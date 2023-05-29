@@ -305,8 +305,7 @@ void archive_out::wirte_transform(dag_path_out_data& in_path) {
 
 void archive_out::wirte_mesh(dag_path_out_data& in_path) {
   MFnMesh l_mesh{in_path.dag_path_};
-  MDagPath l_path_parent = in_path.dag_path_;
-  l_path_parent.pop();
+
   wirte_transform(in_path);
 
   auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
@@ -320,7 +319,7 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
 
   auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
   auto [l_uv, l_uv_i]   = archive_out_ns::get_mesh_uv(l_mesh);
-  DOODLE_LOG_INFO("uvi {}", l_uv_i);
+  // DOODLE_LOG_INFO("uvi {}", l_uv_i);
   Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_s{l_uv, l_uv_i, Alembic::AbcGeom::kFacevaryingScope};
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{
       l_p, l_f, l_pc, l_uv_s, archive_out_ns::get_mesh_normals(l_mesh)};
@@ -335,6 +334,18 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
     l_face_set_schema.set(Alembic::AbcGeom::OFaceSetSchema::Sample{l_list});
     l_face_set_schema.setFaceExclusivity(Alembic::AbcGeom::kFaceSetExclusive);
   }
+}
+
+void archive_out::wirte_frame(const dag_path_out_data& in_path) {
+  MFnMesh l_mesh{in_path.dag_path_};
+
+  // 这里是布料, 不使用细分网格
+  auto l_ploy_schema    = in_path.o_mesh_ptr_->getSchema();
+
+  auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
+  Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{
+      l_p, l_f, l_pc, Alembic::AbcGeom::OV2fGeomParam::Sample{}, archive_out_ns::get_mesh_normals(l_mesh)};
+  l_ploy_schema.set(l_poly_samp);
 }
 
 void archive_out::create_time_sampling_1() {
@@ -389,11 +400,8 @@ void archive_out::open(const std::vector<MDagPath>& in_out_path) {
   ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_mesh(in_dag); });
 }
 
-void archive_out::write(const frame& in_frame) {}
+void archive_out::write() {
+  ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_frame(in_dag); });
+}
 
-// archive_out::~archive_out() {
-//   if (o_archive_) {
-
-//   }
-// }
 }  // namespace doodle::alembic

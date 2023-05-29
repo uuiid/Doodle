@@ -27,10 +27,6 @@ class archive_out {
   using o_xform_ptr          = std::shared_ptr<Alembic::AbcGeom::OXform>;
   using o_mesh_ptr           = std::shared_ptr<Alembic::AbcGeom::OPolyMesh>;
 
-  struct frame {
-    MTime frame_{};
-  };
-
  private:
   struct dag_path_out_data {
     MDagPath dag_path_{};
@@ -53,13 +49,11 @@ class archive_out {
   std::vector<dag_path_out_data> dag_path_out_data_{};
   void open(const std::vector<MDagPath>& in_out_path);
 
-  void write(const frame& in_frame);
-
   static std::tuple<std::uint16_t, std::uint16_t, std::uint16_t> get_rot_order();
 
   void wirte_transform(dag_path_out_data& in_path);
   void wirte_mesh(dag_path_out_data& in_path);
-
+  void wirte_frame(const dag_path_out_data& in_path);
   void create_time_sampling_1();
 
  public:
@@ -77,8 +71,8 @@ class archive_out {
     create_time_sampling_1();
     open(in_dag_path);
   }
-  ~archive_out() = default;
-  archive_out& operator<<(const frame& in_path) { return *this; }
+
+  void write();
 };
 
 }  // namespace doodle::alembic
