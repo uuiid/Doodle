@@ -86,7 +86,7 @@ find_package(Sqlpp11 CONFIG REQUIRED
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(wil CONFIG REQUIRED)
-
+find_package(CMakeRC CONFIG REQUIRED)
 # this is heuristically generated, and may not be correct
 find_package(implot CONFIG REQUIRED)
 

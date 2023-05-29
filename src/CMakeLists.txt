@@ -4,12 +4,6 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 include(ExternalProject)
 include(FetchContent)
 
-FetchContent_Declare(
-        CMakeRCLib
-        GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
-        GIT_TAG master
-)
-
 # FetchContent_Declare(
 # TimeLib
 # URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
@@ -39,7 +33,7 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-FetchContent_MakeAvailable(CMakeRCLib fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
+FetchContent_MakeAvailable(fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
 
 # =====================文档过程===============================
 # 添加文档生成
@@ -76,9 +70,6 @@ doxygen_add_docs(Doxygen
         doodle_dingding
         maya_plug
 )
-
-list(APPEND CMAKE_MODULE_PATH ${cmakerclib_SOURCE_DIR})
-include(CMakeRC)
 
 cmrc_add_resource_library(
         DoodleLibResourceFont
