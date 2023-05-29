@@ -95,7 +95,7 @@ FSys::path core_set::get_data_root() const { return _root_data; }
 
 FSys::path core_set::program_location() { return program_location_attr.parent_path(); }
 std::string core_set::config_file_name() {
-  static std::string str{"doodle_config"};
+  static std::string str{"doodle_config_v2"};
   return str;
 }
 std::string core_set::get_uuid_str() { return boost::uuids::to_string(get_uuid()); }
