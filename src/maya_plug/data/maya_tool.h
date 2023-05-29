@@ -75,7 +75,8 @@ std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 
 namespace details {
 MObject shading_engine_to_mat(const MObject& in_shading_engine);
-}
+double spf();
+}  // namespace details
 
 namespace comm_warp {
 MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_marge_name);

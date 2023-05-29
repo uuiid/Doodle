@@ -18,6 +18,7 @@
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <maya/MStatus.h>
+#include <maya/MTime.h>
 #include <vector>
 
 namespace doodle::maya_plug {
@@ -312,6 +313,12 @@ MObject shading_engine_to_mat(const MObject& in_shading_engine) {
   maya_chick(k_s);
   return k_mat;
 }
+
+double spf() {
+  static const MTime sec(1.0, MTime::kSeconds);
+  return 1.0 / sec.as(MTime::uiUnit());
+}
+
 }  // namespace details
 
 namespace comm_warp {

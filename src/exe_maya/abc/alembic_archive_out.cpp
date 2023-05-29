@@ -363,6 +363,24 @@ void archive_out::create_time_sampling_1() {
   );
 }
 
+void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime& in_time_end) {
+  std::vector<std::double_t> l_times{};
+  for (auto t = in_time_begin; t < in_time_end; ++t) {
+    l_times.emplace_back(t.as(MTime::kSeconds));
+  }
+
+  shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+      Alembic::AbcCoreAbstract::TimeSamplingType{
+          boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.as(MTime::kSeconds)},
+      l_times
+  );
+  transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+      Alembic::AbcCoreAbstract::TimeSamplingType{
+          boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.as(MTime::kSeconds)},
+      l_times
+  );
+}
+
 void archive_out::open(const std::vector<MDagPath>& in_out_path) {
   o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(Alembic::Abc::v12::CreateArchiveWithInfo(
       Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,

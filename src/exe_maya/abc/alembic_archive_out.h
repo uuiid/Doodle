@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
+#include <maya/MTime.h>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -55,6 +56,7 @@ class archive_out {
   void wirte_mesh(dag_path_out_data& in_path);
   void wirte_frame(const dag_path_out_data& in_path);
   void create_time_sampling_1();
+  void create_time_sampling_2(const MTime& in_time_begin, const MTime& in_time_end);
 
  public:
   explicit archive_out(
@@ -71,7 +73,13 @@ class archive_out {
     create_time_sampling_1();
     open(in_dag_path);
   }
-
+  explicit archive_out(
+      FSys::path in_path, const std::vector<MDagPath>& in_dag_path, const MTime& in_begin_time, const MTime& in_end_time
+  )
+      : out_path_(std::move(in_path)) {
+    create_time_sampling_2(in_begin_time, in_end_time);
+    open(in_dag_path);
+  }
   void write();
 };
 
