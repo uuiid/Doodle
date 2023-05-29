@@ -22,10 +22,13 @@ void export_abc_native::export_abc(const MSelectionList& in_select, const FSys::
     in_select.getDagPath(i, k_path);
     l_dag_path.emplace_back(k_path);
   }
-  
 
+  alembic::archive_out l_out{in_path, l_dag_path, begin_time, end_time};
 
-  alembic::archive_out l_out{in_path, l_dag_path};
+  for (auto&& i = begin_time; i < end_time; ++i) {
+    MAnimControl::setCurrentTime(i);
+    l_out.write();
+  }
 }
 
 }  // namespace doodle::maya_plug

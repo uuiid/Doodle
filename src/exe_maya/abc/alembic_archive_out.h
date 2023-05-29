@@ -46,8 +46,8 @@ class archive_out {
   std::int32_t shape_time_index_{};
   std::int32_t transform_time_index_{};
   o_box3d_property_ptr o_box3d_property_ptr_{};
-  std::vector<MDagPath> out_dag_path_{};
   std::vector<dag_path_out_data> dag_path_out_data_{};
+  bool init_{};
   void open(const std::vector<MDagPath>& in_out_path);
 
   static std::tuple<std::uint16_t, std::uint16_t, std::uint16_t> get_rot_order();
@@ -59,20 +59,6 @@ class archive_out {
   void create_time_sampling_2(const MTime& in_time_begin, const MTime& in_time_end);
 
  public:
-  explicit archive_out(
-      FSys::path in_path, time_sampling_ptr in_transform_time_sampling, time_sampling_ptr in_shape_time_sampling,
-      const std::vector<MDagPath>& in_dag_path
-  )
-      : out_path_(std::move(in_path)),
-        transform_time_sampling_(std::move(in_transform_time_sampling)),
-        shape_time_sampling_(std::move(in_shape_time_sampling)) {
-    open(in_dag_path);
-  }
-
-  explicit archive_out(FSys::path in_path, const std::vector<MDagPath>& in_dag_path) : out_path_(std::move(in_path)) {
-    create_time_sampling_1();
-    open(in_dag_path);
-  }
   explicit archive_out(
       FSys::path in_path, const std::vector<MDagPath>& in_dag_path, const MTime& in_begin_time, const MTime& in_end_time
   )

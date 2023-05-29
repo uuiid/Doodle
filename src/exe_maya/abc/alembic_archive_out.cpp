@@ -402,10 +402,6 @@ void archive_out::open(const std::vector<MDagPath>& in_out_path) {
     throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
   }
 
-  out_dag_path_ |= ranges::actions::remove_if([&](const MDagPath& in_dag) -> bool {
-    return maya_plug::is_intermediate(in_dag) /* || !maya_plug::is_renderable(in_dag) */;
-  });
-
   dag_path_out_data_ = in_out_path | ranges::views::filter([](const MDagPath& in_dag) -> bool {
                          return maya_plug::is_intermediate(in_dag) &&
                                 in_dag.hasFn(MFn::kMesh) /* || !maya_plug::is_renderable(in_dag) */;
@@ -414,12 +410,13 @@ void archive_out::open(const std::vector<MDagPath>& in_out_path) {
                          return {in_dag, {}, {}};
                        }) |
                        ranges::to_vector;
-
-  ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_mesh(in_dag); });
 }
 
 void archive_out::write() {
-  ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_frame(in_dag); });
+  if (!init_)
+    ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_mesh(in_dag); });
+  else
+    ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_frame(in_dag); });
 }
 
 }  // namespace doodle::alembic
