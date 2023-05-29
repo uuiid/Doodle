@@ -7,8 +7,11 @@
 #include <doodle_core/lib_warp/enum_template_tool.h>
 #include <doodle_core/logger/logger.h>
 
+#include <maya_plug/fmt/fmt_warp.h>
+
 #include <maya/MStatus.h>
 #include <maya/MString.h>
+
 namespace doodle::maya_plug {
 class maya_error : public std::system_error {
  public:

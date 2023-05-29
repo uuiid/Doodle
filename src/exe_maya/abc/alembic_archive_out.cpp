@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <fmt/core.h>
 #include <maya/MApiNamespace.h>
+#include <maya/MBoundingBox.h>
 #include <maya/MDagPath.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
@@ -46,6 +47,7 @@
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnTransform.h>
 #include <maya/MIntArray.h>
+#include <maya/MItDag.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItMeshVertex.h>
@@ -229,16 +231,37 @@ std::tuple<std::string, std::vector<std::int32_t>> get_face_set(const MObject& i
                                  : std::tuple<std::string, std::vector<std::int32_t>>{l_mat_name, l_face_set_data};
 }
 
+MBoundingBox get_bound_box(const MDagPath& in_path) {
+  MFnDagNode l_node{};
+  MBoundingBox l_box_main{};
+  auto l_path = in_path;
+  MItDag it{};
+  it.reset(l_path, MItDag::kDepthFirst);
+  // for (; !it.isDone(); it.next()) {
+  // it.getPath(l_path);
+  if (l_path.hasFn(MFn::kMesh)) {
+    if (maya_plug::is_intermediate(l_path)) return l_box_main;
+    l_node.setObject(l_path);
+    auto l_box = l_node.boundingBox();
+    l_box_main.expand(l_box);
+  }
+  // }
+  return l_box_main;
+}
 }  // namespace archive_out_ns
 
 void archive_out::wirte_transform(dag_path_out_data& in_path) {
-  MFnTransform l_fn_transform{in_path.dag_path_};
+  MStatus l_s{};
+  MDagPath l_parent_path{in_path.dag_path_};
+  l_parent_path.pop();
+  MFnTransform l_fn_transform{l_parent_path, &l_s};
+  maya_plug::maya_chick(l_s);
 
-  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
+  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(l_parent_path));
   in_path.o_xform_ptr_ =
       std::make_shared<Alembic::AbcGeom::OXform>(o_archive_->getTop(), l_name, transform_time_index_);
 
-  auto l_xform = in_path.o_xform_ptr_->getSchema();
+  auto& l_xform = in_path.o_xform_ptr_->getSchema();
   Alembic::AbcGeom::XformSample l_sample{};
 
   {
@@ -248,13 +271,13 @@ void archive_out::wirte_transform(dag_path_out_data& in_path) {
     l_sample.addOp(l_op);
   }
 
-  {
-    Alembic::AbcGeom::XformOp l_op{
-        Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kRotatePivotTranslationHint};
-    const auto l_translate = l_fn_transform.rotatePivotTranslation(MSpace::Space::kWorld);
-    l_op.setTranslate({l_translate.x, l_translate.y, l_translate.z});
-    l_sample.addOp(l_op);
-  }
+  // {
+  //   Alembic::AbcGeom::XformOp l_op{
+  //       Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kRotatePivotTranslationHint};
+  //   const auto l_translate = l_fn_transform.rotatePivotTranslation(MSpace::Space::kWorld);
+  //   l_op.setTranslate({l_translate.x, l_translate.y, l_translate.z});
+  //   l_sample.addOp(l_op);
+  // }
 
   {
     Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kRotateOperation, Alembic::AbcGeom::kRotateHint};
@@ -266,12 +289,12 @@ void archive_out::wirte_transform(dag_path_out_data& in_path) {
     l_op.setChannelValue(2, Alembic::AbcGeom::RadiansToDegrees(l_rot.z));
     l_sample.addOp(l_op);
   }
-  {
-    Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kRotatePivotPointHint};
-    const auto l_translate = l_fn_transform.rotatePivot(MSpace::Space::kWorld);
-    l_op.setTranslate({l_translate.x, l_translate.y, l_translate.z});
-    l_sample.addOp(l_op);
-  }
+  // {
+  //   Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kRotatePivotPointHint};
+  //   const auto l_translate = l_fn_transform.rotatePivot(MSpace::Space::kWorld);
+  //   l_op.setTranslate({l_translate.x, l_translate.y, l_translate.z});
+  //   l_sample.addOp(l_op);
+  // }
 
   {
     Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kScaleOperation, Alembic::AbcGeom::kScaleHint};
@@ -282,12 +305,12 @@ void archive_out::wirte_transform(dag_path_out_data& in_path) {
     l_sample.addOp(l_op);
   }
 
-  {
-    Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kScalePivotPointHint};
-    auto l_size = l_fn_transform.scalePivot(MSpace::Space::kWorld);
-    l_op.setTranslate({l_size.x, l_size.y, l_size.z});
-    l_sample.addOp(l_op);
-  }
+  // {
+  //   Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kScalePivotPointHint};
+  //   auto l_size = l_fn_transform.scalePivot(MSpace::Space::kWorld);
+  //   l_op.setTranslate({l_size.x, l_size.y, l_size.z});
+  //   l_sample.addOp(l_op);
+  // }
 
   l_xform.set(l_sample);
 
@@ -311,8 +334,10 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
   auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
 
   // 这里是布料, 不使用细分网格
-  in_path.o_mesh_ptr_ = std::make_shared<Alembic::AbcGeom::OPolyMesh>(*in_path.o_xform_ptr_, l_name, shape_time_index_);
-  auto l_ploy_schema  = in_path.o_mesh_ptr_->getSchema();
+  in_path.o_mesh_ptr_ = std::make_shared<Alembic::AbcGeom::OPolyMesh>(
+      *in_path.o_xform_ptr_, l_name, Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
+  );
+  auto& l_ploy_schema = in_path.o_mesh_ptr_->getSchema();
 
   auto l_uv_name      = maya_plug::conv::to_s(l_mesh.currentUVSetName());
   l_ploy_schema.setUVSourceName(l_uv_name);
@@ -340,27 +365,29 @@ void archive_out::wirte_frame(const dag_path_out_data& in_path) {
   MFnMesh l_mesh{in_path.dag_path_};
 
   // 这里是布料, 不使用细分网格
-  auto l_ploy_schema    = in_path.o_mesh_ptr_->getSchema();
+  auto& l_ploy_schema   = in_path.o_mesh_ptr_->getSchema();
 
   auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
+  auto [l_uv, l_uv_i]   = archive_out_ns::get_mesh_uv(l_mesh);
+  // DOODLE_LOG_INFO("uvi {}", l_uv_i);
+  Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_s{l_uv, l_uv_i, Alembic::AbcGeom::kFacevaryingScope};
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{
-      l_p, l_f, l_pc, Alembic::AbcGeom::OV2fGeomParam::Sample{}, archive_out_ns::get_mesh_normals(l_mesh)};
+      l_p, l_f, l_pc, l_uv_s, archive_out_ns::get_mesh_normals(l_mesh)};
+  //, l_uv_s, archive_out_ns::get_mesh_normals(l_mesh)
+  // l_poly_samp.setNormals(archive_out_ns::get_mesh_normals(l_mesh));
   l_ploy_schema.set(l_poly_samp);
 }
 
-void archive_out::create_time_sampling_1() {
-  MTime l_time{1.0, MTime::kSeconds};
-  std::vector<std::double_t>{1.0};
-  shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
-      Alembic::AbcCoreAbstract::TimeSamplingType{
-          1u, 1.0 / boost::numeric_cast<std::double_t>(l_time.as(MTime::uiUnit()))},
-      std::vector<std::double_t>{1.0}
-  );
-  transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
-      Alembic::AbcCoreAbstract::TimeSamplingType{
-          1u, 1.0 / boost::numeric_cast<std::double_t>(l_time.as(MTime::uiUnit()))},
-      std::vector<std::double_t>{1.0}
-  );
+void archive_out::write_box() {
+  MFnDagNode l_node{};
+  MBoundingBox l_box_main{};
+  for (auto&& i : dag_path_out_data_) {
+    l_box_main.expand(archive_out_ns::get_bound_box(i.dag_path_));
+  }
+  Alembic::Abc::Box3d l_box3d{
+      {l_box_main.min().x, l_box_main.min().y, l_box_main.min().z},
+      {l_box_main.max().x, l_box_main.max().y, l_box_main.max().z}};
+  o_box3d_property_ptr_->set(l_box3d);
 }
 
 void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime& in_time_end) {
@@ -369,15 +396,28 @@ void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime
     l_times.emplace_back(t.as(MTime::kSeconds));
   }
 
+  // shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+  //     Alembic::AbcCoreAbstract::TimeSamplingType{
+  //         boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.value() * maya_plug::details::spf()},
+  //     l_times
+  // );
+  // transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+  //     Alembic::AbcCoreAbstract::TimeSamplingType{
+  //         boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.value() * maya_plug::details::spf()},
+  //     l_times
+  // );
+  DOODLE_LOG_INFO(
+      "检查到帧率 {}({}), 开始时间 {}({})", 1.0 / maya_plug::details::spf(),
+      boost::numeric_cast<std::float_t>(maya_plug::details::spf()), in_time_begin.value(),
+      boost::numeric_cast<std::float_t>(in_time_end.as(MTime::kSeconds))
+  );
   shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
-      Alembic::AbcCoreAbstract::TimeSamplingType{
-          boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.as(MTime::kSeconds)},
-      l_times
+      boost::numeric_cast<std::float_t>(maya_plug::details::spf()),
+      boost::numeric_cast<std::float_t>(in_time_begin.as(MTime::kSeconds))
   );
   transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
-      Alembic::AbcCoreAbstract::TimeSamplingType{
-          boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.as(MTime::kSeconds)},
-      l_times
+      boost::numeric_cast<std::float_t>(maya_plug::details::spf()),
+      boost::numeric_cast<std::float_t>(in_time_begin.as(MTime::kSeconds))
   );
 }
 
@@ -403,8 +443,10 @@ void archive_out::open(const std::vector<MDagPath>& in_out_path) {
   }
 
   dag_path_out_data_ = in_out_path | ranges::views::filter([](const MDagPath& in_dag) -> bool {
-                         return maya_plug::is_intermediate(in_dag) &&
-                                in_dag.hasFn(MFn::kMesh) /* || !maya_plug::is_renderable(in_dag) */;
+                         //  maya_plug::get_shape(in_dag.node()).hasFn(MFn::kMesh)
+                         //! in_dag.hasFn(MFn::kMesh)
+                         return !maya_plug::is_intermediate(in_dag) && in_dag.hasFn(MFn::kMesh)
+                             /* || !maya_plug::is_renderable(in_dag) */;
                        }) |
                        ranges::views::transform([](const MDagPath& in_dag) -> dag_path_out_data {
                          return {in_dag, {}, {}};
@@ -413,10 +455,17 @@ void archive_out::open(const std::vector<MDagPath>& in_out_path) {
 }
 
 void archive_out::write() {
-  if (!init_)
-    ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_mesh(in_dag); });
-  else
+  if (!init_) {
+    ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) {
+      if (!in_dag.dag_path_.isValid()) throw_exception(doodle_error{"dag path is invalid"});
+      wirte_mesh(in_dag);
+    });
+    write_box();
+    init_ = true;
+  } else {
     ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_frame(in_dag); });
+    write_box();
+  }
 }
 
 }  // namespace doodle::alembic

@@ -3,9 +3,11 @@
 //
 #include "exception.h"
 
+#include <fmt/core.h>
+
 namespace doodle::maya_plug {
 const char* maya_category::name() const noexcept { return "maya"; }
-std::string maya_category::message(int ev) const { return {"maya"}; }
+std::string maya_category::message(int ev) const { return fmt::format("maya code {}", ev); }
 
 bsys::error_condition maya_category::default_error_condition(int ev) const noexcept {
   return error_category::default_error_condition(ev);

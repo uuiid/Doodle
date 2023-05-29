@@ -7,6 +7,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <maya/MDagPath.h>
+#include <maya/MStatus.h>
 #include <maya/MString.h>
 
 namespace fmt {
@@ -35,4 +36,6 @@ struct formatter<MStringArray> : ostream_formatter {};
 #endif
 template <>
 struct formatter<MTime> : ostream_formatter {};
+template <>
+struct formatter<MStatus> : ostream_formatter {};
 }  // namespace fmt
