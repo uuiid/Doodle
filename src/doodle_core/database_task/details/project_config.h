@@ -16,7 +16,7 @@ struct sql_com<project_config::base_config> : detail::sql_create_table_base<tabl
       conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
   );
 
-  void create_table(conn_ptr& in_ptr);
+  void create_table(conn_ptr& in_ptr) override;
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /**
    *

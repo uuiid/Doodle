@@ -600,6 +600,30 @@ struct sql_create_table_base {
     const table_t l_tables{};
     return doodle::database_n::detail::has_table(l_tables, *in_ptr);
   }
+
+  std::tuple<std::map<std::int64_t, entt::entity>, std::vector<entt::entity>> split_update_install(
+      doodle::conn_ptr& in_ptr, const std::vector<entt::entity>& in_entts, const registry_ptr& reg_
+  ) {
+    const table_t l_table{};
+
+    auto l_pre_ = in_ptr->prepare(
+        sqlpp::select(l_table.id).from(l_table).where(l_table.entity_id == sqlpp::parameter(l_table.entity_id))
+    );
+    std::map<std::int64_t, entt::entity> l_updata_map{};
+    std::vector<entt::entity> l_install;
+    for (auto&& e : in_entts) {
+      l_pre_.params.entity_id = reg_->get<database>(e).get_id();
+      bool has_{};
+      for (auto&& i : (*in_ptr)(l_pre_)) {
+        l_updata_map.emplace(i.id.value(), e);
+        has_ = true;
+      }
+      if (!has_) {
+        l_install.emplace_back(e);
+      }
+    }
+    return {l_updata_map, l_install};
+  }
 };
 template <>
 struct sql_create_table_base<tables::entity> {
@@ -614,6 +638,29 @@ struct sql_create_table_base<tables::entity> {
   bool has_table(doodle::conn_ptr& in_ptr) {
     const tables::entity l_tables{};
     return doodle::database_n::detail::has_table(l_tables, *in_ptr);
+  }
+
+  std::tuple<std::map<std::int64_t, entt::entity>, std::vector<entt::entity>> split_update_install(
+      doodle::conn_ptr& in_ptr, const std::vector<entt::entity>& in_entts, const registry_ptr& reg_
+  ) {
+    const tables::entity l_table{};
+
+    auto l_pre_ =
+        in_ptr->prepare(sqlpp::select(l_table.id).from(l_table).where(l_table.id == sqlpp::parameter(l_table.id)));
+    std::map<std::int64_t, entt::entity> l_updata_map{};
+    std::vector<entt::entity> l_install;
+    for (auto&& e : in_entts) {
+      l_pre_.params.id = reg_->get<database>(e).get_id();
+      bool has_{};
+      for (auto&& i : (*in_ptr)(l_pre_)) {
+        l_updata_map.emplace(i.id.value(), e);
+        has_ = true;
+      }
+      if (!has_) {
+        l_install.emplace_back(e);
+      }
+    }
+    return {l_updata_map, l_install};
   }
 };
 

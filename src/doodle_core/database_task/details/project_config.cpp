@@ -17,10 +17,13 @@
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
 #include <sqlpp11/aggregate_functions/count.h>
+#include <sqlpp11/insert.h>
 #include <sqlpp11/parameter.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/update.h>
 #include <string>
+#include <vector>
 
 namespace doodle::database_n {
 void sql_com<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr) {
@@ -94,64 +97,63 @@ void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::v
                    }) |
                    ranges::to_vector;
 
-  {
-    const tables::project_config l_table{};
-    auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
-        l_table.sim_path                          = sqlpp::parameter(l_table.sim_path),
-        l_table.export_group                      = sqlpp::parameter(l_table.export_group),
-        l_table.cloth_proxy                       = sqlpp::parameter(l_table.cloth_proxy),
-        l_table.simple_module_proxy               = sqlpp::parameter(l_table.simple_module_proxy),
-        l_table.find_icon_regex                   = sqlpp::parameter(l_table.find_icon_regex),
-        l_table.upload_path                       = sqlpp::parameter(l_table.upload_path),
-        l_table.season_count                      = sqlpp::parameter(l_table.season_count),
-        l_table.use_only_sim_cloth                = sqlpp::parameter(l_table.use_only_sim_cloth),
-        l_table.use_divide_group_export           = sqlpp::parameter(l_table.use_divide_group_export),
-        l_table.use_rename_material               = sqlpp::parameter(l_table.use_rename_material),
-        l_table.use_merge_mesh                    = sqlpp::parameter(l_table.use_merge_mesh),
-        l_table.t_post                            = sqlpp::parameter(l_table.t_post),
-        l_table.export_anim_time                  = sqlpp::parameter(l_table.export_anim_time),
-        l_table.use_write_metadata                = sqlpp::parameter(l_table.use_write_metadata),
-        l_table.abc_export_extract_reference_name = sqlpp::parameter(l_table.abc_export_extract_reference_name),
-        l_table.abc_export_format_reference_name  = sqlpp::parameter(l_table.abc_export_format_reference_name),
-        l_table.abc_export_extract_scene_name     = sqlpp::parameter(l_table.abc_export_extract_scene_name),
-        l_table.abc_export_format_scene_name      = sqlpp::parameter(l_table.abc_export_format_scene_name),
-        l_table.abc_export_add_frame_range        = sqlpp::parameter(l_table.abc_export_add_frame_range),
-        l_table.maya_camera_suffix                = sqlpp::parameter(l_table.maya_camera_suffix),
-        l_table.maya_out_put_abc_suffix           = sqlpp::parameter(l_table.maya_out_put_abc_suffix),
-        l_table.entity_id                         = sqlpp::parameter(l_table.entity_id)
-    ));
+  const tables::project_config l_table{};
 
-    for (auto& l_h : l_handles) {
-      auto& l_pconfig                                = l_h.get<project_config::base_config>();
-      l_pre.params.sim_path                          = l_pconfig.vfx_cloth_sim_path.string();
-      l_pre.params.export_group                      = l_pconfig.export_group;
-      l_pre.params.cloth_proxy                       = l_pconfig.cloth_proxy_;
-      l_pre.params.simple_module_proxy               = l_pconfig.simple_module_proxy_;
-      l_pre.params.find_icon_regex                   = l_pconfig.find_icon_regex;
-      l_pre.params.upload_path                       = l_pconfig.upload_path.string();
-      l_pre.params.season_count                      = l_pconfig.season_count;
-      l_pre.params.use_only_sim_cloth                = l_pconfig.use_only_sim_cloth;
-      l_pre.params.use_divide_group_export           = l_pconfig.use_divide_group_export;
-      l_pre.params.use_rename_material               = l_pconfig.use_rename_material;
-      l_pre.params.use_merge_mesh                    = l_pconfig.use_merge_mesh;
-      l_pre.params.t_post                            = l_pconfig.t_post;
-      l_pre.params.export_anim_time                  = l_pconfig.export_anim_time;
-      l_pre.params.use_write_metadata                = l_pconfig.use_write_metadata;
-      l_pre.params.abc_export_extract_reference_name = l_pconfig.abc_export_extract_reference_name;
-      l_pre.params.abc_export_format_reference_name  = l_pconfig.abc_export_format_reference_name;
-      l_pre.params.abc_export_extract_scene_name     = l_pconfig.abc_export_extract_scene_name;
-      l_pre.params.abc_export_format_scene_name      = l_pconfig.abc_export_format_scene_name;
-      l_pre.params.abc_export_add_frame_range        = l_pconfig.abc_export_add_frame_range;
-      l_pre.params.maya_camera_suffix                = l_pconfig.maya_camera_suffix;
-      l_pre.params.maya_out_put_abc_suffix           = l_pconfig.maya_out_put_abc_suffix;
+  auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
+      l_table.sim_path                          = sqlpp::parameter(l_table.sim_path),
+      l_table.export_group                      = sqlpp::parameter(l_table.export_group),
+      l_table.cloth_proxy                       = sqlpp::parameter(l_table.cloth_proxy),
+      l_table.simple_module_proxy               = sqlpp::parameter(l_table.simple_module_proxy),
+      l_table.find_icon_regex                   = sqlpp::parameter(l_table.find_icon_regex),
+      l_table.upload_path                       = sqlpp::parameter(l_table.upload_path),
+      l_table.season_count                      = sqlpp::parameter(l_table.season_count),
+      l_table.use_only_sim_cloth                = sqlpp::parameter(l_table.use_only_sim_cloth),
+      l_table.use_divide_group_export           = sqlpp::parameter(l_table.use_divide_group_export),
+      l_table.use_rename_material               = sqlpp::parameter(l_table.use_rename_material),
+      l_table.use_merge_mesh                    = sqlpp::parameter(l_table.use_merge_mesh),
+      l_table.t_post                            = sqlpp::parameter(l_table.t_post),
+      l_table.export_anim_time                  = sqlpp::parameter(l_table.export_anim_time),
+      l_table.use_write_metadata                = sqlpp::parameter(l_table.use_write_metadata),
+      l_table.abc_export_extract_reference_name = sqlpp::parameter(l_table.abc_export_extract_reference_name),
+      l_table.abc_export_format_reference_name  = sqlpp::parameter(l_table.abc_export_format_reference_name),
+      l_table.abc_export_extract_scene_name     = sqlpp::parameter(l_table.abc_export_extract_scene_name),
+      l_table.abc_export_format_scene_name      = sqlpp::parameter(l_table.abc_export_format_scene_name),
+      l_table.abc_export_add_frame_range        = sqlpp::parameter(l_table.abc_export_add_frame_range),
+      l_table.maya_camera_suffix                = sqlpp::parameter(l_table.maya_camera_suffix),
+      l_table.maya_out_put_abc_suffix           = sqlpp::parameter(l_table.maya_out_put_abc_suffix),
+      l_table.entity_id                         = sqlpp::parameter(l_table.entity_id)
+  ));
 
-      l_pre.params.entity_id                         = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-      auto l_r                                       = l_conn(l_pre);
+  for (auto& l_h : l_handles) {
+    auto& l_pconfig                                = l_h.get<project_config::base_config>();
+    l_pre.params.sim_path                          = l_pconfig.vfx_cloth_sim_path.string();
+    l_pre.params.export_group                      = l_pconfig.export_group;
+    l_pre.params.cloth_proxy                       = l_pconfig.cloth_proxy_;
+    l_pre.params.simple_module_proxy               = l_pconfig.simple_module_proxy_;
+    l_pre.params.find_icon_regex                   = l_pconfig.find_icon_regex;
+    l_pre.params.upload_path                       = l_pconfig.upload_path.string();
+    l_pre.params.season_count                      = l_pconfig.season_count;
+    l_pre.params.use_only_sim_cloth                = l_pconfig.use_only_sim_cloth;
+    l_pre.params.use_divide_group_export           = l_pconfig.use_divide_group_export;
+    l_pre.params.use_rename_material               = l_pconfig.use_rename_material;
+    l_pre.params.use_merge_mesh                    = l_pconfig.use_merge_mesh;
+    l_pre.params.t_post                            = l_pconfig.t_post;
+    l_pre.params.export_anim_time                  = l_pconfig.export_anim_time;
+    l_pre.params.use_write_metadata                = l_pconfig.use_write_metadata;
+    l_pre.params.abc_export_extract_reference_name = l_pconfig.abc_export_extract_reference_name;
+    l_pre.params.abc_export_format_reference_name  = l_pconfig.abc_export_format_reference_name;
+    l_pre.params.abc_export_extract_scene_name     = l_pconfig.abc_export_extract_scene_name;
+    l_pre.params.abc_export_format_scene_name      = l_pconfig.abc_export_format_scene_name;
+    l_pre.params.abc_export_add_frame_range        = l_pconfig.abc_export_add_frame_range;
+    l_pre.params.maya_camera_suffix                = l_pconfig.maya_camera_suffix;
+    l_pre.params.maya_out_put_abc_suffix           = l_pconfig.maya_out_put_abc_suffix;
 
-      DOODLE_LOG_INFO(
-          "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project_config::base_config>().name()
-      );
-    }
+    l_pre.params.entity_id                         = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    auto l_r                                       = l_conn(l_pre);
+
+    DOODLE_LOG_INFO(
+        "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project_config::base_config>().name()
+    );
   }
   auto map_id = detail::sql_com_destroy_parent_id_return_id<
       tables::project_config, tables::project_config_assets_list, tables::project_config_icon_extensions,
