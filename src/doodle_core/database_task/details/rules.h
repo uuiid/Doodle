@@ -15,6 +15,7 @@ struct sql_com<doodle::business::rules> : detail::sql_create_table_base<tables::
       conn_ptr& in_ptr, const std::vector<entt::handle>& in_, const std::map<entt::handle, std::int64_t>& in_map
   );
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
+  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /**
    *
    * @param in_ptr

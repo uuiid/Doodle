@@ -11,6 +11,7 @@ struct sql_com<doodle::redirection_path_info> : detail::sql_create_table_base<ta
   sql_com(registry_ptr reg) : reg_{std::move(reg)} {}
   void create_table(conn_ptr& in_ptr);
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
+  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /**
    *
    * @param in_ptr

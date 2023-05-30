@@ -19,7 +19,7 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<entt:
                    ranges::to_vector;
 
   tables::episodes l_tabl{};
-  auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_tabl).set(
+  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
       l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id), l_tabl.eps = sqlpp::parameter(l_tabl.eps)
   ));
 
@@ -30,6 +30,29 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<entt:
 
     auto l_r               = l_conn(l_pre);
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<episodes>().name());
+  }
+}
+
+void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
+  auto& l_conn   = *in_ptr;
+  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
+                     return entt::handle{*reg_, in_entity};
+                   }) |
+                   ranges::to_vector;
+
+  tables::episodes l_tabl{};
+
+  auto l_pre = l_conn.prepare(sqlpp::update(l_tabl)
+                                  .set(l_tabl.eps = sqlpp::parameter(l_tabl.eps))
+                                  .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
+
+  for (auto& l_h : l_handles) {
+    auto& l_episodes       = l_h.get<episodes>();
+    l_pre.params.eps       = l_episodes.get_episodes();
+    l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+
+    auto l_r               = l_conn(l_pre);
+    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<episodes>().name());
   }
 }
 

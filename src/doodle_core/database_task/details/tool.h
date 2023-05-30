@@ -255,7 +255,7 @@ inline sqlpp::make_traits<t, sqlpp::tag::require_insert> require_insert();
 //     auto& l_conn = *in_ptr;
 //     const table_t l_table{};
 //
-//     return l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
+//     return l_conn.prepare(sqlpp::insert_into(l_table).set(
 //         l_table.value = sqlpp::parameter(l_table.value), l_table.parent_id = sqlpp::parameter(l_table.parent_id)
 //     ));
 //   }
@@ -328,11 +328,6 @@ struct create_table_t {
         sqlpp::name_of<decltype(in_foreign_column.table())>::template char_ptr<create_table_ctx>(),
         sqlpp::name_of<foreign_column_t>::template char_ptr<create_table_ctx>()
     );
-    return *this;
-  }
-  template <typename self_column_t>
-  auto unique_column(const self_column_t& in_self_column) {
-    sql_data += fmt::format(R"(, UNIQUE ({}))", sqlpp::name_of<self_column_t>::template char_ptr<create_table_ctx>());
     return *this;
   }
   std::string end() const { return sql_data + ");"; }
@@ -588,10 +583,7 @@ struct sql_create_table_base {
   sql_create_table_base() = default;
   virtual void create_table(doodle::conn_ptr& in_ptr) {
     const table_t l_tables{};
-    in_ptr->execute(detail::create_table(l_tables)
-                        .foreign_column(l_tables.entity_id, tables::entity{}.id)
-                        .unique_column(l_tables.entity_id)
-                        .end());
+    in_ptr->execute(detail::create_table(l_tables).foreign_column(l_tables.entity_id, tables::entity{}.id).end());
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_id));
   };

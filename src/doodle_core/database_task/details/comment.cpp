@@ -22,7 +22,7 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::
                    }) |
                    ranges::to_vector;
   tables::comment l_table{};
-  auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
+  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.comment_string = sqlpp::parameter(l_table.comment_string),
       l_table.comment_time   = sqlpp::parameter(l_table.comment_time),
       l_table.entity_id      = sqlpp::parameter(l_table.entity_id)
@@ -38,6 +38,30 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::
   }
 }
 
+void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
+  auto& l_conn   = *in_ptr;
+  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
+                     return entt::handle{*reg_, in_entity};
+                   }) |
+                   ranges::to_vector;
+  tables::comment l_table{};
+
+  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
+                                  .set(
+                                      l_table.comment_string = sqlpp::parameter(l_table.comment_string),
+                                      l_table.comment_time   = sqlpp::parameter(l_table.comment_time)
+                                  )
+                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
+  for (auto& l_h : l_handles) {
+    auto& l_shot                = l_h.get<comment>();
+    l_pre.params.comment_string = l_shot.p_comment;
+    l_pre.params.comment_time   = l_shot.p_time_info;
+    l_pre.params.entity_id      = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+
+    auto l_r                    = l_conn(l_pre);
+    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<comment>().name());
+  }
+}
 void sql_com<doodle::comment>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
   auto& l_conn = *in_ptr;
   tables::comment l_table{};

@@ -14,6 +14,7 @@ struct sql_com<doodle::user> : detail::sql_create_table_base<tables::usertab> {
 
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
 
+  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
 
   /**
    *
