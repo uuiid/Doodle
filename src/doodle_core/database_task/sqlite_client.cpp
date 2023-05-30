@@ -176,14 +176,11 @@ class sqlite_file::impl {
                        }) |
                        ranges::to_vector;
 
-      BOOST_ASSERT(ranges::all_of(l_create, [&](entt::entity& i) {
-        return in_registry_ptr->get<database>(i).is_install();
-      }));
+      BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
       auto [l_updata, l_install] = l_orm.split_update_install(in_conn, l_handles);
-
-      l_orm.update(in_conn, l_updata);
-      l_orm.insert(in_conn, l_install);
-      l_orm.destroy(in_conn, in_handle);
+      if (!l_updata.empty()) l_orm.update(in_conn, l_updata);
+      if (!l_install.empty()) l_orm.insert(in_conn, l_install);
+      if (!in_handle.empty()) l_orm.destroy(in_conn, in_handle);
     }
   };
 
@@ -241,8 +238,8 @@ class sqlite_file::impl {
                        }) |
                        ranges::to_vector;
       in_handle = destroy_ids_;
-      l_orm.insert(in_conn, l_handles);
-      l_orm.destroy(in_conn, destroy_ids_);
+      if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
+      if (!destroy_ids_.empty()) l_orm.destroy(in_conn, destroy_ids_);
     }
   };
 
