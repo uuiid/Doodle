@@ -4,6 +4,7 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/project.h>
 
+#include <entt/entity/fwd.hpp>
 #include <rttr/type.h>
 #include <sqlpp11/parameter.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
@@ -11,12 +12,9 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::project l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
       l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id), l_tabl.p_name = sqlpp::parameter(l_tabl.p_name),
@@ -24,7 +22,7 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::
       l_tabl.p_shor_str = sqlpp::parameter(l_tabl.p_shor_str)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_project         = l_h.get<project>();
     l_pre.params.p_en_str   = l_project.p_en_str;
     l_pre.params.p_name     = l_project.p_name;
@@ -37,12 +35,8 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::
   }
 }
 
-void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
 
   tables::project l_tabl{};
 
@@ -52,23 +46,26 @@ void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<entt::
               l_tabl.p_name = sqlpp::parameter(l_tabl.p_name), l_tabl.p_en_str = sqlpp::parameter(l_tabl.p_en_str),
               l_tabl.p_path = sqlpp::parameter(l_tabl.p_path), l_tabl.p_shor_str = sqlpp::parameter(l_tabl.p_shor_str)
           )
-          .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id))
+          .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id) && l_tabl.id == sqlpp::parameter(l_tabl.id))
   );
 
-  for (auto& l_h : l_handles) {
+  for (auto& [id, l_h] : in_id) {
     auto& l_project         = l_h.get<project>();
     l_pre.params.p_name     = l_project.p_name;
     l_pre.params.p_en_str   = l_project.p_en_str;
     l_pre.params.p_path     = l_project.p_path.string();
     l_pre.params.p_shor_str = l_project.p_shor_str;
     l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    l_pre.params.id         = id;
 
     auto l_r                = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
   }
 }
 
-void sql_com<doodle::project>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::project>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
 
   {
@@ -103,7 +100,7 @@ void sql_com<doodle::project>::select(conn_ptr& in_ptr, const std::map<std::int6
         DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
-    reg_->insert<doodle::project>(l_entts.begin(), l_entts.end(), l_works.begin());
+    in_reg->insert<doodle::project>(l_entts.begin(), l_entts.end(), l_works.begin());
   }
 }
 

@@ -9,6 +9,7 @@
 #include "sqlpp11/sqlite3/insert_or.h"
 #include "sqlpp11/update.h"
 #include <algorithm>
+#include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
@@ -20,12 +21,9 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::assets l_table{};
   //  sqlpp::insert_into(l_table).c
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
@@ -33,7 +31,7 @@ void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::e
       l_table.entity_id   = sqlpp::parameter(l_table.entity_id)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_shot             = l_h.get<assets>();
     l_pre.params.assets_path = l_shot.p_path.string();
     l_pre.params.entity_id   = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -42,19 +40,19 @@ void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::e
   }
 }
 
-void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::assets l_table{};
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(l_table.assets_path = sqlpp::parameter(l_table.assets_path))
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_table)
+          .set(l_table.assets_path = sqlpp::parameter(l_table.assets_path))
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
+  );
+  for (const auto& [id, l_h] : in_id) {
     auto& l_shot             = l_h.get<assets>();
+    l_pre.params.id          = id;
     l_pre.params.assets_path = l_shot.p_path.string();
     l_pre.params.entity_id   = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
@@ -63,7 +61,9 @@ void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::vector<entt::e
   }
 }
 
-void sql_com<doodle::assets>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::assets>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
   tables::assets l_table{};
   std::vector<assets> l_assets;
@@ -89,7 +89,7 @@ void sql_com<doodle::assets>::select(conn_ptr& in_ptr, const std::map<std::int64
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  reg_->insert<doodle::assets>(l_entts.begin(), l_entts.end(), l_assets.begin());
+  in_reg->insert<doodle::assets>(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
 void sql_com<doodle::assets>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets>(in_ptr, in_handle);

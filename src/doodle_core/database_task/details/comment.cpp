@@ -15,12 +15,9 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::comment l_table{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.comment_string = sqlpp::parameter(l_table.comment_string),
@@ -28,7 +25,7 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::
       l_table.entity_id      = sqlpp::parameter(l_table.entity_id)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_shot                = l_h.get<comment>();
     l_pre.params.comment_string = l_shot.p_comment;
     l_pre.params.comment_time   = l_shot.p_time_info;
@@ -38,31 +35,33 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::
   }
 }
 
-void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::comment l_table{};
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(
-                                      l_table.comment_string = sqlpp::parameter(l_table.comment_string),
-                                      l_table.comment_time   = sqlpp::parameter(l_table.comment_time)
-                                  )
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_table)
+          .set(
+              l_table.comment_string = sqlpp::parameter(l_table.comment_string),
+              l_table.comment_time   = sqlpp::parameter(l_table.comment_time)
+          )
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
+  );
+  for (auto& [id, l_h] : in_id) {
     auto& l_shot                = l_h.get<comment>();
     l_pre.params.comment_string = l_shot.p_comment;
     l_pre.params.comment_time   = l_shot.p_time_info;
+    l_pre.params.id             = id;
     l_pre.params.entity_id      = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
     auto l_r                    = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<comment>().name());
   }
 }
-void sql_com<doodle::comment>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::comment>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
   tables::comment l_table{};
   std::vector<comment> l_comment;
@@ -90,7 +89,7 @@ void sql_com<doodle::comment>::select(conn_ptr& in_ptr, const std::map<std::int6
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  reg_->insert<doodle::comment>(l_entts.begin(), l_entts.end(), l_comment.begin());
+  in_reg->insert<doodle::comment>(l_entts.begin(), l_entts.end(), l_comment.begin());
 }
 void sql_com<doodle::comment>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::comment>(in_ptr, in_handle);

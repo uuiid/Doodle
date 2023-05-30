@@ -19,6 +19,7 @@
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
 #include <map>
+#include <range/v3/view/map.hpp>
 #include <sqlpp11/aggregate_functions/count.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
@@ -103,12 +104,9 @@ void sql_com<doodle::business::rules>::insert_sub(
   }
 }
 
-void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::business_rules l_table{};
   std::map<entt::handle, std::int64_t> l_map_id{};
 
@@ -118,7 +116,7 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
         l_table.entity_id     = sqlpp::parameter(l_table.entity_id)
     ));
 
-    for (auto& l_h : l_handles) {
+    for (const auto& l_h : in_id) {
       auto& l_rules              = l_h.get<business::rules>();
       l_pre.params.work_weekdays = l_rules.work_weekdays_p.to_string();
       l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -128,25 +126,26 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
       );
     }
   }
-  insert_sub(in_ptr, l_handles, l_map_id);
+  insert_sub(in_ptr, in_id, l_map_id);
 }
 
-void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::business_rules l_table{};
 
   {
     auto l_pre = l_conn.prepare(sqlpp::update(l_table)
                                     .set(l_table.work_weekdays = sqlpp::parameter(l_table.work_weekdays))
-                                    .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-    for (auto& l_h : l_handles) {
+                                    .where(
+                                        l_table.entity_id == sqlpp::parameter(l_table.entity_id) &&
+                                        l_table.id == sqlpp::parameter(l_table.id)
+                                    ));
+    for (auto& [id, l_h] : in_id) {
       auto& l_rules              = l_h.get<business::rules>();
       l_pre.params.work_weekdays = l_rules.work_weekdays_p.to_string();
       l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+      l_pre.params.id            = id;
 
       auto l_r                   = l_conn(l_pre);
       DOODLE_LOG_INFO(
@@ -154,15 +153,22 @@ void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::vecto
       );
     }
   }
+  auto map_id = in_id | ranges::views::transform([](auto&& l_pair) -> std::pair<entt::handle, std::int64_t> {
+                  return {l_pair.second, l_pair.first};
+                }) |
+                ranges::to<std::map<entt::handle, std::int64_t>>;
+  auto l_handles = in_id | ranges::views::values | ranges::to<std::vector<entt::handle>>;
 
-  auto l_map_id = detail::sql_com_destroy_parent_id_return_id<
-      tables::business_rules, tables::business_rules_work_pair, tables::business_rules_work_abs_pair,
-      tables::business_rules_time_info_time_info>(in_ptr, l_handles);
+  detail::sql_com_destroy_parent_id<tables::business_rules_work_pair>(in_ptr, map_id);
+  detail::sql_com_destroy_parent_id<tables::business_rules_work_abs_pair>(in_ptr, map_id);
+  detail::sql_com_destroy_parent_id<tables::business_rules_time_info_time_info>(in_ptr, map_id);
 
-  insert_sub(in_ptr, l_handles, l_map_id);
+  insert_sub(in_ptr, l_handles, map_id);
 }
 
-void sql_com<doodle::business::rules>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::business::rules>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
   std::vector<business::rules> l_assets;
   std::vector<entt::entity> l_entts;
@@ -247,7 +253,7 @@ void sql_com<doodle::business::rules>::select(conn_ptr& in_ptr, const std::map<s
     }
   }
 
-  reg_->insert<doodle::business::rules>(l_entts.begin(), l_entts.end(), l_assets.begin());
+  in_reg->insert<doodle::business::rules>(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
 void sql_com<doodle::business::rules>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets>(in_ptr, in_handle);

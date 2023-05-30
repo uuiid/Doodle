@@ -21,12 +21,8 @@
 #include <vector>
 
 namespace doodle::database_n {
-void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
   tables::assets_file l_table{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
@@ -34,7 +30,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
       l_table.entity_id = sqlpp::parameter(l_table.entity_id)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_assets       = l_h.get<assets_file>();
     l_pre.params.name    = l_assets.name_attr();
     l_pre.params.path    = l_assets.path_attr().string();
@@ -47,36 +43,35 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
   }
 }
 
-void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
   tables::assets_file l_table{};
 
   auto l_pre = l_conn.prepare(
       sqlpp::update(l_table)
           .set(
               l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
-              l_table.version = sqlpp::parameter(l_table.version), l_table.user_ref = sqlpp::parameter(l_table.user_ref)
+              l_table.version = sqlpp::parameter(l_table.version), l_table.user_id = sqlpp::parameter(l_table.user_id)
           )
-          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id))
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
   );
-  for (auto& l_h : l_handles) {
+  for (const auto& [id, l_h] : in_id) {
     auto& l_assets       = l_h.get<assets_file>();
+    l_pre.params.id      = id;
     l_pre.params.name    = l_assets.name_attr();
     l_pre.params.path    = l_assets.path_attr().string();
     l_pre.params.version = l_assets.version_attr();
-    auto l_user          = l_assets.user_attr();
-    if (l_user && l_user.any_of<database>()) l_pre.params.user_ref = l_user.get<database>().get_id();
+    if (auto l_h_user = l_assets.user_attr(); l_h_user && l_h_user.any_of<database>())
+      l_pre.params.user_id = fmt::to_string(l_h_user.get<database>().uuid());
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     auto l_r               = l_conn(l_pre);
 
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets_file>().name());
   }
 }
-void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::assets_file>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
   const tables::assets_file l_table{};
   const tables::entity l_entt_id{};
@@ -108,7 +103,7 @@ void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  reg_->insert<doodle::assets_file>(l_entts.begin(), l_entts.end(), l_assets.begin());
+  in_reg->insert<doodle::assets_file>(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
 void sql_com<doodle::assets_file>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets_file>(in_ptr, in_handle);

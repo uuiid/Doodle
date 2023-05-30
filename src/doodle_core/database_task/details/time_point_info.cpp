@@ -10,6 +10,7 @@
 #include "metadata/metadata.h"
 #include "metadata/time_point_wrap.h"
 #include <algorithm>
+#include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
@@ -21,13 +22,10 @@
 
 namespace doodle::database_n {
 void sql_com<doodle::business::rules_ns::time_point_info>::insert(
-    conn_ptr& in_ptr, const std::vector<entt::entity>& in_id
+    conn_ptr& in_ptr, const std::vector<entt::handle>& in_id
 ) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+  auto& l_conn = *in_ptr;
+
   tables::time_point_info l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
@@ -37,7 +35,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::insert(
       l_table.entity_id     = sqlpp::parameter(l_table.entity_id)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_time               = l_h.get<doodle::business::rules_ns::time_point_info>();
     l_pre.params.first_time    = chrono_ns::round<chrono_ns::microseconds>(l_time.first.get_sys_time());
     l_pre.params.second_time   = chrono_ns::round<chrono_ns::microseconds>(l_time.second.get_sys_time());
@@ -53,24 +51,23 @@ void sql_com<doodle::business::rules_ns::time_point_info>::insert(
 }
 
 void sql_com<doodle::business::rules_ns::time_point_info>::update(
-    conn_ptr& in_ptr, const std::vector<entt::entity>& in_id
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id
 ) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+  auto& l_conn = *in_ptr;
+
   tables::time_point_info l_table{};
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(
-                                      l_table.first_time    = sqlpp::parameter(l_table.first_time),
-                                      l_table.second_time   = sqlpp::parameter(l_table.second_time),
-                                      l_table.info          = sqlpp::parameter(l_table.info),
-                                      l_table.is_extra_work = sqlpp::parameter(l_table.is_extra_work)
-                                  )
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_table)
+          .set(
+              l_table.first_time    = sqlpp::parameter(l_table.first_time),
+              l_table.second_time   = sqlpp::parameter(l_table.second_time),
+              l_table.info          = sqlpp::parameter(l_table.info),
+              l_table.is_extra_work = sqlpp::parameter(l_table.is_extra_work)
+          )
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
+  );
+  for (const auto& [id, l_h] : in_id) {
     auto& l_time               = l_h.get<doodle::business::rules_ns::time_point_info>();
 
     l_pre.params.first_time    = chrono_ns::round<chrono_ns::microseconds>(l_time.first.get_sys_time());
@@ -78,8 +75,9 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
     l_pre.params.info          = l_time.info;
     l_pre.params.is_extra_work = l_time.is_extra_work;
     l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    auto l_r                   = l_conn(l_pre);
+    l_pre.params.id            = id;
 
+    auto l_r                   = l_conn(l_pre);
     DOODLE_LOG_INFO(
         "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),
         entt::type_id<business::rules_ns::time_point_info>().name()
@@ -87,7 +85,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
   }
 }
 void sql_com<doodle::business::rules_ns::time_point_info>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle,  const registry_ptr& reg_
 ) {
   auto& l_conn = *in_ptr;
   tables::time_point_info l_table{};

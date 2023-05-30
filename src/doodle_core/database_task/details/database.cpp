@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/metadata.h>
 
 #include "range/v3/algorithm/all_of.hpp"
+#include <entt/entity/fwd.hpp>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
@@ -19,19 +20,15 @@ void sql_com<doodle::database>::create_table(doodle::conn_ptr& in_ptr) {
   in_ptr->execute(detail::create_index(l_tabl.id));
 }
 
-void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
+void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
 
   tables::entity l_tabl{};
 
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(l_tabl.uuid_data = sqlpp::parameter(l_tabl.uuid_data)));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_data           = l_h.get<database>();
     l_pre.params.uuid_data = uuids::to_string(l_data.uuid());
     auto l_r               = l_conn(l_pre);
@@ -40,7 +37,9 @@ void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt:
   }
 }
 
-void sql_com<doodle::database>::select(conn_ptr& in_ptr, std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::database>::select(
+    conn_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
 
   tables::entity l_tabl{};
@@ -63,12 +62,12 @@ void sql_com<doodle::database>::select(conn_ptr& in_ptr, std::map<std::int64_t, 
     l_id.emplace_back(row.id.value());
     l_entts.emplace_back(num_to_enum<entt::entity>(row.id.value()));
   }
-  reg_->create(l_entts.begin(), l_entts.end());
-  reg_->insert<database>(l_entts.begin(), l_entts.end(), l_data.begin());
+  in_reg->create(l_entts.begin(), l_entts.end());
+  in_reg->insert<database>(l_entts.begin(), l_entts.end(), l_data.begin());
 
-  BOOST_ASSERT(l_entts.size() == reg_->view<database>().size());
+  BOOST_ASSERT(l_entts.size() == in_reg->view<database>().size());
 
-  for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], l_entts[i]);
+  for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], entt::handle{*in_reg, l_entts[i]});
 }
 
 void sql_com<doodle::database>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {

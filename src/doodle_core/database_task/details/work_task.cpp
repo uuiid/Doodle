@@ -7,19 +7,17 @@
 #include "sqlpp11/insert_value_list.h"
 #include "sqlpp11/is_not_null.h"
 #include "sqlpp11/sqlite3/connection.h"
+#include <cstdint>
+#include <entt/entity/fwd.hpp>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 #include <utility>
 
 namespace doodle::database_n {
 
-void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
+void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
 
   {
     // sql::WorkTaskInfo l_tabl{};
@@ -30,7 +28,7 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector
         l_tabl.time_point = sqlpp::parameter(l_tabl.time_point), l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id)
     ));
 
-    for (auto& l_h : l_handles) {
+    for (auto& l_h : in_id) {
       auto& l_work            = l_h.get<doodle::work_task_info>();
       l_pre.params.region     = l_work.region;
       l_pre.params.task_name  = l_work.task_name;
@@ -45,13 +43,10 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector
     }
   }
 }
-void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
+void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+
   {
     tables::work_task_info l_tabl{};
 
@@ -65,7 +60,7 @@ void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::vector
                                     )
                                     .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
 
-    for (auto& l_h : l_handles) {
+    for (const auto& [id, l_h] : in_id) {
       auto& l_work            = l_h.get<doodle::work_task_info>();
       l_pre.params.region     = l_work.region;
       l_pre.params.task_name  = l_work.task_name;
@@ -80,7 +75,9 @@ void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::vector
     }
   }
 }
-void sql_com<doodle::work_task_info>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::work_task_info>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& reg_
+) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
 

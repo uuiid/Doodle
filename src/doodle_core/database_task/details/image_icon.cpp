@@ -4,6 +4,7 @@
 #include <doodle_core/database_task/sql_com.h>
 #include <doodle_core/logger/logger.h>
 
+#include "core/core_help_impl.h"
 #include "metadata/image_icon.h"
 #include "metadata/metadata.h"
 #include <algorithm>
@@ -15,19 +16,16 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::image_icon l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.path = sqlpp::parameter(l_table.path), l_table.entity_id = sqlpp::parameter(l_table.entity_id)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_shot           = l_h.get<image_icon>();
     l_pre.params.path      = l_shot.path.string();
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -36,27 +34,29 @@ void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<ent
   }
 }
 
-void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::image_icon l_table{};
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(l_table.path = sqlpp::parameter(l_table.path))
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_table)
+          .set(l_table.path = sqlpp::parameter(l_table.path))
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
+  );
+  for (auto& [id, l_h] : in_id) {
     auto& l_img            = l_h.get<image_icon>();
     l_pre.params.path      = l_img.path.string();
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    l_pre.params.id        = id;
 
     auto l_r               = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<image_icon>().name());
   }
 }
-void sql_com<doodle::image_icon>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::image_icon>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
   tables::image_icon l_table{};
   std::vector<image_icon> l_img;
@@ -82,7 +82,7 @@ void sql_com<doodle::image_icon>::select(conn_ptr& in_ptr, const std::map<std::i
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  reg_->insert<doodle::image_icon>(l_entts.begin(), l_entts.end(), l_img.begin());
+  in_reg->insert<doodle::image_icon>(l_entts.begin(), l_entts.end(), l_img.begin());
 }
 void sql_com<doodle::image_icon>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::image_icon>(in_ptr, in_handle);

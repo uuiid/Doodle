@@ -16,6 +16,8 @@
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 #include <sqlpp11/aggregate_functions/count.h>
 #include <sqlpp11/insert.h>
 #include <sqlpp11/parameter.h>
@@ -23,6 +25,7 @@
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/update.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace doodle::database_n {
@@ -90,12 +93,9 @@ void sql_com<project_config::base_config>::install_sub(
   }
 }
 
-void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   std::map<entt::handle, std::int64_t> map_id{};
 
   {
@@ -125,7 +125,7 @@ void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::v
         l_table.entity_id                         = sqlpp::parameter(l_table.entity_id)
     ));
 
-    for (auto& l_h : l_handles) {
+    for (auto& l_h : in_id) {
       auto& l_pconfig                                = l_h.get<project_config::base_config>();
       l_pre.params.sim_path                          = l_pconfig.vfx_cloth_sim_path.string();
       l_pre.params.export_group                      = l_pconfig.export_group;
@@ -157,15 +157,12 @@ void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::v
       );
     }
   }
-  install_sub(in_ptr, l_handles, map_id);
+  install_sub(in_ptr, in_id, map_id);
 }
 
-void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   {
     const tables::project_config l_table{};
 
@@ -194,18 +191,17 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::v
                 l_table.maya_camera_suffix                = sqlpp::parameter(l_table.maya_camera_suffix),
                 l_table.maya_out_put_abc_suffix           = sqlpp::parameter(l_table.maya_out_put_abc_suffix)
             )
-            .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id))
+            .where(
+                l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id)
+            )
     );
-    for (auto& l_h : l_handles) {
+    for (auto& [id, l_h] : in_id) {
       auto& l_pconfig                                = l_h.get<project_config::base_config>();
       l_pre.params.sim_path                          = l_pconfig.vfx_cloth_sim_path.string();
       l_pre.params.export_group                      = l_pconfig.export_group;
       l_pre.params.cloth_proxy                       = l_pconfig.cloth_proxy_;
       l_pre.params.simple_module_proxy               = l_pconfig.simple_module_proxy_;
       l_pre.params.find_icon_regex                   = l_pconfig.find_icon_regex;
-      // todo vector
-      //  l_pre.params.assets_list=l_pconfig.assets_list;
-      //  l_pre.params.icon_extensions=l_pconfig.icon_extensions;
       l_pre.params.upload_path                       = l_pconfig.upload_path.string();
       l_pre.params.season_count                      = l_pconfig.season_count;
       l_pre.params.use_only_sim_cloth                = l_pconfig.use_only_sim_cloth;
@@ -214,8 +210,6 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::v
       l_pre.params.use_merge_mesh                    = l_pconfig.use_merge_mesh;
       l_pre.params.t_post                            = l_pconfig.t_post;
       l_pre.params.export_anim_time                  = l_pconfig.export_anim_time;
-      // todo
-      //  l_pre.params.maya_camera_select=l_pconfig.maya_camera_select;
       l_pre.params.use_write_metadata                = l_pconfig.use_write_metadata;
       l_pre.params.abc_export_extract_reference_name = l_pconfig.abc_export_extract_reference_name;
       l_pre.params.abc_export_format_reference_name  = l_pconfig.abc_export_format_reference_name;
@@ -226,6 +220,7 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::v
       l_pre.params.maya_out_put_abc_suffix           = l_pconfig.maya_out_put_abc_suffix;
 
       l_pre.params.entity_id                         = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+      l_pre.params.id                                = id;
       auto l_r                                       = l_conn(l_pre);
 
       DOODLE_LOG_INFO(
@@ -234,15 +229,21 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::v
     }
   }
 
-  auto map_id = detail::sql_com_destroy_parent_id_return_id<
-      tables::project_config, tables::project_config_assets_list, tables::project_config_icon_extensions,
-      tables::project_config_maya_camera_select>(in_ptr, l_handles);
+  auto l_handles =
+      in_id | ranges::views::transform([](auto&& l_pair) -> entt::handle { return l_pair.second; }) | ranges::to_vector;
+  auto map_id = in_id | ranges::views::transform([](auto&& l_pair) -> std::pair<entt::handle, std::int64_t> {
+                  return {l_pair.second, l_pair.first};
+                }) |
+                ranges::to<std::map<entt::handle, std::int64_t>>;
+  detail::sql_com_destroy_parent_id<tables::project_config_assets_list>(in_ptr, map_id);
+  detail::sql_com_destroy_parent_id<tables::project_config_icon_extensions>(in_ptr, map_id);
+  detail::sql_com_destroy_parent_id<tables::project_config_maya_camera_select>(in_ptr, map_id);
 
   install_sub(in_ptr, l_handles, map_id);
 }
 
 void sql_com<project_config::base_config>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
 ) {
   auto& l_conn = *in_ptr;
   std::vector<project_config::base_config> l_config;
@@ -345,7 +346,7 @@ void sql_com<project_config::base_config>::select(
     }
   }
 
-  reg_->insert<project_config::base_config>(l_entts.begin(), l_entts.end(), l_config.begin());
+  in_reg->insert<project_config::base_config>(l_entts.begin(), l_entts.end(), l_config.begin());
 }
 void sql_com<project_config::base_config>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::project_config>(in_ptr, in_handle);

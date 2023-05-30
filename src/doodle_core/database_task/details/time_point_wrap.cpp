@@ -10,6 +10,7 @@
 #include "metadata/metadata.h"
 #include "metadata/time_point_wrap.h"
 #include <algorithm>
+#include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
@@ -20,19 +21,16 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-void sql_com<doodle::time_point_wrap>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::time_point_wrap>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   const tables::time_point_wrap l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.time_point = sqlpp::parameter(l_table.time_point), l_table.entity_id = sqlpp::parameter(l_table.entity_id)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_time = l_h.get<doodle::time_point_wrap>();
     l_pre.params.time_point =
         chrono_ns::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_time.get_sys_time());
@@ -42,29 +40,31 @@ void sql_com<doodle::time_point_wrap>::insert(conn_ptr& in_ptr, const std::vecto
   }
 }
 
-void sql_com<doodle::time_point_wrap>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::time_point_wrap>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   const tables::time_point_wrap l_table{};
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(l_table.time_point = sqlpp::parameter(l_table.time_point))
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_table)
+          .set(l_table.time_point = sqlpp::parameter(l_table.time_point))
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
+  );
+  for (auto& [id, l_h] : in_id) {
     auto& l_time = l_h.get<doodle::time_point_wrap>();
 
     l_pre.params.time_point =
         chrono_ns::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_time.get_sys_time());
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    l_pre.params.id        = id;
     auto l_r               = l_conn(l_pre);
 
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<time_point_wrap>().name());
   }
 }
-void sql_com<doodle::time_point_wrap>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::time_point_wrap>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& reg_
+) {
   auto& l_conn = *in_ptr;
   const tables::time_point_wrap l_table{};
   std::vector<time_point_wrap> l_time;

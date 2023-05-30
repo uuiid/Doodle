@@ -4,6 +4,8 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/importance.h>
 
+#include <cstdint>
+#include <entt/entity/fwd.hpp>
 #include <rttr/type.h>
 #include <sqlpp11/parameter.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
@@ -11,18 +13,15 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::importance l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
       l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id), l_tabl.cutoff_p = sqlpp::parameter(l_tabl.cutoff_p)
   ));
 
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_importance     = l_h.get<importance>();
     l_pre.params.cutoff_p  = l_importance.cutoff_p;
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -32,30 +31,31 @@ void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<ent
   }
 }
 
-void sql_com<doodle::importance>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::importance>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
 
   tables::importance l_tabl{};
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_tabl)
-                                  .set(l_tabl.cutoff_p = sqlpp::parameter(l_tabl.cutoff_p))
-                                  .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_tabl)
+          .set(l_tabl.cutoff_p = sqlpp::parameter(l_tabl.cutoff_p))
+          .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id) && l_tabl.id == sqlpp::parameter(l_tabl.id))
+  );
 
-  for (auto& l_h : l_handles) {
+  for (auto& [id, l_h] : in_id) {
     auto& l_importance     = l_h.get<importance>();
     l_pre.params.cutoff_p  = l_importance.cutoff_p;
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    l_pre.params.id        = id;
 
     auto l_r               = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<importance>().name());
   }
 }
 
-void sql_com<doodle::importance>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::importance>::select(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+) {
   auto& l_conn = *in_ptr;
 
   {
@@ -85,7 +85,7 @@ void sql_com<doodle::importance>::select(conn_ptr& in_ptr, const std::map<std::i
         DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
-    reg_->insert<doodle::importance>(l_entts.begin(), l_entts.end(), l_works.begin());
+    in_reg->insert<doodle::importance>(l_entts.begin(), l_entts.end(), l_works.begin());
   }
 }
 

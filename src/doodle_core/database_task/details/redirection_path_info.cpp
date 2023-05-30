@@ -18,6 +18,7 @@
 #include <magic_enum.hpp>
 #include <map>
 #include <memory>
+#include <range/v3/view/transform.hpp>
 #include <sqlpp11/aggregate_functions/count.h>
 #include <sqlpp11/insert.h>
 #include <sqlpp11/parameter.h>
@@ -38,12 +39,9 @@ void sql_com<doodle::redirection_path_info>::create_table(doodle::conn_ptr& in_p
   create_table_parent_id<tables::rpi_search_path>(in_ptr);
 }
 
-void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
+void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  auto& l_conn = *in_ptr;
+
   tables::redirection_path_info l_table{};
   tables::rpi_search_path l_path_table{};
   std::map<entt::handle, std::int64_t> map_id{};
@@ -52,7 +50,7 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std:
       l_table.redirection_file_name = sqlpp::parameter(l_table.redirection_file_name),
       l_table.entity_id             = sqlpp::parameter(l_table.entity_id)
   ));
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_r_p_i                      = l_h.get<doodle::redirection_path_info>();
     l_pre.params.redirection_file_name = l_r_p_i.file_name_.generic_string();
     l_pre.params.entity_id             = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -70,7 +68,7 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std:
                              l_path_table.parent_id        = sqlpp::parameter(l_path_table.parent_id),
                              l_path_table.redirection_path = sqlpp::parameter(l_path_table.redirection_path)
                          ));
-  for (auto& l_h : l_handles) {
+  for (auto& l_h : in_id) {
     auto& l_r_p_i = l_h.get<doodle::redirection_path_info>();
     for (auto& l_p : l_r_p_i.search_path_) {
       l_path_pre.params.parent_id        = map_id[l_h];
@@ -83,41 +81,47 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std:
   }
 }
 
-void sql_com<doodle::redirection_path_info>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
-  tables::redirection_path_info l_table{};
-  tables::rpi_search_path l_path_table{};
+void sql_com<doodle::redirection_path_info>::update(
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id
+) {
+  auto& l_conn = *in_ptr;
 
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(l_table.redirection_file_name = sqlpp::parameter(l_table.redirection_file_name))
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
+  tables::redirection_path_info l_table{};
+
+  auto l_pre = l_conn.prepare(
+      sqlpp::update(l_table)
+          .set(l_table.redirection_file_name = sqlpp::parameter(l_table.redirection_file_name))
+          .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
+  );
+  for (auto& [id, l_h] : in_id) {
     auto& l_r_p_i                      = l_h.get<doodle::redirection_path_info>();
     l_pre.params.redirection_file_name = l_r_p_i.file_name_.generic_string();
     l_pre.params.entity_id             = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    l_pre.params.id                    = id;
     auto l_r                           = l_conn(l_pre);
     DOODLE_LOG_INFO(
         "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<redirection_path_info>().name()
     );
   }
-  auto map_id = detail::sql_com_destroy_parent_id_return_id<tables::redirection_path_info, tables::rpi_search_path>(
-      in_ptr, l_handles
-  );
 
+  auto map_id = in_id | ranges::views::transform([](auto&& l_pair) -> std::pair<entt::handle, std::int64_t> {
+                  return {l_pair.second, l_pair.first};
+                }) |
+                ranges::to<std::map<entt::handle, std::int64_t>>;
+
+  detail::sql_com_destroy_parent_id<tables::rpi_search_path>(in_ptr, map_id);
+
+  tables::rpi_search_path l_path_table{};
   auto l_path_pre =
       l_conn.prepare(sqlpp::insert_into(l_path_table)
                          .set(
                              l_path_table.parent_id        = sqlpp::parameter(l_path_table.parent_id),
                              l_path_table.redirection_path = sqlpp::parameter(l_path_table.redirection_path)
                          ));
-  for (auto& l_h : l_handles) {
+  for (auto& [l_h, id] : map_id) {
     auto& l_r_p_i = l_h.get<doodle::redirection_path_info>();
     for (auto& l_p : l_r_p_i.search_path_) {
-      l_path_pre.params.parent_id        = map_id[l_h];
+      l_path_pre.params.parent_id        = id;
       l_path_pre.params.redirection_path = l_p.generic_string();
     }
     auto l_r_p = l_conn(l_path_pre);
@@ -128,7 +132,7 @@ void sql_com<doodle::redirection_path_info>::update(conn_ptr& in_ptr, const std:
 }
 
 void sql_com<doodle::redirection_path_info>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
 ) {
   auto& l_conn = *in_ptr;
   const tables::redirection_path_info l_table{};
@@ -171,7 +175,7 @@ void sql_com<doodle::redirection_path_info>::select(
       l_r_p_i[i].search_path_.emplace_back(row.redirection_path.value());
     }
   }
-  reg_->insert<doodle::redirection_path_info>(l_entts.begin(), l_entts.end(), l_r_p_i.begin());
+  in_reg->insert<doodle::redirection_path_info>(l_entts.begin(), l_entts.end(), l_r_p_i.begin());
 }
 void sql_com<doodle::redirection_path_info>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::redirection_path_info>(in_ptr, in_handle);
