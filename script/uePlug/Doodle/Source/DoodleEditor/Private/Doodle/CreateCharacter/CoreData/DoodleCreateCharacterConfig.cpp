@@ -39,6 +39,9 @@ TOptional<FGuid> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bo
   L_Node.BoneName = In_Bone;
 
   L_UI.Keys.Add(L_Key);
+  if (ListConfigNode_Cache.Contains(In_Bone))
+    ListConfigNode_Cache.Emplace(In_Bone);
+  ListConfigNode_Cache[In_Bone].Emplace(L_Key);
   MarkPackageDirty();
   return L_Key;
 }
@@ -117,14 +120,19 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
     }
   }
   ListTrees = L_ListTree;
+  FillCache();
   MarkPackageDirty();
   return true;
 }
 
 TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FGuid& In_BoneName, const float InValue) const {
   if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
+  FTransform L_Tran = FTransform::Identity;
+  for (auto&& guid : ListConfigNode_Cache[ListConfigNode[In_BoneName].BoneName]) {
+    L_Tran *= ListConfigNode[guid].WeightCurve.Evaluate(InValue, 1.0f);
+  }
 
-  return MakeTuple(ListConfigNode[In_BoneName].BoneName, ListConfigNode[In_BoneName].WeightCurve.Evaluate(InValue, 1.0f));
+  return MakeTuple(ListConfigNode[In_BoneName].BoneName, L_Tran);
 }
 
 void UDoodleCreateCharacterConfig::ClearNullKeys() {
@@ -140,5 +148,15 @@ void UDoodleCreateCharacterConfig::ClearNullKeys() {
   for (auto&& i : L_Del_Key) {
     ListConfigNode.Remove(i);
   }
+
   MarkPackageDirty();
+}
+
+void UDoodleCreateCharacterConfig::FillCache() {
+  ListConfigNode.Empty();
+  for (auto&& [guid, bone] : ListConfigNode) {
+    if (ListConfigNode_Cache.Contains(bone.BoneName))
+      ListConfigNode_Cache.Emplace(bone.BoneName);
+    ListConfigNode_Cache[bone.BoneName].Emplace(guid);
+  }
 }

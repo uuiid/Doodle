@@ -90,6 +90,10 @@ class UDoodleCreateCharacterConfig : public UObject {
  private:
   void ClearNullKeys();
 
+  // 配置缓存
+  UPROPERTY();
+  TMap<FName, TArray<FGuid>> ListConfigNode_Cache;
+
   // 骨骼网格体引用
   UPROPERTY();
   TObjectPtr<USkeletalMesh> SkeletalMesh;
