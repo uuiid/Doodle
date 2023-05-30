@@ -48,6 +48,7 @@
 #include <database_task/details/database.h>
 #include <database_task/select.h>
 #include <metadata/metadata.h>
+#include <range/v3/action/unique.hpp>
 #include <range/v3/all.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
@@ -161,14 +162,15 @@ class sqlite_file::impl {
       database_n::sql_com<type_t> l_orm{};
       l_orm.create_table(in_conn);
 
-      std::vector<entt::entity> l_create{};
+      std::set<entt::entity> l_create{};
 
       for (auto&& i : obs_create_) {
-        l_create.emplace_back(i);
+        l_create.emplace(i);
       }
       for (auto&& i : obs_update_) {
-        l_create.emplace_back(i);
+        l_create.emplace(i);
       }
+
       auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
                          return {*in_registry_ptr, in_e};
                        }) |
@@ -229,14 +231,17 @@ class sqlite_file::impl {
       database_n::sql_com<database> l_orm{};
       if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
 
-      std::vector<entt::handle> l_create{};
+      std::set<entt::handle> l_create{};
 
       for (auto&& i : obs_create_) {
-        if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(*in_registry_ptr, i);
+        if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace(*in_registry_ptr, i);
       }
-
+      auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
+                         return {*in_registry_ptr, in_e};
+                       }) |
+                       ranges::to_vector;
       in_handle = destroy_ids_;
-      l_orm.insert(in_conn, l_create);
+      l_orm.insert(in_conn, l_handles);
       l_orm.destroy(in_conn, destroy_ids_);
     }
   };

@@ -121,6 +121,7 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
       l_pre.params.work_weekdays = l_rules.work_weekdays_p.to_string();
       l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
       auto l_r                   = l_conn(l_pre);
+      l_map_id.emplace(l_h, l_r);
       DOODLE_LOG_INFO(
           "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<business::rules>().name()
       );
