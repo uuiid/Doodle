@@ -169,8 +169,10 @@ class sqlite_file::impl {
       for (auto&& i : obs_update_) {
         l_create.emplace_back(i);
       }
-      auto l_handles =
-          l_create | ranges::views::transform([](const entt::entity& in_e) -> entt::handle {}) | ranges::to_vector;
+      auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
+                         return {*in_registry_ptr, in_e};
+                       }) |
+                       ranges::to_vector;
 
       BOOST_ASSERT(ranges::all_of(l_create, [&](entt::entity& i) {
         return in_registry_ptr->get<database>(i).is_install();
