@@ -49,6 +49,8 @@
 #include <database_task/select.h>
 #include <metadata/metadata.h>
 #include <range/v3/all.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 #include <utility>
 
 namespace doodle::database_n {
@@ -150,13 +152,13 @@ class sqlite_file::impl {
       obs_create_.clear();
     }
 
-    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
-      database_n::sql_com<type_t> l_table{in_registry_ptr};
-      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
+    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+      database_n::sql_com<type_t> l_table{};
+      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<type_t> l_orm{in_registry_ptr};
+      database_n::sql_com<type_t> l_orm{};
       l_orm.create_table(in_conn);
 
       std::vector<entt::entity> l_create{};
@@ -167,12 +169,16 @@ class sqlite_file::impl {
       for (auto&& i : obs_update_) {
         l_create.emplace_back(i);
       }
+      auto l_handles =
+          l_create | ranges::views::transform([](const entt::entity& in_e) -> entt::handle {}) | ranges::to_vector;
 
       BOOST_ASSERT(ranges::all_of(l_create, [&](entt::entity& i) {
         return in_registry_ptr->get<database>(i).is_install();
       }));
+      auto [l_updata, l_install] = l_orm.split_update_install(in_conn, l_handles);
 
-      l_orm.insert(in_conn, l_create);
+      l_orm.update(in_conn, l_updata);
+      l_orm.insert(in_conn, l_install);
       l_orm.destroy(in_conn, in_handle);
     }
   };
@@ -212,19 +218,19 @@ class sqlite_file::impl {
       destroy_ids_.clear();
     }
 
-    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
-      database_n::sql_com<database> l_table{in_registry_ptr};
-      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
+    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+      database_n::sql_com<database> l_table{};
+      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<database> l_orm{in_registry_ptr};
+      database_n::sql_com<database> l_orm{};
       if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
 
-      std::vector<entt::entity> l_create{};
+      std::vector<entt::handle> l_create{};
 
       for (auto&& i : obs_create_) {
-        if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(i);
+        if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(*in_registry_ptr, i);
       }
 
       in_handle = destroy_ids_;
@@ -244,7 +250,7 @@ class sqlite_file::impl {
               std::make_shared<impl_obs<arg>>(in_registry_ptr)...} {}
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
-      std::map<std::int64_t, entt::entity> l_map{};
+      std::map<std::int64_t, entt::handle> l_map{};
       std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
       std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
       std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);

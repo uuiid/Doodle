@@ -28,16 +28,17 @@ struct sql_com {
   void create_table(conn_ptr& in_ptr);
 
   /// 插入组件
-  void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
-  //  void insert_id(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
+  void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   /// 更新组件
-  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
-  //  void update_id(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
+  void update(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   /// 选择组件
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle);
-  //  void select_id(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle);
+  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle);
   /// 销毁组件
   void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
+  /// 区分更新和插入
+  std::tuple<std::map<std::int64_t, entt::handle>, std::vector<entt::handle>> split_update_install(
+      doodle::conn_ptr& in_ptr, const std::vector<entt::handle>& in_entts
+  );
 };
 
 }  // namespace doodle::database_n
