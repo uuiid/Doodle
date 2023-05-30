@@ -220,7 +220,6 @@ CREATE TABLE IF NOT EXISTS project_config
     use_merge_mesh                    boolean,
     t_post                            integer,
     export_anim_time                  integer,
-    export_abc_arg                    integer,
     maya_camera_select                boolean,
     use_write_metadata                boolean,
     abc_export_extract_reference_name text,

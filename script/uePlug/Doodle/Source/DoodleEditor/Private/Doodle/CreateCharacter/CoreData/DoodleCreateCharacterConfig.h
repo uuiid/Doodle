@@ -42,7 +42,7 @@ struct FDoodleCreateCharacterConfigUINode {
 
   // 树中配置节点id名称
   UPROPERTY();
-  TArray<FString> Keys{};
+  TArray<FGuid> Keys{};
 
   // 调整最大值
   UPROPERTY()
@@ -69,19 +69,19 @@ class UDoodleCreateCharacterConfig : public UObject {
 
   // 权重配置
   UPROPERTY();
-  TMap<FString, FDoodleCreateCharacterConfigNode> ListConfigNode;
+  TMap<FGuid, FDoodleCreateCharacterConfigNode> ListConfigNode;
 
   UPROPERTY();
   TArray<FDoodleCreateCharacterConfigUINode> ListTrees;
 
   int32 Add_TreeNode(int32 In_Parent);
-  TOptional<FString> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
+  TOptional<FGuid> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
 
   bool Has_UI_ShowName(int32 In_Node, const FString& InName) const;
   void Rename_UI_ShowName(int32 In_Node, const FString& InName);
   bool Delete_Ui_Node(int32 In_Node);
 
-  TTuple<FName, FTransform> Evaluate(const FString& In_BoneName, const float InValue) const;
+  TTuple<FName, FTransform> Evaluate(const FGuid& In_BoneName, const float InValue) const;
 
   USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 

@@ -119,15 +119,12 @@ std::string export_file_abc::get_abc_exprt_arg() const {
   boost::ignore_unused(this);
   auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
   std::string l_r{};
-  if (k_cfg.export_abc_arg[0]) l_r += "-uvWrite ";
-  if (k_cfg.export_abc_arg[1]) l_r += "-writeColorSets ";
-  if (k_cfg.export_abc_arg[2]) l_r += "-writeFaceSets ";
-  if (k_cfg.export_abc_arg[3]) l_r += "-wholeFrameGeo ";
-  if (k_cfg.export_abc_arg[4]) l_r += "-worldSpace ";
-  if (k_cfg.export_abc_arg[5]) l_r += "-writeVisibility ";
-  if (k_cfg.export_abc_arg[6]) l_r += "-writeUVSets ";
-  if (k_cfg.export_abc_arg[7]) l_r += "-stripNamespaces ";
-
+  l_r += "-uvWrite ";
+  l_r += "-writeFaceSets ";
+  l_r += "-wholeFrameGeo ";
+  l_r += "-worldSpace ";
+  l_r += "-writeUVSets ";
+  l_r += "-stripNamespaces ";
   return l_r;
 }
 

@@ -348,7 +348,7 @@ void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
   UDoodleCreateCharacterConfig* L_Config = Config.Get();
   if (!L_Config) return;
 
-  TOptional<FString> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && *CurrentSelect) ? CurrentSelect->Get_Index() : INDEX_NONE);
+  TOptional<FGuid> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && *CurrentSelect) ? CurrentSelect->Get_Index() : INDEX_NONE);
 
   if (L_Key) {
     this->RebuildList();

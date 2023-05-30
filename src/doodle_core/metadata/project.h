@@ -9,7 +9,6 @@ class base_config;
 
 }  // namespace project_config
 
-
 /**
  * 项目信息类
  */
@@ -72,9 +71,7 @@ class DOODLE_CORE_API base_config {
   RTTR_ENABLE();
 
  public:
-  constexpr static std::uint32_t class_hash() {
-    return "class doodle::project::cloth_config"_hs;
-  }
+  constexpr static std::uint32_t class_hash() { return "class doodle::project::cloth_config"_hs; }
 
  public:
   FSys::path vfx_cloth_sim_path;
@@ -132,21 +129,7 @@ class DOODLE_CORE_API base_config {
   std::int32_t t_post{950u};
   /// \brief 导出动画时间
   std::int32_t export_anim_time{1001u};
-  /**
-   * @brief 导出abc选项(只有一部分)
-   * 分别是
-   * @li 0 uvWrite                        =1  uv写入
-   * @li 1 writeColorSets                 =0  写入颜色集
-   * @li 2 writeFaceSets                  =1  写入面集
-   * @li 3 wholeFrameGeo                  =0  整帧几何体
-   *
-   * @li 4 worldSpace                     =1    世界空间
-   * @li 5 writeVisibility                =0    写入可见性
-   * @li 6 writeUVSets                    =0   写入uv集
-   * @li 7 stripNamespaces                =1    去除名称空间
-   *
-   */
-  std::bitset<8> export_abc_arg{};
+
   /// \brief 使用camera优先级寻找maya 相机
   std::vector<camera_judge> maya_camera_select{};
   /// \brief 是否导出自定义元数据

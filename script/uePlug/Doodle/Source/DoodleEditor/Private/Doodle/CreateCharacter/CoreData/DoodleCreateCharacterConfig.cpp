@@ -12,42 +12,29 @@ int32 UDoodleCreateCharacterConfig::Add_TreeNode(int32 In_Parent) {
   return L_Index;
 }
 
-TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent) {
+TOptional<FGuid> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent) {
   if (In_UI_Parent == INDEX_NONE)
-    return TOptional<FString>{};
+    return TOptional<FGuid>{};
   ClearNullKeys();
   FDoodleCreateCharacterConfigUINode& L_UI = ListTrees[In_UI_Parent];
 
-  FString L_Key                            = In_Bone.ToString() + FString::FromInt(In_Bone.GetNumber());
-
-  for (auto i = In_UI_Parent; i != INDEX_NONE && ListTrees[i].Parent != INDEX_NONE; i = ListTrees[i].Parent) {
-    L_Key.Append(FString::FromInt(i));
+  for (auto&& L_K : L_UI.Keys) {
+    if (ListConfigNode[L_K].BoneName == In_Bone) {
+      return L_K;
+    }
   }
 
-  if (ListConfigNode.Contains(L_Key)) {
-    return L_Key;
-  }
-  // 防止添加重叠key
-  for (auto&& i : ListConfigNode) {
-    if (i.Value.BoneName == In_Bone)
-      return i.Key;
-  }
+  FGuid L_Key{FGuid::NewGuid()};
 
   FDoodleCreateCharacterConfigNode& L_Node = ListConfigNode.Emplace(L_Key);
 
   L_Node.WeightCurve.Resize(4.0f, true, -1.0f, 1.0f);
   L_Node.WeightCurve.TranslationCurve.Name.DisplayName = FName{TEXT("TranslationCurve")};
-  L_Node.WeightCurve.TranslationCurve.UpdateOrAddKey(FVector::ZeroVector, -1.f);
-  L_Node.WeightCurve.TranslationCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
-  L_Node.WeightCurve.TranslationCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
-  L_Node.WeightCurve.RotationCurve.Name.DisplayName = FName{TEXT("RotationCurve")};
-  L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, -1.f);
-  L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
-  L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
-  L_Node.WeightCurve.ScaleCurve.Name.DisplayName = FName{TEXT("ScaleCurve")};
-  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::OneVector, -1.f);
-  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::OneVector, 0.f);
-  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::OneVector, 1.0f);
+  L_Node.WeightCurve.RotationCurve.Name.DisplayName    = FName{TEXT("RotationCurve")};
+  L_Node.WeightCurve.ScaleCurve.Name.DisplayName       = FName{TEXT("ScaleCurve")};
+  L_Node.WeightCurve.UpdateOrAddKey(FTransform::Identity, -1.f);
+  L_Node.WeightCurve.UpdateOrAddKey(FTransform::Identity, 0.f);
+  L_Node.WeightCurve.UpdateOrAddKey(FTransform::Identity, 1.f);
 
   L_Node.BoneName = In_Bone;
 
@@ -134,22 +121,22 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
   return true;
 }
 
-TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FString& In_BoneName, const float InValue) const {
+TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FGuid& In_BoneName, const float InValue) const {
   if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
 
   return MakeTuple(ListConfigNode[In_BoneName].BoneName, ListConfigNode[In_BoneName].WeightCurve.Evaluate(InValue, 1.0f));
 }
 
 void UDoodleCreateCharacterConfig::ClearNullKeys() {
-  TSet<FString> L_All_Key{};
+  TSet<FGuid> L_All_Key{};
   ListConfigNode.GetKeys(L_All_Key);
-  TSet<FString> L_Has_Key{};
+  TSet<FGuid> L_Has_Key{};
   for (auto&& i : ListTrees) {
     for (auto&& j : i.Keys)
       L_Has_Key.Add(j);
   }
 
-  TSet<FString> L_Del_Key = L_All_Key.Difference(L_Has_Key);
+  TSet<FGuid> L_Del_Key = L_All_Key.Difference(L_Has_Key);
   for (auto&& i : L_Del_Key) {
     ListConfigNode.Remove(i);
   }

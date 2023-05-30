@@ -85,7 +85,6 @@ project_config::base_config::base_config()
       assets_list(),
       icon_extensions({".png"s, ".jpg"s}),
       season_count(20),
-      export_abc_arg(0b10010101),
       maya_camera_select(
           {std::make_pair(R"(front|persp|side|top|camera)"s, -1000), std::make_pair(R"(ep\d+_sc\d+)"s, 30),
            std::make_pair(R"(ep\d+)"s, 10), std::make_pair(R"(sc\d+)"s, 10), std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
@@ -113,7 +112,6 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
 
   j["t_post"]                            = p.t_post;
   j["export_anim_time"]                  = p.export_anim_time;
-  j["export_abc_arg"]                    = p.export_abc_arg;
 
   j["maya_camera_select"]                = p.maya_camera_select;
   j["use_write_metadata"]                = p.use_write_metadata;
@@ -143,7 +141,6 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
 
   if (j.contains("t_post")) j.at("t_post").get_to(p.t_post);
   if (j.contains("export_anim_time")) j.at("export_anim_time").get_to(p.export_anim_time);
-  if (j.contains("export_abc_arg")) j.at("export_abc_arg").get_to(p.export_abc_arg);
   if (j.contains("maya_camera_select")) j.at("maya_camera_select").get_to(p.maya_camera_select);
   if (j.contains("use_write_metadata")) j.at("use_write_metadata").get_to(p.use_write_metadata);
 
