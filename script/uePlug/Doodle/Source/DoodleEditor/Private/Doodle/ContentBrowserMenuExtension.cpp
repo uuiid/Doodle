@@ -1,5 +1,7 @@
 #include "Doodle/ContentBrowserMenuExtension.h"
 
+#include "Engine/SkeletalMeshLODSettings.h"
+
 /// 资产模块
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetTools/Public/IAssetTools.h"

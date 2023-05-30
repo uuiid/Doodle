@@ -7,6 +7,7 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Animation/SkeletalMeshActor.h"
 #include "Animation/AnimSingleNodeInstance.h"
+#include "Materials/Material.h"
 
 #include "Doodle/DoodleEigenHelper.h"
 

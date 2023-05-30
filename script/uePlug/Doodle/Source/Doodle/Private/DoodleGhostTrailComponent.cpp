@@ -1,7 +1,8 @@
 #include "DoodleGhostTrailComponent.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
-
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 UDoodleGhostTrailComponent::UDoodleGhostTrailComponent(
     const FObjectInitializer &ObjectInitializer
 )
@@ -74,10 +75,11 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
               GetOwner()
                   ->AddComponentByClass(
                       UPoseableMeshComponent::StaticClass(),  // 创建的类
-          true,                                   // 自动附加
-          LSkeletalTransform,                     // 附加变换
-          true                                    // 自动注册
-      ));
+                      true,                                   // 自动附加
+                      LSkeletalTransform,                     // 附加变换
+                      true                                    // 自动注册
+                  )
+          );
       TArray<FTransform> LTransInter;
       if (!LPoseableMeshComponent) {
         return;

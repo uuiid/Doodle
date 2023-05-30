@@ -7,6 +7,7 @@
 #include "Components/ArrowComponent.h"
 #include "Math/UnrealMathUtility.h"
 #include "Components/SplineComponent.h"
+#include "Engine/Scene.h"
 
 ADoodleMatrixLight::ADoodleMatrixLight() {
   PrimaryActorTick.bCanEverTick = true;

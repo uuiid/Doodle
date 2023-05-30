@@ -48,7 +48,6 @@ void ADoodleAiSplineCrowd::Tick(float DeltaTime) {
   auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
   if (!Anim)
     return;
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
+
   Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
-#endif
 }

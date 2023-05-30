@@ -7,6 +7,7 @@
 #include "MovieSceneExecutionToken.h"
 #include "MovieSceneSequence.h"
 #include "MovieSceneTrack.h"
+#include "Components/SkeletalMeshComponent.h"
 
 DECLARE_CYCLE_STAT(
     TEXT("Doodle Event Track Token Execute"), MovieSceneEval_EventTrack_TokenExecute_Doodle, STATGROUP_MovieSceneEval

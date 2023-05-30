@@ -6,6 +6,8 @@
 #include "GeometryCache.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
+#include "Engine/SkeletalMesh.h"
+#include "Engine/SkinnedAssetCommon.h"
 // 测试使用
 #include "Doodle/ResizeTexture.h"
 
@@ -232,14 +234,14 @@ FReply DoodleCopyMat::CopyMateral() {
       UE_LOG(LogTemp, Log, TEXT("确认并加载为几何物体 %s"), *(copyTrange->GetPathName()));
 
       TArray<FSkeletalMaterial> trangeMat = copyTrange->GetMaterials();
-      
+
       if (copySoureSkinObj)
-        for (int m = 0; m < trangeMat.Num(); m++) {
-          trangeMat[m] = copySoureSkinObj->GetMaterials()[m];
-          // UE_LOG(LogTemp, Log, TEXT("%s"), *(trangeMat[m].MaterialInterface->GetPathName()));
-          //  材质插槽命名
-        }
-      copyTrange->SetMaterials(trangeMat);
+        // for (int m = 0; m < trangeMat.Num(); m++) {
+        //   trangeMat[m] = copySoureSkinObj->GetMaterials()[m];
+        //   // UE_LOG(LogTemp, Log, TEXT("%s"), *(trangeMat[m].MaterialInterface->GetPathName()));
+        //   //  材质插槽命名
+        // }
+        copyTrange->SetMaterials(copySoureSkinObj->GetMaterials());
 
     }  // 如果是几何缓存就复制几何缓存
     else if (selectedAss[i].GetClass() == UGeometryCache::StaticClass()) {
@@ -322,7 +324,7 @@ FReply DoodleCopyMat::BathReameAss() {
       if (skinObj == nullptr)
         UE_LOG(LogTemp, Log, TEXT("不是骨骼物体 %s"), *(skinObj->GetPathName()));
 
-      for (auto &mat : skinObj->GetMaterials()) {
+      for (FSkeletalMaterial &mat : skinObj->GetMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
         }
