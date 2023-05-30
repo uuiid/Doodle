@@ -83,13 +83,13 @@ project_config::base_config::base_config()
       simple_module_proxy_("_proxy"),
       find_icon_regex(),
       assets_list(),
-      icon_extensions({".png"s, ".jpg"s}),
+      icon_extensions(/* {".png"s, ".jpg"s} */),
       season_count(20),
       maya_camera_select(
-          {std::make_pair(R"(front|persp|side|top|camera)"s, -1000), std::make_pair(R"(ep\d+_sc\d+)"s, 30),
-           std::make_pair(R"(ep\d+)"s, 10), std::make_pair(R"(sc\d+)"s, 10), std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
-           std::make_pair(R"(ep_\d+)"s, 5), std::make_pair(R"(sc_\d+)"s, 5), std::make_pair(R"(^[A-Z]+_)"s, 2),
-           std::make_pair(R"(_\d+_\d+)"s, 2)}
+          // {std::make_pair(R"(front|persp|side|top|camera)"s, -1000), std::make_pair(R"(ep\d+_sc\d+)"s, 30),
+          //  std::make_pair(R"(ep\d+)"s, 10), std::make_pair(R"(sc\d+)"s, 10), std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
+          //  std::make_pair(R"(ep_\d+)"s, 5), std::make_pair(R"(sc_\d+)"s, 5), std::make_pair(R"(^[A-Z]+_)"s, 2),
+          //  std::make_pair(R"(_\d+_\d+)"s, 2)}
       ),
       maya_camera_suffix("camera"),
       maya_out_put_abc_suffix("_output_abc") {}
