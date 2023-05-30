@@ -224,23 +224,6 @@ void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::vector<std::int64_t>
     l_conn(l_pre);
   }
 }
-template <typename t, typename... sub_types>
-auto sql_com_destroy_parent_id_return_id(conn_ptr& in_ptr, const std::vector<entt::handle>& in_handle) {
-  auto& l_conn = *in_ptr;
-  const t l_table{};
-  std::map<entt::handle, std::int64_t> map_id{};
-  auto l_pre_select = l_conn.prepare(
-      sqlpp::select(l_table.id).from(l_table).where(l_table.entity_id == sqlpp::parameter(l_table.entity_id))
-  );
-  for (const auto& l_h : in_handle) {
-    l_pre_select.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    for (auto&& row : l_conn(l_pre_select)) {
-      map_id.emplace(l_h, row.id.value());
-    }
-  }
-  ((sql_com_destroy_parent_id<sub_types>(in_ptr, map_id), void()), ...);
-  return map_id;
-}
 
 template <typename t>
 inline sqlpp::make_traits<t, sqlpp::tag::can_be_null> can_be_null();
@@ -319,7 +302,11 @@ struct create_table_t {
     (impl_column<columns_t>(in_columns), ...);
     return *this;
   }
-
+  template <typename self_column_t>
+  auto unique_column(const self_column_t& in_self_column) {
+    sql_data += fmt::format(R"(, UNIQUE ({}))", sqlpp::name_of<self_column_t>::template char_ptr<create_table_ctx>());
+    return *this;
+  }
   template <typename self_column_t, typename foreign_column_t>
   auto foreign_column(const self_column_t& in_self_column, const foreign_column_t& in_foreign_column) {
     sql_data += fmt::format(
@@ -330,6 +317,7 @@ struct create_table_t {
     );
     return *this;
   }
+
   std::string end() const { return sql_data + ");"; }
   operator std::string() const { return sql_data + ");"; }
 };
