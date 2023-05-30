@@ -39,9 +39,9 @@ TOptional<FGuid> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bo
   L_Node.BoneName = In_Bone;
 
   L_UI.Keys.Add(L_Key);
-  if (ListConfigNode_Cache.Contains(In_Bone))
+  if (!ListConfigNode_Cache.Contains(In_Bone))
     ListConfigNode_Cache.Emplace(In_Bone);
-  ListConfigNode_Cache[In_Bone].Emplace(L_Key);
+  ListConfigNode_Cache[In_Bone].List.Emplace(L_Key);
   MarkPackageDirty();
   return L_Key;
 }
@@ -70,9 +70,6 @@ void UDoodleCreateCharacterConfig::Rename_UI_ShowName(int32 In_Node, const FStri
 }
 
 bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
-  if (!In_Node)
-    return false;
-
   if (In_Node == INDEX_NONE)
     return false;
   ClearNullKeys();
@@ -99,6 +96,8 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
   // 去除父引用
   if (ListTrees[In_Node].Parent != INDEX_NONE)
     ListTrees[ListTrees[In_Node].Parent].Childs.Remove(In_Node);
+  else
+    ListTrees.RemoveAt(In_Node);
 
   TFunction<void(int32, int32)> L_Build_Tree{};
   TArray<FDoodleCreateCharacterConfigUINode> L_ListTree;
@@ -128,7 +127,7 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
 TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FGuid& In_BoneName, const float InValue) const {
   if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
   FTransform L_Tran = FTransform::Identity;
-  for (auto&& guid : ListConfigNode_Cache[ListConfigNode[In_BoneName].BoneName]) {
+  for (auto&& guid : ListConfigNode_Cache[ListConfigNode[In_BoneName].BoneName].List) {
     L_Tran *= ListConfigNode[guid].WeightCurve.Evaluate(InValue, 1.0f);
   }
 
@@ -155,8 +154,8 @@ void UDoodleCreateCharacterConfig::ClearNullKeys() {
 void UDoodleCreateCharacterConfig::FillCache() {
   ListConfigNode.Empty();
   for (auto&& [guid, bone] : ListConfigNode) {
-    if (ListConfigNode_Cache.Contains(bone.BoneName))
+    if (!ListConfigNode_Cache.Contains(bone.BoneName))
       ListConfigNode_Cache.Emplace(bone.BoneName);
-    ListConfigNode_Cache[bone.BoneName].Emplace(guid);
+    ListConfigNode_Cache[bone.BoneName].List.Emplace(guid);
   }
 }

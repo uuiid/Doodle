@@ -62,6 +62,13 @@ struct FDoodleCreateCharacterConfigUINode {
   }
 };
 
+USTRUCT()
+struct FDoodleGuidList {
+  GENERATED_BODY();
+  UPROPERTY()
+  TArray<FGuid> List{};
+};
+
 UCLASS()
 class UDoodleCreateCharacterConfig : public UObject {
  public:
@@ -89,10 +96,11 @@ class UDoodleCreateCharacterConfig : public UObject {
 
  private:
   void ClearNullKeys();
+  void FillCache();
 
   // 配置缓存
   UPROPERTY();
-  TMap<FName, TArray<FGuid>> ListConfigNode_Cache;
+  TMap<FName, FDoodleGuidList> ListConfigNode_Cache;
 
   // 骨骼网格体引用
   UPROPERTY();
