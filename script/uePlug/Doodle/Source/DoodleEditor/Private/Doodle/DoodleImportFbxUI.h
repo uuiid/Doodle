@@ -100,12 +100,8 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   SLATE_BEGIN_ARGS(SDoodleImportFbxUI) {}
   SLATE_END_ARGS()
 
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   using UDoodleBaseImportDataPtrType = TObjectPtr<UDoodleBaseImportData>;
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
-    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-  using UDoodleBaseImportDataPtrType = UDoodleBaseImportData*;
-#endif
+
   // 这里是内容创建函数
   void Construct(const FArguments& Arg);
 

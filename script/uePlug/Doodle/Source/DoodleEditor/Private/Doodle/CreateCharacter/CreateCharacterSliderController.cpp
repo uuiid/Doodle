@@ -216,7 +216,7 @@ void FCreateCharacterSliderController::DrawTicks(
       );
       FSlateDrawElement::MakeText(
           OutDrawElements, InArgs.StartLayer + 1,
-          InArgs.AllottedGeometry.ToPaintGeometry(TextOffset, InArgs.AllottedGeometry.Size), FrameString,
+          InArgs.AllottedGeometry.ToPaintGeometry(InArgs.AllottedGeometry.Size, FSlateLayoutTransform{TextOffset}), FrameString,
           SmallLayoutFont, InArgs.DrawEffects, InArgs.TickColor * 0.65f
       );
     }
@@ -302,7 +302,7 @@ int32 FCreateCharacterSliderController::OnPaintTimeSlider(
 
     const int32 ArrowLayer    = LayerId + 2;
     FPaintGeometry MyGeometry = AllottedGeometry.ToPaintGeometry(
-        FVector2D(HandleStart, 0), FVector2D(HandleEnd - HandleStart, AllottedGeometry.Size.Y)
+        FVector2D(HandleEnd - HandleStart, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D{HandleStart, 0}}
     );
     FLinearColor ScrubColor = InWidgetStyle.GetColorAndOpacityTint();
     {
@@ -348,7 +348,7 @@ int32 FCreateCharacterSliderController::OnPaintTimeSlider(
       );
 
       FSlateDrawElement::MakeText(
-          OutDrawElements, Args.StartLayer + 1, Args.AllottedGeometry.ToPaintGeometry(TextOffset, TextSize),
+          OutDrawElements, Args.StartLayer + 1, Args.AllottedGeometry.ToPaintGeometry(TextSize, FSlateLayoutTransform{TextOffset}),
           FrameString, SmallLayoutFont, Args.DrawEffects, Args.TickColor
       );
     }
@@ -369,7 +369,7 @@ int32 FCreateCharacterSliderController::OnPaintTimeSlider(
 
       FSlateDrawElement::MakeBox(
           OutDrawElements, LayerId + 1,
-          AllottedGeometry.ToPaintGeometry(FVector2D(RangePosX, 0.f), FVector2D(RangeSizeX, AllottedGeometry.Size.Y)),
+          AllottedGeometry.ToPaintGeometry(FVector2D(RangeSizeX, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D{RangePosX, 0.f}}),
           bMirrorLabels ? ScrubHandleDownBrush : ScrubHandleUpBrush, DrawEffects,
           MouseStartPosX < MouseEndPosX ? FLinearColor(0.5f, 0.5f, 0.5f) : FLinearColor(0.25f, 0.3f, 0.3f)
       );
@@ -396,7 +396,7 @@ int32 FCreateCharacterSliderController::DrawSelectionRange(
       FSlateDrawElement::MakeBox(
           OutDrawElements, LayerId + 1,
           AllottedGeometry.ToPaintGeometry(
-              FVector2D(SelectionRangeL, 0.f), FVector2D(SelectionRangeR - SelectionRangeL, AllottedGeometry.Size.Y)
+              FVector2D(SelectionRangeR - SelectionRangeL, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(SelectionRangeL, 0.f)}
           ),
           FAppStyle::GetBrush("WhiteBrush"), ESlateDrawEffect::None, DrawColor.CopyWithNewOpacity(Args.SolidFillOpacity)
       );
@@ -405,7 +405,7 @@ int32 FCreateCharacterSliderController::DrawSelectionRange(
     FSlateDrawElement::MakeBox(
         OutDrawElements, LayerId + 1,
         AllottedGeometry.ToPaintGeometry(
-            FVector2D(SelectionRangeL, 0.f), FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y)
+            FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(SelectionRangeL, 0.f)}
         ),
         Args.StartBrush, ESlateDrawEffect::None, DrawColor
     );
@@ -413,7 +413,7 @@ int32 FCreateCharacterSliderController::DrawSelectionRange(
     FSlateDrawElement::MakeBox(
         OutDrawElements, LayerId + 1,
         AllottedGeometry.ToPaintGeometry(
-            FVector2D(SelectionRangeR - Args.BrushWidth, 0.f), FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y)
+            FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(SelectionRangeR - Args.BrushWidth, 0.f)}
         ),
         Args.EndBrush, ESlateDrawEffect::None, DrawColor
     );
@@ -440,7 +440,7 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
       AllottedGeometry.ToPaintGeometry(
-          FVector2D(PlaybackRangeL, 0.f), FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y)
+          FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(PlaybackRangeL, 0.f)}
       ),
       Args.StartBrush, ESlateDrawEffect::None, FColor(32, 128, 32, OpacityBlend)  // 120, 75, 50 (HSV)
   );
@@ -448,7 +448,7 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
       AllottedGeometry.ToPaintGeometry(
-          FVector2D(PlaybackRangeR - Args.BrushWidth, 0.f), FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y)
+          FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(PlaybackRangeR - Args.BrushWidth, 0.f)}
       ),
       Args.EndBrush, ESlateDrawEffect::None, FColor(128, 32, 32, OpacityBlend)  // 0, 75, 50 (HSV)
   );
@@ -456,7 +456,7 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   // Black tint for excluded regions
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
-      AllottedGeometry.ToPaintGeometry(FVector2D(0.f, 0.f), FVector2D(PlaybackRangeL, AllottedGeometry.Size.Y)),
+      AllottedGeometry.ToPaintGeometry(FVector2D(PlaybackRangeL, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(0.f, 0.f)}),
       FAppStyle::GetBrush("WhiteBrush"), ESlateDrawEffect::None,
       FLinearColor::Black.CopyWithNewOpacity(0.3f * OpacityBlend / 255.f)
   );
@@ -464,7 +464,7 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
       AllottedGeometry.ToPaintGeometry(
-          FVector2D(PlaybackRangeR, 0.f), FVector2D(AllottedGeometry.Size.X - PlaybackRangeR, AllottedGeometry.Size.Y)
+          FVector2D(AllottedGeometry.Size.X - PlaybackRangeR, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(PlaybackRangeR, 0.f)}
       ),
       FAppStyle::GetBrush("WhiteBrush"), ESlateDrawEffect::None,
       FLinearColor::Black.CopyWithNewOpacity(0.3f * OpacityBlend / 255.f)
@@ -825,7 +825,7 @@ int32 FCreateCharacterSliderController::OnPaintViewArea(
     }
 
     FSlateDrawElement::MakeLines(
-        OutDrawElements, LayerId + 1, AllottedGeometry.ToPaintGeometry(FVector2D(LinePos, 0.0f), FVector2D(1.0f, 1.0f)),
+        OutDrawElements, LayerId + 1, AllottedGeometry.ToPaintGeometry(FVector2D(1.0f, 1.0f), FSlateLayoutTransform{FVector2D(LinePos, 0.0f)}),
         LinePoints, DrawEffects, FLinearColor(1.f, 1.f, 1.f, .5f), false
     );
   }

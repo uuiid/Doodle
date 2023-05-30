@@ -74,7 +74,7 @@
 #include "FileHelpers.h"
 #include "IAssetTools.h"
 
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
 #include "LevelEditorSubsystem.h"
 #endif
 
@@ -86,8 +86,8 @@
 #include "Framework/Notifications/NotificationManager.h"  //通知管理类
 #include "LevelEditorViewport.h"                          //编辑器视口
 #include "Tracks/MovieSceneCameraCutTrack.h"              //处理对电影场景中CameraCut属性的操作。
-#include "TransformData.h"                            //存储关于转换的信息，以便向转换部分添加键。
-#include "Widgets/Notifications/SNotificationList.h"  // 编辑器通知
+#include "TransformData.h"                                //存储关于转换的信息，以便向转换部分添加键。
+#include "Widgets/Notifications/SNotificationList.h"      // 编辑器通知
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
@@ -470,23 +470,23 @@ void UDoodleFbxImport_1::ImportFile() {
   UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
   L_Data->GroupName                 = TEXT("doodle import");
   L_Data->Filenames.Add(ImportPath);
-  L_Data->DestinationPath                          = ImportPathDir;
-  L_Data->bReplaceExisting                         = true;
-  L_Data->bSkipReadOnly                            = true;
-  L_Data->bReplaceExisting                         = true;
+  L_Data->DestinationPath                                        = ImportPathDir;
+  L_Data->bReplaceExisting                                       = true;
+  L_Data->bSkipReadOnly                                          = true;
+  L_Data->bReplaceExisting                                       = true;
 
-  UFbxFactory* k_fbx_f                             = DuplicateObject<UFbxFactory>(GetDefault<UFbxFactory>(), L_Data);
-  L_Data->Factory                                  = k_fbx_f;
+  UFbxFactory* k_fbx_f                                           = DuplicateObject<UFbxFactory>(GetDefault<UFbxFactory>(), L_Data);
+  L_Data->Factory                                                = k_fbx_f;
 
-  k_fbx_f->ImportUI->MeshTypeToImport              = FBXIT_SkeletalMesh;
-  k_fbx_f->ImportUI->OriginalImportType            = FBXIT_SkeletalMesh;
-  k_fbx_f->ImportUI->bImportAsSkeletal             = true;
-  k_fbx_f->ImportUI->bImportMesh                   = true;
-  k_fbx_f->ImportUI->bImportAnimations             = true;
-  k_fbx_f->ImportUI->bImportRigidMesh              = true;
-  k_fbx_f->ImportUI->bImportMaterials              = false;
-  k_fbx_f->ImportUI->bImportTextures               = false;
-  k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict = false;
+  k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_SkeletalMesh;
+  k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
+  k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
+  k_fbx_f->ImportUI->bImportMesh                                 = true;
+  k_fbx_f->ImportUI->bImportAnimations                           = true;
+  k_fbx_f->ImportUI->bImportRigidMesh                            = true;
+  k_fbx_f->ImportUI->bImportMaterials                            = false;
+  k_fbx_f->ImportUI->bImportTextures                             = false;
+  k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict               = false;
 
   k_fbx_f->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
   k_fbx_f->ImportUI->bAutomatedImportShouldDetectType            = false;
@@ -609,7 +609,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   ACineCameraActor* L_CameraActor{};
   // 相机task
   UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
   if (!L_Task)
     // 添加相机时以及强制评估了, 不需要再强制评估
     FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
@@ -635,10 +635,10 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   }
 
   if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
   FString L_CamLable = L_CameraActor->GetActorNameOrLabel();
 #elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-  FString L_CamLable = L_CameraActor->GetActorLabel();
+  FString L_CamLable           = L_CameraActor->GetActorLabel();
 #endif
   UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CamLable);
   // 寻找相机id
@@ -673,33 +673,14 @@ void UDoodleAbcImport_1::ImportFile() {
   UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
   L_Data->GroupName                 = TEXT("doodle import");
   L_Data->Filenames.Add(ImportPath);
-  L_Data->DestinationPath  = ImportPathDir;
-  L_Data->bReplaceExisting = true;
-  L_Data->bSkipReadOnly    = true;
-  L_Data->bReplaceExisting = true;
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
-  UAlembicImportFactory* k_abc_f = DuplicateObject<UAlembicImportFactory>(GetDefault<UAlembicImportFactory>(), L_Data);
-  L_Data->Factory                = k_abc_f;
-  UAbcImportSettings* k_abc_stting = k_abc_f->ImportSettings;
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
-    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-  for (TObjectIterator<UClass> it{}; it; ++it) {
-    if (it->IsChildOf(UFactory::StaticClass())) {
-      if (it->GetName() == "AlembicImportFactory") {
-        L_Data->Factory = it->GetDefaultObject<UFactory>();
-      }
-    }
-  }
+  L_Data->DestinationPath                            = ImportPathDir;
+  L_Data->bReplaceExisting                           = true;
+  L_Data->bSkipReadOnly                              = true;
+  L_Data->bReplaceExisting                           = true;
 
-  // for (TFieldIterator<FProperty> It(L_Data->Factory->GetClass()); It; ++It) {
-  // }
-  UClass* L_Class                  = L_Data->Factory->GetClass();
-  FObjectProperty* L_ClassProperty = FindFProperty<FObjectProperty>(L_Class, TEXT("ImportSettings"));
-  UObject* L_Pr                    = L_ClassProperty->GetObjectPropertyValue(L_Data->Factory);
-  UAbcImportSettings* k_abc_stting = UAbcImportSettings::Get();
-  // L_ClassProperty->SetObjectPropertyValue(L_Data->Factory,k_abc_stting);
-
-#endif
+  UAlembicImportFactory* k_abc_f                     = DuplicateObject<UAlembicImportFactory>(GetDefault<UAlembicImportFactory>(), L_Data);
+  L_Data->Factory                                    = k_abc_f;
+  UAbcImportSettings* k_abc_stting                   = k_abc_f->ImportSettings;
 
   /// 获取abc默认设置并修改
 
@@ -721,7 +702,7 @@ void UDoodleAbcImport_1::ImportFile() {
   k_abc_stting->SamplingSettings.FrameEnd            = EndTime;    // 结束帧
   k_abc_stting->SamplingSettings.FrameSteps          = 1;          // 帧步数
 
-  FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+  FAssetToolsModule& AssetToolsModule                = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
   AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
 }
@@ -848,17 +829,12 @@ class SDoodleImportUiItem : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoo
 };
 
 void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
-    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-  const FSlateFontInfo Font        = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
-#endif
 
 #if PLATFORM_WINDOWS
   const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
 #else
-  const FString FileFilterText     = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
+  const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
 #endif
   // clang-format off
 
@@ -1164,11 +1140,8 @@ bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporte
 bool SDoodleImportFbxUI::IsCamera(UnFbx::FFbxImporter* InFbx) {
   TArray<fbxsdk::FbxCamera*> L_Cameras{};
   MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+
   return !L_Cameras.IsEmpty();
-#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-  return L_Cameras.Num() != 0;
-#endif
 }
 
 void SDoodleImportFbxUI::FindSK() {
@@ -1253,7 +1226,7 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
     } else {
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
       TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
     (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)

@@ -60,7 +60,7 @@
 /// 导入相机的设置
 #include "MovieSceneToolsUserSettings.h"
 
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
 /// 关卡编辑器子系统
 #include "LevelEditorSubsystem.h"
 #endif
@@ -75,7 +75,7 @@ bool init_ue4_project::load_all_blueprint() {
   UE_LOG(LogTemp, Log, TEXT("Gathering All Blueprints From Asset Registry..."));
 
   UBlueprint::StaticClass()->GetPathName();
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
   return AssetRegistryModule.Get().GetAssetsByClass(
       FTopLevelAssetPath{UBlueprint::StaticClass()->GetPathName()}, blueprint_list, true
   );
@@ -87,7 +87,7 @@ bool init_ue4_project::load_all_blueprint() {
 
 bool init_ue4_project::build_all_blueprint() {
   for (auto &&i : blueprint_list) {
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
     FString const AssetPath = i.GetObjectPathString();
 #elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || \
     (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
@@ -97,7 +97,7 @@ bool init_ue4_project::build_all_blueprint() {
 
     UBlueprint *l_b = Cast<UBlueprint>(
         StaticLoadObject(i.GetClass(), nullptr, *AssetPath, nullptr, LOAD_NoWarn | LOAD_DisableCompileOnLoad)
-        );
+    );
 
     if (l_b != nullptr) {
       if (l_b->ParentClass.Get() == UDoodleImportUilt::StaticClass())
@@ -144,14 +144,14 @@ bool init_ue4_project::create_world(const FString &in_path) {
     );
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
     ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
     LevelEditorSubsystem->LoadLevel(in_path);
 #endif
   } else {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
     ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
     LevelEditorSubsystem->LoadLevel(in_path);
 #endif

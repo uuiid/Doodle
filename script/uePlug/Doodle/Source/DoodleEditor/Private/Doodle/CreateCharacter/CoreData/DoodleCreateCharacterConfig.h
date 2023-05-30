@@ -22,7 +22,7 @@ struct FDoodleCreateCharacterConfigUINode {
 
   FDoodleCreateCharacterConfigUINode() = default;
 
-  FDoodleCreateCharacterConfigUINode(int32 In_Parent, FString In_ShowUIName, TArray<FString> In_Keys, float In_MaxValue, float In_MinValue, float In_Value)
+  FDoodleCreateCharacterConfigUINode(int32 In_Parent, FString In_ShowUIName, TArray<FGuid> In_Keys, float In_MaxValue, float In_MinValue, float In_Value)
       : Parent(In_Parent),
         Childs(),
         ShowUIName(MoveTemp(In_ShowUIName)),

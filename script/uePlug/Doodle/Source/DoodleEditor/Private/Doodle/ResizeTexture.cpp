@@ -47,16 +47,15 @@ void FResizeTexture::Resize(UTexture2D* In_Texture) {
             L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::RGBA16F
         );
       } break;
-#if !((ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1))
-      case ETextureSourceFormat::TSF_RGBA8: {
-        UE_LOG(LogTemp, Log, TEXT("不支持的格式 %s"), (*In_Texture->GetFullName()));
-        return;
-      } break;
-      case ETextureSourceFormat::TSF_RGBE8: {
-        UE_LOG(LogTemp, Log, TEXT("不支持的格式 %s"), (*In_Texture->GetFullName()));
-        return;
-      } break;
-#endif
+
+        // case ETextureSourceFormat::TSF_RGBA8: {
+        //   UE_LOG(LogTemp, Log, TEXT("不支持的格式 %s"), (*In_Texture->GetFullName()));
+        //   return;
+        // } break;
+        // case ETextureSourceFormat::TSF_RGBE8: {
+        //   UE_LOG(LogTemp, Log, TEXT("不支持的格式 %s"), (*In_Texture->GetFullName()));
+        //   return;
+        // } break;
 
       case ETextureSourceFormat::TSF_G16: {
         L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::G16);

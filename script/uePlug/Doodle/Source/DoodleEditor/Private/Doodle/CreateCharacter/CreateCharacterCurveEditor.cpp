@@ -233,8 +233,8 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
           .GridLineTint(FLinearColor(0.f, 0.f, 0.f, 0.3f))
           //.ExternalTimeSliderController(CreateCharacterSliderController)
           .TabManager(InArgs._TabManager)
-          .TreeSplitterWidth(0.2f)
-          .ContentSplitterWidth(0.8f)
+          //.TreeSplitterWidth(0.2f)
+          //.ContentSplitterWidth(0.8f)
           .TreeContent()
               // clang-format off
            [

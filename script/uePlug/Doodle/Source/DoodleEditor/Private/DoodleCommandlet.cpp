@@ -39,7 +39,7 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString &in_params) {
 static bool SavePackage(UPackage *Package, const FString &PackageFilename) {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
   return GEditor->SavePackage(Package, nullptr, RF_Standalone, *PackageFilename, GWarn);
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
   FSavePackageArgs L_Arg{};
   L_Arg.Error         = GWarn;
   L_Arg.TopLevelFlags = RF_Standalone;

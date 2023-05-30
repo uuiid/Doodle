@@ -28,7 +28,7 @@ int32 FDoodleClusterSection::OnPaintSection(FSequencerSectionPainter &InPainter)
   if (InPainter.bIsSelected && SequencerPtr.IsValid()) {
     const ESlateDrawEffect DrawEffects =
         InPainter.bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
     static const FSlateBrush *GenericDivider = FAppStyle::GetBrush("Sequencer.GenericDivider");
     const FLinearColor DrawColor             = FAppStyle::GetSlateColor("SelectionColor").GetColor(FWidgetStyle());
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \

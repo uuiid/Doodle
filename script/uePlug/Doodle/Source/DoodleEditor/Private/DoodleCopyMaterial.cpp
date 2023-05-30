@@ -230,26 +230,16 @@ FReply DoodleCopyMat::CopyMateral() {
       USkeletalMesh *copyTrange = Cast<USkeletalMesh>(loadObj);
 
       UE_LOG(LogTemp, Log, TEXT("确认并加载为几何物体 %s"), *(copyTrange->GetPathName()));
-      ENGINE_MINOR_VERSION;
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+
       TArray<FSkeletalMaterial> trangeMat = copyTrange->GetMaterials();
+      
       if (copySoureSkinObj)
         for (int m = 0; m < trangeMat.Num(); m++) {
           trangeMat[m] = copySoureSkinObj->GetMaterials()[m];
-          UE_LOG(LogTemp, Log, TEXT("%s"), *(trangeMat[m].MaterialInterface->GetPathName()));
-          // 材质插槽命名
+          // UE_LOG(LogTemp, Log, TEXT("%s"), *(trangeMat[m].MaterialInterface->GetPathName()));
+          //  材质插槽命名
         }
       copyTrange->SetMaterials(trangeMat);
-#else if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 26
-      TArray<FSkeletalMaterial> trangeMat = copyTrange->Materials;
-      if (copySoureSkinObj)
-        for (int m = 0; m < trangeMat.Num(); m++) {
-          trangeMat[m] = copySoureSkinObj->Materials[m];
-          UE_LOG(LogTemp, Log, TEXT("%s"), *(trangeMat[m].MaterialInterface->GetPathName()));
-          // 材质插槽命名
-        }
-      copyTrange->Materials = trangeMat;
-#endif
 
     }  // 如果是几何缓存就复制几何缓存
     else if (selectedAss[i].GetClass() == UGeometryCache::StaticClass()) {
@@ -331,21 +321,13 @@ FReply DoodleCopyMat::BathReameAss() {
       UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"), *(skinObj->GetPathName()));
       if (skinObj == nullptr)
         UE_LOG(LogTemp, Log, TEXT("不是骨骼物体 %s"), *(skinObj->GetPathName()));
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || \
-    (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) ||  \
-    (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+
       for (auto &mat : skinObj->GetMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
         }
       }
-#else
-      for (auto &mat : skinObj->Materials) {
-        if (mat.ImportedMaterialSlotName.IsValid()) {
-          set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
-        }
-      }
-#endif
+
     } else if (item.GetClass()->IsChildOf<UStaticMesh>()) {
       UStaticMesh *k_st = Cast<UStaticMesh>(loadObj);
       UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"), *(k_st->GetPathName()));
@@ -353,7 +335,7 @@ FReply DoodleCopyMat::BathReameAss() {
         UE_LOG(LogTemp, Log, TEXT("不是静态网格体 %s"), *(k_st->GetPathName()));
         continue;
       }
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
       for (auto &mat : k_st->GetStaticMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
