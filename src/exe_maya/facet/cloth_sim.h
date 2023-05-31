@@ -33,7 +33,7 @@ class cloth_sim final {
   cloth_sim()  = default;
   ~cloth_sim() = default;
 
-  const std::string& name() const noexcept;
+  [[nodiscard]] const std::string& name() const noexcept;
   bool post();
   void add_program_options();
 };
