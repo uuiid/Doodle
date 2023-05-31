@@ -39,17 +39,19 @@
 #include <boost/process.hpp>
 #include <boost/process/environment.hpp>
 #include <boost/process/extend.hpp>
-#include <boost/process/v2/environment.hpp>
-#include <boost/process/v2/execute.hpp>
-#include <boost/process/v2/process.hpp>
-#include <boost/process/v2/stdio.hpp>
+// #include <boost/process/v2/environment.hpp>
+// #include <boost/process/v2/execute.hpp>
+// #include <boost/process/v2/process.hpp>
+// #include <boost/process/v2/stdio.hpp>
 #ifdef _WIN32
 #include <boost/process/windows.hpp>
 #elif defined __linux__
 #include <boost/process/posix.hpp>
 #endif
+// #define BOOST_PROCESS_V2_SEPARATE_COMPILATION
 
-#include <boost/process/v2.hpp>
+// #include <boost/process/v2.hpp>
+// #include <boost/process/v2/src.hpp>
 
 namespace doodle {
 namespace {
