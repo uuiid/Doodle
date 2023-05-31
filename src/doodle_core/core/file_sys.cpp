@@ -11,6 +11,7 @@
 #include <boost/dll.hpp>
 
 #include <Windows.h>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 #include <shellapi.h>
 #include <tchar.h>
@@ -143,6 +144,14 @@ FSys::path from_quotation_marks(const std::string &in_string) {
   }
   return FSys::path{in_string};
 }
+
+FSys::path get_cache_path() { return FSys::temp_directory_path() / "Doodle" / "cache"; }
+FSys::path get_cache_path(const FSys::path &in_path) {
+  auto l_tmp = get_cache_path() / in_path;
+  if (!FSys::exists(l_tmp)) FSys::create_directories(l_tmp);
+  return l_tmp;
+}
+
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS

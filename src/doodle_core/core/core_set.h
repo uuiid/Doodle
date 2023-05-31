@@ -3,6 +3,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/process.hpp>
+
+#include <string>
+
 namespace doodle {
 
 class core_set_init;
@@ -32,7 +35,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
-  [[nodiscard]] FSys::path get_data_root() const;
 
   // doc路径
   [[nodiscard]] FSys::path get_doc() const;
@@ -54,12 +56,12 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
   FSys::path p_root;
   FSys::path _root_cache;
-  FSys::path _root_data;
   FSys::path p_doc;
 
   FSys::path p_mayaPath;
   FSys::path ue4_path;
   std::string ue4_version;
+  std::string maya_version;
   bool maya_replace_save_dialog{false};
   bool maya_force_resolve_link{false};
 

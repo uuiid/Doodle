@@ -55,7 +55,6 @@ core_set::core_set()
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
-      _root_data(p_root / "data"),
       timeout(3600),
       json_data(std::make_shared<nlohmann::json>()) {
   auto l_short_path = FSys::temp_directory_path().generic_wstring();
@@ -81,7 +80,6 @@ FSys::path core_set::get_doc() const { return p_doc; }
 void core_set::set_root(const FSys::path &in_root) {
   p_root      = in_root;
   _root_cache = p_root / "cache";
-  _root_data  = p_root / "data";
 }
 
 FSys::path core_set::get_cache_root() const { return _root_cache; }
@@ -92,10 +90,8 @@ FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
   return path;
 }
 
-FSys::path core_set::get_data_root() const { return _root_data; }
-
 FSys::path core_set::program_location() { return program_location_attr.parent_path(); }
- 
+
 std::string core_set::get_uuid_str() { return boost::uuids::to_string(get_uuid()); }
 
 /// ----------------------------------------------------------------------------
@@ -107,9 +103,7 @@ core_set_init::core_set_init() : p_set(core_set::get_set()) {
   if (!FSys::exists(p_set.get_cache_root())) {
     FSys::create_directories(p_set.get_cache_root());
   }
-  if (!FSys::exists(p_set.get_data_root())) {
-    FSys::create_directories(p_set.get_data_root());
-  }
+
   DOODLE_LOG_INFO("设置缓存目录 {}", p_set.p_root);
 }
 bool core_set_init::find_maya() {

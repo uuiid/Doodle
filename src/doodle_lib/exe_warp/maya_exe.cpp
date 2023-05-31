@@ -4,6 +4,10 @@
 
 #include "maya_exe.h"
 
+#include "doodle_core/configure/config.h"
+#include "doodle_core/core/doodle_lib.h"
+#include "doodle_core/core/file_sys.h"
+#include <doodle_core/configure/config.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -18,9 +22,16 @@
 #include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
 
+#include "exe_warp/maya_exe.h"
+#include <filesystem>
+#include <fmt/core.h>
 #include <stack>
+#include <string>
+#include <winreg/WinReg.hpp>
 // #include <type_traits>
 
+#include <boost/core/ignore_unused.hpp>
+#include <boost/locale/encoding_utf.hpp>
 #include <boost/process.hpp>
 #include <boost/process/extend.hpp>
 #ifdef _WIN32
@@ -56,7 +67,9 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   entt::handle mag_attr{};
   FSys::path file_path_attr{};
 
-  std::string run_script_attr{};
+  nlohmann::json run_script_attr{};
+  std::string run_script_attr_key{};
+  FSys::path program_path{};
 
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
@@ -73,12 +86,15 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   virtual ~run_maya() = default;
 
   void run() {
-    auto l_maya     = core_set::get_set().maya_path() / "mayapy.exe";
-    auto l_tmp_file = FSys::write_tmp_file("maya", run_script_attr, ".py");
-    auto &&l_msg    = mag_attr.get<process_message>();
+    if (program_path.empty()) throw doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"};
+
+    auto l_path = FSys::write_tmp_file(
+        "maya", run_script_attr.dump(), ".json", "maya_fun_tool", std::ios::out | std::ios::binary
+    );
+
+    auto &&l_msg = mag_attr.get<process_message>();
     l_msg.set_state(l_msg.run);
-    l_msg.set_name(file_path_attr.filename().generic_string());
-    l_msg.message(fmt::format("开始写入配置文件 {} \n", l_tmp_file), l_msg.warning);
+    l_msg.message(fmt::format("开始写入配置文件 {} \n", l_path), l_msg.warning);
     l_msg.aborted_function = [this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
@@ -101,8 +117,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
 
     child_attr = boost::process::child{
         g_io_context(),
-        boost::process::exe  = l_maya,
-        boost::process::args = l_tmp_file.generic_wstring(),
+        boost::process::exe  = program_path,
+        boost::process::args = fmt::format("--{}={}", run_script_attr_key, l_path),
         boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
         boost::process::on_exit =
@@ -187,103 +203,6 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   }
 };
 
-std::string qcloth_arg::to_str() const {
-  nlohmann::json l_json{};
-  l_json = *this;
-  return fmt::format(
-      R"(# -*- coding: utf-8 -*-
-import maya_fun_tool
-k_f =  maya_fun_tool.open_file()
-k_f.config_ = """{}"""
-k_f()
-)",
-      l_json.dump()
-  );
-}
-
-std::string export_fbx_arg::to_str() const {
-  nlohmann::json l_json{};
-  l_json = *this;
-  return fmt::format(
-      R"(# -*- coding: utf-8 -*-
-import maya_fun_tool
-k_f =  maya_fun_tool.open_file()
-k_f.config_ = """{}"""
-k_f()
-)",
-      l_json.dump()
-  );
-}
-
-std::string replace_file_arg::to_str() const {
-  auto l_list_entt = save_handle | ranges::views::transform([](const entt::handle &in) -> std::string {
-                       nlohmann::json l_j{};
-                       entt_tool::save_comm<assets_file, redirection_path_info>(in, l_j);
-                       return fmt::format(R"(cmds.doodle_add_entt(josndata="""{}"""))", l_j.dump());
-                     }) |
-                     ranges::to_vector;
-
-  return fmt::format(
-      R"(# -*- coding: utf-8 -*-
-from maya import cmds
-import pymel.core
-import maya.standalone
-maya.standalone.initialize()
-
-cmds.file(force=True, new=True)
-doodle_plug = "doodle_maya_" + str(cmds.about(api=True))[0:4]
-cmds.loadPlugin(doodle_plug)
-
-l_file_path = "{0}"
-project_path = "{1}"
-work_path = "{2}"
-cmds.workspace(work_path, openWorkspace=1)
-
-cmds.file(l_file_path, open=True)
-cmds.doodle_load_project(project=project_path)
-
-{3}
-
-cmds.doodle_create_ref_file(allload=True)
-cmds.doodle_replace_rig_file()
-cmds.doodle_comm_file_save()
-quit()
-)",
-      file_path, project_, find_maya_work(file_path).generic_string(), fmt::join(l_list_entt, "\n")
-  );
-}
-
-std::string clear_file_arg::to_str() const {
-  auto l_save_file_path =
-      file_path.parent_path() / "fbx" / file_path.filename().replace_extension(save_file_extension_attr);
-  return fmt::format(
-      R"(# -*- coding: utf-8 -*-
-from maya import cmds
-import pymel.core
-import maya.standalone
-maya.standalone.initialize()
-
-cmds.file(force=True, new=True)
-
-l_file_path = "{0}"
-save_file_path = "{1}"
-project_path = "{2}"
-work_path = "{3}"
-doodle_plug = "doodle_maya_" + str(cmds.about(api=True))[0:4]
-cmds.loadPlugin(doodle_plug)
-cmds.workspace(work_path, openWorkspace=1)
-
-cmds.doodle_load_project(project=project_path)
-cmds.file(l_file_path, open=True)
-
-cmds.doodle_clear_scene(err_4=True)
-cmds.doodle_comm_file_save(filepath=save_file_path)
-quit()
-)",
-      file_path, l_save_file_path, project_, find_maya_work(file_path).generic_string()
-  );
-}
-
 }  // namespace maya_exe_ns
 
 class maya_exe::impl {
@@ -296,15 +215,36 @@ class maya_exe::impl {
 
 maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
 
-void maya_exe::add_maya_fun_tool() {
-  auto l_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
-  FSys::write_tmp_file(
-      "maya", std::string{l_file_py.begin(), boost::numeric_cast<std::size_t>(l_file_py.size())}, ".py",
-      "maya_fun_tool", std::ios::out | std::ios::binary
+FSys::path maya_exe::find_maya_path() const {
+  boost::ignore_unused(this);
+  auto l_key_str = fmt::format(
+      LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)",
+      boost::locale::conv::utf_to_utf<wchar_t>(core_set::get_set().maya_version)
   );
+  winreg::RegKey l_key{HKEY_LOCAL_MACHINE, l_key_str};
+  auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
+  return l_maya_path;
 }
+
+void maya_exe::install_maya_exe() {
+  auto l_maya_path   = find_maya_path();
+
+  auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
+                       version::build_info::get().version_str;
+  if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
+
+  if (!FSys::exists(l_target_path / "ShadeFragment")) {
+    FSys::copy(l_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment", FSys::copy_options::recursive);
+  }
+  if (!FSys::exists(l_target_path / "ScriptFragment")) {
+    FSys::copy(l_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment", FSys::copy_options::recursive);
+  }
+  if (!FSys::exists(l_target_path / fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version))) {
+    FSys::copy(core_set::get_set().program_location(), l_target_path, FSys::copy_options::overwrite_existing);
+  }
+}
+
 void maya_exe::notify_run() {
-  add_maya_fun_tool();
   if (!doodle_lib::Get().ctx().get<program_info>().stop_attr())
     while (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
       auto l_run = p_i->run_process_arg_attr.top();
@@ -324,17 +264,19 @@ void maya_exe::notify_run() {
   }
 }
 void maya_exe::queue_up(
-    const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun,
-    const FSys::path &in_run_path
+    const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
+    const std::shared_ptr<call_fun_type> &in_call_fun, const FSys::path &in_run_path
 ) {
+  install_maya_exe();
   DOODLE_CHICK(
       core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"}
   );
-  auto l_run             = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
-  l_run->mag_attr        = in_msg;
-  l_run->run_script_attr = in_string;
-  l_run->file_path_attr  = in_run_path;
-  auto &&l_msg           = in_msg.get<process_message>();
+  auto l_run                 = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
+  l_run->mag_attr            = in_msg;
+  l_run->run_script_attr_key = in_key;
+  l_run->run_script_attr     = in_string;
+  l_run->file_path_attr      = in_run_path;
+  auto &&l_msg               = in_msg.get<process_message>();
   l_msg.set_name(in_run_path.filename().generic_string());
   l_run->call_attr =
       std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
