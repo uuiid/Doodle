@@ -73,6 +73,7 @@ bool export_fbx_facet::post() {
   maya_file_io::open_file(l_arg.file_path, l_arg.use_all_ref ? MFileIO::kLoadAllReferences : MFileIO::kLoadDefault);
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
   DOODLE_LOG_INFO("开始导出fbx");
+  return l_ret;
 }
 
 void export_fbx_facet::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
