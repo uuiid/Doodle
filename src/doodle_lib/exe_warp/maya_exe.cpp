@@ -30,6 +30,7 @@
 #include <fmt/core.h>
 #include <stack>
 #include <string>
+#include <winnt.h>
 #include <winreg/WinReg.hpp>
 // #include <type_traits>
 
@@ -250,11 +251,9 @@ maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
 
 FSys::path maya_exe::find_maya_path() const {
   boost::ignore_unused(this);
-  auto l_key_str = fmt::format(
-      LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)",
-      boost::locale::conv::utf_to_utf<wchar_t>(core_set::get_set().maya_version)
-  );
-  winreg::RegKey l_key{HKEY_LOCAL_MACHINE, l_key_str};
+  auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
+  winreg::RegKey l_key{};
+  l_key.Open(HKEY_LOCAL_MACHINE, l_key_str, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
   auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
   return l_maya_path;
 }

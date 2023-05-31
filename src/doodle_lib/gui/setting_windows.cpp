@@ -18,6 +18,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <cstdint>
 #include <magic_enum.hpp>
 namespace doodle::gui {
 
@@ -28,7 +29,7 @@ class setting_windows::impl {
         p_org_name("部门"s, ""s),
         p_cache("缓存位置"s, ""s),
         p_doc("文档路径"s, ""s),
-        p_maya_path("maya路径"s, ""s),
+        p_maya_path("maya 版本"s, 2019),
         p_ue_path("ue路径"s, ""s),
         p_ue_version("ue版本"s, ""s),
         p_batch_max("最大任务数"s, std::int32_t{core_set::get_set().p_max_thread}),
@@ -37,7 +38,7 @@ class setting_windows::impl {
   gui::gui_cache<std::string> p_org_name;
   gui::gui_cache<std::string> p_cache;
   gui::gui_cache<std::string> p_doc;
-  gui::gui_cache<std::string> p_maya_path;
+  gui::gui_cache<std::int32_t> p_maya_path;
   gui::gui_cache<std::string> p_ue_path;
   gui::gui_cache<std::string> p_ue_version;
   gui::gui_cache<std::int32_t> p_batch_max;
@@ -59,7 +60,7 @@ void setting_windows::save() {
   auto& set                    = core_set::get_set();
 
   set.organization_name        = p_i->p_org_name.data;
-  set.p_mayaPath               = p_i->p_maya_path.data;
+  set.maya_version             = p_i->p_maya_path.data;
   set.p_max_thread             = p_i->p_batch_max.data;
   set.ue4_path                 = p_i->p_ue_path.data;
   set.ue4_version              = p_i->p_ue_version.data;
@@ -82,7 +83,7 @@ void setting_windows::init() {
   p_i->p_org_name.data                 = core_set::get_set().organization_name;
   p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();
   p_i->p_doc.data                      = core_set::get_set().get_doc().generic_string();
-  p_i->p_maya_path.data                = core_set::get_set().maya_path().generic_string();
+  p_i->p_maya_path.data                = core_set::get_set().maya_version;
   p_i->p_ue_path.data                  = core_set::get_set().ue4_path.generic_string();
   p_i->p_ue_version.data               = core_set::get_set().ue4_version;
   p_i->p_batch_max.data                = core_set::get_set().p_max_thread;
@@ -105,7 +106,7 @@ bool setting_windows::render() {
 
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);
   imgui::InputText(*p_i->p_doc.gui_name, &(p_i->p_doc.data), ImGuiInputTextFlags_ReadOnly);
-  imgui::InputText(*p_i->p_maya_path.gui_name, &(p_i->p_maya_path.data));
+  imgui::InputInt(*p_i->p_maya_path.gui_name, &(p_i->p_maya_path.data));
   imgui::InputText(*p_i->p_ue_path.gui_name, &(p_i->p_ue_path.data));
   imgui::InputText(*p_i->p_ue_version.gui_name, &(p_i->p_ue_version.data));
   imgui::InputInt(*p_i->p_batch_max.gui_name, &(p_i->p_batch_max.data));

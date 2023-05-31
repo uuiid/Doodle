@@ -4,6 +4,7 @@
 
 #include <boost/process.hpp>
 
+#include <cstdint>
 #include <string>
 
 namespace doodle {
@@ -61,7 +62,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   FSys::path p_mayaPath;
   FSys::path ue4_path;
   std::string ue4_version;
-  std::string maya_version;
+  std::int32_t maya_version;
   bool maya_replace_save_dialog{false};
   bool maya_force_resolve_link{false};
 

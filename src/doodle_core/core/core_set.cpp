@@ -48,14 +48,12 @@ const FSys::path &core_set::maya_path() const noexcept { return p_mayaPath; }
 
 core_set::core_set()
     : user_id(),
-      organization_name(),
       p_doc(FSys::current_path()),
-      p_uuid_gen(),
-      p_mayaPath(),
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
       timeout(3600),
+      maya_version(2019),
       json_data(std::make_shared<nlohmann::json>()) {
   auto l_short_path = FSys::temp_directory_path().generic_wstring();
   auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
@@ -173,6 +171,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["user_name"]                = p.user_name;
   j["program_location_attr"]    = p.program_location_attr;
   j["server_ip"]                = p.server_ip;
+  j["maya_version"]             = p.maya_version;
 }
 
 void from_json(const nlohmann::json &j, core_set &p) {
@@ -201,6 +200,7 @@ void from_json(const nlohmann::json &j, core_set &p) {
     p.program_location_attr = j.at("program_location_attr").get<FSys::path>();
   }
   if (j.contains("server_ip")) j.at("server_ip").get_to(p.server_ip);
+  if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
