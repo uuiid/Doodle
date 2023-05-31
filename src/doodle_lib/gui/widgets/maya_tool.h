@@ -11,6 +11,8 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <vector>
+
 namespace doodle::gui {
 
 class DOODLELIB_API maya_tool {
@@ -25,6 +27,8 @@ class DOODLELIB_API maya_tool {
 
   class impl;
   std::unique_ptr<impl> ptr_attr;
+
+  void set_path(const std::vector<FSys::path>& in_path);
 
  public:
   maya_tool();

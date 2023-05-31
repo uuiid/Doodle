@@ -22,7 +22,11 @@
 
 #include "boost/signals2/connection.hpp"
 
+#include "gui/widgets/maya_tool.h"
+#include <filesystem>
+#include <imgui.h>
 #include <utility>
+#include <vector>
 
 namespace doodle::gui {
 
@@ -79,7 +83,7 @@ class maya_tool::impl {
 
   maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
   maya_tool_ns::ref_attr_gui ref_attr{};
-  boost::signals2::scoped_connection scoped_connection_1{}, scoped_connection_2{};
+  boost::signals2::scoped_connection scoped_connection_1{};
 
   gui_cache<bool> replace_ref_file_{"替换引用"s, true};
   gui_cache<bool> sim_file_{"解算文件"s, true};
@@ -93,45 +97,36 @@ maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
   title_name_                            = std::string{name};
   init();
 }
+
+void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
+  p_sim_path = in_path | ranges::views::filter([](const FSys::path& in_handle) -> bool {
+                 auto l_ex = in_handle.extension();
+                 return l_ex == ".ma" || l_ex == ".mb";
+               }) |
+               ranges::to_vector;
+}
+
 void maya_tool::init() {
   ptr_attr->scoped_connection_1 = g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
-  ptr_attr->scoped_connection_2 =
-      g_reg()->ctx().get<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
-        p_sim_path = in_list | ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                       return in_handle && in_handle.any_of<assets_file>();
-                     }) |
-                     ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                       auto l_ex = in_handle.get<assets_file>().path_attr().extension();
-                       return l_ex == ".ma" || l_ex == ".mb";
-                     }) |
-                     ranges::views::transform([](const entt::handle& in_handle) -> FSys::path {
-                       return in_handle.get<assets_file>().get_path_normal();
-                     }) |
-                     ranges::to_vector;
-      });
-
-  p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
+  p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   g_reg()->ctx().emplace<maya_tool&>(*this);
 }
 
 bool maya_tool::render() {
-  {
-    if (dear::ListBox l_list_files{"file_list"}) {
-      for (const auto& f : p_sim_path) {
-        dear::Selectable(f.generic_string());
-      }
+  ImGui::Text("解算文件列表(将文件拖入此处)");
+  auto* l_win_main = ImGui::GetCurrentWindow();
+  if (auto l_drag = dear::DragDropTargetCustom{l_win_main->ContentRegionRect, l_win_main->ID}) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data());
+        l_data && l_data->IsDelivery()) {
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+      set_path(*l_list);
     }
-    if (auto l_drag = dear::DragDropTarget{}) {
-      if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data());
-          l_data && l_data->IsDelivery()) {
-        auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
-        p_sim_path   = *l_list | ranges::views::filter([](const FSys::path& in_handle) -> bool {
-          auto l_ex = in_handle.extension();
-          return l_ex == ".ma" || l_ex == ".mb";
-        }) | ranges::to_vector;
-      }
+  }
+  if (auto l_c = dear::Child{"##mt_file_list", ImVec2{-FLT_MIN, dear::ListBox::DefaultHeight()}}) {
+    for (const auto& f : p_sim_path) {
+      dear::Selectable(f.generic_string());
     }
   }
 
