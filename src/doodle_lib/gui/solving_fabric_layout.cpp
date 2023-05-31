@@ -37,7 +37,7 @@ void solving_fabric_layout::layout(ImGuiID in_id, const ImVec2& in_size) {
    */
   auto dock_id_tools  = in_id;
   auto dock_id_filter = ImGui::DockBuilderSplitNode(in_id, ImGuiDir_Left, 0.2f, nullptr, &dock_id_tools);
-  auto dock_id_edit   = ImGui::DockBuilderSplitNode(dock_id_tools, ImGuiDir_Down, 0.8f, nullptr, &dock_id_tools);
+  auto dock_id_edit   = ImGui::DockBuilderSplitNode(dock_id_tools, ImGuiDir_Down, 0.5f, nullptr, &dock_id_tools);
 
   // 开始将窗口停靠在创建的窗口中
   namespace menu_w    = gui::config::menu_w;
