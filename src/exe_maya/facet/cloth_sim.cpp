@@ -4,7 +4,6 @@
 
 #include "cloth_sim.h"
 
-#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/database_task/sqlite_client.h"
