@@ -7,6 +7,8 @@
 #include "doodle_core/configure/config.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/core/file_sys.h"
+#include "doodle_core/core/global_function.h"
+#include "doodle_core/logger/logger.h"
 #include <doodle_core/configure/config.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/program_info.h>
@@ -20,6 +22,7 @@
 #include <doodle_lib/core/filesystem_extend.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
 
 #include "exe_warp/maya_exe.h"
@@ -30,15 +33,24 @@
 #include <winreg/WinReg.hpp>
 // #include <type_traits>
 
+#include <boost/asio/readable_pipe.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/locale/encoding_utf.hpp>
 #include <boost/process.hpp>
+#include <boost/process/environment.hpp>
 #include <boost/process/extend.hpp>
+#include <boost/process/v2/environment.hpp>
+#include <boost/process/v2/execute.hpp>
+#include <boost/process/v2/process.hpp>
+#include <boost/process/v2/stdio.hpp>
 #ifdef _WIN32
 #include <boost/process/windows.hpp>
 #elif defined __linux__
 #include <boost/process/posix.hpp>
 #endif
+
+#include <boost/process/v2.hpp>
+
 namespace doodle {
 namespace {
 // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
@@ -115,6 +127,26 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
       }
     });
 
+    boost::process::environment l_eve{};
+    l_eve["MAYA_LOCATION"] = program_path.parent_path().parent_path().generic_string();
+    l_eve["PATH"] += program_path.parent_path().generic_string();
+
+    // boost::process::v2::process_environment l_env{
+    //     std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value>{
+    //         {"MAYA_LOCATION"s, program_path.parent_path().parent_path().generic_string()},
+    //         {"PATH"s, program_path.parent_path().generic_string()}}};
+
+    // boost::asio::readable_pipe l_out_pipe{g_io_context()};
+    // boost::asio::readable_pipe l_err_pipe{g_io_context()};
+    // boost::process::v2::process_stdio l_io{nullptr, l_out_pipe, l_err_pipe};
+    // boost::process::v2::process l_process{
+    //     g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io};
+    // boost::asio::cancellation_signal sig{};
+    // boost::process::v2::async_execute(
+    //     boost::process::v2::process{
+    //         g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io},
+    //     boost::asio::bind_cancellation_slot(sig, [](boost::system::error_code ec, int exit_code) {})
+    // );
     child_attr = boost::process::child{
         g_io_context(),
         boost::process::exe  = program_path,
@@ -129,9 +161,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
               l_msg.message(fmt::format("退出代码 {}", in_exit));
               (*call_attr)(in_error_code);
             },
-        boost::process::windows::hide
-
-    };
+        boost::process::windows::hide,
+        boost::process::env = l_eve};
 
     read_out();
     read_err();
