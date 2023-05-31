@@ -231,7 +231,6 @@ class assets_filter_factory : public filter_factory_base {
             auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
             for (auto&& l_h : *l_list) {
               l_h.emplace_or_replace<assets>(i->data.data);
-              database::save(l_h);
             }
             // @todo 这里要写拖拽
           }

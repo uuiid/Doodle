@@ -60,8 +60,6 @@ entt::handle user::current_user::get_handle() {
     l_create_h.emplace<business::rules>(business::rules::get_default());
     uuid        = l_create_h.emplace<database>(uuid).uuid();
     user_handle = l_create_h;
-
-    //    database::save(l_create_h);
   }
 
   //  DOODLE_CHICK(
@@ -77,9 +75,8 @@ std::string user::current_user::user_name_attr() {
 }
 void user::current_user::user_name_attr(const std::string& in_name) {
   if (!*this) get_handle();
-  user_handle.get<user>().set_name(in_name);
+  user_handle.patch<user>().set_name(in_name);
   core_set::get_set().user_name = in_name;
-  database::save(user_handle);
 }
 
 void user::current_user::set_user(const entt::handle& in) {
@@ -104,8 +101,6 @@ void user::current_user::create_user() {
   uuid                        = l_create_h.emplace<database>().uuid();
   core_set::get_set().user_id = uuid;
   user_handle                 = l_create_h;
-
-  database::save(l_create_h);
 }
 
 }  // namespace doodle

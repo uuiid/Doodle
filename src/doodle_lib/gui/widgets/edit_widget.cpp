@@ -380,7 +380,6 @@ class add_entt_base : public base_render {
       for (std::int32_t i = 0; i < add_size; ++i) {
         auto l_h = list_handle.data.emplace_back(make_handle());
         l_h.emplace<database>();
-        database::save(l_h);
       }
       g_reg()->ctx().get<core_sig>().filter_handle(list_handle);
     }

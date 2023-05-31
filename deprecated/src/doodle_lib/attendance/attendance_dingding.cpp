@@ -76,8 +76,7 @@ void attendance_dingding::async_run(
               do_work();
               return;
             }
-            auto& l_user = in_handle.get<doodle::dingding::user>();
-            database::save(ptr->user_handle);
+            auto& l_user = in_handle.patch<doodle::dingding::user>();
             l_user.user_id = in_user_dd.userid;
             ptr->user_id   = in_user_dd.userid;
             this->get_work_time();

@@ -311,7 +311,6 @@ class time_sequencer_widget::impl {
           }
 
           l_begin = in.time_point_;
-          database::save(in.handle_);
         }
     );
   }
@@ -470,8 +469,6 @@ bool time_sequencer_widget::render() {
   if (p_i->rules_render.render())
     if (p_i->combox_user_id.current_user) {
       p_i->combox_user_id.current_user.emplace_or_replace<doodle::business::rules>(p_i->rules_render.rules_attr());
-
-      if (p_i->combox_user_id.current_user.all_of<database>()) database::save(p_i->combox_user_id.current_user);
     }
 
   return p_i->open;

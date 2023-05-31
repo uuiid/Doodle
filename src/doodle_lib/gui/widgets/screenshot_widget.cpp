@@ -96,7 +96,6 @@ bool screenshot_widget::render() {
 void screenshot_widget::handle_attr(const entt::handle& in) {
   p_i->handle = in;
   if (!p_i->handle.all_of<image_icon>()) p_i->handle.emplace<image_icon>();
-  database::save(in);
 }
 
 const std::string& screenshot_widget::title() const { return p_i->title.name_id; }

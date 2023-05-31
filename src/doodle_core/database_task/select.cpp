@@ -112,6 +112,7 @@ class select::impl {
   std::vector<entt::entity> create_entt{};
   id_map_type id_map{};
   process_message* process_message_{};
+// #define DOODLE_SQL_compatible_v2
 #if defined(DOODLE_SQL_compatible_v2)
 #pragma region "old compatible 兼容旧版函数"
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
@@ -140,7 +141,6 @@ class select::impl {
                   doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
                   doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon,
                   doodle::importance, doodle::redirection_path_info>(l_h, k_json);
-              database::save(l_h);
               process_message_->message("开始旧版本兼容转换"s);
               process_message_->progress_step({1, l_size});
             }}

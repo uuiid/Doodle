@@ -63,7 +63,6 @@ class all_user_view_widget::impl {
     DOODLE_LOG_INFO("设置用户 {} 规则为 {}", combox_user_id(), in_rules);
     rules_attr = in_rules;
     select_user.replace<business::rules>(rules_attr);
-    database::save(select_user);
   }
   void delete_user_fun(const entt::handle& in_user) {
     database::delete_(in_user);

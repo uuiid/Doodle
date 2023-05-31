@@ -142,7 +142,6 @@ database task::set_user(const entt::handle& in_tocken, const entt::entity& in_e,
     }
   }
 
-  database::save(l_h);
   return l_h.get<database>();
 }
 
@@ -151,7 +150,6 @@ std::tuple<entt::entity, database> task::new_user(const user& in) {
   auto l_h                               = entt::handle{*g_reg(), g_reg()->create()};
   l_h.emplace_or_replace<user>(in).power = power_enum::none;
   auto&& l_d                             = l_h.emplace<database>();
-  database::save(l_h);
   return std::make_tuple(l_h.entity(), l_d);
 }
 
@@ -161,7 +159,6 @@ std::tuple<entt::entity, user, database> task::get_user(const boost::uuids::uuid
   auto l_h = l_d.find_by_uuid();
   if (!l_h) throw_exception(json_rpc::invalid_id_exception{});
   if (!l_h.all_of<user, database>()) throw_exception(json_rpc::missing_components_exception{});
-  database::save(l_h);
   return std::make_tuple(l_h.entity(), l_h.get<user>(), l_h.get<database>());
 };
 
@@ -195,7 +192,6 @@ void task::set_user_work_task_info(
   auto l_h = entt::handle{*g_reg(), g_reg()->valid(in_) ? in_ : g_reg()->create(in_)};
   l_h.emplace_or_replace<work_task_info>(in_work).user_ref.user_attr(l_ref_user);
   if (!l_h.all_of<database>()) l_h.emplace<database>();
-  database::save(l_h);
 }
 
 void task::delete_work_task_info(const entt::handle& in_tocken, const entt::entity& in_) {
@@ -214,7 +210,6 @@ void task::delete_work_task_info(const entt::handle& in_tocken, const entt::enti
   l_h.erase<work_task_info>();
 
   if (!l_h.all_of<database>()) l_h.emplace<database>();
-  database::save(l_h);
 }
 
 void task::destroy_entity(const entt::entity& in_) {
