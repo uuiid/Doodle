@@ -14,13 +14,13 @@
 namespace doodle::gui {
 
 class DOODLELIB_API maya_tool {
-  FSys::path p_cloth_path;
-  std::string p_text;
-  std::vector<FSys::path> p_sim_path;
+  FSys::path p_cloth_path{};
+  std::string p_text{};
+  std::vector<FSys::path> p_sim_path{};
 
-  bool p_use_all_ref;
-  bool p_upload_files;
-  std::string title_name_;
+  bool p_use_all_ref{};
+  bool p_upload_files{};
+  std::string title_name_{};
   bool open{true};
 
   class impl;

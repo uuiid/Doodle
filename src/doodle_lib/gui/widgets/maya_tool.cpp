@@ -88,16 +88,7 @@ class maya_tool::impl {
   gui_cache<bool> create_play_blast_{"创建排屏"s, true};
 };
 
-maya_tool::maya_tool()
-    : p_cloth_path(),
-      p_text(),
-      p_sim_path(),
-      p_only_sim(false),
-      p_use_all_ref(false),
-      p_upload_files(false),
-      p_sim_export_fbx(true),
-      p_sim_only_export(),
-      ptr_attr(std::make_unique<impl>()) {
+maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
   title_name_                            = std::string{name};
   init();
