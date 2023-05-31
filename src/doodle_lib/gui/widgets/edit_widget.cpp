@@ -21,8 +21,11 @@
 #include <doodle_lib/gui/widgets/edit_widgets/edit_user.h>
 #include <doodle_lib/gui/widgets/edit_widgets/redirection_path_info_edit.h>
 
+#include <boost/signals2/connection.hpp>
+
 #include <core/tree_node.h>
 #include <gui/widgets/database_edit.h>
+
 namespace doodle::gui {
 namespace edit_widgets_ns {}
 
@@ -305,6 +308,7 @@ class add_assets_for_file : public base_render {
   gui_cache<bool> use_time;
   gui_cache<bool> use_icon;
   gui_cache<std::vector<std::string>, combox_show_name> assets_list;
+  boost::signals2::scoped_connection p_sig1{}, p_sig2{};
 
  public:
   add_assets_for_file()
@@ -312,14 +316,14 @@ class add_assets_for_file : public base_render {
         use_time("检查时间"s, true),
         use_icon("寻找图标"s, true),
         assets_list("分类"s, std::vector<std::string>{}) {
-    auto &l_sig = g_reg()->ctx().get<core_sig>();
-    l_sig.project_end_open.connect([this]() {
+    auto &l_sig       = g_reg()->ctx().get<core_sig>();
+    p_sig1            = l_sig.project_end_open.connect([this]() {
       auto &prj                   = g_reg()->ctx().get<project_config::base_config>();
       this->assets_list           = prj.assets_list;
 
       this->assets_list.show_name = this->assets_list.data.empty() ? "null"s : this->assets_list.data.front();
     });
-    l_sig.save_end.connect([this]() {
+    p_sig2            = l_sig.save_end.connect([this]() {
       auto &prj         = g_reg()->ctx().get<project_config::base_config>();
       this->assets_list = prj.assets_list;
       if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
