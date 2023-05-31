@@ -93,8 +93,8 @@ class maya_tool::impl {
 };
 
 maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
-  g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
-  title_name_                            = std::string{name};
+  if (!g_reg()->ctx().contains<maya_exe_ptr>()) g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
+  title_name_ = std::string{name};
   init();
 }
 

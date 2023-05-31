@@ -9,6 +9,7 @@
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/core/init_register.h"
 #include "doodle_core/doodle_core.h"
+#include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
 
@@ -16,10 +17,17 @@
 #include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
 
+#include <doodle_lib/exe_warp/maya_exe.h>
+
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <cstdint>
+#include <fmt/core.h>
+#include <imgui.h>
 #include <magic_enum.hpp>
+#include <string>
+#include <winreg/WinReg.hpp>
+
 namespace doodle::gui {
 
 class setting_windows::impl {
@@ -43,6 +51,7 @@ class setting_windows::impl {
   gui::gui_cache<std::string> p_ue_version;
   gui::gui_cache<std::int32_t> p_batch_max;
   gui::gui_cache<std::int32_t> p_timeout;
+  std::string maya_path;
   gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::get_set().maya_replace_save_dialog};
   gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::get_set().maya_force_resolve_link};
   std::string user_uuid;
@@ -53,6 +62,8 @@ class setting_windows::impl {
 
 setting_windows::setting_windows() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
+  if (!g_reg()->ctx().contains<maya_exe_ptr>()) g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
+
   init();
 }
 
@@ -106,7 +117,19 @@ bool setting_windows::render() {
 
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);
   imgui::InputText(*p_i->p_doc.gui_name, &(p_i->p_doc.data), ImGuiInputTextFlags_ReadOnly);
-  imgui::InputInt(*p_i->p_maya_path.gui_name, &(p_i->p_maya_path.data));
+  if (imgui::InputInt(*p_i->p_maya_path.gui_name, &(p_i->p_maya_path.data))) {
+    core_set::get_set().maya_version = p_i->p_maya_path.data;
+  };
+  ImGui::SameLine();
+  if (ImGui::Button("测试寻找")) {
+    try {
+      p_i->maya_path = g_reg()->ctx().get<maya_exe_ptr>()->find_maya_path().generic_string();
+    } catch (const winreg::RegException& in_e) {
+      DOODLE_LOG_INFO("没有找到maya文件的运行程序 {}", in_e.what());
+      p_i->maya_path = fmt::format("没有找到maya文件的运行程序({})", in_e.what());
+    }
+  }
+  if (!p_i->maya_path.empty()) dear::Text(p_i->maya_path);
   imgui::InputText(*p_i->p_ue_path.gui_name, &(p_i->p_ue_path.data));
   imgui::InputText(*p_i->p_ue_version.gui_name, &(p_i->p_ue_version.data));
   imgui::InputInt(*p_i->p_batch_max.gui_name, &(p_i->p_batch_max.data));
