@@ -155,6 +155,7 @@
       "configurePreset": "Ninja_RelWithDebInfo",
       "inherits": "debug",
       "targets": [
+        "DoodleExe",
         "doodle_maya_exe",
         "test_main"
       ]
