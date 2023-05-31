@@ -118,6 +118,10 @@ struct Combo : public ScopeWrapper<Combo> {
 struct ListBox : public ScopeWrapper<ListBox> {
   ListBox(const char* label, const ImVec2& size = Zero) noexcept : ScopeWrapper(ImGui::BeginListBox(label, size)) {}
   static void dtor() noexcept { ImGui::EndListBox(); }
+
+  inline static std::float_t DefaultHeight() {
+    return ImGui::GetTextLineHeightWithSpacing() * 7.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
+  }
 };
 
 // Wrapper for ImGui::Begin...EndMenuBar.
