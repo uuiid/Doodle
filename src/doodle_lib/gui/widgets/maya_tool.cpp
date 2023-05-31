@@ -80,6 +80,12 @@ class maya_tool::impl {
   maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
   maya_tool_ns::ref_attr_gui ref_attr{};
   boost::signals2::scoped_connection scoped_connection_1{}, scoped_connection_2{};
+
+  gui_cache<bool> replace_ref_file_{"替换引用"s, true};
+  gui_cache<bool> sim_file_{"解算文件"s, true};
+  gui_cache<bool> export_abc_type_{"导出abc"s, true};
+  gui_cache<bool> export_fbx_type_{"导出fbx"s};
+  gui_cache<bool> create_play_blast_{"创建排屏"s, true};
 };
 
 maya_tool::maya_tool()
@@ -142,11 +148,15 @@ bool maya_tool::render() {
 
   imgui::Checkbox("自动上传", &p_upload_files);
   dear::TreeNode{"解算设置"} && [this]() {
-    imgui::Checkbox("只解算不替换引用", &p_only_sim);
-    imgui::Checkbox("导出为fbx格式", &p_sim_export_fbx);
-    imgui::Checkbox("只导出", &p_sim_only_export);
+    imgui::Checkbox(*ptr_attr->replace_ref_file_, &ptr_attr->replace_ref_file_);
+    imgui::Checkbox(*ptr_attr->sim_file_, &ptr_attr->sim_file_);
+    imgui::Checkbox(*ptr_attr->export_abc_type_, &ptr_attr->export_abc_type_);
+    imgui::Checkbox(*ptr_attr->export_fbx_type_, &ptr_attr->export_fbx_type_);
+    imgui::Checkbox(*ptr_attr->create_play_blast_, &ptr_attr->create_play_blast_);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() { imgui::Checkbox("直接加载所有引用", &p_use_all_ref); };
+
+#if defined DOODLE_MAYA_TOOL
   dear::TreeNode{*ptr_attr->ref_attr.ref_attr} && [&]() {
     if (ImGui::Button(*ptr_attr->ref_attr.de_button_attr)) {
       ptr_attr->ref_attr.ref_attr.data.emplace_back();
@@ -164,7 +174,6 @@ bool maya_tool::render() {
       }
     }
   };
-
   dear::TreeNode{*ptr_attr->convert_maya_id_attr} && [&]() {
     dear::Combo{*ptr_attr->save_maya_type_attr.gui_name, ptr_attr->save_maya_type_attr.show_id_attr.c_str()} && [&]() {
       static auto l_list = magic_enum::enum_names<maya_tool_ns::maya_type>();
@@ -176,16 +185,21 @@ bool maya_tool::render() {
       }
     };
   };
+#endif
 
   if (imgui::Button("解算")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& in_path) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
       k_arg.file_path        = in_path;
-      // todo: 添加配置
       k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
+      if (ptr_attr->replace_ref_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
+      if (ptr_attr->sim_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_sim_file;
+      if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
+      if (ptr_attr->export_fbx_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_fbx_type;
+      if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");
@@ -200,7 +214,6 @@ bool maya_tool::render() {
       k_arg.file_path        = i;
       k_arg.use_all_ref      = this->p_use_all_ref;
       k_arg.upload_file      = p_upload_files;
-      k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
       k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
@@ -210,6 +223,7 @@ bool maya_tool::render() {
       });
     });
   }
+#if defined DOODLE_MAYA_TOOL
   ImGui::SameLine();
   if (imgui::Button("引用文件替换")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
@@ -250,7 +264,7 @@ bool maya_tool::render() {
       });
     });
   }
-
+#endif
   return open;
 }
 const std::string& maya_tool::title() const { return title_name_; }

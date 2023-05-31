@@ -7,6 +7,7 @@
 #include <doodle_core/core/init_register.h>
 
 #include <doodle_app/gui/base/base_window.h>
+#include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -16,9 +17,6 @@ class DOODLELIB_API maya_tool {
   FSys::path p_cloth_path;
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
-  bool p_only_sim;
-  bool p_sim_export_fbx;
-  bool p_sim_only_export;
 
   bool p_use_all_ref;
   bool p_upload_files;
