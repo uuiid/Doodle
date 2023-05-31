@@ -85,6 +85,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   nlohmann::json run_script_attr{};
   std::string run_script_attr_key{};
   FSys::path program_path{};
+  FSys::path maya_program_path{};
 
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
@@ -103,9 +104,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   void run() {
     if (program_path.empty()) throw doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"};
 
-    auto l_path = FSys::write_tmp_file(
-        "maya", run_script_attr.dump(), ".json", "maya_fun_tool", std::ios::out | std::ios::binary
-    );
+    auto l_path  = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
 
     auto &&l_msg = mag_attr.get<process_message>();
     l_msg.set_state(l_msg.run);
@@ -130,9 +129,11 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
       }
     });
 
-    boost::process::environment l_eve{};
-    l_eve["MAYA_LOCATION"] = program_path.parent_path().parent_path().generic_string();
-    l_eve["PATH"] += program_path.parent_path().generic_string();
+    boost::process::environment l_eve = boost::this_process::environment();
+    l_eve["MAYA_LOCATION"]            = maya_program_path.generic_string();
+    l_eve["Path"] += (maya_program_path / "bin").generic_string();
+    l_eve["Path"] += program_path.parent_path().generic_string();
+    l_eve["Path"] += core_set::get_set().program_location().generic_string();
 
     // boost::process::v2::process_environment l_env{
     //     std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value>{
@@ -152,7 +153,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     // );
     child_attr = boost::process::child{
         g_io_context(),
-        boost::process::exe  = program_path,
+        boost::process::exe  = program_path.generic_string(),
         boost::process::args = fmt::format("--{}={}", run_script_attr_key, l_path),
         boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
@@ -165,7 +166,9 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
               (*call_attr)(in_error_code);
             },
         boost::process::windows::hide,
-        boost::process::env = l_eve};
+        l_eve
+
+    };
 
     read_out();
     read_err();
@@ -188,7 +191,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
             read_out();
           } else {
             out_attr.close();
-            DOODLE_LOG_ERROR(in_code);
+            DOODLE_LOG_ERROR(in_code.what());
           }
         }
     );
@@ -225,7 +228,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
             read_err();
           } else {
             err_attr.close();
-            DOODLE_LOG_ERROR(in_code);
+            DOODLE_LOG_ERROR(in_code.what());
           }
         }
     );
@@ -245,6 +248,7 @@ class maya_exe::impl {
   std::vector<std::shared_ptr<maya_exe_ns::run_maya>> run_attr{};
 
   std::atomic_char16_t run_size_attr{};
+  FSys::path run_path{};
 };
 
 maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
@@ -263,6 +267,9 @@ void maya_exe::install_maya_exe() {
 
   auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
                        version::build_info::get().version_str;
+  const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
+  p_i->run_path         = l_target_path / l_run_name;
+
   if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
 
   if (!FSys::exists(l_target_path / "ShadeFragment")) {
@@ -271,8 +278,8 @@ void maya_exe::install_maya_exe() {
   if (!FSys::exists(l_target_path / "ScriptFragment")) {
     FSys::copy(l_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment", FSys::copy_options::recursive);
   }
-  if (!FSys::exists(l_target_path / fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version))) {
-    FSys::copy(core_set::get_set().program_location(), l_target_path, FSys::copy_options::overwrite_existing);
+  if (!FSys::exists(p_i->run_path)) {
+    FSys::copy(core_set::get_set().program_location() / l_run_name, l_target_path / l_run_name);
   }
 }
 
@@ -308,6 +315,8 @@ void maya_exe::queue_up(
   l_run->run_script_attr_key = in_key;
   l_run->run_script_attr     = in_string;
   l_run->file_path_attr      = in_run_path;
+  l_run->program_path        = p_i->run_path;
+  l_run->maya_program_path   = find_maya_path();
   auto &&l_msg               = in_msg.get<process_message>();
   l_msg.set_name(in_run_path.filename().generic_string());
   l_run->call_attr =
