@@ -6,11 +6,9 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <rttr/rttr_enable.h>
 namespace doodle {
 
 class DOODLE_CORE_API export_file_info {
-  RTTR_ENABLE();
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const export_file_info& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, export_file_info& p);
 

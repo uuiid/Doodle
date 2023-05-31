@@ -8,7 +8,6 @@
 
 #include <bitset>
 #include <chrono>
-#include <rttr/rttr_enable.h>
 #include <utility>
 
 namespace doodle {
@@ -29,8 +28,6 @@ class time_point_info;
  */
 
 class DOODLE_CORE_API rules {
-  RTTR_ENABLE();
-
  public:
   using duration_type        = chrono::seconds;
   using point_type           = rules_ns::time_point_info;

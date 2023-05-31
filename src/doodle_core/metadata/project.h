@@ -1,7 +1,6 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <rttr/rttr_enable.h>
 
 namespace doodle {
 namespace project_config {
@@ -19,7 +18,6 @@ class DOODLE_CORE_API project {
 
   std::string p_en_str;
   std::string p_shor_str;
-  RTTR_ENABLE();
 
  private:
   void init_name();
@@ -68,7 +66,6 @@ class DOODLE_CORE_API base_config {
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, base_config& p);
-  RTTR_ENABLE();
 
  public:
   constexpr static std::uint32_t class_hash() { return "class doodle::project::cloth_config"_hs; }

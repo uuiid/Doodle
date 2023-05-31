@@ -6,12 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <rttr/rttr_enable.h>
-
 namespace doodle::movie {
 class DOODLE_CORE_API image_watermark {
-  RTTR_ENABLE();
-
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const image_watermark& nlohmann_json_t);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, image_watermark& nlohmann_json_t);
@@ -30,8 +26,6 @@ class DOODLE_CORE_API image_watermark {
 };
 
 class DOODLE_CORE_API image_attr : boost::totally_ordered<image_attr> {
-  RTTR_ENABLE();
-
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const image_attr& nlohmann_json_t);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, image_attr& nlohmann_json_t);

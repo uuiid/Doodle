@@ -28,7 +28,6 @@
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
-#include <rttr/type.h>
 #include <string>
 #include <tuple>
 #include <utility>

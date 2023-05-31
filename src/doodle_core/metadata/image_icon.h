@@ -5,22 +5,17 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <opencv2/core.hpp>
-#include <rttr/rttr_enable.h>
 #include <utility>
 
 namespace doodle {
 class DOODLE_CORE_API image_icon {
-  RTTR_ENABLE();
-
  public:
   /**
    * @brief 这个路径是相对于根目录的
    */
 
   image_icon() = default;
-  explicit image_icon(FSys::path in_path)
-      : path(std::move(in_path)),
-        image(){};
+  explicit image_icon(FSys::path in_path) : path(std::move(in_path)), image(){};
 
   FSys::path path;
   std::shared_ptr<void> image;

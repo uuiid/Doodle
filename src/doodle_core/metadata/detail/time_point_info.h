@@ -9,7 +9,6 @@
 
 #include <boost/operators.hpp>
 
-#include <rttr/rttr_enable.h>
 #include <utility>
 
 namespace doodle::business::rules_ns {
@@ -17,8 +16,6 @@ class time_point_info;
 void to_json(nlohmann::json& j, const time_point_info& p);
 void from_json(const nlohmann::json& j, time_point_info& p);
 class DOODLE_CORE_API time_point_info : boost::equality_comparable<time_point_info> {
-  RTTR_ENABLE();
-
  public:
   time_point_info() = default;
   explicit time_point_info(

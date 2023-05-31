@@ -64,7 +64,6 @@ add_subdirectory(thread_pool)
 add_subdirectory(details)
 add_subdirectory(time_tool)
 
-
 # 连接库
 target_link_libraries(
         doodle_core
@@ -86,7 +85,6 @@ target_link_libraries(
         sqlpp11::sqlite3
         sqlpp11::sqlpp11
         WIL::WIL
-        RTTR::Core
 
         PRIVATE
         Iphlpapi.lib
@@ -101,9 +99,9 @@ target_compile_definitions(doodle_core
         PRIVATE
 
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:DOODLE_CORE_EXPORT>
-        RTTR_DLL
-        #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
-        )
+
+        # $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
+)
 
 target_compile_options(doodle_core
         PUBLIC

@@ -4,7 +4,6 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/episodes.h>
 
-#include <rttr/type.h>
 #include <sqlpp11/parameter.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>

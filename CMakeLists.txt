@@ -91,7 +91,7 @@ find_package(CMakeRC CONFIG REQUIRED)
 find_package(implot CONFIG REQUIRED)
 
 # 寻找反射
-find_package(rttr CONFIG REQUIRED)
+# find_package(rttr CONFIG REQUIRED)
 
 # 压缩库
 find_package(cryptopp CONFIG REQUIRED)

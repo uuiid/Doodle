@@ -2,11 +2,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
-#include <rttr/rttr_enable.h>
 namespace doodle {
 
 class DOODLE_CORE_API episodes {
-  RTTR_ENABLE();
 
  public:
   int64_t p_episodes;

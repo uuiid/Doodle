@@ -13,7 +13,6 @@
 
 #include <entt/core/type_info.hpp>
 #include <optional>
-#include <rttr/rttr_enable.h>
 
 namespace doodle {
 
@@ -24,7 +23,6 @@ class database;
 
 namespace database_ns {
 class DOODLE_CORE_API ref_data {
-  RTTR_ENABLE();
   friend void to_json(nlohmann::json &j, const ref_data &p);
   friend void from_json(const nlohmann::json &j, ref_data &p);
 
@@ -60,7 +58,6 @@ void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 class DOODLE_CORE_API database : boost::equality_comparable<database>,
                                  boost::equality_comparable<boost::uuids::uuid>,
                                  boost::equality_comparable<database_ns::ref_data> {
-  RTTR_ENABLE();
   template <typename T>
   friend struct database_n::sql_com;
 

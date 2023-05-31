@@ -9,8 +9,6 @@
 
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
-#include <rttr/registration_friend.h>
-#include <rttr/rttr_enable.h>
 
 namespace doodle {
 class user;
@@ -29,7 +27,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   std::string p_string_;
   std::string p_ENUS;
 
-  RTTR_REGISTRATION_FRIEND;
   template <typename T1, typename Char, typename Enable>
   friend struct fmt::formatter;
   template <typename T>
@@ -60,8 +57,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
    * @brief 在打开数据库后, 注册表中保存的所有用户中寻找到当前用户,  如果未寻找到将创建一个新段用户
    */
   class DOODLE_CORE_API current_user {
-    RTTR_ENABLE();
-
    public:
     current_user();
     virtual ~current_user();

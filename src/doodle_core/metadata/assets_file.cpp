@@ -17,10 +17,6 @@
 #include <core/core_set.h>
 #include <entt/entity/fwd.hpp>
 #include <functional>
-#include <rttr/constructor.h>
-#include <rttr/policy.h>
-#include <rttr/registration.h>
-#include <rttr/registration>
 
 namespace doodle {
 
@@ -119,9 +115,4 @@ void assets_file::organization_attr(const std::string& in_organization) noexcept
 }
 assets_file::~assets_file() = default;
 
-RTTR_REGISTRATION {
-  using namespace rttr;
-  using namespace doodle;
-  registration::class_<doodle::assets_file>("doodle::assets_file").constructor()();
-}
 }  // namespace doodle

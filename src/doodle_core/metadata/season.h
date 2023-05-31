@@ -6,13 +6,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
-#include <rttr/rttr_enable.h>
-
 namespace doodle {
 
 class DOODLE_CORE_API season {
-  RTTR_ENABLE();
-
  public:
   std::int32_t p_int;
   season();
@@ -34,12 +30,8 @@ class DOODLE_CORE_API season {
   static bool analysis_static(const entt::handle& in_handle, const FSys::path& in_path);
 
  private:
-  friend void to_json(nlohmann::json& j, const season& p) {
-    j["season"] = p.p_int;
-  }
-  friend void from_json(const nlohmann::json& j, season& p) {
-    j.at("season").get_to(p.p_int);
-  }
+  friend void to_json(nlohmann::json& j, const season& p) { j["season"] = p.p_int; }
+  friend void from_json(const nlohmann::json& j, season& p) { j.at("season").get_to(p.p_int); }
 };
 
 }  // namespace doodle
@@ -55,10 +47,7 @@ struct formatter<::doodle::season> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::season& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     format_to(ctx.out(), "seas_");
-    return formatter<std::int32_t>::format(
-        in_.p_int,
-        ctx
-    );
+    return formatter<std::int32_t>::format(in_.p_int, ctx);
   }
 };
 }  // namespace fmt

@@ -12,9 +12,3 @@
 #include <boost/test/unit_test_log.hpp>
 
 #include <memory>
-#include <rttr/rttr_enable.h>
-#include <rttr/type.h>
-
-BOOST_AUTO_TEST_CASE(test_rttr_base) {
-
-}

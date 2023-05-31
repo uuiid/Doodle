@@ -6,7 +6,6 @@
 
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
-#include <rttr/type.h>
 #include <sqlpp11/parameter.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>

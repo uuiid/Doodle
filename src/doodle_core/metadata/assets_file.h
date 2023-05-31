@@ -8,9 +8,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
-#include "rttr/registration_friend"
-#include "rttr/rttr_enable.h"
-
 namespace doodle {
 /**
  * @brief 文件代表的类型
@@ -34,8 +31,6 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   std::unique_ptr<impl> p_i;
   user_ref user_ref{};
 
-  RTTR_ENABLE();
-  RTTR_REGISTRATION_FRIEND;
   template <typename T>
   friend struct database_n::sql_com;
 
@@ -87,8 +82,6 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const assets_file& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, assets_file& p);
-
-  void rttr_user_attr();
 };
 
 }  // namespace doodle
