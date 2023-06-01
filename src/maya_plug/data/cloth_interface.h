@@ -29,6 +29,7 @@ class cloth_interface {
   virtual void rest(const entt::handle& in_handle) const                                        = 0;
   [[nodiscard]] virtual std::string get_namespace() const                                       = 0;
   virtual void cover_cloth_attr(const entt::handle& in_handle) const                            = 0;
+  [[nodiscard]] virtual MDagPath get_shape() const                                              = 0;
   inline void set_cache_folder(const entt::handle& in_handle) const { set_cache_folder(in_handle, FSys::path{}); }
 };
 
