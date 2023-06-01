@@ -22,7 +22,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 AllowNoIcons=yes
 OutputDir=${CMAKE_INSTALL_PREFIX}
-OutputBaseFilename=setup
+OutputBaseFilename=${DOODLE_PACKAGE_NAME}
 SetupIconFile=${PROJECT_SOURCE_DIR}/src/icon.ico
 Compression=lzma
 SolidCompression=yes
@@ -32,9 +32,13 @@ Name: "Chinese"; MessagesFile: "${innolagnuage_SOURCE_DIR}/ChineseSimplified.isl
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-
 [Files]
-Source: "C:\Program Files\Inno Setup 6\Examples\MyProg.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "${CMAKE_INSTALL_PREFIX}/bin/{#MyAppExeName}"; DestDir: "{app}/bin/{#MyAppExeName}"; Flags: ignoreversion
+Source: "${CMAKE_INSTALL_PREFIX}/bin/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs
+Source: "${CMAKE_INSTALL_PREFIX}/houdini/*"; DestDir: "{app}/houdini"; Flags: ignoreversion recursesubdirs
+Source: "${CMAKE_INSTALL_PREFIX}/SideFX_Labs/*"; DestDir: "{app}/SideFX_Labs"; Flags: ignoreversion recursesubdirs
+Source: "${CMAKE_INSTALL_PREFIX}/ue51_Plug/*"; DestDir: "{app}/ue51_Plug"; Flags: ignoreversion recursesubdirs
+Source: "${CMAKE_INSTALL_PREFIX}/ue427_Plug/*"; DestDir: "{app}/ue427_Plug"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

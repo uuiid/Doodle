@@ -117,9 +117,9 @@ endif()
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
-find_package(Wix)
+find_package(Inno)
 
-if(TARGET wix_exe)
+if(TARGET Inno_exe)
         add_subdirectory(install)
 endif()
 
