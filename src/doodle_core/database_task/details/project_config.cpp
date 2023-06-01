@@ -51,8 +51,8 @@ void sql_com<project_config::base_config>::install_sub(
       for (auto& l_p : l_r_p_i.assets_list) {
         l_path_pre.params.parent_id   = in_map.at(l_h);
         l_path_pre.params.assets_list = l_p;
+        l_conn(l_path_pre);
       }
-      l_conn(l_path_pre);
       //      BOOST_ASSERT(l_r_p == 1);
     }
   }
@@ -68,8 +68,8 @@ void sql_com<project_config::base_config>::install_sub(
       for (auto& l_p : l_r_p_i.icon_extensions) {
         l_path_pre.params.parent_id       = in_map.at(l_h);
         l_path_pre.params.icon_extensions = l_p;
+        l_conn(l_path_pre);
       }
-      l_conn(l_path_pre);
       //      BOOST_ASSERT(l_r_p == 1);
     }
   }
