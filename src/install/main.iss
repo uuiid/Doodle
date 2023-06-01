@@ -16,7 +16,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={pf}\{#MyAppName}
+DefaultDirName={commonpf64}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
@@ -33,18 +33,25 @@ Name: "Chinese"; MessagesFile: "${innolagnuage_SOURCE_DIR}/ChineseSimplified.isl
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 [Files]
-Source: "${CMAKE_INSTALL_PREFIX}/bin/{#MyAppExeName}"; DestDir: "{app}/bin/{#MyAppExeName}"; Flags: ignoreversion
-Source: "${CMAKE_INSTALL_PREFIX}/bin/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs
+Source: "${CMAKE_INSTALL_PREFIX}/bin/{#MyAppExeName}"; DestDir: "{app}/bin"; Flags: ignoreversion
+Source: "${CMAKE_INSTALL_PREFIX}/bin/token.doodle_token"; DestDir: "{app}/bin"; Flags: ignoreversion
+Source: "${CMAKE_INSTALL_PREFIX}/bin/*.dll"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/houdini/*"; DestDir: "{app}/houdini"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/SideFX_Labs/*"; DestDir: "{app}/SideFX_Labs"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/ue51_Plug/*"; DestDir: "{app}/ue51_Plug"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/ue427_Plug/*"; DestDir: "{app}/ue427_Plug"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\bin\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Registry]
+Root: "HKCU64"; Subkey: "Software\uuiid\Doodle"; ValueType: qword; ValueName: "installed_desktop"; ValueData: "1"
+Root: "HKLM64"; Subkey: "SOFTWARE\Classes\doodle.main\shell\open\command"; ValueType: string; ValueData: ""{app}\bin\{#MyAppExeName}" "%1""
+Root: "HKLM64"; Subkey: "SOFTWARE\Classes\doodle.main\DefaultIcon"; ValueType: string; ValueData: "{app}\bin\{#MyAppExeName}"
+Root: "HKLM64"; Subkey: "SOFTWARE\Classes\.doodle_db"; ValueType: string; ValueData: "doodle.main"
