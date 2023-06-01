@@ -174,12 +174,8 @@ class null_facet {
 };
 BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
   app_command<null_facet> l_App{};
-  FSys::copy(
-      R"(D:/test_file/cloth_test/JG_back_up.doodle_db)", "D:/test_file/cloth_test/JG.doodle_db",
-      FSys::copy_options::overwrite_existing
-  );
-  //  doodle_lib l_lib{};
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG.doodle_db");
+
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->open_("D:/test_file/test_db/10_texiao.doodle_db");
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
