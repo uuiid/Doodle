@@ -191,7 +191,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
     export_path   = find_out_group_child_suffix_node(*l_root, l_suffix);
     export_path |=
         ranges::actions::unique([](const MDagPath& in_r, const MDagPath& in_l) -> bool { return in_r == in_l; });
-    DOODLE_LOG_INFO("按组划分导出收集完成 {}", fmt::join(export_path, "\n"));
+    DOODLE_LOG_INFO("按组划分导出收集完成 {}", fmt::join(export_path, " "));
     for (auto&& i : export_path) {
       reference_file_ns::generate_abc_file_path l_name{*g_reg()};
       auto l_node_name = get_node_name_strip_name_space(i);
@@ -210,7 +210,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
     } else {
       export_path = child_export_model(*l_root);
     }
-    DOODLE_LOG_INFO("导出收集完成 {}", fmt::join(export_path, "\n"));
+    DOODLE_LOG_INFO("导出收集完成 {}", fmt::join(export_path, " "));
     MSelectionList l_list{};
     for (auto&& i : export_path) {
       maya_chick(l_list.add(i));
@@ -222,7 +222,11 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
   DOODLE_LOG_INFO("导出划分完成 {}", fmt::join(export_map, " "));
 
   for (auto&& [name, s_l] : export_map) {
-    export_abc(s_l, name(L_ref));
+    auto l_path = name(L_ref);
+    if (!s_l.isEmpty())
+      export_abc(s_l, l_path);
+    else
+      DOODLE_LOG_INFO("没有找到导出对象 {} ", l_path);
   }
 }
 }  // namespace doodle::maya_plug
