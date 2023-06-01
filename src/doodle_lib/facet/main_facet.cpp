@@ -4,6 +4,7 @@
 
 #include "main_facet.h"
 
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/gui_template/show_windows.h"
 #include <doodle_core/core/program_info.h>
 
@@ -48,7 +49,9 @@ void main_facet::load_windows() {
     g_windows_manage().register_layout(layout_init_arg{}.create<layout_window>());
     g_windows_manage().register_layout(layout_init_arg{}.create<asset_library_layout>());
     g_windows_manage().register_layout(layout_init_arg{}.create<solving_fabric_layout>());
-    g_windows_manage().switch_layout(layout_window::name);
+    // g_windows_manage().switch_layout(
+    //     core_set::get_set().layout_config.empty() ? layout_window::name : core_set::get_set().layout_config
+    // );
   }
   gui::g_windows_manage().create_windows_arg(
       gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
@@ -75,6 +78,9 @@ void main_facet::load_windows() {
     );
     g_windows_manage().create_windows_arg(
         windows_init_arg{}.create_set_title<project_edit>().set_init_hide().set_size(640, 320)
+    );
+    g_windows_manage().switch_layout(
+        core_set::get_set().layout_config.empty() ? layout_window::name : core_set::get_set().layout_config
     );
   }
 }

@@ -158,9 +158,10 @@ void windows_manage::set_menu_list(const warp_w_ptr& win_ptr) {
 
 void windows_manage::set_layout(gui::windows_layout&& in_windows) {
   BOOST_ASSERT(in_windows);
-  if (!layout_)
+  if (!layout_) {
     layout_ = std::move(in_windows);
-  else {
+    layout_->set_show();
+  } else {
     layout_next_ = std::move(in_windows);
   }
 }

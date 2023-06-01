@@ -74,7 +74,7 @@ class windows_manage {
   std::vector<std::function<void()>> close_fun_lists_{};
   std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>> menu_list_{};
   std::vector<std::shared_ptr<layout_info>> layout_list_{};
-  std::string_view render_layout_name_{};
+  std::string render_layout_name_{};
 
   void gen_windows_list();
   void set_menu_list(const warp_w_ptr& win_ptr);

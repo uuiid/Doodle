@@ -4,6 +4,7 @@
 
 #include "main_menu_bar.h"
 
+#include "doodle_core/core/core_set.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/database_task/sqlite_client.h>
 
@@ -122,7 +123,10 @@ void main_menu_bar::menu_windows() {
 void main_menu_bar::menu_layout() {
   for (auto &&[name, open] : g_windows_manage().get_layout_list()) {
     if (dear::MenuItem(name.data(), open)) {
-      if (!open) g_windows_manage().switch_layout(name);
+      if (!open) {
+        g_windows_manage().switch_layout(name);
+        core_set::get_set().layout_config = name;
+      }
     }
   }
 }

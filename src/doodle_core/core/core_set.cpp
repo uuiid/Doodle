@@ -172,6 +172,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["program_location_attr"]    = p.program_location_attr;
   j["server_ip"]                = p.server_ip;
   j["maya_version"]             = p.maya_version;
+  j["layout_config"]            = p.layout_config;
 }
 
 void from_json(const nlohmann::json &j, core_set &p) {
@@ -201,6 +202,7 @@ void from_json(const nlohmann::json &j, core_set &p) {
   }
   if (j.contains("server_ip")) j.at("server_ip").get_to(p.server_ip);
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
+  if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
