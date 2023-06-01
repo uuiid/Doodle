@@ -67,7 +67,7 @@
 			{
 				"label": "发布版本(包含ue)",
 				"type": "shell",
-				"command": "${workspaceFolder}\\build_script\\build\\build_exe.cmd;${workspaceFolder}\\build_script\\build\\build_ue4_files.cmd;${workspaceFolder}\\build_script\\build\\build_maya_plug.cmd;${workspaceFolder}\\build_script\\build\\install.cmd",
+				"command": "${workspaceFolder}\\build_script\\build\\install.cmd",
 				"problemMatcher": []
 			},
 			{
