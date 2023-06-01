@@ -12,7 +12,7 @@ namespace details {
 conn_ptr database_info::get_connection() const {
   sqlpp::sqlite3::connection_config l_config{};
 #ifdef NDEBUG
-  l_config.debug = false;
+  // l_config.debug = false;
 #else
   l_config.debug = true;
 #endif
