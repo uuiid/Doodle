@@ -1,8 +1,8 @@
 @echo off
 
-if not exist "%my_pwd%/src/doodle_core" goto set_pwd
+if not exist "%my_pwd%/Doodle.code-workspace" goto set_pwd
 
-if not exist "%cd%/src/doodle_core" goto set_pwd
+if not exist "%cd%/Doodle.code-workspace" goto set_pwd
 
 goto end
 
