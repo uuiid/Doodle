@@ -352,20 +352,6 @@ bool reference_file::find_ref_node() {
   DOODLE_LOG_INFO("获得引用路径 {} 名称空间 {}", path, file_namespace);
   return true;
 }
-void reference_file::qlUpdateInitialPose() const {
-  DOODLE_LOG_INFO("开始更新解算文件 {} 中的布料初始化姿势 {}", get_namespace());
-  MStatus l_status{};
-  auto l_v = find_duplicate_poly{}(MNamespace::getNamespaceObjects(d_str{this->get_namespace()}, false, &l_status));
-  DOODLE_MAYA_CHICK(l_status);
-
-  for (auto &&[l_obj1, l_obj2] : l_v) {
-    MSelectionList l_list{};
-    DOODLE_MAYA_CHICK(l_list.add(l_obj1));
-    DOODLE_MAYA_CHICK(l_list.add(l_obj2));
-    DOODLE_MAYA_CHICK(MGlobal::setActiveSelectionList(l_list));
-    DOODLE_MAYA_CHICK(MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"}));
-  }
-}
 
 entt::handle reference_file::export_file_select(
     const reference_file::export_arg &in_arg, const MSelectionList &in_list

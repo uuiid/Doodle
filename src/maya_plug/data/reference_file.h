@@ -129,10 +129,6 @@ class reference_file {
   /// 获取引用标帜路径
   const std::string &get_key_path() const;
 
-  /**
-   * @brief 将布料初始化状态, (会寻找特点名称的布料进行状态的重置)
-   */
-  void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] std::string get_namespace() const;
