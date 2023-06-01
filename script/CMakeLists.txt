@@ -16,17 +16,8 @@ if(DEFINED Ue4_ROOT_DIR)
                 PATTERN "*.pdb" EXCLUDE
                 PATTERN "Source" EXCLUDE
         )
-
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.0/Plugins/Doodle/
-                DESTINATION ue50_Plug
-                COMPONENT ue4_plug
-                PATTERN "Intermediate" EXCLUDE
-                PATTERN "*.pdb" EXCLUDE
-                PATTERN "Source" EXCLUDE
-        )
-
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.1/Plugins/Doodle/
-                DESTINATION ue51_Plug
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.2/Plugins/Doodle/
+                DESTINATION ue52_Plug
                 COMPONENT ue4_plug
                 PATTERN "Intermediate" EXCLUDE
                 PATTERN "*.pdb" EXCLUDE

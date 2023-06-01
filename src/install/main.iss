@@ -39,8 +39,8 @@ Source: "${CMAKE_INSTALL_PREFIX}/bin/token.doodle_token"; DestDir: "{app}/bin"; 
 Source: "${CMAKE_INSTALL_PREFIX}/bin/*.dll"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/houdini/*"; DestDir: "{app}/houdini"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/SideFX_Labs/*"; DestDir: "{app}/SideFX_Labs"; Flags: ignoreversion recursesubdirs
-Source: "${CMAKE_INSTALL_PREFIX}/ue51_Plug/*"; DestDir: "{app}/ue51_Plug"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/ue427_Plug/*"; DestDir: "{app}/ue427_Plug"; Flags: ignoreversion recursesubdirs
+Source: "${CMAKE_INSTALL_PREFIX}/ue52_Plug/*"; DestDir: "{app}/ue52_Plug"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"
