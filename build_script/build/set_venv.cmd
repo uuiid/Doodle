@@ -17,7 +17,7 @@ if [%1] == [] (set doodle_install_prefix=all) else (set doodle_install_prefix=%1
 set cache_file=%my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
 call %my_pwd%/.venv/Scripts/activate.bat
 
-if exist "%my_pwd%/CMakeUserPresets.json" (set Doodle_suffix=_DD)
+@REM if exist "%my_pwd%/CMakeUserPresets.json" (set Doodle_suffix=_DD)
 
 :end
 
