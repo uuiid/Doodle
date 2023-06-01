@@ -316,6 +316,14 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   return true;
 }
 
+bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
+  p_i->process_message_ = g_reg()->ctx().find<process_message>();
+  p_i->only_ctx         = false;
+  p_i->project          = in_project_path;
+
+  return detail::has_table(tables::com_entity{}, *in_connect);
+}
+
 void select::patch(conn_ptr& in_connect) {
   for (auto&& [e, p] : p_i->local_reg->view<project>().each()) {
     p_i->local_reg->emplace_or_replace<database>(e);

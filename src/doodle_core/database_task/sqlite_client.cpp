@@ -47,6 +47,7 @@
 #include <core/status_info.h>
 #include <database_task/details/database.h>
 #include <database_task/select.h>
+#include <fmt/core.h>
 #include <metadata/metadata.h>
 #include <range/v3/action/unique.hpp>
 #include <range/v3/all.hpp>
@@ -56,19 +57,19 @@
 
 namespace doodle::database_n {
 
-bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
+bsys::error_code file_translator::open_begin() {
   doodle_lib::Get().ctx().get<database_info>().path_ =
-      in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
+      project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   g_reg()->clear();
-  g_reg()->ctx().get<core_sig>().project_begin_open(in_path);
+  g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
   is_opening = true;
   return {};
 }
-bsys::error_code file_translator::open(const FSys::path& in_path) {
-  auto l_r = open_impl(in_path);
+bsys::error_code file_translator::open() {
+  auto l_r = open_impl();
   return l_r;
 }
 
@@ -83,7 +84,7 @@ bsys::error_code file_translator::open_end() {
   return {};
 }
 
-bsys::error_code file_translator::save_begin(const FSys::path& in_path) {
+bsys::error_code file_translator::save_begin() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
@@ -92,8 +93,8 @@ bsys::error_code file_translator::save_begin(const FSys::path& in_path) {
   return {};
 }
 
-bsys::error_code file_translator::save(const FSys::path& in_path) {
-  auto l_r = save_impl(in_path);
+bsys::error_code file_translator::save() {
+  auto l_r = save_impl();
   return l_r;
 }
 
@@ -283,16 +284,19 @@ sqlite_file::sqlite_file(registry_ptr in_registry) : ptr(std::make_unique<impl>(
   ptr->registry_attr = std::move(in_registry);
   ptr->obs_save      = std::make_shared<impl::obs_all>(ptr->registry_attr);
 }
-bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
+bsys::error_code sqlite_file::open_impl() {
   ptr->registry_attr   = g_reg();
   constexpr auto l_loc = BOOST_CURRENT_LOCATION;
   //  if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
   auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
-  if (!l_select(*ptr->registry_attr, in_path, l_k_con))
+  if (l_select.is_old(project_path, l_k_con)) {
+    l_select(*ptr->registry_attr, project_path, l_k_con);
     ptr->obs_save->open(ptr->registry_attr, l_k_con);
-  else {
+    project_path = project_path.replace_filename(fmt::format("{}_new", project_path.stem().string()));
+    new_file_scene(project_path);
+  } else {
     l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     /// 先监听
     ptr->obs_save->connect(ptr->registry_attr);
@@ -305,15 +309,15 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   for (auto&& [e, p] : ptr->registry_attr->view<project_config::base_config>().each()) {
     ptr->registry_attr->ctx().emplace<project_config::base_config>() = p;
   }
-  ptr->registry_attr->ctx().get<project>().set_path(in_path.parent_path());
+  ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
 
   return {};
 }
-bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
+bsys::error_code sqlite_file::save_impl() {
   ptr->registry_attr = g_reg();
 
-  DOODLE_LOG_INFO("文件位置 {}", in_path);
-  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  DOODLE_LOG_INFO("文件位置 {}", project_path);
+  doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
   try {
     auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
@@ -323,8 +327,8 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
     g_reg()->ctx().get<status_info>().message = "保存失败 3s 后重试";
     ptr->error_timer                          = std::make_shared<boost::asio::system_timer>(g_io_context());
-    ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
-      this->async_save(l_path, [](boost::system::error_code in) -> void {});
+    ptr->error_timer->async_wait([l_path = project_path, this](auto&& in) {
+      this->async_save(project_path, [](boost::system::error_code in) -> void {});
     });
     ptr->error_timer->expires_from_now(3s);
   }

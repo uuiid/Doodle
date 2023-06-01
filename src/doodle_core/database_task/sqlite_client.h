@@ -11,6 +11,7 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 
+#include <filesystem>
 #include <utility>
 namespace doodle::database_n {
 
@@ -18,12 +19,12 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file_translator> {
  private:
-  bsys::error_code open_begin(const FSys::path& in_path);
-  bsys::error_code open(const FSys::path& in_path);
+  bsys::error_code open_begin();
+  bsys::error_code open();
   bsys::error_code open_end();
 
-  bsys::error_code save_begin(const FSys::path& in_path);
-  bsys::error_code save(const FSys::path& in_path);
+  bsys::error_code save_begin();
+  bsys::error_code save();
   bsys::error_code save_end();
 
   bool is_saving{};
@@ -35,16 +36,17 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @param in_path 传入的保存路径
    * @return 错误代码(异步)
    */
-  virtual bsys::error_code open_impl(const FSys::path& in_path) = 0;
+  virtual bsys::error_code open_impl() = 0;
   /**
    * @brief 文件保存(@b 非主线程) 可以阻塞,
    * @param in_path 传入的需要保存的路径
    * @return 错误代码(异步)
    */
-  virtual bsys::error_code save_impl(const FSys::path& in_path) = 0;
+  virtual bsys::error_code save_impl() = 0;
 
-  //  virtual bool save_impl(const FSys::path& in_path) = 0;
   enum class state : std::uint8_t { init, end };
+
+  FSys::path project_path;
 
  public:
   virtual ~file_translator() = default;
@@ -55,14 +57,15 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   template <typename CompletionToken>
   auto async_open(const FSys::path& in_path, CompletionToken&& token) ->
       typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
+    project_path = in_path;
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
-        [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
+        [l_s = this->shared_from_this()](auto&& completion_handler) {
           if (l_s->is_opening) return;
-          l_s->open_begin(in_path);
+          l_s->open_begin();
 
           std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(), [l_s, in_path, call]() {
-            auto l_r = l_s->open(in_path);
+          boost::asio::post(g_thread(), [l_s, call]() {
+            auto l_r = l_s->open();
             boost::asio::post(g_io_context(), [call, l_r, l_s]() {
               l_s->open_end();
               call(l_r);
@@ -80,14 +83,15 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   template <typename CompletionToken>
   auto async_save(const FSys::path& in_path, CompletionToken&& token) ->
       typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
+    project_path = in_path;
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
-        [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
+        [l_s = this->shared_from_this()](auto&& completion_handler) {
           if (l_s->is_saving) return;
-          l_s->save_begin(in_path);
+          l_s->save_begin();
 
           std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(), [l_s, in_path, call]() {
-            auto l_r = l_s->save(in_path);
+          boost::asio::post(g_thread(), [l_s, call]() {
+            auto l_r = l_s->save();
             boost::asio::post(g_io_context(), [call, l_r, l_s]() {
               l_s->save_end();
               call(l_r);
@@ -100,14 +104,16 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
 
   inline void save_(const FSys::path& in_path) {
     if (is_saving) return;
-    save_begin(in_path);
-    save(in_path);
+    project_path = in_path;
+    save_begin();
+    save();
     save_end();
   }
   inline void open_(const FSys::path& in_path) {
     if (is_opening) return;
-    open_begin(in_path);
-    open(in_path);
+    project_path = in_path;
+    open_begin();
+    open();
     open_end();
   }
 
@@ -120,8 +126,8 @@ class DOODLE_CORE_API sqlite_file : public file_translator {
   std::unique_ptr<impl> ptr;
 
  protected:
-  bsys::error_code open_impl(const FSys::path& in_path) override;
-  bsys::error_code save_impl(const FSys::path& in_path) override;
+  bsys::error_code open_impl() override;
+  bsys::error_code save_impl() override;
 
  public:
   sqlite_file();
