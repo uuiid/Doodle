@@ -38,7 +38,4 @@ if(DEFINED Ue4_ROOT_DIR)
                 COMPONENT ue4_plug
                 PATTERN "Intermediate" EXCLUDE
         )
-        install(FILES ue_install.wxs
-                DESTINATION wix
-                COMPONENT ue4_plug)
 endif()

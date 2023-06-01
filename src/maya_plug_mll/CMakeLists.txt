@@ -62,6 +62,3 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
 install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
         DESTINATION maya/scripts/scripts/
         COMPONENT maya_plug_com)
-install(FILES maya_plug_install.wxs
-        DESTINATION wix
-        COMPONENT maya_plug_com)
