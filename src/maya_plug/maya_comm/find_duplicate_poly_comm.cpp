@@ -57,7 +57,7 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
         if (k_ref.set_namespace(d_str{k_name})) {
           if (k_ref) {
             DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-            k_ref.qlUpdateInitialPose();
+            // todo: 重置布料
           } else {
             DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
           }
@@ -90,7 +90,7 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
         if (k_ref.set_namespace(i_ns)) {
           if (k_ref) {
             DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-            k_ref.qlUpdateInitialPose();
+            // todo: 重置布料
           } else {
             DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
           }
