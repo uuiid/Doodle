@@ -10,7 +10,7 @@ if %errorlevel% NEQ 0 exit 1
 echo -----------------build maya %1--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset Release_Exe%Doodle_suffix% --target doodle_maya
+--preset Release_Maya%Doodle_suffix%
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------install maya %1--------------------

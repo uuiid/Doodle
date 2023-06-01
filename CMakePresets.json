@@ -172,6 +172,16 @@
       ]
     },
     {
+      "name": "Release_Maya",
+      "configurePreset": "Ninja_release",
+      "jobs": 10,
+      "targets": [
+        "doodle_maya",
+        "doodle_maya_exe"
+      ],
+      "hidden": true
+    },
+    {
       "name": "Release_maya_2018",
       "configurePreset": "Ninja_release_maya_2018",
       "jobs": 10,
