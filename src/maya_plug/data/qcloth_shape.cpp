@@ -567,7 +567,7 @@ void qcloth_shape::sort_group() {
 bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
   in_handle.any_of<qcloth_shape_n::maya_obj>() ? void() : throw_exception(doodle_error{"缺失组件"s});
   MStatus l_s{};
-  auto l_shape = get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
+  auto l_shape = maya_plug::get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
   /// 寻找高模的皮肤簇
   for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
        i.next()) {
@@ -619,7 +619,7 @@ MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
   MStatus l_s{};
   MObject l_skin_cluster{};
   /// \brief 获得组件点上下文
-  auto l_shape = get_shape(in_anim_node);
+  auto l_shape = maya_plug::get_shape(in_anim_node);
 
   /// 寻找高模的皮肤簇
   for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
@@ -645,7 +645,7 @@ MDagPath qcloth_shape::cloth_mesh() const {
   MObject l_mesh{};
   /// \brief 获得组件点上下文
   DOODLE_LOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
-  auto l_shape = get_shape(obj);
+  auto l_shape = maya_plug::get_shape(obj);
   auto l_plug  = get_plug(l_shape, "outputMesh");
 
   /// 寻找高模的皮肤簇
@@ -734,6 +734,12 @@ MObject qcloth_shape::get_solver() const {
   DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
   return l_object;
 }
+
+MDagPath qcloth_shape::get_shape() const {
+  DOODLE_LOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
+  return maya_plug::get_dag_path(obj);
+}
+
 std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
 
 void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {

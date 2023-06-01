@@ -88,10 +88,11 @@ class qcloth_shape : public cloth_interface::element_type {
   void add_field(const entt::handle& in_handle) const override;
   void add_collision(const entt::handle& in_handle) const override;
   void rest(const entt::handle& in_handle) const override;
-  MObject get_solver() const override;
+  [[nodiscard]] MObject get_solver() const override;
   void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const override;
-  std::string get_namespace() const override;
+  [[nodiscard]] std::string get_namespace() const override;
   void cover_cloth_attr(const entt::handle& in_handle) const override;
+  [[nodiscard]] MDagPath get_shape() const override;
 
   /**
    * @brief 获取布料形状（这个是一个tran）
