@@ -3,9 +3,12 @@
 #include <doodle_core/core/core_set.h>
 
 #include <boost/locale.hpp>
+#include <boost/process/environment.hpp>
 
 #include <Windows.h>
+#include <chrono>
 #include <date/date.h>
+#include <date/tz.h>
 #include <fmt/core.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -50,7 +53,7 @@ logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" /
 
 auto make_log(const FSys::path &in_path, const std::string &in_name = "doodle_lib"s) {
   if (!FSys::exists(in_path)) FSys::create_directories(in_path);
-  auto l_path = in_path / fmt::format("{}.txt", core_set::get_set().get_uuid());
+  auto l_path = in_path / fmt::format("{:%Y-%m-%d %H-%M-%S}_{}.txt", chrono::system_clock::now(), boost::this_process::get_id());
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
     auto l_file =
