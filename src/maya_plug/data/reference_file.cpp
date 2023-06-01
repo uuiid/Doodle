@@ -24,6 +24,7 @@
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
 #include <array>
+#include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
@@ -40,7 +41,6 @@
 #include <maya/MUuid.h>
 #include <string_view>
 #include <vector>
-
 
 namespace doodle::maya_plug {
 
@@ -526,8 +526,9 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
   maya_chick(l_status);
   for (auto &&[e, l_cloth] : g_reg()->view<cloth_interface>().each()) {
     if (l_cloth->get_namespace() == get_namespace()) {
+      auto l_obj = l_cloth->get_shape().node();
       for (MItDependencyGraph l_it{
-               l_export_group, MFn::kMesh, MItDependencyGraph::Direction::kDownstream,
+               l_obj, MFn::kMesh, MItDependencyGraph::Direction::kDownstream,
                MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
            !l_it.isDone(); l_it.next()) {
         auto l_current_path = get_dag_path(get_transform(l_it.currentItem(&l_status)));
