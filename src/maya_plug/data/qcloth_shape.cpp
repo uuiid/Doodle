@@ -19,6 +19,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "data/qcloth_shape.h"
+#include "data/sim_cover_attr.h"
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
 #include <magic_enum.hpp>
@@ -744,6 +745,7 @@ std::string qcloth_shape::get_namespace() const { return m_namespace::get_namesp
 
 void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
   /// todo: 未作处理
+  sim_cover_attr::cover_qcloth_attr(in_handle);
 }
 
 }  // namespace doodle::maya_plug
