@@ -83,7 +83,7 @@ class maya_tool::impl {
 
   maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
   maya_tool_ns::ref_attr_gui ref_attr{};
-  boost::signals2::scoped_connection scoped_connection_1{};
+  boost::signals2::scoped_connection scoped_connection_1{}, scoped_connection_2{};
 
   gui_cache<bool> replace_ref_file_{"替换引用"s, true};
   gui_cache<bool> sim_file_{"解算文件"s, true};
@@ -108,6 +108,9 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
 
 void maya_tool::init() {
   ptr_attr->scoped_connection_1 = g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
+    p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
+  });
+  ptr_attr->scoped_connection_2 = g_reg()->ctx().get<core_sig>().save_end.connect([this]() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
   p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
