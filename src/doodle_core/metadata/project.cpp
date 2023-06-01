@@ -105,7 +105,6 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["upload_path"]                       = p.upload_path;
   j["season_count"]                      = p.season_count;
 
-  j["use_merge_mesh"]                    = p.use_merge_mesh;
   j["use_divide_group_export"]           = p.use_divide_group_export;
   j["use_only_sim_cloth"]                = p.use_only_sim_cloth;
 
@@ -133,7 +132,6 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("upload_path")) j.at("upload_path").get_to(p.upload_path);
   if (j.contains("season_count")) j.at("season_count").get_to(p.season_count);
 
-  if (j.contains("use_merge_mesh")) j.at("use_merge_mesh").get_to(p.use_merge_mesh);
   if (j.contains("use_divide_group_export")) j.at("use_divide_group_export").get_to(p.use_divide_group_export);
   if (j.contains("use_only_sim_cloth")) j.at("use_only_sim_cloth").get_to(p.use_only_sim_cloth);
 

@@ -69,7 +69,7 @@ class project_edit::impl {
 
   gui_cache<bool> use_only_sim_cloth{"只导出解算模型"s, false};
   gui_cache<bool> use_divide_group_export{"使用组划分导出"s, false};
-  gui_cache<bool> use_merge_mesh{"合并网格体"s, true};
+
   gui_cache<std::int32_t> t_post{"TPost时间"s, 950};
   gui_cache<std::int32_t> export_anim_time{"导出动画开始帧"s, 1001};
 
@@ -116,7 +116,7 @@ class project_edit::impl {
 
     use_only_sim_cloth      = l_config.use_only_sim_cloth;
     use_divide_group_export = l_config.use_divide_group_export;
-    use_merge_mesh          = l_config.use_merge_mesh;
+
     t_post                  = l_config.t_post;
     export_anim_time        = l_config.export_anim_time;
 
@@ -162,7 +162,7 @@ class project_edit::impl {
 
     l_c.use_only_sim_cloth      = use_only_sim_cloth;
     l_c.use_divide_group_export = use_divide_group_export;
-    l_c.use_merge_mesh          = use_merge_mesh;
+
     l_c.t_post                  = t_post;
     l_c.export_anim_time        = export_anim_time;
 
@@ -211,7 +211,6 @@ bool project_edit::render() {
   ImGui::Checkbox(*p_i->use_divide_group_export, &p_i->use_divide_group_export);
   if (p_i->use_divide_group_export()) ImGui::InputText(*p_i->maya_out_put_abc_suffix, &p_i->maya_out_put_abc_suffix);
 
-  ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
   ImGui::InputInt(*p_i->t_post, &p_i->t_post);
   ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
   ImGui::Checkbox(*p_i->use_write_metadata, &p_i->use_write_metadata);

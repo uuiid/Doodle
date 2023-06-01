@@ -110,7 +110,6 @@ void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::v
         l_table.season_count                      = sqlpp::parameter(l_table.season_count),
         l_table.use_only_sim_cloth                = sqlpp::parameter(l_table.use_only_sim_cloth),
         l_table.use_divide_group_export           = sqlpp::parameter(l_table.use_divide_group_export),
-        l_table.use_merge_mesh                    = sqlpp::parameter(l_table.use_merge_mesh),
         l_table.t_post                            = sqlpp::parameter(l_table.t_post),
         l_table.export_anim_time                  = sqlpp::parameter(l_table.export_anim_time),
         l_table.use_write_metadata                = sqlpp::parameter(l_table.use_write_metadata),
@@ -135,7 +134,6 @@ void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::v
       l_pre.params.season_count                      = l_pconfig.season_count;
       l_pre.params.use_only_sim_cloth                = l_pconfig.use_only_sim_cloth;
       l_pre.params.use_divide_group_export           = l_pconfig.use_divide_group_export;
-      l_pre.params.use_merge_mesh                    = l_pconfig.use_merge_mesh;
       l_pre.params.t_post                            = l_pconfig.t_post;
       l_pre.params.export_anim_time                  = l_pconfig.export_anim_time;
       l_pre.params.use_write_metadata                = l_pconfig.use_write_metadata;
@@ -176,7 +174,6 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::m
                 l_table.season_count                      = sqlpp::parameter(l_table.season_count),
                 l_table.use_only_sim_cloth                = sqlpp::parameter(l_table.use_only_sim_cloth),
                 l_table.use_divide_group_export           = sqlpp::parameter(l_table.use_divide_group_export),
-                l_table.use_merge_mesh                    = sqlpp::parameter(l_table.use_merge_mesh),
                 l_table.t_post                            = sqlpp::parameter(l_table.t_post),
                 l_table.export_anim_time                  = sqlpp::parameter(l_table.export_anim_time),
                 l_table.use_write_metadata                = sqlpp::parameter(l_table.use_write_metadata),
@@ -203,7 +200,6 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::m
       l_pre.params.season_count                      = l_pconfig.season_count;
       l_pre.params.use_only_sim_cloth                = l_pconfig.use_only_sim_cloth;
       l_pre.params.use_divide_group_export           = l_pconfig.use_divide_group_export;
-      l_pre.params.use_merge_mesh                    = l_pconfig.use_merge_mesh;
       l_pre.params.t_post                            = l_pconfig.t_post;
       l_pre.params.export_anim_time                  = l_pconfig.export_anim_time;
       l_pre.params.use_write_metadata                = l_pconfig.use_write_metadata;
@@ -259,7 +255,7 @@ void sql_com<project_config::base_config>::select(
          l_conn(sqlpp::select(
                     l_table.id, l_table.sim_path, l_table.export_group, l_table.cloth_proxy,
                     l_table.simple_module_proxy, l_table.find_icon_regex, l_table.upload_path, l_table.season_count,
-                    l_table.use_only_sim_cloth, l_table.use_divide_group_export, l_table.use_merge_mesh, l_table.t_post,
+                    l_table.use_only_sim_cloth, l_table.use_divide_group_export, l_table.t_post,
                     l_table.export_anim_time, l_table.use_write_metadata, l_table.abc_export_extract_reference_name,
                     l_table.abc_export_format_reference_name, l_table.abc_export_extract_scene_name,
                     l_table.abc_export_format_scene_name, l_table.abc_export_add_frame_range,
@@ -277,7 +273,6 @@ void sql_com<project_config::base_config>::select(
       l_p_c.season_count                      = row.season_count.value();
       l_p_c.use_only_sim_cloth                = row.use_only_sim_cloth.value();
       l_p_c.use_divide_group_export           = row.use_divide_group_export.value();
-      l_p_c.use_merge_mesh                    = row.use_merge_mesh.value();
       l_p_c.t_post                            = row.t_post.value();
       l_p_c.export_anim_time                  = row.export_anim_time.value();
       l_p_c.use_write_metadata                = row.use_write_metadata.value();

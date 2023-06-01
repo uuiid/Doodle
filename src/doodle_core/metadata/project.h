@@ -116,9 +116,6 @@ class DOODLE_CORE_API base_config {
   bool use_divide_group_export{false};
   /// 重命名和合并网格体是在最后判断的
 
-  /// \brief maya导出时, 是否进行合并网格操作
-  bool use_merge_mesh{true};
-
   /// \brief t post 时间
   std::int32_t t_post{950u};
   /// \brief 导出动画时间

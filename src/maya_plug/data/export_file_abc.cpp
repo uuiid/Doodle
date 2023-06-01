@@ -98,42 +98,7 @@ std::string export_file_abc::get_abc_exprt_arg() const {
 }
 
 void export_file_abc::export_abc(const MSelectionList& in_select, const FSys::path& in_path) {
-  auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
-
-  MStatus k_s{};
-  if (in_select.isEmpty()) {
-    DOODLE_LOG_INFO("没有找到导出对象");
-    return;
-  }
-
-  std::vector<std::string> l_export_paths;
-  if (k_cfg.use_merge_mesh) {
-    MDagPath k_mesh_path{comm_warp::marge_mesh(in_select, m_name)};
-    l_export_paths.emplace_back(fmt::format("-root {}", get_node_full_name(k_mesh_path)));
-  } else {
-    MStringArray l_string_array{};
-    k_s = in_select.getSelectionStrings(l_string_array);
-    DOODLE_MAYA_CHICK(k_s);
-    for (auto i = 0; i < l_string_array.length(); ++i) {
-      l_export_paths.emplace_back(fmt::format("-root {}", l_string_array[i]));
-    }
-  }
-
-  auto l_com = fmt::format(
-      R"(
-AbcExport -j "-frameRange {} {} {} -dataFormat ogawa {} -file {}";
-)",
-      begin_time.as(MTime::uiUnit()),  /// \brief 开始时间
-      end_time.as(MTime::uiUnit()),    /// \brief 结束时间
-      get_abc_exprt_arg(),             /// \brief 导出参数
-      fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
-      in_path.generic_string()
-  );
-  DOODLE_LOG_INFO("生成导出命令 {}", l_com);
-
-  /// \brief 导出abc命令
-  k_s = MGlobal::executeCommand(d_str{l_com});  /// \brief 导出文件路径，包含文件名和文件路径
-  DOODLE_MAYA_CHICK(k_s);
+  DOODLE_LOG_INFO("请使用本机导出工具导出 {} {}", in_select, in_path);
 }
 
 void export_file_abc::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle) {
