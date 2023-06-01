@@ -83,38 +83,7 @@ std::vector<MDagPath> export_file_abc::find_out_group_child_suffix_node(
 
   return l_r;
 }
-void export_file_abc::rename_material(const std::string& in_namespace) {
-  auto l_list = m_namespace::get_namespace_objects(in_namespace);
-  MFnDependencyNode k_node{};
 
-  ranges::for_each(l_list, [&](MObject& l_obj) {
-    MStatus k_s{};
-    if (l_obj.hasFn(MFn::Type::kShadingEngine)) {  /// \brief 找到符合的着色集
-      k_node.setObject(l_obj);
-      auto k_plug = get_plug(l_obj, "surfaceShader"s);
-
-      MPlugArray l_m_plug_array{};
-      auto k_source = k_plug.source(&k_s);
-      DOODLE_MAYA_CHICK(k_s);
-      if (k_source.isNull(&k_s)) {
-        return;
-      }
-      DOODLE_MAYA_CHICK(k_s);
-      auto k_mat = k_source.node(&k_s);  /// \brief 从属性链接获得材质名称
-      DOODLE_MAYA_CHICK(k_s);
-      MFnDependencyNode k_mat_node{};
-      k_mat_node.setObject(k_mat);
-      std::string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
-      DOODLE_MAYA_CHICK(k_s);
-      /// \brief 重命名材质名称
-      k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
-      DOODLE_MAYA_CHICK(k_s);
-      DOODLE_LOG_INFO("重命名材质 {} -> {}", d_str{k_node.name()}.str(), k_mat_node_name);
-
-      k_node.setName(d_str{k_mat_node_name}, false, &k_s);
-    }
-  });
-}
 std::string export_file_abc::get_abc_exprt_arg() const {
   boost::ignore_unused(this);
   auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
@@ -131,7 +100,6 @@ std::string export_file_abc::get_abc_exprt_arg() const {
 void export_file_abc::export_abc(const MSelectionList& in_select, const FSys::path& in_path) {
   auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
 
-  if (k_cfg.use_rename_material) rename_material(m_name);
   MStatus k_s{};
   if (in_select.isEmpty()) {
     DOODLE_LOG_INFO("没有找到导出对象");

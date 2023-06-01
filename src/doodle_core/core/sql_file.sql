@@ -216,7 +216,6 @@ CREATE TABLE IF NOT EXISTS project_config
     season_count                      integer,
     use_only_sim_cloth                boolean,
     use_divide_group_export           boolean,
-    use_rename_material               boolean,
     use_merge_mesh                    boolean,
     t_post                            integer,
     export_anim_time                  integer,

@@ -18,7 +18,6 @@ class export_file_abc {
   std::vector<MDagPath> child_export_model(const MDagPath& in_root);
   std::vector<MDagPath> find_out_group_child_suffix_node(const MDagPath& in_root, const std::string& in_suffix);
 
-  void rename_material(const std::string& in_namespace);
   [[nodiscard]] std::string get_abc_exprt_arg() const;
 
  protected:
