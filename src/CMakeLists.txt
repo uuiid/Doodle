@@ -10,6 +10,11 @@ include(FetchContent)
 # DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 # )
 FetchContent_Declare(
+        InnoLagnuage
+        URL https://raw.github.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl
+        DOWNLOAD_NO_EXTRACT TRUE
+)
+FetchContent_Declare(
         fontawesome
         GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
         GIT_TAG 6.x
@@ -33,7 +38,7 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-FetchContent_MakeAvailable(fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
+FetchContent_MakeAvailable(fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn innolagnuage)
 
 # =====================文档过程===============================
 # 添加文档生成

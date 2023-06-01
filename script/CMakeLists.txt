@@ -15,8 +15,7 @@ if(DEFINED Ue4_ROOT_DIR)
                 PATTERN "Intermediate" EXCLUDE
                 PATTERN "*.pdb" EXCLUDE
                 PATTERN "Source" EXCLUDE
-                )
-        doodle_install_code_wix(ue427_Plug ue4_plug)
+        )
 
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.0/Plugins/Doodle/
                 DESTINATION ue50_Plug
@@ -24,8 +23,7 @@ if(DEFINED Ue4_ROOT_DIR)
                 PATTERN "Intermediate" EXCLUDE
                 PATTERN "*.pdb" EXCLUDE
                 PATTERN "Source" EXCLUDE
-                )
-        doodle_install_code_wix(ue50_Plug ue4_plug)
+        )
 
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.1/Plugins/Doodle/
                 DESTINATION ue51_Plug
@@ -33,15 +31,13 @@ if(DEFINED Ue4_ROOT_DIR)
                 PATTERN "Intermediate" EXCLUDE
                 PATTERN "*.pdb" EXCLUDE
                 PATTERN "Source" EXCLUDE
-                )
-        doodle_install_code_wix(ue51_Plug ue4_plug)
+        )
 
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/SideFX_Labs/
                 DESTINATION SideFX_Labs
                 COMPONENT ue4_plug
                 PATTERN "Intermediate" EXCLUDE
-                )
-        doodle_install_code_wix(SideFX_Labs ue4_plug)
+        )
         install(FILES ue_install.wxs
                 DESTINATION wix
                 COMPONENT ue4_plug)

@@ -4,7 +4,6 @@ install(DIRECTORY otls
 install(FILES doodle_houdini.json
         DESTINATION houdini
         COMPONENT doodle_houdini_com)
-doodle_install_code_wix(houdini doodle_houdini_com)
 install(FILES houdini_install.wxs
         DESTINATION wix
         COMPONENT doodle_houdini_com)

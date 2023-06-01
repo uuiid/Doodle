@@ -49,16 +49,3 @@ install(TARGETS doodle_maya_exe
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
         COMPONENT exe_com
 )
-
-# doodle_install_code_wix(bin exe_com)
-# configure_file(install.wxs install.wxs COPYONLY)
-# configure_file(install_script.cmake install_script.cmake @ONLY)
-#
-# install(CODE
-# "
-# set(DOODLE_RUN_NAME $<TARGET_FILE_NAME:doodle_maya_exe>)
-# set(DOODLE_MAIN_EXE $<TARGET_FILE:doodle_maya_exe>)
-#
-# include(${CMAKE_CURRENT_BINARY_DIR}/install_script.cmake)
-# "
-# COMPONENT exe_com)

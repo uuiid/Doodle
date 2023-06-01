@@ -94,18 +94,3 @@ python $<TARGET_FILE:sqlpp11::ddl2cpp> ${_PATH} ${CMAKE_CURRENT_LIST_DIR}/genera
 
 
 endfunction()
-
-function(doodle_install_code_wix dir COMPONENT)
-    install(CODE
-            "
-            execute_process(
-                    COMMAND \${CMAKE_COMMAND} -E make_directory \${CMAKE_INSTALL_PREFIX}/${dir}
-                    COMMAND py ${PROJECT_SOURCE_DIR}/src/install/fix_main_wxs.py
-                    --input_dir \${CMAKE_INSTALL_PREFIX}/${dir}
-
-                    WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
-            )
-"
-            COMPONENT ${COMPONENT}
-            )
-endfunction()

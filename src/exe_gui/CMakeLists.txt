@@ -38,7 +38,6 @@ install(TARGETS DoodleExe
         )
 #最后实现camke修复
 
-doodle_install_code_wix(bin exe_com)
 configure_file(install.wxs install.wxs COPYONLY)
 configure_file(install_script.cmake install_script.cmake @ONLY)
 

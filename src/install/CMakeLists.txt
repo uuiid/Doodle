@@ -22,3 +22,4 @@ install(CODE
         "
         COMPONENT exe_com
         )
+message("${CMAKE_INSTALL_PREFIX} ${PROJECT_SOURCE_DIR}")
