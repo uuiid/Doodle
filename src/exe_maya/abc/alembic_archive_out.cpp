@@ -327,8 +327,8 @@ void archive_out::wirte_transform(dag_path_out_data& in_path) {
 }
 
 void archive_out::wirte_mesh(dag_path_out_data& in_path) {
+  in_path.dag_path_.extendToShape();
   MFnMesh l_mesh{in_path.dag_path_};
-
   wirte_transform(in_path);
 
   auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
