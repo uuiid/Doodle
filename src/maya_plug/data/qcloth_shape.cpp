@@ -744,7 +744,6 @@ MDagPath qcloth_shape::get_shape() const {
 std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
 
 void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
-  /// todo: 未作处理
   sim_cover_attr::cover_qcloth_attr(in_handle);
 }
 
