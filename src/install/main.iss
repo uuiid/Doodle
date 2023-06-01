@@ -26,6 +26,7 @@ OutputBaseFilename=${DOODLE_PACKAGE_NAME}
 SetupIconFile=${PROJECT_SOURCE_DIR}/src/icon.ico
 Compression=lzma
 SolidCompression=yes
+ChangesAssociations=yes
 
 [Languages]
 Name: "Chinese"; MessagesFile: "${innolagnuage_SOURCE_DIR}/ChineseSimplified.isl"
@@ -51,7 +52,8 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tas
 Filename: "{app}\bin\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Registry]
-Root: "HKCU64"; Subkey: "Software\uuiid\Doodle"; ValueType: qword; ValueName: "installed_desktop"; ValueData: "1"
-Root: "HKLM64"; Subkey: "SOFTWARE\Classes\doodle.main\shell\open\command"; ValueType: string; ValueData: ""{app}\bin\{#MyAppExeName}" "%1""
-Root: "HKLM64"; Subkey: "SOFTWARE\Classes\doodle.main\DefaultIcon"; ValueType: string; ValueData: "{app}\bin\{#MyAppExeName}"
-Root: "HKLM64"; Subkey: "SOFTWARE\Classes\.doodle_db"; ValueType: string; ValueData: "doodle.main"
+Root: "HKA"; Subkey: "SOFTWARE\Classes\doodle.main"; ValueType: string; ValueName: ""; ValueData: "doodle"; Flags: uninsdeletekeyifempty uninsdeletevalue
+Root: "HKA"; Subkey: "SOFTWARE\Classes\doodle.main\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#MyAppExeName}"; Flags: uninsdeletekeyifempty uninsdeletevalue
+Root: "HKA"; Subkey: "SOFTWARE\Classes\doodle.main\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekeyifempty uninsdeletevalue
+Root: "HKA"; Subkey: "SOFTWARE\Classes\.doodle_db"; ValueType: string;  ValueName: ""; ValueData: "doodle.main"; Flags: uninsdeletekeyifempty uninsdeletevalue
+Root: "HKA"; Subkey: "SOFTWARE\Classes\.doodle_db\OpenWithProgids"; ValueType: string; ValueName: "doodle.main"; ValueData: ""; Flags: uninsdeletekeyifempty uninsdeletevalue
