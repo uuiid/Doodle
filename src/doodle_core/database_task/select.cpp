@@ -83,10 +83,10 @@ struct future_data {
     );
     in_reg->remove<t>(l_entt_list.begin(), l_entt_list.end());
     in_reg->insert<t>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
-    for (auto&& e : l_entt_list) {
-      // 触发更改
-      in_reg->patch<t>(e);
-    }
+    // for (auto&& e : l_entt_list) {
+    //   // 触发更改
+    //   in_reg->patch<t>(e);
+    // }
   };
 };
 
@@ -269,7 +269,7 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
 }
 template <typename Type>
 void patch_old_sig(entt::registry& in_reg) {
-  for (auto&& [e, p] : in_reg.view<Type>().each()) {
+  for (auto& e : in_reg.view<Type>()) {
     in_reg.patch<Type>(e);
   }
 }
@@ -324,17 +324,14 @@ bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
   return detail::has_table(tables::com_entity{}, *in_connect);
 }
 
-void select::patch(conn_ptr& in_connect) {
+void select::patch() {
   for (auto&& [e, p] : p_i->local_reg->view<project>().each()) {
     p_i->local_reg->emplace_or_replace<database>(e);
   }
   for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
     p_i->local_reg->emplace_or_replace<database>(e);
   }
-  patch_old<DOODLE_SQLITE_TYPE>(*p_i->local_reg);
-
-  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
-  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::usertab{}));
+  // patch_old<DOODLE_SQLITE_TYPE>(*p_i->local_reg);
 }
 
 }  // namespace doodle::database_n

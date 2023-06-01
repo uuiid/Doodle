@@ -19,7 +19,7 @@ class DOODLE_CORE_API select {
 
   bool is_old(const FSys::path& in_project_path, conn_ptr& in_connect);
 
-  void patch(conn_ptr& in_connect);
+  void patch();
 };
 
 }  // namespace doodle::database_n
