@@ -36,7 +36,7 @@ install(TARGETS DoodleExe
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
         COMPONENT exe_com
 )
-
+configure_file(install_script.cmake install_script.cmake @ONLY)
 # 最后实现camke修复
 install(CODE
         "
