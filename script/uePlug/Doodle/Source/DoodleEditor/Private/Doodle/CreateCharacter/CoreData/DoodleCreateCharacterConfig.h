@@ -62,13 +62,6 @@ struct FDoodleCreateCharacterConfigUINode {
   }
 };
 
-USTRUCT()
-struct FDoodleGuidList {
-  GENERATED_BODY();
-  UPROPERTY()
-  TArray<FGuid> List{};
-};
-
 UCLASS()
 class UDoodleCreateCharacterConfig : public UObject {
  public:
@@ -88,7 +81,7 @@ class UDoodleCreateCharacterConfig : public UObject {
   void Rename_UI_ShowName(int32 In_Node, const FString& InName);
   bool Delete_Ui_Node(int32 In_Node);
 
-  TTuple<FName, FTransform> Evaluate(const FGuid& In_BoneName, const float InValue) const;
+  TArray<TTuple<FName, FTransform>> Evaluate(int32_t In_Index) const;
 
   USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 
@@ -96,11 +89,11 @@ class UDoodleCreateCharacterConfig : public UObject {
 
  private:
   void ClearNullKeys();
-  void FillCache();
+  void FillCache() const;
+  void TestCache() const;
 
   // 配置缓存
-  UPROPERTY();
-  TMap<FName, FDoodleGuidList> ListConfigNode_Cache;
+  mutable TMap<FName, TArray<TPair<FGuid, int32_t>>> ListConfigNode_Cache;
 
   // 骨骼网格体引用
   UPROPERTY();

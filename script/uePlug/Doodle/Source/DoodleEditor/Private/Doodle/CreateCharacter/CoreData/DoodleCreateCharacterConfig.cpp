@@ -39,9 +39,10 @@ TOptional<FGuid> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bo
   L_Node.BoneName = In_Bone;
 
   L_UI.Keys.Add(L_Key);
+  TestCache();
   if (!ListConfigNode_Cache.Contains(In_Bone))
     ListConfigNode_Cache.Emplace(In_Bone);
-  ListConfigNode_Cache[In_Bone].List.Emplace(L_Key);
+  ListConfigNode_Cache[In_Bone].Emplace(L_Key, In_UI_Parent);
   MarkPackageDirty();
   return L_Key;
 }
@@ -124,14 +125,23 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
   return true;
 }
 
-TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FGuid& In_BoneName, const float InValue) const {
-  if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
-  FTransform L_Tran = FTransform::Identity;
-  for (auto&& guid : ListConfigNode_Cache[ListConfigNode[In_BoneName].BoneName].List) {
-    L_Tran *= ListConfigNode[guid].WeightCurve.Evaluate(InValue, 1.0f);
+TArray<TTuple<FName, FTransform>> UDoodleCreateCharacterConfig::Evaluate(int32_t In_Index) const {
+  if (!ListTrees.IsValidIndex(In_Index)) return {};
+  const FDoodleCreateCharacterConfigUINode& L_Bone = ListTrees[In_Index];
+
+  TArray<TTuple<FName, FTransform>> L_Out{};
+  TestCache();
+  if (ListConfigNode_Cache.IsEmpty())
+    return L_Out;
+  for (auto&& L_Key : L_Bone.Keys) {
+    FTransform L_Tran = FTransform::Identity;
+    for (auto&& [guid, id] : ListConfigNode_Cache[ListConfigNode[L_Key].BoneName]) {
+      L_Tran *= ListConfigNode[guid].WeightCurve.Evaluate(ListTrees[id].Value, 1.0f);
+    }
+    L_Out.Emplace(ListConfigNode[L_Key].BoneName, L_Tran);
   }
 
-  return MakeTuple(ListConfigNode[In_BoneName].BoneName, L_Tran);
+  return L_Out;
 }
 
 void UDoodleCreateCharacterConfig::ClearNullKeys() {
@@ -151,11 +161,23 @@ void UDoodleCreateCharacterConfig::ClearNullKeys() {
   MarkPackageDirty();
 }
 
-void UDoodleCreateCharacterConfig::FillCache() {
-  ListConfigNode.Empty();
-  for (auto&& [guid, bone] : ListConfigNode) {
-    if (!ListConfigNode_Cache.Contains(bone.BoneName))
-      ListConfigNode_Cache.Emplace(bone.BoneName);
-    ListConfigNode_Cache[bone.BoneName].List.Emplace(guid);
+void UDoodleCreateCharacterConfig::FillCache() const {
+  ListConfigNode_Cache.Empty();
+
+  for (auto i = 0; i < ListTrees.Num(); ++i) {
+    auto& L_UI = ListTrees[i];
+    for (auto&& L_Key : L_UI.Keys) {
+      if (!ListConfigNode.Contains(L_Key))
+        continue;
+      auto& bone = ListConfigNode[L_Key];
+      if (!ListConfigNode_Cache.Contains(bone.BoneName))
+        ListConfigNode_Cache.Emplace(bone.BoneName);
+      ListConfigNode_Cache[bone.BoneName].Emplace(L_Key, i);
+    }
   }
+}
+
+void UDoodleCreateCharacterConfig::TestCache() const {
+  if (ListConfigNode_Cache.IsEmpty())
+    FillCache();
 }
