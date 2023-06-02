@@ -16,12 +16,12 @@ mkdir %my_pwd%\build\html\file
 
 :copy_file
 echo "%my_pwd%\build\html\file *.msi -> %my_pwd%\build\install"
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.msi
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.exe
 
 echo "%my_pwd%\build\html\file *.7z -> %my_pwd%\build\install "
 robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z
 
-@REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.msi
+@REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.exe
 @REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.7z
 
 echo "generate %my_pwd%/build/html/file/index.html"
