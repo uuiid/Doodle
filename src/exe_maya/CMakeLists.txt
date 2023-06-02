@@ -40,12 +40,13 @@ set_target_properties(
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT maya_plug_com)
 include(InstallRequiredSystemLibraries)
 
 install(TARGETS doodle_maya_exe
         RUNTIME_DEPENDENCIES
+        DIRECTORIES ${MAYA_BASE_DIR}/bin
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
-        COMPONENT exe_com
+        COMPONENT maya_plug_com
 )

@@ -50,11 +50,12 @@ set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION maya/plug-ins)
 include(InstallRequiredSystemLibraries)
 install(TARGETS doodle_maya
         RUNTIME_DEPENDENCIES
+        DIRECTORIES ${MAYA_BASE_DIR}/bin
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
         DESTINATION maya/plug-ins
         COMPONENT maya_plug_com
-        )
+)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
         DESTINATION maya

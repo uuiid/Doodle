@@ -1,8 +1,8 @@
 
 
 # 修复dll
-include(BundleUtilities)
-fixup_bundle("${DOODLE_MAIN_EXE}" "" "")
+# include(BundleUtilities)
+# fixup_bundle("${DOODLE_MAIN_EXE}" "" "")
 
 # 生成授权文件
 execute_process(
