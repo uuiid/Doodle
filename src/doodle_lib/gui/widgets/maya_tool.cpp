@@ -141,9 +141,9 @@ bool maya_tool::render() {
     imgui::Checkbox(*ptr_attr->sim_file_, &ptr_attr->sim_file_);
     imgui::Checkbox(*ptr_attr->export_abc_type_, &ptr_attr->export_abc_type_);
     imgui::Checkbox(*ptr_attr->export_fbx_type_, &ptr_attr->export_fbx_type_);
-    imgui::Checkbox(*ptr_attr->create_play_blast_, &ptr_attr->create_play_blast_);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() { imgui::Checkbox("直接加载所有引用", &p_use_all_ref); };
+  imgui::Checkbox(*ptr_attr->create_play_blast_, &ptr_attr->create_play_blast_);
 
 #if defined DOODLE_MAYA_TOOL
   dear::TreeNode{*ptr_attr->ref_attr.ref_attr} && [&]() {
@@ -204,8 +204,8 @@ bool maya_tool::render() {
       k_arg.use_all_ref      = this->p_use_all_ref;
       k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-
       k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
+      if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");

@@ -4,6 +4,8 @@
 
 #include "reference_file.h"
 
+#include "doodle_core/exception/exception.h"
+#include "doodle_core/logger/logger.h"
 #include <doodle_core/lib_warp/std_fmt_optional.h>
 #include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_core/metadata/episodes.h>
@@ -546,6 +548,9 @@ bool reference_file::has_chick_group() const {
     return true;
   } catch (const maya_error &err) {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组 {}", file_namespace, k_cfg.export_group, err.what());
+    return false;
+  } catch (const doodle_error &err) {
+    DOODLE_LOG_ERROR("{}", boost::diagnostic_information(err));
     return false;
   }
 }

@@ -18,7 +18,7 @@ class export_fbx_facet final {
   MTime anim_begin_time_{};
 
   void create_ref_file();
-  void replace_ref_file();
+  void export_fbx();
 
   void play_blast();
   std::shared_ptr<maya_lib_guard> lib_guard_{};
