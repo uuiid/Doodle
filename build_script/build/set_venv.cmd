@@ -13,7 +13,6 @@ call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build
 cd %~dp0/../..
 
 set my_pwd=%cd%
-if [%1] == [] (set doodle_install_prefix=all) else (set doodle_install_prefix=%1)
 set cache_file=%my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
 call %my_pwd%/.venv/Scripts/activate.bat
 
@@ -22,6 +21,5 @@ call %my_pwd%/.venv/Scripts/activate.bat
 :end
 
 echo "Current Location is %my_pwd%"
-echo "doodle_install_prefix is %doodle_install_prefix%"
 echo "build config Ninja_release%Doodle_suffix%"
 echo "build target release_exe%Doodle_suffix%"

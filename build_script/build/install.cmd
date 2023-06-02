@@ -15,14 +15,14 @@ goto copy_file
 mkdir %my_pwd%\build\html\file
 
 :copy_file
-echo "%my_pwd%\build\html\file *.msi -> %my_pwd%\build\install\%doodle_install_prefix%"
-robocopy %my_pwd%\build\install\%doodle_install_prefix% %my_pwd%\build\html\file *.msi
+echo "%my_pwd%\build\html\file *.msi -> %my_pwd%\build\install"
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.msi
 
-echo "%my_pwd%\build\html\file *.7z -> %my_pwd%\build\install\%doodle_install_prefix% "
-robocopy %my_pwd%\build\install\%doodle_install_prefix% %my_pwd%\build\html\file *.7z
+echo "%my_pwd%\build\html\file *.7z -> %my_pwd%\build\install "
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z
 
-@REM robocopy %my_pwd%\build\install\%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\ *.msi
-@REM robocopy %my_pwd%\build\install\%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\ *.7z
+@REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.msi
+@REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.7z
 
 echo "generate %my_pwd%/build/html/file/index.html"
 python %my_pwd%/docs/generate_directory_index_caddystyle.py %my_pwd%/build/html/file
