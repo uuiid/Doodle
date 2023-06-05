@@ -7,6 +7,8 @@
 #include "fireLight.h"
 #include "DoodleSurroundMesh.h"
 #include "Doodle/AiArrayGeneration.h"
+#include "Doodle/AiArrayGenerationMove.h"
+#include "Doodle/AiArrayGenerationMoveSpline.h"
 #include "DoodleAiSplineCrowd.h"
 
 #include "UnrealEdGlobals.h"
@@ -67,10 +69,22 @@ void FdoodleUIModule::StartupModule() {
           nullptr, FAssetData{ADoodleAiArrayGeneration::StaticClass()}
       ))
   );
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle,
+      MakeShareable(new FPlaceableItem(
+          nullptr, FAssetData{ADoodleAiArrayGenerationMove::StaticClass()}
+      ))
+  );
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle,
+      MakeShareable(new FPlaceableItem(
+          nullptr, FAssetData{ADoodleAiArrayGenerationMoveSpline::StaticClass()}
+      ))
+  );
 
-   GUnrealEd->OnGetTemplateMapInfos().BindLambda([this]() -> const TArray<FTemplateMapInfo>& {
-     return Map_Lists;
-   });
+  GUnrealEd->OnGetTemplateMapInfos().BindLambda([this]() -> const TArray<FTemplateMapInfo>& {
+    return Map_Lists;
+  });
 }
 
 void FdoodleUIModule::ShutdownModule() {

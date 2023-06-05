@@ -5,10 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 ADoodleAiSplineCrowd::ADoodleAiSplineCrowd() {
   SplineMoveToComponent = CreateDefaultSubobject<UDoodleAiSplineMoveToComponent>("DoodleAiSplineMoveToComponent");
-  SplineMoveToComponent->AttachToComponent(
-      GetRootComponent(),
-      FAttachmentTransformRules::KeepRelativeTransform
-  );
+  SplineMoveToComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
   SplineMoveToComponent->SetRelativeLocation(FVector{0.f, 0.f, -85.f});
 
   SplineMoveToComponent->SetClosedLoop(true);
@@ -27,6 +24,7 @@ ADoodleAiSplineCrowd::ADoodleAiSplineCrowd() {
 
 void ADoodleAiSplineCrowd::BeginPlay() {
   TranRoot = GetActorTransform();
+  // DrawDebugPoint(GetWorld(), TranRoot.GetLocation(), 10, FColor::Yellow, false, 1.0f);
   // FDetachmentTransformRules L_Rules{EDetachmentRule::KeepWzorld, true};
   // SplineMoveToComponent->DetachFromComponent(L_Rules);
   // SplineMoveToComponent->AttachToComponent(
