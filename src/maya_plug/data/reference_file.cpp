@@ -15,6 +15,7 @@
 
 #include <boost/lambda2.hpp>
 
+#include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
@@ -120,7 +121,7 @@ FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) cons
         "{}_{}-{}", l_name, begin_end_time.first.as(MTime::uiUnit()), begin_end_time.second.as(MTime::uiUnit())
     );
 
-  l_name += ".abc";
+  l_name += export_fbx ? ".fbx" : ".abc";
 
   return FSys::path{l_name};
 }
