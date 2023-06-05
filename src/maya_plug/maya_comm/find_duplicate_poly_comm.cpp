@@ -49,7 +49,8 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
   } else {
     MSelectionList l_list{};
     DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
-    auto l_refs  = reference_file_factory{}.create_ref();
+    auto l_refs = reference_file_factory{}.create_ref();
+    ranges::for_each(l_refs, [&](entt::handle& in_handle) { in_handle.emplace<find_duplicate_poly>(in_handle); });
     auto l_cloth = qcloth_factory{}.create_cloth();
     std::map<std::string, entt::handle> l_ref_map{};
     l_ref_map = l_refs |
