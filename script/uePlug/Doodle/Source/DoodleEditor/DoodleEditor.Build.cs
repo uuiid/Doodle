@@ -111,6 +111,8 @@ public class doodleEditor : ModuleRules
                 "Persona",//骨骼
                 "TimeManagement",// 添加时间管理
                 //"Foliage", // 导出场景使用
+                "MeshDescription",//修改sk使用
+                "MeshBuilder",//修改sk使用
 
             }
             );

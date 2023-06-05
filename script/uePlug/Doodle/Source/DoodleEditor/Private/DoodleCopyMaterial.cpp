@@ -50,6 +50,36 @@
 /// 打开exe需要
 #include "GenericPlatform/GenericPlatformProcess.h"
 
+/// <summary>
+/// 测试使用
+/// </summary>
+#include "Rendering/SkeletalMeshModel.h"
+#include "MeshDescription.h"
+#include "SkeletalMeshBuilder.h"
+namespace {
+void print_test(USkeletalMesh *In_Obj) {
+  auto L_Lod = In_Obj->GetImportedModel();
+  FSkeletalMeshImportData L_Data{};
+  In_Obj->LoadLODImportedData(0, L_Data);
+  GetTargetPlatformManagerRef().GetRunningTargetPlatform();
+
+  // FSkeletalMeshBuilder{}.Build(FSkeletalMeshBuildParameters{nullptr, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 0, true});
+  FMeshDescription L_Des{};
+  L_Data.GetMeshDescription(L_Des);
+  //for (auto &&[name, ele] : L_Des.GetElements()) {
+  //  UE_LOG(LogTemp, Log, TEXT("bone name %s"), *(name.ToString()));
+  //}
+  for (auto &&L_Mesh : L_Lod->LODModels) {
+    int32 L_Num{};
+    for (auto &&L_Info : L_Mesh.ImportedMeshInfos) {
+      L_Num += L_Info.NumVertices;
+      UE_LOG(LogTemp, Log, TEXT("bone name %s"), *(L_Info.Name.ToString()));
+    }
+    UE_LOG(LogTemp, Log, TEXT("FSoftSkinVertex num %d com num %d"), L_Data.Points.Num(), L_Num);
+  }
+}
+}  // namespace
+
 void DoodleCopyMat::Construct(const FArguments &Arg) {
   // 这个是ue界面的创建方法
 
@@ -145,13 +175,12 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                           );
                       TArray<FAssetData> selectedAss;
                       contentBrowserModle.Get().GetSelectedAssets(selectedAss);
-                      FResizeTexture L_r{};
                       for (auto &&item : selectedAss) {
                         UObject *loadObj = item.GetAsset();
                         if (loadObj == nullptr)
                           continue;
-                        if (UTexture2D *l_tex = Cast<UTexture2D>(loadObj)) {
-                          L_r.Resize(l_tex);
+                        if (USkeletalMesh *l_tex = Cast<USkeletalMesh>(loadObj)) {
+                          print_test(l_tex);
                         }
                       }
 
