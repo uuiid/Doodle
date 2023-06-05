@@ -39,7 +39,6 @@ add_custom_command(
         TARGET doodle_maya
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
 )
 
 
@@ -59,7 +58,4 @@ install(TARGETS doodle_maya
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
         DESTINATION maya
-        COMPONENT maya_plug_com)
-install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
-        DESTINATION maya/scripts/scripts/
         COMPONENT maya_plug_com)
