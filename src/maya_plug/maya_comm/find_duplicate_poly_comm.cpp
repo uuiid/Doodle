@@ -4,6 +4,7 @@
 
 #include "find_duplicate_poly_comm.h"
 
+#include "data/qcloth_factory.h"
 #include <data/find_duplicate_poly.h>
 #include <data/maya_tool.h>
 #include <data/reference_file.h>
@@ -48,22 +49,18 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
   } else {
     MSelectionList l_list{};
     DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
+    auto l_refs  = reference_file_factory{}.create_ref();
+    auto l_cloth = qcloth_factory{}.create_cloth();
+    std::map<std::string, entt::handle> l_ref_map{};
+    l_ref_map = l_refs |
+                ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
+                  return {in_handle.get<reference_file>().get_namespace(), in_handle};
+                }) |
+                ranges::to<decltype(l_ref_map)>;
     if (l_list.isEmpty()) {
-      auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &l_status);
-      for (int l_i = 0; l_i < k_names.length(); ++l_i) {
-        auto&& k_name = k_names[l_i];
-        reference_file k_ref{};
-
-        if (k_ref.set_namespace(d_str{k_name})) {
-          if (k_ref) {
-            DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-            // todo: 重置布料
-          } else {
-            DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
-          }
-        } else {
-          DOODLE_LOG_INFO("命名空间 {} 中无有效引用", k_name);
-        }
+      for (auto l_h : l_cloth) {
+        auto l_c = l_h.get<cloth_interface>();
+        l_c->rest(l_ref_map[l_c->get_namespace()]);
       }
     } else {
       MItSelectionList l_it_list{l_list, MFn::kDagNode, &l_status};
@@ -85,17 +82,9 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
       }
 
       for (auto&& i_ns : l_set_list) {
-        reference_file k_ref{};
-
-        if (k_ref.set_namespace(i_ns)) {
-          if (k_ref) {
-            DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-            // todo: 重置布料
-          } else {
-            DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
-          }
-        } else {
-          DOODLE_LOG_INFO("命名空间 {} 中无有效引用", i_ns);
+        for (auto l_h : l_cloth) {
+          auto l_c = l_h.get<cloth_interface>();
+          if (l_ref_map.find(i_ns) != l_ref_map.end()) l_c->rest(l_ref_map[i_ns]);
         }
       }
     }
