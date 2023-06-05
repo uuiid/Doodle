@@ -17,7 +17,6 @@ MSyntax find_duplicate_poly_comm_syntax();
 /**
  * @brief 使用 maya obj 对 执行 @b qlUpdateInitialPose 命令
  * 传入的命令查看 find_duplicate_poly_comm_syntax
- * 当传入一个名称空间时只会进行选中,不会执行命令, 用来debug
  *
  */
 class find_duplicate_poly_comm

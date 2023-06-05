@@ -328,7 +328,6 @@ class open_file(object):
         self.load_plug(["fbxmaya"])
         self.open()
         cmds.doodle_load_project(project=self.cfg.project)
-        cmds.doodle_comm_file_save()
         cmds.doodle_create_ref_file()
         cmds.doodle_replace_rig_file()
         cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
@@ -356,7 +355,6 @@ class open_file(object):
         cmds.doodle_load_project(project=self.cfg.project)
         cmds.doodle_create_ref_file()
         cmds.doodle_replace_rig_file()
-        cmds.doodle_comm_file_save()
 
     def __call__(self):
         if isinstance(self.cfg, sim_config):
