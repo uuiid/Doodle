@@ -30,7 +30,7 @@
             "request": "launch",
             "program": "${command:cmake.getLaunchTargetPath}",
             "args": [
-                "--export_fbx_config=${workspaceFolder}/build/test_1.json"
+                "--cloth_sim_config=${workspaceFolder}/build/test_1.json"
             ],
             "stopAtEntry": false,
             "cwd": "${command:cmake.launchTargetDirectory}",
