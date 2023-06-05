@@ -83,7 +83,8 @@ void cloth_sim::create_cloth() {
   if (!l_cf) return;
 
   cloth_lists_ = l_cf->create_cloth();
-
+}
+void cloth_sim::set_cloth_attr() {
   std::map<std::string, entt::handle> l_ref_map{};
   l_ref_map = ref_files_ |
               ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
@@ -98,6 +99,21 @@ void cloth_sim::create_cloth() {
     l_c->rest(l_ref_h);              /// 添加rest
     l_c->cover_cloth_attr(l_ref_h);  /// 添加布料属性
     l_c->add_field(l_ref_h);         /// 添加场力
+  });
+}
+void cloth_sim::sim() {
+  DOODLE_LOG_INFO("开始解算");
+
+  std::map<std::string, entt::handle> l_ref_map{};
+  l_ref_map = ref_files_ |
+              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
+                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              }) |
+              ranges::to<decltype(l_ref_map)>;
+
+  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
+    auto l_c     = in_handle.get<cloth_interface>();
+    auto l_ref_h = l_ref_map[l_c->get_namespace()];
     l_c->set_cache_folder(l_ref_h);  /// 设置缓存文件夹
   });
 
@@ -115,9 +131,6 @@ void cloth_sim::create_cloth() {
   } catch (const maya_error& error) {
     DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
   }
-}
-void cloth_sim::sim() {
-  DOODLE_LOG_INFO("开始解算");
   const MTime k_end_time = MAnimControl::maxTime();
   for (auto&& i = t_post_time_; i < k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
@@ -152,6 +165,7 @@ void cloth_sim::export_abc() {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
   });
+  l_gen->set_fbx_path();
   export_file_fbx l_ex_fbx{};
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);

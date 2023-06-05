@@ -21,6 +21,8 @@ class cloth_sim final {
   void create_ref_file();
   void replace_ref_file();
   void create_cloth();
+  void set_cloth_attr();
+
   void sim();
   void export_fbx();
   void export_abc();
