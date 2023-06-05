@@ -15,8 +15,6 @@
 
 #include <boost/lambda2.hpp>
 
-#include <maya_plug/data/find_duplicate_poly.h>
-#include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>

@@ -8,6 +8,8 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
+#include <maya/MObject.h>
+#include <vector>
 
 namespace doodle::maya_plug {
 /**
@@ -27,6 +29,7 @@ class find_duplicate_poly {
    * @return 寻找到的obj对
    */
   std::vector<std::pair<MObject, MObject>> operator()(const MObjectArray& in_array);
+  std::vector<std::pair<MObject, MObject>> operator()(const std::vector<MObject>& in_array);
   MObject operator[](const MObject& in_obj);
 };
 

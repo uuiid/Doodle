@@ -363,6 +363,7 @@ bsys::error_code sqlite_file::open_impl() {
       g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置已存在文件", project_path);
     }
   } else {
+    // todo: 更改提示
     g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置无法写入, 不保存新版本文件", project_path);
   }
   ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());

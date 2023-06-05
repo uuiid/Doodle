@@ -7,10 +7,11 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/logger/logger.h"
 
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 
-#include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_tool.h>
@@ -18,10 +19,12 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "data/maya_conv_str.h"
 #include "data/qcloth_shape.h"
 #include "data/sim_cover_attr.h"
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
+#include <fmt/core.h>
 #include <magic_enum.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MDagModifier.h>
@@ -37,6 +40,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
 #include <maya/MPlug.h>
+#include <maya/MStatus.h>
 #include <string>
 
 namespace doodle::maya_plug {
@@ -665,7 +669,6 @@ MDagPath qcloth_shape::cloth_mesh() const {
 void qcloth_shape::sim_cloth() const {
   DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
   MStatus k_s{};
-  MFnDependencyNode l_node{obj, &k_s};
   auto k_plug = get_plug(obj, "outputMesh");
   /// \brief 使用这种方式评估网格
   k_plug.asMObject(&k_s).isNull();
@@ -708,13 +711,28 @@ void qcloth_shape::add_collision(const entt::handle& in_handle) const {
   maya_chick(k_s);
 }
 void qcloth_shape::rest(const entt::handle& in_handle) const {
-  auto l_rest_obj = in_handle.get<find_duplicate_poly>()[obj];
-  if (l_rest_obj.isNull()) return;
-
-  DOODLE_LOG_INFO("开始更新解算的布料 {} 初始化姿势 ", get_node_full_name(obj));
   MSelectionList l_list{};
+  auto l_simple_module_proxy_ = g_reg()->ctx().get<project_config::base_config>().simple_module_proxy_;
+  auto l_proxy_               = g_reg()->ctx().get<project_config::base_config>().cloth_proxy_;
   maya_chick(l_list.add(obj));
-  maya_chick(l_list.add(l_rest_obj));
+
+  auto k_plug = get_plug(obj, "outputMesh");
+  MStatus l_s{};
+  MItDependencyGraph l_it{
+      k_plug,
+      MFn::kMesh,
+      MItDependencyGraph::Direction::kDownstream,
+      MItDependencyGraph::kDepthFirst,
+      MItDependencyGraph::kNodeLevel,
+      &l_s};
+  maya_chick(l_s);
+
+  auto l_path = get_transform(l_it.currentItem());
+  auto l_name = get_node_name(l_path);
+  boost::replace_last(l_name, l_proxy_, l_simple_module_proxy_);
+
+  DOODLE_LOG_INFO("开始寻找布料对应的初识姿势 {} -> {}", get_node_name(l_path), l_name);
+  maya_chick(l_list.add(conv::to_ms(l_name)));
   maya_chick(MGlobal::setActiveSelectionList(l_list));
   maya_chick(MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"}));
 }

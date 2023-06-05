@@ -9,7 +9,6 @@
 
 #include "maya_plug/data/cloth_interface.h"
 #include "maya_plug/data/export_file_abc.h"
-#include "maya_plug/data/find_duplicate_poly.h"
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/data/qcloth_factory.h"
 #include "maya_plug/maya_plug_fwd.h"
@@ -83,9 +82,8 @@ void cloth_sim::create_cloth() {
 
   if (!l_cf) return;
 
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { in_handle.emplace<find_duplicate_poly>(in_handle); });
-
   cloth_lists_ = l_cf->create_cloth();
+
   std::map<std::string, entt::handle> l_ref_map{};
   l_ref_map = ref_files_ |
               ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
