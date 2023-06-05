@@ -219,7 +219,6 @@ CREATE TABLE IF NOT EXISTS project_config
     t_post                            integer,
     export_anim_time                  integer,
     maya_camera_select                boolean,
-    use_write_metadata                boolean,
     abc_export_extract_reference_name text,
     abc_export_format_reference_name  text,
     abc_export_extract_scene_name     text,

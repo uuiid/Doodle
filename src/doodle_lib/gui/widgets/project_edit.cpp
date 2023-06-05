@@ -82,7 +82,6 @@ class project_edit::impl {
 
   gui_cache<bool> abc_export_add_frame_range{"导出附加范围"s, true};
 
-  gui_cache<bool> use_write_metadata{"写出元数据", true};
   gui_cache<std::string> maya_camera_suffix{"相机后缀"s, "camera"s};
   gui_cache<std::string> maya_out_put_abc_suffix{"分组导出abc寻找后缀"s, "_output_abc"s};
 
@@ -127,7 +126,6 @@ class project_edit::impl {
         }) |
         ranges::to_vector;
 
-    use_write_metadata()                = l_config.use_write_metadata;
     abc_export_extract_reference_name() = l_config.abc_export_extract_reference_name;
     abc_export_format_reference_name()  = l_config.abc_export_format_reference_name;
     abc_export_extract_scene_name()     = l_config.abc_export_extract_scene_name;
@@ -171,7 +169,6 @@ class project_edit::impl {
                                return project_config::camera_judge{in};
                              }) |
                              ranges::to_vector;
-    l_c.use_write_metadata                = use_write_metadata();
     l_c.abc_export_extract_reference_name = abc_export_extract_reference_name();
     l_c.abc_export_format_reference_name  = abc_export_format_reference_name();
     l_c.abc_export_extract_scene_name     = abc_export_extract_scene_name();
@@ -213,7 +210,6 @@ bool project_edit::render() {
 
   ImGui::InputInt(*p_i->t_post, &p_i->t_post);
   ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
-  ImGui::Checkbox(*p_i->use_write_metadata, &p_i->use_write_metadata);
 
   ImGui::Text("相机优先级配置:");
   if (ImGui::Button(*p_i->camera_judge_gui_attr.add_camera_judge_list_gui)) {

@@ -12,7 +12,6 @@
 #include "maya_plug/data/find_duplicate_poly.h"
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/data/qcloth_factory.h"
-#include "maya_plug/main/maya_plug_fwd.h"
 #include "maya_plug/maya_plug_fwd.h"
 #include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
@@ -22,7 +21,6 @@
 #include <maya_plug/data/sim_cover_attr.h>
 
 #include "cloth_sim.h"
-#include "cloth_sim/cloth_sim_factory.h"
 #include "entt/entity/fwd.hpp"
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/algorithm/for_each.hpp"
@@ -155,6 +153,11 @@ void cloth_sim::export_abc() {
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
+  });
+  export_file_fbx l_ex_fbx{};
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
+    in_handle.emplace<generate_file_path_ptr>(l_gen);
+    l_ex_fbx.export_anim(in_handle);
   });
 }
 

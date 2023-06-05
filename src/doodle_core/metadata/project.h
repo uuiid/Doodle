@@ -123,8 +123,6 @@ class DOODLE_CORE_API base_config {
 
   /// \brief 使用camera优先级寻找maya 相机
   std::vector<camera_judge> maya_camera_select{};
-  /// \brief 是否导出自定义元数据
-  bool use_write_metadata{true};
 
   /// \brief 导出时重新提取引用名称
   std::string abc_export_extract_reference_name{};

@@ -73,16 +73,6 @@ bool maya_camera::export_file(
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
 
-  if (g_reg()->ctx().get<project_config::base_config>().use_write_metadata) {
-    auto l_h = make_handle();
-    episodes::analysis_static(l_h, k_file_path);
-    shot::analysis_static(l_h, k_file_path);
-
-    l_h.emplace<export_file_info>(
-        k_file_path, in_start.value(), in_end.value(), FSys::path{}, export_file_info::export_type::camera
-    );
-    export_file_info::write_file(l_h);
-  }
   return true;
 }
 bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {

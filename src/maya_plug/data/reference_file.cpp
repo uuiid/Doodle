@@ -355,34 +355,6 @@ bool reference_file::find_ref_node() {
   return true;
 }
 
-entt::handle reference_file::export_file_select(
-    const reference_file::export_arg &in_arg, const MSelectionList &in_list
-) {
-  entt::handle out_{};
-  FSys::path l_path{};
-
-  export_file_info::export_type l_type{};
-
-  if (!l_path.empty() && g_reg()->ctx().get<project_config::base_config>().use_write_metadata) {
-    out_ = make_handle();
-    FSys::path l_ref_file{this->path};
-    if (l_ref_file.empty()) {
-      l_ref_file = this->get_namespace();
-    }
-    auto l_eps{""s};
-    if (episodes::analysis_static(out_, l_path)) l_eps = fmt::to_string(out_.get<episodes>());
-    auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
-    shot::analysis_static(out_, l_path);
-    out_.emplace<export_file_info>(
-            l_path, boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
-            boost::numeric_cast<std::int32_t>(in_arg.end_p.value()), l_ref_file, l_type
-    )
-        .upload_path_ = l_upload_prefix;
-    export_file_info::write_file(out_);
-  }
-  return out_;
-}
-
 bool reference_file::replace_file(const entt::handle &in_handle) {
   DOODLE_CHICK(in_handle.all_of<redirection_path_info>(), doodle_error{"缺失替换引用信息"});
   DOODLE_CHICK(!p_m_object.isNull(), doodle_error{"没有引用文件, 无法替换"});

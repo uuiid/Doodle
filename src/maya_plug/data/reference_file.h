@@ -170,8 +170,6 @@ class reference_file {
     MTime &end_p;
   };
 
-  entt::handle export_file_select(const export_arg &in_arg, const MSelectionList &in_list);
-
   /**
    * @brief 从配置文件中查找需要导出组名称对应的 maya 组 (名称空间为引用空间)
    * @return 导出配置文件中对应的组

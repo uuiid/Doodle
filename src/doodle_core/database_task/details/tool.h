@@ -420,7 +420,6 @@ DOODLE_SQL_COLUMN_IMP(t_post, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(export_anim_time, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(maya_camera_select_reg, sqlpp::text, detail::require_insert);
 DOODLE_SQL_COLUMN_IMP(maya_camera_select_num, sqlpp::integer, detail::require_insert);
-DOODLE_SQL_COLUMN_IMP(use_write_metadata, sqlpp::boolean, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(abc_export_extract_reference_name, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(abc_export_format_reference_name, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(abc_export_extract_scene_name, sqlpp::text, detail::can_be_null);
@@ -467,7 +466,7 @@ DOODLE_SQL_TABLE_IMP(
     project_config, column::id, column::entity_id, column::sim_path, column::export_group, column::cloth_proxy,
     column::simple_module_proxy, column::find_icon_regex, column::upload_path, column::season_count,
     column::use_only_sim_cloth, column::use_divide_group_export, column::t_post, column::export_anim_time,
-    column::use_write_metadata, column::abc_export_extract_reference_name, column::abc_export_format_reference_name,
+    column::abc_export_extract_reference_name, column::abc_export_format_reference_name,
     column::abc_export_extract_scene_name, column::abc_export_format_scene_name, column::abc_export_add_frame_range,
     column::maya_camera_suffix, column::maya_out_put_abc_suffix
 );
