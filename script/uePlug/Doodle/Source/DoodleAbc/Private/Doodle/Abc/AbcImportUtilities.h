@@ -275,7 +275,7 @@ void GetStartTimeAndFrame(T& Schema, float& StartTime, uint32& StartFrame) {
   Alembic::AbcCoreAbstract::TimeSamplingType SamplingType = TimeSampler->getTimeSamplingType();
   // We know the seconds per frame, so if we take the time for the first stored sample we can work out how many 'empty'
   // frames come before it Ensure that the start frame is never lower that 0
-  StartFrame = FMath::Max<int32>(FMath::CeilToInt(StartTime / (float)SamplingType.getTimePerCycle()), 0);
+  StartFrame = FMath::Max<int32>(FMath::RoundToInt(StartTime / (float)SamplingType.getTimePerCycle()), 0);
 }
 
 template <typename T>
@@ -287,7 +287,7 @@ void GetStartTimeAndFrame(T& Schema, float& StartTime, int32& StartFrame) {
   Alembic::AbcCoreAbstract::TimeSamplingType SamplingType = TimeSampler->getTimeSamplingType();
   // We know the seconds per frame, so if we take the time for the first stored sample we can work out how many 'empty'
   // frames come before it Ensure that the start frame is never lower that 0
-  StartFrame = FMath::CeilToInt(StartTime / (float)SamplingType.getTimePerCycle());
+  StartFrame = FMath::RoundToInt(StartTime / (float)SamplingType.getTimePerCycle());
 }
 
 FAbcMeshSample* MergeMeshSamples(const TArray<const FAbcMeshSample*>& Samples);
