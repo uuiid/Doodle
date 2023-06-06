@@ -93,20 +93,24 @@ void export_file_fbx::export_anim(
     return;
   }
   MItDag l_it{};
-  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kInvalid));
+  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
   MDagPath l_path{};
   for (; !l_it.isDone(); l_it.next()) {
     maya_chick(l_it.getPath(l_path));
+    l_path.pop();
     if (in_exclude.hasItem(l_path)) {
       continue;
     }
+    //    if (in_exclude.hasItem(l_path.transform())) {
+    //      continue;
+    //    }
     maya_chick(l_select.add(l_path));
   }
 
   maya_chick(l_satus);
 
   m_namespace_ = l_ref.get_namespace();
-  DOODLE_LOG_INFO("导出物体 {}", l_select);
+  DOODLE_LOG_INFO("导出选中物体 {} 排除物体 {}", l_select, in_exclude);
 
   maya_chick(MGlobal::setActiveSelectionList(l_select));
   auto l_arg = in_handle_view.get<generate_file_path_ptr>();
