@@ -57,8 +57,8 @@ struct DOODLEABC_API FDoodleAbcCompressionSettings {
   float MinimumNumberOfVertexInfluencePercentage;
 };
 
-struct DOODLEABC_API FAbcSamplingSettings {
-  FAbcSamplingSettings() {
+struct DOODLEABC_API FDoodleAbcSamplingSettings {
+  FDoodleAbcSamplingSettings() {
     FrameSteps = 1;
     TimeSteps  = 0.0f;
     FrameStart = FrameEnd = 0;
@@ -222,7 +222,7 @@ class DOODLEABC_API UDoodleAbcImportSettings : public UObject {
   UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties), Category = Conversion)
   FDoodleAbcConversionSettings ConversionSettings;
 
-  FAbcSamplingSettings SamplingSettings;
+  FDoodleAbcSamplingSettings SamplingSettings;
 
   bool bReimport;
   int32 NumThreads;

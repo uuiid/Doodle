@@ -95,10 +95,6 @@ UObject* UDoodleAbcImportFactory::FactoryCreateFile(
     }
   }
 
-  auto l_chick_err = [](EAbcImportError In_err, const FString& In_Msh) -> bool {
-
-  };
-
   GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPreImport(
       this, InClass, InParent, InName, TEXT("ABC")
   );
@@ -108,14 +104,6 @@ UObject* UDoodleAbcImportFactory::FactoryCreateFile(
       AssetImportTask ? Cast<UDoodleAbcImportSettings>(AssetImportTask->Options) : nullptr;
   if (ScriptedSettings) {
     ImportSettings = ScriptedSettings;
-  } else {
-    // 如果没有设置直接返回空, 不导入
-    FText ImportingText = FText::Format(LOCTEXT("AbcFactoryImporting", "Importing {0}.abc"), FText::FromName(InName));
-    FAbcImportLogger::OutputMessages(ImportingText.ToString());
-
-    // Failed to read the file info, fail the import
-    GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(this, nullptr);
-    return nullptr;
   }
 
   FAbcImporter Importer;
