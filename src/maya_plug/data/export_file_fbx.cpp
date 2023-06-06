@@ -18,6 +18,7 @@
 #include <maya/MApiNamespace.h>
 #include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
+#include <maya/MItDag.h>
 #include <memory>
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/view/transform.hpp>
@@ -78,7 +79,9 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   }
 }
 
-void export_file_fbx::export_anim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {
+void export_file_fbx::export_anim(
+    const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view, const MSelectionList& in_exclude
+) {
   MSelectionList l_select{};
   MStatus l_satus{};
   auto& k_cfg         = g_reg()->ctx().get<project_config::base_config>();
@@ -88,7 +91,17 @@ void export_file_fbx::export_anim(const entt::handle_view<reference_file, genera
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return;
   }
-  l_satus = l_select.add(*l_export_group);
+  MItDag l_it{};
+  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kInvalid));
+  for (; !l_it.isDone(); l_it.next()) {
+    MDagPath l_path{};
+    maya_chick(l_it.getPath(l_path));
+    if (in_exclude.hasItem(l_path)) {
+      continue;
+    }
+    maya_chick(l_select.add(l_path));
+  }
+
   maya_chick(l_satus);
 
   m_namespace_ = l_ref.get_namespace();

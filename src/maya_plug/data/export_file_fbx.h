@@ -32,7 +32,10 @@ class export_file_fbx {
  public:
   export_file_fbx() = default;
 
-  void export_anim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view);
+  void export_anim(
+      const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view,
+      const MSelectionList& in_exclude = {}
+  );
   void export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view);
   void export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view);
 };

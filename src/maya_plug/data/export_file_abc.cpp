@@ -156,6 +156,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
 
   for (auto&& [name, s_l] : export_map) {
     auto l_path = name(L_ref);
+    l_current_export_list.merge(s_l);
     if (!s_l.isEmpty())
       export_abc(s_l, l_path);
     else

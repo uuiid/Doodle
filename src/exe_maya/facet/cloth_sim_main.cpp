@@ -161,15 +161,13 @@ void cloth_sim::export_abc() {
   const MTime k_end_time = MAnimControl::maxTime();
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
 
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    in_handle.emplace<generate_file_path_ptr>(l_gen);
-    l_ex.export_sim(in_handle);
-  });
-  l_gen->set_fbx_path();
   export_file_fbx l_ex_fbx{};
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
-    l_ex_fbx.export_anim(in_handle);
+    l_gen->set_fbx_path(false);
+    l_ex.export_sim(in_handle);
+    l_gen->set_fbx_path(true);
+    l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
   });
 }
 
