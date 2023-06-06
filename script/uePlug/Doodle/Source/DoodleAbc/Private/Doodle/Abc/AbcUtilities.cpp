@@ -3,8 +3,8 @@
 #include "AbcUtilities.h"
 
 #include "AbcFile.h"
-#include "AbcImportSettings.h"
 #include "AbcImportUtilities.h"
+#include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "GeometryCache.h"
 #include "Materials/Material.h"
 
@@ -13,15 +13,14 @@ void FAbcUtilities::GetFrameMeshData(
 ) {
   AbcFile.ReadFrame(FrameIndex, EFrameReadFlags::ApplyMatrix, ConcurrencyIndex);
 
-  const UAbcImportSettings* ImportSettings = AbcFile.GetImportSettings();
+  const UDoodleAbcImportSettings* ImportSettings = AbcFile.GetImportSettings();
   checkSlow(ImportSettings);
 
   FGeometryCacheMeshData MeshData;
   int32 PreviousNumVertices                = 0;
   bool bConstantTopology                   = false;
-  const bool bUseVelocitiesAsMotionVectors = ImportSettings->GeometryCacheSettings.MotionVectors ==
-                                             EAbcGeometryCacheMotionVectorsImport::ImportAbcVelocitiesAsMotionVectors;
-  const bool bStoreImportedVertexNumbers = ImportSettings->GeometryCacheSettings.bStoreImportedVertexNumbers;
+  const bool bUseVelocitiesAsMotionVectors = false;
+  const bool bStoreImportedVertexNumbers   = ImportSettings->GeometryCacheSettings.bStoreImportedVertexNumbers;
 
   AbcImporterUtilities::MergePolyMeshesToMeshData(
       FrameIndex, 0, AbcFile.GetSecondsPerFrame(), bUseVelocitiesAsMotionVectors, AbcFile.GetPolyMeshes(),

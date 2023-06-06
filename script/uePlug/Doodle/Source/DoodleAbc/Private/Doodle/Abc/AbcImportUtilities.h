@@ -20,8 +20,8 @@ THIRD_PARTY_INCLUDES_END
 #endif
 
 #include "AbcImportLogger.h"
-#include "AbcImportSettings.h"
 #include "Async/ParallelFor.h"
+#include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "GeometryCache.h"
 #include "GeometryCacheComponent.h"
 #include "GeometryCacheMeshData.h"

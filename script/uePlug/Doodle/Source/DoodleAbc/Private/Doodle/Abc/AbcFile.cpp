@@ -266,7 +266,7 @@ EAbcImportError FAbcFile::Import(UDoodleAbcImportSettings* InImportSettings) {
   AbcImporterUtilities::ApplyConversion(ArchiveBounds, ImportSettings->ConversionSettings);
 
   // If the users opted to try and find materials in the project whos names match one of the face sets
-  if (ImportSettings->MaterialSettings.bFindMaterials) {
+  {
     FAssetRegistryModule& AssetRegistryModule =
         FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
     TArray<FAssetData> AssetData;
@@ -293,12 +293,9 @@ EAbcImportError FAbcFile::Import(UDoodleAbcImportSettings* InImportSettings) {
 
               if (BaseMaterial) {
                 bool bNeedsRecompile = false;
-                if (ImportSettings->ImportType == EAlembicImportType::Skeletal) {
-                  BaseMaterial->SetMaterialUsage(bNeedsRecompile, MATUSAGE_SkeletalMesh);
-                  BaseMaterial->SetMaterialUsage(bNeedsRecompile, MATUSAGE_MorphTargets);
-                } else if (ImportSettings->ImportType == EAlembicImportType::GeometryCache) {
-                  BaseMaterial->SetMaterialUsage(bNeedsRecompile, MATUSAGE_GeometryCache);
-                }
+                BaseMaterial->SetMaterialUsage(bNeedsRecompile, MATUSAGE_SkeletalMesh);
+                BaseMaterial->SetMaterialUsage(bNeedsRecompile, MATUSAGE_MorphTargets);
+                BaseMaterial->SetMaterialUsage(bNeedsRecompile, MATUSAGE_GeometryCache);
               }
             }
           } else {
@@ -314,21 +311,6 @@ EAbcImportError FAbcFile::Import(UDoodleAbcImportSettings* InImportSettings) {
             );
             FAbcImportLogger::AddImportMessage(Message);
           }
-        }
-      }
-    }
-  }
-  // Or the user opted to create materials with and for the faceset names in this ABC file
-  else if (ImportSettings->MaterialSettings.bCreateMaterials) {
-    // Creates materials according to the face set names that were found in the Alembic file
-    for (FAbcPolyMesh* PolyMesh : PolyMeshes) {
-      for (const FString& FaceSetName : PolyMesh->FaceSetNames) {
-        // Preventing duplicate material creation
-        UMaterialInterface** ExistingMaterial = MaterialMap.Find(*FaceSetName);
-        if (!ExistingMaterial) {
-          UMaterial* Material             = NewObject<UMaterial>((UObject*)GetTransientPackage(), *FaceSetName);
-          Material->bUsedWithMorphTargets = true;
-          MaterialMap.Add(FaceSetName, Material);
         }
       }
     }
@@ -526,7 +508,7 @@ const int32 FAbcFile::GetStartFrameIndex() const { return StartFrameIndex; }
 
 const int32 FAbcFile::GetEndFrameIndex() const { return EndFrameIndex; }
 
-const UAbcImportSettings* FAbcFile::GetImportSettings() const { return ImportSettings; }
+const UDoodleAbcImportSettings* FAbcFile::GetImportSettings() const { return ImportSettings; }
 
 const TArray<FAbcPolyMesh*>& FAbcFile::GetPolyMeshes() const { return PolyMeshes; }
 

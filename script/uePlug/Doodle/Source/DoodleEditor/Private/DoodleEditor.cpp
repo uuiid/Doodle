@@ -10,13 +10,6 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "doodleCopyMaterial.h"
-// #include "fireLight.h"
-// #include "DoodleDirectionalLightDome.h"
-// #include "DoodleCopySpline.h"
-// #include "ContentBrowserAssetDataSource.h"
-// #include "IPlacementModeModule.h"
-// #include "AssetRegistry/IAssetRegistry.h"
-// #include "AssetRegistry/AssetRegistryModule.h"
 
 #include "ContentBrowserModule.h"  ///内容游览器
 #include "Doodle/CreateCharacter/CreateCharacterMianUI.h"
@@ -27,45 +20,6 @@
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
-
-LLM_DEFINE_TAG(DoodleAlembic);
-namespace {
-void DoodleDebug(const TArray<FString> &InPaths) {}
-
-void AbcStartupModule() {
-  LLM_SCOPE_BYTAG(DoodleAlembic);
-
-  FModuleManager::LoadModuleChecked<IModuleInterface>("GeometryCache");
-
-  // Register class/struct customizations
-  FPropertyEditorModule &PropertyEditorModule =
-      FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-  PropertyEditorModule.RegisterCustomClassLayout(
-      "AbcImportSettings",
-      FOnGetDetailCustomizationInstance::CreateStatic(&FAbcImportSettingsCustomization::MakeInstance)
-  );
-  PropertyEditorModule.RegisterCustomPropertyTypeLayout(
-      "AbcCompressionSettings",
-      FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FAbcCompressionSettingsCustomization::MakeInstance)
-  );
-  PropertyEditorModule.RegisterCustomPropertyTypeLayout(
-      "AbcSamplingSettings",
-      FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FAbcSamplingSettingsCustomization::MakeInstance)
-  );
-  PropertyEditorModule.RegisterCustomPropertyTypeLayout(
-      "AbcConversionSettings",
-      FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FAbcConversionSettingsCustomization::MakeInstance)
-  );
-}
-void AbcShutdownModule() {
-  FPropertyEditorModule &PropertyEditorModule =
-      FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-  PropertyEditorModule.UnregisterCustomClassLayout("AbcImportSettings");
-  PropertyEditorModule.UnregisterCustomPropertyTypeLayout("AbcCompressionSettings");
-  PropertyEditorModule.UnregisterCustomPropertyTypeLayout("AbcSamplingSettings");
-}
-
-}  // namespace
 
 void FdoodleEditorModule::StartupModule() {
   FdoodleStyle::Initialize();

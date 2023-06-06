@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "AbcAssetImportData.generated.h"
 #include "CoreMinimal.h"
-#include "Doodle/Abc/AbcImportSettings.h"
+#include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "EditorFramework/AssetImportData.h"
+//
+#include "DoodleAbcAssetImportData.generated.h"
 
 /**
  * Base class for import data and options used when importing any asset from Alembic

@@ -75,7 +75,7 @@ class FAbcFile {
   const int32 GetEndFrameIndex() const;
 
   /** Returns user specified import settings */
-  const UAbcImportSettings* GetImportSettings() const;
+  const UDoodleAbcImportSettings* GetImportSettings() const;
 
   /** Return array of PolyMeshes inside of the ABC file */
   const TArray<FAbcPolyMesh*>& GetPolyMeshes() const;

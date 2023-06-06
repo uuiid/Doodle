@@ -29,7 +29,7 @@ class UGeometryCache;
 class UDEPRECATED_GeometryCacheTrack_FlipbookAnimation;
 class UDEPRECATED_GeometryCacheTrack_TransformAnimation;
 class UGeometryCacheTrackStreamable;
-class UAbcImportSettings;
+class UDoodleAbcImportSettings;
 class FSkeletalMeshImportData;
 class UDoodleAbcAssetImportData;
 
@@ -37,7 +37,7 @@ struct FMeshDescription;
 struct FAbcImportData;
 struct FGeometryCacheMeshData;
 struct FAbcMeshSample;
-struct FAbcCompressionSettings;
+struct FDoodleAbcCompressionSettings;
 
 enum EAbcImportError : uint32 {
   AbcImportError_NoError,
@@ -98,7 +98,7 @@ class FAbcImporter {
    * @param InNumThreads - Number of threads to use for importing
    * @return - Possible error code
    */
-  const EAbcImportError ImportTrackData(const int32 InNumThreads, UAbcImportSettings* ImportSettings);
+  const EAbcImportError ImportTrackData(const int32 InNumThreads, UDoodleAbcImportSettings* ImportSettings);
 
   /**
    * Import an Alembic file as a GeometryCache
@@ -177,7 +177,7 @@ class FAbcImporter {
   /** Compresses the imported animation data, returns true if compression was successful and compressed data was
    * populated */
   const bool CompressAnimationDataUsingPCA(
-      const FAbcCompressionSettings& InCompressionSettings, const bool bRunComparison = false
+      const FDoodleAbcCompressionSettings& InCompressionSettings, const bool bRunComparison = false
   );
   /** Performs the actual SVD compression to retrieve the bases and weights used to set up the Skeletal mesh's morph
    * targets */
@@ -217,7 +217,7 @@ class FAbcImporter {
 
  private:
   /** Cached ptr for the import settings */
-  UAbcImportSettings* ImportSettings;
+  UDoodleAbcImportSettings* ImportSettings;
 
   /** Resulting compressed data from PCA compression */
   TArray<FCompressedAbcData> CompressedMeshData;

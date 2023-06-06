@@ -113,6 +113,7 @@ public class doodleEditor : ModuleRules
                 //"Foliage", // 导出场景使用
                 "MeshDescription",//修改sk使用
                 "MeshBuilder",//修改sk使用
+                "DoodleAbc", // 我们自己的导入
 
             }
             );

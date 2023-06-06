@@ -81,11 +81,9 @@ bool FAbcPolyMesh::ReadFirstFrame(const float InTime, const int32 FrameIndex) {
         *File->GetMeshUtilities()
     );
 
-    const bool bApplyTransformation = (File->GetImportSettings()->ImportType == EAlembicImportType::StaticMesh &&
-                                       File->GetImportSettings()->StaticMeshSettings.bPropagateMatrixTransformations) ||
-                                      (File->GetImportSettings()->ImportType == EAlembicImportType::Skeletal &&
+    const bool bApplyTransformation = (File->GetImportSettings()->ImportType == EDoodleAlembicImportType::Skeletal &&
                                        File->GetImportSettings()->CompressionSettings.bBakeMatrixAnimation) ||
-                                      File->GetImportSettings()->ImportType == EAlembicImportType::GeometryCache;
+                                      File->GetImportSettings()->ImportType == EDoodleAlembicImportType::GeometryCache;
 
     // Transform copy of the first sample
     TransformedFirstSample     = new FAbcMeshSample(*FirstSample);
@@ -214,7 +212,7 @@ void FAbcPolyMesh::SetFrameAndTime(
       }
 
       // Computing tangents skippable for GeometryCache only, the other import types need tangents
-      if (File->GetImportSettings()->ImportType != EAlembicImportType::GeometryCache ||
+      if (File->GetImportSettings()->ImportType != EDoodleAlembicImportType::GeometryCache ||
           !File->GetImportSettings()->NormalGenerationSettings.bSkipComputingTangents) {
         AbcImporterUtilities::ComputeTangents(
             WriteSample, File->GetImportSettings()->NormalGenerationSettings.bIgnoreDegenerateTriangles,

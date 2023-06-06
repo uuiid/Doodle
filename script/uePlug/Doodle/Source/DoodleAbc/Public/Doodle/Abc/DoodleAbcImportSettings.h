@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "AbcImportSettings.generated.h"
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-
+//
+#include "DoodleAbcImportSettings.generated.h"
 /** Enum that describes type of asset to import */
 UENUM(BlueprintType)
 enum class EDoodleAlembicImportType : uint8 {
@@ -18,7 +18,7 @@ enum class EDoodleAlembicImportType : uint8 {
 };
 
 USTRUCT(Blueprintable)
-struct FDoodleAbcCompressionSettings {
+struct DOODLEABC_API FDoodleAbcCompressionSettings {
   GENERATED_USTRUCT_BODY()
 
   FDoodleAbcCompressionSettings() {
@@ -57,8 +57,32 @@ struct FDoodleAbcCompressionSettings {
   float MinimumNumberOfVertexInfluencePercentage;
 };
 
+struct DOODLEABC_API FAbcSamplingSettings {
+  FAbcSamplingSettings() {
+    FrameSteps = 1;
+    TimeSteps  = 0.0f;
+    FrameStart = FrameEnd = 0;
+    bSkipEmpty            = false;
+  }
+
+  /** Steps to take when sampling the animation*/
+  int32 FrameSteps;
+
+  /** Time steps to take when sampling the animation*/
+  float TimeSteps;
+
+  /** Starting index to start sampling the animation from*/
+  int32 FrameStart;
+
+  /** Ending index to stop sampling the animation at*/
+  int32 FrameEnd;
+
+  /** Skip empty (pre-roll) frames and start importing at the frame which actually contains data */
+  bool bSkipEmpty;
+};
+
 USTRUCT(Blueprintable)
-struct FDoodleAbcNormalGenerationSettings {
+struct DOODLEABC_API FDoodleAbcNormalGenerationSettings {
   GENERATED_USTRUCT_BODY()
 
   FDoodleAbcNormalGenerationSettings() {
@@ -100,7 +124,7 @@ struct FDoodleAbcNormalGenerationSettings {
 };
 
 USTRUCT(Blueprintable)
-struct FDoodleAbcConversionSettings {
+struct DOODLEABC_API FDoodleAbcConversionSettings {
   GENERATED_USTRUCT_BODY()
 
   FDoodleAbcConversionSettings()
@@ -124,7 +148,7 @@ struct FDoodleAbcConversionSettings {
 };
 
 USTRUCT(Blueprintable)
-struct FDoodleAbcGeometryCacheSettings {
+struct DOODLEABC_API FDoodleAbcGeometryCacheSettings {
   GENERATED_USTRUCT_BODY()
 
   FDoodleAbcGeometryCacheSettings()
@@ -178,8 +202,8 @@ struct FDoodleAbcGeometryCacheSettings {
 };
 
 /** Class that contains all options for importing an alembic file */
-UCLASS(Blueprintable)
-class UDoodleAbcImportSettings : public UObject {
+UCLASS()
+class DOODLEABC_API UDoodleAbcImportSettings : public UObject {
   GENERATED_UCLASS_BODY()
  public:
   /** Type of asset to import from Alembic file */
@@ -197,6 +221,8 @@ class UDoodleAbcImportSettings : public UObject {
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties), Category = Conversion)
   FDoodleAbcConversionSettings ConversionSettings;
+
+  FAbcSamplingSettings SamplingSettings;
 
   bool bReimport;
   int32 NumThreads;

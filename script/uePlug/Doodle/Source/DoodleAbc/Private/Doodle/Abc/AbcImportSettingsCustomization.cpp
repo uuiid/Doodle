@@ -2,9 +2,9 @@
 
 #include "AbcImportSettingsCustomization.h"
 
-#include "AbcImportSettings.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailPropertyRow.h"
 #include "PropertyRestriction.h"
@@ -153,7 +153,7 @@ void FAbcConversionSettingsCustomization::CustomizeChildren(
   TArray<void*> StructPtrs;
   StructPropertyHandle->AccessRawData(StructPtrs);
   if (StructPtrs.Num() == 1) {
-    Settings = (FAbcConversionSettings*)StructPtrs[0];
+    Settings = (FDoodleAbcConversionSettings*)StructPtrs[0];
   }
 
   uint32 NumChildren;

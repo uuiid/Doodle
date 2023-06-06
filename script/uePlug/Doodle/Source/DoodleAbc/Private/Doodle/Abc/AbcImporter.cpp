@@ -13,12 +13,12 @@ THIRD_PARTY_INCLUDES_START
 THIRD_PARTY_INCLUDES_END
 
 #include "Animation/AnimSequence.h"
+#include "AnimationUtils.h"
 #include "Async/ParallelFor.h"
 #include "ComponentReregisterContext.h"
-#include "Doodle/Abc/AbcAssetImportData.h"
 #include "Doodle/Abc/AbcFile.h"
 #include "Doodle/Abc/AbcImportUtilities.h"
-#include "Doodle/Abc/AnimationUtils.h"
+#include "Doodle/Abc/DoodleAbcAssetImportData.h"
 #include "Doodle/Abc/EigenHelper.h"
 #include "Editor.h"
 #include "Engine/SkeletalMesh.h"
@@ -70,10 +70,8 @@ void FAbcImporter::UpdateAssetImportData(UDoodleAbcAssetImportData* AssetImportD
     }
   }
 
-  AssetImportData->SamplingSettings         = ImportSettings->SamplingSettings;
   AssetImportData->NormalGenerationSettings = ImportSettings->NormalGenerationSettings;
   AssetImportData->CompressionSettings      = ImportSettings->CompressionSettings;
-  AssetImportData->StaticMeshSettings       = ImportSettings->StaticMeshSettings;
   AssetImportData->GeometryCacheSettings    = ImportSettings->GeometryCacheSettings;
   AssetImportData->ConversionSettings       = ImportSettings->ConversionSettings;
 }
@@ -103,7 +101,9 @@ const EAbcImportError FAbcImporter::OpenAbcFileForImport(const FString InFilePat
   return AbcFile->Open();
 }
 
-const EAbcImportError FAbcImporter::ImportTrackData(const int32 InNumThreads, UAbcImportSettings* InImportSettings) {
+const EAbcImportError FAbcImporter::ImportTrackData(
+    const int32 InNumThreads, UDoodleAbcImportSettings* InImportSettings
+) {
   ImportSettings             = InImportSettings;
   ImportSettings->NumThreads = InNumThreads;
   EAbcImportError Error      = AbcFile->Import(ImportSettings);
@@ -178,10 +178,9 @@ UStaticMesh* FAbcImporter::CreateStaticMeshFromSample(
     StaticMesh->GetStaticMaterials().Empty();
     // If there were FaceSets available in the Alembic file use the number of unique face sets as num material entries,
     // otherwise default to one material for the whole mesh
-    const uint32 FrameIndex    = 0;
-    uint32 NumFaceSets         = FaceSetNames.Num();
+    const uint32 FrameIndex = 0;
+    uint32 NumFaceSets      = FaceSetNames.Num();
 
-    const bool bCreateMaterial = ImportSettings->MaterialSettings.bCreateMaterials;
     for (uint32 MaterialIndex = 0; MaterialIndex < ((NumMaterials != 0) ? NumMaterials : 1); ++MaterialIndex) {
       UMaterialInterface* Material = nullptr;
       if (FaceSetNames.IsValidIndex(MaterialIndex)) {
@@ -204,7 +203,7 @@ UStaticMesh* FAbcImporter::CreateStaticMeshFromSample(
     SrcModel.BuildSettings.bRecomputeTangents   = false;
     SrcModel.BuildSettings.bUseMikkTSpace       = false;
     // Generate Lightmaps uvs (no support for importing right now)
-    SrcModel.BuildSettings.bGenerateLightmapUVs = ImportSettings->StaticMeshSettings.bGenerateLightmapUVs;
+    SrcModel.BuildSettings.bGenerateLightmapUVs = false;
     // Set lightmap UV index to 1 since we currently only import one set of UVs from the Alembic Data file
     SrcModel.BuildSettings.DstLightmapIndex     = 1;
 
@@ -223,87 +222,6 @@ UStaticMesh* FAbcImporter::CreateStaticMeshFromSample(
   }
 
   return StaticMesh;
-}
-
-const TArray<UStaticMesh*> FAbcImporter::ImportAsStaticMesh(UObject* InParent, EObjectFlags Flags) {
-  checkf(AbcFile->GetNumPolyMeshes() > 0, TEXT("No poly meshes found"));
-
-  TArray<UStaticMesh*> ImportedStaticMeshes;
-  const FAbcStaticMeshSettings& StaticMeshSettings = ImportSettings->StaticMeshSettings;
-
-  TFunction<void(int32, FAbcFile*)> Func           = [this, &ImportedStaticMeshes, StaticMeshSettings, InParent,
-                                            Flags](int32 FrameIndex, FAbcFile* InFile) {
-    const TArray<FAbcPolyMesh*>& PolyMeshes = AbcFile->GetPolyMeshes();
-    if (StaticMeshSettings.bMergeMeshes) {
-      // If merging we merge all the raw mesh structures together and generate a static mesh asset from this
-      TArray<FString> MergedFaceSetNames;
-      TArray<FAbcMeshSample*> Samples;
-      uint32 TotalNumMaterials = 0;
-
-      TArray<const FAbcMeshSample*> SamplesToMerge;
-      // Should merge all samples in the Alembic cache to one single static mesh
-      for (const FAbcPolyMesh* PolyMesh : PolyMeshes) {
-        if (PolyMesh->bShouldImport) {
-          const FAbcMeshSample* Sample = PolyMesh->GetSample(FrameIndex);
-          SamplesToMerge.Add(Sample);
-          TotalNumMaterials += (Sample->NumMaterials != 0) ? Sample->NumMaterials : 1;
-
-          if (PolyMesh->FaceSetNames.Num() > 0) {
-            MergedFaceSetNames.Append(PolyMesh->FaceSetNames);
-          } else {
-            // Default name
-            static const FString DefaultName("NoFaceSetName");
-            MergedFaceSetNames.Add(DefaultName);
-          }
-        }
-      }
-
-      // Only merged samples if there are any
-      if (SamplesToMerge.Num()) {
-        FAbcMeshSample* MergedSample = AbcImporterUtilities::MergeMeshSamples(SamplesToMerge);
-
-        UStaticMesh* StaticMesh      = CreateStaticMeshFromSample(
-            InParent,
-            InParent != GetTransientPackage()
-                               ? FPaths::GetBaseFilename(InParent->GetName())
-                               : (FPaths::GetBaseFilename(AbcFile->GetFilePath()) + "_" + FGuid::NewGuid().ToString()),
-            Flags, TotalNumMaterials, MergedFaceSetNames, MergedSample
-        );
-        if (StaticMesh) {
-          ImportedStaticMeshes.Add(StaticMesh);
-        }
-      }
-    } else {
-      for (const FAbcPolyMesh* PolyMesh : PolyMeshes) {
-        const FAbcMeshSample* Sample = PolyMesh->GetSample(FrameIndex);
-        if (PolyMesh->bShouldImport && Sample) {
-          // Setup static mesh instance
-          UStaticMesh* StaticMesh = CreateStaticMeshFromSample(
-              InParent,
-              InParent != GetTransientPackage() ? PolyMesh->GetName()
-                                                          : PolyMesh->GetName() + "_" + FGuid::NewGuid().ToString(),
-              Flags, Sample->NumMaterials, PolyMesh->FaceSetNames, Sample
-          );
-
-          if (StaticMesh) {
-            ImportedStaticMeshes.Add(StaticMesh);
-          }
-        }
-      }
-    }
-  };
-
-  EFrameReadFlags ReadFlags =
-      (ImportSettings->StaticMeshSettings.bPropagateMatrixTransformations ? EFrameReadFlags::ApplyMatrix
-                                                                          : EFrameReadFlags::None) |
-      EFrameReadFlags::ForceSingleThreaded;
-  AbcFile->ProcessFrames(Func, ReadFlags);
-
-  TArray<UObject*> Assets;
-  Assets.Append(ImportedStaticMeshes);
-  SetMetaData(Assets);
-
-  return ImportedStaticMeshes;
 }
 
 UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFlags Flags) {
@@ -366,9 +284,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
             GeometryCache, FName(*FString(TEXT("Flattened_Track"))), RF_Public
         );
 
-        const bool bCalculateMotionVectors =
-            (ImportSettings->GeometryCacheSettings.MotionVectors ==
-             EAbcGeometryCacheMotionVectorsImport::CalculateMotionVectorsDuringImport);
+        const bool bCalculateMotionVectors = false;
         Track->BeginCoding(
             Codec,
             ImportSettings->GeometryCacheSettings.bApplyConstantTopologyOptimizations && !bContainsHeterogeneousMeshes,
@@ -391,9 +307,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
                                                       &PreviousNumVertices](
                                                          int32 FrameIndex, const FAbcFile* InAbcFile
                                                      ) {
-          const bool bUseVelocitiesAsMotionVectors =
-              (ImportSettings->GeometryCacheSettings.MotionVectors ==
-               EAbcGeometryCacheMotionVectorsImport::ImportAbcVelocitiesAsMotionVectors);
+          const bool bUseVelocitiesAsMotionVectors = false;
           FGeometryCacheMeshData MeshData;
           bool bConstantTopology                 = true;
           const bool bStoreImportedVertexNumbers = ImportSettings->GeometryCacheSettings.bStoreImportedVertexNumbers;
@@ -447,9 +361,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
             UGeometryCacheTrackStreamable* Track =
                 NewObject<UGeometryCacheTrackStreamable>(GeometryCache, TrackName, RF_Public);
 
-            const bool bCalculateMotionVectors =
-                (ImportSettings->GeometryCacheSettings.MotionVectors ==
-                 EAbcGeometryCacheMotionVectorsImport::CalculateMotionVectorsDuringImport);
+            const bool bCalculateMotionVectors = false;
             Track->BeginCoding(
                 Codec,
                 ImportSettings->GeometryCacheSettings.bApplyConstantTopologyOptimizations &&
@@ -493,9 +405,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
               const bool bVisible                  = PolyMesh->GetVisibility(FrameIndex);
               const float FrameTime = PolyMesh->GetTimeForFrameIndex(FrameIndex) - InAbcFile->GetImportTimeOffset();
               if (bVisible) {
-                const bool bUseVelocitiesAsMotionVectors =
-                    (ImportSettings->GeometryCacheSettings.MotionVectors ==
-                     EAbcGeometryCacheMotionVectorsImport::ImportAbcVelocitiesAsMotionVectors);
+                const bool bUseVelocitiesAsMotionVectors = false;
                 const bool bStoreImportedVertexData = ImportSettings->GeometryCacheSettings.bStoreImportedVertexNumbers;
                 const FAbcMeshSample* Sample        = PolyMesh->GetSample(FrameIndex);
                 FGeometryCacheMeshData MeshData;
@@ -856,7 +766,7 @@ void FAbcImporter::SetMetaData(const TArray<UObject*>& Objects) {
 }
 
 const bool FAbcImporter::CompressAnimationDataUsingPCA(
-    const FAbcCompressionSettings& InCompressionSettings, const bool bRunComparison /*= false*/
+    const FDoodleAbcCompressionSettings& InCompressionSettings, const bool bRunComparison /*= false*/
 ) {
   const TArray<FAbcPolyMesh*>& PolyMeshes = AbcFile->GetPolyMeshes();
 
@@ -1064,39 +974,39 @@ const bool FAbcImporter::CompressAnimationDataUsingPCA(
       TArrayView<float> NormalsBasesMatrix;
       uint32 NumUsedSingularValues = NumSamples;
 
-      if (InCompressionSettings.BaseCalculationType != EBaseCalculationType::NoCompression) {
-        const float PercentageOfTotalBases =
-            (InCompressionSettings.BaseCalculationType == EBaseCalculationType::PercentageBased
-                 ? InCompressionSettings.PercentageOfTotalBases / 100.0f
-                 : 1.0f);
-        const int32 NumberOfBases = InCompressionSettings.BaseCalculationType == EBaseCalculationType::FixedNumber
-                                        ? InCompressionSettings.MaxNumberOfBases
-                                        : 0;
+      // if (InCompressionSettings.BaseCalculationType != EBaseCalculationType::NoCompression) {
+      //   const float PercentageOfTotalBases =
+      //       (InCompressionSettings.BaseCalculationType == EBaseCalculationType::PercentageBased
+      //            ? InCompressionSettings.PercentageOfTotalBases / 100.0f
+      //            : 1.0f);
+      //   const int32 NumberOfBases = InCompressionSettings.BaseCalculationType == EBaseCalculationType::FixedNumber
+      //                                   ? InCompressionSettings.MaxNumberOfBases
+      //                                   : 0;
 
-        NumUsedSingularValues     = PerformSVDCompression(
-            OriginalMatrix, OriginalNormalsMatrix, NumSamples, PercentageOfTotalBases, NumberOfBases, OutU, OutNormalsU,
-            OutV
-        );
-        BasesMatrix        = OutU;
-        NormalsBasesMatrix = OutNormalsU;
-      } else {
-        OutV.AddDefaulted(NumSamples * NumSamples);
+      //  NumUsedSingularValues     = PerformSVDCompression(
+      //      OriginalMatrix, OriginalNormalsMatrix, NumSamples, PercentageOfTotalBases, NumberOfBases, OutU,
+      //      OutNormalsU, OutV
+      //  );
+      //  BasesMatrix        = OutU;
+      //  NormalsBasesMatrix = OutNormalsU;
+      //} else {
+      //}
+      OutV.AddDefaulted(NumSamples * NumSamples);
 
-        for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
-          for (int32 CurveIndex = 0; CurveIndex < NumSamples; ++CurveIndex) {
-            float Weight = 0.f;
+      for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
+        for (int32 CurveIndex = 0; CurveIndex < NumSamples; ++CurveIndex) {
+          float Weight = 0.f;
 
-            if (SampleIndex == CurveIndex) {
-              Weight = 1.f;
-            }
-
-            OutV[SampleIndex + (NumSamples * CurveIndex)] = Weight;
+          if (SampleIndex == CurveIndex) {
+            Weight = 1.f;
           }
-        }
 
-        BasesMatrix        = OriginalMatrix;
-        NormalsBasesMatrix = OriginalNormalsMatrix;
+          OutV[SampleIndex + (NumSamples * CurveIndex)] = Weight;
+        }
       }
+
+      BasesMatrix                  = OriginalMatrix;
+      NormalsBasesMatrix           = OriginalNormalsMatrix;
 
       // Set up average frame
       CompressedData.AverageSample = new FAbcMeshSample(MergedZeroFrameSample);
@@ -1335,39 +1245,39 @@ const bool FAbcImporter::CompressAnimationDataUsingPCA(
             AverageNormalData[MeshIndex].GetTypeSize() * NumIndices
         );
 
-        if (InCompressionSettings.BaseCalculationType != EBaseCalculationType::NoCompression) {
-          const float PercentageBases =
-              InCompressionSettings.BaseCalculationType == EBaseCalculationType::PercentageBased
-                  ? InCompressionSettings.PercentageOfTotalBases / 100.0f
-                  : 1.0f;
-          const int32 NumBases  = InCompressionSettings.BaseCalculationType == EBaseCalculationType::FixedNumber
-                                      ? InCompressionSettings.MaxNumberOfBases
-                                      : 0;
+        // if (InCompressionSettings.BaseCalculationType != EBaseCalculationType::NoCompression) {
+        //   const float PercentageBases =
+        //       InCompressionSettings.BaseCalculationType == EBaseCalculationType::PercentageBased
+        //           ? InCompressionSettings.PercentageOfTotalBases / 100.0f
+        //           : 1.0f;
+        //   const int32 NumBases  = InCompressionSettings.BaseCalculationType == EBaseCalculationType::FixedNumber
+        //                               ? InCompressionSettings.MaxNumberOfBases
+        //                               : 0;
 
-          NumUsedSingularValues = PerformSVDCompression(
-              Matrices[MeshIndex], NormalsMatrices[MeshIndex], NumSamples, PercentageBases, NumBases, OutU, OutNormalsU,
-              OutV
-          );
-          BasesMatrix        = OutU;
-          NormalsBasesMatrix = OutNormalsU;
-        } else {
-          OutV.AddDefaulted(NumSamples * NumSamples);
+        //  NumUsedSingularValues = PerformSVDCompression(
+        //      Matrices[MeshIndex], NormalsMatrices[MeshIndex], NumSamples, PercentageBases, NumBases, OutU,
+        //      OutNormalsU, OutV
+        //  );
+        //  BasesMatrix        = OutU;
+        //  NormalsBasesMatrix = OutNormalsU;
+        //} else {
+        //}
+        OutV.AddDefaulted(NumSamples * NumSamples);
 
-          for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
-            for (int32 CurveIndex = 0; CurveIndex < NumSamples; ++CurveIndex) {
-              float Weight = 0.f;
+        for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
+          for (int32 CurveIndex = 0; CurveIndex < NumSamples; ++CurveIndex) {
+            float Weight = 0.f;
 
-              if (SampleIndex == CurveIndex) {
-                Weight = 1.f;
-              }
-
-              OutV[SampleIndex + (NumSamples * CurveIndex)] = Weight;
+            if (SampleIndex == CurveIndex) {
+              Weight = 1.f;
             }
-          }
 
-          BasesMatrix        = Matrices[MeshIndex];
-          NormalsBasesMatrix = NormalsMatrices[MeshIndex];
+            OutV[SampleIndex + (NumSamples * CurveIndex)] = Weight;
+          }
         }
+
+        BasesMatrix           = Matrices[MeshIndex];
+        NormalsBasesMatrix    = NormalsMatrices[MeshIndex];
 
         const float FrameStep = (MaxTimes[MeshIndex] - MinTimes[MeshIndex]) / (float)(NumSamples - 1);
         AbcImporterUtilities::GenerateCompressedMeshData(
@@ -1521,13 +1431,6 @@ const int32 FAbcImporter::PerformSVDCompression(
   );
 
   return NumUsedSingularValues;
-}
-
-const TArray<UStaticMesh*> FAbcImporter::ReimportAsStaticMesh(UStaticMesh* Mesh) {
-  const FString StaticMeshName            = Mesh->GetName();
-  const TArray<UStaticMesh*> StaticMeshes = ImportAsStaticMesh(Mesh->GetOuter(), RF_Public | RF_Standalone);
-
-  return StaticMeshes;
 }
 
 UGeometryCache* FAbcImporter::ReimportAsGeometryCache(UGeometryCache* GeometryCache) {
