@@ -11,6 +11,7 @@
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sequence_to_blend_shape.h>
+#include <maya_plug/fmt/fmt_select_list.h>
 
 #include "data/maya_tool.h"
 #include "exception/exception.h"
@@ -93,8 +94,8 @@ void export_file_fbx::export_anim(
   }
   MItDag l_it{};
   maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kInvalid));
+  MDagPath l_path{};
   for (; !l_it.isDone(); l_it.next()) {
-    MDagPath l_path{};
     maya_chick(l_it.getPath(l_path));
     if (in_exclude.hasItem(l_path)) {
       continue;
@@ -105,6 +106,7 @@ void export_file_fbx::export_anim(
   maya_chick(l_satus);
 
   m_namespace_ = l_ref.get_namespace();
+  DOODLE_LOG_INFO("导出物体 {}", l_select);
 
   maya_chick(MGlobal::setActiveSelectionList(l_select));
   auto l_arg = in_handle_view.get<generate_file_path_ptr>();

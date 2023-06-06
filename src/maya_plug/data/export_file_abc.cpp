@@ -153,7 +153,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
     export_map[l_name]    = l_list;
   }
   DOODLE_LOG_INFO("导出划分完成 {}", fmt::join(export_map, " "));
-
+  l_current_export_list.clear();
   for (auto&& [name, s_l] : export_map) {
     auto l_path = name(L_ref);
     l_current_export_list.merge(s_l);
