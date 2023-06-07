@@ -36,10 +36,10 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
   MSelectionList l_list{};
   maya_chick(k_prase.getObjects(l_list));
 
-  auto l_refs  = reference_file_factory{}.create_ref(l_list);
-  auto l_cloth = qcloth_factory{}.create_cloth();
-  std::map<std::string, entt::handle> l_ref_map{};
+  auto l_refs = reference_file_factory{}.create_ref(l_list);
+  if (l_refs.empty()) return {};
 
+  auto l_cloth = qcloth_factory{}.create_cloth();
   DOODLE_LOG_INFO("开始导出abc");
   export_file_abc l_ex{};
   auto l_gen               = std::make_shared<reference_file_ns::generate_abc_file_path>();
