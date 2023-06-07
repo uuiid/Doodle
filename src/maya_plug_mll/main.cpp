@@ -16,7 +16,6 @@
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/reference_comm.h>
-#include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_render/hud_render_node.h>
 
 #include <maya/MFnPlugin.h>
@@ -194,9 +193,6 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_command<::doodle::maya_plug::set_cloth_cache_path>(k_plugin);
   CHECK_MSTATUS(status);
 
-  /// 添加上传文件命令
-  status = maya_reg->register_command<::doodle::maya_plug::upload_files_command>(k_plugin);
-  CHECK_MSTATUS(status);
   /// 添加解算骨骼命令
   status = maya_reg->register_command<::doodle::maya_plug::dem_bones_comm>(k_plugin);
   CHECK_MSTATUS(status);

@@ -2,24 +2,20 @@ target_sources(doodle_maya_lib
         PUBLIC
         find_duplicate_poly_comm.h
         create_qcloth_assets.h
-        upload_files_command.h
         dem_bones_add_weight.h
         open_doodle_main.h
         clear_scene_comm.h
         reference_comm.h
-        auto_chick_call_back.h
         dem_bones_comm.h
         afterimage_comm.h
         add_entt.h
 
         PRIVATE
         open_doodle_main.cpp
-        upload_files_command.cpp
         afterimage_comm.cpp
         reference_comm.cpp
         dem_bones_add_weight.cpp
         find_duplicate_poly_comm.cpp
-        auto_chick_call_back.cpp
         create_qcloth_assets.cpp
         clear_scene_comm.cpp
         dem_bones_comm.cpp
