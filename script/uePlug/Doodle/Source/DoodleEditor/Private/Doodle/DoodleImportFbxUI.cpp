@@ -216,7 +216,7 @@ void UDoodleFbxImport_1::ImportFile() {
   L_Data->bSkipReadOnly                                          = true;
   L_Data->bReplaceExisting                                       = true;
 
-  UFbxFactory* k_fbx_f                                           = DuplicateObject<UFbxFactory>(GetDefault<UFbxFactory>(), L_Data);
+  UFbxFactory* k_fbx_f                                           = NewObject<UFbxFactory>(L_Data);
   L_Data->Factory                                                = k_fbx_f;
 
   k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_SkeletalMesh;
@@ -414,9 +414,6 @@ void UDoodleAbcImport_1::ImportFile() {
   L_Data->Factory                             = k_abc_f;
   UDoodleAbcImportSettings* k_abc_stting      = NewObject<UDoodleAbcImportSettings>(L_Data);
   k_abc_f->ImportSettings                     = k_abc_stting;
-  // k_abc_f->AssetImportTask                           = NewObject<UAssetImportTask>(L_Data);
-  // k_abc_f->AssetImportTask->Options                  = k_abc_stting;
-  /// 获取abc默认设置并修改
 
   k_abc_stting->ImportType                    = EDoodleAlembicImportType::GeometryCache;  // 导入为几何缓存
   k_abc_stting->ConversionSettings.bFlipV     = true;
@@ -433,7 +430,7 @@ void UDoodleAbcImport_1::ImportFile() {
   k_abc_stting->SamplingSettings.FrameEnd            = EndTime;    // 结束帧
   k_abc_stting->SamplingSettings.FrameSteps          = 1;          // 帧步数
 
-  FAssetToolsModule& AssetToolsModule                = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+  FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
   AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
 }
@@ -567,12 +564,13 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
 #else
   const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
 #endif
-  // clang-format off
 
-  const static TArray<TSharedPtr<FString>> L_DepType{MakeShared<FString>(TEXT("Lig")),MakeShared<FString>(TEXT("Vfx"))};
+  const static TArray<TSharedPtr<FString>> L_DepType{
+      MakeShared<FString>(TEXT("Lig")), MakeShared<FString>(TEXT("Lig_Sim")), MakeShared<FString>(TEXT("Vfx"))};
 
   Path_Suffix = *L_DepType[0];
 
+  // clang-format off
   ChildSlot
   [
     SNew(SBorder)
@@ -797,14 +795,7 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
   LFilter.bIncludeOnlyOnDiskAssets = false;
   LFilter.bRecursivePaths          = true;
   LFilter.bRecursiveClasses        = true;
-
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 26) || \
-    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || \
-    (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
-  LFilter.ClassNames.Add(FName{USkeleton::StaticClass()->GetName()});
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   LFilter.ClassPaths.Add(USkeleton::StaticClass()->GetClassPathName());
-#endif
 
   IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
     USkeleton* L_SK = Cast<USkeleton>(InAss.GetAsset());
@@ -839,8 +830,13 @@ bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporte
       (float_t)In_ImportFbx->Scene->GetNodeCount() * 2, LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
 
   for (size_t i = 0; i < In_ImportFbx->Scene->GetNodeCount(); ++i) {
-    FString L_Name = MakeName(In_ImportFbx->Scene->GetNode(i)->GetName());
-    In_Fbx->FbxNodeNames.Add(L_Name);
+    auto L_FbxNode = In_ImportFbx->Scene->GetNode(i);
+    auto L_Attr    = L_FbxNode->GetNodeAttribute();
+    // 只添加骨骼
+    if (L_Attr && L_Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton) {
+      FString L_Name = MakeName(In_ImportFbx->Scene->GetNode(i)->GetName());
+      In_Fbx->FbxNodeNames.Add(L_Name);
+    }
     // 获取名称空间
     if (L_NameSpace.IsEmpty()) L_NameSpace = GetNamepace(In_ImportFbx->Scene->GetNode(i)->GetName());
 
@@ -957,13 +953,8 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
     } else {
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
       TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
-    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-      UDoodleFbxImport_1* L_ptr = NewObject<UDoodleFbxImport_1>();
-#endif
-      L_ptr->ImportPath = In_File;
+      L_ptr->ImportPath                    = In_File;
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork3", "寻找匹配骨骼"));
 
       if (MatchFbx(L_ptr, FbxImporter)) L_File = ListImportData.Emplace_GetRef(L_ptr);
