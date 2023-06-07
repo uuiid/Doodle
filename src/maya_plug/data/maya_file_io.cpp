@@ -7,11 +7,18 @@
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+// #include <Windows.h>
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
+//
+// #ifdef WIN32
+// #undef WIN32
+// #endif
+//
+// #define WIN32
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
-// #include <maya/adskDebugPrint.h>
+#include <maya/adskDebugPrint.h>
 namespace doodle::maya_plug {
 
 FSys::path maya_file_io::get_current_path() {

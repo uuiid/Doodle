@@ -22,9 +22,6 @@
 #include <maya/MNamespace.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
-#include <maya/adskDataAssociations.h>
-#include <maya/adskDataStream.h>
-#include <maya/adskDebugPrint.h>
 
 namespace doodle::maya_plug {
 
@@ -69,7 +66,6 @@ reference_attr_setting::reference_attr_setting() : p_i(std::make_unique<impl>())
 }
 
 bool reference_attr_setting::get_file_info() {
-  adsk::Debug::Print k_p{std::cout};
   MStatus k_status{};
   DOODLE_MAYA_CHICK(k_status);
   destroy_handle(p_i->p_handles);

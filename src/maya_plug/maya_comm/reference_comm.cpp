@@ -29,27 +29,8 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
 #include <maya/MUuid.h>
-#include <maya/adskDataAssociations.h>
-#include <maya/adskDataStream.h>
-#include <maya/adskDebugPrint.h>
 
 namespace doodle::maya_plug {
-namespace {
-constexpr const char doodle_startTime[]              = "-st";
-constexpr const char doodle_endTime[]                = "-et";
-constexpr const char doodle_project_path[]           = "-pr";
-constexpr const char doodle_export_type[]            = "-ef";
-constexpr const char doodle_export_use_select[]      = "-s";
-constexpr const char doodle_export_force[]           = "-f";
-
-constexpr const char doodle_export_type_long[]       = "-exportType";
-constexpr const char doodle_project_path_long[]      = "-project";
-constexpr const char doodle_startTime_long[]         = "-startTime";
-constexpr const char doodle_endTime_long[]           = "-endTime";
-constexpr const char doodle_export_use_select_long[] = "-select";
-constexpr const char doodle_export_force_long[]      = "-force";
-
-};  // namespace
 
 MSyntax set_cloth_cache_path_syntax() {
   MSyntax l_syntax{};
