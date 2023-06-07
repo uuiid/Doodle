@@ -170,6 +170,7 @@ class Doodle_CustomFbxExporter {
 
   FbxNode* ExportStaticMeshToFbx(const UStaticMesh* In_StaticMesh, const FString& In_MeshName, FbxNode* FbxActor) {
     FbxMesh* L_Mesh = FbxMeshes.FindRef(In_StaticMesh);
+    return FbxActor;
 
     if (!L_Mesh) {
       L_Mesh                                    = FbxMesh::Create(Scene, TCHAR_TO_UTF8(*In_MeshName));
