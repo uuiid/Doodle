@@ -11,7 +11,7 @@
 #include <maya/MFileObject.h>
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
-#include <maya/adskDebugPrint.h>
+// #include <maya/adskDebugPrint.h>
 namespace doodle::maya_plug {
 
 FSys::path maya_file_io::get_current_path() {
@@ -71,9 +71,9 @@ bool maya_file_io::replace_channel_date(const std::string& in_string) {
   k_stream->setElement(0, k_h);
   MFileIO::setMetadata(k_meta);
 
-  adsk::Debug::Print k_p{std::cout};
-  decltype(k_meta)::Debug(&k_meta, k_p);
-  k_p.endSection();
+  //  adsk::Debug::Print k_p{std::cout};
+  //  decltype(k_meta)::Debug(&k_meta, k_p);
+  //  k_p.endSection();
   return true;
 }
 bool maya_file_io::save_file(const FSys::path& in_file_path) {
