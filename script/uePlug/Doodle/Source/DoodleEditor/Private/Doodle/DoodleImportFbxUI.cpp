@@ -222,6 +222,7 @@ void UDoodleFbxImport_1::ImportFile() {
   k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_SkeletalMesh;
   k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
   k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
+  k_fbx_f->ImportUI->bCreatePhysicsAsset                         = false;
   k_fbx_f->ImportUI->bImportMesh                                 = true;
   k_fbx_f->ImportUI->bImportAnimations                           = true;
   k_fbx_f->ImportUI->bImportRigidMesh                            = true;
@@ -236,22 +237,16 @@ void UDoodleFbxImport_1::ImportFile() {
   k_fbx_f->ImportUI->bAllowContentTypeImport                     = true;
   k_fbx_f->ImportUI->TextureImportData->MaterialSearchLocation   = EMaterialSearchLocation::UnderRoot;
   if (SkinObj) {
-    k_fbx_f->ImportUI->Skeleton                                    = SkinObj;
-    k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_Animation;
-    k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
-    k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
-    k_fbx_f->ImportUI->bImportMesh                                 = false;
-    k_fbx_f->ImportUI->bImportAnimations                           = true;
-    k_fbx_f->ImportUI->bImportRigidMesh                            = false;
-    k_fbx_f->ImportUI->bImportMaterials                            = false;
-    k_fbx_f->ImportUI->bImportTextures                             = false;
-    k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict               = false;
-
-    k_fbx_f->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
-    k_fbx_f->ImportUI->bAutomatedImportShouldDetectType            = false;
-    k_fbx_f->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
-    k_fbx_f->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;
-    k_fbx_f->ImportUI->bAllowContentTypeImport                     = true;
+    if (OnlyAnim) {
+      k_fbx_f->ImportUI->Skeleton         = SkinObj;
+      k_fbx_f->ImportUI->MeshTypeToImport = FBXIT_Animation;
+      k_fbx_f->ImportUI->bImportMesh      = false;
+    } else {
+      k_fbx_f->ImportUI->Skeleton          = SkinObj;
+      k_fbx_f->ImportUI->MeshTypeToImport  = FBXIT_SkeletalMesh;
+      k_fbx_f->ImportUI->bImportAsSkeletal = true;
+      k_fbx_f->ImportUI->bImportMesh       = true;
+    }
   }
   FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
@@ -802,7 +797,6 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
     if (L_SK) {
       FDoodleUSkeletonData_1& L_Ref_Data = this->AllSkinObjs.Emplace_GetRef();
       L_Ref_Data.SkinObj                 = L_SK;
-
       for (auto&& L_Item : L_SK->GetReferenceSkeleton().GetRawRefBoneInfo())
         L_Ref_Data.BoneNames.Add(L_Item.ExportName);
     }
@@ -849,14 +843,15 @@ bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporte
   for (auto&& L_SK_Data : this->AllSkinObjs) {
     L_Task_Scoped2.EnterProgressFrame(1.0f);
     FString L_BaseName = FPaths::GetBaseFilename(In_Fbx->ImportPath);
-    if (In_Fbx->FbxNodeNames.Num() >= L_SK_Data.BoneNames.Num()) {
-      if ((L_SK_Data.SkinTag.IsEmpty() ? true : L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE
-          )  /// 先确认字串节省资源
-          && Algo::AllOf(
-                 L_SK_Data.BoneNames, [&](const FString& IN_Str) { return In_Fbx->FbxNodeNames.Contains(IN_Str); }
-             )  /// 进一步确认骨骼内容
-      )
-        In_Fbx->SkinObj = L_SK_Data.SkinObj;
+    if (!L_SK_Data.SkinTag.IsEmpty() && L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE) {
+      In_Fbx->SkinObj = L_SK_Data.SkinObj;
+      return true;
+    }
+    if (Algo::AllOf(
+            L_SK_Data.BoneNames, [&](const FString& IN_Str) { return In_Fbx->FbxNodeNames.Contains(IN_Str); }
+        )  /// 进一步确认骨骼内容
+    ) {
+      In_Fbx->SkinObj = L_SK_Data.SkinObj;
       return true;
     }
   }
@@ -908,12 +903,36 @@ void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix, const FStr
   }
 }
 
+void SDoodleImportFbxUI::SetFbxOnlyAnim() {
+  TSet<FString> L_Abc_path{};
+  for (auto&& L_Fbx : ListImportData) {
+    if (FPaths::GetExtension(L_Fbx->ImportPath, true) == TEXT(".abc")) {
+      FString L_Path = FPaths::GetPath(L_Fbx->ImportPath) / FPaths::GetBaseFilename(L_Fbx->ImportPath);
+      L_Path += ".fbx";
+      FPaths::NormalizeFilename(L_Path);
+      L_Abc_path.Emplace(L_Path);
+    }
+  }
+
+  for (auto&& L_Fbx : ListImportData) {
+    FString L_Path = L_Fbx->ImportPath;
+    FPaths::NormalizeFilename(L_Path);
+    if (L_Abc_path.Contains(L_Path)) {
+      if (auto L_F = Cast<UDoodleFbxImport_1>(L_Fbx)) {
+        L_F->OnlyAnim = false;
+      }
+    }
+  }
+}
+
 void SDoodleImportFbxUI::SetAllSkinTag() {
-  FRegexPattern L_Reg_Ep_Pattern{LR"(SK_(\w+)_Skeleton)"};
+  FRegexPattern L_Reg_Ep_Pattern{LR"((SK_)?(\w+)_Skeleton)"};
   for (auto&& L_Sk : AllSkinObjs) {
     FRegexMatcher L_Reg{L_Reg_Ep_Pattern, L_Sk.SkinObj->GetName()};
-    if (L_Reg.FindNext())
-      L_Sk.SkinTag = L_Reg.GetCaptureGroup(1);
+    if (L_Reg.FindNext()) {
+      FString L_Str = L_Reg.GetCaptureGroup(2);
+      L_Sk.SkinTag  = L_Str.IsEmpty() ? L_Reg.GetCaptureGroup(1) : L_Str;
+    }
   }
 }
 
@@ -1026,6 +1045,7 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
     }
   }
   GenPathPrefix(Path_Prefix, Path_Suffix);
+  SetFbxOnlyAnim();
   ListImportGui->RebuildList();
 
   return FReply::Handled();
