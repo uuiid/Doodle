@@ -56,7 +56,7 @@ class archive_out {
   void wirte_mesh(dag_path_out_data& in_path);
   void write_box();
   void wirte_frame(const dag_path_out_data& in_path);
-  void write_frame_box(); 
+  void write_frame_box();
   void create_time_sampling_2(const MTime& in_time_begin, const MTime& in_time_end);
 
  public:

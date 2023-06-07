@@ -3,7 +3,7 @@ add_executable(
         doodle_maya_exe
         main.cpp
 )
-add_subdirectory(abc)
+
 add_subdirectory(facet)
 add_subdirectory(cloth_sim)
 add_subdirectory(core)
@@ -21,8 +21,8 @@ target_link_libraries(doodle_maya_exe
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
-        Alembic::Alembic
-)
+
+        )
 
 target_compile_definitions(doodle_maya_exe
         PUBLIC

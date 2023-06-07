@@ -19,4 +19,7 @@ MayaNurbsCurveWriter.cpp
 MayaMeshWriter.cpp
 MayaCameraWriter.cpp
 MayaLocatorWriter.cpp
-
+AbcExport.cpp
+AbcExport.h
+MayaFaceSetWriter.cpp
+MayaFaceSetWriter.h

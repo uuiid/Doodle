@@ -11,6 +11,7 @@ add_library(doodle_maya_lib
 )
 
 add_subdirectory(configure configure_${Maya_Version})
+add_subdirectory(abc abc_${Maya_Version})
 add_subdirectory(data data_${Maya_Version})
 add_subdirectory(exception exception_${Maya_Version})
 add_subdirectory(fmt fmt_${Maya_Version})
@@ -34,6 +35,7 @@ target_link_libraries(doodle_maya_lib
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
+        Alembic::Alembic
 )
 target_compile_options(
         doodle_maya_lib

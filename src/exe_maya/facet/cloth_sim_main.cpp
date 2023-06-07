@@ -155,8 +155,7 @@ void cloth_sim::play_blast() {
 
 void cloth_sim::export_abc() {
   DOODLE_LOG_INFO("开始导出abc");
-  // export_file_abc l_ex{};
-  export_abc_native l_ex{};
+  export_file_abc l_ex{};
   auto l_gen             = std::make_shared<reference_file_ns::generate_abc_file_path>();
   const MTime k_end_time = MAnimControl::maxTime();
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
