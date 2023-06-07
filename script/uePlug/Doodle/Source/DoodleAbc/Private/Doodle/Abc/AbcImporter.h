@@ -7,6 +7,7 @@
 #include "Animation/MorphTarget.h"
 #include "Containers/List.h"
 #include "CoreMinimal.h"
+#include "Materials/Material.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/AllowWindowsPlatformTypes.h"

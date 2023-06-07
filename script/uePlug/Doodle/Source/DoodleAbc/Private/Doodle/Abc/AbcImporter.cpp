@@ -22,8 +22,10 @@ THIRD_PARTY_INCLUDES_END
 #include "Doodle/Abc/EigenHelper.h"
 #include "Editor.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/SkinnedAssetCommon.h"
 #include "Engine/StaticMesh.h"
 #include "GeometryCacheCodecV1.h"
+#include "MaterialShared.h"
 #include "Materials/Material.h"
 #include "MeshUtilities.h"
 #include "Misc/FeedbackContext.h"
@@ -171,7 +173,7 @@ UStaticMesh* FAbcImporter::CreateStaticMeshFromSample(
     StaticMesh->SetLightMapCoordinateIndex(1);
 
     // Material setup, since there isn't much material information in the Alembic file,
-    UMaterial* DefaultMaterial = UMaterial::GetDefaultMaterial(MD_Surface);
+    UMaterial* DefaultMaterial = UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface);
     check(DefaultMaterial);
 
     // Material list
@@ -186,7 +188,7 @@ UStaticMesh* FAbcImporter::CreateStaticMeshFromSample(
       if (FaceSetNames.IsValidIndex(MaterialIndex)) {
         Material = AbcImporterUtilities::RetrieveMaterial(*AbcFile, FaceSetNames[MaterialIndex], InParent, Flags);
 
-        if (Material != UMaterial::GetDefaultMaterial(MD_Surface)) {
+        if (Material != UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface)) {
           Material->PostEditChange();
         }
       }
@@ -247,7 +249,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
     GeometryCache->ClearForReimporting();
 
     // Load the default material for later usage
-    UMaterial* DefaultMaterial = UMaterial::GetDefaultMaterial(MD_Surface);
+    UMaterial* DefaultMaterial = UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface);
     check(DefaultMaterial);
     uint32 MaterialOffset     = 0;
 
@@ -335,7 +337,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
           UMaterialInterface* Material = AbcImporterUtilities::RetrieveMaterial(*AbcFile, FaceSetName, InParent, Flags);
           GeometryCache->Materials.Add((Material != nullptr) ? Material : DefaultMaterial);
 
-          if (Material != UMaterial::GetDefaultMaterial(MD_Surface)) {
+          if (Material != UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface)) {
             Material->PostEditChange();
           }
         }
@@ -381,7 +383,7 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
                 Material = AbcImporterUtilities::RetrieveMaterial(
                     *AbcFile, PolyMesh->FaceSetNames[MaterialIndex], InParent, Flags
                 );
-                if (Material != UMaterial::GetDefaultMaterial(MD_Surface)) {
+                if (Material != UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface)) {
                   Material->PostEditChange();
                 }
               }
@@ -645,7 +647,7 @@ TArray<UObject*> FAbcImporter::ImportAsSkeletalMesh(UObject* InParent, EObjectFl
           UMaterialInterface* Material =
               AbcImporterUtilities::RetrieveMaterial(*AbcFile, MaterialName, InParent, Flags);
           SkeletalMesh->GetMaterials().Add(FSkeletalMaterial(Material, true));
-          if (Material != UMaterial::GetDefaultMaterial(MD_Surface)) {
+          if (Material != UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface)) {
             Material->PostEditChange();
           }
         }
