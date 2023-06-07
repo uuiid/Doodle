@@ -16,9 +16,6 @@
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/reference_comm.h>
-#include <maya_plug/maya_comm/replace_rig_file_command.h>
-#include <maya_plug/maya_comm/sequence_to_blend_shape_comm.h>
-#include <maya_plug/maya_comm/sequence_to_blend_shape_ref_comm.h>
 #include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_render/hud_render_node.h>
 
@@ -196,9 +193,7 @@ MStatus initializePlugin(MObject obj) {
   /// 添加设置缓存命令
   status = maya_reg->register_command<::doodle::maya_plug::set_cloth_cache_path>(k_plugin);
   CHECK_MSTATUS(status);
-  /// 添加替换文件命令
-  status = maya_reg->register_command<::doodle::maya_plug::replace_rig_file_command>(k_plugin);
-  CHECK_MSTATUS(status);
+
   /// 添加上传文件命令
   status = maya_reg->register_command<::doodle::maya_plug::upload_files_command>(k_plugin);
   CHECK_MSTATUS(status);
@@ -207,12 +202,6 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
   /// 添加解算骨骼命令
   status = maya_reg->register_command<::doodle::maya_plug::dem_bones_add_weight>(k_plugin);
-  CHECK_MSTATUS(status);
-  /// 添加变形骨骼命令
-  status = maya_reg->register_command<::doodle::maya_plug::sequence_to_blend_shape_comm>(k_plugin);
-  CHECK_MSTATUS(status);
-  /// 添加变形骨骼命令2
-  status = maya_reg->register_command<::doodle::maya_plug::sequence_to_blend_shape_ref_comm>(k_plugin);
   CHECK_MSTATUS(status);
 
   /// 添加创建布料命令
