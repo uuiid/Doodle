@@ -15,15 +15,16 @@
 
 #include <boost/lambda2.hpp>
 
+#include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
-#include <maya_plug/main/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
+#include "maya_tool.h"
 #include <array>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
@@ -551,6 +552,32 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     }
   }
 
+  return l_ret;
+}
+std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list) const {
+  std::vector<entt::handle> l_ret{};
+  g_reg()->clear<reference_file>();
+  g_reg()->clear<qcloth_shape>();
+
+  std::set<std::string> l_names{};
+  MItSelectionList l_it{in_list};
+  for (; !l_it.isDone(); l_it.next()) {
+    MDagPath l_path{};
+    l_it.getDagPath(l_path);
+    auto l_name = get_node_name(l_path);
+    l_names.emplace(m_namespace::get_namespace_from_name(l_name));
+  }
+  for (auto &&k_name : l_names) {
+    reference_file k_ref{k_name};
+    if (k_ref) {
+      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
+      auto l_h = make_handle();
+      l_h.emplace<reference_file>(k_ref);
+      l_ret.emplace_back(l_h);
+    } else {
+      DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
+    }
+  }
   return l_ret;
 }
 

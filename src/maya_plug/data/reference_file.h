@@ -5,6 +5,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
+#include "maya/MApiNamespace.h"
 #include "maya/MString.h"
 #include <maya/MSelectionList.h>
 #include <maya/MTime.h>
@@ -219,6 +220,7 @@ class reference_file_factory {
   ~reference_file_factory() = default;
 
   [[nodiscard]] std::vector<entt::handle> create_ref() const;
+  [[nodiscard]] std::vector<entt::handle> create_ref(const MSelectionList &in_list) const;
 };
 
 }  // namespace doodle::maya_plug
