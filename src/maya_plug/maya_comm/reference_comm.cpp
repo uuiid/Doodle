@@ -13,7 +13,9 @@
 
 #include <boost/asio/use_future.hpp>
 
+#include "maya_plug/data/qcloth_factory.h"
 #include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sim_cover_attr.h>
@@ -42,26 +44,19 @@ MSyntax set_cloth_cache_path_syntax() {
 
 MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   MStatus l_status{};
-  // MArgDatabase k_prase{syntax(), in_list, &l_status};
-  // MSelectionList l_list{};
-  // DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
+  auto l_refs  = reference_file_factory{}.create_ref();
+  auto l_cloth = qcloth_factory{}.create_cloth();
+  std::map<std::string, entt::handle> l_ref_map{};
+  l_ref_map = l_refs |
+              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
+                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              }) |
+              ranges::to<decltype(l_ref_map)>;
+  for (auto l_h : l_cloth) {
+    auto l_c = l_h.get<cloth_interface>();
+    l_c->set_cache_folder(l_ref_map[l_c->get_namespace()], g_reg()->ctx().get<user::current_user>().user_name_attr());
+  }
 
-  // MObject l_object{};
-  // for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-  //   DOODLE_LOG_INFO("引用文件{}被发现需要设置解算碰撞体", k_ref.path);
-  //   /// \brief 生成需要的 布料实体
-  //   if (!l_list.isEmpty())
-  //     for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
-  //       DOODLE_MAYA_CHICK(l_i.getDependNode(l_object));
-  //       if (k_ref.has_node(l_object)) qcloth_shape::create(make_handle(k_e));
-  //     }
-  //   else
-  //     qcloth_shape::create(make_handle(k_e));
-  // }
-  // for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
-  //   DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
-  //   k_qs.set_cache_folder(g_reg()->ctx().get<user::current_user>().user_name_attr());
-  // }
   return l_status;
 }
 

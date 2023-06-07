@@ -27,10 +27,6 @@ class DlsShelf(shelfBase._shelf):
     def build(self):
         self.addButon("export_abc", icon="icons/OUTabc.png",
                       command=self.exportAbc)
-        self.addButon("cam", icon="icons/OUTcam.png",
-                      command=self.export_cam)
-        self.addButon("OUTfbx", icon="icons/OUTfbx.png",
-                      command=self.exportFbx)
 
         self.addButon("remesh", icon="icons/remesh.png",
                       command=self.polyremesh)
@@ -76,18 +72,15 @@ class DlsShelf(shelfBase._shelf):
                       command=cmds.doodle_duplicate_poly)
         self.addButon("set cache", "icons/set_cache.png",
                       command=lambda: self.set_cache())
-        self.addButon("export abc2", "icons/OUTabc2.png",
-                      command=lambda: self._export_abc_and_upload_())
 
         self.addButon("ik to fk", "icons/mark_ik_to_fk.png",
                       command=lambda: scripts.doodle_ik_to_fk.doodle_ik_to_fk())
-        self.addButon("abc to bl", "icons/sequence_to_blend_shape.png",
-                      command=lambda: DlsShelf._export_cloth_fbx_())
+
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
         self.addButon("mesh to hair uv", icon="icons/hair_to_uv.png",
                       command=lambda: hair_uv.main())
-        self.addButon("blend",icon="icons/blend.png",
+        self.addButon("blend", icon="icons/blend.png",
                       command=self.blendkeyframe)
 
     def polyremesh(self):
@@ -98,20 +91,11 @@ class DlsShelf(shelfBase._shelf):
         self.re()
         deleteAttr.deleteShape().show()
 
-    def export_cam(self):
-        cmds.doodle_export_camera()
-
     def exportAbc(self):
-        cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(exportType="abc", select=True)
-
-    def exportFbx(self):
-        cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(exportType="fbx", select=True)
+        cmds.ref_file_export()
 
     def set_cache(self):
-        cmds.doodle_create_ref_file()
-        cmds.doodle_set_cloth_cache_path()
+        cmds.set_cloth_cache_path()
 
     def blendkeyframe(self):
         Doodle_blend_keyframe.backeProcess()
@@ -146,35 +130,6 @@ class DlsShelf(shelfBase._shelf):
             return l_rgb
         else:
             return [0.5, 0.5, 0.5]
-
-    def _export_abc_and_upload_(self):
-        cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(exportType="abc", select=True, force=True)
-        cmds.doodle_upload_files()
-
-    @staticmethod
-    def _abc_to_fbx_():
-        b_time = cmds.currentTime(q=True)
-        select_list = cmds.ls(sl=True)
-        if not select_list:
-            return
-        j_list = cmds.doodle_comm_dem_bones(select_list[0],
-                                            bf=b_time)
-        cmds.currentTime(b_time)
-        l_du = cmds.duplicate(select_list[0], rr=True)
-        j_list.append(l_du[0])
-        cmds.skinCluster(j_list)
-        cmds.doodle_comm_dem_bones_weiget(l_du)
-
-    @staticmethod
-    def _export_cloth_fbx_():
-        l_select = cmds.ls(sl=True)
-        cmds.doodle_create_ref_file()
-        # cmds.doodle_ref_file_load()
-        cmds.doodle_sequence_to_blend_shape_ref()
-        cmds.select(l_select)
-        cmds.doodle_ref_file_export(exportType="fbx", select=True)
-        cmds.doodle_upload_files()
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()

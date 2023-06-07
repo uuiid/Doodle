@@ -8,7 +8,7 @@
 namespace doodle::maya_plug {
 namespace {
 
-constexpr char set_cloth_cache_path_name[] = "doodle_set_cloth_cache_path";
+constexpr char set_cloth_cache_path_name[] = "set_cloth_cache_path";
 }  // namespace
 
 MSyntax set_cloth_cache_path_syntax();
