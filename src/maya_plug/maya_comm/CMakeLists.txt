@@ -9,6 +9,7 @@ target_sources(doodle_maya_lib
         dem_bones_comm.h
         afterimage_comm.h
         add_entt.h
+        ref_file_export.h
 
         PRIVATE
         open_doodle_main.cpp
@@ -20,4 +21,5 @@ target_sources(doodle_maya_lib
         clear_scene_comm.cpp
         dem_bones_comm.cpp
         add_entt.cpp
+        ref_file_export.cpp
 )
