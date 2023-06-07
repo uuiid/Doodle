@@ -88,7 +88,6 @@ class maya_tool::impl {
   gui_cache<bool> replace_ref_file_{"替换引用"s, true};
   gui_cache<bool> sim_file_{"解算文件"s, true};
   gui_cache<bool> export_abc_type_{"导出abc"s, true};
-  gui_cache<bool> export_fbx_type_{"导出fbx"s};
   gui_cache<bool> create_play_blast_{"创建排屏"s, true};
 };
 
@@ -140,7 +139,6 @@ bool maya_tool::render() {
     imgui::Checkbox(*ptr_attr->replace_ref_file_, &ptr_attr->replace_ref_file_);
     imgui::Checkbox(*ptr_attr->sim_file_, &ptr_attr->sim_file_);
     imgui::Checkbox(*ptr_attr->export_abc_type_, &ptr_attr->export_abc_type_);
-    imgui::Checkbox(*ptr_attr->export_fbx_type_, &ptr_attr->export_fbx_type_);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() { imgui::Checkbox("直接加载所有引用", &p_use_all_ref); };
   imgui::Checkbox(*ptr_attr->create_play_blast_, &ptr_attr->create_play_blast_);
@@ -187,7 +185,6 @@ bool maya_tool::render() {
       if (ptr_attr->replace_ref_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
       if (ptr_attr->sim_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_sim_file;
       if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
-      if (ptr_attr->export_fbx_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_fbx_type;
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
