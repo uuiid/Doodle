@@ -5,18 +5,19 @@
 #include "GameFramework/CharacterMovementComponent.h"
 ADoodleAiSplineCrowd::ADoodleAiSplineCrowd() {
   SplineMoveToComponent = CreateDefaultSubobject<UDoodleAiSplineMoveToComponent>("DoodleAiSplineMoveToComponent");
-  SplineMoveToComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-  SplineMoveToComponent->SetRelativeLocation(FVector{0.f, 0.f, -85.f});
+  SplineMoveToComponent->SplineCurve->AttachToComponent(
+      GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform
+  );
+  SplineMoveToComponent->SplineCurve->SetRelativeLocation(FVector{0.f, 0.f, -85.f});
 
-  SplineMoveToComponent->SetClosedLoop(true);
+  SplineMoveToComponent->SplineCurve->SetClosedLoop(true);
   UCharacterMovementComponent* L_Move = Cast<UCharacterMovementComponent>(GetMovementComponent());
   if (L_Move) {
     L_Move->MaxWalkSpeed               = 120.0f;
     L_Move->BrakingDecelerationWalking = 10.f;
   }
   USkeletalMeshComponent* SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
-  if (!SkeletalMeshComponent)
-    return;
+  if (!SkeletalMeshComponent) return;
 
   SkeletalMeshComponent->SetRelativeLocation(FVector{0.000000, 0.000000, -80.000000});
   SkeletalMeshComponent->SetRelativeRotation(FRotator{0.000000, -90.000000, 0.000000});
@@ -31,8 +32,8 @@ void ADoodleAiSplineCrowd::BeginPlay() {
   //     GetRootComponent(),
   //     FAttachmentTransformRules::KeepWorldTransform
   //);
-  SplineMoveToComponent->SetAbsolute(true, true, true);
-  SplineMoveToComponent->SetWorldTransform(TranRoot);
+  SplineMoveToComponent->SplineCurve->SetAbsolute(true, true, true);
+  SplineMoveToComponent->SplineCurve->SetWorldTransform(TranRoot);
   Super::BeginPlay();
 }
 

@@ -12,7 +12,8 @@
 #include "NavigationSystem.h"
 UDoodleAiSplineMoveToComponent::UDoodleAiSplineMoveToComponent() {
   PrimaryComponentTick.bCanEverTick = true;
-  bDrawDebug                        = true;
+
+  SplineCurve                       = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
 }
 
 void UDoodleAiSplineMoveToComponent::BeginPlay() {
@@ -46,8 +47,8 @@ void UDoodleAiSplineMoveToComponent::BeginPlay() {
 // }
 
 void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
-  for (auto i = 0; i < GetNumberOfSplinePoints(); ++i) {
-    DrawDebugPoint(GetWorld(), GetWorldLocationAtSplinePoint(i), 10, FColor::Green, false, 1.0f);
+  for (auto i = 0; i < SplineCurve->GetNumberOfSplinePoints(); ++i) {
+    DrawDebugPoint(GetWorld(), SplineCurve->GetWorldLocationAtSplinePoint(i), 10, FColor::Green, false, 1.0f);
   }
   if (!Actor || !AiController) {
     Actor = GetOwner<AActor>();
@@ -62,38 +63,51 @@ void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
     return;
   }
   UWorld *L_World = GetWorld();
-  if (!L_World)
-    return;
+  if (!L_World) return;
 
   FVector Result;
-  ;
+
+  TEnumAsByte<EPathFollowingRequestResult::Type> L_Code{};
+  int L_TEST_Size{};
+  // do {
   if (!GetRandomPointInRadius(Actor->GetActorLocation(), Result)) {
     return;
   }
   FAIMoveRequest AIMoveRequest{Result};
   AIMoveRequest.SetAcceptanceRadius(AcceptanceRadius);
   AIMoveRequest.SetAllowPartialPath(true);
-  // UAIBlueprintHelperLibrary::SimpleMoveToLocation();
-  FPathFollowingRequestResult L_R = AiController->MoveTo(AIMoveRequest);
-  switch (L_R.Code) {
-    case EPathFollowingRequestResult::AlreadyAtGoal:
-      ++TimeToPoint;
-      L_World->GetTimerManager().SetTimer(
-          TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.1f, false
-      );
-      break;
-    case EPathFollowingRequestResult::Failed:
-      L_World->GetTimerManager().SetTimer(
-          TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.15f + FMath::RandRange(-0.1f, 0.2f), false
-      );
-      break;
-    case EPathFollowingRequestResult::RequestSuccessful:
-      L_World->GetTimerManager().SetTimer(
-          TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.15f + FMath::RandRange(-0.1f, 0.2f), false
-      );
-      // AiController->ReceiveMoveCompleted.AddDynamic(this, &UDoodleAiSplineMoveToComponent::OnMoveCompleted);
-      break;
-  }
+
+  UAIBlueprintHelperLibrary::SimpleMoveToLocation(AiController, Result);
+  // FPathFollowingRequestResult L_R = AiController->MoveTo(AIMoveRequest);
+  // L_Code                          = L_R.Code;
+  //++L_TEST_Size;
+  //} while (L_TEST_Size < 100 && L_Code != EPathFollowingRequestResult::RequestSuccessful);
+  L_World->GetTimerManager().SetTimer(
+      TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.1f /*+ FMath::RandRange(-0.1f, 0.2f)*/,
+      false
+  );
+
+  // switch (L_R.Code) {
+  //   case EPathFollowingRequestResult::AlreadyAtGoal:
+  //     ++TimeToPoint;
+  //     L_World->GetTimerManager().SetTimer(
+  //         TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.1f, false
+  //     );
+  //     break;
+  //   case EPathFollowingRequestResult::Failed:
+  //     L_World->GetTimerManager().SetTimer(
+  //         TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.15f + FMath::RandRange(-0.1f,
+  //         0.2f), false
+  //     );
+  //     break;
+  //   case EPathFollowingRequestResult::RequestSuccessful:
+  //     L_World->GetTimerManager().SetTimer(
+  //         TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.15f + FMath::RandRange(-0.1f,
+  //         0.2f), false
+  //     );
+  //     // AiController->ReceiveMoveCompleted.AddDynamic(this, &UDoodleAiSplineMoveToComponent::OnMoveCompleted);
+  //     break;
+  // }
 }
 
 bool UDoodleAiSplineMoveToComponent::GetRandomPointInRadius(const FVector &Origin, FVector &OutResult) {
@@ -101,16 +115,26 @@ bool UDoodleAiSplineMoveToComponent::GetRandomPointInRadius(const FVector &Origi
   if (!NavSys) {
     return false;
   }
-  FVector L_Forward = Actor->GetActorForwardVector();
-  L_Forward *= (SpeedMax * 3.f);
+  FVector L_Actor_Loc = Actor->GetActorLocation();
 
-  L_Forward = Actor->GetActorLocation() + L_Forward;
-  // FVector L_point = GetLocationAtSplinePoint(TimeToPoint, ESplineCoordinateSpace::World);
-  // UE_LOG(LogTemp, Log, TEXT("index  %s"), *L_Forward.ToString());
-  //  FNavLocation Result;
-  //  bool bSuccess = NavSys->GetRandomReachablePointInRadius(L_point, RandomRadius, Result);
-  //   Out
-  OutResult = FindLocationClosestToWorldLocation(L_Forward, ESplineCoordinateSpace::World);
+  // FVector L_Forward   = SplineCurve->FindTangentClosestToWorldLocation(L_Actor_Loc, ESplineCoordinateSpace::World);
+  float L_Key         = SplineCurve->FindInputKeyClosestToWorldLocation(L_Actor_Loc);
+  float L_Nums        = SplineCurve->GetNumberOfSplinePoints();
+  // L_Key               = (L_Nums - L_Key) > 0.2 ? L_Key : 0;
+
+  L_Key += SpeedMax * 10 / SplineCurve->GetSplineLength();
+  L_Key = L_Key > L_Nums ? (L_Key - L_Nums) : L_Key;
+  UE_LOG(LogTemp, Log, TEXT("index key  %f"), L_Key);
+  // L_Forward *= 3.f;
+  OutResult = SplineCurve->GetLocationAtSplineInputKey(L_Key, ESplineCoordinateSpace::World);
+  // L_Forward = L_Actor_Loc + L_Forward;
+  //  FVector L_point = GetLocationAtSplinePoint(TimeToPoint, ESplineCoordinateSpace::World);
+  //  UE_LOG(LogTemp, Log, TEXT("index  %s"), *L_Forward.ToString());
+  //   FNavLocation Result;
+  //   bool bSuccess = NavSys->GetRandomReachablePointInRadius(L_point, RandomRadius, Result);
+  //    Out
+  // OutResult = SplineCurve->FindLocationClosestToWorldLocation(L_Forward, ESplineCoordinateSpace::World);
+  DrawDebugPoint(GetWorld(), OutResult, 10, FColor::Red, false, 1.0f);
   // DrawDebugSphere(GetWorld(), L_Forward, 10.f, 3, FColor{255, 0, 0});
 
   return true;

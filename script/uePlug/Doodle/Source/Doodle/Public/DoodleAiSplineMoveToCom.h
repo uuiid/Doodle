@@ -1,17 +1,15 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
+#include "AITypes.h"  // ai类型
 #include "Components/SplineComponent.h"
-#include "AITypes.h"                            // ai类型
-#include "Navigation/PathFollowingComponent.h"  // ai类型
-
+#include "CoreMinimal.h"
 #include "DoodleAiSplineMoveToCom.generated.h"
+#include "Navigation/PathFollowingComponent.h"  // ai类型
 class ADoodleAIController;
 
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
-class DOODLE_API UDoodleAiSplineMoveToComponent : public USplineComponent {
+class DOODLE_API UDoodleAiSplineMoveToComponent : public UActorComponent {
  public:
   GENERATED_BODY()
   UDoodleAiSplineMoveToComponent();
@@ -20,15 +18,18 @@ class DOODLE_API UDoodleAiSplineMoveToComponent : public USplineComponent {
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "目标接受范围")
   float AcceptanceRadius{266};
 
-  //virtual void TickComponent(
-  //    float DeltaTime,
-  //    enum ELevelTick TickType,
-  //    FActorComponentTickFunction *ThisTickFunction
+  // virtual void TickComponent(
+  //     float DeltaTime,
+  //     enum ELevelTick TickType,
+  //     FActorComponentTickFunction *ThisTickFunction
   //) override;
 
+  UPROPERTY(EditAnywhere, BlueprintReadOnly)
+  TObjectPtr<USplineComponent> SplineCurve{};
+
  private:
-  //UFUNCTION(BlueprintCallable)
-  //void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult);
+  // UFUNCTION(BlueprintCallable)
+  // void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult);
   void GoToRandomWaypoint();
   bool GetRandomPointInRadius(const FVector &Origin, FVector &OutResult);
   FTimerHandle TimerHandle;
