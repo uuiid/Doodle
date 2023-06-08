@@ -6,7 +6,7 @@ public class DoodleAbc : ModuleRules
 {
     public DoodleAbc(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        //PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(
 			new string[] {
 				"Core",

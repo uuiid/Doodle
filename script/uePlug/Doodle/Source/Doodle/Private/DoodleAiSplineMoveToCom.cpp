@@ -1,14 +1,15 @@
 #include "DoodleAiSplineMoveToCom.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"  // 蓝图ai帮助
+
 #include "AI/NavigationSystemBase.h"
 #include "Blueprint/AIAsyncTaskBlueprintProxy.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"  // 蓝图ai帮助
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "DetourCrowdAIController.h"
+#include "DoodleAIController.h"
+#include "DoodleAiCrowd.h"
+#include "DrawDebugHelpers.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "NavigationSystem.h"
-
-#include "DoodleAiCrowd.h"
-#include "DoodleAIController.h"
 UDoodleAiSplineMoveToComponent::UDoodleAiSplineMoveToComponent() {
   PrimaryComponentTick.bCanEverTick = true;
   bDrawDebug                        = true;
