@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
+#include "opencv2/core.hpp"
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
 #include <utility>
@@ -27,8 +28,7 @@ void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark
   cv::Ptr<cv::freetype::FreeType2> ft2{cv::freetype::createFreeType2()};
   ft2->loadFontData(std::string{doodle_config::font_default}, 0);
   auto textSize = ft2->getTextSize(in_watermark.text_attr, fontHeight, thickness, &baseline);
-  if (thickness > 0)
-    baseline += thickness;
+  if (thickness > 0) baseline += thickness;
   textSize.width += baseline;
   textSize.height += baseline;
   // center the text
@@ -39,28 +39,26 @@ void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark
 
   // draw the box
   cv::rectangle(
-      l_image, textOrg + cv::Point(0, baseline),
-      textOrg + cv::Point(textSize.width, -textSize.height),
-      cv::Scalar(0, 0, 0, 100),
-      -1
+      l_image, textOrg + cv::Point(0, baseline), textOrg + cv::Point(textSize.width, -textSize.height),
+      cv::Scalar(0, 0, 0, 100), -1
   );
 
   cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
   // then put the text itself
   ft2->putText(
-      in_image,
-      in_watermark.text_attr,
-      textOrg,
-      fontHeight,
+      in_image, in_watermark.text_attr, textOrg, fontHeight,
       cv::Scalar{
-          in_watermark.rgba_attr[0],
-          in_watermark.rgba_attr[1],
-          in_watermark.rgba_attr[2],
-          in_watermark.rgba_attr[3]},
-      thickness,
-      cv::LineTypes::LINE_AA,
-      true
+          in_watermark.rgba_attr[0], in_watermark.rgba_attr[1], in_watermark.rgba_attr[2], in_watermark.rgba_attr[3]},
+      thickness, cv::LineTypes::LINE_AA, true
   );
+}
+
+auto create_gamma_LUT_table(const std::double_t &in_gamma) {
+  cv::Mat lookupTable(1, 256, CV_8U);
+  uchar *p = lookupTable.ptr();
+
+  for (int i = 0; i < 256; ++i) p[i] = cv::saturate_cast<uchar>(std::pow(i / 255.0, in_gamma) * 255.0);
+  return lookupTable;
 }
 }  // namespace
 
@@ -71,13 +69,9 @@ class image_to_move::impl {
 
 image_to_move::~image_to_move() = default;
 
-image_to_move::image_to_move()
-    : p_i(std::make_unique<impl>()) {
-}
+image_to_move::image_to_move() : p_i(std::make_unique<impl>()) {}
 void image_to_move::create_move(
-    const FSys::path &in_out_path,
-    process_message &in_msg,
-    const std::vector<image_to_move::image_attr> &in_vector
+    const FSys::path &in_out_path, process_message &in_msg, const std::vector<image_to_move::image_attr> &in_vector
 ) {
   boost::ignore_unused(this);
   /// \brief 这里排序组件
@@ -98,9 +92,10 @@ void image_to_move::create_move(
   in_msg.set_name(in_out_path.filename().generic_string());
 
   const static cv::Size k_size{1920, 1080};
-  auto video             = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
-  auto k_image           = cv::Mat{};
+  auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
+  auto k_image = cv::Mat{};
   const auto &k_size_len = l_vector.size();
+  auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto &l_image : l_vector) {
     if (l_stop) {
       in_msg.set_state(in_msg.fail);
@@ -122,11 +117,13 @@ void image_to_move::create_move(
       DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.path_attr);
       continue;
     }
-    if (k_image.cols != k_size.width || k_image.rows != k_size.height)
-      cv::resize(k_image, k_image, k_size);
+    if (k_image.cols != k_size.width || k_image.rows != k_size.height) cv::resize(k_image, k_image, k_size);
 
     for (auto &k_w : l_image.watermarks_attr) {
-      watermark_add_image(k_image, k_w);
+      if (l_image.gamma_t) {
+        cv::LUT(k_image, l_gamma, k_image);
+      }
+      //      watermark_add_image(k_image, k_w);
     }
     in_msg.progress_step(rational_int{1, k_size_len});
     video << k_image;
@@ -145,19 +142,15 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension() && in_handle.any_of<episodes, shot>())
     l_out /= fmt::format(
-        "{}_{}.mp4",
-        in_handle.any_of<episodes>() ? fmt::to_string(in_handle.get<episodes>()) : "eps_none"s,
+        "{}_{}.mp4", in_handle.any_of<episodes>() ? fmt::to_string(in_handle.get<episodes>()) : "eps_none"s,
         in_handle.any_of<shot>() ? fmt::to_string(in_handle.get<shot>()) : "sh_none"s
     );
   else if (!l_out.has_extension()) {
-    l_out /= fmt::format(
-        "{}.mp4", core_set::get_set().get_uuid()
-    );
+    l_out /= fmt::format("{}.mp4", core_set::get_set().get_uuid());
   } else
     l_out.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});
 
-  if (exists(l_out.parent_path()))
-    create_directories(l_out.parent_path());
+  if (exists(l_out.parent_path())) create_directories(l_out.parent_path());
   return l_out;
 }
 }  // namespace detail

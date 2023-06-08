@@ -37,8 +37,6 @@ class play_blast {
   FSys::path get_file_path() const;
   FSys::path get_file_dir() const;
 
-  void play_blast_by_render(const MTime& in_start, const MTime& in_end) const;
-
  public:
   play_blast();
 

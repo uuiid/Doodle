@@ -37,6 +37,7 @@ class DOODLE_CORE_API image_attr : boost::totally_ordered<image_attr> {
   FSys::path path_attr{};
   std::vector<image_watermark> watermarks_attr{};
   std::int32_t num_attr{};
+  std::float_t gamma_t{};
 
   static void extract_num(std::vector<image_attr>& in_image_list);
 

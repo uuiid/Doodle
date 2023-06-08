@@ -207,6 +207,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   for (auto& l_path : FSys::directory_iterator{k_f}) {
     movie::image_attr k_image{};
     k_image.path_attr = l_path;
+    k_image.gamma_t   = 0.9;
     /// \brief 相机名称
     k_image.watermarks_attr.emplace_back(
         k_cam.get_transform_name(), 0.1, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
@@ -255,6 +256,5 @@ bool play_blast::conjecture_ep_sc() {
   set_save_filename(p_current_path.filename().replace_extension(".mp4"));
   return k_r;
 }
-void play_blast::play_blast_by_render(const MTime& in_start, const MTime& in_end) const {}
 
 }  // namespace doodle::maya_plug
