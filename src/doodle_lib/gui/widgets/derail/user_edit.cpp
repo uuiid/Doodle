@@ -15,58 +15,6 @@
 #include <utility>
 namespace doodle::gui::render {
 
-bool user_edit(const entt::handle& in_handle_view) {
-  using gui_data = gui_cache_name_id_temp<user_edit_t>;
-
-  bool on_change{false};
-  if (!in_handle_view.all_of<user>()) return on_change;
-
-  auto& l_button = in_handle_view.get_or_emplace<gui_data>("用户:"s);
-  auto& l_user   = in_handle_view.get<user>();
-  if (ImGui::InputText(*l_button, &l_user.get_name())) {
-    in_handle_view.patch<user>();
-    on_change = true;
-  }
-  return on_change;
-  //  ImGui::Checkbox(*ptr->advanced, &ptr->advanced);
-  //  if (ptr->advanced()) {
-  //    dear::Text("直接设置用户姓名"s);
-  //    if (ImGui::InputText(
-  //            *ptr->user_name_edit, &ptr->user_name_edit, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue
-  //        )) {
-  //      if (auto l_user = user::find_by_user_name(ptr->user_name_edit()); l_user) {
-  //        ptr->user_tmp_handle = l_user;
-  //      } else {
-  //        ptr->user_tmp_handle = make_handle();
-  //        ptr->user_tmp_handle.get_or_emplace<user>().set_name(ptr->user_name_edit());
-  //      }
-  //
-  //      ptr->set_handle = ptr->user_tmp_handle;
-  //      set_modify(true);
-  //    }
-  //  }
-}
-std::tuple<bool, entt::handle> select_all_user(const std::string& in_current_user, const registry_ptr& in_reg_ptr) {
-  auto& l_list = in_reg_ptr->ctx().get<select_all_user_t>();
-
-  std::tuple<bool, entt::handle> l_ret{false, {}};
-  if (dear::Combo const l_com{*l_list.user_id, in_current_user.data()}) {
-    l_list.refresh(in_reg_ptr);
-    for (auto& i : l_list.user_list) {
-      if (imgui::Selectable(i.first.data())) {
-        l_ret = {true, i.second};
-      }
-    }
-  }
-  return l_ret;
-}
-std::tuple<bool, entt::handle> select_all_user(const entt::handle& in_current_user, const registry_ptr& in_reg_ptr) {
-  return select_all_user(
-      in_current_user && in_current_user.all_of<user>() ? in_current_user.get<user>().get_name() : std::string{},
-      in_reg_ptr
-  );
-}
-
 void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
   auto l_list = in_reg_ptr->view<user>().each();
   user_list   = l_list |
@@ -77,5 +25,38 @@ void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
                   }
               ) |
               ranges::to_vector;
+}
+void select_all_user_t::set_current_user(const std::string& in_current_user) { current_user = in_current_user; }
+void select_all_user_t::set_current_user(const entt::handle& in_current_user) {
+  if (in_current_user && in_current_user.all_of<user>()) {
+    current_user = in_current_user.get<user>().get_name();
+  } else {
+    current_user = {};
+  }
+}
+std::tuple<bool, entt::handle> select_all_user_t::render(const registry_ptr& in_reg_ptr) {
+  std::tuple<bool, entt::handle> l_ret{false, {}};
+  if (dear::Combo const l_com{*user_id, current_user.data()}) {
+    refresh(in_reg_ptr);
+    for (auto& i : user_list) {
+      if (imgui::Selectable(i.first.data())) {
+        l_ret = {true, i.second};
+      }
+    }
+  }
+  return l_ret;
+}
+bool user_edit_t::render(const entt::handle& in_handle_view) {
+  if (!in_handle_view.all_of<user>()) {
+    if (ImGui::Button(*add)) {
+      in_handle_view.emplace<user>();
+      return true;
+    }
+  } else {
+    if (ImGui::InputText(*id, &in_handle_view.get<user>().get_name())) {
+      in_handle_view.patch<user>();
+      return true;
+    }
+  }
 }
 }  // namespace doodle::gui::render

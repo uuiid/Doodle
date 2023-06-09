@@ -11,17 +11,14 @@
 #include "imgui_stdlib.h"
 namespace doodle::gui::render {
 
-bool command_edit(const entt::handle& in_handle_view) {
-  using gui_data = gui_cache_name_id_temp<command_edit_t>;
+bool command_edit_t::render(const entt::handle& in_handle_view) {
   if (in_handle_view.all_of<comment>()) {
-    auto& l_comm   = in_handle_view.get<comment>();
-    auto& l_gui_id = in_handle_view.get_or_emplace<gui_data>("备注:"s);
+    auto& l_comm = in_handle_view.get<comment>();
 
-    if (ImGui::InputText(*l_gui_id, &l_comm.p_comment)) {
+    if (ImGui::InputText(*id, &l_comm.p_comment)) {
       in_handle_view.patch<comment>();
       return true;
     }
   }
-  return false;
 }
 }  // namespace doodle::gui::render

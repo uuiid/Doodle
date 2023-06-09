@@ -11,30 +11,29 @@
 
 #include "entt/entity/fwd.hpp"
 #include <cstdint>
+#include <memory>
 #include <string>
 namespace doodle::gui::render {
+class select_all_user_t;
 class assets_file_edit_t {
- public:
-  assets_file_edit_t() = default;
-  explicit assets_file_edit_t(const entt::handle& in_handle_view) {
-    if (in_handle_view.any_of<assets_file>()) {
-      auto& l_assets_file = in_handle_view.get<assets_file>();
-      path                = l_assets_file.path_attr().generic_string();
-      name                = l_assets_file.name_attr();
-      version             = l_assets_file.version_attr();
-      user                = l_assets_file.user_attr();
-    };
-  };
+  entt::handle render_id{};
+
   std::string path{};
   std::string name{};
   std::int32_t version{};
-  entt::handle user{};
 
   gui_cache_name_id path_id{"路径"s};
   gui_cache_name_id name_id{"名称"s};
   gui_cache_name_id version_id{"版本"s};
   gui_cache_name_id user_id{"用户"s};
+  std::shared_ptr<select_all_user_t> user_edit{};
+
+  void init(const entt::handle& in_handle);
+
+ public:
+  assets_file_edit_t() = default;
+
+  bool render(const entt::handle& in_handle_view);
 };
-bool assets_file_edit(const entt::handle& in_handle_view);
 
 }  // namespace doodle::gui::render

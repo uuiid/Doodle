@@ -25,4 +25,18 @@ bool season_render(const entt::handle& in_handle_view) {
   return false;
 }
 
+bool season_render_t::render(const entt::handle& in_handle_view) {
+  if (in_handle_view.all_of<season>()) {
+    auto& l_season = in_handle_view.get<season>();
+    if (ImGui::InputInt(*id, &l_season.p_int)) {
+      in_handle_view.patch<season>();
+      return true;
+    }
+  } else {
+    if (ImGui::Button(*add)) {
+      in_handle_view.emplace<season>();
+      return true;
+    }
+  }
+}
 }  // namespace doodle::gui::render

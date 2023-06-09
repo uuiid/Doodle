@@ -8,26 +8,33 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include "entt/entity/fwd.hpp"
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 namespace doodle::gui::render {
 
-// class user_edit_t {};
-using entt::literals::operator""_hs;
-using user_edit_t = entt::tag<"user_edit_t"_hs>;
 class select_all_user_t {
+  std::string current_user{};
+
+  void refresh(const registry_ptr& in_reg_ptr);
+
  public:
   select_all_user_t() = default;
   std::vector<std::pair<std::string, entt::handle>> user_list{};
   gui_cache_name_id user_id{"用户"s};
 
-  void refresh(const registry_ptr& in_reg_ptr);
+  void set_current_user(const std::string& in_current_user);
+  void set_current_user(const entt::handle& in_current_user);
+  std::tuple<bool, entt::handle> render(const registry_ptr& in_reg_ptr);
 };
 
-bool user_edit(const entt::handle& in_handle_view);
+class user_edit_t {
+  gui_cache_name_id id{"用户"s};
+  gui_cache_name_id add{"添加"s};
 
-std::tuple<bool, entt::handle> select_all_user(const std::string& in_current_user, const registry_ptr& in_reg_ptr);
-std::tuple<bool, entt::handle> select_all_user(const entt::handle& in_current_user, const registry_ptr& in_reg_ptr);
+ public:
+  bool render(const entt::handle& in_handle_view);
+};
 
 }  // namespace doodle::gui::render
