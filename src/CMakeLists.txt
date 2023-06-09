@@ -87,14 +87,7 @@ add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
 
-if(BUILD_LIMITED_1)
-        message("build task_exe BUILD_LIMITED_1=${BUILD_LIMITED_1}")
-        add_subdirectory(exe_task)
-else()
-        message("build GUI BUILD_LIMITED_1=${BUILD_LIMITED_1}")
-        add_subdirectory(exe_gui)
-endif()
-
+add_subdirectory(exe_gui)
 add_subdirectory(houdini_plug)
 
 if(DEFINED Maya_Version)

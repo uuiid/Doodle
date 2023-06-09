@@ -36,14 +36,22 @@ install(TARGETS DoodleExe
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
         COMPONENT exe_com
 )
-configure_file(install_script.cmake install_script.cmake @ONLY)
 # 最后实现camke修复
 install(CODE
         "
-set(DOODLE_RUN_NAME $<TARGET_FILE_NAME:DoodleExe>)
-set(DOODLE_MAIN_EXE $<TARGET_FILE:DoodleExe>)
-set(DOODLE_GENERATE_TOKEN_RUN $<TARGET_FILE:generate_token>)
+# 修复dll
+include(BundleUtilities)
+fixup_bundle(\"$<TARGET_FILE:DoodleExe>\" \"\" \"\"
+        IGNORE_ITEM
+        doodle_maya_exe_2018.exe
+        doodle_maya_exe_2019.exe
+        doodle_maya_exe_2020.exe
+)
 
-include(${CMAKE_CURRENT_BINARY_DIR}/install_script.cmake)
+# 生成授权文件
+execute_process(
+        COMMAND $<TARGET_FILE:generate_token> ${CMAKE_INSTALL_PREFIX}/bin/
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+)
         "
         COMPONENT exe_com)

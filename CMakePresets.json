@@ -90,7 +90,6 @@
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
         "Maya_Version": "2018",
         "Photoshop_Version": "120.0",
-        "BUILD_LIMITED_1": "OFF",
         "BUILD_USD": "ON",
         "PXR_USD_ROOT": "E:/usd_install",
         "Boost_NO_WARN_NEW_VERSIONS": true
@@ -103,8 +102,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
         "Maya_Version": "2018",
-        "Photoshop_Version": "120.0",
-        "BUILD_LIMITED_1": "ON"
+        "Photoshop_Version": "120.0"
       }
     },
     {
