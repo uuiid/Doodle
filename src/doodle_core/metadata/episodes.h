@@ -5,16 +5,13 @@
 namespace doodle {
 
 class DOODLE_CORE_API episodes {
-
  public:
-  int64_t p_episodes;
+  std::int32_t p_episodes;
   episodes();
-  explicit episodes(int64_t in_episodes);
-  // ~Episodes();
-  [[nodiscard]] const int64_t &get_episodes() const noexcept;
-  void set_episodes(const int64_t &Episodes_);
+  explicit episodes(std::int32_t in_episodes);
 
-  [[nodiscard]] std::string str() const;
+  [[nodiscard]] const std::int32_t &get_episodes() const noexcept;
+  void set_episodes(const std::int32_t &Episodes_);
 
   bool operator<(const episodes &in_rhs) const;
   bool operator>(const episodes &in_rhs) const;
@@ -43,11 +40,11 @@ namespace fmt {
  * @tparam
  */
 template <>
-struct formatter<::doodle::episodes> : formatter<std::int64_t> {
+struct formatter<::doodle::episodes> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     format_to(ctx.out(), "ep_");
-    return formatter<std::int64_t>::format(in_.p_episodes, ctx);
+    return formatter<std::int32_t>::format(in_.p_episodes, ctx);
   }
 };
 }  // namespace fmt

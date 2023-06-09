@@ -45,6 +45,7 @@ class doodle_error;
 class user_ref;
 class user;
 class work_task_info;
+class comment;
 
 using namespace std::literals;
 using namespace date::literals;

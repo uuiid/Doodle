@@ -7,19 +7,14 @@ namespace doodle {
 shot::shot()
     : shot(-1, shot_ab_enum::None) {
 }
-shot::shot(std::int64_t in_shot, shot_ab_enum in_ab)
-    : p_shot(std::move(in_shot)),
-      p_shot_enum(std::move(in_ab)),
-      p_shot_ab(magic_enum::enum_name(p_shot_enum)) {
+shot::shot(std::int32_t in_shot, shot_ab_enum in_ab)
+    : p_shot(std::move(in_shot)), p_shot_enum(std::move(in_ab)), p_shot_ab(magic_enum::enum_name(p_shot_enum)) {
 }
-shot::shot(std::int64_t in_shot, std::string in_ab)
-    : shot(in_shot, magic_enum::enum_cast<shot_ab_enum>(in_ab).value_or(shot_ab_enum::None)) {
-}
-const int64_t& shot::get_shot() const noexcept {
-  return p_shot;
-}
+shot::shot(std::int32_t in_shot, std::string in_ab)
+    : shot(in_shot, magic_enum::enum_cast<shot_ab_enum>(in_ab).value_or(shot_ab_enum::None)) {}
+const int32_t& shot::get_shot() const noexcept { return p_shot; }
 
-void shot::set_shot(const int64_t& in_shot) {
+void shot::set_shot(const int32_t& in_shot) {
   DOODLE_CHICK(in_shot >= 0, doodle_error{"shot无法为负"});
   p_shot = in_shot;
 }

@@ -19,7 +19,6 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/edit_widgets/edit_user.h>
-#include <doodle_lib/gui/widgets/edit_widgets/redirection_path_info_edit.h>
 
 #include <boost/signals2/connection.hpp>
 
@@ -369,28 +368,6 @@ class add_assets_for_file : public base_render {
   };
 };
 
-class add_entt_base : public base_render {
- private:
-  gui_cache<std::int32_t> add_size;
-  gui_cache<std::vector<entt::handle>> list_handle;
-
- public:
-  add_entt_base() : add_size("添加个数", 1), list_handle("添加"s, std::vector<entt::handle>{}){};
-  bool render(const entt::handle &in) override {
-    bool result{false};
-    ImGui::InputInt(*add_size.gui_name, &add_size.data);
-    ImGui::SameLine();
-    if (ImGui::Button(*list_handle.gui_name)) {
-      for (std::int32_t i = 0; i < add_size; ++i) {
-        auto l_h = list_handle.data.emplace_back(make_handle());
-        l_h.emplace<database>();
-      }
-      g_reg()->ctx().get<core_sig>().filter_handle(list_handle);
-    }
-    return result;
-  }
-};
-
 class edit_widgets::impl {
  public:
   std::vector<boost::signals2::scoped_connection> p_sc;
@@ -411,7 +388,6 @@ class edit_widgets::impl {
   std::vector<entt::handle> p_h;
 
   database_edit data_edit;
-  assets_edit *assets_edit;
 
   using gui_edit_cache = gui_cache<std::unique_ptr<edit_interface>>;
   using gui_add_cache  = gui_cache<std::unique_ptr<base_render>>;
@@ -435,18 +411,12 @@ void edit_widgets::init() {
   p_i->p_edit.emplace_back("用户编辑"s, std::make_unique<edit_user>());
   p_i->p_edit.emplace_back("备注"s, std::make_unique<command_edit>());
   p_i->p_edit.emplace_back("等级"s, std::make_unique<importance_edit>());
-  auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>()).data.get();
-
-  p_i->assets_edit = dynamic_cast<assets_edit *>(l_edit);
+  p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>()).data.get();
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
-  p_i->p_edit.emplace_back("替换规则"s, std::make_unique<redirection_path_info_edit>());
 
   /// \brief 连接信号
   ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) { p_i->data_edit.link_sig(in_edit.data); });
-
-  p_i->p_add.emplace_back("添加"s, std::make_unique<add_entt_base>());
-  p_i->p_add.emplace_back("文件添加"s, std::make_unique<add_assets_for_file>());
 
   g_reg()->ctx().emplace<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx().get<core_sig>();
@@ -465,8 +435,7 @@ void edit_widgets::init() {
 }
 
 bool edit_widgets::render() {
-  dear::TreeNode{"添加"} && [this]() { this->add_handle(); };
-  dear::TreeNode{"编辑"} && [this]() { this->edit_handle(); };
+  this->edit_handle();
   return p_i->open;
 }
 
@@ -485,17 +454,6 @@ void edit_widgets::edit_handle() {
   }
 
   //  p_i->data_edit.save(p_i->p_h);
-}
-
-void edit_widgets::add_handle() {
-  /**
-   * @brief 添加多个
-   *
-   */
-  for (auto &&l_add : p_i->p_add) {
-    dear::Text(l_add.gui_name.name);
-    l_add.data->render();
-  }
 }
 
 const std::string &edit_widgets::title() const { return p_i->title_name_; }

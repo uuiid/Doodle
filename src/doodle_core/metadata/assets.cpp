@@ -42,7 +42,6 @@ DOODLE_REGISTER_BEGIN(assets) {
       .ctor<>()
       .ctor<FSys::path>()
       .data<&assets::p_path>("p_path"_hs)
-      .func<&assets::str>("str"_hs)
       .func<&assets::get_path_component>("get_path_component"_hs)
       .func<&assets::set_path>("set_path"_hs)
       .func<&assets::get_path>("get_path"_hs);

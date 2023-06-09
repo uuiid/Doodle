@@ -200,6 +200,11 @@ class gui_cache_name_id : boost::totally_ordered<gui_cache_name_id> {
   bool operator==(const gui_cache_name_id &in) const noexcept;
   bool operator<(const gui_cache_name_id &in) const noexcept;
 };
+template <typename T>
+class gui_cache_name_id_temp : public gui_cache_name_id, public T {
+ public:
+  using gui_cache_name_id::gui_cache_name_id;
+};
 
 /**
  * @brief gui缓存模板类

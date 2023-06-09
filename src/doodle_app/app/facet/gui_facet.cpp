@@ -227,9 +227,6 @@ void gui_facet::init_windows() {
   static std::string _l_p{imgui_file_path.generic_string()};
   io.IniFilename = _l_p.c_str();
 
-  //  ImGuiIO& io = ImGui::GetIO();
-  //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr,
-  //  io.Fonts->GetGlyphRangesChineseFull());
   {
     // io.Fonts->AddFontDefault();
     io.Fonts->AddFontFromFileTTF(

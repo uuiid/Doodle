@@ -31,7 +31,6 @@ class DOODLELIB_API edit_widgets {
   std::unique_ptr<impl> p_i;
 
   void edit_handle();
-  void add_handle();
 
  public:
   /**

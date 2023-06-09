@@ -40,6 +40,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   explicit user(const std::string& in_string);
 
   [[nodiscard]] const std::string& get_name() const;
+  inline std::string& get_name() { return p_string_; };
   void set_name(const std::string& in_string);
 
   [[nodiscard]] const std::string& get_enus() const;
