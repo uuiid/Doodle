@@ -10,6 +10,8 @@
 #include "DrawDebugHelpers.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "NavigationSystem.h"
+
+#include "Kismet/KismetMathLibrary.h"  // 数学库
 UDoodleAiSplineMoveToComponent::UDoodleAiSplineMoveToComponent() {
   PrimaryComponentTick.bCanEverTick = true;
 
@@ -19,15 +21,47 @@ UDoodleAiSplineMoveToComponent::UDoodleAiSplineMoveToComponent() {
 void UDoodleAiSplineMoveToComponent::BeginPlay() {
   Super::BeginPlay();
 
-  GoToRandomWaypoint();
-  // GetDistance() / ;
+  // GoToRandomWaypoint();
+  //  GetDistance() / ;
+
+  if (!Actor || !AiController) {
+    Actor = GetOwner<AActor>();
+    if (!Actor) {
+      UE_LOG(LogTemp, Log, TEXT("return Actor"));
+      return;
+    }
+    AiController = Cast<ADoodleAIController>(UAIBlueprintHelperLibrary::GetAIController(Actor));
+  }
+  if (!Actor || !AiController) {
+    UE_LOG(LogTemp, Log, TEXT("return Actor AiController"));
+    return;
+  }
+  UWorld *L_World = GetWorld();
+  if (!L_World) return;
 
   SpeedMax = GetOwner<APawn>()->FindComponentByClass<UMovementComponent>()->GetMaxSpeed();
 }
 
-// void UDoodleAiSplineMoveToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) {
-//   Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-// }
+void UDoodleAiSplineMoveToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) {
+  if (Actor && AiController) {
+    FVector Result;
+    FVector L_Loc = Actor->GetActorLocation();
+    // do {
+    if (!GetRandomPointInRadius(Actor->GetActorLocation(), Result)) {
+      return;
+    }
+    FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(L_Loc, Result);
+    LookAtRotation.Pitch    = 0.;
+    LookAtRotation.Pitch    = 0.;
+    FRotator InterpRotation = FMath::RInterpTo(Actor->GetActorRotation(), LookAtRotation, DeltaTime, 10.f);
+    // FMath::Inerpto
+
+    Actor->SetActorRotation(InterpRotation);
+
+    UAIBlueprintHelperLibrary::SimpleMoveToLocation(AiController, Result);
+  }
+  Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
 
 // void UDoodleAiSplineMoveToComponent::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult) {
 //   FVector Result;
@@ -47,9 +81,9 @@ void UDoodleAiSplineMoveToComponent::BeginPlay() {
 // }
 
 void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
-  for (auto i = 0; i < SplineCurve->GetNumberOfSplinePoints(); ++i) {
-    DrawDebugPoint(GetWorld(), SplineCurve->GetWorldLocationAtSplinePoint(i), 10, FColor::Green, false, 1.0f);
-  }
+  // for (auto i = 1; i < SplineCurve->GetNumberOfSplinePoints(); ++i) {
+  //   DrawDebugLine(GetWorld(), SplineCurve->GetWorldLocationAtSplinePoint(i - 1), SplineCurve->GetWorldLocationAtSplinePoint(i), FColor::Green, false, 1.0f);
+  // }
   if (!Actor || !AiController) {
     Actor = GetOwner<AActor>();
     if (!Actor) {
@@ -110,6 +144,24 @@ void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
   // }
 }
 
+void UDoodleAiSplineMoveToComponent::ReplaceSplineCurve(const TObjectPtr<USplineComponent> &In_Tmp, const FTransform &In_Loc) {
+  USceneComponent *L_Parent = SplineCurve->GetAttachParent();
+  SplineCurve->UnregisterComponent();
+  SplineCurve->DestroyComponent();
+
+  // SplineCurve = DuplicateObject<USplineComponent>(In_Tmp, this);
+  SplineCurve = NewObject<USplineComponent>(this, NAME_None, RF_NoFlags, In_Tmp);
+  SplineCurve->SetAbsolute(true, true, true);
+  SplineCurve->SetWorldTransform(In_Loc);
+  SplineCurve->SetMobility(EComponentMobility::Type::Movable);
+  SplineCurve->RegisterComponent();
+  SplineCurve->AttachToComponent(L_Parent, FAttachmentTransformRules::KeepWorldTransform);
+  SplineCurve->UpdateSpline();
+  // FTransform L_Tran = SplineCurve->GetComponentTransform();
+  // UE_LOG(LogTemp, Log, TEXT("tran  %s"), *L_Tran.ToString());
+  GoToRandomWaypoint();
+}
+
 bool UDoodleAiSplineMoveToComponent::GetRandomPointInRadius(const FVector &Origin, FVector &OutResult) {
   UNavigationSystemV1 *NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
   if (!NavSys) {
@@ -123,9 +175,9 @@ bool UDoodleAiSplineMoveToComponent::GetRandomPointInRadius(const FVector &Origi
   // L_Key               = (L_Nums - L_Key) > 0.2 ? L_Key : 0;
 
   L_Key += SpeedMax * 10 / SplineCurve->GetSplineLength();
-  L_Key = L_Key > L_Nums ? (L_Key - L_Nums) : L_Key;
-  UE_LOG(LogTemp, Log, TEXT("index key  %f"), L_Key);
-  // L_Forward *= 3.f;
+  L_Key     = L_Key > L_Nums ? (L_Key - L_Nums) : L_Key;
+  // UE_LOG(LogTemp, Log, TEXT("index key  %f"), L_Key);
+  //  L_Forward *= 3.f;
   OutResult = SplineCurve->GetLocationAtSplineInputKey(L_Key, ESplineCoordinateSpace::World);
   // L_Forward = L_Actor_Loc + L_Forward;
   //  FVector L_point = GetLocationAtSplinePoint(TimeToPoint, ESplineCoordinateSpace::World);
@@ -134,8 +186,8 @@ bool UDoodleAiSplineMoveToComponent::GetRandomPointInRadius(const FVector &Origi
   //   bool bSuccess = NavSys->GetRandomReachablePointInRadius(L_point, RandomRadius, Result);
   //    Out
   // OutResult = SplineCurve->FindLocationClosestToWorldLocation(L_Forward, ESplineCoordinateSpace::World);
-  DrawDebugPoint(GetWorld(), OutResult, 10, FColor::Red, false, 1.0f);
-  // DrawDebugSphere(GetWorld(), L_Forward, 10.f, 3, FColor{255, 0, 0});
+  // DrawDebugPoint(GetWorld(), OutResult, 10, FColor::Red, false, 1.0f);
+  //DrawDebugSphere(GetWorld(), OutResult, 10.f, 3, FColor::Red, false, 1.0f);
 
   return true;
 }

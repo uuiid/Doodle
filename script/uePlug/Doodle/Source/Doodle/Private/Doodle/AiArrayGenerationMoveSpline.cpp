@@ -18,7 +18,7 @@
 ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
   PrimaryActorTick.bCanEverTick = true;
   SplineComponent               = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
-  SplineComponent->Mobility     = EComponentMobility::Static;
+  SplineComponent->Mobility     = EComponentMobility::Movable;
   SplineComponent->SetGenerateOverlapEvents(false);
   SplineComponent->SetCanEverAffectNavigation(false);
   SplineComponent->SetClosedLoop(true);
@@ -42,7 +42,6 @@ ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
 #if WITH_EDITOR
   TargetSpline->SetIsVisualizationComponent(true);
 #endif
-  TargetSpline->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
   TargetSpline->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
   TargetSpline->SetCanEverAffectNavigation(false);
   TargetSpline->bHiddenInGame          = true;
@@ -60,7 +59,7 @@ ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
   Preview_InstancedStaticMeshComponent->bHiddenInGame = true;
   Preview_InstancedStaticMeshComponent->CastShadow    = false;
 
-  RandomAnimSpeed                                     = {150.0f, 200.0f};
+  RandomAnimSpeed                                     = {150.0f, 250.0f};
   MaxAcceleration                                     = 300.0f;
 }
 
@@ -96,8 +95,6 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
   FActorSpawnParameters L_ActorSpawnParameters{};
   L_ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
   for (auto&& i : Points) {
-    auto L_tran = i;
-    L_tran.SetScale3D(FVector::OneVector);
     auto L_Loc                      = i.GetLocation();
     // L_Loc.Z += 70;
     ADoodleAiSplineCrowd* L_Actor   = GetWorld()->SpawnActor<ADoodleAiSplineCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
@@ -105,11 +102,10 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     if (L_Com) {
       L_Com->RandomRadius = RandomRadius_Move;
     }
-    L_Actor->SplineMoveToComponent->SetWorldTransform(L_tran);
-
-    L_Actor->SplineMoveToComponent->SplineCurves = TargetSpline->SplineCurves;
-    L_Actor->SplineMoveToComponent->UpdateSpline();
-    DrawDebugPoint(GetWorld(), L_Loc, 10, FColor::Red, false, 1.0f);
+    auto L_tran = i;
+    L_tran.SetScale3D(FVector::OneVector);
+    L_tran.SetRotation(GetActorQuat());
+    L_Actor->SplineMoveToComponent->ReplaceSplineCurve(TargetSpline, L_tran);
 
     TObjectPtr L_Skin = SkinAssets[RandomStream_Skin.RandRange(0, L_Max_Skin)];
     auto L_Array      = L_Map.Find(L_Skin->GetSkeleton());
