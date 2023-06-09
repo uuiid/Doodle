@@ -36,6 +36,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "${CMAKE_INSTALL_PREFIX}/bin/{#MyAppExeName}"; DestDir: "{app}/bin"; Flags: ignoreversion
 Source: "${CMAKE_INSTALL_PREFIX}/bin/token.doodle_token"; DestDir: "{app}/bin"; Flags: ignoreversion
+Source: "${CMAKE_INSTALL_PREFIX}/bin/doodle_maya*.exe"; DestDir: "{app}/bin"; Flags: ignoreversion
 Source: "${CMAKE_INSTALL_PREFIX}/bin/*.dll"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/houdini/*"; DestDir: "{app}/houdini"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/SideFX_Labs/*"; DestDir: "{app}/SideFX_Labs"; Flags: ignoreversion recursesubdirs
