@@ -7,14 +7,12 @@
 #include <entt/entt.hpp>
 namespace doodle::gui::render {
 
-class season_render_t {
+class season_edit_t {
   gui_cache_name_id id{"季数"s};
   gui_cache_name_id add{"添加"s};
 
  public:
   bool render(const entt::handle& in_handle_view);
 };
-
-bool season_render(const entt::handle& in_handle_view);
 
 }  // namespace doodle::gui::render

@@ -18,10 +18,21 @@
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
+#include <doodle_lib/gui/widgets/derail/all_user_combox.h>
+#include <doodle_lib/gui/widgets/derail/assets_file_edit.h>
+#include <doodle_lib/gui/widgets/derail/command_edit.h>
+#include <doodle_lib/gui/widgets/derail/episodes_edit.h>
+#include <doodle_lib/gui/widgets/derail/importance_edit.h>
+#include <doodle_lib/gui/widgets/derail/season_edit.h>
+#include <doodle_lib/gui/widgets/derail/shot_edit.h>
+#include <doodle_lib/gui/widgets/derail/time_edit.h>
+#include <doodle_lib/gui/widgets/derail/user_edit.h>
 #include <doodle_lib/gui/widgets/edit_widgets/edit_user.h>
 
 #include <boost/signals2/connection.hpp>
 
+#include "derail/importance_edit.h"
+#include "derail/shot_edit.h"
 #include <core/tree_node.h>
 #include <gui/widgets/database_edit.h>
 
@@ -392,6 +403,15 @@ class edit_widgets::impl {
   using gui_edit_cache = gui_cache<std::unique_ptr<edit_interface>>;
   using gui_add_cache  = gui_cache<std::unique_ptr<base_render>>;
   std::vector<gui_edit_cache> p_edit;
+
+  render::season_edit_t season_edit{};
+  render::episodes_edit_t episodes_edit{};
+  render::shot_edit_t shot_edit{};
+  render::assets_file_edit_t assets_file_edit{};
+  render::command_edit_t command_edit{};
+  render::importance_edit_t importance_edit{};
+  render::time_edit_t time_edit{};
+
   std::vector<gui_add_cache> p_add;
   std::string title_name_;
   bool open{true};

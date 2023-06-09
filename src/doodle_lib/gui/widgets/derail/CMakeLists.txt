@@ -4,7 +4,7 @@ target_sources(doodle_lib
         command_edit.h
         episodes_edit.h
         importance_edit.h
-        season_render.h
+        season_edit.h
         shot_edit.h
         user_edit.h
         assets_file_edit.h
@@ -15,7 +15,7 @@ target_sources(doodle_lib
         command_edit.cpp
         episodes_edit.cpp
         importance_edit.cpp
-        season_render.cpp
+        season_edit.cpp
         shot_edit.cpp
         user_edit.cpp
         assets_file_edit.cpp
