@@ -48,7 +48,7 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
    * @param in_name 名称
    * @param in_version 版本
    */
-  explicit assets_file(const FSys::path& in_path, std::string in_name, std::uint64_t in_version);
+  explicit assets_file(const FSys::path& in_path, std::string in_name, std::uint32_t in_version);
   explicit assets_file(const FSys::path& in_path);
 
   assets_file(assets_file&&) noexcept;
@@ -68,8 +68,8 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   [[nodiscard]] const FSys::path& path_attr() const;
   void path_attr(const FSys::path& in_path);
 
-  [[nodiscard]] const std::uint64_t& version_attr() const noexcept;
-  void version_attr(const std::uint64_t& in_Version) noexcept;
+  [[nodiscard]] const std::uint32_t& version_attr() const noexcept;
+  void version_attr(const std::uint32_t& in_Version) noexcept;
 
   [[nodiscard]] const std::string& organization_attr() const noexcept;
   void organization_attr(const std::string& in_organization) noexcept;

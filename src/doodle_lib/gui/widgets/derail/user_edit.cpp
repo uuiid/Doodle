@@ -9,7 +9,10 @@
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
+#include "entt/entity/fwd.hpp"
 #include "imgui_stdlib.h"
+#include <string>
+#include <utility>
 namespace doodle::gui::render {
 
 bool user_edit(const entt::handle& in_handle_view) {
@@ -43,5 +46,36 @@ bool user_edit(const entt::handle& in_handle_view) {
   //    }
   //  }
 }
+std::tuple<bool, entt::handle> select_all_user(const std::string& in_current_user, const registry_ptr& in_reg_ptr) {
+  auto& l_list = in_reg_ptr->ctx().get<select_all_user_t>();
 
+  std::tuple<bool, entt::handle> l_ret{false, {}};
+  if (dear::Combo const l_com{*l_list.user_id, in_current_user.data()}) {
+    l_list.refresh(in_reg_ptr);
+    for (auto& i : l_list.user_list) {
+      if (imgui::Selectable(i.first.data())) {
+        l_ret = {true, i.second};
+      }
+    }
+  }
+  return l_ret;
+}
+std::tuple<bool, entt::handle> select_all_user(const entt::handle& in_current_user, const registry_ptr& in_reg_ptr) {
+  return select_all_user(
+      in_current_user && in_current_user.all_of<user>() ? in_current_user.get<user>().get_name() : std::string{},
+      in_reg_ptr
+  );
+}
+
+void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
+  auto l_list = in_reg_ptr->view<user>().each();
+  user_list   = l_list |
+              ranges::views::transform(
+                  [&](const decltype(l_list)::value_type& in_handle) -> std::pair<std::string, entt::handle> {
+                    const auto& [l_e, l_user] = in_handle;
+                    return std::make_pair(l_user.get_name(), entt::handle{*in_reg_ptr, l_e});
+                  }
+              ) |
+              ranges::to_vector;
+}
 }  // namespace doodle::gui::render

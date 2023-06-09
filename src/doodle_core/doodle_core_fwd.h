@@ -29,6 +29,7 @@ class thread_pool;
 
 // #include <>
 namespace doodle {
+using entt::literals::operator""_hs;
 
 namespace details {
 class database_info;

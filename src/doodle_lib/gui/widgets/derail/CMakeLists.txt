@@ -1,6 +1,5 @@
 target_sources(doodle_lib
         PUBLIC
-        base.h
         all_user_combox.h
         command_edit.h
         episodes_edit.h
@@ -9,6 +8,7 @@ target_sources(doodle_lib
         shot_edit.h
         user_edit.h
         assets_file_edit.h
+        time_edit.h
 
         PRIVATE
         all_user_combox.cpp
@@ -19,5 +19,5 @@ target_sources(doodle_lib
         shot_edit.cpp
         user_edit.cpp
         assets_file_edit.cpp
-
+        time_edit.cpp
         )
