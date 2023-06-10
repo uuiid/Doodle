@@ -11,13 +11,15 @@
 namespace doodle::gui::render {
 
 bool command_edit_t::render(const entt::handle& in_handle_view) {
+  bool on_change = false;
   if (in_handle_view.all_of<comment>()) {
     auto& l_comm = in_handle_view.get<comment>();
 
     if (ImGui::InputText(*id, &l_comm.p_comment)) {
       in_handle_view.patch<comment>();
-      return true;
+      on_change = true;
     }
   }
+  return on_change;
 }
 }  // namespace doodle::gui::render

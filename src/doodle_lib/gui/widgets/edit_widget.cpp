@@ -418,6 +418,13 @@ void edit_widgets::edit_handle() {
   if (!p_i->p_h.empty()) {
     const auto l_args = p_i->p_h.size();
     if (l_args > 1) dear::Text(fmt::format("同时编辑了 {}个", l_args));
+    p_i->season_edit.render(p_i->p_h.front());
+    p_i->episodes_edit.render(p_i->p_h.front());
+    p_i->shot_edit.render(p_i->p_h.front());
+    p_i->assets_file_edit.render(p_i->p_h.front());
+    p_i->command_edit.render(p_i->p_h.front());
+    p_i->importance_edit.render(p_i->p_h.front());
+    p_i->time_edit.render(p_i->p_h.front());
   }
 }
 
