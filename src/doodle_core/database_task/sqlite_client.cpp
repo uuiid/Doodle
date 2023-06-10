@@ -350,21 +350,23 @@ bsys::error_code sqlite_file::open_impl() {
     break;
   }
 
-  if (need_save && FSys::folder_is_save(project_path)) {
-    project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
-    if (!FSys::exists(project_path)) {
-      new_file_scene(project_path);
-      doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
-      auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
-      auto l_tx    = sqlpp::start_transaction(*l_k_con);
-      ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
-      l_tx.commit();
+  if (need_save) {
+    if (FSys::folder_is_save(project_path)) {
+      project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
+      if (!FSys::exists(project_path)) {
+        new_file_scene(project_path);
+        doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
+        auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
+        auto l_tx    = sqlpp::start_transaction(*l_k_con);
+        ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
+        l_tx.commit();
+      } else {
+        g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置已存在文件", project_path);
+      }
     } else {
-      g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置已存在文件", project_path);
+      // todo: 更改提示
+      g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置无法写入, 不保存新版本文件", project_path);
     }
-  } else {
-    // todo: 更改提示
-    g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置无法写入, 不保存新版本文件", project_path);
   }
   ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
 
