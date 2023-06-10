@@ -58,16 +58,18 @@ std::tuple<bool, entt::handle> select_all_user_t::render(const registry_ptr& in_
   return l_ret;
 }
 bool user_edit_t::render(const entt::handle& in_handle_view) {
+  bool on_change = false;
   if (!in_handle_view.all_of<user>()) {
     if (ImGui::Button(*add)) {
       in_handle_view.emplace<user>();
-      return true;
+      on_change = true;
     }
   } else {
     if (ImGui::InputText(*id, &in_handle_view.get<user>().get_name())) {
       in_handle_view.patch<user>();
-      return true;
+      on_change = true;
     }
   }
+  return on_change;
 }
 }  // namespace doodle::gui::render
