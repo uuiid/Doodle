@@ -323,7 +323,8 @@ bool reference_file::has_node(const MObject &in_node) const {
 }
 bool reference_file::set_namespace(const std::string &in_namespace) {
   DOODLE_CHICK(!in_namespace.empty(), doodle_error{"空名称空间"});
-  file_namespace = in_namespace.substr(1);
+
+  file_namespace = in_namespace.front() == ':' ? in_namespace.substr(1) : in_namespace;
   find_ref_node();
   return has_chick_group();
 }
