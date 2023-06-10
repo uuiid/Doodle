@@ -45,7 +45,7 @@ FetchContent_MakeAvailable(fontawesome IconFontCppHeaders doxygenAwesomeCss holi
 if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
     set(DOXYGEN_WARNINGS YES)
 else ()
-    set(DOXYGEN_WARNINGS NO)
+    set(DOXYGEN_EXTRACT_ALL YES)
 endif ()
 set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
