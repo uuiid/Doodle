@@ -46,17 +46,12 @@ if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
     set(DOXYGEN_WARNINGS YES)
 else ()
     set(DOXYGEN_EXTRACT_ALL YES)
+    set(DOXYGEN_WARNINGS NO)
     set(DOXYGEN_QUIET YES)
 endif ()
 set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
-set(DOXYGEN_EXCLUDE
-        doodle_lib/external
-        doodle_lib/resource
-        doodle_core/generate
-        doodle_lib/rpc
-        )
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 
 # set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
@@ -64,7 +59,6 @@ set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
 # set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
 set(DOXYGEN_QUIET YES)
-set(DOXYGEN_PROJECT_LOGO doodle_exe/main/icon.ico)
 set(DOXYGEN_NUM_PROC_THREADS 0)
 
 # 创建 css 必须的一部份设置
@@ -77,8 +71,10 @@ doxygen_add_docs(Doxygen
         doodle_core
         doodle_app
         doodle_lib
-        doodle_dingding
         maya_plug
+        exe_maya
+        exe_gui
+        maya_plug_mll
         )
 
 cmrc_add_resource_library(
