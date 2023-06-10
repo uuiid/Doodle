@@ -42,7 +42,11 @@ FetchContent_MakeAvailable(fontawesome IconFontCppHeaders doxygenAwesomeCss holi
 
 # =====================文档过程===============================
 # 添加文档生成
-set(DOXYGEN_WARNINGS YES)
+if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+    set(DOXYGEN_WARNINGS YES)
+else ()
+    set(DOXYGEN_WARNINGS NO)
+endif ()
 set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
@@ -51,7 +55,7 @@ set(DOXYGEN_EXCLUDE
         doodle_lib/resource
         doodle_core/generate
         doodle_lib/rpc
-)
+        )
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 
 # set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
@@ -74,7 +78,7 @@ doxygen_add_docs(Doxygen
         doodle_lib
         doodle_dingding
         maya_plug
-)
+        )
 
 cmrc_add_resource_library(
         DoodleLibResourceFont
@@ -90,30 +94,30 @@ add_subdirectory(doodle_lib)
 add_subdirectory(exe_gui)
 add_subdirectory(houdini_plug)
 
-if(DEFINED Maya_Version)
-        # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
-        # 模块的寻找文件名称 Find + 包名称 + .cmake
-        # 开始运行 `FindMaya.cmake`
-        find_package(Maya ${Maya_Version} MODULE)
+if (DEFINED Maya_Version)
+    # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
+    # 模块的寻找文件名称 Find + 包名称 + .cmake
+    # 开始运行 `FindMaya.cmake`
+    find_package(Maya ${Maya_Version} MODULE)
 
-        if(TARGET maya::maya_all)
-                find_package(OpenMP REQUIRED)
-                find_package(Alembic CONFIG REQUIRED)
-                find_package(dem-bones CONFIG REQUIRED)
-                add_subdirectory(maya_plug_mll maya_plug_mll${Maya_Version})
+    if (TARGET maya::maya_all)
+        find_package(OpenMP REQUIRED)
+        find_package(Alembic CONFIG REQUIRED)
+        find_package(dem-bones CONFIG REQUIRED)
+        add_subdirectory(maya_plug_mll maya_plug_mll${Maya_Version})
 
-                add_subdirectory(maya_plug maya_plug${Maya_Version})
-                add_subdirectory(exe_maya exe_maya${Maya_Version})
-        endif()
-endif()
+        add_subdirectory(maya_plug maya_plug${Maya_Version})
+        add_subdirectory(exe_maya exe_maya${Maya_Version})
+    endif ()
+endif ()
 
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
 find_package(Inno)
 
-if(TARGET Inno_exe)
-        add_subdirectory(install)
-endif()
+if (TARGET Inno_exe)
+    add_subdirectory(install)
+endif ()
 
 add_subdirectory(test)
