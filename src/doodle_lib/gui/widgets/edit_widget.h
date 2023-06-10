@@ -49,16 +49,6 @@ class DOODLELIB_API edit_widgets {
    */
   constexpr static std::string_view name{gui::config::menu_w::edit_};
 
-  /**
-   * @brief 初始化窗口
-   *
-   * 连接获取选择信号 获取 文件列表中的选择物体(单选)
-   * 开始打开信号  在项目打开时清除获取的选中句柄, 并禁用编辑
-   * 结束打开信号 启用编辑
-   *
-   *
-   */
-  void init();
   [[nodiscard("")]] const std::string& title() const;
   /**
    * @brief 每帧刷新函数

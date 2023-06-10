@@ -387,12 +387,6 @@ class edit_widgets::impl {
    */
   std::vector<entt::handle> p_h;
 
-  database_edit data_edit;
-
-  using gui_edit_cache = gui_cache<std::unique_ptr<edit_interface>>;
-  using gui_add_cache  = gui_cache<std::unique_ptr<base_render>>;
-  std::vector<gui_edit_cache> p_edit;
-
   render::season_edit_t season_edit{};
   render::episodes_edit_t episodes_edit{};
   render::shot_edit_t shot_edit{};
@@ -401,7 +395,6 @@ class edit_widgets::impl {
   render::importance_edit_t importance_edit{};
   render::time_edit_t time_edit{};
 
-  std::vector<gui_add_cache> p_add;
   std::string title_name_;
   bool open{true};
   boost::signals2::scoped_connection p_sc;
@@ -409,32 +402,11 @@ class edit_widgets::impl {
 
 edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
-  init();
-}
-edit_widgets::~edit_widgets() = default;
-
-void edit_widgets::init() {
-  p_i->p_edit.emplace_back("季数编辑"s, std::make_unique<season_edit>());
-  p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
-  p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
-  p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
-  p_i->p_edit.emplace_back("用户编辑"s, std::make_unique<edit_user>());
-  p_i->p_edit.emplace_back("备注"s, std::make_unique<command_edit>());
-  p_i->p_edit.emplace_back("等级"s, std::make_unique<importance_edit>());
-  p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>());
-
-  p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
-
-  /// \brief 连接信号
-  ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) { p_i->data_edit.link_sig(in_edit.data); });
-
   g_reg()->ctx().emplace<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx().get<core_sig>();
   p_i->p_sc   = l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) { p_i->p_h = in; });
-  /**
-   * @brief 保存时禁用编辑
-   */
 }
+edit_widgets::~edit_widgets() = default;
 
 bool edit_widgets::render() {
   this->edit_handle();
@@ -446,16 +418,7 @@ void edit_widgets::edit_handle() {
   if (!p_i->p_h.empty()) {
     const auto l_args = p_i->p_h.size();
     if (l_args > 1) dear::Text(fmt::format("同时编辑了 {}个", l_args));
-    p_i->data_edit.render(p_i->p_h.front());
-    ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
-      dear::Text(in_edit.gui_name.name);
-      in_edit.data->render(p_i->p_h.front());
-      in_edit.data->save(p_i->p_h);
-    });
-    p_i->data_edit.save(p_i->p_h);
   }
-
-  //  p_i->data_edit.save(p_i->p_h);
 }
 
 const std::string &edit_widgets::title() const { return p_i->title_name_; }
