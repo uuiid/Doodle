@@ -256,6 +256,7 @@ maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
 FSys::path maya_exe::find_maya_path() const {
   boost::ignore_unused(this);
   auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
+  DOODLE_LOG_INFO("开始寻找在注册表中寻找maya");
   winreg::RegKey l_key{};
   l_key.Open(HKEY_LOCAL_MACHINE, l_key_str, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
   auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
@@ -263,23 +264,29 @@ FSys::path maya_exe::find_maya_path() const {
 }
 
 void maya_exe::install_maya_exe() {
-  auto l_maya_path   = find_maya_path();
+  try {
+    auto l_maya_path   = find_maya_path();
 
-  auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
-                       version::build_info::get().version_str;
-  const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
-  p_i->run_path         = l_target_path / l_run_name;
+    auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
+                         version::build_info::get().version_str;
+    const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
+    p_i->run_path         = l_target_path / l_run_name;
 
-  if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
+    if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
 
-  if (!FSys::exists(l_target_path / "ShadeFragment")) {
-    FSys::copy(l_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment", FSys::copy_options::recursive);
-  }
-  if (!FSys::exists(l_target_path / "ScriptFragment")) {
-    FSys::copy(l_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment", FSys::copy_options::recursive);
-  }
-  if (!FSys::exists(p_i->run_path)) {
-    FSys::copy(core_set::get_set().program_location() / l_run_name, l_target_path / l_run_name);
+    if (!FSys::exists(l_target_path / "ShadeFragment")) {
+      FSys::copy(l_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment", FSys::copy_options::recursive);
+    }
+    if (!FSys::exists(l_target_path / "ScriptFragment")) {
+      FSys::copy(
+          l_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment", FSys::copy_options::recursive
+      );
+    }
+    if (!FSys::exists(p_i->run_path)) {
+      FSys::copy(core_set::get_set().program_location() / l_run_name, l_target_path / l_run_name);
+    }
+  } catch (const winreg::RegException &in_err) {
+    DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
   }
 }
 
@@ -307,9 +314,7 @@ void maya_exe::queue_up(
     const std::shared_ptr<call_fun_type> &in_call_fun, const FSys::path &in_run_path
 ) {
   install_maya_exe();
-  DOODLE_CHICK(
-      core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"}
-  );
+
   auto l_run                 = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
   l_run->mag_attr            = in_msg;
   l_run->run_script_attr_key = in_key;
