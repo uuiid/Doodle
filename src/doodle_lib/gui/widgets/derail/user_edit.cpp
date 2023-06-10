@@ -4,12 +4,16 @@
 
 #include "user_edit.h"
 
+#include "doodle_core/metadata/metadata.h"
 #include <doodle_core/metadata/user.h>
 
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
+#include "boost/uuid/uuid.hpp"
+
 #include "entt/entity/fwd.hpp"
+#include "fmt/compile.h"
 #include "imgui_stdlib.h"
 #include <string>
 #include <utility>
@@ -21,7 +25,14 @@ void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
               ranges::views::transform(
                   [&](const decltype(l_list)::value_type& in_handle) -> std::pair<std::string, entt::handle> {
                     const auto& [l_e, l_user] = in_handle;
-                    return std::make_pair(l_user.get_name(), entt::handle{*in_reg_ptr, l_e});
+                    entt::handle l_h{*in_reg_ptr, l_e};
+                    return std::make_pair(
+                        fmt::format(
+                            "{}(id:{})", l_user.get_name(),
+                            l_h.all_of<database>() ? l_h.get<database>().uuid() : boost::uuids::uuid{}
+                        ),
+                        entt::handle{*in_reg_ptr, l_e}
+                    );
                   }
               ) |
               ranges::to_vector;
