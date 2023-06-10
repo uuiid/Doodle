@@ -51,7 +51,6 @@ void app_base::init() {
 
   DOODLE_LOG_INFO("寻找用户配置文件目录");
   k_init.config_to_user();
-  k_init.find_maya();
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
   DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());

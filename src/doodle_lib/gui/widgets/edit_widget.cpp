@@ -381,17 +381,6 @@ class add_assets_for_file : public base_render {
 
 class edit_widgets::impl {
  public:
-  std::vector<boost::signals2::scoped_connection> p_sc;
-
- public:
-  /**
-   * @brief 添加句柄
-   *
-   */
-  std::int32_t p_add_size = 1;
-  std::vector<entt::handle> add_handles;
-
- public:
   /**
    * @brief 修改句柄
    *
@@ -415,6 +404,7 @@ class edit_widgets::impl {
   std::vector<gui_add_cache> p_add;
   std::string title_name_;
   bool open{true};
+  boost::signals2::scoped_connection p_sc;
 };
 
 edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
@@ -431,7 +421,7 @@ void edit_widgets::init() {
   p_i->p_edit.emplace_back("用户编辑"s, std::make_unique<edit_user>());
   p_i->p_edit.emplace_back("备注"s, std::make_unique<command_edit>());
   p_i->p_edit.emplace_back("等级"s, std::make_unique<importance_edit>());
-  p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>()).data.get();
+  p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>());
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
 
@@ -440,18 +430,10 @@ void edit_widgets::init() {
 
   g_reg()->ctx().emplace<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx().get<core_sig>();
-  p_i->p_sc.emplace_back(l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) {
-    p_i->p_h = in;
-    p_i->data_edit.init(p_i->p_h);
-    ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) { in_edit.data->init(p_i->p_h); });
-  }));
+  p_i->p_sc   = l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) { p_i->p_h = in; });
   /**
    * @brief 保存时禁用编辑
    */
-  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect([&](const FSys::path &) {
-    this->p_i->add_handles.clear();
-    this->p_i->p_h = {};
-  }));
 }
 
 bool edit_widgets::render() {

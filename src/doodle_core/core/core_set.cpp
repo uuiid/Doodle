@@ -42,10 +42,6 @@ core_set &core_set::get_set() {
   return install;
 }
 
-bool core_set::has_maya() const noexcept { return !p_mayaPath.empty(); }
-
-const FSys::path &core_set::maya_path() const noexcept { return p_mayaPath; }
-
 core_set::core_set()
     : user_id(),
       p_doc(FSys::current_path()),
@@ -104,21 +100,6 @@ core_set_init::core_set_init() : p_set(core_set::get_set()) {
 
   DOODLE_LOG_INFO("设置缓存目录 {}", p_set.p_root);
 }
-bool core_set_init::find_maya() {
-  DOODLE_LOG_INFO("寻找maya");
-
-  if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2020\bin)")) {
-    p_set.p_mayaPath = R"(C:\Program Files\Autodesk\Maya2020\bin\)";
-    return true;
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2019\bin)")) {
-    p_set.p_mayaPath = R"(C:\Program Files\Autodesk\Maya2019\bin\)";
-    return true;
-  } else if (FSys::exists(R"(C:\Program Files\Autodesk\Maya2018\bin)")) {
-    p_set.p_mayaPath = R"(C:\Program Files\Autodesk\Maya2018\bin\)";
-    return true;
-  }
-  return false;
-}
 
 void core_set_init::read_file() {
   FSys::path l_k_setting_file_name = p_set.get_doc() / doodle_config::config_name;
@@ -159,7 +140,6 @@ bool core_set_init::config_to_user() {
 
 void to_json(nlohmann::json &j, const core_set &p) {
   j["organization_name"]        = p.organization_name;
-  j["mayaPath"]                 = p.p_mayaPath;
   j["max_thread"]               = p.p_max_thread;
   j["timeout"]                  = p.timeout;
   j["project_root"]             = p.project_root;
@@ -183,7 +163,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   }
   if (j.count("ue4_path")) j["ue4_path"].get_to(p.ue4_path);
   if (j.count("ue4_version")) j["ue4_version"].get_to(p.ue4_version);
-  j.at("mayaPath").get_to(p.p_mayaPath);
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("timeout").get_to(p.timeout);
   if (j.contains("project_root")) j.at("project_root").get_to(p.project_root);

@@ -30,9 +30,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   // 获得运行程序目录
   FSys::path program_location();
 
-  [[nodiscard]] bool has_maya() const noexcept;
-  [[nodiscard]] const FSys::path &maya_path() const noexcept;
-
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
@@ -59,7 +56,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   FSys::path _root_cache;
   FSys::path p_doc;
 
-  FSys::path p_mayaPath;
   FSys::path ue4_path;
   std::string ue4_version;
   std::int32_t maya_version;
@@ -97,7 +93,6 @@ class DOODLE_CORE_API core_set_init {
  public:
   core_set_init();
 
-  bool find_maya();
   void read_file();
   bool write_file();
   bool config_to_user();
