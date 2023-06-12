@@ -77,7 +77,6 @@ class windows_manage {
   std::string render_layout_name_{};
 
   void gen_windows_list();
-  void set_menu_list(const warp_w_ptr& win_ptr);
   class render_guard {
     windows_manage* ptr_;
 
@@ -129,7 +128,7 @@ class windows_init_arg {
     kmain_menu_bar,
     kviewport_side_bar,
   };
-
+  /// 这个值会被显示, 更改布局, 用户主动显示等使用
   std::shared_ptr<bool> init_show_{std::make_shared<bool>(true)};
   render_enum render_enum_{};
   std::int32_t flags_{};

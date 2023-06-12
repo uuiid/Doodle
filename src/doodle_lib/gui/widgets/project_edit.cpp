@@ -87,7 +87,7 @@ class project_edit::impl {
 
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
   std::string title_name_;
-  bool open;
+  bool open{true};
 
   void config_init() {
     auto&& l_prj         = g_reg()->ctx().get<project>();
