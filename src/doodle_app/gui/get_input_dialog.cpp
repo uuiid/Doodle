@@ -22,11 +22,11 @@ namespace doodle::gui {
 
 class create_project_dialog::impl {
  public:
-  project prj;
+  project prj{"C:/", "tmp"s};
 
   FSys::path path;
   std::string path_gui;
-  std::string name;
+  std::string name{"tmp"s};
   std::shared_ptr<FSys::path> in_path;
   gui_cache<entt::handle> select_button_id{"选择文件夹", make_handle()};
 
@@ -61,13 +61,14 @@ bool create_project_dialog::render() {
     p_i->select_button_id().destroy();
     doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
     g_reg()->ctx().get<project>() = p_i->prj;
+    ImGui::CloseCurrentPopup();
     return false;
   }
   return true;
 }
 
 create_project_dialog::create_project_dialog() : p_i(std::make_unique<impl>()) {
-  p_i->path     = core_set::get_set().get_doc() / "doodle";
+  p_i->path     = core_set::get_set().get_doc();
   p_i->path_gui = p_i->path.generic_string();
 }
 create_project_dialog::~create_project_dialog() = default;

@@ -381,6 +381,9 @@ bsys::error_code sqlite_file::save_impl() {
   ptr->registry_attr = g_reg();
 
   DOODLE_LOG_INFO("文件位置 {}", project_path);
+  if (auto l_p = project_path.parent_path(); !FSys::exists(l_p)) {
+    FSys::create_directories(l_p);
+  }
   doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
   try {
     auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();

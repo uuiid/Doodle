@@ -51,7 +51,7 @@ main_menu_bar::~main_menu_bar() = default;
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("创建项目"s)) {
     g_windows_manage().create_windows_arg(
-        windows_init_arg{}.create<create_project_dialog>().set_render_type<dear::Popup>()
+        windows_init_arg{}.create<create_project_dialog>().set_render_type<dear::Begin>()
     );
   }
   if (dear::MenuItem("打开项目"s)) {

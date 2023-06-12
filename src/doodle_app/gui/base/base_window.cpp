@@ -73,10 +73,10 @@ class windows_manage::warp_w {
     }
 
     if (win_render) {
-      *args_.init_show_ = win_render->render();
+      win_render->render();
     } else {
       win_render = std::move((*args_.create_factory_)());
-      /**args_.init_show_ =*/win_render->render();
+      win_render->render();
     }
 
     return *args_.init_show_;
@@ -96,9 +96,7 @@ void windows_manage::tick() {
   const render_guard l_g{this};
   const auto l_org_list = windows_list_.size();
   windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) { return !in_->render(); });
-  const auto l_has_clear = l_org_list != windows_list_.size();
 
-  const auto has_next    = !windows_list_next_.empty();
   windows_list_ |= ranges::actions::push_back(windows_list_next_);
   windows_list_next_.clear();
 }
