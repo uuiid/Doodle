@@ -73,10 +73,10 @@ class windows_manage::warp_w {
     }
 
     if (win_render) {
-      win_render->render();
+      *args_.init_show_ = win_render->render();
     } else {
       win_render = std::move((*args_.create_factory_)());
-      win_render->render();
+      /**args_.init_show_ =*/win_render->render();
     }
 
     return *args_.init_show_;

@@ -17,7 +17,7 @@ class show_message::impl {
   gui_cache_name_id title{"消息"};
   std::string message{};
   gui::gui_cache_name_id button_{"确认"};
-  bool open;
+  bool open{true};
   std::once_flag once_flag;
 };
 

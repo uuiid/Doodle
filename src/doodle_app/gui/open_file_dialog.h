@@ -14,7 +14,7 @@ namespace doodle::gui {
 class DOODLE_APP_API file_panel {
   class impl;
   class path_info;
-  bool open{};
+  bool open{true};
   enum class sort_by : std::int16_t {
     none = 0,
     name = 1,
