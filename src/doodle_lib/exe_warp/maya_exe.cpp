@@ -21,6 +21,7 @@
 
 #include <doodle_lib/core/filesystem_extend.h>
 
+#include "boost/signals2/connection.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
@@ -97,6 +98,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   std::shared_ptr<std::function<void(boost::system::error_code)>> call_attr{};
 
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
+  boost::signals2::scoped_connection cancel_attr{};
 
   run_maya()          = default;
   virtual ~run_maya() = default;
@@ -109,13 +111,13 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     auto &&l_msg = mag_attr.get<process_message>();
     l_msg.set_state(l_msg.run);
     l_msg.message(fmt::format("开始写入配置文件 {} \n", l_path), l_msg.warning);
-    l_msg.aborted_function = [this]() {
+    cancel_attr = l_msg.aborted_sig.connect([this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
       l_msg.message("进程被主动结束\n");
       child_attr.terminate();
       cancel();
-    };
+    });
 
     timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
     timer_attr.async_wait([this](boost::system::error_code in_code) {

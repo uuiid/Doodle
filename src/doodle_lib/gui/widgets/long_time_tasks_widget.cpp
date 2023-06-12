@@ -58,12 +58,13 @@ bool long_time_tasks_widget::render() {
       dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
 
       ImGui::TableNextColumn();
-      if (msg.aborted_function) {
-        if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_function();
+
+      if (!msg.aborted_sig.empty()) {
+        if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_sig();
       } else {
         switch (msg.get_state()) {
           case process_message::state::wait:
-            ImGui::Text("准备开始任务任务");
+            ImGui::Text("准备开始任务");
             break;
           case process_message::state::run:
             ImGui::Text("任务正在运行");

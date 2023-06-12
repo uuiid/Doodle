@@ -73,7 +73,6 @@ image_to_move::image_to_move() : p_i(std::make_unique<impl>()) {}
 void image_to_move::create_move(
     const FSys::path &in_out_path, process_message &in_msg, const std::vector<image_to_move::image_attr> &in_vector
 ) {
-  boost::ignore_unused(this);
   /// \brief 这里排序组件
   auto l_vector = in_vector;
   image_attr::extract_num(l_vector);
@@ -81,11 +80,12 @@ void image_to_move::create_move(
   std::atomic_bool l_stop{};
   /// \brief 这里进行消息初始化
   in_msg.set_state(in_msg.run);
-  in_msg.aborted_function = [l_s = std::addressof(l_stop)]() mutable {
+  boost::signals2::scoped_connection l_connection = in_msg.aborted_sig.connect(l_s = std::addressof(l_stop)]() mutable {
     if (!(*l_s)) {
       *l_s = true;
     }
-  };
+  });
+
   in_msg.message(fmt::format("获得图片路径 {}", l_vector.front().path_attr.parent_path()));
 
   in_msg.message(fmt::format("开始创建视频 {}", in_out_path));

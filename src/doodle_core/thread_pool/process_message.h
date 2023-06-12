@@ -17,12 +17,7 @@ class DOODLE_CORE_API process_message {
     info    = 0,
     warning = 1,
   };
-  enum state {
-    success = 1,
-    fail    = 2,
-    wait    = 3,
-    run     = 4
-  };
+  enum state { success = 1, fail = 2, wait = 3, run = 4 };
 
  private:
   chrono::sys_time_pos p_time;
@@ -69,10 +64,7 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] inline bool is_success() const { return get_state() == state::success; }
   [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
 
-  inline void aborted() const {
-    if (aborted_function) aborted_function();
-  };
-  std::function<void()> aborted_function;
+  boost::signals2::signal<void()> aborted_sig;
 };
 
 }  // namespace doodle
