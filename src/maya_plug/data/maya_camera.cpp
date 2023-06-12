@@ -12,6 +12,7 @@
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "exception/exception.h"
 #include <maya/MDGModifier.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>
@@ -230,6 +231,9 @@ void maya_camera::set_play_attr() {
   DOODLE_MAYA_CHICK(k_s);
   k_s = k_cam_fn.setNearClippingPlane(1);
   DOODLE_MAYA_CHICK(k_s);
+  maya_chick(k_cam_fn.setNearClippingPlane(10));
+
+  MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.multiSampleEnable" 1;)");
 
   auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
   DOODLE_MAYA_CHICK(k_s);
