@@ -329,6 +329,8 @@ void select::patch() {
     p_i->local_reg->emplace_or_replace<database>(e);
   }
   for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
+    // 转换默认值
+    p.use_only_sim_cloth = true;
     p_i->local_reg->emplace_or_replace<database>(e);
   }
   // patch_old<DOODLE_SQLITE_TYPE>(*p_i->local_reg);
