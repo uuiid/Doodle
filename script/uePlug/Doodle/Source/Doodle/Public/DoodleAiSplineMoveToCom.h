@@ -8,6 +8,7 @@
 //
 #include "DoodleAiSplineMoveToCom.generated.h"
 class ADoodleAIController;
+class USplineComponent;
 
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class DOODLE_API UDoodleAiSplineMoveToComponent : public UActorComponent {
@@ -19,14 +20,11 @@ class DOODLE_API UDoodleAiSplineMoveToComponent : public UActorComponent {
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "目标接受范围")
   float AcceptanceRadius{266};
 
-  virtual void TickComponent(
-      float DeltaTime,
-      enum ELevelTick TickType,
-      FActorComponentTickFunction *ThisTickFunction
-  ) override;
+  virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
+      override;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  TObjectPtr<USplineComponent> SplineCurve{};
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
+  TObjectPtr<USplineComponent> SplineCurve;
 
   void GoToRandomWaypoint();
 
