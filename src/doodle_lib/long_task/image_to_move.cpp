@@ -80,11 +80,12 @@ void image_to_move::create_move(
   std::atomic_bool l_stop{};
   /// \brief 这里进行消息初始化
   in_msg.set_state(in_msg.run);
-  boost::signals2::scoped_connection l_connection = in_msg.aborted_sig.connect(l_s = std::addressof(l_stop)]() mutable {
-    if (!(*l_s)) {
-      *l_s = true;
-    }
-  });
+  boost::signals2::scoped_connection l_connection =
+      in_msg.aborted_sig.connect([l_s = std::addressof(l_stop)]() mutable {
+        if (!(*l_s)) {
+          *l_s = true;
+        }
+      });
 
   in_msg.message(fmt::format("获得图片路径 {}", l_vector.front().path_attr.parent_path()));
 
