@@ -36,6 +36,7 @@
 /// 导入模块
 #include "AssetToolsModule.h"
 /// 导入fbx需要
+#include "Animation/AnimBoneCompressionSettings.h"  // 压缩骨骼设置
 #include "Factories/Factory.h"
 #include "Factories/FbxAnimSequenceImportData.h"
 #include "Factories/FbxFactory.h"
@@ -249,8 +250,34 @@ void UDoodleFbxImport_1::ImportFile() {
     }
   }
   FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+  TArray<UObject*> L_Objs             = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
 
-  AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+  FARFilter LFilter{};
+  LFilter.bIncludeOnlyOnDiskAssets = false;
+  LFilter.bRecursivePaths          = true;
+  LFilter.bRecursiveClasses        = true;
+  LFilter.PackagePaths.Add(FName{ImportPathDir});
+  LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
+
+  IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
+    UAnimSequence* L_Anim = Cast<UAnimSequence>(InAss.GetAsset());
+    if (L_Anim) {
+      L_Anim->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+          L_Anim, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
+      );
+      /// 这里无效代码, 防止崩溃
+      TArray<UObject*> LL{};
+      L_Anim->GetPreloadDependencies(LL);
+    }
+    return true;
+  });
+
+  // for (UObject* L_Obj : L_Objs) {
+  //   if (UAnimSequence* L_Seq = Cast<UAnimSequence>(L_Obj)) {
+  //     L_Seq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(L_Seq,
+  //     TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+  //   }
+  // }
 }
 
 void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
@@ -901,6 +928,7 @@ void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix, const FStr
   for (auto&& L_Fbx : ListImportData) {
     L_Fbx->GenPathPrefix(Path_Prefix, Path_Suffix);
   }
+  ListImportGui->RebuildList();
 }
 
 void SDoodleImportFbxUI::SetFbxOnlyAnim() {
