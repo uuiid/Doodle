@@ -11,7 +11,6 @@
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <gui/widgets/database_edit.h>
 
 namespace doodle::gui {
 

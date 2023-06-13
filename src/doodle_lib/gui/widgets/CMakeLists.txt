@@ -1,5 +1,4 @@
 add_subdirectory(assets_filter_widgets)
-add_subdirectory(edit_widgets)
 add_subdirectory(time_sequencer_widgets)
 add_subdirectory(derail)
 target_sources(doodle_lib
@@ -20,7 +19,6 @@ target_sources(doodle_lib
         all_user_view_widget.h
         maya_tool.h
         create_video.h
-        database_edit.h
         work_hour_filling.h
         create_entry.h
         update_self.h
@@ -41,7 +39,6 @@ target_sources(doodle_lib
         all_user_view_widget.cpp
         maya_tool.cpp
         create_video.cpp
-        database_edit.cpp
         work_hour_filling.cpp
         create_entry.cpp
         update_self.cpp
