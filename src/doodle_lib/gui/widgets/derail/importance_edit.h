@@ -8,7 +8,7 @@ namespace doodle::gui::render {
 
 class importance_edit_t {
   gui_cache_name_id id{"重要性"s};
-  gui_cache_name_id add{"添加"s};
+  gui_cache_name_id add{"添加重要性"s};
 
  public:
   bool render(const entt::handle& in_handle_view);

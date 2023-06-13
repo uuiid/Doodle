@@ -10,7 +10,6 @@
 #include "entt/entt.hpp"
 namespace doodle::gui::render {
 class command_edit_t {
-  entt::handle render_id{};
   gui_cache_name_id id{"备注:"s};
 
  public:

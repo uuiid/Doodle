@@ -9,7 +9,7 @@ namespace doodle::gui::render {
 
 class season_edit_t {
   gui_cache_name_id id{"季数"s};
-  gui_cache_name_id add{"添加"s};
+  gui_cache_name_id add{"添加季数"s};
 
  public:
   bool render(const entt::handle& in_handle_view);
