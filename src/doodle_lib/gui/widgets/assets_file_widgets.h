@@ -7,6 +7,8 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <cstdint>
+
 struct ImGuiTableSortSpecs;
 
 namespace doodle::gui {
@@ -34,6 +36,7 @@ class DOODLELIB_API assets_file_widgets {
   void open_drag(std::size_t in_size);
 
   void sort(const ImGuiTableSortSpecs* in_colum_id);
+  void set_render_icon_num(std::uint8_t in_size);
 
  public:
   assets_file_widgets();

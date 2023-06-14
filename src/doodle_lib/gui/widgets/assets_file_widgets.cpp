@@ -4,6 +4,7 @@
 
 #include "assets_file_widgets.h"
 
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/assets.h"
 #include "doodle_core/metadata/episodes.h"
 #include "doodle_core/metadata/metadata.h"
@@ -22,11 +23,20 @@
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/long_task/image_load_task.h>
 
+#include "boost/lambda2.hpp"
+#include "boost/lambda2/lambda2.hpp"
+#include "boost/numeric/conversion/cast.hpp"
+
 #include "create_entry.h"
 #include "entt/entity/fwd.hpp"
 #include "imgui.h"
 #include "range/v3/action/sort.hpp"
 #include "range/v3/action/stable_sort.hpp"
+#include "range/v3/range/conversion.hpp"
+#include "range/v3/view/slice.hpp"
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <magic_enum.hpp>
 #include <memory>
 #include <vector>
@@ -184,12 +194,11 @@ class assets_file_widgets::impl {
   std::vector<base_data_ptr> lists;
   std::size_t select_index{};
 
-  // std::float_t windows_width{0};
+  std::uint32_t size_num{};
 
   bool render_icon{true};
 
   std::function<void()> render_list;
-  //  entt::observer observer_h{*g_reg(), entt::collector.update<database>()};
   std::string title_name_;
 
   template <typename T>
@@ -208,6 +217,7 @@ assets_file_widgets::assets_file_widgets() : p_i(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<image_load_task>();
   this->switch_rander();
   init();
+  p_i->size_num = core_set::get_set().assets_file_widgets_size;
 }
 
 void assets_file_widgets::switch_rander() {
@@ -363,17 +373,35 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
 }
 
 void assets_file_widgets::render_by_icon() {
-  const static auto l_size{5u};
-  ImGui::Columns(l_size, "assets_file_widgets", false);
+  if (ImGui::IsWindowHovered() && ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::GetIO().MouseWheel) {
+    set_render_icon_num(p_i->size_num + ImGui::GetIO().MouseWheel);
+  }
+  ImGui::Columns(p_i->size_num, "assets_file_widgets", false);
   auto k_length =
-      (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
+      (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / p_i->size_num) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
   ImGuiListClipper clipper{};
-  clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / l_size)) + 1);
+  clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / p_i->size_num)) + 1);
   while (clipper.Step()) {
     for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
-      for (int l_j = 0; l_j < l_size; ++l_j) {
-        if ((l_i * l_size + l_j) < p_i->lists.size()) {
-          std::size_t l_index{l_i * l_size + l_j};
+      for (int l_j = 0; l_j < p_i->size_num; ++l_j) {
+        std::int32_t const l_begin = l_i * p_i->size_num;
+        auto l_size_list           = p_i->lists |
+                           ranges::views::slice(
+                               l_begin, std::min(
+                                            l_begin + boost::numeric_cast<std::int32_t>(p_i->size_num),
+                                            boost::numeric_cast<std::int32_t>(p_i->lists.size())
+                                        )
+                           ) |
+                           ranges::views::indirect | ranges::views::transform([](impl::base_data& in) -> std::float_t {
+                             auto& l_icon = dynamic_cast<impl::icon_data&>(in);
+                             return l_icon.image.icon_size2d_.height;
+                           }) |
+                           ranges::to_vector;
+        l_size_list |= ranges::actions::sort(boost::lambda2::_1 < boost::lambda2::_2);
+        auto l_max_size = l_size_list.empty() ? 0.0f : l_size_list.front();
+
+        if ((l_i * p_i->size_num + l_j) < p_i->lists.size()) {
+          std::size_t l_index{l_i * p_i->size_num + l_j};
           auto&& i = *std::dynamic_pointer_cast<impl::icon_data>(p_i->lists[l_index]);
           i.load_image(k_length);
           auto l_pos_image = ImGui::GetCursorPos();
@@ -381,7 +409,8 @@ void assets_file_widgets::render_by_icon() {
           ImGui::PushStyleColor(ImGuiCol_Header, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.8f));
 
           if (ImGui::Selectable(
-                  *i.select.gui_name, i.select.data, ImGuiSelectableFlags_AllowDoubleClick, {k_length, k_length}
+                  *i.select.gui_name, i.select.data, ImGuiSelectableFlags_AllowDoubleClick,
+                  {k_length, l_max_size ? l_max_size : k_length}
               )) {
             set_select(l_index);
           }
@@ -391,6 +420,7 @@ void assets_file_widgets::render_by_icon() {
           dear::DragDropSource{} && [this, l_index]() { this->open_drag(l_index); };
           auto l_pos_select = ImGui::GetCursorPos();
           ImGui::SetCursorPos(l_pos_image);
+
           ImGui::Image(i.image.data.get(), {i.image.icon_size2d_.width - 2, i.image.icon_size2d_.height - 2});
           ImGui::SetCursorPos(l_pos_select);
           dear::Text(i.name);
@@ -556,6 +586,10 @@ void assets_file_widgets::sort(const ImGuiTableSortSpecs* in_colum_id) {
         break;
     }
   }
+}
+void assets_file_widgets::set_render_icon_num(std::uint8_t in_size) {
+  p_i->size_num                                = std::clamp(in_size, std::uint8_t{3}, std::uint8_t{25});
+  core_set::get_set().assets_file_widgets_size = p_i->size_num;
 }
 
 }  // namespace doodle::gui

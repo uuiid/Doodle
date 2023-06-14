@@ -65,6 +65,8 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
   std::string server_ip{};
 
+  std::uint8_t assets_file_widgets_size;
+
  private:
   // 用户名称
   boost::uuids::uuid user_id;
