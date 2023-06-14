@@ -14,11 +14,11 @@ vcpkg_cmake_configure(
 )
 vcpkg_cmake_install()
 
-if(EXISTS "${CURRENT_PACKAGES_DIR}/cmake")
+if (EXISTS "${CURRENT_PACKAGES_DIR}/cmake")
     vcpkg_cmake_config_fixup(CONFIG_PATH cmake)
-else()
+else ()
     vcpkg_cmake_config_fixup(CONFIG_PATH lib/dem-bones/cmake)
-endif()
+endif ()
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug" "${CURRENT_PACKAGES_DIR}/lib")
 
 # Handle copyright

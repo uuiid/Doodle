@@ -11,12 +11,12 @@ vcpkg_from_github(
 )
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         FEATURES
-        auto-format            BIT7Z_AUTO_FORMAT
-        regex-matching         BIT7Z_REGEX_MATCHING
-        use-std-byte           BIT7Z_USE_STD_BYTE
-        use-native-string      BIT7Z_USE_NATIVE_STRING
-        generate-pic           BIT7Z_GENERATE_PIC
-        link-libcpp            BIT7Z_LINK_LIBCPP
+        auto-format BIT7Z_AUTO_FORMAT
+        regex-matching BIT7Z_REGEX_MATCHING
+        use-std-byte BIT7Z_USE_STD_BYTE
+        use-native-string BIT7Z_USE_NATIVE_STRING
+        generate-pic BIT7Z_GENERATE_PIC
+        link-libcpp BIT7Z_LINK_LIBCPP
         auto-prefix-long-paths BIT7Z_AUTO_PREFIX_LONG_PATHS
         )
 
