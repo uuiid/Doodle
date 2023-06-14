@@ -4,6 +4,7 @@
 
 #include "assets_file_widgets.h"
 
+#include "doodle_core/metadata/metadata.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/status_info.h>
@@ -21,10 +22,15 @@
 #include "create_entry.h"
 #include "entt/entity/fwd.hpp"
 #include "imgui.h"
+#include "range/v3/action/sort.hpp"
+#include "range/v3/action/stable_sort.hpp"
+#include <magic_enum.hpp>
 #include <memory>
 #include <vector>
 
 namespace doodle::gui {
+
+enum class assets_file_widgets_column : std::uint32_t { id, assets, episodes, shot, path, name, time, user };
 
 class assets_file_widgets::impl {
  public:
@@ -207,7 +213,6 @@ void assets_file_widgets::init() {
     p_i->lists.clear();
     p_i->select_index = 0;
   }));
-
 }
 
 bool assets_file_widgets::render() {
@@ -384,18 +389,42 @@ void assets_file_widgets::render_by_info() {
       ImGuiTableFlags_::ImGuiTableFlags_ScrollY | ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
           ImGuiTableFlags_::ImGuiTableFlags_RowBg | ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
           ImGuiTableFlags_::ImGuiTableFlags_BordersV | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
-          ImGuiTableFlags_::ImGuiTableFlags_Reorderable | ImGuiTableFlags_::ImGuiTableFlags_Hideable,
+          ImGuiTableFlags_::ImGuiTableFlags_Reorderable | ImGuiTableFlags_::ImGuiTableFlags_Hideable |
+          ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti,
   } && [&]() {
     ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
-    ImGui::TableSetupColumn("id", ImGuiTableColumnFlags_NoHide);
-    ImGui::TableSetupColumn("分类", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("集数", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("镜头", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("路径", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("名称", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("时间", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("制作人", ImGuiTableColumnFlags_None);
+    ImGui::TableSetupColumn(
+        "id", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_NoHide, 0.0F,
+        magic_enum::enum_integer(assets_file_widgets_column::id)
+    );
+    ImGui::TableSetupColumn(
+        "分类", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::assets)
+    );
+    ImGui::TableSetupColumn(
+        "集数", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::episodes)
+    );
+    ImGui::TableSetupColumn(
+        "镜头", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::shot)
+    );
+    ImGui::TableSetupColumn(
+        "路径", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::path)
+    );
+    ImGui::TableSetupColumn(
+        "名称", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::name)
+    );
+    ImGui::TableSetupColumn(
+        "时间", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::time)
+    );
+    ImGui::TableSetupColumn(
+        "制作人", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::user)
+    );
     ImGui::TableHeadersRow();
+
+    if (ImGuiTableSortSpecs* sorts_specs = ImGui::TableGetSortSpecs())
+      if (sorts_specs->SpecsDirty) {
+        sort(sorts_specs);
+        sorts_specs->SpecsDirty = false;
+      }
 
     ImGuiListClipper clipper{};
     clipper.Begin(boost::numeric_cast<std::int32_t>(p_i->lists.size()));
@@ -448,7 +477,84 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
 
 const std::string& assets_file_widgets::title() const { return p_i->title_name_; }
 
-assets_file_widgets::~assets_file_widgets() { /*p_i->observer_h.disconnect();*/
+assets_file_widgets::~assets_file_widgets() = default;
+
+void assets_file_widgets::sort(const ImGuiTableSortSpecs* in_colum_id) {
+  if (p_i->lists.empty()) return;
+
+  for (int l = 0; l < in_colum_id->SpecsCount; ++l) {
+    const auto* l_spec = &in_colum_id->Specs[l];
+    auto l_menu        = magic_enum::enum_cast<assets_file_widgets_column>(l_spec->ColumnUserID);
+    if (!l_menu) continue;
+
+    switch (*l_menu) {
+      case assets_file_widgets_column::id:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return in_l->handle_.get<database>().get_id() < in_r->handle_.get<database>().get_id();
+            });
+        break;
+      case assets_file_widgets_column::assets:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->ass_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->ass_p;
+            });
+        break;
+      case assets_file_widgets_column::episodes:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->eps_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->eps_p;
+            });
+        break;
+
+      case assets_file_widgets_column::shot:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->shot_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->shot_p;
+            });
+        break;
+      case assets_file_widgets_column::path:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->file_path_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->file_path_p;
+            });
+        break;
+      case assets_file_widgets_column::name:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->name_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->name_p;
+            });
+        break;
+      case assets_file_widgets_column::time:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->time_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->time_p;
+            });
+        break;
+      case assets_file_widgets_column::user:
+        p_i->lists |=
+            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
+              return std::dynamic_pointer_cast<impl::info_data>(in_l)->user_p <
+                     std::dynamic_pointer_cast<impl::info_data>(in_r)->user_p;
+            });
+        break;
+      default:
+        break;
+    }
+    switch (l_spec->SortDirection) {
+      case ImGuiSortDirection_Descending:
+        p_i->lists |= ranges::actions::reverse;
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 }  // namespace doodle::gui

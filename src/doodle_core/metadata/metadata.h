@@ -117,7 +117,6 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
     void operator()(const entt::handle &in) const;
   };
 
-  constexpr const static fun_save_ save{};
   constexpr const static fun_delete_ delete_{};
 };
 

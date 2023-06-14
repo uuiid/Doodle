@@ -74,9 +74,6 @@ struct future_data {
     }
     if (!l_not_valid_entity.empty()) {
       DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(t).name(), l_not_valid_entity, l_duplicate_entity);
-      // for (auto&& d : l_not_valid_entity) {
-      //   doodle::database::delete_(entt::handle{*in_reg, d});
-      // }
     }
     DOODLE_CHICK(
         ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }), doodle_error{"无效实体"}
