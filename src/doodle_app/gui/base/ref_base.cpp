@@ -5,22 +5,6 @@
 #include <doodle_core/metadata/metadata.h>
 namespace doodle::gui {
 
-void edit_interface::init(const entt::handle &in) { init(std::vector<entt::handle>{in}); }
-void edit_interface::save(const entt::handle &in) { save(std::vector<entt::handle>{in}); }
-void edit_interface::set_modify(bool is_modify) {
-  data_->is_modify = is_modify;
-  data_->edited();
-}
-edit_interface::edit_interface() : data_(std::make_unique<gui_data>()) {}
-void edit_interface::save(const std::vector<entt::handle> &in) {
-  if (data_->is_modify) ranges::for_each(in, [this](const entt::handle &in_handle) { save_(in_handle); });
-  data_->is_modify = false;
-}
-void edit_interface::init(const std::vector<entt::handle> &in) {
-  data_->is_modify = false;
-  if (!in.empty()) init_(in.front());
-}
-
 edit_interface::~edit_interface() = default;
 
 gui_cache_name_id::gui_cache_name_id(const std::string &in_name) : name_id(), name() {

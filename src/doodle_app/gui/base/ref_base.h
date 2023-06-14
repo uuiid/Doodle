@@ -31,90 +31,6 @@ class DOODLE_APP_API base_render {
 };
 
 /**
- * @brief gui 缓存类的数据
- *
- */
-class gui_data {
- public:
-  /// 是否修改
-  bool is_modify{false};
-  /// 编辑更改信号
-  boost::signals2::signal<void()> edited;
-};
-
-/**
- * @brief 编辑类的接口
- *
- */
-class DOODLE_APP_API edit_interface {
- protected:
-  /**
-   * @brief 初始化编辑时使用
-   *
-   * @param in 传入的初始化句柄
-   */
-  virtual void init_(const entt::handle &in)       = 0;
-  /**
-   * @brief 保存时调用
-   *
-   * @param in 传入的保存句柄
-   */
-  virtual void save_(const entt::handle &in) const = 0;
-
-  /**
-   * @brief 将实例状态设为更改, 将会使用 gui_data::edited 信号传播更改
-   *
-   * @param is_modify
-   */
-  void set_modify(bool is_modify);
-
- public:
-  /**
-   * @brief Construct a new edit interface object
-   *
-   */
-  edit_interface();
-  /**
-   * @brief Destroy the edit interface object
-   *
-   */
-  virtual ~edit_interface();
-
-  /**
-   * @brief 数据指针
-   *
-   */
-  std::unique_ptr<gui_data> data_;
-
-  /**
-   * @brief 初始化接口
-   *
-   * @param in 传入的句柄
-   */
-  virtual void init(const entt::handle &in);
-  /**
-   * @brief 初始化接口
-   *
-   * @param in 传入的句柄列表， 当使用多个 实体初始化时，覆盖这个接口， 否则
-   * 调用 这个接口和调用 init(const entt::handle &in) 相同
-   */
-  virtual void init(const std::vector<entt::handle> &in);
-  /**
-   * @brief 渲染接口
-   *
-   * @param in 传入的句柄
-   */
-  virtual void render(const entt::handle &in) = 0;
-  /**
-   * @brief 保存接口
-   *
-   * @param in 传入的句柄
-   */
-  virtual void save(const entt::handle &in);
-  virtual void save(const std::vector<entt::handle> &in);
-};
-
-/**
  * @brief 空类
  *
  */
@@ -199,11 +115,6 @@ class gui_cache_name_id : boost::totally_ordered<gui_cache_name_id> {
 
   bool operator==(const gui_cache_name_id &in) const noexcept;
   bool operator<(const gui_cache_name_id &in) const noexcept;
-};
-template <typename T>
-class gui_cache_name_id_temp : public gui_cache_name_id, public T {
- public:
-  using gui_cache_name_id::gui_cache_name_id;
 };
 
 /**
