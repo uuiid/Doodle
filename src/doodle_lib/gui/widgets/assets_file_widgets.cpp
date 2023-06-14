@@ -296,7 +296,12 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
         ranges::views::transform([](const impl::base_data& in_data) -> entt::handle { return in_data.handle_; }) |
         ranges::to_vector | ranges::actions::push_back(in_) | ranges::actions::unique | ranges::to_vector;
 
-    ranges::for_each(l_list, [](entt::handle& in_handle) { in_handle.destroy(); });
+    ranges::for_each(l_list, [](entt::handle& in_handle) {
+      if (in_handle) in_handle.destroy();
+    });
+    auto& l_sig = g_reg()->ctx().get<core_sig>();
+    l_sig.select_handles({});
+    l_sig.select_handle({});
     boost::asio::post(g_io_context(), [this, l_list]() {
       p_i->lists = p_i->lists | ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
                      return ranges::contains(l_list, in_data->handle_);
