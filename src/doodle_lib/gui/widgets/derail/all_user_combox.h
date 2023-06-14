@@ -19,7 +19,7 @@ class DOODLELIB_API all_user_combox {
   std::unique_ptr<impl> ptr;
   void get_all_user_data();
 
-  void delete_user(const entt::handle& in_user);
+  void delete_user(entt::handle& in_user);
 
  public:
   all_user_combox();

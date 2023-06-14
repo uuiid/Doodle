@@ -57,10 +57,10 @@ void all_user_combox::get_all_user_data() {
   });
 }
 
-void all_user_combox::delete_user(const entt::handle& in_user) {
+void all_user_combox::delete_user(entt::handle& in_user) {
   if (in_user && in_user.all_of<database, user>()) {
     DOODLE_LOG_INFO("删除用户 {}", in_user.get<user>().get_name(), in_user.get<database>().uuid());
-    database::delete_(in_user);
+    in_user.destroy();
   } else {
     DOODLE_LOG_WARN("具有无效的句柄或者缺失组件");
   }

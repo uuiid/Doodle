@@ -105,19 +105,6 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
     return find_by_uuid(boost::lexical_cast<boost::uuids::uuid>(in));
   };
   [[nodiscard]] entt::handle find_by_uuid() const;
-
-  class DOODLE_CORE_API fun_save_ {
-   public:
-    constexpr fun_save_() = default;
-    void operator()(const entt::handle &in) const;
-  };
-  class DOODLE_CORE_API fun_delete_ {
-   public:
-    constexpr fun_delete_() = default;
-    void operator()(const entt::handle &in) const;
-  };
-
-  constexpr const static fun_delete_ delete_{};
 };
 
 namespace database_ns {

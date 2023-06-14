@@ -271,15 +271,13 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
         ranges::views::filter([](const impl::base_data& in_data) { return in_data.select && in_data.handle_; }) |
         ranges::views::transform([](const impl::base_data& in_data) -> entt::handle { return in_data.handle_; }) |
         ranges::to_vector | ranges::actions::push_back(in_) | ranges::actions::unique | ranges::to_vector;
-    ranges::for_each(l_list, [](const entt::handle& in_handle) { database::delete_(in_handle); });
 
-    g_reg()->ctx().get<core_sig>().save_begin.connect([this, in_, l_list]() {
-      boost::asio::post(g_io_context(), [this, in_, l_list]() {
-        p_i->lists = p_i->lists | ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
-                       return ranges::contains(l_list, in_data->handle_);
-                     }) |
-                     ranges::to_vector;
-      });
+    ranges::for_each(l_list, [](entt::handle& in_handle) { in_handle.destroy(); });
+    boost::asio::post(g_io_context(), [this, l_list]() {
+      p_i->lists = p_i->lists | ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
+                     return ranges::contains(l_list, in_data->handle_);
+                   }) |
+                   ranges::to_vector;
     });
   }
 }
@@ -478,6 +476,15 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
 const std::string& assets_file_widgets::title() const { return p_i->title_name_; }
 
 assets_file_widgets::~assets_file_widgets() = default;
+template <typename T>
+struct sort_by {
+  bool operator()(const entt::handle& in_l, const entt::handle& in_r) const {
+    if (in_l.any_of<T>() && in_r.any_of<T>)
+      return in_l.get<T>() < in_r.get<T>();
+    else
+      return in_l.any_of<T>() ? true : (in_r.any_of<T>() ? true : false);
+  }
+};
 
 void assets_file_widgets::sort(const ImGuiTableSortSpecs* in_colum_id) {
   if (p_i->lists.empty()) return;
