@@ -55,7 +55,10 @@ class DOODLE_CORE_API ref_data {
 void DOODLE_CORE_API to_json(nlohmann::json &j, const database &p);
 void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 
-class DOODLE_CORE_API database : boost::equality_comparable<database>,
+/**
+ * 这个类可以按照id排序
+ */
+class DOODLE_CORE_API database : boost::totally_ordered<database>,
                                  boost::equality_comparable<boost::uuids::uuid>,
                                  boost::equality_comparable<database_ns::ref_data> {
   template <typename T>
@@ -94,6 +97,7 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
   std::uint64_t get_id() const;
 
   bool operator==(const database &in_rhs) const;
+  bool operator<(const database &in_rhs) const;
   bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator==(const ref_data &in_rhs) const;
 

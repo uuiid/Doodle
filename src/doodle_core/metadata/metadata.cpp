@@ -14,6 +14,7 @@
 #include <boost/hana/ext/std.hpp>
 
 #include <core/core_set.h>
+#include <tuple>
 
 namespace doodle {
 
@@ -65,7 +66,10 @@ std::uint64_t database::get_id() const { return p_id; }
 
 bool database::is_install() const { return p_id > 0; }
 
-bool database::operator==(const database &in_rhs) const { return p_uuid_ == in_rhs.p_uuid_; }
+bool database::operator==(const database &in_rhs) const {
+  return std::tie(p_uuid_, p_id) == std::tie(in_rhs.p_uuid_, in_rhs.p_id);
+}
+bool database::operator<(const database &in_rhs) const { return p_id < in_rhs.p_id; }
 bool database::operator==(const boost::uuids::uuid &in_rhs) const { return p_uuid_ == in_rhs; }
 bool database::operator==(const database_ns::ref_data &in_rhs) const { return p_uuid_ == in_rhs.uuid; }
 

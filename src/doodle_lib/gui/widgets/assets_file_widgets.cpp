@@ -4,7 +4,10 @@
 
 #include "assets_file_widgets.h"
 
+#include "doodle_core/metadata/assets.h"
+#include "doodle_core/metadata/episodes.h"
 #include "doodle_core/metadata/metadata.h"
+#include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/status_info.h>
@@ -31,6 +34,17 @@
 namespace doodle::gui {
 
 enum class assets_file_widgets_column : std::uint32_t { id, assets, episodes, shot, path, name, time, user };
+template <typename T>
+struct sort_by {
+  bool operator()(const entt::handle& in_l, const entt::handle& in_r) const {
+    bool l_r{};
+    if (in_l.any_of<T>() && in_r.any_of<T>())
+      l_r = in_l.get<T>() < in_r.get<T>();
+    else
+      l_r = in_l.any_of<T>() || in_r.any_of<T>();
+    return l_r;
+  }
+};
 
 class assets_file_widgets::impl {
  public:
@@ -184,6 +198,16 @@ class assets_file_widgets::impl {
   std::function<void()> render_list;
   //  entt::observer observer_h{*g_reg(), entt::collector.update<database>()};
   std::string title_name_;
+
+  template <typename T>
+  struct sort_by2 {
+    sort_by<T> sort_{};
+    bool operator()(
+        const assets_file_widgets::impl::base_data_ptr& in_l, const assets_file_widgets::impl::base_data_ptr& in_r
+    ) const {
+      return sort_(in_l->handle_, in_r->handle_);
+    }
+  };
 };
 
 assets_file_widgets::assets_file_widgets() : p_i(std::make_unique<impl>()) {
@@ -476,15 +500,6 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
 const std::string& assets_file_widgets::title() const { return p_i->title_name_; }
 
 assets_file_widgets::~assets_file_widgets() = default;
-template <typename T>
-struct sort_by {
-  bool operator()(const entt::handle& in_l, const entt::handle& in_r) const {
-    if (in_l.any_of<T>() && in_r.any_of<T>)
-      return in_l.get<T>() < in_r.get<T>();
-    else
-      return in_l.any_of<T>() ? true : (in_r.any_of<T>() ? true : false);
-  }
-};
 
 void assets_file_widgets::sort(const ImGuiTableSortSpecs* in_colum_id) {
   if (p_i->lists.empty()) return;
@@ -496,32 +511,17 @@ void assets_file_widgets::sort(const ImGuiTableSortSpecs* in_colum_id) {
 
     switch (*l_menu) {
       case assets_file_widgets_column::id:
-        p_i->lists |=
-            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
-              return in_l->handle_.get<database>().get_id() < in_r->handle_.get<database>().get_id();
-            });
+        p_i->lists |= ranges::actions::stable_sort(impl::sort_by2<database>{});
         break;
       case assets_file_widgets_column::assets:
-        p_i->lists |=
-            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
-              return std::dynamic_pointer_cast<impl::info_data>(in_l)->ass_p <
-                     std::dynamic_pointer_cast<impl::info_data>(in_r)->ass_p;
-            });
+        p_i->lists |= ranges::actions::stable_sort(impl::sort_by2<assets>{});
         break;
       case assets_file_widgets_column::episodes:
-        p_i->lists |=
-            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
-              return std::dynamic_pointer_cast<impl::info_data>(in_l)->eps_p <
-                     std::dynamic_pointer_cast<impl::info_data>(in_r)->eps_p;
-            });
+        p_i->lists |= ranges::actions::stable_sort(impl::sort_by2<episodes>{});
         break;
 
       case assets_file_widgets_column::shot:
-        p_i->lists |=
-            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
-              return std::dynamic_pointer_cast<impl::info_data>(in_l)->shot_p <
-                     std::dynamic_pointer_cast<impl::info_data>(in_r)->shot_p;
-            });
+        p_i->lists |= ranges::actions::stable_sort(impl::sort_by2<shot>{});
         break;
       case assets_file_widgets_column::path:
         p_i->lists |=
@@ -538,11 +538,7 @@ void assets_file_widgets::sort(const ImGuiTableSortSpecs* in_colum_id) {
             });
         break;
       case assets_file_widgets_column::time:
-        p_i->lists |=
-            ranges::actions::stable_sort([](const impl::base_data_ptr& in_l, const impl::base_data_ptr& in_r) -> bool {
-              return std::dynamic_pointer_cast<impl::info_data>(in_l)->time_p <
-                     std::dynamic_pointer_cast<impl::info_data>(in_r)->time_p;
-            });
+        p_i->lists |= ranges::actions::stable_sort(impl::sort_by2<time_point_wrap>{});
         break;
       case assets_file_widgets_column::user:
         p_i->lists |=
