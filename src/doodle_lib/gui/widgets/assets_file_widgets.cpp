@@ -110,9 +110,7 @@ class assets_file_widgets::impl {
     }
 
     void compute_size(float max_length) {
-      if (image.max_ == max_length)
-        return;
-      else if (image.size2d_.empty()) {  /// 加载默认图标时大小为空， 直接指定大小
+      if (image.size2d_.empty()) {  /// 加载默认图标时大小为空， 直接指定大小
         image.icon_size2d_ = {max_length, max_length};
       } else {  /// 非默认图标直接计算大小
         if (image.size2d_.aspectRatio() >= 1) {
@@ -125,7 +123,6 @@ class assets_file_widgets::impl {
     };
 
     void load_image(float max_length) {
-      image_loader k_load{};
       if (handle_.any_of<image_icon>()) {
         /// @brief 如果有图标就获取
         auto&& k_icon = handle_.get<image_icon>();
@@ -145,10 +142,6 @@ class assets_file_widgets::impl {
         }
         image         = k_icon.image;
         image.size2d_ = k_icon.size2d_;
-        compute_size(max_length);
-      } else {
-        /// @brief 否则默认图标
-        image = k_load.default_image();
         compute_size(max_length);
       }
     };

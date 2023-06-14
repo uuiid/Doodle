@@ -5,18 +5,12 @@
 #include <doodle_core/metadata/metadata.h>
 namespace doodle::gui {
 
-edit_interface::~edit_interface() = default;
-
-gui_cache_name_id::gui_cache_name_id(const std::string &in_name) : name_id(), name() {
-  auto l_size = in_name.size();
-
-  name_id     = fmt::format(
-      "{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s,
-      doodle_lib::Get().ctx().get<identifier>()
-  );
-  name = {name_id.c_str(), l_size};
-  // name = k_v.substr(0, l_size);
-}
+gui_cache_name_id::gui_cache_name_id(const std::string &in_name)
+    : name_id(fmt::format(
+          "{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s,
+          doodle_lib::Get().ctx().get<identifier>()
+      )),
+      name(name_id.c_str(), in_name.size()) {}
 
 const char *gui_cache_name_id::operator*() const noexcept { return name_id.c_str(); }
 gui_cache_name_id::gui_cache_name_id(gui_cache_name_id &&in_r) noexcept {
