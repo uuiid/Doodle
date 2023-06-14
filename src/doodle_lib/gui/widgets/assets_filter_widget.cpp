@@ -397,19 +397,12 @@ class assets_filter_widget::impl {
     };
   };
 
-  impl()
-      : p_conns(),
-        p_filter_factorys(),
-        p_filters(),
-        p_sorts(
-            {gui_cache<bool>{"名称排序"s, true}, gui_cache<bool>{"集数排序"s, false}, gui_cache<bool>{"反向"s, false}}
-        ) {}
+  impl() : p_conns(), p_filter_factorys(), p_filters() {}
 
   std::vector<boost::signals2::scoped_connection> p_conns;
 
   std::vector<factory_chick> p_filter_factorys;
   std::vector<std::unique_ptr<filter_base>> p_filters;
-  std::array<gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
   std::string title_name_;
   bool open{true};
@@ -437,14 +430,6 @@ bool assets_filter_widget::render() {
   bool l_is_edit{false};
   for (auto&& i : p_impl->p_filter_factorys) {
     l_is_edit |= i.render({});
-  }
-
-  ImGui::Separator();
-
-  for (auto&& i : p_impl->p_sorts) {
-    if (ImGui::Checkbox(*i.gui_name, &i.data)) {
-      l_is_edit = true;
-    }
   }
 
   if (ranges::any_of(
@@ -489,25 +474,6 @@ void assets_filter_widget::refresh_(bool force) {
            });
          }) |
          ranges::to_vector;
-
-  if (p_impl->p_sorts[0].data) {
-    ranges::partition(list, [](const entt::handle& in) -> bool { return in.any_of<assets_file>(); });
-    list |= ranges::actions::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
-      if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>())
-        return in_r.get<assets_file>() < in_l.get<assets_file>();
-      return false;
-    });
-  }
-  if (p_impl->p_sorts[1].data) {
-    ranges::partition(list, [](const entt::handle& in) -> bool { return in.any_of<episodes>(); });
-    list |= ranges::actions::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
-      if (in_r.any_of<episodes>() && in_l.any_of<episodes>()) return in_r.get<episodes>() < in_l.get<episodes>();
-      return false;
-    });
-  }
-  if (p_impl->p_sorts[2].data) {
-    list |= ranges::actions::reverse;
-  }
 
   g_reg()->ctx().get<core_sig>().filter_handle(list);
 }
