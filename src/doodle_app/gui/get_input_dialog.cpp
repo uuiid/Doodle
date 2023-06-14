@@ -28,7 +28,7 @@ class create_project_dialog::impl {
   std::string path_gui;
   std::string name{"tmp"s};
   std::shared_ptr<FSys::path> in_path;
-  gui_cache<entt::handle> select_button_id{"选择文件夹", make_handle()};
+  gui_cache_name_id select_button_id{"选择文件夹"s};
 
   std::string title{"输入项目"s};
 };
@@ -58,8 +58,7 @@ bool create_project_dialog::render() {
 
   if (imgui::Button("ok")) {
     p_i->prj.set_path(p_i->path.parent_path());
-    p_i->select_button_id().destroy();
-    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
+    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->new_file_scene(p_i->path, p_i->prj);
     g_reg()->ctx().get<project>() = p_i->prj;
     ImGui::CloseCurrentPopup();
     return false;

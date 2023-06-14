@@ -29,6 +29,7 @@
 #include <doodle_core/database_task/details/user.h>
 #include <doodle_core/database_task/details/work_task.h>
 #include <doodle_core/gui_template/show_windows.h>
+#include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
@@ -111,12 +112,6 @@ bsys::error_code file_translator::save_end() {
   g_reg()->ctx().erase<process_message>();
   is_saving = false;
   return {};
-}
-void file_translator::new_file_scene(const FSys::path& in_path) {
-  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
-  auto& l_s                                          = g_reg()->ctx().emplace<status_info>();
-  l_s.message                                        = "创建新项目";
-  l_s.need_save                                      = true;
 }
 
 class sqlite_file::impl {
@@ -294,6 +289,9 @@ class sqlite_file::impl {
     void disconnect(const registry_ptr& in_registry_ptr) {
       std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
     }
+    void clear() {
+      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+    }
     void connect(const registry_ptr& in_registry_ptr) {
       std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
     }
@@ -354,7 +352,6 @@ bsys::error_code sqlite_file::open_impl() {
     if (FSys::folder_is_save(project_path)) {
       project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
       if (!FSys::exists(project_path)) {
-        new_file_scene(project_path);
         doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
         auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
         auto l_tx    = sqlpp::start_transaction(*l_k_con);
@@ -402,7 +399,40 @@ bsys::error_code sqlite_file::save_impl() {
 
   return {};
 }
+void sqlite_file::new_file_scene(const FSys::path& in_path, const project& in_project) {
+  ptr->obs_save->disconnect(ptr->registry_attr);
+  ptr->obs_save->clear();
+  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  g_reg()->clear();
+  ptr->obs_save->connect(ptr->registry_attr);
+  entt::handle l_prj{*ptr->registry_attr, ptr->registry_attr->create()};
+  entt::handle l_prj_config{*ptr->registry_attr, ptr->registry_attr->create()};
+  l_prj.emplace<database>();
+  l_prj_config.emplace<database>();
+  l_prj.emplace<project>(in_project);
+  auto& l_config              = l_prj_config.emplace<project_config::base_config>();
+  l_config.maya_camera_select = {
+      std::make_pair(R"(front|persp|side|top|camera)"s, -1000),
+      std::make_pair(R"(ep\d+_sc\d+)"s, 30),
+      std::make_pair(R"(ep\d+)"s, 10),
+      std::make_pair(R"(sc\d+)"s, 10),
+      std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
+      std::make_pair(R"(ep_\d+)"s, 5),
+      std::make_pair(R"(sc_\d+)"s, 5),
+      std::make_pair(R"(^[A-Z]+_)"s, 2),
+      std::make_pair(R"(_\d+_\d+)"s, 2)};
+  l_config.icon_extensions         = {".png", ".jpg", ".jpeg", ".tga", ".tif"};
+  l_config.export_group            = "UE4";
+  l_config.cloth_proxy_            = "_cloth_proxy";
+  l_config.simple_module_proxy_    = "_proxy";
+  l_config.maya_camera_suffix      = "camera";
+  l_config.maya_out_put_abc_suffix = "_output_abc";
+  l_config.season_count            = 20;
 
+  auto& l_s                        = ptr->registry_attr->ctx().emplace<status_info>();
+  l_s.message                      = "创建新项目";
+  l_s.need_save                    = true;
+}
 sqlite_file::~sqlite_file()                                    = default;
 sqlite_file::sqlite_file(sqlite_file&& in) noexcept            = default;
 sqlite_file& sqlite_file::operator=(sqlite_file&& in) noexcept = default;

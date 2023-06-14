@@ -139,7 +139,7 @@ class DOODLE_CORE_API base_config {
   /// @brief 输出abc时的后缀
   std::string maya_out_put_abc_suffix;
 
-  base_config();
+  base_config() = default;
 
   [[nodiscard]] bool match_icon_extensions(const FSys::path& in_path) const;
 

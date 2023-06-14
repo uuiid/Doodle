@@ -45,6 +45,7 @@ class convert;
 class doodle_error;
 class user_ref;
 class user;
+class project;
 class work_task_info;
 class comment;
 

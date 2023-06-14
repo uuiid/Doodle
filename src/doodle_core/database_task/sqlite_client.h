@@ -117,7 +117,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
     open_end();
   }
 
-  virtual void new_file_scene(const FSys::path& in_path);
+  virtual void new_file_scene(const FSys::path& in_path, const project& in_project) = 0;
 };
 
 class DOODLE_CORE_API sqlite_file : public file_translator {
@@ -136,6 +136,7 @@ class DOODLE_CORE_API sqlite_file : public file_translator {
 
   sqlite_file(const sqlite_file& in) noexcept            = delete;
   sqlite_file& operator=(const sqlite_file& in) noexcept = delete;
+  void new_file_scene(const FSys::path& in_path, const project& in_project) override;
 
   sqlite_file(sqlite_file&& in) noexcept;
   sqlite_file& operator=(sqlite_file&& in) noexcept;

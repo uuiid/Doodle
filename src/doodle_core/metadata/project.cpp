@@ -76,14 +76,6 @@ FSys::path project::make_path(const FSys::path& in_path) const {
   return path;
 }
 
-project_config::base_config::base_config()
-    : export_group("UE4"),
-      cloth_proxy_("_cloth_proxy"),
-      simple_module_proxy_("_proxy"),
-      season_count(20),
-      maya_camera_suffix("camera"),
-      maya_out_put_abc_suffix("_output_abc") {}
-
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]                   = p.find_icon_regex;
   j["assets_list"]                       = p.assets_list;
