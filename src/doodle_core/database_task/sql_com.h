@@ -41,4 +41,24 @@ struct sql_com {
   );
 };
 
+/**
+ * @brief 这是一个模板类, 用来特化数据库类型的
+ *
+ * @tparam T
+ */
+template <typename t>
+struct sql_ctx {
+  static_assert(detail::wrong_v<t>, "sql_ctx must be specialized");
+
+  /// 创建表
+  void create_table(conn_ptr& in_ptr);
+
+  /// 插入组件
+  void insert(conn_ptr& in_ptr, const t& in_id);
+  /// 更新组件
+  void update(conn_ptr& in_ptr, t& in_id);
+  /// 选择组件
+  void select(conn_ptr& in_ptr, t& in_handle);
+};
+
 }  // namespace doodle::database_n

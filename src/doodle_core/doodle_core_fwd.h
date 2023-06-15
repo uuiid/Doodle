@@ -74,8 +74,13 @@ namespace database_n {
 
 class select;
 
-template <typename T>
+template <typename>
 struct sql_com;
+
+template <typename>
+class impl_obs;
+template <typename>
+struct sql_ctx;
 }  // namespace database_n
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;

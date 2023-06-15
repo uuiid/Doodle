@@ -61,8 +61,11 @@ class DOODLE_CORE_API database : boost::totally_ordered<database>,
   template <typename T>
   friend struct database_n::sql_com;
 
- private:
+  template <typename>
+  friend class database_n::impl_obs;
   friend class database_n::select;
+
+ private:
   mutable std::uint64_t p_id;
   boost::uuids::uuid p_uuid_;
 
