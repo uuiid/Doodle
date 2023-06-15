@@ -16,9 +16,6 @@
 
 namespace doodle {
 
-using data_status_save   = entt::tag<"data_status_save"_hs>;
-using data_status_delete = entt::tag<"data_status_delete"_hs>;
-
 class database;
 
 namespace database_ns {

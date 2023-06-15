@@ -19,13 +19,13 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file_translator> {
  private:
-  bsys::error_code open_begin();
+  void open_begin();
   bsys::error_code open();
-  bsys::error_code open_end();
+  void open_end();
 
-  bsys::error_code save_begin();
+  void save_begin();
   bsys::error_code save();
-  bsys::error_code save_end();
+  void save_end();
 
   bool is_saving{};
   bool is_opening{};

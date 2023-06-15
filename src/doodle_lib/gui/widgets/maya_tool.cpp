@@ -109,9 +109,6 @@ void maya_tool::init() {
   ptr_attr->scoped_connection_1 = g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
-  ptr_attr->scoped_connection_2 = g_reg()->ctx().get<core_sig>().save_end.connect([this]() {
-    p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
-  });
   p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   g_reg()->ctx().emplace<maya_tool&>(*this);
 }

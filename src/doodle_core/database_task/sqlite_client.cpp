@@ -257,7 +257,7 @@ using obs_all = obs_main<
     doodle::importance, doodle::redirection_path_info, doodle::business::rules, doodle::user, doodle::work_task_info>;
 }  // namespace file_translator_ns
 
-bsys::error_code file_translator::open_begin() {
+void file_translator::open_begin() {
   doodle_lib::Get().ctx().get<database_info>().path_ =
       project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -266,14 +266,13 @@ bsys::error_code file_translator::open_begin() {
   g_reg()->clear();
   g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
   is_opening = true;
-  return {};
 }
 bsys::error_code file_translator::open() {
   auto l_r = open_impl();
   return l_r;
 }
 
-bsys::error_code file_translator::open_end() {
+void file_translator::open_end() {
   core_set::get_set().add_recent_project(doodle_lib::Get().ctx().get<database_info>().path_);
   g_reg()->ctx().get<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -281,16 +280,13 @@ bsys::error_code file_translator::open_end() {
   k_msg.set_state(k_msg.success);
   g_reg()->ctx().erase<process_message>();
   is_opening = false;
-  return {};
 }
 
-bsys::error_code file_translator::save_begin() {
+void file_translator::save_begin() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
-  g_reg()->ctx().get<core_sig>().save_begin();
   is_saving = true;
-  return {};
 }
 
 bsys::error_code file_translator::save() {
@@ -298,35 +294,28 @@ bsys::error_code file_translator::save() {
   return l_r;
 }
 
-bsys::error_code file_translator::save_end() {
+void file_translator::save_end() {
   g_reg()->ctx().get<status_info>().need_save = false;
-  g_reg()->ctx().get<core_sig>().save_end();
-  g_reg()->clear<data_status_save>();
-  g_reg()->clear<data_status_delete>();
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  auto& k_msg                                 = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
   g_reg()->ctx().erase<process_message>();
   is_saving = false;
-  return {};
 }
 
 class file_translator::impl {
  public:
   registry_ptr registry_attr;
-
   std::shared_ptr<file_translator_ns::obs_all> obs_save;
-  std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
 file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
 file_translator::file_translator(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
   ptr->registry_attr = std::move(in_registry);
-  ptr->obs_save      = std::make_shared<impl::obs_all>(ptr->registry_attr);
+  ptr->obs_save      = std::make_shared<file_translator_ns::obs_all>(ptr->registry_attr);
 }
 bsys::error_code file_translator::open_impl() {
-  ptr->registry_attr   = g_reg();
-  constexpr auto l_loc = BOOST_CURRENT_LOCATION;
+  ptr->registry_attr = g_reg();
 
   bool need_save{};
   {
@@ -393,12 +382,7 @@ bsys::error_code file_translator::save_impl() {
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
-    g_reg()->ctx().get<status_info>().message = "保存失败请重试重试";
-    // ptr->error_timer                          = std::make_shared<boost::asio::system_timer>(g_io_context());
-    // ptr->error_timer->async_wait([l_path = project_path, this](auto&& in) {
-    //   this->async_save(project_path, [](boost::system::error_code in) -> void {});
-    // });
-    // ptr->error_timer->expires_from_now(3s);
+    g_reg()->ctx().get<status_info>().message = "保存失败";
   }
 
   return {};

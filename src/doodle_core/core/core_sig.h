@@ -41,13 +41,5 @@ class DOODLE_CORE_API core_sig {
    * @brief 保存时发出的信号
    */
   boost::signals2::signal<void()> save;
-  /**
-   * @brief 开始保存
-   */
-  boost::signals2::signal<void()> save_begin;
-  /**
-   * @brief 结束保存
-   */
-  boost::signals2::signal<void()> save_end;
 };
 }  // namespace doodle
