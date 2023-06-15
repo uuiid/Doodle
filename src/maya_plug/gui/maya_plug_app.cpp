@@ -30,7 +30,6 @@ void maya_facet::load_windows() {
   using namespace gui;
 
   g_windows_manage().register_layout(layout_init_arg{}.create<maya_layout>());
-  g_windows_manage().switch_layout(maya_layout::name);
 
   g_windows_manage().create_windows_arg(windows_init_arg{}.create<maya_menu>().set_render_type<dear::MainMenuBar>());
   g_windows_manage().create_windows_arg(
@@ -41,6 +40,7 @@ void maya_facet::load_windows() {
   g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<create_sim_cloth>());
   g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<dem_cloth_to_fbx>());
 
+  g_windows_manage().switch_layout(maya_layout::name);
   boost::asio::post(g_io_context(), [this]() { close_windows(); });
 }
 void maya_facet::close_windows() { ::ShowWindow(p_hwnd, SW_HIDE); }

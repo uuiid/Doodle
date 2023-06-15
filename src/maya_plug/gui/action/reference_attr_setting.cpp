@@ -36,7 +36,7 @@ class reference_attr_setting::impl {
   std::vector<entt::handle> p_handles;
   entt::handle p_current_select;
   std::string title_name_;
-  bool open{};
+  bool open{true};
 
   ::doodle::gui::gui_cache<bool> simple_subsampling{"simple subsampling", true};
   ::doodle::gui::gui_cache<std::int32_t> frame_samples{"frame samples"s, 6};

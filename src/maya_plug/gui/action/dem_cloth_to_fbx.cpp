@@ -27,7 +27,7 @@ class dem_cloth_to_fbx::impl {
   std::double_t weightsSmoothStep_p{1};
   std::int32_t isBindUpdate_p{0};
   std::string title_name_{};
-  bool open{};
+  bool open{true};
   void run() {
     auto l_py = fmt::format(
         R"(

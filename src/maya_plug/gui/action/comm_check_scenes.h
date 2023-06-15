@@ -35,7 +35,7 @@ class comm_check_scenes {
   bool p_err_3;
   bool p_err_4;
   std::string title_name_;
-  bool open{};
+  bool open{true};
 
   static MStatus run_maya_py_script(const std::string& in_script);
 
