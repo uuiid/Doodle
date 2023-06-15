@@ -421,17 +421,20 @@ void sqlite_file::new_file_scene(const FSys::path& in_path, const project& in_pr
       std::make_pair(R"(sc_\d+)"s, 5),
       std::make_pair(R"(^[A-Z]+_)"s, 2),
       std::make_pair(R"(_\d+_\d+)"s, 2)};
-  l_config.icon_extensions         = {".png", ".jpg", ".jpeg", ".tga", ".tif"};
-  l_config.export_group            = "UE4";
-  l_config.cloth_proxy_            = "_cloth_proxy";
-  l_config.simple_module_proxy_    = "_proxy";
-  l_config.maya_camera_suffix      = "camera";
-  l_config.maya_out_put_abc_suffix = "_output_abc";
-  l_config.season_count            = 20;
+  l_config.icon_extensions                              = {".png", ".jpg", ".jpeg", ".tga", ".tif"};
+  l_config.export_group                                 = "UE4";
+  l_config.cloth_proxy_                                 = "_cloth_proxy";
+  l_config.simple_module_proxy_                         = "_proxy";
+  l_config.maya_camera_suffix                           = "camera";
+  l_config.maya_out_put_abc_suffix                      = "_output_abc";
+  l_config.season_count                                 = 20;
 
-  auto& l_s                        = ptr->registry_attr->ctx().emplace<status_info>();
-  l_s.message                      = "创建新项目";
-  l_s.need_save                    = true;
+  g_reg()->ctx().emplace<project>()                     = in_project;
+  g_reg()->ctx().emplace<project_config::base_config>() = l_config;
+
+  auto& l_s                                             = ptr->registry_attr->ctx().emplace<status_info>();
+  l_s.message                                           = "创建新项目";
+  l_s.need_save                                         = true;
 }
 sqlite_file::~sqlite_file()                                    = default;
 sqlite_file::sqlite_file(sqlite_file&& in) noexcept            = default;

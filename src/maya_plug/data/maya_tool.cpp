@@ -249,20 +249,20 @@ std::string get_node_full_name(const MDagPath& in_obj) {
   DOODLE_MAYA_CHICK(l_s);
   return d_str{l_str};
 }
-std::string get_node_name(const MObject& in_obj) {
+std::string get_node_name(const MObject& in_obj, bool abs) {
   MFnDependencyNode l_node{};
   DOODLE_MAYA_CHICK(l_node.setObject(in_obj));
   MStatus l_s{};
-  auto l_name = l_node.name(&l_s);
+  auto l_name = abs ? l_node.absoluteName(&l_s) : l_node.name(&l_s);
   DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
 }
-std::string get_node_name(const MDagPath& in_obj) {
+std::string get_node_name(const MDagPath& in_obj, bool abs) {
   MFnDependencyNode l_node{};
   MStatus l_s{};
   DOODLE_MAYA_CHICK(l_node.setObject(in_obj.node(&l_s)));
   DOODLE_MAYA_CHICK(l_s);
-  auto l_name = l_node.name(&l_s);
+  auto l_name = abs ? l_node.absoluteName(&l_s) : l_node.name(&l_s);
   DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
 }

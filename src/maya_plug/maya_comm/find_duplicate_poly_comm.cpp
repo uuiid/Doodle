@@ -4,6 +4,8 @@
 
 #include "find_duplicate_poly_comm.h"
 
+#include <maya_plug/data/m_namespace.h>
+
 #include "data/qcloth_factory.h"
 #include <data/maya_tool.h>
 #include <data/reference_file.h>
@@ -33,7 +35,7 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
   MSelectionList l_list{};
   DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
 
-  auto l_refs = reference_file_factory{}.create_ref();
+  auto l_refs  = reference_file_factory{}.create_ref();
   auto l_cloth = qcloth_factory{}.create_cloth();
   std::map<std::string, entt::handle> l_ref_map{};
   l_ref_map = l_refs |
@@ -50,19 +52,15 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
     MItSelectionList l_it_list{l_list, MFn::kDagNode, &l_status};
     DOODLE_MAYA_CHICK(l_status);
     std::set<std::string> l_set_list;
-    MFnDependencyNode l_dep_node{};
+
     for (; !l_it_list.isDone(); l_it_list.next()) {
       MObject l_obj{};
       l_status = l_it_list.getDependNode(l_obj);
       DOODLE_MAYA_CHICK(l_status);
-
-      DOODLE_MAYA_CHICK(l_dep_node.setObject(l_obj));
-
-      auto l_full_name = l_dep_node.absoluteName(&l_status);
+      auto l_name_space = m_namespace::get_namespace_from_name(get_node_name(l_obj));
       DOODLE_MAYA_CHICK(l_status);
-      auto l_name_space = MNamespace::getNamespaceFromName(l_full_name, &l_status);
-      DOODLE_MAYA_CHICK(l_status);
-      l_set_list.emplace(d_str{l_name_space});
+      //      if (l_name_space[0] == ':') l_name_space = l_name_space.substr(1);
+      l_set_list.emplace(l_name_space);
     }
 
     for (auto&& i_ns : l_set_list) {
