@@ -60,6 +60,203 @@
 
 namespace doodle::database_n {
 
+namespace file_translator_ns {
+template <typename type_t>
+class impl_obs {
+  entt::observer obs_update_;
+  entt::observer obs_create_;
+
+ public:
+  explicit impl_obs(const registry_ptr& in_registry_ptr)
+      : obs_update_(
+
+        ),
+        obs_create_() {}
+
+  impl_obs(const impl_obs&)            = default;
+  impl_obs(impl_obs&&)                 = default;
+  impl_obs& operator=(const impl_obs&) = default;
+  impl_obs& operator=(impl_obs&&)      = default;
+
+  ~impl_obs()                          = default;
+
+  void connect(const registry_ptr& in_registry_ptr) {
+    obs_update_.connect(*in_registry_ptr, entt::collector.update<type_t>().where<database>());
+    obs_create_.connect(*in_registry_ptr, entt::collector.group<database, type_t>());
+  }
+
+  void disconnect(const registry_ptr& in_registry_ptr) {
+    obs_update_.disconnect();
+    obs_create_.disconnect();
+  }
+
+  void clear() {
+    obs_update_.clear();
+    obs_create_.clear();
+  }
+
+  void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+    database_n::sql_com<type_t> l_table{};
+    if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
+  };
+
+  void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+    database_n::sql_com<type_t> l_orm{};
+    l_orm.create_table(in_conn);
+
+    std::set<entt::entity> l_create{};
+
+    for (auto&& i : obs_create_) {
+      l_create.emplace(i);
+    }
+    for (auto&& i : obs_update_) {
+      l_create.emplace(i);
+    }
+
+    auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
+                       return {*in_registry_ptr, in_e};
+                     }) |
+                     ranges::to_vector;
+
+    BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
+    auto [l_updata, l_install] = l_orm.split_update_install(in_conn, l_handles);
+    if (!l_updata.empty()) l_orm.update(in_conn, l_updata);
+    if (!l_install.empty()) l_orm.insert(in_conn, l_install);
+    if (!in_handle.empty()) l_orm.destroy(in_conn, in_handle);
+  }
+  void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+    database_n::sql_com<type_t> l_orm{};
+    l_orm.create_table(in_conn);
+
+    auto l_v       = in_registry_ptr->view<database, type_t>();
+    auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
+                       return {*in_registry_ptr, in_e};
+                     }) |
+                     ranges::to_vector;
+
+    BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
+    l_orm.insert(in_conn, l_handles);
+  }
+};
+
+template <>
+class impl_obs<database> {
+  entt::observer obs_create_;
+  std::vector<std::int64_t> destroy_ids_{};
+  entt::connection conn_{}, conn_2{};
+  void on_destroy(entt::registry& in_reg, entt::entity in_entt) {
+    if (auto& l_data = in_reg.get<database>(in_entt); l_data.is_install()) destroy_ids_.emplace_back(l_data.get_id());
+  }
+
+ public:
+  explicit impl_obs(const registry_ptr& in_registry_ptr) : obs_create_(), destroy_ids_{}, conn_{} {}
+
+  impl_obs(const impl_obs&)            = default;
+  impl_obs(impl_obs&&)                 = default;
+  impl_obs& operator=(const impl_obs&) = default;
+  impl_obs& operator=(impl_obs&&)      = default;
+  ~impl_obs()                          = default;
+
+  void connect(const registry_ptr& in_registry_ptr) {
+    obs_create_.connect(*in_registry_ptr, entt::collector.group<database>());
+    conn_  = in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
+    conn_2 = in_registry_ptr->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
+  }
+
+  void disconnect(const registry_ptr& in_registry_ptr) {
+    obs_create_.disconnect();
+    conn_.release();
+    conn_2.release();
+  }
+
+  void clear() {
+    obs_create_.clear();
+    destroy_ids_.clear();
+  }
+
+  void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+    database_n::sql_com<database> l_table{};
+    if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
+  };
+
+  void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+    database_n::sql_com<database> l_orm{};
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
+
+    std::set<entt::handle> l_create{};
+
+    for (auto&& i : obs_create_) {
+      if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace(*in_registry_ptr, i);
+    }
+    auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
+                       return {*in_registry_ptr, in_e};
+                     }) |
+                     ranges::to_vector;
+    in_handle = destroy_ids_;
+    if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
+    if (!destroy_ids_.empty()) l_orm.destroy(in_conn, destroy_ids_);
+  }
+
+  void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+    database_n::sql_com<database> l_orm{};
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
+
+    std::set<entt::handle> l_create{};
+
+    auto l_v       = in_registry_ptr->view<database>();
+    auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
+                       return {*in_registry_ptr, in_e};
+                     }) |
+                     ranges::to_vector;
+    in_handle = destroy_ids_;
+    if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
+  }
+};
+
+template <typename... arg>
+class obs_main {
+  std::tuple<std::shared_ptr<impl_obs<database>>, std::shared_ptr<impl_obs<arg>>...> obs_data_;
+
+ public:
+  explicit obs_main(const registry_ptr& in_registry_ptr = g_reg())
+      : obs_data_{
+            std::make_shared<impl_obs<database>>(in_registry_ptr),
+            std::make_shared<impl_obs<arg>>(in_registry_ptr)...} {}
+
+  void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+    std::map<std::int64_t, entt::handle> l_map{};
+    std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+  }
+  void disconnect(const registry_ptr& in_registry_ptr) {
+    std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
+  }
+  void clear() {
+    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+  }
+  void connect(const registry_ptr& in_registry_ptr) {
+    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+  }
+
+  void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+    std::vector<std::int64_t> l_handles{};
+    std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+  }
+  void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+    std::vector<std::int64_t> l_handles{};
+    std::apply([&](auto&&... x) { (x->save_all(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+  }
+};
+using obs_all = obs_main<
+    doodle::project, doodle::project_config::base_config, doodle::episodes, doodle::shot, doodle::season,
+    doodle::assets, doodle::assets_file, doodle::time_point_wrap, doodle::comment, doodle::image_icon,
+    doodle::importance, doodle::redirection_path_info, doodle::business::rules, doodle::user, doodle::work_task_info>;
+}  // namespace file_translator_ns
+
 bsys::error_code file_translator::open_begin() {
   doodle_lib::Get().ctx().get<database_info>().path_ =
       project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
@@ -114,213 +311,20 @@ bsys::error_code file_translator::save_end() {
   return {};
 }
 
-class sqlite_file::impl {
+class file_translator::impl {
  public:
   registry_ptr registry_attr;
-  template <typename type_t>
-  class impl_obs {
-    entt::observer obs_update_;
-    entt::observer obs_create_;
 
-   public:
-    explicit impl_obs(const registry_ptr& in_registry_ptr)
-        : obs_update_(
-
-          ),
-          obs_create_() {}
-
-    impl_obs(const impl_obs&)            = default;
-    impl_obs(impl_obs&&)                 = default;
-    impl_obs& operator=(const impl_obs&) = default;
-    impl_obs& operator=(impl_obs&&)      = default;
-
-    ~impl_obs()                          = default;
-
-    void connect(const registry_ptr& in_registry_ptr) {
-      obs_update_.connect(*in_registry_ptr, entt::collector.update<type_t>().where<database>());
-      obs_create_.connect(*in_registry_ptr, entt::collector.group<database, type_t>());
-    }
-
-    void disconnect(const registry_ptr& in_registry_ptr) {
-      obs_update_.disconnect();
-      obs_create_.disconnect();
-    }
-
-    void clear() {
-      obs_update_.clear();
-      obs_create_.clear();
-    }
-
-    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
-      database_n::sql_com<type_t> l_table{};
-      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
-    };
-
-    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<type_t> l_orm{};
-      l_orm.create_table(in_conn);
-
-      std::set<entt::entity> l_create{};
-
-      for (auto&& i : obs_create_) {
-        l_create.emplace(i);
-      }
-      for (auto&& i : obs_update_) {
-        l_create.emplace(i);
-      }
-
-      auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
-                         return {*in_registry_ptr, in_e};
-                       }) |
-                       ranges::to_vector;
-
-      BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
-      auto [l_updata, l_install] = l_orm.split_update_install(in_conn, l_handles);
-      if (!l_updata.empty()) l_orm.update(in_conn, l_updata);
-      if (!l_install.empty()) l_orm.insert(in_conn, l_install);
-      if (!in_handle.empty()) l_orm.destroy(in_conn, in_handle);
-    }
-    void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<type_t> l_orm{};
-      l_orm.create_table(in_conn);
-
-      auto l_v       = in_registry_ptr->view<database, type_t>();
-      auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
-                         return {*in_registry_ptr, in_e};
-                       }) |
-                       ranges::to_vector;
-
-      BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
-      l_orm.insert(in_conn, l_handles);
-    }
-  };
-
-  template <>
-  class impl_obs<database> {
-    entt::observer obs_create_;
-    std::vector<std::int64_t> destroy_ids_{};
-    entt::connection conn_{}, conn_2{};
-    void on_destroy(entt::registry& in_reg, entt::entity in_entt) {
-      if (auto& l_data = in_reg.get<database>(in_entt); l_data.is_install()) destroy_ids_.emplace_back(l_data.get_id());
-    }
-
-   public:
-    explicit impl_obs(const registry_ptr& in_registry_ptr) : obs_create_(), destroy_ids_{}, conn_{} {}
-
-    impl_obs(const impl_obs&)            = default;
-    impl_obs(impl_obs&&)                 = default;
-    impl_obs& operator=(const impl_obs&) = default;
-    impl_obs& operator=(impl_obs&&)      = default;
-    ~impl_obs()                          = default;
-
-    void connect(const registry_ptr& in_registry_ptr) {
-      obs_create_.connect(*in_registry_ptr, entt::collector.group<database>());
-      conn_  = in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
-      conn_2 = in_registry_ptr->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
-    }
-
-    void disconnect(const registry_ptr& in_registry_ptr) {
-      obs_create_.disconnect();
-      conn_.release();
-      conn_2.release();
-    }
-
-    void clear() {
-      obs_create_.clear();
-      destroy_ids_.clear();
-    }
-
-    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
-      database_n::sql_com<database> l_table{};
-      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
-    };
-
-    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<database> l_orm{};
-      if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
-
-      std::set<entt::handle> l_create{};
-
-      for (auto&& i : obs_create_) {
-        if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace(*in_registry_ptr, i);
-      }
-      auto l_handles = l_create | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
-                         return {*in_registry_ptr, in_e};
-                       }) |
-                       ranges::to_vector;
-      in_handle = destroy_ids_;
-      if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
-      if (!destroy_ids_.empty()) l_orm.destroy(in_conn, destroy_ids_);
-    }
-
-    void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<database> l_orm{};
-      if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
-
-      std::set<entt::handle> l_create{};
-
-      auto l_v       = in_registry_ptr->view<database>();
-      auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
-                         return {*in_registry_ptr, in_e};
-                       }) |
-                       ranges::to_vector;
-      in_handle = destroy_ids_;
-      if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
-    }
-  };
-
-  template <typename... arg>
-  class obs_main {
-    std::tuple<std::shared_ptr<impl_obs<database>>, std::shared_ptr<impl_obs<arg>>...> obs_data_;
-
-   public:
-    explicit obs_main(const registry_ptr& in_registry_ptr = g_reg())
-        : obs_data_{
-              std::make_shared<impl_obs<database>>(in_registry_ptr),
-              std::make_shared<impl_obs<arg>>(in_registry_ptr)...} {}
-
-    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
-      std::map<std::int64_t, entt::handle> l_map{};
-      std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
-      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
-      std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
-      std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
-    }
-    void disconnect(const registry_ptr& in_registry_ptr) {
-      std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
-    }
-    void clear() {
-      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
-    }
-    void connect(const registry_ptr& in_registry_ptr) {
-      std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
-    }
-
-    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
-      std::vector<std::int64_t> l_handles{};
-      std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
-      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
-    }
-    void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
-      std::vector<std::int64_t> l_handles{};
-      std::apply([&](auto&&... x) { (x->save_all(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
-      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
-    }
-  };
-  using obs_all = obs_main<
-      doodle::project, doodle::project_config::base_config, doodle::episodes, doodle::shot, doodle::season,
-      doodle::assets, doodle::assets_file, doodle::time_point_wrap, doodle::comment, doodle::image_icon,
-      doodle::importance, doodle::redirection_path_info, doodle::business::rules, doodle::user, doodle::work_task_info>;
-  std::shared_ptr<obs_all> obs_save;
+  std::shared_ptr<file_translator_ns::obs_all> obs_save;
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
-sqlite_file::sqlite_file() : ptr(std::make_unique<impl>()) {}
-sqlite_file::sqlite_file(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
+file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
+file_translator::file_translator(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
   ptr->registry_attr = std::move(in_registry);
   ptr->obs_save      = std::make_shared<impl::obs_all>(ptr->registry_attr);
 }
-bsys::error_code sqlite_file::open_impl() {
+bsys::error_code file_translator::open_impl() {
   ptr->registry_attr   = g_reg();
   constexpr auto l_loc = BOOST_CURRENT_LOCATION;
 
@@ -369,7 +373,7 @@ bsys::error_code sqlite_file::open_impl() {
 
   return {};
 }
-bsys::error_code sqlite_file::save_impl() {
+bsys::error_code file_translator::save_impl() {
   if (!FSys::folder_is_save(project_path)) {
     g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置无法写入, 不保存", project_path);
     return bsys::error_code{};
@@ -399,7 +403,7 @@ bsys::error_code sqlite_file::save_impl() {
 
   return {};
 }
-void sqlite_file::new_file_scene(const FSys::path& in_path, const project& in_project) {
+void file_translator::new_file_scene(const FSys::path& in_path, const project& in_project) {
   ptr->obs_save->disconnect(ptr->registry_attr);
   ptr->obs_save->clear();
   doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
@@ -436,8 +440,5 @@ void sqlite_file::new_file_scene(const FSys::path& in_path, const project& in_pr
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
-sqlite_file::~sqlite_file()                                    = default;
-sqlite_file::sqlite_file(sqlite_file&& in) noexcept            = default;
-sqlite_file& sqlite_file::operator=(sqlite_file&& in) noexcept = default;
-
+file_translator::~file_translator() = default;
 }  // namespace doodle::database_n

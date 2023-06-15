@@ -63,7 +63,7 @@ void doodle_lib::init() {
   ptr->reg->ctx().emplace<core_sig>();
 
   ptr->reg->ctx().emplace<status_info>();
-  ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::sqlite_file>(ptr->reg));
+  ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));
 }
 
 registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }

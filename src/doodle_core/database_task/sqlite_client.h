@@ -29,6 +29,8 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
 
   bool is_saving{};
   bool is_opening{};
+  class impl;
+  std::unique_ptr<impl> ptr;
 
  protected:
   /**
@@ -36,20 +38,22 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @param in_path 传入的保存路径
    * @return 错误代码(异步)
    */
-  virtual bsys::error_code open_impl() = 0;
+  virtual bsys::error_code open_impl();
   /**
    * @brief 文件保存(@b 非主线程) 可以阻塞,
    * @param in_path 传入的需要保存的路径
    * @return 错误代码(异步)
    */
-  virtual bsys::error_code save_impl() = 0;
+  virtual bsys::error_code save_impl();
 
   enum class state : std::uint8_t { init, end };
 
   FSys::path project_path;
 
  public:
-  virtual ~file_translator() = default;
+  file_translator();
+  explicit file_translator(registry_ptr in_registry);
+  ~file_translator();
   /**
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径
@@ -117,29 +121,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
     open_end();
   }
 
-  virtual void new_file_scene(const FSys::path& in_path, const project& in_project) = 0;
-};
-
-class DOODLE_CORE_API sqlite_file : public file_translator {
- private:
-  class impl;
-  std::unique_ptr<impl> ptr;
-
- protected:
-  bsys::error_code open_impl() override;
-  bsys::error_code save_impl() override;
-
- public:
-  sqlite_file();
-  explicit sqlite_file(registry_ptr in_registry);
-  virtual ~sqlite_file();
-
-  sqlite_file(const sqlite_file& in) noexcept            = delete;
-  sqlite_file& operator=(const sqlite_file& in) noexcept = delete;
-  void new_file_scene(const FSys::path& in_path, const project& in_project) override;
-
-  sqlite_file(sqlite_file&& in) noexcept;
-  sqlite_file& operator=(sqlite_file&& in) noexcept;
+  virtual void new_file_scene(const FSys::path& in_path, const project& in_project);
 };
 
 }  // namespace doodle::database_n
