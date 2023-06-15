@@ -258,6 +258,7 @@ using obs_all = obs_main<
 }  // namespace file_translator_ns
 
 void file_translator::open_begin() {
+  is_opening = true;
   doodle_lib::Get().ctx().get<database_info>().path_ =
       project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -265,7 +266,6 @@ void file_translator::open_begin() {
   k_msg.set_state(k_msg.run);
   g_reg()->clear();
   g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
-  is_opening = true;
 }
 bsys::error_code file_translator::open() {
   auto l_r = open_impl();
@@ -273,7 +273,7 @@ bsys::error_code file_translator::open() {
 }
 
 void file_translator::open_end() {
-  core_set::get_set().add_recent_project(doodle_lib::Get().ctx().get<database_info>().path_);
+  core_set::get_set().add_recent_project(project_path);
   g_reg()->ctx().get<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
@@ -283,10 +283,10 @@ void file_translator::open_end() {
 }
 
 void file_translator::save_begin() {
+  is_saving   = true;
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
-  is_saving = true;
 }
 
 bsys::error_code file_translator::save() {
