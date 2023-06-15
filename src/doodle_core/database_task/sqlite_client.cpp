@@ -351,11 +351,8 @@ bsys::error_code file_translator::open_impl() {
         ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
         l_tx.commit();
       } else {
-        g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置已存在文件", project_path);
+        g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
       }
-    } else {
-      // todo: 更改提示
-      g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置无法写入, 不保存新版本文件", project_path);
     }
   }
   ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
