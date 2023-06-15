@@ -4,6 +4,9 @@
 
 #include "ref_file_export.h"
 
+#include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/metadata/project.h"
+
 #include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/qcloth_factory.h>
@@ -43,7 +46,10 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
   DOODLE_LOG_INFO("开始导出abc");
   export_file_abc l_ex{};
   auto l_gen               = std::make_shared<reference_file_ns::generate_abc_file_path>();
-  const MTime l_begin_time = MAnimControl::minTime();
+
+  auto l_config_export     = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
+
+  const MTime l_begin_time = MTime{boost::numeric_cast<std::double_t>(l_config_export), MTime::uiUnit()};
   const MTime l_end_time   = MAnimControl::maxTime();
   l_gen->begin_end_time    = std::make_pair(l_begin_time, l_end_time);
 
