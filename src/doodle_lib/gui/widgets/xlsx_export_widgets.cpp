@@ -120,11 +120,23 @@ xlsx_line::xlsx_line(
   }
 
   auto l_prj_name = g_reg()->ctx().get<project>().p_name;
-  if (in_use_first_as_project_name)
-    l_prj_name = in_handle.all_of<assets>() ? in_handle.get<assets>().p_path.begin()->generic_string() : ""s;
-  auto k_ass_path = in_handle.all_of<assets>() ? in_handle.get<assets>().p_path : FSys::path{};
-  if (in_use_first_as_project_name && !k_ass_path.empty()) {
-    k_ass_path = fmt::to_string(fmt::join(++k_ass_path.begin(), k_ass_path.end(), "/"));
+  std::string k_ass_path{};
+  if (in_handle.all_of<assets>()) {
+    auto l_p   = in_handle.get<assets>().get_parent();
+    k_ass_path = in_handle.all_of<assets>() ? in_handle.get<assets>().p_path : ""s;
+    while (l_p) {
+      k_ass_path = fmt::format("{}/{}", l_p.get<assets>().p_path, k_ass_path);
+      if (auto l_pp = l_p.get<assets>().get_parent()) {
+        l_p = l_pp;
+      } else {
+        break;
+      }
+    }
+    l_p = in_handle;
+    if (in_use_first_as_project_name) {
+      l_prj_name = l_p.get<assets>().p_path;
+      boost::erase_first(k_ass_path, fmt::format("{}/", l_prj_name));
+    }
   }
 
   auto l_season =                                                          //"季数"
@@ -144,7 +156,7 @@ xlsx_line::xlsx_line(
   len_time_     = chrono::round<chrono::seconds>(k_time);
   time_info_    = k_comm.p_time_info;
   comment_info_ = k_comm.get_comment();
-  file_path_    = k_ass_path.generic_string();
+  file_path_    = k_ass_path;
   name_attr_    = k_ass.name_attr();
   cutoff_attr_  = in_handle.any_of<importance>() ? in_handle.get<importance>().cutoff_p : ""s;
   DOODLE_LOG_INFO("计算时间为 {}", len_time_);

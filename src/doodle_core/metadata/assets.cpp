@@ -14,7 +14,7 @@ namespace doodle {
 
 assets::assets() : p_path() {}
 
-assets::assets(std::string in_name) : p_path(std::move(in_name)) { set_path_component(); }
+assets::assets(std::string in_name) : p_path(std::move(in_name)) {}
 
 std::string assets::str() const { return p_path; }
 void assets::set_path(const std::string& in_path) { p_path = in_path; }
@@ -38,9 +38,8 @@ bool assets::operator!=(const assets& in_rhs) const { return in_rhs.p_path != p_
 DOODLE_REGISTER_BEGIN(assets) {
   entt::meta<assets>()
       .ctor<>()
-      .ctor<FSys::path>()
+      .ctor<std::string>()
       .data<&assets::p_path>("p_path"_hs)
-      .func<&assets::get_path_component>("get_path_component"_hs)
       .func<&assets::set_path>("set_path"_hs)
       .func<&assets::get_path>("get_path"_hs);
 }

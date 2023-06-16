@@ -135,7 +135,7 @@ class shot_filter_factory : public filter_factory_t<shot> {
   }
 };
 
-#if 1
+#if 0
 class assets_filter_factory : public filter_factory_base {
  public:
   constexpr const static ImGuiTreeNodeFlags base_flags{
@@ -230,7 +230,7 @@ class assets_filter_factory : public filter_factory_base {
           if (auto l_hs = ImGui::AcceptDragDropPayload(doodle_config::drop_handle_list.data()); l_hs) {
             auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
             for (auto&& l_h : *l_list) {
-              l_h.emplace_or_replace<assets>(i->data.data);
+              l_h.emplace_or_replace<assets>(i->data.data.generic_string());
             }
             // @todo 这里要写拖拽
           }
@@ -419,7 +419,8 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back(true, "季数过滤"s, std::make_unique<season_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "集数过滤"s, std::make_unique<episodes_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "镜头过滤"s, std::make_unique<shot_filter_factory>());
-  p_impl->p_filter_factorys.emplace_back(true, "资产过滤"s, std::make_unique<assets_filter_factory>());
+  // todo: 重写资产过滤
+  //  p_impl->p_filter_factorys.emplace_back(true, "资产过滤"s, std::make_unique<assets_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "时间过滤"s, std::make_unique<time_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "制作人过滤"s, std::make_unique<gui::name_filter_factory>());
 }
