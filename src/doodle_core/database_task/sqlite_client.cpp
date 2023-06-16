@@ -52,6 +52,7 @@
 #include <range/v3/action/unique.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
+#include <tuple>
 #include <utility>
 
 namespace doodle::database_n {
@@ -114,8 +115,8 @@ class impl_obs {
     l_handles |=
         ranges::actions::push_back(additional_save_handles_ | ranges::views::filter([](const entt::handle& in_h) {
                                      return in_h && in_h.any_of<type_t>();
-                                   })) |
-        ranges::actions::unique;
+                                   }));
+    l_handles |= ranges::actions::unique;
 
     BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
     auto [l_updata, l_install] = l_orm.split_update_install(in_conn, l_handles);
@@ -252,7 +253,9 @@ class obs_main {
 
     static auto make_tuple() { return std::make_tuple(std::make_shared<type_ptr<Ts>>()...); }
   };
-  using obs_tuple_type_make = tuple_helper<impl_obs, arg_com>;
+
+  using database_cat_tuble  = decltype(std::tuple_cat(std::declval<std::tuple<database>>(), std::declval<arg_ctx>()));
+  using obs_tuple_type_make = tuple_helper<impl_obs, database_cat_tuble>;
   using ctx_tuple_type_make = tuple_helper<impl_ctx, arg_ctx>;
   using obs_tuple_type      = typename obs_tuple_type_make::type;
   using ctx_tuple_type      = typename ctx_tuple_type_make::type;
