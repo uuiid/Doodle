@@ -19,6 +19,7 @@
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include "boost/numeric/conversion/cast.hpp"
 #include <boost/asio.hpp>
 
 #include "core/core_help_impl.h"
@@ -28,6 +29,7 @@
 #include "metadata/assets.h"
 #include "metadata/metadata.h"
 #include "metadata/project.h"
+#include <cstdint>
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
 #include <range/v3/range_for.hpp>
@@ -336,8 +338,9 @@ void patch_0001(const registry_ptr& in_ptr) {
     }
 
     l_ass.set_path(l_com.back());
-    auto l_patent_index = l_com.size() - 2;
-    l_tree_map[l_com.size() - 2][l_com[l_patent_index]].get<assets>().add_child(entt::handle{*in_ptr, e});
+    auto l_patent_index = boost::numeric_cast<std::int64_t>(l_com.size()) - 2;
+    if (l_patent_index >= 0)
+      l_tree_map[l_patent_index][l_com[l_patent_index]].get<assets>().add_child(entt::handle{*in_ptr, e});
   }
 }
 
