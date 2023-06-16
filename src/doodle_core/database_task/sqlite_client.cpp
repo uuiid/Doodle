@@ -400,7 +400,7 @@ bsys::error_code file_translator::open_impl() {
   bool need_save{};
   {
     database_n::select l_select{};
-    auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
+    auto l_k_con = doodle_lib::Get().ctx().emplace<database_info>().get_connection_const();
     if (!l_select.is_old(project_path, l_k_con)) {
       ptr->obs_save->open(ptr->registry_attr, l_k_con);
     } else {
