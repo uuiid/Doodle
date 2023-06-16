@@ -243,10 +243,10 @@ class impl_ctx {
 
 template <typename arg_ctx, typename arg_com>
 class obs_main {
-  template <template <typename> typename type_ptr, typename T>
+  template <template <typename...> typename type_ptr, typename T>
   struct tuple_helper;
 
-  template <template <typename> typename type_ptr, typename... Ts>
+  template <template <typename...> typename type_ptr, typename... Ts>
   struct tuple_helper<type_ptr, std::tuple<Ts...>> {
     using type = std::tuple<std::shared_ptr<type_ptr<Ts>>...>;
 
