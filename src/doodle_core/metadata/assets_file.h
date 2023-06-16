@@ -74,6 +74,9 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   [[nodiscard]] const std::string& organization_attr() const noexcept;
   void organization_attr(const std::string& in_organization) noexcept;
 
+  [[nodiscard]] const entt::handle& assets_attr() const noexcept;
+  void assets_attr(const entt::handle& in_assets_attr) noexcept;
+
   [[nodiscard]] FSys::path get_path_normal() const;
 
   bool operator<(const assets_file& in_rhs) const;

@@ -27,6 +27,8 @@ class assets_file::impl {
   std::uint32_t p_version{};
 
   std::string organization_p{};
+
+  entt::handle assets_attr{};
 };
 
 void to_json(nlohmann::json& j, const assets_file& p) {
@@ -113,6 +115,10 @@ const std::string& assets_file::organization_attr() const noexcept { return p_i-
 void assets_file::organization_attr(const std::string& in_organization) noexcept {
   p_i->organization_p = in_organization;
 }
+
+const entt::handle& assets_file::assets_attr() const noexcept { return p_i->assets_attr; }
+void assets_file::assets_attr(const entt::handle& in_assets_attr) noexcept { p_i->assets_attr = in_assets_attr; }
+
 assets_file::~assets_file() = default;
 
 }  // namespace doodle
