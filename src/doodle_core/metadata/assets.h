@@ -23,11 +23,9 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
    * @brief 分解路径,转换为向量缓存
    *
    */
-  void set_path_component();
 
   DOODLE_REGISTER_FRIEND();
 
-  std::vector<std::string> p_component;
   entt::handle parent_{};
   std::set<entt::handle> child_{};
 
@@ -39,8 +37,6 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
   explicit assets(std::string in_name);
 
   [[nodiscard]] std::string str() const;
-
-  const std::vector<std::string>& get_path_component() { return p_component; };
 
   void set_path(const std::string& in_path);
 

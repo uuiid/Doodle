@@ -16,11 +16,6 @@ assets::assets() : p_path() {}
 
 assets::assets(std::string in_name) : p_path(std::move(in_name)) { set_path_component(); }
 
-void assets::set_path_component() {
-  p_component.clear();
-
-  boost::split(p_component, p_path, boost::is_any_of("/"));
-}
 std::string assets::str() const { return p_path; }
 void assets::set_path(const std::string& in_path) { p_path = in_path; }
 const std::string& assets::get_path() const { return p_path; }

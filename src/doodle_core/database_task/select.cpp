@@ -21,8 +21,11 @@
 
 #include <boost/asio.hpp>
 
+#include "core/core_help_impl.h"
 #include "database_task/details/tool.h"
 #include "details/tool.h"
+#include "entt/entity/fwd.hpp"
+#include "metadata/assets.h"
 #include "metadata/metadata.h"
 #include "metadata/project.h"
 #include <range/v3/all.hpp>
@@ -31,6 +34,7 @@
 #include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
+#include <vector>
 
 namespace doodle::database_n {
 template <class t>
@@ -257,7 +261,7 @@ template <typename... Type>
 void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
   std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{
       std::make_pair(entt::type_id<Type>().hash(), [&](entt::registry& in_reg, const std::string& in_str) {
-        auto l_json = nlohmann::json::parse(in_str);
+        auto l_json                  = nlohmann::json::parse(in_str);
         in_reg.ctx().emplace<Type>() = std::move(l_json.get<Type>());
       })...};
 
@@ -309,6 +313,37 @@ bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
   return detail::has_table(tables::com_entity{}, *in_connect);
 }
 
-void select::patch() { p_i->local_reg->ctx().emplace<project_config::base_config>().use_only_sim_cloth = true; }
+void patch_0001(const registry_ptr& in_ptr) {
+  auto l_ass_value = in_ptr->view<assets>();
+  std::vector<std::map<std::string, entt::handle>> l_tree_map{};
+
+  for (auto&& [e, l_ass] : l_ass_value.each()) {
+    std::vector<std::string> l_com{};
+    boost::split(l_com, l_ass.get_path(), boost::is_any_of("/"));
+    if (l_tree_map.size() < l_com.size()) l_tree_map.resize(l_com.size());
+    for (int i = 0; i < l_com.size() - 1; ++i) {
+      auto& l_tag    = l_com[i];
+      auto& l_handle = l_tree_map[i][l_tag];
+      if (!l_handle) {
+        l_handle             = entt::handle{*in_ptr, in_ptr->create()};
+        l_tree_map[i][l_tag] = l_handle;
+        l_handle.emplace<database>();
+        l_handle.emplace<assets>(l_tag);
+        if (i > 0) {
+          l_tree_map[i - 1][l_tag].get<assets>().add_child(l_handle);
+        }
+      }
+    }
+
+    l_ass.set_path(l_com.back());
+    auto l_patent_index = l_com.size() - 2;
+    l_tree_map[l_com.size() - 2][l_com[l_patent_index]].get<assets>().add_child(entt::handle{*in_ptr, e});
+  }
+}
+
+void select::patch() {
+  patch_0001(p_i->local_reg);
+  p_i->local_reg->ctx().emplace<project_config::base_config>().use_only_sim_cloth = true;
+}
 
 }  // namespace doodle::database_n
