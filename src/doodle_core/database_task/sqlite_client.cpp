@@ -254,7 +254,7 @@ class obs_main {
     static auto make_tuple() { return std::make_tuple(std::make_shared<type_ptr<Ts>>()...); }
   };
 
-  using database_cat_tuble  = decltype(std::tuple_cat(std::declval<std::tuple<database>>(), std::declval<arg_ctx>()));
+  using database_cat_tuble  = decltype(std::tuple_cat(std::declval<std::tuple<database>>(), std::declval<arg_com>()));
   using obs_tuple_type_make = tuple_helper<impl_obs, database_cat_tuble>;
   using ctx_tuple_type_make = tuple_helper<impl_ctx, arg_ctx>;
   using obs_tuple_type      = typename obs_tuple_type_make::type;
