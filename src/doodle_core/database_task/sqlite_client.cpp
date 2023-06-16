@@ -307,6 +307,7 @@ class obs_main {
   }
   void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     std::vector<std::int64_t> l_handles{};
+    std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn), ...); }, ctx_data_);
     std::apply([&](auto&&... x) { (x->save_all(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
   }
@@ -489,7 +490,13 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
 }
 bsys::error_code file_translator::import_() {
   ptr->registry_attr = g_reg();
-  auto l_k_con       = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
+
+  database_n::select l_select{};
+  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
+  if (l_select.is_old(project_path, l_k_con)) {
+    g_reg()->ctx().get<status_info>().message = "旧版保存, 无法导入";
+  }
+
   ptr->obs_save->import_project(ptr->registry_attr, l_k_con);
   return {};
 }

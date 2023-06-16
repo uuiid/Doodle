@@ -258,7 +258,7 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
   std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{
       std::make_pair(entt::type_id<Type>().hash(), [&](entt::registry& in_reg, const std::string& in_str) {
         auto l_json = nlohmann::json::parse(in_str);
-        in_reg.ctx().emplace<Type>(std::move(l_json.get<Type>()));
+        in_reg.ctx().emplace<Type>() = std::move(l_json.get<Type>());
       })...};
 
   _select_ctx_(in_reg, in_conn, l_fun);
