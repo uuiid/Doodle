@@ -363,6 +363,24 @@ void file_translator::save_end() {
   g_reg()->ctx().erase<process_message>();
   is_saving = false;
 }
+void file_translator::import_begin() {
+  is_opening = true;
+  doodle_lib::Get().ctx().get<database_info>().path_ =
+      project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("导入数据");
+  k_msg.set_state(k_msg.run);
+  g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
+}
+
+void file_translator::import_end() {
+  g_reg()->ctx().get<core_sig>().project_end_open();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("完成导入数据");
+  k_msg.set_state(k_msg.success);
+  g_reg()->ctx().erase<process_message>();
+  is_opening = false;
+}
 
 class file_translator::impl {
  public:
@@ -482,5 +500,6 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
+bsys::error_code file_translator::import_() { return bsys::error_code(); }
 file_translator::~file_translator() = default;
 }  // namespace doodle::database_n
