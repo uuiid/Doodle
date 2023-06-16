@@ -96,9 +96,6 @@ class impl_obs {
     );
   }
   void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
-    database_n::sql_com<type_t> l_orm{};
-    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
-
     std::set<entt::entity> l_create{};
 
     for (auto&& i : obs_create_) {
@@ -117,7 +114,10 @@ class impl_obs {
                                      return in_h && in_h.any_of<type_t>();
                                    }));
     l_handles |= ranges::actions::unique;
+    if (l_handles.empty() && in_handle.empty()) return;
 
+    database_n::sql_com<type_t> l_orm{};
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
     BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
     auto [l_updata, l_install] = l_orm.split_update_install(in_conn, l_handles);
     if (!l_updata.empty()) l_orm.update(in_conn, l_updata);
@@ -190,9 +190,6 @@ class impl_obs<database> {
   }
 
   void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
-    database_n::sql_com<database> l_orm{};
-    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
-
     std::set<entt::handle> l_create{};
 
     for (auto&& i : obs_create_) {
@@ -209,6 +206,11 @@ class impl_obs<database> {
         ranges::actions::unique;
 
     in_handle = destroy_ids_;
+    if (destroy_ids_.empty() && l_handles.empty()) return;
+
+    database_n::sql_com<database> l_orm{};
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
+
     if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
     if (!destroy_ids_.empty()) l_orm.destroy(in_conn, destroy_ids_);
   }

@@ -27,6 +27,7 @@
 #include "details/tool.h"
 #include "entt/entity/fwd.hpp"
 #include "metadata/assets.h"
+#include "metadata/assets_file.h"
 #include "metadata/metadata.h"
 #include "metadata/project.h"
 #include <cstdint>
@@ -318,30 +319,44 @@ bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
 void patch_0001(const registry_ptr& in_ptr) {
   auto l_ass_value = in_ptr->view<assets>();
   std::vector<std::map<std::string, entt::handle>> l_tree_map{};
-
+  std::vector<entt::handle> l_remove{};
   for (auto&& [e, l_ass] : l_ass_value.each()) {
     std::vector<std::string> l_com{};
     boost::split(l_com, l_ass.get_path(), boost::is_any_of("/"));
-    if (l_tree_map.size() < l_com.size()) l_tree_map.resize(l_com.size());
-    for (int i = 0; i < l_com.size() - 1; ++i) {
-      auto& l_tag    = l_com[i];
-      auto& l_handle = l_tree_map[i][l_tag];
-      if (!l_handle) {
-        l_handle             = entt::handle{*in_ptr, in_ptr->create()};
-        l_tree_map[i][l_tag] = l_handle;
-        l_handle.emplace<database>();
-        l_handle.emplace<assets>(l_tag);
-        if (i > 0) {
-          l_tree_map[i - 1][l_tag].get<assets>().add_child(l_handle);
+    if (!l_com.empty()) {
+      if (l_tree_map.size() < l_com.size()) l_tree_map.resize(l_com.size());
+      for (int i = 0; i < l_com.size(); ++i) {
+        auto& l_tag    = l_com[i];
+        auto& l_handle = l_tree_map[i][l_tag];
+        if (!l_handle) {
+          l_handle             = entt::handle{*in_ptr, in_ptr->create()};
+          l_tree_map[i][l_tag] = l_handle;
+          l_handle.emplace<database>();
+          l_handle.emplace<assets>(l_tag);
+          if (i > 0) {
+            l_tree_map[i - 1][l_tag].get<assets>().add_child(l_handle);
+          }
+        } else {
+          l_remove.emplace_back(*in_ptr, e);
         }
       }
-    }
 
-    l_ass.set_path(l_com.back());
-    auto l_patent_index = boost::numeric_cast<std::int64_t>(l_com.size()) - 2;
-    if (l_patent_index >= 0)
-      l_tree_map[l_patent_index][l_com[l_patent_index]].get<assets>().add_child(entt::handle{*in_ptr, e});
+      if (auto l_h = entt::handle{*in_ptr, e}; l_h.any_of<assets_file>()) {
+        l_h.patch<assets_file>().assets_attr(l_tree_map[l_com.size() - 1][l_com.back()]);
+      }
+    } else {
+      l_remove.emplace_back(*in_ptr, e);
+    }
   }
+
+  for (auto&& h : l_remove) {
+    h.remove<assets>();
+  }
+  in_ptr->each([&in_ptr](auto entity) {
+    if (in_ptr->orphan(entity)) {
+      in_ptr->release(entity);
+    }
+  });
 }
 
 void select::patch() {
