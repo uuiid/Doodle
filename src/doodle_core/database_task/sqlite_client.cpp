@@ -96,7 +96,7 @@ class impl_obs {
   }
   void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
     database_n::sql_com<type_t> l_orm{};
-    l_orm.create_table(in_conn);
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
 
     std::set<entt::entity> l_create{};
 
@@ -127,7 +127,7 @@ class impl_obs {
     boost::ignore_unused(in_handle);
 
     database_n::sql_com<type_t> l_orm{};
-    l_orm.create_table(in_conn);
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
 
     auto l_v       = in_registry_ptr->view<database, type_t>();
     auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
