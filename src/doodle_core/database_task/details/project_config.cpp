@@ -339,9 +339,12 @@ void sql_com<project_config::base_config>::destroy(conn_ptr& in_ptr, const std::
   detail::sql_com_destroy_parent_id<tables::project_config_maya_camera_select>(in_ptr, in_handle);
 }
 
-void sql_ctx<doodle::redirection_path_info>::create_table(doodle::conn_ptr& in_ptr) {
-  detail::sql_create_table_base<tables::redirection_path_info>::create_table(in_ptr);
-  create_table_parent_id<tables::rpi_search_path>(in_ptr);
+void sql_ctx<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr) {
+  detail::sql_create_table_base<tables::project_config>::create_table(in_ptr);
+
+  create_table_parent_id<
+      tables::project_config_assets_list, tables::project_config_icon_extensions,
+      tables::project_config_maya_camera_select>(in_ptr);
 }
 
 void sql_ctx<project_config::base_config>::install_sub(
