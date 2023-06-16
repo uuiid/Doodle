@@ -30,6 +30,7 @@
 #include "metadata/assets_file.h"
 #include "metadata/metadata.h"
 #include "metadata/project.h"
+#include "range/v3/algorithm/all_of.hpp"
 #include <cstdint>
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
@@ -334,7 +335,8 @@ void patch_0001(const registry_ptr& in_ptr) {
           l_handle.emplace<database>();
           l_handle.emplace<assets>(l_tag);
           if (i > 0) {
-            l_tree_map[i - 1][l_tag].get<assets>().add_child(l_handle);
+            auto l_up_tag = l_com[i - 1];
+            l_tree_map[i - 1][l_up_tag].get<assets>().add_child(l_handle);
           }
         } else {
           l_remove.emplace_back(*in_ptr, e);
@@ -348,6 +350,9 @@ void patch_0001(const registry_ptr& in_ptr) {
       l_remove.emplace_back(*in_ptr, e);
     }
   }
+  BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
+
+  DOODLE_LOG_INFO("{}", l_tree_map);
 
   for (auto&& h : l_remove) {
     h.remove<assets>();
