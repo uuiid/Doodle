@@ -263,62 +263,65 @@ class obs_main {
   struct tuple_helper<type_ptr, std::tuple<Ts...>> {
     using type = std::tuple<std::shared_ptr<type_ptr<Ts>>...>;
 
-    auto make_tuple() { return std::make_tuple(std::shared_ptr<type_ptr<Ts>>{}...); }
+    static auto make_tuple() { return std::make_tuple(std::make_shared<type_ptr<Ts>>()...); }
   };
-
-  using obs_tuple_type = typename tuple_helper<impl_obs, arg_com>::type;
-  using ctx_tuple_type = typename tuple_helper<impl_ctx, arg_ctx>::type;
+  using obs_tuple_type_make = tuple_helper<impl_obs, arg_com>;
+  using ctx_tuple_type_make = tuple_helper<impl_ctx, arg_ctx>;
+  using obs_tuple_type      = typename obs_tuple_type_make::type;
+  using ctx_tuple_type      = typename ctx_tuple_type_make::type;
   obs_tuple_type obs_data_{};
   ctx_tuple_type ctx_data_{};
 
  public:
-  explicit obs_main() : obs_data_{obs_tuple_type::make_tuple()}, ctx_data_{ctx_tuple_type::make_tuple()} {}
+  explicit obs_main() : obs_data_{obs_tuple_type_make::make_tuple()}, ctx_data_{ctx_tuple_type_make::make_tuple()} {}
 
   void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     std::map<std::int64_t, entt::handle> l_map{};
-    std::apply([&](auto&&... x) { ((x->disconnect(), ...)); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn), ...); }, ctx_data_);
+    std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
   }
 
-  void add_ref_project(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
-    std::map<std::int64_t, entt::handle> l_map{};
-    std::apply([&](auto&&... x) { ((x->disconnect(), ...)); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
-    l_map | ranges::views::values |
-        ranges::views::for_each([](const entt::handle& in_handle) { in_handle.remove<database>(); });
-    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
-  }
+  //  void add_ref_project(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+  //    std::map<std::int64_t, entt::handle> l_map{};
+  //    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
+  //    std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
+  //    l_map | ranges::views::values |
+  //        ranges::views::for_each([](const entt::handle& in_handle) { in_handle.remove<database>(); });
+  //    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+  //  }
 
   void import_project(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     std::map<std::int64_t, entt::handle> l_map{};
-    std::apply([&](auto&&... x) { ((x->disconnect(), ...)); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
     auto l_hs = l_map | ranges::views::values | ranges::to_vector;
     std::apply([&](auto&&... x) { ((x->import_handles(l_hs), ...)); }, obs_data_);
   }
 
   void disconnect() {
-    std::apply([&](auto&&... x) { ((x->disconnect(), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
   }
   void clear() {
-    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
   }
   void connect(const registry_ptr& in_registry_ptr) {
-    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
   }
 
   void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     std::vector<std::int64_t> l_handles{};
+    std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn), ...); }, ctx_data_);
     std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
   }
   void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     std::vector<std::int64_t> l_handles{};
     std::apply([&](auto&&... x) { (x->save_all(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
-    std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
   }
 };
 using obs_all = obs_main<
