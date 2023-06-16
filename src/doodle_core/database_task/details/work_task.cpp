@@ -40,6 +40,8 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector
       l_pre.params.time_point = l_work.time;
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
         l_pre.params.ref_id = l_user_h.get<database>().get_id();
+      } else {
+        l_pre.params.ref_id.set_null();
       }
       auto l_r = l_conn(l_pre);
       DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<work_task_info>().name());
@@ -71,6 +73,8 @@ void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::map<st
       l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
         l_pre.params.ref_id = l_user_h.get<database>().get_id();
+      } else {
+        l_pre.params.ref_id.set_null();
       }
       auto l_r = l_conn(l_pre);
       DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<work_task_info>().name());
@@ -109,6 +113,7 @@ void sql_com<doodle::work_task_info>::select(
       l_w.task_name = row.task_name.value();
       if (!row.ref_id.is_null() && in_handle.count(row.ref_id.value()) != 0)
         l_w.user_ref.handle_cache = in_handle.at(row.ref_id.value());
+
       auto l_id = row.entity_id.value();
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_w));
