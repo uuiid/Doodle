@@ -411,14 +411,6 @@ bsys::error_code file_translator::open_impl() {
       ptr->obs_save->connect(ptr->registry_attr);
     }
   }
-  for (auto&& [e, p] : ptr->registry_attr->view<project>().each()) {
-    ptr->registry_attr->ctx().emplace<project>() = p;
-    break;
-  }
-  for (auto&& [e, p] : ptr->registry_attr->view<project_config::base_config>().each()) {
-    ptr->registry_attr->ctx().emplace<project_config::base_config>() = p;
-    break;
-  }
 
   if (need_save) {
     if (FSys::folder_is_save(project_path)) {
@@ -469,12 +461,7 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
   g_reg()->clear();
   ptr->obs_save->connect(ptr->registry_attr);
-  entt::handle l_prj{*ptr->registry_attr, ptr->registry_attr->create()};
-  entt::handle l_prj_config{*ptr->registry_attr, ptr->registry_attr->create()};
-  l_prj.emplace<database>();
-  l_prj_config.emplace<database>();
-  l_prj.emplace<project>(in_project);
-  auto& l_config              = l_prj_config.emplace<project_config::base_config>();
+  project_config::base_config l_config{};
   l_config.maya_camera_select = {
       std::make_pair(R"(front|persp|side|top|camera)"s, -1000),
       std::make_pair(R"(ep\d+_sc\d+)"s, 30),
@@ -500,6 +487,11 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
-bsys::error_code file_translator::import_() { return bsys::error_code(); }
+bsys::error_code file_translator::import_() {
+  ptr->registry_attr = g_reg();
+  auto l_k_con       = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
+  ptr->obs_save->import_project(ptr->registry_attr, l_k_con);
+  return {};
+}
 file_translator::~file_translator() = default;
 }  // namespace doodle::database_n

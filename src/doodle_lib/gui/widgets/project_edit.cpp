@@ -302,14 +302,6 @@ bool project_edit::render() {
   ImGui::InputInt(*p_i->season_count.gui_name, &p_i->season_count.data);
 
   if (ImGui::Button("保存")) {
-    for (auto e : g_reg()->view<project_config::base_config>()) {
-      g_reg()->patch<project_config::base_config>(e) = p_i->get_config_();
-      break;
-    }
-    for (auto e : g_reg()->view<project>()) {
-      g_reg()->patch<project>(e).set_name(p_i->project_name.data);
-      break;
-    }
     g_reg()->ctx().get<project_config::base_config>() = p_i->get_config_();
     g_reg()->ctx().get<project>().set_name(p_i->project_name.data);
 

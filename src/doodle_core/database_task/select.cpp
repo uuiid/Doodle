@@ -257,24 +257,12 @@ template <typename... Type>
 void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
   std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{
       std::make_pair(entt::type_id<Type>().hash(), [&](entt::registry& in_reg, const std::string& in_str) {
-        auto l_h    = entt::handle{in_reg, in_reg.create()};
         auto l_json = nlohmann::json::parse(in_str);
-        l_h.emplace<Type>(std::move(l_json.get<Type>()));
+        in_reg.ctx().emplace<Type>(std::move(l_json.get<Type>()));
       })...};
 
   _select_ctx_(in_reg, in_conn, l_fun);
 }
-template <typename Type>
-void patch_old_sig(entt::registry& in_reg) {
-  for (auto& e : in_reg.view<Type>()) {
-    in_reg.patch<Type>(e);
-  }
-}
-
-template <typename... Type>
-void patch_old(entt::registry& in_reg) {
-  (patch_old_sig<Type>(in_reg), ...);
-};
 
 }  // namespace
 
@@ -321,16 +309,6 @@ bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
   return detail::has_table(tables::com_entity{}, *in_connect);
 }
 
-void select::patch() {
-  for (auto&& [e, p] : p_i->local_reg->view<project>().each()) {
-    p_i->local_reg->emplace_or_replace<database>(e);
-  }
-  for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
-    // 转换默认值
-    p.use_only_sim_cloth = true;
-    p_i->local_reg->emplace_or_replace<database>(e);
-  }
-  // patch_old<DOODLE_SQLITE_TYPE>(*p_i->local_reg);
-}
+void select::patch() { p_i->local_reg->ctx().emplace<project_config::base_config>().use_only_sim_cloth = true; }
 
 }  // namespace doodle::database_n
