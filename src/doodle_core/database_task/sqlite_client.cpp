@@ -127,15 +127,15 @@ class impl_obs {
   void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
     boost::ignore_unused(in_handle);
 
-    database_n::sql_com<type_t> l_orm{};
-    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
-
     auto l_v       = in_registry_ptr->view<database, type_t>();
     auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
                        return {*in_registry_ptr, in_e};
                      }) |
                      ranges::to_vector;
+    if (l_handles.empty()) return;
 
+    database_n::sql_com<type_t> l_orm{};
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
     BOOST_ASSERT(ranges::all_of(l_handles, [&](entt::handle& i) { return i.get<database>().is_install(); }));
     l_orm.insert(in_conn, l_handles);
   }
@@ -216,14 +216,16 @@ class impl_obs<database> {
   }
 
   void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
-    database_n::sql_com<database> l_orm{};
-    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
     auto l_v       = in_registry_ptr->view<database>();
     auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
                        return {*in_registry_ptr, in_e};
                      }) |
                      ranges::to_vector;
     in_handle = destroy_ids_;
+
+    if (l_handles.empty()) return;
+    database_n::sql_com<database> l_orm{};
+    if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
     if (!l_handles.empty()) l_orm.insert(in_conn, l_handles);
   }
 };
@@ -428,8 +430,10 @@ bsys::error_code file_translator::open_impl() {
         ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
         l_tx.commit();
       } else {
-        g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
+        g_reg()->ctx().get<status_info>().message = fmt::format("{} 已经存在, 不保存", project_path);
       }
+    } else {
+      g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
     }
   }
   ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
