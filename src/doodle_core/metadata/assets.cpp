@@ -25,7 +25,7 @@ void assets::add_child(const entt::handle& in_child) {
 
   auto l_this_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_org_parent  = in_child.get<assets>().parent_;
-  if (l_org_parent != l_this_handle) return;
+  if (l_org_parent == l_this_handle) return;
 
   child_.insert(in_child);
   in_child.patch<assets>().parent_ = l_this_handle;
