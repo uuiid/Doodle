@@ -24,6 +24,8 @@ class DOODLE_CORE_API assets {
   DOODLE_REGISTER_FRIEND();
 
   std::vector<std::string> p_component;
+  entt::handle parent_{};
+  std::vector<entt::handle> child_{};
 
  public:
   /**

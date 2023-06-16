@@ -380,7 +380,6 @@ DOODLE_SQL_COLUMN_IMP(update_time, sqlpp::time_point, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(entity_id, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(user_name, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(permission_group, sqlpp::integer, detail::can_be_null);
-DOODLE_SQL_COLUMN_IMP(user_id, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(task_name, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(region, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(abstract, sqlpp::text, detail::can_be_null);
@@ -434,6 +433,8 @@ DOODLE_SQL_COLUMN_IMP(p_path, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(p_en_str, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(p_shor_str, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, detail::can_be_null);
+// 这个id一般代指 实体id
+DOODLE_SQL_COLUMN_IMP(ref_id, sqlpp::integer, detail::can_be_null);
 
 }  // namespace column
 DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data);
@@ -441,7 +442,7 @@ DOODLE_SQL_TABLE_IMP(com_entity, column::id, column::entity_id, column::com_hash
 
 DOODLE_SQL_TABLE_IMP(usertab, column::id, column::entity_id, column::user_name, column::permission_group);
 DOODLE_SQL_TABLE_IMP(
-    work_task_info, column::id, column::entity_id, column::user_id, column::task_name, column::region, column::abstract,
+    work_task_info, column::id, column::entity_id, column::ref_id, column::task_name, column::region, column::abstract,
     column::time_point
 );
 DOODLE_SQL_TABLE_IMP(episodes, column::id, column::entity_id, column::eps);
@@ -456,7 +457,7 @@ DOODLE_SQL_TABLE_IMP(
 );
 DOODLE_SQL_TABLE_IMP(image_icon, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(
-    assets_file, column::id, column::entity_id, column::name, column::path, column::version, column::user_id
+    assets_file, column::id, column::entity_id, column::name, column::path, column::version, column::ref_id
 );
 DOODLE_SQL_TABLE_IMP(
     time_point_info, column::id, column::entity_id, column::first_time, column::second_time, column::info,

@@ -16,11 +16,13 @@ class assets_tree {
 
     bool operator<(const assets_tree_node& rhs) const;
   };
-  tree<assets_tree_node> tree_;
 
-  bool render_child(const tree<assets_tree_node>::iterator& in);
+  using tree_type_t = tree<assets_tree_node>;
+  tree_type_t tree_;
 
-  void popen_menu(const tree<assets_tree_node>::iterator_base& in);
+  bool render_child(const tree_type_t::iterator& in_node);
+
+  void popen_menu(const tree_type_t::iterator_base& in);
 
  public:
   assets_tree() = default;

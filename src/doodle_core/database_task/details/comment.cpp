@@ -6,10 +6,12 @@
 
 #include "metadata/comment.h"
 #include "metadata/metadata.h"
+#include "tool.h"
 #include <algorithm>
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
 #include <magic_enum.hpp>
+#include <metadata/assets_file.h>
 #include <sqlpp11/aggregate_functions/count.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>

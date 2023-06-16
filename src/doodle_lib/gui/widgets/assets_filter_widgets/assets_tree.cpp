@@ -18,7 +18,14 @@ bool assets_tree::assets_tree_node::operator<(const doodle::gui::assets_tree::as
 }
 
 bool assets_tree::render() {
-  for (auto it = tree_.begin_fixed(tree_.begin(), 0); it != tree_.end_fixed(tree_.begin(), 0); ++it) {
+  for (auto it = tree_type_t::begin(tree_.begin()); it != tree_type_t::end(tree_.begin()); ++it) {
+    render_child(it);
+  }
+  return true;
+}
+void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {}
+bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
+  for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
     ImGuiTreeNodeFlags k_f{assets_tree_node_base_flags};
     if (it->has_select) k_f |= ImGuiTreeNodeFlags_Selected;
     if (it.number_of_children() != 0) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
@@ -44,6 +51,4 @@ bool assets_tree::render() {
   }
   return false;
 }
-void assets_tree::popen_menu(const tree<assets_tree_node>::iterator_base &in) {}
-bool assets_tree::render_child(const tree<assets_tree_node>::iterator &in) { return false; }
 }  // namespace doodle::gui
