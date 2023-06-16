@@ -31,6 +31,7 @@
     "boost-lambda2",
     "argh",
     "cmakerc",
+    "treehh",
     {
       "name": "opencv",
       "default-features": false,
