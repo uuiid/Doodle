@@ -57,7 +57,7 @@ class setting_windows::impl {
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"生成新id"s};
   std::string title_name_;
-  bool open;
+  bool open{true};
 };
 
 setting_windows::setting_windows() : p_i(std::make_unique<impl>()) {
