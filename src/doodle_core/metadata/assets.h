@@ -32,9 +32,14 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
  public:
   std::string p_path;
 
-  assets();
+  assets() = default;
 
-  explicit assets(std::string in_name);
+  explicit assets(std::string in_name) : p_path(std::move(in_name)){};
+
+  assets(const assets& in_other)            = default;
+  assets(assets&& in_other)                 = default;
+  assets& operator=(const assets& in_other) = default;
+  assets& operator=(assets&& in_other)      = default;
 
   [[nodiscard]] std::string str() const;
 

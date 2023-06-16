@@ -12,9 +12,6 @@
 #include "entt/entity/fwd.hpp"
 namespace doodle {
 
-assets::assets() : p_path() {}
-
-assets::assets(std::string in_name) : p_path(std::move(in_name)) {}
 
 std::string assets::str() const { return p_path; }
 void assets::set_path(const std::string& in_path) { p_path = in_path; }

@@ -352,10 +352,15 @@ void patch_0001(const registry_ptr& in_ptr) {
   }
   BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
 
-  DOODLE_LOG_INFO("{}", l_tree_map);
+  for (auto&& l_list : l_tree_map) {
+    for (auto&& [l_name, l_h] : l_list) {
+      DOODLE_LOG_INFO("{} -> {}", l_name, l_h.get<assets>().p_path);
+    }
+  }
 
   for (auto&& h : l_remove) {
     h.remove<assets>();
+    //    h.destroy();
   }
   in_ptr->each([&in_ptr](auto entity) {
     if (in_ptr->orphan(entity)) {
