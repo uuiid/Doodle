@@ -7,6 +7,10 @@
 #include <doodle_core/core/init_register_macro.h>
 #include <doodle_core/doodle_core_fwd.h>
 
+#include "boost/operators.hpp"
+
+#include "entt/entity/fwd.hpp"
+#include <entt/entt.hpp>
 namespace doodle {
 /**
  * @brief 资产类, 这个时候资产分类
@@ -14,7 +18,7 @@ namespace doodle {
  * 使用path表示资产的分类, 其中每段路径代表一个标签, 标签越靠前权重越高
  *
  */
-class DOODLE_CORE_API assets {
+class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
   /**
    * @brief 分解路径,转换为向量缓存
    *
@@ -25,73 +29,29 @@ class DOODLE_CORE_API assets {
 
   std::vector<std::string> p_component;
   entt::handle parent_{};
-  std::vector<entt::handle> child_{};
+  std::set<entt::handle> child_{};
 
  public:
-  /**
-   * @brief 文件标签
-   *
-   */
-  FSys::path p_path;
+  std::string p_path;
 
   assets();
-  /**
-   * @brief 初始化时的标签
-   *
-   * @param in_name
-   */
-  explicit assets(FSys::path in_name);
 
-  /**
-   * @brief 返回字符串表示
-   *
-   * @return std::string p_path.generic_string()
-   */
+  explicit assets(std::string in_name);
+
   [[nodiscard]] std::string str() const;
 
-  /**
-   * @brief 获取标签, 使用 std::vector<std::string> 获取标签
-   *
-   * @return const std::vector<std::string>&
-   */
   const std::vector<std::string>& get_path_component() { return p_component; };
 
-  /**
-   * @brief 设置标签路径, 同时会分解路径
-   *
-   * @param in_path 传入的标签路径
-   */
-  void set_path(const FSys::path& in_path);
-  /**
-   * @brief Get the path object
-   *
-   * @return const FSys::path& p_path
-   */
-  [[nodiscard]] const FSys::path& get_path() const;
+  void set_path(const std::string& in_path);
 
-  /**
-   * @brief 排序类, 使用 p_paht 排序
-   */
+  [[nodiscard]] const std::string& get_path() const;
+
+  [[nodiscard]] inline entt::handle get_parent() const { return parent_; }
+  [[nodiscard]] inline std::set<entt::handle> get_child() const { return child_; }
+
+  void add_child(const entt::handle& in_child);
+
   bool operator<(const assets& in_rhs) const;
-  /**
-   * @copydoc operator<(const assets& in_rhs) const
-   */
-  bool operator>(const assets& in_rhs) const;
-  /**
-   * @copydoc operator<(const assets& in_rhs) const
-   */
-  bool operator<=(const assets& in_rhs) const;
-  /**
-   * @copydoc operator<(const assets& in_rhs) const
-   */
-  bool operator>=(const assets& in_rhs) const;
-  /**
-   * @brief 相等函数 使用 p_path 判断
-   */
-  bool operator==(const assets& in_rhs) const;
-  /**
-   * @copydoc operator==(const assets& in_rhs) const
-   */
   bool operator!=(const assets& in_rhs) const;
 
  private:
@@ -105,10 +65,7 @@ class DOODLE_CORE_API assets {
   /**
    * @copydoc to_json(nlohmann::json& j, const assets& p)
    */
-  friend void from_json(const nlohmann::json& j, assets& p) {
-    j.at("path").get_to(p.p_path);
-    p.set_path_component();
-  }
+  friend void from_json(const nlohmann::json& j, assets& p) { j.at("path").get_to(p.p_path); }
 };
 }  // namespace doodle
 namespace fmt {
@@ -129,7 +86,7 @@ struct formatter<::doodle::assets> : formatter<std::string_view> {
    */
   template <typename FormatContext>
   auto format(const ::doodle::assets& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string_view>::format(in_.p_path.generic_string(), ctx);
+    return formatter<std::string_view>::format(in_.p_path, ctx);
   }
 };
 }  // namespace fmt

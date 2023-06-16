@@ -449,7 +449,7 @@ DOODLE_SQL_TABLE_IMP(episodes, column::id, column::entity_id, column::eps);
 DOODLE_SQL_TABLE_IMP(shot, column::id, column::entity_id, column::shot_int, column::shot_ab);
 DOODLE_SQL_TABLE_IMP(redirection_path_info, column::id, column::entity_id, column::redirection_file_name);
 DOODLE_SQL_TABLE_IMP(rpi_search_path, column::id, column::parent_id, column::redirection_path);
-DOODLE_SQL_TABLE_IMP(assets, column::id, column::entity_id, column::assets_path);
+DOODLE_SQL_TABLE_IMP(assets, column::id, column::entity_id, column::assets_path, column::parent_id);
 DOODLE_SQL_TABLE_IMP(comment, column::id, column::entity_id, column::comment_string, column::comment_time);
 DOODLE_SQL_TABLE_IMP(
     export_file_info, column::id, column::entity_id, column::file_path, column::start_frame, column::end_frame,
