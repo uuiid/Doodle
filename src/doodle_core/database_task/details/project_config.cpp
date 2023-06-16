@@ -398,11 +398,11 @@ void sql_ctx<project_config::base_config>::insert(conn_ptr& in_ptr, const projec
   auto& l_conn = *in_ptr;
 
   tables::project_config const l_tabl{};
-  auto l_select  = l_conn(sqlpp::select(l_tabl.entity_id).from(l_tabl).where(l_tabl.entity_id.is_not_null()));
-  auto l_entt_id = l_select.empty() ? 0 : l_select.front().entity_id.value();
+  auto l_select = l_conn(sqlpp::select(l_tabl.id).from(l_tabl).unconditionally());
+  auto l_id     = l_select.empty() ? 0 : l_select.front().id.value();
 
   l_conn(sqlpp::sqlite3::insert_or_replace_into(l_tabl).set(
-      l_tabl.entity_id = l_entt_id, l_tabl.sim_path = in_config.vfx_cloth_sim_path.string(),
+      l_tabl.id = l_id, l_tabl.sim_path = in_config.vfx_cloth_sim_path.string(),
       l_tabl.export_group = in_config.export_group, l_tabl.cloth_proxy = in_config.cloth_proxy_,
       l_tabl.simple_module_proxy = in_config.simple_module_proxy_, l_tabl.find_icon_regex = in_config.find_icon_regex,
       l_tabl.upload_path = in_config.upload_path.string(), l_tabl.season_count = in_config.season_count,
@@ -417,14 +417,14 @@ void sql_ctx<project_config::base_config>::insert(conn_ptr& in_ptr, const projec
       l_tabl.maya_camera_suffix                = in_config.maya_camera_suffix,
       l_tabl.maya_out_put_abc_suffix           = in_config.maya_out_put_abc_suffix
   ));
-  auto l_main_id =
-      l_conn(sqlpp::select(l_tabl.id).from(l_tabl).where(l_tabl.entity_id == l_entt_id)).front().id.value();
-  std::vector<std::int64_t> l_main_id_list{l_main_id};
+  //  auto l_main_id =
+  //      l_conn(sqlpp::select(l_tabl.id).from(l_tabl).where(l_tabl.entity_id == l_entt_id)).front().id.value();
+  std::vector<std::int64_t> l_main_id_list{l_id};
 
   detail::sql_com_destroy_parent_id<tables::project_config_assets_list>(in_ptr, l_main_id_list);
   detail::sql_com_destroy_parent_id<tables::project_config_icon_extensions>(in_ptr, l_main_id_list);
   detail::sql_com_destroy_parent_id<tables::project_config_maya_camera_select>(in_ptr, l_main_id_list);
-  install_sub(in_ptr, l_main_id, in_config);
+  install_sub(in_ptr, l_id, in_config);
 }
 void sql_ctx<project_config::base_config>::select(conn_ptr& in_ptr, project_config::base_config& in_config) {
   auto& l_conn = *in_ptr;

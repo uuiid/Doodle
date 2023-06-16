@@ -112,11 +112,11 @@ void sql_ctx<project>::insert(conn_ptr& in_ptr, const project& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::project const l_tabl{};
-  auto l_select  = l_conn(sqlpp::select(l_tabl.entity_id).from(l_tabl).where(l_tabl.entity_id.is_not_null()));
-  auto l_entt_id = l_select.empty() ? 0 : l_select.front().entity_id.value();
+  auto l_select = l_conn(sqlpp::select(l_tabl.id).from(l_tabl).unconditionally());
+  auto id       = l_select.empty() ? 0 : l_select.front().id.value();
 
   l_conn(sqlpp::sqlite3::insert_or_replace_into(l_tabl).set(
-      l_tabl.entity_id = l_entt_id, l_tabl.p_name = in_id.p_name, l_tabl.p_en_str = in_id.p_en_str,
+      l_tabl.id = id, l_tabl.p_name = in_id.p_name, l_tabl.p_en_str = in_id.p_en_str,
       l_tabl.p_path = in_id.p_path.generic_string(), l_tabl.p_shor_str = in_id.p_shor_str
   ));
 
