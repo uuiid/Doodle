@@ -164,6 +164,7 @@ void cloth_sim::export_abc() {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_gen->set_fbx_path(false);
     l_ex.export_sim(in_handle);
+    if (l_ex.get_export_list().isEmpty()) return;
     l_gen->set_fbx_path(true);
     l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
   });
