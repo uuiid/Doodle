@@ -59,6 +59,7 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
     //      if (l_name_space[0] == ':') l_name_space = l_name_space.substr(1);
     l_set_list.emplace(l_name_space);
   }
+  DOODLE_LOG_INFO("获取选中 {}", l_set_list);
 
   for (auto&& i_ns : l_set_list) {
     for (auto l_h : l_cloth) {
