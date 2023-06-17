@@ -44,30 +44,26 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
               }) |
               ranges::to<decltype(l_ref_map)>;
   if (l_list.isEmpty()) {
+    return l_status;
+  }
+  MItSelectionList l_it_list{l_list, MFn::kDagNode, &l_status};
+  DOODLE_MAYA_CHICK(l_status);
+  std::set<std::string> l_set_list;
+
+  for (; !l_it_list.isDone(); l_it_list.next()) {
+    MObject l_obj{};
+    l_status = l_it_list.getDependNode(l_obj);
+    DOODLE_MAYA_CHICK(l_status);
+    auto l_name_space = m_namespace::get_namespace_from_name(get_node_name(l_obj));
+    DOODLE_MAYA_CHICK(l_status);
+    //      if (l_name_space[0] == ':') l_name_space = l_name_space.substr(1);
+    l_set_list.emplace(l_name_space);
+  }
+
+  for (auto&& i_ns : l_set_list) {
     for (auto l_h : l_cloth) {
       auto l_c = l_h.get<cloth_interface>();
-      l_c->rest(l_ref_map[l_c->get_namespace()]);
-    }
-  } else {
-    MItSelectionList l_it_list{l_list, MFn::kDagNode, &l_status};
-    DOODLE_MAYA_CHICK(l_status);
-    std::set<std::string> l_set_list;
-
-    for (; !l_it_list.isDone(); l_it_list.next()) {
-      MObject l_obj{};
-      l_status = l_it_list.getDependNode(l_obj);
-      DOODLE_MAYA_CHICK(l_status);
-      auto l_name_space = m_namespace::get_namespace_from_name(get_node_name(l_obj));
-      DOODLE_MAYA_CHICK(l_status);
-      //      if (l_name_space[0] == ':') l_name_space = l_name_space.substr(1);
-      l_set_list.emplace(l_name_space);
-    }
-
-    for (auto&& i_ns : l_set_list) {
-      for (auto l_h : l_cloth) {
-        auto l_c = l_h.get<cloth_interface>();
-        if (l_ref_map.find(i_ns) != l_ref_map.end()) l_c->rest(l_ref_map[i_ns]);
-      }
+      if (l_ref_map.find(i_ns) != l_ref_map.end()) l_c->rest(l_ref_map[i_ns]);
     }
   }
 
