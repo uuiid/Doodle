@@ -428,7 +428,7 @@ bsys::error_code file_translator::open_impl() {
 }
 bsys::error_code file_translator::save_impl() {
   if (!FSys::folder_is_save(project_path)) {
-    g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置无法写入, 不保存", project_path);
+    g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
     return bsys::error_code{};
   }
 
@@ -439,16 +439,15 @@ bsys::error_code file_translator::save_impl() {
     FSys::create_directories(l_p);
   }
   doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
-  if (!FSys::folder_is_save(project_path)) {
-    g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
-    return {};
-  }
 
   try {
-    auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
-    auto l_tx    = sqlpp::start_transaction(*l_k_con);
+    // 提前测试存在
+    auto l_exists = FSys::exists(project_path);
+    auto l_k_con  = doodle_lib::Get().ctx().get<database_info>().get_connection();
+    auto l_tx     = sqlpp::start_transaction(*l_k_con);
     if (ptr->save_all) {
-      if (!FSys::exists(project_path)) {
+      if (!l_exists) {
+        g_reg()->ctx().get<status_info>().message = fmt::format("{} 转换旧版数据, 较慢", project_path);
         ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
         ptr->save_all = false;
       } else {
