@@ -437,15 +437,15 @@ bsys::error_code file_translator::save_impl() {
   if (auto l_p = project_path.parent_path(); !FSys::exists(l_p)) {
     FSys::create_directories(l_p);
   }
-  doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
 
   try {
     // 提前测试存在
-    auto l_exists = FSys::exists(project_path);
-    auto l_k_con  = doodle_lib::Get().ctx().get<database_info>().get_connection();
-    auto l_tx     = sqlpp::start_transaction(*l_k_con);
+    if (ptr->save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
+    doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
+    auto l_exists                                      = FSys::exists(project_path);
+    auto l_k_con                                       = doodle_lib::Get().ctx().get<database_info>().get_connection();
+    auto l_tx                                          = sqlpp::start_transaction(*l_k_con);
     if (ptr->save_all) {
-      project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
       doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
       if (!l_exists) {
         g_reg()->ctx().get<status_info>().message = fmt::format("{} 转换旧版数据, 较慢", project_path);

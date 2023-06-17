@@ -443,7 +443,7 @@ void sql_ctx<project_config::base_config>::select(conn_ptr& in_ptr, project_conf
                                 l_table.maya_camera_suffix, l_table.maya_out_put_abc_suffix, l_table.entity_id
          )
                                 .from(l_table)
-                                .where(l_table.entity_id.is_not_null()))) {
+                                .where(l_table.entity_id.is_null()))) {
       in_config.vfx_cloth_sim_path                = row.sim_path.value();
       in_config.export_group                      = row.export_group.value();
       in_config.cloth_proxy_                      = row.cloth_proxy.value();
