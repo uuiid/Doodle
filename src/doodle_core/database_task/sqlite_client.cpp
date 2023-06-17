@@ -394,6 +394,7 @@ class file_translator::impl {
  public:
   registry_ptr registry_attr;
   std::shared_ptr<obs_all> obs_save;
+  bool save_all{};
 };
 
 file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
@@ -403,8 +404,7 @@ file_translator::file_translator(registry_ptr in_registry) : ptr(std::make_uniqu
 }
 bsys::error_code file_translator::open_impl() {
   ptr->registry_attr = g_reg();
-
-  bool need_save{};
+  ptr->save_all      = false;
   {
     database_n::select l_select{};
     auto l_k_con = doodle_lib::Get().ctx().emplace<database_info>().get_connection_const();
@@ -414,28 +414,14 @@ bsys::error_code file_translator::open_impl() {
       ptr->obs_save->disconnect();
       l_select(*ptr->registry_attr, project_path, l_k_con);
       l_select.patch();
-      need_save = true;
+      ptr->save_all = true;
       /// 先监听
       ptr->obs_save->connect(ptr->registry_attr);
+      project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
+      doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
     }
   }
 
-  if (need_save) {
-    if (FSys::folder_is_save(project_path)) {
-      project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
-      if (!FSys::exists(project_path)) {
-        doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
-        auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
-        auto l_tx    = sqlpp::start_transaction(*l_k_con);
-        ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
-        l_tx.commit();
-      } else {
-        g_reg()->ctx().get<status_info>().message = fmt::format("{} 已经存在, 不保存", project_path);
-      }
-    } else {
-      g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
-    }
-  }
   ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
 
   return {};
@@ -453,10 +439,24 @@ bsys::error_code file_translator::save_impl() {
     FSys::create_directories(l_p);
   }
   doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
+  if (!FSys::folder_is_save(project_path)) {
+    g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
+    return {};
+  }
+
   try {
     auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
-    ptr->obs_save->save(ptr->registry_attr, l_k_con);
+    if (ptr->save_all) {
+      if (!FSys::exists(project_path)) {
+        ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
+        ptr->save_all = false;
+      } else {
+        g_reg()->ctx().get<status_info>().message = fmt::format("{} 已经存在, 不保存", project_path);
+      }
+    } else {
+      ptr->obs_save->save(ptr->registry_attr, l_k_con);
+    }
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
