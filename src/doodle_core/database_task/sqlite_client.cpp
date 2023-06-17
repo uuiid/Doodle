@@ -326,6 +326,13 @@ using obs_all = obs_main<
         doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, doodle::business::rules,
         doodle::user, doodle::work_task_info>>;
 
+class file_translator::impl {
+ public:
+  registry_ptr registry_attr;
+  std::shared_ptr<obs_all> obs_save;
+  bool save_all{};
+};
+
 void file_translator::open_begin() {
   is_opening = true;
   doodle_lib::Get().ctx().get<database_info>().path_ =
@@ -335,6 +342,7 @@ void file_translator::open_begin() {
   k_msg.set_state(k_msg.run);
   g_reg()->clear();
   g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
+  core_set::get_set().add_recent_project(project_path);
 }
 bsys::error_code file_translator::open() {
   auto l_r = open_impl();
@@ -342,7 +350,6 @@ bsys::error_code file_translator::open() {
 }
 
 void file_translator::open_end() {
-  core_set::get_set().add_recent_project(project_path);
   g_reg()->ctx().get<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
@@ -364,6 +371,7 @@ bsys::error_code file_translator::save() {
 }
 
 void file_translator::save_end() {
+  core_set::get_set().add_recent_project(project_path);
   g_reg()->ctx().get<status_info>().need_save = false;
   auto& k_msg                                 = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
@@ -389,13 +397,6 @@ void file_translator::import_end() {
   g_reg()->ctx().erase<process_message>();
   is_opening = false;
 }
-
-class file_translator::impl {
- public:
-  registry_ptr registry_attr;
-  std::shared_ptr<obs_all> obs_save;
-  bool save_all{};
-};
 
 file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
 file_translator::file_translator(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
