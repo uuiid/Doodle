@@ -342,7 +342,6 @@ void file_translator::open_begin() {
   k_msg.set_state(k_msg.run);
   g_reg()->clear();
   g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
-  core_set::get_set().add_recent_project(project_path);
 }
 bsys::error_code file_translator::open() {
   auto l_r = open_impl();
@@ -355,6 +354,7 @@ void file_translator::open_end() {
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
   g_reg()->ctx().erase<process_message>();
+  core_set::get_set().add_recent_project(project_path);
   is_opening = false;
 }
 
@@ -371,12 +371,12 @@ bsys::error_code file_translator::save() {
 }
 
 void file_translator::save_end() {
-  core_set::get_set().add_recent_project(project_path);
   g_reg()->ctx().get<status_info>().need_save = false;
   auto& k_msg                                 = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
   g_reg()->ctx().erase<process_message>();
+  core_set::get_set().add_recent_project(project_path);
   is_saving = false;
 }
 void file_translator::import_begin() {
@@ -418,8 +418,6 @@ bsys::error_code file_translator::open_impl() {
       ptr->save_all = true;
       /// 先监听
       ptr->obs_save->connect(ptr->registry_attr);
-      project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
-      doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
     }
   }
 
@@ -447,6 +445,8 @@ bsys::error_code file_translator::save_impl() {
     auto l_k_con  = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx     = sqlpp::start_transaction(*l_k_con);
     if (ptr->save_all) {
+      project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
+      doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
       if (!l_exists) {
         g_reg()->ctx().get<status_info>().message = fmt::format("{} 转换旧版数据, 较慢", project_path);
         ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
