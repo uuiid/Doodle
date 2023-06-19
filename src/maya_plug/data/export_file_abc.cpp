@@ -24,6 +24,7 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
+#include "range/v3/range/conversion.hpp"
 #include <cmath>
 #include <fmt/format.h>
 #include <map>
@@ -38,6 +39,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MObject.h>
 #include <range/v3/algorithm/for_each.hpp>
+#include <set>
 #include <vector>
 
 namespace doodle::maya_plug {
@@ -86,30 +88,43 @@ std::vector<MDagPath> export_file_abc::find_out_group_child_suffix_node(
 
   return l_r;
 }
-
-std::string export_file_abc::get_abc_exprt_arg() const {
-  boost::ignore_unused(this);
-  auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  std::string l_r{};
-  l_r += "-uvWrite ";
-  l_r += "-writeFaceSets ";
-  l_r += "-wholeFrameGeo ";
-  l_r += "-worldSpace ";
-  l_r += "-writeUVSets ";
-  l_r += "-stripNamespaces ";
-  return l_r;
-}
-
+struct cmp_dag {
+  bool operator()(const MDagPath& lhs, const MDagPath& rhs) const {
+    std::string const name1{lhs.fullPathName().asChar()};
+    std::string const name2{rhs.fullPathName().asChar()};
+    return (name1.compare(name2) < 0);
+  }
+};
 void export_file_abc::export_abc(const MSelectionList& in_select, const FSys::path& in_path) {
   DOODLE_LOG_INFO("导出物体 {} 路径 {}", in_select, in_path);
   MAnimControl::setCurrentTime(begin_time);
-  std::vector<MDagPath> l_dag_path{};
-  l_dag_path.reserve(in_select.length());
+  MStatus l_status{};
+  MItDag k_it{};
+
+  std::set<MDagPath, cmp_dag> l_export_set{};
+
   for (auto i = 0; i < in_select.length(); ++i) {
     MDagPath k_path{};
     in_select.getDagPath(i, k_path);
-    l_dag_path.emplace_back(k_path);
+
+    /// 收集所有的子网格
+    maya_chick(k_it.reset(k_path, MItDag::kDepthFirst, MFn::Type::kMesh));
+    MFnDagNode l_fn_dag_node{};
+    for (; !k_it.isDone(&l_status); k_it.next()) {
+      maya_chick(l_status);
+      maya_chick(k_it.getPath(k_path));
+      maya_chick(l_fn_dag_node.setObject(k_path));
+
+      /// \brief 检查一下是否是中间对象
+      if (!l_fn_dag_node.isIntermediateObject(&l_status)) {
+        maya_chick(l_status);
+        l_export_set.emplace(k_path);
+      }
+    }
+    //    l_dag_path.emplace_back(k_path);
   }
+  std::vector<MDagPath> l_dag_path = l_export_set | ranges::to_vector;
+  DOODLE_LOG_INFO("收集完成导出物体 {}", l_dag_path);
 
   alembic::archive_out l_out{in_path, l_dag_path, begin_time, end_time};
 
@@ -152,7 +167,6 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
 
       l_name.add_external_string = l_node_name;
       l_name.begin_end_time      = l_arg->begin_end_time;
-      maya_chick(i.extendToShape());
       export_map[l_name].add(i, MObject::kNullObj, true);
     }
   } else {
