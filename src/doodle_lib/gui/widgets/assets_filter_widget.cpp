@@ -9,8 +9,10 @@
 #include "doodle_core/metadata/project.h"
 #include <doodle_core/metadata/metadata_cpp.h>
 
+#include "assets_filter_widgets/assets_tree.h"
 #include "entt/entity/fwd.hpp"
 #include <core/tree_node.h>
+#include <gui/widgets/assets_filter_widgets/assets_tree.h>
 #include <gui/widgets/assets_filter_widgets/filter_base.h>
 #include <gui/widgets/assets_filter_widgets/filter_factory_base.h>
 #include <gui/widgets/assets_filter_widgets/filter_factory_template.h>
@@ -403,6 +405,8 @@ class assets_filter_widget::impl {
 
   std::vector<factory_chick> p_filter_factorys;
   std::vector<std::unique_ptr<filter_base>> p_filters;
+
+  assets_tree assets_tree_{};
   bool run_edit{false};
   std::string title_name_;
   bool open{true};
@@ -423,6 +427,7 @@ void assets_filter_widget::init() {
   //  p_impl->p_filter_factorys.emplace_back(true, "资产过滤"s, std::make_unique<assets_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "时间过滤"s, std::make_unique<time_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "制作人过滤"s, std::make_unique<gui::name_filter_factory>());
+  p_impl->assets_tree_.init_tree();
 }
 
 bool assets_filter_widget::render() {
@@ -432,7 +437,7 @@ bool assets_filter_widget::render() {
   for (auto&& i : p_impl->p_filter_factorys) {
     l_is_edit |= i.render({});
   }
-
+  p_impl->assets_tree_.render();
   if (ranges::any_of(
           p_impl->p_filter_factorys,
           [](const impl::factory_chick& in) { return in.p_factory.select && in.p_factory.data->is_edit; }
@@ -450,6 +455,7 @@ void assets_filter_widget::refresh(bool force) {
       this->refresh_(force);
       p_impl->run_edit = false;
     });
+  p_impl->assets_tree_.init_tree();
 }
 void assets_filter_widget::refresh_(bool force) {
   p_impl->p_filters.clear();

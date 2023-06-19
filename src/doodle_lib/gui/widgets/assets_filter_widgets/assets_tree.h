@@ -19,9 +19,9 @@ class assets_tree {
     bool has_select{};
     entt::handle handle{};
     assets_tree_node() = default;
-    assets_tree_node(std::string in_name, bool in_has_select, const entt::handle& in_handle)
-        : name(std::move(in_name)), has_select(in_has_select), handle(in_handle) {}
 
+    explicit assets_tree_node(std::string in_name, const entt::handle& in_handle)
+        : name(std::move(in_name)), handle(in_handle) {}
     bool operator<(const assets_tree_node& rhs) const;
   };
 

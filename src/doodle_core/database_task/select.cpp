@@ -31,6 +31,7 @@
 #include "metadata/metadata.h"
 #include "metadata/project.h"
 #include "range/v3/algorithm/all_of.hpp"
+#include "range/v3/range/conversion.hpp"
 #include "treehh/tree.hh"
 #include <cstdint>
 #include <range/v3/all.hpp>
@@ -321,6 +322,7 @@ bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
 
 void patch_0001(const registry_ptr& in_ptr) {
   auto l_ass_value = in_ptr->view<assets>();
+  auto l_remove    = l_ass_value | ranges::to_vector;
   std::vector<std::map<std::string, entt::handle>> l_tree_map{};
 
   for (auto&& [e, l_ass] : l_ass_value.each()) {
@@ -346,13 +348,14 @@ void patch_0001(const registry_ptr& in_ptr) {
     }
   }
 
-  BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
-  in_ptr->remove<assets>(l_ass_value.begin(), l_ass_value.end());
+  in_ptr->remove<assets>(l_remove.begin(), l_remove.end());
   in_ptr->each([&in_ptr](auto entity) {
     if (in_ptr->orphan(entity)) {
       in_ptr->release(entity);
     }
   });
+  BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
+  DOODLE_LOG_INFO("转换完成 {}", l_tree_map);
 }
 
 void select::patch() {
