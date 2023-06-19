@@ -4,13 +4,16 @@
 
 #include "assets_tree.h"
 
+#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/logger/logger.h"
+#include "doodle_core/metadata/metadata.h"
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/metadata/assets.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
+#include "entt/entity/fwd.hpp"
 #include "imgui.h"
 #include "range/v3/algorithm/for_each.hpp"
 
@@ -37,23 +40,46 @@ bool assets_tree::render() {
   return true;
 }
 void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
-  ImGui::InputText(*input_add_node, &node_name);
+  ImGui::InputText(*input_data.input, &input_data.node_name);
   ImGui::SameLine();
 
-  if (ImGui::Button("添加")) {
+  if (ImGui::Button(*input_data.node)) {
     auto l_parent = tree_type_t ::parent(in);
     if (auto it = ranges::find_if(
             tree_type_t::begin(l_parent), tree_type_t::end(l_parent),
             [&](const assets_tree_node &in) -> bool {
               //              DOODLE_LOG_INFO("检查节点 {}", in.name);
-              return in.name == node_name;
+              return in.name == input_data.node_name;
             }
         );
         it == in.end()) {
-      DOODLE_LOG_INFO("添加节点 {}", node_name);
-      tree_.insert(in, assets_tree_node{node_name, {}});
-      //      auto k_path = in_node.data.data / p_popen.data;
-      //      in_node.child.emplace_back(std::make_shared<tree_node_type>(gui_cache_path{p_popen.data, k_path}));
+      DOODLE_LOG_INFO("添加节点 {}", input_data.node_name);
+      entt::handle l_h{*g_reg(), g_reg()->create()};
+      l_h.emplace<database>();
+      l_h.emplace<assets>(input_data.node_name);
+
+      tree_.insert(in, assets_tree_node{input_data.node_name, l_h});
+      ImGui::CloseCurrentPopup();
+    }
+  }
+  ImGui::InputText(*rename_data.input, &rename_data.node_name);
+  ImGui::SameLine();
+
+  if (ImGui::Button(*rename_data.rename)) {
+    auto l_parent = tree_type_t ::parent(in);
+    if (auto it = ranges::find_if(
+            tree_type_t::begin(l_parent), tree_type_t::end(l_parent),
+            [&](const assets_tree_node &in) -> bool {
+              //              DOODLE_LOG_INFO("检查节点 {}", in.name);
+              return in.name == rename_data.node_name;
+            }
+        );
+        it == in.end()) {
+      DOODLE_LOG_INFO("重命名节点 {}", rename_data.node_name);
+      if (auto l_h = in->handle; l_h && l_h.all_of<assets>()) {
+        l_h.get<assets>().set_path(rename_data.node_name);
+        in->name = rename_data.node_name;
+      }
       ImGui::CloseCurrentPopup();
     }
   }

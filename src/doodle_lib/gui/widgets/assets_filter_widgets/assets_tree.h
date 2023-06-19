@@ -30,8 +30,16 @@ class assets_tree {
   using tree_type_t = tree<assets_tree_node>;
   tree_type_t tree_;
 
-  gui_cache_name_id input_add_node{"名称"};
-  std::string node_name{};
+  struct {
+    gui_cache_name_id input{"名称"};
+    gui_cache_name_id node{"添加"};
+    std::string node_name{};
+  } input_data{};
+  struct {
+    gui_cache_name_id input{"名称"};
+    gui_cache_name_id rename{"重命名"};
+    std::string node_name{};
+  } rename_data{};
 
   void build_tree(const entt::handle& in_handle_view, const tree_type_t::iterator& in_parent);
   bool render_child(const tree_type_t::iterator& in_node);
