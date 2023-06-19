@@ -61,6 +61,7 @@ ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
 
   RandomAnimSpeed                                     = {150.0f, 250.0f};
   MaxAcceleration                                     = 300.0f;
+  SkinOffsetQuatValue                                 = {-90.0f};
 }
 
 void ADoodleAiArrayGenerationMoveSpline::Tick(float DeltaTime) {
@@ -114,7 +115,9 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     TObjectPtr<UAnimationAsset> L_Anim = (*L_Array)[RandomStream_Anim.RandRange(0, L_Array->Num() - 1)];
     USkeletalMeshComponent* L_Sk_Com   = L_Actor->GetMesh();
     FVector::ZAxisVector;
-    L_Sk_Com->SetRelativeLocationAndRotation({0.f, 0.f, -85.f}, FQuat{FVector::ZAxisVector, -90.f});
+    L_Sk_Com->SetRelativeLocationAndRotation(
+        {0.f, 0.f, -85.f}, FQuat{FVector::ZAxisVector, FMath::DegreesToRadians(SkinOffsetQuatValue)}
+    );
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
     // L_Sk_Com->LightingChannels = LightingChannels;
@@ -176,8 +179,11 @@ void ADoodleAiArrayGenerationMoveSpline::GenPoint() {
           // DrawDebugPoint(GetWorld(), L_HitR.ImpactPoint, 10.0f, FColor::Red, false, 1.0f);
           if (GetRandomPointInRadius(L_HitR.ImpactPoint, L_Point_Out)) {
             L_Point_Out.Z += OffsetValue;
-            // TargetSpline->GetTangentAtSplinePoint(0, ESplineCoordinateSpace::Type::World).ToOrientationQuat();
-            FTransform L_Ftran{TargetSpline->GetTangentAtSplinePoint(0, ESplineCoordinateSpace::Type::World).ToOrientationQuat(), L_Point_Out};
+            FQuat L_Quat =
+                TargetSpline->GetTangentAtSplinePoint(0, ESplineCoordinateSpace::Type::World).ToOrientationQuat();
+            static FQuat G_Tran{FVector::ZAxisVector, FMath::DegreesToRadians(-90.f)};
+            L_Quat *= G_Tran;
+            FTransform L_Ftran{L_Quat, L_Point_Out};
             Points.Add(L_Ftran);
 
             Preview_InstancedStaticMeshComponent->AddInstance(L_Ftran, true);

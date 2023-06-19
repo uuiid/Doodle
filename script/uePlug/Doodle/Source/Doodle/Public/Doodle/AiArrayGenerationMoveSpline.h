@@ -45,6 +45,8 @@ class DOODLE_API ADoodleAiArrayGenerationMoveSpline : public AActor {
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "上下偏移值")
   float OffsetValue;
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "旋转偏移值")
+  float SkinOffsetQuatValue;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机最大速度")
   FVector2D RandomAnimSpeed;
