@@ -5,10 +5,14 @@
 #include "assets_tree.h"
 
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/logger/logger.h"
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/metadata/assets.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
+
+#include "imgui.h"
+#include "range/v3/algorithm/for_each.hpp"
 
 namespace doodle::gui {
 
@@ -29,13 +33,32 @@ void assets_tree::build_tree(const entt::handle &in_handle_view, const tree_type
 }
 
 bool assets_tree::render() {
-  //  for (auto it = tree_type_t::begin(tree_.begin()); it != tree_type_t::end(tree_.begin()); ++it) {
-  //    render_child(it);
-  //  }
   render_child(tree_.begin());
   return true;
 }
-void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {}
+void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
+  ImGui::InputText(*input_add_node, &node_name);
+  ImGui::SameLine();
+
+  if (ImGui::Button("添加")) {
+    auto l_parent = tree_type_t ::parent(in);
+    if (auto it = ranges::find_if(
+            tree_type_t::begin(l_parent), tree_type_t::end(l_parent),
+            [&](const assets_tree_node &in) -> bool {
+              //              DOODLE_LOG_INFO("检查节点 {}", in.name);
+              return in.name == node_name;
+            }
+        );
+        it == in.end()) {
+      DOODLE_LOG_INFO("添加节点 {}", node_name);
+      tree_.insert(in, assets_tree_node{node_name, {}});
+      //      auto k_path = in_node.data.data / p_popen.data;
+      //      in_node.child.emplace_back(std::make_shared<tree_node_type>(gui_cache_path{p_popen.data, k_path}));
+      ImGui::CloseCurrentPopup();
+    }
+  }
+}
+
 bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
   for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
     ImGuiTreeNodeFlags k_f{assets_tree_node_base_flags};
@@ -45,6 +68,7 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
 
     const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), k_f};
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+      ranges::for_each(tree_, [](assets_tree_node &in_node) { in_node.has_select = false; });
       it->has_select = true;
     }
     if (auto l_popen_menu = dear::PopupContextItem{}) {

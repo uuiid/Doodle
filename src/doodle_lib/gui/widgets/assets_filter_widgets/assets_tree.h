@@ -5,6 +5,8 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include "doodle_app/gui/base/ref_base.h"
+
 #include "boost/operators.hpp"
 
 #include <string>
@@ -27,6 +29,9 @@ class assets_tree {
 
   using tree_type_t = tree<assets_tree_node>;
   tree_type_t tree_;
+
+  gui_cache_name_id input_add_node{"名称"};
+  std::string node_name{};
 
   void build_tree(const entt::handle& in_handle_view, const tree_type_t::iterator& in_parent);
   bool render_child(const tree_type_t::iterator& in_node);
