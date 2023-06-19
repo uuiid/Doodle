@@ -59,6 +59,7 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
       entt::handle l_h{*g_reg(), g_reg()->create()};
       l_h.emplace<database>();
       l_h.emplace<assets>(input_data.node_name);
+      l_parent->handle.get<assets>().add_child(l_h);
 
       tree_.insert(in, assets_tree_node{input_data.node_name, l_h});
       ImGui::CloseCurrentPopup();
