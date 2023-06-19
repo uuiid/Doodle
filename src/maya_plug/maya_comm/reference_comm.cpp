@@ -86,23 +86,6 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   }
 
   return l_status;
-
-  //  MStatus l_status{};
-  //  auto l_refs  = reference_file_factory{}.create_ref();
-  //  auto l_cloth = qcloth_factory{}.create_cloth();
-  //  std::map<std::string, entt::handle> l_ref_map{};
-  //  l_ref_map = l_refs |
-  //              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
-  //                return {in_handle.get<reference_file>().get_namespace(), in_handle};
-  //              }) |
-  //              ranges::to<decltype(l_ref_map)>;
-  //  for (auto l_h : l_cloth) {
-  //    auto l_c = l_h.get<cloth_interface>();
-  //    l_c->set_cache_folder(l_ref_map[l_c->get_namespace()],
-  //    g_reg()->ctx().get<user::current_user>().user_name_attr());
-  //  }
-  //
-  //  return l_status;
 }
 
 }  // namespace doodle::maya_plug
