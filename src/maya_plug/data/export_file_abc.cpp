@@ -128,7 +128,7 @@ void export_file_abc::export_abc(const MSelectionList& in_select, const FSys::pa
 
   alembic::archive_out l_out{in_path, l_dag_path, begin_time, end_time};
 
-  for (auto&& i = begin_time; i < end_time; ++i) {
+  for (auto i = begin_time; i < end_time; ++i) {
     MAnimControl::setCurrentTime(i);
     l_out.write();
   }
