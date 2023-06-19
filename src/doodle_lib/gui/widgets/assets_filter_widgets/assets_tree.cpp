@@ -29,9 +29,10 @@ void assets_tree::build_tree(const entt::handle &in_handle_view, const tree_type
 }
 
 bool assets_tree::render() {
-  for (auto it = tree_.begin(); it != tree_.end(); ++it) {
-    render_child(it);
-  }
+  //  for (auto it = tree_type_t::begin(tree_.begin()); it != tree_type_t::end(tree_.begin()); ++it) {
+  //    render_child(it);
+  //  }
+  render_child(tree_.begin());
   return true;
 }
 void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {}
@@ -39,7 +40,8 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
   for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
     ImGuiTreeNodeFlags k_f{assets_tree_node_base_flags};
     if (it->has_select) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
-    if (it.number_of_children() != 0) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
+    const auto l_has_child = it.number_of_children() != 0;
+    if (!l_has_child) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
 
     const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), k_f};
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
@@ -57,7 +59,7 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
         // @todo 这里要写拖拽
       }
     }
-    if (l_root_node) {
+    if (l_has_child && l_root_node) {
       render_child(it);
     }
   }
@@ -65,12 +67,13 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
 }
 void assets_tree::init_tree() {
   tree_.clear();
+  tree_           = tree_type_t{assets_tree_node{"root", entt::handle{*g_reg(), entt::null}}};
   auto l_ass_view = g_reg()->view<assets>();
   for (auto &&[e, ass] : l_ass_view.each()) {
     if (!ass.get_parent()) {
-      auto l_h  = entt::handle{*g_reg(), e};
-      auto l_it = tree_.insert(tree_.begin(), assets_tree_node{ass.p_path, l_h});
-      build_tree({*g_reg(), e}, l_it);
+      auto l_h = entt::handle{*g_reg(), e};
+      //      auto l_it = tree_.insert(tree_.begin(), assets_tree_node{ass.p_path, l_h});
+      build_tree(l_h, tree_.begin());
     }
   }
 }
