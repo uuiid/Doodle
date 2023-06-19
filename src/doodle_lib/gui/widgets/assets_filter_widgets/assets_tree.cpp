@@ -4,7 +4,9 @@
 
 #include "assets_tree.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/configure/static_value.h>
+#include <doodle_core/metadata/assets.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
@@ -17,6 +19,15 @@ bool assets_tree::assets_tree_node::operator<(const doodle::gui::assets_tree::as
   return name < rhs.name;
 }
 
+void assets_tree::build_tree(const entt::handle &in_handle_view, const tree_type_t::iterator &in_parent) {
+  auto &l_ass = in_handle_view.get<assets>();
+  auto l_it   = tree_.append_child(in_parent, assets_tree_node{l_ass.get_path(), false, in_handle_view});
+
+  for (auto &&l_c : l_ass.get_child()) {
+    build_tree(l_c, l_it);
+  }
+}
+
 bool assets_tree::render() {
   for (auto it = tree_type_t::begin(tree_.begin()); it != tree_type_t::end(tree_.begin()); ++it) {
     render_child(it);
@@ -27,10 +38,10 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {}
 bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
   for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
     ImGuiTreeNodeFlags k_f{assets_tree_node_base_flags};
-    if (it->has_select) k_f |= ImGuiTreeNodeFlags_Selected;
+    if (it->has_select) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
     if (it.number_of_children() != 0) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
 
-    if (const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), assets_tree_node_base_flags}) {
+    if (const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), k_f}) {
       if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
         it->has_select = true;
       }
@@ -50,5 +61,12 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
     }
   }
   return false;
+}
+void assets_tree::init_tree() {
+  tree_.clear();
+  auto l_ass_view = g_reg()->view<assets>();
+  for (auto &e : l_ass_view) {
+    build_tree({*g_reg(), e}, tree_.begin());
+  }
 }
 }  // namespace doodle::gui

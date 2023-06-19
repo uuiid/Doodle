@@ -48,6 +48,7 @@ class user;
 class project;
 class work_task_info;
 class comment;
+class assets;
 
 using namespace std::literals;
 using namespace date::literals;
