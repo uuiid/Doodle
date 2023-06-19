@@ -152,6 +152,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
 
       l_name.add_external_string = l_node_name;
       l_name.begin_end_time      = l_arg->begin_end_time;
+      maya_chick(i.extendToShape());
       export_map[l_name].add(i, MObject::kNullObj, true);
     }
   } else {
