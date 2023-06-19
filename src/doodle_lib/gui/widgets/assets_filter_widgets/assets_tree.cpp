@@ -7,6 +7,7 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/logger/logger.h"
+#include "doodle_core/metadata/assets_file.h"
 #include "doodle_core/metadata/metadata.h"
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/metadata/assets.h>
@@ -16,6 +17,7 @@
 #include "entt/entity/fwd.hpp"
 #include "imgui.h"
 #include "range/v3/algorithm/for_each.hpp"
+#include "range/v3/view/filter.hpp"
 
 namespace doodle::gui {
 
@@ -103,10 +105,12 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
     if (auto l_drag_drop = dear::DragDropTarget{}) {
       if (const auto *l_hs = ImGui::AcceptDragDropPayload(doodle_config::drop_handle_list.data()); l_hs) {
         auto *l_list = reinterpret_cast<std::vector<entt::handle> *>(l_hs->Data);
-        for (auto &&l_h : *l_list) {
-          //          l_h.emplace_or_replace<assets>(i->data.data);
-        }
-        // @todo 这里要写拖拽
+        ranges::for_each(
+            *l_list | ranges::views::filter([](entt::handle &in_handle) -> bool {
+              return in_handle && in_handle.all_of<assets_file>();
+            }),
+            [&](entt::handle &in_h) { in_h.patch<assets_file>().assets_attr(it->handle); }
+        );
       }
     }
     if (l_has_child && l_root_node) {
