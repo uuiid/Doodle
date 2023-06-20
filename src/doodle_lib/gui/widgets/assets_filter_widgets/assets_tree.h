@@ -41,6 +41,8 @@ class assets_tree {
     std::string node_name{};
   } rename_data{};
 
+  bool edit_data{};
+
   void build_tree(const entt::handle& in_handle_view, const tree_type_t::iterator& in_parent);
   bool render_child(const tree_type_t::iterator& in_node);
   void popen_menu(const tree_type_t::iterator_base& in);

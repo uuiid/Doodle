@@ -34,7 +34,6 @@ class DOODLELIB_API assets_filter_widget {
   void init();
   bool render();
   const std::string& title() const;
-  void refresh(bool force);
 };
 
 }  // namespace doodle::gui

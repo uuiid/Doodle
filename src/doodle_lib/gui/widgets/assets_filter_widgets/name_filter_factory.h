@@ -15,11 +15,11 @@ class DOODLELIB_API name_filter_factory : public filter_factory_base {
  public:
   name_filter_factory();
   ~name_filter_factory() override;
-  bool render() override;
+  bool render();
 
  protected:
   std::unique_ptr<filter_base> make_filter_() override;
-  void refresh_() override;
+  void refresh_();
   void init();
 };
 

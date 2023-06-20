@@ -38,9 +38,10 @@ void assets_tree::build_tree(const entt::handle &in_handle_view, const tree_type
 }
 
 bool assets_tree::render() {
-  render_child(tree_.begin());
-  return true;
+  edit_data = false;
+  return render_child(tree_.begin());
 }
+
 void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
   ImGui::InputText(*input_data.input, &input_data.node_name);
   ImGui::SameLine();
@@ -56,12 +57,13 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
         );
         it == in.end()) {
       DOODLE_LOG_INFO("添加节点 {}", input_data.node_name);
-      entt::handle l_h{*g_reg(), g_reg()->create()};
+      entt::handle const l_h{*g_reg(), g_reg()->create()};
       l_h.emplace<database>();
       l_h.emplace<assets>(input_data.node_name);
       l_parent->handle.get<assets>().add_child(l_h);
 
       tree_.insert(in, assets_tree_node{input_data.node_name, l_h});
+      //      edit_data = true;
       ImGui::CloseCurrentPopup();
     }
   }
@@ -82,6 +84,7 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
       if (auto l_h = in->handle; l_h && l_h.all_of<assets>()) {
         l_h.get<assets>().set_path(rename_data.node_name);
         in->name = rename_data.node_name;
+        //        edit_data = true;
       }
       ImGui::CloseCurrentPopup();
     }
@@ -99,6 +102,7 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
       ranges::for_each(tree_, [](assets_tree_node &in_node) { in_node.has_select = false; });
       it->has_select = true;
+      edit_data      = true;
     }
     if (auto l_popen_menu = dear::PopupContextItem{}) {
       popen_menu(it);
@@ -118,7 +122,7 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
       render_child(it);
     }
   }
-  return false;
+  return edit_data;
 }
 void assets_tree::init_tree() {
   tree_.clear();

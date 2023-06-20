@@ -19,8 +19,6 @@ class DOODLELIB_API filter_factory_base {
 
  protected:
   virtual std::unique_ptr<filter_base> make_filter_() = 0;
-  virtual void refresh_()                             = 0;
-  virtual void init()                                 = 0;
 
   bool is_disabled;
 
@@ -29,7 +27,7 @@ class DOODLELIB_API filter_factory_base {
   virtual ~filter_factory_base();
   entt::observer p_obs;
   bool is_edit;
-  virtual bool render() = 0;
+
   virtual void refresh(bool force);
   std::unique_ptr<filter_base> make_filter();
 };

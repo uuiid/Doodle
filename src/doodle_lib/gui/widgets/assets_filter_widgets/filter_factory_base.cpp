@@ -22,16 +22,7 @@ std::unique_ptr<filter_base> filter_factory_base::make_filter() {
   is_edit = false;
   return make_filter_();
 }
-void filter_factory_base::refresh(bool force) {
-  if (!is_disabled) refresh_();
-
-  p_obs.clear();
-
-  if (p_i->need_init || force) {
-    this->init();
-    p_i->need_init = false;
-  }
-}
+void filter_factory_base::refresh(bool force) {}
 void filter_factory_base::connection_sig() {
   auto& l_sig = g_reg()->ctx().get<core_sig>();
 
