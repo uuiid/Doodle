@@ -7,6 +7,7 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/metadata/assets_file.h"
 #include "doodle_core/metadata/episodes.h"
+#include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/season.h"
 #include "doodle_core/metadata/shot.h"
@@ -16,6 +17,8 @@
 #include "doodle_app/gui/base/ref_base.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/lib_warp/icon_font_macro.h>
+
+#include <doodle_lib/gui/widgets/derail/user_edit.h>
 
 #include "boost/signals2/connection.hpp"
 
@@ -57,15 +60,15 @@ class file_path_filter {
       return false;
   }
 };
-class name_filter {
+class user_filter {
  private:
-  std::string name_;
+  entt::handle user_;
 
  public:
-  explicit name_filter(std::string in_name) : name_(std::move(in_name)) {}
+  explicit user_filter(const entt::handle in_user) : user_(std::move(in_user)) {}
   virtual bool operator()(const entt::handle& in) const {
     if (in.any_of<assets_file>()) {
-      return boost::algorithm::contains(in.get<assets_file>().user_attr().get<user>().get_name(), name_);
+      return in.get<assets_file>().user_attr() == user_;
     } else
       return false;
   };
@@ -104,7 +107,7 @@ class assets_filter_widget::impl {
     std::function<bool(const entt::handle)> filter{};
     gui_cache_name_id button_name{};
   };
-  std::array<filter_fun, 5> filter_list{};
+  std::array<filter_fun, 6> filter_list{};
 
   struct {
     gui_cache_name_id name{"季数"};
@@ -196,6 +199,19 @@ class assets_filter_widget::impl {
     }
   } path_filter{};
 
+  struct {
+    gui_cache_name_id name{"用户过滤"};
+    render::select_all_user_t select_user{};
+    entt::handle select_user_handle{};
+    bool render() {
+      auto [l_b, l_u] = select_user.render(g_reg());
+      if (l_b) {
+        select_user_handle = l_u;
+      }
+      return l_b;
+    }
+  } user_filter{};
+
   std::string title_name_;
   bool open{true};
 
@@ -256,6 +272,18 @@ bool assets_filter_widget::render() {
           filter<time_point_wrap>{p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap},
           gui_cache_name_id{fmt::format(
               "时间:{}-{} " ICON_FA_XMARK, p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap
+          )}};
+      filter_list();
+    }
+    if (p_impl->user_filter.render()) {
+      p_impl->filter_list[5] = {
+          user_filter{p_impl->user_filter.select_user_handle},
+          gui_cache_name_id{fmt::format(
+              "用户:{}(id {}) " ICON_FA_XMARK,
+              p_impl->user_filter.select_user_handle ? p_impl->user_filter.select_user_handle.get<user>() : user{},
+              (p_impl->user_filter.select_user_handle && p_impl->user_filter.select_user_handle.any_of<database>())
+                  ? p_impl->user_filter.select_user_handle.get<database>().get_id()
+                  : 0
           )}};
       filter_list();
     }
