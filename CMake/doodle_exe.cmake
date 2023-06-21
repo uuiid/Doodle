@@ -94,3 +94,22 @@ python $<TARGET_FILE:sqlpp11::ddl2cpp> ${_PATH} ${CMAKE_CURRENT_LIST_DIR}/genera
 
 
 endfunction()
+
+
+function(doodle_ue_plug)
+    set(options)
+    set(oneValueArgs PLUG_JSON)
+    set(multiValueArgs)
+    cmake_parse_arguments(
+            DOODLE_UE
+            "${options}"
+            "${oneValueArgs}"
+            "${multiValueArgs}"
+            ${ARGN}
+    )
+
+    file(READ ${DOODLE_UE_PLUG_JSON} PLUGIN)
+    string(JSON PLUGIN SET ${PLUGIN} VersionName "\"${v_short}\"")
+    string(JSON PLUGIN SET ${PLUGIN} Version "${v_patch}")
+    file(WRITE ${DOODLE_UE_PLUG_JSON} ${PLUGIN})
+endfunction()
