@@ -12,6 +12,7 @@
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/metadata/assets.h>
 
+#include "doodle_app/gui/base/ref_base.h"
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include "entt/entity/fwd.hpp"
@@ -54,7 +55,7 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
             tree_type_t::begin(l_parent), tree_type_t::end(l_parent),
             [&](const assets_tree_node &in) -> bool {
               //              DOODLE_LOG_INFO("检查节点 {}", in.name);
-              return in.name == input_data.node_name;
+              return in.name.name == input_data.node_name;
             }
         );
         it == in.end()) {
@@ -78,14 +79,14 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
             tree_type_t::begin(l_parent), tree_type_t::end(l_parent),
             [&](const assets_tree_node &in) -> bool {
               //              DOODLE_LOG_INFO("检查节点 {}", in.name);
-              return in.name == rename_data.node_name;
+              return in.name.name == rename_data.node_name;
             }
         );
         it == in.end()) {
       DOODLE_LOG_INFO("重命名节点 {}", rename_data.node_name);
       if (auto l_h = in->handle; l_h && l_h.all_of<assets>()) {
         l_h.get<assets>().set_path(rename_data.node_name);
-        in->name = rename_data.node_name;
+        in->name = gui_cache_name_id{rename_data.node_name};
         //        edit_data = true;
       }
       ImGui::CloseCurrentPopup();
