@@ -96,7 +96,6 @@ void windows_manage::tick() {
   drop_manger_->render();
 
   const render_guard l_g{this};
-  const auto l_org_list = windows_list_.size();
   windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) { return !in_->render(); });
 
   windows_list_ |= ranges::actions::push_back(windows_list_next_);
