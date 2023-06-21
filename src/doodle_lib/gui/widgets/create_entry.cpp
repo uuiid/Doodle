@@ -20,9 +20,9 @@ bool create_entry::render() {
   args_->fun_(
       args_->paths_ | ranges::views::transform([=](const FSys::path &in_path) -> entt::handle {
         auto l_ent      = entt::handle{*g_reg(), g_reg()->create()};
-        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
+        //        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
         /// \brief 这里使用 lexically_proximate 防止相对路径失败
-        auto l_path     = in_path.lexically_proximate(l_prj_path);
+        //        auto l_path     = in_path.lexically_proximate(l_prj_path);
 
         season::analysis_static(l_ent, in_path);
         episodes::analysis_static(l_ent, in_path);
@@ -34,7 +34,7 @@ bool create_entry::render() {
         }
         find_icon(l_ent, in_path);
         l_ent.emplace<database>();
-        l_ent.emplace<assets_file>(l_path);
+        l_ent.emplace<assets_file>(in_path);
         return l_ent;
       }) |
       ranges::to_vector
