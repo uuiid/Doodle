@@ -95,7 +95,7 @@ class assets_filter_widget::impl {
       p_filters;
 
   assets_tree assets_tree_{};
-  std::string add_filter{"右键此处添加其他过滤器"};
+  gui_cache_name_id add_filter{"其他过滤器"};
 
   struct filter_fun {
     std::function<bool(const entt::handle)> filter{};
@@ -213,45 +213,55 @@ void assets_filter_widget::init() {
 
 bool assets_filter_widget::render() {
   /// 渲染数据
-  //  if () {
   if (p_impl->path_filter.render()) {
-    p_impl->filter_list[0] = {
-        file_path_filter{p_impl->path_filter.path},
-        gui_cache_name_id{fmt::format("路径过滤:{} " ICON_FA_XMARK, p_impl->path_filter.path)}};
+    if (p_impl->path_filter.path.empty()) {
+      p_impl->filter_list[0] = {};
+    } else {
+      p_impl->filter_list[0] = {
+          file_path_filter{p_impl->path_filter.path},
+          gui_cache_name_id{fmt::format("路径过滤:{} " ICON_FA_XMARK, p_impl->path_filter.path)}};
+    }
+    filter_list();
   }
+  if (auto l_ = dear::CollapsingHeader{*p_impl->add_filter}) {
+    if (p_impl->season_filter.render()) {
+      p_impl->filter_list[1] = {
+          filter<season>{p_impl->season_filter.season},
+          gui_cache_name_id{fmt::format("季数:{} " ICON_FA_XMARK, p_impl->season_filter.season)}};
+      filter_list();
+    }
+    if (p_impl->episode_filter.render()) {
+      p_impl->filter_list[2] = {
+          filter<episodes>{p_impl->episode_filter.episode},
+          gui_cache_name_id{fmt::format("集数:{} " ICON_FA_XMARK, p_impl->episode_filter.episode)}};
+      filter_list();
+    }
+    if (p_impl->shot_filter.render()) {
+      p_impl->filter_list[3] = {
+          filter<shot>{p_impl->shot_filter.shot_},
+          gui_cache_name_id{fmt::format("镜头:{} " ICON_FA_XMARK, p_impl->shot_filter.shot_)}};
+      filter_list();
+    }
+    if (p_impl->time_filter.render()) {
+      p_impl->filter_list[4] = {
+          filter<time_point_wrap>{p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap},
+          gui_cache_name_id{fmt::format(
+              "时间:{}-{} " ICON_FA_XMARK, p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap
+          )}};
+      filter_list();
+    }
 
-  if (p_impl->season_filter.render()) {
-    p_impl->filter_list[1] = {
-        filter<season>{p_impl->season_filter.season},
-        gui_cache_name_id{fmt::format("季数:{} " ICON_FA_XMARK, p_impl->season_filter.season)}};
-  }
-  if (p_impl->episode_filter.render()) {
-    p_impl->filter_list[2] = {
-        filter<episodes>{p_impl->episode_filter.episode},
-        gui_cache_name_id{fmt::format("集数:{} " ICON_FA_XMARK, p_impl->episode_filter.episode)}};
-  }
-  if (p_impl->shot_filter.render()) {
-    p_impl->filter_list[3] = {
-        filter<shot>{p_impl->shot_filter.shot_},
-        gui_cache_name_id{fmt::format("镜头:{} " ICON_FA_XMARK, p_impl->shot_filter.shot_)}};
-  }
-  if (p_impl->time_filter.render()) {
-    p_impl->filter_list[4] = {
-        filter<time_point_wrap>{p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap},
-        gui_cache_name_id{fmt::format(
-            "时间:{}-{} " ICON_FA_XMARK, p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap
-        )}};
-  }
+    //  if (auto l_menu = dear::PopupContextItem{p_impl->add_filter.data()}) {
+    //  }
+    //  if (auto l_child = dear::Child{"过滤器", ImVec2{0.f, footer_height_to_reserve}, false}) {
+    //  }
 
-  //  if (auto l_menu = dear::PopupContextItem{p_impl->add_filter.data()}) {
-  //  }
-  //  if (auto l_child = dear::Child{"过滤器", ImVec2{0.f, footer_height_to_reserve}, false}) {
-  //  }
-
-  for (auto&& l_data : p_impl->filter_list) {
-    if (l_data.filter) {
-      if (ImGui::Button(*l_data.button_name)) {
-        l_data.filter = {};
+    for (auto&& l_data : p_impl->filter_list) {
+      if (l_data.filter) {
+        if (ImGui::Button(*l_data.button_name)) {
+          l_data.filter = {};
+          filter_list();
+        }
       }
     }
   }
@@ -270,22 +280,24 @@ void assets_filter_widget::refresh_(bool force) {
   //      }) |
   //      ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in) -> bool { return (bool)in; }) |
   //      ranges::to_vector;
-
-  //  std::vector<entt::handle> list{};
-  //
-  //  auto l_v = g_reg()->view<database, assets_file>(entt::exclude<project, project_config::base_config>);
-  //  list     = l_v | ranges::views::transform([](const entt::entity& in) -> entt::handle {
-  //           return entt::handle{*g_reg(), in};
-  //         }) |
-  //         ranges::views::filter([&](const entt::handle& in) -> bool {
-  //           return ranges::all_of(p_impl->p_filters, [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
-  //             return (*in_f)(in);
-  //           });
-  //         }) |
-  //         ranges::to_vector;
-
-  //  g_reg()->ctx().get<core_sig>().filter_handle(list);
 }
 const std::string& assets_filter_widget::title() const { return p_impl->title_name_; }
+void assets_filter_widget::filter_list() {
+  std::vector<entt::handle> list{};
+
+  auto l_v = g_reg()->view<database, assets_file>(entt::exclude<project, project_config::base_config>);
+  list =
+      l_v | ranges::views::transform([](const entt::entity& in) -> entt::handle {
+        return entt::handle{*g_reg(), in};
+      }) |
+      ranges::views::filter([&](const entt::handle& in) -> bool {
+        return ranges::all_of(p_impl->filter_list, [&](const decltype(p_impl->filter_list)::value_type& in_f) -> bool {
+          return !in_f.filter || in_f.filter(in);
+        });
+      }) |
+      ranges::to_vector;
+
+  g_reg()->ctx().get<core_sig>().filter_handle(list);
+}
 
 }  // namespace doodle::gui
