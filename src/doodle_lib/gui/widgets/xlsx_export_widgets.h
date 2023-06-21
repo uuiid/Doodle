@@ -66,8 +66,6 @@ class xlsx_table {
 
   std::vector<xlsx_line> line_list;
   std::map<std::string, chrono::seconds> time_statistics;
-
-  std::string to_str() const;
 };
 
 }  // namespace xlsx_export_widgets_ns

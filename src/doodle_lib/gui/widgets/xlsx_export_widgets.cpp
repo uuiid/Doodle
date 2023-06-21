@@ -3,6 +3,7 @@
 //
 #include "xlsx_export_widgets.h"
 
+#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -26,6 +27,7 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/attendance/attendance_rule.h>
+#include <doodle_lib/gui/widgets/derail/user_edit.h>
 
 #include <boost/contract.hpp>
 #include <boost/filesystem/path.hpp>
@@ -209,47 +211,6 @@ void xlsx_table::computing_time() {
 }
 void xlsx_table::sort_line() { line_list |= ranges::actions::sort; }
 
-std::string xlsx_table::to_str() const {
-  std::ostringstream l_str{};
-  l_str << fmt::format(
-      "{}\n", fmt::join(
-                  {"部门"s, "制作人"s, "项目"s, "集数"s, "镜头"s, "开始时间"s, "结束时间"s, "持续时间/day"s,
-                   "时间备注"s, "备注"s, "类别"s, "名称"s, "等级"s},
-                  ","
-              )
-  );  /// @brief 标题
-  l_str << fmt::format(
-      "{}\n", fmt::join(
-                  line_list | ranges::views::transform([](const xlsx_line &in_line) -> std::string {
-                    // using days_double   = chrono::duration<std::float_t, std::ratio<60ull * 60ull * 8ull>>;
-                    using time_rational = boost::rational<std::uint64_t>;
-                    time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
-
-                    return fmt::format(
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{},"
-                        "{}",
-                        in_line.organization_, in_line.user_, in_line.project_season_name_, in_line.episodes_,
-                        in_line.shot_, in_line.start_time_, in_line.end_time_,
-                        boost::rational_cast<std::double_t>(l_time_rational), in_line.time_info_, in_line.comment_info_,
-                        in_line.file_path_, in_line.name_attr_, in_line.cutoff_attr_
-                    );
-                  }),
-                  "\n"
-              )
-  );
-  return l_str.str();
-}
 }  // namespace xlsx_export_widgets_ns
 
 class xlsx_table_gui {
@@ -371,24 +332,6 @@ class xlsx_export_widgets::impl {
     time_point_wrap time_data{};
   };
 
-  class user_list_cache : public gui_cache<std::string> {
-   public:
-    user_list_cache() : gui_cache<std::string>("过滤用户"s, "all"s){};
-    std::map<std::string, entt::handle> user_list{};
-    entt::handle current_user{};
-  };
-
-  class user_clock {
-   public:
-    explicit user_clock(const std::string &in_basic_string, const std::string &in_phone_number, entt::handle in_handle)
-        : user_handle_attr(in_handle),
-          phone_number(fmt::format("{}电话", in_basic_string), in_phone_number),
-          get_chork("获取时钟"s){};
-    entt::handle user_handle_attr{};
-    gui_cache<std::string> phone_number;
-    gui_cache_name_id get_chork{"获取时钟"s};
-  };
-
   struct gui_path : gui_cache_path {
     FSys::path stem{};
   };
@@ -417,7 +360,8 @@ class xlsx_export_widgets::impl {
 
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户
-  user_list_cache combox_user_id{};
+  render::select_all_user_t user_select{};
+  entt::handle current_user{};
 
   /// 过滤年份,月份
   time_cache combox_month{};
@@ -491,15 +435,10 @@ bool xlsx_export_widgets::render() {
         time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
   }
   ImGui::SameLine();
-  dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
-    gen_user();
-    for (auto &&l_u : p_i->combox_user_id.user_list) {
-      if (dear::Selectable(l_u.first.c_str())) {
-        p_i->combox_user_id()            = l_u.first;
-        p_i->combox_user_id.current_user = l_u.second;
-      }
-    }
-  };
+
+  if (auto &&[l_r, l_user] = p_i->user_select.render(g_reg()); l_r) {
+    p_i->current_user = l_user;
+  }
 
   ImGui::PopItemWidth();
   ImGui::SameLine();
@@ -700,25 +639,13 @@ void xlsx_export_widgets::filter_() {
                 return l_t <= l_end && l_t >= l_begin;
               }) |
               ranges::views::filter([&](const entt::handle &in_handle) -> bool {
-                if (p_i->combox_user_id.data == "all")
+                if (p_i->current_user) {
+                  return in_handle.get<assets_file>().user_attr() == p_i->current_user;
+                } else {
                   return in_handle.get<assets_file>().user_attr().all_of<user>();
-                else {
-                  auto l_user = p_i->combox_user_id.current_user;
-                  return in_handle.get<assets_file>().user_attr() == l_user;
                 }
               }) |
               ranges::to_vector;
-}
-void xlsx_export_widgets::gen_user() {
-  p_i->combox_user_id.user_list.clear();
-
-  auto l_v = g_reg()->view<database, user>();
-  for (auto &&[e, l_d, l_u] : l_v.each()) {
-    if (l_u.get_name().empty()) continue;
-    auto l_h = make_handle(e);
-    p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
-  }
-  p_i->combox_user_id.user_list.emplace("all", entt::handle{});
 }
 
 }  // namespace doodle::gui
