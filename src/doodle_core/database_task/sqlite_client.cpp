@@ -465,7 +465,7 @@ void file_translator::async_save_impl(
 
   boost::asio::post(
       g_thread(),
-      [this, l_exists, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection(), l_end_call]() mutable {
+      [this, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection(), l_end_call]() mutable {
         try {
           auto l_tx = sqlpp::start_transaction(*l_k_con);
           if (ptr->save_all) {
