@@ -4,8 +4,10 @@
 
 #include "assets_file_widgets.h"
 
+#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/assets.h"
+#include "doodle_core/metadata/assets_file.h"
 #include "doodle_core/metadata/episodes.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/time_point_wrap.h"
@@ -231,6 +233,15 @@ void assets_file_widgets::switch_rander() {
 void assets_file_widgets::init() {
   g_reg()->ctx().emplace<assets_file_widgets&>(*this);
   auto& l_sig = g_reg()->ctx().get<core_sig>();
+  auto l_view = g_reg()->view<assets_file>();
+
+  generate_lists(
+      l_view | ranges::views::transform([](const decltype(l_view)::entity_type& in_v) -> entt::handle {
+        return entt::handle{*g_reg(), in_v};
+      }) |
+      ranges::to_vector
+  );
+
   p_i->p_sc.emplace_back(l_sig.filter_handle.connect([this](const std::vector<entt::handle>& in) {
     p_i->handle_list = in;
     generate_lists(p_i->handle_list);
