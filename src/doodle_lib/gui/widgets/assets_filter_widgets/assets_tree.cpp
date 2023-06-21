@@ -5,6 +5,7 @@
 #include "assets_tree.h"
 
 #include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/assets_file.h"
@@ -14,6 +15,9 @@
 
 #include "doodle_app/gui/base/ref_base.h"
 #include <doodle_app/lib_warp/imgui_warp.h>
+
+#include "boost/asio/post.hpp"
+#include <boost/asio.hpp>
 
 #include "entt/entity/fwd.hpp"
 #include "imgui.h"
@@ -40,12 +44,21 @@ void assets_tree::build_tree(const entt::handle &in_handle_view, const tree_type
   }
 }
 
+void assets_tree::delete_node_(const tree_type_t::iterator_base &in_node) {
+  for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
+    it->handle.destroy();
+    if (it.number_of_children() != 0) {
+      delete_node_(it);
+    }
+  }
+}
+
 bool assets_tree::render() {
   edit_data = false;
   return render_child(tree_.begin());
 }
 
-void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
+void assets_tree::popen_menu(const tree_type_t::sibling_iterator &in) {
   ImGui::InputText(*input_data.input, &input_data.node_name);
   ImGui::SameLine();
 
@@ -91,6 +104,15 @@ void assets_tree::popen_menu(const tree_type_t::iterator_base &in) {
       }
       ImGui::CloseCurrentPopup();
     }
+  }
+  if (ImGui::Button(*delete_node)) {
+    boost::asio::post(g_io_context(), [this, in]() {
+      delete_node_(in);
+      tree_.erase_children(in);
+      tree_.erase(in);
+    });
+    DOODLE_LOG_INFO("重命名节点和子节点 {}", in->name.name);
+    ImGui::CloseCurrentPopup();
   }
 }
 

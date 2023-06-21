@@ -43,13 +43,17 @@ class assets_tree {
     std::string node_name{};
   } rename_data{};
 
+  gui_cache_name_id delete_node{"删除"};
+
   bool edit_data{};
 
   entt::handle current_select_handle;
   std::vector<entt::handle> filter_list_handles{};
   void build_tree(const entt::handle& in_handle_view, const tree_type_t::iterator& in_parent);
   bool render_child(const tree_type_t::iterator& in_node);
-  void popen_menu(const tree_type_t::iterator_base& in);
+  void popen_menu(const tree_type_t::sibling_iterator& in);
+
+  void delete_node_(const tree_type_t::iterator_base& in_node);
 
   void filter_list();
 
