@@ -100,7 +100,7 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
     const auto l_has_child = it.number_of_children() != 0;
     if (!l_has_child) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
-    const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), k_f};
+    const auto l_root_node = dear::TreeNodeEx{*it->name, k_f};
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
       ranges::for_each(tree_, [](assets_tree_node &in_node) { in_node.has_select = false; });
       it->has_select        = true;

@@ -19,7 +19,7 @@ namespace doodle::gui {
 class assets_tree {
   struct assets_tree_node : boost::less_than_comparable<assets_tree_node> {
    public:
-    std::string name;
+    gui_cache_name_id name;
     bool has_select{};
     entt::handle handle{};
     assets_tree_node() = default;
