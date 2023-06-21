@@ -204,6 +204,22 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     return FAppStyle::GetWidgetStyle<FTextBlockStyle>("SkeletonTree.NormalFont").Font;
   }
 
+  // DragBegin
+  ///  当拖动进入一个小部件时在拖放过程中调用
+  void OnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override{};
+  /// 当拖动离开小部件时在拖放过程中调用
+  void OnDragLeave(const FDragDropEvent& InDragDropEvent) override{};
+  /// 当鼠标被拖动到小部件上时，在拖放过程中调用
+  FReply OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override {
+    return FReply::Handled();
+  };
+  /// 当用户把东西放到小部件上时被调用 终止拖放
+  FReply OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override {
+    return FReply::Handled();
+  };
+  FReply OnDragDetected(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) { return FReply::Handled(); }
+  // DragEnd
+
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
   TWeakObjectPtr<UDoodleCreateCharacterConfig> Config_Data;
   FDoodleTreeEdit OnModifyWeights;
@@ -429,14 +445,26 @@ void SCreateCharacterTree::Delete_UiTreeNode() {
 
   if (!CurrentSelect)
     return;
-  if (!*CurrentSelect)
-    return;
+  if (!*CurrentSelect) return;
 
-  if (!L_Config->Delete_Ui_Node(CurrentSelect->Get_Index()))
-    return;
+  if (!L_Config->Delete_Ui_Node(CurrentSelect->Get_Index())) return;
 
   CreateUITree();
   this->RebuildList();
 }
+
+// void SCreateCharacterTree::OnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
+// }
+//
+// void SCreateCharacterTree::OnDragLeave(const FDragDropEvent& InDragDropEvent) {
+// }
+//
+// FReply SCreateCharacterTree::OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
+//   return FReply::Handled();
+// }
+//
+// FReply SCreateCharacterTree::OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
+//   return FReply::Handled();
+// }
 
 #undef LOCTEXT_NAMESPACE
