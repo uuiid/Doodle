@@ -32,6 +32,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 namespace doodle::gui {
 template <typename T>
 class filter {
@@ -195,6 +196,8 @@ class assets_filter_widget::impl {
 
   std::string title_name_;
   bool open{true};
+
+  std::vector<entt::handle> ass_tree_filter_list{};
 };
 
 assets_filter_widget::assets_filter_widget() : p_impl(std::make_unique<impl>()) {
@@ -209,6 +212,7 @@ void assets_filter_widget::init() {
   auto l_new                     = time_point_wrap{}.compose();
   p_impl->time_filter.begin_time = {l_new.year, l_new.month, l_new.day};
   p_impl->time_filter.end_time   = {l_new.year, l_new.month, l_new.day};
+  p_impl->ass_tree_filter_list   = p_impl->assets_tree_.get_filter_list_handles();
 }
 
 bool assets_filter_widget::render() {
@@ -250,23 +254,20 @@ bool assets_filter_widget::render() {
           )}};
       filter_list();
     }
+  }
 
-    //  if (auto l_menu = dear::PopupContextItem{p_impl->add_filter.data()}) {
-    //  }
-    //  if (auto l_child = dear::Child{"过滤器", ImVec2{0.f, footer_height_to_reserve}, false}) {
-    //  }
-
-    for (auto&& l_data : p_impl->filter_list) {
-      if (l_data.filter) {
-        if (ImGui::Button(*l_data.button_name)) {
-          l_data.filter = {};
-          filter_list();
-        }
+  for (auto&& l_data : p_impl->filter_list) {
+    if (l_data.filter) {
+      if (ImGui::Button(*l_data.button_name)) {
+        l_data.filter = {};
+        filter_list();
       }
     }
   }
-  if (p_impl->assets_tree_.render())
-    ;
+  if (p_impl->assets_tree_.render()) {
+    p_impl->ass_tree_filter_list = p_impl->assets_tree_.get_filter_list_handles();
+    filter_list();
+  }
 
   return p_impl->open;
 }
@@ -285,12 +286,8 @@ const std::string& assets_filter_widget::title() const { return p_impl->title_na
 void assets_filter_widget::filter_list() {
   std::vector<entt::handle> list{};
 
-  auto l_v = g_reg()->view<database, assets_file>(entt::exclude<project, project_config::base_config>);
   list =
-      l_v | ranges::views::transform([](const entt::entity& in) -> entt::handle {
-        return entt::handle{*g_reg(), in};
-      }) |
-      ranges::views::filter([&](const entt::handle& in) -> bool {
+      p_impl->ass_tree_filter_list | ranges::views::filter([&](const entt::handle& in) -> bool {
         return ranges::all_of(p_impl->filter_list, [&](const decltype(p_impl->filter_list)::value_type& in_f) -> bool {
           return !in_f.filter || in_f.filter(in);
         });
