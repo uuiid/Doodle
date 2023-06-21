@@ -15,6 +15,8 @@
 #include "entt/entity/fwd.hpp"
 #include "fmt/compile.h"
 #include "imgui_stdlib.h"
+#include "range/v3/action/push_back.hpp"
+#include "range/v3/action/push_front.hpp"
 #include <string>
 #include <utility>
 namespace doodle::gui::render {
@@ -34,6 +36,11 @@ void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
           }
       ) |
       ranges::to_vector;
+
+  if (user_null_user) {
+    user_list |= ranges::actions::push_back(std::make_pair("所有"s, entt::handle{}));
+    std::swap(user_list.front(), user_list.back());
+  }
 }
 void select_all_user_t::set_current_user(const std::string& in_current_user) { current_user = in_current_user; }
 void select_all_user_t::set_current_user(const entt::handle& in_current_user) {

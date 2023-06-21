@@ -16,11 +16,14 @@ namespace doodle::gui::render {
 
 class select_all_user_t {
   std::string current_user{};
+  bool user_null_user{};
 
   void refresh(const registry_ptr& in_reg_ptr);
 
  public:
   select_all_user_t() = default;
+  explicit select_all_user_t(bool in_use_null_user) : user_null_user(in_use_null_user) {}
+
   std::vector<std::pair<std::string, entt::handle>> user_list{};
   gui_cache_name_id user_id{"用户"s};
 
