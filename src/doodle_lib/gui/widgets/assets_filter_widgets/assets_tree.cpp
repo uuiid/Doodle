@@ -123,7 +123,7 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
       }
     }
     if (l_has_child && l_root_node) {
-      render_child(it);
+      edit_data |= render_child(it);
     }
   }
   return edit_data;
@@ -139,6 +139,12 @@ void assets_tree::init_tree() {
       build_tree(l_h, tree_.begin());
     }
   }
+  auto l_view = g_reg()->view<assets_file>();
+  filter_list_handles =
+      l_view | ranges::views::transform([](const decltype(l_view)::entity_type &in_value_type) -> entt::handle {
+        return {*g_reg(), in_value_type};
+      }) |
+      ranges::to_vector;
 }
 void assets_tree::filter_list() {
   auto l_view         = g_reg()->view<assets_file>().each();
