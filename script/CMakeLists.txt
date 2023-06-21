@@ -14,5 +14,11 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/SideFX_Labs/
         PATTERN "Intermediate" EXCLUDE
         )
 
-DOODLE_UE_PLUG(PLUG_JSON ${PROJECT_SOURCE_DIR}/script/uePlug/4.27/Plugins/Doodle/Doodle.uplugin)
-DOODLE_UE_PLUG(PLUG_JSON ${PROJECT_SOURCE_DIR}/script/uePlug/5.2/Plugins/Doodle/Doodle.uplugin)
+
+install(CODE "
+message(${CMAKE_MODULE_PATH})
+include(${PROJECT_SOURCE_DIR}/CMake/doodle_exe)
+DOODLE_UE_PLUG(PLUG_JSON ${CMAKE_INSTALL_PREFIX}/ue427_Plug/Doodle.uplugin)
+DOODLE_UE_PLUG(PLUG_JSON ${CMAKE_INSTALL_PREFIX}/ue52_Plug/Doodle.uplugin)
+"
+        COMPONENT ue4_plug)
