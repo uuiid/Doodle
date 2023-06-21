@@ -262,7 +262,6 @@ void gui_facet::init_windows() {
   auto& k_sig = g_reg()->ctx().emplace<core_sig>();
   k_sig.save.connect(2, [this]() {
     doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save(
-        doodle_lib::Get().ctx().get<database_info>().path_,
         [this](auto) { DOODLE_LOG_INFO("保存项目 {}", doodle_lib::Get().ctx().get<database_info>().path_); }
     );
   });

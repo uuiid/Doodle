@@ -30,9 +30,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   virtual void async_open_impl(
       const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
   );
-  virtual void async_save_impl(
-      const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
-  );
+  virtual void async_save_impl(const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call);
   virtual void async_import_impl(
       const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
   );
@@ -65,12 +63,12 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @param in_path 传入的项目文件路径
    */
   template <typename CompletionToken>
-  auto async_save(const FSys::path& in_path, CompletionToken&& token) ->
+  auto async_save(CompletionToken&& token) ->
       typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
-        [in_path, l_s = this->shared_from_this()](auto&& completion_handler) {
+        [l_s = this->shared_from_this()](auto&& completion_handler) {
           l_s->async_save_impl(
-              in_path, std::make_shared<call_error>(std::forward<decltype(completion_handler)>(completion_handler))
+              std::make_shared<call_error>(std::forward<decltype(completion_handler)>(completion_handler))
           );
         },
         token

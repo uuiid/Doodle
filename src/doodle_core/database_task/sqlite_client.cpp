@@ -427,13 +427,10 @@ void file_translator::async_open_impl(
   );
 }
 
-void file_translator::async_save_impl(
-    const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
-) {
+void file_translator::async_save_impl(const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call) {
   if (is_run) return;
-  is_run       = true;
+  is_run = true;
 
-  project_path = in_path;
   {
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("保存数据");
@@ -451,7 +448,7 @@ void file_translator::async_save_impl(
     }
     doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
     // 提前测试存在
-    if (FSys::exists(project_path)) {
+    if (ptr->save_all && FSys::exists(project_path)) {
       k_msg.message(fmt::format("{} 已经存在, 不保存", project_path));
       is_run = false;
       return;
@@ -498,15 +495,13 @@ void file_translator::async_import_impl(
 
   {
     doodle_lib::Get().ctx().get<database_info>().path_ =
-        project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
+        in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("导入数据");
     k_msg.set_state(k_msg.run);
-    g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
   }
 
   auto l_end_call = [this, in_call]() {
-    g_reg()->ctx().get<core_sig>().project_end_open();
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("完成导入数据");
     k_msg.set_state(k_msg.success);
@@ -516,9 +511,10 @@ void file_translator::async_import_impl(
 
   boost::asio::post(
       g_thread(),
-      [this, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const(), l_end_call]() mutable {
+      [this, in_path, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const(),
+       l_end_call]() mutable {
         database_n::select l_select{};
-        if (l_select.is_old(project_path, l_k_con)) {
+        if (l_select.is_old(in_path, l_k_con)) {
           g_reg()->ctx().get<status_info>().message = "旧版保存, 无法导入";
         }
         ptr->obs_save->import_project(ptr->registry_attr, l_k_con);
