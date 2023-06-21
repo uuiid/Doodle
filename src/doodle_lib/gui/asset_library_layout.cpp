@@ -4,6 +4,8 @@
 
 #include "asset_library_layout.h"
 
+#include "doodle_app/gui/base/base_window.h"
+
 #include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/menu_bar.h>
 #include <doodle_lib/gui/setting_windows.h>
@@ -21,6 +23,7 @@
 #include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include "widgets/all_user_view_widget.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -62,5 +65,6 @@ void asset_library_layout::set_show() {
   g_windows_manage().close_windows<xlsx_export_widgets>();
   g_windows_manage().close_windows<setting_windows>();
   g_windows_manage().close_windows<project_edit>();
+  g_windows_manage().close_windows<all_user_view_widget>();
 }
 }  // namespace doodle::gui

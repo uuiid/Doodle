@@ -23,6 +23,7 @@
 #include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include "widgets/all_user_view_widget.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 namespace doodle::gui {
@@ -63,6 +64,7 @@ void solving_fabric_layout::set_show() {
   g_windows_manage().close_windows<time_sequencer_widget>();
   g_windows_manage().close_windows<xlsx_export_widgets>();
   g_windows_manage().close_windows<setting_windows>();
+  g_windows_manage().close_windows<all_user_view_widget>();
 }
 
 }  // namespace doodle::gui

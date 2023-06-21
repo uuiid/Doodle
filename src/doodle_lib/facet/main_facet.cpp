@@ -38,6 +38,7 @@
 #include <boost/asio.hpp>
 
 #include "gui/solving_fabric_layout.h"
+#include "gui/widgets/all_user_view_widget.h"
 namespace doodle {
 main_facet::main_facet() : facet::gui_facet() {
   g_reg()->ctx().emplace<image_to_move>() = std::make_shared<detail::image_to_move>();
@@ -73,6 +74,7 @@ void main_facet::load_windows() {
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<time_sequencer_widget>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_file_widgets>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<all_user_view_widget>());
     g_windows_manage().create_windows_arg(
         windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
     );
