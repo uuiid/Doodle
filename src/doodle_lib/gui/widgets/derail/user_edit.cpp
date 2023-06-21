@@ -30,7 +30,7 @@ void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
             const auto& [l_e, l_user] = in_handle;
             entt::handle l_h{*in_reg_ptr, l_e};
             return std::make_pair(
-                fmt::format("{}(id:{})", l_user.get_name(), l_h.all_of<database>() ? l_h.get<database>().get_id() : 0),
+                fmt::format("{}(id:{})", l_user.get_name(), l_h.all_of<database>() ? l_h.get<database>().get_id() : -1),
                 entt::handle{*in_reg_ptr, l_e}
             );
           }
@@ -56,7 +56,8 @@ std::tuple<bool, entt::handle> select_all_user_t::render(const registry_ptr& in_
     refresh(in_reg_ptr);
     for (auto& i : user_list) {
       if (imgui::Selectable(i.first.data())) {
-        l_ret = {true, i.second};
+        l_ret        = {true, i.second};
+        current_user = i.first;
       }
     }
   }
