@@ -333,25 +333,28 @@ struct ViewportSideBar : public ScopeWrapper<ViewportSideBar, true> {
 struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
   bool use_dtor;
 
-  template <class... Args>
-  static bool find_flags(Args&&... in_args) {
-    auto tub = std::make_tuple(std::forward<Args>(in_args)...);
-    if constexpr (sizeof...(in_args) > 2) {
-      return std::get<1>(tub) & ImGuiTreeNodeFlags_NoTreePushOnOpen;
-    } else {
-      return false;
-    }
+  //  template <class... Args>
+  //  static bool find_flags(Args&&... in_args) {
+  //    auto tub = std::make_tuple(std::forward<Args>(in_args)...);
+  //    if constexpr (sizeof...(in_args) > 2) {
+  //      return std::get<1>(tub) & ImGuiTreeNodeFlags_NoTreePushOnOpen;
+  //    } else {
+  //      return false;
+  //    }
+  //  };
+  constexpr static bool find_flags(const char*) { return false; };
+  constexpr static bool find_flags(const char*, ImGuiTreeNodeFlags in_flags) {
+    return in_flags & ImGuiTreeNodeFlags_NoTreePushOnOpen;
   };
+
   template <class... Args>
   TreeNodeEx(Args&&... in_args) noexcept
-      : ScopeWrapper<TreeNodeEx>(::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)),
-        use_dtor(find_flags(std::forward<Args>(in_args)...)) {}
-  static void dtor() noexcept {};
-  ~TreeNodeEx() {
-    if (!ok_) return;
-
-    if (!use_dtor) ImGui::TreePop();
-  };
+      : ScopeWrapper<TreeNodeEx>(
+            /// 先测试 TreeNodeEx , 再测试 find_flags, 防止短路
+            find_flags(std::forward<Args>(in_args)...) ? (::ImGui::TreeNodeEx(std::forward<Args>(in_args)...), false)
+                                                       : ::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)
+        ) {}
+  static void dtor() noexcept { ImGui::TreePop(); };
 };
 
 struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
