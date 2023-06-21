@@ -360,7 +360,7 @@ class xlsx_export_widgets::impl {
 
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户
-  render::select_all_user_t user_select{};
+  render::select_all_user_t user_select{true};
   entt::handle current_user{};
 
   /// 过滤年份,月份
@@ -391,11 +391,10 @@ void xlsx_export_widgets::init() {
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) p_i->list = g_reg()->ctx().get<std::vector<entt::handle>>();
   p_i->con.emplace_back(g_reg()->ctx().get<core_sig>().select_handles.connect([this](const std::vector<entt::handle> &in
                                                                               ) { p_i->list = in; }));
-  p_i->export_path.path = FSys::temp_directory_path() / "test.xlsx";
-  p_i->export_path.stem = p_i->export_path.path.stem();
-  p_i->export_path.data = p_i->export_path.path.generic_string();
+  p_i->export_path.path                   = FSys::temp_directory_path() / "test.xlsx";
+  p_i->export_path.stem                   = p_i->export_path.path.stem();
+  p_i->export_path.data                   = p_i->export_path.path.generic_string();
 
-  gen_user();
   auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
   p_i->combox_month.cache()               = {l_y, l_m};
 }
@@ -639,11 +638,14 @@ void xlsx_export_widgets::filter_() {
                 return l_t <= l_end && l_t >= l_begin;
               }) |
               ranges::views::filter([&](const entt::handle &in_handle) -> bool {
+                bool l_r{};
                 if (p_i->current_user) {
-                  return in_handle.get<assets_file>().user_attr() == p_i->current_user;
+                  l_r = in_handle.get<assets_file>().user_attr() == p_i->current_user;
                 } else {
-                  return in_handle.get<assets_file>().user_attr().all_of<user>();
+                  auto l_user = in_handle.get<assets_file>().user_attr();
+                  l_r         = l_user.all_of<user>();
                 }
+                return l_r;
               }) |
               ranges::to_vector;
 }

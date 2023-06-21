@@ -86,7 +86,6 @@ class DOODLELIB_API xlsx_export_widgets {
   void export_xlsx();
 
   bool get_work_time();
-  void gen_user();
 
   void filter_();
 
@@ -102,36 +101,3 @@ class DOODLELIB_API xlsx_export_widgets {
 };
 
 }  // namespace doodle::gui
-
-namespace fmt {
-/**
- * 格式化xlsx line 行
- */
-template <>
-struct formatter<::doodle::gui::xlsx_export_widgets_ns::xlsx_line> : formatter<std::string> {
-  template <typename FormatContext>
-  auto format(const ::doodle::gui::xlsx_export_widgets_ns::xlsx_line& in_, FormatContext& ctx) const
-      -> decltype(ctx.out()) {
-    fmt::format_to(
-        ctx.out(),
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{}",
-        in_.organization_, in_.user_, in_.project_season_name_, in_.episodes_, in_.shot_, in_.start_time_,
-        in_.end_time_, in_.len_time_, in_.time_info_, in_.comment_info_, in_.file_path_, in_.name_attr_,
-        in_.cutoff_attr_
-    );
-    return ctx.out();
-  }
-};
-}  // namespace fmt
