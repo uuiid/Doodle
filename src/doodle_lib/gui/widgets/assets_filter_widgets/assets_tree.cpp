@@ -17,7 +17,9 @@
 #include "entt/entity/fwd.hpp"
 #include "imgui.h"
 #include "range/v3/algorithm/for_each.hpp"
+#include "range/v3/range/conversion.hpp"
 #include "range/v3/view/filter.hpp"
+#include "range/v3/view/transform.hpp"
 
 namespace doodle::gui {
 
@@ -101,8 +103,9 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
     const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), k_f};
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
       ranges::for_each(tree_, [](assets_tree_node &in_node) { in_node.has_select = false; });
-      it->has_select = true;
-      edit_data      = true;
+      it->has_select        = true;
+      edit_data             = true;
+      current_select_handle = it->handle;
       filter_list();
     }
     if (auto l_popen_menu = dear::PopupContextItem{}) {
@@ -137,5 +140,17 @@ void assets_tree::init_tree() {
     }
   }
 }
-void assets_tree::filter_list() {}
+void assets_tree::filter_list() {
+  auto l_view         = g_reg()->view<assets_file>().each();
+  filter_list_handles = l_view |
+                        ranges::views::filter([this](const decltype(l_view)::value_type &in_value_type) -> bool {
+                          auto &&[l_e, l_ass] = in_value_type;
+                          return l_ass.assets_attr() == current_select_handle;
+                        }) |
+                        ranges::views::transform([](const decltype(l_view)::value_type &in_value_type) -> entt::handle {
+                          auto &&[l_e, l_ass] = in_value_type;
+                          return {*g_reg(), l_e};
+                        }) |
+                        ranges::to_vector;
+}
 }  // namespace doodle::gui

@@ -9,9 +9,11 @@
 
 #include "boost/operators.hpp"
 
+#include "entt/entity/fwd.hpp"
 #include <string>
 #include <treehh/tree.hh>
 #include <utility>
+#include <vector>
 namespace doodle::gui {
 
 class assets_tree {
@@ -43,6 +45,8 @@ class assets_tree {
 
   bool edit_data{};
 
+  entt::handle current_select_handle;
+  std::vector<entt::handle> filter_list_handles{};
   void build_tree(const entt::handle& in_handle_view, const tree_type_t::iterator& in_parent);
   bool render_child(const tree_type_t::iterator& in_node);
   void popen_menu(const tree_type_t::iterator_base& in);
@@ -54,6 +58,8 @@ class assets_tree {
 
   void init_tree();
   bool render();
+
+  inline const std::vector<entt::handle>& get_filter_list_handles() const { return filter_list_handles; };
 };
 
 }  // namespace doodle::gui
