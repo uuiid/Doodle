@@ -17,6 +17,8 @@
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/lib_warp/icon_font_macro.h>
 
+#include "boost/signals2/connection.hpp"
+
 #include "assets_filter_widgets/assets_tree.h"
 #include "entt/entity/fwd.hpp"
 #include "fmt/compile.h"
@@ -198,10 +200,13 @@ class assets_filter_widget::impl {
   bool open{true};
 
   std::vector<entt::handle> ass_tree_filter_list{};
+  boost::signals2::scoped_connection connection{};
 };
 
 assets_filter_widget::assets_filter_widget() : p_impl(std::make_unique<impl>()) {
   p_impl->title_name_ = std::string{name};
+  auto& l_sig         = g_reg()->ctx().get<core_sig>();
+  p_impl->connection  = l_sig.project_end_open.connect([&]() { init(); });
   init();
 }
 assets_filter_widget::~assets_filter_widget() = default;

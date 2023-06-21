@@ -499,6 +499,7 @@ void file_translator::async_import_impl(
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("导入数据");
     k_msg.set_state(k_msg.run);
+    g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
   }
 
   auto l_end_call = [this, in_call]() {
@@ -506,6 +507,7 @@ void file_translator::async_import_impl(
     k_msg.set_name("完成导入数据");
     k_msg.set_state(k_msg.success);
     g_reg()->ctx().erase<process_message>();
+    g_reg()->ctx().get<core_sig>().project_end_open();
     is_run = false;
   };
 

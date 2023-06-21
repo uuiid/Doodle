@@ -99,7 +99,7 @@ class assets_file_widgets::impl {
     };
 
     void init(const entt::handle& in_h) {
-      if (handle_.any_of<assets_file, episodes, shot>()) {
+      if (handle_ && handle_.any_of<assets_file, episodes, shot>()) {
         /// @brief 渲染名称
         if (auto [l_ass, l_ep, l_shot] = handle_.try_get<assets_file, episodes, shot>(); l_ass || l_ep || l_shot) {
           if (l_ass) {
