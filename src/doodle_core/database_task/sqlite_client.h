@@ -12,6 +12,7 @@
 #include <boost/asio/thread_pool.hpp>
 
 #include <filesystem>
+#include <memory>
 #include <utility>
 namespace doodle::database_n {
 
@@ -19,20 +20,7 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file_translator> {
  private:
-  void open_begin();
-  bsys::error_code open();
-  void open_end();
-
-  void save_begin();
-  bsys::error_code save();
-  void save_end();
-
-  void import_begin();
-  bsys::error_code import_();
-  void import_end();
-
-  bool is_saving{};
-  bool is_opening{};
+  bool is_run{};
   class impl;
   std::unique_ptr<impl> ptr;
 
@@ -54,6 +42,18 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
 
   FSys::path project_path;
 
+  virtual void async_open_impl(
+      const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
+  );
+  virtual void async_save_impl(
+      const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
+  );
+  virtual void async_import_impl(
+      const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
+  );
+  using call_error     = std::function<void(bsys::error_code)>;
+  using call_error_ptr = std::shared_ptr<call_error>;
+
  public:
   file_translator();
   explicit file_translator(registry_ptr in_registry);
@@ -65,20 +65,11 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   template <typename CompletionToken>
   auto async_open(const FSys::path& in_path, CompletionToken&& token) ->
       typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
-    project_path = in_path;
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
-        [l_s = this->shared_from_this()](auto&& completion_handler) {
-          if (l_s->is_opening) return;
-          l_s->open_begin();
-
-          std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(), [l_s, call]() {
-            auto l_r = l_s->open();
-            boost::asio::post(g_io_context(), [call, l_r, l_s]() {
-              l_s->open_end();
-              call(l_r);
-            });
-          });
+        [in_path, l_s = this->shared_from_this()](auto&& completion_handler) {
+          l_s->async_open_impl(
+              in_path, std::make_shared<call_error>(std::forward<decltype(completion_handler)>(completion_handler))
+          );
         },
         token
     );
@@ -91,20 +82,11 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   template <typename CompletionToken>
   auto async_save(const FSys::path& in_path, CompletionToken&& token) ->
       typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
-    project_path = in_path;
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
-        [l_s = this->shared_from_this()](auto&& completion_handler) {
-          if (l_s->is_saving) return;
-          l_s->save_begin();
-
-          std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(), [l_s, call]() {
-            auto l_r = l_s->save();
-            boost::asio::post(g_io_context(), [call, l_r, l_s]() {
-              l_s->save_end();
-              call(l_r);
-            });
-          });
+        [in_path, l_s = this->shared_from_this()](auto&& completion_handler) {
+          l_s->async_save_impl(
+              in_path, std::make_shared<call_error>(std::forward<decltype(completion_handler)>(completion_handler))
+          );
         },
         token
     );
@@ -116,38 +98,17 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   template <typename CompletionToken>
   auto async_import(const FSys::path& in_path, CompletionToken&& token) ->
       typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
-    project_path = in_path;
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
-        [l_s = this->shared_from_this()](auto&& completion_handler) {
-          if (l_s->is_opening) return;
-          l_s->import_begin();
-
-          std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(), [l_s, call]() {
-            auto l_r = l_s->import_();
-            boost::asio::post(g_io_context(), [call, l_r, l_s]() {
-              l_s->import_end();
-              call(l_r);
-            });
-          });
+        [in_path, l_s = this->shared_from_this()](auto&& completion_handler) {
+          l_s->async_import_impl(
+              in_path, std::make_shared<call_error>(std::forward<decltype(completion_handler)>(completion_handler))
+          );
         },
         token
     );
   };
-  inline void save_(const FSys::path& in_path) {
-    if (is_saving) return;
-    project_path = in_path;
-    save_begin();
-    save();
-    save_end();
-  }
-  inline void open_(const FSys::path& in_path) {
-    if (is_opening) return;
-    project_path = in_path;
-    open_begin();
-    open();
-    open_end();
-  }
+  inline void save_(const FSys::path& in_path) { project_path = in_path; }
+  inline void open_(const FSys::path& in_path) { project_path = in_path; }
 
   virtual void new_file_scene(const FSys::path& in_path, const project& in_project);
 };

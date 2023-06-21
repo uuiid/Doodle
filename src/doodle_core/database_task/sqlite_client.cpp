@@ -36,6 +36,7 @@
 
 #include "core/core_help_impl.h"
 #include "core/file_sys.h"
+#include "core/global_function.h"
 #include "entt/entity/fwd.hpp"
 #include "entt/signal/sigh.hpp"
 #include "range/v3/action/push_back.hpp"
@@ -333,138 +334,12 @@ class file_translator::impl {
   bool save_all{};
 };
 
-void file_translator::open_begin() {
-  is_opening = true;
-  doodle_lib::Get().ctx().get<database_info>().path_ =
-      project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("加载数据");
-  k_msg.set_state(k_msg.run);
-  g_reg()->clear();
-  g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
-}
-bsys::error_code file_translator::open() {
-  auto l_r = open_impl();
-  return l_r;
-}
-
-void file_translator::open_end() {
-  g_reg()->ctx().get<core_sig>().project_end_open();
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("完成写入数据");
-  k_msg.set_state(k_msg.success);
-  g_reg()->ctx().erase<process_message>();
-  core_set::get_set().add_recent_project(project_path);
-  is_opening = false;
-}
-
-void file_translator::save_begin() {
-  is_saving   = true;
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("保存数据");
-  k_msg.set_state(k_msg.run);
-}
-
-bsys::error_code file_translator::save() {
-  auto l_r = save_impl();
-  return l_r;
-}
-
-void file_translator::save_end() {
-  g_reg()->ctx().get<status_info>().need_save = false;
-  auto& k_msg                                 = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("完成写入数据");
-  k_msg.set_state(k_msg.success);
-  g_reg()->ctx().erase<process_message>();
-  core_set::get_set().add_recent_project(project_path);
-  is_saving = false;
-}
-void file_translator::import_begin() {
-  is_opening = true;
-  doodle_lib::Get().ctx().get<database_info>().path_ =
-      project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("导入数据");
-  k_msg.set_state(k_msg.run);
-  g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
-}
-
-void file_translator::import_end() {
-  g_reg()->ctx().get<core_sig>().project_end_open();
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("完成导入数据");
-  k_msg.set_state(k_msg.success);
-  g_reg()->ctx().erase<process_message>();
-  is_opening = false;
-}
-
 file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
 file_translator::file_translator(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
   ptr->registry_attr = std::move(in_registry);
   ptr->obs_save      = std::make_shared<obs_all>();
 }
-bsys::error_code file_translator::open_impl() {
-  ptr->registry_attr = g_reg();
-  ptr->save_all      = false;
-  {
-    database_n::select l_select{};
-    auto l_k_con = doodle_lib::Get().ctx().emplace<database_info>().get_connection_const();
-    if (!l_select.is_old(project_path, l_k_con)) {
-      ptr->obs_save->open(ptr->registry_attr, l_k_con);
-    } else {
-      ptr->obs_save->disconnect();
-      l_select(*ptr->registry_attr, project_path, l_k_con);
-      l_select.patch();
-      ptr->save_all = true;
-      /// 先监听
-      ptr->obs_save->connect(ptr->registry_attr);
-    }
-  }
 
-  ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
-
-  return {};
-}
-bsys::error_code file_translator::save_impl() {
-  if (!FSys::folder_is_save(project_path)) {
-    g_reg()->ctx().get<status_info>().message = fmt::format("{} 位置权限不够, 不保存", project_path);
-    return bsys::error_code{};
-  }
-
-  ptr->registry_attr = g_reg();
-
-  DOODLE_LOG_INFO("文件位置 {}", project_path);
-  if (auto l_p = project_path.parent_path(); !FSys::exists(l_p)) {
-    FSys::create_directories(l_p);
-  }
-
-  try {
-    // 提前测试存在
-    if (ptr->save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
-    doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
-    auto l_exists                                      = FSys::exists(project_path);
-    auto l_k_con                                       = doodle_lib::Get().ctx().get<database_info>().get_connection();
-    auto l_tx                                          = sqlpp::start_transaction(*l_k_con);
-    if (ptr->save_all) {
-      doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
-      if (!l_exists) {
-        g_reg()->ctx().get<status_info>().message = fmt::format("{} 转换旧版数据, 较慢", project_path);
-        ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
-        ptr->save_all = false;
-      } else {
-        g_reg()->ctx().get<status_info>().message = fmt::format("{} 已经存在, 不保存", project_path);
-      }
-    } else {
-      ptr->obs_save->save(ptr->registry_attr, l_k_con);
-    }
-    l_tx.commit();
-  } catch (const sqlpp::exception& in_error) {
-    DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
-    g_reg()->ctx().get<status_info>().message = "保存失败";
-  }
-
-  return {};
-}
 void file_translator::new_file_scene(const FSys::path& in_path, const project& in_project) {
   ptr->obs_save->disconnect();
   ptr->obs_save->clear();
@@ -497,17 +372,155 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
-bsys::error_code file_translator::import_() {
-  ptr->registry_attr = g_reg();
 
-  database_n::select l_select{};
-  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
-  if (l_select.is_old(project_path, l_k_con)) {
-    g_reg()->ctx().get<status_info>().message = "旧版保存, 无法导入";
+void file_translator::async_open_impl(
+    const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
+) {
+  if (is_run) return;
+  is_run       = true;
+
+  project_path = in_path;
+
+  {
+    doodle_lib::Get().ctx().get<database_info>().path_ =
+        project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
+    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    k_msg.set_name("加载数据");
+    k_msg.set_state(k_msg.run);
+    g_reg()->clear();
+    g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
+    ptr->registry_attr = g_reg();
   }
 
-  ptr->obs_save->import_project(ptr->registry_attr, l_k_con);
-  return {};
+  auto l_end_call = [this, in_call]() {
+    ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
+    g_reg()->ctx().get<core_sig>().project_end_open();
+    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    k_msg.set_name("完成写入数据");
+    k_msg.set_state(k_msg.success);
+    g_reg()->ctx().erase<process_message>();
+    core_set::get_set().add_recent_project(project_path);
+    (*in_call)({});
+  };
+
+  boost::asio::post(
+      g_thread(),
+      [this, l_k_con = doodle_lib::Get().ctx().emplace<database_info>().get_connection_const(), l_end_call]() mutable {
+        ptr->save_all = false;
+        database_n::select l_select{};
+
+        if (!l_select.is_old(project_path, l_k_con)) {
+          ptr->obs_save->open(ptr->registry_attr, l_k_con);
+        } else {
+          ptr->obs_save->disconnect();
+          l_select(*ptr->registry_attr, project_path, l_k_con);
+          l_select.patch();
+          ptr->save_all = true;
+          /// 先监听
+          ptr->obs_save->connect(ptr->registry_attr);
+        }
+
+        boost::asio::post(g_io_context(), l_end_call);
+      }
+  );
 }
+
+void file_translator::async_save_impl(
+    const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
+) {
+  if (is_run) return;
+  is_run       = true;
+
+  project_path = in_path;
+  {
+    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    k_msg.set_name("保存数据");
+    k_msg.set_state(k_msg.run);
+    if (!FSys::folder_is_save(project_path)) {
+      k_msg.message(fmt::format("{} 位置权限不够, 不保存", project_path));
+      return;
+    }
+    ptr->registry_attr = g_reg();
+    if (ptr->save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
+    DOODLE_LOG_INFO("文件位置 {}", project_path);
+    if (auto l_p = project_path.parent_path(); !FSys::exists(l_p)) {
+      FSys::create_directories(l_p);
+    }
+    doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
+    // 提前测试存在
+    if (FSys::exists(project_path)) {
+      k_msg.message(fmt::format("{} 已经存在, 不保存", project_path));
+      return;
+    }
+  }
+
+  auto l_end_call = [this, in_call]() {
+    g_reg()->ctx().get<status_info>().need_save = false;
+    auto& k_msg                                 = g_reg()->ctx().emplace<process_message>();
+    k_msg.set_name("完成写入数据");
+    k_msg.set_state(k_msg.success);
+    g_reg()->ctx().erase<process_message>();
+    core_set::get_set().add_recent_project(project_path);
+  };
+
+  boost::asio::post(
+      g_thread(),
+      [this, l_exists, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection(), l_end_call]() mutable {
+        try {
+          auto l_tx = sqlpp::start_transaction(*l_k_con);
+          if (ptr->save_all) {
+            g_reg()->ctx().get<status_info>().message = fmt::format("{} 转换旧版数据, 较慢", project_path);
+            ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
+            ptr->save_all = false;
+          } else {
+            ptr->obs_save->save(ptr->registry_attr, l_k_con);
+          }
+          l_tx.commit();
+        } catch (const sqlpp::exception& in_error) {
+          DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
+          g_reg()->ctx().get<status_info>().message = "保存失败";
+        }
+        boost::asio::post(g_io_context(), l_end_call);
+      }
+  );
+}
+
+void file_translator::async_import_impl(
+    const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
+) {
+  if (is_run) return;
+  is_run = true;
+
+  {
+    doodle_lib::Get().ctx().get<database_info>().path_ =
+        project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
+    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    k_msg.set_name("导入数据");
+    k_msg.set_state(k_msg.run);
+    g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
+  }
+
+  auto l_end_call = [this, in_call]() {
+    g_reg()->ctx().get<core_sig>().project_end_open();
+    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    k_msg.set_name("完成导入数据");
+    k_msg.set_state(k_msg.success);
+    g_reg()->ctx().erase<process_message>();
+  };
+
+  boost::asio::post(
+      g_thread(),
+      [this, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const(), l_end_call]() mutable {
+        database_n::select l_select{};
+        if (l_select.is_old(project_path, l_k_con)) {
+          g_reg()->ctx().get<status_info>().message = "旧版保存, 无法导入";
+        }
+        ptr->obs_save->import_project(ptr->registry_attr, l_k_con);
+
+        boost::asio::post(g_io_context(), l_end_call);
+      }
+  );
+}
+
 file_translator::~file_translator() = default;
 }  // namespace doodle::database_n
