@@ -67,6 +67,20 @@ void main_menu_bar::menu_file() {
 
     );
   }
+  if (ImGui::MenuItem("导入项目")) {
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}
+            .create<file_dialog>(file_dialog::dialog_args{}.async_read([](const FSys::path &in) mutable {
+              doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_import(in, [in](auto) {
+                DOODLE_LOG_INFO("打开项目 {}", in);
+              });
+            }))
+            .set_title("打开项目")
+            .set_render_type<dear::Popup>()
+
+    );
+  }
+
   dear::Menu{"最近的项目"} && []() {
     auto &k_list = core_set::get_set().project_root;
     for (int l_i = 0; l_i < k_list.size(); ++l_i) {
