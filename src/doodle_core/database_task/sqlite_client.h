@@ -25,21 +25,6 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   std::unique_ptr<impl> ptr;
 
  protected:
-  /**
-   * @brief  文件加载(@b 非主线程) 可以阻塞,
-   * @param in_path 传入的保存路径
-   * @return 错误代码(异步)
-   */
-  virtual bsys::error_code open_impl();
-  /**
-   * @brief 文件保存(@b 非主线程) 可以阻塞,
-   * @param in_path 传入的需要保存的路径
-   * @return 错误代码(异步)
-   */
-  virtual bsys::error_code save_impl();
-
-  enum class state : std::uint8_t { init, end };
-
   FSys::path project_path;
 
   virtual void async_open_impl(

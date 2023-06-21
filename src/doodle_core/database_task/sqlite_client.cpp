@@ -44,6 +44,7 @@
 #include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/view/filter.hpp"
 #include "range/v3/view/map.hpp"
+#include <atomic>
 #include <core/core_set.h>
 #include <core/status_info.h>
 #include <database_task/select.h>
@@ -331,7 +332,7 @@ class file_translator::impl {
  public:
   registry_ptr registry_attr;
   std::shared_ptr<obs_all> obs_save;
-  bool save_all{};
+  std::atomic_bool save_all{};
 };
 
 file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
