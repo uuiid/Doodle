@@ -402,6 +402,7 @@ void file_translator::async_open_impl(
     g_reg()->ctx().erase<process_message>();
     core_set::get_set().add_recent_project(project_path);
     (*in_call)({});
+    is_run = false;
   };
 
   boost::asio::post(
@@ -439,6 +440,7 @@ void file_translator::async_save_impl(
     k_msg.set_state(k_msg.run);
     if (!FSys::folder_is_save(project_path)) {
       k_msg.message(fmt::format("{} 位置权限不够, 不保存", project_path));
+      is_run = false;
       return;
     }
     ptr->registry_attr = g_reg();
@@ -451,6 +453,7 @@ void file_translator::async_save_impl(
     // 提前测试存在
     if (FSys::exists(project_path)) {
       k_msg.message(fmt::format("{} 已经存在, 不保存", project_path));
+      is_run = false;
       return;
     }
   }
@@ -462,6 +465,7 @@ void file_translator::async_save_impl(
     k_msg.set_state(k_msg.success);
     g_reg()->ctx().erase<process_message>();
     core_set::get_set().add_recent_project(project_path);
+    is_run = false;
   };
 
   boost::asio::post(
@@ -507,6 +511,7 @@ void file_translator::async_import_impl(
     k_msg.set_name("完成导入数据");
     k_msg.set_state(k_msg.success);
     g_reg()->ctx().erase<process_message>();
+    is_run = false;
   };
 
   boost::asio::post(
