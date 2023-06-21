@@ -21,21 +21,19 @@ namespace doodle::gui::render {
 
 void select_all_user_t::refresh(const registry_ptr& in_reg_ptr) {
   auto l_list = in_reg_ptr->view<user>().each();
-  user_list   = l_list |
-              ranges::views::transform(
-                  [&](const decltype(l_list)::value_type& in_handle) -> std::pair<std::string, entt::handle> {
-                    const auto& [l_e, l_user] = in_handle;
-                    entt::handle l_h{*in_reg_ptr, l_e};
-                    return std::make_pair(
-                        fmt::format(
-                            "{}(id:{})", l_user.get_name(),
-                            l_h.all_of<database>() ? l_h.get<database>().uuid() : boost::uuids::uuid{}
-                        ),
-                        entt::handle{*in_reg_ptr, l_e}
-                    );
-                  }
-              ) |
-              ranges::to_vector;
+  user_list =
+      l_list |
+      ranges::views::transform(
+          [&](const decltype(l_list)::value_type& in_handle) -> std::pair<std::string, entt::handle> {
+            const auto& [l_e, l_user] = in_handle;
+            entt::handle l_h{*in_reg_ptr, l_e};
+            return std::make_pair(
+                fmt::format("{}(id:{})", l_user.get_name(), l_h.all_of<database>() ? l_h.get<database>().get_id() : 0),
+                entt::handle{*in_reg_ptr, l_e}
+            );
+          }
+      ) |
+      ranges::to_vector;
 }
 void select_all_user_t::set_current_user(const std::string& in_current_user) { current_user = in_current_user; }
 void select_all_user_t::set_current_user(const entt::handle& in_current_user) {
