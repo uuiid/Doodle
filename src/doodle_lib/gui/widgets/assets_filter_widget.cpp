@@ -272,16 +272,6 @@ bool assets_filter_widget::render() {
   return p_impl->open;
 }
 
-void assets_filter_widget::refresh_(bool force) {
-  //  p_impl->p_filters =
-  //      p_impl->p_filter_factorys |
-  //      ranges::views::filter([](const impl::factory_chick& in) -> bool { return in.p_factory.select; }) |
-  //      ranges::views::transform([](const impl::factory_chick& in) -> std::unique_ptr<gui::filter_base> {
-  //        return in.p_factory.data->make_filter();
-  //      }) |
-  //      ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in) -> bool { return (bool)in; }) |
-  //      ranges::to_vector;
-}
 const std::string& assets_filter_widget::title() const { return p_impl->title_name_; }
 void assets_filter_widget::filter_list() {
   std::vector<entt::handle> list{};

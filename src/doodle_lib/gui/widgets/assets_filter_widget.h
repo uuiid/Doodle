@@ -23,7 +23,6 @@ class DOODLELIB_API assets_filter_widget {
   class impl;
   std::unique_ptr<impl> p_impl;
 
-  void refresh_(bool force);
   void filter_list();
 
  public:
