@@ -350,7 +350,6 @@ struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
   template <class... Args>
   TreeNodeEx(Args&&... in_args) noexcept
       : ScopeWrapper<TreeNodeEx>(
-            /// 先测试 TreeNodeEx , 再测试 find_flags, 防止短路
             find_flags(std::forward<Args>(in_args)...) ? (::ImGui::TreeNodeEx(std::forward<Args>(in_args)...), false)
                                                        : ::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)
         ) {}

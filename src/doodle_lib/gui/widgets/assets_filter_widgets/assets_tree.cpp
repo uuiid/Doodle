@@ -96,13 +96,14 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
     ImGuiTreeNodeFlags k_f{assets_tree_node_base_flags};
     if (it->has_select) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
     const auto l_has_child = it.number_of_children() != 0;
-    if (!l_has_child) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
+    if (!l_has_child) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
     const auto l_root_node = dear::TreeNodeEx{it->name.c_str(), k_f};
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
       ranges::for_each(tree_, [](assets_tree_node &in_node) { in_node.has_select = false; });
       it->has_select = true;
       edit_data      = true;
+      filter_list();
     }
     if (auto l_popen_menu = dear::PopupContextItem{}) {
       popen_menu(it);
@@ -136,4 +137,5 @@ void assets_tree::init_tree() {
     }
   }
 }
+void assets_tree::filter_list() {}
 }  // namespace doodle::gui

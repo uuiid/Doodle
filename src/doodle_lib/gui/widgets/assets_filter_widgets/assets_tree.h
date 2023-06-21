@@ -47,6 +47,8 @@ class assets_tree {
   bool render_child(const tree_type_t::iterator& in_node);
   void popen_menu(const tree_type_t::iterator_base& in);
 
+  void filter_list();
+
  public:
   assets_tree() = default;
 
