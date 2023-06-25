@@ -85,17 +85,15 @@ void authorization::load_authorization_data(std::istream& in_path) {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
     l_decryption.SetKeyWithIV(
         doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
-        CryptoPP::AES::BLOCKSIZE
+        doodle_config::cryptopp_iv.size()
     );
 
     CryptoPP::FileSource l_file{
         in_path, true,
         new CryptoPP::HexDecoder{new CryptoPP::AuthenticatedDecryptionFilter{
             l_decryption, new CryptoPP::StringSink{decryptedtext},
-            CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
-                CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
-            doodle_config::cryptopp_iv.size()}}};
-    l_file.Flush(true);
+            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size}}};
+    //    l_file.Flush(true);
   }
   *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
 }
@@ -115,7 +113,7 @@ authorization::authorization() : p_i(std::make_unique<impl>()) {
 
   if (is_build_near()) {
     DOODLE_LOG_INFO("近期构建不检查授权内容");
-    //    return;
+    return;
   }
 
   if (FSys::exists(l_p)) {
@@ -179,13 +177,13 @@ void authorization::generate_token(const FSys::path& in_path) {
     CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
     aes_Encryption.SetKeyWithIV(
         doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
-        CryptoPP::AES::BLOCKSIZE
+        doodle_config::cryptopp_iv.size()
     );
     CryptoPP::StringSource l_string_source{
         out_json.dump(), true,
         new CryptoPP::AuthenticatedEncryptionFilter{
             aes_Encryption, new CryptoPP::HexEncoder{new CryptoPP::FileSink{l_f_s}}, false,
-            doodle_config::cryptopp_iv.size()}};
+            doodle_config::cryptopp_tag_size}};
   }
 }
 void authorization::save(const FSys::path& in_path) const {
