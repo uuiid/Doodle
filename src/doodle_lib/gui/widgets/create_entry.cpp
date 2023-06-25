@@ -114,7 +114,7 @@ void create_entry::render_project_open_files() {
   ImGui::Dummy(l_text_size);
 
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + l_text_size.y);
-  //  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x / 2);
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
   if (ImGui::Button("打开")) {
     ImGui::CloseCurrentPopup();
     doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path, [l_prj_path](auto) {
@@ -122,11 +122,14 @@ void create_entry::render_project_open_files() {
     });
   }
   ImGui::SameLine();
-  ImGui::Dummy(l_main_text_size);
+  ImGui::Dummy({l_main_text_size.x - l_text_size.x / 2, l_text_size.y});
   ImGui::SameLine();
   if (ImGui::Button("取消")) {
     ImGui::CloseCurrentPopup();
   }
+  ImGui::SameLine();
+  ImGui::Dummy({l_text_size.x / 2, l_text_size.y});
+  ImGui::Dummy(l_main_text_size);
 }
 void create_entry::render_project_import_files() {
   auto l_show_str  = fmt::format("打开库文件 {}", fmt::join(args_->paths_, "\n"));
