@@ -138,13 +138,16 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
 }
 
 void drop_manager::render() {
-  if (begin_drop_)
-    dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
+  if (begin_drop_) {
+    if (auto l_drop = dear::DragDropSource{ImGuiDragDropFlags_SourceExtern}) {
       ImGui::SetDragDropPayload(
           doodle::doodle_config::drop_imgui_id.data(), drop_files.get(), sizeof(std::vector<FSys::path>)
       );
-      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(*drop_files, "\n"))); };
-    };
+      if (auto l_tip = dear::Tooltip{}) {
+        dear::Text(fmt::format("{}", fmt::join(*drop_files, "\n")));
+      }
+    }
+  }
 }
 
 ole_guard::ole_guard() {
