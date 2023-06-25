@@ -11,6 +11,7 @@ class DOODLE_APP_API authorization {
   std::unique_ptr<impl> p_i;
 
   void load_authorization_data(const std::string& in_str);
+  void load_authorization_data(std::istream& in_apth);
 
   bool is_build_near();
 

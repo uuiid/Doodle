@@ -8,6 +8,7 @@
 #include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/logger/logger.h>
 
+#include "cryptopp/files.h"
 #include <cryptopp/aes.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/gcm.h>
@@ -48,17 +49,17 @@ void authorization::load_authorization_data(const std::string& in_data) {
         CryptoPP::AES::BLOCKSIZE
     );
 
-    const std::string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_tag_size);
-    const std::string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_tag_size);
+    const std::string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_iv.size());
+    const std::string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_iv.size());
 
     DOODLE_CHICK(ciphertext.size() == enc.size() + mac.size(), doodle_error{"授权码解码失误"});
-    DOODLE_CHICK(doodle_config::cryptopp_tag_size == mac.size(), doodle_error{"授权码解码失误"});
+    DOODLE_CHICK(doodle_config::cryptopp_iv.size() == mac.size(), doodle_error{"授权码解码失误"});
 
     CryptoPP::AuthenticatedDecryptionFilter df{
-        l_decryption, new CryptoPP::StringSink(decryptedtext),
+        l_decryption, new CryptoPP::StringSink{decryptedtext},
         CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
             CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
-        doodle_config::cryptopp_tag_size};
+        doodle_config::cryptopp_iv.size()};
 
     df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)mac.data(), mac.size());
     df.ChannelPut(
@@ -72,6 +73,30 @@ void authorization::load_authorization_data(const std::string& in_data) {
   }
   *p_i                 = nlohmann::json::parse(decryptedtext).get<impl>();
   p_i->ciphertext_data = std::move(ciphertext);
+}
+
+void authorization::load_authorization_data(std::istream& in_path) {
+  DOODLE_LOG_INFO("开始检查授权文件内容");
+
+  std::string decryptedtext{};
+
+  {
+    CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
+    l_decryption.SetKeyWithIV(
+        doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
+        CryptoPP::AES::BLOCKSIZE
+    );
+
+    CryptoPP::FileSource l_file{
+        in_path, true,
+        new CryptoPP::AuthenticatedDecryptionFilter{
+            l_decryption, new CryptoPP::StringSink{decryptedtext},
+            CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
+                CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
+            doodle_config::cryptopp_iv.size()}};
+    l_file.Flush(true);
+  }
+  *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
 }
 
 authorization::authorization(const std::string& in_data) : p_i(std::make_unique<impl>()) {
@@ -89,12 +114,13 @@ authorization::authorization() : p_i(std::make_unique<impl>()) {
 
   if (is_build_near()) {
     DOODLE_LOG_INFO("近期构建不检查授权内容");
-    return;
+    //    return;
   }
 
   if (FSys::exists(l_p)) {
     FSys::ifstream ifstream{l_p, std::ifstream::binary};
     std::string l_s{std::istream_iterator<char>{ifstream}, std::istream_iterator<char>{}};
+    //    load_authorization_data(ifstream);
     load_authorization_data(l_s);
   }
 }
@@ -116,11 +142,11 @@ void authorization::generate_token(const FSys::path& in_path) {
   {
     CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
     aes_Encryption.SetKeyWithIV(
-        doodle_config::cryptopp_key.data(), CryptoPP::AES::DEFAULT_KEYLENGTH, doodle_config::cryptopp_iv.data(),
+        doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
         CryptoPP::AES::BLOCKSIZE
     );
     CryptoPP::AuthenticatedEncryptionFilter l_authenticated_encryption_filter{
-        aes_Encryption, new CryptoPP::StringSink{out_data}, false, doodle_config::cryptopp_tag_size};
+        aes_Encryption, new CryptoPP::StringSink{out_data}, false, doodle_config::cryptopp_iv.size()};
 
     l_authenticated_encryption_filter.ChannelPut(
         CryptoPP::AAD_CHANNEL, (const CryptoPP::byte*)doodle_config::authorization_data.data(),
