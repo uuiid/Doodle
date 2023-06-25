@@ -1,14 +1,14 @@
 #include "CreateCharacterTree.h"
 
+#include "BoneSelectionWidget.h"  // 骨骼树
 #include "CharacterEditorViewport.h"
-#include "Engine/SkeletalMeshSocket.h"              // 骨骼 Socket
-#include "Widgets/Input/SSlider.h"                  // 滑动条
-#include "SScrubControlPanel.h"                     // 时间控制
-#include "Framework/Docking/TabManager.h"           // 选项卡布局
-#include "BoneSelectionWidget.h"                    // 骨骼树
-#include "Widgets/Text/SInlineEditableTextBlock.h"  // 内联编辑小部件
-
 #include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+#include "Engine/SkeletalMeshSocket.h"              // 骨骼 Socket
+#include "Framework/Docking/TabManager.h"           // 选项卡布局
+#include "Input/DragAndDrop.h"                      // 拖拽数据源
+#include "SScrubControlPanel.h"                     // 时间控制
+#include "Widgets/Input/SSlider.h"                  // 滑动条
+#include "Widgets/Text/SInlineEditableTextBlock.h"  // 内联编辑小部件
 
 #define LOCTEXT_NAMESPACE "SCreateCharacterConfigTreeItem"
 
@@ -37,15 +37,56 @@ void UCreateCharacterMianTreeItem::SetPlaybackRange(const TRange<FFrameNumber>& 
   }
 }
 
+class FSCreateCharacterBoneDragDropOp : public FDragDropOperation {
+ public:
+  DRAG_DROP_OPERATOR_TYPE(FSCreateCharacterBoneDragDropOp, FDragDropOperation)
+  FString BoneName;
+  SCreateCharacterTree::TreeVirwWeightItemType ItemData;
+  virtual TSharedPtr<SWidget> GetDefaultDecorator() const override {
+    // clang-format off
+		return SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("Graph.ConnectorFeedback.Border"))
+			.Content()
+			[		
+				SNew(SHorizontalBox)
+				//+SHorizontalBox::Slot()
+				//.AutoWidth()
+				//[
+				//	SNew(SImage)
+				//	.Image(this, &FSCreateCharacterBoneDragDropOp::GetIcon)
+				//]
+
+				+SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(STextBlock) 
+					.Text( this, &FSCreateCharacterBoneDragDropOp::GetHoverText )
+				]
+			];
+
+    // clang-format on
+  }
+
+  FText GetHoverText() const {
+    return FText::Format(NSLOCTEXT("BoneDragDropOp", "BoneHoverTextFmt", "Bone {0}"), FText::FromString(BoneName));
+  }
+
+  static TSharedRef<FSCreateCharacterBoneDragDropOp> New(
+      SCreateCharacterTree::TreeVirwWeightItemType In_ItemData, const FString& InBoneName
+  ) {
+    TSharedPtr<FSCreateCharacterBoneDragDropOp> L_Drop = MakeShared<FSCreateCharacterBoneDragDropOp>();
+    L_Drop->BoneName                                   = InBoneName;
+    L_Drop->ItemData                                   = In_ItemData;
+    L_Drop->Construct();
+    return L_Drop.ToSharedRef();
+  }
+};
+
 class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType> {
  public:
   using Super = SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType>;
 
-  SLATE_BEGIN_ARGS(SCreateCharacterConfigTreeItem)
-      : _ItemData(),
-        _InConfig(),
-        _OnEditItem(),
-        _OnModifyWeights() {}
+  SLATE_BEGIN_ARGS(SCreateCharacterConfigTreeItem) : _ItemData(), _InConfig(), _OnEditItem(), _OnModifyWeights() {}
 
   SLATE_ARGUMENT(SCreateCharacterTree::TreeVirwWeightItemType, ItemData)
   SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, InConfig)
@@ -59,8 +100,10 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     Config_Data     = Arg._InConfig;
     OnEditItem      = Arg._OnEditItem;
     OnModifyWeights = Arg._OnModifyWeights;
+    Super::FArguments L_Arg{};
+    L_Arg.OnDragDetected(this, &SCreateCharacterConfigTreeItem::My_OnDragDetected);
 
-    Super::Construct(Super::FArguments{}, OwnerTableView);
+    Super::Construct(L_Arg, OwnerTableView);
   }
 
   TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
@@ -217,7 +260,21 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   FReply OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override {
     return FReply::Handled();
   };
-  FReply OnDragDetected(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) { return FReply::Handled(); }
+  FReply My_OnDragDetected(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) {
+    // auto TablePtr = Table.Pin();
+    // if (TablePtr.IsValid() && MouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton)) {
+    //   auto Operation = TablePtr->GetOutlinerPtr().Pin()->CreateDragDropOperation(MouseEvent,
+    //   TablePtr->GetSelectedItems());
+
+    //  if (Operation.IsValid()) {
+    //    return FReply::Handled().BeginDragDrop(Operation.ToSharedRef());
+    //  }
+    //}
+
+    return FReply::Handled().BeginDragDrop(FSCreateCharacterBoneDragDropOp::New(ItemData, ItemData->Get().ShowUIName));
+
+    // return FReply::Unhandled();
+  }
   // DragEnd
 
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
@@ -393,6 +450,13 @@ void SCreateCharacterTree::CreateUITree() {
       L_Ptr->Set(i);
       L_Fun(L_Ptr, InConfig, L_Nodes.Childs);
     }
+    InParent->Childs.Sort([](TreeVirwWeightItemType In_L, TreeVirwWeightItemType In_R) -> bool {
+      if (*In_L && *In_R) {
+        return In_L->Get().Sort_Index < In_L->Get().Sort_Index;
+      } else {
+        return *In_L ? *In_L : *In_R;
+      }
+    });
   };
 
   CreateCharacterConfigTreeData.Empty(L_Config->ListConfigNode.Num());

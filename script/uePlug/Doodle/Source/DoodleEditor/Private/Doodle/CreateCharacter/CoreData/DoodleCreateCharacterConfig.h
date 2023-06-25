@@ -53,13 +53,13 @@ struct FDoodleCreateCharacterConfigUINode {
 
   UPROPERTY()
   float Value{};
+  UPROPERTY()
+  int32 Sort_Index{};
 
   inline bool operator==(const FDoodleCreateCharacterConfigUINode& In) const {
     return Tie(Parent, Childs, ShowUIName, Keys) == Tie(In.Parent, In.Childs, In.ShowUIName, In.Keys);
   }
-  inline bool operator!=(const FDoodleCreateCharacterConfigUINode& In) const {
-    return !(*this == In);
-  }
+  inline bool operator!=(const FDoodleCreateCharacterConfigUINode& In) const { return !(*this == In); }
 };
 
 UCLASS()
