@@ -431,6 +431,10 @@ void file_translator::async_open_impl(
 void file_translator::async_save_impl(const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call) {
   if (is_run) return;
   is_run = true;
+  if (project_path.empty()) {
+    is_run = false;
+    return;
+  }
 
   {
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -444,7 +448,7 @@ void file_translator::async_save_impl(const std::shared_ptr<std::function<void(b
     ptr->registry_attr = g_reg();
     if (ptr->save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
     DOODLE_LOG_INFO("文件位置 {}", project_path);
-    if (auto l_p = project_path.parent_path(); !FSys::exists(l_p)) {
+    if (auto l_p = project_path.parent_path(); !FSys::exists(l_p) && !l_p.empty()) {
       FSys::create_directories(l_p);
     }
     doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
