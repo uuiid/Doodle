@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 
 #include "entt/entity/fwd.hpp"
+#include "fmt/compile.h"
 #include "imgui.h"
 #include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/range/conversion.hpp"
@@ -143,8 +144,21 @@ bool assets_tree::render_child(const tree_type_t::iterator &in_node) {
             }),
             [&](entt::handle &in_h) { in_h.patch<assets_file>().assets_attr(it->handle); }
         );
+      } else if (const auto *l_drop_it = ImGui::AcceptDragDropPayload(doodle_config::drop_ass_tree_node.data());
+                 l_drop_it) {
+        auto *l_drop_it_ptr = reinterpret_cast<decltype(it) *>(l_drop_it->Data);
+        boost::asio::post(g_io_context(), [this, l_it_child = *l_drop_it_ptr, l_it_p = it]() {
+          move_node_(l_it_child, l_it_p);
+          DOODLE_LOG_INFO("添加子项目 {}", l_it_child->name.name);
+        });
       }
     }
+
+    if (auto l_drop_source = dear::DragDropSource{}) {
+      ImGui::SetDragDropPayload(doodle_config::drop_ass_tree_node.data(), &(it), sizeof(it));
+      dear::Text(it->name.name);
+    }
+
     if (l_has_child && l_root_node) {
       edit_data |= render_child(it);
     }
@@ -181,5 +195,16 @@ void assets_tree::filter_list() {
                           return {*g_reg(), l_e};
                         }) |
                         ranges::to_vector;
+}
+void assets_tree::move_node_(
+    const tree<assets_tree::assets_tree_node>::iterator &in_node,
+    const tree<assets_tree::assets_tree_node>::iterator &in_parent
+) {
+  auto l_it = tree_.append_child(in_parent);
+  tree_.move_ontop(l_it, in_node);
+  if (in_parent->handle && in_parent->handle.all_of<assets>()) {
+    auto &l_ass = in_parent->handle.get<assets>();
+    l_ass.add_child(in_node->handle);
+  }
 }
 }  // namespace doodle::gui

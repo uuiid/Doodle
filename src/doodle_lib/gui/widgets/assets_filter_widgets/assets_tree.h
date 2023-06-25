@@ -49,11 +49,14 @@ class assets_tree {
 
   entt::handle current_select_handle;
   std::vector<entt::handle> filter_list_handles{};
+
   void build_tree(const entt::handle& in_handle_view, const tree_type_t::iterator& in_parent);
   bool render_child(const tree_type_t::iterator& in_node);
   void popen_menu(const tree_type_t::sibling_iterator& in);
 
   void delete_node_(const tree_type_t::iterator_base& in_node);
+
+  void move_node_(const tree_type_t::iterator& in_node, const tree_type_t::iterator& in_parent);
 
   void filter_list();
 
