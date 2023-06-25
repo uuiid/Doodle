@@ -408,7 +408,7 @@ void assets_file_widgets::render_by_icon() {
                              return l_icon.image.icon_size2d_.height;
                            }) |
                            ranges::to_vector;
-        l_size_list |= ranges::actions::sort(boost::lambda2::_1 < boost::lambda2::_2);
+        l_size_list |= ranges::actions::sort(boost::lambda2::_1 > boost::lambda2::_2);
         auto l_max_size = l_size_list.empty() ? 0.0f : l_size_list.front();
 
         if ((l_i * p_i->size_num + l_j) < p_i->lists.size()) {
