@@ -368,7 +368,8 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
 
   g_reg()->ctx().emplace<project>()                     = in_project;
   g_reg()->ctx().emplace<project_config::base_config>() = l_config;
-
+  project_path                                          = in_path;
+  ptr->save_all                                         = false;
   auto& l_s                                             = ptr->registry_attr->ctx().emplace<status_info>();
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
