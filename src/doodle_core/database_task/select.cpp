@@ -361,6 +361,11 @@ void patch_0001(const registry_ptr& in_ptr) {
 void select::patch() {
   patch_0001(p_i->local_reg);
   p_i->local_reg->ctx().emplace<project_config::base_config>().use_only_sim_cloth = true;
+
+  for (auto [e, ass_f] : p_i->local_reg->view<assets_file>().each()) {
+    auto l_user = ass_f.user_attr();
+    l_user.get_or_emplace<database>();
+  }
 }
 
 }  // namespace doodle::database_n
