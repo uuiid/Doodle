@@ -34,6 +34,7 @@
 #include "boost/filesystem/path.hpp"
 #include <boost/asio.hpp>
 
+#include "configure/static_value.h"
 #include "core/core_help_impl.h"
 #include "core/file_sys.h"
 #include "core/global_function.h"
@@ -521,7 +522,13 @@ void file_translator::async_import_impl(
     g_reg()->ctx().get<core_sig>().project_end_open();
     is_run = false;
   };
-
+  boost::asio::post(
+      g_thread(),
+      [l_image  = in_path.parent_path() / doodle_config::image_folder_name,
+       l_target = project_path.parent_path() / doodle_config::image_folder_name]() mutable {
+        FSys::copy(l_image, l_target, FSys::copy_options::recursive | FSys::copy_options::overwrite_existing);
+      }
+  );
   boost::asio::post(
       g_thread(),
       [this, in_path, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const(), l_end_call,
