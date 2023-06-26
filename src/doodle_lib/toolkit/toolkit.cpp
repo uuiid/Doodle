@@ -119,7 +119,7 @@ bool toolkit::deleteUeCache() {
 
   //  FSys::remove_all(path);
 
-  for (FSys::directory_iterator it{path}; it != FSys::directory_iterator(); it++) {
+  for (FSys::recursive_directory_iterator it{path}; it != FSys::recursive_directory_iterator{}; it++) {
     DOODLE_LOG_INFO(fmt::format("delete : {}", it->path()));
     if (it->is_regular_file()) FSys::remove(*it);
   }
