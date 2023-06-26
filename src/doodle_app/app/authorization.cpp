@@ -130,44 +130,6 @@ void authorization::generate_token(const FSys::path& in_path) {
   impl l_impl{};
   l_impl.l_time           = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
   nlohmann::json out_json = l_impl;
-#if 0
-  /**
-   * @brief 加密后输出的数据
-   */
-  std::string out_data{};
-  /**
-   * @brief 需要加密的json数据
-   */
-  std::string in_data{out_json.dump()};
-  {
-    CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
-    aes_Encryption.SetKeyWithIV(
-        doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
-        CryptoPP::AES::BLOCKSIZE
-    );
-    CryptoPP::AuthenticatedEncryptionFilter l_authenticated_encryption_filter{
-        aes_Encryption, new CryptoPP::StringSink{out_data}, false, doodle_config::cryptopp_iv.size()};
-
-    l_authenticated_encryption_filter.ChannelPut(
-        CryptoPP::AAD_CHANNEL, (const CryptoPP::byte*)doodle_config::authorization_data.data(),
-        doodle_config::authorization_data.size()
-    );
-    l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
-
-    l_authenticated_encryption_filter.ChannelPut(
-        CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)in_data.data(), in_data.size()
-    );
-    l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
-  }
-  if (exists(in_path)) create_directories(in_path);
-
-  {
-    FSys::ofstream l_f{
-        in_path / FSys::path{doodle_config::token_name.data()},
-        std::ofstream::binary | std::ofstream::out | std::ofstream::trunc};
-    l_f << out_data;
-  }
-#endif
 
   {
     FSys::ofstream l_f_s{
