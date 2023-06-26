@@ -124,7 +124,7 @@ void image_to_move::create_move(
       if (l_image.gamma_t) {
         cv::LUT(k_image, l_gamma, k_image);
       }
-      //      watermark_add_image(k_image, k_w);
+      watermark_add_image(k_image, k_w);
     }
     in_msg.progress_step(rational_int{1, k_size_len});
     video << k_image;
