@@ -8,6 +8,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 // #include <Windows.h>
+#include "maya_conv_str.h"
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
 //
@@ -156,6 +157,10 @@ void maya_file_io::set_workspace(const FSys::path& in_path) {
     std::string const l_s{fmt::format(R"(workspace -openWorkspace "{}")", l_path.generic_string())};
     maya_chick(MGlobal::executeCommand(d_str{l_s}));
   }
+}
+
+void maya_file_io::open_file(const FSys::path& in_file_path, MFileIO::ReferenceMode in_mode) {
+  maya_chick(MFileIO::open(conv::to_ms(in_file_path.generic_string()), nullptr, true, in_mode, true));
 }
 
 }  // namespace doodle::maya_plug

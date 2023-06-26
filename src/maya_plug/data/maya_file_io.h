@@ -22,11 +22,9 @@ class maya_file_io {
   static bool chick_channel();
   static bool replace_channel_date(const std::string& in_string);
   static bool save_file(const FSys::path& in_file_path);
-  inline static void open_file(
+  static void open_file(
       const FSys::path& in_file_path, MFileIO::ReferenceMode in_mode = MFileIO::ReferenceMode::kLoadDefault
-  ) {
-    DOODLE_MAYA_CHICK(MFileIO::open(d_str{in_file_path.generic_string()}, nullptr, true, in_mode, true));
-  };
+  );
 
   static bool upload_file(const FSys::path& in_source_path, const FSys::path& in_prefix);
 
