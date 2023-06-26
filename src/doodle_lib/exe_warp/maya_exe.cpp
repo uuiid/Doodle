@@ -266,32 +266,36 @@ FSys::path maya_exe::find_maya_path() const {
 }
 
 void maya_exe::install_maya_exe() {
-  //  try {
-  //    auto l_maya_path   = find_maya_path();
-  //
-  //    auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
-  //                         version::build_info::get().version_str;
-  //    const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
-  //
-  //    if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
-  //
-  //    if (!FSys::exists(l_target_path / "ShadeFragment")) {
-  //      FSys::copy(l_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment",
-  //      FSys::copy_options::recursive);
-  //    }
-  //    if (!FSys::exists(l_target_path / "ScriptFragment")) {
-  //      FSys::copy(
-  //          l_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment", FSys::copy_options::recursive
-  //      );
-  //    }
-  //    if (!FSys::exists(p_i->run_path)) {
-  //      FSys::copy(core_set::get_set().program_location() / l_run_name, l_target_path / l_run_name);
-  //    }
-  //  } catch (const winreg::RegException &in_err) {
-  //    DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
-  //  }
-  p_i->run_path =
-      core_set::get_set().program_location() / fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
+  try {
+    auto l_maya_path   = find_maya_path();
+
+    auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
+                         version::build_info::get().version_str;
+    const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
+
+    if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
+
+    if (!FSys::exists(l_target_path / "ShadeFragment")) {
+      FSys::copy(
+          l_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment",
+          FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
+      );
+    }
+    if (!FSys::exists(l_target_path / "ScriptFragment")) {
+      FSys::copy(
+          l_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment",
+          FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
+      );
+    }
+    if (!FSys::exists(p_i->run_path)) {
+      FSys::copy(core_set::get_set().program_location() / l_run_name, l_target_path / l_run_name);
+    }
+  } catch (const winreg::RegException &in_err) {
+    DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
+  }
+  //  p_i->run_path =
+  //      core_set::get_set().program_location() / fmt::format("doodle_maya_exe_{}.exe",
+  //      core_set::get_set().maya_version);
 }
 
 void maya_exe::notify_run() {
