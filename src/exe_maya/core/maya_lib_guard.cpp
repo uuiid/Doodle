@@ -20,8 +20,7 @@
 #include <maya/MLibrary.h>
 #include <memory>
 // #include <boost/align.hpp>
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   MLibrary::initialize(true, "maya_doodle");
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
@@ -47,5 +46,4 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   maya_chick(MFileIO::newFile(true));
 }
 maya_lib_guard::~maya_lib_guard() { MLibrary::cleanup(0, false); }
-}  // namespace maya_plug
 }  // namespace doodle
