@@ -87,6 +87,8 @@ class windows_manage {
 
   void set_layout(gui::windows_layout&& in_windows);
 
+  void* get_windwos(const std::string_view& in_info);
+
  public:
   explicit windows_manage(facet::gui_facet* in_facet);
 
@@ -100,6 +102,13 @@ class windows_manage {
   void show_windows(const std::string_view& in_info);
   void close_windows(const std::string_view& in_info);
   void open_windows(const std::string_view& in_info);
+  template <typename win_type>
+  std::enable_if_t<details::has_name_v<win_type>, win_type*> find_windows() {
+    if (has_windows(win_type::name)) {
+      return static_cast<win_type*>(get_windwos(win_type::name));
+    }
+    return nullptr;
+  };
 
   template <typename win_type>
   std::enable_if_t<details::has_name_v<win_type>> open_windows() {

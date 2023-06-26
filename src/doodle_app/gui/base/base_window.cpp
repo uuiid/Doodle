@@ -224,4 +224,12 @@ void windows_manage::gen_windows_list() {
     return std::get<0>(in_r).get() < std::get<0>(in_l).get();
   });
 }
+void* windows_manage::get_windwos(const std::string_view& in_info) {
+  if (auto l_it =
+          ranges::find_if(windows_list_, [=](const warp_w_ptr& in_arg) { return in_arg->args_.title_ == in_info; });
+      l_it != ranges::end(windows_list_)) {
+    return (*l_it)->win_render.data();
+  }
+  return nullptr;
+}
 }  // namespace doodle::gui

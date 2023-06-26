@@ -6,15 +6,20 @@
 
 #include "doodle_core/configure/static_value.h"
 #include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/metadata/assets.h"
 #include "doodle_core/metadata/assets_file.h"
 #include "doodle_core/metadata/metadata.h"
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
+#include "doodle_app/gui/base/base_window.h"
+#include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/core/image_loader.h>
 
+#include "assets_filter_widget.h"
 #include "entt/entity/fwd.hpp"
 #include "fmt/compile.h"
 #include "fmt/format.h"
@@ -74,29 +79,48 @@ void create_entry::switch_sources_file() {
     sources_file_type_ = sources_file_type::other_files;
 }
 void create_entry::render_other_files() {
-  args_->fun_(
-      args_->paths_ | ranges::views::transform([=](const FSys::path &in_path) -> entt::handle {
-        auto l_ent = entt::handle{*g_reg(), g_reg()->create()};
-        //        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
-        /// \brief 这里使用 lexically_proximate 防止相对路径失败
-        //        auto l_path     = in_path.lexically_proximate(l_prj_path);
-
-        season::analysis_static(l_ent, in_path);
-        episodes::analysis_static(l_ent, in_path);
-        shot::analysis_static(l_ent, in_path);
-        episodes::conjecture_season(l_ent);
-
-        if (FSys::exists(in_path)) {
-          l_ent.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
+  ImGui::Text("添加文件类别:");
+  for (auto &&i : g_reg()->ctx().get<project_config::base_config>().assets_list) {
+    if (ImGui::Selectable(i.c_str())) {
+      entt::handle l_ass{};
+      for (auto &&[e, ass] : g_reg()->view<assets>().each()) {
+        if (ass.p_path == i) {
+          l_ass = {*g_reg(), e};
         }
-        find_icon(l_ent, in_path);
-        l_ent.emplace<database>();
-        l_ent.emplace<assets_file>(in_path);
-        return l_ent;
-      }) |
-      ranges::to_vector
-  );
-  ImGui::CloseCurrentPopup();
+      }
+      if (!l_ass) {
+        l_ass = {*g_reg(), g_reg()->create()};
+        l_ass.emplace<database>();
+        l_ass.emplace<assets>(i);
+      }
+      if (auto l_f = g_windows_manage().find_windows<assets_filter_widget>()) {
+        l_f->init();
+      }
+      args_->fun_(
+          args_->paths_ | ranges::views::transform([=](const FSys::path &in_path) -> entt::handle {
+            auto l_ent = entt::handle{*g_reg(), g_reg()->create()};
+            //        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
+            /// \brief 这里使用 lexically_proximate 防止相对路径失败
+            //        auto l_path     = in_path.lexically_proximate(l_prj_path);
+
+            season::analysis_static(l_ent, in_path);
+            episodes::analysis_static(l_ent, in_path);
+            shot::analysis_static(l_ent, in_path);
+            episodes::conjecture_season(l_ent);
+
+            if (FSys::exists(in_path)) {
+              l_ent.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
+            }
+            find_icon(l_ent, in_path);
+            l_ent.emplace<database>();
+            l_ent.emplace<assets_file>(in_path).assets_attr(l_ass);
+            return l_ent;
+          }) |
+          ranges::to_vector
+      );
+      ImGui::CloseCurrentPopup();
+    }
+  }
 }
 void create_entry::render_project_open_files() {
   auto l_prj_path  = args_->paths_.front();
@@ -150,7 +174,7 @@ void create_entry::render_project_import_files() {
 
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + l_text_size.y);
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
-  if (ImGui::Button("导入")) {
+  if (ImGui::Button("导入(暂时无法使用)")) {
     ImGui::CloseCurrentPopup();
     //    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path, [l_prj_path](auto) {
     //      DOODLE_LOG_INFO("打开项目 {}", l_prj_path);
