@@ -140,6 +140,7 @@ void create_entry::render_project_open_files() {
 }
 void create_entry::render_project_import_files() {
   auto l_text_size = ImGui::CalcTextSize("打开");
+  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + l_text_size.y * 2);
   ImGui::Dummy(l_text_size);
   ImGui::SameLine();
   dear::Text(fmt::format("导入库文件:\n{}", fmt::join(args_->paths_, "\n")));
