@@ -19,11 +19,7 @@ FSys::path image_icon::image_root(const entt::handle& in_handle) const {
             DOODLE_CHICK(!result.empty(), doodle_error{"无效的根目录"});
           });
 
-  return result = in_handle
-                      .registry()
-                      ->ctx()
-                      .at<project>()
-                      .make_path(
+  return result = in_handle.registry()->ctx().get<project>().make_path(
                           std::string{doodle_config::image_folder_name}
                       );
 }
