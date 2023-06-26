@@ -30,6 +30,7 @@
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include "boost/asio/any_io_executor.hpp"
 #include "boost/core/ignore_unused.hpp"
 #include "boost/filesystem/path.hpp"
 #include <boost/asio.hpp>

@@ -21,6 +21,7 @@
 
 #include <doodle_lib/core/filesystem_extend.h>
 
+#include "boost/process/start_dir.hpp"
 #include "boost/signals2/connection.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
@@ -155,8 +156,9 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     // );
     child_attr = boost::process::child{
         g_io_context(),
-        boost::process::exe  = program_path.generic_string(),
-        boost::process::args = fmt::format("--{}={}", run_script_attr_key, l_path),
+        boost::process::exe       = program_path.generic_string(),
+        boost::process::start_dir = maya_program_path / "bin",
+        boost::process::args      = fmt::format("--{}={}", run_script_attr_key, l_path),
         boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
         boost::process::on_exit =
@@ -168,9 +170,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
               (*call_attr)(in_error_code);
             },
         boost::process::windows::hide,
-        l_eve
-
-    };
+        l_eve};
 
     read_out();
     read_err();

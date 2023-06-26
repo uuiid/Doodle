@@ -13,6 +13,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "exception/exception.h"
+#include "maya_conv_str.h"
 #include <maya/MDGModifier.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>
@@ -105,7 +106,7 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
       in_start.value(), in_end.value(), d_str{k_tran_node.fullPathName()}.str()
   );
   DOODLE_MAYA_CHICK(k_s);
-  k_s = MGlobal::executeCommand(d_str{k_comm});
+  k_s = MGlobal::executeCommand(conv::to_ms(k_comm));
   DOODLE_MAYA_CHICK(k_s);
   return true;
 }

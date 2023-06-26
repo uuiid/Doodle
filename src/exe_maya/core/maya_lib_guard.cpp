@@ -37,7 +37,7 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "Substance";)"));
 
   if (MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer()) {
-    if (auto l_f = renderer->getFragmentManager()) {
+    if (auto* l_f = renderer->getFragmentManager()) {
       l_f->addFragmentPath(maya_plug::conv::to_ms((p_path / "bin" / "ScriptFragment").generic_string()));
       l_f->addFragmentPath(maya_plug::conv::to_ms((p_path / "bin" / "ShadeFragment").generic_string()));
     }

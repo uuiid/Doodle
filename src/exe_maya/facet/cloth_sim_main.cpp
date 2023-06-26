@@ -181,4 +181,5 @@ void cloth_sim::export_fbx() {
     l_ex.export_sim(in_handle);
   });
 }
+
 }  // namespace doodle::maya_plug

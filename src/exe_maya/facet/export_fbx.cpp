@@ -12,6 +12,8 @@
 
 #include "doodle_lib/exe_warp/maya_exe.h"
 
+#include "boost/system/detail/error_code.hpp"
+
 #include "maya_plug/data/export_file_fbx.h"
 #include "maya_plug/maya_plug_fwd.h"
 
@@ -104,7 +106,9 @@ bool export_fbx_facet::post() {
 
   l_ret      = true;
 
-  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
+  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(
+      l_arg.project_, [](boost::system::error_code) {}
+  );
   doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));

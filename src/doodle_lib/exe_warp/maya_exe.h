@@ -131,14 +131,15 @@ class DOODLELIB_API maya_exe {
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
     auto l_msg_ref = in_handle.get_or_emplace<process_message>();
     l_msg_ref.set_name(in_arg.file_path.filename().generic_string());
-    in_arg.maya_path = find_maya_path();
+    auto l_arg      = in_arg;
+    l_arg.maya_path = find_maya_path();
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
-        [this, l_msg_ref, &in_arg, in_handle](auto &&in_completion_handler) {
+        [this, l_msg_ref, l_arg, in_handle](auto &&in_completion_handler) {
           nlohmann::json l_json{};
-          l_json = in_arg;
+          l_json = l_arg;
           auto l_fun =
               std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          this->queue_up(in_handle, Arg_t::k_name, l_json, l_fun, in_arg.file_path);
+          this->queue_up(in_handle, Arg_t::k_name, l_json, l_fun, l_arg.file_path);
         },
         in_completion
     );
