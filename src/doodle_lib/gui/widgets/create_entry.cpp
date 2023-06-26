@@ -100,15 +100,11 @@ void create_entry::render_other_files() {
 }
 void create_entry::render_project_open_files() {
   auto l_prj_path  = args_->paths_.front();
-  auto l_show_str  = fmt::format("打开库文件 {}", l_prj_path);
   auto l_text_size = ImGui::CalcTextSize("打开");
-  //  auto l_text_size = ImGui::GetTextLineHeightWithSpacing();
-  //  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + l_text_size.y * 2);
-  //  ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
   ImGui::Dummy(l_text_size);
   ImGui::SameLine();
-  dear::Text(l_show_str);
+  dear::Text(fmt::format("打开库文件 {}", l_prj_path));
   auto l_main_text_size = ImGui::GetItemRectSize();
   ImGui::SameLine();
   ImGui::Dummy(l_text_size);
@@ -122,8 +118,19 @@ void create_entry::render_project_open_files() {
     });
   }
   ImGui::SameLine();
-  ImGui::Dummy({l_main_text_size.x - l_text_size.x / 2, l_text_size.y});
-  ImGui::SameLine();
+
+  {
+    auto l_dummy_x = (l_main_text_size.x - l_text_size.x * 3 / 2) / 2;
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_dummy_x);
+    if (ImGui::Button("导入")) {
+      ImGui::CloseCurrentPopup();
+      doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_import(l_prj_path, [l_prj_path](auto) {
+        DOODLE_LOG_INFO("打开项目 {}", l_prj_path);
+      });
+    }
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_dummy_x);
+  }
   if (ImGui::Button("取消")) {
     ImGui::CloseCurrentPopup();
   }
@@ -132,30 +139,32 @@ void create_entry::render_project_open_files() {
   ImGui::Dummy(l_main_text_size);
 }
 void create_entry::render_project_import_files() {
-  auto l_show_str  = fmt::format("打开库文件 {}", fmt::join(args_->paths_, "\n"));
-  auto l_text_size = ImGui::CalcTextSize("打开库文件");
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
-  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + l_text_size.y * 2);
-  //  ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-  dear::Text(l_show_str);
+  auto l_text_size = ImGui::CalcTextSize("打开");
+  ImGui::Dummy(l_text_size);
+  ImGui::SameLine();
+  dear::Text(fmt::format("导入库文件:\n{}", fmt::join(args_->paths_, "\n")));
+  auto l_main_text_size = ImGui::GetItemRectSize();
   ImGui::SameLine();
   ImGui::Dummy(l_text_size);
 
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + l_text_size.y);
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x / 2);
-  if (ImGui::Button("打开")) {
-    //    ImGui::CloseCurrentPopup();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
+  if (ImGui::Button("导入")) {
+    ImGui::CloseCurrentPopup();
     //    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path, [l_prj_path](auto) {
     //      DOODLE_LOG_INFO("打开项目 {}", l_prj_path);
     //    });
   }
   ImGui::SameLine();
-  ImGui::Dummy({l_text_size.x, l_text_size.y});
-  ImGui::SameLine();
+
+  auto l_dummy_x = l_main_text_size.x - l_text_size.x * 2;
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_dummy_x);
+
   if (ImGui::Button("取消")) {
     ImGui::CloseCurrentPopup();
   }
-  ImGui::Dummy(l_text_size);
+  ImGui::SameLine();
+  ImGui::Dummy({l_text_size.x / 2, l_text_size.y});
   ImGui::Dummy(l_text_size);
 }
 
