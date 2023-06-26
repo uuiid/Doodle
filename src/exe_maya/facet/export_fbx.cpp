@@ -15,6 +15,7 @@
 #include "maya_plug/data/export_file_fbx.h"
 #include "maya_plug/maya_plug_fwd.h"
 
+#include <filesystem>
 #include <fmt/format.h>
 #include <memory>
 
@@ -124,6 +125,17 @@ bool export_fbx_facet::post() {
     DOODLE_LOG_INFO("安排排屏");
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
+  DOODLE_LOG_INFO("复制文件maya文件");
+  boost::asio::post(
+      l_s,
+      [l_source = l_arg.file_path,
+       l_target =
+           maya_plug::maya_file_io::work_path(FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()) /
+           l_arg.file_path.filename()]() {
+        FSys::copy_file(l_source, l_target, FSys::copy_options::overwrite_existing);
+      }
+  );
+
   return l_ret;
 }
 
