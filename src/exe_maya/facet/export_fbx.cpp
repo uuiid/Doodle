@@ -100,7 +100,7 @@ bool export_fbx_facet::post() {
 
   if (l_arg.file_path.empty()) return l_ret;
 
-  lib_guard_ = std::make_shared<maya_lib_guard>();
+  lib_guard_ = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 
   l_ret      = true;
 

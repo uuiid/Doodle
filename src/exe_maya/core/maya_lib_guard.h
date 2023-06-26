@@ -3,12 +3,13 @@
 //
 
 #pragma once
+#include <doodle_core/core/file_sys.h>
 namespace doodle {
 namespace maya_plug {
 
 class maya_lib_guard {
  public:
-  maya_lib_guard();
+  explicit maya_lib_guard(const FSys::path& p_path);
   ~maya_lib_guard();
 };
 

@@ -34,12 +34,14 @@ class arg {
   std::int32_t t_post{};
   std::int32_t export_anim_time{};
   std::bitset<8> bitset_;
+  FSys::path maya_path;
   friend void to_json(nlohmann::json &in_nlohmann_json_j, const arg &in_nlohmann_json_t) {
     in_nlohmann_json_j["path"]             = in_nlohmann_json_t.file_path.generic_string();
     in_nlohmann_json_j["project_"]         = in_nlohmann_json_t.project_.generic_string();
     in_nlohmann_json_j["t_post"]           = in_nlohmann_json_t.t_post;
     in_nlohmann_json_j["export_anim_time"] = in_nlohmann_json_t.export_anim_time;
     in_nlohmann_json_j["bitset_"]          = in_nlohmann_json_t.bitset_;
+    in_nlohmann_json_j["maya_path"]        = in_nlohmann_json_t.maya_path;
   }
   friend void from_json(const nlohmann::json &in_nlohmann_json_j, arg &in_nlohmann_json_t) {
     in_nlohmann_json_j["path"].get_to(in_nlohmann_json_t.file_path);
@@ -47,6 +49,7 @@ class arg {
     in_nlohmann_json_j["t_post"].get_to(in_nlohmann_json_t.t_post);
     in_nlohmann_json_j["export_anim_time"].get_to(in_nlohmann_json_t.export_anim_time);
     in_nlohmann_json_j["bitset_"].get_to(in_nlohmann_json_t.bitset_);
+    in_nlohmann_json_j["maya_path"].get_to(in_nlohmann_json_t.maya_path);
   }
 };
 
@@ -128,6 +131,7 @@ class DOODLELIB_API maya_exe {
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
     auto l_msg_ref = in_handle.get_or_emplace<process_message>();
     l_msg_ref.set_name(in_arg.file_path.filename().generic_string());
+    in_arg.maya_path = find_maya_path();
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, l_msg_ref, &in_arg, in_handle](auto &&in_completion_handler) {
           nlohmann::json l_json{};
