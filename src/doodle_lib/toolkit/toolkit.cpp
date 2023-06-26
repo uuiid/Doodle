@@ -1,4 +1,5 @@
 #include <doodle_core/core/core_set.h>
+
 #include <doodle_lib/toolkit/toolkit.h>
 
 #if defined(_WIN32)
@@ -61,8 +62,7 @@ void toolkit::installUePath(const FSys::path &path) {
     auto &set      = core_set::get_set();
     auto sourePath = core_set::get_set().program_location().parent_path();
     auto l_name{set.ue4_version};
-    if (auto l_f = l_name.find('.');
-        l_f != std::string::npos) {
+    if (auto l_f = l_name.find('.'); l_f != std::string::npos) {
       l_name.erase(l_f, 1);
     }
     sourePath /= fmt::format("ue{}_Plug", l_name);
@@ -116,7 +116,14 @@ bool toolkit::deleteUeCache() {
 
   path /= "UnrealEngine";
   DOODLE_LOG_INFO(fmt::format("delete Folder : {}", path));
-  FSys::remove_all(path);
+
+  //  FSys::remove_all(path);
+
+  for (FSys::directory_iterator it{path}; it != FSys::directory_iterator(); it++) {
+    DOODLE_LOG_INFO(fmt::format("delete : {}", it->path()));
+    if (it->is_regular_file()) FSys::remove(*it);
+  }
+
 #endif
   return true;
 }
