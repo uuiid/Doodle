@@ -252,8 +252,9 @@ void gui_facet::init_windows() {
     auto& l_prj  = g_reg()->ctx().get<project>();
     auto l_title = boost::locale::conv::utf_to_utf<char>(doodle_lib::Get().ctx().get<program_info>().title_attr());
     auto l_str   = fmt::format(
-        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, doodle_lib::Get().ctx().get<database_info>().path_,
-        l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str()
+        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title,
+        doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path(), l_prj.p_path,
+        l_prj.show_str(), l_prj.str(), l_prj.short_str()
     );
     set_title(l_str);
   };
@@ -261,9 +262,11 @@ void gui_facet::init_windows() {
   g_reg()->ctx().get<core_sig>().save.connect(3, s_set_title_fun);
   auto& k_sig = g_reg()->ctx().emplace<core_sig>();
   k_sig.save.connect(2, [this]() {
-    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save(
-        [this](auto) { DOODLE_LOG_INFO("保存项目 {}", doodle_lib::Get().ctx().get<database_info>().path_); }
-    );
+    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save([this](auto) {
+      DOODLE_LOG_INFO(
+          "保存项目 {}", doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path()
+      );
+    });
   });
   /// 在这里我们加载项目
   doodle_lib::Get().ctx().get<program_options>().init_project();

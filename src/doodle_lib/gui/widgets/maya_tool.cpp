@@ -8,6 +8,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
@@ -176,7 +177,7 @@ bool maya_tool::render() {
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& in_path) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
       k_arg.file_path        = in_path;
-      k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       if (ptr_attr->replace_ref_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
@@ -198,7 +199,7 @@ bool maya_tool::render() {
       k_arg.use_all_ref      = this->p_use_all_ref;
       k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-      k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path();
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
@@ -220,7 +221,7 @@ bool maya_tool::render() {
             return in_info.save_handle;
           }) |
           ranges::to_vector;
-      k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
@@ -234,11 +235,11 @@ bool maya_tool::render() {
   if (ImGui::Button("转换格式")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
-      auto k_arg                     = maya_exe_ns::clear_file_arg{};
-      k_arg.file_path                = i;
-      k_arg.project_                 = doodle_lib::Get().ctx().get<database_info>().path_;
-      k_arg.t_post                   = g_reg()->ctx().get<project_config::base_config>().t_post;
-      k_arg.export_anim_time         = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
+      auto k_arg             = maya_exe_ns::clear_file_arg{};
+      k_arg.file_path        = i;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path();
+      k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
+      k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.save_file_extension_attr = ptr_attr->save_maya_type_attr.show_id_attr;
 
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
