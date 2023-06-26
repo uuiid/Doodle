@@ -272,7 +272,7 @@ void maya_exe::install_maya_exe() {
     auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
                          version::build_info::get().version_str;
     const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
-
+    p_i->run_path         = l_target_path / l_run_name;
     if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
 
     if (!FSys::exists(l_target_path / "ShadeFragment")) {
