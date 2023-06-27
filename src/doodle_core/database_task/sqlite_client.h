@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/logger/logger.h>
 
 #include <any>
 #include <filesystem>
@@ -29,13 +28,10 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   virtual void async_save_impl();
   virtual void async_import_impl(const FSys::path& in_path);
 
-  using call_error     = std::function<void(bsys::error_code)>;
-  using call_error_ptr = std::shared_ptr<call_error>;
-
  public:
   file_translator();
   explicit file_translator(registry_ptr in_registry);
-  ~file_translator();
+  ~file_translator() = default;
   /**
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径

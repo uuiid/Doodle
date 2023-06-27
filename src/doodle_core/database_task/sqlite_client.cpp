@@ -533,5 +533,4 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
   );
 }
 
-file_translator::~file_translator() = default;
 }  // namespace doodle::database_n
