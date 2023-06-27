@@ -12,6 +12,7 @@
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
+#include <doodle_core/database_task/sqlite_client.h>
 
 #include "doodle_app/gui/base/ref_base.h"
 #include "doodle_app/gui/show_message.h"
@@ -81,8 +82,8 @@ void setting_windows::save() {
 
   auto&& l_u                   = g_reg()->ctx().get<user::current_user>();
   l_u.user_name_attr(p_i->p_user());
-  g_reg()->ctx().get<core_sig>().save();
   core_set_init{}.write_file();
+  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save();
 }
 setting_windows::~setting_windows() = default;
 

@@ -259,15 +259,6 @@ void gui_facet::init_windows() {
     set_title(l_str);
   };
   g_reg()->ctx().get<core_sig>().project_end_open.connect(s_set_title_fun);
-  g_reg()->ctx().get<core_sig>().save.connect(3, s_set_title_fun);
-  auto& k_sig = g_reg()->ctx().emplace<core_sig>();
-  k_sig.save.connect(2, [this]() {
-    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save([this](auto) {
-      DOODLE_LOG_INFO(
-          "保存项目 {}", doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path()
-      );
-    });
-  });
   /// 在这里我们加载项目
   doodle_lib::Get().ctx().get<program_options>().init_project();
 

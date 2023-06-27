@@ -67,9 +67,7 @@ bool cloth_sim::post() {
 
   l_ret      = true;
 
-  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(
-      l_arg.project_, [](boost::system::error_code) {}
-  );
+  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));

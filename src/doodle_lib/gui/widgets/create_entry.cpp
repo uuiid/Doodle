@@ -93,7 +93,7 @@ void create_entry::render_other_files() {
         l_ass.emplace<database>();
         l_ass.emplace<assets>(i);
       }
-      if (auto l_f = g_windows_manage().find_windows<assets_filter_widget>()) {
+      if (auto *l_f = g_windows_manage().find_windows<assets_filter_widget>()) {
         l_f->init();
       }
       args_->fun_(
@@ -137,9 +137,7 @@ void create_entry::render_project_open_files() {
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
   if (ImGui::Button("打开")) {
     ImGui::CloseCurrentPopup();
-    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path, [l_prj_path](auto) {
-      DOODLE_LOG_INFO("打开项目 {}", l_prj_path);
-    });
+    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path);
   }
   ImGui::SameLine();
 
@@ -148,9 +146,7 @@ void create_entry::render_project_open_files() {
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_dummy_x);
     if (ImGui::Button("导入")) {
       ImGui::CloseCurrentPopup();
-      doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_import(l_prj_path, [l_prj_path](auto) {
-        DOODLE_LOG_INFO("打开项目 {}", l_prj_path);
-      });
+      doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_import(l_prj_path);
     }
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_dummy_x);
@@ -176,9 +172,7 @@ void create_entry::render_project_import_files() {
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
   if (ImGui::Button("导入(暂时无法使用)")) {
     ImGui::CloseCurrentPopup();
-    //    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path, [l_prj_path](auto) {
-    //      DOODLE_LOG_INFO("打开项目 {}", l_prj_path);
-    //    });
+    //    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path );
   }
   ImGui::SameLine();
 

@@ -7,6 +7,7 @@
 #include "doodle_core/core/core_help_impl.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/init_register.h>
+#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/project.h>
 
 #include <doodle_app/gui/base/ref_base.h>
@@ -305,7 +306,7 @@ bool project_edit::render() {
     g_reg()->ctx().get<project_config::base_config>() = p_i->get_config_();
     g_reg()->ctx().get<project>().set_name(p_i->project_name.data);
 
-    g_reg()->ctx().get<core_sig>().save();
+    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save();
   }
 
   return p_i->open;

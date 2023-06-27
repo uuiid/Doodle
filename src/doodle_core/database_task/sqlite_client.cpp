@@ -378,9 +378,7 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   l_s.need_save                                         = true;
 }
 
-void file_translator::async_open_impl(
-    const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
-) {
+void file_translator::async_open_impl(const FSys::path& in_path) {
   if (is_run) return;
   is_run       = true;
 
@@ -397,7 +395,7 @@ void file_translator::async_open_impl(
     ptr->registry_attr = g_reg();
   }
 
-  auto l_end_call = [this, in_call]() {
+  auto l_end_call = [this]() {
     ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
     g_reg()->ctx().get<core_sig>().project_end_open();
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -405,7 +403,6 @@ void file_translator::async_open_impl(
     k_msg.set_state(k_msg.success);
     g_reg()->ctx().erase<process_message>();
     core_set::get_set().add_recent_project(project_path);
-    (*in_call)({});
     is_run = false;
   };
 
@@ -430,7 +427,7 @@ void file_translator::async_open_impl(
   );
 }
 
-void file_translator::async_save_impl(const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call) {
+void file_translator::async_save_impl() {
   if (is_run) return;
   is_run = true;
   if (project_path.empty()) {
@@ -465,7 +462,7 @@ void file_translator::async_save_impl(const std::shared_ptr<std::function<void(b
     if (ptr->save_all) k_msg.message(fmt::format("{} 转换旧版数据, 较慢", project_path));
   }
 
-  auto l_end_call = [this, in_call]() {
+  auto l_end_call = [this]() {
     g_reg()->ctx().get<status_info>().need_save = false;
     auto& k_msg                                 = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("完成写入数据");
@@ -495,9 +492,7 @@ void file_translator::async_save_impl(const std::shared_ptr<std::function<void(b
   );
 }
 
-void file_translator::async_import_impl(
-    const FSys::path& in_path, const std::shared_ptr<std::function<void(bsys::error_code)>>& in_call
-) {
+void file_translator::async_import_impl(const FSys::path& in_path) {
   if (is_run) return;
   is_run = true;
 
@@ -510,7 +505,7 @@ void file_translator::async_import_impl(
     g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
   }
   auto l_old      = std::make_shared<bool>();
-  auto l_end_call = [this, in_call, l_old]() {
+  auto l_end_call = [this, l_old]() {
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     if (*l_old) {
       k_msg.message(fmt::format("{}, 旧版文件, 不导入", project_path));
