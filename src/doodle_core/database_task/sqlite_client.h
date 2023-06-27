@@ -7,10 +7,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 
-#include <boost/asio/async_result.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/thread_pool.hpp>
-
 #include <filesystem>
 #include <memory>
 #include <utility>
