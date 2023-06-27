@@ -36,10 +36,5 @@ class DOODLE_CORE_API core_sig {
    * @brief 多个实体选中时发出的信号, 在单选时也会发出信号
    */
   boost::signals2::signal<void(const std::vector<entt::handle>&)> select_handles;
-
-  /**
-   * @brief 保存时发出的信号
-   */
-  boost::signals2::signal<void()> save;
 };
 }  // namespace doodle
