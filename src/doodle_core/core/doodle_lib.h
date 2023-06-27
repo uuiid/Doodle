@@ -39,8 +39,6 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   inline entt::registry::context& ctx() { return ctx_p; };
   inline const entt::registry::context& ctx() const { return ctx_p; };
 
-  [[nodiscard]] registry_ptr& reg_attr() const;
-
   bool operator==(const doodle_lib& in_rhs) const;
 };
 

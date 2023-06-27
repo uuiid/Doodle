@@ -14,6 +14,7 @@
 
 #include "core/doodle_lib.h"
 
+#include <boost/asio.hpp>
 #include <boost/locale.hpp>
 
 #include <core/status_info.h>
@@ -50,11 +51,11 @@ void doodle_lib::init() {
 
   init_register::instance().reg_class();
 
-  //boost::locale::generator k_gen{};
-  //k_gen.categories(
-  //    boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
+  // boost::locale::generator k_gen{};
+  // k_gen.categories(
+  //     boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
   //);
-  //FSys::path::imbue(k_gen("zh_CN.UTF-8"));
+  // FSys::path::imbue(k_gen("zh_CN.UTF-8"));
 
   ctx().emplace<database_info>();
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
@@ -65,8 +66,6 @@ void doodle_lib::init() {
   ptr->reg->ctx().emplace<status_info>();
   ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));
 }
-
-registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 

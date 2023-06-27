@@ -7,7 +7,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 
-#include "core/core_help_impl.h"
 #include <any>
 #include <filesystem>
 #include <memory>
