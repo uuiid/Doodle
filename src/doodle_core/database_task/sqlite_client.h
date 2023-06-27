@@ -7,6 +7,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 
+#include "core/core_help_impl.h"
+#include <any>
 #include <filesystem>
 #include <memory>
 #include <utility>
@@ -17,8 +19,9 @@ using file_translator_ptr = std::shared_ptr<file_translator>;
 class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file_translator> {
  private:
   bool is_run{};
-  class impl;
-  std::unique_ptr<impl> ptr;
+  std::any obs{};
+  registry_ptr registry_attr{};
+  std::atomic_bool save_all{};
 
  protected:
   FSys::path project_path;

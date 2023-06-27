@@ -47,6 +47,7 @@
 #include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/view/filter.hpp"
 #include "range/v3/view/map.hpp"
+#include <any>
 #include <atomic>
 #include <core/core_set.h>
 #include <core/status_info.h>
@@ -331,25 +332,16 @@ using obs_all = obs_main<
         doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, doodle::business::rules,
         doodle::user, doodle::work_task_info>>;
 
-class file_translator::impl {
- public:
-  registry_ptr registry_attr;
-  std::shared_ptr<obs_all> obs_save;
-  std::atomic_bool save_all{};
-};
-
-file_translator::file_translator() : ptr(std::make_unique<impl>()) {}
-file_translator::file_translator(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
-  ptr->registry_attr = std::move(in_registry);
-  ptr->obs_save      = std::make_shared<obs_all>();
-}
+file_translator::file_translator() : registry_attr(g_reg()), obs(obs_all{}) {}
+file_translator::file_translator(registry_ptr in_registry) : registry_attr(in_registry), obs(obs_all{}) {}
 
 void file_translator::new_file_scene(const FSys::path& in_path, const project& in_project) {
-  ptr->obs_save->disconnect();
-  ptr->obs_save->clear();
+  auto& l_obs = std::any_cast<obs_all&>(obs);
+  l_obs.disconnect();
+  l_obs.clear();
   doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
   g_reg()->clear();
-  ptr->obs_save->connect(ptr->registry_attr);
+  l_obs.connect(registry_attr);
   project_config::base_config l_config{};
   l_config.maya_camera_select = {
       std::make_pair(R"(front|persp|side|top|camera)"s, -1000),
@@ -372,8 +364,8 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   g_reg()->ctx().emplace<project>()                     = in_project;
   g_reg()->ctx().emplace<project_config::base_config>() = l_config;
   project_path                                          = in_path;
-  ptr->save_all                                         = false;
-  auto& l_s                                             = ptr->registry_attr->ctx().emplace<status_info>();
+  save_all                                              = false;
+  auto& l_s                                             = registry_attr->ctx().emplace<status_info>();
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
@@ -392,11 +384,11 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
     k_msg.set_state(k_msg.run);
     g_reg()->clear();
     g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
-    ptr->registry_attr = g_reg();
+    registry_attr = g_reg();
   }
 
   auto l_end_call = [this]() {
-    ptr->registry_attr->ctx().get<project>().set_path(project_path.parent_path());
+    registry_attr->ctx().get<project>().set_path(project_path.parent_path());
     g_reg()->ctx().get<core_sig>().project_end_open();
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("完成写入数据");
@@ -409,18 +401,19 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   boost::asio::post(
       g_thread(),
       [this, l_k_con = doodle_lib::Get().ctx().emplace<database_info>().get_connection_const(), l_end_call]() mutable {
-        ptr->save_all = false;
+        save_all = false;
         database_n::select l_select{};
+        auto& l_obs = std::any_cast<obs_all&>(obs);
 
         if (!l_select.is_old(project_path, l_k_con)) {
-          ptr->obs_save->open(ptr->registry_attr, l_k_con);
+          l_obs.open(registry_attr, l_k_con);
         } else {
-          ptr->obs_save->disconnect();
-          l_select(*ptr->registry_attr, project_path, l_k_con);
+          l_obs.disconnect();
+          l_select(*registry_attr, project_path, l_k_con);
           l_select.patch();
-          ptr->save_all = true;
+          save_all = true;
           /// 先监听
-          ptr->obs_save->connect(ptr->registry_attr);
+          l_obs.connect(registry_attr);
         }
         boost::asio::post(g_io_context(), l_end_call);
       }
@@ -445,21 +438,21 @@ void file_translator::async_save_impl() {
       k_msg.set_state(k_msg.fail);
       return;
     }
-    ptr->registry_attr = g_reg();
-    if (ptr->save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
+    registry_attr = g_reg();
+    if (save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
     DOODLE_LOG_INFO("文件位置 {}", project_path);
     if (auto l_p = project_path.parent_path(); !FSys::exists(l_p) && !l_p.empty()) {
       FSys::create_directories(l_p);
     }
     doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
     // 提前测试存在
-    if (ptr->save_all && FSys::exists(project_path)) {
+    if (save_all && FSys::exists(project_path)) {
       k_msg.message(fmt::format("{} 已经存在, 不保存", project_path));
       is_run = false;
       k_msg.set_state(k_msg.fail);
       return;
     }
-    if (ptr->save_all) k_msg.message(fmt::format("{} 转换旧版数据, 较慢", project_path));
+    if (save_all) k_msg.message(fmt::format("{} 转换旧版数据, 较慢", project_path));
   }
 
   auto l_end_call = [this]() {
@@ -477,11 +470,11 @@ void file_translator::async_save_impl() {
       [this, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection(), l_end_call]() mutable {
         try {
           auto l_tx = sqlpp::start_transaction(*l_k_con);
-          if (ptr->save_all) {
-            ptr->obs_save->save_all(ptr->registry_attr, l_k_con);
-            ptr->save_all = false;
+          if (save_all) {
+            std::any_cast<obs_all&>(obs).save_all(registry_attr, l_k_con);
+            save_all = false;
           } else {
-            ptr->obs_save->save(ptr->registry_attr, l_k_con);
+            std::any_cast<obs_all&>(obs).save(registry_attr, l_k_con);
           }
           l_tx.commit();
         } catch (const sqlpp::exception& in_error) {
@@ -534,7 +527,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
           DOODLE_LOG_INFO("旧版文件, 不导入");
           *l_old = true;
         }
-        ptr->obs_save->import_project(ptr->registry_attr, l_k_con);
+        std::any_cast<obs_all&>(obs).import_project(registry_attr, l_k_con);
         boost::asio::post(g_io_context(), l_end_call);
       }
   );
