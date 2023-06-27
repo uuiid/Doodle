@@ -43,8 +43,10 @@
 #include "entt/signal/sigh.hpp"
 #include "logger/logger.h"
 #include "range/v3/action/push_back.hpp"
+#include "range/v3/action/remove_if.hpp"
 #include "range/v3/algorithm/all_of.hpp"
 #include "range/v3/algorithm/for_each.hpp"
+#include "range/v3/algorithm/transform.hpp"
 #include "range/v3/view/filter.hpp"
 #include "range/v3/view/map.hpp"
 #include <any>
@@ -297,8 +299,17 @@ class obs_main {
     std::map<std::int64_t, entt::handle> l_map{};
     std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
+    auto l_hs                 = l_map | ranges::views::values | ranges::to_vector;
+    auto l_view_data          = in_registry_ptr->view<database>().each();
+    std::set<uuid> l_uuid_set = l_view_data |
+                                ranges::views::transform([](const decltype(l_view_data)::value_type& in_e) -> uuid {
+                                  return std::get<1>(in_e).uuid();
+                                }) |
+                                ranges::to<std::set>;
+    l_hs |= ranges::actions::remove_if([&](const entt::handle& in_handle) -> bool {
+      return l_uuid_set.count(in_handle.get<database>().uuid()) == 1;
+    });
     std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
-    auto l_hs = l_map | ranges::views::values | ranges::to_vector;
     std::apply([&](auto&&... x) { ((x->import_handles(l_hs), ...)); }, obs_data_);
   }
 
