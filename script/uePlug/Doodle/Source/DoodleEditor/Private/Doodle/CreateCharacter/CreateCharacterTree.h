@@ -33,11 +33,16 @@ class UCreateCharacterMianTreeItem {
   TRange<FFrameNumber> GetPlaybackRange();
   void SetPlaybackRange(const TRange<FFrameNumber>& In_Range);
 
-  DECLARE_DELEGATE(FOnRenameRequested);
-  FOnRenameRequested OnRenameRequested;
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
+  TWeakPtr<UCreateCharacterMianTreeItem> Parent;
 
+  FSimpleDelegate OnRenameRequested;
   FSimpleDelegate OnSetRange;
+
+  static bool Sort_Child(
+      const TSharedPtr<UCreateCharacterMianTreeItem>& In_L, const TSharedPtr<UCreateCharacterMianTreeItem>& In_R
+  );
+  bool Sort_Child();
 
  private:
 };
@@ -74,7 +79,9 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
  private:
-  TSharedRef<class ITableRow> CreateCharacterConfigTreeData_Row(TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table);
+  TSharedRef<class ITableRow> CreateCharacterConfigTreeData_Row(
+      TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table
+  );
   void CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List);
   TSharedPtr<SWidget> Create_ContextMenuOpening();
   void On_SelectionChanged(TreeVirwWeightItemType TreeItem, ESelectInfo::Type SelectInfo);
@@ -83,6 +90,11 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   void AddBoneTreeMenu(FMenuBuilder& In_Builder);
 
   void Add_TreeNode(const FName& In_Bone_Name);
+
+  void Sort_Root();
+  void My_OnSortModeChanged(
+      EColumnSortPriority::Type In_Sort_Priority, const FName& In_Name, EColumnSortMode::Type In_Mode
+  );
 
   void CreateUITree();
 

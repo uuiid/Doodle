@@ -8,6 +8,7 @@ int32 UDoodleCreateCharacterConfig::Add_TreeNode(int32 In_Parent) {
   ListTrees[L_Index].Parent = In_Parent;
   if (In_Parent != INDEX_NONE) ListTrees[In_Parent].Childs.Add(L_Index);
   ListTrees[L_Index].ShowUIName = {FString{"AddBone"} + FString::FromInt(TreeIndex)};
+  ListTrees[L_Index].Sort_Index = L_Index;
   MarkPackageDirty();
   return L_Index;
 }

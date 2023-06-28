@@ -10,11 +10,11 @@
 #include "Widgets/Input/SSlider.h"                  // 滑动条
 #include "Widgets/Text/SInlineEditableTextBlock.h"  // 内联编辑小部件
 
+// #include "SortHelper.h"
+
 #define LOCTEXT_NAMESPACE "SCreateCharacterConfigTreeItem"
 
-FDoodleCreateCharacterConfigUINode& UCreateCharacterMianTreeItem::Get() {
-  return Config->ListTrees[ConfigNode_Index];
-}
+FDoodleCreateCharacterConfigUINode& UCreateCharacterMianTreeItem::Get() { return Config->ListTrees[ConfigNode_Index]; }
 
 UCreateCharacterMianTreeItem::operator bool() const {
   return Config && ConfigNode_Index != INDEX_NONE && ConfigNode_Index < Config->ListTrees.Num();
@@ -37,10 +37,43 @@ void UCreateCharacterMianTreeItem::SetPlaybackRange(const TRange<FFrameNumber>& 
   }
 }
 
+bool UCreateCharacterMianTreeItem::Sort_Child(
+    const TSharedPtr<UCreateCharacterMianTreeItem>& In_L, const TSharedPtr<UCreateCharacterMianTreeItem>& In_R
+) {
+  return In_L->Get().Sort_Index < In_R->Get().Sort_Index;
+  // if (*In_L && *In_R) {
+  // } else {
+  //   return *In_L ? *In_L : *In_R;
+  // }
+}
+
+bool UCreateCharacterMianTreeItem::Sort_Child() {
+  // using Sort_type = FSceneOutlinerSortHelper<std::int32_t>;
+
+  // Sort_type{}.Primary();
+
+  Childs.Sort(
+      static_cast<
+          bool (*)(const TSharedPtr<UCreateCharacterMianTreeItem>&, const TSharedPtr<UCreateCharacterMianTreeItem>&)>(
+          &UCreateCharacterMianTreeItem::Sort_Child
+      )
+  );
+  // Childs.HeapSort(static_cast<bool (*)(const TSharedPtr<UCreateCharacterMianTreeItem>&, const
+  // TSharedPtr<UCreateCharacterMianTreeItem>&)>(&UCreateCharacterMianTreeItem::Sort_Child)); std::sort(Childs.begin(),
+  // Childs.end(), static_cast<bool (*)(const TSharedPtr<UCreateCharacterMianTreeItem>&, const
+  // TSharedPtr<UCreateCharacterMianTreeItem>&)>(&UCreateCharacterMianTreeItem::Sort_Child));
+  // Childs.StableSort(static_cast<bool (*)(const TSharedPtr<UCreateCharacterMianTreeItem>&, const
+  // TSharedPtr<UCreateCharacterMianTreeItem>&)>(&UCreateCharacterMianTreeItem::Sort_Child));
+  return false;
+}
+
 class FSCreateCharacterBoneDragDropOp : public FDragDropOperation {
  public:
   DRAG_DROP_OPERATOR_TYPE(FSCreateCharacterBoneDragDropOp, FDragDropOperation)
   FString BoneName;
+  int32 CurrentIndex{};
+  int32 TargetIndex{};
+
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
   virtual TSharedPtr<SWidget> GetDefaultDecorator() const override {
     // clang-format off
@@ -68,7 +101,10 @@ class FSCreateCharacterBoneDragDropOp : public FDragDropOperation {
   }
 
   FText GetHoverText() const {
-    return FText::Format(NSLOCTEXT("BoneDragDropOp", "BoneHoverTextFmt", "Bone {0}"), FText::FromString(BoneName));
+                return FText::Format(
+                    NSLOCTEXT("BoneDragDropOp", "BoneHoverTextFmt", "Bone {0} {1} {2}"), FText::FromString(BoneName),
+                    CurrentIndex, TargetIndex
+                );
   }
 
   static TSharedRef<FSCreateCharacterBoneDragDropOp> New(
@@ -77,6 +113,7 @@ class FSCreateCharacterBoneDragDropOp : public FDragDropOperation {
     TSharedPtr<FSCreateCharacterBoneDragDropOp> L_Drop = MakeShared<FSCreateCharacterBoneDragDropOp>();
     L_Drop->BoneName                                   = InBoneName;
     L_Drop->ItemData                                   = In_ItemData;
+    L_Drop->CurrentIndex                               = In_ItemData->Get().Sort_Index;
     L_Drop->Construct();
     return L_Drop.ToSharedRef();
   }
@@ -86,24 +123,28 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
  public:
   using Super = SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType>;
 
-  SLATE_BEGIN_ARGS(SCreateCharacterConfigTreeItem) : _ItemData(), _InConfig(), _OnEditItem(), _OnModifyWeights() {}
+  SLATE_BEGIN_ARGS(SCreateCharacterConfigTreeItem)
+      : _ItemData(), _InConfig(), _OnEditItem(), _OnModifyWeights(), _OnRootSort() {}
 
   SLATE_ARGUMENT(SCreateCharacterTree::TreeVirwWeightItemType, ItemData)
   SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, InConfig)
   SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
   SLATE_EVENT(FDoodleTreeEdit, OnModifyWeights)
+  SLATE_EVENT(FSimpleDelegate, OnRootSort)
   SLATE_END_ARGS()
 
   // 这里是内容创建函数
-  void Construct(const FArguments& Arg, const TSharedRef<STableViewBase>& OwnerTableView) {
+  void Construct(const FArguments& Arg, const TSharedRef<STableViewBase>& In_OwnerTableView) {
     ItemData        = Arg._ItemData;
     Config_Data     = Arg._InConfig;
     OnEditItem      = Arg._OnEditItem;
     OnModifyWeights = Arg._OnModifyWeights;
+    OnRootSort      = Arg._OnRootSort;
+    OwnerTableView  = In_OwnerTableView;
     Super::FArguments L_Arg{};
     L_Arg.OnDragDetected(this, &SCreateCharacterConfigTreeItem::My_OnDragDetected);
 
-    Super::Construct(L_Arg, OwnerTableView);
+    Super::Construct(L_Arg, In_OwnerTableView);
   }
 
   TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
@@ -248,40 +289,49 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   }
 
   // DragBegin
-  ///  当拖动进入一个小部件时在拖放过程中调用
-  void OnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override{};
-  /// 当拖动离开小部件时在拖放过程中调用
-  void OnDragLeave(const FDragDropEvent& InDragDropEvent) override{};
-  /// 当鼠标被拖动到小部件上时，在拖放过程中调用
+  /////  当拖动进入一个小部件时在拖放过程中调用
+  // void OnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override{};
+  ///// 当拖动离开小部件时在拖放过程中调用
+  // void OnDragLeave(const FDragDropEvent& InDragDropEvent) override{};
+  ///// 当鼠标被拖动到小部件上时，在拖放过程中调用
   FReply OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override {
-    return FReply::Handled();
+    if (auto L_Op = InDragDropEvent.GetOperationAs<FSCreateCharacterBoneDragDropOp>()) {
+      if (L_Op->ItemData && *L_Op->ItemData) {
+        L_Op->TargetIndex = ItemData->Get().Sort_Index;
+        return FReply::Handled();
+      }
+    }
+
+    return FReply::Unhandled();
   };
   /// 当用户把东西放到小部件上时被调用 终止拖放
   FReply OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override {
-    return FReply::Handled();
+    if (auto L_Op = InDragDropEvent.GetOperationAs<FSCreateCharacterBoneDragDropOp>()) {
+      if (L_Op->ItemData && *L_Op->ItemData) {
+        Swap(L_Op->ItemData->Get().Sort_Index, ItemData->Get().Sort_Index);
+        Config_Data->MarkPackageDirty();
+        if (!L_Op->ItemData->Parent.IsValid()) {
+          OnRootSort.ExecuteIfBound();
+        }
+        OwnerTableView->RequestListRefresh();
+        return FReply::Handled();
+      }
+    }
+
+    return FReply::Unhandled();
   };
   FReply My_OnDragDetected(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) {
-    // auto TablePtr = Table.Pin();
-    // if (TablePtr.IsValid() && MouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton)) {
-    //   auto Operation = TablePtr->GetOutlinerPtr().Pin()->CreateDragDropOperation(MouseEvent,
-    //   TablePtr->GetSelectedItems());
-
-    //  if (Operation.IsValid()) {
-    //    return FReply::Handled().BeginDragDrop(Operation.ToSharedRef());
-    //  }
-    //}
-
     return FReply::Handled().BeginDragDrop(FSCreateCharacterBoneDragDropOp::New(ItemData, ItemData->Get().ShowUIName));
-
-    // return FReply::Unhandled();
   }
   // DragEnd
 
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
   TWeakObjectPtr<UDoodleCreateCharacterConfig> Config_Data;
   FDoodleTreeEdit OnModifyWeights;
+  TSharedPtr<STableViewBase> OwnerTableView;
 
   FDoodleTreeEdit OnEditItem;
+  FSimpleDelegate OnRootSort;
   TSharedPtr<SSlider> Slider;
 };
 
@@ -314,7 +364,10 @@ void SCreateCharacterTree::Construct(const FArguments& Arg) {
               // clang-format off
                            SNew(SHeaderRow) 
                          + SHeaderRow::Column(G_Name)
-                         .DefaultLabel(LOCTEXT("Construct", "Name")) 
+                         .DefaultLabel(LOCTEXT("Construct", "Name"))
+                         //.OnSort(FOnSortModeChanged::CreateSP(this,&SCreateCharacterTree::My_OnSortModeChanged))
+                         //.SortMode(EColumnSortMode::Ascending)
+                         //.SortPriority(EColumnSortPriority::Max)
                          + SHeaderRow::Column(G_Value)
                          .DefaultLabel(LOCTEXT("Construct", "Value"))
               // clang-format on
@@ -334,10 +387,30 @@ TSharedRef<SDockTab> SCreateCharacterTree::OnSpawnAction(const FSpawnTabArgs& Sp
 }
 
 TSharedRef<class ITableRow> SCreateCharacterTree::CreateCharacterConfigTreeData_Row(TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table) {
-  return SNew(SCreateCharacterConfigTreeItem, In_Table).ItemData(In_Value).OnEditItem(OnEditItem).OnModifyWeights(OnModifyWeights).InConfig(Config.Get());
+  return SNew(SCreateCharacterConfigTreeItem, In_Table)
+      .ItemData(In_Value)
+      .OnEditItem(OnEditItem)
+      .OnModifyWeights(OnModifyWeights)
+      .InConfig(Config.Get())
+      .OnRootSort_Lambda([this]() { Sort_Root(); });
 }
 
 void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List) {
+  In_Value->Sort_Child();
+
+  // TArray<int32> L_Print_Value{};
+  // for (auto&& i : In_Value->Childs) {
+  //   L_Print_Value.Add(i->Get().Sort_Index);
+  // }
+  // auto TArrayConvertFString = [](TArray<int32> IntArray) {
+  //   TArray<FString> StrArray;
+  //   for (int32 i : IntArray) {
+  //     StrArray.Push(FString::FromInt(i));
+  //   };
+  //   return StrArray;
+  // };
+  // auto L_String = FString::Join(TArrayConvertFString(L_Print_Value), TEXT(" "));
+  // UE_LOG(LogTemp, Warning, TEXT("Sort: %s "), *L_String);
   In_List = In_Value->Childs;
 }
 
@@ -421,7 +494,9 @@ void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
   UDoodleCreateCharacterConfig* L_Config = Config.Get();
   if (!L_Config) return;
 
-  TOptional<FGuid> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && *CurrentSelect) ? CurrentSelect->Get_Index() : INDEX_NONE);
+  TOptional<FGuid> L_Key = L_Config->Add_ConfigNode(
+      In_Bone_Name, (CurrentSelect && *CurrentSelect) ? CurrentSelect->Get_Index() : INDEX_NONE
+  );
 
   if (L_Key) {
     this->RebuildList();
@@ -429,15 +504,39 @@ void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
   }
 }
 
+void SCreateCharacterTree::Sort_Root() {
+  CreateCharacterConfigTreeData.Sort(
+      static_cast<
+          bool (*)(const TSharedPtr<UCreateCharacterMianTreeItem>&, const TSharedPtr<UCreateCharacterMianTreeItem>&)>(
+          &TreeVirwWeightItemType::ElementType::Sort_Child
+      )
+  );
+}
+
+void SCreateCharacterTree::My_OnSortModeChanged(
+    EColumnSortPriority::Type In_Sort_Priority, const FName& In_Name, EColumnSortMode::Type In_Mode
+) {
+  if (In_Name == G_Name) {
+    Sort_Root();
+    for (auto&& i : CreateCharacterConfigTreeData) {
+      i->Sort_Child();
+    }
+  }
+  RequestListRefresh();
+  // RebuildList();
+}
+
 void SCreateCharacterTree::CreateUITree() {
   UDoodleCreateCharacterConfig* L_Config = Config.Get();
 
   if (!L_Config) return;
 
-  TFunction<void(const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig, const TArray<int32>& InChildIndex)> L_Fun{};
-  L_Fun = [&](
-              const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
-              UDoodleCreateCharacterConfig* InConfig,
+  TFunction<void(
+      const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig,
+      const TArray<int32>& InChildIndex
+  )>
+      L_Fun{};
+  L_Fun = [&](const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig,
               const TArray<int32>& InChildIndex
           ) {
     for (auto i : InChildIndex) {
@@ -448,15 +547,13 @@ void SCreateCharacterTree::CreateUITree() {
           InParent->Childs.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>(L_Config));
       // 添加子项
       L_Ptr->Set(i);
+      L_Ptr->Parent = InParent;
+      if (L_Nodes.Sort_Index == 0) {
+        L_Nodes.Sort_Index = i;
+      }
       L_Fun(L_Ptr, InConfig, L_Nodes.Childs);
     }
-    InParent->Childs.Sort([](TreeVirwWeightItemType In_L, TreeVirwWeightItemType In_R) -> bool {
-      if (*In_L && *In_R) {
-        return In_L->Get().Sort_Index < In_L->Get().Sort_Index;
-      } else {
-        return *In_L ? *In_L : *In_R;
-      }
-    });
+    InParent->Sort_Child();
   };
 
   CreateCharacterConfigTreeData.Empty(L_Config->ListConfigNode.Num());
@@ -470,6 +567,7 @@ void SCreateCharacterTree::CreateUITree() {
     L_Ptr->Set(i);
     L_Fun(L_Ptr, L_Config, L_Node.Childs);
   }
+  Sort_Root();
 }
 
 void SCreateCharacterTree::AddBone() {
@@ -493,6 +591,7 @@ void SCreateCharacterTree::AddBone() {
   if (!L_Has_Parent) CreateCharacterConfigTreeData.Add(L_Ptr);
 
   L_Ptr->Set(L_UI_Node);
+  L_Ptr->Parent = CurrentSelect;
 
   this->RequestTreeRefresh();
   if (!L_Has_Parent) {
