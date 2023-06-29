@@ -152,9 +152,19 @@ class assets_file_widgets::impl {
           );
           return;
         }
+        // todo: 添加错误图标
+
+        //        if (!k_icon.image) {
+        //          select.gui_name = gui_cache_name_id{ICON_FA_CIRCLE_EXCLAMATION};
+        //          return;
+        //        }
         image         = k_icon.image;
         image.size2d_ = k_icon.size2d_;
         compute_size(max_length);
+      } else {
+        // todo: 添加文件图标
+
+        //        select.gui_name = gui_cache_name_id{ICON_FA_FILE};
       }
     };
   };
