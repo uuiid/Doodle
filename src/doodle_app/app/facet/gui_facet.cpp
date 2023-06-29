@@ -97,7 +97,7 @@ void gui_facet::deconstruction() {
   ImGui::DestroyContext();
   g_reg()->ctx().get<std::shared_ptr<win::d3d_device>>().reset();
 
-  ::RevokeDragDrop(p_hwnd);
+  p_i->drop_manager_guard_ptr.reset();
   ::DestroyWindow(p_hwnd);
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
