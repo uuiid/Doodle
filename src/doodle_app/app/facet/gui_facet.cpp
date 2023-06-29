@@ -59,6 +59,7 @@ class gui_facet::impl {
   //  using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
   using drop_ptr_type = decltype(winrt::make_self<win::drop_manager>());
 
+  std::shared_ptr<win::drop_manager_guard> drop_manager_guard_ptr{};
   drop_ptr_type dorp_manager{};
 };
 
@@ -210,20 +211,8 @@ void gui_facet::init_windows() {
   /// 启用文件拖拽
   DragAcceptFiles(p_hwnd, 1);
   /// \brief 注册拖放对象
-  p_i->dorp_manager = winrt::make_self<win::drop_manager>();
-
-  auto k_r          = ::RegisterDragDrop(p_hwnd, p_i->dorp_manager.get());
-  switch (k_r) {
-    case DRAGDROP_E_INVALIDHWND:
-      throw_exception(doodle_error{"无效的窗口句柄"});
-    case DRAGDROP_E_ALREADYREGISTERED:
-      throw_exception(doodle_error{"已经注册过拖拽com"});
-    case E_OUTOFMEMORY:
-      throw_exception(doodle_error{"内存不足"});
-    case S_OK:
-      DOODLE_LOG_INFO("注册拖拽com成功");
-      break;
-  }
+  p_i->dorp_manager           = winrt::make_self<win::drop_manager>();
+  p_i->drop_manager_guard_ptr = std::make_shared<win::drop_manager_guard>(p_i->dorp_manager, p_hwnd);
 
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
   //                                     MONITOR_DEFAULTTONEAREST);
@@ -236,7 +225,7 @@ void gui_facet::init_windows() {
   //               mi.rcMonitor.bottom - mi.rcMonitor.top,
   //               SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
-  auto imgui_file_path = core_set::get_set().get_cache_root("imgui") / "imgui.ini";
+  auto imgui_file_path        = core_set::get_set().get_cache_root("imgui") / "imgui.ini";
   static std::string _l_p{imgui_file_path.generic_string()};
   io.IniFilename = _l_p.c_str();
 

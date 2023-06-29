@@ -2,6 +2,7 @@
 // Created by TD on 2021/12/31.
 //
 
+#include "doodle_core/platform/win/windows_alias.h"
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/core/file_sys.h>
 
@@ -40,6 +41,17 @@ class DOODLE_CORE_API drop_manager : public winrt::implements<drop_manager, ::ID
   [[maybe_unused]] STDMETHODIMP Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) override;
 
   void render();
+};
+
+class DOODLE_CORE_API drop_manager_guard {
+ public:
+  using drop_ptr_type = decltype(winrt::make_self<win::drop_manager>());
+  explicit drop_manager_guard(drop_ptr_type &in_drop_ptr, wnd_handle in_hwnd);
+  ~drop_manager_guard();
+
+ private:
+  drop_ptr_type drop_ptr_;
+  wnd_handle hwnd_;
 };
 
 }  // namespace doodle::win

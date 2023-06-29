@@ -150,6 +150,24 @@ void drop_manager::render() {
   }
 }
 
+drop_manager_guard::drop_manager_guard(drop_manager_guard::drop_ptr_type &in_drop_ptr, wnd_handle in_hwnd)
+    : hwnd_(in_hwnd) {
+  auto k_r = ::RegisterDragDrop(hwnd_, in_drop_ptr.get());
+  switch (k_r) {
+    case DRAGDROP_E_INVALIDHWND:
+      throw_exception(doodle_error{"无效的窗口句柄"});
+    case DRAGDROP_E_ALREADYREGISTERED:
+      throw_exception(doodle_error{"已经注册过拖拽com"});
+    case E_OUTOFMEMORY:
+      throw_exception(doodle_error{"内存不足"});
+    case S_OK:
+      DOODLE_LOG_INFO("注册拖拽com成功");
+      break;
+  }
+}
+
+drop_manager_guard::~drop_manager_guard() { ::RevokeDragDrop(hwnd_); }
+
 ole_guard::ole_guard() {
   auto k_r = ::OleInitialize(nullptr);
   winrt::init_apartment(winrt::apartment_type::single_threaded);
