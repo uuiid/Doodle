@@ -10,6 +10,7 @@ target_sources(test_main
         entt_test.cpp
         regex.cpp
         abc.cpp
+        wenrt.cpp
 )
 
 target_link_libraries(
