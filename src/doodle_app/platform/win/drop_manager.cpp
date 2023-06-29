@@ -20,24 +20,24 @@
 #include <wil/win32_result_macros.h>
 namespace doodle::win {
 
-ULONG drop_manager::AddRef() { return InterlockedIncrement(&m_RefCount); }
-
-ULONG drop_manager::Release() {
-  auto nTemp = InterlockedDecrement(&m_RefCount);
-  if (!nTemp) {
-    delete this;
-  }
-  return nTemp;
-}
-STDMETHODIMP drop_manager::QueryInterface(const IID &riid, void **ppv) {
-  if (riid == IID_IUnknown || riid == IID_IDropTarget) {
-    *ppv = this;
-    AddRef();
-    return S_OK;
-  }
-  *ppv = nullptr;
-  return E_NOINTERFACE;
-}
+// ULONG drop_manager::AddRef() { return InterlockedIncrement(&m_RefCount); }
+//
+// ULONG drop_manager::Release() {
+//   auto nTemp = InterlockedDecrement(&m_RefCount);
+//   if (!nTemp) {
+//     delete this;
+//   }
+//   return nTemp;
+// }
+// STDMETHODIMP drop_manager::QueryInterface(const IID &riid, void **ppv) {
+//   if (riid == IID_IUnknown || riid == IID_IDropTarget) {
+//     *ppv = this;
+//     AddRef();
+//     return S_OK;
+//   }
+//   *ppv = nullptr;
+//   return E_NOINTERFACE;
+// }
 
 STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 DragEnter");

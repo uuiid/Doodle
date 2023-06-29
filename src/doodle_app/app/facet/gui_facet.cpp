@@ -55,7 +55,8 @@ class gui_facet::impl {
   win::d3d_device_ptr d3d_attr;
   std::string name_attr{"gui_windows"};
   boost::asio::high_resolution_timer timer_{boost::asio::make_strand(g_io_context())};
-  using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
+  //  using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
+  using drop_ptr_type = decltype(winrt::make_self<win::drop_manager>());
 
   drop_ptr_type dorp_manager{};
 };
@@ -208,7 +209,8 @@ void gui_facet::init_windows() {
   /// 启用文件拖拽
   DragAcceptFiles(p_hwnd, 1);
   /// \brief 注册拖放对象
-  p_i->dorp_manager = new win::drop_manager{};
+  p_i->dorp_manager = winrt::make_self<win::drop_manager>();
+
   auto k_r          = ::RegisterDragDrop(p_hwnd, p_i->dorp_manager.get());
   DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
 
