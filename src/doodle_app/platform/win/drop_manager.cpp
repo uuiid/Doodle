@@ -152,6 +152,7 @@ void drop_manager::render() {
 
 ole_guard::ole_guard() {
   auto k_r = ::OleInitialize(nullptr);
+  winrt::init_apartment(winrt::apartment_type::single_threaded);
   switch (k_r) {
     case S_OK:
       DOODLE_LOG_INFO("COM 库已在此线程上成功初始化");
@@ -168,5 +169,8 @@ ole_guard::ole_guard() {
       break;
   }
 }
-ole_guard::~ole_guard() { ::OleUninitialize(); }
+ole_guard::~ole_guard() {
+  ::OleUninitialize();
+  winrt::uninit_apartment();
+}
 }  // namespace doodle::win

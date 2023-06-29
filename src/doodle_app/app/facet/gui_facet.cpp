@@ -4,6 +4,7 @@
 
 #include "gui_facet.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/file_sys.h>
@@ -212,7 +213,17 @@ void gui_facet::init_windows() {
   p_i->dorp_manager = winrt::make_self<win::drop_manager>();
 
   auto k_r          = ::RegisterDragDrop(p_hwnd, p_i->dorp_manager.get());
-  DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
+  switch (k_r) {
+    case DRAGDROP_E_INVALIDHWND:
+      throw_exception(doodle_error{"无效的窗口句柄"});
+    case DRAGDROP_E_ALREADYREGISTERED:
+      throw_exception(doodle_error{"已经注册过拖拽com"});
+    case E_OUTOFMEMORY:
+      throw_exception(doodle_error{"内存不足"});
+    case S_OK:
+      DOODLE_LOG_INFO("注册拖拽com成功");
+      break;
+  }
 
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
   //                                     MONITOR_DEFAULTTONEAREST);
