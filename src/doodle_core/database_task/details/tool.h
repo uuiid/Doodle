@@ -4,9 +4,11 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/metadata.h>
 
-#include "sqlpp11/sqlite3/connection.h"
-#include "sqlpp11/statement.h"
-#include "sqlpp11/type_traits.h"
+#include "fmt/color.h"
+#include "fmt/core.h"
+#include "sqlpp11/custom_query.h"
+#include "sqlpp11/select.h"
+#include "sqlpp11/where.h"
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <sqlpp11/data_types/boolean/data_type.h>
@@ -329,6 +331,21 @@ std::string create_index(const column_t& in_column) {
       sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>()
   );
 }
+template <typename column_t>
+std::string has_colume(const column_t& in_column) {
+  return fmt::format(
+      R"(SELECT COUNT(*) AS CNTREC FROM pragma_table_info('{}') WHERE name='{}';)",
+      sqlpp::name_of<decltype(in_column.table())>::template char_ptr<create_table_ctx>(),
+      sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>()
+  );
+}
+template <typename column_t>
+std::string create_colume(const column_t& in_column) {
+  return fmt::format(
+      R"(ALTER TABLE {} ADD {};)", sqlpp::name_of<decltype(in_column.table())>::template char_ptr<create_table_ctx>(),
+      sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>()
+  );
+}
 
 template <typename table_t>
 create_table_t<table_t> create_table(const table_t& /*in_table*/) {
@@ -396,6 +413,7 @@ DOODLE_SQL_COLUMN_IMP(file_path, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(start_frame, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(end_frame, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(ref_file, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(organization, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(export_type_, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(path, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(name, sqlpp::text, detail::can_be_null);
@@ -459,7 +477,7 @@ DOODLE_SQL_TABLE_IMP(
 DOODLE_SQL_TABLE_IMP(image_icon, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(
     assets_file, column::id, column::entity_id, column::name, column::path, column::version, column::ref_id,
-    column::assets_ref_id
+    column::organization, column::assets_ref_id
 );
 DOODLE_SQL_TABLE_IMP(
     time_point_info, column::id, column::entity_id, column::first_time, column::second_time, column::info,
@@ -535,6 +553,19 @@ struct sqlite_master : sqlpp::table_t<
 
 }  // namespace doodle::database_n::tables
 namespace doodle::database_n::detail {
+struct pragma_table : sqlpp::table_t<pragma_table, tables::column::name> {
+  struct _alias_t {
+    static constexpr const char _literal[] = "pragma_table";
+    using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+    template <typename t>
+    struct _member_t {
+      t pragma_table;
+      t& operator()() { return pragma_table; }
+      const t& operator()() const { return pragma_table; }
+    };
+  };
+};
+
 template <typename table_t>
 bool has_table(const table_t& /*table*/, sqlpp::sqlite3::connection& in_connection) {
   const tables::sqlite_master l_table{};
@@ -547,8 +578,32 @@ bool has_table(const table_t& /*table*/, sqlpp::sqlite3::connection& in_connecti
                          ))) {
     return row.count.value() > 0;
   }
+  //  pragma_table l_tab{};
+  //  SQLPP_ALIAS_PROVIDER(tables::column::name);
+  //  sqlpp::custom_query(sqlpp::count(l_tab.name)), sqlpp::verbatim(fmt::format("pragma_table_info", "")),
+  //      sqlpp::where(l_tab.name == sqlpp::parameter(l_tab.name));
+
   return false;
 }
+template <typename column_t>
+bool has_colume2(sqlpp::sqlite3::connection& in_connection, const column_t& in_column) {
+  pragma_table l_tab{};
+  for (auto&& row : in_connection(
+           sqlpp::custom_query(
+               sqlpp::select(sqlpp::count(l_tab.name)),
+               sqlpp::verbatim(fmt::format(
+                   "FROM pragma_table_info('{}') AS pragma_table",
+                   sqlpp::name_of<decltype(in_column.table())>::template char_ptr<create_table_ctx>()
+               )),
+               sqlpp::where(l_tab.name == std::string{sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>()})
+           )
+               .with_result_type_of(sqlpp::select(sqlpp::count(l_tab.name)))
+       )) {
+    return row.count.value() > 0;
+  }
+  return false;
+}
+
 template <typename table_t>
 struct sql_create_table_base {
  private:
@@ -564,6 +619,17 @@ struct sql_create_table_base {
   template <typename... table_subs_t>
   void create_table_parent_id(doodle::conn_ptr& in_ptr) {
     (impl_create_table_parent_id<table_subs_t>(in_ptr), ...);
+  }
+  template <typename column_t>
+  void create_table(doodle::conn_ptr& in_ptr, const column_t& in_column) {
+    if (!has_colume2(*in_ptr, in_column)) {
+      in_ptr->execute(detail::create_colume(in_column));
+    }
+  }
+
+  template <typename column_t>
+  bool has_colume(doodle::conn_ptr& in_ptr, const column_t& in_column) {
+    return has_colume2(*in_ptr, in_column);
   }
 
  public:

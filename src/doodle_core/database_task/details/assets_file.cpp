@@ -25,20 +25,24 @@ namespace doodle::database_n {
 void sql_com<doodle::assets_file>::create_table(conn_ptr& in_ptr) { sql_create_table_base::create_table(in_ptr); }
 
 void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  sql_create_table_base::create_table(in_ptr, tables::assets_file{}.organization);
+
   auto& l_conn = *in_ptr;
   tables::assets_file l_table{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
       l_table.version = sqlpp::parameter(l_table.version), l_table.ref_id = sqlpp::parameter(l_table.ref_id),
       l_table.entity_id     = sqlpp::parameter(l_table.entity_id),
-      l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id)
+      l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id),
+      l_table.organization  = sqlpp::parameter(l_table.organization)
   ));
 
   for (auto& l_h : in_id) {
-    auto& l_assets       = l_h.get<assets_file>();
-    l_pre.params.name    = l_assets.name_attr();
-    l_pre.params.path    = l_assets.path_attr().string();
-    l_pre.params.version = l_assets.version_attr();
+    auto& l_assets            = l_h.get<assets_file>();
+    l_pre.params.name         = l_assets.name_attr();
+    l_pre.params.path         = l_assets.path_attr().string();
+    l_pre.params.version      = l_assets.version_attr();
+    l_pre.params.organization = l_assets.organization_attr();
     if (auto l_h_user = l_assets.user_attr(); l_h_user && l_h_user.any_of<database>())
       l_pre.params.ref_id = l_h_user.get<database>().get_id();
     else {
@@ -56,6 +60,8 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
 }
 
 void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  sql_create_table_base::create_table(in_ptr, tables::assets_file{}.organization);
+
   auto& l_conn = *in_ptr;
   tables::assets_file l_table{};
 
@@ -64,16 +70,19 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
           .set(
               l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
               l_table.version = sqlpp::parameter(l_table.version), l_table.ref_id = sqlpp::parameter(l_table.ref_id),
-              l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id)
+              l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id),
+              l_table.organization  = sqlpp::parameter(l_table.organization)
           )
           .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
   );
   for (const auto& [id, l_h] : in_id) {
-    auto& l_assets       = l_h.get<assets_file>();
-    l_pre.params.id      = id;
-    l_pre.params.name    = l_assets.name_attr();
-    l_pre.params.path    = l_assets.path_attr().string();
-    l_pre.params.version = l_assets.version_attr();
+    auto& l_assets            = l_h.get<assets_file>();
+    l_pre.params.id           = id;
+    l_pre.params.name         = l_assets.name_attr();
+    l_pre.params.path         = l_assets.path_attr().string();
+    l_pre.params.version      = l_assets.version_attr();
+    l_pre.params.organization = l_assets.organization_attr();
+
     if (auto l_h_user = l_assets.user_attr(); l_h_user && l_h_user.any_of<database>())
       l_pre.params.ref_id = l_h_user.get<database>().get_id();
     else {
@@ -106,30 +115,58 @@ void sql_com<doodle::assets_file>::select(
     l_entts.reserve(raw.count.value());
     break;
   }
+  if (has_colume(in_ptr, l_table.organization)) {
+    for (auto& row : l_conn(sqlpp::select(
+                                l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id,
+                                l_table.assets_ref_id, l_table.organization
+         )
+                                .from(l_table)
+                                .where(l_table.entity_id.is_not_null()))) {
+      assets_file l_a{};
+      l_a.name_attr(row.name.value());
+      l_a.path_attr(row.path.value());
+      l_a.version_attr(row.version.value());
+      l_a.organization_attr(row.organization.value());
+      if (!row.ref_id.is_null() && in_handle.count(row.ref_id.value()) != 0)
+        l_a.user_ref.handle_cache = in_handle.at(row.ref_id.value());
 
-  for (auto& row :
-       l_conn(sqlpp::select(
-                  l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id, l_table.assets_ref_id
-       )
-                  .from(l_table)
-                  .where(l_table.entity_id.is_not_null()))) {
-    assets_file l_a{};
-    l_a.name_attr(row.name.value());
-    l_a.path_attr(row.path.value());
-    l_a.version_attr(row.version.value());
-    if (!row.ref_id.is_null() && in_handle.count(row.ref_id.value()) != 0)
-      l_a.user_ref.handle_cache = in_handle.at(row.ref_id.value());
+      if (!row.assets_ref_id.is_null() && in_handle.count(row.assets_ref_id.value()) != 0)
+        l_a.assets_attr(in_handle.at(row.assets_ref_id.value()));
 
-    if (!row.assets_ref_id.is_null() && in_handle.count(row.assets_ref_id.value()) != 0)
-      l_a.assets_attr(in_handle.at(row.assets_ref_id.value()));
+      auto l_id = row.entity_id.value();
+      if (in_handle.find(l_id) != in_handle.end()) {
+        l_assets.emplace_back(std::move(l_a));
+        l_entts.emplace_back(in_handle.at(l_id));
+        DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+      } else {
+        DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      }
+    }
+  } else {
+    for (auto& row : l_conn(sqlpp::select(
+                                l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id,
+                                l_table.assets_ref_id
+         )
+                                .from(l_table)
+                                .where(l_table.entity_id.is_not_null()))) {
+      assets_file l_a{};
+      l_a.name_attr(row.name.value());
+      l_a.path_attr(row.path.value());
+      l_a.version_attr(row.version.value());
+      if (!row.ref_id.is_null() && in_handle.count(row.ref_id.value()) != 0)
+        l_a.user_ref.handle_cache = in_handle.at(row.ref_id.value());
 
-    auto l_id = row.entity_id.value();
-    if (in_handle.find(l_id) != in_handle.end()) {
-      l_assets.emplace_back(std::move(l_a));
-      l_entts.emplace_back(in_handle.at(l_id));
-      DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
-    } else {
-      DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      if (!row.assets_ref_id.is_null() && in_handle.count(row.assets_ref_id.value()) != 0)
+        l_a.assets_attr(in_handle.at(row.assets_ref_id.value()));
+
+      auto l_id = row.entity_id.value();
+      if (in_handle.find(l_id) != in_handle.end()) {
+        l_assets.emplace_back(std::move(l_a));
+        l_entts.emplace_back(in_handle.at(l_id));
+        DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+      } else {
+        DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      }
     }
   }
   in_reg->insert<doodle::assets_file>(l_entts.begin(), l_entts.end(), l_assets.begin());
