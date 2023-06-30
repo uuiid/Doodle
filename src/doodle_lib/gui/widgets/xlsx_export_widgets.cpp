@@ -123,9 +123,10 @@ xlsx_line::xlsx_line(
 
   auto l_prj_name = g_reg()->ctx().get<project>().p_name;
   std::string k_ass_path{};
-  if (in_handle.all_of<assets>()) {
-    auto l_p   = in_handle.get<assets>().get_parent();
-    k_ass_path = in_handle.all_of<assets>() ? in_handle.get<assets>().p_path : ""s;
+
+  if (auto l_ass_h = in_handle.get<assets_file>().assets_attr()) {
+    auto l_p   = l_ass_h.get<assets>().get_parent();
+    k_ass_path = l_p ? l_p.get<assets>().p_path : ""s;
     while (l_p) {
       k_ass_path = fmt::format("{}/{}", l_p.get<assets>().p_path, k_ass_path);
       if (auto l_pp = l_p.get<assets>().get_parent()) {
@@ -134,7 +135,7 @@ xlsx_line::xlsx_line(
         break;
       }
     }
-    l_p = in_handle;
+    l_p = l_ass_h;
     if (in_use_first_as_project_name) {
       l_prj_name = l_p.get<assets>().p_path;
       boost::erase_first(k_ass_path, fmt::format("{}/", l_prj_name));
