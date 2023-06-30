@@ -33,6 +33,7 @@
 #include "range/v3/algorithm/all_of.hpp"
 #include "range/v3/range/conversion.hpp"
 #include "treehh/tree.hh"
+#include <algorithm>
 #include <cstdint>
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
@@ -41,6 +42,7 @@
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 #include <treehh/tree.hh>
+#include <utility>
 #include <vector>
 
 namespace doodle::database_n {
@@ -324,27 +326,46 @@ void patch_0001(const registry_ptr& in_ptr) {
   auto l_ass_value = in_ptr->view<assets>();
   auto l_remove    = l_ass_value | ranges::to_vector;
   std::vector<std::map<std::string, entt::handle>> l_tree_map{};
+  using tree_type_t = tree<std::pair<std::string, entt::handle>>;
+  tree_type_t l_tree{std::pair<std::string, entt::handle>{""s, entt::handle{}}};
+
+  auto l_has_node = [&](const std::string& in_node, const tree_type_t::iterator& in_it) -> bool {
+    return std::any_of(
+        tree_type_t::begin(in_it), tree_type_t::end(in_it),
+        [&](const tree_type_t::value_type& in_value) -> bool { return in_node == in_value.first; }
+    );
+  };
+  auto l_get_node = [&](const std::string& in_node, const tree_type_t::iterator& in_it) {
+    return std::find_if(
+        tree_type_t::begin(in_it), tree_type_t::end(in_it),
+        [&](const tree_type_t::value_type& in_value) -> bool { return in_node == in_value.first; }
+    );
+  };
 
   for (auto&& [e, l_ass] : l_ass_value.each()) {
     std::vector<std::string> l_com{};
     boost::split(l_com, l_ass.get_path(), boost::is_any_of("/"));
 
-    if (l_tree_map.size() < l_com.size()) l_tree_map.resize(l_com.size());
+    auto l_it = l_tree.begin();
     for (int i = 0; i < l_com.size(); ++i) {
-      auto& l_tag = l_com[i];
-      if (!l_tree_map[i][l_tag]) {
-        auto l_handle        = entt::handle{*in_ptr, in_ptr->create()};
-        l_tree_map[i][l_tag] = l_handle;
+      auto& l_tag       = l_com[i];
+      auto l_current_it = l_it;
+      if (!l_has_node(l_tag, l_it)) {
+        auto l_handle = entt::handle{*in_ptr, in_ptr->create()};
         l_handle.emplace<database>();
         l_handle.emplace<assets>(l_tag);
-        if (i > 0) {
-          auto l_up_tag = l_com[i - 1];
-          l_tree_map[i - 1][l_up_tag].get<assets>().add_child(l_handle);
-        }
+        l_it = l_tree.append_child(l_it, {l_tag, l_handle});
+      } else
+        l_it = l_get_node(l_tag, l_it);
+
+      if (l_current_it != l_tree.begin()) {
+        auto l_p_it = tree_type_t ::parent(l_it);
+        l_p_it->second.get<assets>().add_child(l_it->second);
       }
+
     }
     if (auto l_h = entt::handle{*in_ptr, e}; l_h.any_of<assets_file>()) {
-      l_h.patch<assets_file>().assets_attr(l_tree_map[l_com.size() - 1][l_com.back()]);
+      l_h.patch<assets_file>().assets_attr(l_it->second);
     }
   }
 
@@ -354,7 +375,7 @@ void patch_0001(const registry_ptr& in_ptr) {
       in_ptr->release(entity);
     }
   });
-  BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
+  //  BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
   DOODLE_LOG_INFO("转换完成 {}", l_tree_map);
 }
 
