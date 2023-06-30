@@ -38,8 +38,7 @@ void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
 const boost::uuids::uuid& user_ref::get_uuid() const { return user_ref_attr.uuid; }
 
 entt::handle user_ref::user_attr() const {
-  if (handle_cache && handle_cache.all_of<database, user>() && handle_cache.get<database>() == user_ref_attr &&
-      handle_cache.get<user>().get_name() == cache_name) {
+  if (handle_cache && handle_cache.all_of<database, user>()) {
     return handle_cache;
   } else {
     auto l_handle = user_ref_attr.handle<user>();
