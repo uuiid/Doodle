@@ -169,9 +169,7 @@ drop_manager_guard::drop_manager_guard(drop_manager_guard::drop_ptr_type &in_dro
 drop_manager_guard::~drop_manager_guard() { ::RevokeDragDrop(hwnd_); }
 
 ole_guard::ole_guard() {
-  auto k_r = ::OleInitialize(nullptr);
-  winrt::init_apartment(winrt::apartment_type::single_threaded);
-  switch (k_r) {
+  switch (::OleInitialize(nullptr)) {
     case S_OK:
       DOODLE_LOG_INFO("COM 库已在此线程上成功初始化");
       break;
@@ -186,9 +184,10 @@ ole_guard::ole_guard() {
     default:
       break;
   }
+  winrt::init_apartment(winrt::apartment_type::single_threaded);
 }
 ole_guard::~ole_guard() {
-  ::OleUninitialize();
+  //  ::OleUninitialize();
   winrt::uninit_apartment();
 }
 }  // namespace doodle::win
