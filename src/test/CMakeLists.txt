@@ -16,6 +16,7 @@ macro(doodle_link_test)
             PUBLIC
             doodle_lib
             Boost::unit_test_framework
+            cldapi.lib
             )
     target_compile_definitions(${ARGV0}
             PUBLIC
