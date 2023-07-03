@@ -10,7 +10,8 @@
 #include "entt/entt.hpp"
 namespace doodle::gui::render {
 class command_edit_t {
-  gui_cache_name_id id{"备注:"s};
+  gui_cache_name_id id{"备注"s};
+  gui_cache_name_id add{"添加备注"s};
 
  public:
   bool render(const entt::handle& in_handle_view);

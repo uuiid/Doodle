@@ -82,31 +82,52 @@ void edit_widgets::edit_handle() {
 
     if (p_i->season_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<season>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<season>() = l_data; });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<season>()) in.emplace<season>();
+        in.patch<season>() = l_data;
+      });
     }
     if (p_i->episodes_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<episodes>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<episodes>() = l_data; });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<episodes>()) in.emplace<episodes>();
+        in.patch<episodes>() = l_data;
+      });
     }
     if (p_i->shot_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<shot>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<shot>() = l_data; });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<shot>()) in.emplace<shot>();
+        in.patch<shot>() = l_data;
+      });
     }
     if (p_i->assets_file_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<assets_file>().user_attr();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<assets_file>().user_attr(l_data); });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<assets_file>()) in.emplace<assets_file>();
+        in.patch<assets_file>().user_attr(l_data);
+      });
     }
     if (p_i->command_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<comment>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<comment>() = l_data; });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<comment>()) in.emplace<comment>();
+        in.patch<comment>() = l_data;
+      });
     }
     if (p_i->importance_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<importance>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<importance>() = l_data; });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<importance>()) in.emplace<importance>();
+        in.patch<importance>() = l_data;
+      });
     }
     if (p_i->time_edit.render(p_i->p_h.front())) {
       auto l_data = p_i->p_h.front().get<time_point_wrap>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) { in.patch<time_point_wrap>() = l_data; });
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
+        if (!in.any_of<time_point_wrap>()) in.emplace<time_point_wrap>();
+        in.patch<time_point_wrap>() = l_data;
+      });
     }
   }
 }

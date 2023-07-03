@@ -19,6 +19,11 @@ bool command_edit_t::render(const entt::handle& in_handle_view) {
       in_handle_view.patch<comment>();
       on_change = true;
     }
+  } else {
+    if (ImGui::Button(*add)) {
+      in_handle_view.emplace<comment>();
+      on_change = true;
+    }
   }
   return on_change;
 }
