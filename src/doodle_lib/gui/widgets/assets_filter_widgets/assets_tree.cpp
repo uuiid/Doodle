@@ -108,6 +108,7 @@ void assets_tree::popen_menu(const tree_type_t::sibling_iterator &in) {
   }
   if (ImGui::Button(*delete_node)) {
     boost::asio::post(g_io_context(), [this, in]() {
+      in->handle.destroy();
       delete_node_(in);
       tree_.erase_children(in);
       tree_.erase(in);

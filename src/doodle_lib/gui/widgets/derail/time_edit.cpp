@@ -21,8 +21,16 @@ bool time_edit_t::render(const entt::handle& in_handle_view) {
     if (in_handle_view != render_id) {
       init(in_handle_view);
     }
-    if (ImGui::InputInt3(*time_ymd_id, time_ymd.data())) on_change = true;
-    if (ImGui::InputInt3(*time_hms_id, time_hms.data())) on_change = true;
+    if (ImGui::InputInt3(*time_ymd_id, time_ymd.data())) {
+      in_handle_view.patch<time_point_wrap>() =
+          time_point_wrap{time_ymd[0], time_ymd[1], time_ymd[2], time_hms[0], time_hms[1], time_hms[2]};
+      on_change = true;
+    }
+    if (ImGui::InputInt3(*time_hms_id, time_hms.data())) {
+      in_handle_view.patch<time_point_wrap>() =
+          time_point_wrap{time_ymd[0], time_ymd[1], time_ymd[2], time_hms[0], time_hms[1], time_hms[2]};
+      on_change = true;
+    }
   }
   return on_change;
 }
@@ -38,8 +46,17 @@ bool time_edit_t::render(const time_point_wrap& in_point_wrap, const entt::handl
     init(in_point_wrap);
     render_id = in_handle_view;
   }
-  if (ImGui::InputInt3(*time_ymd_id, time_ymd.data())) on_change = true;
-  if (ImGui::InputInt3(*time_hms_id, time_hms.data())) on_change = true;
+  if (ImGui::InputInt3(*time_ymd_id, time_ymd.data())) {
+    in_handle_view.patch<time_point_wrap>() =
+        time_point_wrap{time_ymd[0], time_ymd[1], time_ymd[2], time_hms[0], time_hms[1], time_hms[2]};
+    on_change = true;
+  }
+  if (ImGui::InputInt3(*time_hms_id, time_hms.data())) {
+    in_handle_view.patch<time_point_wrap>() =
+        time_point_wrap{time_ymd[0], time_ymd[1], time_ymd[2], time_hms[0], time_hms[1], time_hms[2]};
+
+    on_change = true;
+  }
   return on_change;
 }
 void time_edit_t::init(const time_point_wrap& in_handle) {
