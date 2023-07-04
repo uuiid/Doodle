@@ -764,23 +764,40 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .OnClicked_Lambda([this](){
                FindSK();
                ImportFile();
-           CreateWorld();
+               CreateWorld();
                return FReply::Handled();
             })
           ]
+
           + SHorizontalBox::Slot()
           .FillWidth(1.0f)
           [
             SNew(SButton)
             .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
+            .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除查找的骨骼"))
+            .OnClicked_Lambda([this](){
+               for (auto&& i: ListImportData) {
+                   if (i->IsA<UDoodleFbxImport_1>()) {
+                       Cast<UDoodleFbxImport_1>(i)->SkinObj = nullptr;
+                   }
+               }
+               ListImportGui->RebuildList(); 
+               return FReply::Handled();
+            })
+          ]
+
+          + SHorizontalBox::Slot()
+          .FillWidth(1.0f)
+          [
+            SNew(SButton)
+            .Text(LOCTEXT("Clear All","Clear All"))
             .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
             .OnClicked_Lambda([this](){
                ListImportData.Empty(); 
-         ListImportGui->RebuildList(); 
-         CreateWorld();
+               ListImportGui->RebuildList(); 
                return FReply::Handled();
             })
-      ]
+          ]
         ]
         +SVerticalBox::Slot()
         .AutoHeight()
@@ -791,7 +808,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .Text(LOCTEXT("Search USkeleton Import","Search USkeleton Direct Import"))
           .ToolTipText(LOCTEXT("Search USkeleton Tip3","不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
           .OnClicked_Lambda([this](){
-             ImportFile();
+              ImportFile();
               CreateWorld();
              return FReply::Handled();
           })
@@ -874,6 +891,9 @@ bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporte
       In_Fbx->SkinObj = L_SK_Data.SkinObj;
       return true;
     }
+  }
+  for (auto&& L_SK_Data : this->AllSkinObjs) {
+    L_Task_Scoped2.EnterProgressFrame(1.0f);
     if (Algo::AllOf(
             L_SK_Data.BoneNames, [&](const FString& IN_Str) { return In_Fbx->FbxNodeNames.Contains(IN_Str); }
         )  /// 进一步确认骨骼内容

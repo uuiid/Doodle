@@ -4,6 +4,8 @@
 5.0
 5.1
 5.2
+*.uasset
+*.umap
 /Doodle/Binaries/
 /Doodle/Intermediate/
 /Doodle/Content
