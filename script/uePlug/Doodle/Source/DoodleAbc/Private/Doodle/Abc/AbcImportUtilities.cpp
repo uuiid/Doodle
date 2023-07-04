@@ -25,7 +25,7 @@ THIRD_PARTY_INCLUDES_START
 #include <Alembic/AbcCoreFactory/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/AbcGeom/All.h>
-#include <Imath/ImathVec.h>
+// #include <Imath/ImathVec.h>
 THIRD_PARTY_INCLUDES_END
 
 #if PLATFORM_WINDOWS
@@ -244,7 +244,7 @@ ESampleReadFlags AbcImporterUtilities::GenerateAbcMeshSampleReadFlags(const Alem
 /** Generated smoothing groups based on the given face normals, will compare angle between adjacent normals to determine
    whether or not an edge is hard/soft and calculates the smoothing group information with the edge data */
 void AbcImporterUtilities::GenerateSmoothingGroups(
-    TMultiMap<uint32, uint32>& TouchingFaces, const TArray<FVector3f>& FaceNormals, TArray<uint32>& FaceSmoothingGroups,
+    TMultiMap<uint32, uint32>& TouchingFaces, const TArray<FVector>& FaceNormals, TArray<uint32>& FaceSmoothingGroups,
     uint32& HighestSmoothingGroup, const float HardAngleDotThreshold
 ) {
   // Cache whether or not the hard angle thresshold is set to 0.0 by the user
@@ -262,14 +262,14 @@ void AbcImporterUtilities::GenerateSmoothingGroups(
     TouchingFaces.MultiFind(FaceIndex, ConnectedFaceIndices);
 
     // Get the vertex-averaged face normal
-    const FVector3f FaceNormal = FaceNormals[FaceIndex];
+    const FVector FaceNormal = FaceNormals[FaceIndex];
 
     for (int32 i = 0; i < ConnectedFaceIndices.Num(); ++i) {
-      const uint32 ConnectedFaceIndex     = ConnectedFaceIndices[i];
-      const FVector3f ConnectedFaceNormal = FaceNormals[ConnectedFaceIndex];
+      const uint32 ConnectedFaceIndex   = ConnectedFaceIndices[i];
+      const FVector ConnectedFaceNormal = FaceNormals[ConnectedFaceIndex];
 
       // Calculate the Angle between the two connected face normals and clamp from 0-1
-      const float DotProduct              = FMath::Clamp(FMath::Abs(FaceNormal | ConnectedFaceNormal), 0.0f, 1.0f);
+      const float DotProduct            = FMath::Clamp(FMath::Abs(FaceNormal | ConnectedFaceNormal), 0.0f, 1.0f);
 
       // Compare DotProduct against threshold and handle 0.0 case correctly
       if (DotProduct > HardAngleDotThreshold || (bZeroThreshold && FMath::IsNearlyZero(DotProduct))) {
@@ -375,7 +375,7 @@ bool AbcImporterUtilities::GenerateAbcMeshSampleDataForFrame(
   if (EnumHasAnyFlags(ReadFlags, ESampleReadFlags::Positions)) {
     Alembic::Abc::P3fArraySamplePtr PositionsSample = MeshSample.getPositions();
     bRetrievalResult &=
-        RetrieveTypedAbcData<Alembic::Abc::P3fArraySamplePtr, FVector3f>(PositionsSample, Sample->Vertices);
+        RetrieveTypedAbcData<Alembic::Abc::P3fArraySamplePtr, FVector>(PositionsSample, Sample->Vertices);
   }
 
   if (EnumHasAnyFlags(ReadFlags, ESampleReadFlags::Velocities)) {
@@ -384,7 +384,7 @@ bool AbcImporterUtilities::GenerateAbcMeshSampleDataForFrame(
     if (bVelocitiesAvailable) {
       Alembic::Abc::V3fArraySamplePtr VelocitiesSample = MeshSample.getVelocities();
       bRetrievalResult &=
-          RetrieveTypedAbcData<Alembic::Abc::V3fArraySamplePtr, FVector3f>(VelocitiesSample, Sample->Velocities);
+          RetrieveTypedAbcData<Alembic::Abc::V3fArraySamplePtr, FVector>(VelocitiesSample, Sample->Velocities);
     }
   }
 
@@ -473,7 +473,7 @@ bool AbcImporterUtilities::GenerateAbcMeshSampleDataForFrame(
     bool bConstantNormals                           = bNormalsAvailable && Schema.getNormalsParam().isConstant();
     if (bNormalsAvailable && (!bConstantNormals || (bConstantNormals && bFirstFrame))) {
       Alembic::Abc::N3fArraySamplePtr NormalsSample = NormalParameter.getValueProperty().getValue(FrameSelector);
-      RetrieveTypedAbcData<Alembic::Abc::N3fArraySamplePtr, FVector3f>(NormalsSample, Sample->Normals);
+      RetrieveTypedAbcData<Alembic::Abc::N3fArraySamplePtr, FVector>(NormalsSample, Sample->Normals);
 
       if (Sample->Normals.Num() > 0) {
         // Can only retrieve normal indices when the Normals array is indexed
@@ -489,7 +489,7 @@ bool AbcImporterUtilities::GenerateAbcMeshSampleDataForFrame(
           }
 
           // Expand Normal array
-          ExpandVertexAttributeArray<FVector3f>(NormalIndices, Sample->Normals);
+          ExpandVertexAttributeArray<FVector>(NormalIndices, Sample->Normals);
         } else {
           ProcessVertexAttributeArray(
               Sample->Indices, FaceCounts, bNeedsTriangulation, Sample->Vertices.Num(), Sample->Normals
@@ -615,11 +615,11 @@ bool AbcImporterUtilities::GenerateAbcMeshSampleDataForFrame(
 
 void AbcImporterUtilities::ReadUVSetData(
     Alembic::AbcGeom::IV2fGeomParam& UVCoordinateParameter, const Alembic::Abc::ISampleSelector FrameSelector,
-    TArray<FVector2f>& OutUVs, const TArray<uint32>& MeshIndices, const bool bNeedsTriangulation,
+    TArray<FVector2D>& OutUVs, const TArray<uint32>& MeshIndices, const bool bNeedsTriangulation,
     const TArray<uint32>& FaceCounts, const int32 NumVertices
 ) {
   Alembic::Abc::V2fArraySamplePtr UVSample = UVCoordinateParameter.getValueProperty().getValue(FrameSelector);
-  RetrieveTypedAbcData<Alembic::Abc::V2fArraySamplePtr, FVector2f>(UVSample, OutUVs);
+  RetrieveTypedAbcData<Alembic::Abc::V2fArraySamplePtr, FVector2D>(UVSample, OutUVs);
 
   // Can only retrieve UV indices when the UVs array is indexed
   const bool bIndexedUVs = UVCoordinateParameter.getIndexProperty().valid();
@@ -634,7 +634,7 @@ void AbcImporterUtilities::ReadUVSetData(
     }
 
     // Expand UV array
-    ExpandVertexAttributeArray<FVector2f>(UVIndices, OutUVs);
+    ExpandVertexAttributeArray<FVector2D>(UVIndices, OutUVs);
   } else if (OutUVs.Num()) {
     ProcessVertexAttributeArray(MeshIndices, FaceCounts, bNeedsTriangulation, NumVertices, OutUVs);
   }
@@ -648,7 +648,7 @@ void AbcImporterUtilities::GenerateSmoothingGroupsIndices(FAbcMeshSample* MeshSa
   TMultiMap<uint32, uint32> TouchingFaces;
 
   // Stores the individual face normals (vertex averaged)
-  TArray<FVector3f> FaceNormals;
+  TArray<FVector> FaceNormals;
 
   // Pre-initialize RawMesh arrays
   const int32 NumFaces = MeshSample->Indices.Num() / 3;
@@ -660,7 +660,7 @@ void AbcImporterUtilities::GenerateSmoothingGroupsIndices(FAbcMeshSample* MeshSa
 
   for (int32 FaceIndex = 0; FaceIndex < NumFaces; ++FaceIndex) {
     // Will hold the averaged face normal
-    FVector3f FaceNormal(0, 0, 0);
+    FVector FaceNormal(0, 0, 0);
 
     // Determine number of vertices for this face (we only support triangle-based meshes for now)
     const int32 NumVertsForFace    = 3;
@@ -706,7 +706,7 @@ void AbcImporterUtilities::GenerateSmoothingGroupsIndices(FAbcMeshSample* MeshSa
       }
 
       // Retrieve normal to calculate the face normal
-      FVector3f Normal = MeshSample->Normals[TriSampleIndex];
+      FVector Normal = MeshSample->Normals[TriSampleIndex];
 
       // Averaged face normal addition
       FaceNormal += Normal;
@@ -737,7 +737,7 @@ void AbcImporterUtilities::CalculateNormals(FAbcMeshSample* Sample) {
     const int32 TriangleIndices[3] = {2, 1, 0};
     const int32 FaceOffset         = FaceIndex * 3;
 
-    FVector3f VertexPositions[3];
+    FVector VertexPositions[3];
     int32 VertexIndices[3];
 
     // Retrieve vertex indices and positions
@@ -751,8 +751,8 @@ void AbcImporterUtilities::CalculateNormals(FAbcMeshSample* Sample) {
     VertexPositions[2] = Sample->Vertices[VertexIndices[2]];
 
     // Calculate normal for triangle face
-    FVector3f N =
-        FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
+    FVector N =
+        FVector::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
     N.Normalize();
 
     // Unrolled loop
@@ -761,13 +761,13 @@ void AbcImporterUtilities::CalculateNormals(FAbcMeshSample* Sample) {
     Sample->Normals[FaceOffset + 2] += N;
   }
 
-  for (FVector3f& Normal : Sample->Normals) {
+  for (FVector& Normal : Sample->Normals) {
     Normal.Normalize();
   }
 }
 
 void AbcImporterUtilities::CalculateSmoothNormals(FAbcMeshSample* Sample) {
-  TArray<FVector3f> PerVertexNormals;
+  TArray<FVector> PerVertexNormals;
   PerVertexNormals.AddZeroed(Sample->Vertices.Num());
 
   // Loop over each face
@@ -778,7 +778,7 @@ void AbcImporterUtilities::CalculateSmoothNormals(FAbcMeshSample* Sample) {
 
     // Retrieve vertex indices and positions
     int32 VertexIndices[3];
-    FVector3f VertexPositions[3];
+    FVector VertexPositions[3];
 
     // Retrieve vertex indices and positions
     VertexIndices[0]   = Sample->Indices[FaceOffset + TriangleIndices[0]];
@@ -791,8 +791,8 @@ void AbcImporterUtilities::CalculateSmoothNormals(FAbcMeshSample* Sample) {
     VertexPositions[2] = Sample->Vertices[VertexIndices[2]];
 
     // Calculate normal for triangle face
-    FVector3f N =
-        FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
+    FVector N =
+        FVector::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
     N.Normalize();
 
     // Unrolled loop
@@ -827,17 +827,17 @@ void AbcImporterUtilities::CalculateNormalsWithSmoothingGroups(
     return;
   }
 
-  TArray<FVector3f> PerVertexNormals;
+  TArray<FVector> PerVertexNormals;
   PerVertexNormals.AddZeroed(Sample->Vertices.Num());
 
-  TMap<TPair<uint32, uint32>, FVector3f> SmoothingGroupVertexNormals;
+  TMap<TPair<uint32, uint32>, FVector> SmoothingGroupVertexNormals;
   SmoothingGroupVertexNormals.Reserve(Sample->Indices.Num());
 
   // Loop over each face
   const uint32 NumFaces          = Sample->Indices.Num() / 3;
   const int32 TriangleIndices[3] = {2, 1, 0};
   int32 VertexIndices[3];
-  FVector3f VertexPositions[3];
+  FVector VertexPositions[3];
 
   for (uint32 FaceIndex = 0; FaceIndex < NumFaces; ++FaceIndex) {
     // Retrieve smoothing group for this face
@@ -855,13 +855,13 @@ void AbcImporterUtilities::CalculateNormalsWithSmoothingGroups(
     VertexPositions[2]         = Sample->Vertices[VertexIndices[2]];
 
     // Calculate normal for triangle face
-    FVector3f N =
-        FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
+    FVector N =
+        FVector::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
     N.Normalize();
 
     for (int32 Index = 0; Index < 3; ++Index) {
       const TPair<uint32, uint32> Pair = TPair<uint32, uint32>(SmoothingGroup, VertexIndices[Index]);
-      if (FVector3f* SN = SmoothingGroupVertexNormals.Find(Pair)) {
+      if (FVector* SN = SmoothingGroupVertexNormals.Find(Pair)) {
         (*SN) += N;
       } else {
         SmoothingGroupVertexNormals.Add(Pair, N);
@@ -1063,34 +1063,34 @@ void AbcImporterUtilities::GetHierarchyForObject(
 }
 
 void AbcImporterUtilities::PropogateMatrixTransformationToSample(FAbcMeshSample* Sample, const FMatrix& Matrix) {
-  for (FVector3f& Position : Sample->Vertices) {
-    Position = (FVector4f)Matrix.TransformPosition((FVector)Position);
+  for (FVector& Position : Sample->Vertices) {
+    Position = (FVector4)Matrix.TransformPosition((FVector)Position);
   }
 
-  for (FVector3f& Velocity : Sample->Velocities) {
-    Velocity = (FVector4f)Matrix.TransformVector((FVector)Velocity);
+  for (FVector& Velocity : Sample->Velocities) {
+    Velocity = (FVector4)Matrix.TransformVector((FVector)Velocity);
   }
 
   // TODO could make this a for loop and combine the transforms
-  for (FVector3f& Normal : Sample->Normals) {
-    Normal = (FVector4f)Matrix.TransformVector((FVector)Normal);
+  for (FVector& Normal : Sample->Normals) {
+    Normal = (FVector4)Matrix.TransformVector((FVector)Normal);
     Normal.Normalize();
   }
 
-  for (FVector3f& TangentX : Sample->TangentX) {
-    TangentX = (FVector4f)Matrix.TransformVector((FVector)TangentX);
+  for (FVector& TangentX : Sample->TangentX) {
+    TangentX = (FVector4)Matrix.TransformVector((FVector)TangentX);
     TangentX.Normalize();
   }
 
-  for (FVector3f& TangentY : Sample->TangentY) {
-    TangentY = (FVector4f)Matrix.TransformVector((FVector)TangentY);
+  for (FVector& TangentY : Sample->TangentY) {
+    TangentY = (FVector4)Matrix.TransformVector((FVector)TangentY);
     TangentY.Normalize();
   }
 }
 
 void AbcImporterUtilities::GenerateDeltaFrameDataMatrix(
-    const TArray<FVector3f>& FrameVertexData, const TArray<FVector3f>& FrameNormalData,
-    const TArray<FVector3f>& AverageVertexData, const TArray<FVector3f>& AverageNormalData, const int32 SampleIndex,
+    const TArray<FVector>& FrameVertexData, const TArray<FVector>& FrameNormalData,
+    const TArray<FVector>& AverageVertexData, const TArray<FVector>& AverageNormalData, const int32 SampleIndex,
     const int32 AverageVertexOffset, const int32 AverageIndexOffset, const FVector& SamplePositionOffset,
     TArray<float>& OutGeneratedMatrix, TArray<float>& OutGeneratedNormalsMatrix
 ) {
@@ -1141,7 +1141,7 @@ void AbcImporterUtilities::GenerateCompressedMeshData(
     const int32 BaseOffset     = BaseIndex * NumMatrixRows;
     for (uint32 Index = 0; Index < NumVertices; ++Index) {
       const int32 IndexOffset = BaseOffset + (Index * 3);
-      FVector3f& BaseVertex   = Base->Vertices[Index];
+      FVector& BaseVertex     = Base->Vertices[Index];
 
       BaseVertex.X -= BasesMatrix[IndexOffset + 0];
       BaseVertex.Y -= BasesMatrix[IndexOffset + 1];
@@ -1153,7 +1153,7 @@ void AbcImporterUtilities::GenerateCompressedMeshData(
     const int32 BaseIndexOffset       = BaseIndex * NumNormalsMatrixRows;
     for (uint32 Index = 0; Index < NumIndices; ++Index) {
       const int32 IndexOffset = BaseIndexOffset + (Index * 3);
-      FVector3f& BaseNormal   = Base->Normals[Index];
+      FVector& BaseNormal     = Base->Normals[Index];
 
       BaseNormal.X -= NormalsBasesMatrix[IndexOffset + 0];
       BaseNormal.Y -= NormalsBasesMatrix[IndexOffset + 1];
@@ -1201,7 +1201,7 @@ bool AbcImporterUtilities::AreVerticesEqual(const FSoftSkinVertex& V1, const FSo
     if (FMath::Abs(V1.UVs[UVIdx].Y - V2.UVs[UVIdx].Y) > (1.0f / 1024.0f)) return false;
   }
 
-  FVector3f N1, N2;
+  FVector N1, N2;
   N1 = V1.TangentZ;
   N2 = V2.TangentZ;
 
@@ -1221,11 +1221,11 @@ void AbcImporterUtilities::ApplyConversion(
     // Apply UV matrix to flip channels
     FMatrix2x2 UVMatrix(FScale2D(InConversionSettings.bFlipU ? -1.0f : 1.0f, InConversionSettings.bFlipV ? -1.0f : 1.0f)
     );
-    FVector2f UVOffset(InConversionSettings.bFlipU ? 1.0f : 0.0f, InConversionSettings.bFlipV ? 1.0f : 0.0f);
+    FVector2D UVOffset(InConversionSettings.bFlipU ? 1.0f : 0.0f, InConversionSettings.bFlipV ? 1.0f : 0.0f);
 
     for (uint32 UVIndex = 0; UVIndex < InOutSample->NumUVSets; ++UVIndex) {
-      for (FVector2f& UV : InOutSample->UVs[UVIndex]) {
-        UV = UVOffset + FVector2f(UVMatrix.TransformPoint(FVector2D(UV)));
+      for (FVector2D& UV : InOutSample->UVs[UVIndex]) {
+        UV = UVOffset + FVector2D(UVMatrix.TransformPoint(FVector2D(UV)));
       }
     }
   }
@@ -1397,26 +1397,25 @@ void AbcImporterUtilities::GeometryCacheDataForMeshSample(
     FGeometryCacheMeshData& OutMeshData, const FAbcMeshSample* MeshSample, const uint32 MaterialOffset,
     const float SecondsPerFrame, const bool bUseVelocitiesAsMotionVectors, const bool bStoreImportedVertexNumbers
 ) {
-  OutMeshData.BoundingBox   = MeshSample->Vertices.Num() ? FBox3f(MeshSample->Vertices) : FBox3f(EForceInit::ForceInit);
+  OutMeshData.BoundingBox   = MeshSample->Vertices.Num() ? FBox(MeshSample->Vertices) : FBox(EForceInit::ForceInit);
 
   // We currently always have everything except motion vectors
   // and tangents are auto-configure based on their presence in the mesh sample data
   const int32 NumNormals    = MeshSample->Normals.Num();
   const bool bHasTangents   = MeshSample->TangentX.Num() == NumNormals && MeshSample->TangentY.Num() == NumNormals;
   const bool bHasVelocities = bUseVelocitiesAsMotionVectors && (MeshSample->Velocities.Num() > 0);
-  const bool bHasImportedVertexNumbers             = (NumNormals > 0) && bStoreImportedVertexNumbers;
+  const bool bHasImportedVertexNumbers     = (NumNormals > 0) && bStoreImportedVertexNumbers;
 
-  OutMeshData.VertexInfo.bHasColor0                = true;
-  OutMeshData.VertexInfo.bHasTangentX              = bHasTangents;
-  OutMeshData.VertexInfo.bHasTangentZ              = NumNormals > 0;
-  OutMeshData.VertexInfo.bHasUV0                   = true;
-  OutMeshData.VertexInfo.bHasMotionVectors         = bHasVelocities;
-  OutMeshData.VertexInfo.bHasImportedVertexNumbers = bHasImportedVertexNumbers;
+  OutMeshData.VertexInfo.bHasColor0        = true;
+  OutMeshData.VertexInfo.bHasTangentX      = bHasTangents;
+  OutMeshData.VertexInfo.bHasTangentZ      = NumNormals > 0;
+  OutMeshData.VertexInfo.bHasUV0           = true;
+  OutMeshData.VertexInfo.bHasMotionVectors = bHasVelocities;
 
-  uint32 NumMaterials                              = MaterialOffset;
+  uint32 NumMaterials                      = MaterialOffset;
 
-  const int32 NumTriangles                         = MeshSample->Indices.Num() / 3;
-  const uint32 NumSections                         = MeshSample->NumMaterials ? MeshSample->NumMaterials : 1;
+  const int32 NumTriangles                 = MeshSample->Indices.Num() / 3;
+  const uint32 NumSections                 = MeshSample->NumMaterials ? MeshSample->NumMaterials : 1;
 
   TArray<TArray<uint32>> SectionIndices;
   SectionIndices.AddDefaulted(NumSections);
@@ -1435,10 +1434,6 @@ void AbcImporterUtilities::GeometryCacheDataForMeshSample(
   OutMeshData.TextureCoordinates.AddZeroed(NumNormals);
   OutMeshData.Colors.AddZeroed(NumNormals);
 
-  if (bHasImportedVertexNumbers) {
-    OutMeshData.ImportedVertexNumbers.AddZeroed(NumNormals);
-  }
-
   for (int32 TriangleIndex = 0; TriangleIndex < NumTriangles; ++TriangleIndex) {
     const int32 SectionIndex = MeshSample->MaterialIndices[TriangleIndex];
     TArray<uint32>& Section  = SectionIndices[SectionIndex];
@@ -1449,12 +1444,8 @@ void AbcImporterUtilities::GeometryCacheDataForMeshSample(
 
       OutMeshData.Positions[CornerIndex] = MeshSample->Vertices[Index];
 
-      if (bHasImportedVertexNumbers) {
-        OutMeshData.ImportedVertexNumbers[CornerIndex] = Index;
-      }
-
       if (bHasVelocities) {
-        FVector3f MotionVector = MeshSample->Velocities[Index];
+        FVector MotionVector = MeshSample->Velocities[Index];
         MotionVector *= -1.f;
         MotionVector *= SecondsPerFrame;  // Velocity is per seconds but we need per frame for motion vectors
         OutMeshData.MotionVectors[CornerIndex] = MotionVector;

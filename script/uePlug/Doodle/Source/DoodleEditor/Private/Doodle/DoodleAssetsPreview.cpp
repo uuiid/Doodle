@@ -11,14 +11,15 @@
 #include "EngineUtils.h"
 
 ADoodleAssetsPreview::ADoodleAssetsPreview() {
-  static ConstructorHelpers::FObjectFinder<UTextureCube> CubemapMap(TEXT("/Doodle/lock_dev/Assets/HDRI/EpicQuadPanorama_Gray.EpicQuadPanorama_Gray"));
+  // static ConstructorHelpers::FObjectFinder<UTextureCube>
+  // CubemapMap(TEXT("/Doodle/lock_dev/Assets/HDRI/EpicQuadPanorama_Gray.EpicQuadPanorama_Gray"));
 
   PrimaryActorTick.bCanEverTick = true;
   SkyLight                      = CreateDefaultSubobject<USkyLightComponent>(TEXT("SkyLightComponent"));
 
-  SkyLight->SetCubemap(CubemapMap.Object);
+  // SkyLight->SetCubemap(CubemapMap.Object);
   SkyLight->SourceType = ESkyLightSourceType::SLS_SpecifiedCubemap;
-  SkyLight->SetSourceCubemapAngle(60.f);
+  SkyLight->SourceCubemapAngle      = 60.0f;
   SkyLight->SkyDistanceThreshold    = 1.f;
   SkyLight->bLowerHemisphereIsBlack = false;
   SkyLight->SetCastRaytracedShadow(true);
@@ -45,23 +46,13 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
 
   PostProcess->Settings.bOverride_FilmToe                                 = true;
   PostProcess->Settings.FilmToe                                           = 0.5f;
-  PostProcess->Settings.bOverride_DynamicGlobalIlluminationMethod         = true;
-  PostProcess->Settings.DynamicGlobalIlluminationMethod                   = EDynamicGlobalIlluminationMethod::Lumen;
-  PostProcess->Settings.bOverride_LumenSceneDetail                        = true;
-  PostProcess->Settings.LumenSceneDetail                                  = 4.f;
-  PostProcess->Settings.bOverride_LumenFinalGatherQuality                 = true;
-  PostProcess->Settings.LumenFinalGatherQuality                           = 4.f;
+ 
 
   PostProcess->Settings.bOverride_RayTracingGI                            = true;
   PostProcess->Settings.RayTracingGIType                                  = ERayTracingGlobalIlluminationType::BruteForce;
   PostProcess->Settings.bOverride_RayTracingGISamplesPerPixel             = true;
   PostProcess->Settings.RayTracingGISamplesPerPixel                       = 8;
-  PostProcess->Settings.bOverride_ReflectionMethod                        = true;
-  PostProcess->Settings.ReflectionMethod                                  = EReflectionMethod::Lumen;
-  PostProcess->Settings.bOverride_LumenRayLightingMode                    = true;
-  PostProcess->Settings.LumenRayLightingMode                              = ELumenRayLightingModeOverride::HitLighting;
-  PostProcess->Settings.bOverride_LumenFrontLayerTranslucencyReflections  = true;
-  PostProcess->Settings.LumenFrontLayerTranslucencyReflections            = false;
+ 
   PostProcess->Settings.bOverride_ScreenSpaceReflectionIntensity          = true;
   PostProcess->Settings.ScreenSpaceReflectionIntensity                    = 100.f;
   PostProcess->Settings.bOverride_RayTracingReflectionsMaxBounces         = true;
@@ -101,19 +92,18 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
 
   DirectionalLight->SetDynamicShadowCascades(3);
   DirectionalLight->DistanceFieldShadowDistance       = 30000.f;
-  DirectionalLight->bAtmosphereSunLight               = false;
   DirectionalLight->bUseRayTracedDistanceFieldShadows = false;
   DirectionalLight->SamplesPerPixel                   = 8;
-  DirectionalLight->ForwardShadingPriority            = 100;
   DirectionalLight->SetRelativeLocation(FVector{0.f, 0.f, -550.f});
   DirectionalLight->SetupAttachment(RootComponent);
 
-  SkyDome = CreateDefaultSubobject<UStaticMeshComponent>("SkyDome");
+  SkyDome                               = CreateDefaultSubobject<UStaticMeshComponent>("SkyDome");
   /// Script/Engine.StaticMesh'/Doodle/lock_dev/Assets/EnviroDome.EnviroDome'
   /// Script/Engine.Material'/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M'
-  static ConstructorHelpers::FObjectFinder<UStaticMesh> SkyDome_Mesh(TEXT("/Doodle/lock_dev/Assets/EnviroDome.EnviroDome"));
-  static ConstructorHelpers::FObjectFinder<UMaterial> SkyDome_Mat(TEXT("/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M"));
-  SkyDome->SetStaticMesh(SkyDome_Mesh.Object);
+  // static ConstructorHelpers::FObjectFinder<UStaticMesh>
+  // SkyDome_Mesh(TEXT("/Doodle/lock_dev/Assets/EnviroDome.EnviroDome")); static
+  // ConstructorHelpers::FObjectFinder<UMaterial> SkyDome_Mat(TEXT("/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M"));
+  // SkyDome->SetStaticMesh(SkyDome_Mesh.Object);
   SkyDome->bVisibleInRayTracing         = false;
   SkyDome->CastShadow                   = false;
   SkyDome->bAffectDistanceFieldLighting = false;
@@ -143,10 +133,11 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
   }
 
   {  // [1]
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> L_StaticMesh_Obj(TEXT("/Doodle/lock_dev/Assets/Character_STM.Character_STM"));
+    // static ConstructorHelpers::FObjectFinder<UStaticMesh>
+    // L_StaticMesh_Obj(TEXT("/Doodle/lock_dev/Assets/Character_STM.Character_STM"));
 
     auto& L_S = StaticMeshs.Emplace_GetRef(CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Character_STM")));
-    L_S->SetStaticMesh(L_StaticMesh_Obj.Object);
+    // L_S->SetStaticMesh(L_StaticMesh_Obj.Object);
     L_S->SetupAttachment(RootComponent);
     L_S->SetRelativeLocation({-245.f, 0.f, 0.f});
   }
@@ -178,27 +169,28 @@ void ADoodleAssetsPreview::OnConstruction(const FTransform& Transform) {
 
 void ADoodleAssetsPreview::PostActorCreated() {
   Super::PostActorCreated();
-  UMaterial* L_SkyDomeMaterial = LoadObject<UMaterial>(this, TEXT("/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M"));
-  SkyDome_Mat_Inst             = UMaterialInstanceDynamic::Create(L_SkyDomeMaterial, this);
+  // UMaterial* L_SkyDomeMaterial = LoadObject<UMaterial>(this, TEXT("/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M"));
+  // SkyDome_Mat_Inst             = UMaterialInstanceDynamic::Create(L_SkyDomeMaterial, this);
   SkyDome_Mat_Inst->SetScalarParameterValue(TEXT("PDO"), 3000.0f);
 
   SkyDome->SetMaterial(0, SkyDome_Mat_Inst);
-  UMaterial* L_PBRCheckerMaterial = LoadObject<UMaterial>(this, TEXT("/Doodle/lock_dev/Assets/PBR_Checker_M.PBR_Checker_M"));
-  PBR_Mat_Inst                    = UMaterialInstanceDynamic::Create(L_PBRCheckerMaterial, this);
+  // UMaterial* L_PBRCheckerMaterial = LoadObject<UMaterial>(this,
+  // TEXT("/Doodle/lock_dev/Assets/PBR_Checker_M.PBR_Checker_M")); PBR_Mat_Inst                    =
+  // UMaterialInstanceDynamic::Create(L_PBRCheckerMaterial, this);
   PBR_Mat_Inst->SetScalarParameterValue(TEXT("Max_NoneMetallic"), 0.9f);
   PBR_Mat_Inst->SetScalarParameterValue(TEXT("Min_Metallic"), 0.3f);
   PBR_Mat_Inst->SetScalarParameterValue(TEXT("Min_NoneMetallic"), 0.02f);
   PBRChecker(EnableChecker);
 
-  UMaterial* L_BaseMaterial                = LoadObject<UMaterial>(this, TEXT("/Doodle/lock_dev/Assets/Base_M.Base_M"));
-  UMaterialInstanceDynamic* L_Base_MatInst = UMaterialInstanceDynamic::Create(L_BaseMaterial, this);
-  L_Base_MatInst->SetScalarParameterValue(TEXT("BaseColor"), 0.21f);
-  L_Base_MatInst->SetScalarParameterValue(TEXT("Metallic"), 0.0f);
-  L_Base_MatInst->SetScalarParameterValue(TEXT("Specular"), 1.0f);
-  L_Base_MatInst->SetScalarParameterValue(TEXT("Roughness"), .0f);
-  L_Base_MatInst->SetScalarParameterValue(TEXT("AO"), 1.0f);
-  StaticMeshs[2]->SetMaterial(0, L_Base_MatInst);
-  StaticMeshs[3]->SetMaterial(0, L_Base_MatInst);
+  // UMaterial* L_BaseMaterial                = LoadObject<UMaterial>(this,
+  // TEXT("/Doodle/lock_dev/Assets/Base_M.Base_M")); UMaterialInstanceDynamic* L_Base_MatInst =
+  // UMaterialInstanceDynamic::Create(L_BaseMaterial, this); L_Base_MatInst->SetScalarParameterValue(TEXT("BaseColor"),
+  // 0.21f); L_Base_MatInst->SetScalarParameterValue(TEXT("Metallic"), 0.0f);
+  // L_Base_MatInst->SetScalarParameterValue(TEXT("Specular"), 1.0f);
+  // L_Base_MatInst->SetScalarParameterValue(TEXT("Roughness"), .0f);
+  // L_Base_MatInst->SetScalarParameterValue(TEXT("AO"), 1.0f);
+  // StaticMeshs[2]->SetMaterial(0, L_Base_MatInst);
+  // StaticMeshs[3]->SetMaterial(0, L_Base_MatInst);
 
   LightingScenarios = EDoodleAssetsPreviewLightModel::MidContrast;
   // this->Mark
@@ -325,18 +317,18 @@ void ADoodleAssetsPreview::SwitchConsole() {
 }
 
 void ADoodleAssetsPreview::TurnLighting_Fun() {
-  SkyLight->SetSourceCubemapAngle(60.f - TurnLighting);
+  SkyLight->SourceCubemapAngle = 60.f - TurnLighting;
   SkyLight->MarkRenderStateDirty();
   FQuat L_Quat{FVector::ZAxisVector, TurnLighting};
   switch (LightingScenarios) {
     case EDoodleAssetsPreviewLightModel::LowContrast: {
-      L_Quat *= FQuat::MakeFromRotator({-71.685211f, 250.879517f, 32.971264f});
+      L_Quat *= FQuat::MakeFromEuler({-71.685211f, 250.879517f, 32.971264f});
     } break;
     case EDoodleAssetsPreviewLightModel::MidContrast: {
-      L_Quat *= FQuat::MakeFromRotator({-45.999348f, 250.000214f, 0.000088f});
+      L_Quat *= FQuat::MakeFromEuler({-45.999348f, 250.000214f, 0.000088f});
     } break;
     case EDoodleAssetsPreviewLightModel::HighContrast: {
-      L_Quat *= FQuat::MakeFromRotator({-60.f, -110.500160f, 12.080514f});
+      L_Quat *= FQuat::MakeFromEuler({-60.f, -110.500160f, 12.080514f});
     } break;
     default:
       break;

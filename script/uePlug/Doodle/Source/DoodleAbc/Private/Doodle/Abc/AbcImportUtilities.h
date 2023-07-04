@@ -220,7 +220,7 @@ ESampleReadFlags GenerateAbcMeshSampleReadFlags(const Alembic::AbcGeom::IPolyMes
 /** Generated smoothing groups based on the given face normals, will compare angle between adjacent normals to determine
    whether or not an edge is hard/soft and calculates the smoothing group information with the edge data */
 void GenerateSmoothingGroups(
-    TMultiMap<uint32, uint32>& TouchingFaces, const TArray<FVector3f>& FaceNormals, TArray<uint32>& FaceSmoothingGroups,
+    TMultiMap<uint32, uint32>& TouchingFaces, const TArray<FVector>& FaceNormals, TArray<uint32>& FaceSmoothingGroups,
     uint32& HighestSmoothingGroup, const float HardAngleDotThreshold
 );
 
@@ -233,7 +233,7 @@ bool GenerateAbcMeshSampleDataForFrame(
 /** Read out texture coordinate data from Alembic GeometryParameter */
 void ReadUVSetData(
     Alembic::AbcGeom::IV2fGeomParam& UVCoordinateParameter, const Alembic::Abc::ISampleSelector FrameSelector,
-    TArray<FVector2f>& OutUVs, const TArray<uint32>& MeshIndices, const bool bNeedsTriangulation,
+    TArray<FVector2D>& OutUVs, const TArray<uint32>& MeshIndices, const bool bNeedsTriangulation,
     const TArray<uint32>& FaceCounts, const int32 NumVertices
 );
 
@@ -302,8 +302,8 @@ void PropogateMatrixTransformationToSample(FAbcMeshSample* Sample, const FMatrix
 
 /** Generates the delta frame data for the given average and frame vertex data */
 void GenerateDeltaFrameDataMatrix(
-    const TArray<FVector3f>& FrameVertexData, const TArray<FVector3f>& FrameNormalData,
-    const TArray<FVector3f>& AverageVertexData, const TArray<FVector3f>& AverageNormalData, const int32 SampleIndex,
+    const TArray<FVector>& FrameVertexData, const TArray<FVector>& FrameNormalData,
+    const TArray<FVector>& AverageVertexData, const TArray<FVector>& AverageNormalData, const int32 SampleIndex,
     const int32 AverageVertexOffset, const int32 AverageIndexOffset, const FVector& SamplePositionOffset,
     TArray<float>& OutGeneratedMatrix, TArray<float>& OutGeneratedNormalsMatrix
 );

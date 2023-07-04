@@ -19,10 +19,8 @@ THIRD_PARTY_INCLUDES_END
 #include "Doodle/Abc/AbcFile.h"
 #include "Doodle/Abc/AbcImportUtilities.h"
 #include "Doodle/Abc/DoodleAbcAssetImportData.h"
-#include "Doodle/Abc/EigenHelper.h"
 #include "Editor.h"
 #include "Engine/SkeletalMesh.h"
-#include "Engine/SkinnedAssetCommon.h"
 #include "Engine/StaticMesh.h"
 #include "GeometryCacheCodecV1.h"
 // #include "E:/UnrealEngine/Engine/Source/Runtime/Engine/Public/MaterialShared.h"
@@ -459,11 +457,10 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
         MatTimes.Add(AbcFile->GetImportLength() + AbcFile->GetImportTimeOffset());
         Track->SetMatrixSamples(Mats, MatTimes);
 
-        // Some tracks might not have any mesh samples because they are invisible (can happen with
-        // bFlattenTracks=false), so skip them
-        if (Track->EndCoding()) {
-          GeometryCache->AddTrack(Track);
-        }
+        // 有些轨道可能没有任何网格样本，因为它们是不可见的（在bFlattenTracks=false的情况下可能发生），所以跳过它们。
+
+        Track->EndCoding();
+        GeometryCache->AddTrack(Track);
       }
     }
 
@@ -493,271 +490,15 @@ UGeometryCache* FAbcImporter::ImportAsGeometryCache(UObject* InParent, EObjectFl
   return GeometryCache;
 }
 
-TArray<UObject*> FAbcImporter::ImportAsSkeletalMesh(UObject* InParent, EObjectFlags Flags) {
-  // First compress the animation data
-  const bool bRunComparison     = false;
-  const bool bCompressionResult = CompressAnimationDataUsingPCA(ImportSettings->CompressionSettings, bRunComparison);
-
-  TArray<UObject*> GeneratedObjects;
-
-  if (!bCompressionResult) {
-    return GeneratedObjects;
-  }
-
-  // Create a Skeletal mesh instance
-
-  const FString& ObjectName =
-      InParent != GetTransientPackage()
-          ? FPaths::GetBaseFilename(InParent->GetName())
-          : (FPaths::GetBaseFilename(AbcFile->GetFilePath()) + "_" + FGuid::NewGuid().ToString());
-  const FString SanitizedObjectName   = ObjectTools::SanitizeObjectName(ObjectName);
-
-  USkeletalMesh* ExistingSkeletalMesh = FindObject<USkeletalMesh>(InParent, *SanitizedObjectName);
-  FSkinnedMeshComponentRecreateRenderStateContext* RecreateExistingRenderStateContext =
-      ExistingSkeletalMesh ? new FSkinnedMeshComponentRecreateRenderStateContext(ExistingSkeletalMesh, false) : nullptr;
-
-  USkeletalMesh* SkeletalMesh = CreateObjectInstance<USkeletalMesh>(InParent, ObjectName, Flags);
-
-  // Only import data if a valid object was created
-  if (SkeletalMesh) {
-    // Touch pre edit change
-    SkeletalMesh->PreEditChange(NULL);
-
-    // Retrieve the imported resource structure and allocate a new LOD model
-    FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
-    check(ImportedModel->LODModels.Num() == 0);
-    ImportedModel->LODModels.Empty();
-    ImportedModel->EmptyOriginalReductionSourceMeshData();
-    ImportedModel->LODModels.Add(new FSkeletalMeshLODModel());
-    SkeletalMesh->ResetLODInfo();
-
-    FSkeletalMeshLODInfo& NewLODInfo                      = SkeletalMesh->AddLODInfo();
-    NewLODInfo.ReductionSettings.NumOfTrianglesPercentage = 1.0f;
-    NewLODInfo.ReductionSettings.NumOfVertPercentage      = 1.0f;
-    NewLODInfo.ReductionSettings.MaxDeviationPercentage   = 0.0f;
-    FSkeletalMeshLODModel& LODModel                       = ImportedModel->LODModels[0];
-
-    const FMeshBoneInfo BoneInfo(FName(TEXT("RootBone"), FNAME_Add), TEXT("RootBone_Export"), INDEX_NONE);
-    const FTransform BoneTransform;
-    {
-      FReferenceSkeletonModifier RefSkelModifier(SkeletalMesh->GetRefSkeleton(), SkeletalMesh->GetSkeleton());
-      RefSkelModifier.Add(BoneInfo, BoneTransform);
-    }
-
-    FAbcMeshSample* MergedMeshSample = new FAbcMeshSample();
-    for (const FCompressedAbcData& Data : CompressedMeshData) {
-      AbcImporterUtilities::AppendMeshSample(MergedMeshSample, Data.AverageSample);
-    }
-
-    // Forced to 1
-    LODModel.NumTexCoords = MergedMeshSample->NumUVSets;
-    SkeletalMesh->SetHasVertexColors(true);
-    SkeletalMesh->SetVertexColorGuid(FGuid::NewGuid());
-
-    /* Bounding box according to animation */
-    SkeletalMesh->SetImportedBounds(AbcFile->GetArchiveBounds().GetBox());
-
-    bool bBuildSuccess = false;
-    TArray<int32> MorphTargetVertexRemapping;
-    TArray<int32> UsedVertexIndicesForMorphs;
-    MergedMeshSample->TangentX.Empty();
-    MergedMeshSample->TangentY.Empty();
-    bBuildSuccess = BuildSkeletalMesh(
-        LODModel, SkeletalMesh->GetRefSkeleton(), MergedMeshSample, MorphTargetVertexRemapping,
-        UsedVertexIndicesForMorphs
-    );
-
-    if (!bBuildSuccess) {
-      SkeletalMesh->MarkAsGarbage();
-      return GeneratedObjects;
-    }
-
-    // Create the skeleton object
-    FString SkeletonName = FString::Printf(TEXT("%s_Skeleton"), *SkeletalMesh->GetName());
-    USkeleton* Skeleton  = CreateObjectInstance<USkeleton>(InParent, SkeletonName, Flags);
-
-    // Merge bones to the selected skeleton
-    check(Skeleton->MergeAllBonesToBoneTree(SkeletalMesh));
-    Skeleton->MarkPackageDirty();
-    if (SkeletalMesh->GetSkeleton() != Skeleton) {
-      SkeletalMesh->SetSkeleton(Skeleton);
-      SkeletalMesh->MarkPackageDirty();
-    }
-
-    // Create animation sequence for the skeleton
-    UAnimSequence* Sequence = CreateObjectInstance<UAnimSequence>(
-        InParent, FString::Printf(TEXT("%s_Animation"), *SkeletalMesh->GetName()), Flags
-    );
-    Sequence->SetSkeleton(Skeleton);
-
-    int32 ObjectIndex                    = 0;
-    uint32 TriangleOffset                = 0;
-    uint32 WedgeOffset                   = 0;
-    uint32 VertexOffset                  = 0;
-
-    IAnimationDataController& Controller = Sequence->GetController();
-
-    Controller.OpenBracket(LOCTEXT("ImportAsSkeletalMesh", "Importing Alembic Animation"));
-
-    Controller.SetPlayLength(AbcFile->GetImportLength());
-    Controller.SetFrameRate(FFrameRate(AbcFile->GetFramerate(), 1));
-
-    Sequence->ImportFileFramerate     = AbcFile->GetFramerate();
-    Sequence->ImportResampleFramerate = 1.0f / (float)AbcFile->GetFramerate();
-
-    {
-#if WITH_EDITOR
-      // When ScopedPostEditChange goes out of scope, it will call SkeletalMesh->PostEditChange()
-      // while preventing any call to that within the scope
-      FScopedSkeletalMeshPostEditChange ScopedPostEditChange(SkeletalMesh);
-#endif
-
-      for (FCompressedAbcData& CompressedData : CompressedMeshData) {
-        FAbcMeshSample* AverageSample = CompressedData.AverageSample;
-
-        if (CompressedData.BaseSamples.Num() > 0) {
-          const int32 NumBases   = CompressedData.BaseSamples.Num();
-          int32 NumUsedBases     = 0;
-
-          const int32 NumIndices = CompressedData.AverageSample->Indices.Num();
-
-          for (int32 BaseIndex = 0; BaseIndex < NumBases; ++BaseIndex) {
-            FAbcMeshSample* BaseSample = CompressedData.BaseSamples[BaseIndex];
-
-            // Create new morph target with name based on object and base index
-            UMorphTarget* MorphTarget  = NewObject<UMorphTarget>(
-                SkeletalMesh, FName(*FString::Printf(TEXT("Base_%i_%i"), BaseIndex, ObjectIndex))
-            );
-
-            // Setup morph target vertices directly
-            TArray<FMorphTargetDelta> MorphDeltas;
-            GenerateMorphTargetVertices(
-                BaseSample, MorphDeltas, AverageSample, WedgeOffset, MorphTargetVertexRemapping,
-                UsedVertexIndicesForMorphs, VertexOffset, WedgeOffset
-            );
-
-            const bool bCompareNormals = true;
-            MorphTarget->PopulateDeltas(MorphDeltas, 0, LODModel.Sections, bCompareNormals);
-
-            const float PercentageOfVerticesInfluences =
-                ((float)MorphTarget->GetMorphLODModels()[0].Vertices.Num() / (float)NumIndices) * 100.0f;
-            if (PercentageOfVerticesInfluences >
-                ImportSettings->CompressionSettings.MinimumNumberOfVertexInfluencePercentage) {
-              SkeletalMesh->RegisterMorphTarget(MorphTarget);
-              MorphTarget->MarkPackageDirty();
-
-              // Set up curves
-              const TArray<float>& CurveValues = CompressedData.CurveValues[BaseIndex];
-              const TArray<float>& TimeValues  = CompressedData.TimeValues[BaseIndex];
-              // Morph target stuffies
-              FString CurveName                = FString::Printf(TEXT("Base_%i_%i"), BaseIndex, ObjectIndex);
-              FName ConstCurveName             = *CurveName;
-
-              // Sets up the morph target curves with the sample values and time keys
-              SetupMorphTargetCurves(Skeleton, ConstCurveName, Sequence, CurveValues, TimeValues, Controller);
-            } else {
-              MorphTarget->MarkAsGarbage();
-            }
-          }
-        }
-
-        WedgeOffset += CompressedData.AverageSample->Indices.Num();
-        VertexOffset += CompressedData.AverageSample->Vertices.Num();
-
-        const uint32 NumMaterials = CompressedData.MaterialNames.Num();
-        for (uint32 MaterialIndex = 0; MaterialIndex < NumMaterials; ++MaterialIndex) {
-          const FString& MaterialName = CompressedData.MaterialNames[MaterialIndex];
-          UMaterialInterface* Material =
-              AbcImporterUtilities::RetrieveMaterial(*AbcFile, MaterialName, InParent, Flags);
-          SkeletalMesh->GetMaterials().Add(FSkeletalMaterial(Material, true));
-          if (Material != UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface)) {
-            Material->PostEditChange();
-          }
-        }
-
-        ++ObjectIndex;
-      }
-
-      // Add a track for translating the RootBone by the samples centers
-      // Each mesh has the same samples centers so use the first one
-      if (SamplesOffsets.IsSet() && CompressedMeshData.Num() > 0 && CompressedMeshData[0].CurveValues.Num() > 0) {
-        const int32 NumSamples = CompressedMeshData[0].CurveValues[0].Num(
-        );  // We might have less bases than we have samples, so use the number of curve values here
-
-        FRawAnimSequenceTrack RootBoneTrack;
-        RootBoneTrack.PosKeys.Reserve(NumSamples);
-        RootBoneTrack.RotKeys.Reserve(NumSamples);
-        RootBoneTrack.ScaleKeys.Reserve(NumSamples);
-
-        for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
-          const FVector SampleOffset = SamplesOffsets.GetValue()[SampleIndex];
-          RootBoneTrack.PosKeys.Add((FVector3f)SampleOffset);
-
-          RootBoneTrack.RotKeys.Add(FQuat4f::Identity);
-          RootBoneTrack.ScaleKeys.Add(FVector3f::OneVector);
-        }
-
-        const FReferenceSkeleton& RefSkeleton  = SkeletalMesh->GetRefSkeleton();
-        const TArray<FMeshBoneInfo>& BonesInfo = RefSkeleton.GetRawRefBoneInfo();
-
-        Controller.AddBoneTrack(BonesInfo[0].Name);
-        Controller.SetBoneTrackKeys(
-            BonesInfo[0].Name, RootBoneTrack.PosKeys, RootBoneTrack.RotKeys, RootBoneTrack.ScaleKeys
-        );
-      }
-
-      // Set recompute tangent flag on skeletal mesh sections
-      for (FSkelMeshSection& Section : LODModel.Sections) {
-        Section.bRecomputeTangent = true;
-      }
-
-      SkeletalMesh->CalculateInvRefMatrices();
-    }
-
-    SkeletalMesh->MarkPackageDirty();
-
-    Controller.UpdateCurveNamesFromSkeleton(Skeleton, ERawCurveTrackTypes::RCT_Float);
-    Controller.NotifyPopulated();
-
-    Controller.CloseBracket();
-
-    Sequence->PostEditChange();
-    Sequence->SetPreviewMesh(SkeletalMesh);
-    Sequence->MarkPackageDirty();
-
-    Skeleton->SetPreviewMesh(SkeletalMesh);
-    Skeleton->PostEditChange();
-
-    GeneratedObjects.Add(SkeletalMesh);
-    GeneratedObjects.Add(Skeleton);
-    GeneratedObjects.Add(Sequence);
-
-    UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-    AssetEditorSubsystem->CloseAllEditorsForAsset(Skeleton);
-    AssetEditorSubsystem->CloseAllEditorsForAsset(SkeletalMesh);
-    AssetEditorSubsystem->CloseAllEditorsForAsset(Sequence);
-  }
-
-  if (RecreateExistingRenderStateContext) {
-    delete RecreateExistingRenderStateContext;
-  }
-
-  SetMetaData(GeneratedObjects);
-
-  return GeneratedObjects;
-}
-
 void FAbcImporter::SetupMorphTargetCurves(
     USkeleton* Skeleton, FName ConstCurveName, UAnimSequence* Sequence, const TArray<float>& CurveValues,
-    const TArray<float>& TimeValues, IAnimationDataController& Controller
+    const TArray<float>& TimeValues
 ) {
   FSmartName NewName;
   Skeleton->AddSmartNameAndModify(USkeleton::AnimCurveMappingName, ConstCurveName, NewName);
 
-  FAnimationCurveIdentifier CurveId(NewName, ERawCurveTrackTypes::RCT_Float);
-  Controller.AddCurve(CurveId);
-
-  const FFloatCurve* NewCurve = Sequence->GetDataModel()->FindFloatCurve(CurveId);
+  FFloatCurve* NewCurve =
+      static_cast<FFloatCurve*>(Sequence->RawCurveData.GetCurveData(NewName.UID, ERawCurveTrackTypes::RCT_Float));
   ensure(NewCurve);
 
   FRichCurve RichCurve;
@@ -775,8 +516,6 @@ void FAbcImporter::SetupMorphTargetCurves(
     RichCurve.SetKeyTangentMode(NewKeyHandle, NewTangentMode);
     RichCurve.SetKeyTangentWeightMode(NewKeyHandle, NewTangentWeightMode);
   }
-
-  Controller.SetCurveKeys(CurveId, RichCurve.GetConstRefOfKeys());
 }
 
 void FAbcImporter::SetMetaData(const TArray<UObject*>& Objects) {
@@ -790,682 +529,9 @@ void FAbcImporter::SetMetaData(const TArray<UObject*>& Objects) {
   }
 }
 
-const bool FAbcImporter::CompressAnimationDataUsingPCA(
-    const FDoodleAbcCompressionSettings& InCompressionSettings, const bool bRunComparison /*= false*/
-) {
-  const TArray<FAbcPolyMesh*>& PolyMeshes = AbcFile->GetPolyMeshes();
-
-  // Split up poly mesh objects into constant and animated objects to process
-  TArray<FAbcPolyMesh*> PolyMeshesToCompress;
-  TArray<FAbcPolyMesh*> ConstantPolyMeshObjects;
-  for (FAbcPolyMesh* PolyMesh : PolyMeshes) {
-    if (PolyMesh->bShouldImport && PolyMesh->bConstantTopology) {
-      if (PolyMesh->IsConstant() && PolyMesh->bConstantTransformation) {
-        ConstantPolyMeshObjects.Add(PolyMesh);
-      } else if (!PolyMesh->IsConstant() || (InCompressionSettings.bBakeMatrixAnimation && !PolyMesh->bConstantTransformation)) {
-        PolyMeshesToCompress.Add(PolyMesh);
-      }
-    }
-  }
-
-  const bool bEnableSamplesOffsets =
-      (ConstantPolyMeshObjects.Num() == 0);  // We can't offset constant meshes since they don't have morph targets
-
-  bool bResult                        = true;
-  const int32 NumPolyMeshesToCompress = PolyMeshesToCompress.Num();
-  if (NumPolyMeshesToCompress) {
-    if (InCompressionSettings.bMergeMeshes) {
-      // Merged path
-      TArray<FVector3f> AverageVertexData;
-      TArray<FVector3f> AverageNormalData;
-
-      float MinTime    = FLT_MAX;
-      float MaxTime    = -FLT_MAX;
-      int32 NumSamples = 0;
-
-      TArray<uint32> ObjectVertexOffsets;
-      TArray<uint32> ObjectIndexOffsets;
-      TFunction<void(int32, FAbcFile*)> MergedMeshesFunc = [this, PolyMeshesToCompress, &MinTime, &MaxTime, &NumSamples,
-                                                            &ObjectVertexOffsets, &ObjectIndexOffsets,
-                                                            &AverageVertexData, &AverageNormalData,
-                                                            NumPolyMeshesToCompress](
-                                                               int32 FrameIndex, FAbcFile* InFile
-                                                           ) {
-        for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-          FAbcPolyMesh* PolyMesh = PolyMeshesToCompress[MeshIndex];
-
-          MinTime =
-              FMath::Min(MinTime, (float)PolyMesh->GetTimeForFrameIndex(FrameIndex) - AbcFile->GetImportTimeOffset());
-          MaxTime =
-              FMath::Max(MaxTime, (float)PolyMesh->GetTimeForFrameIndex(FrameIndex) - AbcFile->GetImportTimeOffset());
-
-          if (ObjectVertexOffsets.Num() != NumPolyMeshesToCompress) {
-            ObjectVertexOffsets.Add(AverageVertexData.Num());
-            ObjectIndexOffsets.Add(AverageNormalData.Num());
-            AverageVertexData.Append(PolyMesh->GetSample(FrameIndex)->Vertices);
-            AverageNormalData.Append(PolyMesh->GetSample(FrameIndex)->Normals);
-          } else {
-            for (int32 VertexIndex = 0; VertexIndex < PolyMesh->GetSample(FrameIndex)->Vertices.Num(); ++VertexIndex) {
-              AverageVertexData[VertexIndex + ObjectVertexOffsets[MeshIndex]] +=
-                  PolyMesh->GetSample(FrameIndex)->Vertices[VertexIndex];
-            }
-
-            for (int32 Index = 0; Index < PolyMesh->GetSample(FrameIndex)->Indices.Num(); ++Index) {
-              AverageNormalData[Index + ObjectIndexOffsets[MeshIndex]] +=
-                  PolyMesh->GetSample(FrameIndex)->Normals[Index];
-            }
-          }
-        }
-
-        ++NumSamples;
-      };
-
-      EFrameReadFlags Flags = EFrameReadFlags::PositionAndNormalOnly;
-      if (ImportSettings->CompressionSettings.bBakeMatrixAnimation) {
-        Flags |= EFrameReadFlags::ApplyMatrix;
-      }
-
-      {
-        // Check the first frame to see if the Alembic can be imported as a skeletal mesh due to memory constraints
-        AbcFile->ReadFrame(AbcFile->GetStartFrameIndex(), Flags, 0);
-        MergedMeshesFunc(AbcFile->GetStartFrameIndex(), AbcFile);
-        AbcFile->CleanupFrameData(0);
-
-        const int32 NumFrames          = AbcFile->GetEndFrameIndex() - AbcFile->GetStartFrameIndex() + 1;
-        const uint64 NumMatrixElements = uint64(AverageVertexData.Num()) * 3 * NumFrames;
-        if (!IntFitsIn<int32>(NumMatrixElements)) {
-          UE_LOG(
-              LogAbcImporter, Error,
-              TEXT("Vertex matrix has too many elements (%llu) because the mesh has too many vertices (%d) and/or the "
-                   "animation has too many frames (%d). Try importing as GeometryCache instead."),
-              NumMatrixElements, AverageVertexData.Num(), NumFrames
-          );
-          return false;
-        }
-
-        const uint64 NumNormalsMatrixElements = uint64(AverageNormalData.Num()) * 3 * NumFrames;
-        if (!IntFitsIn<int32>(NumNormalsMatrixElements)) {
-          UE_LOG(
-              LogAbcImporter, Error,
-              TEXT("Normal matrix has too many elements (%llu) because the mesh has too many vertices (%d) and/or the "
-                   "animation has too many frames (%d). Try importing as GeometryCache instead."),
-              NumNormalsMatrixElements, AverageNormalData.Num(), NumFrames
-          );
-          return false;
-        }
-
-        AverageVertexData.Reset();
-        AverageNormalData.Reset();
-        ObjectVertexOffsets.Reset();
-        ObjectIndexOffsets.Reset();
-
-        MinTime    = FLT_MAX;
-        MaxTime    = -FLT_MAX;
-        NumSamples = 0;
-      }
-
-      AbcFile->ProcessFrames(MergedMeshesFunc, Flags);
-
-      // Average out vertex data
-      FBox AverageBoundingBox(ForceInit);
-      const float Multiplier = 1.0f / FMath::Max(NumSamples, 1);
-      for (FVector3f& Vertex : AverageVertexData) {
-        Vertex *= Multiplier;
-        AverageBoundingBox += (FVector)Vertex;
-      }
-      const FVector AverageSampleCenter = AverageBoundingBox.GetCenter();
-
-      for (FVector3f& Normal : AverageNormalData) {
-        Normal = Normal.GetSafeNormal();
-      }
-
-      // Allocate compressed mesh data object
-      CompressedMeshData.AddDefaulted();
-      FCompressedAbcData& CompressedData = CompressedMeshData.Last();
-
-      FAbcMeshSample MergedZeroFrameSample;
-      for (FAbcPolyMesh* PolyMesh : PolyMeshesToCompress) {
-        AbcImporterUtilities::AppendMeshSample(&MergedZeroFrameSample, PolyMesh->GetTransformedFirstSample());
-
-        // QQ FUNCTIONALIZE
-        // Add material names from this mesh object
-        if (PolyMesh->FaceSetNames.Num() > 0) {
-          CompressedData.MaterialNames.Append(PolyMesh->FaceSetNames);
-        } else {
-          static const FString DefaultName("NoFaceSetName");
-          CompressedData.MaterialNames.Add(DefaultName);
-        }
-      }
-
-      const uint32 NumVertices          = AverageVertexData.Num();
-      const uint32 NumMatrixRows        = NumVertices * 3;
-      const uint32 NumIndices           = AverageNormalData.Num();
-      const uint32 NumNormalsMatrixRows = NumIndices * 3;
-
-      TArray<float> OriginalMatrix;
-      OriginalMatrix.AddZeroed(NumMatrixRows * NumSamples);
-
-      TArray<float> OriginalNormalsMatrix;
-      OriginalNormalsMatrix.AddZeroed(NumNormalsMatrixRows * NumSamples);
-
-      if (bEnableSamplesOffsets) {
-        SamplesOffsets.Emplace();
-        SamplesOffsets.GetValue().AddZeroed(NumSamples);
-      }
-
-      uint32 GenerateMatrixSampleIndex = 0;
-      TFunction<void(int32, FAbcFile*)> GenerateMatrixFunc =
-          [this, PolyMeshesToCompress, NumPolyMeshesToCompress, &OriginalMatrix, &OriginalNormalsMatrix,
-           &AverageVertexData, &AverageNormalData, &NumSamples, &ObjectVertexOffsets, &ObjectIndexOffsets,
-           &GenerateMatrixSampleIndex, &AverageSampleCenter](int32 FrameIndex, FAbcFile* InFile) {
-            FVector SampleOffset = FVector::ZeroVector;
-            if (SamplesOffsets.IsSet()) {
-              FBox BoundingBox(ForceInit);
-
-              // For each object generate the delta frame data for the PCA compression
-              for (FAbcPolyMesh* PolyMesh : PolyMeshesToCompress) {
-                const TArray<FVector3f>& Vertices = PolyMesh->GetSample(FrameIndex)->Vertices;
-
-                for (const FVector3f& Vertex : Vertices) {
-                  BoundingBox += (FVector)Vertex;
-                }
-              }
-
-              SampleOffset                                         = BoundingBox.GetCenter() - AverageSampleCenter;
-              SamplesOffsets.GetValue()[GenerateMatrixSampleIndex] = SampleOffset;
-            }
-
-            // For each object generate the delta frame data for the PCA compression
-            for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-              FAbcPolyMesh* PolyMesh            = PolyMeshesToCompress[MeshIndex];
-              const TArray<FVector3f>& Vertices = PolyMesh->GetSample(FrameIndex)->Vertices;
-              const TArray<FVector3f>& Normals  = PolyMesh->GetSample(FrameIndex)->Normals;
-
-              AbcImporterUtilities::GenerateDeltaFrameDataMatrix(
-                  Vertices, Normals, AverageVertexData, AverageNormalData, GenerateMatrixSampleIndex,
-                  ObjectVertexOffsets[MeshIndex], ObjectIndexOffsets[MeshIndex], SampleOffset, OriginalMatrix,
-                  OriginalNormalsMatrix
-              );
-            }
-
-            ++GenerateMatrixSampleIndex;
-          };
-
-      AbcFile->ProcessFrames(GenerateMatrixFunc, Flags);
-
-      // Perform compression
-      TArray<float> OutU, OutV, OutNormalsU;
-      TArrayView<float> BasesMatrix;
-      TArrayView<float> NormalsBasesMatrix;
-      uint32 NumUsedSingularValues = NumSamples;
-
-      // if (InCompressionSettings.BaseCalculationType != EBaseCalculationType::NoCompression) {
-      //   const float PercentageOfTotalBases =
-      //       (InCompressionSettings.BaseCalculationType == EBaseCalculationType::PercentageBased
-      //            ? InCompressionSettings.PercentageOfTotalBases / 100.0f
-      //            : 1.0f);
-      //   const int32 NumberOfBases = InCompressionSettings.BaseCalculationType == EBaseCalculationType::FixedNumber
-      //                                   ? InCompressionSettings.MaxNumberOfBases
-      //                                   : 0;
-
-      //  NumUsedSingularValues     = PerformSVDCompression(
-      //      OriginalMatrix, OriginalNormalsMatrix, NumSamples, PercentageOfTotalBases, NumberOfBases, OutU,
-      //      OutNormalsU, OutV
-      //  );
-      //  BasesMatrix        = OutU;
-      //  NormalsBasesMatrix = OutNormalsU;
-      //} else {
-      //}
-      OutV.AddDefaulted(NumSamples * NumSamples);
-
-      for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
-        for (int32 CurveIndex = 0; CurveIndex < NumSamples; ++CurveIndex) {
-          float Weight = 0.f;
-
-          if (SampleIndex == CurveIndex) {
-            Weight = 1.f;
-          }
-
-          OutV[SampleIndex + (NumSamples * CurveIndex)] = Weight;
-        }
-      }
-
-      BasesMatrix                  = OriginalMatrix;
-      NormalsBasesMatrix           = OriginalNormalsMatrix;
-
-      // Set up average frame
-      CompressedData.AverageSample = new FAbcMeshSample(MergedZeroFrameSample);
-      FMemory::Memcpy(
-          CompressedData.AverageSample->Vertices.GetData(), AverageVertexData.GetData(),
-          AverageVertexData.GetTypeSize() * NumVertices
-      );
-      FMemory::Memcpy(
-          CompressedData.AverageSample->Normals.GetData(), AverageNormalData.GetData(),
-          AverageNormalData.GetTypeSize() * NumIndices
-      );
-
-      const float FrameStep = (MaxTime - MinTime) / (float)(NumSamples - 1);
-      AbcImporterUtilities::GenerateCompressedMeshData(
-          CompressedData, NumUsedSingularValues, NumSamples, BasesMatrix, NormalsBasesMatrix, OutV, FrameStep,
-          FMath::Max(MinTime, 0.0f)
-      );
-
-      if (bRunComparison) {
-        CompareCompressionResult(
-            OriginalMatrix, NumSamples, NumUsedSingularValues, BasesMatrix, OutV, THRESH_POINTS_ARE_SAME
-        );
-        CompareCompressionResult(
-            OriginalNormalsMatrix, NumSamples, NumUsedSingularValues, NormalsBasesMatrix, OutV, THRESH_NORMALS_ARE_SAME
-        );
-      }
-    } else {
-      TArray<float> MinTimes;
-      TArray<float> MaxTimes;
-      TArray<TArray<FVector3f>> AverageVertexData;
-      TArray<TArray<FVector3f>> AverageNormalData;
-
-      MinTimes.AddZeroed(NumPolyMeshesToCompress);
-      MaxTimes.AddZeroed(NumPolyMeshesToCompress);
-      AverageVertexData.AddDefaulted(NumPolyMeshesToCompress);
-      AverageNormalData.AddDefaulted(NumPolyMeshesToCompress);
-
-      int32 NumSamples                                       = 0;
-      TFunction<void(int32, FAbcFile*)> IndividualMeshesFunc = [this, NumPolyMeshesToCompress, &PolyMeshesToCompress,
-                                                                &MinTimes, &MaxTimes, &NumSamples, &AverageVertexData,
-                                                                &AverageNormalData](
-                                                                   int32 FrameIndex, FAbcFile* InFile
-                                                               ) {
-        // Each individual object creates a compressed data object
-        for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-          FAbcPolyMesh* PolyMesh             = PolyMeshesToCompress[MeshIndex];
-          TArray<FVector3f>& AverageVertices = AverageVertexData[MeshIndex];
-          TArray<FVector3f>& AverageNormals  = AverageNormalData[MeshIndex];
-
-          if (AverageVertices.Num() == 0) {
-            MinTimes[MeshIndex] = FLT_MAX;
-            MaxTimes[MeshIndex] = -FLT_MAX;
-            AverageVertices.Append(PolyMesh->GetSample(FrameIndex)->Vertices);
-            AverageNormals.Append(PolyMesh->GetSample(FrameIndex)->Normals);
-          } else {
-            const TArray<FVector3f>& CurrentVertices = PolyMesh->GetSample(FrameIndex)->Vertices;
-            for (int32 VertexIndex = 0; VertexIndex < AverageVertices.Num(); ++VertexIndex) {
-              AverageVertices[VertexIndex] += CurrentVertices[VertexIndex];
-            }
-
-            for (int32 Index = 0; Index < PolyMesh->GetSample(FrameIndex)->Indices.Num(); ++Index) {
-              AverageNormals[Index] += PolyMesh->GetSample(FrameIndex)->Normals[Index];
-            }
-          }
-
-          MinTimes[MeshIndex] = FMath::Min(
-              MinTimes[MeshIndex], (float)PolyMesh->GetTimeForFrameIndex(FrameIndex) - AbcFile->GetImportTimeOffset()
-          );
-          MaxTimes[MeshIndex] = FMath::Max(
-              MaxTimes[MeshIndex], (float)PolyMesh->GetTimeForFrameIndex(FrameIndex) - AbcFile->GetImportTimeOffset()
-          );
-        }
-
-        for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-          TArray<FVector3f>& AverageNormals = AverageNormalData[MeshIndex];
-
-          for (FVector3f& AverageNormal : AverageNormals) {
-            AverageNormal = AverageNormal.GetSafeNormal();
-          }
-        }
-
-        ++NumSamples;
-      };
-
-      EFrameReadFlags Flags = EFrameReadFlags::PositionAndNormalOnly;
-      if (ImportSettings->CompressionSettings.bBakeMatrixAnimation) {
-        Flags |= EFrameReadFlags::ApplyMatrix;
-      }
-
-      {
-        // Check the first frame to see if the Alembic can be imported as a skeletal mesh due to memory constraints
-        AbcFile->ReadFrame(AbcFile->GetStartFrameIndex(), Flags, 0);
-        IndividualMeshesFunc(AbcFile->GetStartFrameIndex(), AbcFile);
-        AbcFile->CleanupFrameData(0);
-
-        const int32 NumFrames = AbcFile->GetEndFrameIndex() - AbcFile->GetStartFrameIndex() + 1;
-        for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-          const uint64 NumMatrixElements = uint64(AverageVertexData[MeshIndex].Num()) * 3 * NumFrames;
-          if (!IntFitsIn<int32>(NumMatrixElements)) {
-            UE_LOG(
-                LogAbcImporter, Error,
-                TEXT("Vertex matrix has too many elements (%llu) because the mesh has too many vertices (%d) and/or "
-                     "the animation has too many frames (%d). Try importing as GeometryCache instead."),
-                NumMatrixElements, AverageVertexData[MeshIndex].Num(), NumFrames
-            );
-            return false;
-          }
-
-          const uint64 NumNormalsMatrixElements = uint64(AverageNormalData[MeshIndex].Num()) * 3 * NumFrames;
-          if (!IntFitsIn<int32>(NumNormalsMatrixElements)) {
-            UE_LOG(
-                LogAbcImporter, Error,
-                TEXT("Normal matrix has too many elements (%llu) because the mesh has too many vertices (%d) and/or "
-                     "the animation has too many frames (%d). Try importing as GeometryCache instead."),
-                NumNormalsMatrixElements, AverageNormalData[MeshIndex].Num(), NumFrames
-            );
-            return false;
-          }
-        }
-
-        MinTimes.Reset();
-        MaxTimes.Reset();
-        AverageVertexData.Reset();
-        AverageNormalData.Reset();
-
-        MinTimes.AddZeroed(NumPolyMeshesToCompress);
-        MaxTimes.AddZeroed(NumPolyMeshesToCompress);
-        AverageVertexData.AddDefaulted(NumPolyMeshesToCompress);
-        AverageNormalData.AddDefaulted(NumPolyMeshesToCompress);
-
-        NumSamples = 0;
-      }
-
-      AbcFile->ProcessFrames(IndividualMeshesFunc, Flags);
-
-      // Average out vertex data
-      FBox AverageBoundingBox(ForceInit);
-      const float Multiplier = 1.0f / FMath::Max(NumSamples, 1);
-      for (TArray<FVector3f>& VertexData : AverageVertexData) {
-        for (FVector3f& Vertex : VertexData) {
-          Vertex *= Multiplier;
-          AverageBoundingBox += (FVector)Vertex;
-        }
-      }
-      const FVector AverageSampleCenter = AverageBoundingBox.GetCenter();
-
-      TArray<TArray<float>> Matrices;
-      TArray<TArray<float>> NormalsMatrices;
-      for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-        Matrices.AddDefaulted();
-        Matrices[MeshIndex].AddZeroed(AverageVertexData[MeshIndex].Num() * 3 * NumSamples);
-
-        NormalsMatrices.AddDefaulted();
-        NormalsMatrices[MeshIndex].AddZeroed(AverageNormalData[MeshIndex].Num() * 3 * NumSamples);
-      }
-
-      if (bEnableSamplesOffsets) {
-        SamplesOffsets.Emplace();
-        SamplesOffsets.GetValue().AddDefaulted(NumSamples);
-      }
-
-      if (bEnableSamplesOffsets) {
-        SamplesOffsets.Emplace();
-        SamplesOffsets.GetValue().AddDefaulted(NumSamples);
-      }
-
-      uint32 GenerateMatrixSampleIndex = 0;
-      TFunction<void(int32, FAbcFile*)> GenerateMatrixFunc =
-          [this, NumPolyMeshesToCompress, &Matrices, &NormalsMatrices, &GenerateMatrixSampleIndex,
-           &PolyMeshesToCompress, &AverageVertexData, &AverageNormalData,
-           &AverageSampleCenter](int32 FrameIndex, FAbcFile* InFile) {
-            // Compute on bounding box for the sample, which will include all the meshes
-            FBox BoundingBox(ForceInit);
-
-            for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-              FAbcPolyMesh* PolyMesh            = PolyMeshesToCompress[MeshIndex];
-              const uint32 NumMatrixRows        = AverageVertexData[MeshIndex].Num() * 3;
-
-              const TArray<FVector3f>& Vertices = PolyMesh->GetSample(FrameIndex)->Vertices;
-
-              for (const FVector3f& Vector : Vertices) {
-                BoundingBox += (FVector)Vector;
-              }
-            }
-
-            FVector SampleOffset = FVector::ZeroVector;
-            if (SamplesOffsets.IsSet()) {
-              SampleOffset                                         = BoundingBox.GetCenter() - AverageSampleCenter;
-              SamplesOffsets.GetValue()[GenerateMatrixSampleIndex] = SampleOffset;
-            }
-
-            // For each object generate the delta frame data for the PCA compression
-            for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-              FAbcPolyMesh* PolyMesh                   = PolyMeshesToCompress[MeshIndex];
-              const uint32 NumMatrixRows               = AverageVertexData[MeshIndex].Num() * 3;
-              const TArray<FVector3f>& CurrentVertices = PolyMesh->GetSample(FrameIndex)->Vertices;
-              const TArray<FVector3f>& CurrentNormals  = PolyMesh->GetSample(FrameIndex)->Normals;
-
-              const int32 AverageVertexOffset          = 0;
-              const int32 AverageIndexOffset           = 0;
-
-              AbcImporterUtilities::GenerateDeltaFrameDataMatrix(
-                  CurrentVertices, CurrentNormals, AverageVertexData[MeshIndex], AverageNormalData[MeshIndex],
-                  GenerateMatrixSampleIndex, AverageVertexOffset, AverageIndexOffset, SampleOffset, Matrices[MeshIndex],
-                  NormalsMatrices[MeshIndex]
-              );
-            }
-
-            ++GenerateMatrixSampleIndex;
-          };
-
-      AbcFile->ProcessFrames(GenerateMatrixFunc, Flags);
-
-      for (int32 MeshIndex = 0; MeshIndex < NumPolyMeshesToCompress; ++MeshIndex) {
-        // Perform compression
-        TArray<float> OutU, OutV, OutNormalsU;
-        TArrayView<float> BasesMatrix;
-        TArrayView<float> NormalsBasesMatrix;
-
-        const int32 NumVertices      = AverageVertexData[MeshIndex].Num();
-        const int32 NumIndices       = AverageNormalData[MeshIndex].Num();
-        const int32 NumMatrixRows    = NumVertices * 3;
-        uint32 NumUsedSingularValues = NumSamples;
-
-        // Allocate compressed mesh data object
-        CompressedMeshData.AddDefaulted();
-        FCompressedAbcData& CompressedData = CompressedMeshData.Last();
-        CompressedData.AverageSample =
-            new FAbcMeshSample(*PolyMeshesToCompress[MeshIndex]->GetTransformedFirstSample());
-        FMemory::Memcpy(
-            CompressedData.AverageSample->Vertices.GetData(), AverageVertexData[MeshIndex].GetData(),
-            AverageVertexData[MeshIndex].GetTypeSize() * NumVertices
-        );
-        FMemory::Memcpy(
-            CompressedData.AverageSample->Normals.GetData(), AverageNormalData[MeshIndex].GetData(),
-            AverageNormalData[MeshIndex].GetTypeSize() * NumIndices
-        );
-
-        // if (InCompressionSettings.BaseCalculationType != EBaseCalculationType::NoCompression) {
-        //   const float PercentageBases =
-        //       InCompressionSettings.BaseCalculationType == EBaseCalculationType::PercentageBased
-        //           ? InCompressionSettings.PercentageOfTotalBases / 100.0f
-        //           : 1.0f;
-        //   const int32 NumBases  = InCompressionSettings.BaseCalculationType == EBaseCalculationType::FixedNumber
-        //                               ? InCompressionSettings.MaxNumberOfBases
-        //                               : 0;
-
-        //  NumUsedSingularValues = PerformSVDCompression(
-        //      Matrices[MeshIndex], NormalsMatrices[MeshIndex], NumSamples, PercentageBases, NumBases, OutU,
-        //      OutNormalsU, OutV
-        //  );
-        //  BasesMatrix        = OutU;
-        //  NormalsBasesMatrix = OutNormalsU;
-        //} else {
-        //}
-        OutV.AddDefaulted(NumSamples * NumSamples);
-
-        for (int32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
-          for (int32 CurveIndex = 0; CurveIndex < NumSamples; ++CurveIndex) {
-            float Weight = 0.f;
-
-            if (SampleIndex == CurveIndex) {
-              Weight = 1.f;
-            }
-
-            OutV[SampleIndex + (NumSamples * CurveIndex)] = Weight;
-          }
-        }
-
-        BasesMatrix           = Matrices[MeshIndex];
-        NormalsBasesMatrix    = NormalsMatrices[MeshIndex];
-
-        const float FrameStep = (MaxTimes[MeshIndex] - MinTimes[MeshIndex]) / (float)(NumSamples - 1);
-        AbcImporterUtilities::GenerateCompressedMeshData(
-            CompressedData, NumUsedSingularValues, NumSamples, BasesMatrix, NormalsBasesMatrix, OutV, FrameStep,
-            FMath::Max(MinTimes[MeshIndex], 0.0f)
-        );
-
-        // QQ FUNCTIONALIZE
-        // Add material names from this mesh object
-        if (PolyMeshesToCompress[MeshIndex]->FaceSetNames.Num() > 0) {
-          CompressedData.MaterialNames.Append(PolyMeshesToCompress[MeshIndex]->FaceSetNames);
-        } else {
-          static const FString DefaultName("NoFaceSetName");
-          CompressedData.MaterialNames.Add(DefaultName);
-        }
-
-        if (bRunComparison) {
-          CompareCompressionResult(
-              Matrices[MeshIndex], NumSamples, NumUsedSingularValues, BasesMatrix, OutV, THRESH_POINTS_ARE_SAME
-          );
-          CompareCompressionResult(
-              NormalsMatrices[MeshIndex], NumSamples, NumUsedSingularValues, NormalsBasesMatrix, OutV,
-              THRESH_NORMALS_ARE_SAME
-          );
-        }
-      }
-    }
-  } else {
-    bResult                               = ConstantPolyMeshObjects.Num() > 0;
-    TSharedRef<FTokenizedMessage> Message = FTokenizedMessage::Create(
-        bResult ? EMessageSeverity::Warning : EMessageSeverity::Error,
-        LOCTEXT(
-            "NoMeshesToProcess",
-            "Unable to compress animation data, no meshes (with constant topology) found with Vertex Animation and "
-            "baked Matrix Animation is turned off."
-        )
-    );
-    FAbcImportLogger::AddImportMessage(Message);
-  }
-
-  // Process the constant meshes by only adding them as average samples (without any bases/morphtargets to add as well)
-  for (const FAbcPolyMesh* ConstantPolyMesh : ConstantPolyMeshObjects) {
-    // Allocate compressed mesh data object
-    CompressedMeshData.AddDefaulted();
-    FCompressedAbcData& CompressedData = CompressedMeshData.Last();
-
-    if (ImportSettings->CompressionSettings.bBakeMatrixAnimation) {
-      CompressedData.AverageSample = new FAbcMeshSample(*ConstantPolyMesh->GetTransformedFirstSample());
-    } else {
-      CompressedData.AverageSample = new FAbcMeshSample(*ConstantPolyMesh->GetFirstSample());
-    }
-
-    // QQ FUNCTIONALIZE
-    // Add material names from this mesh object
-    if (ConstantPolyMesh->FaceSetNames.Num() > 0) {
-      CompressedData.MaterialNames.Append(ConstantPolyMesh->FaceSetNames);
-    } else {
-      static const FString DefaultName("NoFaceSetName");
-      CompressedData.MaterialNames.Add(DefaultName);
-    }
-  }
-
-  return bResult;
-}
-
-void FAbcImporter::CompareCompressionResult(
-    const TArray<float>& OriginalMatrix, const uint32 NumSamples, const uint32 NumUsedSingularValues,
-    const TArrayView<float>& OutU, const TArray<float>& OutV, const float Tolerance
-) {
-  if (NumSamples == 0) {
-    return;
-  }
-
-  const uint32 NumRows = OriginalMatrix.Num() / NumSamples;
-
-  TArray<float> ComparisonMatrix;
-  ComparisonMatrix.AddZeroed(OriginalMatrix.Num());
-  for (uint32 SampleIndex = 0; SampleIndex < NumSamples; ++SampleIndex) {
-    const int32 SampleOffset = (SampleIndex * NumRows);
-    const int32 CurveOffset  = (SampleIndex * NumUsedSingularValues);
-    for (uint32 BaseIndex = 0; BaseIndex < NumUsedSingularValues; ++BaseIndex) {
-      const int32 BaseOffset = (BaseIndex * NumRows);
-      for (uint32 RowIndex = 0; RowIndex < NumRows; RowIndex++) {
-        ComparisonMatrix[RowIndex + SampleOffset] += OutU[RowIndex + BaseOffset] * OutV[BaseIndex + CurveOffset];
-      }
-    }
-  }
-
-  // Compare arrays
-  for (int32 i = 0; i < ComparisonMatrix.Num(); ++i) {
-    ensureMsgf(
-        FMath::IsNearlyEqual(OriginalMatrix[i], ComparisonMatrix[i], Tolerance), TEXT("Difference of %2.10f found"),
-        FMath::Abs(OriginalMatrix[i] - ComparisonMatrix[i])
-    );
-  }
-}
-
-const int32 FAbcImporter::PerformSVDCompression(
-    const TArray<float>& OriginalMatrix, const TArray<float>& OriginalNormalsMatrix, const uint32 NumSamples,
-    const float InPercentage, const int32 InFixedNumValue, TArray<float>& OutU, TArray<float>& OutNormalsU,
-    TArray<float>& OutV
-) {
-  const int32 NumRows = OriginalMatrix.Num() / NumSamples;
-
-  TArray<float> OutS;
-  EigenHelpers::PerformSVD(OriginalMatrix, NumRows, NumSamples, OutU, OutV, OutS);
-
-  // Now we have the new basis data we have to construct the correct morph target data and curves
-  const float PercentageBasesUsed      = InPercentage;
-  const int32 NumNonZeroSingularValues = OutS.Num();
-  const int32 NumUsedSingularValues    = (InFixedNumValue != 0)
-                                             ? FMath::Min(InFixedNumValue, (int32)OutS.Num())
-                                             : (int32)((float)NumNonZeroSingularValues * PercentageBasesUsed);
-
-  // Pre-multiply the bases with it's singular values
-  ParallelFor(NumUsedSingularValues, [&](int32 ValueIndex) {
-    const float Multiplier  = OutS[ValueIndex];
-    const int32 ValueOffset = ValueIndex * NumRows;
-
-    for (int32 RowIndex = 0; RowIndex < NumRows; ++RowIndex) {
-      OutU[ValueOffset + RowIndex] *= Multiplier;
-    }
-  });
-
-  // Project OriginalNormalsMatrix on OutV to deduce OutNormalsU
-  //
-  // OriginalNormalsMatrix * OutV.transpose() = OutNormalsU
-  //
-  // This takes into account that OutNormalsU should be already scaled by what would be OutNormalsS, just like OutU is
-  // scaled by OutS
-
-  const int32 NormalsNumRows = OriginalNormalsMatrix.Num() / NumSamples;
-
-  Eigen::MatrixXf NormalsMatrix;
-  EigenHelpers::ConvertArrayToEigenMatrix(OriginalNormalsMatrix, NormalsNumRows, NumSamples, NormalsMatrix);
-
-  const uint32 OutVNumRows = OutV.Num() / NumSamples;
-
-  Eigen::MatrixXf VMatrix;
-  EigenHelpers::ConvertArrayToEigenMatrix(OutV, OutVNumRows, NumSamples, VMatrix);
-
-  Eigen::MatrixXf NormalsUMatrix = NormalsMatrix * VMatrix.transpose();
-
-  uint32 OutNumColumns, OutNumRows;
-  EigenHelpers::ConvertEigenMatrixToArray(NormalsUMatrix, OutNormalsU, OutNumColumns, OutNumRows);
-
-  UE_LOG(
-      LogAbcImporter, Log,
-      TEXT("Decomposed animation and reconstructed with %i number of bases (full %i, percentage %f, calculated %i)"),
-      NumUsedSingularValues, OutS.Num(), PercentageBasesUsed * 100.0f, NumUsedSingularValues
-  );
-
-  return NumUsedSingularValues;
-}
-
 UGeometryCache* FAbcImporter::ReimportAsGeometryCache(UGeometryCache* GeometryCache) {
   UGeometryCache* ReimportedCache = ImportAsGeometryCache(GeometryCache->GetOuter(), RF_Public | RF_Standalone);
   return ReimportedCache;
-}
-
-TArray<UObject*> FAbcImporter::ReimportAsSkeletalMesh(USkeletalMesh* SkeletalMesh) {
-  TArray<UObject*> ReimportedObjects = ImportAsSkeletalMesh(SkeletalMesh->GetOuter(), RF_Public | RF_Standalone);
-  return ReimportedObjects;
 }
 
 const TArray<FAbcPolyMesh*>& FAbcImporter::GetPolyMeshes() const { return AbcFile->GetPolyMeshes(); }
@@ -1487,18 +553,18 @@ void FAbcImporter::GenerateMeshDescriptionFromSample(
 
   FStaticMeshAttributes Attributes(*MeshDescription);
 
-  TVertexAttributesRef<FVector3f> VertexPositions = Attributes.GetVertexPositions();
-  TEdgeAttributesRef<bool> EdgeHardnesses         = Attributes.GetEdgeHardnesses();
+  TVertexAttributesRef<FVector> VertexPositions = Attributes.GetVertexPositions();
+  TEdgeAttributesRef<bool> EdgeHardnesses       = Attributes.GetEdgeHardnesses();
   TPolygonGroupAttributesRef<FName> PolygonGroupImportedMaterialSlotNames =
       Attributes.GetPolygonGroupMaterialSlotNames();
-  TVertexInstanceAttributesRef<FVector3f> VertexInstanceNormals   = Attributes.GetVertexInstanceNormals();
-  TVertexInstanceAttributesRef<FVector3f> VertexInstanceTangents  = Attributes.GetVertexInstanceTangents();
+  TVertexInstanceAttributesRef<FVector> VertexInstanceNormals     = Attributes.GetVertexInstanceNormals();
+  TVertexInstanceAttributesRef<FVector> VertexInstanceTangents    = Attributes.GetVertexInstanceTangents();
   TVertexInstanceAttributesRef<float> VertexInstanceBinormalSigns = Attributes.GetVertexInstanceBinormalSigns();
-  TVertexInstanceAttributesRef<FVector4f> VertexInstanceColors    = Attributes.GetVertexInstanceColors();
-  TVertexInstanceAttributesRef<FVector2f> VertexInstanceUVs       = Attributes.GetVertexInstanceUVs();
+  TVertexInstanceAttributesRef<FVector4> VertexInstanceColors     = Attributes.GetVertexInstanceColors();
+  TVertexInstanceAttributesRef<FVector2D> VertexInstanceUVs       = Attributes.GetVertexInstanceUVs();
 
   // Speedtree use UVs to store is data
-  VertexInstanceUVs.SetNumChannels(Sample->NumUVSets);
+  VertexInstanceUVs.SetNumIndices(Sample->NumUVSets);
 
   for (int32 MatIndex = 0; MatIndex < StaticMesh->GetStaticMaterials().Num(); ++MatIndex) {
     const FPolygonGroupID PolygonGroupID = MeshDescription->CreatePolygonGroup();
@@ -1508,10 +574,10 @@ void FAbcImporter::GenerateMeshDescriptionFromSample(
 
   // position
   for (int32 VertexIndex = 0; VertexIndex < Sample->Vertices.Num(); ++VertexIndex) {
-    FVector3f Position        = Sample->Vertices[VertexIndex];
+    FVector Position          = Sample->Vertices[VertexIndex];
 
     FVertexID VertexID        = MeshDescription->CreateVertex();
-    VertexPositions[VertexID] = FVector3f(Position);
+    VertexPositions[VertexID] = FVector(Position);
   }
 
   uint32 VertexIndices[3];
@@ -1538,9 +604,9 @@ void FAbcImporter::GenerateMeshDescriptionFromSample(
       const FVertexInstanceID VertexInstanceID      = MeshDescription->CreateVertexInstance(VertexID);
 
       // tangents
-      FVector3f TangentX                            = Sample->TangentX[IndiceIndex];
-      FVector3f TangentY                            = Sample->TangentY[IndiceIndex];
-      FVector3f TangentZ                            = Sample->Normals[IndiceIndex];
+      FVector TangentX                              = Sample->TangentX[IndiceIndex];
+      FVector TangentY                              = Sample->TangentY[IndiceIndex];
+      FVector TangentZ                              = Sample->Normals[IndiceIndex];
 
       VertexInstanceTangents[VertexInstanceID]      = TangentX;
       VertexInstanceNormals[VertexInstanceID]       = TangentZ;
@@ -1549,9 +615,9 @@ void FAbcImporter::GenerateMeshDescriptionFromSample(
       );
 
       if (Sample->Colors.Num()) {
-        VertexInstanceColors[VertexInstanceID] = FVector4f(Sample->Colors[IndiceIndex]);
+        VertexInstanceColors[VertexInstanceID] = FVector4(Sample->Colors[IndiceIndex]);
       } else {
-        VertexInstanceColors[VertexInstanceID] = FVector4f(FLinearColor::White);
+        VertexInstanceColors[VertexInstanceID] = FVector4(FLinearColor::White);
       }
 
       for (uint32 UVIndex = 0; UVIndex < Sample->NumUVSets; ++UVIndex) {
@@ -1633,9 +699,7 @@ bool FAbcImporter::BuildSkeletalMesh(
   LODModel.Sections.Empty(MeshSections.Num());
   LODModel.NumVertices = 0;
   LODModel.IndexBuffer.Empty();
-
-  TArray<uint32>& RawPointIndices = LODModel.GetRawPointIndices();
-  RawPointIndices.Reset();
+  TArray<uint32> RawPointIndices;
 
   TArray<TArray<uint32>> VertexIndexRemap;
   VertexIndexRemap.Empty(MeshSections.Num());
@@ -1671,11 +735,11 @@ bool FAbcImporter::BuildSkeletalMesh(
 
         // Populate vertex data
         NewVertex.Position = Sample->Vertices[Index];
-        NewVertex.TangentX = (FVector3f)SourceSection.TangentX[FaceOffset + VertexIndex];
-        NewVertex.TangentY = (FVector3f)SourceSection.TangentY[FaceOffset + VertexIndex];
-        NewVertex.TangentZ = (FVector3f)SourceSection.TangentZ[FaceOffset + VertexIndex];  // LWC_TODO: precision loss
+        NewVertex.TangentX = (FVector)SourceSection.TangentX[FaceOffset + VertexIndex];
+        NewVertex.TangentY = (FVector)SourceSection.TangentY[FaceOffset + VertexIndex];
+        NewVertex.TangentZ = (FVector)SourceSection.TangentZ[FaceOffset + VertexIndex];  // LWC_TODO: precision loss
         for (uint32 UVIndex = 0; UVIndex < SourceSection.NumUVSets; ++UVIndex) {
-          NewVertex.UVs[UVIndex] = FVector2f(SourceSection.UVs[UVIndex][FaceOffset + VertexIndex]);
+          NewVertex.UVs[UVIndex] = FVector2D(SourceSection.UVs[UVIndex][FaceOffset + VertexIndex]);
         }
 
         NewVertex.Color = SourceSection.Colors[FaceOffset + VertexIndex];
@@ -1734,6 +798,15 @@ bool FAbcImporter::BuildSkeletalMesh(
 
   // Only using bone zero
   LODModel.ActiveBoneIndices.Add(0);
+
+  // Copy raw point indices to LOD model.
+  LODModel.RawPointIndices.RemoveBulkData();
+  if (RawPointIndices.Num()) {
+    LODModel.RawPointIndices.Lock(LOCK_READ_WRITE);
+    void* Dest = LODModel.RawPointIndices.Realloc(RawPointIndices.Num());
+    FMemory::Memcpy(Dest, RawPointIndices.GetData(), LODModel.RawPointIndices.GetBulkDataSize());
+    LODModel.RawPointIndices.Unlock();
+  }
 
   // Finish building the sections.
   for (int32 SectionIndex = 0; SectionIndex < LODModel.Sections.Num(); SectionIndex++) {

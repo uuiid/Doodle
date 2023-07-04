@@ -2,7 +2,7 @@
 
 #pragma once
 
-//#if UE_BUILD_DEBUG && WITH_EDITOR
+// #if UE_BUILD_DEBUG && WITH_EDITOR
 #if WITH_EDITOR
 #define UE_DOODLE_EIGEN_DEBUG 1
 #endif
@@ -35,9 +35,7 @@
 
 PRAGMA_DEFAULT_VISIBILITY_START
 THIRD_PARTY_INCLUDES_START
-#include <Eigen/Core>
-#include <Eigen/Eigen>
-#include <Eigen/Eigenvalues>
+
 THIRD_PARTY_INCLUDES_END
 PRAGMA_DEFAULT_VISIBILITY_END
 
@@ -53,12 +51,7 @@ PRAGMA_DEFAULT_VISIBILITY_END
 namespace Doodle {
 
 #if UE_DOODLE_EIGEN_DEBUG
-template <typename EigenDenseBaseDerivedType>
-FString EigenMatrixToString(const Eigen::DenseBase<EigenDenseBaseDerivedType>& Matrix) {
-  std::stringstream StringStream;
-  StringStream << Matrix;
-  return StringStream.str().c_str();
-}
+
 #endif
 
 }  // namespace Doodle

@@ -27,6 +27,7 @@ class FAbcTransform;
 class UAbcImportSettings;
 class UMaterialInterface;
 class IMeshUtilities;
+class UDoodleAbcImportSettings;
 
 enum EAbcImportError : uint32;
 

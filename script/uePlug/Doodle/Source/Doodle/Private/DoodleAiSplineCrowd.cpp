@@ -48,5 +48,5 @@ void ADoodleAiSplineCrowd::Tick(float DeltaTime) {
   if (!Anim)
     return;
 
-  Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
+  // Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
 }

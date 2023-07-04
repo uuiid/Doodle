@@ -85,7 +85,7 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
         return;
       }
       // 设置骨骼网格体
-      LPoseableMeshComponent->SetSkinnedAssetAndUpdate(SkeletalMeshComponent_P->GetSkeletalMeshAsset());
+      LPoseableMeshComponent->SetSkeletalMesh(SkeletalMeshComponent_P->SkeletalMesh);
       LPoseableMeshComponent->RegisterComponent();
 
       for (size_t j = 0; j < LTrans.Num(); ++j) {

@@ -11,7 +11,7 @@ void UDoodleAnimInstance::DoodleCalculateSpeed() {
 
   if (LPawn) {
     FVector LVelocity = LPawn->GetVelocity();
-    DirectionAttrXY   = UKismetAnimationLibrary::CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
+    // DirectionAttrXY   = UKismetAnimationLibrary::CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
 
     VelocityAttr      = LVelocity.Size();
   }

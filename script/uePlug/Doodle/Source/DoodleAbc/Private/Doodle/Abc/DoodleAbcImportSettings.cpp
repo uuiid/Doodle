@@ -7,7 +7,6 @@
 #include "UObject/Package.h"
 #include "UObject/ReleaseObjectVersion.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(DoodleAbcImportSettings)
 UDoodleAbcImportSettings::UDoodleAbcImportSettings(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer) {
   bReimport = false;

@@ -26,7 +26,7 @@ class DOODLE_API ADoodleAiCrowd : public ACharacter {
 
  protected:
   UPROPERTY()
-  TObjectPtr<UDoodleAiMoveToComponent> MoveToCom{};
+  UDoodleAiMoveToComponent* MoveToCom{};
   // Called when the game starts or when spawned
   // virtual void BeginPlay() override;
 

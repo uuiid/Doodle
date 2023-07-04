@@ -7,7 +7,6 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
 #include "Engine/SkeletalMesh.h"
-#include "Engine/SkinnedAssetCommon.h"
 // 测试使用
 #include "Doodle/ResizeTexture.h"
 
@@ -58,25 +57,6 @@
 #include "SkeletalMeshBuilder.h"
 namespace {
 void print_test(USkeletalMesh *In_Obj) {
-  auto L_Lod = In_Obj->GetImportedModel();
-  FSkeletalMeshImportData L_Data{};
-  In_Obj->LoadLODImportedData(0, L_Data);
-  GetTargetPlatformManagerRef().GetRunningTargetPlatform();
-
-  // FSkeletalMeshBuilder{}.Build(FSkeletalMeshBuildParameters{nullptr, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 0, true});
-  FMeshDescription L_Des{};
-  L_Data.GetMeshDescription(L_Des);
-  //for (auto &&[name, ele] : L_Des.GetElements()) {
-  //  UE_LOG(LogTemp, Log, TEXT("bone name %s"), *(name.ToString()));
-  //}
-  for (auto &&L_Mesh : L_Lod->LODModels) {
-    int32 L_Num{};
-    for (auto &&L_Info : L_Mesh.ImportedMeshInfos) {
-      L_Num += L_Info.NumVertices;
-      UE_LOG(LogTemp, Log, TEXT("bone name %s"), *(L_Info.Name.ToString()));
-    }
-    UE_LOG(LogTemp, Log, TEXT("FSoftSkinVertex num %d com num %d"), L_Data.Points.Num(), L_Num);
-  }
 }
 }  // namespace
 

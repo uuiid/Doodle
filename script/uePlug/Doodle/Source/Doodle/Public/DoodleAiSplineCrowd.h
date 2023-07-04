@@ -22,7 +22,7 @@ class DOODLE_API ADoodleAiSplineCrowd : public ADoodleAiCrowd {
   ADoodleAiSplineCrowd();
 
   UPROPERTY(Category = Doodle, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-  TObjectPtr<UDoodleAiSplineMoveToComponent> SplineMoveToComponent;
+  UDoodleAiSplineMoveToComponent* SplineMoveToComponent;
 
   virtual void BeginPlay() override;
   virtual void Tick(float DeltaTime) override;

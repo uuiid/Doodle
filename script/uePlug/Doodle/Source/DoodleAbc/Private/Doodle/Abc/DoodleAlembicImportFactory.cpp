@@ -19,11 +19,9 @@
 #include "GeometryCache.h"
 #include "HAL/FileManager.h"
 #include "ImportUtils/StaticMeshImportUtils.h"
-#include "Interfaces/IMainFrameModule.h"
+// #include "Interfaces/IMainFrameModule.h"
 #include "Math/UnrealMathUtility.h"
 #include "Subsystems/AssetEditorSubsystem.h"
-
-#include UE_INLINE_GENERATED_CPP_BY_NAME(DoodleAlembicImportFactory)
 
 #define LOCTEXT_NAMESPACE "DoodleAlembicImportFactory"
 
@@ -214,59 +212,7 @@ TArray<UObject*> UDoodleAbcImportFactory::ImportSkeletalMesh(
 ) {
   // Flush commands before importing
   FlushRenderingCommands();
-
-  const uint32 NumMeshes = Importer.GetNumMeshTracks();
-  // Check if the alembic file contained any meshes
-  if (NumMeshes > 0) {
-    TArray<UObject*> GeneratedObjects = Importer.ImportAsSkeletalMesh(InParent, Flags);
-
-    if (!GeneratedObjects.Num()) {
-      return {};
-    }
-
-    USkeletalMesh* SkeletalMesh = [&GeneratedObjects]() {
-      UObject** FoundObject =
-          GeneratedObjects.FindByPredicate([](UObject* Object) { return Object->IsA<USkeletalMesh>(); });
-      return FoundObject ? CastChecked<USkeletalMesh>(*FoundObject) : nullptr;
-    }();
-
-    if (SkeletalMesh) {
-      // Setup asset import data
-      if (!SkeletalMesh->GetAssetImportData() ||
-          !SkeletalMesh->GetAssetImportData()->IsA<UDoodleAbcAssetImportData>()) {
-        SkeletalMesh->SetAssetImportData(NewObject<UDoodleAbcAssetImportData>(SkeletalMesh));
-      }
-      SkeletalMesh->GetAssetImportData()->Update(UFactory::CurrentFilename);
-      UDoodleAbcAssetImportData* AssetImportData = Cast<UDoodleAbcAssetImportData>(SkeletalMesh->GetAssetImportData());
-      if (AssetImportData) {
-        Importer.UpdateAssetImportData(AssetImportData);
-      }
-    }
-
-    UAnimSequence* AnimSequence = [&GeneratedObjects]() {
-      UObject** FoundObject =
-          GeneratedObjects.FindByPredicate([](UObject* Object) { return Object->IsA<UAnimSequence>(); });
-      return FoundObject ? CastChecked<UAnimSequence>(*FoundObject) : nullptr;
-    }();
-
-    if (AnimSequence) {
-      // Setup asset import data
-      if (!AnimSequence->AssetImportData || !AnimSequence->AssetImportData->IsA<UDoodleAbcAssetImportData>()) {
-        AnimSequence->AssetImportData = NewObject<UDoodleAbcAssetImportData>(AnimSequence);
-      }
-      AnimSequence->AssetImportData->Update(UFactory::CurrentFilename);
-      UDoodleAbcAssetImportData* AssetImportData = Cast<UDoodleAbcAssetImportData>(AnimSequence->AssetImportData);
-      if (AssetImportData) {
-        Importer.UpdateAssetImportData(AssetImportData);
-      }
-    }
-
-    return GeneratedObjects;
-  } else {
-    // Not able to import as skeletal mesh
-    GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(this, nullptr);
-    return {};
-  }
+  return {};
 }
 
 bool UDoodleAbcImportFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames) {
@@ -486,51 +432,7 @@ EReimportResult::Type UDoodleAbcImportFactory::ReimportSkeletalMesh(USkeletalMes
     return EReimportResult::Failed;
   }
 
-  TArray<UObject*> ReimportedObjects = Importer.ReimportAsSkeletalMesh(SkeletalMesh);
-  USkeletalMesh* NewSkeletalMesh     = [&ReimportedObjects]() {
-    UObject** FoundObject =
-        ReimportedObjects.FindByPredicate([](UObject* Object) { return Object->IsA<USkeletalMesh>(); });
-    return FoundObject ? CastChecked<USkeletalMesh>(*FoundObject) : nullptr;
-  }();
-
-  if (!NewSkeletalMesh) {
-    return EReimportResult::Failed;
-  } else {
-    // Update file path/timestamp (Path could change if user has to browse for it manually)
-    if (!NewSkeletalMesh->GetAssetImportData() ||
-        !NewSkeletalMesh->GetAssetImportData()->IsA<UDoodleAbcAssetImportData>()) {
-      NewSkeletalMesh->SetAssetImportData(NewObject<UDoodleAbcAssetImportData>(NewSkeletalMesh));
-    }
-
-    NewSkeletalMesh->GetAssetImportData()->Update(CurrentFilename);
-    UDoodleAbcAssetImportData* AssetImportData = Cast<UDoodleAbcAssetImportData>(NewSkeletalMesh->GetAssetImportData());
-    if (AssetImportData) {
-      Importer.UpdateAssetImportData(AssetImportData);
-    }
-  }
-
-  UAnimSequence* NewAnimSequence = [&ReimportedObjects]() {
-    UObject** FoundObject =
-        ReimportedObjects.FindByPredicate([](UObject* Object) { return Object->IsA<UAnimSequence>(); });
-    return FoundObject ? CastChecked<UAnimSequence>(*FoundObject) : nullptr;
-  }();
-
-  if (!NewAnimSequence) {
-    return EReimportResult::Failed;
-  } else {
-    // Update file path/timestamp (Path could change if user has to browse for it manually)
-    if (!NewAnimSequence->AssetImportData || !NewAnimSequence->AssetImportData->IsA<UDoodleAbcAssetImportData>()) {
-      NewAnimSequence->AssetImportData = NewObject<UDoodleAbcAssetImportData>(NewAnimSequence);
-    }
-
-    NewAnimSequence->AssetImportData->Update(CurrentFilename);
-    UDoodleAbcAssetImportData* AssetImportData = Cast<UDoodleAbcAssetImportData>(NewAnimSequence->AssetImportData);
-    if (AssetImportData) {
-      Importer.UpdateAssetImportData(AssetImportData);
-    }
-  }
-
-  return EReimportResult::Succeeded;
+  return EReimportResult::Failed;
 }
 
 void UDoodleAbcImportFactory::PopulateOptionsWithImportData(UDoodleAbcAssetImportData* ImportData) {

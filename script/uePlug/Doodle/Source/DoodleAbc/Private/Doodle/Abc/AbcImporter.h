@@ -110,8 +110,6 @@ class FAbcImporter {
    */
   UGeometryCache* ImportAsGeometryCache(UObject* InParent, EObjectFlags Flags);
 
-  TArray<UObject*> ImportAsSkeletalMesh(UObject* InParent, EObjectFlags Flags);
-
   /**
    * Reimport an Alembic file as a GeometryCache
    *
@@ -119,14 +117,6 @@ class FAbcImporter {
    * @return UGeometryCache*
    */
   UGeometryCache* ReimportAsGeometryCache(UGeometryCache* GeometryCache);
-
-  /**
-   * Reimport an Alembic file as a SkeletalMesh
-   *
-   * @param SkeletalMesh - Current SkeletalMesh instance
-   * @return USkeletalMesh*
-   */
-  TArray<UObject*> ReimportAsSkeletalMesh(USkeletalMesh* SkeletalMesh);
 
   /** Returns the array of imported PolyMesh objects */
   const TArray<class FAbcPolyMesh*>& GetPolyMeshes() const;
@@ -175,19 +165,6 @@ class FAbcImporter {
       const FAbcMeshSample* Sample, FMeshDescription* MeshDescription, UStaticMesh* StaticMesh
   );
 
-  /** Compresses the imported animation data, returns true if compression was successful and compressed data was
-   * populated */
-  const bool CompressAnimationDataUsingPCA(
-      const FDoodleAbcCompressionSettings& InCompressionSettings, const bool bRunComparison = false
-  );
-  /** Performs the actual SVD compression to retrieve the bases and weights used to set up the Skeletal mesh's morph
-   * targets */
-  const int32 PerformSVDCompression(
-      const TArray<float>& OriginalMatrix, const TArray<float>& OriginalNormalsMatrix, const uint32 NumSamples,
-      const float InPercentage, const int32 InFixedNumValue, TArray<float>& OutU, TArray<float>& OutNormalsU,
-      TArray<float>& OutV
-  );
-
   /** Functionality for comparing the matrices and calculating the difference from the original animation */
   void CompareCompressionResult(
       const TArray<float>& OriginalMatrix, const uint32 NumSamples, const uint32 NumUsedSingularValues,
@@ -210,7 +187,7 @@ class FAbcImporter {
   /** Set up correct morph target weights from the PCA compressed data */
   void SetupMorphTargetCurves(
       USkeleton* Skeleton, FName ConstCurveName, UAnimSequence* Sequence, const TArray<float>& CurveValues,
-      const TArray<float>& TimeValues, IAnimationDataController& Controller
+      const TArray<float>& TimeValues
   );
 
   /** Set the Alembic archive metadata on the given objects */

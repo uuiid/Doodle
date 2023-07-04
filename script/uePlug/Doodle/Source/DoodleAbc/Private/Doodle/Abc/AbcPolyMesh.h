@@ -37,15 +37,15 @@ struct FAbcMeshSample {
   void Copy(const FAbcMeshSample& InSample, const ESampleReadFlags ReadFlags);
   void Copy(const FAbcMeshSample* InSample, const ESampleReadFlags ReadFlags);
 
-  TArray<FVector3f> Vertices;
-  TArray<FVector3f> Velocities;
+  TArray<FVector> Vertices;
+  TArray<FVector> Velocities;
   TArray<uint32> Indices;
 
   // Vertex attributes (per index based)
-  TArray<FVector3f> Normals;
-  TArray<FVector3f> TangentX;
-  TArray<FVector3f> TangentY;
-  TArray<FVector2f> UVs[MAX_TEXCOORDS];
+  TArray<FVector> Normals;
+  TArray<FVector> TangentX;
+  TArray<FVector> TangentY;
+  TArray<FVector2D> UVs[MAX_TEXCOORDS];
 
   TArray<FLinearColor> Colors;
   /*TArray<FVector2D> Visibility;

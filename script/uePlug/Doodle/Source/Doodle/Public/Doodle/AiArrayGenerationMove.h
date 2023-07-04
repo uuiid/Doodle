@@ -26,7 +26,7 @@ class DOODLE_API ADoodleAiArrayGenerationMove : public AActor {
 
  private:
   UPROPERTY(Category = Collision, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-  TObjectPtr<class USplineComponent> SplineComponent;
+  USplineComponent *SplineComponent;
 
  public:
   UPROPERTY(
@@ -62,15 +62,15 @@ class DOODLE_API ADoodleAiArrayGenerationMove : public AActor {
   float RandomRadius_Move{500};
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
-  TArray<TObjectPtr<UAnimationAsset>> AnimAssets;
+  TArray<UAnimationAsset *> AnimAssets;
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
-  TArray<TObjectPtr<USkeletalMesh>> SkinAssets;
+  TArray<USkeletalMesh *> SkinAssets;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
-  TObjectPtr<UStaticMesh> Preview_Mesh;
+  UStaticMesh *Preview_Mesh;
 
   UPROPERTY()
-  TObjectPtr<UInstancedStaticMeshComponent> Preview_InstancedStaticMeshComponent;
+  UInstancedStaticMeshComponent *Preview_InstancedStaticMeshComponent;
 
   /**
    * Channels that this light should affect.
@@ -96,13 +96,13 @@ class DOODLE_API ADoodleAiArrayGenerationMove : public AActor {
   TArray<FTransform> Points;
 
   UPROPERTY()
-  TArray<TObjectPtr<UArrowComponent>> ArrowComponents;
+  TArray<UArrowComponent *> ArrowComponents;
 
   UPROPERTY(EditDefaultsOnly, Category = "Doodle")
-  TObjectPtr<UStaticMeshComponent> Target;
+  UStaticMeshComponent *Target;
   /** Component to control Pitch. */
   UPROPERTY(EditDefaultsOnly, Category = "Doodle")
-  TObjectPtr<USceneComponent> SceneComponentTarget;
+  USceneComponent *SceneComponentTarget;
 
   FVector Target_Transform;
 

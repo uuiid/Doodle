@@ -144,7 +144,7 @@ void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
   // }
 }
 
-void UDoodleAiSplineMoveToComponent::ReplaceSplineCurve(const TObjectPtr<USplineComponent> &In_Tmp, const FTransform &In_Loc) {
+void UDoodleAiSplineMoveToComponent::ReplaceSplineCurve(USplineComponent *In_Tmp, const FTransform &In_Loc) {
   USceneComponent *L_Parent = SplineCurve->GetAttachParent();
   SplineCurve->UnregisterComponent();
   SplineCurve->DestroyComponent();
@@ -187,7 +187,7 @@ bool UDoodleAiSplineMoveToComponent::GetRandomPointInRadius(const FVector &Origi
   //    Out
   // OutResult = SplineCurve->FindLocationClosestToWorldLocation(L_Forward, ESplineCoordinateSpace::World);
   // DrawDebugPoint(GetWorld(), OutResult, 10, FColor::Red, false, 1.0f);
-  //DrawDebugSphere(GetWorld(), OutResult, 10.f, 3, FColor::Red, false, 1.0f);
+  // DrawDebugSphere(GetWorld(), OutResult, 10.f, 3, FColor::Red, false, 1.0f);
 
   return true;
 }

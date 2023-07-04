@@ -74,7 +74,6 @@
 #include "Factories/WorldFactory.h"
 #include "FileHelpers.h"
 #include "IAssetTools.h"
-#include "LevelEditorSubsystem.h"
 #include "LevelSequence.h"
 #include "Modules/ModuleManager.h"
 
@@ -168,6 +167,263 @@ void Debug_To_File(const FStringView& In_String) {
   }
 }
 
+void ShowReadOnlyError() {
+  FNotificationInfo Info(LOCTEXT("SequenceReadOnly", "Sequence is read only."));
+  Info.ExpireDuration = 5.0f;
+  FSlateNotificationManager::Get().AddNotification(Info)->SetCompletionState(SNotificationItem::CS_Fail);
+}
+void ShowSpawnableNotAllowedError() {
+  FNotificationInfo Info(LOCTEXT("SequenceSpawnableNotAllowed", "Spawnable object is not allowed for Sequence."));
+  Info.ExpireDuration = 5.0f;
+  FSlateNotificationManager::Get().AddNotification(Info)->SetCompletionState(SNotificationItem::CS_Fail);
+}
+
+FGuid AddSpawnable(
+    TSharedRef<ISequencer> Sequencer, UObject& Object, UActorFactory* ActorFactory = nullptr,
+    FName SpawnableName = NAME_None
+) {
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (!Sequence->AllowsSpawnableObjects()) {
+    return FGuid();
+  }
+
+  // Grab the MovieScene that is currently focused.  We'll add our Blueprint as an inner of the
+  // MovieScene asset.
+  UMovieScene* OwnerMovieScene = Sequence->GetMovieScene();
+
+  TValueOrError<FNewSpawnable, FText> Result =
+      Sequencer->GetSpawnRegister().CreateNewSpawnableType(Object, *OwnerMovieScene, ActorFactory);
+  if (!Result.IsValid()) {
+    FNotificationInfo Info(Result.GetError());
+    Info.ExpireDuration = 3.0f;
+    FSlateNotificationManager::Get().AddNotification(Info);
+    return FGuid();
+  }
+
+  FNewSpawnable& NewSpawnable = Result.GetValue();
+
+  if (SpawnableName == NAME_None) {
+    NewSpawnable.Name = MovieSceneHelpers::MakeUniqueSpawnableName(OwnerMovieScene, NewSpawnable.Name);
+  } else {
+    NewSpawnable.Name = SpawnableName.ToString();
+  }
+
+  FGuid NewGuid = OwnerMovieScene->AddSpawnable(NewSpawnable.Name, *NewSpawnable.ObjectTemplate);
+
+  Sequencer->ForceEvaluate();
+
+  return NewGuid;
+}
+
+void NewCameraAdded(TSharedRef<ISequencer> Sequencer, ACameraActor* NewCamera, FGuid CameraGuid) {
+  if (Sequencer->OnCameraAddedToSequencer().IsBound() &&
+      !Sequencer->OnCameraAddedToSequencer().Execute(NewCamera, CameraGuid)) {
+    return;
+  }
+
+  MovieSceneToolHelpers::LockCameraActorToViewport(Sequencer, NewCamera);
+
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (Sequence && Sequence->IsTrackSupported(UMovieSceneCameraCutTrack::StaticClass()) == ETrackSupport::Supported) {
+    MovieSceneToolHelpers::CreateCameraCutSectionForCamera(
+        Sequence->GetMovieScene(), CameraGuid, Sequencer->GetLocalTime().Time.FloorToFrame()
+    );
+  }
+}
+
+FGuid CreateBinding(TSharedRef<ISequencer> Sequencer, UObject& InObject, const FString& InName) {
+  const FScopedTransaction Transaction(LOCTEXT("CreateBinding", "Create New Binding"));
+
+  UMovieSceneSequence* OwnerSequence = Sequencer->GetFocusedMovieSceneSequence();
+  UMovieScene* OwnerMovieScene       = OwnerSequence->GetMovieScene();
+
+  OwnerSequence->Modify();
+  OwnerMovieScene->Modify();
+
+  const FGuid PossessableGuid = OwnerMovieScene->AddPossessable(InName, InObject.GetClass());
+
+  // Attempt to use the parent as a context if necessary
+  UObject* ParentObject       = OwnerSequence->GetParentObject(&InObject);
+  UObject* BindingContext     = Sequencer->GetPlaybackContext();
+
+  AActor* ParentActorAdded    = nullptr;
+  FGuid ParentGuid;
+
+  if (ParentObject) {
+    // Ensure we have possessed the outer object, if necessary
+    ParentGuid = Sequencer->GetHandleToObject(ParentObject, false);
+    if (!ParentGuid.IsValid()) {
+      ParentGuid       = Sequencer->GetHandleToObject(ParentObject);
+      ParentActorAdded = Cast<AActor>(ParentObject);
+    }
+
+    if (OwnerSequence->AreParentContextsSignificant()) {
+      BindingContext = ParentObject;
+    }
+
+    // Set up parent/child guids for possessables within spawnables
+    if (ParentGuid.IsValid()) {
+      FMovieScenePossessable* ChildPossessable = OwnerMovieScene->FindPossessable(PossessableGuid);
+      if (ensure(ChildPossessable)) {
+        ChildPossessable->SetParent(ParentGuid);
+      }
+
+      FMovieSceneSpawnable* ParentSpawnable = OwnerMovieScene->FindSpawnable(ParentGuid);
+      if (ParentSpawnable) {
+        ParentSpawnable->AddChildPossessable(PossessableGuid);
+      }
+    }
+  }
+
+  // if (!OwnerMovieScene->FindPossessable(PossessableGuid)->BindSpawnableObject(Sequencer->GetFocusedTemplateID(),
+  // &InObject, &Sequencer.Get())) {
+  OwnerSequence->BindPossessableObject(PossessableGuid, InObject, BindingContext);
+  //}
+
+  // Broadcast if a parent actor was added as a result of adding this object
+  if (ParentActorAdded && ParentGuid.IsValid()) {
+    Sequencer->OnActorAddedToSequencer().Broadcast(ParentActorAdded, ParentGuid);
+  }
+
+  return PossessableGuid;
+}
+
+FGuid MakeNewSpawnable(
+    TSharedRef<ISequencer> Sequencer, UObject& Object, UActorFactory* ActorFactory, bool bSetupDefaults,
+    FName SpawnableName
+) {
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (!Sequence) {
+    return FGuid();
+  }
+
+  UMovieScene* MovieScene = Sequence->GetMovieScene();
+  if (!MovieScene) {
+    return FGuid();
+  }
+
+  if (MovieScene->IsReadOnly()) {
+    ShowReadOnlyError();
+    return FGuid();
+  }
+
+  if (!Sequence->AllowsSpawnableObjects()) {
+    ShowSpawnableNotAllowedError();
+    return FGuid();
+  }
+
+  FGuid NewGuid = AddSpawnable(Sequencer, Object, ActorFactory, SpawnableName);
+  if (!NewGuid.IsValid()) {
+    return FGuid();
+  }
+
+  FMovieSceneSpawnable* Spawnable = MovieScene->FindSpawnable(NewGuid);
+  if (!Spawnable) {
+    return FGuid();
+  }
+
+  // Spawn the object so we can position it correctly, it's going to get spawned anyway since things default to spawned.
+  UObject* SpawnedObject = Sequencer->GetSpawnRegister().SpawnObject(
+      NewGuid, *MovieScene, Sequencer->GetFocusedTemplateID(), Sequencer.Get()
+  );
+
+  if (bSetupDefaults) {
+    FTransformData TransformData;
+    Sequencer->GetSpawnRegister().SetupDefaultsForSpawnable(
+        SpawnedObject, Spawnable->GetGuid(), TransformData, Sequencer, Sequencer->GetSequencerSettings()
+    );
+  }
+
+  if (ACameraActor* NewCamera = Cast<ACameraActor>(SpawnedObject)) {
+    NewCameraAdded(Sequencer, NewCamera, NewGuid);
+  }
+
+  return NewGuid;
+}
+
+FGuid CreateCamera(TSharedRef<ISequencer> Sequencer, const bool bSpawnable, ACineCameraActor*& OutActor) {
+  FGuid CameraGuid;
+
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (!Sequence) {
+    return CameraGuid;
+  }
+
+  UMovieScene* MovieScene = Sequence->GetMovieScene();
+  if (!MovieScene) {
+    return CameraGuid;
+  }
+
+  if (MovieScene->IsReadOnly()) {
+    ShowReadOnlyError();
+    return CameraGuid;
+  }
+
+  UWorld* World = GCurrentLevelEditingViewportClient ? GCurrentLevelEditingViewportClient->GetWorld() : nullptr;
+  if (!World) {
+    return CameraGuid;
+  }
+
+  const FScopedTransaction Transaction(LOCTEXT("CreateCamera", "Create Camera"));
+
+  FActorSpawnParameters SpawnParams;
+  if (bSpawnable) {
+    // Don't bother transacting this object if we're creating a spawnable since it's temporary
+    SpawnParams.ObjectFlags &= ~RF_Transactional;
+  }
+
+  // Set new camera to match viewport
+  OutActor = World->SpawnActor<ACineCameraActor>(SpawnParams);
+  if (!OutActor) {
+    return CameraGuid;
+  }
+
+  OutActor->SetActorLocation(GCurrentLevelEditingViewportClient->GetViewLocation(), false);
+  OutActor->SetActorRotation(GCurrentLevelEditingViewportClient->GetViewRotation());
+  // OutActor->CameraComponent->FieldOfView = ViewportClient->ViewFOV; //@todo set the focal length from this field of
+  // view
+
+  FMovieSceneSpawnable* Spawnable = nullptr;
+
+  if (bSpawnable) {
+    FString NewName = MovieSceneHelpers::MakeUniqueSpawnableName(
+        MovieScene, FName::NameToDisplayString(ACineCameraActor::StaticClass()->GetFName().ToString(), false)
+    );
+
+    CameraGuid = MakeNewSpawnable(Sequencer, *OutActor, nullptr, true, NAME_None);
+    Spawnable  = MovieScene->FindSpawnable(CameraGuid);
+
+    if (ensure(Spawnable)) {
+      Spawnable->SetName(NewName);
+    }
+
+    // Destroy the old actor
+    World->EditorDestroyActor(OutActor, false);
+
+    for (TWeakObjectPtr<UObject>& Object : Sequencer->FindBoundObjects(CameraGuid, Sequencer->GetFocusedTemplateID())) {
+      OutActor = Cast<ACineCameraActor>(Object.Get());
+      if (OutActor) {
+        break;
+      }
+    }
+    ensure(OutActor);
+
+    OutActor->SetActorLabel(NewName, false);
+  } else {
+    CameraGuid = CreateBinding(Sequencer, *OutActor, OutActor->GetActorLabel());
+  }
+
+  if (!CameraGuid.IsValid()) {
+    return CameraGuid;
+  }
+
+  Sequencer->OnActorAddedToSequencer().Broadcast(OutActor, CameraGuid);
+
+  NewCameraAdded(Sequencer, OutActor, CameraGuid);
+
+  return CameraGuid;
+}
+
 }  // namespace
 
 FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) {
@@ -257,7 +513,7 @@ void UDoodleFbxImport_1::ImportFile() {
   LFilter.bRecursivePaths          = true;
   LFilter.bRecursiveClasses        = true;
   LFilter.PackagePaths.Add(FName{ImportPathDir});
-  LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
+  LFilter.ClassNames.Add(FName{UAnimSequence::StaticClass()->GetName()});
 
   IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
     UAnimSequence* L_Anim = Cast<UAnimSequence>(InAss.GetAsset());
@@ -374,7 +630,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
   if (!L_Task)
     // 添加相机时以及强制评估了, 不需要再强制评估
-    FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+    CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
   else
     // 强制评估序列, 要不然相机指针会空
     L_ShotSequencer->ForceEvaluate();
@@ -392,7 +648,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
 
   if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
 
-  FString L_CamLable = L_CameraActor->GetActorNameOrLabel();
+  FString L_CamLable = L_CameraActor->GetActorLabel();
 
   UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CamLable);
   // 寻找相机id
@@ -579,7 +835,7 @@ class SDoodleImportUiItem : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoo
 };
 
 void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
-  const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
+  const FSlateFontInfo Font = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
 
 #if PLATFORM_WINDOWS
   const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
@@ -764,40 +1020,23 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .OnClicked_Lambda([this](){
                FindSK();
                ImportFile();
-               CreateWorld();
+           CreateWorld();
                return FReply::Handled();
             })
           ]
-
           + SHorizontalBox::Slot()
           .FillWidth(1.0f)
           [
             SNew(SButton)
             .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
-            .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除查找的骨骼"))
-            .OnClicked_Lambda([this](){
-               for (auto&& i: ListImportData) {
-                   if (i->IsA<UDoodleFbxImport_1>()) {
-                       Cast<UDoodleFbxImport_1>(i)->SkinObj = nullptr;
-                   }
-               }
-               ListImportGui->RebuildList(); 
-               return FReply::Handled();
-            })
-          ]
-
-          + SHorizontalBox::Slot()
-          .FillWidth(1.0f)
-          [
-            SNew(SButton)
-            .Text(LOCTEXT("Clear All","Clear All"))
             .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
             .OnClicked_Lambda([this](){
                ListImportData.Empty(); 
-               ListImportGui->RebuildList(); 
+         ListImportGui->RebuildList(); 
+         CreateWorld();
                return FReply::Handled();
             })
-          ]
+      ]
         ]
         +SVerticalBox::Slot()
         .AutoHeight()
@@ -808,7 +1047,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .Text(LOCTEXT("Search USkeleton Import","Search USkeleton Direct Import"))
           .ToolTipText(LOCTEXT("Search USkeleton Tip3","不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
           .OnClicked_Lambda([this](){
-              ImportFile();
+             ImportFile();
               CreateWorld();
              return FReply::Handled();
           })
@@ -834,7 +1073,7 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
   LFilter.bIncludeOnlyOnDiskAssets = false;
   LFilter.bRecursivePaths          = true;
   LFilter.bRecursiveClasses        = true;
-  LFilter.ClassPaths.Add(USkeleton::StaticClass()->GetClassPathName());
+  LFilter.ClassNames.Add(FName{USkeleton::StaticClass()->GetName()});
 
   IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
     USkeleton* L_SK = Cast<USkeleton>(InAss.GetAsset());
@@ -891,9 +1130,6 @@ bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporte
       In_Fbx->SkinObj = L_SK_Data.SkinObj;
       return true;
     }
-  }
-  for (auto&& L_SK_Data : this->AllSkinObjs) {
-    L_Task_Scoped2.EnterProgressFrame(1.0f);
     if (Algo::AllOf(
             L_SK_Data.BoneNames, [&](const FString& IN_Str) { return In_Fbx->FbxNodeNames.Contains(IN_Str); }
         )  /// 进一步确认骨骼内容
@@ -910,7 +1146,7 @@ bool SDoodleImportFbxUI::IsCamera(UnFbx::FFbxImporter* InFbx) {
   TArray<fbxsdk::FbxCamera*> L_Cameras{};
   MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
 
-  return !L_Cameras.IsEmpty();
+  return L_Cameras.Num() != 0;
 }
 
 void SDoodleImportFbxUI::FindSK() {
@@ -1020,8 +1256,8 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
     } else {
-      TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
-      L_ptr->ImportPath                    = In_File;
+      UDoodleFbxImport_1* L_ptr = NewObject<UDoodleFbxImport_1>();
+      L_ptr->ImportPath         = In_File;
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork3", "寻找匹配骨骼"));
 
       if (MatchFbx(L_ptr, FbxImporter)) L_File = ListImportData.Emplace_GetRef(L_ptr);

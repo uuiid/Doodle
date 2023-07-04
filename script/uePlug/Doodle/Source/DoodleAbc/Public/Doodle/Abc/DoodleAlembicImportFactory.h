@@ -22,7 +22,7 @@ class DOODLEABC_API UDoodleAbcImportFactory : public UFactory, public FReimportH
 
   /** Object used to show import options for Alembic */
   UPROPERTY()
-  TObjectPtr<UDoodleAbcImportSettings> ImportSettings;
+  UDoodleAbcImportSettings* ImportSettings;
 
   bool bShowOption;
 

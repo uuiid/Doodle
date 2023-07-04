@@ -24,11 +24,11 @@ class DOODLE_API UDoodleAiSplineMoveToComponent : public UActorComponent {
       override;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
-  TObjectPtr<USplineComponent> SplineCurve;
+  USplineComponent *SplineCurve;
 
   void GoToRandomWaypoint();
 
-  void ReplaceSplineCurve(const TObjectPtr<USplineComponent> &In_Tmp, const FTransform &In_Loc);
+  void ReplaceSplineCurve(USplineComponent *In_Tmp, const FTransform &In_Loc);
 
  private:
   // UFUNCTION(BlueprintCallable)

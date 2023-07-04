@@ -36,7 +36,7 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
   EDoodleAssetsPreviewLightModel LightingScenarios;
   // 背景
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods")
-  double BackgroundValueCompensation;
+  float BackgroundValueCompensation;
   // 光阴影
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods", meta = (MultiLine = "true"))
   bool RaytracingShadow;
@@ -48,7 +48,7 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
   bool UseHardWareRaytracing;
   // 曝光补偿
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods", meta = (MultiLine = "true", UIMin = "-15.0", UIMax = "15.0"))
-  double ExposureCompensation;
+  float ExposureCompensation;
   // 接地
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods")
   bool Grounded;
@@ -73,21 +73,21 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
 
  private:
   UPROPERTY()
-  TObjectPtr<USkyLightComponent> SkyLight;
+  USkyLightComponent* SkyLight;
   UPROPERTY()
-  TObjectPtr<UPostProcessComponent> PostProcess;
+  UPostProcessComponent* PostProcess;
   UPROPERTY()
-  TObjectPtr<UDirectionalLightComponent> DirectionalLight;
+  UDirectionalLightComponent* DirectionalLight;
   UPROPERTY()
-  TObjectPtr<UStaticMeshComponent> SkyDome;
+  UStaticMeshComponent* SkyDome;
   UPROPERTY()
-  TObjectPtr<USceneComponent> RootStaticMeshs;
+  USceneComponent* RootStaticMeshs;
   UPROPERTY()
-  TArray<TObjectPtr<UStaticMeshComponent>> StaticMeshs;
+  TArray<UStaticMeshComponent*> StaticMeshs;
   UPROPERTY()
-  TObjectPtr<UMaterialInstanceDynamic> PBR_Mat_Inst;
+  UMaterialInstanceDynamic* PBR_Mat_Inst;
   UPROPERTY()
-  TObjectPtr<UMaterialInstanceDynamic> SkyDome_Mat_Inst;
+  UMaterialInstanceDynamic* SkyDome_Mat_Inst;
 
   void SwitchLight(EDoodleAssetsPreviewLightModel InModel);
   void PBRChecker(bool InIsEnable);

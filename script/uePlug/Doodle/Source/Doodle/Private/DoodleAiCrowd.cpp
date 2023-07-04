@@ -52,5 +52,5 @@ void ADoodleAiCrowd::Tick(float DeltaTime) {
   auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
   if (!Anim)
     return;
-  Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
+  // Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
 }
