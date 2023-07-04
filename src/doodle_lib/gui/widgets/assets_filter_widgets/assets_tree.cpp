@@ -77,9 +77,28 @@ void assets_tree::popen_menu(const tree_type_t::sibling_iterator &in) {
       entt::handle const l_h{*g_reg(), g_reg()->create()};
       l_h.emplace<database>();
       l_h.emplace<assets>(input_data.node_name);
-      l_parent->handle.get<assets>().add_child(l_h);
+      if (l_parent->handle && l_parent->handle.all_of<assets>()) l_parent->handle.get<assets>().add_child(l_h);
 
       tree_.insert(in, assets_tree_node{input_data.node_name, l_h});
+      //      edit_data = true;
+      ImGui::CloseCurrentPopup();
+    }
+  }
+  ImGui::SameLine();
+
+  if (ImGui::Button(*input_data.node_child)) {
+    if (auto it = ranges::find_if(
+            tree_type_t::begin(in), tree_type_t::end(in),
+            [&](const assets_tree_node &in) -> bool { return in.name.name == input_data.node_name; }
+        );
+        it == in.end()) {
+      DOODLE_LOG_INFO("添加节点 {}", input_data.node_name);
+      entt::handle const l_h{*g_reg(), g_reg()->create()};
+      l_h.emplace<database>();
+      l_h.emplace<assets>(input_data.node_name);
+      if (in->handle && in->handle.all_of<assets>()) in->handle.get<assets>().add_child(l_h);
+
+      tree_.append_child(in, assets_tree_node{input_data.node_name, l_h});
       //      edit_data = true;
       ImGui::CloseCurrentPopup();
     }

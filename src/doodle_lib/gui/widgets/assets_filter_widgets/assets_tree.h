@@ -35,6 +35,7 @@ class assets_tree {
   struct {
     gui_cache_name_id input{"名称"};
     gui_cache_name_id node{"添加"};
+    gui_cache_name_id node_child{"添加子集"};
     std::string node_name{};
   } input_data{};
   struct {
