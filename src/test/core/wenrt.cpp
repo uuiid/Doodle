@@ -20,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <unknwn.h>
+#include <vector>
 #include <wil/result.h>
 
 
@@ -44,7 +45,7 @@
 
 auto child_path  = L"D:/sy";
 auto server_path = L"E:/Doodle";
-
+using namespace doodle;
 class search_managet {
  public:
   search_managet() {
@@ -66,7 +67,10 @@ class search_managet {
 
 class cloud_provider_registrar {
  public:
-  cloud_provider_registrar() { init2(); }
+  cloud_provider_registrar(const FSys::path& in_root, const FSys::path& in_server_path)
+      : root_{in_root}, server_root_{in_server_path} {
+    init2();
+  }
   ~cloud_provider_registrar() { uninit2(); }
 
   void connect_sync_root_transfer_callbacks();
@@ -78,58 +82,14 @@ class cloud_provider_registrar {
 
  private:
   CF_CONNECTION_KEY s_transferCallbackConnectionKey{};
+  FSys::path root_{};
+  FSys::path server_root_{};
 
-  void init() {
-    auto l_sync_root_id = get_sync_root_id();
-
-    winrt::Windows::Storage::Provider::StorageProviderSyncRootInfo l_info{};
-    l_info.Id(l_sync_root_id);
-    auto l_folder = winrt::Windows::Storage::StorageFolder::GetFolderFromPathAsync(child_path).get();
-    l_info.Path(l_folder);
-    l_info.DisplayNameResource(L"sy");
-
-    l_info.IconResource(L"%SystemRoot%\\system32\\charmap.exe,0");
-    l_info.HydrationPolicy(winrt::Windows::Storage::Provider::StorageProviderHydrationPolicy::Full);
-    l_info.HydrationPolicyModifier(winrt::Windows::Storage::Provider::StorageProviderHydrationPolicyModifier::None);
-    l_info.PopulationPolicy(winrt::Windows::Storage::Provider::StorageProviderPopulationPolicy::AlwaysFull);
-    l_info.InSyncPolicy(
-        winrt::Windows::Storage::Provider::StorageProviderInSyncPolicy::FileCreationTime |
-        winrt::Windows::Storage::Provider::StorageProviderInSyncPolicy::DirectoryCreationTime
-    );
-    l_info.Version(L"0.0.0");
-    l_info.ShowSiblingsAsGroup(false);
-    l_info.HardlinkPolicy(winrt::Windows::Storage::Provider::StorageProviderHardlinkPolicy::None);
-
-    winrt::Windows::Foundation::Uri uri(L"http://cloudmirror.example.com/recyclebin");
-    l_info.RecycleBinUri(uri);
-
-    std::wstring syncRootIdentity(server_path);
-    syncRootIdentity.append(L"->");
-    syncRootIdentity.append(child_path);
-
-    winrt::Windows::Storage::Streams::IBuffer contextBuffer =
-        winrt::Windows::Security::Cryptography::CryptographicBuffer::ConvertStringToBinary(
-            syncRootIdentity.data(), winrt::Windows::Security::Cryptography::BinaryStringEncoding::Utf8
-        );
-    l_info.Context(contextBuffer);
-
-    winrt::Windows::Foundation::Collections::IVector<
-        winrt::Windows::Storage::Provider::StorageProviderItemPropertyDefinition>
-        customStates = l_info.StorageProviderItemPropertyDefinitions();
-
-    winrt::Windows::Storage::Provider::StorageProviderSyncRootManager::Register(l_info);
-  }
-
+  std::vector<CF_PLACEHOLDER_CREATE_INFO> list_dir_info(const FSys::path& in_parent);
   void init2() {
     // 使用win32 api注册同步文件夹
     //    auto l_sync_root_id         = get_sync_root_id();
-    // a3dde735-edc1-404d-87a2-a506db7b9c36
-    //    GUID const l_guid           = {0xA3DDE735, 0xEDC1, 0x404D, {0x87, 0xA2, 0xA5, 0x6B, 0xB7, 0xB9, 0xC3, 0x6D}};
-    GUID l_guid                 = {0};
-    l_guid.Data1                = 0xA3DDE735;
-    l_guid.Data2                = 0xEDC1;
-    l_guid.Data3                = 0x404D;
-    //    l_guid.Data4                = {0x87, 0xA2, 0xA5, 0x6B, 0xB7, 0xB9, 0xC3, 0x6D};
+    GUID const l_guid           = {0xA3DDE735, 0xEDC1, 0x404D, {0x87, 0xA2, 0xA5, 0x06, 0xDB, 0x7B, 0x9C, 0x36}};
     CF_SYNC_REGISTRATION l_reg  = {0};
     l_reg.StructSize            = sizeof(l_reg);
     l_reg.ProviderName          = L"Doodle.Sync";
@@ -141,23 +101,23 @@ class cloud_provider_registrar {
     policies.Hydration.Primary  = CF_HYDRATION_POLICY_PARTIAL;
     policies.InSync             = CF_INSYNC_POLICY_NONE;
     policies.Population.Primary = CF_POPULATION_POLICY_PARTIAL;
-    HRESULT hr =
-        CfRegisterSyncRoot(child_path, &l_reg, &policies, CF_REGISTER_FLAG_DISABLE_ON_DEMAND_POPULATION_ON_ROOT);
-    try {
-      THROW_IF_FAILED(hr);
-    }
-    CATCH_LOG()
+    THROW_IF_FAILED(CfRegisterSyncRoot(
+        root_.generic_wstring().c_str(), &l_reg, &policies, CF_REGISTER_FLAG_DISABLE_ON_DEMAND_POPULATION_ON_ROOT
+    ));
+    static CF_CALLBACK_REGISTRATION s_MirrorCallbackTable[] = {
+        {CF_CALLBACK_TYPE_FETCH_DATA, cloud_provider_registrar::on_fetch_data},
+        {CF_CALLBACK_TYPE_CANCEL_FETCH_DATA, cloud_provider_registrar::on_cancel_fetch_data},
+        CF_CALLBACK_REGISTRATION_END};
+
+    THROW_IF_FAILED(::CfConnectSyncRoot(
+        child_path, s_MirrorCallbackTable, nullptr,
+        CF_CONNECT_FLAG_REQUIRE_PROCESS_INFO | CF_CONNECT_FLAG_REQUIRE_FULL_FILE_PATH, &s_transferCallbackConnectionKey
+    ));
   }
 
   void uninit2() {
     THROW_IF_FAILED(CfDisconnectSyncRoot(s_transferCallbackConnectionKey));
-    HRESULT hr = CfUnregisterSyncRoot(child_path);
-    THROW_IF_FAILED(hr);
-  }
-
-  void uninit() {
-    auto l_sync_root_id = get_sync_root_id();
-    winrt::Windows::Storage::Provider::StorageProviderSyncRootManager::Unregister(l_sync_root_id);
+    THROW_IF_FAILED(CfUnregisterSyncRoot(root_.generic_wstring().c_str()));
   }
 
   static winrt::com_array<wchar_t> convert_sid_to_string_sid(::PSID p_sid) {
@@ -194,31 +154,25 @@ class cloud_provider_registrar {
   }
 };
 
-void cloud_provider_registrar::connect_sync_root_transfer_callbacks() {
-  static CF_CALLBACK_REGISTRATION s_MirrorCallbackTable[] = {
-      {CF_CALLBACK_TYPE_FETCH_DATA, cloud_provider_registrar::on_fetch_data},
-      {CF_CALLBACK_TYPE_CANCEL_FETCH_DATA, cloud_provider_registrar::on_cancel_fetch_data},
-      CF_CALLBACK_REGISTRATION_END};
-
-  THROW_IF_FAILED(::CfConnectSyncRoot(
-      child_path, s_MirrorCallbackTable, nullptr,
-      CF_CONNECT_FLAG_REQUIRE_PROCESS_INFO | CF_CONNECT_FLAG_REQUIRE_FULL_FILE_PATH, &s_transferCallbackConnectionKey
-  ));
-};
-
 void CALLBACK cloud_provider_registrar::on_fetch_data(
     _In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters
 ) {}
 void CALLBACK cloud_provider_registrar::on_cancel_fetch_data(
     _In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters
 ) {}
+std::vector<CF_PLACEHOLDER_CREATE_INFO> cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
+  std::vector<CF_PLACEHOLDER_CREATE_INFO> l_r{};
+
+  WIN32_FIND_DATA L_find_Data;
+  HANDLE L_hfile_handle;
+  CF_PLACEHOLDER_CREATE_INFO cloudEntry;
+}
 
 BOOST_AUTO_TEST_CASE(wenrt_base_) {
   //  winrt::init_apartment();
   //  search_managet l_s{};
-  cloud_provider_registrar l_reg{};
+  cloud_provider_registrar l_reg{child_path, server_path};
 
-  l_reg.connect_sync_root_transfer_callbacks();
   BOOST_TEST(true);
   //  std::thread{[]() { winrt::init_apartment(winrt::apartment_type::single_threaded); }}.detach();
 }
