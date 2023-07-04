@@ -56,7 +56,7 @@ class setting_windows::impl {
   gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::get_set().maya_replace_save_dialog};
   gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::get_set().maya_force_resolve_link};
   std::string user_uuid;
-  gui::gui_cache_name_id new_user_id{"生成新id"s};
+  gui::gui_cache_name_id new_user_id{"切换新用户"s};
   std::string title_name_;
   bool open{true};
 };
@@ -90,7 +90,7 @@ setting_windows::~setting_windows() = default;
 void setting_windows::init() {
   auto l_user                          = g_reg()->ctx().get<user::current_user>().get_handle();
   p_i->p_user.data                     = l_user.get<user>().get_name();
-  p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().uuid());
+  p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().get_id());
 
   p_i->p_org_name.data                 = core_set::get_set().organization_name;
   p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();
@@ -113,7 +113,7 @@ bool setting_windows::render() {
     g_reg()->ctx().get<user::current_user>() = {};
     auto& l_h                                = g_reg()->ctx().get<user::current_user>();
     l_h.create_user();
-    p_i->user_uuid = fmt::format("用户id: {}", l_h.uuid);
+    p_i->user_uuid = fmt::format("用户id: {}", l_h.user_handle.get<database>().get_id());
   }
 
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);
