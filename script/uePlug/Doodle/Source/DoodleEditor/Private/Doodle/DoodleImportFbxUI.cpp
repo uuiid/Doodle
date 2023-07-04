@@ -205,7 +205,12 @@ void UDoodleBaseImportData::GenStartAndEndTime() {
 }
 
 void UDoodleFbxImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
-  ImportPathDir = GetImportPath(In_Path_Prefix) / "Fbx_Import_" + In_Path_Suffix;
+  FString L_String = FString::Format(
+      TEXT("FbxI_{0}_{1}"),
+      TArray<FStringFormatArg>{
+          FStringFormatArg{In_Path_Suffix}, FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}}
+  );
+  ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
 }
 
 void UDoodleFbxImport_1::ImportFile() {
@@ -420,7 +425,12 @@ void UDoodleFbxCameraImport_1::ImportFile() {
 }
 
 void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
-  ImportPathDir = GetImportPath(In_Path_Prefix) / "Abc_Import_" + In_Path_Suffix;
+  FString L_String = FString::Format(
+      TEXT("AbcI_{0}_{1}"),
+      TArray<FStringFormatArg>{
+          FStringFormatArg{In_Path_Suffix}, FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}}
+  );
+  ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
 }
 
 void UDoodleAbcImport_1::ImportFile() {
