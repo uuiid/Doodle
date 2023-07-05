@@ -142,6 +142,32 @@ class directory_watcher {
 
   void cancel() { ::CancelIoEx(dir_, overlapped_ptr_->get()); }
 
+  void on_sync_root_file_changes() {
+    for (auto&& [l_action, l_path] : files_) {
+      DWORD l_attr = ::GetFileAttributesW(l_path.generic_wstring().c_str());
+
+      if (!(l_attr & FILE_ATTRIBUTE_DIRECTORY)) {
+        auto placeholder{CreateFile(l_path.c_str(), 0, FILE_READ_DATA, nullptr, OPEN_EXISTING, 0, nullptr)};
+        LARGE_INTEGER const offset = {};
+        LARGE_INTEGER length{};
+        length.QuadPart = MAXLONGLONG;
+        if (l_attr & FILE_ATTRIBUTE_PINNED) {
+          //          wprintf(L"Hydrating file %s\n", path.c_str());
+          ::CfHydratePlaceholder(placeholder, offset, length, CF_HYDRATE_FLAG_NONE, nullptr);
+        }
+        //        else if (l_attr & FILE_ATTRIBUTE_UNPINNED) {
+        //          //          wprintf(L"Dehydrating file %s\n", path.c_str());
+        //          ::CfDehydratePlaceholder(placeholder, offset, length, CF_DEHYDRATE_FLAG_NONE, NULL);
+        //        }
+      }
+
+      if (l_action == FILE_ACTION_ADDED) {
+        if (FSys::is_directory(l_path)) {
+        }
+      }
+    }
+  }
+
  private:
   void init() {
     const size_t c_bufferSize = sizeof(FILE_NOTIFY_INFORMATION) * 100;
@@ -154,7 +180,6 @@ class directory_watcher {
     );
     THROW_LAST_ERROR_IF(!dir_);
     boost::system::error_code l_code{};
-    ;
     boost::asio::use_service<boost::asio::detail::io_context_impl>(
         boost::asio::query(executor_, boost::asio::execution::context)
     )
