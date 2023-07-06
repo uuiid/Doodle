@@ -1,17 +1,28 @@
 
+add_library(
+        doodle_cloud_drive_lib
+)
+target_link_libraries(doodle_cloud_drive_lib
+        PUBLIC
+        doodle_app
+        cldapi.lib
+        )
+
 
 add_executable(
         doodle_cloud_drive
         main.cpp
 )
-add_subdirectory(
-        facet
-)
+
+add_subdirectory(facet)
+add_subdirectory(cloud)
+
 set_target_properties(doodle_cloud_drive
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(doodle_cloud_drive
         PUBLIC
         doodle_app
+        doodle_cloud_drive_lib
         )
 target_compile_definitions(doodle_cloud_drive
         PUBLIC

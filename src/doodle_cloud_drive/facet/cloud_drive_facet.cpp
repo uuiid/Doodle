@@ -4,4 +4,19 @@
 
 #include "cloud_drive_facet.h"
 
-namespace doodle {}  // namespace doodle
+#include <doodle_core/core/doodle_lib.h>
+
+#include <doodle_app/app/program_options.h>
+
+namespace doodle {
+
+bool cloud_drive_facet::post() {
+  bool l_r{};
+
+  return l_r;
+}
+void cloud_drive_facet::add_program_options() {
+  doodle_lib::Get().ctx().get<program_options>().arg.add_param(cloud_drive_arg::name);
+}
+
+}  // namespace doodle

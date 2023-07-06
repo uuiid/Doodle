@@ -9,10 +9,11 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <doodle_lib/facet/create_move_facet.h>
-#include <doodle_lib/facet/main_facet.h>
-#include <doodle_lib/facet/rpc_server_facet.h>
+#include <doodle_app/app/app_command.h>
+#include <doodle_app/doodle_app_fwd.h>
 
+#include <doodle_cloud_drive/facet/cloud_drive_facet.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -21,7 +22,7 @@
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main(int argc, const char* const argv[]) try {
-  using main_app = doodle::app_command<doodle::main_facet>;
+  using main_app = doodle::app_command<doodle::cloud_drive_facet>;
   main_app app{argc, argv};
   try {
     return app.run();
@@ -32,7 +33,6 @@ extern "C" int main(int argc, const char* const argv[]) try {
     DOODLE_LOG_ERROR(boost::current_exception_diagnostic_information(true));
     return 1;
   }
-  return 0;
 } catch (...) {
   auto l_path = std::filesystem::temp_directory_path() / "doodle_cloud_drive.log";
   std::ofstream{l_path} << boost::current_exception_diagnostic_information(true);

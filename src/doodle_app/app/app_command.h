@@ -47,8 +47,8 @@ class app_command : public app_base {
 
   static app_command& Get() { return *(dynamic_cast<app_command*>(self)); }
   template <typename T>
-  void add_facet() {
-    static_cast<T*>(facet_list.emplace_back(std::in_place_type<T>).data());
+  auto add_facet() {
+    return static_cast<T*>(facet_list.emplace_back(std::in_place_type<T>).data());
   };
 
  protected:
