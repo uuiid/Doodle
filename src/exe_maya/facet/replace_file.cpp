@@ -47,8 +47,8 @@ bool replace_file_facet::post() {
   if (l_arg.file_path.empty()) return l_ret;
 
   lib_guard_ = std::make_shared<maya_lib_guard>(l_arg.maya_path);
-
-  l_ret      = true;
+  doodle_lib::Get().ctx().emplace<reference_file_factory>();
+  l_ret = true;
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   maya_file_io::set_workspace(l_arg.file_path);
@@ -60,6 +60,7 @@ bool replace_file_facet::post() {
   auto l_s = boost::asio::make_strand(g_io_context());
   boost::asio::post(l_s, [this]() { this->create_ref_file(); });
   boost::asio::post(l_s, [l_files = l_arg.file_list, this]() { this->replace_file(l_files); });
+  return l_ret;
 }
 void replace_file_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
@@ -82,6 +83,11 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
     auto&& l_ref = l_ref_it->get<reference_file>();
     l_ref.replace_file(l_pair.second);
   }
+
+  DOODLE_LOG_INFO("替换完成");
+  maya_file_io::save_file(
+      maya_plug::maya_file_io::work_path("replace_file") / maya_plug::maya_file_io::get_current_path().filename()
+  );
 }
 
 void replace_file_facet::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
