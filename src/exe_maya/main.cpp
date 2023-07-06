@@ -11,11 +11,13 @@
 
 #include <exe_maya/facet/cloth_sim.h>
 #include <exe_maya/facet/export_fbx.h>
+#include <exe_maya/facet/replace_file.h>
 #include <iostream>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main(int argc, const char* const argv[]) try {
-  using main_app = doodle::app_command<doodle::maya_plug::cloth_sim, doodle::maya_plug::export_fbx_facet>;
+  using main_app = doodle::app_command<
+      doodle::maya_plug::cloth_sim, doodle::maya_plug::export_fbx_facet, doodle::maya_plug::replace_file_facet>;
   main_app app{argc, argv};
   try {
     return app.run();
