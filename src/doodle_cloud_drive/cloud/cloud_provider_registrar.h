@@ -36,6 +36,12 @@ class cloud_provider_registrar {
   }
   ~cloud_provider_registrar() { uninit2(); }
 
+  [[nodiscard]] FSys::path& child_path() { return root_; }
+  [[nodiscard]] const FSys::path& child_path() const { return root_; }
+
+  [[nodiscard]] FSys::path& server_path() { return server_root_; }
+  [[nodiscard]] const FSys::path& server_path() const { return server_root_; }
+
  private:
   CF_CONNECTION_KEY s_transferCallbackConnectionKey{};
   FSys::path root_{};

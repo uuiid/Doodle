@@ -3,17 +3,59 @@
 //
 
 #include "cloud_provider_registrar.h"
+
+#include "doodle_core/logger/logger.h"
+#include <doodle_core/core/file_sys.h>
+
+#include <boost/asio.hpp>
+// #include <doodle_core/lib_warp/
+#include <filesystem>
 namespace doodle {
 
 namespace {
-
 /**
  * @brief CF_CALLBACK_TYPE_FETCH_DATA 此回调用于向同步提供程序询问所需的一系列文件数据，以满足占位符上的 I/O
  * 请求或显式水合请求。 如果同步提供程序指定的水合策略在同步根注册时不是 ALWAYS_FULL，则需要实现此回调。
  * @param
  */
 void CALLBACK
-on_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {}
+on_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {
+  auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
+  FSys::path l_server_path{reinterpret_cast<wchar_t const*>(callbackInfo->FileIdentity)};
+  FSys::path l_child_path = FSys::path{callbackInfo->VolumeDosName} / callbackInfo->NormalizedPath;
+  callbackParameters->FetchData.RequiredFileOffset;
+  {
+    auto l_log = fmt::format(
+        L"on_fetch_data: {} -> {} Received data request from {} for {}{}, priority {}, offset {}`{} length {}`{}",
+        l_server_path.wstring(), l_child_path.wstring(),
+        (callbackInfo->ProcessInfo && callbackInfo->ProcessInfo->ImagePath) ? callbackInfo->ProcessInfo->ImagePath
+                                                                            : L"UNKNOWN",
+        callbackInfo->VolumeDosName, callbackInfo->NormalizedPath, callbackInfo->PriorityHint,
+        callbackParameters->FetchData.RequiredFileOffset.HighPart,
+        callbackParameters->FetchData.RequiredFileOffset.LowPart, callbackParameters->FetchData.RequiredLength.HighPart,
+        callbackParameters->FetchData.RequiredLength.LowPart
+    );
+    fmt::print(l_log);
+  }
+
+  boost::asio::windows::random_access_handle l_file_handle{g_io_context()};
+
+  auto* l_file = ::CreateFileW(
+      l_server_path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr
+  );
+  if (l_file == INVALID_HANDLE_VALUE) {
+    LOG_LAST_ERROR();
+    auto l_log = fmt::format(
+        L"on_fetch_data: {} -> {} CreateFileW failed with {}", l_server_path.wstring(), l_child_path.wstring(),
+        ::GetLastError()
+    );
+    fmt::print(l_log);
+    return;
+  }
+
+  auto l_buffer_size = std::min(callbackParameters->FetchData.RequiredLength.QuadPart, 4096ll);
+}
 /**
  * @brief CF_CALLBACK_TYPE_VALIDATE_DATA
  * 此回调用于请求同步提供程序确认给定范围的文件数据（之前的CF_OPERATION_TYPE_TRANSFER_DATA操作已存在于磁盘上）是否有效，
