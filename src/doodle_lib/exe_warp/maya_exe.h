@@ -85,6 +85,7 @@ class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:
   bool replace_file_all;
   std::vector<entt::handle> save_handle{};
+  constexpr static std::string_view k_name{"replace_file_config"};
 
   [[nodiscard]] std::string to_str() const;
 
