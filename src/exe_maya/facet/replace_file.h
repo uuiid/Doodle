@@ -14,11 +14,9 @@ namespace doodle::maya_plug {
 
 class replace_file_facet {
   static constexpr auto config{"replace_file_config"};
-
   void create_ref_file();
-  void export_fbx();
+  void replace_file(const std::vector<std::pair<FSys::path, FSys::path>>& in_files);
 
-  void play_blast();
   std::shared_ptr<maya_lib_guard> lib_guard_{};
   std::vector<entt::handle> ref_files_{};
 

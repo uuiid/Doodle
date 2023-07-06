@@ -108,8 +108,6 @@ bool export_fbx_facet::post() {
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
   maya_file_io::set_workspace(l_arg.file_path);

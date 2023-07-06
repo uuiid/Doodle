@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <nlohmann/json_fwd.hpp>
 #include <string_view>
+#include <utility>
 
 namespace doodle::maya_exe_ns {
 namespace flags {
@@ -56,7 +57,6 @@ class arg {
 class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
  public:
   constexpr static std::string_view k_name{"cloth_sim_config"};
-  [[nodiscard]] std::string to_str() const;
 
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
@@ -72,38 +72,41 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   bool upload_file;
   constexpr static std::string_view k_name{"export_fbx_config"};
 
-  [[nodiscard]] std::string to_str() const;
-
   friend void to_json(nlohmann::json &nlohmann_json_j, const export_fbx_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
     nlohmann_json_j["upload_file"] = nlohmann_json_t.upload_file;
   };
+  friend void from_json(const nlohmann::json &in_nlohmann_json_j, export_fbx_arg &in_nlohmann_json_t) {
+    from_json(in_nlohmann_json_j, dynamic_cast<arg &>(in_nlohmann_json_t));
+    in_nlohmann_json_j["use_all_ref"].get_to(in_nlohmann_json_t.use_all_ref);
+    in_nlohmann_json_j["upload_file"].get_to(in_nlohmann_json_t.upload_file);
+  }
 };
 
 class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:
   bool replace_file_all;
-  std::vector<entt::handle> save_handle{};
+  std::vector<std::pair<FSys::path, FSys::path>> file_list{};
   constexpr static std::string_view k_name{"replace_file_config"};
-
-  [[nodiscard]] std::string to_str() const;
 
   friend void to_json(nlohmann::json &nlohmann_json_j, const replace_file_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
-    nlohmann_json_j["replace_file_all"] = nlohmann_json_t.replace_file_all;
-  };
+    nlohmann_json_j["file_list"] = nlohmann_json_t.file_list;
+  }
+  friend void from_json(const nlohmann::json &in_nlohmann_json_j, replace_file_arg &in_nlohmann_json_t) {
+    from_json(in_nlohmann_json_j, dynamic_cast<arg &>(in_nlohmann_json_t));
+    in_nlohmann_json_j["file_list"].get_to(in_nlohmann_json_t.file_list);
+  }
 };
 
 class DOODLELIB_API clear_file_arg : public maya_exe_ns::arg {
  public:
   std::string save_file_extension_attr;
 
-  [[nodiscard]] std::string to_str() const;
-
   friend void to_json(nlohmann::json &nlohmann_json_j, const clear_file_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
-    nlohmann_json_j["replace_file_all"] = nlohmann_json_t.save_file_extension_attr;
+    nlohmann_json_j["save_file_extension_attr"] = nlohmann_json_t.save_file_extension_attr;
   };
 };
 

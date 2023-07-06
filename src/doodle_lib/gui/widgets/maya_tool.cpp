@@ -52,16 +52,6 @@ class maya_reference_info : boost::equality_comparable<maya_reference_info> {
 
   entt::handle save_handle{make_handle()};
 
-  void set_value() {
-    auto& l_ass  = save_handle.get_or_emplace<assets_file>();
-    auto& l_path = save_handle.get_or_emplace<redirection_path_info>();
-
-    l_ass.path_attr(f_file_path_attr());
-    FSys::path l_f{to_file_path_attr()};
-    l_path.file_name_   = l_f.filename();
-    l_path.search_path_ = {l_f.parent_path()};
-  }
-
   bool operator==(const maya_reference_info& in_r) const {
     return std::tie(f_file_path_attr, to_file_path_attr) == std::tie(in_r.f_file_path_attr, in_r.to_file_path_attr);
   }
@@ -139,17 +129,14 @@ bool maya_tool::render() {
     imgui::Checkbox(*ptr_attr->export_abc_type_, &ptr_attr->export_abc_type_);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() { imgui::Checkbox("直接加载所有引用", &p_use_all_ref); };
-  imgui::Checkbox(*ptr_attr->create_play_blast_, &ptr_attr->create_play_blast_);
-
-#if defined DOODLE_MAYA_TOOL
   dear::TreeNode{*ptr_attr->ref_attr.ref_attr} && [&]() {
     if (ImGui::Button(*ptr_attr->ref_attr.de_button_attr)) {
       ptr_attr->ref_attr.ref_attr.data.emplace_back();
     }
 
     for (auto&& l_i : ptr_attr->ref_attr.ref_attr()) {
-      if (ImGui::InputText(*l_i.f_file_path_attr, &l_i.f_file_path_attr)) l_i.set_value();
-      if (ImGui::InputText(*l_i.to_file_path_attr, &l_i.to_file_path_attr)) l_i.set_value();
+      ImGui::InputText(*l_i.f_file_path_attr, &l_i.f_file_path_attr);
+      ImGui::InputText(*l_i.to_file_path_attr, &l_i.to_file_path_attr);
       ImGui::SameLine();
       if (ImGui::Button(*l_i.de_button_attr)) {
         boost::asio::post(g_io_context(), [l_i, this]() {
@@ -159,6 +146,8 @@ bool maya_tool::render() {
       }
     }
   };
+  imgui::Checkbox(*ptr_attr->create_play_blast_, &ptr_attr->create_play_blast_);
+#if defined DOODLE_MAYA_TOOL
   dear::TreeNode{*ptr_attr->convert_maya_id_attr} && [&]() {
     dear::Combo{*ptr_attr->save_maya_type_attr.gui_name, ptr_attr->save_maya_type_attr.show_id_attr.c_str()} && [&]() {
       static auto l_list = magic_enum::enum_names<maya_tool_ns::maya_type>();
@@ -207,7 +196,6 @@ bool maya_tool::render() {
       });
     });
   }
-#if defined DOODLE_MAYA_TOOL
   ImGui::SameLine();
   if (imgui::Button("引用文件替换")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
@@ -215,12 +203,13 @@ bool maya_tool::render() {
       auto k_arg             = maya_exe_ns::replace_file_arg{};
       k_arg.file_path        = i;
       k_arg.replace_file_all = true;
-      k_arg.save_handle =
-          ptr_attr->ref_attr.ref_attr() |
-          ranges::views::transform([](const maya_tool_ns::maya_reference_info& in_info) -> entt::handle {
-            return in_info.save_handle;
-          }) |
-          ranges::to_vector;
+      k_arg.file_list        = ptr_attr->ref_attr.ref_attr() |
+                        ranges::views::transform(
+                            [](const maya_tool_ns::maya_reference_info& in_info) -> std::pair<FSys::path, FSys::path> {
+                              return {in_info.f_file_path_attr.data, in_info.to_file_path_attr.data};
+                            }
+                        ) |
+                        ranges::to_vector;
       k_arg.project_         = doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
@@ -231,6 +220,7 @@ bool maya_tool::render() {
       });
     });
   }
+#if defined DOODLE_MAYA_TOOL
   ImGui::SameLine();
   if (ImGui::Button("转换格式")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();

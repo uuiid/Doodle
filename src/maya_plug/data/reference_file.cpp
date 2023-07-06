@@ -24,8 +24,10 @@
 
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
+#include "maya_conv_str.h"
 #include "maya_tool.h"
 #include <array>
+#include <filesystem>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -356,8 +358,7 @@ bool reference_file::find_ref_node() {
   return true;
 }
 
-bool reference_file::replace_file(const entt::handle &in_handle) {
-  DOODLE_CHICK(in_handle.all_of<redirection_path_info>(), doodle_error{"缺失替换引用信息"});
+bool reference_file::replace_file(const FSys::path &in_handle) {
   DOODLE_CHICK(!p_m_object.isNull(), doodle_error{"没有引用文件, 无法替换"});
   search_file_info = in_handle;
   MStatus k_s{};
@@ -366,13 +367,13 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
           auto *self  = reinterpret_cast<reference_file *>(clientData);
-          auto l_path = self->search_file_info.get<redirection_path_info>().get_replace_path();
-          if (l_path) {
+          auto l_path = self->search_file_info;
+          if (FSys::exists(l_path)) {
             MStatus k_s{};
-            DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, *l_path);
-            k_s = file.setRawFullName(d_str{l_path->generic_string()});
+            DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, l_path);
+            k_s = file.setRawFullName(conv::to_ms(l_path.generic_string()));
             DOODLE_MAYA_CHICK(k_s);
-            *retCode = FSys::exists(*l_path);
+            *retCode = FSys::exists(l_path);
           } else {
             *retCode = false;
           }
@@ -384,7 +385,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
     DOODLE_MAYA_CHICK(k_s);
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
-  auto l_name   = search_file_info.get<redirection_path_info>().get_replace_path()->stem().generic_string();
+  auto l_name   = in_handle.stem().generic_string();
   auto l_name_d = l_name;
   for (int l_i = 1; l_i < 1000 && MNamespace::namespaceExists(d_str{l_name_d}); ++l_i) {
     l_name_d = fmt::format("{}{}", l_name, l_i);

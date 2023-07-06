@@ -87,7 +87,7 @@ class reference_file {
  private:
   std::string file_namespace;
 
-  entt::handle search_file_info;
+  FSys::path search_file_info;
   /// @brief 添加风场字段
   std::string field_attr;
 
@@ -156,7 +156,7 @@ class reference_file {
   /**
    * @brief 替换引用 需要组件 redirection_path_info_edit
    */
-  bool replace_file(const entt::handle &in_handle);
+  bool replace_file(const FSys::path &in_handle);
 
   std::optional<MDagPath> get_field_dag() const;
   const std::string &get_field_string() const;
