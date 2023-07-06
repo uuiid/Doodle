@@ -166,6 +166,7 @@
       "targets": [
         "DoodleExe",
         "generate_token",
+        "doodle_cloud_drive",
         "Doxygen"
       ]
     },
