@@ -5,6 +5,8 @@
 // clang-format off
 #include <algorithm>
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <cwchar>
 #include <memory>
 #include <string>
@@ -26,6 +28,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
+
+class cloud_fetch_data;
+
 class cloud_provider_registrar {
  public:
   cloud_provider_registrar(FSys::path in_root, const FSys::path& in_server_path)
@@ -42,10 +47,7 @@ class cloud_provider_registrar {
   [[nodiscard]] FSys::path& server_path() { return server_root_; }
   [[nodiscard]] const FSys::path& server_path() const { return server_root_; }
 
- private:
-  CF_CONNECTION_KEY s_transferCallbackConnectionKey{};
-  FSys::path root_{};
-  FSys::path server_root_{};
+  std::map<std::int64_t, std::weak_ptr<cloud_fetch_data>> cloud_fetch_data_list{};
 
   inline static LARGE_INTEGER file_time_to_large_integer(_In_ const FILETIME in_filetime) {
     LARGE_INTEGER l_large_integer{};
@@ -53,6 +55,17 @@ class cloud_provider_registrar {
     l_large_integer.HighPart = in_filetime.dwHighDateTime;
     return l_large_integer;
   };
+
+  inline static LARGE_INTEGER longlong_to_large_integer(_In_ const std::size_t in_large_integer) {
+    LARGE_INTEGER l_large_integer{};
+    l_large_integer.QuadPart = in_large_integer;
+    return l_large_integer;
+  };
+
+ private:
+  CF_CONNECTION_KEY s_transferCallbackConnectionKey{};
+  FSys::path root_{};
+  FSys::path server_root_{};
 
   void list_dir_info(const FSys::path& in_parent);
 

@@ -4,13 +4,131 @@
 
 #include "cloud_provider_registrar.h"
 
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/core/file_sys.h>
 
+#include "boost/asio/buffer.hpp"
+#include "boost/asio/read.hpp"
+#include "boost/asio/read_until.hpp"
+#include "boost/asio/windows/overlapped_handle.hpp"
+#include "boost/asio/windows/overlapped_ptr.hpp"
+#include "boost/asio/windows/random_access_handle.hpp"
+#include "boost/asio/windows/stream_handle.hpp"
+#include "boost/exception/diagnostic_information.hpp"
+#include "boost/numeric/conversion/cast.hpp"
+#include "boost/system/system_error.hpp"
 #include <boost/asio.hpp>
 // #include <doodle_core/lib_warp/
+#include "fmt/ostream.h"
+#include "magic_enum.hpp"
+#include <cstddef>
 #include <filesystem>
+#include <memory>
+
 namespace doodle {
+
+class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> {
+  constexpr static std::size_t buffer_size = 4096;
+
+ public:
+  struct arg {
+    OVERLAPPED Overlapped;
+    CF_CALLBACK_INFO CallbackInfo;
+    CHAR PriorityHint;
+    LARGE_INTEGER StartOffset;
+    LARGE_INTEGER RemainingLength;
+    ULONG BufferSize;
+  };
+
+  explicit cloud_fetch_data(
+      boost::asio::io_context& io_context, FSys::path in_server_path, FSys::path in_child_path,
+      CF_CALLBACK_INFO in_callback_info_, const CF_CALLBACK_PARAMETERS* in_callback_parameters
+  )
+      : stream_handle_{io_context},
+        server_path_{std::move(in_server_path)},
+        child_path_{std::move(in_child_path)},
+        length_{std::min(
+            boost::numeric_cast<std::size_t>(in_callback_parameters->FetchData.RequiredLength.QuadPart), buffer_size
+        )},
+        buffer_{std::make_unique<char>(length_)},
+        callback_info_{in_callback_info_},
+        start_offset_{boost::numeric_cast<std::size_t>(in_callback_parameters->FetchData.RequiredFileOffset.QuadPart)},
+        remaining_length_{in_callback_parameters->FetchData.RequiredLength} {
+    init();
+  }
+
+ private:
+  boost::asio::windows::random_access_handle stream_handle_;
+  FSys::path server_path_;
+  FSys::path child_path_;
+  std::size_t length_;
+  std::unique_ptr<char> buffer_;
+  CF_CALLBACK_INFO callback_info_;
+  std::size_t start_offset_{};
+  LARGE_INTEGER remaining_length_{};
+
+  void init() {
+    stream_handle_.assign(::CreateFileW(
+        server_path_.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr
+    ));
+  }
+
+ public:
+  void async_read() {
+    boost::asio::async_read_at(
+        stream_handle_, start_offset_, boost::asio::buffer(buffer_.get(), length_),
+        [this, l_s = shared_from_this()](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+          if (ec && ec != boost::asio::error::eof) {
+            // 读取失败
+            DOODLE_LOG_INFO(
+                "[{}:{}] - Async read failed for {}, Status {}\n", GetCurrentProcessId(), GetCurrentThreadId(),
+                server_path_, ec.what()
+            );
+            return;
+          }
+          // 读取成功
+          fmt::print(
+              "[{}:{}] - Async read failed for {}, Status {}\n", GetCurrentProcessId(), GetCurrentThreadId(),
+              server_path_, ec.what()
+          );
+          transfer_data(
+              callback_info_.ConnectionKey, callback_info_.TransferKey, buffer_.get(), start_offset_, bytes_transferred,
+              NOERROR
+          );
+          start_offset_ += bytes_transferred;
+          remaining_length_.QuadPart -= bytes_transferred;
+          if (remaining_length_.QuadPart > 0) {
+            async_read();
+          }
+        }
+    );
+  }
+
+  void cancel() { stream_handle_.cancel(); }
+
+  static void transfer_data(
+      _In_ CF_CONNECTION_KEY connectionKey, _In_ LARGE_INTEGER transferKey,
+      _In_reads_bytes_opt_(length.QuadPart) LPCVOID transferData, _In_ std::size_t startingOffset,
+      _In_ std::size_t length, _In_ NTSTATUS completionStatus
+  ) {
+    CF_OPERATION_INFO opInfo               = {0};
+    CF_OPERATION_PARAMETERS opParams       = {0};
+
+    opInfo.StructSize                      = sizeof(opInfo);
+    opInfo.Type                            = CF_OPERATION_TYPE_TRANSFER_DATA;
+    opInfo.ConnectionKey                   = connectionKey;
+    opInfo.TransferKey                     = transferKey;
+    opParams.ParamSize                     = RTL_SIZEOF_THROUGH_FIELD(CF_OPERATION_PARAMETERS, TransferData);
+    opParams.TransferData.CompletionStatus = completionStatus;
+    opParams.TransferData.Buffer           = transferData;
+    opParams.TransferData.Offset           = cloud_provider_registrar::longlong_to_large_integer(startingOffset);
+    opParams.TransferData.Length           = cloud_provider_registrar::longlong_to_large_integer(length);
+
+    THROW_IF_FAILED(::CfExecute(&opInfo, &opParams));
+  }
+};
 
 namespace {
 /**
@@ -21,9 +139,9 @@ namespace {
 void CALLBACK
 on_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {
   auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
-  FSys::path l_server_path{reinterpret_cast<wchar_t const*>(callbackInfo->FileIdentity)};
-  FSys::path l_child_path = FSys::path{callbackInfo->VolumeDosName} / callbackInfo->NormalizedPath;
-  callbackParameters->FetchData.RequiredFileOffset;
+
+  FSys::path const l_server_path{reinterpret_cast<wchar_t const*>(callbackInfo->FileIdentity)};
+  FSys::path const l_child_path = FSys::path{callbackInfo->VolumeDosName} / callbackInfo->NormalizedPath;
   {
     auto l_log = fmt::format(
         L"on_fetch_data: {} -> {} Received data request from {} for {}{}, priority {}, offset {}`{} length {}`{}",
@@ -38,34 +156,34 @@ on_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_
     fmt::print(l_log);
   }
 
-  boost::asio::windows::random_access_handle l_file_handle{g_io_context()};
-
-  auto* l_file = ::CreateFileW(
-      l_server_path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr
-  );
-  if (l_file == INVALID_HANDLE_VALUE) {
-    LOG_LAST_ERROR();
-    auto l_log = fmt::format(
-        L"on_fetch_data: {} -> {} CreateFileW failed with {}", l_server_path.wstring(), l_child_path.wstring(),
-        ::GetLastError()
+  try {
+    auto l_ptr = std::make_shared<cloud_fetch_data>(
+        g_io_context(), l_server_path, l_child_path, *callbackInfo, callbackParameters
     );
-    fmt::print(l_log);
-    return;
+    l_cloud_provider_registrar->cloud_fetch_data_list.emplace(callbackInfo->FileId.QuadPart, l_ptr);
+    l_ptr->async_read();
+  } catch (const boost::system::system_error& in_error) {
+    DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
   }
-
-  auto l_buffer_size = std::min(callbackParameters->FetchData.RequiredLength.QuadPart, 4096ll);
 }
 /**
  * @brief CF_CALLBACK_TYPE_VALIDATE_DATA
- * 此回调用于请求同步提供程序确认给定范围的文件数据（之前的CF_OPERATION_TYPE_TRANSFER_DATA操作已存在于磁盘上）是否有效，
- * 因此平台可以使用它来满足用户 I/O
+ * 此回调用于请求同步提供程序确认给定范围的文件数据（之前的 CF_OPERATION_TYPE_TRANSFER_DATA
+ * 操作已存在于磁盘上）是否有效， 因此平台可以使用它来满足用户 I/O
  * 请求。仅当同步提供程序在同步根注册时指定水合策略修饰符VALIDATION_REQUIRED时，才需要实现此回调。
  * @param callbackInfo
  * @param callbackParameters
  */
 void CALLBACK
-on_validate_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {}
+on_validate_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {
+  auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
+  DOODLE_LOG_INFO(
+      "取消请求 {} {}", callbackInfo->FileIdentity, magic_enum::enum_name(callbackParameters->Cancel.Flags)
+  );
+  if (auto l_ptr = l_cloud_provider_registrar->cloud_fetch_data_list[callbackInfo->FileId.QuadPart]; !l_ptr.expired()) {
+    l_ptr.lock()->cancel();
+  }
+}
 /**
  * @brief CF_CALLBACK_TYPE_CANCEL_FETCH_DATA
  * 此回调用于通知同步提供程序不再需要一系列文件数据，通常是因为原始请求已被取消。
@@ -164,20 +282,20 @@ void CALLBACK on_notify_rename_completion(
 void cloud_provider_registrar::init2() {
   // 使用win32 api注册同步文件夹
   //    auto l_sync_root_id         = get_sync_root_id();
-  GUID const l_guid           = {0xA3DDE735, 0xEDC1, 0x404D, {0x87, 0xA2, 0xA5, 0x06, 0xDB, 0x7B, 0x9C, 0x36}};
-  CF_SYNC_REGISTRATION l_reg  = {0};
-  l_reg.StructSize            = sizeof(l_reg);
-  l_reg.ProviderName          = L"Doodle.Sync";
-  l_reg.ProviderVersion       = L"1.0";
-  l_reg.ProviderId            = l_guid;
-  CF_SYNC_POLICIES policies   = {0};
-  policies.StructSize         = sizeof(policies);
-  policies.HardLink           = CF_HARDLINK_POLICY_NONE;
-  policies.InSync             = CF_INSYNC_POLICY_NONE;
-  policies.Hydration.Primary  = CF_HYDRATION_POLICY_PARTIAL;
-  policies.Hydration.Modifier = CF_HYDRATION_POLICY_MODIFIER_VALIDATION_REQUIRED |
-                                CF_HYDRATION_POLICY_MODIFIER_AUTO_DEHYDRATION_ALLOWED |
-                                CF_HYDRATION_POLICY_MODIFIER_ALLOW_FULL_RESTART_HYDRATION;
+  GUID const l_guid          = {0xA3DDE735, 0xEDC1, 0x404D, {0x87, 0xA2, 0xA5, 0x06, 0xDB, 0x7B, 0x9C, 0x36}};
+  CF_SYNC_REGISTRATION l_reg = {0};
+  l_reg.StructSize           = sizeof(l_reg);
+  l_reg.ProviderName         = L"Doodle.Sync";
+  l_reg.ProviderVersion      = L"1.0";
+  l_reg.ProviderId           = l_guid;
+  CF_SYNC_POLICIES policies  = {0};
+  policies.StructSize        = sizeof(policies);
+  policies.HardLink          = CF_HARDLINK_POLICY_NONE;
+  policies.InSync            = CF_INSYNC_POLICY_NONE;
+  policies.Hydration.Primary = CF_HYDRATION_POLICY_PARTIAL;
+  // CF_HYDRATION_POLICY_MODIFIER_VALIDATION_REQUIRED
+  policies.Hydration.Modifier =
+      CF_HYDRATION_POLICY_MODIFIER_AUTO_DEHYDRATION_ALLOWED | CF_HYDRATION_POLICY_MODIFIER_ALLOW_FULL_RESTART_HYDRATION;
   policies.Population.Primary  = CF_POPULATION_POLICY_PARTIAL;
   policies.Population.Modifier = CF_POPULATION_POLICY_MODIFIER_NONE;
   THROW_IF_FAILED(CfRegisterSyncRoot(
