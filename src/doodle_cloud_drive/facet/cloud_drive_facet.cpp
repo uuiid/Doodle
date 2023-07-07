@@ -8,6 +8,9 @@
 
 #include <doodle_app/app/program_options.h>
 
+#include <doodle_cloud_drive/cloud/cloud_provider_registrar.h>
+#include <doodle_cloud_drive/cloud/directory_watcher.h>
+
 namespace doodle {
 
 bool cloud_drive_facet::post() {

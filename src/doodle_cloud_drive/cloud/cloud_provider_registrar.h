@@ -62,6 +62,8 @@ class cloud_provider_registrar {
     return l_large_integer;
   };
 
+  void create_placeholder(const FSys::path& in_parent);
+
  private:
   CF_CONNECTION_KEY s_transferCallbackConnectionKey{};
   FSys::path root_{};
@@ -69,7 +71,6 @@ class cloud_provider_registrar {
 
   void list_dir_info(const FSys::path& in_parent);
 
-  void create_placeholder(const FSys::path& in_parent);
   void init2();
 
   void uninit2();

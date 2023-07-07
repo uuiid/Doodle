@@ -1,6 +1,8 @@
 
 add_library(
         doodle_cloud_drive_lib
+
+        cloud_drive.h
 )
 target_link_libraries(doodle_cloud_drive_lib
         PUBLIC

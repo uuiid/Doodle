@@ -3,7 +3,10 @@
 //
 
 #pragma once
+
 namespace doodle {
+
+class cloud_provider_registrar;
 
 class cloud_drive_arg {
  public:

@@ -95,8 +95,9 @@ class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> 
           );
           transfer_data(
               callback_info_.ConnectionKey, callback_info_.TransferKey, buffer_.get(), start_offset_, bytes_transferred,
-              NOERROR
+              STATUS_SUCCESS
           );
+          STATUS_CLOUD_FILE_IN_USE;
           start_offset_ += bytes_transferred;
           remaining_length_.QuadPart -= bytes_transferred;
           if (remaining_length_.QuadPart > 0) {
@@ -122,6 +123,7 @@ class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> 
     opInfo.TransferKey                     = transferKey;
     opParams.ParamSize                     = RTL_SIZEOF_THROUGH_FIELD(CF_OPERATION_PARAMETERS, TransferData);
     opParams.TransferData.CompletionStatus = completionStatus;
+    opParams.TransferData.Flags            = CF_OPERATION_TRANSFER_DATA_FLAG_NONE;
     opParams.TransferData.Buffer           = transferData;
     opParams.TransferData.Offset           = cloud_provider_registrar::longlong_to_large_integer(startingOffset);
     opParams.TransferData.Length           = cloud_provider_registrar::longlong_to_large_integer(length);
@@ -175,15 +177,7 @@ on_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_
  * @param callbackParameters
  */
 void CALLBACK
-on_validate_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {
-  auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
-  DOODLE_LOG_INFO(
-      "取消请求 {} {}", callbackInfo->FileIdentity, magic_enum::enum_name(callbackParameters->Cancel.Flags)
-  );
-  if (auto l_ptr = l_cloud_provider_registrar->cloud_fetch_data_list[callbackInfo->FileId.QuadPart]; !l_ptr.expired()) {
-    l_ptr.lock()->cancel();
-  }
-}
+on_validate_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {}
 /**
  * @brief CF_CALLBACK_TYPE_CANCEL_FETCH_DATA
  * 此回调用于通知同步提供程序不再需要一系列文件数据，通常是因为原始请求已被取消。
@@ -193,6 +187,13 @@ on_validate_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBA
  */
 void CALLBACK
 on_cancel_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {
+  auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
+  DOODLE_LOG_INFO(
+      "取消请求 {} {}", callbackInfo->FileIdentity, magic_enum::enum_name(callbackParameters->Cancel.Flags)
+  );
+  if (auto l_ptr = l_cloud_provider_registrar->cloud_fetch_data_list[callbackInfo->FileId.QuadPart]; !l_ptr.expired()) {
+    l_ptr.lock()->cancel();
+  }
 }
 /**
  * @brief CF_CALLBACK_TYPE_FETCH_PLACEHOLDERS
@@ -203,7 +204,11 @@ on_cancel_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CA
  */
 void CALLBACK on_fetch_placeholders(
     _In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters
-) {}
+) {
+  auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
+  FSys::path const l_server_path{reinterpret_cast<wchar_t const*>(callbackInfo->FileIdentity)};
+  l_cloud_provider_registrar->create_placeholder(l_server_path);
+}
 /**
  * @brief 此回调用于通知同步提供程序其同步根之一下的占位符已成功打开以进行读/写/删除访问。
  * 执行打开操作的用户应用程序不会被阻止。预计同步提供商不会做出任何响应。此回调的实现是可选的。
