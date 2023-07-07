@@ -86,7 +86,6 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
 
 class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:
-  bool replace_file_all;
   std::vector<std::pair<FSys::path, FSys::path>> file_list{};
   constexpr static std::string_view k_name{"replace_file_config"};
 

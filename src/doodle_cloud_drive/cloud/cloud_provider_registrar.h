@@ -37,7 +37,6 @@ class cloud_provider_registrar {
       : root_{std::move(in_root)}, server_root_{in_server_path} {
     if (!FSys::exists(root_)) FSys::create_directories(root_);
     init2();
-    create_placeholder(in_server_path);
   }
   ~cloud_provider_registrar() { uninit2(); }
 
@@ -61,7 +60,7 @@ class cloud_provider_registrar {
     l_large_integer.QuadPart = in_large_integer;
     return l_large_integer;
   };
-
+  /// 基于服务器路径映射本地标势符
   void create_placeholder(const FSys::path& in_parent);
 
  private:
