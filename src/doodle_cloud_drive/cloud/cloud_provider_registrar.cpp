@@ -18,32 +18,25 @@
 #include "boost/exception/diagnostic_information.hpp"
 #include "boost/numeric/conversion/cast.hpp"
 #include "boost/system/system_error.hpp"
+#include "boost/winapi/get_last_error.hpp"
 #include <boost/asio.hpp>
 // #include <doodle_core/lib_warp/
 #include "fmt/ostream.h"
 #include "magic_enum.hpp"
 #include <Shlwapi.h>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
-
+#include <wil/result.h>
 namespace doodle {
 
 class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> {
   constexpr static std::size_t buffer_size = 4096;
 
  public:
-  struct arg {
-    OVERLAPPED Overlapped;
-    CF_CALLBACK_INFO CallbackInfo;
-    CHAR PriorityHint;
-    LARGE_INTEGER StartOffset;
-    LARGE_INTEGER RemainingLength;
-    ULONG BufferSize;
-  };
-
   explicit cloud_fetch_data(
       boost::asio::io_context& io_context, FSys::path in_server_path, FSys::path in_child_path,
       CF_CALLBACK_INFO in_callback_info_, const CF_CALLBACK_PARAMETERS* in_callback_parameters
@@ -112,7 +105,7 @@ class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> 
 
   void cancel() { stream_handle_.cancel(); }
 
-  static void transfer_data(
+  void transfer_data(
       _In_ CF_CONNECTION_KEY connectionKey, _In_ LARGE_INTEGER transferKey,
       _In_reads_bytes_opt_(length.QuadPart) LPCVOID transferData, _In_ std::size_t startingOffset,
       _In_ std::size_t length, _In_ NTSTATUS completionStatus
@@ -124,6 +117,8 @@ class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> 
     opInfo.Type                            = CF_OPERATION_TYPE_TRANSFER_DATA;
     opInfo.ConnectionKey                   = connectionKey;
     opInfo.TransferKey                     = transferKey;
+    opInfo.RequestKey                      = callback_info_.RequestKey;
+
     opParams.ParamSize                     = RTL_SIZEOF_THROUGH_FIELD(CF_OPERATION_PARAMETERS, TransferData);
     opParams.TransferData.CompletionStatus = completionStatus;
     opParams.TransferData.Flags            = CF_OPERATION_TRANSFER_DATA_FLAG_NONE;
@@ -131,7 +126,7 @@ class cloud_fetch_data : std::enable_shared_from_this<cloud_provider_registrar> 
     opParams.TransferData.Offset           = cloud_provider_registrar::longlong_to_large_integer(startingOffset);
     opParams.TransferData.Length           = cloud_provider_registrar::longlong_to_large_integer(length);
 
-    THROW_IF_FAILED(::CfExecute(&opInfo, &opParams));
+    LOG_IF_FAILED(::CfExecute(&opInfo, &opParams));
   }
 };
 
@@ -140,18 +135,6 @@ struct cf_placeholder_create_info : ::CF_PLACEHOLDER_CREATE_INFO {
   cf_placeholder_create_info()                                          = default;
   // copy constructor
   cf_placeholder_create_info(const cf_placeholder_create_info& in_info) = delete;
-  //      : ::CF_PLACEHOLDER_CREATE_INFO(in_info) {
-  //    RelativeFileName = new wchar_t[wcslen(in_info.RelativeFileName) + 1];
-  //    wcscpy_s(const_cast<wchar_t*>(RelativeFileName), wcslen(in_info.RelativeFileName), in_info.RelativeFileName);
-  //    FsMetadata = in_info.FsMetadata;
-  //    auto* l_p  = malloc(in_info.FileIdentityLength);
-  //    ::CopyMemory(l_p, in_info.FileIdentity, in_info.FileIdentityLength);
-  //    FileIdentity       = l_p;
-  //    FileIdentityLength = in_info.FileIdentityLength;
-  //    Flags              = in_info.Flags;
-  //    Result             = in_info.Result;
-  //    CreateUsn          = in_info.CreateUsn;
-  //  }
   // move constructor
   cf_placeholder_create_info(cf_placeholder_create_info&& in_info) noexcept {
     RelativeFileName           = in_info.RelativeFileName;
@@ -171,22 +154,6 @@ struct cf_placeholder_create_info : ::CF_PLACEHOLDER_CREATE_INFO {
   }
   // copy assignment
   cf_placeholder_create_info& operator=(const cf_placeholder_create_info& in_info) = delete;
-  //  {
-  //    if (this == &in_info) {
-  //      return *this;
-  //    }
-  //    RelativeFileName = new wchar_t[wcslen(in_info.RelativeFileName) + 1];
-  //    wcscpy_s(const_cast<wchar_t*>(RelativeFileName), wcslen(in_info.RelativeFileName), in_info.RelativeFileName);
-  //    FsMetadata = in_info.FsMetadata;
-  //    auto* l_p  = ::LocalAlloc(LPTR, in_info.FileIdentityLength);
-  //    ::CopyMemory(l_p, in_info.FileIdentity, in_info.FileIdentityLength);
-  //    FileIdentity       = l_p;
-  //    FileIdentityLength = in_info.FileIdentityLength;
-  //    Flags              = in_info.Flags;
-  //    Result             = in_info.Result;
-  //    CreateUsn          = in_info.CreateUsn;
-  //    return *this;
-  //  }
   // move assignment
   cf_placeholder_create_info& operator=(cf_placeholder_create_info&& in_info) noexcept {
     if (this == &in_info) {
@@ -208,16 +175,6 @@ struct cf_placeholder_create_info : ::CF_PLACEHOLDER_CREATE_INFO {
     in_info.CreateUsn          = 0;
     return *this;
   }
-
-  //  void set_file_identity(_In_ CONST FSys::path& in_path) {
-  //    FileIdentityLength = in_path.native().size() * sizeof(wchar_t);
-  //    FileIdentity       = ::LocalAlloc(LPTR, FileIdentityLength);
-  //    ::CopyMemory(const_cast<void*>(FileIdentity), in_path.native().c_str(), FileIdentityLength);
-  //  }
-  //  void set_relative_file_name(_In_ CONST _Field_z_ WCHAR in_path[]) {
-  //    RelativeFileName = new wchar_t[wcslen(in_path) + 1];
-  //    wcscpy_s(const_cast<wchar_t*>(RelativeFileName), wcslen(in_path), in_path);
-  //  }
 };
 
 class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch_placeholders> {
@@ -228,9 +185,27 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
         child_path_{std::move(in_child_path)},
         callback_info_{in_callback_info_} {}
   ~cloud_fetch_placeholders() = default;
-  void async_run() {
-    init();
-    transfer_data(callback_info_.ConnectionKey, callback_info_.TransferKey);
+  void async_run() { init(); }
+  // 失败
+  static void fail(CONST CF_CALLBACK_INFO* in_callback_info_) {
+    CF_OPERATION_INFO opInfo                       = {0};
+    CF_OPERATION_PARAMETERS opParams               = {0};
+
+    opInfo.StructSize                              = sizeof(opInfo);
+    opInfo.Type                                    = CF_OPERATION_TYPE_TRANSFER_PLACEHOLDERS;
+    opInfo.ConnectionKey                           = in_callback_info_->ConnectionKey;
+    opInfo.TransferKey                             = in_callback_info_->TransferKey;
+    opInfo.RequestKey                              = in_callback_info_->RequestKey;
+
+    opParams.ParamSize                             = sizeof(opParams);
+
+    opParams.TransferPlaceholders.Flags            = CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAG_NONE;
+    opParams.TransferPlaceholders.CompletionStatus = GetLastError();
+    opParams.TransferPlaceholders.PlaceholderArray = nullptr;
+    opParams.TransferPlaceholders.PlaceholderCount = 0;
+    opParams.TransferPlaceholders.EntriesProcessed = 0;
+
+    LOG_IF_FAILED(::CfExecute(&opInfo, &opParams));
   }
 
  private:
@@ -242,12 +217,17 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
   FSys::path search_path_;
   FSys::path child_path_;
   CF_CALLBACK_INFO callback_info_;
-  std::vector<cf_placeholder_create_info> placeholder_create_infos_;
+  std::vector<CF_PLACEHOLDER_CREATE_INFO> placeholder_create_infos_;
   std::vector<std::shared_ptr<data_value>> data_values_;
 
   NTSTATUS ntstatus_{STATUS_SUCCESS};
 
+  std::size_t file_count_{0};
+  std::size_t entries_processed_{0};
+  CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAGS flags_{CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAG_NONE};
+
   void init() {
+    file_count_ = std::distance(FSys::directory_iterator{search_path_}, FSys::directory_iterator{});
     server_path_.make_preferred();
     search_path_.make_preferred();
     child_path_.make_preferred();
@@ -255,11 +235,8 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
     WIN32_FIND_DATA l_find_Data;
     HANDLE l_hfile_handle;
 
-    auto l_search_path       = search_path_.native() + L"\\*";
-    FSys::path l_parent_path = (child_path_ / search_path_.lexically_relative(server_path_)).make_preferred();
-    if (l_parent_path.native().back() != L'\\') {
-      l_parent_path += L"\\";
-    }
+    auto l_search_path = search_path_.native() + L"\\*";
+
     l_hfile_handle =
         ::FindFirstFileExW(l_search_path.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0);
     if (l_hfile_handle == INVALID_HANDLE_VALUE) {
@@ -267,57 +244,73 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
       return;
     }
 
+    std::int32_t l_end{};
+
     do {
-      if (l_find_Data.cFileName[0] == L'.' && (l_find_Data.cFileName[1] == L'\0' || l_find_Data.cFileName[1] == L'.')) {
-        continue;
-      }
-      cf_placeholder_create_info& l_cloud_entry = placeholder_create_infos_.emplace_back();
-      auto& l_data_value                        = data_values_.emplace_back(std::make_shared<data_value>());
-      l_data_value->relative_file_name          = l_find_Data.cFileName;
-      l_data_value->file_identity               = (l_parent_path / l_find_Data.cFileName).native();
+      std::size_t l_i{};
 
-      l_cloud_entry.FileIdentity                = l_data_value->file_identity.c_str();
-      l_cloud_entry.FileIdentityLength = static_cast<ULONG>(l_data_value->file_identity.size() * sizeof(wchar_t));
-      l_cloud_entry.RelativeFileName   = l_data_value->relative_file_name.c_str();
-      l_cloud_entry.FsMetadata.FileSize.QuadPart =
-          (boost::numeric_cast<ULONGLONG>(l_find_Data.nFileSizeHigh) << 32) + l_find_Data.nFileSizeLow;
-      l_cloud_entry.FsMetadata.BasicInfo.FileAttributes = l_find_Data.dwFileAttributes;
-      l_cloud_entry.FsMetadata.BasicInfo.CreationTime =
-          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftCreationTime);
-      l_cloud_entry.FsMetadata.BasicInfo.LastAccessTime =
-          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastAccessTime);
-      l_cloud_entry.FsMetadata.BasicInfo.LastWriteTime =
-          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
-      l_cloud_entry.FsMetadata.BasicInfo.ChangeTime =
-          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+      do {
+        if (l_find_Data.cFileName[0] == L'.' &&
+            (l_find_Data.cFileName[1] == L'\0' || l_find_Data.cFileName[1] == L'.')) {
+          continue;
+        }
+        CF_PLACEHOLDER_CREATE_INFO& l_cloud_entry = placeholder_create_infos_.emplace_back();
+        ++l_i;
 
-      l_cloud_entry.Flags = CF_PLACEHOLDER_CREATE_FLAG_MARK_IN_SYNC | CF_PLACEHOLDER_CREATE_FLAG_SUPERSEDE;
+        auto& l_data_value               = data_values_.emplace_back(std::make_shared<data_value>());
+        l_data_value->relative_file_name = l_find_Data.cFileName;
+        l_data_value->file_identity      = (search_path_ / l_find_Data.cFileName).native();
 
-    } while (::FindNextFileW(l_hfile_handle, &l_find_Data));
+        l_cloud_entry.FileIdentity       = l_data_value->file_identity.c_str();
+        l_cloud_entry.FileIdentityLength = static_cast<ULONG>(l_data_value->file_identity.size() * sizeof(wchar_t));
+        l_cloud_entry.RelativeFileName   = l_data_value->relative_file_name.c_str();
+        l_cloud_entry.FsMetadata.FileSize.QuadPart =
+            (boost::numeric_cast<ULONGLONG>(l_find_Data.nFileSizeHigh) << 32) + l_find_Data.nFileSizeLow;
+        l_cloud_entry.FsMetadata.BasicInfo.FileAttributes = l_find_Data.dwFileAttributes;
+        l_cloud_entry.FsMetadata.BasicInfo.CreationTime =
+            cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftCreationTime);
+        l_cloud_entry.FsMetadata.BasicInfo.LastAccessTime =
+            cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastAccessTime);
+        l_cloud_entry.FsMetadata.BasicInfo.LastWriteTime =
+            cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+        l_cloud_entry.FsMetadata.BasicInfo.ChangeTime =
+            cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+
+        l_cloud_entry.Flags = CF_PLACEHOLDER_CREATE_FLAG_MARK_IN_SYNC | CF_PLACEHOLDER_CREATE_FLAG_SUPERSEDE;
+        l_end               = ::FindNextFileW(l_hfile_handle, &l_find_Data);
+      } while (l_end && l_i < 20);
+      if (l_end) flags_ |= CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAG_DISABLE_ON_DEMAND_POPULATION;
+      transfer_data(callback_info_.ConnectionKey, callback_info_.TransferKey);
+      entries_processed_ += placeholder_create_infos_.size();
+      placeholder_create_infos_.clear();
+      data_values_.clear();
+      l_end = ::FindNextFileW(l_hfile_handle, &l_find_Data);
+    } while (l_end);
 
     ::FindClose(l_hfile_handle);
   }
 
   void transfer_data(_In_ CF_CONNECTION_KEY connectionKey, _In_ LARGE_INTEGER transferKey) {
-    CF_OPERATION_INFO opInfo            = {0};
-    CF_OPERATION_PARAMETERS opParams    = {0};
+    CF_OPERATION_INFO opInfo                       = {0};
+    CF_OPERATION_PARAMETERS opParams               = {0};
 
-    opInfo.StructSize                   = sizeof(opInfo);
-    opInfo.Type                         = CF_OPERATION_TYPE_TRANSFER_DATA;
-    opInfo.ConnectionKey                = connectionKey;
-    opInfo.TransferKey                  = transferKey;
+    opInfo.StructSize                              = sizeof(opInfo);
+    opInfo.Type                                    = CF_OPERATION_TYPE_TRANSFER_PLACEHOLDERS;
+    opInfo.ConnectionKey                           = connectionKey;
+    opInfo.TransferKey                             = transferKey;
+    opInfo.RequestKey                              = callback_info_.RequestKey;
 
-    opParams.ParamSize                  = RTL_SIZEOF_THROUGH_FIELD(CF_OPERATION_PARAMETERS, TransferPlaceholders);
+    opParams.ParamSize                             = sizeof(opParams);
 
-    opParams.TransferPlaceholders.Flags = CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAG_NONE;
+    opParams.TransferPlaceholders.Flags            = flags_;
     opParams.TransferPlaceholders.CompletionStatus = ntstatus_;
     opParams.TransferPlaceholders.PlaceholderTotalCount =
-        cloud_provider_registrar::longlong_to_large_integer(placeholder_create_infos_.size());
+        cloud_provider_registrar::longlong_to_large_integer(file_count_);
     opParams.TransferPlaceholders.PlaceholderArray = placeholder_create_infos_.data();
     opParams.TransferPlaceholders.PlaceholderCount = placeholder_create_infos_.size();
-    opParams.TransferPlaceholders.EntriesProcessed = placeholder_create_infos_.size();
+    opParams.TransferPlaceholders.EntriesProcessed = entries_processed_;
 
-    THROW_IF_FAILED(::CfExecute(&opInfo, &opParams));
+    LOG_IF_FAILED(::CfExecute(&opInfo, &opParams));
   }
 };
 
@@ -394,13 +387,18 @@ on_cancel_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CA
 void CALLBACK on_fetch_placeholders(
     _In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters
 ) {
-  auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
-  //  DOODLE_LOG_INFO("收到占位符请求 {} {}", callbackInfo->FileIdentity, callbackInfo->NormalizedPath);
-  auto l_ptr                       = std::make_shared<cloud_fetch_placeholders>(
-      g_io_context(), l_cloud_provider_registrar->server_path(), l_cloud_provider_registrar->child_path(),
-      *callbackInfo, callbackParameters
-  );
-  l_ptr->async_run();
+  try {
+    auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
+    //  DOODLE_LOG_INFO("收到占位符请求 {} {}", callbackInfo->FileIdentity, callbackInfo->NormalizedPath);
+    auto l_ptr                       = std::make_shared<cloud_fetch_placeholders>(
+        g_io_context(), l_cloud_provider_registrar->server_path(), l_cloud_provider_registrar->child_path(),
+        *callbackInfo, callbackParameters
+    );
+    l_ptr->async_run();
+  }
+  CATCH_LOG();
+
+  cloud_fetch_placeholders::fail(callbackInfo);
 }
 /**
  * @brief 此回调用于通知同步提供程序其同步根之一下的占位符已成功打开以进行读/写/删除访问。
@@ -478,6 +476,11 @@ void CALLBACK on_notify_rename_completion(
 }  // namespace
 
 void cloud_provider_registrar::init2() {
+  root_        = root_.lexically_normal();
+  server_root_ = server_path().lexically_normal();
+  root_.make_preferred();
+  server_root_.make_preferred();
+
   // 使用win32 api注册同步文件夹
   //    auto l_sync_root_id         = get_sync_root_id();
   GUID const l_guid          = {0xA3DDE735, 0xEDC1, 0x404D, {0x87, 0xA2, 0xA5, 0x06, 0xDB, 0x7B, 0x9C, 0x36}};
@@ -496,9 +499,9 @@ void cloud_provider_registrar::init2() {
       CF_HYDRATION_POLICY_MODIFIER_AUTO_DEHYDRATION_ALLOWED | CF_HYDRATION_POLICY_MODIFIER_ALLOW_FULL_RESTART_HYDRATION;
   policies.Population.Primary  = CF_POPULATION_POLICY_PARTIAL;
   policies.Population.Modifier = CF_POPULATION_POLICY_MODIFIER_NONE;
-  THROW_IF_FAILED(CfRegisterSyncRoot(
-      root_.generic_wstring().c_str(), &l_reg, &policies, CF_REGISTER_FLAG_DISABLE_ON_DEMAND_POPULATION_ON_ROOT
-  ));
+  THROW_IF_FAILED(
+      CfRegisterSyncRoot(root_.c_str(), &l_reg, &policies, CF_REGISTER_FLAG_DISABLE_ON_DEMAND_POPULATION_ON_ROOT)
+  );
   static CF_CALLBACK_REGISTRATION s_MirrorCallbackTable[] = {
       {CF_CALLBACK_TYPE_FETCH_DATA, on_fetch_data},
       {CF_CALLBACK_TYPE_VALIDATE_DATA, on_validate_data},
@@ -515,9 +518,26 @@ void cloud_provider_registrar::init2() {
       CF_CALLBACK_REGISTRATION_END};
 
   THROW_IF_FAILED(::CfConnectSyncRoot(
-      root_.generic_wstring().c_str(), s_MirrorCallbackTable, this,
+      root_.c_str(), s_MirrorCallbackTable, this,
       CF_CONNECT_FLAG_REQUIRE_PROCESS_INFO | CF_CONNECT_FLAG_REQUIRE_FULL_FILE_PATH, &s_transferCallbackConnectionKey
   ));
+  //  auto l_file_h = ::CreateFileW(
+  //      root_.c_str(), WRITE_DAC, 0, nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT |
+  //      FILE_FLAG_BACKUP_SEMANTICS, nullptr
+  //  );
+
+  HANDLE l_file_h{};
+  auto hr = ::CfOpenFileWithOplock(root_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, &l_file_h);
+  LOG_IF_FAILED(hr);
+
+  if (hr != S_OK) {
+    return;
+    LOG_LAST_ERROR();
+  }
+  LOG_IF_FAILED(::CfConvertToPlaceholder(
+      l_file_h, root_.c_str(), root_.native().size() * sizeof(wchar_t), CF_CONVERT_FLAG_MARK_IN_SYNC, nullptr, nullptr
+  ));
+  ::CfCloseHandle(l_file_h);
 }
 
 void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
@@ -540,36 +560,61 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
     if (l_find_Data.cFileName[0] == L'.' && (l_find_Data.cFileName[1] == L'\0' || l_find_Data.cFileName[1] == L'.')) {
       continue;
     }
-    CF_PLACEHOLDER_CREATE_INFO l_cloud_entry{};
-    auto l_path                      = (in_parent / l_find_Data.cFileName).generic_wstring();
-    l_cloud_entry.FileIdentity       = l_path.c_str();
-    l_cloud_entry.FileIdentityLength = (l_path.size() + 1) * sizeof(wchar_t);
+    if (auto l_clo_path = (l_parent_path / l_find_Data.cFileName).lexically_normal(); FSys::exists(l_clo_path)) {
+      l_clo_path.make_preferred();
+      auto l_state = ::CfGetPlaceholderStateFromFindData(&l_find_Data);
+      if (FSys::is_directory(l_clo_path)) {
+        switch (l_state) {
+          case CF_PLACEHOLDER_STATE_NO_STATES: {
+            HANDLE l_file_h{};
+            LOG_IF_FAILED(::CfOpenFileWithOplock(l_clo_path.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, &l_file_h));
 
-    l_cloud_entry.RelativeFileName   = l_find_Data.cFileName;
-    l_cloud_entry.FsMetadata.FileSize.QuadPart =
-        (boost::numeric_cast<ULONGLONG>(l_find_Data.nFileSizeHigh) << 32) + l_find_Data.nFileSizeLow;
-    l_cloud_entry.FsMetadata.BasicInfo.FileAttributes = l_find_Data.dwFileAttributes;
-    l_cloud_entry.FsMetadata.BasicInfo.CreationTime   = file_time_to_large_integer(l_find_Data.ftCreationTime);
-    l_cloud_entry.FsMetadata.BasicInfo.LastAccessTime = file_time_to_large_integer(l_find_Data.ftLastAccessTime);
-    l_cloud_entry.FsMetadata.BasicInfo.LastWriteTime  = file_time_to_large_integer(l_find_Data.ftLastWriteTime);
-    l_cloud_entry.FsMetadata.BasicInfo.ChangeTime     = file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+            if (l_file_h == INVALID_HANDLE_VALUE) {
+              return;
+              LOG_LAST_ERROR();
+            }
+            LOG_IF_FAILED(::CfConvertToPlaceholder(
+                l_file_h, l_clo_path.c_str(), l_clo_path.native().size() * sizeof(wchar_t),
+                CF_CONVERT_FLAG_MARK_IN_SYNC, nullptr, nullptr
+            ));
+            ::CfCloseHandle(l_file_h);
+            break;
+          }
+        }
+      }
+    } else {
+      CF_PLACEHOLDER_CREATE_INFO l_cloud_entry{};
+      auto l_path                      = (in_parent / l_find_Data.cFileName).lexically_normal().make_preferred();
+      l_cloud_entry.FileIdentity       = l_path.native().c_str();
+      l_cloud_entry.FileIdentityLength = (l_path.native().size() + 1) * sizeof(wchar_t);
 
-    l_cloud_entry.Flags = CF_PLACEHOLDER_CREATE_FLAG_MARK_IN_SYNC | CF_PLACEHOLDER_CREATE_FLAG_SUPERSEDE;
-    THROW_IF_FAILED(
-        ::CfCreatePlaceholders(l_parent_path.native().c_str(), &l_cloud_entry, 1, CF_CREATE_FLAG_STOP_ON_ERROR, nullptr)
-    );
+      l_cloud_entry.RelativeFileName   = l_find_Data.cFileName;
+      l_cloud_entry.FsMetadata.FileSize.QuadPart =
+          (boost::numeric_cast<ULONGLONG>(l_find_Data.nFileSizeHigh) << 32) + l_find_Data.nFileSizeLow;
+      l_cloud_entry.FsMetadata.BasicInfo.FileAttributes = l_find_Data.dwFileAttributes;
+      l_cloud_entry.FsMetadata.BasicInfo.CreationTime   = file_time_to_large_integer(l_find_Data.ftCreationTime);
+      l_cloud_entry.FsMetadata.BasicInfo.LastAccessTime = file_time_to_large_integer(l_find_Data.ftLastAccessTime);
+      l_cloud_entry.FsMetadata.BasicInfo.LastWriteTime  = file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+      l_cloud_entry.FsMetadata.BasicInfo.ChangeTime     = file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+
+      l_cloud_entry.Flags = CF_PLACEHOLDER_CREATE_FLAG_MARK_IN_SYNC | CF_PLACEHOLDER_CREATE_FLAG_SUPERSEDE;
+      LOG_IF_FAILED(::CfCreatePlaceholders(
+          l_parent_path.native().c_str(), &l_cloud_entry, 1, CF_CREATE_FLAG_STOP_ON_ERROR, nullptr
+      ));
+    }
+
   } while (::FindNextFileW(l_hfile_handle, &l_find_Data));
 
   ::FindClose(l_hfile_handle);
 }
 void cloud_provider_registrar::create_placeholder(const FSys::path& in_parent) {
-  auto l_path = in_parent;
+  auto l_path = in_parent.lexically_normal();
   l_path.make_preferred();
   list_dir_info(l_path);
 }
 
 void cloud_provider_registrar::uninit2() {
-  THROW_IF_FAILED(CfDisconnectSyncRoot(s_transferCallbackConnectionKey));
-  THROW_IF_FAILED(CfUnregisterSyncRoot(root_.generic_wstring().c_str()));
+  LOG_IF_FAILED(CfDisconnectSyncRoot(s_transferCallbackConnectionKey));
+  LOG_IF_FAILED(CfUnregisterSyncRoot(root_.generic_wstring().c_str()));
 }
 }  // namespace doodle
