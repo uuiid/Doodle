@@ -27,6 +27,7 @@
 // clang-format on
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_cloud_drive/cloud_drive.h>
 namespace doodle {
 
 class cloud_fetch_data;
@@ -46,7 +47,7 @@ class cloud_provider_registrar {
   [[nodiscard]] FSys::path& server_path() { return server_root_; }
   [[nodiscard]] const FSys::path& server_path() const { return server_root_; }
 
-  std::map<std::int64_t, std::weak_ptr<cloud_fetch_data>> cloud_fetch_data_list{};
+  std::map<std::int64_t, std::weak_ptr<detail::cloud_fetch_data>> cloud_fetch_data_list{};
 
   inline static LARGE_INTEGER file_time_to_large_integer(_In_ const FILETIME in_filetime) {
     LARGE_INTEGER l_large_integer{};

@@ -4,6 +4,10 @@
 #pragma once
 
 namespace doodle {
+namespace detail {
+class cloud_fetch_data;
+}
+
 class cloud_provider_registrar;
 class cloud_drive_arg;
 class cloud_drive_facet;

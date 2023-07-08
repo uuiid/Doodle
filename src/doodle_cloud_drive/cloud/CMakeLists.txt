@@ -9,3 +9,4 @@ target_sources(
         cloud_provider_registrar.cpp
         directory_watcher.cpp
 )
+add_subdirectory(detail)
