@@ -284,7 +284,7 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
       entries_processed_ += placeholder_create_infos_.size();
       placeholder_create_infos_.clear();
       data_values_.clear();
-      l_end = ::FindNextFileW(l_hfile_handle, &l_find_Data);
+      //      l_end = ::FindNextFileW(l_hfile_handle, &l_find_Data);
     } while (l_end);
 
     ::FindClose(l_hfile_handle);
@@ -570,7 +570,7 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
             LOG_IF_FAILED(::CfOpenFileWithOplock(l_clo_path.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, &l_file_h));
 
             if (l_file_h == INVALID_HANDLE_VALUE) {
-              return;
+              continue;
               LOG_LAST_ERROR();
             }
             LOG_IF_FAILED(::CfConvertToPlaceholder(
