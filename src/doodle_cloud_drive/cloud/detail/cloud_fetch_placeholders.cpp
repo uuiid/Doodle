@@ -14,6 +14,7 @@
 #include "cloud_convert_to_placeholder.h"
 #include <doodle_cloud_drive/cloud/cloud_provider_registrar.h>
 #include <doodle_cloud_drive/cloud/detail/cloud_convert_to_placeholder.h>
+#include <filesystem>
 #include <magic_enum.hpp>
 #include <memory>
 namespace doodle::detail {
@@ -54,7 +55,7 @@ void cloud_fetch_placeholders::init() {
         }
         DOODLE_LOG_INFO("file exist:{}", l_c_path);
         auto l_conv = std::make_shared<cloud_convert_to_placeholder>(
-            g_io_context(), l_c_path, search_path_ / l_find_Data.cFileName
+            g_io_context(), search_path_ / l_find_Data.cFileName, l_c_path
         );
         l_conv->async_run();
       } else {

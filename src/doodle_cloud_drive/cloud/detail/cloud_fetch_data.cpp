@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
+
+#include <doodle_cloud_drive/cloud/cloud_provider_registrar.h>
 namespace doodle::detail {
 void cloud_fetch_data::init() {
   stream_handle_.assign(::CreateFileW(
@@ -47,8 +49,9 @@ void cloud_fetch_data::async_read() {
 }
 
 void cloud_fetch_data::transfer_data(
-    int connectionKey, LARGE_INTEGER transferKey, LPCVOID transferData, std::size_t startingOffset, std::size_t length,
-    NTSTATUS completionStatus
+    _In_ CF_CONNECTION_KEY connectionKey, _In_ LARGE_INTEGER transferKey,
+    _In_reads_bytes_opt_(length.QuadPart) LPCVOID transferData, _In_ std::size_t startingOffset,
+    _In_ std::size_t length, _In_ NTSTATUS completionStatus
 ) {
   CF_OPERATION_INFO opInfo               = {0};
   CF_OPERATION_PARAMETERS opParams       = {0};

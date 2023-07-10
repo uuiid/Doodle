@@ -70,7 +70,7 @@ class directory_watcher {
   std::vector<std::tuple<DWORD, FSys::path>> files_;
   std::shared_ptr<boost::asio::windows::overlapped_ptr> overlapped_ptr_;
   boost::asio::any_io_executor executor_;
-  HANDLE dir_;
+  wil::unique_hfile dir_;
 };
 
 }  // namespace doodle

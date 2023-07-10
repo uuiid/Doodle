@@ -15,6 +15,7 @@
 #include "boost/winapi/get_last_error.hpp"
 #include <boost/asio.hpp>
 // #include <doodle_core/lib_warp/
+#include "detail/cloud_convert_to_placeholder.h"
 #include "fmt/ostream.h"
 #include "magic_enum.hpp"
 #include <Shlwapi.h>
@@ -220,17 +221,17 @@ void cloud_provider_registrar::init2() {
   );
   static CF_CALLBACK_REGISTRATION s_MirrorCallbackTable[] = {
       {CF_CALLBACK_TYPE_FETCH_DATA, on_fetch_data},
-      {CF_CALLBACK_TYPE_VALIDATE_DATA, on_validate_data},
+      //      {CF_CALLBACK_TYPE_VALIDATE_DATA, on_validate_data},
       {CF_CALLBACK_TYPE_CANCEL_FETCH_DATA, on_cancel_fetch_data},
       {CF_CALLBACK_TYPE_FETCH_PLACEHOLDERS, on_fetch_placeholders},
-      {CF_CALLBACK_TYPE_NOTIFY_FILE_OPEN_COMPLETION, on_notify_file_open_completion},
-      {CF_CALLBACK_TYPE_NOTIFY_FILE_CLOSE_COMPLETION, on_notify_file_close_completion},
-      {CF_CALLBACK_TYPE_NOTIFY_DEHYDRATE, on_notify_dehydrate},
-      {CF_CALLBACK_TYPE_NOTIFY_DEHYDRATE_COMPLETION, on_notify_dehydrate_completion},
-      {CF_CALLBACK_TYPE_NOTIFY_DELETE_COMPLETION, on_notify_delete_completion},
-      {CF_CALLBACK_TYPE_NOTIFY_DELETE, on_notify_delete},
-      {CF_CALLBACK_TYPE_NOTIFY_RENAME, on_notify_rename},
-      {CF_CALLBACK_TYPE_NOTIFY_RENAME_COMPLETION, on_notify_rename_completion},
+      //      {CF_CALLBACK_TYPE_NOTIFY_FILE_OPEN_COMPLETION, on_notify_file_open_completion},
+      //      {CF_CALLBACK_TYPE_NOTIFY_FILE_CLOSE_COMPLETION, on_notify_file_close_completion},
+      //      {CF_CALLBACK_TYPE_NOTIFY_DEHYDRATE, on_notify_dehydrate},
+      //      {CF_CALLBACK_TYPE_NOTIFY_DEHYDRATE_COMPLETION, on_notify_dehydrate_completion},
+      //      {CF_CALLBACK_TYPE_NOTIFY_DELETE_COMPLETION, on_notify_delete_completion},
+      //      {CF_CALLBACK_TYPE_NOTIFY_DELETE, on_notify_delete},
+      //      {CF_CALLBACK_TYPE_NOTIFY_RENAME, on_notify_rename},
+      //      {CF_CALLBACK_TYPE_NOTIFY_RENAME_COMPLETION, on_notify_rename_completion},
       CF_CALLBACK_REGISTRATION_END};
 
   THROW_IF_FAILED(::CfConnectSyncRoot(
@@ -244,16 +245,15 @@ void cloud_provider_registrar::init2() {
 
   unique_cf_hfile l_cf_hfile{};
 
-  HANDLE l_file_h{};
   auto hr = ::CfOpenFileWithOplock(root_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, l_cf_hfile.put());
   LOG_IF_FAILED(hr);
 
   if (hr != S_OK) {
     return;
-    LOG_LAST_ERROR();
   }
   LOG_IF_FAILED(::CfConvertToPlaceholder(
-      l_file_h, root_.c_str(), root_.native().size() * sizeof(wchar_t), CF_CONVERT_FLAG_MARK_IN_SYNC, nullptr, nullptr
+      l_cf_hfile.get(), root_.c_str(), root_.native().size() * sizeof(wchar_t), CF_CONVERT_FLAG_MARK_IN_SYNC, nullptr,
+      nullptr
   ));
 }
 
@@ -276,40 +276,13 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
     if (l_find_Data.cFileName[0] == L'.' && (l_find_Data.cFileName[1] == L'\0' || l_find_Data.cFileName[1] == L'.')) {
       continue;
     }
-    if (auto l_clo_path = (l_parent_path / l_find_Data.cFileName).lexically_normal(); FSys::exists(l_clo_path)) {
-      l_clo_path.make_preferred();
-      CF_PLACEHOLDER_STATE l_state = ::CfGetPlaceholderStateFromFindData(&l_find_Data);
-      if (FSys::is_directory(l_clo_path)) {
-        switch (l_state) {
-          case CF_PLACEHOLDER_STATE_NO_STATES:
-          case CF_PLACEHOLDER_STATE_PLACEHOLDER:
-          case CF_PLACEHOLDER_STATE_SYNC_ROOT:
-          case CF_PLACEHOLDER_STATE_ESSENTIAL_PROP_PRESENT:
-          case CF_PLACEHOLDER_STATE_IN_SYNC:
-          case CF_PLACEHOLDER_STATE_PARTIAL:
-          case CF_PLACEHOLDER_STATE_PARTIALLY_ON_DISK: {
-            HANDLE l_file_h{};
-            LOG_IF_FAILED(::CfOpenFileWithOplock(l_clo_path.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, &l_file_h));
-
-            if (l_file_h == INVALID_HANDLE_VALUE) {
-              continue;
-              LOG_LAST_ERROR();
-            }
-            CF_CONVERT_FLAGS l_flags =
-                (l_state == CF_PLACEHOLDER_STATE_IN_SYNC ? CF_CONVERT_FLAG_MARK_IN_SYNC : CF_CONVERT_FLAG_NONE) |
-                CF_CONVERT_FLAG_ENABLE_ON_DEMAND_POPULATION;
-
-            LOG_IF_FAILED(::CfConvertToPlaceholder(
-                l_file_h, l_clo_path.c_str(), l_clo_path.native().size() * sizeof(wchar_t), l_flags, nullptr, nullptr
-            ));
-            ::CfCloseHandle(l_file_h);
-            break;
-          }
-          default:
-            DOODLE_LOG_INFO("Unknown state: {}", magic_enum::enum_name(l_state));
-            break;
-        }
-      }
+    std::error_code l_ec{};
+    if (auto l_clo_path = (l_parent_path / l_find_Data.cFileName).lexically_normal();
+        FSys::exists(l_clo_path, l_ec) || l_ec) {
+      std::make_shared<detail::cloud_convert_to_placeholder>(
+          g_io_context(), (in_parent / l_find_Data.cFileName).lexically_normal(), l_clo_path
+      )
+          ->async_run();
     } else {
       CF_PLACEHOLDER_CREATE_INFO l_cloud_entry{};
       auto l_path                      = (in_parent / l_find_Data.cFileName).lexically_normal().make_preferred();
