@@ -27,6 +27,7 @@
 #include <string>
 #include <wil/result.h>
 namespace doodle {
+using unique_cf_hfile = wil::unique_any_handle_invalid<decltype(&::CfCloseHandle), ::CfCloseHandle>;
 
 namespace {
 /**
@@ -241,8 +242,10 @@ void cloud_provider_registrar::init2() {
   //      FILE_FLAG_BACKUP_SEMANTICS, nullptr
   //  );
 
+  unique_cf_hfile l_cf_hfile{};
+
   HANDLE l_file_h{};
-  auto hr = ::CfOpenFileWithOplock(root_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, &l_file_h);
+  auto hr = ::CfOpenFileWithOplock(root_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, l_cf_hfile.put());
   LOG_IF_FAILED(hr);
 
   if (hr != S_OK) {
@@ -252,22 +255,20 @@ void cloud_provider_registrar::init2() {
   LOG_IF_FAILED(::CfConvertToPlaceholder(
       l_file_h, root_.c_str(), root_.native().size() * sizeof(wchar_t), CF_CONVERT_FLAG_MARK_IN_SYNC, nullptr, nullptr
   ));
-  ::CfCloseHandle(l_file_h);
 }
 
 void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
   WIN32_FIND_DATA l_find_Data;
-  HANDLE l_hfile_handle;
 
   auto l_search_path       = in_parent.native() + L"\\*";
   FSys::path l_parent_path = (root_ / in_parent.lexically_relative(server_root_)).make_preferred();
   if (l_parent_path.native().back() != L'\\') {
     l_parent_path += L"\\";
   }
-  l_hfile_handle =
-      ::FindFirstFileExW(l_search_path.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0);
+  wil::unique_hfind l_find_handle{
+      ::FindFirstFileExW(l_search_path.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0)};
 
-  if (l_hfile_handle == INVALID_HANDLE_VALUE) {
+  if (!l_find_handle.is_valid()) {
     return;
   }
 
@@ -330,9 +331,7 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
       ));
     }
 
-  } while (::FindNextFileW(l_hfile_handle, &l_find_Data));
-
-  ::FindClose(l_hfile_handle);
+  } while (::FindNextFileW(l_find_handle.get(), &l_find_Data));
 }
 void cloud_provider_registrar::create_placeholder(const FSys::path& in_parent) {
   auto l_path = in_parent.lexically_normal();

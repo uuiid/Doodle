@@ -66,11 +66,9 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
 
   void init();
 
-  void convert_to_placeholder(const FSys::path& in_local_path);
-
   void transfer_data(_In_ CF_CONNECTION_KEY connectionKey, _In_ LARGE_INTEGER transferKey);
   // 失败
-  void fail()
+  void fail();
 };
 
 }  // namespace doodle::detail

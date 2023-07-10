@@ -4,6 +4,8 @@
 
 #include "cloud_fetch_data.h"
 
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/logger/logger.h>
 namespace doodle::detail {
 void cloud_fetch_data::init() {
   stream_handle_.assign(::CreateFileW(
