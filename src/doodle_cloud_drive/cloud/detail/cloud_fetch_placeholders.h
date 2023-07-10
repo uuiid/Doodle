@@ -66,7 +66,7 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
 
   void init();
 
-  void transfer_data(_In_ CF_CONNECTION_KEY connectionKey, _In_ LARGE_INTEGER transferKey);
+  void transfer_data();
   // 失败
   void fail();
 };

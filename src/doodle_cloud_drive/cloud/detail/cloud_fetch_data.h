@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_core/core/file_sys.h>
 // clang-format off
+#include "wil/result_macros.h"
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
@@ -27,6 +28,7 @@
 #include <ntstatus.h>
 #include <cfapi.h>
 // clang-format on
+#include "boost/system/detail/error_code.hpp"
 #include <boost/asio.hpp>
 
 #include <memory>
@@ -62,7 +64,8 @@ class cloud_fetch_data : public std::enable_shared_from_this<cloud_fetch_data> {
   CF_CALLBACK_INFO callback_info_;
   std::size_t start_offset_{};
   LARGE_INTEGER remaining_length_{};
-
+  boost::system::error_code ec_{};
+  NTSTATUS ntstatus_{STATUS_SUCCESS};
   void init();
 
  public:

@@ -8,6 +8,7 @@ target_link_libraries(doodle_cloud_drive_lib
         PUBLIC
         doodle_app
         cldapi.lib
+        Shlwapi.lib
         )
 
 

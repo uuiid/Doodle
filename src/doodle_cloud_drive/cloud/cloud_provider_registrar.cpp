@@ -39,23 +39,9 @@ namespace {
 void CALLBACK
 on_fetch_data(_In_ CONST CF_CALLBACK_INFO* callbackInfo, _In_ CONST CF_CALLBACK_PARAMETERS* callbackParameters) {
   auto* l_cloud_provider_registrar = reinterpret_cast<cloud_provider_registrar*>(callbackInfo->CallbackContext);
-
-  FSys::path const l_server_path{reinterpret_cast<wchar_t const*>(callbackInfo->FileIdentity)};
+  const auto* l_begin              = reinterpret_cast<wchar_t const*>(callbackInfo->FileIdentity);
+  FSys::path const l_server_path{l_begin, l_begin + callbackInfo->FileIdentityLength / sizeof(wchar_t)};
   FSys::path const l_child_path = FSys::path{callbackInfo->VolumeDosName} / callbackInfo->NormalizedPath;
-  //  {
-  //    auto l_log = fmt::format(
-  //        L"on_fetch_data: {} -> {} Received data request from {} for {}{}, priority {}, offset {}`{} length {}`{}",
-  //        l_server_path.wstring(), l_child_path.wstring(),
-  //        (callbackInfo->ProcessInfo && callbackInfo->ProcessInfo->ImagePath) ? callbackInfo->ProcessInfo->ImagePath
-  //                                                                            : L"UNKNOWN",
-  //        callbackInfo->VolumeDosName, callbackInfo->NormalizedPath, callbackInfo->PriorityHint,
-  //        callbackParameters->FetchData.RequiredFileOffset.HighPart,
-  //        callbackParameters->FetchData.RequiredFileOffset.LowPart,
-  //        callbackParameters->FetchData.RequiredLength.HighPart, callbackParameters->FetchData.RequiredLength.LowPart
-  //    );
-  //    fmt::print(l_log);
-  //  }
-
   try {
     auto l_ptr = std::make_shared<detail::cloud_fetch_data>(
         g_io_context(), l_server_path, l_child_path, *callbackInfo, callbackParameters
