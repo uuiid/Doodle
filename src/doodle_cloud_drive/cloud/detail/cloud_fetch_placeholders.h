@@ -58,15 +58,16 @@ class cloud_fetch_placeholders : public std::enable_shared_from_this<cloud_fetch
   std::vector<CF_PLACEHOLDER_CREATE_INFO> placeholder_create_infos_;
   std::vector<std::shared_ptr<data_value>> data_values_;
 
+  std::size_t file_count_{};
+
   NTSTATUS ntstatus_{STATUS_SUCCESS};
 
-  std::size_t file_count_{0};
-  std::size_t entries_processed_{0};
   CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAGS flags_{CF_OPERATION_TRANSFER_PLACEHOLDERS_FLAG_NONE};
-
+  CF_PLACEHOLDER_CREATE_INFO placeholder_create_info_{};
   void init();
 
   void transfer_data();
+  bool transfer_data_one();
   // 失败
   void fail();
 };

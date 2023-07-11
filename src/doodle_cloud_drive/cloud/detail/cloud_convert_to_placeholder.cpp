@@ -43,7 +43,7 @@ void cloud_convert_to_placeholder::async_run() {
       l_file_list.emplace_back(sub_path{l_it.depth(), l_it->path()});
     }
     l_file_list |= ranges::actions::sort([](const sub_path& l_left, const sub_path& l_right) {
-      return l_left.deep_ < l_right.deep_;
+      return l_left.deep_ > l_right.deep_;
     });
     for (auto& l_item : l_file_list) {
       auto l_convert = std::make_shared<cloud_convert_to_placeholder>(
@@ -80,29 +80,27 @@ void cloud_convert_to_placeholder::async_convert_to_placeholder() {
     l_flags |= CF_CONVERT_FLAG_DEHYDRATE;
   }
 
-  wil::unique_hfile l_hfile{::CreateFileW(
-      child_path_.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr
-  )};
-  if (l_hfile.is_valid()) {
+  //  wil::unique_hfile l_hfile{::CreateFileW(
+  //      child_path_.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr
+  //  )};
+  unique_cf_hfile l_file_h{};
+  LOG_IF_FAILED(::CfOpenFileWithOplock(
+      child_path_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE | CF_OPEN_FILE_FLAG_WRITE_ACCESS, l_file_h.put()
+  ));
+  if (l_file_h.is_valid()) {
     DWORD l_size{};
-    //    LOG_IF_FAILED(::CfGetPlaceholderInfo(l_hfile.get(), CF_PLACEHOLDER_INFO_STANDARD, nullptr, 0, &l_size));
+    //    LOG_IF_FAILED(::CfGetPlaceholderInfo(l_file_h.get(), CF_PLACEHOLDER_INFO_STANDARD, nullptr, 0, &l_size));
     auto l_buff = std::make_unique<char[]>(sizeof(CF_PLACEHOLDER_STANDARD_INFO));
-    auto l_h =
-        LOG_IF_FAILED(::CfGetPlaceholderInfo(l_hfile.get(), CF_PLACEHOLDER_INFO_STANDARD, l_buff.get(), l_size, &l_size)
-        );
+    auto l_h    = LOG_IF_FAILED(
+        ::CfGetPlaceholderInfo(l_file_h.get(), CF_PLACEHOLDER_INFO_STANDARD, l_buff.get(), l_size, &l_size)
+    );
     if (l_h != S_OK) {
-      l_hfile.release();
-      unique_cf_hfile l_file_h{};
-      LOG_IF_FAILED(::CfOpenFileWithOplock(
-          child_path_.c_str(),
-          l_is_dir ? (CF_OPEN_FILE_FLAG_FOREGROUND) : (CF_OPEN_FILE_FLAG_EXCLUSIVE | CF_OPEN_FILE_FLAG_WRITE_ACCESS),
-          l_file_h.put()
+      //          l_is_dir ? (CF_OPEN_FILE_FLAG_FOREGROUND) : (CF_OPEN_FILE_FLAG_EXCLUSIVE |
+      //          CF_OPEN_FILE_FLAG_WRITE_ACCESS),
+      LOG_IF_FAILED(::CfConvertToPlaceholder(
+          l_file_h.get(), server_path_.c_str(), server_path_.native().size() * sizeof(wchar_t), l_flags, nullptr,
+          nullptr
       ));
-      if (l_file_h.is_valid())
-        LOG_IF_FAILED(::CfConvertToPlaceholder(
-            l_file_h.get(), server_path_.c_str(), server_path_.native().size() * sizeof(wchar_t), l_flags, nullptr,
-            nullptr
-        ));
     }
   }
 

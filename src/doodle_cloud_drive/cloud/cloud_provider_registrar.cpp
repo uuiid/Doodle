@@ -224,23 +224,6 @@ void cloud_provider_registrar::init2() {
       root_.c_str(), s_MirrorCallbackTable, this,
       CF_CONNECT_FLAG_REQUIRE_PROCESS_INFO | CF_CONNECT_FLAG_REQUIRE_FULL_FILE_PATH, &s_transferCallbackConnectionKey
   ));
-  //  auto l_file_h = ::CreateFileW(
-  //      root_.c_str(), WRITE_DAC, 0, nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT |
-  //      FILE_FLAG_BACKUP_SEMANTICS, nullptr
-  //  );
-
-  unique_cf_hfile l_cf_hfile{};
-
-  auto hr = ::CfOpenFileWithOplock(root_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE, l_cf_hfile.put());
-  LOG_IF_FAILED(hr);
-
-  if (hr != S_OK) {
-    return;
-  }
-  LOG_IF_FAILED(::CfConvertToPlaceholder(
-      l_cf_hfile.get(), root_.c_str(), root_.native().size() * sizeof(wchar_t), CF_CONVERT_FLAG_MARK_IN_SYNC, nullptr,
-      nullptr
-  ));
 }
 
 void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
@@ -251,6 +234,9 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
   if (l_parent_path.native().back() != L'\\') {
     l_parent_path += L"\\";
   }
+
+  std::make_shared<detail::cloud_convert_to_placeholder>(g_io_context(), server_root_, root_)->async_run();
+
   wil::unique_hfind l_find_handle{
       ::FindFirstFileExW(l_search_path.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0)};
 
@@ -265,10 +251,6 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
     std::error_code l_ec{};
     if (auto l_clo_path = (l_parent_path / l_find_Data.cFileName).lexically_normal();
         FSys::exists(l_clo_path, l_ec) || l_ec) {
-      std::make_shared<detail::cloud_convert_to_placeholder>(
-          g_io_context(), (in_parent / l_find_Data.cFileName).lexically_normal(), l_clo_path
-      )
-          ->async_run();
     } else {
       CF_PLACEHOLDER_CREATE_INFO l_cloud_entry{};
       auto l_path                      = (in_parent / l_find_Data.cFileName).lexically_normal().make_preferred();
