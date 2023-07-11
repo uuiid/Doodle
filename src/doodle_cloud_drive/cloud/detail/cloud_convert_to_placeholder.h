@@ -47,6 +47,7 @@ class cloud_convert_to_placeholder : public std::enable_shared_from_this<cloud_c
   NTSTATUS ntstatus_{STATUS_SUCCESS};
   bool sub_run{};
   void async_convert_to_placeholder();
+  void init_child_placeholder();
 
   struct sub_path {
     std::int32_t deep_{};

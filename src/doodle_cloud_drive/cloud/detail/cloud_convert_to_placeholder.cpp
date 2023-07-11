@@ -24,10 +24,10 @@
 #include <ntstatus.h>
 #include <cfapi.h>
 // clang-format on
-
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 
+#include <doodle_cloud_drive/cloud/cloud_provider_registrar.h>
 #include <magic_enum.hpp>
 namespace doodle::detail {
 using unique_cf_hfile = wil::unique_any_handle_invalid<decltype(&::CfCloseHandle), ::CfCloseHandle>;
@@ -35,6 +35,7 @@ using unique_cf_hfile = wil::unique_any_handle_invalid<decltype(&::CfCloseHandle
 void cloud_convert_to_placeholder::async_run() {
   std::error_code l_ec{};
   if (FSys::is_directory(child_path_, l_ec) && !sub_run) {
+    boost::asio::post(executor_, [self = shared_from_this()]() { self->init_child_placeholder(); });
     std::vector<sub_path> l_file_list{};
     std::error_code l_ec{};
     for (auto l_it = FSys::recursive_directory_iterator{child_path_}; l_it != FSys::recursive_directory_iterator{};
@@ -57,7 +58,7 @@ void cloud_convert_to_placeholder::async_run() {
   boost::asio::post(executor_, [self = shared_from_this()]() { self->async_convert_to_placeholder(); });
 }
 void cloud_convert_to_placeholder::async_convert_to_placeholder() {
-  DOODLE_LOG_INFO("async_convert_to_placeholder:{} {}", child_path_, server_path_);
+  if (!FSys::exists(server_path_)) return;
 
   //  WIN32_FIND_DATA l_find_Data;
 
@@ -69,39 +70,53 @@ void cloud_convert_to_placeholder::async_convert_to_placeholder() {
   //    return;
   //  }
   std::error_code l_ec{};
-  auto l_is_dir            = FSys::is_directory(child_path_, l_ec);
-
-  CF_CONVERT_FLAGS l_flags = CF_CONVERT_FLAG_NONE;
-  //          (l_state == CF_PLACEHOLDER_STATE_IN_SYNC ? CF_CONVERT_FLAG_MARK_IN_SYNC : CF_CONVERT_FLAG_NONE);
+  const auto l_is_dir  = FSys::is_directory(child_path_, l_ec);
+  const auto l_is_file = FSys::is_regular_file(child_path_, l_ec);
 
   if (l_is_dir) {
-    l_flags |= CF_CONVERT_FLAG_ENABLE_ON_DEMAND_POPULATION;
-  } else if (FSys::is_regular_file(child_path_, l_ec) || l_ec) {
-    l_flags |= CF_CONVERT_FLAG_DEHYDRATE;
-  }
+    const CF_CONVERT_FLAGS l_flags = CF_CONVERT_FLAG_NONE | CF_CONVERT_FLAG_ENABLE_ON_DEMAND_POPULATION;
+    unique_cf_hfile l_file_h{};
+    if (FAILED_LOG(::CfOpenFileWithOplock(child_path_.c_str(), CF_OPEN_FILE_FLAG_FOREGROUND, l_file_h.put())))
+      DOODLE_LOG_INFO("async_convert_to_placeholder:{} {}", child_path_, server_path_);
 
-  //  wil::unique_hfile l_hfile{::CreateFileW(
-  //      child_path_.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr
-  //  )};
-  unique_cf_hfile l_file_h{};
-  LOG_IF_FAILED(::CfOpenFileWithOplock(
-      child_path_.c_str(), CF_OPEN_FILE_FLAG_EXCLUSIVE | CF_OPEN_FILE_FLAG_WRITE_ACCESS, l_file_h.put()
-  ));
-  if (l_file_h.is_valid()) {
-    DWORD l_size{};
-    //    LOG_IF_FAILED(::CfGetPlaceholderInfo(l_file_h.get(), CF_PLACEHOLDER_INFO_STANDARD, nullptr, 0, &l_size));
-    auto l_buff = std::make_unique<char[]>(sizeof(CF_PLACEHOLDER_STANDARD_INFO));
-    auto l_h    = LOG_IF_FAILED(
-        ::CfGetPlaceholderInfo(l_file_h.get(), CF_PLACEHOLDER_INFO_STANDARD, l_buff.get(), l_size, &l_size)
-    );
-    if (l_h != S_OK) {
-      //          l_is_dir ? (CF_OPEN_FILE_FLAG_FOREGROUND) : (CF_OPEN_FILE_FLAG_EXCLUSIVE |
-      //          CF_OPEN_FILE_FLAG_WRITE_ACCESS),
-      LOG_IF_FAILED(::CfConvertToPlaceholder(
-          l_file_h.get(), server_path_.c_str(), server_path_.native().size() * sizeof(wchar_t), l_flags, nullptr,
-          nullptr
-      ));
+    if (l_file_h.is_valid()) {
+      if (FAILED_LOG(::CfConvertToPlaceholder(
+              l_file_h.get(), server_path_.c_str(), server_path_.native().size() * sizeof(wchar_t), l_flags, nullptr,
+              nullptr
+          )))
+        DOODLE_LOG_INFO("async_convert_to_placeholder:{} {}", child_path_, server_path_);
     }
+  } else if (l_is_file) {
+    WIN32_FIND_DATA l_find_Data;
+    const wil::unique_hfind l_find_handle{
+        ::FindFirstFileExW(server_path_.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0)};
+
+    if (!l_find_handle.is_valid()) {
+      return;
+    }
+    CF_PLACEHOLDER_CREATE_INFO l_cloud_entry{};
+    l_cloud_entry.FileIdentity       = server_path_.c_str();
+    l_cloud_entry.FileIdentityLength = (server_path_.native().size()) * sizeof(wchar_t);
+    auto l_file_name                 = child_path_.filename();
+    auto l_parent_path               = child_path_.parent_path();
+    l_cloud_entry.RelativeFileName   = l_file_name.native().c_str();
+    l_cloud_entry.FsMetadata.FileSize.QuadPart =
+        (boost::numeric_cast<ULONGLONG>(l_find_Data.nFileSizeHigh) << 32) + l_find_Data.nFileSizeLow;
+    l_cloud_entry.FsMetadata.BasicInfo.FileAttributes = l_find_Data.dwFileAttributes;
+    l_cloud_entry.FsMetadata.BasicInfo.CreationTime =
+        cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftCreationTime);
+    l_cloud_entry.FsMetadata.BasicInfo.LastAccessTime =
+        cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastAccessTime);
+    l_cloud_entry.FsMetadata.BasicInfo.LastWriteTime =
+        cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+    l_cloud_entry.FsMetadata.BasicInfo.ChangeTime =
+        cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+
+    l_cloud_entry.Flags = CF_PLACEHOLDER_CREATE_FLAG_SUPERSEDE;
+    if (FAILED_LOG(::CfCreatePlaceholders(
+            l_parent_path.native().c_str(), &l_cloud_entry, 1, CF_CREATE_FLAG_STOP_ON_ERROR, nullptr
+        )))
+      DOODLE_LOG_INFO("async_convert_to_placeholder:{} {}", child_path_, server_path_);
   }
 
   //  break;
@@ -124,6 +139,55 @@ void cloud_convert_to_placeholder::async_convert_to_placeholder() {
   //      DOODLE_LOG_INFO("Unknown state: {} {}", child_path_, magic_enum::enum_name(l_state));
   //      break;
   //  }
-}  // namespace doodle::detail
+}
+void cloud_convert_to_placeholder::init_child_placeholder() {
+  WIN32_FIND_DATA l_find_Data;
+
+  auto l_search_path       = server_path_.native() + L"\\*";
+  FSys::path l_parent_path = child_path_.make_preferred();
+  if (l_parent_path.native().back() != L'\\') {
+    l_parent_path += L"\\";
+  }
+  wil::unique_hfind l_find_handle{
+      ::FindFirstFileExW(l_search_path.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0)};
+
+  if (!l_find_handle.is_valid()) {
+    return;
+  }
+
+  do {
+    if (l_find_Data.cFileName[0] == L'.' && (l_find_Data.cFileName[1] == L'\0' || l_find_Data.cFileName[1] == L'.')) {
+      continue;
+    }
+    std::error_code l_ec{};
+    if (auto l_clo_path = (l_parent_path / l_find_Data.cFileName).lexically_normal();
+        !FSys::exists(l_clo_path, l_ec) && !l_ec) {
+      CF_PLACEHOLDER_CREATE_INFO l_cloud_entry{};
+      auto l_path                      = (server_path_ / l_find_Data.cFileName).lexically_normal().make_preferred();
+      l_cloud_entry.FileIdentity       = l_path.native().c_str();
+      l_cloud_entry.FileIdentityLength = (l_path.native().size() + 1) * sizeof(wchar_t);
+
+      l_cloud_entry.RelativeFileName   = l_find_Data.cFileName;
+      l_cloud_entry.FsMetadata.FileSize.QuadPart =
+          (boost::numeric_cast<ULONGLONG>(l_find_Data.nFileSizeHigh) << 32) + l_find_Data.nFileSizeLow;
+      l_cloud_entry.FsMetadata.BasicInfo.FileAttributes = l_find_Data.dwFileAttributes;
+      l_cloud_entry.FsMetadata.BasicInfo.CreationTime =
+          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftCreationTime);
+      l_cloud_entry.FsMetadata.BasicInfo.LastAccessTime =
+          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastAccessTime);
+      l_cloud_entry.FsMetadata.BasicInfo.LastWriteTime =
+          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+      l_cloud_entry.FsMetadata.BasicInfo.ChangeTime =
+          cloud_provider_registrar::file_time_to_large_integer(l_find_Data.ftLastWriteTime);
+
+      l_cloud_entry.Flags = CF_PLACEHOLDER_CREATE_FLAG_MARK_IN_SYNC | CF_PLACEHOLDER_CREATE_FLAG_SUPERSEDE;
+      LOG_IF_FAILED(::CfCreatePlaceholders(
+          l_parent_path.native().c_str(), &l_cloud_entry, 1, CF_CREATE_FLAG_STOP_ON_ERROR, nullptr
+      ));
+    }
+
+  } while (::FindNextFileW(l_find_handle.get(), &l_find_Data));
+}
+// namespace doodle::detail
 
 }  // namespace doodle::detail

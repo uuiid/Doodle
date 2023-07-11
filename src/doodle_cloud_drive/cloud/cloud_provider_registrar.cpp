@@ -237,6 +237,7 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
 
   std::make_shared<detail::cloud_convert_to_placeholder>(g_io_context(), server_root_, root_)->async_run();
 
+#if 0
   wil::unique_hfind l_find_handle{
       ::FindFirstFileExW(l_search_path.c_str(), FindExInfoBasic, &l_find_Data, FindExSearchNameMatch, nullptr, 0)};
 
@@ -273,6 +274,7 @@ void cloud_provider_registrar::list_dir_info(const FSys::path& in_parent) {
     }
 
   } while (::FindNextFileW(l_find_handle.get(), &l_find_Data));
+#endif
 }
 void cloud_provider_registrar::create_placeholder(const FSys::path& in_parent) {
   auto l_path = in_parent.lexically_normal();
