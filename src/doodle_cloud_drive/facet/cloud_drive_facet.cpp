@@ -36,10 +36,11 @@ bool cloud_drive_facet::post() {
 
   registrar_ = std::make_shared<cloud_provider_registrar>(l_arg.root_path, l_arg.server_path);
   l_r        = true;
-  signals_.async_wait([](boost::system::error_code, int) {
+  signals_.async_wait([this](boost::system::error_code, int) {
+    DOODLE_LOG_INFO("收到退出信号");
+    work_guard_.reset();
     app_base::Get().stop_app();
     g_io_context().stop();
-    DOODLE_LOG_INFO("收到退出信号");
   });
   boost::asio::post(g_io_context(), [this, l_arg]() { registrar_->create_placeholder(l_arg.server_path); });
   return l_r;
