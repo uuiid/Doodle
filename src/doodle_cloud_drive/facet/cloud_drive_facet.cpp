@@ -40,7 +40,7 @@ bool cloud_drive_facet::post() {
     DOODLE_LOG_INFO("收到退出信号");
     work_guard_.reset();
     app_base::Get().stop_app();
-    g_io_context().stop();
+    DOODLE_LOG_INFO("停止所以循环");
   });
   boost::asio::post(g_io_context(), [this, l_arg]() { registrar_->create_placeholder(l_arg.server_path); });
   return l_r;
