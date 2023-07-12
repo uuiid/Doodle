@@ -19,7 +19,6 @@
 #include "doodle_lib/distributed_computing/client.h"
 #include <doodle_lib/distributed_computing/server.h>
 #include <doodle_lib/facet/main_facet.h>
-#include <doodle_lib/facet/rpc_server_facet.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/asio/executor_work_guard.hpp>

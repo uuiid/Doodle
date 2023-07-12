@@ -14,7 +14,6 @@
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
 
-#include <doodle_lib/facet/rpc_server_facet.h>
 #include <doodle_lib/gui/asset_library_layout.h>
 #include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/menu_bar.h>

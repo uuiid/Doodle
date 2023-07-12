@@ -3,9 +3,7 @@
 //
 #include "doodle_core/logger/logger.h"
 
-#include <doodle_lib/facet/create_move_facet.h>
 #include <doodle_lib/facet/main_facet.h>
-#include <doodle_lib/facet/rpc_server_facet.h>
 
 #include <boost/exception/diagnostic_information.hpp>
 

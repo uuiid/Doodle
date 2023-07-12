@@ -6,9 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <doodle_lib/facet/create_move_facet.h>
 #include <doodle_lib/facet/main_facet.h>
-#include <doodle_lib/facet/rpc_server_facet.h>
 
 #include <iostream>
 
