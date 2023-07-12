@@ -20,8 +20,15 @@ target_sources(doodle_core
         project_config.h
         rules.h
         time_point_wrap.h
+        file_one_path.h
+
 
         PRIVATE
+
+        column.h
+        drop_if.h
+        tables.h
+
         user.cpp
         work_task.cpp
         database.cpp
@@ -40,4 +47,5 @@ target_sources(doodle_core
         project_config.cpp
         rules.cpp
         time_point_wrap.cpp
+        file_one_path.cpp
         )
