@@ -18,6 +18,7 @@ target_sources(
         move_create.h
         rules.h
         work_task.h
+        file_one_path.h
 
         PRIVATE
         assets.cpp
@@ -38,6 +39,7 @@ target_sources(
         move_create.cpp
         rules.cpp
         work_task.cpp
+        file_one_path.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
