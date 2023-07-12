@@ -22,6 +22,7 @@ target_sources(doodle_lib
         work_hour_filling.h
         create_entry.h
         update_self.h
+        upload_files.h
 
         PRIVATE
         edit_widget.cpp
@@ -42,4 +43,5 @@ target_sources(doodle_lib
         work_hour_filling.cpp
         create_entry.cpp
         update_self.cpp
+        upload_files.cpp
         )

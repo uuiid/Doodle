@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <string>
 #include <array>
+#include <string>
 
 namespace doodle {
 namespace doodle_config {
@@ -32,6 +32,7 @@ constexpr const std::string_view ue4_shot{R"(Shot)"};
 namespace gui::config::menu_w {
 constexpr const std::string_view project_widget{"项目"};
 constexpr const std::string_view edit_{"编辑"};
+constexpr const std::string_view upload_files{"上传"};
 constexpr const std::string_view create_entry_{"创建条目"};
 constexpr const std::string_view assets_filter{"过滤"};
 constexpr const std::string_view assets_file{"文件列表"};
@@ -46,8 +47,6 @@ constexpr const std::string_view subtitle_processing{"修改字幕"};
 constexpr const std::string_view time_edit{"时间编辑"};
 constexpr const std::string_view all_user_view_widget{"用户列表"};
 constexpr const std::string_view work_hour_filling{"工时填报"};
-constexpr const auto menu_base =
-    std::make_tuple(project_widget, edit_, assets_filter, assets_file, long_time_tasks, setting, project_edit);
 
 }  // namespace gui::config::menu_w
 }  // namespace doodle
