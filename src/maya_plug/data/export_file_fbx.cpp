@@ -15,6 +15,8 @@
 
 #include "data/maya_tool.h"
 #include "exception/exception.h"
+#include "fmt/core.h"
+#include "maya_conv_str.h"
 #include <maya/MAnimControl.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagModifier.h>
@@ -92,22 +94,26 @@ void export_file_fbx::export_anim(
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return;
   }
-  MItDag l_it{};
-  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
-  MDagPath l_path{};
-  for (; !l_it.isDone(); l_it.next()) {
-    maya_chick(l_it.getPath(l_path));
-    l_path.pop();
-    if (in_exclude.hasItem(l_path)) {
-      continue;
+  if (in_exclude.isEmpty()) {
+    l_select.add(*l_export_group);
+  } else {
+    MItDag l_it{};
+    maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
+    MDagPath l_path{};
+    for (; !l_it.isDone(); l_it.next()) {
+      maya_chick(l_it.getPath(l_path));
+      l_path.pop();
+      if (in_exclude.hasItem(l_path)) {
+        continue;
+      }
+      //    if (in_exclude.hasItem(l_path.transform())) {
+      //      continue;
+      //    }
+      maya_chick(l_select.add(l_path));
     }
-    //    if (in_exclude.hasItem(l_path.transform())) {
-    //      continue;
-    //    }
-    maya_chick(l_select.add(l_path));
-  }
 
-  maya_chick(l_satus);
+    maya_chick(l_satus);
+  }
 
   m_namespace_ = l_ref.get_namespace();
   DOODLE_LOG_INFO("导出选中物体 {} 排除物体 {}", l_select, in_exclude);
@@ -124,15 +130,18 @@ void export_file_fbx::export_anim(
 
   k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", l_arg->begin_end_time.second.value());
   maya_chick(MGlobal::executeCommand(d_str{k_comm}));
-
-  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
-  maya_chick(MGlobal::executeCommand(d_str{k_comm}));
-
-  k_comm = std::string{"FBXExportConstraints -v true;"};
-  maya_chick(MGlobal::executeCommand(d_str{k_comm}));
+  maya_chick(MGlobal::executeCommand(conv::to_ms("FBXExportBakeComplexAnimation -v true;")));
+  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportConstraints -v false;)")));
+  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportInputConnections -v true;)")));
+  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportSkeletonDefinitions -v true;)")));
+  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportSkins -v true;)")));
+  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportSmoothingGroups -v true;)")));
 
   k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
   maya_chick(MGlobal::executeCommand(d_str{k_comm}));
+  //  maya_chick(MGlobal::executeCommand(conv::to_ms(
+  //      fmt::format(R"(file -force -options "v=0;" -typ "FBX export" -pr -es "{}";)", k_file_path.generic_string())
+  //  )));
 }
 
 void export_file_fbx::cloth_to_blendshape(
