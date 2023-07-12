@@ -4,6 +4,7 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/database_task/details/column.h>
 #include <doodle_core/database_task/details/drop_if.h>
+#include <doodle_core/database_task/details/tables.h>
 #include <doodle_core/metadata/metadata.h>
 
 #include "fmt/color.h"

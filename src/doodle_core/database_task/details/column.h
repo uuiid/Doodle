@@ -206,3 +206,73 @@ create_table_t<table_t> create_table(const table_t& /*in_table*/) {
       std::is_same_v<std::tuple_element<0, decltype(sqlpp::all_of(table_name{}))>::type::_spec_t, tables::column::id>, \
       "ID is the primary key and must be placed first"                                                                 \
   )
+namespace doodle::database_n::tables {
+namespace column {
+DOODLE_SQL_COLUMN_IMP(id, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(com_hash, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(json_data, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(uuid_data, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(update_time, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(entity_id, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(user_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(permission_group, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(task_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(region, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(abstract, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(time_point, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(eps, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(shot_int, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(shot_ab, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(redirection_path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(redirection_file_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(assets_path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(comment_string, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(comment_time, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(file_path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(start_frame, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(end_frame, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(ref_file, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(organization, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(export_type_, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(version, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(first_time, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(second_time, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(info, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(is_extra_work, sqlpp::boolean, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(sim_path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(export_group, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(cloth_proxy, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(simple_module_proxy, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(find_icon_regex, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(assets_list, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(icon_extensions, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(upload_path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(season_count, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(use_only_sim_cloth, sqlpp::boolean, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(use_divide_group_export, sqlpp::boolean, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(t_post, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(export_anim_time, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(maya_camera_select_reg, sqlpp::text, detail::require_insert);
+DOODLE_SQL_COLUMN_IMP(maya_camera_select_num, sqlpp::integer, detail::require_insert);
+DOODLE_SQL_COLUMN_IMP(abc_export_extract_reference_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(abc_export_format_reference_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(abc_export_extract_scene_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(abc_export_format_scene_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(abc_export_add_frame_range, sqlpp::boolean, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(maya_camera_suffix, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(maya_out_put_abc_suffix, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(p_int, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(cutoff_p, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(p_name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(p_path, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(p_en_str, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(p_shor_str, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, detail::can_be_null);
+// 这个id一般代指 实体id
+DOODLE_SQL_COLUMN_IMP(ref_id, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(assets_ref_id, sqlpp::integer, detail::can_be_null);
+
+}  // namespace column
+}  // namespace doodle::database_n::tables

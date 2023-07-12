@@ -40,7 +40,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
   for (auto& l_h : in_id) {
     auto& l_assets            = l_h.get<assets_file>();
     l_pre.params.name         = l_assets.name_attr();
-    l_pre.params.path         = l_assets.path_attr().string();
+    l_pre.params.path         = l_assets.path_attr().generic_string();
     l_pre.params.version      = l_assets.version_attr();
     l_pre.params.organization = l_assets.organization_attr();
     if (auto l_h_user = l_assets.user_attr(); l_h_user && l_h_user.any_of<database>())
