@@ -11,8 +11,8 @@
 namespace doodle::gui {
 const std::string& upload_files::title() const { return title_; }
 bool upload_files::render() {
-  if (ImGui::Button(*ue_file_)) {
-    ue_file_path_.clear();
+  constexpr static auto g_text{"拖拽添加文件"};
+  if (ImGui::InputText(*ue_file_, &ue_file_path_)) {
   }
   if (auto l_drag = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
@@ -24,13 +24,10 @@ bool upload_files::render() {
     }
   }
   if (auto l_tip = dear::ItemTooltip{}) {
-    ImGui::Text("拖拽添加文件, 点击删除ue文件");
+    ImGui::Text(g_text);
   }
-  ImGui::SameLine();
-  dear::Text(ue_file_path_);
 
-  if (ImGui::Button(*maya_file_)) {
-    maya_file_path_.clear();
+  if (ImGui::InputText(*maya_file_, &maya_file_path_)) {
   }
   if (auto l_drag = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
@@ -42,13 +39,10 @@ bool upload_files::render() {
     }
   }
   if (auto l_tip = dear::ItemTooltip{}) {
-    ImGui::Text("拖拽添加文件, 点击删除maya文件");
+    ImGui::Text(g_text);
   }
-  ImGui::SameLine();
-  dear::Text(maya_file_path_);
 
-  if (ImGui::Button(*rig_file_)) {
-    rig_file_path_.clear();
+  if (ImGui::InputText(*rig_file_, &rig_file_path_)) {
   }
   if (auto l_drag = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
@@ -60,10 +54,8 @@ bool upload_files::render() {
     }
   }
   if (auto l_tip = dear::ItemTooltip{}) {
-    ImGui::Text("拖拽添加文件, 点击删除绑定文件");
+    ImGui::Text(g_text);
   }
-  ImGui::SameLine();
-  dear::Text(rig_file_path_);
 
   return show_;
 }
