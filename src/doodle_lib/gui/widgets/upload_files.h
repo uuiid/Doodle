@@ -21,9 +21,12 @@ class upload_files {
 
   entt::handle upload_file_{};
 
-  gui_cache<std::string> ue_file_{"UE文件"};
-  gui_cache<std::string> maya_file_{"Maya 文件"};
-  gui_cache<std::string> rig_file_{"Maya 绑定文件"};
+  gui_cache_name_id ue_file_{"UE文件"};
+  std::string ue_file_path_{};
+  gui_cache_name_id maya_file_{"Maya 文件"};
+  std::string maya_file_path_{};
+  gui_cache_name_id rig_file_{"Maya 绑定文件"};
+  std::string rig_file_path_{};
   image_icon image_icon_{};
 
  public:

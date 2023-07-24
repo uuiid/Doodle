@@ -2,6 +2,8 @@
 // Created by td_main on 2023/7/12.
 //
 #pragma once
+#include <doodle_core/database_task/sql_com.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <sqlpp11/data_types/boolean/data_type.h>
 #include <sqlpp11/data_types/integral/data_type.h>

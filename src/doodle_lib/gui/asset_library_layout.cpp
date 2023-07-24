@@ -4,6 +4,8 @@
 
 #include "asset_library_layout.h"
 
+#include "doodle_core/configure/static_value.h"
+
 #include "doodle_app/gui/base/base_window.h"
 
 #include <doodle_lib/gui/layout_window.h>
@@ -20,6 +22,7 @@
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/upload_files.h>
 #include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
@@ -45,6 +48,7 @@ void asset_library_layout::layout(ImGuiID in_id, const ImVec2& in_size) {
   namespace menu_w    = gui::config::menu_w;
   ImGui::DockBuilderDockWindow(menu_w::assets_filter.data(), dock_id_filter);  /// \brief 过滤器的停靠
   ImGui::DockBuilderDockWindow(menu_w::edit_.data(), dock_id_tools);           /// \brief 编辑的停靠
+  ImGui::DockBuilderDockWindow(menu_w::upload_files.data(), dock_id_tools);    /// \brief 上传文件停靠
 
   ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_edit);  /// \brief 主窗口的停靠
 
@@ -55,6 +59,7 @@ void asset_library_layout::set_show() {
   g_windows_manage().open_windows<edit_widgets>();
   g_windows_manage().open_windows<assets_filter_widget>();
   g_windows_manage().open_windows<assets_file_widgets>();
+  g_windows_manage().open_windows<upload_files>();
 
   g_windows_manage().close_windows<maya_tool>();
   g_windows_manage().close_windows<create_video>();

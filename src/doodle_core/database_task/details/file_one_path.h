@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_core/database_task/details/tables.h>
 #include <doodle_core/database_task/details/tool.h>
+#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/file_one_path.h>
 namespace doodle::database_n {
 
