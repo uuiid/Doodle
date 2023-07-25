@@ -95,4 +95,6 @@ template <>
 struct sql_com<doodle::ue_file> : public file_one_path<tables::ue_file, doodle::ue_file> {};
 template <>
 struct sql_com<doodle::maya_rig_file> : public file_one_path<tables::maya_rig_file, doodle::maya_rig_file> {};
+template <>
+struct sql_com<doodle::ue_file_preset> : public file_one_path<tables::ue_file_preset, doodle::ue_file_preset> {};
 }  // namespace doodle::database_n

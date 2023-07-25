@@ -40,9 +40,10 @@ class logger_ctrl;
 namespace detail {
 template <typename>
 class one_file_base;
-using maya_file_id     = entt::tag<"maya_file"_hs>;
-using ue_file_id       = entt::tag<"ue_file"_hs>;
-using maya_rig_file_id = entt::tag<"maya_rig_file"_hs>;
+using maya_file_id      = entt::tag<"maya_file"_hs>;
+using ue_file_id        = entt::tag<"ue_file"_hs>;
+using maya_rig_file_id  = entt::tag<"maya_rig_file"_hs>;
+using ue_file_preset_id = entt::tag<"ue_file_preset"_hs>;
 }  // namespace detail
 
 using database_info = details::database_info;
@@ -57,9 +58,10 @@ class project;
 class work_task_info;
 class comment;
 class assets;
-using maya_file     = detail::one_file_base<detail::maya_file_id>;
-using ue_file       = detail::one_file_base<detail::ue_file_id>;
-using maya_rig_file = detail::one_file_base<detail::maya_rig_file_id>;
+using maya_file      = detail::one_file_base<detail::maya_file_id>;
+using ue_file        = detail::one_file_base<detail::ue_file_id>;
+using maya_rig_file  = detail::one_file_base<detail::maya_rig_file_id>;
+using ue_file_preset = detail::one_file_base<detail::ue_file_preset_id>;
 
 using namespace std::literals;
 using namespace date::literals;

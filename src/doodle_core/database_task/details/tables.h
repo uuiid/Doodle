@@ -89,4 +89,5 @@ DOODLE_SQL_TABLE_IMP(time_point_wrap, column::id, column::entity_id, column::tim
 DOODLE_SQL_TABLE_IMP(maya_file, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(ue_file, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(maya_rig_file, column::id, column::entity_id, column::path);
+DOODLE_SQL_TABLE_IMP(ue_file_preset, column::id, column::entity_id, column::path);
 }  // namespace doodle::database_n::tables

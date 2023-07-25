@@ -342,7 +342,7 @@ using obs_all = obs_main<
     std::tuple<
         doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap,
         doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, doodle::business::rules,
-        doodle::user, doodle::work_task_info, maya_file, ue_file, maya_rig_file>>;
+        doodle::user, doodle::work_task_info, maya_file, ue_file, maya_rig_file, ue_file_preset>>;
 
 file_translator::file_translator() : registry_attr(g_reg()), obs(obs_all{}) {}
 file_translator::file_translator(registry_ptr in_registry) : registry_attr(in_registry), obs(obs_all{}) {}
