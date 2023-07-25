@@ -38,9 +38,6 @@ bool upload_files::render() {
       }
     }
   }
-  if (auto l_tip = dear::ItemTooltip{}) {
-    ImGui::Text(g_text);
-  }
 
   if (ImGui::InputText(*rig_file_, &rig_file_path_)) {
   }
@@ -53,8 +50,17 @@ bool upload_files::render() {
       }
     }
   }
-  if (auto l_tip = dear::ItemTooltip{}) {
-    ImGui::Text(g_text);
+
+  if (ImGui::InputText(*ue_file_preset_, &ue_file_preset_path_)) {
+  }
+  if (auto l_drag = dear::DragDropTarget{}) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
+        l_data && l_data->IsDelivery()) {
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+      if (!l_list->empty()) {
+        ue_file_preset_path_ = l_list->front().generic_string();
+      }
+    }
   }
 
   return show_;

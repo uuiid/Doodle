@@ -27,6 +27,8 @@ class upload_files {
   std::string maya_file_path_{};
   gui_cache_name_id rig_file_{"Maya 绑定文件"};
   std::string rig_file_path_{};
+  gui_cache_name_id ue_file_preset_{"UE文件预调"};
+  std::string ue_file_preset_path_{};
   image_icon image_icon_{};
 
  public:
