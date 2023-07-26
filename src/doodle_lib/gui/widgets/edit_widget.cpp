@@ -13,6 +13,7 @@
 #include "doodle_core/metadata/shot.h"
 #include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/core/init_register.h>
+#include <doodle_core/metadata/file_one_path.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 
@@ -20,21 +21,65 @@
 #include <doodle_lib/gui/widgets/derail/assets_file_edit.h>
 #include <doodle_lib/gui/widgets/derail/command_edit.h>
 #include <doodle_lib/gui/widgets/derail/episodes_edit.h>
+#include <doodle_lib/gui/widgets/derail/file_one_edit_t.h>
 #include <doodle_lib/gui/widgets/derail/importance_edit.h>
 #include <doodle_lib/gui/widgets/derail/season_edit.h>
 #include <doodle_lib/gui/widgets/derail/shot_edit.h>
 #include <doodle_lib/gui/widgets/derail/time_edit.h>
 #include <doodle_lib/gui/widgets/derail/user_edit.h>
 
+#include <boost/hana.hpp>
+#include <boost/hana/ext/std.hpp>
 #include <boost/signals2/connection.hpp>
 
 #include "entt/entity/fwd.hpp"
 #include "fmt/core.h"
 #include "range/v3/algorithm/for_each.hpp"
-
+#include <memory>
+#include <tuple>
 namespace doodle::gui {
 
 class edit_widgets::impl {
+ public:
+  template <typename T, typename Gui_T>
+  class render_edit_impl {
+   public:
+    Gui_T edit{};
+    impl *p_impl_{nullptr};
+    explicit render_edit_impl(impl *in_impl) : p_impl_{in_impl} {}
+    bool render(const entt::handle &in_handle) {
+      bool on_change{false};
+      if (edit.render(in_handle)) {
+        auto l_data = in_handle.get<T>();
+        ranges::for_each(p_impl_->p_h, [&](const entt::handle &in) {
+          if (!in.any_of<T>()) in.emplace<T>();
+          in.patch<T>() = l_data;
+        });
+        on_change = true;
+      }
+      return on_change;
+    }
+  };
+  template <>
+  class render_edit_impl<assets_file, render::assets_file_edit_t> {
+   public:
+    render::assets_file_edit_t edit{};
+    impl *p_impl_{nullptr};
+    explicit render_edit_impl(impl *in_impl) : p_impl_{in_impl} {}
+    bool render(const entt::handle &in_handle) {
+      bool on_change{false};
+      if (edit.render(in_handle)) {
+        auto l_data = in_handle.get<assets_file>().user_attr();
+        ranges::for_each(p_impl_->p_h, [&](const entt::handle &in) {
+          if (!in.any_of<assets_file>()) in.emplace<assets_file>();
+          in.patch<assets_file>().user_attr(l_data);
+        });
+        on_change = true;
+      }
+      return on_change;
+    }
+  };
+
  public:
   /**
    * @brief 修改句柄
@@ -50,6 +95,25 @@ class edit_widgets::impl {
   render::importance_edit_t importance_edit{};
   render::time_edit_t time_edit{};
 
+  std::tuple<
+      std::shared_ptr<render_edit_impl<season, render::season_edit_t>>,
+      std::shared_ptr<render_edit_impl<episodes, render::episodes_edit_t>>,
+      std::shared_ptr<render_edit_impl<shot, render::shot_edit_t>>,
+      std::shared_ptr<render_edit_impl<assets_file, render::assets_file_edit_t>>,
+      std::shared_ptr<render_edit_impl<comment, render::command_edit_t>>,
+      std::shared_ptr<render_edit_impl<importance, render::importance_edit_t>>,
+      std::shared_ptr<render_edit_impl<time_point_wrap, render::time_edit_t>>,
+      std::shared_ptr<render::maya_file_edit_t>,       //
+      std::shared_ptr<render::ue_file_edit_t>,         //
+      std::shared_ptr<render::maya_rig_file_edit_t>,   //
+      std::shared_ptr<render::ue_file_preset_edit_t>>  //
+      render_data;
+
+  std::tuple<
+      std::shared_ptr<render::maya_file_edit_t>, std::shared_ptr<render::ue_file_edit_t>,
+      std::shared_ptr<render::maya_rig_file_edit_t>, std::shared_ptr<render::ue_file_preset_edit_t>>
+      file_one_edit{};
+
   std::string title_name_;
   bool open{true};
   boost::signals2::scoped_connection p_sc;
@@ -60,11 +124,26 @@ class edit_widgets::impl {
 edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
   g_reg()->ctx().emplace<edit_widgets &>(*this);
-  auto &l_sig = g_reg()->ctx().get<core_sig>();
-  p_i->p_sc   = l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) {
+  auto &l_sig      = g_reg()->ctx().get<core_sig>();
+  p_i->p_sc        = l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) {
     p_i->p_h = in;
     gen_text();
   });
+
+  p_i->render_data = std::make_tuple(
+      std::make_shared<impl::render_edit_impl<season, render::season_edit_t>>(p_i.get()),
+      std::make_shared<impl::render_edit_impl<episodes, render::episodes_edit_t>>(p_i.get()),
+      std::make_shared<impl::render_edit_impl<shot, render::shot_edit_t>>(p_i.get()),
+      std::make_shared<impl::render_edit_impl<assets_file, render::assets_file_edit_t>>(p_i.get()),
+      std::make_shared<impl::render_edit_impl<comment, render::command_edit_t>>(p_i.get()),
+      std::make_shared<impl::render_edit_impl<importance, render::importance_edit_t>>(p_i.get()),
+      std::make_shared<impl::render_edit_impl<time_point_wrap, render::time_edit_t>>(p_i.get()),
+      std::make_shared<render::maya_file_edit_t>("maya路径"s),      //
+      std::make_shared<render::ue_file_edit_t>("ue路径"s),          //
+      std::make_shared<render::maya_rig_file_edit_t>("绑定路径"s),  //
+      std::make_shared<render::ue_file_preset_edit_t>("预调路径"s)  //
+
+  );
 }
 edit_widgets::~edit_widgets() = default;
 
@@ -80,55 +159,7 @@ void edit_widgets::edit_handle() {
     if (l_args > 1) dear::Text(fmt::format("同时编辑了 {}个", l_args));
     dear::Text(p_i->database_info);
 
-    if (p_i->season_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<season>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<season>()) in.emplace<season>();
-        in.patch<season>() = l_data;
-      });
-    }
-    if (p_i->episodes_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<episodes>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<episodes>()) in.emplace<episodes>();
-        in.patch<episodes>() = l_data;
-      });
-    }
-    if (p_i->shot_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<shot>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<shot>()) in.emplace<shot>();
-        in.patch<shot>() = l_data;
-      });
-    }
-    if (p_i->assets_file_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<assets_file>().user_attr();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<assets_file>()) in.emplace<assets_file>();
-        in.patch<assets_file>().user_attr(l_data);
-      });
-    }
-    if (p_i->command_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<comment>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<comment>()) in.emplace<comment>();
-        in.patch<comment>() = l_data;
-      });
-    }
-    if (p_i->importance_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<importance>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<importance>()) in.emplace<importance>();
-        in.patch<importance>() = l_data;
-      });
-    }
-    if (p_i->time_edit.render(p_i->p_h.front())) {
-      auto l_data = p_i->p_h.front().get<time_point_wrap>();
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in) {
-        if (!in.any_of<time_point_wrap>()) in.emplace<time_point_wrap>();
-        in.patch<time_point_wrap>() = l_data;
-      });
-    }
+    boost::hana::for_each(p_i->render_data, [&](auto &&i) { i->render(p_i->p_h.front()); });
   }
 }
 

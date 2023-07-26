@@ -9,6 +9,7 @@ target_sources(doodle_lib
         user_edit.h
         assets_file_edit.h
         time_edit.h
+        file_one_edit_t.h
 
         PRIVATE
         all_user_combox.cpp
@@ -20,4 +21,5 @@ target_sources(doodle_lib
         user_edit.cpp
         assets_file_edit.cpp
         time_edit.cpp
+        file_one_edit_t.cpp
         )
