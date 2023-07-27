@@ -12,6 +12,21 @@ namespace UnFbx {
 class FFbxImporter;
 }
 
+USTRUCT()
+struct FDoodleUSkeletonData_1 {
+ public:
+  GENERATED_BODY()
+  FDoodleUSkeletonData_1(){};
+  FDoodleUSkeletonData_1(const TSet<FString>& InString, USkeleton* InSkin) : BoneNames(InString), SkinObj(InSkin) {}
+  ~FDoodleUSkeletonData_1() {}
+
+  TSet<FString> BoneNames;
+  USkeleton* SkinObj;
+  FString SkinTag;
+
+  static TArray<FDoodleUSkeletonData_1> ListAllSkeletons();
+};
+
 UCLASS()
 class UDoodleBaseImportData : public UObject {
  public:
@@ -31,8 +46,12 @@ class UDoodleBaseImportData : public UObject {
 
   /// @brief 导入后的路径
   FString ImportPathDir{};
+
+ protected:
   // 生成导入的路径
   FString GetImportPath(const FString& In_Path_Prefix);
+
+ public:
   // @brief获取文件名称中的开始和结束
   void GenStartAndEndTime();
   /**
@@ -43,6 +62,8 @@ class UDoodleBaseImportData : public UObject {
    */
   virtual void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix){};
   virtual void ImportFile(){};
+
+  static FString GetPathPrefix(const FString& In_Path);
 };
 
 UCLASS()
@@ -52,13 +73,14 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
   UDoodleFbxImport_1(){};
   UDoodleFbxImport_1(const FString& InString) : UDoodleBaseImportData(InString), SkinObj() {}
   ~UDoodleFbxImport_1() override {}
-  /// @brief fbx文件中包含的节点
-  TSet<FString> FbxNodeNames;
+
   /// @brief 寻找到的骨骼
   USkeleton* SkinObj;
   bool OnlyAnim{true};
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
+
+  bool FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton);
 };
 
 UCLASS()
@@ -83,18 +105,7 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
   void ImportFile() override;
 };
 
-USTRUCT()
-struct FDoodleUSkeletonData_1 {
- public:
-  GENERATED_BODY()
-  FDoodleUSkeletonData_1(){};
-  FDoodleUSkeletonData_1(const TSet<FString>& InString, USkeleton* InSkin) : BoneNames(InString), SkinObj(InSkin) {}
-  ~FDoodleUSkeletonData_1() {}
 
-  TSet<FString> BoneNames;
-  USkeleton* SkinObj;
-  FString SkinTag;
-};
 
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
  public:
@@ -126,13 +137,6 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   FString Path_Prefix;
   FString Path_Suffix;
 
-  /**
-   * @brief 获取所有的sk
-   *
-   */
-  void GetAllSkinObjs();
-  // 将sk 和fbx 进行匹配
-  bool MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporter* In_ImportFbx);
   // 判断fbx是否是相机fbx
   bool IsCamera(UnFbx::FFbxImporter* InFbx);
   // 寻找骨骼排匹配
@@ -140,7 +144,6 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   // @brief 导入文件
   void ImportFile();
-  void CreateWorld();
 
   /**
    * @brief 根据传入的路径生成前缀

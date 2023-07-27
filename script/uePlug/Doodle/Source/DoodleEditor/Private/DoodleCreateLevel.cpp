@@ -8,11 +8,11 @@
 #include "LevelSequence.h"
 #include "Modules/ModuleManager.h"
 /// 定序器使用
+#include "Doodle/DoodleImportFbxUI.h"
+#include "Misc/OutputDeviceNull.h"
 #include "MovieSceneToolHelpers.h"
 #include "SequencerSettings.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
-#include "Misc/OutputDeviceNull.h"
-
 //// 保存操作使用
 #include "FileHelpers.h"
 /// 相机导入
@@ -59,6 +59,95 @@
 /// 导入相机的设置
 #include "MovieSceneToolsUserSettings.h"
 
+// 目录选择器
+#include "Widgets/Input/SDirectoryPicker.h"
+// 文件选择器
+#include "AssetRegistry/IAssetRegistry.h"
+#include "Widgets/Input/SFilePathPicker.h"
+// 我们自己的多路径文件选择器
+#include "Doodle/FilePathsPicker.h"
+// 组合框
+#include "Components/ComboBoxString.h"
+// fbx读取需要
+#include "FbxImporter.h"
+#include "Rendering/SkeletalMeshLODImporterData.h"
+#include "fbxsdk/scene/animation/fbxanimcurve.h"
+#include "fbxsdk/scene/animation/fbxanimlayer.h"
+#include "fbxsdk/scene/animation/fbxanimstack.h"
+#include "fbxsdk/scene/geometry/fbxcamera.h"
+#include "fbxsdk/scene/geometry/fbxcameraswitcher.h"
+#include "fbxsdk/scene/geometry/fbxnode.h"
+
+// 读写文件
+#include "Misc/FileHelper.h"
+// 元数据
+#include "UObject/MetaData.h"
+// 算法
+#include "Algo/AllOf.h"
+/// 自动导入类需要
+#include "AssetImportTask.h"
+
+/// 正则
+#include "Internationalization/Regex.h"
+/// 一般的导入任务设置
+#include "AssetImportTask.h"
+/// 导入模块
+#include "AssetToolsModule.h"
+/// 导入fbx需要
+#include "Animation/AnimBoneCompressionSettings.h"  // 压缩骨骼设置
+#include "Factories/Factory.h"
+#include "Factories/FbxAnimSequenceImportData.h"
+#include "Factories/FbxFactory.h"
+#include "Factories/FbxImportUI.h"
+#include "Factories/FbxSkeletalMeshImportData.h"
+#include "Factories/FbxTextureImportData.h"
+#include "Factories/ImportSettings.h"
+#include "Factories/MaterialImportHelpers.h"
+/// 进度框
+#include "Misc/ScopedSlowTask.h"
+/// 属性按钮
+#include "PropertyCustomizationHelpers.h"
+/// 内容游览器模块
+#include "ContentBrowserModule.h"
+/// 内容游览器
+#include "IContentBrowserSingleton.h"
+/// 导入abc
+#include "AbcImportSettings.h"
+/// 编辑器笔刷效果
+#include "EditorStyleSet.h"
+
+/// 导入相机需要的头文件
+#include "Camera/CameraComponent.h"  // 相机组件
+#include "CineCameraActor.h"         // 相机
+#include "ILevelSequenceEditorToolkit.h"
+#include "LevelSequence.h"
+#include "MovieSceneToolHelpers.h"
+#include "MovieSceneToolsUserSettings.h"          // 导入相机设置
+#include "Sections/MovieSceneCameraCutSection.h"  // 相机剪切
+#include "SequencerUtilities.h"                   // 创建相机
+
+// 创建world
+#include "AssetToolsModule.h"
+#include "EditorLevelLibrary.h"
+#include "Factories/WorldFactory.h"
+#include "FileHelpers.h"
+#include "IAssetTools.h"
+#include "LevelEditorSubsystem.h"
+#include "LevelSequence.h"
+#include "Modules/ModuleManager.h"
+
+// 导入abc
+#include "AlembicImportFactory.h"
+#include "Framework/Notifications/NotificationManager.h"  //通知管理类
+#include "LevelEditorViewport.h"                          //编辑器视口
+#include "Tracks/MovieSceneCameraCutTrack.h"              //处理对电影场景中CameraCut属性的操作。
+#include "TransformData.h"                            //存储关于转换的信息，以便向转换部分添加键。
+#include "Widgets/Notifications/SNotificationList.h"  // 编辑器通知
+
+// 自定义导入abc
+#include "Doodle/Abc/DoodleAbcImportSettings.h"
+#include "Doodle/Abc/DoodleAlembicImportFactory.h"
+
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
 /// 关卡编辑器子系统
 #include "LevelEditorSubsystem.h"
@@ -66,7 +155,7 @@
 namespace doodle {
 bool init_ue4_project::load_all_blueprint() {
   UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
-  FAssetRegistryModule &AssetRegistryModule =
+  FAssetRegistryModule& AssetRegistryModule =
       FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
   AssetRegistryModule.Get().SearchAllAssets(/*bSynchronousSearch =*/true);
   UE_LOG(LogTemp, Log, TEXT("Finished Loading Asset Registry."));
@@ -85,16 +174,16 @@ bool init_ue4_project::load_all_blueprint() {
 }
 
 bool init_ue4_project::build_all_blueprint() {
-  for (auto &&i : blueprint_list) {
+  for (auto&& i : blueprint_list) {
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
     FString const AssetPath = i.GetObjectPathString();
 #elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || \
     (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
-    FString const AssetPath                     = i.ObjectPath.ToString();
+    FString const AssetPath = i.ObjectPath.ToString();
 #endif
     UE_LOG(LogTemp, Log, TEXT("Loading and Compiling: '%s'..."), *AssetPath);
 
-    UBlueprint *l_b = Cast<UBlueprint>(
+    UBlueprint* l_b = Cast<UBlueprint>(
         StaticLoadObject(i.GetClass(), nullptr, *AssetPath, nullptr, LOAD_NoWarn | LOAD_DisableCompileOnLoad)
     );
 
@@ -106,17 +195,18 @@ bool init_ue4_project::build_all_blueprint() {
   return true;
 }
 
-bool init_ue4_project::create_level(const FString &in_path) {
+bool init_ue4_project::create_level(const FString& in_path) {
   p_save_level_path = in_path;
-  auto &l_ass_tool  = FModuleManager::Get()
-                         .LoadModuleChecked<FAssetToolsModule>("AssetTools")
-                         .Get();
+  auto& l_ass_tool  = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
   UE_LOG(LogTemp, Log, TEXT("关卡路径 %s"), *(FPaths::GetPath(in_path) / FPaths::GetBaseFilename(in_path)));
   if (!FPackageName::DoesPackageExist(in_path)) {
     for (TObjectIterator<UClass> it{}; it; ++it) {
       if (it->IsChildOf(UFactory::StaticClass())) {
         if (it->GetName() == "LevelSequenceFactoryNew") {
-          p_level_ = l_ass_tool.CreateAsset(FPaths::GetBaseFilename(in_path), FPaths::GetPath(in_path), ULevelSequence::StaticClass(), it->GetDefaultObject<UFactory>());
+          p_level_ = l_ass_tool.CreateAsset(
+              FPaths::GetBaseFilename(in_path), FPaths::GetPath(in_path), ULevelSequence::StaticClass(),
+              it->GetDefaultObject<UFactory>()
+          );
         }
       }
     }
@@ -124,16 +214,13 @@ bool init_ue4_project::create_level(const FString &in_path) {
     p_level_ = LoadObject<ULevelSequence>(nullptr, *in_path);
   }
 
-  if (p_level_ != nullptr)
-    p_save_level_path = p_level_->GetPathName();
+  if (p_level_ != nullptr) p_save_level_path = p_level_->GetPathName();
 
   return p_level_ != nullptr;
 }
-bool init_ue4_project::create_world(const FString &in_path) {
+bool init_ue4_project::create_world(const FString& in_path) {
   p_save_world_path = in_path;
-  auto &l_ass_tool  = FModuleManager::Get()
-                         .LoadModuleChecked<FAssetToolsModule>("AssetTools")
-                         .Get();
+  auto& l_ass_tool  = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
   UE_LOG(LogTemp, Log, TEXT("世界路径 %s"), *(FPaths::GetPath(in_path) / FPaths::GetBaseFilename(in_path)));
 
   if (!FPackageName::DoesPackageExist(in_path)) {
@@ -144,20 +231,19 @@ bool init_ue4_project::create_world(const FString &in_path) {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
-    ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
+    ULevelEditorSubsystem* LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
     LevelEditorSubsystem->LoadLevel(in_path);
 #endif
   } else {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
-    ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
+    ULevelEditorSubsystem* LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
     LevelEditorSubsystem->LoadLevel(in_path);
 #endif
     p_world_ = GEditor->GetEditorWorldContext().World();
   }
-  if (p_world_ != nullptr)
-    p_save_world_path = p_world_->GetPathName();
+  if (p_world_ != nullptr) p_save_world_path = p_world_->GetPathName();
 
   return p_world_ != nullptr;
 }
@@ -167,8 +253,7 @@ bool init_ue4_project::set_level_info(int32 in_start, int32 in_end) {
   end_frame   = in_end;
 
   auto l_eve  = CastChecked<ULevelSequence>(p_level_);
-  if (l_eve->GetMovieScene()->GetCameraCutTrack() != nullptr)
-    return true;
+  if (l_eve->GetMovieScene()->GetCameraCutTrack() != nullptr) return true;
 
   l_eve->GetMovieScene()->SetDisplayRate(FFrameRate{25, 1});
   l_eve->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{25, 1});
@@ -177,13 +262,11 @@ bool init_ue4_project::set_level_info(int32 in_start, int32 in_end) {
   /// 设置范围
   l_eve->GetMovieScene()->SetWorkingRange((in_start - 10) / 25, (in_end + 10) / 25);
   l_eve->GetMovieScene()->SetViewRange((in_start - 10) / 25, (in_end + 10) / 25);
-  l_eve->GetMovieScene()->SetPlaybackRange(
-      TRange<FFrameNumber>{in_start, in_end}, true
-  );
+  l_eve->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{in_start, in_end}, true);
   l_eve->Modify();
   // l_eve->GetMovieScene()->FindMasterTrack<>()
 
-  ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
+  ACineCameraActor* l_cam = GWorld->SpawnActor<ACineCameraActor>();
   // GEditor->Bluep;
   // StaticLoadObject
 
@@ -191,18 +274,14 @@ bool init_ue4_project::set_level_info(int32 in_start, int32 in_end) {
    * @brief 使用ue4反射添加相机轨道什么的
    *
    */
-  UDoodleImportUilt::Get()->create_camera(
-      l_eve,
-      l_cam
-  );
+  UDoodleImportUilt::Get()->create_camera(l_eve, l_cam);
 
   // 设置相机属性
-  l_cam->GetCineCameraComponent()->Filmback.SensorHeight = 20.25;
-  l_cam->GetCineCameraComponent()->Filmback.SensorWidth  = 36.0;
-  l_cam->GetCineCameraComponent()->FocusSettings.FocusMethod =
-      ECameraFocusMethod::Disable;
+  l_cam->GetCineCameraComponent()->Filmback.SensorHeight     = 20.25;
+  l_cam->GetCineCameraComponent()->Filmback.SensorWidth      = 36.0;
+  l_cam->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 
-  for (auto &&i : l_eve->MovieScene->GetAllSections()) {
+  for (auto&& i : l_eve->MovieScene->GetAllSections()) {
     i->SetStartFrame(TRangeBound<FFrameNumber>{});
     i->SetEndFrame(TRangeBound<FFrameNumber>{});
     i->SetRange(TRange<FFrameNumber>{in_start, in_end});
@@ -216,8 +295,12 @@ bool init_ue4_project::save() {
   return true;
 }
 void init_ue4_project::tmp() {
-  init_ue4_project{}.import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)");
-  init_ue4_project{}.import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main2.json)");
+  init_ue4_project{}.import_ass_data(
+      R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)"
+  );
+  init_ue4_project{}.import_ass_data(
+      R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main2.json)"
+  );
   // save();
 
   /// test2
@@ -226,8 +309,9 @@ void init_ue4_project::tmp() {
   // create_world(TEXT("/Game/tmp/1/world_"));
   // create_level(TEXT("/Game/tmp/1/level_"));
   // set_level_info(1001, 1096);
-  // auto l_load_sk = LoadObject<UAnimSequence>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP029_SC008_AN_Ch001D_Rig_LX_1001-1096"));
-  // auto l_load_geo = LoadObject<UGeometryCache>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP053_SC056_AN_Ch115A_Rig_jfm_1000-1119"));
+  // auto l_load_sk = LoadObject<UAnimSequence>(p_level_,
+  // TEXT("/Game/tmp/1/ch_/RJ_EP029_SC008_AN_Ch001D_Rig_LX_1001-1096")); auto l_load_geo =
+  // LoadObject<UGeometryCache>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP053_SC056_AN_Ch115A_Rig_jfm_1000-1119"));
   // TArray<UAnimSequence *> l_load_sks{};
   // l_load_sks.Add(l_load_sk);
   // obj_add_level(l_load_sks);
@@ -237,15 +321,14 @@ void init_ue4_project::tmp() {
   // camera_fbx_to_level(TEXT("D:/Autodesk/RJ_EP029_SC008_AN_camera_1001-1096.fbx"));
 }
 
-bool init_ue4_project::import_ass_data(const FString &in_path) {
+bool init_ue4_project::import_ass_data(const FString& in_path) {
   /// 加载蓝图
   load_all_blueprint();
   build_all_blueprint();
 
-  if (!FPaths::FileExists(in_path))
-    return false;
+  if (!FPaths::FileExists(in_path)) return false;
 
-  TArray<UAssetImportTask *> ImportDataList{};
+  TArray<UAssetImportTask*> ImportDataList{};
 
   {  /// 解码导入的json数据
      // TArray<FDoodleAssetImportData> import_setting_list;
@@ -322,14 +405,14 @@ bool init_ue4_project::import_ass_data(const FString &in_path) {
   return true;
 }
 
-bool init_ue4_project::obj_add_level(const TArray<UGeometryCache *> in_obj) {
+bool init_ue4_project::obj_add_level(const TArray<UGeometryCache*> in_obj) {
   check(p_level_);
 
-  auto *l_eve  = CastChecked<ULevelSequence>(p_level_);
-  auto *l_tool = UDoodleImportUilt::Get();
-  for (auto &i : in_obj) {
-    AGeometryCacheActor *l_actor   = GWorld->SpawnActor<AGeometryCacheActor>();
-    UGeometryCacheComponent *l_com = l_actor->GetGeometryCacheComponent();
+  auto* l_eve  = CastChecked<ULevelSequence>(p_level_);
+  auto* l_tool = UDoodleImportUilt::Get();
+  for (auto& i : in_obj) {
+    AGeometryCacheActor* l_actor   = GWorld->SpawnActor<AGeometryCacheActor>();
+    UGeometryCacheComponent* l_com = l_actor->GetGeometryCacheComponent();
     l_com->SetGeometryCache(i);
     auto l_task = l_tool->add_geo_cache_scene(l_eve, l_actor);
     if (l_task) {
@@ -343,15 +426,15 @@ bool init_ue4_project::obj_add_level(const TArray<UGeometryCache *> in_obj) {
 
   return false;
 }
-bool init_ue4_project::obj_add_level(const TArray<UAnimSequence *> in_obj) {
+bool init_ue4_project::obj_add_level(const TArray<UAnimSequence*> in_obj) {
   check(p_level_);
 
-  auto *l_eve  = CastChecked<ULevelSequence>(p_level_);
-  auto *l_tool = UDoodleImportUilt::Get();
-  for (auto &i : in_obj) {
-    ASkeletalMeshActor *l_actor   = GWorld->SpawnActor<ASkeletalMeshActor>();
-    USkeletalMeshComponent *l_com = l_actor->GetSkeletalMeshComponent();
-    USkeleton *l_sk               = i->GetSkeleton();
+  auto* l_eve  = CastChecked<ULevelSequence>(p_level_);
+  auto* l_tool = UDoodleImportUilt::Get();
+  for (auto& i : in_obj) {
+    ASkeletalMeshActor* l_actor   = GWorld->SpawnActor<ASkeletalMeshActor>();
+    USkeletalMeshComponent* l_com = l_actor->GetSkeletalMeshComponent();
+    USkeleton* l_sk               = i->GetSkeleton();
     auto l_sk_mesh_path           = l_sk->GetPathName().Replace(TEXT("_Skeleton"), TEXT(""));
     auto l_sk_mesh                = LoadObject<USkeletalMesh>(i, *l_sk_mesh_path);
     if (l_sk_mesh) {
@@ -371,13 +454,13 @@ bool init_ue4_project::obj_add_level(const TArray<UAnimSequence *> in_obj) {
   return false;
 }
 
-bool init_ue4_project::has_obj(const UObject *in_obj) {
+bool init_ue4_project::has_obj(const UObject* in_obj) {
   check(p_level_);
 
-  auto *l_eve  = CastChecked<ULevelSequence>(p_level_);
-  auto *l_move = l_eve->GetMovieScene();
+  auto* l_eve  = CastChecked<ULevelSequence>(p_level_);
+  auto* l_move = l_eve->GetMovieScene();
   for (auto i = 0; i < l_move->GetSpawnableCount(); i++) {
-    FMovieSceneSpawnable &l_f = l_move->GetSpawnable(i);
+    FMovieSceneSpawnable& l_f = l_move->GetSpawnable(i);
     if (l_f.GetObjectTemplate()->GetPathName() == in_obj->GetPathName()) {
       return true;
     }
@@ -385,11 +468,11 @@ bool init_ue4_project::has_obj(const UObject *in_obj) {
   return false;
 }
 
-bool init_ue4_project::camera_fbx_to_level(const FString &in_fbx_path) {
+bool init_ue4_project::camera_fbx_to_level(const FString& in_fbx_path) {
   check(p_level_);
 
-  auto *l_eve  = CastChecked<ULevelSequence>(p_level_);
-  auto *l_move = l_eve->GetMovieScene();
+  auto* l_eve  = CastChecked<ULevelSequence>(p_level_);
+  auto* l_move = l_eve->GetMovieScene();
   FGuid l_cam_guid{};
   for (auto i = 0; i < l_move->GetSpawnableCount(); i++) {
     if (l_move->GetSpawnable(i).GetObjectTemplate()->GetClass()->IsChildOf(ACameraActor::StaticClass())) {
@@ -406,7 +489,7 @@ bool init_ue4_project::camera_fbx_to_level(const FString &in_fbx_path) {
   }
 
   if (l_cam_guid.IsValid()) {
-    auto *l_setting                   = NewObject<UMovieSceneUserImportFBXSettings>(p_world_);
+    auto* l_setting                   = NewObject<UMovieSceneUserImportFBXSettings>(p_world_);
     l_setting->bMatchByNameOnly       = false;
     l_setting->bForceFrontXAxis       = false;
     l_setting->bConvertSceneUnit      = true;
@@ -417,11 +500,7 @@ bool init_ue4_project::camera_fbx_to_level(const FString &in_fbx_path) {
     l_setting->ReduceKeysTolerance    = 0;
 
     UDoodleImportUiltEditor::Get()->add_camera_fbx_scene(
-        Cast<UWorld>(p_world_),
-        l_eve,
-        l_setting,
-        in_fbx_path,
-        l_cam_guid
+        Cast<UWorld>(p_world_), l_eve, l_setting, in_fbx_path, l_cam_guid
     );
   }
 
@@ -429,3 +508,49 @@ bool init_ue4_project::camera_fbx_to_level(const FString &in_fbx_path) {
   // UnFbx::FFbxImporter *FbxImporter = UnFbx::FFbxImporter::GetInstance();
 }
 }  // namespace doodle
+
+void FDoodleCreateLevel::ImportSkeletalMesh(const FString& InFbxpath) {}
+
+void FDoodleCreateLevel::ImportGeometryCache(const FString& InAbcPath) {}
+
+void FDoodleCreateLevel::ImportCamera(const FString& InFbxpath) {
+  UDoodleFbxCameraImport_1* L_FbxCameraImport = NewObject<UDoodleFbxCameraImport_1>();
+  L_FbxCameraImport->ImportPath               = InFbxpath;
+  L_FbxCameraImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), "Lig");
+}
+
+namespace {
+bool IsCamera(UnFbx::FFbxImporter* InFbx) {
+  TArray<fbxsdk::FbxCamera*> L_Cameras{};
+  MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
+  return !L_Cameras.IsEmpty();
+}
+}  // namespace
+
+void FDoodleCreateLevel::ImportFile(const FString& InFile) {
+  if (!FPaths::FileExists(InFile)) {
+    return;
+  }
+
+  FString l_ext = FPaths::GetExtension(InFile, true);
+
+  if (l_ext == TEXT(".abc")) {
+    UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
+    L_FbxImporter->ClearAllCaches();
+    L_FbxImporter->ImportFromFile(*InFile, FPaths::GetExtension(InFile));
+
+    if (IsCamera(L_FbxImporter)) {
+      ImportCamera(InFile);
+    } else {
+      ImportSkeletalMesh(InFile);
+    }
+  } else if (l_ext == TEXT(".fbx")) {
+    ImportGeometryCache(InFile);
+  }
+}
+
+void FDoodleCreateLevel::ImportFiles(const TArray<FString>& InFiles) {
+  for (auto&& i : InFiles) {
+    ImportFile(i);
+  }
+}
