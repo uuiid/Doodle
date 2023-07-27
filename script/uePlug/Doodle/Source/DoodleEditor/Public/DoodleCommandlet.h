@@ -2,9 +2,7 @@
 
 #include "Commandlets/Commandlet.h"
 #include "CoreMinimal.h"
-#include "DoodleAssetImportData.h"
 
-///
 ///
 #include "DoodleCommandlet.generated.h"
 
@@ -12,32 +10,9 @@ class UFactory;
 class FJsonObject;
 class UFbxFactory;
 
-// USTRUCT()
-// struct FDoodleEpisodes
-// {
-//   GENERATED_BODY()
-// public:
-//   uint64 eps;
-// };
-// USTRUCT()
-// struct FDoodleShot
-// {
-//   GENERATED_BODY()
-// public:
-//   uint64 shot;
-//   TOptional<FString> shot_ab;
-// };
-// USTRUCT()
-// struct FDoodleSeason
-// {
-//   GENERATED_BODY()
-// public:
-//   std::int32_t season;
-// };
-
 UCLASS()
 class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
-  GENERATED_UCLASS_BODY()
+  GENERATED_BODY()
 
   /** Parsed commandline tokens */
   TArray<FString> CmdLineTokens;

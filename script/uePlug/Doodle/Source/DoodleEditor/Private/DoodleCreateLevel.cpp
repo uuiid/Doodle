@@ -31,8 +31,7 @@
 
 /// 自动导入类需要
 #include "AssetImportTask.h"
-/// 导入我们的自定义数据
-#include "DoodleAssetImportData.h"
+
 /// 检查包名称存在
 #include "Misc/PackageName.h"
 
@@ -249,76 +248,76 @@ bool init_ue4_project::import_ass_data(const FString &in_path) {
   TArray<UAssetImportTask *> ImportDataList{};
 
   {  /// 解码导入的json数据
-    TArray<FDoodleAssetImportData> import_setting_list;
-    FString k_json_str;
-    FDoodleAssetImportDataGroup l_data_list{};
-    if (FFileHelper::LoadFileToString(k_json_str, *in_path)) {
-      UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
-      UE_LOG(LogTemp, Log, TEXT("开始测试 数组"));
-      if (FJsonObjectConverter::JsonObjectStringToUStruct<
-              FDoodleAssetImportDataGroup>(k_json_str, &l_data_list, CPF_None, CPF_None)) {
-        import_setting_list = l_data_list.groups;
-      }
-    }
-    UE_LOG(LogTemp, Log, TEXT("开始直接读取字符串作为json"));
-    if (FJsonObjectConverter::JsonObjectStringToUStruct<
-            FDoodleAssetImportDataGroup>(in_path, &l_data_list, CPF_None, CPF_None)) {
-      import_setting_list = l_data_list.groups;
-    }
+     // TArray<FDoodleAssetImportData> import_setting_list;
+     // FString k_json_str;
+     // FDoodleAssetImportDataGroup l_data_list{};
+     // if (FFileHelper::LoadFileToString(k_json_str, *in_path)) {
+     //   UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
+     //   UE_LOG(LogTemp, Log, TEXT("开始测试 数组"));
+     //   if (FJsonObjectConverter::JsonObjectStringToUStruct<
+     //           FDoodleAssetImportDataGroup>(k_json_str, &l_data_list, CPF_None, CPF_None)) {
+     //     import_setting_list = l_data_list.groups;
+     //   }
+     // }
+     // UE_LOG(LogTemp, Log, TEXT("开始直接读取字符串作为json"));
+     // if (FJsonObjectConverter::JsonObjectStringToUStruct<
+     //         FDoodleAssetImportDataGroup>(in_path, &l_data_list, CPF_None, CPF_None)) {
+     //   import_setting_list = l_data_list.groups;
+     // }
 
-    if (l_data_list.groups.Num() == 0) {
-      return false;
-    }
+    // if (l_data_list.groups.Num() == 0) {
+    //   return false;
+    // }
 
-    create_world(l_data_list.world_path);
-    create_level(l_data_list.level_path);
-    set_level_info(l_data_list.start_frame, l_data_list.end_frame);
+    // create_world(l_data_list.world_path);
+    // create_level(l_data_list.level_path);
+    // set_level_info(l_data_list.start_frame, l_data_list.end_frame);
 
-    for (auto &i : import_setting_list) {
-      UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
-      switch (i.import_type) {
-        case EDoodleImportType::abc:
-        case EDoodleImportType::fbx:
-          ImportDataList.Add(i.get_input(GetTransientPackage()));
-          break;
-        case EDoodleImportType::camera:
-          camera_fbx_to_level(i.import_file_path);
-          break;
-        default:
-          break;
-      }
-    }
+    // for (auto &i : import_setting_list) {
+    //   UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
+    //   switch (i.import_type) {
+    //     case EDoodleImportType::abc:
+    //     case EDoodleImportType::fbx:
+    //       ImportDataList.Add(i.get_input(GetTransientPackage()));
+    //       break;
+    //     case EDoodleImportType::camera:
+    //       camera_fbx_to_level(i.import_file_path);
+    //       break;
+    //     default:
+    //       break;
+    //   }
+    // }
 
-    UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
-    FAssetToolsModule &AssetToolsModule =
-        FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-    TArray<FString> import_Paths{};
-    AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
-    for (auto &ImportData : ImportDataList) {
-      // if (ImportData->Result.Num() > 0 || ImportData->ImportedObjectPaths.Num() > 0) {
-      //   for (FString &i : ImportData->ImportedObjectPaths) {
-      //     FString pr{i};
-      //     import_Paths.AddUnique(i);
-      //     UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *pr);
-      //   }
-      // } else {
-      //   UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
-      // }
-    }
-    UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+    // UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
+    // FAssetToolsModule &AssetToolsModule =
+    //     FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+    // TArray<FString> import_Paths{};
+    // AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
+    // for (auto &ImportData : ImportDataList) {
+    //   // if (ImportData->Result.Num() > 0 || ImportData->ImportedObjectPaths.Num() > 0) {
+    //   //   for (FString &i : ImportData->ImportedObjectPaths) {
+    //   //     FString pr{i};
+    //   //     import_Paths.AddUnique(i);
+    //   //     UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *pr);
+    //   //   }
+    //   // } else {
+    //   //   UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
+    //   // }
+    // }
+    // UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
-    TArray<UObject *> import_obj{};
-    for (FString &i : import_Paths) {
-      auto l_load = LoadObject<UObject>(p_level_, *i);
-      if (l_load != nullptr)
-        import_obj.Add(l_load);
-    }
+    // TArray<UObject *> import_obj{};
+    // for (FString &i : import_Paths) {
+    //   auto l_load = LoadObject<UObject>(p_level_, *i);
+    //   if (l_load != nullptr)
+    //     import_obj.Add(l_load);
+    // }
 
-    TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj);
-    TArray<UAnimSequence *> l_anim = this->filter_by_type<UAnimSequence>(import_obj);
-    this->obj_add_level(l_geo);
-    this->obj_add_level(l_anim);
-    this->save();
+    // TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj);
+    // TArray<UAnimSequence *> l_anim = this->filter_by_type<UAnimSequence>(import_obj);
+    // this->obj_add_level(l_geo);
+    // this->obj_add_level(l_anim);
+    // this->save();
   }
   return true;
 }
