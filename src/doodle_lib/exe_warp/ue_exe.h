@@ -34,21 +34,20 @@ class ue_exe {
       const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
   );
 
-  std::string arg_to_string(const arg_render_queue &in_arg) const;
-  std::string arg_to_string(const arg_import_file &in_arg) const;
-
  public:
   struct arg_render_queue {
     FSys::path map_path_{};
     FSys::path queue_path_{};
 
     std::pair<std::int32_t, std::int32_t> image_size_{};
+    std::string to_string() const;
   };
 
   struct arg_import_file {
     FSys::path queue_path_{};
 
     std::vector<FSys::path> import_file_list_{};
+    std::string to_string() const;
   };
 
   ue_exe() = default;
@@ -58,7 +57,7 @@ class ue_exe {
     auto l_msg_ref = in_handle.get_or_emplace<process_message>();
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
-        [this, l_msg_ref, l_arg = arg_to_string(in_arg), in_handle](auto &&in_completion_handler) {
+        [this, l_msg_ref, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {
           auto l_fun =
               std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
           this->queue_up(in_handle, l_arg, l_fun);

@@ -156,7 +156,6 @@ void ue_exe::queue_up(
   notify_run();
 }
 
-std::string ue_exe::arg_to_string(const arg_render_queue &in_arg) const { return {}; }
-std::string ue_exe::arg_to_string(const doodle::ue_exe::arg_import_file &in_arg) const { return {}; }
-
+std::string ue_exe::arg_render_queue::to_string() const { return std::string(); }
+std::string ue_exe::arg_import_file::to_string() const { return std::string(); }
 }  // namespace doodle
