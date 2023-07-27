@@ -294,6 +294,8 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
   TArray<fbxsdk::FbxNode*> L_Fbx_Node_list{};
   FString L_NameSpace{};
   auto* L_ImportFbx = UnFbx::FFbxImporter::GetInstance();
+  L_ImportFbx->ClearAllCaches();
+  L_ImportFbx->ImportFromFile(*ImportPath, FPaths::GetExtension(ImportPath));
   FScopedSlowTask L_Task_Scoped2{
       (float_t)L_ImportFbx->Scene->GetNodeCount() * 2, LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
 
@@ -334,6 +336,7 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
       return true;
     }
   }
+  return false;
 }
 
 void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
@@ -375,6 +378,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
 
   // 已经打开的fbx, 直接获取, 是一个单例
   UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
+  L_FbxImporter->ImportFromFile(*ImportPath, FPaths::GetExtension(ImportPath));
   fbxsdk::FbxTimeSpan L_Fbx_Time     = L_FbxImporter->GetAnimationTimeSpan(
       L_FbxImporter->Scene->GetRootNode(), L_FbxImporter->Scene->GetCurrentAnimationStack()
   );
