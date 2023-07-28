@@ -13,8 +13,10 @@
 
 // 批量导入
 #include "AssetImportTask.h"
+#include "AssetRegistry/IAssetRegistry.h"
 #include "AssetToolsModule.h"
 #include "DesktopPlatformModule.h"
+#include "Doodle/DoodleImportFbxUI.h"
 #include "Factories/FbxFactory.h"
 #include "Factories/FbxImportUI.h"
 #include "Factories/FbxSkeletalMeshImportData.h"
@@ -25,8 +27,6 @@
 #include "ObjectTools.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
-#include "Doodle/DoodleImportFbxUI.h"
-
 /// 设置使用
 #include "DoodleEditorSetting.h"
 // 重命名资产
@@ -82,7 +82,7 @@ void print_test(USkeletalMesh *In_Obj) {
 
 void DoodleCopyMat::Construct(const FArguments &Arg) {
   // 这个是ue界面的创建方法
-
+  /// clang-format off
   ChildSlot
       [SNew(SHorizontalBox) +
        SHorizontalBox::Slot()
@@ -149,46 +149,32 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                                                              TEXT("选中骨骼物体,"
                                                                   "会将材料名称和骨骼物体的插槽名称统一")
                                                          ); })] +
-
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(
-               FMargin{1.f, 1.f}
-           )[SNew(SCheckBox).OnCheckStateChanged_Lambda(
-               [this](const ECheckBoxState &in) /*-> FReply*/
-               {
-                 this->bEnableSeparateTranslucency =
-                     in == ECheckBoxState::Checked;
-               }
-           )] +
+           .Padding(FMargin(1.f, 1.f))[SNew(SButton)
+                                           .OnClicked_Lambda([this]() {
+                                             FindErrorMaterials();
 
+                                             return FReply::Handled();
+                                           })  // 批量重命名
+                                               [SNew(STextBlock).Text(FText::FromString(TEXT("查找超限材质")))]
+                                           .ToolTipText_Lambda([=]() -> FText {
+                                             return FText::FromString(TEXT("查找贴图使用数量大于16个的材质"));
+                                           })] +
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
            .Padding(FMargin{1.f, 1.f})
                [SNew(SButton)
                     .OnClicked_Lambda([this]() -> FReply {
-                      FContentBrowserModule &contentBrowserModle =
-                          FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
-                              "ContentBrowser"
-                          );
-                      TArray<FAssetData> selectedAss;
-                      contentBrowserModle.Get().GetSelectedAssets(selectedAss);
-                      for (auto &&item : selectedAss) {
-                        UObject *loadObj = item.GetAsset();
-                        if (loadObj == nullptr)
-                          continue;
-                        if (USkeletalMesh *l_tex = Cast<USkeletalMesh>(loadObj)) {
-                          print_test(l_tex);
-                        }
-                      }
 
                       return FReply::Handled();
                     })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
                     .ToolTipText_Lambda([]() -> FText { return FText::FromString(
                                                             TEXT("测试使用")
                                                         ); })]];
+  /// clang-format on
 }
 
 void DoodleCopyMat::AddReferencedObjects(FReferenceCollector &collector) {
@@ -292,47 +278,6 @@ FReply DoodleCopyMat::CopyMateral() {
   return FReply::Handled();
 }
 
-FReply DoodleCopyMat::BathImport() {
-  const UDoodleEditorSetting *l_setting = GetDefault<UDoodleEditorSetting>();
-  if (!FPaths::FileExists(l_setting->DoodleExePath)) {
-    FText l_t = FText::FromString(TEXT("错误"));
-    FMessageDialog::Open(EAppMsgType::OkCancel, FText::FromString(TEXT("没有找到DoodleExe.exe运行文件,请在设置中输入正确的路径")), &l_t);
-    return FReply::Handled();
-  }
-
-  FString l_temp_dir  = FPaths::Combine(FPaths::ProjectSavedDir(), FPaths::CreateTempFilename(TEXT("doodle"), TEXT("import"), TEXT("")));
-  FString l_prj       = FPaths::ConvertRelativePathToFull(FPaths::GetProjectFilePath());
-  FString l_abs_path  = FPaths::ConvertRelativePathToFull(l_temp_dir);
-  FString l_com       = FString::Format(TEXT(R"(--ue4outpath="{0}" --ue4Project="{1}")"), TArray<FStringFormatArg>{FStringFormatArg{l_abs_path}, FStringFormatArg{l_prj}});
-  FString l_start_dir = FPaths::GetPath(l_setting->DoodleExePath);
-  FProcHandle l_h     = FPlatformProcess::CreateProc(
-      *l_setting->DoodleExePath,
-      *l_com,
-      true,
-      false,
-      false,
-      nullptr,
-      0,
-      *l_start_dir,
-      nullptr,
-      nullptr
-  );
-  FPlatformProcess::WaitForProc(l_h);
-
-  IFileManager::Get().IterateDirectory(
-      *l_abs_path,
-      [](const TCHAR *in_path, bool in_) -> bool {
-        doodle::init_ue4_project l_import_tool{};
-        FString l_path{in_path};
-        if (FPaths::FileExists(l_path) && FPaths::GetExtension(l_path, true) == TEXT(".json_doodle")) {
-          l_import_tool.import_ass_data(l_path);
-        }
-        return true;
-      }
-  );
-
-  return FReply::Handled();
-}
 
 FReply DoodleCopyMat::BathReameAss() {
   FContentBrowserModule &contentBrowserModle =
@@ -386,6 +331,39 @@ FReply DoodleCopyMat::BathReameAss() {
     }
   }
   return FReply::Handled();
+}
+
+void DoodleCopyMat::FindErrorMaterials() {
+  FARFilter LFilter{};
+  LFilter.bIncludeOnlyOnDiskAssets = false;
+  LFilter.bRecursivePaths          = true;
+  LFilter.bRecursiveClasses        = true;
+  LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
+
+  TArray<UObject *> ErrorMaterials{};
+
+  FString L_MatName{TEXT("材质 :")};
+  IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData &InAss) -> bool {
+    UMaterial *L_Material = Cast<UMaterial>(InAss.GetAsset());
+    if (L_Material) {
+      TArray<FMaterialParameterInfo> L_ParameterInfo{};
+      TArray<FGuid> L_ParameterIds{};
+      L_Material->GetAllTextureParameterInfo(L_ParameterInfo, L_ParameterIds);
+      if (L_ParameterIds.Num() > 16 && L_ParameterInfo.Num() > 16) {
+        ErrorMaterials.Add(L_Material);
+        L_MatName += L_Material->GetPathName() + TEXT(";\n");
+      }
+    }
+    return true;
+  });
+  if (!ErrorMaterials.IsEmpty() && GEngine) {
+    L_MatName += TEXT("会在渲染中出现多次编译的情况");
+    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(L_MatName));
+    FModuleManager::Get()
+        .LoadModuleChecked<FContentBrowserModule>("ContentBrowser")
+        .Get()
+        .SyncBrowserToAssets(ErrorMaterials);
+  }
 }
 
 FReply DoodleCopyMat::set_marteral_deep() {

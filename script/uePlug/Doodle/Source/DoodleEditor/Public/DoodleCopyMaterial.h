@@ -20,6 +20,8 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
   FReply BathImport();
   FReply BathReameAss();
 
+  void FindErrorMaterials();
+
   bool bEnableSeparateTranslucency;
   FReply set_marteral_deep();
 
