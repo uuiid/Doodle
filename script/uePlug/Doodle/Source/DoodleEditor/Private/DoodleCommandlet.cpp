@@ -54,12 +54,12 @@ static bool SavePackage(UPackage* Package, const FString& PackageFilename) {
 //   }
 // }
 
-void UDoodleAssCreateCommandlet::save_temp_json(const FString& out_path) { return; }
-
 int32 UDoodleAssCreateCommandlet::Main(const FString& Params) {
   UE_LOG(LogTemp, Log, TEXT("开始解析参数"));
   if (!parse_params(Params)) {
-    save_temp_json(FPaths::ProjectDir());
+    FDoodleCreateLevel L_CreateLevel{};
+    L_CreateLevel.ImportFiles({});
+
     return 0;
   }
 

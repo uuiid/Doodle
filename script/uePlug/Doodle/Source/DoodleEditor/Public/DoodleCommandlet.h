@@ -35,7 +35,6 @@ class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
 
  private:
   bool parse_params(const FString &in_params);
-  void setting_import_fbx_is_skobj(UFbxFactory *k_fbx_f);
 
   // void ClearDirtyPackages();
   // static bool SavePackage(UPackage* Package, const FString& PackageFilename)
