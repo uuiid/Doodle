@@ -558,10 +558,10 @@ class SDoodleImportUiItem : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoo
       return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportPath));
     } else if (ColumnName == TEXT("Time_Ranges")) {
       // clang-format off
-			return SNew(STextBlock)
-				.Text_Lambda([this]() -> FText {
-				return FText::FromString(FString::Printf(TEXT("%d - %d"), ItemShow->StartTime, ItemShow->EndTime));
-					})
+            return SNew(STextBlock)
+                .Text_Lambda([this]() -> FText {
+                return FText::FromString(FString::Printf(TEXT("%d - %d"), ItemShow->StartTime, ItemShow->EndTime));
+                    })
           // clang-format on
           ;
     } else if (ColumnName == TEXT("Import_Path_Dir")) {
@@ -576,38 +576,38 @@ class SDoodleImportUiItem : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoo
 
     else if (ColumnName == TEXT("Skeleton_Path") && ItemShowFBX) {
       // clang-format off
-			return SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.Padding(1.f)
-				.HAlign(HAlign_Left)
-				[
-					SNew(STextBlock)
-					.Text_Lambda([this]() -> FText {
-				return FText::FromString(FString::Printf(TEXT("%s"), *(ItemShowFBX->SkinObj != nullptr ?
-					ItemShowFBX->SkinObj->GetPackage()->GetPathName() : FString{ TEXT("") })));
-						})
-				]
-			+ SHorizontalBox::Slot()///  
-				.AutoWidth()
-				.HAlign(HAlign_Right)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()/// ⬅️, 将选中的给到属性上
-				.HAlign(HAlign_Right)
-				[
-					PropertyCustomizationHelpers::MakeUseSelectedButton(FSimpleDelegate::CreateRaw(this, &SDoodleImportUiItem::DoodleUseSelected))/// 委托转发
-				]
-			+ SHorizontalBox::Slot()/// 🔍 将属性显示在资产编辑器中
-				.HAlign(HAlign_Right)
-				[
-					PropertyCustomizationHelpers::MakeBrowseButton(FSimpleDelegate::CreateRaw(this, &SDoodleImportUiItem::DoodleBrowse))/// 委托转发
-				]
-			+ SHorizontalBox::Slot()/// 重置, 将属性给空
-				.HAlign(HAlign_Right)
-				[
-					PropertyCustomizationHelpers::MakeResetButton(FSimpleDelegate::CreateRaw(this, &SDoodleImportUiItem::DoodleReset))/// 委托转发
-				]
-				]
+            return SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                .Padding(1.f)
+                .HAlign(HAlign_Left)
+                [
+                    SNew(STextBlock)
+                    .Text_Lambda([this]() -> FText {
+                return FText::FromString(FString::Printf(TEXT("%s"), *(ItemShowFBX->SkinObj != nullptr ?
+                    ItemShowFBX->SkinObj->GetPackage()->GetPathName() : FString{ TEXT("") })));
+                        })
+                ]
+            + SHorizontalBox::Slot()///  
+                .AutoWidth()
+                .HAlign(HAlign_Right)
+                [
+                    SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()/// ⬅️, 将选中的给到属性上
+                .HAlign(HAlign_Right)
+                [
+                    PropertyCustomizationHelpers::MakeUseSelectedButton(FSimpleDelegate::CreateRaw(this, &SDoodleImportUiItem::DoodleUseSelected))/// 委托转发
+                ]
+            + SHorizontalBox::Slot()/// 🔍 将属性显示在资产编辑器中
+                .HAlign(HAlign_Right)
+                [
+                    PropertyCustomizationHelpers::MakeBrowseButton(FSimpleDelegate::CreateRaw(this, &SDoodleImportUiItem::DoodleBrowse))/// 委托转发
+                ]
+            + SHorizontalBox::Slot()/// 重置, 将属性给空
+                .HAlign(HAlign_Right)
+                [
+                    PropertyCustomizationHelpers::MakeResetButton(FSimpleDelegate::CreateRaw(this, &SDoodleImportUiItem::DoodleReset))/// 委托转发
+                ]
+                ]
           // clang-format on
           ;
     } else {
@@ -658,227 +658,227 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
   Path_Suffix = *L_DepType[0];
 
   // clang-format off
-	ChildSlot
-		[
-			SNew(SBorder)
-			.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 0.0f))
-		.BorderImage(new FSlateBrush())
-		.HAlign(HAlign_Fill)
-		[
-			SNew(SVerticalBox)
-			// 扫描文件目录槽
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(2.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("BinaryPathLabel", "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中.\n同时也会根据拖入的相机以及各种文件生成关卡"))
-		.ColorAndOpacity(FSlateColor{ FLinearColor{1,0,0,1} })
-		.Font(Font)
-		]
-	// 前缀槽
-	+ SVerticalBox::Slot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(2.0f)
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("BinaryPathLabel1", "项目缩写"))
-		.Font(Font)
-		]
-	+ SHorizontalBox::Slot()
-		.FillWidth(8.0f)
-		[
-			/// 生成的前缀
-			SNew(SEditableTextBox)
-			.Text_Lambda([this]()-> FText {
-		return FText::FromString(this->Path_Prefix);
-				})
-		.OnTextChanged_Lambda([this](const FText& In_Text) {
-					GenPathPrefix(In_Text.ToString(), Path_Suffix);
-			})
-					.OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) {
-				GenPathPrefix(In_Text.ToString(), Path_Suffix);
-						})
-		]
-		]
-	// 后缀槽
-	+ SVerticalBox::Slot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(2.0f)
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("BinaryPathLabel11", "部门缩写"))
-		.ColorAndOpacity(FSlateColor{ FLinearColor{1,0,0,1} })
-		.Font(Font)
-		]
-	+ SHorizontalBox::Slot()
-		.FillWidth(8.0f)
-		[
-			///  
-			SNew(SComboBox<TSharedPtr<FString>>)
-			.OptionsSource(&L_DepType)
-		.OnSelectionChanged_Lambda(
-			[this](const TSharedPtr<FString>& In, ESelectInfo::Type) {
-				GenPathPrefix(Path_Prefix, *In);
-			})
-		.OnGenerateWidget_Lambda(
-			[this](const TSharedPtr<FString>& In) {
-				return SNew(STextBlock).Text(FText::FromString(*In));
-			})
-				.InitiallySelectedItem(L_DepType[0])
-				[
-					SNew(STextBlock)
-					.Text_Lambda([this]() { return FText::FromString(Path_Suffix); })
-				]
-		]
-		]
+    ChildSlot
+        [
+            SNew(SBorder)
+            .BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 0.0f))
+        .BorderImage(new FSlateBrush())
+        .HAlign(HAlign_Fill)
+        [
+            SNew(SVerticalBox)
+            // 扫描文件目录槽
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+            SNew(STextBlock)
+            .Text(LOCTEXT("BinaryPathLabel", "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中.\n同时也会根据拖入的相机以及各种文件生成关卡"))
+        .ColorAndOpacity(FSlateColor{ FLinearColor{1,0,0,1} })
+        .Font(Font)
+        ]
+    // 前缀槽
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNew(STextBlock)
+            .Text(LOCTEXT("BinaryPathLabel1", "项目缩写"))
+        .Font(Font)
+        ]
+    + SHorizontalBox::Slot()
+        .FillWidth(8.0f)
+        [
+            /// 生成的前缀
+            SNew(SEditableTextBox)
+            .Text_Lambda([this]()-> FText {
+        return FText::FromString(this->Path_Prefix);
+                })
+        .OnTextChanged_Lambda([this](const FText& In_Text) {
+                    GenPathPrefix(In_Text.ToString(), Path_Suffix);
+            })
+                    .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) {
+                GenPathPrefix(In_Text.ToString(), Path_Suffix);
+                        })
+        ]
+        ]
+    // 后缀槽
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNew(STextBlock)
+            .Text(LOCTEXT("BinaryPathLabel11", "部门缩写"))
+        .ColorAndOpacity(FSlateColor{ FLinearColor{1,0,0,1} })
+        .Font(Font)
+        ]
+    + SHorizontalBox::Slot()
+        .FillWidth(8.0f)
+        [
+            ///  
+            SNew(SComboBox<TSharedPtr<FString>>)
+            .OptionsSource(&L_DepType)
+        .OnSelectionChanged_Lambda(
+            [this](const TSharedPtr<FString>& In, ESelectInfo::Type) {
+                GenPathPrefix(Path_Prefix, *In);
+            })
+        .OnGenerateWidget_Lambda(
+            [this](const TSharedPtr<FString>& In) {
+                return SNew(STextBlock).Text(FText::FromString(*In));
+            })
+                .InitiallySelectedItem(L_DepType[0])
+                [
+                    SNew(STextBlock)
+                    .Text_Lambda([this]() { return FText::FromString(Path_Suffix); })
+                ]
+        ]
+        ]
 
-	+ SVerticalBox::Slot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(2.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("importTitle", "导入的fbx 动画文件, 相机, abc文件"))
-		.Font(Font)
-		]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+            SNew(STextBlock)
+            .Text(LOCTEXT("importTitle", "导入的fbx 动画文件, 相机, abc文件"))
+        .Font(Font)
+        ]
 
-	/// 主要的列表小部件(Fbx)
-	+ SVerticalBox::Slot()
-		.FillHeight(3.0f)
-		.VAlign(VAlign_Top)
-		.Padding(2.0f)
-		[
-			SAssignNew(ListImportGui, SListView<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType>)
-			.ItemHeight(80) // 小部件高度
-		.ListItemsSource(&ListImportData)
-		.ScrollbarVisibility(EVisibility::All)
-		.OnGenerateRow_Lambda(// 生成小部件
-			[](SDoodleImportFbxUI::UDoodleBaseImportDataPtrType InItem,
-				const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
-					return SNew(SDoodleImportUiItem, OwnerTable)
-						.ItemShow(InItem);
-			}
-		)
-		.SelectionMode(ESelectionMode::Type::Single) //单选
-				.HeaderRow ///题头元素
-				(
-					SNew(SHeaderRow)
-					+ SHeaderRow::Column(TEXT("Import_File"))
-					.FillWidth(4.0f)
-					[
-						SNew(SBorder)
-						.Padding(5)
-					[
-						SNew(STextBlock)
-						.Text(FText::FromString(TEXT("Import File")))
-					]
-					]
-			+ SHeaderRow::Column(TEXT("Ep_And_Shot"))
-				.FillWidth(1.0f)
-				.DefaultLabel(LOCTEXT("Ep_And_Shot", "集数和镜头"))
+    /// 主要的列表小部件(Fbx)
+    + SVerticalBox::Slot()
+        .FillHeight(3.0f)
+        .VAlign(VAlign_Top)
+        .Padding(2.0f)
+        [
+            SAssignNew(ListImportGui, SListView<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType>)
+            .ItemHeight(80) // 小部件高度
+        .ListItemsSource(&ListImportData)
+        .ScrollbarVisibility(EVisibility::All)
+        .OnGenerateRow_Lambda(// 生成小部件
+            [](SDoodleImportFbxUI::UDoodleBaseImportDataPtrType InItem,
+                const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
+                    return SNew(SDoodleImportUiItem, OwnerTable)
+                        .ItemShow(InItem);
+            }
+        )
+        .SelectionMode(ESelectionMode::Type::Single) //单选
+                .HeaderRow ///题头元素
+                (
+                    SNew(SHeaderRow)
+                    + SHeaderRow::Column(TEXT("Import_File"))
+                    .FillWidth(4.0f)
+                    [
+                        SNew(SBorder)
+                        .Padding(5)
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString(TEXT("Import File")))
+                    ]
+                    ]
+            + SHeaderRow::Column(TEXT("Ep_And_Shot"))
+                .FillWidth(1.0f)
+                .DefaultLabel(LOCTEXT("Ep_And_Shot", "集数和镜头"))
 
-				+ SHeaderRow::Column(TEXT("Time_Ranges"))
-				.FillWidth(1.0f)
-				.DefaultLabel(LOCTEXT("Time Ranges", "时间范围"))
+                + SHeaderRow::Column(TEXT("Time_Ranges"))
+                .FillWidth(1.0f)
+                .DefaultLabel(LOCTEXT("Time Ranges", "时间范围"))
 
-				+ SHeaderRow::Column(TEXT("Skeleton_Path"))
-				.FillWidth(4.0f)
-				.DefaultLabel(LOCTEXT("Skeleton Path", "骨骼路径"))
+                + SHeaderRow::Column(TEXT("Skeleton_Path"))
+                .FillWidth(4.0f)
+                .DefaultLabel(LOCTEXT("Skeleton Path", "骨骼路径"))
 
-				+ SHeaderRow::Column(TEXT("Import_Path_Dir"))
-				.FillWidth(2.0f)
-				.DefaultLabel(LOCTEXT("Import Path Dir", "导入的目标"))
-				)
-		]
+                + SHeaderRow::Column(TEXT("Import_Path_Dir"))
+                .FillWidth(2.0f)
+                .DefaultLabel(LOCTEXT("Import Path Dir", "导入的目标"))
+                )
+        ]
 
-	+ SVerticalBox::Slot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(2.0f)
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("Search USkeleton", "Search USkeleton"))
-		.ToolTipText(LOCTEXT("Search USkeleton Tip", "寻找骨骼"))
-		.OnClicked_Lambda([this]() {
-		FindSK();
-		return FReply::Handled();
-			})
-		]
-	+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("Search USkeleton And Import", "Search USkeleton And Import"))
-		.ToolTipText(LOCTEXT("Search USkeleton Tip2", "寻找骨骼并导入Fbx"))
-		.OnClicked_Lambda([this]() {
-		FindSK();
-		ImportFile();
-		return FReply::Handled();
-			})
-		]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNew(SButton)
+            .Text(LOCTEXT("Search USkeleton", "Search USkeleton"))
+        .ToolTipText(LOCTEXT("Search USkeleton Tip", "寻找骨骼"))
+        .OnClicked_Lambda([this]() {
+        FindSK();
+        return FReply::Handled();
+            })
+        ]
+    + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNew(SButton)
+            .Text(LOCTEXT("Search USkeleton And Import", "Search USkeleton And Import"))
+        .ToolTipText(LOCTEXT("Search USkeleton Tip2", "寻找骨骼并导入Fbx"))
+        .OnClicked_Lambda([this]() {
+        FindSK();
+        ImportFile();
+        return FReply::Handled();
+            })
+        ]
 
-	+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("Clear USkeleton", "Clear USkeleton"))
-		.ToolTipText(LOCTEXT("Clear USkeleton Tip", "清除查找的骨骼"))
-		.OnClicked_Lambda([this]() {
-		for (auto&& i : ListImportData) {
-			if (i->IsA<UDoodleFbxImport_1>()) {
-				Cast<UDoodleFbxImport_1>(i)->SkinObj = nullptr;
-			}
-		}
-		ListImportGui->RebuildList();
-		return FReply::Handled();
-			})
-		]
+    + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNew(SButton)
+            .Text(LOCTEXT("Clear USkeleton", "Clear USkeleton"))
+        .ToolTipText(LOCTEXT("Clear USkeleton Tip", "清除查找的骨骼"))
+        .OnClicked_Lambda([this]() {
+        for (auto&& i : ListImportData) {
+            if (i->IsA<UDoodleFbxImport_1>()) {
+                Cast<UDoodleFbxImport_1>(i)->SkinObj = nullptr;
+            }
+        }
+        ListImportGui->RebuildList();
+        return FReply::Handled();
+            })
+        ]
 
-	+ SHorizontalBox::Slot()
-		.FillWidth(1.0f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("Clear All", "Clear All"))
-		.ToolTipText(LOCTEXT("Clear USkeleton Tip", "清除所有"))
-		.OnClicked_Lambda([this]() {
-		ListImportData.Empty();
-		ListImportGui->RebuildList();
-		return FReply::Handled();
-			})
-		]
-		]
-	+ SVerticalBox::Slot()
-		.AutoHeight()
-		.VAlign(VAlign_Center)
-		.Padding(2.0f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("Search USkeleton Import", "Search USkeleton Direct Import"))
-		.ToolTipText(LOCTEXT("Search USkeleton Tip3", "不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
-		.OnClicked_Lambda([this]() {
-		ImportFile();
-		return FReply::Handled();
-			})
-		]
-		]
+    + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNew(SButton)
+            .Text(LOCTEXT("Clear All", "Clear All"))
+        .ToolTipText(LOCTEXT("Clear USkeleton Tip", "清除所有"))
+        .OnClicked_Lambda([this]() {
+        ListImportData.Empty();
+        ListImportGui->RebuildList();
+        return FReply::Handled();
+            })
+        ]
+        ]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+            SNew(SButton)
+            .Text(LOCTEXT("Search USkeleton Import", "Search USkeleton Direct Import"))
+        .ToolTipText(LOCTEXT("Search USkeleton Tip3", "不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
+        .OnClicked_Lambda([this]() {
+        ImportFile();
+        return FReply::Handled();
+            })
+        ]
+        ]
 
-		];
+        ];
   // clang-format on
 }
 
