@@ -189,7 +189,7 @@ void FDoodleCreateLevel::ImportFile(const FString& InFile) {
   AllSkinObjs   = FDoodleUSkeletonData_1::ListAllSkeletons();
   FString l_ext = FPaths::GetExtension(InFile, true);
 
-  if (l_ext == TEXT(".abc")) {
+  if (l_ext == TEXT(".fbx")) {
     UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
     L_FbxImporter->ClearAllCaches();
     L_FbxImporter->ImportFromFile(*InFile, FPaths::GetExtension(InFile));
@@ -199,7 +199,7 @@ void FDoodleCreateLevel::ImportFile(const FString& InFile) {
     } else {
       ImportSkeletalMesh(InFile);
     }
-  } else if (l_ext == TEXT(".fbx")) {
+  } else if (l_ext == TEXT(".abc")) {
     ImportGeometryCache(InFile);
   }
 }
