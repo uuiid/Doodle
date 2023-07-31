@@ -12,7 +12,7 @@ class UFbxFactory;
 
 UCLASS()
 class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
-  GENERATED_BODY()
+  GENERATED_UCLASS_BODY()
 
   /** Parsed commandline tokens */
   TArray<FString> CmdLineTokens;
@@ -21,15 +21,7 @@ class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
   TArray<FString> CmdLineSwitches;
 
  private:
-  /**
-   *
-   */
-  UPROPERTY()
-  UAutomatedAssetImportData *GlobalImportData;
-
-  /** */
-  UPROPERTY()
-  TArray<UAutomatedAssetImportData *> ImportDataList;
+  TArray<FString> ImportFiles{};
 
   FString import_setting_path;
 
