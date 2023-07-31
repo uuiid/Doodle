@@ -115,7 +115,9 @@ public class doodleEditor : ModuleRules
                 "MeshBuilder",//修改sk使用
                 "DoodleAbc", // 我们自己的导入
 
-            }
+				"SequencerScriptingEditor",
+
+			}
             );
 
 
