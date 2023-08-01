@@ -116,6 +116,8 @@ public class doodleEditor : ModuleRules
                 "DoodleAbc", // 我们自己的导入
 
 				"SequencerScriptingEditor",
+				"MovieRenderPipelineCore",// 远程渲染需要
+				"MovieRenderPipelineEditor", //远程渲染需要
 
 			}
             );
