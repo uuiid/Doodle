@@ -42,12 +42,8 @@ void UDoodleMovieRemoteExecutor::Execute_Implementation(UMoviePipelineQueue* InP
     return;
   }
 
-  if (!ensureMsgf(
-          !ProcessHandle.IsValid(), TEXT("Attempted to start another New Process Executor without the last one "
-                                         "quitting. Force killing. This executor only supports one at a time.")
-      )) {
-    FPlatformProcess::TerminateProc(ProcessHandle, true);
-  }
+  FindRemoteClient();
+  return;
 
   // Arguments to pass to the executable. This can be modified by settings in the event a setting needs to be applied
   // early. In the format of -foo -bar
@@ -233,12 +229,47 @@ void UDoodleMovieRemoteExecutor::CheckForProcessFinished() {
           LogMovieRenderPipeline, Warning, TEXT("Process exited with non-success return code. Return Code; %d"),
           ReturnCode
       );
-      // OnPipelineErrored(nullptr, true, LOCTEXT("ProcessNonZeroReturn", "Non-success return code returned. See log for
-      // Return Code."));
     }
 
     OnExecutorFinishedImpl();
   } else {
     // Process is still running, spin wheels.
+  }
+}
+
+void UDoodleMovieRemoteExecutor::FindRemoteClient() {
+  static auto G_Config{TEXT("//192.168.20.59/UE_Config/Client.txt")};
+  static FString L_Sub_URL{TEXT("v1/AtWork")};
+  HTTPResponseRecievedDelegate.AddDynamic(this, &UDoodleMovieRemoteExecutor::HttpRemoteClient);
+  if (FPlatformFileManager::Get().GetPlatformFile().FileExists(G_Config)) {
+    TArray<FString> L_StrList{};
+    FFileHelper::LoadFileToStringArray(L_StrList, G_Config);
+
+    for (auto&& i : L_StrList) {
+      FString L_Url = FString::Printf(TEXT("http://%s:%d/%s/"), *i, 50021, *L_Sub_URL);
+      // int32 L_Id    = SendHTTPRequest(L_Url, TEXT("POST"), {}, TMap<FString, FString>{{TEXT("Content-Type"),
+      // TEXT("text")}});
+      int32 L_Id    = SendHTTPRequest(
+          L_Url, TEXT("GET"), {}, TMap<FString, FString>{{TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent")}}
+      );
+      RemoteClientMap.Add(L_Id) = i;
+    }
+  }
+}
+
+void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 ResponseCode, const FString& Message) {
+  if (ResponseCode == 200) {
+    RemoteClientUrl = RemoteClientMap[RequestIndex];
+    UE_LOG(LogTemp, Warning, TEXT("使用工作机: %s"), *RemoteClientUrl);
+    HTTPResponseRecievedDelegate.RemoveAll(this);
+  } else {
+    RemoteClientMap.Remove(RequestIndex);
+    UE_LOG(LogTemp, Warning, TEXT("错误的返回代码: %d"), ResponseCode);
+  }
+
+  if (RemoteClientMap.IsEmpty()) {
+    UE_LOG(LogTemp, Warning, TEXT("全部客户端被占用"));
+    HTTPResponseRecievedDelegate.RemoveAll(this);
+    OnExecutorFinishedImpl();
   }
 }

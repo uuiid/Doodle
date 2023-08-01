@@ -30,4 +30,12 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
  protected:
   /** A handle to the currently running process (if any) for the active job. */
   FProcHandle ProcessHandle;
+
+ private:
+  TMap<int32, FString> RemoteClientMap;
+  FString RemoteClientUrl;
+
+  void FindRemoteClient();
+  UFUNCTION()
+  void HttpRemoteClient(int32 RequestIndex, int32 ResponseCode, const FString& Message);
 };
