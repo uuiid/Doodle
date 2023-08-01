@@ -4,6 +4,20 @@
 #include "MoviePipelineLinearExecutor.h"
 #include "MovieRemoteExecutor.generated.h"
 
+USTRUCT()
+struct UDoodleRemoteRenderJobArg {
+  GENERATED_BODY();
+
+  UPROPERTY()
+  FString ProjectPath;
+
+  UPROPERTY()
+  FString Args;
+
+  UPROPERTY()
+  FString ManifestValue;
+};
+
 /**
  * This is the implementation responsible for executing the rendering of
  * multiple movie pipelines on the local machine in an external process.
@@ -34,6 +48,12 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
  private:
   TMap<int32, FString> RemoteClientMap;
   FString RemoteClientUrl;
+  UDoodleRemoteRenderJobArg RemoteRenderJobArg;
+
+  // 生成命令行
+  void GenerateCommandLineArguments(UMoviePipelineQueue* InPipelineQueue);
+
+  void StartRemoteClientRender();
 
   void FindRemoteClient();
   UFUNCTION()

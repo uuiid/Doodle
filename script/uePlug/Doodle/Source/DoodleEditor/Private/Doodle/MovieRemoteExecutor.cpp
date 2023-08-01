@@ -41,10 +41,16 @@ void UDoodleMovieRemoteExecutor::Execute_Implementation(UMoviePipelineQueue* InP
     OnExecutorFinishedImpl();
     return;
   }
-
+  GenerateCommandLineArguments(InPipelineQueue);
   FindRemoteClient();
   return;
+}
 
+void UDoodleMovieRemoteExecutor::CancelAllJobs_Implementation() {}
+
+void UDoodleMovieRemoteExecutor::CheckForProcessFinished() {}
+
+void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueue* InPipelineQueue) {
   // Arguments to pass to the executable. This can be modified by settings in the event a setting needs to be applied
   // early. In the format of -foo -bar
   FString CommandLineArgs;
@@ -117,40 +123,26 @@ void UDoodleMovieRemoteExecutor::Execute_Implementation(UMoviePipelineQueue* InP
     CommandLineArgs += TEXT("\"");
   }
 
-  FString GameNameOrProjectFile;
   if (FPaths::IsProjectFilePathSet()) {
-    GameNameOrProjectFile = FString::Printf(TEXT("\"%s\""), *FPaths::GetProjectFilePath());
+    RemoteRenderJobArg.ProjectPath = FString::Printf(TEXT("\"%s\""), *FPaths::GetProjectFilePath());
   } else {
-    GameNameOrProjectFile = FApp::GetProjectName();
+    RemoteRenderJobArg.ProjectPath = FApp::GetProjectName();
   }
 
-  FString MoviePipelineArgs;
-  {
-    // We will pass the path to the saved manifest file on the command line and parse it on the other end from disk.
-    // This is assumed to be relative to the game's Saved directory on load.
-    FString PipelineConfig = TEXT("MovieRenderPipeline/QueueManifest.utxt");
-
-    // Because the Queue has multiple jobs in it, we don't need to pass which sequence to render. That's only needed if
-    // you're rendering a specific sequence with a specific primary config.
-    MoviePipelineArgs      = FString::Printf(
-        TEXT("-MoviePipelineConfig=\"%s\""), *PipelineConfig
-    );  // -MoviePipeline=\"%s\" -MoviePipelineLocalExecutorClass=\"%s\" -MoviePipelineClass=\"%s\""),
-  }
+  RemoteRenderJobArg.ManifestValue =
+      UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
 
   TMap<FString, FStringFormatArg> NamedArguments;
-  NamedArguments.Add(TEXT("GameNameOrProjectFile"), GameNameOrProjectFile);
+
   NamedArguments.Add(
       TEXT("PlayWorld"), TEXT("MoviePipelineEntryMap")
   );  // Boot up on an empty map, the executor will immediately transition to the correct one.
   NamedArguments.Add(TEXT("UnrealURL"), UnrealURLParams);  // Pass the command line arguments for this job
   NamedArguments.Add(TEXT("SubprocessCommandLine"), FCommandLine::GetSubprocessCommandline());
   NamedArguments.Add(TEXT("CommandLineParams"), CommandLineArgs);
-  NamedArguments.Add(TEXT("MoviePipelineArgs"), MoviePipelineArgs);
 
-  FString FinalCommandLine = FString::Format(
-      TEXT("{GameNameOrProjectFile} {PlayWorld}{UnrealURL} -game {SubprocessCommandLine} {CommandLineParams} "
-           "{MoviePipelineArgs}"),
-      NamedArguments
+  RemoteRenderJobArg.Args = FString::Format(
+      TEXT("{PlayWorld}{UnrealURL} -game {SubprocessCommandLine} {CommandLineParams} "), NamedArguments
   );
 
   // Prefer the -Cmd version of the executable if possible, gracefully falling back to the normal one. This is to help
@@ -164,76 +156,20 @@ void UDoodleMovieRemoteExecutor::Execute_Implementation(UMoviePipelineQueue* InP
   const uint32 PriorityModifier  = 0;
 
   UE_LOG(LogMovieRenderPipeline, Log, TEXT("Launching a new process to render with the following command line:"));
-  UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s %s"), *ExecutablePath, *FinalCommandLine);
-
-  ProcessHandle = FPlatformProcess::CreateProc(
-      *ExecutablePath, *FinalCommandLine, bLaunchDetatched, bLaunchMinimized, bLaunchWindowHidden, &ProcessID,
-      PriorityModifier, nullptr, nullptr, nullptr
-  );
-
-  if (!ProcessHandle.IsValid()) {
-    UE_LOG(
-        LogMovieRenderPipeline, Warning,
-        TEXT("Failed to launch executable for new process render. Executable Path: \"%s\" Command Line: \"%s\""),
-        FPlatformProcess::ExecutablePath(), *FinalCommandLine
-    );
-    // OnPipelineErrored(nullptr, true, LOCTEXT("ProcessFailedToLaunch", "New Process failed to launch. See log for
-    // command line argument used.")); OnIndividualPipelineFinished(nullptr);
-  } else {
-    if (ExecutorSettings->bCloseEditor) {
-      FPlatformMisc::RequestExit(false);
-    } else {
-      // Register a tick handler to listen every frame to see if the process shut down gracefully, we'll use return
-      // codes to tell success vs cancel.
-      FCoreDelegates::OnBeginFrame.AddUObject(this, &UDoodleMovieRemoteExecutor::CheckForProcessFinished);
-    }
-  }
+  UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s %s"), *ExecutablePath, *RemoteRenderJobArg.Args);
 }
 
-void UDoodleMovieRemoteExecutor::CancelAllJobs_Implementation() {
-  if (!ensureMsgf(
-          ProcessHandle.IsValid(),
-          TEXT("Attempting to cancel UMoviePipelineNewProcessExecutor job without a valid process handle. This should "
-               "only be called if the process was originally valid!")
-      )) {
-    return;
-  }
+void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
+  const UMoviePipelineInProcessExecutorSettings* ExecutorSettings =
+      GetDefault<UMoviePipelineInProcessExecutorSettings>();
+  // todo: 上传文件
 
-  if (FPlatformProcess::IsProcRunning(ProcessHandle)) {
-    // Process is still running, try to kill it.
-    FPlatformProcess::TerminateProc(ProcessHandle);
+  if (ExecutorSettings->bCloseEditor) {
+    FPlatformMisc::RequestExit(false);
   } else {
-    UE_LOG(
-        LogMovieRenderPipeline, Warning,
-        TEXT("Attempting to cancel UMoviePipelineNewProcessExecutor job but process has already exited.")
-    );
-  }
-}
-
-void UDoodleMovieRemoteExecutor::CheckForProcessFinished() {
-  if (!ensureMsgf(
-          ProcessHandle.IsValid(), TEXT("CheckForProcessFinished called without a valid process handle. This should "
-                                        "only be called if the process was originally valid!")
-      )) {
-    return;
-  }
-
-  int32 ReturnCode;
-  if (FPlatformProcess::GetProcReturnCode(ProcessHandle, &ReturnCode)) {
-    ProcessHandle.Reset();
-    FCoreDelegates::OnBeginFrame.RemoveAll(this);
-
-    // Log an error for now
-    if (ReturnCode != 0) {
-      UE_LOG(
-          LogMovieRenderPipeline, Warning, TEXT("Process exited with non-success return code. Return Code; %d"),
-          ReturnCode
-      );
-    }
-
-    OnExecutorFinishedImpl();
-  } else {
-    // Process is still running, spin wheels.
+    // Register a tick handler to listen every frame to see if the process shut down gracefully, we'll use return codes
+    // to tell success vs cancel.
+    FCoreDelegates::OnBeginFrame.AddUObject(this, &UDoodleMovieRemoteExecutor::CheckForProcessFinished);
   }
 }
 
@@ -262,6 +198,7 @@ void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 Resp
     RemoteClientUrl = RemoteClientMap[RequestIndex];
     UE_LOG(LogTemp, Warning, TEXT("使用工作机: %s"), *RemoteClientUrl);
     HTTPResponseRecievedDelegate.RemoveAll(this);
+    StartRemoteClientRender();
   } else {
     RemoteClientMap.Remove(RequestIndex);
     UE_LOG(LogTemp, Warning, TEXT("错误的返回代码: %d"), ResponseCode);
