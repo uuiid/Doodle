@@ -5,7 +5,7 @@
 #include "MovieRemoteExecutor.generated.h"
 
 USTRUCT()
-struct UDoodleRemoteRenderJobArg {
+struct FDoodleRemoteRenderJobArg {
   GENERATED_BODY();
 
   UPROPERTY()
@@ -16,6 +16,19 @@ struct UDoodleRemoteRenderJobArg {
 
   UPROPERTY()
   FString ManifestValue;
+};
+
+// struct FDoodleRemoteRenderState {
+//
+//
+// };
+
+UENUM()
+enum class DoodleMovieRemoteState {
+  Wait UMETA(DisplayName = "Wait"),
+  Render UMETA(DisplayName = "Render"),
+  Success UMETA(DisplayName = "Success"),
+  Fail UMETA(DisplayName = "Fail"),
 };
 
 /**
@@ -37,23 +50,34 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   virtual void CancelCurrentJob_Implementation() override { CancelAllJobs_Implementation(); }
   virtual void CancelAllJobs_Implementation() override;
   // ~UMoviePipelineExecutorBase Interface
+ public:
+  DoodleMovieRemoteState GetRenderState();
+  float GetProgress();
 
  protected:
   void CheckForProcessFinished();
+  // 上传文件
+  bool UploadFiles();
 
  protected:
   /** A handle to the currently running process (if any) for the active job. */
   FProcHandle ProcessHandle;
 
  private:
-  TMap<int32, FString> RemoteClientMap;
+  TArray<FString> RemoteClients;
+  TSet<int32> Render_IDs{};
+  TSet<int32> GetRenderState_IDs{};
+
   FString RemoteClientUrl;
-  UDoodleRemoteRenderJobArg RemoteRenderJobArg;
+  TArray<FDoodleRemoteRenderJobArg> RemoteRenderJobArgs;
+  TWeakPtr<class SWindow> WeakCustomWindow;
 
   // 生成命令行
   void GenerateCommandLineArguments(UMoviePipelineQueue* InPipelineQueue);
 
   void StartRemoteClientRender();
+
+  inline int32 GetProt() { return 50021; }
 
   void FindRemoteClient();
   UFUNCTION()
