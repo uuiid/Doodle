@@ -124,6 +124,7 @@ class SDoodleRemoteNotification : public SCompoundWidget, public INotificationWi
   float Progress;
   FText Render_State;
 
+  UFUNCTION()
   TObjectPtr<UDoodleMovieRemoteExecutor> MovieRemoteExecutor;
 
   TWeakPtr<SNotificationItem> WeakOwningNotification;
@@ -154,6 +155,7 @@ void UDoodleMovieRemoteExecutor::Execute_Implementation(UMoviePipelineQueue* InP
   }
   GenerateCommandLineArguments(InPipelineQueue);
   FindRemoteClient();
+  StartRemoteClientRender();
 }
 
 void UDoodleMovieRemoteExecutor::CancelAllJobs_Implementation() {}
@@ -383,9 +385,9 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
     return;
   }
   FNotificationInfo L_Info{FText::FromString(TEXT("正在渲染..."))};
-  L_Info.ContentWidget        = SNew(SDoodleRemoteNotification, this);
-  L_Info.bFireAndForget       = false;
-
+  // L_Info.ContentWidget        = SNew(SDoodleRemoteNotification, this);
+  L_Info.bFireAndForget       = true;  // 自动取消
+  L_Info.FadeInDuration       = 1.0f;  // 淡入淡出时间
   // 造型设计补充信息
   L_Info.WidthOverride        = 400.0f;
   L_Info.bUseLargeFont        = false;
@@ -394,6 +396,7 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   // 显示与默认警告不同的信息图标
   L_Info.Image                = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Warning"));
 
+  L_Info.Text                 = FText::FromString(TEXT("提交渲染完成"));
   FSlateNotificationManager::Get().AddNotification(L_Info);
   static FString L_Sub_URL{TEXT("v1/SubmitJob")};
   for (auto&& i : RemoteRenderJobArgs) {
@@ -412,6 +415,7 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   if (ExecutorSettings->bCloseEditor) {
     FPlatformMisc::RequestExit(false);
   }
+  OnExecutorFinishedImpl();
 }
 
 void UDoodleMovieRemoteExecutor::FindRemoteClient() {
