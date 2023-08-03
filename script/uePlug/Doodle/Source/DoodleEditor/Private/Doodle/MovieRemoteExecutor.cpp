@@ -180,21 +180,42 @@ bool UDoodleMovieRemoteExecutor::UploadFiles() {
 #else
   static auto G_Config{TEXT("//192.168.20.59/UE_Config/Remote.txt")};
 #endif  // 1
+
+  TSharedPtr<FScopedSlowTask> L_Task_Scoped_Ptr =
+      MakeShared<FScopedSlowTask>(0, LOCTEXT("DoingSlowWork2", "复制文件中..."));
+  L_Task_Scoped_Ptr->MakeDialog();
+
   FFileHelper::LoadFileToStringArray(L_StrList, G_Config);
 
   IPlatformFile& L_PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
   FString L_Prj_Name            = FPaths::GetBaseFilename(FPaths::GetProjectFilePath());
   FString L_R_Prj               = L_StrList[0] / L_Prj_Name / FPaths::GetCleanFilename(FPaths::GetProjectFilePath());
-  {
+
+  {  // 复制项目
     if (L_PlatformFile.FileExists(*L_R_Prj)) {
       L_PlatformFile.DeleteFile(*L_R_Prj);
     }
     L_PlatformFile.CreateDirectoryTree(*(L_StrList[0] / L_Prj_Name));
+    L_Task_Scoped_Ptr->EnterProgressFrame(
+        0.0F, FText::FromString(FString::Printf(TEXT("复制项目 %s -> %s"), *L_R_Prj, *(FPaths::GetProjectFilePath())))
+    );
     if (!L_PlatformFile.CopyFile(*L_R_Prj, *(FPaths::GetProjectFilePath()))) return false;
+    for (auto&& i : RemoteRenderJobArgs) i.ProjectPath = L_R_Prj;
   }
-  for (auto&& i : RemoteRenderJobArgs) i.ProjectPath = L_R_Prj;
 
+  {
+    // 复制配置
+    FString L_Config = FPaths::ProjectConfigDir();
+    FPaths::NormalizeDirectoryName(L_Config);
+    L_Task_Scoped_Ptr->EnterProgressFrame(
+        0.0F, FText::FromString(FString::Printf(
+                  TEXT("复制配置 %s -> %s"), *(L_StrList[0] / L_Prj_Name / FPaths::GetBaseFilename(L_Config)), *L_Config
+              ))
+    );
+    L_PlatformFile.CopyDirectoryTree(*(L_StrList[0] / L_Prj_Name / FPaths::GetBaseFilename(L_Config)), *L_Config, true);
+  }
+  // 复制内容
   FString SourceDir(FPaths::ProjectContentDir());
   FPaths::NormalizeDirectoryName(SourceDir);
 
@@ -210,10 +231,6 @@ bool UDoodleMovieRemoteExecutor::UploadFiles() {
   if (!L_PlatformFile.DirectoryExists(*DestDir) && !L_PlatformFile.CreateDirectoryTree(*DestDir)) {
     return false;
   }
-
-  TSharedPtr<FScopedSlowTask> L_Task_Scoped_Ptr =
-      MakeShared<FScopedSlowTask>(0, LOCTEXT("DoingSlowWork2", "复制文件中..."));
-  L_Task_Scoped_Ptr->MakeDialog();
 
   // Copy all files and directories
   struct FCopyFilesAndDirs : public IPlatformFile::FDirectoryVisitor {
