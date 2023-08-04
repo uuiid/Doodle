@@ -112,7 +112,17 @@ std::string_view process_message::log() const {
   //  std::lock_guard _lock{_mutex};
   return p_log;
 }
-std::string_view process_message::log(std::size_t in_begin, std::size_t in_end) const {}
+std::string_view process_message::log(std::size_t in_begin, std::size_t in_end) const {
+  auto l_it_begin{p_log.begin()};
+  auto l_it_end{p_log.end()};
+  auto l_b_s{std::min(std::min(in_begin, in_end), p_log.size())};
+  auto l_e_s{std::min(std::max(in_begin, in_end), p_log.size())};
+
+  l_it_begin += l_b_s;
+  l_it_end += l_e_s;
+  std::size_t const l_dis = std::distance(l_it_begin, l_it_end);
+  return std::string_view{&(*l_it_begin), l_dis};
+}
 rational_int process_message::get_progress() const {
   //  std::lock_guard _lock{_mutex};
   return p_progress;
