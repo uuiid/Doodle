@@ -50,7 +50,9 @@ class DOODLE_CORE_API process_message {
 
   void set_state(state in_state);
   [[nodiscard]] std::string_view err() const;
+  [[nodiscard]] std::string_view err(std::size_t in_begin, std::size_t in_end) const;
   [[nodiscard]] std::string_view log() const;
+  [[nodiscard]] std::string_view log(std::size_t in_begin, std::size_t in_end) const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] inline std::double_t get_progress_f() const {

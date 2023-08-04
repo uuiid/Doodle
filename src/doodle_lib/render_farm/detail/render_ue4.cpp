@@ -4,4 +4,9 @@
 
 #include "render_ue4.h"
 
-namespace doodle::render_farm {}  // namespace doodle::render_farm
+namespace doodle::render_farm {
+namespace detail {
+
+void render_ue4::run() {}
+}  // namespace detail
+}  // namespace doodle::render_farm

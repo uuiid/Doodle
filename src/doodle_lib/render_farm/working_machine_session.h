@@ -27,7 +27,6 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
  private:
   void do_read();
   void on_parser(boost::system::error_code ec, std::size_t bytes_transferred);
-  void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
   void send_response(boost::beast::http::message_generator&& in_message_generator);
   void on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
   void do_close();
