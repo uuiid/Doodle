@@ -36,11 +36,8 @@ class ue_exe {
 
  public:
   struct arg_render_queue {
-    FSys::path map_path_{};
-    FSys::path queue_path_{};
-
-    std::pair<std::int32_t, std::int32_t> image_size_{};
-    std::string to_string() const;
+    std::string args_{};
+    std::string to_string() const { return args_; };
   };
 
   struct arg_import_file {

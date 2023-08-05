@@ -156,6 +156,4 @@ void ue_exe::queue_up(
   notify_run();
 }
 
-std::string ue_exe::arg_render_queue::to_string() const { return std::string(); }
-std::string ue_exe::arg_import_file::to_string() const { return std::string(); }
 }  // namespace doodle

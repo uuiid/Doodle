@@ -222,11 +222,13 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
               }
 
               auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+              l_h.emplace<process_message>();
+              l_h.emplace<uuid>();
               l_h.emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
                   l_h, l_parser_ptr->release().body().get<render_ue4_ptr ::element_type ::arg>()
               ));
               boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-              l_response.body() = l_h.entity();
+              l_response.body() = {{"state", "ok"}, {"uuid", l_h.get<uuid>()}};
               send_response(boost::beast::http::message_generator{std::move(l_response)});
             }
         );
