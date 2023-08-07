@@ -328,9 +328,6 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
   // correct map with correct gamemode.
   UnrealURLParams += FString::Printf(TEXT("?game=%s"), *AMoviePipelineGameMode::StaticClass()->GetPathName());
 
-  for (auto&& i : RemoteRenderJobArgs)
-    i.ProjectPath = UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
-
   // 循环查看任务中的设置，让他们修改命令行参数。因为我们可能有多个任务，所以我们会遍历所有任务和所有设置，希望用户的设置不会发生冲突。
   for (const UMoviePipelineExecutorJob* Job : DuplicatedQueue->GetJobs()) {
     FDoodleRemoteRenderJobArg& L_Arg = RemoteRenderJobArgs.Emplace_GetRef();
@@ -383,6 +380,8 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
         TEXT("{PlayWorld}{UnrealURL} -game {SubprocessCommandLine} {CommandLineParams}"), NamedArguments
     );
   }
+  for (auto&& i : RemoteRenderJobArgs)
+    i.ProjectPath = UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
 
   UE_LOG(LogMovieRenderPipeline, Log, TEXT("Launching a new process to render with the following command line:"));
   for (auto&& i : RemoteRenderJobArgs) UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s"), *i.Args);
