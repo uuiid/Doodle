@@ -19,16 +19,16 @@ class render_ue4 {
     std::string ManifestValue;
     // to json
     friend void to_json(nlohmann::json& j, const arg& in_arg) {
-      j["ProjectPath"]   = in_arg.ProjectPath;
-      j["Args"]          = in_arg.Args;
-      j["ManifestValue"] = in_arg.ManifestValue;
+      j["projectPath"]   = in_arg.ProjectPath;
+      j["args"]          = in_arg.Args;
+      j["manifestValue"] = in_arg.ManifestValue;
     }
 
     // form json
     friend void from_json(const nlohmann::json& j, arg& in_arg) {
-      j.at("ProjectPath").get_to(in_arg.ProjectPath);
-      j.at("Args").get_to(in_arg.Args);
-      j.at("ManifestValue").get_to(in_arg.ManifestValue);
+      j.at("projectPath").get_to(in_arg.ProjectPath);
+      j.at("args").get_to(in_arg.Args);
+      j.at("manifestValue").get_to(in_arg.ManifestValue);
     }
   };
 

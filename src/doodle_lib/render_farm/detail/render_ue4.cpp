@@ -54,10 +54,15 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
     auto l_prj_content = l_prj_path.parent_path() / g_content;
     for (auto&& i : FSys::recursive_directory_iterator{l_prj_content}) {
       auto l_loc_ = l_loc_content / i.path().lexically_relative(l_prj_content);
-      if (i.file_size() != FSys::file_size(l_loc_) || i.last_write_time() != FSys::last_write_time(l_loc_)) {
-        FSys::copy(
-            i.path(), l_loc.parent_path() / g_content / i.path().filename(), FSys::copy_options::overwrite_existing
-        );
+      if (i.is_directory()) {
+        FSys::create_directories(l_loc_);
+      } else {
+        if (!FSys::exists(l_loc_) || i.file_size() != FSys::file_size(l_loc_) ||
+            i.last_write_time() != FSys::last_write_time(l_loc_)) {
+          FSys::copy(
+              i.path(), l_loc.parent_path() / g_content / i.path().filename(), FSys::copy_options::overwrite_existing
+          );
+        }
       }
     }
   }
