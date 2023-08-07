@@ -61,6 +61,7 @@ find_package(Boost REQUIRED COMPONENTS
         unit_test_framework
         log
         log_setup
+        url
         )
 
 find_package(Doxygen)
