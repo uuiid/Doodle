@@ -39,6 +39,11 @@ class render_ue4 {
  private:
   arg arg_;
   entt::handle self_handle_;
+  FSys::path manifest_path_;
+  // 下载文件
+  bool download_file(const FSys::path& in_file_path);
+  // 生成命令行
+  std::string generate_command_line() const;
 };
 }  // namespace detail
 using render_ue4_ptr = std::shared_ptr<detail::render_ue4>;
