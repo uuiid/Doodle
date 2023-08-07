@@ -69,6 +69,7 @@ std::int32_t app_base::poll_one() {
   return 0;
 }
 void app_base::stop_app(bool in_stop) {
+  on_stop();
   lib_ptr->ctx().emplace<program_info>().is_stop = true;
   this->deconstruction();
   core_set_init{}.write_file();

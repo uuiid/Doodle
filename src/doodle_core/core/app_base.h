@@ -7,6 +7,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
+#include <boost/signals2.hpp>
+
 #include <thread>
 
 namespace doodle {
@@ -58,6 +60,8 @@ class DOODLE_CORE_API app_base {
   bool is_main_thread() const;
 
   virtual std::int32_t poll_one();
+
+  boost::signals2::signal<void()> on_stop;
 
   void stop_app(bool in_stop = false);
 

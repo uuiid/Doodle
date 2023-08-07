@@ -138,6 +138,7 @@ void ue_exe::notify_run() {
 void ue_exe::queue_up(
     const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
 ) {
+  if (ue_path_.empty()) find_ue_exe();
   auto l_run       = queue_list_.emplace(std::make_shared<run_ue>());
   l_run->ue_path   = ue_path_;
   l_run->mag_attr  = in_msg;
@@ -155,5 +156,6 @@ void ue_exe::queue_up(
       });
   notify_run();
 }
+void ue_exe::find_ue_exe() { ue_path_ = core_set::get_set().ue4_path / doodle_config::ue_path_obj; }
 
 }  // namespace doodle

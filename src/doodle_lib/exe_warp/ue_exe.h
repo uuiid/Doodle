@@ -34,6 +34,8 @@ class ue_exe {
       const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
   );
 
+  void find_ue_exe();
+
  public:
   struct arg_render_queue {
     std::string args_{};

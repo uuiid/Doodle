@@ -101,5 +101,17 @@ void menu_bar::menu_start_render_client() {
     doodle_lib::Get().ctx().erase<doodle::render_farm::working_machine_ptr>();
   }
 }
+menu_bar::menu_bar() {
+  connection_  = app_base::Get().on_stop.connect([this]() {
+    auto &&l_lib = doodle_lib::Get();
+    if (l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>()) {
+      l_lib.ctx().get<doodle::render_farm::working_machine_ptr>()->stop();
+      l_lib.ctx().erase<doodle::render_farm::working_machine_ptr>();
+    }
+  });
+  auto &&l_lib = doodle_lib::Get();
+
+  run_client   = l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>();
+}
 
 }  // namespace doodle::gui

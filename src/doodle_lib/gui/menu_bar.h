@@ -12,6 +12,8 @@ class DOODLELIB_API menu_bar : public main_menu_bar {
  public:
   static void message(const std::string& in_m);
 
+  menu_bar();
+
  protected:
   void menu_tool() override;
 
@@ -19,5 +21,6 @@ class DOODLELIB_API menu_bar : public main_menu_bar {
   // 启动渲染客户端
   void menu_start_render_client();
   bool run_client;
+  boost::signals2::scoped_connection connection_;
 };
 }  // namespace doodle::gui
