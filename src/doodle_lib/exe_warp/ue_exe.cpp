@@ -116,7 +116,15 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
 };
 
 void ue_exe::notify_run() {
-  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr())
+  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
+    if (!queue_list_.empty()) {
+      auto l_run = queue_list_.top();
+      queue_list_.pop();
+      l_run->run();
+      run_process_.emplace_back(l_run);
+    }
+  }
+#if 0
     while (run_size_attr < core_set::get_set().p_max_thread && !queue_list_.empty()) {
       auto l_run = queue_list_.top();
       queue_list_.pop();
@@ -125,6 +133,7 @@ void ue_exe::notify_run() {
       run_process_.emplace_back(l_run);
     }
 
+#endif
   /// @brief 清除运行完成的程序
   for (auto &&l_i : run_process_) {
     if (!l_i->child_attr.running()) {
