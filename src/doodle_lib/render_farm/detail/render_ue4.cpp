@@ -11,6 +11,8 @@ namespace doodle::render_farm {
 namespace detail {
 
 void render_ue4::run() {
+  auto&& l_msg = self_handle_.get_or_emplace<process_message>();
+  l_msg.message("开始下载ue4项目文件");
   boost::asio::post(g_io_context(), [this]() {
     const bool l_r = download_file("D:/doodle/cache/ue");
     boost::asio::post(g_io_context(), [this, l_r]() { this->run_impl(l_r); });
@@ -69,15 +71,20 @@ std::string render_ue4::generate_command_line() const {
   );
 }
 void render_ue4::run_impl(bool in_r) {
+  auto&& l_msg = self_handle_.get_or_emplace<process_message>();
   if (!in_r) {
-    auto&& l_msg = self_handle_.get_or_emplace<process_message>();
     l_msg.set_state(process_message::state::fail);
     l_msg.message(fmt::format("project path not exist: {}", arg_.ProjectPath));
     return;
   }
+  l_msg.message("开始启动ue4项目文件");
   // 生成命令行
   doodle_lib::Get().ctx().emplace<ue_exe>().async_run(
-      self_handle_, ue_exe::arg_render_queue{generate_command_line()}, [](auto&&) {}
+      self_handle_, ue_exe::arg_render_queue{generate_command_line()},
+      [this](auto&&) {
+        auto&& l_msg = self_handle_.get_or_emplace<process_message>();
+        l_msg.set_state(process_message::state::success);
+      }
   );
 }
 }  // namespace detail
