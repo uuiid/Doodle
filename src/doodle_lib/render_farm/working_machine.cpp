@@ -31,4 +31,5 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
   }
   do_accept();
 }
+void working_machine::stop() { acceptor_.close(); }
 }  // namespace doodle::render_farm

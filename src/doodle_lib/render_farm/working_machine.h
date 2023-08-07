@@ -19,6 +19,7 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
       : end_point_{boost::asio::ip::make_address(in_ip), in_port}, acceptor_{in_io_context, end_point_} {}
   ~working_machine() = default;
   void run();
+  void stop();
 
  private:
   void do_accept();

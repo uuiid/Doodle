@@ -10,6 +10,7 @@
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/show_message.h>
 
+#include <doodle_lib/render_farm/working_machine.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
 #include <fmt/core.h>
@@ -76,6 +77,17 @@ void menu_bar::menu_tool() {
       l_message = fmt::format("失败{} ", boost::diagnostic_information(error));
     }
     menu_bar::message(l_message);
+  }
+
+  if (dear::MenuItem("启动渲染客户端", &run_client)) {
+    menu_start_render_client();
+  }
+}
+void menu_bar::menu_start_render_client() {
+  if (run_client) {
+    doodle_lib::Get().ctx().emplace<doodle::render_farm::working_machine>(g_io_context(), "127.0.0.1", 50021).run();
+  } else {
+    doodle_lib::Get().ctx().emplace<doodle::render_farm::working_machine>(g_io_context(), "127.0.0.1", 50021).stop();
   }
 }
 

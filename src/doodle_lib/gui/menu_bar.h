@@ -14,5 +14,10 @@ class DOODLELIB_API menu_bar : public main_menu_bar {
 
  protected:
   void menu_tool() override;
+
+ private:
+  // 启动渲染客户端
+  void menu_start_render_client();
+  bool run_client;
 };
 }  // namespace doodle::gui

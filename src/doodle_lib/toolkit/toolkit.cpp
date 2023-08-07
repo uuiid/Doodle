@@ -28,7 +28,7 @@ void toolkit::installMayaPath() {
     DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, mayadoc));
     copy(sourePath, mayadoc, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 
-    static std::string k_mod{R"(+ doodle 1.1 .\doodle
+    static std::string const k_mod{R"(+ doodle 1.1 .\doodle
 MYMODULE_LOCATION:= .
 PATH+:= plug-ins
 PYTHONPATH+:= scripts
