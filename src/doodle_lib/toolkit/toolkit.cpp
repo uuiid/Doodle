@@ -2,6 +2,7 @@
 
 #include <doodle_lib/toolkit/toolkit.h>
 
+#include <winreg/WinReg.hpp>
 #if defined(_WIN32)
 
 #include <ShlObj.h>
@@ -85,22 +86,12 @@ void toolkit::installUePath(const FSys::path &path) {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path     = core_set::get_set().ue4_path / "Engine/Config/BaseEngine.ini";
-  // 做备份
-  auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
-  FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);
-  FSys::fstream file{ue_path, std::ios::in | std::ios::out | std::ios::binary};
-  std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
-
-  static std::string str{R"("%ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache")"};
-  auto it = line.find(str);
-  while (it != std::string::npos) {
-    line.replace(it, str.size(), R"("%GAMEDIR%DerivedDataCache")");
-    it = line.find(str);
-  }
-  file.close();
-  file.open(ue_path, std::ios::out | std::ios::trunc | std::ios::binary);
-  file << line;
+  winreg::RegKey l_key{};
+  l_key.Create(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Session Manager\\Environment");
+  l_key.SetStringValue(L"UE-LocalDataCachePath", L"%GAMEDIR%DerivedDataCache");
+  l_key.SetStringValue(L"UE-SharedDataCachePath", L"%GAMEDIR%DerivedDataCache");
+  constexpr static const auto *L_Param = L"Environment";
+  ::SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, reinterpret_cast<LPARAM>(L_Param), SMTO_BLOCK, 100, NULL);
 }
 
 bool toolkit::deleteUeCache() {
