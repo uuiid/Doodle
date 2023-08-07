@@ -14,7 +14,16 @@ void render_ue4::run() {
   auto&& l_msg = self_handle_.get_or_emplace<process_message>();
   l_msg.message("开始下载ue4项目文件");
   boost::asio::post(g_io_context(), [this]() {
-    const bool l_r = download_file("D:/doodle/cache/ue");
+    bool l_r{};
+    try {
+      l_r = download_file("D:/doodle/cache/ue");
+    } catch (const doodle_error& e) {
+      l_r = false;
+      DOODLE_LOG_ERROR(e);
+    } catch (...) {
+      l_r = false;
+      DOODLE_LOG_ERROR(boost::current_exception_diagnostic_information());
+    }
     boost::asio::post(g_io_context(), [this, l_r]() { this->run_impl(l_r); });
   });
 }
