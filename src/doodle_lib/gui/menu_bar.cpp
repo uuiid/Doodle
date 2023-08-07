@@ -51,7 +51,7 @@ void menu_bar::menu_tool() {
       toolkit::deleteUeCache();
       l_message += "成功";
     } catch (const doodle::doodle_error &error) {
-      l_message = fmt::format("{}失败{} ", l_message, boost::diagnostic_information(error));
+      l_message = fmt::format("{}失败\n{} ", l_message, boost::diagnostic_information(error));
     }
     menu_bar::message(l_message);
   }
@@ -61,10 +61,8 @@ void menu_bar::menu_tool() {
     try {
       toolkit::modifyUeCachePath();
       l_message += "成功";
-    } catch (const FSys::filesystem_error &error) {
-      l_message = fmt::format("失败(请使用管理员启动){} ", boost::diagnostic_information(error));
     } catch (const winreg::RegException &error) {
-      l_message = fmt::format("失败(请使用管理员启动){} ", boost::diagnostic_information(error));
+      l_message = fmt::format("失败(请使用管理员启动)\n{} ", boost::diagnostic_information(error));
     }
     menu_bar::message(l_message);
   }

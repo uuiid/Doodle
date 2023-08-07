@@ -41,13 +41,9 @@ class DOODLELIB_API toolkit {
 
   /**
    * @brief 修改ue4缓存位置,
-   * @pre 修改ue4缓存位置需要在 @ref doodle_windwos_setting "设置" 中寻找到ue4的位置
    *
-   * 我们将会替换配置文件中的缓存位置值，
-   * 将缓存位置更改为项目中
-   * @note 同时会将原先的进行备份，备份时同时会添加时间戳， 同时必须重新启动ue4 配置文件才会生效
-   * 我们使用更改ue4配置文件,将 @b %ENGINEVERSIONAGNOSTICUSERDIR%DerivedDataCache
-   * 替换为 @b %GAMEDIR%DerivedDataCache 的方法运行
+   * 使用环境变量的方式替换缓存
+   * 会抛出 winreg::RegException 异常
    */
   static void modifyUeCachePath();
 
