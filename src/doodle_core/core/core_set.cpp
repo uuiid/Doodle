@@ -51,7 +51,16 @@ core_set::core_set()
       timeout(3600),
       maya_version(2019),
       assets_file_widgets_size(5),
-      json_data(std::make_shared<nlohmann::json>()) {
+      json_data(std::make_shared<nlohmann::json>()),
+#ifdef NDEBUG
+      server_ip{"192.168.20.59"},
+      depot_ip{"\\\\192.168.10.218\\Doodletemp"}
+#else
+      server_ip{"192.168.20.59"},
+      depot_ip{"\\\\192.168.20.59\\UE_Config\\Doodletemp"}
+#endif
+
+{
   auto l_short_path = FSys::temp_directory_path().generic_wstring();
   auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
   std::unique_ptr<wchar_t[]> const p_buff{new wchar_t[k_buff_size]};
