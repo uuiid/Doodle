@@ -27,5 +27,5 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;
 };
-
+using working_machine_ptr = std::shared_ptr<working_machine>;
 }  // namespace doodle::render_farm

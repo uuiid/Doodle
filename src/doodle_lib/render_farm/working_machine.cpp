@@ -24,12 +24,17 @@ void working_machine::do_accept() {
 }
 void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
   if (ec) {
-    DOODLE_LOG_ERROR("on_accept error: {}", ec.message());
-
+    if (ec == boost::asio::error::operation_aborted) {
+      return;
+    }
+    DOODLE_LOG_ERROR("on_accept error: {}", ec.what());
   } else {
     std::make_shared<working_machine_session>(std::move(socket), shared_from_this())->run();
   }
   do_accept();
 }
-void working_machine::stop() { acceptor_.close(); }
+void working_machine::stop() {
+  acceptor_.cancel();
+  acceptor_.close();
+}
 }  // namespace doodle::render_farm
