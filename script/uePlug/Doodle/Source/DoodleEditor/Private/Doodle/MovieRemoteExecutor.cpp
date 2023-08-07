@@ -415,9 +415,9 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
 
   L_Info.Text                 = FText::FromString(TEXT("提交渲染完成"));
   FSlateNotificationManager::Get().AddNotification(L_Info);
-  static FString L_Sub_URL{TEXT("/v1/render_frame/submit_job")};
+  static FString L_Sub_URL{TEXT("v1/render_frame/submit_job")};
   for (auto&& i : RemoteRenderJobArgs) {
-    FString L_Url = FString::Printf(TEXT("http://%s:%d/%s/"), *RemoteClients[0], GetProt(), *L_Sub_URL);
+    FString L_Url = FString::Printf(TEXT("http://%s:%d/%s"), *RemoteClients[0], GetProt(), *L_Sub_URL);
     Algo::Rotate(RemoteClients, 1);
     FString L_MSg{};
     FJsonObjectConverter::UStructToJsonObjectString(i, L_MSg);
