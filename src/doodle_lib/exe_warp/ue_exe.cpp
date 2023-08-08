@@ -167,7 +167,7 @@ void ue_exe::queue_up(
 }
 void ue_exe::find_ue_exe() {
   auto l_ue_path = core_set::get_set().ue4_path;
-  if (!l_ue_path.empty()) throw_exception(doodle_error{"ue4 路径未设置"});
+  if (l_ue_path.empty()) throw_exception(doodle_error{"ue4 路径未设置"});
   ue_path_ = l_ue_path / doodle_config::ue_path_obj;
 
   if (FSys::exists(ue_path_)) {
