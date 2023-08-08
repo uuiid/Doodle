@@ -381,7 +381,7 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
     );
   }
   for (auto&& i : RemoteRenderJobArgs)
-    i.ProjectPath = UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
+    i.ManifestValue = UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
 
   UE_LOG(LogMovieRenderPipeline, Log, TEXT("Launching a new process to render with the following command line:"));
   for (auto&& i : RemoteRenderJobArgs) UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s"), *i.Args);
@@ -423,7 +423,9 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
     int32 L_Id = SendHTTPRequest(
         L_Url, TEXT("POSt"), L_MSg,
         TMap<FString, FString>{
-            {TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent")}, {TEXT("Content-Type"), TEXT("application/json")}}
+            {TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent")},
+            {TEXT("Content-Type"), TEXT("application/json")},
+            {TEXT("Keep-Alive"), TEXT("false")}}
     );
     Render_IDs.Add(L_Id);
   }
