@@ -44,7 +44,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
     auto &l_mag = mag_attr.patch<process_message>();
 
     l_mag.set_state(l_mag.run);
-    l_mag.message(fmt::format("开始运行 ue_exe: {}", ue_path.string()));
+    l_mag.message(fmt::format("开始运行 ue_exe: {}\n", ue_path.string()));
 
     cancel_attr = l_mag.aborted_sig.connect([this]() {
       auto &&l_msg = mag_attr.get<process_message>();
@@ -116,30 +116,13 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
 };
 
 void ue_exe::notify_run() {
-  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
-    if (!queue_list_.empty()) {
-      auto l_run = queue_list_.top();
-      queue_list_.pop();
-      l_run->run();
-      run_process_.emplace_back(l_run);
-    }
-  }
-#if 0
-    while (run_size_attr < core_set::get_set().p_max_thread && !queue_list_.empty()) {
-      auto l_run = queue_list_.top();
-      queue_list_.pop();
-      ++run_size_attr;
-      l_run->run();
-      run_process_.emplace_back(l_run);
-    }
+  if (run_process_ && !run_process_->child_attr.running()) run_process_.reset();
 
-#endif
-  /// @brief 清除运行完成的程序
-  for (auto &&l_i : run_process_) {
-    if (!l_i->child_attr.running()) {
-      boost::asio::post(g_io_context(), [l_i, this]() {
-        this->run_process_ |= ranges::actions::remove_if([&](auto &&j) -> bool { return l_i == j; });
-      });
+  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
+    if (!queue_list_.empty() && !run_process_) {
+      run_process_ = queue_list_.top();
+      queue_list_.pop();
+      run_process_->run();
     }
   }
 }
@@ -170,7 +153,7 @@ void ue_exe::find_ue_exe() {
   if (l_ue_path.empty()) throw_exception(doodle_error{"ue4 路径未设置"});
   ue_path_ = l_ue_path / doodle_config::ue_path_obj;
 
-  if (FSys::exists(ue_path_)) {
+  if (!FSys::exists(ue_path_)) {
     throw_exception(doodle_error{"未找到 ue4 程序"});
   }
 }
