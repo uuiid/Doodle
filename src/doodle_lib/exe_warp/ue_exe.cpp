@@ -156,5 +156,16 @@ void ue_exe::find_ue_exe() {
     throw_exception(doodle_error{"未找到 ue4 程序"});
   }
 }
+std::string ue_exe::get_file_version(const FSys::path &in_path) {
+  auto l_version_path = in_path.parent_path() / "UnrealEditor.version";
+
+  if (!FSys::exists(l_version_path)) {
+    throw_exception(doodle_error{"未找到 UnrealEditor.version 文件"});
+  }
+  FSys::ifstream l_ifstream{l_version_path};
+  nlohmann::json const l_json = nlohmann::json::parse(l_ifstream);
+
+  return fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>());
+}
 
 }  // namespace doodle

@@ -25,7 +25,7 @@ class ue_exe {
   class run_ue;
   FSys::path ue_path_;
   std::stack<std::shared_ptr<run_ue>> queue_list_{};
-  std::vector<std::shared_ptr<run_ue>> run_process_{};
+  std::shared_ptr<run_ue> run_process_{};
   std::atomic_char16_t run_size_attr{};
 
   void notify_run();
@@ -50,6 +50,8 @@ class ue_exe {
   };
 
   ue_exe() = default;
+
+  std::string get_file_version(const FSys::path &in_path);
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
