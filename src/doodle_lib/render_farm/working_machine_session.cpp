@@ -4,6 +4,8 @@
 
 #include "working_machine_session.h"
 
+#include <doodle_core/core/app_base.h>
+
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 
 #include "boost/url/urls.hpp"
@@ -111,6 +113,7 @@ struct basic_json_body {
 }  // namespace detail
 
 void working_machine_session::run() {
+  connection_ = doodle::app_base::Get().on_stop.connect([this]() { do_close(); });
   boost::asio::dispatch(
       boost::asio::make_strand(stream_.get_executor()),
       boost::beast::bind_front_handler(&working_machine_session::do_read, shared_from_this())
@@ -224,13 +227,15 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
               auto l_h = entt::handle{*g_reg(), g_reg()->create()};
               l_h.emplace<process_message>();
               l_h.emplace<uuid>();
-              l_h.emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
-                  l_h, l_parser_ptr->release().body().get<render_ue4_ptr ::element_type ::arg>()
+              l_h
+                  .emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
+                      l_h, l_parser_ptr->release().body().get<render_ue4_ptr ::element_type ::arg>()
                   ))
                   ->run();
 
               boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
               l_response.body() = {{"state", "ok"}, {"uuid", l_h.get<uuid>()}};
+              l_response.keep_alive(false);
               send_response(boost::beast::http::message_generator{std::move(l_response)});
             }
         );

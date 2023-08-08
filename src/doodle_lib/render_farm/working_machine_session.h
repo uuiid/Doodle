@@ -9,6 +9,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include <boost/signals2.hpp>
 
 #include <memory>
 
@@ -27,6 +28,7 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
       : stream_{std::move(in_socket)}, working_machine_{std::move(in_working_machine)} {}
 
   void run();
+  ~working_machine_session() { do_close(); }
 
  private:
   void do_read();
@@ -43,5 +45,6 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   boost::beast::flat_buffer buffer_;
   boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
   std::shared_ptr<working_machine> working_machine_;
+  boost::signals2::scoped_connection connection_;
 };
 }  // namespace doodle::render_farm
