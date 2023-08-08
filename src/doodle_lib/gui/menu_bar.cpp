@@ -88,14 +88,14 @@ void menu_bar::menu_start_render_client() {
     doodle_lib::Get()
         .ctx()
         .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), "127.0.0.1", 50021)
+            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
         )
         ->run();
   } else {
     doodle_lib::Get()
         .ctx()
         .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), "127.0.0.1", 50021)
+            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
         )
         ->stop();
     doodle_lib::Get().ctx().erase<doodle::render_farm::working_machine_ptr>();
