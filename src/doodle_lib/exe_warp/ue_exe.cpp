@@ -52,12 +52,12 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
       l_msg.message("进程被主动结束\n");
       cancel();
     });
-
+    ue_path     = ue_path.lexically_normal();
     child_attr  = boost::process::child{
         g_io_context(),
-        boost::process::exe  = ue_path.generic_string(),
-        boost::process::args = arg_attr,
-        boost::process::std_out > out_attr,
+        //        boost::process::exe  = ue_path.generic_string(),
+        //        boost::process::args = arg_attr,
+        boost::process::cmd = fmt::format("{} {}", ue_path, arg_attr), boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
