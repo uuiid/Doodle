@@ -19,6 +19,7 @@
 #include "doodle_app/lib_warp/imgui_warp.h"
 
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 
@@ -40,7 +41,7 @@ class setting_windows::impl {
         p_doc("文档路径"s, ""s),
         p_maya_path("maya 版本"s, 2019),
         p_ue_path("ue路径"s, ""s),
-        p_ue_version("ue版本"s, ""s),
+        p_ue_version("ue版本"s),
         p_batch_max("最大任务数"s, std::int32_t{core_set::get_set().p_max_thread}),
         p_timeout("任务超时时间"s, boost::numeric_cast<std::int32_t>(core_set::get_set().timeout)) {}
   gui::gui_cache<std::string> p_user;
@@ -49,7 +50,7 @@ class setting_windows::impl {
   gui::gui_cache<std::string> p_doc;
   gui::gui_cache<std::int32_t> p_maya_path;
   gui::gui_cache<std::string> p_ue_path;
-  gui::gui_cache<std::string> p_ue_version;
+  std::string p_ue_version;
   gui::gui_cache<std::int32_t> p_batch_max;
   gui::gui_cache<std::int32_t> p_timeout;
   std::string maya_path;
@@ -75,7 +76,7 @@ void setting_windows::save() {
   set.maya_version             = p_i->p_maya_path.data;
   set.p_max_thread             = p_i->p_batch_max.data;
   set.ue4_path                 = p_i->p_ue_path.data;
-  set.ue4_version              = p_i->p_ue_version.data;
+  set.ue4_version              = p_i->p_ue_version;
   set.timeout                  = p_i->p_timeout.data;
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
@@ -97,7 +98,7 @@ void setting_windows::init() {
   p_i->p_doc.data                      = core_set::get_set().get_doc().generic_string();
   p_i->p_maya_path.data                = core_set::get_set().maya_version;
   p_i->p_ue_path.data                  = core_set::get_set().ue4_path.generic_string();
-  p_i->p_ue_version.data               = core_set::get_set().ue4_version;
+  p_i->p_ue_version                    = core_set::get_set().ue4_version;
   p_i->p_batch_max.data                = core_set::get_set().p_max_thread;
   p_i->p_timeout.data                  = core_set::get_set().timeout;
   p_i->p_maya_replace_save_dialog.data = core_set::get_set().maya_replace_save_dialog;
@@ -130,9 +131,28 @@ bool setting_windows::render() {
       p_i->maya_path = fmt::format("没有找到maya文件的运行程序({})", in_e.what());
     }
   }
+  constexpr static auto g_text{"拖拽ue exe文件到此处"};
   if (!p_i->maya_path.empty()) dear::Text(p_i->maya_path);
-  imgui::InputText(*p_i->p_ue_path.gui_name, &(p_i->p_ue_path.data));
-  imgui::InputText(*p_i->p_ue_version.gui_name, &(p_i->p_ue_version.data));
+
+  if (imgui::InputText(*p_i->p_ue_path.gui_name, &(p_i->p_ue_path.data))) {
+    get_ue_version();
+  };
+  if (auto l_drag = dear::DragDropTarget{}) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
+        l_data && l_data->IsDelivery()) {
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+      if (!l_list->empty()) {
+        p_i->p_ue_path.data = l_list->front().parent_path().parent_path().parent_path().parent_path().generic_string();
+        get_ue_version();
+      }
+    }
+  }
+  if (auto l_tip = dear::ItemTooltip{}) {
+    ImGui::Text(g_text);
+  }
+  ImGui::Text("ue 版本: ");
+  ImGui::SameLine();
+  dear::Text(p_i->p_ue_version);
   imgui::InputInt(*p_i->p_batch_max.gui_name, &(p_i->p_batch_max.data));
   dear::HelpMarker{"更改任务池时,减小不会结束现在的任务, 真假时会立即加入等待的项目"s};
   imgui::InputInt(*p_i->p_timeout.gui_name, &(p_i->p_timeout.data));
@@ -146,5 +166,18 @@ bool setting_windows::render() {
 }
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }
+void setting_windows::get_ue_version() {
+  if (p_i->p_ue_path.data.empty()) return;
+  auto l_path = FSys::path{p_i->p_ue_path.data} / "Engine/Binaries/Win64/UnrealEditor.exe";
+  if (!FSys::exists(l_path)) {
+    p_i->p_ue_version = "没有找到 UnrealEditor.exe";
+    return;
+  }
+  try {
+    p_i->p_ue_version = doodle_lib::Get().ctx().emplace<ue_exe>().get_file_version(l_path);
+  } catch (const doodle_error& error) {
+    p_i->p_ue_version = boost::diagnostic_information(error);
+  }
+}
 
 }  // namespace doodle::gui

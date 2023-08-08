@@ -55,6 +55,8 @@ class setting_windows {
   class impl;
   std::unique_ptr<impl> p_i;
 
+  void get_ue_version();
+
  public:
   setting_windows();
   ~setting_windows();
