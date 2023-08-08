@@ -74,6 +74,7 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
 
   // 生成命令行
   void GenerateCommandLineArguments(UMoviePipelineQueue* InPipelineQueue);
+  TArray<TObjectPtr<UMoviePipelineQueue>> GetQueuesToRender(UMoviePipelineQueue* InPipelineQueue);
 
   void StartRemoteClientRender();
 

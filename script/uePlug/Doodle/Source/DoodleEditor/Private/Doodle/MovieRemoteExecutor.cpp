@@ -311,25 +311,27 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
   CommandLineArgs += FString::Printf(TEXT(" -messaging -SessionName=\"%s\""), TEXT("NewProcess Movie Render"));
   CommandLineArgs += TEXT(" -nohmd");
   CommandLineArgs += TEXT(" -windowed");
-  CommandLineArgs += FString::Printf(TEXT(" -ResX=%d -ResY=%d"), 1280, 720);
-
-  // Place the Queue in a package and serialize it to disk so we can pass their dynamic object
-  // to another process without having to save/check in/etc.
-  FString ManifestFilePath;
-  UMoviePipelineQueue* DuplicatedQueue =
-      UMoviePipelineEditorBlueprintLibrary::SaveQueueToManifestFile(InPipelineQueue, ManifestFilePath);
-  if (!DuplicatedQueue) {
-    UE_LOG(LogMovieRenderPipeline, Error, TEXT("Could not save manifest package to disk. Path: %s"), *ManifestFilePath);
-    OnExecutorFinishedImpl();
-    return;
-  }
+  // CommandLineArgs += FString::Printf(TEXT(" -ResX=%d -ResY=%d"), 1280, 720);
 
   // Boot into our custom Game Mode (to go with our custom map). Once booted the in-process Executor will load the
   // correct map with correct gamemode.
   UnrealURLParams += FString::Printf(TEXT("?game=%s"), *AMoviePipelineGameMode::StaticClass()->GetPathName());
 
   // 循环查看任务中的设置，让他们修改命令行参数。因为我们可能有多个任务，所以我们会遍历所有任务和所有设置，希望用户的设置不会发生冲突。
-  for (const UMoviePipelineExecutorJob* Job : DuplicatedQueue->GetJobs()) {
+  for (const TObjectPtr<UMoviePipelineQueue> L_Queue : GetQueuesToRender(InPipelineQueue)) {
+    // Place the Queue in a package and serialize it to disk so we can pass their dynamic object
+    // to another process without having to save/check in/etc.
+    FString ManifestFilePath;
+    UMoviePipelineQueue* DuplicatedQueue =
+        UMoviePipelineEditorBlueprintLibrary::SaveQueueToManifestFile(L_Queue, ManifestFilePath);
+    if (!DuplicatedQueue) {
+      UE_LOG(
+          LogMovieRenderPipeline, Error, TEXT("Could not save manifest package to disk. Path: %s"), *ManifestFilePath
+      );
+      OnExecutorFinishedImpl();
+      return;
+    }
+
     FDoodleRemoteRenderJobArg& L_Arg = RemoteRenderJobArgs.Emplace_GetRef();
     L_Arg.Args                       = CommandLineArgs;
 
@@ -345,8 +347,8 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
     TArray<FString> OutDeviceProfileCVars;
     TArray<FString> OutExecCmds;
 
-    Job->GetConfiguration()->InitializeTransientSettings();
-    for (const UMoviePipelineSetting* Setting : Job->GetConfiguration()->GetAllSettings()) {
+    DuplicatedQueue->GetJobs()[0]->GetConfiguration()->InitializeTransientSettings();
+    for (const UMoviePipelineSetting* Setting : DuplicatedQueue->GetJobs()[0]->GetConfiguration()->GetAllSettings()) {
       Setting->BuildNewProcessCommandLineArgs(OutUrlParams, OutCommandLineArgs, OutDeviceProfileCVars, OutExecCmds);
     }
 
@@ -379,12 +381,29 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
     L_Arg.Args = FString::Format(
         TEXT("{PlayWorld}{UnrealURL} -game {SubprocessCommandLine} {CommandLineParams}"), NamedArguments
     );
+    L_Arg.ManifestValue = UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
   }
-  for (auto&& i : RemoteRenderJobArgs)
-    i.ManifestValue = UMoviePipelineEditorBlueprintLibrary::ConvertManifestFileToString(ManifestFilePath);
 
   UE_LOG(LogMovieRenderPipeline, Log, TEXT("Launching a new process to render with the following command line:"));
   for (auto&& i : RemoteRenderJobArgs) UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s"), *i.Args);
+}
+
+TArray<TObjectPtr<UMoviePipelineQueue>> UDoodleMovieRemoteExecutor::GetQueuesToRender(
+    UMoviePipelineQueue* InPipelineQueue
+) {
+  TArray<TObjectPtr<UMoviePipelineQueue>> L_Array{};
+
+  for (auto i = 0; i < InPipelineQueue->GetJobs().Num(); ++i) {
+    auto L_Queue = CastChecked<UMoviePipelineQueue>(StaticDuplicateObject(InPipelineQueue, GetTransientPackage()));
+    auto L_Job   = L_Queue->GetJobs()[i];
+    for (auto* L_Tmp : L_Queue->GetJobs()) {
+      if (L_Tmp == L_Job) continue;
+      L_Queue->DeleteJob(L_Tmp);
+    }
+    L_Array.Add(L_Queue);
+  }
+
+  return L_Array;
 }
 
 void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
