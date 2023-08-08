@@ -136,7 +136,6 @@ void ue_exe::queue_up(
   l_run->mag_attr  = in_msg;
   l_run->arg_attr  = in_command_line;
   l_run->call_attr = in_call_fun;
-  l_run->run();
 
   l_run->call_attr =
       std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
