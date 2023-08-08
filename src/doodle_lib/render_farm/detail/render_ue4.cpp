@@ -13,8 +13,15 @@ namespace detail {
 void render_ue4::run() {
   auto&& l_msg = self_handle_.get_or_emplace<process_message>();
   l_msg.message("开始下载ue4项目文件");
-  boost::asio::post(g_io_context(), [this]() {
-    bool l_r{};
+  auto& l_map = g_reg()->ctx().emplace<std::map<std::string, decltype(boost::asio::make_strand(g_thread()))>>();
+
+  if (l_map.count(arg_.ProjectPath) == 0) {
+    l_map.emplace(arg_.ProjectPath, boost::asio::make_strand(g_thread()));
+  }
+
+  auto& l_strand = l_map.at(arg_.ProjectPath);
+  boost::asio::post(l_strand, [this]() {
+    bool l_r;
     try {
       l_r = download_file("D:/doodle/cache/ue");
     } catch (const doodle_error& e) {
@@ -35,9 +42,9 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
   if (!FSys::exists(l_prj_path)) {
     return false;
   }
-  if (!FSys::exists(in_file_path)) FSys::create_directories(in_file_path);
 
-  const auto l_loc = in_file_path / l_prj_path.filename();
+  const auto l_loc = in_file_path / l_prj_path.stem() / l_prj_path.filename();
+  if (!FSys::exists(l_loc.parent_path())) FSys::create_directories(l_loc.parent_path());
   {  // 复制项目文件
     FSys::copy(l_prj_path, l_loc, FSys::copy_options::overwrite_existing);
   }
@@ -59,9 +66,12 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
       } else {
         if (!FSys::exists(l_loc_) || i.file_size() != FSys::file_size(l_loc_) ||
             i.last_write_time() != FSys::last_write_time(l_loc_)) {
-          FSys::copy(
-              i.path(), l_loc.parent_path() / g_content / i.path().filename(), FSys::copy_options::overwrite_existing
-          );
+          try {
+            FSys::copy_file(i.path(), l_loc_, FSys::copy_options::overwrite_existing);
+            FSys::last_write_time(l_loc_, i.last_write_time());
+          } catch (const FSys::filesystem_error& error) {
+            DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+          }
         }
       }
     }
@@ -72,8 +82,9 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
   {
     // 写入数据
     manifest_path_ =
-        l_loc.parent_path() / "Saved" / "MovieRenderPipeline" / fmt::format("{}.txt", core_set::get_set().get_uuid());
-    std::ofstream l_ofs{manifest_path_};
+        l_loc.parent_path() / "Saved" / "MovieRenderPipeline" / fmt::format("{}.utxt", core_set::get_set().get_uuid());
+    if (!FSys::exists(manifest_path_.parent_path())) FSys::create_directories(manifest_path_.parent_path());
+    std::ofstream l_ofs{manifest_path_, std::ios::binary};
     l_ofs << arg_.ManifestValue;
     manifest_path_ = manifest_path_.lexically_normal();
   }
