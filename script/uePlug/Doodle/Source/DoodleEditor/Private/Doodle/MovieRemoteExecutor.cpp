@@ -438,21 +438,10 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
     OnExecutorFinishedImpl();
     return;
   }
-  FNotificationInfo L_Info{FText::FromString(TEXT("正在渲染..."))};
-  // L_Info.ContentWidget        = SNew(SDoodleRemoteNotification, this);
-  L_Info.bFireAndForget       = true;  // 自动取消
-  L_Info.FadeInDuration       = 1.0f;  // 淡入淡出时间
-  // 造型设计补充信息
-  L_Info.WidthOverride        = 400.0f;
-  L_Info.bUseLargeFont        = false;
-  L_Info.bUseThrobber         = false;
-  L_Info.bUseSuccessFailIcons = false;
-  // 显示与默认警告不同的信息图标
-  L_Info.Image                = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Warning"));
 
-  L_Info.Text                 = FText::FromString(TEXT("提交渲染完成"));
-  FSlateNotificationManager::Get().AddNotification(L_Info);
   static FString L_Sub_URL{TEXT("v1/render_frame/submit_job")};
+  HTTPResponseRecievedDelegate.AddDynamic(this, &UDoodleMovieRemoteExecutor::HttpRemoteClient);
+
   for (auto&& i : RemoteRenderJobArgs) {
     FString L_Url = FString::Printf(TEXT("http://%s:%d/%s"), *RemoteClients[0], GetProt(), *L_Sub_URL);
     Algo::Rotate(RemoteClients, 1);
@@ -471,7 +460,6 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   if (ExecutorSettings->bCloseEditor) {
     FPlatformMisc::RequestExit(false);
   }
-  OnExecutorFinishedImpl();
 }
 
 void UDoodleMovieRemoteExecutor::FindRemoteClient() {
@@ -488,6 +476,28 @@ void UDoodleMovieRemoteExecutor::FindRemoteClient() {
   }
 }
 
-void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 ResponseCode, const FString& Message) {}
+void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 ResponseCode, const FString& Message) {
+  if (Render_IDs.Contains(RequestIndex)) {
+    FNotificationInfo L_Info{FText::FromString(TEXT("正在渲染..."))};
+    // L_Info.ContentWidget        = SNew(SDoodleRemoteNotification, this);
+    L_Info.bFireAndForget       = true;  // 自动取消
+    L_Info.FadeInDuration       = 1.0f;  // 淡入淡出时间
+    // 造型设计补充信息
+    L_Info.WidthOverride        = 400.0f;
+    L_Info.bUseLargeFont        = false;
+    L_Info.bUseThrobber         = false;
+    L_Info.bUseSuccessFailIcons = false;
+    // 显示与默认警告不同的信息图标
+    L_Info.Image                = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Warning"));
+
+    if (ResponseCode != 0) {
+      L_Info.Text = FText::FromString(TEXT("提交渲染失败"));
+    } else {
+      L_Info.Text = FText::FromString(TEXT("提交渲染完成"));
+    }
+    FSlateNotificationManager::Get().AddNotification(L_Info);
+    OnExecutorFinishedImpl();
+  }
+}
 
 #undef LOCTEXT_NAMESPACE
