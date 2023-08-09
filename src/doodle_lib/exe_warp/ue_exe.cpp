@@ -137,9 +137,8 @@ void ue_exe::queue_up(
   l_run->arg_attr  = in_command_line;
   l_run->call_attr = in_call_fun;
 
-  l_run->call_attr =
-      std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
-        boost::asio::post(g_io_context(), [=]() {
+  l_run->call_attr = std::make_shared<call_fun_type>([in_call_fun, this](const boost::system::error_code &in_code) {
+    boost::asio::post(g_io_context(), [=]() {
           --run_size_attr;
           (*in_call_fun)(in_code);
           this->notify_run();
