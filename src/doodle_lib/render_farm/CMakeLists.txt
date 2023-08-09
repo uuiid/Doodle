@@ -10,4 +10,5 @@ target_sources(
         working_machine.cpp
         working_machine_session.cpp
 )
+add_subdirectory(exception)
 add_subdirectory(detail)
