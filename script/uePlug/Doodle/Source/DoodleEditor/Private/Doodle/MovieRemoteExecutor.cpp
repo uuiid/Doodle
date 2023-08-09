@@ -26,8 +26,11 @@
 #include "Widgets/Notifications/SNotificationList.h"      // 通知消息结构
 #include "Widgets/Notifications/SProgressBar.h"           // 进度条
 //
-#include "Algo/Rotate.h"          // 旋转数组
-#include "JsonObjectConverter.h"  // json转换
+#include "Algo/Rotate.h"                    // 旋转数组
+#include "JsonObjectConverter.h"            // json转换
+#include "MoviePipelineBlueprintLibrary.h"  // 蓝图库
+#include "MoviePipelineOutputSetting.h"     // 输出设置
+
 #define LOCTEXT_NAMESPACE "DoodleMovieRemoteExecutor"
 
 class SDoodleRemoteNotification : public SCompoundWidget, public INotificationWidget {
@@ -311,7 +314,7 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
   CommandLineArgs += FString::Printf(TEXT(" -messaging -SessionName=\"%s\""), TEXT("NewProcess Movie Render"));
   CommandLineArgs += TEXT(" -nohmd");
   CommandLineArgs += TEXT(" -windowed");
-  // CommandLineArgs += FString::Printf(TEXT(" -ResX=%d -ResY=%d"), 1280, 720);
+  CommandLineArgs += FString::Printf(TEXT(" -ResX=%d -ResY=%d"), 1280, 720);
 
   // Boot into our custom Game Mode (to go with our custom map). Once booted the in-process Executor will load the
   // correct map with correct gamemode.
@@ -319,6 +322,25 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
 
   // 循环查看任务中的设置，让他们修改命令行参数。因为我们可能有多个任务，所以我们会遍历所有任务和所有设置，希望用户的设置不会发生冲突。
   for (const TObjectPtr<UMoviePipelineQueue> L_Queue : GetQueuesToRender(InPipelineQueue)) {
+    FDoodleRemoteRenderJobArg& L_Arg = RemoteRenderJobArgs.Emplace_GetRef();
+    L_Arg.Args                       = CommandLineArgs;
+
+    if (UMoviePipelineOutputSetting* L_Setting =
+            L_Queue->GetJobs()[0]->GetConfiguration()->FindSetting<UMoviePipelineOutputSetting>()) {
+      FDirectoryPath L_Path{TEXT("Saved/MovieRenders/{sequence_name}/")};
+      FMoviePipelineFilenameResolveParams L_Params{};
+      L_Params.Job = L_Queue->GetJobs()[0];
+      FString L_Out_Dir{};
+      FMoviePipelineFormatArgs L_Args{};
+      UMoviePipelineBlueprintLibrary::ResolveFilenameFormatArguments(L_Path.Path, L_Params, L_Out_Dir, L_Args);
+      L_Out_Dir.LeftChopInline(6);
+      // InPipelineQueue->
+      L_Path.Path = TEXT("{project_dir}/");
+      L_Path.Path += L_Out_Dir;
+      L_Arg.OutFilePath          = L_Out_Dir;
+      L_Setting->OutputDirectory = L_Path;
+    }
+
     // Place the Queue in a package and serialize it to disk so we can pass their dynamic object
     // to another process without having to save/check in/etc.
     FString ManifestFilePath;
@@ -331,9 +353,6 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
       OnExecutorFinishedImpl();
       return;
     }
-
-    FDoodleRemoteRenderJobArg& L_Arg = RemoteRenderJobArgs.Emplace_GetRef();
-    L_Arg.Args                       = CommandLineArgs;
 
     TMap<FString, FStringFormatArg> NamedArguments;
 

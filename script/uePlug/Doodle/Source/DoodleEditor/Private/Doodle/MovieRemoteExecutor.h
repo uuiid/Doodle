@@ -16,6 +16,9 @@ struct FDoodleRemoteRenderJobArg {
 
   UPROPERTY()
   FString ManifestValue;
+
+  UPROPERTY()
+  FString OutFilePath;
 };
 
 // struct FDoodleRemoteRenderState {
