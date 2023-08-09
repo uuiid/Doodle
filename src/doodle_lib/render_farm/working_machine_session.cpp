@@ -229,7 +229,7 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
               l_h.emplace<uuid>();
               l_h
                   .emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
-                      l_h, l_parser_ptr->release().body().get<render_ue4_ptr ::element_type ::arg>()
+                      l_h, l_parser_ptr->release().body().get<render_ue4_ptr::element_type::arg>()
                   ))
                   ->run();
 
