@@ -66,6 +66,9 @@ void process_message::message(const std::string& in_string, const level& in_leve
   //    return std::isspace(in_type, l_local);
   //  });
   spdlog::info(l_msg);
+  if (l_msg.back() != '\n') {
+    l_msg += '\n';
+  }
 
   std::lock_guard l_lock{_mutex};
   switch (in_level_enum) {
