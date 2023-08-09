@@ -37,7 +37,8 @@ class render_ue4 {
     }
   };
 
-  render_ue4(entt::handle self_handle, arg in_arg) : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {}
+  explicit render_ue4(entt::handle self_handle, arg in_arg)
+      : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {}
   ~render_ue4() = default;
   void run();
 
