@@ -23,9 +23,13 @@ class http_method<boost::beast::http::verb::post> {
 
  public:
   http_method()
-      : map_action{{"render_job"s, [](std::shared_ptr<working_machine_session> in_session, boost::urls::params_ref) {
-                      return render_job(std::move(in_session));
-                    }}} {}
+      : map_action{
+            {"render_job"s, [](std::shared_ptr<working_machine_session> in_session,
+                               boost::urls::params_ref) { return render_job(std::move(in_session)); }},
+
+            {"computer"s, [](std::shared_ptr<working_machine_session> in_session, boost::urls::params_ref) {
+               return computer_reg(std::move(in_session));
+             }}} {}
   void run(std::shared_ptr<working_machine_session> in_session);
 
   inline static std::string parser(
@@ -36,6 +40,8 @@ class http_method<boost::beast::http::verb::post> {
   }
 
   static void render_job(std::shared_ptr<working_machine_session> in_session);
+  // 计算机注册
+  static void computer_reg(std::shared_ptr<working_machine_session> in_session);
 };
 }  // namespace detail
 }  // namespace doodle::render_farm

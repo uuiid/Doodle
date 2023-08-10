@@ -6,11 +6,13 @@ target_sources(
         url_route_get.h
         url_route_post.h
         basic_json_body.h
+        computer.h
 
         render_ue4.cpp
         url_route_base.cpp
         url_route_get.cpp
         url_route_post.cpp
         basic_json_body.cpp
+        computer.cpp
 
 )
