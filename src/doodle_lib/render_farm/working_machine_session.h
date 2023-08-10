@@ -9,14 +9,20 @@
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include <boost/hana.hpp>
 #include <boost/signals2.hpp>
 
 #include <memory>
-
+#include <nlohmann/json.hpp>
 namespace doodle::render_farm {
 
 class working_machine;
+namespace detail {
+struct basic_json_body;
 
+template <boost::beast::http::verb>
+class http_method;
+}  // namespace detail
 /**
  * @brief 会话类 用于处理客户端的请求  一个会话对应一个客户端
  */
@@ -30,6 +36,15 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   void run();
   ~working_machine_session() { do_close(); }
 
+  struct function {
+    boost::signals2::signal<boost::beast::http::response<detail::basic_json_body>(const nlohmann::json&)> on_submit_job;
+    boost::signals2::signal<boost::beast::http::message_generator()> on_get_all_job;
+  };
+
+ private:
+  template <boost::beast::http::verb in_method>
+  friend class detail::http_method;
+
  private:
   void do_read();
   /**
@@ -41,6 +56,10 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   void send_response(boost::beast::http::message_generator&& in_message_generator);
   void on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
   void do_close();
+
+  template <boost::beast::http::verb http_verb>
+  void do_parser();
+
   boost::beast::tcp_stream stream_;
   boost::beast::flat_buffer buffer_;
   boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;

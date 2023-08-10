@@ -110,6 +110,190 @@ struct basic_json_body {
     }
   };
 };
+
+//  检查url
+
+std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator> chick_url(
+    boost::urls::segments_ref in_segments_ref
+) {
+  auto l_begin = in_segments_ref.begin();
+  auto l_end   = in_segments_ref.end();
+  if (l_begin == l_end) {
+    throw_exception(doodle_error{"url error"});
+  }
+
+  if (*l_begin != "v1") {
+    throw_exception(doodle_error{"url version error"});
+  }
+  ++l_begin;
+  if (l_begin == l_end) {
+    throw_exception(doodle_error{"url not found render_farm"});
+  }
+  if (*l_begin != "render_farm") {
+    throw_exception(doodle_error{"url not found render_farm"});
+  }
+  ++l_begin;
+  if (l_begin == l_end) {
+    throw_exception(doodle_error{"url not found action"});
+  }
+  return {l_begin, l_end};
+}
+
+// http 方法
+template <boost::beast::http::verb in_method>
+class http_method {
+ public:
+  void run(std::shared_ptr<working_machine_session> in_session) {
+    boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
+    in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
+  };
+};
+
+template <>
+class http_method<boost::beast::http::verb::get> {
+  using map_actin_type = std::map<
+      std::string, std::function<boost::beast::http::message_generator(const entt::handle&, boost::urls::params_ref)>>;
+  const map_actin_type map_action;
+
+ public:
+  http_method()
+      : map_action{
+            {"get_log"s, [](const entt::handle& in_h, boost::urls::params_ref) { return get_log(in_h); }},
+            {"get_err"s, [](const entt::handle& in_h, boost::urls::params_ref) { return get_err(in_h); }},
+            {"render_job"s,
+             [](const entt::handle& in_h, boost::urls::params_ref in_params) { return render_job(); }}} {}
+
+  void run(std::shared_ptr<working_machine_session> in_session) {
+    auto l_url                = boost::url{in_session->request_parser_.get().target()};
+
+    auto [l_handle, l_method] = parser(chick_url(l_url.segments()));
+
+    if (map_action.count(l_method) == 0) {
+      boost::beast::http::response<boost::beast::http::empty_body> l_response{
+          boost::beast::http::status::not_found, 11};
+      in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
+    } else {
+      in_session->send_response(map_action.at(l_method)(l_handle, l_url.params()));
+    }
+  };
+
+  static boost::beast::http::message_generator get_log(const entt::handle& in_h) {
+    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+    l_response.body() = in_h.get<process_message>().log();
+    return l_response;
+  }
+
+  static boost::beast::http::message_generator get_err(const entt::handle& in_h) {
+    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+    l_response.body() = in_h.get<process_message>().err();
+    return l_response;
+  }
+  static boost::beast::http::message_generator render_job() {
+    auto l_view  = g_reg()->view<uuid>().each();
+    auto l_uuids = l_view |
+                   ranges::views::transform([](auto in_e) -> boost::uuids::uuid { return std::get<1>(in_e); }) |
+                   ranges::to_vector;
+    boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+    l_response.body() = l_uuids;
+    return {std::move(l_response)};
+  }
+
+  static std::tuple<entt::handle, std::string> parser(
+      const std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator>& in_segments
+  ) {
+    auto [l_begin, l_end] = in_segments;
+    auto l_next           = l_begin++;
+    entt::handle l_handle{*g_reg(), entt::null};
+    if (l_next == l_end) {
+      return {l_handle, *l_begin};
+    } else {
+      auto l_uuid = boost::lexical_cast<boost::uuids::uuid>(*l_begin);
+      g_reg()->view<boost::uuids::uuid>().each([&](entt::entity in_entity, boost::uuids::uuid& in_uuid) {
+        if (in_uuid == l_uuid) {
+          l_handle = entt::handle{*g_reg(), in_entity};
+        }
+      });
+      if (!l_handle) {
+        throw_exception(doodle_error{"url not found id"});
+      }
+
+      ++l_begin;
+      if (l_begin != l_end) {
+        throw_exception(doodle_error{"url not found method"});
+      }
+
+      auto l_method = *l_begin;
+      if (l_method.empty()) {
+        throw_exception(doodle_error{" url method is empty"});
+      }
+      return {l_handle, l_method};
+    }
+  }
+};
+
+template <>
+class http_method<boost::beast::http::verb::post> {
+  using map_action_type =
+      std::map<std::string, std::function<void(std::shared_ptr<working_machine_session>, boost::urls::params_ref)>>;
+  const map_action_type map_action;
+
+ public:
+  http_method()
+      : map_action{{"render_job"s, [](std::shared_ptr<working_machine_session> in_session, boost::urls::params_ref) {
+                      return render_job(in_session);
+                    }}} {}
+  void run(std::shared_ptr<working_machine_session> in_session) {
+    auto l_url = boost::url{in_session->request_parser_.get().target()};
+
+    auto l_m   = parser(chick_url(l_url.segments()));
+
+    if (map_action.count(l_m) == 0) {
+      boost::beast::http::response<boost::beast::http::empty_body> l_response{
+          boost::beast::http::status::not_found, 11};
+      in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
+    } else {
+      map_action.at(l_m)(in_session, l_url.params());
+    }
+  };
+
+  static std::string parser(
+      const std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator>& in_segments
+  ) {
+    auto [l_begin, l_end] = in_segments;
+    return *l_begin;
+  }
+
+  static void render_job(std::shared_ptr<working_machine_session> in_session) {
+    using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
+    auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(in_session->request_parser_));
+    boost::beast::http::async_read(
+        in_session->stream_, in_session->buffer_, *l_parser_ptr,
+        [self = in_session, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
+          boost::ignore_unused(bytes_transferred);
+          if (ec == boost::beast::http::error::end_of_stream) {
+            return self->do_close();
+          }
+          if (ec) {
+            DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+            return;
+          }
+
+          auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+          l_h.emplace<process_message>();
+          auto& l_uuid = l_h.emplace<uuid>();
+          l_h.emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
+                                          l_h, l_parser_ptr->release().body().get<render_ue4_ptr::element_type::arg>()
+                                      ))
+              ->run();
+
+          boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+          l_response.body() = {{"state", "ok"}, {"uuid", l_uuid}};
+          l_response.keep_alive(false);
+          self->send_response(boost::beast::http::message_generator{std::move(l_response)});
+        }
+    );
+  }
+}
 }  // namespace detail
 
 void working_machine_session::run() {
@@ -120,6 +304,12 @@ void working_machine_session::run() {
   );
 }
 
+template <boost::beast::http::verb http_verb>
+void working_machine_session::do_parser() {
+  stream_.expires_after(30s);
+  std::make_shared<detail::http_method<http_verb>>()->run(shared_from_this());
+}
+
 void working_machine_session::do_read() {
   stream_.expires_after(30s);
   boost::beast::http::async_read_header(
@@ -127,121 +317,20 @@ void working_machine_session::do_read() {
       boost::beast::bind_front_handler(&working_machine_session::on_parser, shared_from_this())
   );
 }
+
 void working_machine_session::on_parser(boost::system::error_code ec, std::size_t bytes_transferred) {
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
 
   switch (request_parser_.get().method()) {
-    case boost::beast::http::verb::get: {
-      auto l_url      = boost::url{request_parser_.get().target()};
-      auto l_segments = l_url.segments();
-      for (auto l_begin = l_segments.begin(); l_begin != l_segments.end(); ++l_begin) {
-        if (*l_begin != "v1") break;
-
-        if (++l_begin == l_segments.end()) break;
-        if (*l_begin != "render_frame") break;
-
-        if (++l_begin == l_segments.end()) break;
-        auto l_uuid = boost::lexical_cast<uuid>(*l_begin);
-
-        if (++l_begin == l_segments.end()) break;
-        // 方法
-        auto l_uuid_view = g_reg()->view<uuid>().each();
-        if (auto l_it = ranges::find_if(l_uuid_view, [&](auto&& v) { return std::get<1>(v) == l_uuid; });
-            l_it != l_uuid_view.end()) {
-          auto l_method = *l_begin;
-          auto l_h      = entt::handle{*g_reg(), std::get<0>(*l_it)};
-          if (l_method == "get_state") {
-            auto l_state = l_h.get<process_message>().get_state();
-            boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-            l_response.body() = {{"state", l_state}, {"uuid", l_uuid}};
-            send_response(boost::beast::http::message_generator{std::move(l_response)});
-            return;
-          } else if (l_method == "get_log") {
-            std::string_view l_log{};
-            if (auto l_params = l_url.params(); l_url.has_query() && l_params.contains("begin")) {
-              auto l_bit = l_params.find("begin"), l_eit = l_params.find("end");
-              std::size_t ll_begin = std::stoll((*l_bit).value),
-                          ll_end   = l_eit != l_params.end() ? std::stoll((*l_eit).value) : -1;
-              l_log                = l_h.get<process_message>().log(ll_begin, ll_end);
-            } else {
-              l_log = l_h.get<process_message>().log();
-            }
-            boost::beast::http::response<boost::beast::http::string_body> l_response{
-                boost::beast::http::status::ok, 11};
-            l_response.body() = l_log;
-            send_response(boost::beast::http::message_generator{std::move(l_response)});
-            return;
-          } else if (l_method == "get_err") {
-            std::string_view l_err{};
-            if (auto l_params = l_url.params(); l_url.has_query() && l_params.contains("begin")) {
-              auto l_bit = l_params.find("begin"), l_eit = l_params.find("end");
-              std::size_t ll_begin = std::stoll((*l_bit).value),
-                          ll_end   = l_eit != l_params.end() ? std::stoll((*l_eit).value) : -1;
-              l_err                = l_h.get<process_message>().err(ll_begin, ll_end);
-            } else {
-              l_err = l_h.get<process_message>().err();
-            }
-            boost::beast::http::response<boost::beast::http::string_body> l_response{
-                boost::beast::http::status::ok, 11};
-            l_response.body() = l_err;
-            send_response(boost::beast::http::message_generator{std::move(l_response)});
-            return;
-          } else if (l_method == "get_time") {
-            auto l_time = l_h.get<process_message>().get_time();
-            boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-            l_response.body() = {{"time", l_time}, {"uuid", l_uuid}};
-            send_response(boost::beast::http::message_generator{std::move(l_response)});
-            return;
-          }
-        }
-      }
-
-      boost::beast::http::response<boost::beast::http::empty_body> l_response{
-          boost::beast::http::status::not_found, 11};
-      send_response(boost::beast::http::message_generator{std::move(l_response)});
+    case boost::beast::http::verb::get:
+      do_parser<boost::beast::http::verb::get>();
       break;
-    }
-    case boost::beast::http::verb::head: {
-      boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-      l_response.body() = {{"hello", "world"}};
-      send_response(boost::beast::http::message_generator{std::move(l_response)});
+    case boost::beast::http::verb::head:
+      do_parser<boost::beast::http::verb::head>();
       break;
-    }
-
     case boost::beast::http::verb::post: {
-      if (request_parser_.get().target() == "/v1/render_frame/submit_job") {
-        auto l_parser_ptr = std::make_shared<json_parser_type>(std::move(request_parser_));
-        boost::beast::http::async_read(
-            stream_, buffer_, *l_parser_ptr,
-            [this, self = shared_from_this(),
-             l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
-              boost::ignore_unused(bytes_transferred);
-              if (ec == boost::beast::http::error::end_of_stream) {
-                return do_close();
-              }
-              if (ec) {
-                DOODLE_LOG_ERROR("on_read error: {}", ec.message());
-                return;
-              }
-
-              auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-              l_h.emplace<process_message>();
-              l_h.emplace<uuid>();
-              l_h
-                  .emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
-                      l_h, l_parser_ptr->release().body().get<render_ue4_ptr::element_type::arg>()
-                  ))
-                  ->run();
-
-              boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-              l_response.body() = {{"state", "ok"}, {"uuid", l_h.get<uuid>()}};
-              l_response.keep_alive(false);
-              send_response(boost::beast::http::message_generator{std::move(l_response)});
-            }
-        );
-        break;
-      }
-      // 如果不是提交任务, 直接返回失败
+      do_parser<boost::beast::http::verb::post>();
+      break;
     }
     default: {
       boost::beast::http::response<boost::beast::http::empty_body> l_response{
