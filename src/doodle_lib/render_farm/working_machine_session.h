@@ -23,10 +23,7 @@ struct basic_json_body;
 template <boost::beast::http::verb in_method>
 class http_method {
  public:
-  void run(std::shared_ptr<working_machine_session> in_session) {
-    boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
-    in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
-  };
+  void run(std::shared_ptr<working_machine_session> in_session);
 };
 ;
 }  // namespace detail
@@ -73,4 +70,12 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   std::shared_ptr<working_machine> working_machine_;
   boost::signals2::scoped_connection connection_;
 };
+
+namespace detail {
+template <boost::beast::http::verb in_method>
+void http_method<in_method>::run(std::shared_ptr<working_machine_session> in_session) {
+  boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
+  in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
+}
+}  // namespace detail
 }  // namespace doodle::render_farm
