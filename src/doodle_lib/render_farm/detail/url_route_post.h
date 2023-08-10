@@ -3,10 +3,13 @@
 //
 
 #pragma once
-namespace doodle {
-namespace render_farm {
 
-class url_route_post {};
+namespace doodle::render_farm {
+namespace detail {
 
-}  // namespace render_farm
-}  // namespace doodle
+class url_route_post {
+ public:
+};
+
+}  // namespace detail
+}  // namespace doodle::render_farm
