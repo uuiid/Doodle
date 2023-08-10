@@ -293,7 +293,7 @@ class http_method<boost::beast::http::verb::post> {
         }
     );
   }
-}
+};
 }  // namespace detail
 
 void working_machine_session::run() {
