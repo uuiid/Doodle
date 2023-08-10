@@ -319,8 +319,6 @@ void working_machine_session::do_read() {
 }
 
 void working_machine_session::on_parser(boost::system::error_code ec, std::size_t bytes_transferred) {
-  using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
-
   switch (request_parser_.get().method()) {
     case boost::beast::http::verb::get:
       do_parser<boost::beast::http::verb::get>();
