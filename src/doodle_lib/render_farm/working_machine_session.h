@@ -20,8 +20,15 @@ class working_machine;
 namespace detail {
 struct basic_json_body;
 
-template <boost::beast::http::verb>
-class http_method;
+template <boost::beast::http::verb in_method>
+class http_method {
+ public:
+  void run(std::shared_ptr<working_machine_session> in_session) {
+    boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
+    in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
+  };
+};
+;
 }  // namespace detail
 /**
  * @brief 会话类 用于处理客户端的请求  一个会话对应一个客户端

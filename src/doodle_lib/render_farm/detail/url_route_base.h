@@ -8,21 +8,9 @@
 #include <boost/url.hpp>
 namespace doodle::render_farm {
 namespace detail {
-class url_route_base {
-  void chick_v1_render_farm();
-
- protected:
-  boost::urls::segments_ref segments_ref_;
-
- public:
-  explicit url_route_base(boost::urls::segments_ref in_ref) : segments_ref_(std::move(in_ref)) {
-    chick_v1_render_farm();
-  };
-  virtual ~url_route_base() = default;
-  virtual boost::beast::http::message_generator run(
-      const std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>& in_request_parser
-  ) = 0;
-};
+std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator> chick_url(
+    boost::urls::segments_ref in_segments_ref
+);
 
 }  // namespace detail
 }  // namespace doodle::render_farm
