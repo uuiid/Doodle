@@ -15,7 +15,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 namespace doodle::render_farm {
-
+class working_machine_session;
 class working_machine;
 namespace detail {
 struct basic_json_body;
