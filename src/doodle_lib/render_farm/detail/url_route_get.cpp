@@ -66,9 +66,25 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   return {std::move(l_response)};
 }
 
+namespace {
+struct computer_tmp {
+  std::string name;
+  std::string status;
+  explicit computer_tmp(const computer& in_computer)
+      : name(in_computer.name()), status(magic_enum::enum_name(in_computer.status())) {}
+
+  friend void to_json(nlohmann::json& j, const computer_tmp& in_tmp) {
+    j = nlohmann::json{{"name", in_tmp.name}, {"status", in_tmp.status}};
+  }
+};
+}  // namespace
 boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::computer_reg() const {
-  auto l_view = g_reg()->view<render_farm::computer>();
-  auto l_ids  = l_view | ranges::to_vector;
+  auto l_view = g_reg()->view<render_farm::computer>().each();
+  auto l_ids  = l_view | ranges::views::transform([](auto&& in_item) -> computer_tmp {
+                 auto& l_computer = std::get<1>(in_item);
+                 return computer_tmp{l_computer};
+               }) |
+               ranges::to_vector;
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
   l_response.body() = l_ids;
   l_response.keep_alive(keep_alive_);
