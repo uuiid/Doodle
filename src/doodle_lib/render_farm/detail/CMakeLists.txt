@@ -7,6 +7,7 @@ target_sources(
         url_route_post.h
         basic_json_body.h
         computer.h
+        ue4_task.h
 
         render_ue4.cpp
         url_route_base.cpp
@@ -14,5 +15,6 @@ target_sources(
         url_route_post.cpp
         basic_json_body.cpp
         computer.cpp
+        ue4_task.cpp
 
 )
