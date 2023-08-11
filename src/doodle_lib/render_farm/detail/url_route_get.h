@@ -28,6 +28,7 @@ class http_method<boost::beast::http::verb::get> {
 
   boost::beast::http::message_generator get_err(const entt::handle& in_h);
   boost::beast::http::message_generator render_job();
+  boost::beast::http::message_generator computer_reg();
 
   std::tuple<entt::handle, std::string> parser(
       const std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator>& in_segments

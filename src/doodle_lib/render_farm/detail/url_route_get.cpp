@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/exception/exception.h>
 
+#include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 namespace doodle::render_farm::detail {
 
@@ -14,7 +15,9 @@ http_method<boost::beast::http::verb::get>::http_method()
     : map_action{
           {"get_log"s, [this](const entt::handle& in_h, boost::urls::params_ref) { return get_log(in_h); }},
           {"get_err"s, [this](const entt::handle& in_h, boost::urls::params_ref) { return get_err(in_h); }},
-          {"render_job"s, [this](const entt::handle&, boost::urls::params_ref) { return render_job(); }}} {}
+          {"render_job"s, [this](const entt::handle&, boost::urls::params_ref) { return render_job(); }},
+          {"computer"s, [this](const entt::handle&, boost::urls::params_ref) { return computer_reg(); }},
+      } {}
 void http_method<boost::beast::http::verb::get>::run(std::shared_ptr<working_machine_session> in_session) {
   auto [l_handle, l_method] = parser(chick_url(in_session->url_.segments()));
   keep_alive_               = in_session->request_parser_.keep_alive();
@@ -63,6 +66,17 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   l_response.insert(boost::beast::http::field::content_type, "application/json");
   return {std::move(l_response)};
 }
+
+boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::computer_reg() {
+  auto l_view = g_reg()->view<render_farm::computer>();
+  auto l_ids  = l_view | ranges::to_vector;
+  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  l_response.body() = l_ids;
+  l_response.keep_alive(keep_alive_);
+  l_response.insert(boost::beast::http::field::content_type, "application/json");
+  return {std::move(l_response)};
+}
+
 boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   l_response.keep_alive(keep_alive_);
