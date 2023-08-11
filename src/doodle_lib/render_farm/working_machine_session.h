@@ -6,6 +6,7 @@
 #include "doodle_core/core/global_function.h"
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/render_farm/detail/basic_json_body.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -41,6 +42,21 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   void run();
   ~working_machine_session() { do_close(); }
 
+  template <typename Error_Type>
+  void send_error(const Error_Type& in_error) {
+    boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+    l_response.body() = {{"state", boost::diagnostic_information(in_error)}, {"id", -1}};
+    l_response.keep_alive(request_parser_.keep_alive());
+    send_response(boost::beast::http::message_generator{std::move(l_response)});
+  };
+  template <typename Error_Type>
+  void send_error_code(const Error_Type& in_error) {
+    boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+    l_response.body() = {{"state", in_error.message()}, {"id", -1}};
+    l_response.keep_alive(request_parser_.keep_alive());
+    send_response(boost::beast::http::message_generator{std::move(l_response)});
+  };
+
  private:
   template <boost::beast::http::verb in_method>
   friend class detail::http_method;
@@ -53,9 +69,9 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
    * @param bytes_transferred  读取的字节数
    */
   void on_parser(boost::system::error_code ec, std::size_t bytes_transferred);
-  void send_response(boost::beast::http::message_generator&& in_message_generator);
   void on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
   void do_close();
+  void send_response(boost::beast::http::message_generator&& in_message_generator);
 
   template <boost::beast::http::verb http_verb>
   void do_parser();
@@ -63,7 +79,7 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   boost::beast::tcp_stream stream_;
   boost::beast::flat_buffer buffer_;
   boost::url url_;
-  boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
+  bn request_parser_;
   std::shared_ptr<working_machine> working_machine_;
   boost::signals2::scoped_connection connection_;
 };
