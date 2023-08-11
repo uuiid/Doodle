@@ -17,7 +17,7 @@ void computer::delay(computer_status in_status) {
   }
   timer_->expires_from_now(std::chrono::seconds(5));
   timer_->async_wait([this](auto e) {
-    if (!e) {
+    if (!e && status_ == computer_status::lost) {
       status_ = computer_status::lost;
     }
   });
