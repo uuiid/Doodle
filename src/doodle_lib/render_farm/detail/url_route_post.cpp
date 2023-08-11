@@ -35,6 +35,10 @@ void http_method<boost::beast::http::verb::post>::render_job(std::shared_ptr<wor
         }
         if (ec) {
           DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+          boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+          l_response.body() = {{"state", ec.message()}, {"id", -1}};
+          l_response.keep_alive(l_parser_ptr->get().keep_alive());
+          self->send_response(boost::beast::http::message_generator{std::move(l_response)});
           return;
         }
 
@@ -73,6 +77,10 @@ void http_method<boost::beast::http::verb::post>::computer_reg(std::shared_ptr<w
         }
         if (ec) {
           DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+          boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+          l_response.body() = {{"state", ec.message()}, {"id", -1}};
+          l_response.keep_alive(l_parser_ptr->get().keep_alive());
+          self->send_response(boost::beast::http::message_generator{std::move(l_response)});
           return;
         }
 
