@@ -10,12 +10,12 @@ namespace doodle::render_farm::detail {
 
 http_method<boost::beast::http::verb::get>::http_method()
     : map_action{
-          {"get_log"s, [](const entt::handle& in_h, boost::urls::params_ref) { return get_log(in_h); }},
-          {"get_err"s, [](const entt::handle& in_h, boost::urls::params_ref) { return get_err(in_h); }},
-          {"render_job"s, [](const entt::handle&, boost::urls::params_ref) { return render_job(); }}} {}
+          {"get_log"s, [this](const entt::handle& in_h, boost::urls::params_ref) { return get_log(in_h); }},
+          {"get_err"s, [this](const entt::handle& in_h, boost::urls::params_ref) { return get_err(in_h); }},
+          {"render_job"s, [this](const entt::handle&, boost::urls::params_ref) { return render_job(); }}} {}
 void http_method<boost::beast::http::verb::get>::run(std::shared_ptr<working_machine_session> in_session) {
   auto [l_handle, l_method] = parser(chick_url(in_session->url_.segments()));
-
+  keep_alive_               = in_session->request_parser_.keep_alive();
   if (map_action.count(l_method) == 0) {
     boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
     l_response.keep_alive(false);
@@ -61,16 +61,20 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
                  ranges::to_vector;
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
   l_response.body() = l_uuids;
+  l_response.keep_alive(keep_alive_);
   l_response.insert(boost::beast::http::field::content_type, "application/json");
   return {std::move(l_response)};
 }
 boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+  l_response.keep_alive(keep_alive_);
+
   l_response.body() = in_h.get<process_message>().err();
   return l_response;
 }
 boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_log(const entt::handle& in_h) {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+  l_response.keep_alive(keep_alive_);
   l_response.body() = in_h.get<process_message>().log();
   return l_response;
 }

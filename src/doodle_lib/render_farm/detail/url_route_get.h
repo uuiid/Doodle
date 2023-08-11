@@ -17,17 +17,19 @@ class http_method<boost::beast::http::verb::get> {
       std::string, std::function<boost::beast::http::message_generator(const entt::handle&, boost::urls::params_ref)>>;
   const map_actin_type map_action;
 
+  bool keep_alive_;
+
  public:
   http_method();
 
   void run(std::shared_ptr<working_machine_session> in_session);
 
-  static boost::beast::http::message_generator get_log(const entt::handle& in_h);
+  boost::beast::http::message_generator get_log(const entt::handle& in_h);
 
-  static boost::beast::http::message_generator get_err(const entt::handle& in_h);
-  static boost::beast::http::message_generator render_job();
+  boost::beast::http::message_generator get_err(const entt::handle& in_h);
+  boost::beast::http::message_generator render_job();
 
-  static std::tuple<entt::handle, std::string> parser(
+  std::tuple<entt::handle, std::string> parser(
       const std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator>& in_segments
   );
 };
