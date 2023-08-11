@@ -97,7 +97,7 @@ void http_method<boost::beast::http::verb::post>::computer_reg(std::shared_ptr<w
           l_handle = entt::handle{*g_reg(), g_reg()->create()};
           l_handle.emplace<computer>(l_json.get<computer>());
         }
-
+        l_handle.get<computer>().delay();
         boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.keep_alive(l_parser_ptr->keep_alive());
         l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
