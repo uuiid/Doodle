@@ -38,7 +38,9 @@ class render_ue4 {
   };
 
   explicit render_ue4(entt::handle self_handle, arg in_arg)
-      : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {}
+      : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {
+    set_meg();
+  }
   ~render_ue4() = default;
   void run();
 
@@ -46,6 +48,7 @@ class render_ue4 {
   arg arg_;
   entt::handle self_handle_;
   FSys::path manifest_path_;
+  void set_meg();
 
   // 下载文件
   bool download_file(const FSys::path& in_file_path);
@@ -53,6 +56,7 @@ class render_ue4 {
   [[nodiscard("")]] std::string generate_command_line() const;
   void run_impl(bool in_r);
 };
+
 }  // namespace detail
 using render_ue4_ptr = std::shared_ptr<detail::render_ue4>;
 }  // namespace doodle::render_farm

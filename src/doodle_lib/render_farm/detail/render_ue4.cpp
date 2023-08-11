@@ -112,5 +112,11 @@ void render_ue4::run_impl(bool in_r) {
       }
   );
 }
+void render_ue4::set_meg() {
+  auto& l_msg = self_handle_.get_or_emplace<process_message>();
+  auto l_prj  = FSys::path{arg_.ProjectPath};
+  l_msg.message(fmt::format("开始准备 {}", l_prj));
+  l_msg.set_name(l_prj.filename().generic_string());
+}
 }  // namespace detail
 }  // namespace doodle::render_farm
