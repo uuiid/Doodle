@@ -76,23 +76,32 @@ void http_method<boost::beast::http::verb::post>::computer_reg(std::shared_ptr<w
 
         auto l_json = l_parser_ptr->release().body();
         entt::handle l_handle{};
-        try {
-          auto l_c = l_json.get<computer>();
-          g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
-            if (in_computer.name() == l_c.name()) {
-              l_handle = entt::handle{*g_reg(), e};
-            }
-          });
-        } catch (const nlohmann::json::exception& e) {
-          DOODLE_LOG_ERROR("json parse error: {}", e.what());
-          self->send_error(e);
-          return;
+        if (l_json.contains("id")) {
+          l_handle = entt::handle{*g_reg(), l_json["id"].get<entt::entity>()};
+        }
+        if (!l_handle) {
+          try {
+            auto l_c = l_json.get<computer>();
+            g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
+              if (in_computer.name() == l_c.name()) {
+                l_handle = entt::handle{*g_reg(), e};
+              }
+            });
+          } catch (const nlohmann::json::exception& e) {
+            DOODLE_LOG_ERROR("json parse error: {}", e.what());
+            self->send_error(e);
+            return;
+          }
         }
         if (!l_handle) {
           l_handle = entt::handle{*g_reg(), g_reg()->create()};
           l_handle.emplace<computer>(l_json.get<computer>());
         }
-        l_handle.get<computer>().delay();
+        if (l_json.contains("status")) {
+          l_handle.get<computer>().delay(l_json["status"].get<std::string>());
+        } else {
+          l_handle.get<computer>().delay();
+        }
         boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.keep_alive(l_parser_ptr->keep_alive());
         l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
