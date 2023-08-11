@@ -13,15 +13,13 @@ namespace doodle::render_farm {
 namespace detail {
 
 void http_method<boost::beast::http::verb::post>::run(std::shared_ptr<working_machine_session> in_session) {
-  auto l_url = boost::url{in_session->request_parser_.get().target()};
-
-  auto l_m   = parser(chick_url(l_url.segments()));
+  auto l_m = parser(chick_url(in_session->url_.segments()));
 
   if (map_action.count(l_m) == 0) {
     boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
     in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
   } else {
-    map_action.at(l_m)(in_session, l_url.params());
+    map_action.at(l_m)(in_session, in_session->url_.params());
   }
 }
 
@@ -50,7 +48,7 @@ void http_method<boost::beast::http::verb::post>::render_job(std::shared_ptr<wor
 
         boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.body() = {{"state", "ok"}, {"uuid", l_uuid}};
-        l_response.keep_alive(false);
+        l_response.keep_alive(l_parser_ptr->get().keep_alive());
         self->send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
@@ -82,6 +80,11 @@ void http_method<boost::beast::http::verb::post>::computer_reg(std::shared_ptr<w
           l_handle = entt::handle{*g_reg(), g_reg()->create()};
           l_handle.emplace<computer>(l_json.get<computer>());
         }
+        boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+        DOODLE_LOG_ERROR("keep_alive: {}", l_parser_ptr->keep_alive());
+        l_response.keep_alive(l_parser_ptr->keep_alive());
+        l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
+        self->send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
 }
