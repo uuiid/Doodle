@@ -18,7 +18,7 @@ http_method<boost::beast::http::verb::get>::http_method()
           {"render_job"s, [this](const entt::handle&, boost::urls::params_ref) { return render_job(); }},
           {"computer"s, [this](const entt::handle&, boost::urls::params_ref) { return computer_reg(); }},
       } {}
-void http_method<boost::beast::http::verb::get>::run(std::shared_ptr<working_machine_session> in_session) {
+void http_method<boost::beast::http::verb::get>::run(const std::shared_ptr<working_machine_session>& in_session) {
   auto [l_handle, l_method] = parser(chick_url(in_session->url_.segments()));
   keep_alive_               = in_session->request_parser_.keep_alive();
   if (map_action.count(l_method) == 0) {
@@ -52,12 +52,11 @@ std::tuple<entt::handle, std::string> http_method<boost::beast::http::verb::get>
       throw_exception(doodle_error{" url method is empty"});
     }
     return {l_handle, l_method};
-  } else {
-    return {l_handle, *l_begin};
   }
+  return {l_handle, *l_begin};
 }
 
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::render_job() {
+boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::render_job() const {
   auto l_view = g_reg()->view<render_farm::render_ue4_ptr>();
   auto l_ids  = l_view | ranges::to_vector;
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
@@ -67,7 +66,7 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   return {std::move(l_response)};
 }
 
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::computer_reg() {
+boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::computer_reg() const {
   auto l_view = g_reg()->view<render_farm::computer>();
   auto l_ids  = l_view | ranges::to_vector;
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
@@ -77,13 +76,15 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   return {std::move(l_response)};
 }
 
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
+boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h
+) const {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   l_response.keep_alive(keep_alive_);
   l_response.body() = in_h.get<process_message>().err();
   return l_response;
 }
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_log(const entt::handle& in_h) {
+boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_log(const entt::handle& in_h
+) const {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   l_response.keep_alive(keep_alive_);
   l_response.body() = in_h.get<process_message>().log();

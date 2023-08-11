@@ -8,8 +8,8 @@
 
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
-namespace doodle::render_farm {
-namespace detail {
+
+namespace doodle::render_farm::detail {
 
 template <>
 class http_method<boost::beast::http::verb::get> {
@@ -22,19 +22,17 @@ class http_method<boost::beast::http::verb::get> {
  public:
   http_method();
 
-  void run(std::shared_ptr<working_machine_session> in_session);
+  void run(const std::shared_ptr<working_machine_session>& in_session);
 
-  boost::beast::http::message_generator get_log(const entt::handle& in_h);
+  [[nodiscard("")]] boost::beast::http::message_generator get_log(const entt::handle& in_h) const;
 
-  boost::beast::http::message_generator get_err(const entt::handle& in_h);
-  boost::beast::http::message_generator render_job();
-  boost::beast::http::message_generator computer_reg();
+  [[nodiscard("")]] boost::beast::http::message_generator get_err(const entt::handle& in_h) const;
+  [[nodiscard("")]] boost::beast::http::message_generator render_job() const;
+  [[nodiscard("")]] boost::beast::http::message_generator computer_reg() const;
 
-  std::tuple<entt::handle, std::string> parser(
+  static std::tuple<entt::handle, std::string> parser(
       const std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator>& in_segments
   );
 };
 
-}  // namespace detail
-
-}  // namespace doodle::render_farm
+}  // namespace doodle::render_farm::detail
