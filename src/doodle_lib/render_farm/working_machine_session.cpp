@@ -58,12 +58,11 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     do_close();
   }
 
-  url_ = boost::url{request_parser_.get().target()};
   if (bytes_transferred == 0) {
-    boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
-    send_response(boost::beast::http::message_generator{std::move(l_response)});
+    do_close();
     return;
   }
+  url_ = boost::url{request_parser_.get().target()};
   try {
     switch (request_parser_.get().method()) {
       case boost::beast::http::verb::get:
