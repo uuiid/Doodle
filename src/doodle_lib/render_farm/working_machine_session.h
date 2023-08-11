@@ -79,7 +79,7 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   boost::beast::tcp_stream stream_;
   boost::beast::flat_buffer buffer_;
   boost::url url_;
-  bn request_parser_;
+  boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
   std::shared_ptr<working_machine> working_machine_;
   boost::signals2::scoped_connection connection_;
 };
