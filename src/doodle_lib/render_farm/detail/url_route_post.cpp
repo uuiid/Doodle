@@ -46,9 +46,8 @@ void http_method<boost::beast::http::verb::post>::render_job(std::shared_ptr<wor
         l_h.emplace<process_message>();
         try {
           l_h.emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
-                                          l_h, l_parser_ptr->release().body().get<render_ue4_ptr::element_type::arg>()
-                                      ))
-              ->run();
+              l_h, l_parser_ptr->release().body().get<render_ue4_ptr::element_type::arg>()
+          ));
         } catch (const nlohmann::json::exception& e) {
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
           boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::bad_request, 11};
