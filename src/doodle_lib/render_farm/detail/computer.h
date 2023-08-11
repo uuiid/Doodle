@@ -27,7 +27,8 @@ class computer {
   inline void set_status(computer_status in_status) { status_ = in_status; }
 
   // 延期
-  void delay();
+  void delay(computer_status in_status = computer_status::idle);
+  void delay(const std::string& in_str);
 
   // to_json
   friend void to_json(nlohmann::json& j, const computer& p) { j["name"] = p.name_; }
