@@ -23,9 +23,7 @@ namespace detail {
 
 //  检查url
 
-
 // http 方法
-
 
 }  // namespace detail
 
@@ -52,24 +50,48 @@ void working_machine_session::do_read() {
 }
 
 void working_machine_session::on_parser(boost::system::error_code ec, std::size_t bytes_transferred) {
-  switch (request_parser_.get().method()) {
-    case boost::beast::http::verb::get:
-      do_parser<boost::beast::http::verb::get>();
-      break;
-    case boost::beast::http::verb::head:
-      do_parser<boost::beast::http::verb::head>();
-      break;
-    case boost::beast::http::verb::post: {
-      do_parser<boost::beast::http::verb::post>();
-      break;
-    }
-    default: {
-      boost::beast::http::response<boost::beast::http::empty_body> l_response{
-          boost::beast::http::status::not_found, 11};
-      send_response(boost::beast::http::message_generator{std::move(l_response)});
-      break;
-    }
+  if (ec) {
+    DOODLE_LOG_ERROR("on_write error: {}", ec.message());
+    //    if (ec == boost::beast::http::error::end_of_stream) {
+    //      return;
+    //    }
+    do_close();
   }
+
+  url_ = boost::url{request_parser_.get().target()};
+  if (bytes_transferred == 0) {
+    boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
+    send_response(boost::beast::http::message_generator{std::move(l_response)});
+    return;
+  }
+  try {
+    switch (request_parser_.get().method()) {
+      case boost::beast::http::verb::get:
+        do_parser<boost::beast::http::verb::get>();
+        break;
+      case boost::beast::http::verb::head:
+        do_parser<boost::beast::http::verb::head>();
+        break;
+      case boost::beast::http::verb::post: {
+        do_parser<boost::beast::http::verb::post>();
+        break;
+      }
+      default: {
+        boost::beast::http::response<boost::beast::http::empty_body> l_response{
+            boost::beast::http::status::not_found, 11};
+        send_response(boost::beast::http::message_generator{std::move(l_response)});
+        break;
+      }
+    }
+  } catch (const doodle_error& e) {
+    DOODLE_LOG_ERROR("doodle_error: {}", boost::diagnostic_information(e));
+    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
+    l_response.body() = e.what();
+    send_response(boost::beast::http::message_generator{std::move(l_response)});
+  }
+  //  catch (const std::exception& e) {
+  //    DOODLE_LOG_ERROR("std::exception: {}", e.what());
+  //  }
 }
 
 void working_machine_session::send_response(boost::beast::http::message_generator&& in_message_generator) {
@@ -93,7 +115,7 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
   if (!keep_alive) {
     return do_close();
   }
-
+  url_.clear();
   do_read();
 }
 void working_machine_session::do_close() {

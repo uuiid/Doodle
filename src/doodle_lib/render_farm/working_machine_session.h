@@ -11,6 +11,7 @@
 #include <boost/beast.hpp>
 #include <boost/hana.hpp>
 #include <boost/signals2.hpp>
+#include <boost/url.hpp>
 
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -40,11 +41,6 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   void run();
   ~working_machine_session() { do_close(); }
 
-  struct function {
-    boost::signals2::signal<boost::beast::http::response<detail::basic_json_body>(const nlohmann::json&)> on_submit_job;
-    boost::signals2::signal<boost::beast::http::message_generator()> on_get_all_job;
-  };
-
  private:
   template <boost::beast::http::verb in_method>
   friend class detail::http_method;
@@ -66,6 +62,7 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
 
   boost::beast::tcp_stream stream_;
   boost::beast::flat_buffer buffer_;
+  boost::url url_;
   boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
   std::shared_ptr<working_machine> working_machine_;
   boost::signals2::scoped_connection connection_;
