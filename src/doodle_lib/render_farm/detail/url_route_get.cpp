@@ -74,7 +74,8 @@ struct computer_tmp {
       : name(in_computer.name()), status(magic_enum::enum_name(in_computer.status())) {}
 
   friend void to_json(nlohmann::json& j, const computer_tmp& in_tmp) {
-    j = nlohmann::json{{"name", in_tmp.name}, {"status", in_tmp.status}};
+    j["name"]   = in_tmp.name;
+    j["status"] = in_tmp.status;
   }
 };
 }  // namespace
