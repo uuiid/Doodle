@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/exception/exception.h>
+
+#include <doodle_lib/render_farm/detail/render_ue4.h>
 namespace doodle::render_farm::detail {
 
 http_method<boost::beast::http::verb::get>::http_method()
@@ -30,13 +32,9 @@ std::tuple<entt::handle, std::string> http_method<boost::beast::http::verb::get>
 ) {
   auto [l_begin, l_end] = in_segments;
   entt::handle l_handle{*g_reg(), entt::null};
-  if (std::regex_match(*l_begin, std::regex{"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"})) {
-    auto l_uuid = boost::lexical_cast<boost::uuids::uuid>(*l_begin);
-    g_reg()->view<boost::uuids::uuid>().each([&](entt::entity in_entity, boost::uuids::uuid& in_uuid) {
-      if (in_uuid == l_uuid) {
-        l_handle = entt::handle{*g_reg(), in_entity};
-      }
-    });
+  if (std::regex_match(*l_begin, std::regex{R"(^\d+$)"})) {
+    auto l_uuid = std::stoi(*l_begin);
+    l_handle    = {*g_reg(), num_to_enum<entt::entity>(l_uuid)};
     if (!l_handle) {
       throw_exception(doodle_error{"url not found id"});
     }
@@ -55,12 +53,12 @@ std::tuple<entt::handle, std::string> http_method<boost::beast::http::verb::get>
     return {l_handle, *l_begin};
   }
 }
+
 boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::render_job() {
-  auto l_view  = g_reg()->view<uuid>().each();
-  auto l_uuids = l_view | ranges::views::transform([](auto in_e) -> boost::uuids::uuid { return std::get<1>(in_e); }) |
-                 ranges::to_vector;
+  auto l_view = g_reg()->view<render_farm::render_ue4_ptr>();
+  auto l_ids  = l_view | ranges::to_vector;
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
-  l_response.body() = l_uuids;
+  l_response.body() = l_ids;
   l_response.keep_alive(keep_alive_);
   l_response.insert(boost::beast::http::field::content_type, "application/json");
   return {std::move(l_response)};
@@ -68,7 +66,6 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
 boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   l_response.keep_alive(keep_alive_);
-
   l_response.body() = in_h.get<process_message>().err();
   return l_response;
 }

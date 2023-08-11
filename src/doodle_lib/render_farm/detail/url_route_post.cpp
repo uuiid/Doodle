@@ -40,7 +40,6 @@ void http_method<boost::beast::http::verb::post>::render_job(std::shared_ptr<wor
 
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<process_message>();
-        auto& l_uuid = l_h.emplace<uuid>();
         try {
           l_h.emplace<render_ue4_ptr>(std::make_shared<render_ue4_ptr ::element_type>(
                                           l_h, l_parser_ptr->release().body().get<render_ue4_ptr::element_type::arg>()
@@ -50,13 +49,13 @@ void http_method<boost::beast::http::verb::post>::render_job(std::shared_ptr<wor
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
           boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::bad_request, 11};
           l_response.keep_alive(l_parser_ptr->keep_alive());
-          l_response.body() = {{"state", boost::diagnostic_information(e)}, {"uuid", -1}};
+          l_response.body() = {{"state", boost::diagnostic_information(e)}, {"id", -1}};
           self->send_response(boost::beast::http::message_generator{std::move(l_response)});
           return;
         }
 
         boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-        l_response.body() = {{"state", "ok"}, {"uuid", l_uuid}};
+        l_response.body() = {{"state", "ok"}, {"id", l_h.entity()}};
         l_response.keep_alive(l_parser_ptr->get().keep_alive());
         self->send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
