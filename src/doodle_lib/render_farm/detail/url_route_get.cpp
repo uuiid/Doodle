@@ -14,15 +14,14 @@ http_method<boost::beast::http::verb::get>::http_method()
           {"get_err"s, [](const entt::handle& in_h, boost::urls::params_ref) { return get_err(in_h); }},
           {"render_job"s, [](const entt::handle&, boost::urls::params_ref) { return render_job(); }}} {}
 void http_method<boost::beast::http::verb::get>::run(std::shared_ptr<working_machine_session> in_session) {
-  auto l_url                = boost::url{in_session->request_parser_.get().target()};
-
-  auto [l_handle, l_method] = parser(chick_url(l_url.segments()));
+  auto [l_handle, l_method] = parser(chick_url(in_session->url_.segments()));
 
   if (map_action.count(l_method) == 0) {
     boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
+    l_response.keep_alive(false);
     in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
   } else {
-    in_session->send_response(map_action.at(l_method)(l_handle, l_url.params()));
+    in_session->send_response(map_action.at(l_method)(l_handle, in_session->url_.params()));
   }
 }
 
