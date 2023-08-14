@@ -70,7 +70,7 @@ struct table_line : boost::totally_ordered<table_line> {
   table_line() = default;
 
   explicit table_line(const work_task_info& in_task)
-      : data_handle(make_handle(in_task)),
+      : data_handle(make_handle(&in_task)),
         cache_time{in_task.time},
         time_day{fmt::format("{:%F}", cache_time)},
         week{tran.at(fmt::format("{:%A}", cache_time))},

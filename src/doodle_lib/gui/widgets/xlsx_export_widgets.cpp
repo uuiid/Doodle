@@ -629,10 +629,10 @@ void xlsx_export_widgets::filter_() {
   auto l_end   = p_i->combox_month.time_data.current_month_end();
   DOODLE_LOG_INFO("开始日期 {} 结束日期 {}", l_begin, l_end);
 
-  p_i->list =
-      l_view |
-      ranges::views::transform([](const entt::entity &in_tuple) -> entt::handle { return make_handle(in_tuple); }) |
-      ranges::to_vector;
+  p_i->list = l_view | ranges::views::transform([](const entt::entity &in_tuple) -> entt::handle {
+                return entt::handle{*g_reg(), in_tuple};
+              }) |
+              ranges::to_vector;
 
   p_i->list = p_i->list | ranges::views::filter([&](const entt::handle &in_handle) -> bool {
                 auto &&l_t = in_handle.get<time_point_wrap>();

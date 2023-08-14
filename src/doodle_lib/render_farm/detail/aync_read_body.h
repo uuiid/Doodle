@@ -52,5 +52,5 @@ namespace doodle::render_farm {
 //   );
 // }
 
-}  // namespace detail
+//}  // namespace detail
 }  // namespace doodle::render_farm

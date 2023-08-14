@@ -32,10 +32,11 @@ class http_method<boost::beast::http::verb::get> {
 
   inline static auto make_server() {
     return http_method{
-        {"get_log"s, [](const entt::handle& in_h) { return get_log(in_h); }},
-        {"get_err"s, [](const entt::handle& in_h) { return get_err(in_h); }},
-        {"render_job"s, [](const entt::handle& in_h) { return render_job(in_h); }},
-        {"computer"s, [](const entt::handle& in_h) { return computer_reg(in_h); }},
+        {//
+         {"get_log"s, [](const entt::handle& in_h) { return get_log(in_h); }},
+         {"get_err"s, [](const entt::handle& in_h) { return get_err(in_h); }},
+         {"render_job"s, [](const entt::handle& in_h) { return render_job(in_h); }},
+         {"computer"s, [](const entt::handle& in_h) { return computer_reg(in_h); }}}  //
     };
   }
 

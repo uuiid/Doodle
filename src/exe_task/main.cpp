@@ -96,8 +96,8 @@ class main_facet : public doodle::main_facet {
   void load_windows() override {
     using namespace doodle;
     g_reg()->ctx().get<gui::layout_tick>() = std::make_shared<layout>();
-    make_handle().emplace<gui::gui_tick>() = std::make_shared<menu_bar>();
-    make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
+    entt::handle{*g_reg(), g_reg()->create()}.emplace<gui::gui_tick>() = std::make_shared<menu_bar>();
+    entt::handle{*g_reg(), g_reg()->create()}.emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
   }
 };
 using main_app = doodle::app_command<main_facet>;

@@ -41,7 +41,7 @@ std::vector<entt::handle> qcloth_factory::create_cloth() const {
     l_object = i.thisNode(&l_status);
     MFnDependencyNode const k_dep{l_object};
     if (k_dep.typeName(&l_status) == qcloth_shape::qlClothShape) {
-      auto l_h = l_ret.emplace_back(make_handle());
+      auto l_h = l_ret.emplace_back(entt::handle{*g_reg(), g_reg()->create()});
       DOODLE_LOG_INFO("获取布料 {}", get_node_name(l_object));
       l_h.emplace<cloth_interface>(std::make_shared<qcloth_shape>(l_object));
     }

@@ -50,7 +50,7 @@ class maya_reference_info : boost::equality_comparable<maya_reference_info> {
 
   gui_cache_name_id de_button_attr{"删除"};
 
-  entt::handle save_handle{make_handle()};
+  entt::handle save_handle{*g_reg(), g_reg()->create()};
 
   bool operator==(const maya_reference_info& in_r) const {
     return std::tie(f_file_path_attr, to_file_path_attr) == std::tie(in_r.f_file_path_attr, in_r.to_file_path_attr);
@@ -173,7 +173,7 @@ bool maya_tool::render() {
       if (ptr_attr->sim_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_sim_file;
       if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");
       });
@@ -190,7 +190,7 @@ bool maya_tool::render() {
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.project_         = doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path();
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");
       });
@@ -213,7 +213,7 @@ bool maya_tool::render() {
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
-      l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");
       });
@@ -231,7 +231,7 @@ bool maya_tool::render() {
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.save_file_extension_attr = ptr_attr->save_maya_type_attr.show_id_attr;
 
-      l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");
       });
