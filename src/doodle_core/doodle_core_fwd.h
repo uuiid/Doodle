@@ -50,7 +50,12 @@ struct entt_id {
   inline friend void to_json(nlohmann::json& j, const entt_id& p) { j = p.id; }
   inline friend void from_json(const nlohmann::json& j, entt_id& p) { p.id = j.get<entt::entity>(); }
 };
-
+template <typename>
+struct entt_handle {
+  entt::handle handle_;
+  inline operator entt::handle() const { return handle_; }
+  inline operator bool() const { return static_cast<bool>(handle_); }
+};
 using maya_file_id      = entt::tag<"maya_file"_hs>;
 using ue_file_id        = entt::tag<"ue_file"_hs>;
 using maya_rig_file_id  = entt::tag<"maya_rig_file"_hs>;
