@@ -47,10 +47,10 @@ void all_user_combox::get_all_user_data() {
   auto l_v = g_reg()->view<database, user>();
   ptr->user_name_list.clear();
   for (auto&& [e, l_d, l_u] : l_v.each()) {
-    auto l_h    = make_handle(e);
+    auto l_h    = entt::handle{*g_reg(), e};
     auto l_name = fmt::to_string(l_u);
     if (l_name.empty()) l_name = fmt::to_string(l_d.uuid());
-    ptr->user_name_list.emplace_back(l_name, make_handle(e));
+    ptr->user_name_list.emplace_back(l_name, l_h);
   }
   ptr->user_name_list |= ranges::actions::sort([](const user_gui_data& in_l, const user_gui_data& in_r) {
     return in_l.show_name.name < in_r.show_name.name;

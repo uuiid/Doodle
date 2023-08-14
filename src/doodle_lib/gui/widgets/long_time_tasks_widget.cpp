@@ -34,7 +34,7 @@ bool long_time_tasks_widget::render() {
     imgui::TableHeadersRow();
 
     for (const auto&& [e, msg] : g_reg()->view<process_message>().each()) {
-      auto k_h = make_handle(e);
+      auto k_h = entt::handle{*g_reg(), e};
       imgui::TableNextRow();
       imgui::TableNextColumn();
       if (dear::Selectable(
