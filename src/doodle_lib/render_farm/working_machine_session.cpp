@@ -12,6 +12,7 @@
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/url/urls.hpp"
 #include <boost/beast/core.hpp>
@@ -30,8 +31,8 @@ namespace detail {
 }  // namespace detail
 
 void working_machine_session::run() {
-  connection_ = doodle::app_base::Get().on_stop.connect([this]() { do_close(); });
-
+  connection_          = doodle::app_base::Get().on_stop.connect([this]() { do_close(); });
+  working_machine_ptr_ = doodle_lib::Get().ctx().get<render_farm::working_machine_ptr>();
   boost::asio::dispatch(
       boost::asio::make_strand(stream_.get_executor()),
       bind_reg_handler(&working_machine_session::do_read, g_reg(), this)
@@ -42,7 +43,18 @@ template <boost::beast::http::verb http_verb>
 void working_machine_session::do_parser() {
   stream_.expires_after(30s);
   make_handle(this);
-  //  detail::http_method<http_verb>{}.run(make_handle(this));
+  using http_method = detail::http_method<http_verb>;
+  if (!working_machine_ptr_->ctx().contains<http_method>()) {
+    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
+    l_response.keep_alive(false);
+    l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+    l_response.set(boost::beast::http::field::content_type, "text/html");
+    l_response.body() = fmt::format("The resource '{}' was not found.", request_parser_.get().target());
+    l_response.prepare_payload();
+    send_response(std::move(l_response));
+    return;
+  }
+  working_machine_ptr_->ctx().get<http_method>().run(make_handle(this));
 }
 
 void working_machine_session::do_read() {

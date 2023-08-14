@@ -35,7 +35,8 @@ struct basic_json_body;
 
 }  // namespace detail
 
-using working_machine_session_ptr = std::shared_ptr<working_machine_session>;
+using working_machine_ptr = std::shared_ptr<working_machine>;
+
 }  // namespace render_farm
 
 using namespace entt::literals;

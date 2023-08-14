@@ -21,11 +21,18 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   void run();
   void stop();
 
+  inline entt::registry::context& ctx() { return ctx_; }
+
+  void config_server();
+  void config_client();
+  void config_work();
+
  private:
   void do_accept();
   void on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;
+  entt::registry::context ctx_{};
 };
 using working_machine_ptr = std::shared_ptr<working_machine>;
 }  // namespace doodle::render_farm

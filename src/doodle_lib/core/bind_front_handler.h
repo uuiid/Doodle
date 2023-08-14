@@ -4,12 +4,11 @@
 
 #pragma once
 #include <boost/asio.hpp>
-#include <boost/callable_traits/class_of.hpp>
 
 #include <type_traits>
 namespace doodle {
 namespace detail {
-template <class Handler, typename Entt_Handler, class... Args>
+template <class Handler, typename Entt_Handler, typename Component, class... Args>
 class bind_front_wrapper {
   //  using Handler_Class = boost::callable_traits::class_of_t<Handler>;
   Handler h_;
@@ -32,10 +31,7 @@ class bind_front_wrapper {
 
   template <std::size_t... I, class... Ts>
   void invoke(std::true_type, boost::mp11::index_sequence<I...>, Ts&&... ts) {
-    std::mem_fn(h_)(
-        entt_handler_.template get<boost::callable_traits::class_of_t<Handler>>(), std::get<I>(std::move(args_))...,
-        std::forward<Ts>(ts)...
-    );
+    std::mem_fn(h_)(entt_handler_.template get<Component>(), std::get<I>(std::move(args_))..., std::forward<Ts>(ts)...);
   }
 
  public:
@@ -87,28 +83,11 @@ class bind_front_wrapper {
 
 }  // namespace detail
 
-// template <class Handler, class... Args>
-// detail::bind_wrapper<typename std::decay<Handler>::type, typename std::decay<Args>::type...> bind_handler(
-//     Handler&& handler, Args&&... args
-//) {
-//   return detail::bind_wrapper<typename std::decay<Handler>::type, typename std::decay<Args>::type...>(
-//       std::forward<Handler>(handler), std::forward<Args>(args)...
-//   );
-// }
-
-template <typename Handler, typename Entt_Handler, typename... Args>
-auto bind_front_handler(Handler&& handler, Entt_Handler in_entt_handler, Args&&... args)
-    -> detail::bind_front_wrapper<std::decay_t<Handler>, std::decay_t<Entt_Handler>, std::decay_t<Args>...> {
-  return detail::bind_front_wrapper<std::decay_t<Handler>, std::decay_t<Entt_Handler>, std::decay_t<Args>...>(
-      std::forward<Handler>(handler), std::forward<Entt_Handler>(in_entt_handler), std::forward<Args>(args)...
-  );
-}
-
 template <typename Handler, typename Reg_Ptr, typename Component, typename... Args>
 auto bind_reg_handler(Handler&& handler, Reg_Ptr& in_reg_ptr, Component* in_instance, Args&&... args) {
   return detail::bind_front_wrapper<
       std::decay_t<Handler>, decltype(entt::handle{*in_reg_ptr, entt::to_entity(*in_reg_ptr, *in_instance)}),
-      std::decay_t<Args>...>(
+      std::decay_t<Component>, std::decay_t<Args>...>(
       std::forward<Handler>(handler), entt::handle{*in_reg_ptr, entt::to_entity(*in_reg_ptr, *in_instance)},
       std::forward<Args>(args)...
   );

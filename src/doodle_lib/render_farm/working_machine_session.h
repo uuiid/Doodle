@@ -75,6 +75,7 @@ class working_machine_session {
   void do_parser();
 
   boost::beast::flat_buffer buffer_;
+  render_farm::working_machine_ptr working_machine_ptr_;
 
  public:
   void send_response(boost::beast::http::message_generator&& in_message_generator);

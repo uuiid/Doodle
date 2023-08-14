@@ -4,6 +4,8 @@
 
 #include "working_machine.h"
 
+#include <doodle_lib/render_farm/detail/url_route_get.h>
+#include <doodle_lib/render_farm/detail/url_route_post.h>
 #include <doodle_lib/render_farm/working_machine_session.h>
 
 #include <boost/asio.hpp>
@@ -36,5 +38,23 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
 void working_machine::stop() {
   acceptor_.cancel();
   acceptor_.close();
+}
+void working_machine::config_server() {
+  using http_get = detail::http_method<boost::beast::http::verb::get>;
+  ctx().emplace<http_get>(http_get::make_server());
+  using http_post = detail::http_method<boost::beast::http::verb::post>;
+  ctx().emplace<http_post>(http_post::make_server());
+}
+void working_machine::config_client() {
+  using http_get = detail::http_method<boost::beast::http::verb::get>;
+  ctx().emplace<http_get>(http_get::make_client());
+  using http_post = detail::http_method<boost::beast::http::verb::post>;
+  ctx().emplace<http_post>(http_post::make_client());
+}
+void working_machine::config_work() {
+  using http_get = detail::http_method<boost::beast::http::verb::get>;
+  ctx().emplace<http_get>(http_get::make_work());
+  using http_post = detail::http_method<boost::beast::http::verb::post>;
+  ctx().emplace<http_post>(http_post::make_work());
 }
 }  // namespace doodle::render_farm

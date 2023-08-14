@@ -39,7 +39,21 @@ class http_method<boost::beast::http::verb::get> {
          {"computer"s, [](const entt::handle& in_h) { return computer_reg(in_h); }}}  //
     };
   }
+  inline static auto make_client() {
+    return http_method{
+        {
 
+        }  //
+    };
+  }
+  inline static auto make_work() {
+    return http_method{
+        {
+            // ,
+            {"render_job"s, [](const entt::handle& in_h) { return render_job(in_h); }}  //
+        }                                                                               //
+    };
+  }
   void run(const entt::handle& in_session);
 
   [[nodiscard("")]] static boost::beast::http::message_generator get_log(const entt::handle& in_h);
