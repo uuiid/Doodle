@@ -10,6 +10,7 @@ namespace doodle {
 namespace render_farm {
 namespace detail {
 void forward_to_server::operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
+  boost::ignore_unused(bytes_transferred);
   auto& l_session = handle_.get<working_machine_session>();
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
