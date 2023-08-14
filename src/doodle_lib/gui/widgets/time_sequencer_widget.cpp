@@ -483,7 +483,7 @@ void time_sequencer_widget::fliter_select() {
   DOODLE_LOG_INFO("开始日期 {} 结束日期 {}", l_begin, l_end);
 
   auto l_list  = l_view | ranges::views::transform([](const entt::entity& in_tuple) -> entt::handle {
-                  return make_handle(in_tuple);
+                  return entt::handle{*g_reg(), in_tuple};
                 });
   /// 过滤
   auto l_list2 = l_list | ranges::views::filter([&](const entt::handle& in_handle) -> bool {
@@ -560,8 +560,8 @@ void time_sequencer_widget::gen_user() {
   auto l_v = g_reg()->view<database, user>();
   for (auto&& [e, l_d, l_u] : l_v.each()) {
     if (l_u.get_name().empty()) continue;
-    auto l_h = make_handle(e);
-    p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
+    auto l_h = entt::handle{*g_reg(), e};
+    p_i->combox_user_id.user_list.emplace(l_u.get_name(), l_h);
   }
   p_i->combox_user_id.user_list.emplace("all", entt::handle{});
 }
