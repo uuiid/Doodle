@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <doodle_core/doodle_core_fwd.h>
+
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <nlohmann/json.hpp>
@@ -34,6 +36,8 @@ struct ue4_arg {
     j.at("outFilePath").get_to(in_arg.out_file_path);
   }
 };
+
+using ue_server_id = doodle::detail::entt_id<entt::tag<"ue_server_id"_hs>>;
 
 class render_ue4 {
  public:
