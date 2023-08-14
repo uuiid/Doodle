@@ -86,9 +86,9 @@ class working_machine_session {
 
 namespace detail {
 template <boost::beast::http::verb in_method>
-void http_method<in_method>::run(std::shared_ptr<working_machine_session> in_session) {
+void http_method<in_method>::run(const entt::handle& in_handle) {
   boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
-  in_session->send_response(boost::beast::http::message_generator{std::move(l_response)});
+  in_handle.get<working_machine_session>().send_response(boost::beast::http::message_generator{std::move(l_response)});
 }
 }  // namespace detail
 }  // namespace doodle::render_farm
