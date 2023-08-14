@@ -15,9 +15,7 @@ namespace entt {
  * @tparam Type doodle metadata 中的类
  */
 template <typename Type>
-struct [[maybe_unused]] entt::type_hash<
-    Type,
-    std::void_t<decltype(Type::class_hash())>> {
+struct [[maybe_unused]] entt::type_hash<Type, std::void_t<decltype(Type::class_hash())>> {
   static entt::id_type value() noexcept { return Type::class_hash(); }
 };
 }  // namespace entt
@@ -26,42 +24,23 @@ namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
 DOODLE_CORE_API registry_ptr &g_reg();
 
-template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
-entt::handle make_handle(const Component &instance) {
-  return entt::handle{*(g_reg()), entt::to_entity(*(g_reg()), instance)};
-};
-template <class Component, std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
-entt::handle make_handle(const Component &instance) {
-  return entt::handle{*(g_reg()), instance};
-};
-
-inline entt::handle make_handle() {
-  return entt::handle{*(g_reg()), g_reg()->create()};
+template <class Component, typename Reg_Ptr, std::enable_if_t<std::is_pointer_v<Component>> * = 0>
+entt::handle make_handle(Component *instance, Reg_Ptr &in_reg_ptr = g_reg()) {
+  return entt::handle{*(in_reg_ptr), entt::to_entity(*(in_reg_ptr), instance)};
 }
 
-// template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
-// entt::handle make_gui_handle(const Component &instance) {
-//   return entt::handle{*(g_gui_reg()), entt::to_entity(*(g_gui_reg()), instance)};
-// };
-// template <class Component, std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
-// entt::handle make_gui_handle(const Component &instance) {
-//   return entt::handle{*(g_gui_reg()), instance};
-// };
-//
-// inline entt::handle make_gui_handle() {
-//   return entt::handle{*(g_gui_reg()), g_gui_reg()->create()};
-// }
+inline entt::handle make_handle(registry_ptr &in_registry_ptr = g_reg()) {
+  return entt::handle{*(in_registry_ptr), in_registry_ptr->create()};
+}
 
 template <typename Handle_, std::enable_if_t<std::is_same_v<entt::handle, Handle_>, bool> = true>
 void destroy_handle(Handle_ &in_handle) {
-  if (in_handle)
-    in_handle.destroy();
+  if (in_handle) in_handle.destroy();
 }
 
 template <typename Container_, std::enable_if_t<details::is_handle_container<Container_>::value, bool> = true>
 void destroy_handle(Container_ &in_handles) {
-  for (auto &&i : in_handles)
-    destroy_handle(i);
+  for (auto &&i : in_handles) destroy_handle(i);
   in_handles.clear();
 }
 
