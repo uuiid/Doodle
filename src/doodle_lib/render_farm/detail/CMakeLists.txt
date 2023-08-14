@@ -8,6 +8,8 @@ target_sources(
         basic_json_body.h
         computer.h
         ue4_task.h
+        aync_read_body.h
+        forward_to_server.h
 
         render_ue4.cpp
         url_route_base.cpp
@@ -16,5 +18,6 @@ target_sources(
         basic_json_body.cpp
         computer.cpp
         ue4_task.cpp
+        forward_to_server.cpp
 
 )

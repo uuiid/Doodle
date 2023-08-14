@@ -7,6 +7,7 @@ target_sources(doodle_lib
         observable_container.h
 
         holidaycn_time.h
+        bind_front_handler.h
 
         PRIVATE
         filesystem_extend.cpp

@@ -40,6 +40,17 @@ class logger_ctrl;
 namespace detail {
 template <typename>
 class one_file_base;
+template <typename>
+struct entt_id {
+  entt::entity id;
+  inline operator entt::entity() const { return id; }
+  inline operator bool() const { return id != entt::null; }
+
+  // to json
+  inline friend void to_json(nlohmann::json& j, const entt_id& p) { j = p.id; }
+  inline friend void from_json(const nlohmann::json& j, entt_id& p) { p.id = j.get<entt::entity>(); }
+};
+
 using maya_file_id      = entt::tag<"maya_file"_hs>;
 using ue_file_id        = entt::tag<"ue_file"_hs>;
 using maya_rig_file_id  = entt::tag<"maya_rig_file"_hs>;

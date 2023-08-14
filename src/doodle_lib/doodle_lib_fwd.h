@@ -26,6 +26,18 @@ using client_ptr = std::shared_ptr<client>;
 using server_ptr = std::shared_ptr<server>;
 
 }  // namespace distributed_computing
+
+namespace render_farm {
+class working_machine_session;
+class working_machine;
+namespace detail {
+struct basic_json_body;
+
+}  // namespace detail
+
+using working_machine_session_ptr = std::shared_ptr<working_machine_session>;
+}  // namespace render_farm
+
 using namespace entt::literals;
 using namespace std::literals;
 using namespace chrono::literals;
