@@ -5,7 +5,9 @@
 #include "working_machine_session.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/core/bind_front_handler.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
@@ -29,23 +31,23 @@ namespace detail {
 
 void working_machine_session::run() {
   connection_ = doodle::app_base::Get().on_stop.connect([this]() { do_close(); });
+
   boost::asio::dispatch(
       boost::asio::make_strand(stream_.get_executor()),
-      boost::beast::bind_front_handler(&working_machine_session::do_read, shared_from_this())
+      bind_reg_handler(&working_machine_session::do_read, g_reg(), this)
   );
 }
 
 template <boost::beast::http::verb http_verb>
 void working_machine_session::do_parser() {
   stream_.expires_after(30s);
-  std::make_shared<detail::http_method<http_verb>>()->run(shared_from_this());
+  std::make_shared<detail::http_method<http_verb>>()->run(make_handle(this));
 }
 
 void working_machine_session::do_read() {
   stream_.expires_after(30s);
   boost::beast::http::async_read_header(
-      stream_, buffer_, request_parser_,
-      boost::beast::bind_front_handler(&working_machine_session::on_parser, shared_from_this())
+      stream_, buffer_, request_parser_, bind_reg_handler(&working_machine_session::on_parser, g_reg(), this)
   );
 }
 
@@ -98,9 +100,7 @@ void working_machine_session::send_response(boost::beast::http::message_generato
 
   boost::beast::async_write(
       stream_, std::move(in_message_generator),
-      [this, self = shared_from_this(), keep_alive](boost::system::error_code ec, std::size_t bytes_transferred) {
-        on_write(keep_alive, ec, bytes_transferred);
-      }
+      bind_reg_handler(&working_machine_session::on_write, g_reg(), this, keep_alive)
   );
 }
 void working_machine_session::on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred) {

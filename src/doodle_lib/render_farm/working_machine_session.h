@@ -17,27 +17,23 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 namespace doodle::render_farm {
-class working_machine_session;
-class working_machine;
+
 namespace detail {
 struct basic_json_body;
 
 template <boost::beast::http::verb in_method>
 class http_method {
  public:
-  void run(std::shared_ptr<working_machine_session> in_session);
+  void run(const entt::handle& in_handle);
 };
-;
+
 }  // namespace detail
 /**
  * @brief 会话类 用于处理客户端的请求  一个会话对应一个客户端
  */
-class working_machine_session : public std::enable_shared_from_this<working_machine_session> {
+class working_machine_session {
  public:
-  explicit working_machine_session(
-      boost::asio::ip::tcp::socket in_socket, std::shared_ptr<working_machine> in_working_machine
-  )
-      : stream_{std::move(in_socket)}, working_machine_{std::move(in_working_machine)} {}
+  explicit working_machine_session(boost::asio::ip::tcp::socket in_socket) : stream_{std::move(in_socket)} {}
 
   void run();
   ~working_machine_session() { do_close(); }
@@ -61,6 +57,9 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   template <boost::beast::http::verb in_method>
   friend class detail::http_method;
 
+  template <typename>
+  friend class async_read_body_op;
+
  private:
   void do_read();
   /**
@@ -76,11 +75,12 @@ class working_machine_session : public std::enable_shared_from_this<working_mach
   template <boost::beast::http::verb http_verb>
   void do_parser();
 
-  boost::beast::tcp_stream stream_;
   boost::beast::flat_buffer buffer_;
+
+ public:
+  boost::beast::tcp_stream stream_;
   boost::url url_;
   boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
-  std::shared_ptr<working_machine> working_machine_;
   boost::signals2::scoped_connection connection_;
 };
 
