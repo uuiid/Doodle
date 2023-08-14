@@ -29,7 +29,9 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
     }
     DOODLE_LOG_ERROR("on_accept error: {}", ec.what());
   } else {
-    std::make_shared<working_machine_session>(std::move(socket), shared_from_this())->run();
+    entt::handle{*g_reg(), g_reg()->create()}
+        .emplace<working_machine_session>(std::move(socket), shared_from_this())
+        .run();
   }
   do_accept();
 }
