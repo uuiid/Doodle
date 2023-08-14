@@ -106,7 +106,9 @@ auto bind_front_handler(Handler&& handler, Entt_Handler in_entt_handler, Args&&.
 
 template <typename Handler, typename Reg_Ptr, typename Component, typename... Args>
 auto bind_reg_handler(Handler&& handler, Reg_Ptr& in_reg_ptr, Component* in_instance, Args&&... args) {
-  return detail::bind_front_wrapper<std::decay_t<Handler>, std::decay_t<Reg_Ptr>, std::decay_t<Args>...>(
+  return detail::bind_front_wrapper<
+      std::decay_t<Handler>, decltype(entt::handle{*in_reg_ptr, entt::to_entity(*in_reg_ptr, *in_instance)}),
+      std::decay_t<Args>...>(
       std::forward<Handler>(handler), entt::handle{*in_reg_ptr, entt::to_entity(*in_reg_ptr, *in_instance)},
       std::forward<Args>(args)...
   );

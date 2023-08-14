@@ -41,7 +41,8 @@ void working_machine_session::run() {
 template <boost::beast::http::verb http_verb>
 void working_machine_session::do_parser() {
   stream_.expires_after(30s);
-  detail::http_method<http_verb>{}.run(make_handle(this));
+  make_handle(this);
+  //  detail::http_method<http_verb>{}.run(make_handle(this));
 }
 
 void working_machine_session::do_read() {

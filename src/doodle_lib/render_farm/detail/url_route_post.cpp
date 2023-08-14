@@ -139,11 +139,12 @@ void http_method<boost::beast::http::verb::post>::run_job(const entt::handle& in
 
         auto l_h    = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<process_message>();
-        l_h.emplace<ue_server_id>(l_json["id"].get<entt::entity>());
         try {
-          l_h.emplace<ue4_task_ptr>(std::make_shared<render_ue4_ptr::element_type>(
+          l_h.emplace<ue_server_id>(l_json["id"].get<entt::entity>());
+          auto l_task_ptr = std::make_shared<render_ue4_ptr::element_type>(
               l_h, l_json["arg"].get<render_ue4_ptr::element_type::arg>()
-          ));
+          );
+          l_h.emplace<render_ue4_ptr>(l_task_ptr);
         } catch (const nlohmann::json::exception& e) {
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
           l_session.send_error(e);

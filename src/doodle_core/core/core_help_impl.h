@@ -24,7 +24,7 @@ namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
 DOODLE_CORE_API registry_ptr &g_reg();
 
-template <class Component, typename Reg_Ptr = registry_ptr, std::enable_if_t<std::is_pointer_v<Component>> * = 0>
+template <typename Component, typename Reg_Ptr = registry_ptr>
 entt::handle make_handle(Component instance, Reg_Ptr &in_reg_ptr = g_reg()) {
   return entt::handle{*(in_reg_ptr), entt::to_entity(*(in_reg_ptr), *instance)};
 }
