@@ -229,7 +229,7 @@ void dingding_api::async_get_token(read_access_token_fun&& in) {
 //         }
 //         auto l_res = l_body.result_type().list;
 //         auto l_msg = l_res | ranges::views::transform([](const user_dd& in) -> entt::handle {
-//                        auto l_handle = doodle::make_handle();
+//                        auto l_handle = doodle::entt::handle{*g_reg(), g_reg()->create()};
 //                        l_handle.emplace<user_dd>(in);
 //                        return l_handle;
 //                      }) |
@@ -311,7 +311,7 @@ void dingding_api::async_get_user_info(  /// 找到用户信息
 //         }
 //         auto l_res = l_body.result_type();
 //         auto l_msg = l_res | ranges::views::transform([](const attendance::day_data& in) -> entt::handle {
-//                        auto l_h = make_handle();
+//                        auto l_h = entt::handle{*g_reg(), g_reg()->create()};
 //                        l_h.emplace<attendance::day_data>(in);
 //                        return l_h;
 //                      }) |
@@ -439,8 +439,9 @@ std::shared_ptr<dingding_api> dingding_api_factory::create_api(const std::string
     }
   }
 
-  return make_handle().emplace<dingding_api_ptr>(std::make_shared<dingding_api_ptr::element_type>(
-      in_company, g_io_context().get_executor(), *g_reg()->ctx().get<std::shared_ptr<boost::asio::ssl::context>>()
+  return entt::handle{*g_reg(), g_reg()->create()}.emplace<dingding_api_ptr>(
+      std::make_shared<dingding_api_ptr::element_type>(
+          in_company, g_io_context().get_executor(), *g_reg()->ctx().get<std::shared_ptr<boost::asio::ssl::context>>()
   ));
 }
 }  // namespace doodle::dingding

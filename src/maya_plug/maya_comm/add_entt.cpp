@@ -36,7 +36,7 @@ MStatus add_entt::doIt(const MArgList& in_arg_list) {
     DOODLE_MAYA_CHICK(l_s);
 
     auto l_json = nlohmann::json::parse(l_str.asUTF8());
-    auto l_h    = make_handle();
+    auto l_h    = entt::handle{*g_reg(), g_reg()->create()};
     entt_tool::load_comm<assets_file, redirection_path_info>(l_h, l_json);
     DOODLE_LOG_INFO("加载实体 {}", l_h);
   }

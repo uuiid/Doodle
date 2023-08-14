@@ -546,7 +546,7 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     reference_file k_ref{k_name};
     if (k_ref) {
       DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-      auto l_h = make_handle();
+      auto l_h = entt::handle{*g_reg(), g_reg()->create()};
       l_h.emplace<reference_file>(k_ref);
       l_ret.emplace_back(l_h);
     } else {
@@ -573,7 +573,7 @@ std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionLis
     reference_file k_ref{k_name};
     if (k_ref) {
       DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-      auto l_h = make_handle();
+      auto l_h = entt::handle{*g_reg(), g_reg()->create()};
       l_h.emplace<reference_file>(k_ref);
       l_ret.emplace_back(l_h);
     } else {

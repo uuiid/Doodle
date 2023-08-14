@@ -71,7 +71,7 @@ entt::handle export_file_info::read_file(const FSys::path& in_path) {
           });
 
   auto l_json = nlohmann::json::parse(FSys::ifstream{in_path});
-  auto l_h    = make_handle();
+  auto l_h    = entt::handle{*g_reg(), g_reg()->create()};
   entt_tool::load_comm<export_file_info, episodes, shot>(l_h, l_json);
   return l_h;
 }

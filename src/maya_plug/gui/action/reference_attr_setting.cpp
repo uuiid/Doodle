@@ -78,7 +78,7 @@ bool reference_attr_setting::get_file_info() {
     reference_file k_ref{};
 
     if (k_ref.set_namespace(d_str{k_name})) {
-      auto k_h = make_handle();
+      auto k_h = entt::handle{*g_reg(), g_reg()->create()};
       k_h.emplace<reference_file>(k_ref);
       p_i->p_handles.push_back(k_h);
     } else {

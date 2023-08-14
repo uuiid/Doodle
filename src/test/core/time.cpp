@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(time_work) {
   business::work_clock work_clock{};
 
   business::attendance_rule l_r{};
-  auto l_user = make_handle();
+  auto l_user = entt::handle{*g_reg(), g_reg()->create()};
   l_user.emplace<user>().set_name("test1");
   auto&& l_rules = l_user.emplace<business::rules>(business::rules::get_default());
   l_rules.extra_p.emplace_back(

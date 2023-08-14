@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(base) {
 BOOST_AUTO_TEST_CASE(list_users) {
   bool run{true};
   for (auto i = 0u; i < 10; ++i) {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<user>().set_name(fmt::format("user{}", i));
     l_h.emplace<database>();
   }
@@ -85,25 +85,25 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
   bool run{true};
   std::vector<entt::handle> users{};
 
-  auto l_main = users.emplace_back(make_handle());
+  auto l_main = users.emplace_back(entt::handle{*g_reg(), g_reg()->create()});
 
   l_main.emplace<user>().set_name(fmt::format("user_{}", "main"s));
   l_main.get<user>().power = power_enum::modify_other_users;
   l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
   for (auto j = 0u; j < 10; ++j) {
-    auto l_h2 = make_handle();
+    auto l_h2 = entt::handle{*g_reg(), g_reg()->create()};
     auto& l_w = l_h2.emplace<work_task_info>();
     l_w.user_ref.user_attr(l_main);
     l_w.task_name = fmt::format("work main_{} ", j);
     l_h2.emplace<database>();
   }
   for (auto i = 0u; i < 10; ++i) {
-    auto l_h = users.emplace_back(make_handle());
+    auto l_h = users.emplace_back(entt::handle{*g_reg(), g_reg()->create()});
 
     l_h.emplace<user>().set_name(fmt::format("user{}", i));
     l_h.emplace<database>();
     for (auto j = 0u; j < 10; ++j) {
-      auto l_h2 = make_handle();
+      auto l_h2 = entt::handle{*g_reg(), g_reg()->create()};
       auto& l_w = l_h2.emplace<work_task_info>();
       l_w.user_ref.user_attr(l_h);
       l_w.task_name = fmt::format("work {}_{} ", i, j);
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(new_user) {
 BOOST_AUTO_TEST_CASE(get_user) {
   bool run{true};
   distributed_computing::server l_s{};
-  auto l_main = make_handle();
+  auto l_main = entt::handle{*g_reg(), g_reg()->create()};
   l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
   l_main.emplace<user>().set_name("test1");
 
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(get_user) {
 BOOST_AUTO_TEST_CASE(set_user) {
   bool run{true};
   distributed_computing::server l_s{};
-  auto l_main = make_handle();
+  auto l_main = entt::handle{*g_reg(), g_reg()->create()};
   l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
   l_main.emplace<user>().set_name("test1");
 
@@ -174,13 +174,13 @@ BOOST_AUTO_TEST_CASE(set_user) {
 BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
   bool run{true};
   distributed_computing::server l_s{};
-  auto l_main = make_handle();
+  auto l_main = entt::handle{*g_reg(), g_reg()->create()};
   l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
   l_main.emplace<user>().set_name("test1");
 
   g_reg()->ctx().emplace<user::current_user>().set_user(l_main);
 
-  auto l_work        = make_handle();
+  auto l_work        = entt::handle{*g_reg(), g_reg()->create()};
   auto& l_work_com_b = l_work.emplace<work_task_info>();
 
   l_work_com_b.user_ref.user_attr(l_main);

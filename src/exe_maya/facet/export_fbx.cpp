@@ -64,7 +64,7 @@ void export_fbx_facet::export_fbx() {
     l_ex.export_anim(i);
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
-  auto l_h = make_handle();
+  auto l_h = entt::handle{*g_reg(), g_reg()->create()};
   l_h.emplace<generate_file_path_ptr>(l_gen);
   l_ex.export_cam(l_h);
 }

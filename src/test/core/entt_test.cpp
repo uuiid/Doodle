@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(test_entt_obs) {
   entt::observer l_obs2{*g_reg(), entt::collector.update<database>()};
   auto l_obs3 = std::make_shared<entt::observer>(*g_reg(), entt::collector.group<database>());
 
-  auto l_h    = make_handle();
+  auto l_h    = entt::handle{*g_reg(), g_reg()->create()};
   l_h.emplace<database>();
   l_h.emplace<std::int64_t>();
 

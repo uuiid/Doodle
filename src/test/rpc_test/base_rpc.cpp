@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(set_user) {
 BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
   l_sub.run("rpc_server/get_user_work_task_info");
 
-  auto l_main = make_handle();
+  auto l_main = entt::handle{*g_reg(), g_reg()->create()};
   l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
 
   distributed_computing::client l_c{"127.0.0.1"};

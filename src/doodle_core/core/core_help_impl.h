@@ -28,14 +28,14 @@ template <class Component, typename Reg_Ptr, std::enable_if_t<std::is_pointer_v<
 entt::handle make_handle(const Component *instance, Reg_Ptr &in_reg_ptr = g_reg()) {
   return entt::handle{*(in_reg_ptr), entt::to_entity(*(in_reg_ptr), *instance)};
 }
-template <class Component, typename Reg_Ptr, std::enable_if_t<!std::is_pointer_v<Component>> * = 0>
-entt::handle make_handle(const Component &instance, Reg_Ptr &in_reg_ptr = g_reg()) {
-  return entt::handle{*(in_reg_ptr), entt::to_entity(in_reg_ptr, instance)};
-}
+// template <class Component, typename Reg_Ptr, std::enable_if_t<!std::is_pointer_v<Component>> * = 0>
+// entt::handle make_handle(const Component &instance, Reg_Ptr &in_reg_ptr = g_reg()) {
+//   return entt::handle{*(in_reg_ptr), entt::to_entity(in_reg_ptr, instance)};
+// }
 
-inline entt::handle make_handle(registry_ptr &in_registry_ptr = g_reg()) {
-  return entt::handle{*(in_registry_ptr), in_registry_ptr->create()};
-}
+// inline entt::handle make_handle(registry_ptr &in_registry_ptr) {
+//   return entt::handle{*(in_registry_ptr), in_registry_ptr->create()};
+// }
 
 template <typename Handle_, std::enable_if_t<std::is_same_v<entt::handle, Handle_>, bool> = true>
 void destroy_handle(Handle_ &in_handle) {

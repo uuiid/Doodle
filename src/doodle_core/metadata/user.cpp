@@ -55,7 +55,7 @@ entt::handle user::current_user::get_handle() {
   }
 
   if (!*this) {
-    auto l_create_h = make_handle();
+    auto l_create_h = entt::handle{*g_reg(), g_reg()->create()};
     l_create_h.emplace<user>(core_set::get_set().user_name);
     l_create_h.emplace<business::rules>(business::rules::get_default());
     uuid        = l_create_h.emplace<database>(uuid).uuid();
@@ -95,7 +95,7 @@ user::current_user::current_user() : uuid(core_set::get_set().user_id) {}
 
 user::current_user::~current_user() = default;
 void user::current_user::create_user() {
-  auto l_create_h = make_handle();
+  auto l_create_h = entt::handle{*g_reg(), g_reg()->create()};
   l_create_h.emplace<user>(core_set::get_set().user_name);
   l_create_h.emplace<business::rules>(business::rules::get_default());
   uuid                        = l_create_h.emplace<database>().uuid();

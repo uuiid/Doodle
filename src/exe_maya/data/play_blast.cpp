@@ -234,7 +234,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     );
     l_handle_list.push_back(std::move(k_image));
   }
-  auto k_msg = make_handle();
+  auto k_msg = entt::handle{*g_reg(), g_reg()->create()};
   k_msg.emplace<process_message>().set_name("制作拍屏");
   k_msg.emplace<FSys::path>(get_out_path());
   k_msg.emplace<episodes>(p_eps);

@@ -20,7 +20,7 @@
 
 namespace doodle::maya_plug {
 
-create_sim_cloth::create_sim_cloth() : p_coll(make_handle()) {
+create_sim_cloth::create_sim_cloth() : p_coll(entt::handle{*g_reg(), g_reg()->create()}) {
   title_name_ = std::string{name};
   auto k_view = g_reg()->view<qcloth_shape>();
   std::transform(k_view.begin(), k_view.end(), std::back_inserter(p_list), [](auto& in) -> entt::handle {
@@ -34,7 +34,7 @@ bool create_sim_cloth::render() {
     DOODLE_MAYA_CHICK(k_s);
     MObject k_node{};
     for (MItSelectionList i{k_list}; !i.isDone(); i.next()) {
-      auto k_h = make_handle();
+      auto k_h = entt::handle{*g_reg(), g_reg()->create()};
       k_s      = i.getDependNode(k_node);
       DOODLE_MAYA_CHICK(k_s);
       k_h.emplace<qcloth_shape_n::maya_obj>(k_node);

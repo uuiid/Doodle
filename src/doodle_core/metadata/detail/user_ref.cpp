@@ -54,7 +54,7 @@ entt::handle user_ref::user_attr() const {
 
       if (!handle_cache) {
         DOODLE_LOG_WARN("创建临时虚拟用户 {}", cache_name);
-        l_handle = make_handle();
+        l_handle = entt::handle{*g_reg(), g_reg()->create()};
         l_handle.emplace<user>(cache_name);
         handle_cache = l_handle;
       }

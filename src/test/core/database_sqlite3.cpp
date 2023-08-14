@@ -57,72 +57,72 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_create_table) {
 
 void create_test_database() {
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::project>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::episodes>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::shot>(100, shot::shot_ab_enum::A);
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::season>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::assets>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::assets_file>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::time_point_wrap>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::comment>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::image_icon>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::importance>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::redirection_path_info>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::business::rules>();
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::user>("test_user");
   }
   {
-    auto l_h = make_handle();
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::work_task_info>();
   }

@@ -50,7 +50,7 @@ class create_video::impl {
 
 create_video::create_video() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
-  p_i->out_video_h = make_handle();
+  p_i->out_video_h = entt::handle{*g_reg(), g_reg()->create()};
 }
 
 bool create_video::render() {
@@ -197,7 +197,7 @@ bool create_video::render() {
   return p_i->open;
 }
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
-  auto l_h = make_handle();
+  auto l_h = entt::handle{*g_reg(), g_reg()->create()};
   l_h.emplace<process_message>();
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
