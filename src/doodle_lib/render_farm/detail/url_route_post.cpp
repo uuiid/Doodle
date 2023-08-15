@@ -82,10 +82,14 @@ void http_method<boost::beast::http::verb::post>::computer_reg(const entt::handl
           return;
         }
 
-        auto l_json = l_parser_ptr->release().body();
+        auto l_json      = l_parser_ptr->release().body();
+        auto l_source_ip = l_session.stream().socket().remote_endpoint().address().to_string();
+        DOODLE_LOG_INFO("computer_reg: {}", l_source_ip);
         entt::handle l_handle{};
-        if (l_json.contains("id")) {
-          l_handle = entt::handle{*g_reg(), l_json["id"].get<entt::entity>()};
+        auto l_p = l_session.url().params();
+
+        if (auto l_it = l_p.find("id"); l_it != l_p.end()) {
+          l_handle = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi((*l_it).value))};
         }
         if (!l_handle) {
           try {

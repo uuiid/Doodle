@@ -39,15 +39,19 @@ class working_machine_session {
   ~working_machine_session() { do_close(); }
 
   template <typename Error_Type>
-  void send_error(const Error_Type& in_error) {
-    boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  void send_error(
+      const Error_Type& in_error, boost::beast::http::status in_status = boost::beast::http::status::bad_request
+  ) {
+    boost::beast::http::response<detail::basic_json_body> l_response{in_status, 11};
     l_response.body() = {{"state", boost::diagnostic_information(in_error)}, {"id", -1}};
     l_response.keep_alive(false);
     send_response(boost::beast::http::message_generator{std::move(l_response)});
   };
   template <typename Error_Type>
-  void send_error_code(const Error_Type& in_error) {
-    boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  void send_error_code(
+      const Error_Type& in_error, boost::beast::http::status in_status = boost::beast::http::status::bad_request
+  ) {
+    boost::beast::http::response<detail::basic_json_body> l_response{in_status, 11};
     l_response.body() = {{"state", in_error.message()}, {"id", -1}};
     l_response.keep_alive(false);
     send_response(boost::beast::http::message_generator{std::move(l_response)});
@@ -73,12 +77,12 @@ class working_machine_session {
 
   template <boost::beast::http::verb http_verb>
   void do_parser();
+  using request_parser_type = boost::beast::http::request_parser<boost::beast::http::empty_body>;
 
-  boost::beast::flat_buffer buffer_;
   render_farm::working_machine_ptr working_machine_ptr_;
 
+  boost::beast::flat_buffer buffer_;
   boost::beast::tcp_stream stream_;
-  using request_parser_type = boost::beast::http::request_parser<boost::beast::http::empty_body>;
   std::shared_ptr<request_parser_type> request_parser_;
   boost::url url_;
   boost::signals2::scoped_connection connection_;
