@@ -14,10 +14,18 @@ void forward_to_server::operator()(boost::system::error_code ec, std::size_t byt
   auto& l_session = handle_.get<working_machine_session>();
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
-    l_session.send_error(ec.message());
+    l_session.send_error_code(ec);
     return;
   }
   auto l_server_ip = core_set::get_set().server_ip;
+  if (l_server_ip.empty()) {
+    DOODLE_LOG_ERROR("forward_to_server error: server_ip is empty");
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::bad_request, 11};
+    l_response.body() = "forward_to_server error: server_ip is empty";
+    l_response.keep_alive(false);
+    l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
+  }
 
   boost::asio::ip::tcp::resolver resolver{l_session.stream().get_executor()};
   stream_              = std::make_shared<boost::beast::tcp_stream>(l_session.stream().get_executor());
@@ -32,7 +40,7 @@ void forward_to_server::on_write(boost::system::error_code ec, std::size_t bytes
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
     auto& l_session = handle_.get<working_machine_session>();
-    l_session.send_error(ec.message());
+    l_session.send_error(ec);
     return;
   }
   parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>();
@@ -45,7 +53,7 @@ void forward_to_server::on_read(boost::system::error_code ec, std::size_t bytes_
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
     auto& l_session = handle_.get<working_machine_session>();
-    l_session.send_error(ec.message());
+    l_session.send_error(ec);
     return;
   }
   auto& l_session = handle_.get<working_machine_session>();
