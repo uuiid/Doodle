@@ -51,7 +51,7 @@ std::tuple<entt::handle, std::string> http_method<boost::beast::http::verb::get>
   return {l_handle, *l_begin};
 }
 
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::render_job(const entt::handle& in_h) {
+void http_method<boost::beast::http::verb::get>::render_job(const entt::handle& in_h) {
   auto l_view     = g_reg()->view<render_farm::ue4_task_ptr>();
   auto l_ids      = l_view | ranges::to_vector;
   auto& l_session = in_h.get<working_machine_session>();
@@ -59,7 +59,7 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   l_response.body() = l_ids;
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
-  return {std::move(l_response)};
+  l_session.send_response(std::move(l_response));
 }
 
 namespace {
@@ -75,8 +75,7 @@ struct computer_tmp {
   }
 };
 }  // namespace
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::computer_reg(const entt::handle& in_h
-) {
+void http_method<boost::beast::http::verb::get>::computer_reg(const entt::handle& in_h) {
   auto l_view = g_reg()->view<render_farm::computer>().each();
   auto l_ids  = l_view | ranges::views::transform([](auto&& in_item) -> computer_tmp {
                  auto& l_computer = std::get<1>(in_item);
@@ -89,22 +88,22 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
 
-  return {std::move(l_response)};
+  l_session.send_response(std::move(l_response));
 }
 
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
+void http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   auto& l_session = in_h.get<working_machine_session>();
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.body() = in_h.get<http_method_get_handle>().handle_.get<process_message>().err();
-  return l_response;
+  l_session.send_response(std::move(l_response));
 }
-boost::beast::http::message_generator http_method<boost::beast::http::verb::get>::get_log(const entt::handle& in_h) {
+void http_method<boost::beast::http::verb::get>::get_log(const entt::handle& in_h) {
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   auto& l_session = in_h.get<working_machine_session>();
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.body() = in_h.get<http_method_get_handle>().handle_.get<process_message>().log();
-  return l_response;
+  l_session.send_response(std::move(l_response));
 }
 
 }  // namespace doodle::render_farm::detail

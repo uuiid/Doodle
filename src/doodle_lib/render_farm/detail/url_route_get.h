@@ -56,11 +56,11 @@ class http_method<boost::beast::http::verb::get> {
   }
   void run(const entt::handle& in_session);
 
-  [[nodiscard("")]] static boost::beast::http::message_generator get_log(const entt::handle& in_h);
+  static void get_log(const entt::handle& in_h);
 
-  [[nodiscard("")]] static boost::beast::http::message_generator get_err(const entt::handle& in_h);
-  [[nodiscard("")]] static boost::beast::http::message_generator render_job(const entt::handle& in_h);
-  [[nodiscard("")]] static boost::beast::http::message_generator computer_reg(const entt::handle& in_h);
+  static void get_err(const entt::handle& in_h);
+  static void render_job(const entt::handle& in_h);
+  static void computer_reg(const entt::handle& in_h);
 
   static std::tuple<entt::handle, std::string> parser(
       const std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator>& in_segments
