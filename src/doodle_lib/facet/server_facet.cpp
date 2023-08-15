@@ -11,6 +11,7 @@
 #include <doodle_app/app/program_options.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/asio/executor_work_guard.hpp"
 namespace doodle {
@@ -21,6 +22,12 @@ bool server_facet::post() {
     doodle_lib::Get().ctx().get<program_info>().use_gui_attr(false);
     l_r    = true;
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+    doodle_lib::Get()
+        .ctx()
+        .emplace<doodle::render_farm::working_machine_ptr>(
+            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+        )
+        ->config_server();
   }
   return l_r;
 }

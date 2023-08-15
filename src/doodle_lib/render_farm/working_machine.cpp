@@ -44,17 +44,20 @@ void working_machine::config_server() {
   ctx().emplace<http_get>(http_get::make_server());
   using http_post = detail::http_method<boost::beast::http::verb::post>;
   ctx().emplace<http_post>(http_post::make_server());
+  run();
 }
 void working_machine::config_client() {
   using http_get = detail::http_method<boost::beast::http::verb::get>;
   ctx().emplace<http_get>(http_get::make_client());
   using http_post = detail::http_method<boost::beast::http::verb::post>;
   ctx().emplace<http_post>(http_post::make_client());
+  run();
 }
 void working_machine::config_work() {
   using http_get = detail::http_method<boost::beast::http::verb::get>;
   ctx().emplace<http_get>(http_get::make_work());
   using http_post = detail::http_method<boost::beast::http::verb::post>;
   ctx().emplace<http_post>(http_post::make_work());
+  run();
 }
 }  // namespace doodle::render_farm
