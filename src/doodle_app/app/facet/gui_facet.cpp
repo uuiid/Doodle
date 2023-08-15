@@ -66,6 +66,8 @@ class gui_facet::impl {
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
+  if (!doodle_lib::Get().ctx().get<program_info>().use_gui_attr()) return false;
+
   init_windows();
   windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>(this);
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
@@ -89,17 +91,18 @@ bool gui_facet::post() {
 }
 void gui_facet::deconstruction() {
   p_i->timer_.cancel();
+  if (p_hwnd) {
+    // Cleanup
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImPlot::DestroyContext();
+    ImGui::DestroyContext();
+    g_reg()->ctx().get<std::shared_ptr<win::d3d_device>>().reset();
 
-  // Cleanup
-  ImGui_ImplDX11_Shutdown();
-  ImGui_ImplWin32_Shutdown();
-  ImPlot::DestroyContext();
-  ImGui::DestroyContext();
-  g_reg()->ctx().get<std::shared_ptr<win::d3d_device>>().reset();
-
-  p_i->drop_manager_guard_ptr.reset();
-  ::DestroyWindow(p_hwnd);
-  ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
+    p_i->drop_manager_guard_ptr.reset();
+    ::DestroyWindow(p_hwnd);
+    ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
+  }
 }
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
   doodle_lib::Get().ctx().emplace<gui::main_proc_handle>();

@@ -58,7 +58,7 @@ class DOODLE_APP_API gui_facet {
   virtual bool translate_message();
   virtual void tick();
 
-  ::doodle::win::wnd_handle p_hwnd;
+  ::doodle::win::wnd_handle p_hwnd{nullptr};
   ::doodle::win::wnd_class p_win_class;
   void init_windows();
 

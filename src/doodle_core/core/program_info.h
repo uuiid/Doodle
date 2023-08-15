@@ -20,6 +20,8 @@ class DOODLE_CORE_API program_info {
   ::doodle::win::wnd_handle parent_handle_{};
   std::string title{};
 
+  bool use_gui{true};
+
  public:
   program_info();
   ~program_info() = default;
@@ -34,6 +36,9 @@ class DOODLE_CORE_API program_info {
   void parent_windows_attr(::doodle::win::wnd_handle in_);
   std::string& title_attr();
   void title_attr(const std::string& in_str);
+
+  inline void use_gui_attr(bool in_) { use_gui = in_; };
+  [[nodiscard]] inline bool use_gui_attr() const { return use_gui; };
 };
 }  // namespace details
 }  // namespace doodle

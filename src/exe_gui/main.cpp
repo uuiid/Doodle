@@ -16,7 +16,7 @@
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main(int argc, const char* const argv[]) try {
-  using main_app = doodle::app_command<doodle::main_facet, doodle::server_facet>;
+  using main_app = doodle::app_command<doodle::server_facet, doodle::main_facet>;
   main_app app{argc, argv};
   try {
     return app.run();
