@@ -11,6 +11,7 @@ target_sources(test_main
         regex.cpp
         abc.cpp
         wenrt.cpp
+        render_farm.cpp
 )
 
 target_link_libraries(

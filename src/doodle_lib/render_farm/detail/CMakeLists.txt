@@ -1,6 +1,6 @@
 target_sources(
         doodle_lib
-        PRIVATE
+        PUBLIC
         render_ue4.h
         url_route_base.h
         url_route_get.h
@@ -11,6 +11,7 @@ target_sources(
         aync_read_body.h
         forward_to_server.h
 
+        PRIVATE
         render_ue4.cpp
         url_route_base.cpp
         url_route_get.cpp

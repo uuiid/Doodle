@@ -94,11 +94,19 @@ void http_method<boost::beast::http::verb::get>::computer_reg(const entt::handle
 }
 
 void http_method<boost::beast::http::verb::get>::get_err(const entt::handle& in_h) {
-  boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   auto& l_session = in_h.get<working_machine_session>();
-  l_response.keep_alive(l_session.request_parser().keep_alive());
-  l_response.body() = in_h.get<http_method_get_handle>().handle_.get<process_message>().err();
-  l_session.send_response(std::move(l_response));
+  auto l_h        = in_h.get<http_method_get_handle>().handle_;
+  if (l_h && l_h.all_of<process_message>()) {
+    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+    l_response.body() = in_h.get<http_method_get_handle>().handle_.get<process_message>().err();
+    l_response.keep_alive(l_session.request_parser().keep_alive());
+    l_session.send_response(std::move(l_response));
+  } else {
+    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
+    l_response.keep_alive(l_session.request_parser().keep_alive());
+    l_response.body() = "not found";
+    l_session.send_response(std::move(l_response));
+  }
 }
 void http_method<boost::beast::http::verb::get>::get_log(const entt::handle& in_h) {
   auto& l_session = in_h.get<working_machine_session>();
