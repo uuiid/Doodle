@@ -16,6 +16,18 @@
 #include <fmt/core.h>
 #include <winreg/WinReg.hpp>
 namespace doodle::gui {
+menu_bar::menu_bar() {
+  connection_  = app_base::Get().on_stop.connect([this]() {
+    auto &&l_lib = doodle_lib::Get();
+    if (l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>()) {
+      l_lib.ctx().get<doodle::render_farm::working_machine_ptr>()->stop();
+      l_lib.ctx().erase<doodle::render_farm::working_machine_ptr>();
+    }
+  });
+  auto &&l_lib = doodle_lib::Get();
+
+  run_client   = l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>();
+}
 
 void menu_bar::message(const std::string &in_m) {
   g_windows_manage().create_windows_arg(
@@ -80,17 +92,20 @@ void menu_bar::menu_tool() {
   }
 
   if (dear::MenuItem("启动渲染客户端", &run_client)) {
-    menu_start_render_client();
+    menu_start_render_client(run_client);
+  }
+  if (dear::MenuItem("启动渲染工作端", &run_work)) {
+    menu_start_render_client(run_work);
   }
 }
-void menu_bar::menu_start_render_client() {
-  if (run_client) {
+void menu_bar::menu_start_render_client(bool is_run) {
+  if (is_run) {
     doodle_lib::Get()
         .ctx()
         .emplace<doodle::render_farm::working_machine_ptr>(
             std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
         )
-        ->run();
+        ->config_client();
   } else {
     doodle_lib::Get()
         .ctx()
@@ -101,17 +116,24 @@ void menu_bar::menu_start_render_client() {
     doodle_lib::Get().ctx().erase<doodle::render_farm::working_machine_ptr>();
   }
 }
-menu_bar::menu_bar() {
-  connection_  = app_base::Get().on_stop.connect([this]() {
-    auto &&l_lib = doodle_lib::Get();
-    if (l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>()) {
-      l_lib.ctx().get<doodle::render_farm::working_machine_ptr>()->stop();
-      l_lib.ctx().erase<doodle::render_farm::working_machine_ptr>();
-    }
-  });
-  auto &&l_lib = doodle_lib::Get();
 
-  run_client   = l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>();
+void menu_bar::menu_start_work(bool is_run) {
+  if (is_run) {
+    doodle_lib::Get()
+        .ctx()
+        .emplace<doodle::render_farm::working_machine_ptr>(
+            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+        )
+        ->config_work();
+  } else {
+    doodle_lib::Get()
+        .ctx()
+        .emplace<doodle::render_farm::working_machine_ptr>(
+            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+        )
+        ->stop();
+    doodle_lib::Get().ctx().erase<doodle::render_farm::working_machine_ptr>();
+  }
 }
 
 }  // namespace doodle::gui
