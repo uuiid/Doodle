@@ -88,6 +88,7 @@ boost::beast::http::message_generator http_method<boost::beast::http::verb::get>
   l_response.body() = l_ids;
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
+
   return {std::move(l_response)};
 }
 
