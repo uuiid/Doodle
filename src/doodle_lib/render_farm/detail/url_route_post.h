@@ -31,12 +31,10 @@ class http_method<boost::beast::http::verb::post> {
   inline static auto make_server() {
     return http_method{
         {{"render_job"s, [](const entt::handle &in_handle) { return render_job(in_handle); }},
-         {"computer_reg"s, [](const entt::handle &in_handle) { return computer_reg(in_handle); }}}};
+         {"computer"s, [](const entt::handle &in_handle) { return computer_reg(in_handle); }}}};
   }
   inline static auto make_work() {
-    return http_method{
-        {{"computer_reg"s, [](const entt::handle &in_handle) { return computer_reg(in_handle); }},
-         {"run_job", [](const entt::handle &in_handle) { return run_job(in_handle); }}}};
+    return http_method{{{"run_job", [](const entt::handle &in_handle) { return run_job(in_handle); }}}};
   }
 
   inline static std::string parser(
