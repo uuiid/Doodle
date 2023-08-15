@@ -19,8 +19,8 @@ class DOODLELIB_API menu_bar : public main_menu_bar {
 
  private:
   // 启动渲染客户端
-  static void menu_start_render_client(bool is_run);
-  static void menu_start_work(bool is_run);
+  void menu_start_render_client(bool is_run);
+  void menu_start_work(bool is_run);
   bool run_client;
   bool run_work;
   boost::signals2::scoped_connection connection_;

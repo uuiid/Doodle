@@ -12,6 +12,8 @@
 #include <memory>
 namespace doodle::render_farm {
 
+enum class working_machine_work_type { none, server, client, work };
+
 class working_machine : public std::enable_shared_from_this<working_machine> {
  public:
   working_machine() = default;
@@ -26,6 +28,8 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   void config_server();
   void config_client();
   void config_work();
+  void config(working_machine_work_type in_type);
+  inline working_machine_work_type work_type() const { return work_type_; }
 
  private:
   void do_accept();
@@ -33,6 +37,7 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;
   entt::registry::context ctx_{};
+  working_machine_work_type work_type_{};
 };
 using working_machine_ptr = std::shared_ptr<working_machine>;
 }  // namespace doodle::render_farm

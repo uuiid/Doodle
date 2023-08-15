@@ -44,6 +44,7 @@ void working_machine::config_server() {
   ctx().emplace<http_get>(http_get::make_server());
   using http_post = detail::http_method<boost::beast::http::verb::post>;
   ctx().emplace<http_post>(http_post::make_server());
+  work_type_ = working_machine_work_type::server;
   run();
 }
 void working_machine::config_client() {
@@ -51,6 +52,7 @@ void working_machine::config_client() {
   ctx().emplace<http_get>(http_get::make_client());
   using http_post = detail::http_method<boost::beast::http::verb::post>;
   ctx().emplace<http_post>(http_post::make_client());
+  work_type_ = working_machine_work_type::client;
   run();
 }
 void working_machine::config_work() {
@@ -58,6 +60,27 @@ void working_machine::config_work() {
   ctx().emplace<http_get>(http_get::make_work());
   using http_post = detail::http_method<boost::beast::http::verb::post>;
   ctx().emplace<http_post>(http_post::make_work());
+  work_type_ = working_machine_work_type::work;
   run();
+}
+void working_machine::config(working_machine_work_type in_type) {
+  switch (in_type) {
+    case working_machine_work_type::server: {
+      config_server();
+      break;
+    }
+    case working_machine_work_type::client: {
+      config_client();
+      break;
+    }
+    case working_machine_work_type::work: {
+      config_work();
+      break;
+    }
+    default: {
+      DOODLE_LOG_ERROR("working_machine::config error: invalid work type");
+      break;
+    }
+  }
 }
 }  // namespace doodle::render_farm
