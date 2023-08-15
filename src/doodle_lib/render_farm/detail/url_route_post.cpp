@@ -59,7 +59,7 @@ void http_method<boost::beast::http::verb::post>::render_job(const entt::handle&
 
         boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.body() = {{"state", "ok"}, {"id", l_h.entity()}};
-        l_response.keep_alive(l_parser_ptr->get().keep_alive());
+        l_response.keep_alive(l_parser_ptr->keep_alive());
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
