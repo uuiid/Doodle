@@ -19,8 +19,8 @@ void forward_to_server::operator()(boost::system::error_code ec, std::size_t byt
   }
   auto l_server_ip = core_set::get_set().server_ip;
 
-  boost::asio::ip::tcp::resolver resolver{l_session.stream_.get_executor()};
-  stream_              = std::make_shared<boost::beast::tcp_stream>(l_session.stream_.get_executor());
+  boost::asio::ip::tcp::resolver resolver{l_session.stream().get_executor()};
+  stream_              = std::make_shared<boost::beast::tcp_stream>(l_session.stream().get_executor());
   auto const l_results = resolver.resolve(l_server_ip, "50021");
   stream_->connect(l_results);
   boost::beast::http::request<boost::beast::http::string_body> l_request{parser_->get()};

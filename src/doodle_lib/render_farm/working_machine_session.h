@@ -78,19 +78,21 @@ class working_machine_session {
   render_farm::working_machine_ptr working_machine_ptr_;
 
   boost::beast::tcp_stream stream_;
-  boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
+  using request_parser_type = boost::beast::http::request_parser<boost::beast::http::empty_body>;
+  std::shared_ptr<request_parser_type> request_parser_;
   boost::url url_;
   boost::signals2::scoped_connection connection_;
 
  public:
   void send_response(boost::beast::http::message_generator&& in_message_generator);
-  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& request_parser() {
-    return request_parser_;
+  [[nodiscard("")]] inline boost::beast::http::request_parser<boost::beast::http::empty_body>& request_parser() {
+    static boost::beast::http::request_parser<boost::beast::http::empty_body> l_request_parser{};
+    return request_parser_ ? *request_parser_ : l_request_parser;
   };
-  inline boost::beast::tcp_stream& stream() { return stream_; }
+  [[nodiscard("")]] inline boost::beast::tcp_stream& stream() { return stream_; }
   // url
-  inline boost::url& url() { return url_; }
-  inline const boost::url& url() const { return url_; }
+  [[nodiscard("")]] inline boost::url& url() { return url_; }
+  [[nodiscard("")]] inline const boost::url& url() const { return url_; }
 };
 
 namespace detail {

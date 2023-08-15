@@ -59,8 +59,9 @@ void working_machine_session::do_parser() {
 
 void working_machine_session::do_read() {
   stream_.expires_after(30s);
+  request_parser_ = std::make_shared<request_parser_type>();
   boost::beast::http::async_read_header(
-      stream_, buffer_, request_parser_, bind_reg_handler(&working_machine_session::on_parser, g_reg(), this)
+      stream_, buffer_, *request_parser_, bind_reg_handler(&working_machine_session::on_parser, g_reg(), this)
   );
 }
 
@@ -77,9 +78,9 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     do_close();
     return;
   }
-  url_ = boost::url{request_parser_.get().target()};
+  url_ = boost::url{request_parser_->get().target()};
   try {
-    switch (request_parser_.get().method()) {
+    switch (request_parser_->get().method()) {
       case boost::beast::http::verb::get:
         do_parser<boost::beast::http::verb::get>();
         break;
@@ -127,6 +128,7 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
   if (!keep_alive) {
     return do_close();
   }
+  request_parser_.reset();
   url_.clear();
   do_read();
 }
