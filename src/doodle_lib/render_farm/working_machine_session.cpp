@@ -49,7 +49,7 @@ void working_machine_session::do_parser() {
     l_response.keep_alive(false);
     l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     l_response.set(boost::beast::http::field::content_type, "text/html");
-    l_response.body() = fmt::format("The resource '{}' was not found.", request_parser_.get().target());
+    l_response.body() = fmt::format("The resource '{}' was not found.", request_parser().get().target());
     l_response.prepare_payload();
     send_response(std::move(l_response));
     return;

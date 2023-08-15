@@ -77,12 +77,20 @@ class working_machine_session {
   boost::beast::flat_buffer buffer_;
   render_farm::working_machine_ptr working_machine_ptr_;
 
+  boost::beast::tcp_stream stream_;
+  boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
+  boost::url url_;
+  boost::signals2::scoped_connection connection_;
+
  public:
   void send_response(boost::beast::http::message_generator&& in_message_generator);
-  boost::beast::tcp_stream stream_;
-  boost::url url_;
-  boost::beast::http::request_parser<boost::beast::http::empty_body> request_parser_;
-  boost::signals2::scoped_connection connection_;
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& request_parser() {
+    return request_parser_;
+  };
+  inline boost::beast::tcp_stream& stream() { return stream_; }
+  // url
+  inline boost::url& url() { return url_; }
+  inline const boost::url& url() const { return url_; }
 };
 
 namespace detail {
