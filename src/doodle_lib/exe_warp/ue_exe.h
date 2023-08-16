@@ -30,11 +30,12 @@ class ue_exe {
 
   void notify_run();
   using call_fun_type = std::function<void(boost::system::error_code)>;
-  void queue_up(
-      const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
-  );
 
   void find_ue_exe();
+
+  virtual void queue_up(
+      const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
+  );
 
  public:
   struct arg_render_queue {
@@ -68,4 +69,5 @@ class ue_exe {
   }
 };
 
+using ue_exe_ptr = std::shared_ptr<ue_exe>;
 }  // namespace doodle

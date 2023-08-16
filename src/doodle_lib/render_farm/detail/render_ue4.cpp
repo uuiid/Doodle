@@ -104,7 +104,9 @@ void render_ue4::run_impl(bool in_r) {
   }
   l_msg.message("开始启动ue4项目文件");
   // 生成命令行
-  doodle_lib::Get().ctx().emplace<ue_exe>().async_run(
+  if (!doodle_lib::Get().ctx().contains<ue_exe_ptr>())
+    doodle_lib::Get().ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
+  doodle_lib::Get().ctx().get<ue_exe_ptr>()->async_run(
       self_handle_, ue_exe::arg_render_queue{generate_command_line()},
       [this](auto&&) {
         auto&& l_msg = self_handle_.get_or_emplace<process_message>();

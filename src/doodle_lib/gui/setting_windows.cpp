@@ -174,7 +174,9 @@ void setting_windows::get_ue_version() {
     return;
   }
   try {
-    p_i->p_ue_version = doodle_lib::Get().ctx().emplace<ue_exe>().get_file_version(l_path);
+    if (!doodle_lib::Get().ctx().contains<ue_exe_ptr>())
+      doodle_lib::Get().ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
+    p_i->p_ue_version = doodle_lib::Get().ctx().get<ue_exe_ptr>()->get_file_version(l_path);
   } catch (const doodle_error& error) {
     p_i->p_ue_version = boost::diagnostic_information(error);
   }
