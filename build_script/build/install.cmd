@@ -23,8 +23,8 @@ robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z
 @REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.exe
 @REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.7z
 
-echo "generate %my_pwd%/build/html/file/index.html"
-python %my_pwd%/docs/generate_directory_index_caddystyle.py %my_pwd%/build/html/file
-
-echo "generate %my_pwd%/build/html/update.html"
-python %my_pwd%/docs/generate_updata_log.py %my_pwd%/build/html/update.html
+@REM echo "generate %my_pwd%/build/html/file/index.html"
+@REM python %my_pwd%/docs/generate_directory_index_caddystyle.py %my_pwd%/build/html/file
+@REM
+@REM echo "generate %my_pwd%/build/html/update.html"
+@REM python %my_pwd%/docs/generate_updata_log.py %my_pwd%/build/html/update.html
