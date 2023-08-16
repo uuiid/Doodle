@@ -12,6 +12,7 @@ namespace detail {
 class forward_to_server {
  public:
   using request_parser_ptr = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::string_body>>;
+  using request_ptr        = std::shared_ptr<boost::beast::http::request<boost::beast::http::string_body>>;
   explicit forward_to_server(entt::handle in_session, request_parser_ptr in_parser)
       : handle_(std::move(in_session)), parser_(std::move(in_parser)) {}
   ~forward_to_server() = default;
@@ -20,7 +21,9 @@ class forward_to_server {
  private:
   entt::handle handle_;
   request_parser_ptr parser_;
+  request_ptr request_;
   std::shared_ptr<boost::beast::tcp_stream> stream_;
+  boost::beast::http::response<boost::beast::http::string_body> response_;
   boost::beast::flat_buffer buffer_;
 
   void on_write(boost::system::error_code ec, std::size_t bytes_transferred);

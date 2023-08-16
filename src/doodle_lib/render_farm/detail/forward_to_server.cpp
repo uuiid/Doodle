@@ -32,9 +32,14 @@ void forward_to_server::operator()(boost::system::error_code ec, std::size_t byt
   stream_              = std::make_shared<boost::beast::tcp_stream>(l_session.stream().get_executor());
   auto const l_results = resolver.resolve(l_server_ip, "50021");
   stream_->connect(l_results);
-  boost::beast::http::request<boost::beast::http::string_body> l_request{std::move(parser_->release())};
-  l_request.keep_alive(true);
-  boost::beast::http::async_write(*stream_, l_request, bind_reg_handler(&forward_to_server::on_write, g_reg(), this));
+  auto l_body = parser_->release();
+  auto l_data = l_body.body();
+  request_    = std::make_shared<request_ptr::element_type>(std::move(l_body));
+  request_->target("/v1/render_farm/render_job");
+  request_->body() = l_data;
+  request_->keep_alive(false);
+  request_->prepare_payload();
+  boost::beast::http::async_write(*stream_, *request_, bind_reg_handler(&forward_to_server::on_write, g_reg(), this));
 }
 void forward_to_server::on_write(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
@@ -44,9 +49,9 @@ void forward_to_server::on_write(boost::system::error_code ec, std::size_t bytes
     l_session.send_error(ec);
     return;
   }
-  parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>();
+
   boost::beast::http::async_read(
-      *stream_, buffer_, *parser_, bind_reg_handler(&forward_to_server::on_read, g_reg(), this)
+      *stream_, buffer_, response_, bind_reg_handler(&forward_to_server::on_read, g_reg(), this)
   );
 }
 void forward_to_server::on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
@@ -54,12 +59,13 @@ void forward_to_server::on_read(boost::system::error_code ec, std::size_t bytes_
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
     auto& l_session = handle_.get<working_machine_session>();
-    l_session.send_error(ec);
+    l_session.send_error_code(ec);
+    stream_->close();
     return;
   }
   auto& l_session = handle_.get<working_machine_session>();
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
-  l_response.body() = parser_->get().body();
+  l_response.body() = response_.body();
   l_response.keep_alive(false);
   l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
 }

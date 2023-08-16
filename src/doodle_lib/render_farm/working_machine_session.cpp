@@ -62,7 +62,7 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     return;
   }
   url_ = boost::url{request_parser_->get().target()};
-
+  DOODLE_LOG_INFO("开始解析 uel {}", url_.path());
   try {
     auto l_has_call = (*route_ptr_)(request_parser_->get().method(), make_handle(this));
     if (!l_has_call) {

@@ -25,18 +25,24 @@ class server_facet {
   bool post() {
     using namespace doodle;
     bool l_r{};
-    auto l_name = doodle_lib::Get().ctx().get<program_options>().arg[name];
-    if (l_name) {
-      doodle_lib::Get().ctx().get<program_info>().use_gui_attr(false);
-      l_r    = true;
-      guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
-      doodle_lib::Get()
-          .ctx()
-          .emplace<doodle::render_farm::working_machine_ptr>(
-              std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-          )
-          ->config_server();
-    }
+    l_r        = true;
+    guard_     = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+    auto l_ptr = doodle_lib::Get().ctx().emplace<doodle::render_farm::working_machine_ptr>(
+        std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+    );
+    auto route_ptr = std::make_shared<render_farm::detail::http_route>();
+
+    l_ptr->route(route_ptr);
+    route_ptr->reg<render_farm::detail::render_job_type_post>();
+    route_ptr->reg<render_farm::detail::computer_reg_type_post>();
+    route_ptr->reg<render_farm::detail::get_log_type_get>();
+    route_ptr->reg<render_farm::detail::get_err_type_get>();
+    route_ptr->reg<render_farm::detail::render_job_type_get>();
+
+    route_ptr->reg<render_farm::detail::computer_reg_type_get>();
+    route_ptr->reg<render_farm::detail::client_submit_job_type_post>();
+    l_ptr->run();
+
     return l_r;
   }
   void add_program_options() {}
@@ -45,7 +51,6 @@ class server_facet {
   std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> guard_;
 };
 #include <doodle_lib/facet/main_facet.h>
-#include <doodle_lib/facet/server_facet.h>
 
 #include <iostream>
 

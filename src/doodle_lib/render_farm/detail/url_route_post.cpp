@@ -59,10 +59,9 @@ void client_submit_job_type_post::operator()(
   using parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
   auto& l_session   = in_handle.get<working_machine_session>();
   auto l_parser_ptr = std::make_shared<parser_type>(std::move(l_session.request_parser()));
-  boost::beast::http::async_read(
-      l_session.stream(), l_session.buffer(), *l_parser_ptr,
-      in_handle.emplace<forward_to_server>(in_handle, l_parser_ptr)
-  );
+  boost::beast::http::async_read(l_session.stream(), l_session.buffer(), *l_parser_ptr, [=](auto&&... in_arg) {
+    in_handle.emplace<forward_to_server>(in_handle, l_parser_ptr)(std::move(in_arg)...);
+  });
 }
 
 void computer_reg_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
