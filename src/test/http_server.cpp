@@ -8,6 +8,8 @@
 #include <doodle_app/app/program_options.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/render_farm/detail/computer_manage.h>
+#include <doodle_lib/render_farm/detail/ue_task_manage.h>
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
@@ -38,9 +40,13 @@ class server_facet {
     route_ptr->reg<render_farm::detail::get_log_type_get>();
     route_ptr->reg<render_farm::detail::get_err_type_get>();
     route_ptr->reg<render_farm::detail::render_job_type_get>();
-
     route_ptr->reg<render_farm::detail::computer_reg_type_get>();
+
     route_ptr->reg<render_farm::detail::client_submit_job_type_post>();
+
+    route_ptr->reg<render_farm::detail::run_job_post>();
+    g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
+    g_reg()->ctx().emplace<render_farm::computer_manage>().run();
     l_ptr->run();
 
     return l_r;
