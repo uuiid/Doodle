@@ -18,14 +18,14 @@ macro(doodle_link_test)
             Boost::unit_test_framework
             cldapi.lib
             doodle_cloud_drive_lib
-            )
+    )
     target_compile_definitions(${ARGV0}
             PUBLIC
             $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
             CRTDBG_MAP_ALLOC
             BOOST_TEST_DYN_LINK
             BOOST_ALL_DYN_LINK
-            )
+    )
     target_include_directories(
             ${ARGV0}
             PRIVATE
@@ -49,3 +49,24 @@ add_subdirectory(ai)
 # 这一项要放在最后
 
 add_subdirectory(main_fixtures)
+
+
+add_executable(
+        http_server
+        EXCLUDE_FROM_ALL
+        http_server.cpp
+)
+target_link_libraries(http_server
+        PUBLIC
+        doodle_lib
+        Boost::unit_test_framework
+)
+target_compile_definitions(http_server
+        PUBLIC
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        BOOST_TEST_DYN_LINK
+        BOOST_ALL_DYN_LINK
+)
+target_compile_options(http_server PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
