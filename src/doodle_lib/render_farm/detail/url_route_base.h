@@ -9,9 +9,6 @@
 #include <boost/url.hpp>
 namespace doodle::render_farm {
 namespace detail {
-std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterator> chick_url(
-    boost::urls::segments_ref in_segments_ref
-);
 
 class http_route {
  public:
