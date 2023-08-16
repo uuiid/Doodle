@@ -29,10 +29,11 @@ class ue_exe {
   std::atomic_char16_t run_size_attr{};
 
   void notify_run();
-  using call_fun_type = std::function<void(boost::system::error_code)>;
 
   void find_ue_exe();
 
+ protected:
+  using call_fun_type = std::function<void(boost::system::error_code)>;
   virtual void queue_up(
       const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
   );

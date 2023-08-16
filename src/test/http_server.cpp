@@ -8,6 +8,7 @@
 #include <doodle_app/app/program_options.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/render_farm/detail/computer_manage.h>
 #include <doodle_lib/render_farm/detail/ue_task_manage.h>
 #include <doodle_lib/render_farm/detail/url_route_base.h>
@@ -17,6 +18,22 @@
 
 #include "boost/asio/executor_work_guard.hpp"
 #include <boost/asio.hpp>
+
+class ue_exe_m : public doodle::ue_exe {
+ public:
+ protected:
+  void queue_up(
+      const entt::handle& in_msg, const std::string& in_command_line,
+      const std::shared_ptr<ue_exe::call_fun_type>& in_call_fun
+  ) override {
+    DOODLE_LOG_INFO("{}", in_command_line);
+    boost::asio::post(doodle::g_io_context(), [in_call_fun, in_command_line]() {
+      DOODLE_LOG_INFO("{}", in_command_line);
+      (*in_call_fun)(boost::system::error_code{});
+    });
+  }
+};
+
 class server_facet {
   static constexpr auto name{"server"};
 
@@ -27,8 +44,9 @@ class server_facet {
   bool post() {
     using namespace doodle;
     bool l_r{};
-    l_r        = true;
-    guard_     = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+    l_r    = true;
+    guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+    doodle_lib::Get().ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
     auto l_ptr = doodle_lib::Get().ctx().emplace<doodle::render_farm::working_machine_ptr>(
         std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
     );
