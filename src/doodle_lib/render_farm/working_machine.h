@@ -31,7 +31,11 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   void config(working_machine_work_type in_type);
   inline working_machine_work_type work_type() const { return work_type_; }
 
+  inline void route(http_route_ptr in_route_ptr) { route_ptr_ = std::move(in_route_ptr); }
+
  private:
+  friend class working_machine_session;
+  http_route_ptr route_ptr_;
   void do_accept();
   void on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
   boost::asio::ip::tcp::endpoint end_point_;

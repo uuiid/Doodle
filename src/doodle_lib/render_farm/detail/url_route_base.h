@@ -13,7 +13,7 @@ std::pair<boost::urls::segments_ref::iterator, boost::urls::segments_ref::iterat
     boost::urls::segments_ref in_segments_ref
 );
 
-struct http_route {
+class http_route {
  public:
   class capture_url {
     std::vector<std::string> capture_vector_;
@@ -31,7 +31,7 @@ struct http_route {
       set_cap_bit();
     };
 
-    void operator()(boost::urls::segments_ref in_segments_ref, const entt::handle& in_session);
+    bool operator()(boost::urls::segments_ref in_segments_ref, const entt::handle& in_session) const;
   };
 
  private:
@@ -42,7 +42,7 @@ struct http_route {
   // 注册路由
   void reg(boost::beast::http::verb in_verb, std::vector<std::string> in_vector, capture_url::action_type in_function);
   // 路由分发
-  void operator()(boost::beast::http::verb in_verb, const entt::handle& in_session);
+  bool operator()(boost::beast::http::verb in_verb, const entt::handle& in_session) const;
 };
 
 }  // namespace detail

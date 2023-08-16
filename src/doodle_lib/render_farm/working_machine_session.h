@@ -33,7 +33,8 @@ class http_method {
  */
 class working_machine_session {
  public:
-  explicit working_machine_session(boost::asio::ip::tcp::socket in_socket) : stream_{std::move(in_socket)} {}
+  explicit working_machine_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr_)
+      : stream_{std::move(in_socket)}, route_ptr_{std::move(in_route_ptr_)} {}
 
   void run();
   ~working_machine_session() { do_close(); }
@@ -75,8 +76,6 @@ class working_machine_session {
   void on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
   void do_close();
 
-  template <boost::beast::http::verb http_verb>
-  void do_parser();
   using request_parser_type = boost::beast::http::request_parser<boost::beast::http::empty_body>;
 
   render_farm::working_machine_ptr working_machine_ptr_;
@@ -86,6 +85,7 @@ class working_machine_session {
   std::shared_ptr<request_parser_type> request_parser_;
   boost::url url_;
   boost::signals2::scoped_connection connection_;
+  http_route_ptr route_ptr_;
 
  public:
   void send_response(boost::beast::http::message_generator&& in_message_generator);

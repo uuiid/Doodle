@@ -5,6 +5,8 @@
 #include "url_route_base.h"
 
 #include <doodle_core/exception/exception.h>
+
+#include <doodle_lib/render_farm/working_machine_session.h>
 namespace doodle::render_farm::detail {
 
 void http_route::capture_url::set_cap_bit() {
@@ -34,16 +36,28 @@ std::tuple<bool, std::map<std::string, std::string>> http_route::capture_url::ma
   return {l_result, l_str};
 }
 
-void http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref, const entt::handle& in_session) {
+bool http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref, const entt::handle& in_session)
+    const {
   auto [l_result, l_map] = match_url(in_segments_ref);
   if (l_result) {
     action_(in_session, l_map);
   }
+  return l_result;
 }
 void http_route::reg(
     boost::beast::http::verb in_verb, std::vector<std::string> in_vector,
     http_route::capture_url::action_type in_function
 ) {
   actions[in_verb].emplace_back(std::move(in_vector), std::move(in_function));
+}
+
+bool http_route::operator()(boost::beast::http::verb in_verb, const entt::handle& in_session) const {
+  auto l_it     = actions.find(in_verb);
+  bool l_result = false;
+  if (l_it != actions.end()) {
+    auto l_segments_ref = in_session.get<working_machine_session>().url().segments();
+    l_result = ranges::any_of(l_it->second, [&](const auto& l_action) { return l_action(l_segments_ref, in_session); });
+  }
+  return l_result;
 }
 }  // namespace doodle::render_farm::detail
