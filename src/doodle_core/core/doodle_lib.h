@@ -21,7 +21,7 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   friend boost::asio::io_context& g_io_context();
   friend boost::asio::thread_pool& g_thread();
   friend registry_ptr& g_reg();
-  friend registry_ptr& g_reg();
+  friend entt::registry::context& g_ctx();
   friend details::logger_ctrl& g_logger_ctrl();
 
  private:
