@@ -4,6 +4,7 @@
 
 #include "working_machine.h"
 
+#include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
 #include <doodle_lib/render_farm/working_machine_session.h>
@@ -40,27 +41,29 @@ void working_machine::stop() {
   acceptor_.close();
 }
 void working_machine::config_server() {
-  using http_get = detail::http_method<boost::beast::http::verb::get>;
-  ctx().emplace<http_get>(http_get::make_server());
-  using http_post = detail::http_method<boost::beast::http::verb::post>;
-  ctx().emplace<http_post>(http_post::make_server());
   work_type_ = working_machine_work_type::server;
+
+  route_ptr_ = std::make_shared<detail::http_route>();
+  route_ptr_->reg<detail::render_job_type_post>();
+  route_ptr_->reg<detail::computer_reg_type_post>();
+  route_ptr_->reg<detail::get_log_type_get>();
+  route_ptr_->reg<detail::get_err_type_get>();
+
+  route_ptr_->reg<detail::computer_reg_type_get>();
+
   run();
 }
 void working_machine::config_client() {
-  using http_get = detail::http_method<boost::beast::http::verb::get>;
-  ctx().emplace<http_get>(http_get::make_client());
-  using http_post = detail::http_method<boost::beast::http::verb::post>;
-  ctx().emplace<http_post>(http_post::make_client());
   work_type_ = working_machine_work_type::client;
+  work_type_ = working_machine_work_type::server;
+
+  route_ptr_ = std::make_shared<detail::http_route>();
+  route_ptr_->reg<detail::client_submit_job_type_post>();
   run();
 }
 void working_machine::config_work() {
-  using http_get = detail::http_method<boost::beast::http::verb::get>;
-  ctx().emplace<http_get>(http_get::make_work());
-  using http_post = detail::http_method<boost::beast::http::verb::post>;
-  ctx().emplace<http_post>(http_post::make_work());
   work_type_ = working_machine_work_type::work;
+  route_ptr_->reg<detail::run_job_post>();
   run();
 }
 void working_machine::config(working_machine_work_type in_type) {

@@ -18,16 +18,6 @@
 #include <nlohmann/json.hpp>
 namespace doodle::render_farm {
 
-namespace detail {
-struct basic_json_body;
-
-template <boost::beast::http::verb in_method>
-class http_method {
- public:
-  void run(const entt::handle& in_handle);
-};
-
-}  // namespace detail
 /**
  * @brief 会话类 用于处理客户端的请求  一个会话对应一个客户端
  */
@@ -59,9 +49,6 @@ class working_machine_session {
   };
 
  private:
-  template <boost::beast::http::verb in_method>
-  friend class detail::http_method;
-
   template <typename>
   friend class async_read_body_op;
 
@@ -74,7 +61,6 @@ class working_machine_session {
    */
   void on_parser(boost::system::error_code ec, std::size_t bytes_transferred);
   void on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
-  void do_close();
 
   using request_parser_type = boost::beast::http::request_parser<boost::beast::http::empty_body>;
 
@@ -89,21 +75,18 @@ class working_machine_session {
 
  public:
   void send_response(boost::beast::http::message_generator&& in_message_generator);
+  void do_close();
   [[nodiscard("")]] inline boost::beast::http::request_parser<boost::beast::http::empty_body>& request_parser() {
     static boost::beast::http::request_parser<boost::beast::http::empty_body> l_request_parser{};
     return request_parser_ ? *request_parser_ : l_request_parser;
   };
   [[nodiscard("")]] inline boost::beast::tcp_stream& stream() { return stream_; }
+  // buffer
+  [[nodiscard("")]] inline boost::beast::flat_buffer& buffer() { return buffer_; }
+  [[nodiscard("")]] inline const boost::beast::flat_buffer& buffer() const { return buffer_; }
   // url
   [[nodiscard("")]] inline boost::url& url() { return url_; }
   [[nodiscard("")]] inline const boost::url& url() const { return url_; }
 };
 
-namespace detail {
-template <boost::beast::http::verb in_method>
-void http_method<in_method>::run(const entt::handle& in_handle) {
-  boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
-  in_handle.get<working_machine_session>().send_response(boost::beast::http::message_generator{std::move(l_response)});
-}
-}  // namespace detail
 }  // namespace doodle::render_farm
