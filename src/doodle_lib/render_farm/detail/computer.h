@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <doodle_lib/doodle_lib_fwd.h>
+
 #include <boost/asio.hpp>
 
 #include <nlohmann/json.hpp>
@@ -26,6 +28,8 @@ class computer {
   [[nodiscard]] inline computer_status status() const { return status_; }
   inline void set_status(computer_status in_status) { status_ = in_status; }
 
+  void run_task(const detail::ue4_task& in_task);
+
   // 延期
   void delay(computer_status in_status = computer_status::idle);
   void delay(const std::string& in_str);
@@ -37,8 +41,8 @@ class computer {
 
  private:
   std::string name_;
+  chrono::sys_time_pos last_time_{chrono::sys_seconds::clock ::now()};
   computer_status status_{computer_status::lost};
-  std::shared_ptr<boost::asio::system_timer> timer_;
 };
 
 }  // namespace doodle::render_farm

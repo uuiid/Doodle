@@ -10,18 +10,20 @@ namespace detail {
 
 class ue4_task {
  public:
-  using arg = ue4_arg;
+  using arg_t = ue4_arg;
 
-  explicit ue4_task(entt::handle self_handle, arg in_arg)
+  explicit ue4_task(entt::handle self_handle, arg_t in_arg)
       : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {
     set_meg();
   }
   // 分派任务
   void assign_tasks();
+  // arg
+  [[nodiscard]] inline const arg_t& arg() const { return arg_; }
 
  private:
   void set_meg();
-  arg arg_;
+  arg_t arg_;
   entt::handle self_handle_;
 };
 

@@ -33,6 +33,7 @@ class working_machine;
 namespace detail {
 struct basic_json_body;
 class http_route;
+class ue4_task;
 
 }  // namespace detail
 using http_route_ptr      = std::shared_ptr<detail::http_route>;

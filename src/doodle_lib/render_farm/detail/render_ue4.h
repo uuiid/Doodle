@@ -41,9 +41,9 @@ using ue_server_id = doodle::detail::entt_id<entt::tag<"ue_server_id"_hs>>;
 
 class render_ue4 {
  public:
-  using arg = ue4_arg;
+  using arg_t = ue4_arg;
 
-  explicit render_ue4(entt::handle self_handle, arg in_arg)
+  explicit render_ue4(entt::handle self_handle, arg_t in_arg)
       : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {
     set_meg();
   }
@@ -51,7 +51,7 @@ class render_ue4 {
   void run();
 
  private:
-  arg arg_;
+  arg_t arg_;
   entt::handle self_handle_;
   FSys::path manifest_path_;
   void set_meg();

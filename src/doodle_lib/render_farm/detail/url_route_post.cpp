@@ -38,7 +38,7 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
         l_h.emplace<process_message>();
         try {
           l_h.emplace<ue4_task_ptr>(std::make_shared<ue4_task_ptr::element_type>(
-              l_h, l_parser_ptr->release().body().get<ue4_task_ptr::element_type::arg>()
+              l_h, l_parser_ptr->release().body().get<ue4_task_ptr::element_type::arg_t>()
           ));
         } catch (const nlohmann::json::exception& e) {
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
@@ -147,7 +147,7 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
         try {
           l_h.emplace<ue_server_id>(l_json["id"].get<entt::entity>());
           auto l_task_ptr = std::make_shared<render_ue4_ptr::element_type>(
-              l_h, l_json["arg"].get<render_ue4_ptr::element_type::arg>()
+              l_h, l_json["arg"].get<render_ue4_ptr::element_type::arg_t>()
           );
           l_h.emplace<render_ue4_ptr>(l_task_ptr);
         } catch (const nlohmann::json::exception& e) {
