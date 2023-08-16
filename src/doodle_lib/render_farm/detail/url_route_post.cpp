@@ -15,24 +15,13 @@
 namespace doodle::render_farm {
 namespace detail {
 
-void http_method<boost::beast::http::verb::post>::run(const entt::handle& in_handle) {
-  auto& l_session = in_handle.get<working_machine_session>();
-  auto l_m        = parser(chick_url(l_session.url().segments()));
-
-  if (map_action.count(l_m) == 0) {
-    boost::beast::http::response<boost::beast::http::empty_body> l_response{boost::beast::http::status::not_found, 11};
-    l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
-  } else {
-    map_action.at(l_m)(in_handle);
-  }
-}
-
-void http_method<boost::beast::http::verb::post>::render_job(const entt::handle& in_handle) {
+void render_job_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
+    const {
   auto& l_session        = in_handle.get<working_machine_session>();
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
   boost::beast::http::async_read(
-      l_session.stream_, l_session.buffer_, *l_parser_ptr,
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
       [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         auto& l_session = in_handle.get<working_machine_session>();
@@ -64,12 +53,25 @@ void http_method<boost::beast::http::verb::post>::render_job(const entt::handle&
       }
   );
 }
-void http_method<boost::beast::http::verb::post>::computer_reg(const entt::handle& in_handle) {
+void client_submit_job_type_post::operator()(
+    const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap
+) const {
+  using parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
+  auto& l_session   = in_handle.get<working_machine_session>();
+  auto l_parser_ptr = std::make_shared<parser_type>(std::move(l_session.request_parser()));
+  boost::beast::http::async_read(
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
+      in_handle.emplace<forward_to_server>(in_handle, l_parser_ptr)
+  );
+}
+
+void computer_reg_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
+    const {
   auto& l_session        = in_handle.get<working_machine_session>();
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
   boost::beast::http::async_read(
-      l_session.stream_, l_session.buffer_, *l_parser_ptr,
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
       [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         auto& l_session = in_handle.get<working_machine_session>();
@@ -121,12 +123,12 @@ void http_method<boost::beast::http::verb::post>::computer_reg(const entt::handl
       }
   );
 }
-void http_method<boost::beast::http::verb::post>::run_job(const entt::handle& in_handle) {
+void run_job_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) const {
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto& l_session        = in_handle.get<working_machine_session>();
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
   boost::beast::http::async_read(
-      l_session.stream_, l_session.buffer_, *l_parser_ptr,
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
       [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         auto& l_session = in_handle.get<working_machine_session>();
@@ -162,14 +164,5 @@ void http_method<boost::beast::http::verb::post>::run_job(const entt::handle& in
       }
   );
 }
-void http_method<boost::beast::http::verb::post>::client_submit_job(const entt::handle& in_handle) {
-  using parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
-  auto& l_session   = in_handle.get<working_machine_session>();
-  auto l_parser_ptr = std::make_shared<parser_type>(std::move(l_session.request_parser()));
-  boost::beast::http::async_read(
-      l_session.stream_, l_session.buffer_, *l_parser_ptr, in_handle.emplace<forward_to_server>(in_handle, l_parser_ptr)
-  );
-}
-
 }  // namespace detail
 }  // namespace doodle::render_farm
