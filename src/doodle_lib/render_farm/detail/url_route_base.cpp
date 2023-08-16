@@ -21,14 +21,15 @@ void http_route::capture_url::set_cap_bit() {
 std::tuple<bool, std::map<std::string, std::string>> http_route::capture_url::match_url(
     boost::urls::segments_ref in_segments_ref
 ) const {
-  bool l_result = false;
+  bool l_result = true;
   auto l_it     = in_segments_ref.begin();
   std::map<std::string, std::string> l_str{};
   for (auto i = 0; l_it != in_segments_ref.end(); ++l_it, ++i) {
     if (capture_bitset_[i]) {
-      l_str.emplace(capture_vector_[i].substr(1, capture_vector_[i].size() - 1), *l_it);
+      l_str.emplace(capture_vector_[i].substr(1, capture_vector_[i].size() - 2), *l_it);
     } else {
       if (capture_vector_[i] != *l_it) {
+        l_result = false;
         break;
       }
     }

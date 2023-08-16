@@ -48,6 +48,7 @@ void working_machine::config_server() {
   route_ptr_->reg<detail::computer_reg_type_post>();
   route_ptr_->reg<detail::get_log_type_get>();
   route_ptr_->reg<detail::get_err_type_get>();
+  route_ptr_->reg<detail::render_job_type_get>();
 
   route_ptr_->reg<detail::computer_reg_type_get>();
 
