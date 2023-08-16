@@ -38,6 +38,12 @@ class http_route {
  public:
   // 注册路由
   void reg(boost::beast::http::verb in_verb, std::vector<std::string> in_vector, capture_url::action_type in_function);
+  template <typename T>
+  void reg() {
+    T l_reg{};
+    reg(l_reg.verb_, l_reg.url_, l_reg);
+  };
+
   // 路由分发
   bool operator()(boost::beast::http::verb in_verb, const entt::handle& in_session) const;
 };
