@@ -94,6 +94,7 @@ namespace pool_n {}  // namespace pool_n
 
 DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();
+DOODLE_CORE_API entt::registry::context& g_ctx();
 
 namespace movie {
 class image_attr;
