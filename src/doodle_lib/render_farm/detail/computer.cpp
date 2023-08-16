@@ -15,6 +15,7 @@
 #include <magic_enum.hpp>
 namespace doodle {
 namespace render_farm {
+namespace {
 
 class send_to_render {
  public:
@@ -24,7 +25,10 @@ class send_to_render {
   void run() {
     boost::beast::http::request<detail::basic_json_body> l_request{
         boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
-    l_request.body() = make_handle(this).get<detail::ue4_task>().arg();
+    nlohmann::json l_json{};
+    l_json["id"]     = entt::to_entity(*g_reg(), *this);
+    l_json["arg"]    = make_handle(this).get<detail::ue4_task>().arg();
+    l_request.body() = l_json;
     l_request.keep_alive(false);
     l_request.prepare_payload();
     boost::beast::http::async_write(socket_, l_request, bind_reg_handler(&send_to_render::on_write, g_reg(), this));
@@ -56,6 +60,7 @@ class send_to_render {
   boost::beast::http::response<detail::basic_json_body> response;
   boost::asio::ip::tcp::socket socket_;
 };
+}  // namespace
 
 void computer::delay(computer_status in_status) {
   if (last_time_ - chrono::sys_seconds::clock::now() < std::chrono::seconds(5)) {
@@ -70,6 +75,10 @@ void computer::delay(const std::string& in_str) {
   delay(l_status.value_or(computer_status::idle));
 }
 
-void computer::run_task(const detail::ue4_task& in_task) { status_ = computer_status::busy; }
+void computer::run_task(const detail::ue4_task& in_task) {
+  status_ = computer_status::busy;
+
+  make_handle(this).emplace<send_to_render>(name).run();
+}
 }  // namespace render_farm
 }  // namespace doodle

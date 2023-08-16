@@ -4,6 +4,8 @@
 
 #include "working_machine.h"
 
+#include <doodle_lib/render_farm/detail/computer_manage.h>
+#include <doodle_lib/render_farm/detail/ue_task_manage.h>
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
@@ -51,6 +53,9 @@ void working_machine::config_server() {
   route_ptr_->reg<detail::render_job_type_get>();
 
   route_ptr_->reg<detail::computer_reg_type_get>();
+
+  g_reg()->ctx().emplace<ue_task_manage>().run();
+  g_reg()->ctx().emplace<computer_manage>().run();
 
   run();
 }
