@@ -167,9 +167,8 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(client)
 
-
-BOOST_AUTO_TEST_CASE(forward_to_server){
-  boost::beast::http::request<boost::beast::http::string_body > l_request{
+BOOST_AUTO_TEST_CASE(forward_to_server) {
+  boost::beast::http::request<boost::beast::http::string_body> l_request{
       boost::beast::http::verb::get, "/v1/render_farm/client_submit_job", 11};
 
   auto l_json = nlohmann::json::parse(
@@ -196,10 +195,6 @@ BOOST_AUTO_TEST_CASE(forward_to_server){
   auto l_res_json = nlohmann::json::parse(l_response.body());
 }
 
-
 BOOST_AUTO_TEST_SUITE_END()
-
-
-
 
 BOOST_AUTO_TEST_SUITE_END()
