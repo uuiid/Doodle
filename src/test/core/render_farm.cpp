@@ -164,4 +164,42 @@ BOOST_AUTO_TEST_CASE(get_error, *boost::unit_test::depends_on("server/render_job
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(client)
+
+
+BOOST_AUTO_TEST_CASE(forward_to_server){
+  boost::beast::http::request<boost::beast::http::string_body > l_request{
+      boost::beast::http::verb::get, "/v1/render_farm/client_submit_job", 11};
+
+  auto l_json = nlohmann::json::parse(
+      R"(
+{
+    "projectPath": "occaecat Excepteur sint quis laborum",
+    "args": "ut tempor",
+    "manifestValue": "voluptate ut veniam",
+    "outFilePath": "id occaecat aute nisi elit"
+}
+)"
+  );
+
+  l_request.body() = l_json.dump();
+
+  l_request.keep_alive(false);
+  boost::beast::http::write(stream_, l_request);
+  boost::beast::flat_buffer l_buffer;
+  boost::beast::http::response<boost::beast::http::string_body> l_response;
+  boost::beast::http::read(stream_, l_buffer, l_response);
+  BOOST_TEST(l_response.result() == boost::beast::http::status::ok);
+  BOOST_TEST_MESSAGE(l_response.body());
+
+  auto l_res_json = nlohmann::json::parse(l_response.body());
+}
+
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
+
+
 BOOST_AUTO_TEST_SUITE_END()
