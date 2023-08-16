@@ -10,6 +10,7 @@ target_sources(
         ue4_task.h
         aync_read_body.h
         forward_to_server.h
+        ue_task_manage.h
 
         PRIVATE
         render_ue4.cpp
@@ -20,5 +21,5 @@ target_sources(
         computer.cpp
         ue4_task.cpp
         forward_to_server.cpp
-
+        ue_task_manage.cpp
 )

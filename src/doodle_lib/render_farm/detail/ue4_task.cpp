@@ -4,6 +4,7 @@
 
 #include "ue4_task.h"
 
+#include <doodle_lib/render_farm/detail/computer.h>
 namespace doodle {
 namespace render_farm {
 namespace detail {
@@ -12,7 +13,16 @@ void ue4_task::set_meg() {
   auto l_prj  = FSys::path{arg_.ProjectPath};
   l_msg.set_name(l_prj.filename().generic_string());
 }
-void ue4_task::assign_tasks() {}
+void ue4_task::assign_tasks() {
+  auto l_view = g_reg()->view<computer>();
+
+  for (auto&& [e, c] : l_view.each()) {
+    if (c.status() == computer_status::idle) {
+      c.run_task(*this);
+      return;
+    }
+  }
+}
 }  // namespace detail
 }  // namespace render_farm
 }  // namespace doodle
