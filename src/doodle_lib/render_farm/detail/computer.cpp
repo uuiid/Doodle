@@ -78,7 +78,7 @@ void computer::delay(const std::string& in_str) {
 void computer::run_task(const detail::ue4_task& in_task) {
   status_ = computer_status::busy;
 
-  make_handle(this).emplace<send_to_render>(name).run();
+  make_handle(this).emplace<send_to_render>(name_).run();
 }
 }  // namespace render_farm
 }  // namespace doodle
