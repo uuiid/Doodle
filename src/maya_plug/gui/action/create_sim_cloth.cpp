@@ -24,7 +24,7 @@ create_sim_cloth::create_sim_cloth() : p_coll(entt::handle{*g_reg(), g_reg()->cr
   title_name_ = std::string{name};
   auto k_view = g_reg()->view<qcloth_shape>();
   std::transform(k_view.begin(), k_view.end(), std::back_inserter(p_list), [](auto& in) -> entt::handle {
-    return make_handle(in);
+    return {*g_reg(), in};
   });
 }
 bool create_sim_cloth::render() {

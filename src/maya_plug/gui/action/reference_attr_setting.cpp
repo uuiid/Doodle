@@ -61,7 +61,7 @@ reference_attr_setting::reference_attr_setting() : p_i(std::make_unique<impl>())
   p_i->title_name_ = std::string{name};
   auto k_ref_view  = g_reg()->view<reference_file>();
   std::transform(k_ref_view.begin(), k_ref_view.end(), std::back_inserter(p_i->p_handles), [](auto& in_e) {
-    return make_handle(in_e);
+    return entt::handle{*g_reg(), in_e};
   });
 }
 
@@ -137,7 +137,7 @@ bool reference_attr_setting::render() {
 
       dear::TreeNode l_node{k_ref.get_key_path().c_str()};
       if (ImGui::IsItemClicked() /*&& !ImGui::IsItemToggledOpen()*/) {
-        p_i->p_current_select = make_handle(k_e);
+        p_i->p_current_select = entt::handle{*g_reg(), k_e};
         l_ref_value           = true;
       }
       l_node&& [&]() {

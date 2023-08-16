@@ -53,7 +53,7 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
       l_s = l_arg.getFlagArgumentList(create_qcloth_assets_ns::cloth, i, l_arg_list);
       DOODLE_MAYA_CHICK(l_s);
 
-      p_i->cloth_list.emplace_back(make_handle(num_to_enum<entt::entity>(l_arg_list.asInt(0))));
+      p_i->cloth_list.emplace_back(*g_reg(), num_to_enum<entt::entity>(l_arg_list.asInt(0)));
     }
   }
 
@@ -62,7 +62,7 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
     std::int32_t l_value{};
     l_s = l_arg.getFlagArgument(create_qcloth_assets_ns::collision, 0, l_value);
     DOODLE_MAYA_CHICK(l_s);
-    p_i->coll_p = make_handle(num_to_enum<entt::entity>(l_value));
+    p_i->coll_p = {*g_reg(), num_to_enum<entt::entity>(l_value)};
   }
 
   p_i->cloth_list |= ranges::actions::remove_if([](const entt::handle& in) { return !in; });
