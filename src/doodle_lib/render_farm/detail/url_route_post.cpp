@@ -146,7 +146,7 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
         try {
           l_h.emplace<ue_server_id>(l_json["id"].get<entt::entity>());
 
-          l_h.emplace<render_ue4>(l_h, l_json["arg"].get<render_ue4_ptr::element_type::arg_t>());
+          l_h.emplace<render_ue4>(l_h, l_json["arg"].get<render_ue4::arg_t>());
         } catch (const nlohmann::json::exception& e) {
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
           l_session.send_error(e);
