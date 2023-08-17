@@ -23,7 +23,7 @@ struct basic_json_body {
       the Content-Length will be set to the payload size, and
       any chunked Transfer-Encoding will be removed.
   */
-  static std::uint64_t size(value_type const& body) { return body.size(); }
+  static std::uint64_t size(value_type const& body) { return body.dump().size(); }
 
   /** The algorithm for parsing the body
 
