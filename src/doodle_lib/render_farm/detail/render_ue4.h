@@ -64,5 +64,5 @@ class render_ue4 {
 };
 
 }  // namespace detail
-using render_ue4_ptr = std::shared_ptr<detail::render_ue4>;
+using render_ue4 = detail::render_ue4;
 }  // namespace doodle::render_farm
