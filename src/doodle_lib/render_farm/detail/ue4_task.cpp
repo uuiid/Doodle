@@ -18,7 +18,7 @@ void ue4_task::assign_tasks() {
 
   for (auto&& [e, c] : l_view.each()) {
     if (c.status() == computer_status::idle) {
-      c.run_task(*this);
+      c.run_task(self_handle_);
       return;
     }
   }
