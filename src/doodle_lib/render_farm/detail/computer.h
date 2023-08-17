@@ -28,7 +28,7 @@ class computer {
   [[nodiscard]] inline computer_status status() const { return status_; }
   inline void set_status(computer_status in_status) { status_ = in_status; }
 
-  void run_task(const detail::ue4_task& in_task);
+  void run_task(const entt::handle& in_handle);
 
   // 延期
   void delay(computer_status in_status = computer_status::idle);
