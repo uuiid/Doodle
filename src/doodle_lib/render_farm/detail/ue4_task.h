@@ -32,6 +32,6 @@ class ue4_task {
 };
 
 }  // namespace detail
-using ue4_task_ptr = std::shared_ptr<detail::ue4_task>;
+using ue4_task = detail::ue4_task;
 }  // namespace render_farm
 }  // namespace doodle

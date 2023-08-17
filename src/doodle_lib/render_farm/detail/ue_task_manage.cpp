@@ -12,8 +12,8 @@ void ue_task_manage::run() {
   timer_ = std::make_shared<timer>(g_io_context());
   timer_->expires_from_now(1s);
   timer_->async_wait([this](const boost::system::error_code& ec) {
-    for (auto&& [e, task] : g_reg()->view<ue4_task_ptr>().each()) {
-      if (!task->is_assign()) task->assign_tasks();
+    for (auto&& [e, task] : g_reg()->view<detail::ue4_task>().each()) {
+      if (!task.is_assign()) task.assign_tasks();
     }
     this->run();
   });

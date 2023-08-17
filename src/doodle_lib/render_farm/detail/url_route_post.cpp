@@ -37,9 +37,7 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<process_message>();
         try {
-          l_h.emplace<ue4_task_ptr>(std::make_shared<ue4_task_ptr::element_type>(
-              l_h, l_parser_ptr->release().body().get<ue4_task_ptr::element_type::arg_t>()
-          ));
+          l_h.emplace<ue4_task>(l_h, l_parser_ptr->release().body().get<ue4_task::arg_t>());
         } catch (const nlohmann::json::exception& e) {
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
           l_session.send_error(e);

@@ -53,7 +53,7 @@ void get_err_type_get::operator()(const entt::handle& in_handle, const std::map<
 }
 void render_job_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
-  auto l_view     = g_reg()->view<render_farm::ue4_task_ptr>();
+  auto l_view     = g_reg()->view<ue4_task>();
   auto l_ids      = l_view | ranges::to_vector;
   auto& l_session = in_handle.get<working_machine_session>();
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
