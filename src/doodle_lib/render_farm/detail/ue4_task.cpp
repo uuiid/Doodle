@@ -19,10 +19,12 @@ void ue4_task::assign_tasks() {
   for (auto&& [e, c] : l_view.each()) {
     if (c.status() == computer_status::idle) {
       c.run_task(self_handle_);
+      computer_handle_ = entt::handle{*g_reg(), e};
       return;
     }
   }
 }
+bool ue4_task::is_assign() const { return computer_handle_ && computer_handle_.all_of<computer>(); }
 }  // namespace detail
 }  // namespace render_farm
 }  // namespace doodle

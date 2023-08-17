@@ -18,6 +18,9 @@ class ue4_task {
   }
   // 分派任务
   void assign_tasks();
+
+  // 是否完成分配
+  [[nodiscard]] bool is_assign() const;
   // arg
   [[nodiscard]] inline const arg_t& arg() const { return arg_; }
 
@@ -25,6 +28,7 @@ class ue4_task {
   void set_meg();
   arg_t arg_;
   entt::handle self_handle_;
+  entt::handle computer_handle_;
 };
 
 }  // namespace detail
