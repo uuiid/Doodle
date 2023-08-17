@@ -16,16 +16,17 @@
 namespace doodle {
 namespace render_farm {
 namespace {
-
+class send_to_render;
+using send_to_render_ptr = std::shared_ptr<send_to_render>;
 class send_to_render {
  public:
-  explicit send_to_render(std::string in_ip, const entt::handle& in_task)
-      : socket_{g_io_context()}, ip_{std::move(in_ip)}, task_ptr_{in_task.get<ue4_task_ptr>()} {}
+  explicit send_to_render(std::string in_ip, const entt::handle& in_handle, ue4_task_ptr in_task_ptr)
+      : socket_{g_io_context()}, ip_{std::move(in_ip)}, self_handle_{std::move(in_handle)}, task_ptr_{in_task_ptr} {}
 
   void run() {
     boost::asio::async_connect(
         socket_, boost::asio::ip::tcp::resolver(g_io_context()).resolve(ip_, "50021"),
-        bind_reg_handler(&send_to_render::on_connect, g_reg(), this)
+        bind_reg_handler(&send_to_render::on_connect, g_reg(), this, self_handle_)
     );
   };
 
@@ -36,15 +37,17 @@ class send_to_render {
       DOODLE_LOG_INFO("{}", ec.message());
       return;
     }
-    boost::beast::http::request<detail::basic_json_body> l_request{
+    request_ = boost::beast::http::request<detail::basic_json_body>{
         boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
     nlohmann::json l_json{};
     l_json["id"]     = entt::to_entity(*g_reg(), *this);
     l_json["arg"]    = task_ptr_->arg();
-    l_request.body() = l_json;
-    l_request.keep_alive(false);
-    l_request.prepare_payload();
-    boost::beast::http::async_write(socket_, l_request, bind_reg_handler(&send_to_render::on_write, g_reg(), this));
+    request_.body()  = l_json;
+    request_.keep_alive(false);
+    request_.prepare_payload();
+    boost::beast::http::async_write(
+        socket_, request_, bind_reg_handler(&send_to_render::on_write, g_reg(), this, self_handle_)
+    );
   }
 
   // on write
@@ -55,7 +58,7 @@ class send_to_render {
     }
 
     boost::beast::http::async_read(
-        socket_, buffer_, response, bind_reg_handler(&send_to_render::on_read, g_reg(), this)
+        socket_, buffer_, response, bind_reg_handler(&send_to_render::on_read, g_reg(), this, self_handle_)
     );
   }
 
@@ -72,8 +75,11 @@ class send_to_render {
   boost::beast::http::response<detail::basic_json_body> response;
   boost::asio::ip::tcp::socket socket_;
   std::string ip_;
+  entt::handle self_handle_;
   ue4_task_ptr task_ptr_;
+  boost::beast::http::request<detail::basic_json_body> request_;
 };
+using send_to_render_ptr = std::shared_ptr<send_to_render>;
 }  // namespace
 
 void computer::delay(computer_status in_status) {
@@ -90,9 +96,13 @@ void computer::delay(const std::string& in_str) {
 }
 
 void computer::run_task(const entt::handle& in_handle) {
-  status_ = computer_status::busy;
-
-  make_handle(this).emplace<send_to_render>(name_, in_handle).run();
+  status_            = computer_status::busy;
+  auto l_self_handle = make_handle(this);
+  l_self_handle
+      .emplace<send_to_render_ptr>(
+          std::make_shared<send_to_render_ptr::element_type>(name_, l_self_handle, in_handle.get<ue4_task_ptr>())
+      )
+      ->run();
 }
 }  // namespace render_farm
 }  // namespace doodle

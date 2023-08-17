@@ -2,8 +2,8 @@
 // Created by TD on 2022/3/4.
 //
 #pragma once
-#include <type_traits>
 #include <entt/fwd.hpp>
+#include <type_traits>
 
 namespace doodle::details {
 
@@ -23,6 +23,12 @@ struct is_smart_pointer : public std::false_type {};
 
 template <typename T>
 struct is_smart_pointer<T, std::void_t<decltype(T::element_type)>> : public std::true_type {};
+
+// template <typename T>
+// using is_smart_pointer_t = is_smart_pointer<T>;
+
+template <typename T>
+constexpr auto is_smart_pointer_v = is_smart_pointer<T>::value;
 
 template <typename T, typename = void>
 struct is_handle_container : public std::false_type {};

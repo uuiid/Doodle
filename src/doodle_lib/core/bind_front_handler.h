@@ -93,4 +93,12 @@ auto bind_reg_handler(Handler&& handler, Reg_Ptr& in_reg_ptr, Component* in_inst
   );
 }
 
+template <typename Handler, typename Reg_Ptr, typename Component, typename... Args>
+auto bind_reg_handler(Handler&& handler, Reg_Ptr& in_reg_ptr, Component*, entt::handle in_handle, Args&&... args) {
+  using Component_Ptr = std::shared_ptr<std::decay_t<Component>>;
+  return detail::bind_front_wrapper<std::decay_t<Handler>, entt::handle, Component_Ptr, std::decay_t<Args>...>(
+      std::forward<Handler>(handler), in_handle, std::forward<Args>(args)...
+  );
+}
+
 }  // namespace doodle

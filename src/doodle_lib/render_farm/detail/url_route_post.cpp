@@ -126,6 +126,7 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto& l_session        = in_handle.get<working_machine_session>();
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+
   boost::beast::http::async_read(
       l_session.stream(), l_session.buffer(), *l_parser_ptr,
       [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
