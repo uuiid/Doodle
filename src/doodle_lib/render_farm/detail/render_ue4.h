@@ -52,12 +52,19 @@ class render_ue4 {
 
  private:
   arg_t arg_;
+
   entt::handle self_handle_;
   FSys::path manifest_path_;
+  FSys::path loc_out_file_path_;
+  FSys::path server_file_path;
   void set_meg();
 
   // 下载文件
   bool download_file(const FSys::path& in_file_path);
+
+  bool updata_file();
+
+  void call_server_state();
   // 生成命令行
   [[nodiscard("")]] std::string generate_command_line() const;
   void run_impl(bool in_r);
