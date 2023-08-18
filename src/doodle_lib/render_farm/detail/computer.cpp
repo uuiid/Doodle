@@ -27,6 +27,7 @@ class send_to_render {
     boost::beast::flat_buffer buffer_;
     boost::beast::http::response<detail::basic_json_body> response;
     boost::beast::http::request<detail::basic_json_body> request_;
+    //    boost::asio::cancellation_signal sig_{};
   };
   std::shared_ptr<data_type> ptr_;
 
