@@ -53,6 +53,7 @@ void working_machine::config_server() {
   route_ptr_->reg<detail::render_job_type_get>();
 
   route_ptr_->reg<detail::computer_reg_type_get>();
+  route_ptr_->reg<detail::render_job_type_post>();
 
   g_reg()->ctx().emplace<ue_task_manage>().run();
   g_reg()->ctx().emplace<computer_manage>().run();
