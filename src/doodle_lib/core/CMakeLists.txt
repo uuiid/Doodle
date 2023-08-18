@@ -8,6 +8,7 @@ target_sources(doodle_lib
 
         holidaycn_time.h
         bind_front_handler.h
+        erase_handle_component.h
 
         PRIVATE
         filesystem_extend.cpp
