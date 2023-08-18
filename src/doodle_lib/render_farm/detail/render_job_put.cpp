@@ -39,7 +39,7 @@ void render_job_put::operator()(boost::system::error_code ec, std::size_t bytes_
       l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
     }
   }
-  boost::asio::post(g_io_context(), [l_h = ptr_->handle_] { l_h.erase<render_job_put>(); });
+  erase_reg_component(this);
 }
 
 }  // namespace detail
