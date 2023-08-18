@@ -37,6 +37,13 @@ class client {
   [[nodiscard]] inline std::string& server_ip() { return ptr_->server_ip_; }
   [[nodiscard]] inline const std::string& server_ip() const { return ptr_->server_ip_; }
 
+  // stream
+
+  template <typename CompletionHandler>
+  auto async_connect(CompletionHandler&& in_completion) {
+    return;
+  }
+
   void list_task();
 
   inline void server_ip(std::string in_server_ip) { ptr_->server_ip_ = std::move(in_server_ip); }
