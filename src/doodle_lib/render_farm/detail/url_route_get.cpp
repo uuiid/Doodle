@@ -98,9 +98,9 @@ void repository_type_get::operator()(const entt::handle& in_handle, const std::m
     const {
   nlohmann::json l_json{};
 #if NDEBUG
-  l_json["path"] = R"(\\192.168.10.218\Doodletemp)";
+  l_json["path"] = R"(//192.168.10.218/Doodletemp)";
 #else
-  l_json["path"] = R"(\\192.168.20.59\UE_Config\Doodletemp)";
+  l_json["path"] = R"(//192.168.20.59/UE_Config/Doodletemp)";
 #endif
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
   auto& l_session   = in_handle.get<working_machine_session>();
