@@ -70,3 +70,24 @@ target_compile_definitions(http_server
 target_compile_options(http_server PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
+
+
+add_executable(
+        http_proxy
+        EXCLUDE_FROM_ALL
+        http_proxy.cpp
+)
+target_link_libraries(http_proxy
+        PUBLIC
+        doodle_lib
+        Boost::unit_test_framework
+)
+target_compile_definitions(http_proxy
+        PUBLIC
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        BOOST_TEST_DYN_LINK
+        BOOST_ALL_DYN_LINK
+)
+target_compile_options(http_proxy PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
