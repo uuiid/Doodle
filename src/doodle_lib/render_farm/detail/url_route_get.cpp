@@ -94,4 +94,19 @@ void computer_reg_type_get::operator()(const entt::handle& in_handle, const std:
 
   l_session.send_response(std::move(l_response));
 }
+void repository_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
+    const {
+  nlohmann::json l_json{};
+#if NDEBUG
+  l_json["path"] = R"(\\192.168.10.218\Doodletemp)";
+#else
+  l_json["path"] = R"(\\192.168.20.59\UE_Config\Doodletemp)";
+#endif
+  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  auto& l_session   = in_handle.get<working_machine_session>();
+  l_response.body() = l_json;
+  l_response.keep_alive(l_session.request_parser().keep_alive());
+  l_response.insert(boost::beast::http::field::content_type, "application/json");
+  l_session.send_response(std::move(l_response));
+}
 }  // namespace doodle::render_farm::detail

@@ -33,5 +33,9 @@ struct computer_reg_type_get {
   boost::beast::http::verb verb_{boost::beast::http::verb::get};
   void operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) const;
 };
-
+struct repository_type_get {
+  std::vector<std::string> url_{"v1", "render_farm", "repository"};
+  boost::beast::http::verb verb_{boost::beast::http::verb::get};
+  void operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) const;
+};
 }  // namespace doodle::render_farm::detail
