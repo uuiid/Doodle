@@ -52,7 +52,7 @@ class client {
   // on_connect
   void on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endpoint endpoint);
   // on_connect_timeout
-  void on_connect_timeout();
+  void on_connect_timeout(boost::system::error_code ec);
 };
 
 }  // namespace doodle

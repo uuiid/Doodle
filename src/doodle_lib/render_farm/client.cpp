@@ -31,7 +31,11 @@ void client::on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endp
   }
   DOODLE_LOG_INFO("连接成功服务器");
 }
-void client::on_connect_timeout() {
+void client::on_connect_timeout(boost::system::error_code ec) {
+  if (ec) {
+    DOODLE_LOG_INFO("{}", ec.message());
+    return;
+  }
   ptr_->socket_.cancel();
   DOODLE_LOG_INFO("连接服务器超时");
   run();

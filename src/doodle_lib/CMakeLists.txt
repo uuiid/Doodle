@@ -12,7 +12,7 @@ add_library(doodle_lib
         #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
 
 
-        )
+)
 
 target_sources(doodle_lib
         PUBLIC
@@ -20,7 +20,7 @@ target_sources(doodle_lib
         doodle_lib_all.h
         doodle_lib_pch.h
         ${OUT_LISTS_sqlpp}
-        )
+)
 
 
 target_precompile_headers(doodle_lib
@@ -86,7 +86,7 @@ target_link_libraries(doodle_lib
         doodle_holidaycn
         Alembic::Alembic # abc文件读写
         xlnt::xlnt #表格库
-        )
+)
 
 target_compile_definitions(doodle_lib
         PUBLIC
@@ -94,16 +94,17 @@ target_compile_definitions(doodle_lib
         WIN32_LEAN_AND_MEAN
         PRIVATE
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
-        )
+)
 target_compile_options(doodle_lib
         PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /EHs>
         $<$<CXX_COMPILER_ID:MSVC>: /MP>
-        )
+        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+)
 
 target_include_directories(doodle_lib
         PUBLIC
         ${PROJECT_SOURCE_DIR}/src
-        )
+)
 #add_custom_target(genexdebug
 #        COMMAND ${CMAKE_COMMAND} -E echo "$<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:'is lib'>")

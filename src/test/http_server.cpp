@@ -62,6 +62,7 @@ class server_facet {
     route_ptr->reg<render_farm::detail::render_job_type_post>();
 
     route_ptr->reg<render_farm::detail::client_submit_job_type_post>();
+    route_ptr->reg<render_farm::detail::repository_type_get>();
 
     route_ptr->reg<render_farm::detail::run_job_post>();
     g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();

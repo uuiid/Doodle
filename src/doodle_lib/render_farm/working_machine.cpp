@@ -66,6 +66,7 @@ void working_machine::config_client() {
 
   route_ptr_ = std::make_shared<detail::http_route>();
   route_ptr_->reg<detail::client_submit_job_type_post>();
+  route_ptr_->reg<detail::repository_type_get>();
   run();
 }
 void working_machine::config_work() {
