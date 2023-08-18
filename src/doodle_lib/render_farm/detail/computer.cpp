@@ -53,7 +53,7 @@ class send_to_render {
     ptr_->request_ = boost::beast::http::request<detail::basic_json_body>{
         boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
     nlohmann::json l_json{};
-    l_json["id"]          = entt::to_entity(*g_reg(), *this);
+    l_json["id"]          = ptr_->task_handle_.entity();
     l_json["arg"]         = ptr_->task_handle_.get<detail::ue4_task>().arg();
     ptr_->request_.body() = l_json;
     ptr_->request_.keep_alive(false);
