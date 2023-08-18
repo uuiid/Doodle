@@ -158,7 +158,6 @@ void UDoodleMovieRemoteExecutor::Execute_Implementation(UMoviePipelineQueue* InP
   }
   GenerateCommandLineArguments(InPipelineQueue);
   FindRemoteClient();
-  StartRemoteClientRender();
 }
 
 void UDoodleMovieRemoteExecutor::CancelAllJobs_Implementation() {}
@@ -177,29 +176,20 @@ float UDoodleMovieRemoteExecutor::GetProgress() {
 void UDoodleMovieRemoteExecutor::CheckForProcessFinished() {}
 
 bool UDoodleMovieRemoteExecutor::UploadFiles() {
-  TArray<FString> L_StrList{};
-#if 1
-  static auto G_Config{TEXT("//192.168.20.59/UE_Config/Remote_Debug.txt")};
-#else
-  static auto G_Config{TEXT("//192.168.20.59/UE_Config/Remote.txt")};
-#endif  // 1
-
   TSharedPtr<FScopedSlowTask> L_Task_Scoped_Ptr =
       MakeShared<FScopedSlowTask>(0, LOCTEXT("DoingSlowWork2", "复制文件中..."));
   L_Task_Scoped_Ptr->MakeDialog();
 
-  FFileHelper::LoadFileToStringArray(L_StrList, G_Config);
-
   IPlatformFile& L_PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
   FString L_Prj_Name            = FPaths::GetBaseFilename(FPaths::GetProjectFilePath());
-  FString L_R_Prj               = L_StrList[0] / L_Prj_Name / FPaths::GetCleanFilename(FPaths::GetProjectFilePath());
+  FString L_R_Prj = Remote_Repository / L_Prj_Name / FPaths::GetCleanFilename(FPaths::GetProjectFilePath());
 
   {  // 复制项目
     if (L_PlatformFile.FileExists(*L_R_Prj)) {
       L_PlatformFile.DeleteFile(*L_R_Prj);
     }
-    L_PlatformFile.CreateDirectoryTree(*(L_StrList[0] / L_Prj_Name));
+    L_PlatformFile.CreateDirectoryTree(*(Remote_Repository / L_Prj_Name));
     L_Task_Scoped_Ptr->EnterProgressFrame(
         0.0F, FText::FromString(FString::Printf(TEXT("复制项目 %s -> %s"), *L_R_Prj, *(FPaths::GetProjectFilePath())))
     );
@@ -212,17 +202,20 @@ bool UDoodleMovieRemoteExecutor::UploadFiles() {
     FString L_Config = FPaths::ProjectConfigDir();
     FPaths::NormalizeDirectoryName(L_Config);
     L_Task_Scoped_Ptr->EnterProgressFrame(
-        0.0F, FText::FromString(FString::Printf(
-                  TEXT("复制配置 %s -> %s"), *(L_StrList[0] / L_Prj_Name / FPaths::GetBaseFilename(L_Config)), *L_Config
-              ))
+        0.0F,
+        FText::FromString(FString::Printf(
+            TEXT("复制配置 %s -> %s"), *(Remote_Repository / L_Prj_Name / FPaths::GetBaseFilename(L_Config)), *L_Config
+        ))
     );
-    L_PlatformFile.CopyDirectoryTree(*(L_StrList[0] / L_Prj_Name / FPaths::GetBaseFilename(L_Config)), *L_Config, true);
+    L_PlatformFile.CopyDirectoryTree(
+        *(Remote_Repository / L_Prj_Name / FPaths::GetBaseFilename(L_Config)), *L_Config, true
+    );
   }
   // 复制内容
   FString SourceDir(FPaths::ProjectContentDir());
   FPaths::NormalizeDirectoryName(SourceDir);
 
-  FString DestDir(L_StrList[0] / L_Prj_Name / FPaths::GetBaseFilename(SourceDir));
+  FString DestDir(Remote_Repository / L_Prj_Name / FPaths::GetBaseFilename(SourceDir));
   FPaths::NormalizeDirectoryName(DestDir);
 
   // Does Source dir exist?
@@ -428,8 +421,8 @@ TArray<TObjectPtr<UMoviePipelineQueue>> UDoodleMovieRemoteExecutor::GetQueuesToR
 void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   const UMoviePipelineInProcessExecutorSettings* ExecutorSettings =
       GetDefault<UMoviePipelineInProcessExecutorSettings>();
-  if (RemoteClients.IsEmpty()) {
-    FNotificationInfo L_Info{FText::FromString(TEXT("无法找到远程机器..."))};
+  if (Remote_Repository.IsEmpty()) {
+    FNotificationInfo L_Info{FText::FromString(TEXT("无法找到远程储存库..."))};
     FSlateNotificationManager::Get().AddNotification(L_Info);
     OnExecutorFinishedImpl();
   }
@@ -439,12 +432,12 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
     return;
   }
 
-  static FString L_Sub_URL{TEXT("v1/render_frame/submit_job")};
-  HTTPResponseRecievedDelegate.AddDynamic(this, &UDoodleMovieRemoteExecutor::HttpRemoteClient);
+  static FString L_Sub_URL{TEXT("v1/render_frame/client_submit_job")};
 
   for (auto&& i : RemoteRenderJobArgs) {
-    FString L_Url = FString::Printf(TEXT("http://%s:%d/%s"), *RemoteClients[0], GetProt(), *L_Sub_URL);
-    Algo::Rotate(RemoteClients, 1);
+    FString L_Url = FString::Printf(TEXT("http://127.0.0.1:%d/%s"), GetProt(), *L_Sub_URL);
+    UE_LOG(LogMovieRenderPipeline, Log, TEXT("RemoteClientRender URL: %s"), *L_Url);
+
     FString L_MSg{};
     FJsonObjectConverter::UStructToJsonObjectString(i, L_MSg);
     int32 L_Id = SendHTTPRequest(
@@ -452,7 +445,7 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
         TMap<FString, FString>{
             {TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent")},
             {TEXT("Content-Type"), TEXT("application/json")},
-            {TEXT("Keep-Alive"), TEXT("false")}}
+            {TEXT("Keep-Alive"), TEXT("true")}}
     );
     Render_IDs.Add(L_Id);
   }
@@ -463,21 +456,32 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
 }
 
 void UDoodleMovieRemoteExecutor::FindRemoteClient() {
-  static auto G_Config{TEXT("//192.168.20.59/UE_Config/Client.txt")};
-  // static FString L_Sub_URL{TEXT("v1/AtWork")};
+  HTTPResponseRecievedDelegate.AddDynamic(this, &UDoodleMovieRemoteExecutor::HttpRemoteClient);
 
-  if (FPlatformFileManager::Get().GetPlatformFile().FileExists(G_Config)) {
-    TArray<FString> L_StrList{};
-    FFileHelper::LoadFileToStringArray(L_StrList, G_Config);
-
-    for (auto&& i : L_StrList) {
-      RemoteClients.AddUnique(i);
-    }
-  }
+  static FString L_Sub_URL{TEXT("v1/render_frame/repository")};
+  GetRepository_ID = SendHTTPRequest(
+      L_Sub_URL, TEXT("GET"), {},
+      TMap<FString, FString>{
+          {TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent")},
+          {TEXT("Content-Type"), TEXT("application/json")},
+          {TEXT("Keep-Alive"), TEXT("true")}}
+  );
 }
 
 void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 ResponseCode, const FString& Message) {
-  if (Render_IDs.Contains(RequestIndex)) {
+  if (GetRepository_ID == RequestIndex) {
+    TSharedPtr<FJsonValue> L_Json{};
+    TSharedRef<TJsonReader<TCHAR>> L_Reader = TJsonReaderFactory<TCHAR>::Create(Message);
+    if (FJsonSerializer::Deserialize(L_Reader, L_Json)) {
+      auto L_JsonObj = L_Json->AsObject();
+      if (L_JsonObj->HasField(TEXT("path"))) {
+        Remote_Repository = L_JsonObj->GetStringField(TEXT("path"));
+      }
+    }
+    StartRemoteClientRender();
+    return;
+
+  } else if (Render_IDs.Contains(RequestIndex)) {
     FNotificationInfo L_Info{FText::FromString(TEXT("正在渲染..."))};
     // L_Info.ContentWidget        = SNew(SDoodleRemoteNotification, this);
     L_Info.bFireAndForget       = true;  // 自动取消

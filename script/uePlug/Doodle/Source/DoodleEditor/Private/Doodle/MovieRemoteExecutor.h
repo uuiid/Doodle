@@ -69,7 +69,7 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
  private:
   TArray<FString> RemoteClients;
   TSet<int32> Render_IDs{};
-  TSet<int32> GetRenderState_IDs{};
+  int32 GetRepository{};
 
   FString RemoteClientUrl;
   TArray<FDoodleRemoteRenderJobArg> RemoteRenderJobArgs;
