@@ -20,6 +20,14 @@ void working_machine::run() {
   //  acceptor_.bind(end_point_);
   //  acceptor_.listen(boost::asio::socket_base::max_listen_connections);
   do_accept();
+  signal_set_.async_wait([&](boost::system::error_code ec, int signal) {
+    if (ec) {
+      DOODLE_LOG_ERROR("signal_set_ error: {}", ec.message());
+      return;
+    }
+    DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
+    this->stop();
+  });
 }
 void working_machine::do_accept() {
   acceptor_.async_accept(

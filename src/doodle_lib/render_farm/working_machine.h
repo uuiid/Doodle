@@ -17,7 +17,9 @@ enum class working_machine_work_type { none, server, client, work };
 class working_machine : public std::enable_shared_from_this<working_machine> {
  public:
   explicit working_machine(boost::asio::io_context& in_io_context, std::uint16_t in_port)
-      : end_point_{boost::asio::ip::tcp::v4(), in_port}, acceptor_{in_io_context, end_point_} {}
+      : end_point_{boost::asio::ip::tcp::v4(), in_port},
+        acceptor_{in_io_context, end_point_},
+        signal_set_{g_io_context(), SIGINT, SIGTERM} {}
   ~working_machine() = default;
   void run();
   void stop();
@@ -32,11 +34,13 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
 
  private:
   friend class working_machine_session;
-  http_route_ptr route_ptr_;
   void do_accept();
   void on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
+  http_route_ptr route_ptr_;
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;
+  boost::asio::signal_set signal_set_{g_io_context(), SIGINT, SIGTERM};
+
   working_machine_work_type work_type_{};
 };
 using working_machine_ptr = std::shared_ptr<working_machine>;
