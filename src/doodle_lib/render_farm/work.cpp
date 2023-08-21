@@ -118,10 +118,9 @@ void work::on_read(boost::system::error_code ec, std::size_t bytes_transferred) 
     do_close();
     return;
   }
-  if (ptr_->response_.result() != boost::beast::http::status::ok) {
+  if (ptr_->response_.result() == boost::beast::http::status::not_found) {
     DOODLE_LOG_INFO("{}", ptr_->response_.body());
-    ptr_->buffer_.clear();
-    ptr_->response_ = {};
+    do_close();
     return;
   }
 
