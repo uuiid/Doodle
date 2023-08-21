@@ -11,6 +11,7 @@ namespace render_farm {
 
 class work {
  public:
+  //  boost::asio::basic_io_object;
   using timer         = boost::asio::high_resolution_timer;
   using timer_ptr     = std::shared_ptr<timer>;
   using socket        = boost::beast::tcp_stream;
@@ -40,6 +41,7 @@ class work {
  public:
   explicit work(std::string in_server_ip) : ptr_{std::make_shared<data_type>()} {
     ptr_->server_ip = std::move(in_server_ip);
+    make_ptr();
   }
 
   ~work() = default;
@@ -47,6 +49,8 @@ class work {
   void run();
 
  private:
+  void make_ptr();
+
   void do_wait();
   void do_register();
   void do_read();

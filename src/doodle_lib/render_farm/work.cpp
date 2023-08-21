@@ -18,23 +18,19 @@ void work::on_wait(boost::system::error_code ec) {
   run();
 }
 void work::do_wait() {
+  DOODLE_LOG_INFO("开始等待下一次心跳");
   ptr_->timer_->expires_after(doodle::chrono::seconds{2});
-
   ptr_->timer_->async_wait(std::bind(&work::on_wait, this, std::placeholders::_1));
 }
 
-void work::run() {
-  auto l_s = boost::asio::make_strand(g_io_context());
+void work::make_ptr() {
+  auto l_s        = boost::asio::make_strand(g_io_context());
+  ptr_->resolver_ = std::make_shared<resolver>(l_s);
+  ptr_->socket_   = std::make_shared<socket>(l_s);
+  ptr_->timer_    = std::make_shared<timer>(l_s);
+}
 
-  if (!ptr_->resolver_) {
-    ptr_->resolver_ = std::make_shared<resolver>(l_s);
-  }
-  if (!ptr_->socket_) {
-    ptr_->socket_ = std::make_shared<socket>(l_s);
-  }
-  if (!ptr_->timer_) {
-    ptr_->timer_ = std::make_shared<timer>(l_s);
-  }
+void work::run() {
   if (!ptr_->socket_->socket().is_open()) {
     ptr_->resolver_->async_resolve(
         ptr_->server_ip, "50021", std::bind(&work::on_resolve, this, std::placeholders::_1, std::placeholders::_2)
