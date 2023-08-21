@@ -12,17 +12,19 @@ namespace render_farm {
 class work {
  public:
   //  boost::asio::basic_io_object;
-  using timer         = boost::asio::high_resolution_timer;
-  using timer_ptr     = std::shared_ptr<timer>;
-  using socket        = boost::beast::tcp_stream;
-  using socket_ptr    = std::shared_ptr<socket>;
-  using resolver      = boost::asio::ip::tcp::resolver;
-  using resolver_ptr  = std::shared_ptr<resolver>;
+  using timer          = boost::asio::high_resolution_timer;
+  using timer_ptr      = std::shared_ptr<timer>;
+  using socket         = boost::beast::tcp_stream;
+  using socket_ptr     = std::shared_ptr<socket>;
+  using resolver       = boost::asio::ip::tcp::resolver;
+  using resolver_ptr   = std::shared_ptr<resolver>;
 
-  using buffer_type   = boost::beast::flat_buffer;
+  using buffer_type    = boost::beast::flat_buffer;
 
-  using response_type = boost::beast::http::response<boost::beast::http::string_body>;
-  using request_type  = boost::beast::http::request<boost::beast::http::string_body>;
+  using response_type  = boost::beast::http::response<boost::beast::http::string_body>;
+  using request_type   = boost::beast::http::request<boost::beast::http::string_body>;
+  using signal_set     = boost::asio::signal_set;
+  using signal_set_ptr = std::shared_ptr<signal_set>;
 
  private:
   struct data_type {
@@ -30,6 +32,9 @@ class work {
     timer_ptr timer_{};
     socket_ptr socket_{};
     resolver_ptr resolver_{};
+
+    signal_set_ptr signal_set_{};
+
     // buffer
     buffer_type buffer_{};
 

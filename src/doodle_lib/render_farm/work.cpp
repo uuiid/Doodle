@@ -24,10 +24,19 @@ void work::do_wait() {
 }
 
 void work::make_ptr() {
-  auto l_s        = boost::asio::make_strand(g_io_context());
-  ptr_->resolver_ = std::make_shared<resolver>(l_s);
-  ptr_->socket_   = std::make_shared<socket>(l_s);
-  ptr_->timer_    = std::make_shared<timer>(l_s);
+  auto l_s          = boost::asio::make_strand(g_io_context());
+  ptr_->resolver_   = std::make_shared<resolver>(l_s);
+  ptr_->socket_     = std::make_shared<socket>(l_s);
+  ptr_->timer_      = std::make_shared<timer>(l_s);
+  ptr_->signal_set_ = std::make_shared<signal_set>(l_s, SIGINT, SIGTERM);
+  ptr_->signal_set_->async_wait([&](boost::system::error_code ec, int signal) {
+    if (ec) {
+      DOODLE_LOG_ERROR("signal_set_ error: {}", ec.message());
+      return;
+    }
+    DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
+    this->do_close();
+  });
 }
 
 void work::run() {
@@ -100,6 +109,13 @@ void work::on_read(boost::system::error_code ec, std::size_t bytes_transferred) 
     do_close();
     return;
   }
+  if (ptr_->response_.result() != boost::beast::http::status::ok) {
+    DOODLE_LOG_INFO("{}", ptr_->response_.body());
+    ptr_->buffer_.clear();
+    ptr_->response_ = {};
+    return;
+  }
+
   DOODLE_LOG_INFO("{}", ptr_->response_.body());
   ptr_->buffer_.clear();
   ptr_->response_ = {};
