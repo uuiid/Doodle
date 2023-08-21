@@ -71,6 +71,7 @@ void working_machine::config_client() {
 }
 void working_machine::config_work() {
   work_type_ = working_machine_work_type::work;
+  route_ptr_ = std::make_shared<detail::http_route>();
   route_ptr_->reg<detail::run_job_post>();
   run();
 }
