@@ -5,6 +5,9 @@
 namespace doodle {
 
 class work_facet {
+  using signal_set     = boost::asio::signal_set;
+  using signal_set_ptr = std::shared_ptr<signal_set>;
+
   static constexpr auto name{"work"};
 
  public:
@@ -15,6 +18,8 @@ class work_facet {
 
  private:
   std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> guard_;
+
+  signal_set_ptr signal_set_{};
 };
 
 }  // namespace doodle

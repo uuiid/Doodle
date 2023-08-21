@@ -4,6 +4,7 @@
 
 #include "work_facet.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core_fwd.h>
@@ -21,6 +22,16 @@ bool work_facet::post() {
   bool l_r{};
   auto l_name = doodle_lib::Get().ctx().get<program_options>().arg[name];
   if (l_name) {
+    signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
+    signal_set_->async_wait([&](boost::system::error_code ec, int signal) {
+      if (ec) {
+        DOODLE_LOG_ERROR("signal_set_ error: {}", ec.message());
+        return;
+      }
+      DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
+      app_base::Get().stop_app();
+    });
+
     win::open_console_window();
     g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
 
