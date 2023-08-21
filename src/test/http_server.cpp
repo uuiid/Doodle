@@ -9,11 +9,13 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/render_farm/client.h>
 #include <doodle_lib/render_farm/detail/computer_manage.h>
 #include <doodle_lib/render_farm/detail/ue_task_manage.h>
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/work.h>
 #include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/asio/executor_work_guard.hpp"
@@ -68,6 +70,7 @@ class server_facet {
     g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
     g_reg()->ctx().emplace<render_farm::computer_manage>().run();
     l_ptr->run();
+    g_reg()->ctx().emplace<render_farm::work>("192.168.20.59").run();
 
     return l_r;
   }
