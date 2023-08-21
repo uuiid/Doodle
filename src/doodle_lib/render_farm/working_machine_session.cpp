@@ -67,12 +67,14 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     if (!l_has_call) {
       boost::beast::http::response<boost::beast::http::empty_body> l_response{
           boost::beast::http::status::not_found, 11};
+      l_response.prepare_payload();
       send_response(boost::beast::http::message_generator{std::move(l_response)});
     }
   } catch (const doodle_error& e) {
     DOODLE_LOG_ERROR("doodle_error: {}", boost::diagnostic_information(e));
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
     l_response.body() = e.what();
+    l_response.prepare_payload();
     send_response(boost::beast::http::message_generator{std::move(l_response)});
   }
 }
