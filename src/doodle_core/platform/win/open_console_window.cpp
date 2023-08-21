@@ -19,6 +19,7 @@ void open_console_window() {
     ::SetFocus(::GetConsoleWindow());
 
     std::locale::global(boost::locale::generator().generate("UTF-8"));
+    THROW_IF_WIN32_BOOL_FALSE(::SetConsoleOutputCP(65001));
   }
 }
 }  // namespace doodle::win
