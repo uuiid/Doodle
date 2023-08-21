@@ -101,7 +101,7 @@ bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_pt
   /// 去除旧的log
   spdlog::drop(l_name);
 
-  SPDLOG_DEBUG(fmt::format("初始化 {} 日志 {}", in_name));
+  SPDLOG_DEBUG(fmt::format("初始化日志 {}", in_name));
   return true;
 }
 }  // namespace doodle::details
