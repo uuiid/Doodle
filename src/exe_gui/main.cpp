@@ -8,6 +8,7 @@
  */
 #include <doodle_lib/facet/main_facet.h>
 #include <doodle_lib/facet/server_facet.h>
+#include <doodle_lib/facet/work_facet.h>
 
 #include <iostream>
 
@@ -16,7 +17,7 @@
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main(int argc, const char* const argv[]) try {
-  using main_app = doodle::app_command<doodle::server_facet, doodle::main_facet>;
+  using main_app = doodle::app_command<doodle::server_facet, doodle::work_facet, doodle::main_facet>;
   main_app app{argc, argv};
   try {
     return app.run();
