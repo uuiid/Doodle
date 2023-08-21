@@ -9,4 +9,5 @@ target_sources(doodle_core
         list_drive.cpp
         register_file_type.cpp
         get_prot.cpp
+        open_console_window.cpp
         )
