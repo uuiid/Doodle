@@ -3,6 +3,9 @@
 //
 #include <doodle_core/platform/win/windows_alias.h>
 
+#include <boost/locale.hpp>
+
+#include <locale>
 #include <wil/result.h>
 namespace doodle::win {
 
@@ -14,6 +17,8 @@ void open_console_window() {
     ::freopen_s(&l_file, "CONOUT$", "w", stdout);
     ::freopen_s(&l_file, "CONERR$", "w", stderr);
     ::SetFocus(::GetConsoleWindow());
+
+    std::locale::global(boost::locale::generator().generate("UTF-8"));
   }
 }
 }  // namespace doodle::win
