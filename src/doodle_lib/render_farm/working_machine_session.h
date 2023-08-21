@@ -60,7 +60,8 @@ class working_machine_session {
   void on_parser(boost::system::error_code ec, std::size_t bytes_transferred);
   void on_write(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
 
-  using request_parser_type = boost::beast::http::request_parser<boost::beast::http::empty_body>;
+  using request_parser_type     = boost::beast::http::request_parser<boost::beast::http::empty_body>;
+  using request_parser_type_ptr = std::shared_ptr<request_parser_type>;
 
   struct data_type {
     data_type(boost::asio::ip::tcp::socket in_socket) : stream_(std::move(in_socket)) {}
@@ -68,7 +69,7 @@ class working_machine_session {
 
     render_farm::working_machine_ptr working_machine_ptr_;
     boost::beast::flat_buffer buffer_;
-    request_parser_type request_parser_;
+    request_parser_type_ptr request_parser_;
     boost::url url_;
     boost::signals2::scoped_connection connection_;
     http_route_ptr route_ptr_;
@@ -79,7 +80,7 @@ class working_machine_session {
   void send_response(boost::beast::http::message_generator&& in_message_generator);
   void do_close();
   [[nodiscard("")]] inline boost::beast::http::request_parser<boost::beast::http::empty_body>& request_parser() {
-    return ptr_->request_parser_;
+    return *ptr_->request_parser_;
   };
   [[nodiscard("")]] inline boost::beast::tcp_stream& stream() { return ptr_->stream_; }
   // buffer

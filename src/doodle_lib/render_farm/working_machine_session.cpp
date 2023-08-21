@@ -42,9 +42,10 @@ void working_machine_session::run() {
 
 void working_machine_session::do_read() {
   stream().expires_after(30s);
+  ptr_->request_parser_ = std::make_shared<request_parser_type>();
 
   boost::beast::http::async_read_header(
-      stream(), buffer(), ptr_->request_parser_, bind_reg_handler(&working_machine_session::on_parser, g_reg(), this)
+      stream(), buffer(), *ptr_->request_parser_, bind_reg_handler(&working_machine_session::on_parser, g_reg(), this)
   );
 }
 
@@ -55,16 +56,13 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     //      return;
     //    }
     do_close();
-  }
-
-  if (bytes_transferred == 0) {
-    do_close();
     return;
   }
-  ptr_->url_ = boost::url{ptr_->request_parser_.get().target()};
+
+  ptr_->url_ = boost::url{ptr_->request_parser_->get().target()};
   DOODLE_LOG_INFO("开始解析 uel {}", ptr_->url_.path());
   try {
-    auto l_has_call = (*ptr_->route_ptr_)(ptr_->request_parser_.get().method(), make_handle(this));
+    auto l_has_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), make_handle(this));
     if (!l_has_call) {
       boost::beast::http::response<boost::beast::http::empty_body> l_response{
           boost::beast::http::status::not_found, 11};
@@ -99,11 +97,16 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
   }
   ptr_->buffer_.clear();
   ptr_->url_.clear();
+  ptr_->request_parser_ = std::make_shared<request_parser_type>();
   do_read();
 }
 void working_machine_session::do_close() {
   boost::system::error_code ec;
-  ptr_->stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+  ptr_->stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+
+  if (ec) {
+    DOODLE_LOG_ERROR("do_close error: {}", ec.message());
+  }
 }
 
 }  // namespace doodle::render_farm

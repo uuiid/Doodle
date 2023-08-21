@@ -11,16 +11,17 @@ namespace render_farm {
 
 class work {
  public:
-  using timer        = boost::asio::system_timer;
-  using timer_ptr    = std::shared_ptr<timer>;
+  using timer         = boost::asio::high_resolution_timer;
+  using timer_ptr     = std::shared_ptr<timer>;
   using socket        = boost::beast::tcp_stream;
-  using socket_ptr   = std::shared_ptr<socket>;
-  using resolver     = boost::asio::ip::tcp::resolver;
-  using resolver_ptr = std::shared_ptr<resolver>;
+  using socket_ptr    = std::shared_ptr<socket>;
+  using resolver      = boost::asio::ip::tcp::resolver;
+  using resolver_ptr  = std::shared_ptr<resolver>;
 
   using buffer_type   = boost::beast::flat_buffer;
 
   using response_type = boost::beast::http::response<boost::beast::http::string_body>;
+  using request_type  = boost::beast::http::request<boost::beast::http::string_body>;
 
  private:
   struct data_type {
@@ -30,8 +31,9 @@ class work {
     resolver_ptr resolver_{};
     // buffer
     buffer_type buffer_{};
-    // requset
+
     response_type response_{};
+    request_type request_{};
   };
   std::shared_ptr<data_type> ptr_;
 
@@ -45,7 +47,13 @@ class work {
   void run();
 
  private:
+  void do_wait();
   void do_register();
+  void do_read();
+  void do_close();
+
+  void on_wait(boost::system::error_code ec);
+
   // on_resolve
   void on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results);
 
