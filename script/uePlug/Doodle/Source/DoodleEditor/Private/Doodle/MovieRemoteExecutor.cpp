@@ -422,9 +422,12 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   const UMoviePipelineInProcessExecutorSettings* ExecutorSettings =
       GetDefault<UMoviePipelineInProcessExecutorSettings>();
   if (Remote_Repository.IsEmpty()) {
-    FNotificationInfo L_Info{FText::FromString(TEXT("无法找到远程储存库..."))};
+    FNotificationInfo L_Info{FText::FromString(TEXT("无法找到远程储存库"))};
+    L_Info.Text = FText::FromString(TEXT("无法找到远程储存库..."));
     FSlateNotificationManager::Get().AddNotification(L_Info);
+
     OnExecutorFinishedImpl();
+    return;
   }
 
   if (!UploadFiles()) {
@@ -432,7 +435,7 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
     return;
   }
 
-  static FString L_Sub_URL{TEXT("v1/render_frame/client_submit_job")};
+  static FString L_Sub_URL{TEXT("v1/render_farm/client_submit_job")};
 
   for (auto&& i : RemoteRenderJobArgs) {
     FString L_Url = FString::Printf(TEXT("http://127.0.0.1:%d/%s"), GetProt(), *L_Sub_URL);
@@ -458,9 +461,10 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
 void UDoodleMovieRemoteExecutor::FindRemoteClient() {
   HTTPResponseRecievedDelegate.AddDynamic(this, &UDoodleMovieRemoteExecutor::HttpRemoteClient);
 
-  static FString L_Sub_URL{TEXT("v1/render_frame/repository")};
+  static FString L_Sub_URL{TEXT("v1/render_farm/repository")};
+  FString L_Url    = FString::Printf(TEXT("http://127.0.0.1:%d/%s"), GetProt(), *L_Sub_URL);
   GetRepository_ID = SendHTTPRequest(
-      L_Sub_URL, TEXT("GET"), {},
+      L_Url, TEXT("GET"), {},
       TMap<FString, FString>{
           {TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent")},
           {TEXT("Content-Type"), TEXT("application/json")},
@@ -494,11 +498,12 @@ void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 Resp
     // 显示与默认警告不同的信息图标
     L_Info.Image                = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Warning"));
 
-    if (ResponseCode != 0) {
+    if (ResponseCode != 200) {
       L_Info.Text = FText::FromString(TEXT("提交渲染失败"));
     } else {
       L_Info.Text = FText::FromString(TEXT("提交渲染完成"));
     }
+    UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s"), *Message);
     FSlateNotificationManager::Get().AddNotification(L_Info);
     OnExecutorFinishedImpl();
   }

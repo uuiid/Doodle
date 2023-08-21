@@ -67,11 +67,10 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   FProcHandle ProcessHandle;
 
  private:
-  TArray<FString> RemoteClients;
   TSet<int32> Render_IDs{};
-  int32 GetRepository{};
+  int32 GetRepository_ID{};
 
-  FString RemoteClientUrl;
+  FString Remote_Repository;
   TArray<FDoodleRemoteRenderJobArg> RemoteRenderJobArgs;
   TWeakPtr<class SWindow> WeakCustomWindow;
 
