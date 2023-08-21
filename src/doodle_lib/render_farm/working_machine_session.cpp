@@ -52,10 +52,11 @@ void working_machine_session::do_read() {
 void working_machine_session::on_parser(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
   if (ec) {
-    DOODLE_LOG_ERROR("on_write error: {}", ec.message());
-    //    if (ec == boost::beast::http::error::end_of_stream) {
-    //      return;
-    //    }
+    if (ec != boost::beast::http::error::end_of_stream) {
+      DOODLE_LOG_ERROR("on_write error: {}", ec.message());
+    } else {
+      DOODLE_LOG_ERROR("末端的流, 主动关闭");
+    }
     do_close();
     return;
   }
