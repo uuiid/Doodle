@@ -47,6 +47,7 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
         boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.body() = {{"state", "ok"}, {"id", l_h.entity()}};
         l_response.keep_alive(l_parser_ptr->keep_alive());
+        l_response.prepare_payload();
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
@@ -117,6 +118,8 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         l_response.keep_alive(l_parser_ptr->keep_alive());
         l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
         DOODLE_LOG_INFO("send computer_reg: {}", l_session.url().data());
+        DOODLE_LOG_INFO("response version: {}", l_response.version());
+        l_response.prepare_payload();
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
@@ -157,6 +160,7 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
         boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.keep_alive(l_parser_ptr->keep_alive());
         l_response.body() = {{"state", "ok"}};
+        l_response.prepare_payload();
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
