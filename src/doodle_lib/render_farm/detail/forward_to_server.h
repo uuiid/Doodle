@@ -13,9 +13,8 @@ class forward_to_server {
  public:
   using request_parser_ptr = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::string_body>>;
   using request_ptr        = std::shared_ptr<boost::beast::http::request<boost::beast::http::string_body>>;
-  explicit forward_to_server(entt::handle in_session, request_parser_ptr in_parser)
-      : ptr_{std::make_shared<data_type>()} {
-    ptr_->handle_ = in_session;
+  explicit forward_to_server(entt::handle in_self, request_parser_ptr in_parser) : ptr_{std::make_shared<data_type>()} {
+    ptr_->self_handle_ = in_self;
     ptr_->parser_ = std::move(in_parser);
   }
   ~forward_to_server() = default;
@@ -23,7 +22,7 @@ class forward_to_server {
 
  private:
   struct data_type {
-    entt::handle handle_;
+    entt::handle self_handle_;
     request_parser_ptr parser_;
     request_ptr request_;
     std::shared_ptr<boost::beast::tcp_stream> stream_;

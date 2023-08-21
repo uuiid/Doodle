@@ -11,7 +11,7 @@ namespace render_farm {
 namespace detail {
 void forward_to_server::operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
-  auto& l_session = ptr_->handle_.get<working_machine_session>();
+  auto& l_session = ptr_->self_handle_.get<working_machine_session>();
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
     l_session.send_error_code(ec);
@@ -47,7 +47,7 @@ void forward_to_server::on_write(boost::system::error_code ec, std::size_t bytes
   boost::ignore_unused(bytes_transferred);
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
-    auto& l_session = ptr_->handle_.get<working_machine_session>();
+    auto& l_session = ptr_->self_handle_.get<working_machine_session>();
     l_session.send_error(ec);
     return;
   }
@@ -60,12 +60,12 @@ void forward_to_server::on_read(boost::system::error_code ec, std::size_t bytes_
   boost::ignore_unused(bytes_transferred);
   if (ec) {
     DOODLE_LOG_ERROR("forward_to_server error:{}", ec.message());
-    auto& l_session = ptr_->handle_.get<working_machine_session>();
+    auto& l_session = ptr_->self_handle_.get<working_machine_session>();
     l_session.send_error_code(ec);
     ptr_->stream_->close();
     return;
   }
-  auto& l_session = ptr_->handle_.get<working_machine_session>();
+  auto& l_session = ptr_->self_handle_.get<working_machine_session>();
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
   l_response.body() = ptr_->response_.body();
   l_response.keep_alive(false);
