@@ -116,6 +116,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.keep_alive(l_parser_ptr->keep_alive());
         l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
+        DOODLE_LOG_INFO("send computer_reg: {}", l_session.url().data());
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
