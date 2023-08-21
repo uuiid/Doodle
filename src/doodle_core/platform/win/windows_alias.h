@@ -20,4 +20,6 @@ using wnd_instance = ::HINSTANCE;
 class d3d_device;
 using string_type = PWSTR;
 
+void open_console_window();
+
 }  // namespace doodle::win
