@@ -37,17 +37,30 @@ void work::make_ptr() {
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
     this->do_close();
   });
+  ptr_->request_ = {boost::beast::http::verb::post, "/v1/render_farm/computer", 11};
+  ptr_->request_.set(boost::beast::http::field::host, fmt::format("{}:50021", ptr_->server_ip));
+  ptr_->request_.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  ptr_->request_.set(boost::beast::http::field::content_type, "application/json");
+  ptr_->request_.set(boost::beast::http::field::accept, "application/json");
+  nlohmann::json l_json;
+  l_json["name"]        = boost::asio::ip::host_name();
+  ptr_->request_.body() = l_json.dump();
+  ptr_->request_.prepare_payload();
 }
 
 void work::run() {
   if (!ptr_->socket_->socket().is_open()) {
-    ptr_->resolver_->async_resolve(
-        ptr_->server_ip, "50021", std::bind(&work::on_resolve, this, std::placeholders::_1, std::placeholders::_2)
-    );
+    do_resolve();
   } else {
     DOODLE_LOG_INFO("socket is open");
     do_register();
   }
+}
+void work::do_resolve() {
+  DOODLE_LOG_INFO("开始解析服务器地址");
+  ptr_->resolver_->async_resolve(
+      ptr_->server_ip, "50021", std::bind(&work::on_resolve, this, std::placeholders::_1, std::placeholders::_2)
+  );
 }
 
 void work::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
@@ -56,6 +69,7 @@ void work::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolv
     do_wait();
     return;
   }
+  DOODLE_LOG_INFO("开始连接服务器");
   boost::asio::async_connect(ptr_->socket_->socket(), results, [this](auto&& PH1, auto&& PH2) {
     on_connect(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
   });
@@ -72,25 +86,20 @@ void work::on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endpoi
 }
 
 void work::do_register() {
-  ptr_->request_ = {boost::beast::http::verb::post, "/v1/render_farm/computer", 11};
-  ptr_->request_.set(boost::beast::http::field::host, fmt::format("{}:50021", ptr_->server_ip));
-  ptr_->request_.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  ptr_->request_.set(boost::beast::http::field::content_type, "application/json");
-  ptr_->request_.set(boost::beast::http::field::accept, "application/json");
-  nlohmann::json l_json;
-  l_json["name"]        = boost::asio::ip::host_name();
-  ptr_->request_.body() = l_json.dump();
-  ptr_->request_.prepare_payload();
-  boost::beast::http::async_write(*ptr_->socket_, ptr_->request_, [this](auto&& PH1, auto&& PH2) {
+  boost::beast::http::async_write(*ptr_->socket_, std::as_const(ptr_->request_), [this](auto&& PH1, auto&& PH2) {
     on_write(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
   });
 }
 void work::on_write(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
+  if (ec == boost::beast::errc::not_connected) {
+    DOODLE_LOG_INFO("失去连接, 开始重新连接");
+    do_resolve();
+    return;
+  }
   if (ec) {
     DOODLE_LOG_INFO("{}", ec.message());
     do_close();
-
     return;
   }
   do_read();
@@ -121,6 +130,14 @@ void work::on_read(boost::system::error_code ec, std::size_t bytes_transferred) 
   ptr_->response_ = {};
   do_wait();
 }
-void work::do_close() { ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send); }
+void work::do_close() {
+  try {
+    boost::system::error_code ec{};
+    ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+    DOODLE_LOG_INFO("{}", ec.message());
+  } catch (const std::system_error& in_err) {
+    DOODLE_LOG_INFO("{}", boost::diagnostic_information(in_err));
+  };
+}
 }  // namespace render_farm
 }  // namespace doodle

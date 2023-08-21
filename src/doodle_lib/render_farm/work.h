@@ -57,6 +57,7 @@ class work {
   void make_ptr();
 
   void do_wait();
+  void do_resolve();
   void do_register();
   void do_read();
   void do_close();
