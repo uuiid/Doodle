@@ -15,11 +15,15 @@
 
 #include "boost/asio/executor_work_guard.hpp"
 
+#include <spdlog/sinks/stdout_color_sinks.h>
 namespace doodle {
 bool work_facet::post() {
   bool l_r{};
   auto l_name = doodle_lib::Get().ctx().get<program_options>().arg[name];
   if (l_name) {
+    win::open_console_window();
+    g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
+
     doodle_lib::Get().ctx().get<program_info>().use_gui_attr(false);
     l_r    = true;
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));

@@ -7,17 +7,24 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/platform/win/windows_alias.h>
 
 #include <doodle_app/app/program_options.h>
 
 #include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/asio/executor_work_guard.hpp"
+
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 namespace doodle {
 bool server_facet::post() {
   bool l_r{};
   auto l_name = doodle_lib::Get().ctx().get<program_options>().arg[name];
   if (l_name) {
+    win::open_console_window();
+    g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
+
     doodle_lib::Get().ctx().get<program_info>().use_gui_attr(false);
     l_r    = true;
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
