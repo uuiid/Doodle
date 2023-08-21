@@ -107,6 +107,7 @@ void repository_type_get::operator()(const entt::handle& in_handle, const std::m
   l_response.body() = l_json;
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
+  l_response.prepare_payload();
   l_session.send_response(std::move(l_response));
 }
 }  // namespace doodle::render_farm::detail
