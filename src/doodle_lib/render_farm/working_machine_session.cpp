@@ -50,6 +50,7 @@ void working_machine_session::do_read() {
 }
 
 void working_machine_session::on_parser(boost::system::error_code ec, std::size_t bytes_transferred) {
+  boost::ignore_unused(bytes_transferred);
   if (ec) {
     DOODLE_LOG_ERROR("on_write error: {}", ec.message());
     //    if (ec == boost::beast::http::error::end_of_stream) {
