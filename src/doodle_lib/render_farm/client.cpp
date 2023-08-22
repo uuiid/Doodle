@@ -31,17 +31,14 @@ void client::run() {
   ++ptr_->connect_count_;
   //  do_wait();
   //  do_resolve();
-
-  async_connect(
-      boost::asio::any_io_executor{boost::asio::make_strand(g_io_context())},
-      [](boost::system::error_code ec, socket_ptr in_ptr) {
-        if (ec) {
-          DOODLE_LOG_INFO("{}", ec.message());
-          return;
-        }
-        DOODLE_LOG_INFO("连接成功服务器");
-      }
-  );
+  auto l_exe = boost::asio::any_io_executor{boost::asio::make_strand(g_io_context())};
+  async_connect(l_exe, [](boost::system::error_code ec, socket_ptr in_ptr) {
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec.message());
+      return;
+    }
+    DOODLE_LOG_INFO("连接成功服务器");
+  });
 }
 
 void client::do_resolve() {
