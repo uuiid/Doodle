@@ -4,6 +4,8 @@
 
 #include "work.h"
 
+#include <doodle_core/lib_warp/boost_fmt_error.h>
+
 #include <boost/beast.hpp>
 namespace doodle {
 namespace render_farm {
@@ -12,7 +14,7 @@ void work::on_wait(boost::system::error_code ec) {
     return;
   }
   if (ec) {
-    DOODLE_LOG_INFO("{}", ec.what());
+    DOODLE_LOG_INFO("{}", ec);
     return;
   }
   run();
@@ -31,7 +33,7 @@ void work::make_ptr() {
   ptr_->signal_set_ = std::make_shared<signal_set>(l_s, SIGINT, SIGTERM);
   ptr_->signal_set_->async_wait([&](boost::system::error_code ec, int signal) {
     if (ec) {
-      DOODLE_LOG_ERROR("signal_set_ error: {}", ec.what());
+      DOODLE_LOG_ERROR("signal_set_ error: {}", ec);
       return;
     }
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
@@ -65,7 +67,7 @@ void work::do_resolve() {
 
 void work::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
   if (ec) {
-    DOODLE_LOG_INFO("{}", ec.what());
+    DOODLE_LOG_INFO("{}", ec);
     do_wait();
     return;
   }
@@ -77,7 +79,7 @@ void work::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolv
 
 void work::on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endpoint endpoint) {
   if (ec) {
-    DOODLE_LOG_INFO("{}", ec.what());
+    DOODLE_LOG_INFO("{}", ec);
     do_wait();
     return;
   }
@@ -98,7 +100,7 @@ void work::on_write(boost::system::error_code ec, std::size_t bytes_transferred)
     return;
   }
   if (ec) {
-    DOODLE_LOG_INFO("{}", ec.what());
+    DOODLE_LOG_INFO("{}", ec);
     do_close();
     return;
   }
@@ -114,7 +116,7 @@ void work::on_read(boost::system::error_code ec, std::size_t bytes_transferred) 
   boost::ignore_unused(bytes_transferred);
 
   if (ec) {
-    DOODLE_LOG_INFO("{}", ec.what());
+    DOODLE_LOG_INFO("{}", ec);
     do_close();
     return;
   }
@@ -133,7 +135,7 @@ void work::do_close() {
   try {
     boost::system::error_code ec{};
     ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-    DOODLE_LOG_INFO("{}", ec.what());
+    DOODLE_LOG_INFO("{}", ec);
   } catch (const std::system_error& in_err) {
     DOODLE_LOG_INFO("{}", boost::diagnostic_information(in_err));
   };
