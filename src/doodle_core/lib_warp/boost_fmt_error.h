@@ -13,9 +13,7 @@ template <>
 struct formatter<::boost::system::error_code> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const ::boost::system::error_code& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        in_.to_string(),
-        ctx
+    return formatter<string_view>::format(in_.what(), ctx
     );
   }
 };

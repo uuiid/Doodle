@@ -94,7 +94,8 @@ void work::do_register() {
 }
 void work::on_write(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
-  if (ec == boost::beast::errc::not_connected) {
+  if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+      ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
     DOODLE_LOG_INFO("失去连接, 开始重新连接");
     do_resolve();
     return;
