@@ -49,9 +49,7 @@ void asset_library_layout::layout(ImGuiID in_id, const ImVec2& in_size) {
   ImGui::DockBuilderDockWindow(menu_w::assets_filter.data(), dock_id_filter);  /// \brief 过滤器的停靠
   ImGui::DockBuilderDockWindow(menu_w::edit_.data(), dock_id_tools);           /// \brief 编辑的停靠
   ImGui::DockBuilderDockWindow(menu_w::upload_files.data(), dock_id_tools);    /// \brief 上传文件停靠
-
   ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_edit);  /// \brief 主窗口的停靠
-
   ImGui::DockBuilderFinish(in_id);
 }
 
