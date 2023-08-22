@@ -5,5 +5,8 @@
 #include "render_monitor.h"
 
 namespace doodle {
-namespace gui {}  // namespace gui
+namespace gui {
+void render_monitor::init() {}
+bool render_monitor::render() { return false; }
+}  // namespace gui
 }  // namespace doodle
