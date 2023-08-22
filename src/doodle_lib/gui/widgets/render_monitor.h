@@ -13,10 +13,25 @@ namespace gui {
 
 class render_monitor {
  private:
-  class impl {
+  struct computer {
+    std::uint64_t id_{};
+    std::string name_{};
+    std::string state_{};
+  };
+  struct render_task {
+    std::uint64_t id_{};
+    std::string name_{};
+    std::string state_{};
+  };
+
+  struct impl {
     bool open_{true};
+    gui_cache_name_id component_collapsing_header_id_;
+    gui_cache_name_id render_task_collapsing_header_id_;
     gui_cache_name_id component_table_id_;
     gui_cache_name_id render_task_table_id_;
+    std::vector<computer> computers_;
+    std::vector<render_task> render_tasks_;
   };
   std::unique_ptr<impl> p_i;
 
