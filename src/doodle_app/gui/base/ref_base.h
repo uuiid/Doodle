@@ -6,29 +6,6 @@
 #include <boost/signals2.hpp>
 
 namespace doodle::gui {
-/**
- * @brief 基本的渲染基类, render(const entt::handle & )必须每帧调用
- *
- */
-class DOODLE_APP_API base_render {
- public:
-  /**
-   * @brief Construct a new base render object
-   *
-   */
-  base_render()                                    = default;
-  /**
-   * @brief Destroy the base render object
-   *
-   */
-  virtual ~base_render()                           = default;
-  /**
-   * @brief 渲染函数, 每帧调用, 不要再这里添加太多的逻辑运行方法, 最好只有渲染方法
-   *
-   * @param in
-   */
-  virtual bool render(const entt::handle &in = {}) = 0;
-};
 
 /**
  * @brief 空类
