@@ -52,7 +52,7 @@ void work::run() {
   if (!ptr_->socket_->socket().is_open()) {
     do_resolve();
   } else {
-    DOODLE_LOG_INFO("socket is open");
+    DOODLE_LOG_INFO("开始发送心跳注册");
     do_register();
   }
 }
