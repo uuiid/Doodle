@@ -60,16 +60,5 @@ void asset_library_layout::set_show() {
   g_windows_manage().open_windows<assets_filter_widget>();
   g_windows_manage().open_windows<assets_file_widgets>();
   g_windows_manage().open_windows<upload_files>();
-
-  g_windows_manage().close_windows<maya_tool>();
-  g_windows_manage().close_windows<create_video>();
-  g_windows_manage().close_windows<extract_subtitles_widgets>();
-  g_windows_manage().close_windows<subtitle_processing>();
-  g_windows_manage().close_windows<long_time_tasks_widget>();
-  g_windows_manage().close_windows<time_sequencer_widget>();
-  g_windows_manage().close_windows<xlsx_export_widgets>();
-  g_windows_manage().close_windows<setting_windows>();
-  g_windows_manage().close_windows<project_edit>();
-  g_windows_manage().close_windows<all_user_view_widget>();
 }
 }  // namespace doodle::gui
