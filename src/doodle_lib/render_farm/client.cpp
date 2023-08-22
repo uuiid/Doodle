@@ -34,7 +34,7 @@ void client::run() {
 
   async_connect(
       boost::asio::any_io_executor{boost::asio::make_strand(g_io_context())},
-      [](boost::system::error_code ec) {
+      [](boost::system::error_code ec, socket_ptr in_ptr) {
         if (ec) {
           DOODLE_LOG_INFO("{}", ec.message());
           return;

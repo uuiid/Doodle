@@ -58,8 +58,9 @@ class client {
 
   template <typename ExecutorType, typename CompletionHandler>
   auto async_connect(const ExecutorType& in_executor_type, CompletionHandler&& in_completion) {
-    boost::asio::async_completion<CompletionHandler, void(boost::system::error_code, socket_ptr)> init(in_completion);
-    using handler_type = typename decltype(init)::completion_handler_type;
+    using async_completion =
+        boost::asio::async_completion<CompletionHandler, void(boost::system::error_code, socket_ptr)>;
+    using handler_type = typename async_completion::completion_handler_type;
     using base_type    = boost::beast::async_base<handler_type, ExecutorType>;
     struct connect_op : base_type, boost::asio::coroutine {
       enum state {
@@ -72,15 +73,21 @@ class client {
       client* ptr_;
       state state_ = start;
       connect_op(client* in_ptr, handler_type&& in_handler, const ExecutorType& in_executor_type_1)
-          : base_type(std::move(in_handler), in_executor_type_1), ptr_(in_ptr) {}
-
-      void operator()(boost::system::error_code ec = {}, socket_ptr = {}) {
+          : base_type(std::move(in_handler), in_executor_type_1), ptr_(in_ptr) {
         if (ptr_->ptr_->socket_->socket().is_open()) {
           do_write();
         } else {
           do_resolve();
         }
       }
+
+      //      void operator()(boost::system::error_code ec, socket_ptr in_ptr) {
+      //        if (ptr_->ptr_->socket_->socket().is_open()) {
+      //          do_write();
+      //        } else {
+      //          do_resolve();
+      //        }
+      //      }
       void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
         switch (state_) {
           case state::write: {
@@ -140,9 +147,12 @@ class client {
       void do_resolve() { ptr_->ptr_->resolver_->async_resolve(ptr_->ptr_->server_ip_, "50021", std::move(*this)); }
     };
 
-    connect_op op{this, std::move(init.completion_handler), in_executor_type};
-
-    return init.result.get();
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code ec, socket_ptr in_ptr)>(
+        [](auto&& in_completion_, client* in_client_ptr, const auto& in_executor_) {
+          connect_op op{in_client_ptr, std::move(in_completion_), in_executor_};
+        },
+        std::move(in_completion), this, in_executor_type
+    );
   }
 
   void list_task();
