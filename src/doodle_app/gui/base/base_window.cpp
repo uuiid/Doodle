@@ -150,11 +150,12 @@ void windows_manage::set_layout(gui::windows_layout&& in_windows) {
 
   // close all windows
   for (auto& i : windows_list_) {
-    *i->args_.init_show_ = false;
+    if (i->args_.render_enum_ == windows_init_arg::render_enum::kbegin) *i->args_.init_show_ = false;
   }
   windows_list_next_.clear();
 
   if (!layout_) {
+    windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) { return !*in_->args_.init_show_; });
     layout_ = std::move(in_windows);
     layout_->set_show();
   } else {
