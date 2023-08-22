@@ -33,11 +33,15 @@ void get_log_type_get::operator()(const entt::handle& in_handle, const std::map<
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
     l_response.body() = l_h.get<process_message>().log();
     l_response.keep_alive(l_session.request_parser().keep_alive());
+    l_response.insert(boost::beast::http::field::content_type, "text/html");
+    l_response.prepare_payload();
     l_session.send_response(std::move(l_response));
   } else {
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
     l_response.keep_alive(l_session.request_parser().keep_alive());
     l_response.body() = "not found";
+    l_response.insert(boost::beast::http::field::content_type, "text/html");
+    l_response.prepare_payload();
     l_session.send_response(std::move(l_response));
   }
 }
@@ -53,11 +57,15 @@ void get_err_type_get::operator()(const entt::handle& in_handle, const std::map<
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
     l_response.body() = l_h.get<process_message>().err();
     l_response.keep_alive(l_session.request_parser().keep_alive());
+    l_response.insert(boost::beast::http::field::content_type, "text/html");
+    l_response.prepare_payload();
     l_session.send_response(std::move(l_response));
   } else {
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
     l_response.keep_alive(l_session.request_parser().keep_alive());
     l_response.body() = "not found";
+    l_response.insert(boost::beast::http::field::content_type, "text/html");
+    l_response.prepare_payload();
     l_session.send_response(std::move(l_response));
   }
 }
@@ -70,6 +78,7 @@ void render_job_type_get::operator()(const entt::handle& in_handle, const std::m
   l_response.body() = l_ids;
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
+  l_response.prepare_payload();
   l_session.send_response(std::move(l_response));
 }
 namespace {
@@ -101,6 +110,7 @@ void computer_reg_type_get::operator()(const entt::handle& in_handle, const std:
   l_response.body() = l_ids;
   l_response.keep_alive(l_session.request_parser().keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
+  l_response.prepare_payload();
 
   l_session.send_response(std::move(l_response));
 }
