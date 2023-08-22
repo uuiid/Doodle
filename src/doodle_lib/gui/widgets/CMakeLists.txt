@@ -23,6 +23,7 @@ target_sources(doodle_lib
         create_entry.h
         update_self.h
         upload_files.h
+        render_monitor.h
 
         PRIVATE
         edit_widget.cpp
@@ -44,4 +45,5 @@ target_sources(doodle_lib
         create_entry.cpp
         update_self.cpp
         upload_files.cpp
+        render_monitor.cpp
         )
