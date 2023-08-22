@@ -29,8 +29,19 @@ void client::run() {
 
   //  boost::asio::bind_cancellation_slot();
   ++ptr_->connect_count_;
-  do_wait();
-  do_resolve();
+  //  do_wait();
+  //  do_resolve();
+
+  async_connect(
+      boost::asio::any_io_executor{boost::asio::make_strand(g_io_context())},
+      [](boost::system::error_code ec) {
+        if (ec) {
+          DOODLE_LOG_INFO("{}", ec.message());
+          return;
+        }
+        DOODLE_LOG_INFO("连接成功服务器");
+      }
+  );
 }
 
 void client::do_resolve() {
@@ -54,6 +65,7 @@ void client::on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endp
     return;
   }
   DOODLE_LOG_INFO("连接成功服务器");
+  do_hello();
 }
 
 void client::on_connect_timeout(boost::system::error_code ec) {
@@ -65,22 +77,59 @@ void client::on_connect_timeout(boost::system::error_code ec) {
   DOODLE_LOG_INFO("连接服务器超时");
   //  run();
 }
+
+void client::do_write() {
+  boost::beast::async_write(
+      ptr_->socket_->socket(), std::move(*ptr_->request_), boost::beast::bind_front_handler(&client::on_write, this)
+  );
+}
+
+void client::on_write(boost::system::error_code ec, std::size_t bytes_transferred) {
+  boost::ignore_unused(bytes_transferred);
+  if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+      ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
+    DOODLE_LOG_INFO("失去连接, 开始重新连接");
+    do_resolve();
+    return;
+  }
+  do_read();
+}
+
+void client::do_read() {
+  ptr_->buffer_.clear();
+  ptr_->response_ = {};
+  boost::beast::http::async_read(
+      ptr_->socket_->socket(), ptr_->buffer_, ptr_->response_, boost::beast::bind_front_handler(&client::on_read, this)
+  );
+}
+void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
+  boost::ignore_unused(bytes_transferred);
+  if (ec) {
+    DOODLE_LOG_INFO("{}", ec.message());
+    return;
+  }
+  DOODLE_LOG_INFO("{}", ptr_->response_.body());
+}
+
 void client::rest_run() {
   ptr_->connect_count_ = 0;
   run();
 }
 void client::list_task() {
-  if (!ptr_->socket_.is_open()) {
-    DOODLE_LOG_INFO("socket is not open");
-    return;
-  }
-
-  ptr_->request_ = boost::beast::http::request<render_farm::detail::basic_json_body>{
+  boost::beast::http::request<render_farm::detail::basic_json_body> l_request{
       boost::beast::http::verb::get, "/v1/render_farm/render_job", 11};
-  ptr_->request_.keep_alive(true);
-  ptr_->request_.set(boost::beast::http::field::host, fmt::format("{}:50021", ptr_->server_ip_));
-  ptr_->request_.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  ptr_->request_.set(boost::beast::http::field::content_type, "application/json");
-  ptr_->request_.set(boost::beast::http::field::accept, "application/json");
+  l_request.keep_alive(true);
+  l_request.set(boost::beast::http::field::host, fmt::format("{}:50021", ptr_->server_ip_));
+  l_request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  l_request.set(boost::beast::http::field::content_type, "application/json");
+  l_request.set(boost::beast::http::field::accept, "application/json");
+}
+void client::do_hello() {
+  boost::beast::http::request<boost::beast::http::empty_body> l_request{
+      boost::beast::http::verb::get, "/v1/render_farm", 11};
+  l_request.keep_alive(true);
+  l_request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+  ptr_->request_ = std::make_shared<message_generator_type>(std::move(l_request));
 }
 }  // namespace doodle
