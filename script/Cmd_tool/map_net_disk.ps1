@@ -16,7 +16,7 @@ $Net_MAPS = @(
     @("K:", "\\192.168.10.250\public\美易高", "美易高_250"),
     @("W:", "\\192.168.10.240\public\mygwaibao", "美易高_外包"),
     @("A:", "\\192.168.10.240\public\meiyigxiangmu", "美易高_项目")
-    # @("Y:", "\\192.168.10.240\public\mygwaibao2", "美易高_外包2")
+    @("Y:", "\\192.168.10.218\jxyc", "美易高_英唯项目")
 )
 
 #写入新的消息
@@ -52,4 +52,4 @@ $My_Str += "`n`n即将重启文件管理器"
 Write-Host $My_Str
 
 Start-Process explorer
-# ps2exe E:\Doodle\script\Cmd_tool\map_net_disk.ps1 E:\Doodle\script\Cmd_tool\run2.5.exe
+# ps2exe E:\Doodle\script\Cmd_tool\map_net_disk.ps1 E:\Doodle\script\Cmd_tool\run2.6.exe
