@@ -12,6 +12,16 @@
 #include <doodle_lib/render_farm/detail/ue4_task.h>
 namespace doodle::render_farm::detail {
 
+void get_root_type::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) const {
+  auto& l_session = in_handle.get<working_machine_session>();
+  boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+  l_response.body() = "hello world";
+  l_response.keep_alive(l_session.request_parser().keep_alive());
+  l_response.insert(boost::beast::http::field::content_type, "text/html");
+  l_response.prepare_payload();
+  l_session.send_response(std::move(l_response));
+}
+
 void get_log_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
   if (in_cap.count("handle") == 0) {
