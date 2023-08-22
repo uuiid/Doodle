@@ -79,9 +79,6 @@ void layout_window::set_show() {
   g_windows_manage().open_windows<time_sequencer_widget>();
   g_windows_manage().open_windows<xlsx_export_widgets>();
 
-  g_windows_manage().close_windows<setting_windows>();
-  g_windows_manage().close_windows<project_edit>();
-  g_windows_manage().close_windows<all_user_view_widget>();
 }
 
 layout_window::~layout_window() = default;
