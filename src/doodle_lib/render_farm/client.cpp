@@ -8,20 +8,44 @@
 
 #include <boost/asio.hpp>
 namespace doodle {
+void client::do_wait() {
+  ptr_->timer_->expires_after(5s);
+  ptr_->timer_->async_wait(boost::beast::bind_front_handler(&client::on_connect_timeout, this));
+}
+
+void client::make_ptr() {
+  auto l_s        = boost::asio::make_strand(g_io_context());
+  ptr_->socket_   = std::make_shared<socket>(l_s);
+  ptr_->timer_    = std::make_shared<timer>(l_s);
+  ptr_->resolver_ = std::make_shared<resolver>(l_s);
+  //  ptr_->signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
+}
 
 void client::run() {
   if (ptr_->connect_count_ > 3) {
     DOODLE_LOG_INFO("连接服务器失败");
     return;
   }
+
   //  boost::asio::bind_cancellation_slot();
   ++ptr_->connect_count_;
-  ptr_->timer_.expires_from_now(10s);
-  boost::asio::async_connect(
-      ptr_->socket_, boost::asio::ip::tcp::resolver(g_io_context()).resolve(ptr_->server_ip_, "50021"),
-      bind_reg_handler(&client::on_connect, g_reg(), this)
+  do_wait();
+  do_resolve();
+}
+
+void client::do_resolve() {
+  ptr_->resolver_->async_resolve(
+      ptr_->server_ip_, "50021", boost::beast::bind_front_handler(&client::on_resolve, this)
   );
-  ptr_->timer_.async_wait(bind_reg_handler(&client::on_connect_timeout, g_reg(), this));
+}
+void client::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
+  if (ec) {
+    DOODLE_LOG_INFO("{}", ec.message());
+    return;
+  }
+  boost::asio::async_connect(
+      ptr_->socket_->socket(), results, boost::beast::bind_front_handler(&client::on_connect, this)
+  );
 }
 void client::on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endpoint endpoint) {
   boost::ignore_unused(endpoint);
@@ -31,14 +55,15 @@ void client::on_connect(boost::system::error_code ec, boost::asio::ip::tcp::endp
   }
   DOODLE_LOG_INFO("连接成功服务器");
 }
+
 void client::on_connect_timeout(boost::system::error_code ec) {
   if (ec) {
     DOODLE_LOG_INFO("{}", ec.message());
     return;
   }
-  ptr_->socket_.cancel();
+  //  ptr_->socket_->socket().cancel();
   DOODLE_LOG_INFO("连接服务器超时");
-  run();
+  //  run();
 }
 void client::rest_run() {
   ptr_->connect_count_ = 0;
