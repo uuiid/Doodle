@@ -7,6 +7,9 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
+
 #include <cstdint>
 namespace doodle {
 namespace gui {
