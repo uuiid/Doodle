@@ -147,6 +147,13 @@ bool windows_manage::has_windows(const std::string_view& in_info) {
 
 void windows_manage::set_layout(gui::windows_layout&& in_windows) {
   BOOST_ASSERT(in_windows);
+
+  // close all windows
+  for (auto& i : windows_list_) {
+    *i->args_.init_show_ = false;
+  }
+  windows_list_next_.clear();
+
   if (!layout_) {
     layout_ = std::move(in_windows);
     layout_->set_show();
