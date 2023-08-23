@@ -6,6 +6,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/render_farm/client.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -17,15 +18,19 @@ namespace gui {
 class render_monitor {
  private:
   struct computer {
-    std::uint64_t id_{};
+    std::int64_t id_{};
     std::string name_{};
     std::string state_{};
   };
   struct render_task {
-    std::uint64_t id_{};
+    std::int64_t id_{};
     std::string name_{};
     std::string state_{};
   };
+  using timer_t      = boost::asio::system_timer;
+  using timer_ptr_t  = std::shared_ptr<timer_t>;
+  using strand_t     = boost::asio::strand<boost::asio::io_context::executor_type>;
+  using strand_ptr_t = std::shared_ptr<strand_t>;
 
   struct impl {
     bool open_{true};
@@ -35,8 +40,15 @@ class render_monitor {
     gui_cache_name_id render_task_table_id_;
     std::vector<computer> computers_;
     std::vector<render_task> render_tasks_;
+    std::shared_ptr<client> client_ptr_{};
+    strand_ptr_t strand_ptr_{};
+    timer_ptr_t timer_ptr_{};
   };
   std::unique_ptr<impl> p_i;
+
+  void do_wait();
+
+  void get_remote_data();
 
  public:
   render_monitor() : p_i(std::make_unique<impl>()){};
