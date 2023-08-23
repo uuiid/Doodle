@@ -7,6 +7,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+
 namespace doodle {
 class client {
  private:
@@ -57,37 +58,6 @@ class client {
   };
 
  public:
-  struct computer {
-    std::int64_t id_{};
-    std::string name_{};
-    std::string state_{};
-    // form json
-    friend void from_json(const nlohmann::json& in_json, computer& out_data) {
-      in_json["id"].get_to(out_data.id_);
-      in_json["name"].get_to(out_data.name_);
-      in_json["state"].get_to(out_data.state_);
-    }
-  };
-  struct computer_list_t {
-    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
-    using result_type   = std::vector<computer>;
-    result_type result_;
-    client* ptr_;
-
-    boost::beast::http::message_generator operator()() {
-      boost::beast::http::request<render_farm::detail::basic_json_body> l_request{
-          boost::beast::http::verb::get, "/v1/render_farm/render_job", 11};
-      l_request.keep_alive(true);
-      l_request.set(boost::beast::http::field::host, fmt::format("{}:50021", ptr_->server_ip()));
-      l_request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-      l_request.set(boost::beast::http::field::content_type, "application/json");
-      l_request.set(boost::beast::http::field::accept, "application/json");
-      return {std::move(l_request)};
-    };
-
-    result_type operator()(const response_type& in_response) { return in_response.body().get<std::vector<computer>>(); }
-  };
-
   struct hello_t {
     using response_type = boost::beast::http::response<boost::beast::http::string_body>;
     using result_type   = std::string;
@@ -209,7 +179,7 @@ class client {
     }
 
     void do_write() {
-      ptr_->state_   = write;
+      ptr_->state_ = write;
       DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       ptr_->request_ = std::make_shared<message_generator_type>(std::move(ptr_->action_()));
       boost::beast::async_write(stream(), std::move(*ptr_->request_), std::move(*this));
@@ -268,17 +238,71 @@ class client {
     return async_main(in_executor_type, std::forward<decltype(in_completion)>(in_completion), hello_t{});
   }
 
+ private:
+  struct computer {
+    std::int64_t id_{};
+    std::string name_{};
+    std::string state_{};
+    // form json
+    friend void from_json(const nlohmann::json& in_json, computer& out_data) {
+      in_json["id"].get_to(out_data.id_);
+      in_json["name"].get_to(out_data.name_);
+      in_json["state"].get_to(out_data.state_);
+    }
+  };
+  struct computer_list_t {
+    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
+    using result_type   = std::vector<computer>;
+    result_type result_;
+    client* ptr_;
+
+    boost::beast::http::message_generator operator()();
+
+    result_type operator()(const response_type& in_response);
+  };
+
+ public:
   template <typename CompletionHandler>
-  auto async_computer_list(CompletionHandler&& in_completion) {}
+  auto async_computer_list(CompletionHandler&& in_completion) {
+    return async_main(
+        boost::asio::make_strand(g_io_context()), std::forward<decltype(in_completion)>(in_completion),
+        computer_list_t{}
+    );
+  }
+
+ private:
+  struct task_t {
+    std::int64_t id_{};
+    std::string name_{};
+    std::string state_{};
+    // form json
+    friend void from_json(const nlohmann::json& in_json, task_t& out_data) {
+      in_json["id"].get_to(out_data.id_);
+      in_json["name"].get_to(out_data.name_);
+      in_json["state"].get_to(out_data.state_);
+    }
+  };
+  struct task_list_t {
+    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
+    using result_type   = std::vector<task_t>;
+    client* ptr_;
+
+    boost::beast::http::message_generator operator()();
+
+    result_type operator()(const response_type& in_response);
+  };
+
+ public:
+  template <typename CompletionHandler>
+  auto async_task_list(CompletionHandler&& in_completion) {
+    return async_main(
+        boost::asio::make_strand(g_io_context()), std::forward<decltype(in_completion)>(in_completion), task_list_t{}
+    );
+  }
 
  private:
   void do_wait();
-  // 获取渲染注册机器列表
-  void do_get_computer_list();
-  // 获取所有的渲染任务
-  void do_get_task_list();
 
   //  void on_connect_timeout(boost::system::error_code ec);
 };
-
 }  // namespace doodle
