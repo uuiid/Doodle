@@ -88,7 +88,24 @@ class client {
     result_type operator()(const response_type& in_response) { return in_response.body().get<std::vector<computer>>(); }
   };
 
-  struct computer_list_t {};
+  struct hello_t {
+    using response_type = boost::beast::http::response<boost::beast::http::string_body>;
+    using result_type   = std::string;
+    client* ptr_;
+
+    boost::beast::http::message_generator operator()() {
+      boost::beast::http::request<boost::beast::http::empty_body> l_request{
+          boost::beast::http::verb::get, "/v1/render_farm", 11};
+      l_request.keep_alive(true);
+      l_request.set(boost::beast::http::field::host, fmt::format("{}:50021", ptr_->server_ip()));
+      l_request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+      l_request.set(boost::beast::http::field::content_type, "application/json");
+      l_request.set(boost::beast::http::field::accept, "text/plain");
+      return {std::move(l_request)};
+    };
+
+    result_type operator()(const response_type& in_response) { return in_response.body(); }
+  };
 
   template <typename ExecutorType, typename CompletionHandler, typename ActionType>
   struct connect_op_type : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>,
@@ -192,7 +209,7 @@ class client {
       ptr_->state_   = write;
 
       ptr_->request_ = std::make_shared<message_generator_type>(std::move(ptr_->action_()));
-      boost::beast::async_write(stream(), *ptr_->request_, std::move(*this));
+      boost::beast::async_write(stream(), std::move(*ptr_->request_), std::move(*this));
     }
     void do_read() {
       ptr_->state_ = read;
@@ -202,6 +219,27 @@ class client {
     }
     void do_resolve() { resolver().async_resolve(client_data().server_ip_, "50021", std::move(*this)); }
   };
+
+ private:
+  template <typename ExecutorType, typename CompletionHandler, typename ActionType>
+  auto async_main(const ExecutorType& in_executor_type, CompletionHandler&& in_completion, ActionType in_action) {
+    //    using async_completion =
+    //        boost::asio::async_completion<CompletionHandler, void(boost::system::error_code, socket_ptr)>;
+    //    using handler_type = typename async_completion::completion_handler_type;
+    using connect_op = connect_op_type<ExecutorType, CompletionHandler, ActionType>;
+    return boost::asio::async_initiate<
+        CompletionHandler, void(boost::system::error_code, typename ActionType::result_type)>(
+        [](auto&& in_completion_, client* in_client_ptr, const auto& in_executor_, ActionType&& in_action) {
+          auto l_h = std::make_shared<connect_op>(
+              in_client_ptr, std::forward<decltype(in_completion_)>(in_completion_), in_executor_, std::move(in_action)
+          );
+          auto& l_queue = in_client_ptr->ptr_->queue_;
+          l_queue.emplace([l_self = l_h]() { l_self->run(); });
+          if (!in_client_ptr->ptr_->queue_running_) l_queue.front()();
+        },
+        in_completion, this, in_executor_type, std::move(in_action)
+    );
+  }
 
  public:
   explicit client(std::string in_server_ip) : ptr_(std::make_shared<data_type>()) {
@@ -223,50 +261,8 @@ class client {
 
   template <typename ExecutorType, typename CompletionHandler>
   auto async_connect(const ExecutorType& in_executor_type, CompletionHandler&& in_completion) {
-    //    using async_completion =
-    //        boost::asio::async_completion<CompletionHandler, void(boost::system::error_code, socket_ptr)>;
-    //    using handler_type = typename async_completion::completion_handler_type;
-    using connect_op = connect_op_type<ExecutorType, CompletionHandler>;
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
-        [](auto&& in_completion_, client* in_client_ptr, const auto& in_executor_) {
-          //          connect_op op{in_client_ptr, std::forward<decltype(in_completion_)>(in_completion_),
-          //          in_executor_};
-          auto l_h = std::make_shared<connect_op>(
-              in_client_ptr, std::forward<decltype(in_completion_)>(in_completion_), in_executor_
-          );
-          auto& l_queue = in_client_ptr->ptr_->queue_;
-          l_queue.emplace([l_self = l_h]() { l_self->run(); });
-          if (!in_client_ptr->ptr_->queue_running_) l_queue.front()();
-        },
-        in_completion, this, in_executor_type
-    );
+    return async_main(in_executor_type, std::forward<decltype(in_completion)>(in_completion), hello_t{});
   }
-
- public:
-  template <typename CompletionHandler, typename ActionType>
-  struct get_data_op : boost::beast::async_base<std::decay_t<CompletionHandler>, socket_t::executor_type>,
-                       boost::asio::coroutine {
-    struct data_type2 {
-      buffer_type buffer_;
-      boost::beast::http::response<boost::beast::http::string_body> response_;
-      client* ptr_;
-      state state_ = start;
-      message_generator_ptr request_;
-      ActionType action_;
-      std::unique_ptr<client::queue_action_guard> guard_;
-    };
-    std::unique_ptr<data_type2> ptr_;
-    explicit get_data_op(client* in_ptr, ActionType in_action, CompletionHandler&& in_handler)
-        : boost::beast::async_base<std::decay_t<CompletionHandler>, socket_t::executor_type>(
-              std::move(in_handler), in_ptr->stream().get_executor()
-          ),
-          ptr_(std::make_unique<data_type2>()) {
-      ptr_->ptr_         = in_ptr;
-      ptr_->guard_       = std::make_unique<client::queue_action_guard>(in_ptr->ptr_.get());
-      ptr_->action_      = std::move(in_action);
-      ptr_->action_.ptr_ = in_ptr;
-    }
-  };
 
   template <typename CompletionHandler>
   auto async_computer_list(CompletionHandler&& in_completion) {}

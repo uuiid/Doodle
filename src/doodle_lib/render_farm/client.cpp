@@ -31,13 +31,15 @@ void client::make_ptr() {
 }
 
 void client::run() {
-  async_connect(boost::asio::make_strand(g_io_context()), [](boost::system::error_code ec) {
-    if (ec) {
-      DOODLE_LOG_INFO("{}", ec.message());
-      return;
-    }
-    DOODLE_LOG_INFO("连接成功服务器");
-  });
+  for (int l = 0; l < 100; ++l) {
+    async_connect(boost::asio::make_strand(g_io_context()), [](boost::system::error_code ec, std::string in_string) {
+      if (ec) {
+        DOODLE_LOG_INFO("{}", ec.message());
+        return;
+      }
+      DOODLE_LOG_INFO("连接成功服务器 {}", in_string);
+    });
+  }
 }
 
 }  // namespace doodle
