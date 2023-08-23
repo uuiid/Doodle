@@ -234,7 +234,6 @@ class client {
     return async_main(in_executor_type, std::forward<decltype(in_completion)>(in_completion), hello_t{});
   }
 
- private:
   struct computer {
     std::int64_t id_{};
     std::string name_{};
@@ -246,6 +245,8 @@ class client {
       in_json["state"].get_to(out_data.state_);
     }
   };
+
+ private:
   struct computer_list_t {
     using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
     using result_type   = std::vector<computer>;
@@ -266,7 +267,6 @@ class client {
     );
   }
 
- private:
   struct task_t {
     std::int64_t id_{};
     std::string name_{};
@@ -278,6 +278,8 @@ class client {
       in_json["state"].get_to(out_data.state_);
     }
   };
+
+ private:
   struct task_list_t {
     using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
     using result_type   = std::vector<task_t>;
