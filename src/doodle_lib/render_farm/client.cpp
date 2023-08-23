@@ -4,6 +4,8 @@
 
 #include "client.h"
 
+#include <doodle_core/lib_warp/boost_fmt_error.h>
+
 #include <doodle_lib/core/bind_front_handler.h>
 
 #include <boost/asio.hpp>
@@ -17,15 +19,9 @@ client::queue_action_guard::~queue_action_guard() {
   }
 }
 
-void client::do_wait() {
-  ptr_->timer_->expires_after(5s);
-  //  ptr_->timer_->async_wait(boost::beast::bind_front_handler(&client::on_connect_timeout, this));
-}
-
 void client::make_ptr() {
   auto l_s        = boost::asio::make_strand(g_io_context());
   ptr_->socket_   = std::make_shared<socket_t>(l_s);
-  ptr_->timer_    = std::make_shared<timer_t>(l_s);
   ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
   //  ptr_->signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
 }
@@ -48,6 +44,14 @@ void client::do_close() {
   if (ec) {
     DOODLE_LOG_INFO(ec);
   }
+}
+void client::cancel() {
+  boost::system::error_code ec;
+  ptr_->socket_->socket().cancel(ec);
+  if (ec) {
+    DOODLE_LOG_INFO(ec);
+  }
+  ptr_->queue_ = {};
 }
 boost::beast::http::message_generator client::task_list_t::operator()() {
   boost::beast::http::request<render_farm::detail::basic_json_body> l_request{

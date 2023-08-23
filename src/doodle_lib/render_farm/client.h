@@ -25,15 +25,8 @@ class client {
 
   struct data_type {
     std::string server_ip_;
-
     socket_ptr socket_{};
-    timer_ptr timer_{};
     resolver_ptr resolver_{};
-
-    buffer_type buffer_;
-    response_type response_;
-    message_generator_ptr request_;
-    std::int32_t connect_count_{};
 
     std::queue<std::function<void()>> queue_;
     std::atomic_bool queue_running_{};
@@ -225,6 +218,9 @@ class client {
   // run
   void run();
 
+  // cancel
+  void cancel();
+
   // server_ip
   [[nodiscard]] inline std::string& server_ip() { return ptr_->server_ip_; }
   [[nodiscard]] inline const std::string& server_ip() const { return ptr_->server_ip_; }
@@ -301,7 +297,6 @@ class client {
   }
 
  private:
-  void do_wait();
   void do_close();
 
   //  void on_connect_timeout(boost::system::error_code ec);
