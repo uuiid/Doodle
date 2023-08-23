@@ -26,17 +26,7 @@ void client::make_ptr() {
   //  ptr_->signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
 }
 
-void client::run() {
-  for (int l = 0; l < 100; ++l) {
-    async_connect(boost::asio::make_strand(g_io_context()), [](boost::system::error_code ec, std::string in_string) {
-      if (ec) {
-        DOODLE_LOG_INFO("{}", ec.message());
-        return;
-      }
-      DOODLE_LOG_INFO("连接成功服务器 {}", in_string);
-    });
-  }
-}
+void client::run() {}
 client::~client() { do_close(); }
 void client::do_close() {
   boost::system::error_code ec;

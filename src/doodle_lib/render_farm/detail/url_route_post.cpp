@@ -83,19 +83,18 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         }
 
         auto l_json      = l_parser_ptr->release().body();
-        auto l_source_ip = l_session.stream().socket().remote_endpoint().address().to_string();
-        DOODLE_LOG_INFO("computer_reg: {}", l_source_ip);
+        auto l_remote_ip = l_session.stream().socket().remote_endpoint().address().to_string();
+        DOODLE_LOG_INFO("computer_reg: {}", l_remote_ip);
         entt::handle l_handle{};
         auto l_p = l_session.url().params();
 
         if (auto l_it = l_p.find("id"); l_it != l_p.end()) {
           l_handle = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi((*l_it).value))};
         }
-        auto l_remote_ip = l_session.stream().socket().remote_endpoint().address().to_string();
         if (!l_handle) {
           try {
             g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
-              if (in_computer.name() == l_c) {
+              if (in_computer.name() == l_remote_ip) {
                 l_handle = entt::handle{*g_reg(), e};
               }
             });
