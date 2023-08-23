@@ -220,7 +220,7 @@ class client {
     ptr_->server_ip_ = std::move(in_server_ip);
     make_ptr();
   }
-  ~client() = default;
+  ~client();
 
   // run
   void run();
@@ -302,6 +302,7 @@ class client {
 
  private:
   void do_wait();
+  void do_close();
 
   //  void on_connect_timeout(boost::system::error_code ec);
 };

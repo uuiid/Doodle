@@ -41,6 +41,14 @@ void client::run() {
     });
   }
 }
+client::~client() { do_close(); }
+void client::do_close() {
+  boost::system::error_code ec;
+  ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+  if (ec) {
+    DOODLE_LOG_INFO(ec);
+  }
+}
 boost::beast::http::message_generator client::task_list_t::operator()() {
   boost::beast::http::request<render_farm::detail::basic_json_body> l_request{
       boost::beast::http::verb::get, "/v1/render_farm/render_job", 11};
