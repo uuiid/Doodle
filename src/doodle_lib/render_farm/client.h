@@ -193,6 +193,8 @@ class client {
         DOODLE_LOG_INFO("{}", ec.message());
         return;
       }
+      ptr_->state_ = state::resolve;
+      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       boost::asio::async_connect(socket(), results, std::move(*this));
     }
     void operator()(boost::system::error_code ec, const boost::asio::ip::tcp::endpoint& endpoint) {
@@ -201,18 +203,20 @@ class client {
         DOODLE_LOG_INFO("{}", ec.message());
         return;
       }
-      DOODLE_LOG_INFO("连接成功服务器");
+      ptr_->state_ = connect;
+      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       do_write();
     }
 
     void do_write() {
       ptr_->state_   = write;
-
+      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       ptr_->request_ = std::make_shared<message_generator_type>(std::move(ptr_->action_()));
       boost::beast::async_write(stream(), std::move(*ptr_->request_), std::move(*this));
     }
     void do_read() {
       ptr_->state_ = read;
+      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       ptr_->buffer_.clear();
       ptr_->response_ = {};
       boost::beast::http::async_read(stream(), ptr_->buffer_, ptr_->response_, std::move(*this));
