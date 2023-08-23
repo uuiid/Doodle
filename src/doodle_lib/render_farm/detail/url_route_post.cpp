@@ -91,11 +91,11 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         if (auto l_it = l_p.find("id"); l_it != l_p.end()) {
           l_handle = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi((*l_it).value))};
         }
+        auto l_remote_ip = l_session.stream().socket().remote_endpoint().address().to_string();
         if (!l_handle) {
           try {
-            auto l_c = l_json.get<computer>();
             g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
-              if (in_computer.name() == l_c.name()) {
+              if (in_computer.name() == l_c) {
                 l_handle = entt::handle{*g_reg(), e};
               }
             });
@@ -107,7 +107,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         }
         if (!l_handle) {
           l_handle = entt::handle{*g_reg(), g_reg()->create()};
-          l_handle.emplace<computer>(l_json.get<computer>());
+          l_handle.emplace<computer>().set_name(l_remote_ip);
         }
         if (l_json.contains("status")) {
           l_handle.get<computer>().delay(l_json["status"].get<std::string>());
