@@ -354,7 +354,9 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
 
 void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
   FString L_Folder = GetImportPath(In_Path_Prefix);
-  ImportPathDir    = L_Folder / FPaths::GetBaseFilename(L_Folder) + "_" + In_Path_Suffix;
+  FString L_Base   = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path_Prefix.ToUpper(), Eps, Shot, *ShotAb);
+  if (In_Path_Suffix == TEXT("Vfx")) L_Base += TEXT("_Vfx");
+  ImportPathDir = L_Folder / L_Base;
 }
 
 void UDoodleFbxCameraImport_1::ImportFile() {
