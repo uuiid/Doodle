@@ -277,33 +277,35 @@ void UDoodleFbxImport_1::ImportFile() {
   }
   FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
   TArray<UObject*> L_Objs             = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+  if (L_Objs.IsEmpty() || L_Objs.Top()->IsA<USkeletalMesh>()) {
+    FARFilter LFilter{};
+    LFilter.bIncludeOnlyOnDiskAssets = false;
+    LFilter.bRecursivePaths          = true;
+    LFilter.bRecursiveClasses        = true;
+    LFilter.PackagePaths.Add(FName{ImportPathDir});
+    LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
 
-  FARFilter LFilter{};
-  LFilter.bIncludeOnlyOnDiskAssets = false;
-  LFilter.bRecursivePaths          = true;
-  LFilter.bRecursiveClasses        = true;
-  LFilter.PackagePaths.Add(FName{ImportPathDir});
-  LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
-
-  IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
-    UAnimSequence* L_Anim = Cast<UAnimSequence>(InAss.GetAsset());
-    if (L_Anim) {
-      L_Anim->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
-          L_Anim, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
-      );
-      /// 这里无效代码, 防止崩溃
-      TArray<UObject*> LL{};
-      L_Anim->GetPreloadDependencies(LL);
+    IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
+      UAnimSequence* L_Anim = Cast<UAnimSequence>(InAss.GetAsset());
+      if (L_Anim) {
+        L_Anim->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+            L_Anim, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
+        );
+        /// 这里无效代码, 防止崩溃
+        TArray<UObject*> LL{};
+        L_Anim->GetPreloadDependencies(LL);
+      }
+      return true;
+    });
+  } else {
+    for (UObject* L_Obj : L_Objs) {
+      if (UAnimSequence* L_Seq = Cast<UAnimSequence>(L_Obj)) {
+        L_Seq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+            L_Seq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
+        );
+      }
     }
-    return true;
-  });
-
-  // for (UObject* L_Obj : L_Objs) {
-  //   if (UAnimSequence* L_Seq = Cast<UAnimSequence>(L_Obj)) {
-  //     L_Seq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(L_Seq,
-  //     TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
-  //   }
-  // }
+  }
 }
 
 bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton) {
@@ -463,6 +465,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
       // Mark the package dirty...
       L_Pkg->MarkPackageDirty();
       SavePackageHelper(L_Pkg, L_Package_Name);
+      FirstImport = true;
     }
 
 #endif
@@ -1205,6 +1208,10 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
     }
     GenPathPrefix(Path_Prefix, Path_Suffix);
     SetFbxOnlyAnim();
+    // 优先相机
+    ListImportData.StableSort([](const UDoodleBaseImportData& In_R, const UDoodleBaseImportData& In_L) {
+      return In_R.IsA<UDoodleFbxCameraImport_1>();
+    });
     ListImportGui->RebuildList();
 
     return FReply::Handled();

@@ -87,6 +87,8 @@ UCLASS()
 class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData {
  public:
   GENERATED_BODY()
+  // 初次导入
+  bool FirstImport{false};
   UDoodleFbxCameraImport_1(){};
   UDoodleFbxCameraImport_1(const FString& InString) : UDoodleBaseImportData(InString) {}
   ~UDoodleFbxCameraImport_1() override {}
@@ -104,8 +106,6 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
 };
-
-
 
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
  public:
