@@ -91,12 +91,16 @@
 #include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "Doodle/Abc/DoodleAlembicImportFactory.h"
 #include "EditorAssetLibrary.h"               // save asset
+#include "EngineAnalytics.h"                  // 分析
 #include "LevelSequenceActor.h"               // 序列actor
 #include "LevelSequencePlayer.h"              // 播放序列
+#include "MovieSceneToolsProjectSettings.h"   // 定序器项目设置
+#include "PackageHelperFunctions.h"           // 保存包
 #include "Sections/MovieSceneSpawnSection.h"  // 生成段
 #include "SequencerTools.h"                   // 序列工具
 #include "Subsystems/EditorActorSubsystem.h"  // 创建actor
 #include "Tracks/MovieSceneSpawnTrack.h"      // 生成轨道
+#include "UObject/GCObjectScopeGuard.h"
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
@@ -410,6 +414,9 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   // 创建定序器
   // ULevelSequenceFactoryNew* L_ShotSequenceFactory = ULevelSequenceFactoryNew::;
   if (!L_ShotSequence) {
+    // #define DOODLE_TEST_1
+
+#ifdef DOODLE_TEST_1
     for (TObjectIterator<UClass> it{}; it; ++it) {
       if (it->IsChildOf(UFactory::StaticClass())) {
         if (it->GetName() == "LevelSequenceFactoryNew") {
@@ -420,6 +427,45 @@ void UDoodleFbxCameraImport_1::ImportFile() {
         }
       }
     }
+#else
+    const FString L_Package_Name = UPackageTools::SanitizePackageName(ImportPathDir);
+    // if (!L_AssTool.)
+
+    UPackage* L_Pkg              = CreatePackage(*L_Package_Name);
+    {
+      TArray<UPackage*> L_TopLevelPackages{L_Pkg};
+      UPackageTools::HandleFullyLoadingPackages(L_TopLevelPackages, LOCTEXT("CreateANewObject", "Create a new object"));
+      L_ShotSequence = NewObject<ULevelSequence>(
+          L_Pkg, FName(*FPaths::GetBaseFilename(ImportPathDir)), RF_Public | RF_Standalone | RF_Transactional
+      );
+      // FGCObjectScopeGuard DontGCFactory(L_ShotSequence);
+      L_ShotSequence->Initialize();
+      const UMovieSceneToolsProjectSettings* ProjectSettings = GetDefault<UMovieSceneToolsProjectSettings>();
+      FFrameRate TickResolution                              = L_ShotSequence->GetMovieScene()->GetTickResolution();
+      L_ShotSequence->GetMovieScene()->SetPlaybackRange(
+          (ProjectSettings->DefaultStartTime * TickResolution).FloorToFrame(),
+          (ProjectSettings->DefaultDuration * TickResolution).FloorToFrame().Value
+      );
+      // L_ShotSequence->Modify();
+
+      // Notify the asset registry
+      IAssetRegistry::GetChecked().AssetCreated(L_ShotSequence);
+
+      // analytics create record
+      if (FEngineAnalytics::IsAvailable()) {
+        TArray<FAnalyticsEventAttribute> Attribs;
+        Attribs.Add(FAnalyticsEventAttribute(TEXT("AssetType"), ULevelSequence::StaticClass()->GetName()));
+        Attribs.Add(FAnalyticsEventAttribute(TEXT("Duplicated"), TEXT("No")));
+
+        FEngineAnalytics::GetProvider().RecordEvent(TEXT("Editor.Usage.CreateAsset"), Attribs);
+      }
+
+      // Mark the package dirty...
+      L_Pkg->MarkPackageDirty();
+      SavePackageHelper(L_Pkg, L_Package_Name);
+    }
+
+#endif
   }
   L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile3", "设置定序器以及相机 ..."));
 
@@ -765,14 +811,14 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             /// 生成的前缀
             SNew(SEditableTextBox)
             .Text_Lambda([this]()-> FText {
-        return FText::FromString(this->Path_Prefix);
-                })
-        .OnTextChanged_Lambda([this](const FText& In_Text) {
-                    GenPathPrefix(In_Text.ToString(), Path_Suffix);
-            })
-                    .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) {
+                return FText::FromString(this->Path_Prefix);
+             })
+            .OnTextChanged_Lambda([this](const FText& In_Text) {
                 GenPathPrefix(In_Text.ToString(), Path_Suffix);
-                        })
+            })
+            .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) {
+                GenPathPrefix(In_Text.ToString(), Path_Suffix);
+            })
         ]
         ]
     // 后缀槽
@@ -783,33 +829,57 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         [
             SNew(SHorizontalBox)
             + SHorizontalBox::Slot()
-        .FillWidth(1.0f)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("BinaryPathLabel11", "部门缩写"))
-        .ColorAndOpacity(FSlateColor{ FLinearColor{1,0,0,1} })
-        .Font(Font)
+           .FillWidth(1.0f)
+            [
+               SNew(STextBlock)
+               .Text(LOCTEXT("BinaryPathLabel11", "部门缩写"))
+               .ColorAndOpacity(FSlateColor{ FLinearColor{1,0,0,1} })
+               .Font(Font)
+            ]
+            + SHorizontalBox::Slot()
+            .FillWidth(8.0f)
+            [
+                ///  
+                 SNew(SComboBox<TSharedPtr<FString>>)
+                 .OptionsSource(&L_DepType)
+                 .OnSelectionChanged_Lambda(
+                 [this](const TSharedPtr<FString>& In, ESelectInfo::Type) {
+                     GenPathPrefix(Path_Prefix, *In);
+                 })
+                 .OnGenerateWidget_Lambda(
+                 [this](const TSharedPtr<FString>& In) {
+                     return SNew(STextBlock).Text(FText::FromString(*In));
+                 })
+                 .InitiallySelectedItem(L_DepType[0])
+                 [
+                     SNew(STextBlock)
+                     .Text_Lambda([this]() { return FText::FromString(Path_Suffix); })
+                 ]
+            ]
         ]
-    + SHorizontalBox::Slot()
-        .FillWidth(8.0f)
+	// 只导入相机 SCheckBox
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
         [
-            ///  
-            SNew(SComboBox<TSharedPtr<FString>>)
-            .OptionsSource(&L_DepType)
-        .OnSelectionChanged_Lambda(
-            [this](const TSharedPtr<FString>& In, ESelectInfo::Type) {
-                GenPathPrefix(Path_Prefix, *In);
-            })
-        .OnGenerateWidget_Lambda(
-            [this](const TSharedPtr<FString>& In) {
-                return SNew(STextBlock).Text(FText::FromString(*In));
-            })
-                .InitiallySelectedItem(L_DepType[0])
-                [
-                    SNew(STextBlock)
-                    .Text_Lambda([this]() { return FText::FromString(Path_Suffix); })
-                ]
-        ]
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+           .FillWidth(1.0f)
+            [
+               SNew(STextBlock)
+               .Text(LOCTEXT("BinaryPathLabel12", "只导入相机"))
+               .ColorAndOpacity(FSlateColor{ FLinearColor{1,1,0,1} })
+               .Font(Font)
+            ]
+            + SHorizontalBox::Slot()
+            .FillWidth(8.0f)
+            [
+                ///  
+                SNew(SCheckBox)
+				.IsChecked(this->OnlyCamera)
+				.OnCheckStateChanged_Lambda([this]( ECheckBoxState In_State){ this->OnlyCamera = In_State;})
+            ]
         ]
 
     + SVerticalBox::Slot()
@@ -1064,6 +1134,40 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
     }
     if (L_File) L_File->GenStartAndEndTime();
 }
+void SDoodleImportFbxUI::AddCameraFile(const FString& In_File) {
+    /// @brief 先扫描前缀
+    if (this->Path_Prefix.IsEmpty()) {
+    this->Path_Prefix = UDoodleBaseImportData::GetPathPrefix(In_File);
+    }
+
+    /// @brief 寻找到相同的就跳过
+    if (ListImportData.FindByPredicate([&](const SDoodleImportFbxUI::UDoodleBaseImportDataPtrType& In_FBx) {
+          return In_FBx->ImportPath == In_File;
+        })) {
+    return;
+    };
+    SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_File{};
+    /// 扫描fbx 和abc 文件
+    if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
+    UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
+
+    FScopedSlowTask L_Task_Scoped1{2.0f, LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
+    L_Task_Scoped1.MakeDialog();
+    // FString L_Debug_str{};
+
+    FbxImporter->ImportFromFile(In_File, FPaths::GetExtension(In_File));
+    ON_SCOPE_EXIT { FbxImporter->ReleaseScene(); };
+
+    if (IsCamera(FbxImporter)) {
+      L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork21", "确认为相机"));
+      SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
+      L_ptr->ImportPath                                      = In_File;
+      L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
+    }
+    }
+
+    if (L_File) L_File->GenStartAndEndTime();
+}
 
 // DragBegin
 FReply SDoodleImportFbxUI::OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
@@ -1085,12 +1189,18 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
     if (FPaths::DirectoryExists(Path)) {
       // 目录进行迭代
       IFileManager::Get().IterateDirectoryRecursively(*Path, [this](const TCHAR* InPath, bool in_) -> bool {
-        AddFile(InPath);
+        if (this->OnlyCamera == ECheckBoxState::Checked)
+          AddCameraFile(InPath);
+        else
+          AddFile(InPath);
         return true;
       });
     } else if (FPaths::FileExists(Path)) {
       // 文件直接添加
-      AddFile(Path);
+      if (this->OnlyCamera == ECheckBoxState::Checked)
+        AddCameraFile(Path);
+      else
+        AddFile(Path);
     }
     }
     GenPathPrefix(Path_Prefix, Path_Suffix);

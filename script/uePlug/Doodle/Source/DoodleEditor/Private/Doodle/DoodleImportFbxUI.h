@@ -137,8 +137,11 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   FString Path_Prefix;
   FString Path_Suffix;
 
+  ECheckBoxState OnlyCamera{ECheckBoxState::Unchecked};
+
   // 判断fbx是否是相机fbx
   bool IsCamera(UnFbx::FFbxImporter* InFbx);
+  void AddCameraFile(const FString& In_File);
   // 寻找骨骼排匹配
   void FindSK();
 
