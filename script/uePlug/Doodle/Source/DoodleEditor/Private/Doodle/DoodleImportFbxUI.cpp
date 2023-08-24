@@ -179,7 +179,7 @@ FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
   }
 
-  FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-z])?)"};
+  FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-zA-Z])?)"};
   FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, ImportPath};
 
   if (L_Reg_Sc.FindNext()) {
@@ -406,6 +406,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *ImportPathDir);
 
   // 创建定序器
+  // ULevelSequenceFactoryNew* L_ShotSequenceFactory = ULevelSequenceFactoryNew::;
   if (!L_ShotSequence) {
     for (TObjectIterator<UClass> it{}; it; ++it) {
       if (it->IsChildOf(UFactory::StaticClass())) {
@@ -542,68 +543,6 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     GEngine->Tick(FApp::GetDeltaTime(), false);
   }
   UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
-  //// FSoftObjectPath L_LevelSequenceSoftPath{ImportPathDir};
-  //// UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
-  // UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-  // L_AssetEditorSubsystem->OpenEditorForAsset(L_ShotSequence);
-
-  // L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile4", "尝试打开定序器 ..."));
-
-  // IAssetEditorInstance* L_AssetEditor                = L_AssetEditorSubsystem->FindEditorForAsset(L_ShotSequence,
-  // true);
-
-  // ILevelSequenceEditorToolkit* L_LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(L_AssetEditor);
-  // ISequencer* L_ShotSequencer                        = L_LevelSequenceEditor->GetSequencer().Get();
-  // UMovieScene* L_Move                                = L_ShotSequence->GetMovieScene();
-  // ACineCameraActor* L_CameraActor{};
-  //// 相机task
-  // UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-
-  // if (!L_Task)
-  //   // 添加相机时以及强制评估了, 不需要再强制评估
-  // FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
-  // else
-  //   // 强制评估序列, 要不然相机指针会空
-  //   L_ShotSequencer->ForceEvaluate();
-  // L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile5", "刷新 ..."));
-
-  // L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-
-  //// Cast<FStructProperty>(L_Task->GetClass()->FindPropertyByName("CameraBindingID"))->;
-  //// 寻找相机组件
-  // UCameraComponent* L_Cam{};
-  // for (auto&& L_Section : L_Task->GetAllSections()) {
-  //   L_Cam = Cast<UMovieSceneCameraCutSection>(L_Section)->GetFirstCamera(*L_ShotSequencer,
-  //   MovieSceneSequenceID::Root); if (L_Cam) break;
-  // }
-
-  // if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
-
-  // FString L_CamLable = L_CameraActor->GetActorNameOrLabel();
-
-  // UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CamLable);
-  //// 寻找相机id
-  // FGuid L_CamGuid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
-
-  // UE_LOG(LogTemp, Log, TEXT("guid %s"), *L_CamGuid.ToString());
-
-  // TMap<FGuid, FString> L_Map{};
-  // L_Map.Add(L_CamGuid, L_CamLable);
-
-  // L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
-
-  //// 正式开始导入
-  // MovieSceneToolHelpers::ImportFBXCameraToExisting(
-  //     L_FbxImporter, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, false, true
-  //);
-
-  // UWorld* World = Cast<UWorld>(L_ShotSequencer->GetPlaybackContext());
-  // bool bValid   = MovieSceneToolHelpers::ImportFBXIfReady(
-  //     World, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, L_ImportFBXSettings,
-  //     InOutParams
-  //);
-
-  // L_ShotSequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
 }
 
 void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
