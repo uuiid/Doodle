@@ -185,7 +185,7 @@ FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) {
   if (L_Reg_Sc.FindNext()) {
     Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(1));
     if (L_Reg_Sc.GetEndLimit() > 2) {
-      ShotAb = L_Reg_Sc.GetCaptureGroup(2);
+      ShotAb = L_Reg_Sc.GetCaptureGroup(2).ToUpper();
     }
   }
 
