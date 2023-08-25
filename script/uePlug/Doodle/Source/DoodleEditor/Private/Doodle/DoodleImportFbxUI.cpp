@@ -284,10 +284,11 @@ void UDoodleFbxImport_1::ImportFile() {
     LFilter.bRecursiveClasses        = true;
     LFilter.PackagePaths.Add(FName{ImportPathDir});
     LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
-
-    IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
+    USkeletalMesh* L_Sk = CastChecked<USkeletalMesh>(L_Objs.Top());
+    IAssetRegistry::Get()->EnumerateAssets(LFilter, [this, L_Sk](const FAssetData& InAss) -> bool {
       UAnimSequence* L_Anim = Cast<UAnimSequence>(InAss.GetAsset());
-      if (L_Anim) {
+      if (L_Anim && L_Anim->GetSkeleton() == L_Sk->GetSkeleton()) {
+        AnimSeq                         = L_Anim;
         L_Anim->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
             L_Anim, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
         );
@@ -300,6 +301,7 @@ void UDoodleFbxImport_1::ImportFile() {
   } else {
     for (UObject* L_Obj : L_Objs) {
       if (UAnimSequence* L_Seq = Cast<UAnimSequence>(L_Obj)) {
+        AnimSeq                        = L_Seq;
         L_Seq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
             L_Seq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
         );
@@ -860,7 +862,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                  ]
             ]
         ]
-	// 只导入相机 SCheckBox
+    // 只导入相机 SCheckBox
     + SVerticalBox::Slot()
         .AutoHeight()
         .VAlign(VAlign_Center)
@@ -880,8 +882,8 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             [
                 ///  
                 SNew(SCheckBox)
-				.IsChecked(this->OnlyCamera)
-				.OnCheckStateChanged_Lambda([this]( ECheckBoxState In_State){ this->OnlyCamera = In_State;})
+                .IsChecked(this->OnlyCamera)
+                .OnCheckStateChanged_Lambda([this]( ECheckBoxState In_State){ this->OnlyCamera = In_State;})
             ]
         ]
 
@@ -1089,6 +1091,24 @@ void SDoodleImportFbxUI::SetFbxOnlyAnim() {
     if (L_Abc_path.Contains(L_Path)) {
       if (auto L_F = Cast<UDoodleFbxImport_1>(L_Fbx)) {
         L_F->OnlyAnim = false;
+      }
+    }
+    }
+}
+
+void SDoodleImportFbxUI::MatchCameraAndFile() {
+    for (auto L_File : ListImportData) {
+    if (L_File->IsA<UDoodleFbxCameraImport_1>()) {
+      auto L_Cam = CastChecked<UDoodleFbxCameraImport_1>(L_File);
+      for (auto L_File2 : ListImportData) {
+        if (L_File != L_File2 && L_File->Eps == L_File2->Eps && L_File->Shot == L_File2->Shot &&
+            L_File->ShotAb == L_File2->ShotAb) {
+          if (auto L_Fbx = Cast<UDoodleFbxImport_1>(L_File2); L_Fbx) {
+            L_Fbx->CameraImport = L_Cam;
+          } else if (auto L_Abc = Cast<UDoodleAbcImport_1>(L_File2); L_Abc) {
+            L_Abc->CameraImport = L_Cam;
+          }
+        }
       }
     }
     }

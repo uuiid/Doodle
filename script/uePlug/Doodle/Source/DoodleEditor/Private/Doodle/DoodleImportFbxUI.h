@@ -76,6 +76,10 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
 
   /// @brief 寻找到的骨骼
   USkeleton* SkinObj;
+  UAnimSequence* AnimSeq;
+
+  UDoodleFbxCameraImport_1* CameraImport;
+
   bool OnlyAnim{true};
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
@@ -100,6 +104,10 @@ UCLASS()
 class UDoodleAbcImport_1 : public UDoodleBaseImportData {
  public:
   GENERATED_BODY()
+
+  UGeometryCache* GeometryCache;
+  UDoodleFbxCameraImport_1* CameraImport;
+
   UDoodleAbcImport_1(){};
   UDoodleAbcImport_1(const FString& InString) : UDoodleBaseImportData(InString) {}
   ~UDoodleAbcImport_1() override {}
@@ -157,12 +165,8 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   // 检查fbx是否只导入动画
   void SetFbxOnlyAnim();
 
-  /**
-   * @brief 提取所有的标签
-   * 暂时是 使用 SK_(\w+)_Skeleton 捕获
-   *
-   */
-  void SetAllSkinTag();
+  // 匹配相机和文件
+  void MatchCameraAndFile();
 
   /**
    * @brief 添加文件
