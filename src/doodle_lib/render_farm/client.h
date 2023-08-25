@@ -2,6 +2,8 @@
 // Created by td_main on 2023/8/18.
 //
 #pragma once
+#include <doodle_core/lib_warp/boost_fmt_error.h>
+
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
 
@@ -122,10 +124,9 @@ class client {
       switch (ptr_->state_) {
         case state::write: {
           boost::ignore_unused(bytes_transferred);
-          if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
-              ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
-            DOODLE_LOG_INFO("失去连接, 开始重新连接");
-            do_resolve();
+          if (ec) {
+            DOODLE_LOG_INFO("{}", ec);
+            this->complete(false, ec, result_type{});
             return;
           }
           do_read();
@@ -135,7 +136,8 @@ class client {
         case state::read: {
           boost::ignore_unused(bytes_transferred);
           if (ec) {
-            DOODLE_LOG_INFO("{}", ec.message());
+            DOODLE_LOG_INFO("{}", ec);
+            this->complete(false, ec, result_type{});
             return;
           }
           this->complete(false, ec, ptr_->action_(ptr_->response_));
@@ -143,7 +145,8 @@ class client {
         }
         default: {
           if (ec) {
-            DOODLE_LOG_INFO("{}", ec.message());
+            DOODLE_LOG_INFO("{}", ec);
+            this->complete(false, ec, result_type{});
             return;
           }
           break;
@@ -153,7 +156,8 @@ class client {
 
     void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec.message());
+        DOODLE_LOG_INFO("{}", ec);
+        this->complete(false, ec, result_type{});
         return;
       }
       ptr_->state_ = state::resolve;
@@ -163,9 +167,11 @@ class client {
     void operator()(boost::system::error_code ec, const boost::asio::ip::tcp::endpoint& endpoint) {
       boost::ignore_unused(endpoint);
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec.message());
+        DOODLE_LOG_INFO("{}", ec);
+        this->complete(false, ec, result_type{});
         return;
       }
+ 
       ptr_->state_ = connect;
       DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       do_write();
