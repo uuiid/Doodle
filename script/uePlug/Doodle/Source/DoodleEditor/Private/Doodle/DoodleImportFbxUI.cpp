@@ -87,20 +87,24 @@
 #include "Widgets/Notifications/SNotificationList.h"  // 编辑器通知
 
 // 自定义导入abc
-#include "CineCameraActor.h"  // 相机
+#include "Animation/SkeletalMeshActor.h"  // 骨骼actor
+#include "CineCameraActor.h"              // 相机
 #include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "Doodle/Abc/DoodleAlembicImportFactory.h"
-#include "EditorAssetLibrary.h"               // save asset
-#include "EngineAnalytics.h"                  // 分析
-#include "LevelSequenceActor.h"               // 序列actor
-#include "LevelSequencePlayer.h"              // 播放序列
-#include "MovieSceneToolsProjectSettings.h"   // 定序器项目设置
-#include "PackageHelperFunctions.h"           // 保存包
-#include "Sections/MovieSceneSpawnSection.h"  // 生成段
-#include "SequencerTools.h"                   // 序列工具
-#include "Subsystems/EditorActorSubsystem.h"  // 创建actor
-#include "Tracks/MovieSceneSpawnTrack.h"      // 生成轨道
-#include "UObject/GCObjectScopeGuard.h"
+#include "EditorAssetLibrary.h"                       // save asset
+#include "EngineAnalytics.h"                          // 分析
+#include "GeometryCache.h"                            // 几何缓存
+#include "GeometryCacheActor.h"                       // 几何缓存actor
+#include "LevelSequenceActor.h"                       // 序列actor
+#include "LevelSequencePlayer.h"                      // 播放序列
+#include "MovieSceneGeometryCacheTrack.h"             // 几何缓存轨道
+#include "MovieSceneToolsProjectSettings.h"           // 定序器项目设置
+#include "PackageHelperFunctions.h"                   // 保存包
+#include "Sections/MovieSceneSpawnSection.h"          // 生成段
+#include "SequencerTools.h"                           // 序列工具
+#include "Subsystems/EditorActorSubsystem.h"          // 创建actor
+#include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
+#include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
@@ -306,6 +310,40 @@ void UDoodleFbxImport_1::ImportFile() {
             L_Seq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
         );
       }
+    }
+  }
+}
+
+void UDoodleFbxImport_1::AssembleScene() {
+  if (CameraImport && CameraImport->FirstImport && AnimSeq) {
+    ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *CameraImport->ImportPathDir);
+    if (!L_ShotSequence) {
+      UE_LOG(LogTemp, Log, TEXT("序列 %s 未能加载"), *CameraImport->ImportPathDir);
+      return;
+    }
+    UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+    if (auto* L_Actor =
+            EditorActorSubsystem->SpawnActorFromObject(AnimSeq, FVector::ZeroVector, FRotator::ZeroRotator)) {
+      auto* L_SK_Actor = CastChecked<ASkeletalMeshActor>(
+          L_ShotSequence->MakeSpawnableTemplateFromInstance(*L_Actor, L_Actor->GetFName())
+      );
+      UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
+      FGuid L_GUID             = L_MoveScene->AddSpawnable(L_SK_Actor->GetName(), *L_SK_Actor);
+      {
+        UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = L_MoveScene->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
+        UMovieSceneSpawnSection* L_MovieSceneSpawnSection =
+            CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+        L_MovieSceneSpawnSection->GetChannel().Reset();
+        L_MovieSceneSpawnSection->GetChannel().SetDefault(true);
+        L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+      }
+      {
+        UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
+            L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
+
+        L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
+      }
+      L_Actor->Destroy();
     }
   }
 }
@@ -533,6 +571,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
         L_MovieSceneSpawnSection->GetChannel().Reset();
         L_MovieSceneSpawnSection->GetChannel().SetDefault(true);
         L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+        L_Actor->Destroy();
       }
       // FSequencerUtilities::MakeNewSpawnable()
 
@@ -598,6 +637,8 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
 }
 
+void UDoodleFbxCameraImport_1::AssembleScene() {}
+
 void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
   FString L_String = FString::Format(
       TEXT("AbcI_{0}_{1}"),
@@ -638,7 +679,43 @@ void UDoodleAbcImport_1::ImportFile() {
 
   FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-  AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+  TArray<UObject*> L_Geos             = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+  if (!L_Geos.IsEmpty()) {
+    GeometryCache = Cast<UGeometryCache>(L_Geos.Top());
+  }
+}
+
+void UDoodleAbcImport_1::AssembleScene() {
+  if (CameraImport && CameraImport->FirstImport && GeometryCache) {
+    ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *CameraImport->ImportPathDir);
+    if (!L_ShotSequence) {
+      UE_LOG(LogTemp, Log, TEXT("序列 %s 未能加载"), *CameraImport->ImportPathDir);
+      return;
+    }
+    UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+    if (auto* L_Actor =
+            EditorActorSubsystem->SpawnActorFromObject(GeometryCache, FVector::ZeroVector, FRotator::ZeroRotator)) {
+      auto* L_SK_Actor = CastChecked<AGeometryCacheActor>(
+          L_ShotSequence->MakeSpawnableTemplateFromInstance(*L_Actor, L_Actor->GetFName())
+      );
+      UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
+      FGuid L_GUID             = L_MoveScene->AddSpawnable(L_SK_Actor->GetName(), *L_SK_Actor);
+      {
+        UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = L_MoveScene->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
+        UMovieSceneSpawnSection* L_MovieSceneSpawnSection =
+            CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+        L_MovieSceneSpawnSection->GetChannel().Reset();
+        L_MovieSceneSpawnSection->GetChannel().SetDefault(true);
+        L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+      }
+      {
+        UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
+            L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
+        L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_SK_Actor->GetGeometryCacheComponent());
+      }
+      L_Actor->Destroy();
+    }
+  }
 }
 
 class SDoodleImportUiItem : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType> {
@@ -1057,11 +1134,15 @@ void SDoodleImportFbxUI::FindSK() {
 }
 
 void SDoodleImportFbxUI::ImportFile() {
-    FScopedSlowTask L_Task_Scoped1{(float)ListImportData.Num(), LOCTEXT("ImportFile1", "加载 fbx 文件中...")};
+    FScopedSlowTask L_Task_Scoped1{(float)(ListImportData.Num() * 2), LOCTEXT("ImportFile1", "加载 fbx 文件中...")};
     L_Task_Scoped1.MakeDialog();
     for (auto&& i : ListImportData) {
     L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("ImportFile2", "导入文件中"));
     i->ImportFile();
+    }
+    for (auto&& i : ListImportData) {
+    L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("ImportFile2", "导入文件中"));
+    i->AssembleScene();
     }
 }
 
@@ -1232,6 +1313,7 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
     ListImportData.StableSort([](const UDoodleBaseImportData& In_R, const UDoodleBaseImportData& In_L) {
       return In_R.IsA<UDoodleFbxCameraImport_1>();
     });
+    MatchCameraAndFile();
     ListImportGui->RebuildList();
 
     return FReply::Handled();

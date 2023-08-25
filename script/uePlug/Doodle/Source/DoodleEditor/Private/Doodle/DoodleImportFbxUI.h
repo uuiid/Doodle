@@ -11,6 +11,7 @@
 namespace UnFbx {
 class FFbxImporter;
 }
+class UGeometryCache;
 
 USTRUCT()
 struct FDoodleUSkeletonData_1 {
@@ -62,6 +63,7 @@ class UDoodleBaseImportData : public UObject {
    */
   virtual void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix){};
   virtual void ImportFile(){};
+  virtual void AssembleScene(){};
 
   static FString GetPathPrefix(const FString& In_Path);
 };
@@ -84,6 +86,8 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
 
+  void AssembleScene() override;
+
   bool FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton);
 };
 
@@ -98,6 +102,7 @@ class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData {
   ~UDoodleFbxCameraImport_1() override {}
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
+  void AssembleScene() override;
 };
 
 UCLASS()
@@ -113,6 +118,7 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
   ~UDoodleAbcImport_1() override {}
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
+  void AssembleScene() override;
 };
 
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
