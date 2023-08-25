@@ -62,22 +62,26 @@
             ]
         }
     ],
-    "Plugins": [
-        {
-            "Name": "EditorScriptingUtilities",
-            "Enabled": true
-        },
-        {
-            "Name": "AlembicImporter",
-            "Enabled": true
-        },
-        {
-            "Name": "GeometryCache",
-            "Enabled": true
-        },
-        {
-            "Name": "LevelSequenceEditor",
-            "Enabled": true
-        }
-    ]
+	"Plugins": [
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "AlembicImporter",
+			"Enabled": true
+		},
+		{
+			"Name": "GeometryCache",
+			"Enabled": true
+		},
+		{
+			"Name": "LevelSequenceEditor",
+			"Enabled": true
+		},
+		{
+			"Name": "MovieRenderPipeline",
+			"Enabled": true
+		}
+	]
 }
