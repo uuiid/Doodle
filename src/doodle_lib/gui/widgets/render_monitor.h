@@ -34,15 +34,16 @@ class render_monitor {
 
   struct impl {
     bool open_{true};
-    gui_cache_name_id component_collapsing_header_id_;
-    gui_cache_name_id render_task_collapsing_header_id_;
-    gui_cache_name_id component_table_id_;
-    gui_cache_name_id render_task_table_id_;
-    std::vector<computer> computers_;
-    std::vector<render_task> render_tasks_;
+    gui_cache_name_id component_collapsing_header_id_{"渲染注册"};
+    gui_cache_name_id render_task_collapsing_header_id_{"渲染任务"};
+    gui_cache_name_id component_table_id_{"注册列表"s};
+    gui_cache_name_id render_task_table_id_{"任务列表"s};
+    std::vector<computer> computers_{};
+    std::vector<render_task> render_tasks_{};
     std::shared_ptr<client> client_ptr_{};
     strand_ptr_t strand_ptr_{};
     timer_ptr_t timer_ptr_{};
+    std::once_flag once_flag_{};
   };
   std::unique_ptr<impl> p_i;
 

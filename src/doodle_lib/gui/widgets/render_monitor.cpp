@@ -17,6 +17,7 @@ void render_monitor::init() {
   do_wait();
 }
 bool render_monitor::render() {
+  std::call_once(p_i->once_flag_, [this]() { init(); });
   if (auto l_ = dear::CollapsingHeader{*p_i->component_collapsing_header_id_}) {
     if (auto l_table = dear::Table{*p_i->component_table_id_, 3}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
@@ -82,6 +83,7 @@ void render_monitor::get_remote_data() {
                             return computer{in_item.id_, in_item.name_, in_item.state_};
                           }) |
                           ranges::to_vector;
+        do_wait();
       }
   );
   p_i->client_ptr_->async_task_list(
@@ -95,6 +97,7 @@ void render_monitor::get_remote_data() {
                                return render_task{in_item.id_, in_item.name_, in_item.state_};
                              }) |
                              ranges::to_vector;
+        do_wait();
       }
   );
 }
