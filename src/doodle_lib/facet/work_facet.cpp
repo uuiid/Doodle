@@ -33,11 +33,12 @@ bool work_facet::post() {
     });
 
     win::open_console_window();
-    g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
+    g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "work"s);
 
     doodle_lib::Get().ctx().get<program_info>().use_gui_attr(false);
     l_r    = true;
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+
     doodle_lib::Get().ctx().emplace<doodle::render_farm::work>(core_set::get_set().server_ip).run();
     doodle_lib::Get()
         .ctx()
