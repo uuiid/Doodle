@@ -166,7 +166,11 @@ class client_core {
       DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }
-    void do_resolve() { resolver_.async_resolve(ptr_->server_ip_, "50021", std::move(*this)); }
+    void do_resolve() {
+      ptr_->state_ = start;
+
+      resolver_.async_resolve(ptr_->server_ip_, "50021", std::move(*this));
+    }
   };
 
  public:
