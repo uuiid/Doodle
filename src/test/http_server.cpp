@@ -72,7 +72,7 @@ class server_facet {
     g_reg()->ctx().emplace<render_farm::computer_manage>().run();
     l_ptr->run();
     //    g_reg()->ctx().emplace<render_farm::work>("192.168.20.59").run();
-    g_reg()->ctx().emplace<client>("192.168.20.59").run();
+    //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 
     return l_r;
   }
