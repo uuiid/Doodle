@@ -16,6 +16,11 @@ namespace doodle {
 class client {
   std::shared_ptr<detail::client_core> core_ptr_;
 
+ public:
+  explicit client(std::string in_server_ip)
+      : core_ptr_(std::make_shared<detail::client_core>(std::move(in_server_ip))) {}
+  ~client() = default;
+
   struct computer {
     std::int64_t id_{};
     std::string name_{};
@@ -27,12 +32,6 @@ class client {
       in_json["status"].get_to(out_data.state_);
     }
   };
-
- public:
-  explicit client(std::string in_server_ip)
-      : core_ptr_(std::make_shared<detail::client_core>(std::move(in_server_ip))) {}
-  ~client() = default;
-
   struct computer_list_t {
     using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
     using result_type   = std::vector<computer>;
