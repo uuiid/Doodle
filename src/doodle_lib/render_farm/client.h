@@ -32,26 +32,24 @@ class client {
       in_json["status"].get_to(out_data.state_);
     }
   };
-  struct computer_list_t {
-    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
-    using result_type   = std::vector<computer>;
-    result_type result_;
-    detail::client_core* ptr_;
-
-    boost::beast::http::message_generator operator()();
-
-    result_type operator()(const response_type& in_response);
-  };
-
   // cancel
   inline void cancel() { core_ptr_->cancel(); }
 
  public:
   template <typename CompletionHandler>
   auto async_computer_list(CompletionHandler&& in_completion) {
-    return core_ptr_->async_main(
-        boost::asio::make_strand(g_io_context()), std::forward<decltype(in_completion)>(in_completion),
-        computer_list_t{}
+    boost::beast::http::request<render_farm::detail::basic_json_body> l_request{
+        boost::beast::http::verb::get, "/v1/render_farm/computer", 11};
+    l_request.keep_alive(true);
+    l_request.set(boost::beast::http::field::content_type, "application/json");
+    l_request.set(boost::beast::http::field::accept, "application/json");
+    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
+    return core_ptr_->async_read<response_type>(
+        boost::asio::make_strand(g_io_context()), l_request,
+        [l_fun = std::move(in_completion)](auto&& PH1, const response_type& PH2) {
+          DOODLE_LOG_INFO("{}", PH2.body());
+          l_fun(PH1, PH2.body().get<std::vector<computer>>());
+        }
     );
   }
 
@@ -67,21 +65,22 @@ class client {
     }
   };
 
-  struct task_list_t {
-    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
-    using result_type   = std::vector<task_t>;
-    detail::client_core* ptr_;
-
-    boost::beast::http::message_generator operator()();
-
-    result_type operator()(const response_type& in_response);
-  };
-
  public:
   template <typename CompletionHandler>
   auto async_task_list(CompletionHandler&& in_completion) {
-    return core_ptr_->async_main(
-        boost::asio::make_strand(g_io_context()), std::forward<decltype(in_completion)>(in_completion), task_list_t{}
+    boost::beast::http::request<render_farm::detail::basic_json_body> l_request{
+        boost::beast::http::verb::get, "/v1/render_farm/render_job", 11};
+    l_request.keep_alive(true);
+    l_request.set(boost::beast::http::field::content_type, "application/json");
+    l_request.set(boost::beast::http::field::accept, "application/json");
+
+    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
+    return core_ptr_->async_read<response_type>(
+        boost::asio::make_strand(g_io_context()), l_request,
+        [l_fun = std::move(in_completion)](auto&& PH1, const response_type& PH2) {
+          DOODLE_LOG_INFO("{}", PH2.body());
+          l_fun(PH1, PH2.body().get<std::vector<task_t>>());
+        }
     );
   }
 };
