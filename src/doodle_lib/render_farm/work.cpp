@@ -6,6 +6,8 @@
 
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
+#include <doodle_lib/render_farm/detail/render_ue4.h>
+
 #include <boost/beast.hpp>
 namespace doodle {
 namespace render_farm {
@@ -40,20 +42,6 @@ void work::make_ptr() {
 }
 
 void work::run() {
-  ptr_->core_ptr_->async_main(
-      boost::asio::make_strand(g_io_context()),
-      [this](auto&& PH1, auto&& PH2) {
-        DOODLE_LOG_INFO("{}", PH2);
-        do_wait();
-      },
-      reg_action{}
-  );
-}
-
-void work::send_server_state(const entt::handle& in_handle) {}
-
-void work::do_close() { ptr_->core_ptr_->cancel(); }
-boost::beast::http::message_generator work::reg_action::operator()() {
   request_type l_request{boost::beast::http::verb::post, "/v1/render_farm/computer", 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
@@ -61,10 +49,39 @@ boost::beast::http::message_generator work::reg_action::operator()() {
   l_json["name"]   = boost::asio::ip::host_name();
   l_request.body() = l_json.dump();
   l_request.prepare_payload();
-  return l_request;
+  using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
+
+  ptr_->core_ptr_->async_read<response_type_1>(
+      boost::asio::make_strand(g_io_context()), l_request,
+      [this](auto&& PH1, const response_type_1& PH2) {
+        DOODLE_LOG_INFO("{}", PH2.body());
+        do_wait();
+      }
+  );
 }
-work::reg_action::result_type work::reg_action::operator()(const work::reg_action::response_type& in_response) {
-  return in_response.body();
+
+void work::send_server_state(const entt::handle& in_handle) {
+  entt::entity l_id = in_handle.get<detail::ue_server_id>();
+  request_type l_request{boost::beast::http::verb::post, fmt::format("/v1/render_farm/render_job/{}", l_id), 11};
+  l_request.set(boost::beast::http::field::content_type, "application/json");
+  l_request.set(boost::beast::http::field::accept, "application/json");
+  nlohmann::json l_json;
+  l_json["state"]  = in_handle.get<process_message>().get_state();
+
+  l_request.body() = l_json.dump();
+  l_request.prepare_payload();
+  using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
+
+  ptr_->core_ptr_->async_read<response_type_1>(
+      boost::asio::make_strand(g_io_context()), l_request,
+      [this](auto&& PH1, const response_type_1& PH2) {
+        DOODLE_LOG_INFO("{}", PH2.body());
+        do_wait();
+      }
+  );
 }
+
+void work::do_close() { ptr_->core_ptr_->cancel(); }
+
 }  // namespace render_farm
 }  // namespace doodle

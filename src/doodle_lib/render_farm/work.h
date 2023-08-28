@@ -52,14 +52,6 @@ class work {
   void do_close();
 
   void on_wait(boost::system::error_code ec);
-
-  struct reg_action {
-    using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
-    using result_type   = std::string;
-    client_core* ptr_;
-    boost::beast::http::message_generator operator()();
-    result_type operator()(const response_type& in_response);
-  };
 };
 
 }  // namespace render_farm
