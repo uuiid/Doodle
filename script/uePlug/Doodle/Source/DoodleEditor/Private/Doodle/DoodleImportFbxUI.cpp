@@ -1228,7 +1228,9 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
       L_ptr->ImportPath                    = In_File;
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork3", "寻找匹配骨骼"));
-      if (L_ptr->FindSkeleton(AllSkinObjs)) L_File = ListImportData.Emplace_GetRef(L_ptr);
+      // if (L_ptr->FindSkeleton(AllSkinObjs))
+      L_ptr->FindSkeleton(AllSkinObjs);
+      L_File = ListImportData.Emplace_GetRef(L_ptr);
     }
     }
     if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc")) {
