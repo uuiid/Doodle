@@ -40,7 +40,7 @@ bool render_monitor::render() {
       for (auto& l_computer : p_i->computers_) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Text("%ll", l_computer.id_);
+        ImGui::Text("%d", l_computer.id_);
         ImGui::TableNextColumn();
         dear::Text(l_computer.name_);
         ImGui::TableNextColumn();
@@ -61,7 +61,7 @@ bool render_monitor::render() {
       for (auto& l_render_task : p_i->render_tasks_) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Text("%ll", l_render_task.id_);
+        ImGui::Text("%d", l_render_task.id_);
         ImGui::TableNextColumn();
         dear::Text(l_render_task.name_);
         ImGui::TableNextColumn();
