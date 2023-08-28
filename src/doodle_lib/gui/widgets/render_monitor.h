@@ -15,7 +15,7 @@
 namespace doodle {
 namespace gui {
 
-class render_monitor {
+class render_monitor : public std::enable_shared_from_this<render_monitor> {
  private:
   struct computer {
     std::int64_t id_{};
@@ -33,11 +33,15 @@ class render_monitor {
   using strand_ptr_t = std::shared_ptr<strand_t>;
 
   struct impl {
-    bool open_{true};
     gui_cache_name_id component_collapsing_header_id_{"渲染注册"};
     gui_cache_name_id render_task_collapsing_header_id_{"渲染任务"};
     gui_cache_name_id component_table_id_{"注册列表"s};
     gui_cache_name_id render_task_table_id_{"任务列表"s};
+    // 进度条
+    gui_cache_name_id progress_bar_id_{"进度条"s};
+    // 进度信息
+    std::float_t progress_{};
+    std::string progress_message_{};
     std::vector<computer> computers_{};
     std::vector<render_task> render_tasks_{};
     std::shared_ptr<client> client_ptr_{};
@@ -53,9 +57,10 @@ class render_monitor {
 
  public:
   render_monitor() : p_i(std::make_unique<impl>()){};
-  ~render_monitor() = default;
+  ~render_monitor();
 
   constexpr static std::string_view name{gui::config::menu_w::render_monitor};
+  bool open_{true};
 
   void init();
   bool render();
