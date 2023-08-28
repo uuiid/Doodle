@@ -152,14 +152,16 @@ class windows_init_arg {
 
  private:
   using set_open_ptr = void (*)(bool, std::shared_ptr<void>&);
+  using create_ptr   = std::function<windows_t()>;
+  using create_guard = std::function<dear_types(windows_init_arg*)>;
   /// 这个值会被显示, 更改布局, 用户主动显示等使用
   std::shared_ptr<bool> init_show_{std::make_shared<bool>(true)};
   render_enum render_enum_{};
   std::int32_t flags_{};
   std::array<float, 2> size_xy_{};
   std::string title_{};
-  std::shared_ptr<std::function<windows_t()>> create_factory_{};
-  std::function<dear_types(windows_init_arg*)> create_guard_{};
+  create_ptr create_factory_{};
+  create_guard create_guard_{};
   set_open_ptr set_open{};
 
   template <typename type_t, std::enable_if_t<details::has_flags_v<type_t>>* = nullptr>
@@ -269,17 +271,15 @@ class windows_init_arg {
 
   template <typename t, typename... arg>
   windows_init_arg& create(arg&&... in_arg) {
-    create_factory_ = std::make_shared<decltype(create_factory_)::element_type>(
-        [l_arg = std::make_tuple(std::move(in_arg)...)]() -> windows_t {
-          return std::apply(
-              [](auto&&... in_args) -> windows_t {
-                auto l_win = std::make_shared<t>(std::move(in_args)...);
-                return windows_t{l_win, windows{std::in_place_type<t&>, *l_win}};
-              },
-              std::move(l_arg)
-          );
-        }
-    );
+    create_factory_ = [l_arg = std::make_tuple(std::move(in_arg)...)]() -> windows_t {
+      return std::apply(
+          [](auto&&... in_args) -> windows_t {
+            auto l_win = std::make_shared<t>(std::move(in_args)...);
+            return windows_t{l_win, windows{std::in_place_type<t&>, *l_win}};
+          },
+          std::move(l_arg)
+      );
+    };
     get_default_flags<t>();
     get_default_sizexy<t>();
     get_default_name<t>();

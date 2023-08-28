@@ -78,7 +78,7 @@ class windows_manage::warp_w {
     if (win_render) {
       l_show = win_render.render();
     } else {
-      win_render = std::move((*args_.create_factory_)());
+      win_render = std::move(args_.create_factory_());
       win_render.render();
     }
     args_.set_open(l_show, win_render.storage_);
