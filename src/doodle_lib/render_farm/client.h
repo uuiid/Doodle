@@ -11,8 +11,10 @@
 #include <boost/beast.hpp>
 
 namespace doodle {
-class client {
- private:
+namespace detail {
+
+class client_core {
+ public:
   using timer_t                = boost::asio::system_timer;
   using timer_ptr              = std::shared_ptr<timer_t>;
   using socket_t               = boost::beast::tcp_stream;
@@ -25,6 +27,7 @@ class client {
   using message_generator_type = boost::beast::http::message_generator;
   using message_generator_ptr  = std::shared_ptr<message_generator_type>;
 
+ private:
   struct data_type {
     std::string server_ip_;
     socket_ptr socket_{};
@@ -56,7 +59,7 @@ class client {
   struct hello_t {
     using response_type = boost::beast::http::response<boost::beast::http::string_body>;
     using result_type   = std::string;
-    client* ptr_;
+    client_core* ptr_;
 
     boost::beast::http::message_generator operator()() {
       boost::beast::http::request<boost::beast::http::empty_body> l_request{
@@ -80,11 +83,11 @@ class client {
     struct data_type2 {
       buffer_type buffer_;
       response_type response_;
-      client* ptr_;
+      client_core* ptr_;
       state state_ = start;
       message_generator_ptr request_;
       ActionType action_;
-      std::unique_ptr<client::queue_action_guard> guard_;
+      std::unique_ptr<client_core::queue_action_guard> guard_;
     };
     std::unique_ptr<data_type2> ptr_;
 
@@ -93,16 +96,17 @@ class client {
     auto& socket() { return ptr_->ptr_->socket(); }
     auto& stream() { return ptr_->ptr_->stream(); }
     auto& resolver() { return ptr_->ptr_->resolver(); }
-    client::data_type& client_data() { return *ptr_->ptr_->ptr_; }
+    client_core::data_type& client_data() { return *ptr_->ptr_->ptr_; }
 
     connect_op_type(
-        client* in_ptr, CompletionHandler&& in_handler, const ExecutorType& in_executor_type_1, ActionType in_action
+        client_core* in_ptr, CompletionHandler&& in_handler, const ExecutorType& in_executor_type_1,
+        ActionType in_action
     )
         : base_type(std::move(in_handler), in_executor_type_1), ptr_(std::make_unique<data_type2>()) {
       ptr_->ptr_         = in_ptr;
       ptr_->action_      = std::move(in_action);
       ptr_->action_.ptr_ = in_ptr;
-      ptr_->guard_       = std::make_unique<client::queue_action_guard>(in_ptr->ptr_.get());
+      ptr_->guard_       = std::make_unique<client_core::queue_action_guard>(in_ptr->ptr_.get());
     }
     ~connect_op_type()                                 = default;
     // move
@@ -193,7 +197,7 @@ class client {
     void do_resolve() { resolver().async_resolve(client_data().server_ip_, "50021", std::move(*this)); }
   };
 
- private:
+ public:
   template <typename ExecutorType, typename CompletionHandler, typename ActionType>
   auto async_main(const ExecutorType& in_executor_type, CompletionHandler&& in_completion, ActionType in_action) {
     //    using async_completion =
@@ -202,7 +206,7 @@ class client {
     using connect_op = connect_op_type<ExecutorType, CompletionHandler, ActionType>;
     return boost::asio::async_initiate<
         CompletionHandler, void(boost::system::error_code, typename ActionType::result_type)>(
-        [](auto&& in_completion_, client* in_client_ptr, const auto& in_executor_, ActionType&& in_action) {
+        [](auto&& in_completion_, client_core* in_client_ptr, const auto& in_executor_, ActionType&& in_action) {
           auto l_h = std::make_shared<connect_op>(
               in_client_ptr, std::forward<decltype(in_completion_)>(in_completion_), in_executor_, std::move(in_action)
           );
@@ -215,11 +219,11 @@ class client {
   }
 
  public:
-  explicit client(std::string in_server_ip) : ptr_(std::make_shared<data_type>()) {
+  explicit client_core(std::string in_server_ip) : ptr_(std::make_shared<data_type>()) {
     ptr_->server_ip_ = std::move(in_server_ip);
     make_ptr();
   }
-  ~client();
+  ~client_core();
 
   // run
   void run();
@@ -240,6 +244,15 @@ class client {
     return async_main(in_executor_type, std::forward<decltype(in_completion)>(in_completion), hello_t{});
   }
 
+ private:
+  void do_close();
+
+  //  void on_connect_timeout(boost::system::error_code ec);
+};
+}  // namespace detail
+class client {
+  std::shared_ptr<detail::client_core> core_ptr_;
+
   struct computer {
     std::int64_t id_{};
     std::string name_{};
@@ -252,22 +265,29 @@ class client {
     }
   };
 
- private:
+ public:
+  explicit client(std::string in_server_ip)
+      : core_ptr_(std::make_shared<detail::client_core>(std::move(in_server_ip))) {}
+  ~client() = default;
+
   struct computer_list_t {
     using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
     using result_type   = std::vector<computer>;
     result_type result_;
-    client* ptr_;
+    detail::client_core* ptr_;
 
     boost::beast::http::message_generator operator()();
 
     result_type operator()(const response_type& in_response);
   };
 
+  // cancel
+  inline void cancel() { core_ptr_->cancel(); }
+
  public:
   template <typename CompletionHandler>
   auto async_computer_list(CompletionHandler&& in_completion) {
-    return async_main(
+    return core_ptr_->async_main(
         boost::asio::make_strand(g_io_context()), std::forward<decltype(in_completion)>(in_completion),
         computer_list_t{}
     );
@@ -285,11 +305,10 @@ class client {
     }
   };
 
- private:
   struct task_list_t {
     using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
     using result_type   = std::vector<task_t>;
-    client* ptr_;
+    detail::client_core* ptr_;
 
     boost::beast::http::message_generator operator()();
 
@@ -299,14 +318,10 @@ class client {
  public:
   template <typename CompletionHandler>
   auto async_task_list(CompletionHandler&& in_completion) {
-    return async_main(
+    return core_ptr_->async_main(
         boost::asio::make_strand(g_io_context()), std::forward<decltype(in_completion)>(in_completion), task_list_t{}
     );
   }
-
- private:
-  void do_close();
-
-  //  void on_connect_timeout(boost::system::error_code ec);
 };
+
 }  // namespace doodle
