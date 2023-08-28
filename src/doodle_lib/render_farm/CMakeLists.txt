@@ -1,6 +1,7 @@
 target_sources(
         doodle_lib
         PUBLIC
+        client_core.h
         client.h
         work.h
         proxy_server.h
@@ -8,6 +9,7 @@ target_sources(
         working_machine_session.h
 
         PRIVATE
+        client_core.cpp
         client.cpp
         work.cpp
         proxy_server.cpp
