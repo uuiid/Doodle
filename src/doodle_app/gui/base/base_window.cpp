@@ -70,6 +70,7 @@ class windows_manage::warp_w {
         l_win
     );
     if (!l_show) {
+      args_.set_open(l_show, win_render.storage_);
       win_render.reset();
       return *args_.init_show_;
     }
@@ -80,10 +81,20 @@ class windows_manage::warp_w {
       win_render = std::move((*args_.create_factory_)());
       win_render.render();
     }
+    args_.set_open(l_show, win_render.storage_);
 
     return *args_.init_show_ && l_show;
   };
 };
+void windows_manage::close_all() {
+  const render_guard l_g{this};
+  windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) {
+    in_->args_.set_open(false, in_->win_render.storage_);
+    return true;
+  });
+
+  windows_list_next_.clear();
+}
 
 void windows_manage::tick() {
   if (layout_next_) {
@@ -103,7 +114,9 @@ void windows_manage::tick() {
 }
 
 windows_manage::windows_manage(facet::gui_facet* in_facet)
-    : gui_facet_(in_facet), drop_manger_(in_facet ? in_facet->drop_manager() : nullptr) {}
+    : gui_facet_(in_facet), drop_manger_(in_facet ? in_facet->drop_manager() : nullptr) {
+  app_base::Get().on_stop.connect([this]() { close_all(); });
+}
 
 void windows_manage::show_windows() {
   if (gui_facet_)

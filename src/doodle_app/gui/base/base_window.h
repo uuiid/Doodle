@@ -38,6 +38,7 @@ namespace details {
 DOODLE_HAS_VALUE(name);
 DOODLE_HAS_VALUE(flags);
 DOODLE_HAS_VALUE(sizexy);
+DOODLE_HAS_VALUE(open_);
 
 #undef DOODLE_HAS_VALUE
 }  // namespace details
@@ -88,6 +89,8 @@ class windows_manage {
   void set_layout(gui::windows_layout&& in_windows);
 
   void* get_windwos(const std::string_view& in_info);
+
+  void close_all();
 
  public:
   explicit windows_manage(facet::gui_facet* in_facet);
@@ -148,6 +151,7 @@ class windows_init_arg {
   };
 
  private:
+  using set_open_ptr = void (*)(bool, std::shared_ptr<void>&);
   /// 这个值会被显示, 更改布局, 用户主动显示等使用
   std::shared_ptr<bool> init_show_{std::make_shared<bool>(true)};
   render_enum render_enum_{};
@@ -156,6 +160,7 @@ class windows_init_arg {
   std::string title_{};
   std::shared_ptr<std::function<windows_t()>> create_factory_{};
   std::function<dear_types(windows_init_arg*)> create_guard_{};
+  set_open_ptr set_open{};
 
   template <typename type_t, std::enable_if_t<details::has_flags_v<type_t>>* = nullptr>
   inline windows_init_arg& get_default_flags() {
@@ -183,6 +188,20 @@ class windows_init_arg {
   }
   template <typename type_t, std::enable_if_t<!details::has_name_v<type_t>>* = nullptr>
   inline windows_init_arg& get_default_name() {
+    return *this;
+  }
+
+  template <typename type_t, std::enable_if_t<details::has_open__v<type_t>>* = nullptr>
+  inline windows_init_arg& set_default_open() {
+    set_open = +[](bool in_open, std::shared_ptr<void>& in_win) {
+      auto l_ptr   = std::static_pointer_cast<type_t>(in_win);
+      l_ptr->open_ = in_open;
+    };
+    return *this;
+  }
+  template <typename type_t, std::enable_if_t<!details::has_open__v<type_t>>* = nullptr>
+  inline windows_init_arg& set_default_open() {
+    set_open = +[](bool in_open, std::shared_ptr<void>& in_win) {};
     return *this;
   }
 
@@ -264,6 +283,7 @@ class windows_init_arg {
     get_default_flags<t>();
     get_default_sizexy<t>();
     get_default_name<t>();
+    set_default_open<t>();
     return *this;
   };
 };
