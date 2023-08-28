@@ -25,7 +25,6 @@ void client_core::make_ptr() {
   //  ptr_->signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
 }
 
-void client_core::run() {}
 client_core::~client_core() { do_close(); }
 void client_core::do_close() {
   boost::system::error_code ec;
