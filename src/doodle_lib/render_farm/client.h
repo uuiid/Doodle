@@ -281,7 +281,7 @@ class client {
     friend void from_json(const nlohmann::json& in_json, task_t& out_data) {
       in_json["id"].get_to(out_data.id_);
       in_json["name"].get_to(out_data.name_);
-      in_json["state"].get_to(out_data.state_);
+      in_json["status"].get_to(out_data.state_);
     }
   };
 
