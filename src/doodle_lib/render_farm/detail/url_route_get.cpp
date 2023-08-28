@@ -69,18 +69,6 @@ void get_err_type_get::operator()(const entt::handle& in_handle, const std::map<
     l_session.send_response(std::move(l_response));
   }
 }
-void render_job_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
-    const {
-  auto l_view     = g_reg()->view<ue4_task>();
-  auto l_ids      = l_view | ranges::to_vector;
-  auto& l_session = in_handle.get<working_machine_session>();
-  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
-  l_response.body() = l_ids;
-  l_response.keep_alive(l_session.request_parser().keep_alive());
-  l_response.insert(boost::beast::http::field::content_type, "application/json");
-  l_response.prepare_payload();
-  l_session.send_response(std::move(l_response));
-}
 namespace {
 struct computer_tmp {
   std::string name;
@@ -95,7 +83,37 @@ struct computer_tmp {
     j["id"]     = in_tmp.id;
   }
 };
+struct render_job_tmp {
+  entt::entity id_{};
+  std::string name_{};
+  std::string status_{};
+  explicit render_job_tmp(const ue4_task& in_task, entt::entity in_id)
+      : name_(in_task.arg().ProjectPath), status_(in_task.is_assign() ? "已分配"s : "未分配"s), id_(in_id) {}
+  friend void to_json(nlohmann::json& j, const render_job_tmp& in_tmp) {
+    j["id"]     = in_tmp.id_;
+    j["name"]   = in_tmp.name_;
+    j["status"] = in_tmp.status_;
+  }
+};
+
 }  // namespace
+
+void render_job_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
+    const {
+  auto l_view = g_reg()->view<ue4_task>().each();
+  auto l_ids  = l_view | ranges::views::transform([](auto&& in_item) -> render_job_tmp {
+                 auto& l_task = std::get<1>(in_item);
+                 return render_job_tmp{l_task, std::get<0>(in_item)};
+               }) |
+               ranges::to_vector;
+  auto& l_session = in_handle.get<working_machine_session>();
+  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  l_response.body() = l_ids;
+  l_response.keep_alive(l_session.request_parser().keep_alive());
+  l_response.insert(boost::beast::http::field::content_type, "application/json");
+  l_response.prepare_payload();
+  l_session.send_response(std::move(l_response));
+}
 
 void computer_reg_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
