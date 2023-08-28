@@ -5,6 +5,7 @@
 #include "render_ue4.h"
 
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/render_farm/work.h>
 
 #include <boost/asio.hpp>
 namespace doodle::render_farm {
@@ -109,7 +110,8 @@ void render_ue4::run_impl(bool in_r) {
   doodle_lib::Get().ctx().get<ue_exe_ptr>()->async_run(
       self_handle_, ue_exe::arg_render_queue{generate_command_line()},
       [this](auto&&) {
-
+        updata_file();
+        send_server_state("done");
       }
   );
 }
@@ -138,6 +140,13 @@ bool render_ue4::updata_file() {
     }
   }
   return false;
+}
+
+void render_ue4::send_server_state(const std::string& in_state) {
+  if (self_handle_ && g_ctx().contains<render_farm::work>()) {
+    DOODLE_LOG_INFO("开始沟通服务器");
+    g_ctx().get<render_farm::work>().send_server_state(self_handle_);
+  }
 }
 }  // namespace detail
 }  // namespace doodle::render_farm

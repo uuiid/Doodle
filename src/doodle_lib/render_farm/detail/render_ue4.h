@@ -63,8 +63,9 @@ class render_ue4 {
   bool download_file(const FSys::path& in_file_path);
 
   bool updata_file();
+  // 给服务器发送状态
+  void send_server_state(const std::string& in_state);
 
-  void call_server_state();
   // 生成命令行
   [[nodiscard("")]] std::string generate_command_line() const;
   void run_impl(bool in_r);
