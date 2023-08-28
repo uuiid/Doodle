@@ -51,7 +51,6 @@ class client_core {
     read,
   };
 
-
  private:
   template <typename ExecutorType, typename CompletionHandler, typename ResponseType, typename RequestType>
   struct connect_write_read_op : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>,
@@ -63,6 +62,8 @@ class client_core {
       RequestType request_;
       std::unique_ptr<client_core::queue_action_guard> guard_;
       std::string_view server_ip_;
+      // 重试次数
+      std::size_t retry_count_{};
     };
     std::unique_ptr<data_type2> ptr_;
     socket_t& socket_;
@@ -99,13 +100,19 @@ class client_core {
 
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
       boost::ignore_unused(bytes_transferred);
-      if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
-        this->complete(false, ec, ptr_->response_);
-        return;
-      }
+
       switch (ptr_->state_) {
         case state::write: {
+          if (ec) {
+            DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
+            ++ptr_->retry_count_;
+            if (ptr_->retry_count_ > 3) {
+              this->complete(false, ec, ptr_->response_);
+              return;
+            }
+            do_resolve();
+            return;
+          }
           do_read();
           break;
         }
@@ -114,6 +121,11 @@ class client_core {
           break;
         }
         default: {
+          if (ec) {
+            DOODLE_LOG_INFO("{}", ec);
+            this->complete(false, ec, ptr_->response_);
+            return;
+          }
           break;
         }
       }
