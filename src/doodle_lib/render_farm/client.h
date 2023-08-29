@@ -47,7 +47,7 @@ class client {
     return core_ptr_->async_read<response_type>(
         boost::asio::make_strand(g_io_context()), l_request,
         [l_fun = std::move(in_completion)](auto&& PH1, const response_type& PH2) {
-          DOODLE_LOG_INFO("{}", PH2.body());
+          DOODLE_LOG_INFO("{}", PH2.body().dump());
           l_fun(PH1, PH2.body().get<std::vector<computer>>());
         }
     );
@@ -78,7 +78,7 @@ class client {
     return core_ptr_->async_read<response_type>(
         boost::asio::make_strand(g_io_context()), l_request,
         [l_fun = std::move(in_completion)](auto&& PH1, const response_type& PH2) {
-          DOODLE_LOG_INFO("{}", PH2.body());
+          DOODLE_LOG_INFO("{}", PH2.body().dump());
           l_fun(PH1, PH2.body().get<std::vector<task_t>>());
         }
     );
