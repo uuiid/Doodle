@@ -54,7 +54,7 @@
 				"debugConfig": "Doodle_debug"
 			},
 		],
-		"C_Cpp.intelliSenseEngine": "disabled",
+		"C_Cpp.intelliSenseEngine": "default",
 		"cmake.configureOnEdit": false,
 		"cmake.configureOnOpen": false,
 		"cmake.automaticReconfigure": false,
@@ -64,7 +64,14 @@
 		"todo-tree.filtering.excludeGlobs": [
 			"deprecated",
 			"docs"
-		]
+		],
+		"files.associations": {
+			".clang-format": "yaml",
+			"*.json_doodle": "json",
+			"string": "cpp",
+			"*.ipp": "cpp",
+			"iterator": "cpp"
+		}
 	},
 	"tasks": {
 		"version": "2.0.0",

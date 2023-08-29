@@ -25,31 +25,22 @@
       "problemMatcher": []
     },
     {
-      "label": "cmake test part",
+      "label": "install",
       "type": "shell",
-      "command": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:build_target}.exe",
-      "args": [
-        "--logger=HRF,all",
-        "--color_output=true",
-        "--run_test=${input:arg_input}"
-      ],
-      "problemMatcher": [],
-      "dependsOn": [
-        "cmake build"
-      ]
+      "command": "${workspaceFolder}/build_script/build/install.cmd",
+      "problemMatcher": []
     },
     {
-      "label": "cmake test",
+      "label": "install and html",
       "type": "shell",
-      "command": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:build_target}.exe",
-      "args": [
-        "--logger=HRF,all",
-        "--color_output=true"
-      ],
-      "problemMatcher": [],
-      "dependsOn": [
-        "cmake build"
-      ]
+      "command": "${workspaceFolder}/build_script/build/install.cmd&&${workspaceFolder}/build_script/build/updata_html.cmd",
+      "problemMatcher": []
+    },
+    {
+      "label": "build 5.2 plug",
+      "type": "shell",
+      "command": "${workspaceFolder}/script/uePlug/build_5.cmd",
+      "problemMatcher": []
     }
   ],
   "inputs": [
