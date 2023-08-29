@@ -62,6 +62,9 @@ class client_core {
       RequestType request_;
       std::unique_ptr<client_core::queue_action_guard> guard_;
       std::string_view server_ip_;
+
+      // 解析路由结果
+      boost::asio::ip::tcp::resolver::results_type results_;
       // 重试次数
       std::size_t retry_count_{};
     };
@@ -97,22 +100,28 @@ class client_core {
         do_resolve();
       }
     }
-
+    // async_write async_read 回调
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
       boost::ignore_unused(bytes_transferred);
 
+      if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+          ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
+        if (ptr_->retry_count_ > 3) {
+          this->complete(false, ec, ptr_->response_);
+          return;
+        }
+        DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
+        do_resolve();
+        return;
+      }
+      if (ec) {
+        DOODLE_LOG_INFO("{}", ec);
+        this->complete(false, ec, ptr_->response_);
+        return;
+      }
+
       switch (ptr_->state_) {
         case state::write: {
-          if (ec) {
-            DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
-            ++ptr_->retry_count_;
-            if (ptr_->retry_count_ > 3) {
-              this->complete(false, ec, ptr_->response_);
-              return;
-            }
-            do_resolve();
-            return;
-          }
           do_read();
           break;
         }
@@ -121,35 +130,56 @@ class client_core {
           break;
         }
         default: {
-          if (ec) {
-            DOODLE_LOG_INFO("{}", ec);
-            this->complete(false, ec, ptr_->response_);
-            return;
-          }
           break;
         }
       }
     }
-
+    // async_resolve 回调
     void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
+      if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+          ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
+        if (ptr_->retry_count_ > 3) {
+          this->complete(false, ec, ptr_->response_);
+          return;
+        }
+        DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
+        do_resolve();
+        return;
+      }
+
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         this->complete(false, ec, ptr_->response_);
         return;
       }
-      ptr_->state_ = state::resolve;
-      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
-      boost::asio::async_connect(socket_.socket(), results, std::move(*this));
+      ptr_->retry_count_ = 0;
+      ptr_->results_     = results;
+
+      do_connect();
     }
+    // async_connect 回调
     void operator()(boost::system::error_code ec, const boost::asio::ip::tcp::endpoint& endpoint) {
       boost::ignore_unused(endpoint);
+
+      if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+          ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
+        if (ptr_->retry_count_ > 3) {
+          this->complete(false, ec, ptr_->response_);
+          return;
+        }
+        DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
+        do_connect();
+        return;
+      }
+
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         this->complete(false, ec, ptr_->response_);
         return;
       }
 
-      ptr_->state_ = connect;
+      ptr_->state_       = connect;
+      ptr_->retry_count_ = 0;
       DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       do_write();
     }
@@ -166,9 +196,15 @@ class client_core {
       DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }
+    void do_connect() {
+      ptr_->state_ = state::resolve;
+      ++ptr_->retry_count_;
+      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
+      boost::asio::async_connect(socket_.socket(), ptr_->results_, std::move(*this));
+    }
     void do_resolve() {
       ptr_->state_ = start;
-
+      ++ptr_->retry_count_;
       resolver_.async_resolve(ptr_->server_ip_, "50021", std::move(*this));
     }
   };
