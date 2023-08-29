@@ -25,7 +25,7 @@ void client_core::make_ptr() {
   //  ptr_->signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
 }
 
-client_core::~client_core() { do_close(); }
+client_core::~client_core() = default;
 void client_core::do_close() {
   boost::system::error_code ec;
   ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);

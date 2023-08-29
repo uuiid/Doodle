@@ -17,6 +17,11 @@ void render_monitor::init() {
   do_wait();
 }
 bool render_monitor::render() {
+  if (ImGui::Button("ull")) {
+    std::int32_t* l_id{nullptr};
+    throw doodle_error{""};
+  }
+
   std::call_once(p_i->once_flag_, [this]() { init(); });
   {
     ImGui::Text("渲染刷新");
@@ -123,9 +128,6 @@ void render_monitor::get_remote_data() {
     do_wait();
   });
 }
-render_monitor::~render_monitor() {
-  p_i->timer_ptr_->cancel();
-  p_i->client_ptr_->cancel();
-}
+render_monitor::~render_monitor() = default;
 }  // namespace gui
 }  // namespace doodle
