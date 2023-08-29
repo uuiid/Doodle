@@ -9,6 +9,7 @@
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
+#include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
 
@@ -48,6 +49,7 @@ void doodle_lib::init() {
   ptr->io_context_ = std::make_shared<boost::asio::io_context>();
   ptr->p_log       = std::make_shared<logger_ctr_ptr::element_type>();
   ptr->reg         = std::make_shared<entt::registry>();
+  ctx().emplace<detail::crash_reporting_thread>();
 
   init_register::instance().reg_class();
 
