@@ -109,10 +109,7 @@ void render_ue4::run_impl(bool in_r) {
     doodle_lib::Get().ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
   doodle_lib::Get().ctx().get<ue_exe_ptr>()->async_run(
       self_handle_, ue_exe::arg_render_queue{generate_command_line()},
-      [this](auto&&) {
-        updata_file();
-        send_server_state("done");
-      }
+      [this](auto&&) { end_run(); }
   );
 }
 void render_ue4::set_meg() {
@@ -121,7 +118,37 @@ void render_ue4::set_meg() {
   l_msg.message(fmt::format("开始准备 {}", l_prj));
   l_msg.set_name(l_prj.filename().generic_string());
 }
+void render_ue4::end_run() {
+  auto& l_map    = g_reg()->ctx().emplace<std::map<std::string, decltype(boost::asio::make_strand(g_thread()))>>();
+
+  auto& l_strand = l_map.at(arg_.ProjectPath);
+  boost::asio::post(l_strand, [this]() {
+    bool l_r;
+    try {
+      l_r = updata_file();
+    } catch (const doodle_error& e) {
+      l_r = false;
+      DOODLE_LOG_ERROR(e);
+    } catch (...) {
+      l_r = false;
+      DOODLE_LOG_ERROR(boost::current_exception_diagnostic_information());
+    }
+    boost::asio::post(g_io_context(), [this, l_r]() {
+      self_handle_.get<process_message>().set_state(
+          l_r ? process_message::state::success : process_message::state::fail
+      );
+      self_handle_.get<process_message>().message(l_r ? "done" : "fail");
+      this->send_server_state();
+    });
+  });
+}
+
 bool render_ue4::updata_file() {
+  if (!FSys::exists(loc_out_file_path_)) {
+    DOODLE_LOG_ERROR("文件不存在 {}", loc_out_file_path_);
+    return false;
+  }
+
   // 上传输出
   for (auto&& i : FSys::recursive_directory_iterator{loc_out_file_path_}) {
     auto l_loc_ = server_file_path / i.path().lexically_relative(loc_out_file_path_);
@@ -139,10 +166,10 @@ bool render_ue4::updata_file() {
       }
     }
   }
-  return false;
+  return true;
 }
 
-void render_ue4::send_server_state(const std::string& in_state) {
+void render_ue4::send_server_state() {
   if (self_handle_ && g_ctx().contains<render_farm::work>()) {
     DOODLE_LOG_INFO("开始沟通服务器");
     g_ctx().get<render_farm::work>().send_server_state(self_handle_);
