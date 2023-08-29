@@ -29,7 +29,8 @@ bool render_monitor::render() {
       dear::Text(p_i->progress_message_);
     }
   }
-  if (auto l_ = dear::CollapsingHeader{*p_i->component_collapsing_header_id_}) {
+  if (auto l_ = dear::CollapsingHeader{
+          *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen}) {
     if (auto l_table = dear::Table{*p_i->component_table_id_, 3}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
       ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 100.0f);
@@ -49,7 +50,8 @@ bool render_monitor::render() {
     }
   }
 
-  if (auto l_ = dear::CollapsingHeader{*p_i->render_task_collapsing_header_id_}) {
+  if (auto l_ = dear::CollapsingHeader{
+          *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen}) {
     if (auto l_table = dear::Table{*p_i->render_task_table_id_, 3}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
       ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 100.0f);
