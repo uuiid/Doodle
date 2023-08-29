@@ -13,10 +13,10 @@
 namespace doodle::detail {
 
 namespace {
-LONG WINAPI UnhandledStaticInitException(LPEXCEPTION_POINTERS ExceptionInfo) {
-  g_ctx().get<crash_reporting_thread>().on_crash_during_static_init(ExceptionInfo);
-  return EXCEPTION_CONTINUE_SEARCH;
-}
+// LONG WINAPI UnhandledStaticInitException(LPEXCEPTION_POINTERS ExceptionInfo) {
+//   g_ctx().get<crash_reporting_thread>().on_crash_during_static_init(ExceptionInfo);
+//   return EXCEPTION_CONTINUE_SEARCH;
+// }
 LONG WINAPI DoodleUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo) {
   //  ReportCrash(ExceptionInfo);
   //  GIsCriticalError = true;
@@ -42,7 +42,7 @@ class crash_reporting_thread::impl {
   std::shared_ptr<std::thread> thread_ptr_;
 };
 crash_reporting_thread::crash_reporting_thread() : impl_ptr_(std::make_unique<impl>()) {
-  ::SetUnhandledExceptionFilter(UnhandledStaticInitException);
+  //  ::SetUnhandledExceptionFilter(UnhandledStaticInitException);
   impl_ptr_->thread_ptr_ = std::make_shared<std::thread>([this]() { this->run(); });
   ::SetThreadPriority(impl_ptr_->thread_ptr_->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
   ::SetUnhandledExceptionFilter(DoodleUnhandledExceptionFilter);
