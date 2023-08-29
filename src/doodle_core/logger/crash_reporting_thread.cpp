@@ -9,6 +9,7 @@
 #include <DbgHelp.h>
 #include <Windows.h>
 #include <fmt/chrono.h>
+#include <wil/resource.h>
 namespace doodle::detail {
 
 namespace {
@@ -82,11 +83,10 @@ void crash_reporting_thread::handle_crash() {
   l_path = l_path.lexically_normal();
   l_path = l_path.make_preferred();
   if (!FSys::exists(l_path.parent_path())) FSys::create_directories(l_path.parent_path());
-
-  HANDLE l_file_handle = ::CreateFileW(
+  wil::unique_hfile l_file_handle{::CreateFileW(
       l_path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr
-  );
-  if (l_file_handle == INVALID_HANDLE_VALUE) {
+  )};
+  if (!l_file_handle) {
     return;
   }
   MINIDUMP_EXCEPTION_INFORMATION l_exception_info{};
@@ -95,8 +95,11 @@ void crash_reporting_thread::handle_crash() {
   l_exception_info.ClientPointers    = FALSE;
   //(MINIDUMP_TYPE)(MiniDumpWithPrivateReadWriteMemory|MiniDumpWithDataSegs|
   // MiniDumpWithHandleData|MiniDumpWithFullMemoryInfo|MiniDumpWithThreadInfo|MiniDumpWithUnloadedModules);
-  ::MiniDumpWriteDump(
-      ::GetCurrentProcess(), ::GetCurrentProcessId(), l_file_handle, MiniDumpNormal, &l_exception_info, nullptr, nullptr
+  wil::unique_hmodule l_module{::GetModuleHandleW(L"dbghelp.dll")};
+  auto l_func = reinterpret_cast<decltype(&::MiniDumpWriteDump)>(::GetProcAddress(l_module.get(), "MiniDumpWriteDump"));
+  l_func(
+      ::GetCurrentProcess(), ::GetCurrentProcessId(), l_file_handle.get(), MiniDumpNormal, &l_exception_info, nullptr,
+      nullptr
   );
 }
 void crash_reporting_thread::wait_until_crash_handled() { std::unique_lock l_lock{impl_ptr_->mutex_}; }
