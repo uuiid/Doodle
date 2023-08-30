@@ -91,7 +91,6 @@ void computer::delay(computer_status in_status) {
   if (chrono::sys_seconds::clock::now() - last_time_ < 0.5s) {
     return;
   }
-  if (status_ == computer_status::busy) return;
 
   status_ = in_status;
 }
