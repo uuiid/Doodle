@@ -35,9 +35,9 @@ class send_to_render {
     using response_type_1 = boost::beast::http::response<detail::basic_json_body>;
     request_type_1 l_request{boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
     nlohmann::json l_json{};
-    l_json["id"]     = task_handle_.entity();
+    l_json["id"] = task_handle_.entity();
     auto& l_arg  = task_handle_.get<detail::ue4_task>().arg();
-    DOODLE_LOG_INFO("开始分派任务 {} -> {}", l_arg.ProjectPath, l_arg.out_file_path);
+    DOODLE_LOG_INFO("开始分派任务 id {} {} -> {}", task_handle_, l_arg.ProjectPath, l_arg.out_file_path);
     l_json["arg"]    = l_arg;
     l_request.body() = l_json;
     l_request.keep_alive(false);
