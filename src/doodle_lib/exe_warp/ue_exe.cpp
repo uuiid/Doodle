@@ -118,7 +118,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
 void ue_exe::notify_run() {
   if (run_process_ && !run_process_->child_attr.running()) run_process_.reset();
 
-  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
+  if (!g_ctx().get<program_info>().stop_attr()) {
     if (!queue_list_.empty() && !run_process_) {
       run_process_ = queue_list_.top();
       queue_list_.pop();

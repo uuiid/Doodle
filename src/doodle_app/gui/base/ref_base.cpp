@@ -7,8 +7,7 @@ namespace doodle::gui {
 
 gui_cache_name_id::gui_cache_name_id(const std::string &in_name)
     : name_id(fmt::format(
-          "{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s,
-          doodle_lib::Get().ctx().get<identifier>()
+          "{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s, g_ctx().get<identifier>()
       )),
       name(name_id.c_str(), in_name.size()) {}
 

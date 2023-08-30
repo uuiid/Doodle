@@ -33,7 +33,7 @@ namespace detail {
 
 void working_machine_session::run() {
   ptr_->connection_          = doodle::app_base::Get().on_stop.connect([this]() { do_close(); });
-  ptr_->working_machine_ptr_ = doodle_lib::Get().ctx().get<render_farm::working_machine_ptr>();
+  ptr_->working_machine_ptr_ = g_ctx().get<render_farm::working_machine_ptr>();
   boost::asio::dispatch(
       boost::asio::make_strand(stream().get_executor()),
       bind_reg_handler(&working_machine_session::do_read, g_reg(), this)

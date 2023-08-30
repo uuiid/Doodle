@@ -31,7 +31,7 @@ class app_command : public app_base {
 
  public:
   app_command() : app_base() {
-    doodle_lib::Get().ctx().emplace<program_options>();
+    g_ctx().emplace<program_options>();
 
     add_facet<Facet_Defaute>();
     (add_facet<Facet_>(), ...);
@@ -41,7 +41,7 @@ class app_command : public app_base {
     for (auto&& val : facet_list) {
       val->add_program_options();
     }
-    doodle_lib::Get().ctx().get<program_options>().arg.parse(argc, argv);
+    g_ctx().get<program_options>().arg.parse(argc, argv);
   }
   virtual ~app_command() override = default;
 

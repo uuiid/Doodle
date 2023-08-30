@@ -22,7 +22,7 @@
 
 namespace doodle::gui {
 
-windows_manage& g_windows_manage() { return doodle_lib::Get().ctx().get<windows_manage>(); }
+windows_manage& g_windows_manage() { return g_ctx().get<windows_manage>(); }
 
 windows_manage::layout_info::layout_info(doodle::gui::layout_init_arg& arg)
     : init_arg_(std::make_shared<layout_init_arg>(std::move(arg))) {}

@@ -299,7 +299,7 @@ void maya_exe::install_maya_exe() {
 }
 
 void maya_exe::notify_run() {
-  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr())
+  if (!g_ctx().get<program_info>().stop_attr())
     while (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
       auto l_run = p_i->run_process_arg_attr.top();
       p_i->run_process_arg_attr.pop();

@@ -20,8 +20,7 @@ namespace doodle {
 
 bool cloud_drive_facet::post() {
   bool l_r{};
-  auto l_str =
-      FSys::from_quotation_marks(doodle_lib::Get().ctx().get<program_options>().arg(cloud_drive_arg::name).str());
+  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(cloud_drive_arg::name).str());
   if (l_str.empty()) {
     return l_r;
   }
@@ -45,8 +44,6 @@ bool cloud_drive_facet::post() {
   boost::asio::post(g_io_context(), [this, l_arg]() { registrar_->create_placeholder(l_arg.server_path); });
   return l_r;
 }
-void cloud_drive_facet::add_program_options() {
-  doodle_lib::Get().ctx().get<program_options>().arg.add_param(cloud_drive_arg::name);
-}
+void cloud_drive_facet::add_program_options() { g_ctx().get<program_options>().arg.add_param(cloud_drive_arg::name); }
 
 }  // namespace doodle

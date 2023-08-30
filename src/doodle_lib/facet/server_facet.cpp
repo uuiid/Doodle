@@ -20,12 +20,12 @@
 namespace doodle {
 bool server_facet::post() {
   bool l_r{};
-  auto l_name = doodle_lib::Get().ctx().get<program_options>().arg[name];
+  auto l_name = g_ctx().get<program_options>().arg[name];
   if (l_name) {
     win::open_console_window();
     g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
 
-    doodle_lib::Get().ctx().get<program_info>().use_gui_attr(false);
+    g_ctx().get<program_info>().use_gui_attr(false);
     l_r    = true;
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
     doodle_lib::Get()
@@ -37,6 +37,6 @@ bool server_facet::post() {
   }
   return l_r;
 }
-void server_facet::add_program_options() { /* doodle_lib::Get().ctx().get<program_options>().arg.add_param(name); */
+void server_facet::add_program_options() { /* g_ctx().get<program_options>().arg.add_param(name); */
 }
 }  // namespace doodle

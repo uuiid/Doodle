@@ -42,7 +42,7 @@ using namespace doodle;
 using namespace doodle::database_n;
 BOOST_AUTO_TEST_CASE(test_sqlite3_create_table) {
   doodle_lib l_lib{};
-  auto l_sql_conn = doodle_lib::Get().ctx().emplace<database_info>().get_connection();
+  auto l_sql_conn = g_ctx().emplace<database_info>().get_connection();
   tables::work_task_info l_tables;
   //  l_sql_conn->execute(detail::create_table(l_tables)
   //                          .foreign_column(l_tables.entity_id, tables::entity{}.id)
@@ -135,17 +135,17 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_save) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
 
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_save();
+  g_ctx().get<file_translator_ptr>()->async_save();
 }
 
 BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   FSys::remove("D:/test.sqlite");
   doodle_lib l_lib{};
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_open(FSys::path{});
+  g_ctx().get<file_translator_ptr>()->async_open(FSys::path{});
   create_test_database();
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_save();
+  g_ctx().get<file_translator_ptr>()->async_save();
 
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_open("D:/test.sqlite");
+  g_ctx().get<file_translator_ptr>()->async_open("D:/test.sqlite");
   BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
   BOOST_TEST_CHECK(g_reg()->view<user>().size() == 1);
   BOOST_TEST_CHECK(g_reg()->view<shot>().size() == 1);
@@ -175,11 +175,11 @@ class null_facet {
 BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
   app_command<null_facet> l_App{};
 
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_open("D:/test_file/test_db/10_texiao.doodle_db");
+  g_ctx().get<file_translator_ptr>()->async_open("D:/test_file/test_db/10_texiao.doodle_db");
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_save();
-  doodle_lib::Get().ctx().get<file_translator_ptr>()->async_open("D:/test_file/cloth_test/JG2.doodle_db");
+  g_ctx().get<file_translator_ptr>()->async_save();
+  g_ctx().get<file_translator_ptr>()->async_open("D:/test_file/cloth_test/JG2.doodle_db");
 }

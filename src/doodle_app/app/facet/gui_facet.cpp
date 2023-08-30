@@ -66,20 +66,20 @@ class gui_facet::impl {
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
-  if (!doodle_lib::Get().ctx().get<program_info>().use_gui_attr()) return false;
+  if (!g_ctx().get<program_info>().use_gui_attr()) return false;
 
   init_windows();
-  windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>(this);
+  windows_manage_ = &g_ctx().emplace<gui::windows_manage>(this);
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted) {
       DOODLE_LOG_INFO(in_code.message());
       return;
     }
-    if (doodle_lib::Get().ctx().get<program_info>().stop_attr()) return;
+    if (g_ctx().get<program_info>().stop_attr()) return;
     if (!this->translate_message()) return;
     this->tick();  /// 渲染
-    if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
+    if (!g_ctx().get<program_info>().stop_attr()) {
       p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
       p_i->timer_.async_wait(s_fun);
     }
@@ -105,8 +105,8 @@ void gui_facet::deconstruction() {
   }
 }
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
-  doodle_lib::Get().ctx().emplace<gui::main_proc_handle>();
-  doodle_lib::Get().ctx().emplace<identifier>();
+  g_ctx().emplace<gui::main_proc_handle>();
+  g_ctx().emplace<identifier>();
 
   g_reg()->ctx().emplace<image_to_move>();
 }
@@ -154,7 +154,7 @@ bool gui_facet::translate_message() {
 }
 
 void gui_facet::init_windows() {
-  auto l_instance     = doodle_lib::Get().ctx().get<program_info>().handle_attr();
+  auto l_instance     = g_ctx().get<program_info>().handle_attr();
 
   p_win_class         = {sizeof(WNDCLASSEX), CS_CLASSDC, win::WndProc, 0L,      sizeof(std::nullptr_t),
                          l_instance,         nullptr,    nullptr,      nullptr, nullptr,
@@ -165,11 +165,10 @@ void gui_facet::init_windows() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(doodle_lib::Get().ctx().get<program_info>().title_attr());
+  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(g_ctx().get<program_info>().title_attr());
   p_hwnd     = ::CreateWindowExW(
       0L, p_win_class.lpszClassName, l_str.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-      CW_USEDEFAULT, doodle_lib::Get().ctx().get<program_info>().parent_windows_attr(), nullptr, p_win_class.hInstance,
-      this
+      CW_USEDEFAULT, g_ctx().get<program_info>().parent_windows_attr(), nullptr, p_win_class.hInstance, this
   );
 
   // Initialize Direct3D
@@ -255,17 +254,16 @@ void gui_facet::init_windows() {
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().get<project>();
-    auto l_title = boost::locale::conv::utf_to_utf<char>(doodle_lib::Get().ctx().get<program_info>().title_attr());
+    auto l_title = boost::locale::conv::utf_to_utf<char>(g_ctx().get<program_info>().title_attr());
     auto l_str   = fmt::format(
         "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title,
-        doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->get_project_path(), l_prj.p_path,
-        l_prj.show_str(), l_prj.str(), l_prj.short_str()
+        g_ctx().get<database_n::file_translator_ptr>()->get_project_path(), l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str()
     );
     set_title(l_str);
   };
   g_reg()->ctx().get<core_sig>().project_end_open.connect(s_set_title_fun);
   /// 在这里我们加载项目
-  doodle_lib::Get().ctx().get<program_options>().init_project();
+  g_ctx().get<program_options>().init_project();
 
   s_set_title_fun();
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });

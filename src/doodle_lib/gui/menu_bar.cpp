@@ -114,7 +114,7 @@ void menu_bar::menu_start_render_client(bool is_run) {
             std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
         )
         ->stop();
-    doodle_lib::Get().ctx().erase<doodle::render_farm::working_machine_ptr>();
+    g_ctx().erase<doodle::render_farm::working_machine_ptr>();
     run_client = false;
     run_work   = false;
   }
@@ -136,7 +136,7 @@ void menu_bar::menu_start_work(bool is_run) {
             std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
         )
         ->stop();
-    doodle_lib::Get().ctx().erase<doodle::render_farm::working_machine_ptr>();
+    g_ctx().erase<doodle::render_farm::working_machine_ptr>();
     run_work   = false;
     run_client = false;
   }

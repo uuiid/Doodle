@@ -49,7 +49,7 @@ namespace doodle::maya_plug {
 
 void export_fbx_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
-  ref_files_ = doodle_lib::Get().ctx().get<reference_file_factory>().create_ref();
+  ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
   ref_files_ |= ranges::actions::remove_if([](entt::handle& in_handle) -> bool {
     auto&& l_ref = in_handle.get<reference_file>();
     return !l_ref;
@@ -86,7 +86,7 @@ const std::string& export_fbx_facet::name() const noexcept {
 
 bool export_fbx_facet::post() {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(doodle_lib::Get().ctx().get<program_options>().arg(config).str());
+  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(config).str());
   if (l_str.empty()) {
     return l_ret;
   }
@@ -106,15 +106,15 @@ bool export_fbx_facet::post() {
 
   l_ret      = true;
 
-  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
-  doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
+  g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
+  g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path, l_arg.use_all_ref ? MFileIO::kLoadAllReferences : MFileIO::kLoadDefault);
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
-  doodle_lib::Get().ctx().emplace<reference_file_factory>();
+  g_ctx().emplace<reference_file_factory>();
   DOODLE_LOG_INFO("开始导出fbx");
   auto l_s = boost::asio::make_strand(g_io_context());
   boost::asio::post(l_s, [this]() {
@@ -139,6 +139,6 @@ bool export_fbx_facet::post() {
   return l_ret;
 }
 
-void export_fbx_facet::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
+void export_fbx_facet::add_program_options() { g_ctx().get<program_options>().arg.add_param(config); }
 
 }  // namespace doodle::maya_plug

@@ -77,6 +77,6 @@ registry_ptr& g_reg() { return doodle_lib::Get().ptr->reg; }
 boost::asio::io_context& g_io_context() { return *doodle_lib::Get().ptr->io_context_; }
 boost::asio::thread_pool& g_thread() { return doodle_lib::Get().ptr->thread_pool_attr; }
 details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }
-entt::registry::context& g_ctx() { return doodle_lib::Get().ptr->reg->ctx(); }
+entt::registry::context& g_ctx() { return doodle_lib::Get().ctx_p; }
 
 }  // namespace doodle

@@ -59,7 +59,7 @@ void main_menu_bar::menu_file() {
     g_windows_manage().create_windows_arg(
         windows_init_arg{}
             .create<file_dialog>(file_dialog::dialog_args{}.async_read([](const FSys::path &in) mutable {
-              doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(in);
+              g_ctx().get<database_n::file_translator_ptr>()->async_open(in);
             }))
             .set_title("打开项目")
             .set_render_type<dear::Popup>()
@@ -70,7 +70,7 @@ void main_menu_bar::menu_file() {
     g_windows_manage().create_windows_arg(
         windows_init_arg{}
             .create<file_dialog>(file_dialog::dialog_args{}.async_read([](const FSys::path &in) mutable {
-              doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_import(in);
+              g_ctx().get<database_n::file_translator_ptr>()->async_import(in);
             }))
             .set_title("打开项目")
             .set_render_type<dear::Popup>()
@@ -84,14 +84,14 @@ void main_menu_bar::menu_file() {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
         if (dear::MenuItem(fmt::format("{0}##{1}", l_p.generic_string(), l_i))) {
-          doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_p);
+          g_ctx().get<database_n::file_translator_ptr>()->async_open(l_p);
         }
     }
   };
 
   ImGui::Separator();
 
-  if (dear::MenuItem("保存"s, "Ctrl+S")) doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save();
+  if (dear::MenuItem("保存"s, "Ctrl+S")) g_ctx().get<database_n::file_translator_ptr>()->async_save();
 
   ImGui::Separator();
   dear::MenuItem("调试"s, &p_i->p_debug_show);
@@ -105,7 +105,7 @@ void main_menu_bar::menu_file() {
 
 bool main_menu_bar::render() {
   if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl)
-    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save();
+    g_ctx().get<database_n::file_translator_ptr>()->async_save();
 
   dear::Menu{"文件"} && [this]() { this->menu_file(); };
   dear::Menu{"窗口"} && [this]() { this->menu_windows(); };

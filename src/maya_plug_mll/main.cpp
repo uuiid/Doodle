@@ -69,7 +69,7 @@ void open_windows() {
     case MGlobal::MMayaState::kInteractive: {
       HWND win_id  = find_windows();
       p_doodle_app = std::make_shared<maya_gui_app>();
-      doodle_lib::Get().ctx().get<program_info>().parent_windows_attr(win_id);
+      g_ctx().get<program_info>().parent_windows_attr(win_id);
       break;
     }
     case MGlobal::MMayaState::kBatch:
@@ -79,7 +79,7 @@ void open_windows() {
     } break;
   }
 
-  doodle_lib::Get().ctx().get<program_info>().handle_attr(::MhInstPlugin);
+  g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
 }
 }  // namespace doodle::maya_plug
 

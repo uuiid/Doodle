@@ -47,7 +47,7 @@ const std::string& cloth_sim::name() const noexcept {
 }
 bool cloth_sim::post() {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(doodle_lib::Get().ctx().get<program_options>().arg(config).str());
+  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(config).str());
   if (l_str.empty()) {
     return l_ret;
   }
@@ -67,8 +67,8 @@ bool cloth_sim::post() {
 
   l_ret      = true;
 
-  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
-  doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
+  g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
+  g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
 #if MAYA_API_VERSION >= 20190000
@@ -87,7 +87,7 @@ bool cloth_sim::post() {
   maya_chick(MAnimControl::setMinTime(t_post_time_));
   maya_chick(MAnimControl::setAnimationStartTime(t_post_time_));
 
-  doodle_lib::Get().ctx().emplace<reference_file_factory>();
+  g_ctx().emplace<reference_file_factory>();
 
   maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()}));
 
@@ -126,6 +126,6 @@ bool cloth_sim::post() {
   return l_ret;
 }
 
-void cloth_sim::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
+void cloth_sim::add_program_options() { g_ctx().get<program_options>().arg.add_param(config); }
 
 };  // namespace doodle::maya_plug

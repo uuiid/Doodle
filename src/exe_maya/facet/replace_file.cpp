@@ -30,7 +30,7 @@ const std::string& replace_file_facet::name() const noexcept {
 }
 bool replace_file_facet::post() {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(doodle_lib::Get().ctx().get<program_options>().arg(config).str());
+  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(config).str());
   if (l_str.empty()) {
     return l_ret;
   }
@@ -47,10 +47,10 @@ bool replace_file_facet::post() {
   if (l_arg.file_path.empty()) return l_ret;
 
   lib_guard_ = std::make_shared<maya_lib_guard>(l_arg.maya_path);
-  doodle_lib::Get().ctx().emplace<reference_file_factory>();
+  g_ctx().emplace<reference_file_factory>();
   l_ret = true;
 
-  doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
+  g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
@@ -64,7 +64,7 @@ bool replace_file_facet::post() {
 }
 void replace_file_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
-  ref_files_ = doodle_lib::Get().ctx().get<reference_file_factory>().create_ref();
+  ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
   ref_files_ |= ranges::actions::remove_if([](entt::handle& in_handle) -> bool {
     auto&& l_ref = in_handle.get<reference_file>();
     return !l_ref;
@@ -90,6 +90,6 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
   );
 }
 
-void replace_file_facet::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
+void replace_file_facet::add_program_options() { g_ctx().get<program_options>().arg.add_param(config); }
 
 }  // namespace doodle::maya_plug

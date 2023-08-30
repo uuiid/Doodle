@@ -240,7 +240,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   k_msg.emplace<episodes>(p_eps);
   k_msg.emplace<shot>(p_shot);
 
-  doodle_lib::Get().ctx().get<image_to_move>()->async_create_move(
+  g_ctx().get<image_to_move>()->async_create_move(
       k_msg, l_handle_list,
       [k_f, l_path = get_out_path(), l_w = boost::asio::make_work_guard(g_io_context())]() {
         DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);

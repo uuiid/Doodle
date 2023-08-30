@@ -35,7 +35,7 @@ namespace doodle::maya_plug {
 
 void cloth_sim::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
-  ref_files_ = doodle_lib::Get().ctx().get<reference_file_factory>().create_ref();
+  ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
 }
 void cloth_sim::replace_ref_file() {
   DOODLE_LOG_INFO("开始替换引用");

@@ -351,7 +351,7 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   auto& l_obs = std::any_cast<obs_all&>(obs);
   l_obs.disconnect();
   l_obs.clear();
-  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  g_ctx().get<database_info>().path_ = in_path;
   g_reg()->clear();
   l_obs.connect(registry_attr);
   project_config::base_config l_config{};
@@ -389,8 +389,7 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   project_path = in_path;
 
   {
-    doodle_lib::Get().ctx().get<database_info>().path_ =
-        project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
+    g_ctx().get<database_info>().path_ = project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("加载数据");
     k_msg.set_state(k_msg.run);
@@ -412,7 +411,7 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
 
   boost::asio::post(
       g_thread(),
-      [this, l_k_con = doodle_lib::Get().ctx().emplace<database_info>().get_connection_const(), l_end_call]() mutable {
+      [this, l_k_con = g_ctx().emplace<database_info>().get_connection_const(), l_end_call]() mutable {
         save_all = false;
         database_n::select l_select{};
         auto& l_obs = std::any_cast<obs_all&>(obs);
@@ -456,7 +455,7 @@ void file_translator::async_save_impl() {
     if (auto l_p = project_path.parent_path(); !FSys::exists(l_p) && !l_p.empty()) {
       FSys::create_directories(l_p);
     }
-    doodle_lib::Get().ctx().get<database_info>().path_ = project_path;
+    g_ctx().get<database_info>().path_ = project_path;
     // 提前测试存在
     if (save_all && FSys::exists(project_path)) {
       k_msg.message(fmt::format("{} 已经存在, 不保存", project_path));
@@ -478,9 +477,8 @@ void file_translator::async_save_impl() {
   };
 
   boost::asio::post(
-      g_thread(),
-      [this, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection(), l_end_call]() mutable {
-        try {
+      g_thread(), [this, l_k_con = g_ctx().get<database_info>().get_connection(), l_end_call]() mutable {
+    try {
           auto l_tx = sqlpp::start_transaction(*l_k_con);
           if (save_all) {
             std::any_cast<obs_all&>(obs).save_all(registry_attr, l_k_con);
@@ -502,8 +500,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
   is_run = true;
 
   {
-    doodle_lib::Get().ctx().get<database_info>().path_ =
-        in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
+    g_ctx().get<database_info>().path_ = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("导入数据");
     k_msg.set_state(k_msg.run);
@@ -532,8 +529,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
   );
   boost::asio::post(
       g_thread(),
-      [this, in_path, l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const(), l_end_call,
-       l_old]() mutable {
+      [this, in_path, l_k_con = g_ctx().get<database_info>().get_connection_const(), l_end_call, l_old]() mutable {
         database_n::select l_select{};
         if (l_select.is_old(in_path, l_k_con)) {
           DOODLE_LOG_INFO("旧版文件, 不导入");
