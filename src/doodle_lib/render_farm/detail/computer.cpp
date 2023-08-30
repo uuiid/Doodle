@@ -74,7 +74,7 @@ void computer::delay(const std::string& in_str) {
 
 void computer::run_task(const entt::handle& in_handle) {
   status_            = computer_status::busy;
-  last_time_         = chrono::sys_seconds::clock::now();
+  last_time_         = chrono::sys_seconds::clock::now() + 10s;
   auto l_self_handle = make_handle(this);
   l_self_handle.get_or_emplace<send_to_render>(name_).run(in_handle);
 }
