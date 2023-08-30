@@ -29,6 +29,7 @@ class work {
     timer_ptr timer_{};
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
+    entt::entity computer_id{entt::null};
   };
   std::shared_ptr<data_type> ptr_;
 

@@ -6,9 +6,11 @@
 
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
+#include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 
 #include <boost/beast.hpp>
+#include <boost/url.hpp>
 namespace doodle {
 namespace render_farm {
 void work::on_wait(boost::system::error_code ec) {
@@ -42,6 +44,11 @@ void work::make_ptr() {
 }
 
 void work::run() {
+  boost::url l_url{"/v1/render_farm/computer"};
+  auto l_view = g_reg()->view<render_ue4>();
+  l_url.params().set("status", magic_enum::enum_name(l_view.empty() ? computer_status::idle : computer_status::busy));
+  if (ptr_->computer_id != entt::null) l_url.params().set("id", fmt::to_string(ptr_->computer_id));
+
   request_type l_request{boost::beast::http::verb::post, "/v1/render_farm/computer", 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
@@ -54,6 +61,10 @@ void work::run() {
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
       [this](auto&& PH1, const response_type_1& PH2) {
+        if (PH2.result() == boost::beast::http::status::ok) {
+          auto l_json       = nlohmann::json::parse(PH2.body());
+          ptr_->computer_id = num_to_enum<entt::entity>()(l_json["id"].get<std::int32_t>());
+        }
         DOODLE_LOG_INFO("{}", PH2.body());
         do_wait();
       }
@@ -74,8 +85,10 @@ void work::send_server_state(const entt::handle& in_handle) {
 
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
-      [this](auto&& PH1, const response_type_1& PH2) {
+      [this, in_handle](auto&& PH1, const response_type_1& PH2) {
         DOODLE_LOG_INFO("{}", PH2.body());
+        auto l_h = in_handle;
+        l_h.destroy();
         do_wait();
       }
   );
