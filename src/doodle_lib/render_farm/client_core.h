@@ -97,6 +97,7 @@ class client_core {
         do_resolve();
       }
     }
+
     // async_write async_read 回调
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
       boost::ignore_unused(bytes_transferred);
@@ -104,6 +105,7 @@ class client_core {
       if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
         if (ptr_->retry_count_ > 3) {
+          ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
           return;
         }
@@ -136,6 +138,7 @@ class client_core {
       if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
         if (ptr_->retry_count_ > 3) {
+          ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
           return;
         }
@@ -161,6 +164,7 @@ class client_core {
       if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
         if (ptr_->retry_count_ > 3) {
+          ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
           return;
         }
