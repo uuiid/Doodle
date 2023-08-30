@@ -332,6 +332,7 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
       L_Path.Path += L_Out_Dir;
       L_Arg.OutFilePath          = L_Out_Dir;
       L_Setting->OutputDirectory = L_Path;
+      UE_LOG(LogMovieRenderPipeline, Error, TEXT("重定向输出. Path: %s"), *L_Path.Path);
     }
 
     // Place the Queue in a package and serialize it to disk so we can pass their dynamic object
@@ -407,11 +408,8 @@ TArray<TObjectPtr<UMoviePipelineQueue>> UDoodleMovieRemoteExecutor::GetQueuesToR
 
   for (auto i = 0; i < InPipelineQueue->GetJobs().Num(); ++i) {
     auto L_Queue = CastChecked<UMoviePipelineQueue>(StaticDuplicateObject(InPipelineQueue, GetTransientPackage()));
-    auto L_Job   = L_Queue->GetJobs()[i];
-    for (auto* L_Tmp : L_Queue->GetJobs()) {
-      if (L_Tmp == L_Job) continue;
-      L_Queue->DeleteJob(L_Tmp);
-    }
+    L_Queue->DeleteAllJobs();
+    L_Queue->DuplicateJob(InPipelineQueue->GetJobs()[i]);
     L_Array.Add(L_Queue);
   }
 
