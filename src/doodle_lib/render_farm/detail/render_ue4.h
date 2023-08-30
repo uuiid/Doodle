@@ -57,6 +57,8 @@ class render_ue4 {
   FSys::path manifest_path_;
   FSys::path loc_out_file_path_;
   FSys::path server_file_path;
+
+  boost::asio::any_io_executor strand_;
   void set_meg();
 
   // 下载文件

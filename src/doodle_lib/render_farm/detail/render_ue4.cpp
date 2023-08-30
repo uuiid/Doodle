@@ -20,8 +20,8 @@ void render_ue4::run() {
     l_map.emplace(arg_.ProjectPath, boost::asio::make_strand(g_thread()));
   }
 
-  auto& l_strand = l_map.at(arg_.ProjectPath);
-  boost::asio::post(l_strand, [this]() {
+  strand_ = l_map.at(arg_.ProjectPath);
+  boost::asio::post(strand_, [this]() {
     bool l_r;
     try {
       l_r = download_file("D:/doodle/cache/ue");
@@ -79,7 +79,7 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
   }
   loc_out_file_path_ = l_loc.parent_path() / arg_.out_file_path;
   if (FSys::exists(loc_out_file_path_)) FSys::remove_all(loc_out_file_path_);
-  arg_.ProjectPath   = l_loc.lexically_normal().generic_string();
+  arg_.ProjectPath = l_loc.lexically_normal().generic_string();
 
   {
     // 写入数据
@@ -119,12 +119,10 @@ void render_ue4::set_meg() {
   l_msg.set_name(l_prj.filename().generic_string());
 }
 void render_ue4::end_run() {
-  auto& l_map    = g_reg()->ctx().emplace<std::map<std::string, decltype(boost::asio::make_strand(g_thread()))>>();
-
-  auto& l_strand = l_map.at(arg_.ProjectPath);
-  boost::asio::post(l_strand, [this]() {
+  boost::asio::post(strand_, [this]() {
     bool l_r;
     try {
+      DOODLE_LOG_INFO("开始上传文件");
       l_r = updata_file();
     } catch (const doodle_error& e) {
       l_r = false;
