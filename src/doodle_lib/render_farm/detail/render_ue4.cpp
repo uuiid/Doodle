@@ -20,8 +20,9 @@ void render_ue4::run() {
     l_map.emplace(arg_.ProjectPath, boost::asio::make_strand(g_thread()));
   }
 
-  strand_          = l_map.at(arg_.ProjectPath);
-  server_file_path = FSys::path{arg_.ProjectPath}.parent_path();
+  strand_ = l_map.at(arg_.ProjectPath);
+  server_file_path /= arg_.out_file_path;
+  server_file_path = FSys::path{arg_.ProjectPath}.parent_path() / arg_.out_file_path;
   boost::asio::post(strand_, [this]() {
     bool l_r;
     try {
@@ -147,6 +148,8 @@ bool render_ue4::updata_file() {
     DOODLE_LOG_ERROR("文件不存在 {}", loc_out_file_path_);
     return false;
   }
+
+  if (!FSys::exists(server_file_path)) FSys::create_directories(server_file_path);
 
   // 上传输出
   for (auto&& i : FSys::recursive_directory_iterator{loc_out_file_path_}) {
