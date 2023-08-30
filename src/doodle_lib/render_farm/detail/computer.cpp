@@ -22,22 +22,20 @@ using send_to_render_ptr = std::shared_ptr<send_to_render>;
 class send_to_render {
  private:
   std::shared_ptr<doodle::detail::client_core> client_core_ptr_{};
-  entt::handle task_handle_;
 
  public:
-  explicit send_to_render(std::string in_ip, entt::handle in_task)
-      : client_core_ptr_(), task_handle_{std::move(in_task)} {
+  explicit send_to_render(std::string in_ip) : client_core_ptr_() {
     client_core_ptr_ = std::make_shared<doodle::detail::client_core>(in_ip);
   }
 
-  void run() {
+  void run(entt::handle in_handle) {
     using request_type_1  = boost::beast::http::request<detail::basic_json_body>;
     using response_type_1 = boost::beast::http::response<detail::basic_json_body>;
     request_type_1 l_request{boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
     nlohmann::json l_json{};
-    l_json["id"] = task_handle_.entity();
-    auto& l_arg  = task_handle_.get<detail::ue4_task>().arg();
-    DOODLE_LOG_INFO("开始分派任务 id {} {} -> {}", task_handle_, l_arg.ProjectPath, l_arg.out_file_path);
+    l_json["id"] = in_handle.entity();
+    auto& l_arg  = in_handle.get<detail::ue4_task>().arg();
+    DOODLE_LOG_INFO("开始分派任务 id {} {} -> {}", in_handle, l_arg.ProjectPath, l_arg.out_file_path);
     l_json["arg"]    = l_arg;
     l_request.body() = l_json;
     l_request.keep_alive(false);
@@ -76,7 +74,7 @@ void computer::run_task(const entt::handle& in_handle) {
   status_            = computer_status::busy;
   last_time_         = chrono::sys_seconds::clock::now();
   auto l_self_handle = make_handle(this);
-  l_self_handle.get_or_emplace<send_to_render>(name_, in_handle).run();
+  l_self_handle.get_or_emplace<send_to_render>(name_).run(in_handle);
 }
 }  // namespace render_farm
 }  // namespace doodle
