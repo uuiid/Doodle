@@ -48,11 +48,6 @@ crash_reporting_thread::crash_reporting_thread() : impl_ptr_(std::make_unique<im
   ::SetUnhandledExceptionFilter(DoodleUnhandledExceptionFilter);
 }
 
-crash_reporting_thread& crash_reporting_thread::get_instance() {
-  static crash_reporting_thread instance;
-  return instance;
-}
-
 void crash_reporting_thread::run() {
   std::unique_lock<std::mutex> l_lock{impl_ptr_->mutex_};
   impl_ptr_->condition_.wait(l_lock);

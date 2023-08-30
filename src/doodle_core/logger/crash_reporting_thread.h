@@ -27,8 +27,6 @@ class crash_reporting_thread {
 
   void run();
 
-  static crash_reporting_thread& get_instance();
-
   void on_crash_during_static_init(LPEXCEPTION_POINTERS ExceptionInfo);
   void on_crashed(LPEXCEPTION_POINTERS InExceptionInfo);
   // 等待直到崩溃被处理

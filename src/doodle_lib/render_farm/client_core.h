@@ -14,14 +14,11 @@
 namespace doodle::detail {
 class client_core {
  public:
-  using socket_t               = boost::beast::tcp_stream;
-  using socket_ptr             = std::shared_ptr<socket_t>;
-  using resolver_t             = boost::asio::ip::tcp::resolver;
-  using resolver_ptr           = std::shared_ptr<resolver_t>;
-  using buffer_type            = boost::beast::flat_buffer;
-  using response_type          = boost::beast::http::response<render_farm::detail::basic_json_body>;
-  using message_generator_type = boost::beast::http::message_generator;
-  using message_generator_ptr  = std::shared_ptr<message_generator_type>;
+  using socket_t     = boost::beast::tcp_stream;
+  using socket_ptr   = std::shared_ptr<socket_t>;
+  using resolver_t   = boost::asio::ip::tcp::resolver;
+  using resolver_ptr = std::shared_ptr<resolver_t>;
+  using buffer_type  = boost::beast::flat_buffer;
 
  private:
   struct data_type {
