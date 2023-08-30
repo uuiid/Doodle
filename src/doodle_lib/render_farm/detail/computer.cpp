@@ -42,14 +42,16 @@ class send_to_render {
     l_request.prepare_payload();
     client_core_ptr_->async_read<boost::beast::http::response<detail::basic_json_body>>(
         boost::asio::make_strand(g_io_context()), l_request,
-        [this](auto&& PH1, const response_type_1& PH2) {
+        [this, in_handle](auto&& PH1, const response_type_1& PH2) {
           if (PH1) {
             DOODLE_LOG_ERROR("{}", PH1.message());
+            in_handle.get<detail::ue4_task>().fail();
             return;
           }
           if (PH2.result() == boost::beast::http::status::ok) {
             DOODLE_LOG_INFO("成功派发任务");
           } else {
+            in_handle.get<detail::ue4_task>().fail();
             DOODLE_LOG_INFO("派发任务失败");
           }
         }

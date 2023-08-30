@@ -25,6 +25,10 @@ void ue4_task::assign_tasks() {
   }
 }
 bool ue4_task::is_assign() const { return computer_handle_ && computer_handle_.all_of<computer>(); }
+void ue4_task::success() { self_handle_.get<process_message>().set_state(process_message::state::success); }
+bool ue4_task::is_success() const {
+  return self_handle_.get<process_message>().get_state() != process_message::state::success;
+}
 }  // namespace detail
 }  // namespace render_farm
 }  // namespace doodle

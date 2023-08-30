@@ -21,6 +21,14 @@ class ue4_task {
 
   // 是否完成分配
   [[nodiscard]] bool is_assign() const;
+
+  // 成功
+  void success();
+  bool is_success() const;
+
+  // 失败
+  void fail() { computer_handle_ == entt::handle{}; }
+
   // arg
   [[nodiscard]] inline const arg_t& arg() const { return arg_; }
 
