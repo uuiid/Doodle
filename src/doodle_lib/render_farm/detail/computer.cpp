@@ -36,7 +36,9 @@ class send_to_render {
     request_type_1 l_request{boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
     nlohmann::json l_json{};
     l_json["id"]     = task_handle_.entity();
-    l_json["arg"]    = task_handle_.get<detail::ue4_task>().arg();
+    auto& l_arg  = task_handle_.get<detail::ue4_task>().arg();
+    DOODLE_LOG_INFO("开始分派任务 {} -> {}", l_arg.ProjectPath, l_arg.out_file_path);
+    l_json["arg"]    = l_arg;
     l_request.body() = l_json;
     l_request.keep_alive(false);
     l_request.prepare_payload();
@@ -63,7 +65,7 @@ void computer::delay(computer_status in_status) {
     return;
   }
   last_time_ = chrono::sys_seconds::clock::now();
-  status_ = in_status;
+  status_    = in_status;
 }
 void computer::delay(const std::string& in_str) {
   auto l_status = magic_enum::enum_cast<computer_status>(in_str);
