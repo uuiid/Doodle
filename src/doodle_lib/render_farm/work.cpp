@@ -62,8 +62,12 @@ void work::run() {
       boost::asio::make_strand(g_io_context()), l_request,
       [this](auto&& PH1, const response_type_1& PH2) {
         if (PH2.result() == boost::beast::http::status::ok) {
-          auto l_json       = nlohmann::json::parse(PH2.body());
-          ptr_->computer_id = num_to_enum<entt::entity>(l_json["id"].get<std::int32_t>());
+          try {
+            auto l_json       = nlohmann::json::parse(PH2.body());
+            ptr_->computer_id = num_to_enum<entt::entity>(l_json["id"].get<std::int32_t>());
+          } catch (const nlohmann::json::exception& e) {
+            DOODLE_LOG_ERROR("json parse error: {}", boost::diagnostic_information(e));
+          }
         }
         DOODLE_LOG_INFO("{}", PH2.body());
         do_wait();
