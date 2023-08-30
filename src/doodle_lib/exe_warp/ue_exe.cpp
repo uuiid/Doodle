@@ -44,8 +44,8 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
     auto &l_mag = mag_attr.patch<process_message>();
 
     l_mag.set_state(l_mag.run);
-    l_mag.message(fmt::format("开始运行 ue_exe: {}\n", ue_path.string()));
-
+    l_mag.message(fmt::format("开始运行 ue_exe: {}\n", ue_path));
+    DOODLE_LOG_INFO("开始运行 ue_exe: {} {}", ue_path, arg_attr);
     cancel_attr = l_mag.aborted_sig.connect([this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
@@ -139,11 +139,11 @@ void ue_exe::queue_up(
 
   l_run->call_attr = std::make_shared<call_fun_type>([in_call_fun, this](const boost::system::error_code &in_code) {
     boost::asio::post(g_io_context(), [=]() {
-          --run_size_attr;
-          (*in_call_fun)(in_code);
-          this->notify_run();
-        });
-      });
+      --run_size_attr;
+      (*in_call_fun)(in_code);
+      this->notify_run();
+    });
+  });
   notify_run();
 }
 void ue_exe::find_ue_exe() {
