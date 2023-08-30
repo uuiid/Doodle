@@ -123,7 +123,7 @@ void render_ue4::end_run() {
   boost::asio::post(strand_, [this]() {
     bool l_r;
     try {
-      DOODLE_LOG_INFO("开始上传文件");
+      DOODLE_LOG_INFO("开始上传文件 {}", server_file_path);
       l_r = updata_file();
     } catch (const doodle_error& e) {
       l_r = false;
