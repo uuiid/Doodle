@@ -193,10 +193,6 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
 void proxy_server::run() { do_accept(); }
 void proxy_server::stop() {}
 void proxy_server::do_accept() {
-  if (!server_stream_.socket().is_open()) {
-    return;
-  }
-
   acceptor_.async_accept(
       boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&proxy_server::on_accept, this)
   );
@@ -208,7 +204,16 @@ void proxy_server::on_accept(boost::system::error_code ec, boost::asio::ip::tcp:
     }
     DOODLE_LOG_ERROR("on_accept error: {}", ec.what());
   } else {
-    std::make_shared<proxy_server_session>(std::move(socket), server_stream_)->run();
+    client_core_ptr_->async_connect(
+        boost::asio::make_strand(g_io_context()),
+        [this, socket = std::move(socket)](auto&& PH1, auto&& PH2) mutable {
+          if (PH1) {
+            DOODLE_LOG_ERROR("{}", PH1.message());
+            return;
+          }
+          std::make_shared<proxy_server_session>(std::move(socket), *server_stream_)->run();
+        }
+    );
   }
   do_accept();
 }
