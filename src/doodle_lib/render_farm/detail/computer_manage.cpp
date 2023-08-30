@@ -11,7 +11,7 @@ namespace doodle {
 namespace render_farm {
 void computer_manage::run() {
   timer_ = std::make_shared<timer>(g_io_context());
-  timer_->expires_from_now(1s);
+  timer_->expires_from_now(3s);
   timer_->async_wait([this](const boost::system::error_code& ec) {
     for (auto&& [e, computer] : g_reg()->view<computer>().each()) {
       if (computer.status() == computer_status::idle) {
