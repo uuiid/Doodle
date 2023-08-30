@@ -20,9 +20,14 @@ void render_ue4::run() {
     l_map.emplace(arg_.ProjectPath, boost::asio::make_strand(g_thread()));
   }
 
-  strand_ = l_map.at(arg_.ProjectPath);
-  server_file_path /= arg_.out_file_path;
-  server_file_path = FSys::path{arg_.ProjectPath}.parent_path() / arg_.out_file_path;
+  strand_    = l_map.at(arg_.ProjectPath);
+  auto l_prj = FSys::path{arg_.ProjectPath};
+  static FSys::path l_loc_main_{"D:/doodle/cache/ue"};
+  server_file_path   = l_prj.parent_path() / arg_.out_file_path;
+  loc_out_file_path_ = l_loc_main_ / l_prj.stem() / arg_.out_file_path;
+  if (FSys::exists(loc_out_file_path_)) FSys::remove_all(loc_out_file_path_);
+  DOODLE_LOG_INFO("确认输出路径 {}", loc_out_file_path_);
+
   boost::asio::post(strand_, [this]() {
     bool l_r;
     try {
@@ -79,9 +84,7 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
       }
     }
   }
-  loc_out_file_path_ = l_loc.parent_path() / arg_.out_file_path;
-  DOODLE_LOG_INFO("确认输出路径 {}", loc_out_file_path_);
-  if (FSys::exists(loc_out_file_path_)) FSys::remove_all(loc_out_file_path_);
+
   arg_.ProjectPath = l_loc.lexically_normal().generic_string();
 
   {
@@ -110,8 +113,9 @@ void render_ue4::run_impl(bool in_r) {
   l_msg.message("开始启动ue4项目文件");
   // 生成命令行
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
-  g_ctx().get<ue_exe_ptr>()->async_run(self_handle_, ue_exe::arg_render_queue{generate_command_line()}, [this](auto&&) { end_run(); }
-  );
+  g_ctx().get<ue_exe_ptr>()->async_run(self_handle_, ue_exe::arg_render_queue{generate_command_line()}, [this](auto&&) {
+    end_run();
+  });
 }
 void render_ue4::set_meg() {
   auto& l_msg = self_handle_.get_or_emplace<process_message>();
