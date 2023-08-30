@@ -78,6 +78,7 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
     }
   }
   loc_out_file_path_ = l_loc.parent_path() / arg_.out_file_path;
+  if (FSys::exists(loc_out_file_path_)) FSys::remove_all(loc_out_file_path_);
   arg_.ProjectPath   = l_loc.lexically_normal().generic_string();
 
   {
