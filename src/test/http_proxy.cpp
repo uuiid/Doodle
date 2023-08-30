@@ -45,29 +45,11 @@ class server_facet {
   bool post() {
     using namespace doodle;
     bool l_r{};
-    l_r    = true;
-    guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
-    g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-    auto l_ptr                    = g_ctx().emplace<doodle::render_farm::working_machine_ptr>(
-        std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-    );
-    auto route_ptr = std::make_shared<render_farm::detail::http_route>();
+    l_r        = true;
+    guard_     = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
 
-    l_ptr->route(route_ptr);
-    route_ptr->reg<render_farm::detail::render_job_type_post>();
-    route_ptr->reg<render_farm::detail::computer_reg_type_post>();
-    route_ptr->reg<render_farm::detail::get_log_type_get>();
-    route_ptr->reg<render_farm::detail::get_err_type_get>();
-    route_ptr->reg<render_farm::detail::render_job_type_get>();
-    route_ptr->reg<render_farm::detail::computer_reg_type_get>();
-    route_ptr->reg<render_farm::detail::render_job_type_post>();
-
-    route_ptr->reg<render_farm::detail::client_submit_job_type_post>();
-
-    route_ptr->reg<render_farm::detail::run_job_post>();
-    g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
-    g_reg()->ctx().emplace<render_farm::computer_manage>().run();
-    l_ptr->run();
+    auto& l_ptr = g_ctx().emplace<doodle::proxy_server>(g_io_context(), 50021, "baidu.com");
+    l_ptr.run();
 
     return l_r;
   }
