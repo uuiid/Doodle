@@ -59,10 +59,10 @@ class send_to_render {
 }  // namespace
 
 void computer::delay(computer_status in_status) {
-  if (chrono::sys_seconds::clock::now() - last_time_ < 0.5s) {
+  if (chrono::sys_seconds::clock::now() - last_time_ < 1s) {
     return;
   }
-
+  last_time_ = chrono::sys_seconds::clock::now();
   status_ = in_status;
 }
 void computer::delay(const std::string& in_str) {
@@ -72,6 +72,7 @@ void computer::delay(const std::string& in_str) {
 
 void computer::run_task(const entt::handle& in_handle) {
   status_            = computer_status::busy;
+  last_time_         = chrono::sys_seconds::clock::now();
   auto l_self_handle = make_handle(this);
   l_self_handle.get_or_emplace<send_to_render>(name_, in_handle).run();
 }
