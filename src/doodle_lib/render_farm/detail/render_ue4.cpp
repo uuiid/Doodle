@@ -177,6 +177,8 @@ void render_ue4::send_server_state() {
   if (self_handle_ && g_ctx().contains<render_farm::work>()) {
     DOODLE_LOG_INFO("开始沟通服务器");
     g_ctx().get<render_farm::work>().send_server_state(self_handle_);
+  } else {
+    DOODLE_LOG_ERROR("服务器不存在");
   }
 }
 }  // namespace detail
