@@ -108,8 +108,7 @@ void render_ue4::run_impl(bool in_r) {
   if (!doodle_lib::Get().ctx().contains<ue_exe_ptr>())
     doodle_lib::Get().ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
   doodle_lib::Get().ctx().get<ue_exe_ptr>()->async_run(
-      self_handle_, ue_exe::arg_render_queue{generate_command_line()},
-      [this](auto&&) { end_run(); }
+      self_handle_, ue_exe::arg_render_queue{generate_command_line()}, [this](auto&&) { end_run(); }
   );
 }
 void render_ue4::set_meg() {
@@ -151,15 +150,17 @@ bool render_ue4::updata_file() {
 
   // 上传输出
   for (auto&& i : FSys::recursive_directory_iterator{loc_out_file_path_}) {
-    auto l_loc_ = server_file_path / i.path().lexically_relative(loc_out_file_path_);
+    auto l_ser_ = server_file_path / i.path().lexically_relative(loc_out_file_path_);
     if (i.is_directory()) {
-      FSys::create_directories(l_loc_);
+      FSys::create_directories(l_ser_);
     } else {
-      if (!FSys::exists(l_loc_) || i.file_size() != FSys::file_size(l_loc_) ||
-          i.last_write_time() != FSys::last_write_time(l_loc_)) {
+      if (!FSys::exists(l_ser_) || i.file_size() != FSys::file_size(l_ser_) ||
+          i.last_write_time() != FSys::last_write_time(l_ser_)) {
         try {
-          FSys::copy_file(i.path(), l_loc_, FSys::copy_options::overwrite_existing);
-          FSys::last_write_time(l_loc_, i.last_write_time());
+          if (!FSys::exists(l_ser_.parent_path())) FSys::create_directories(l_ser_.parent_path());
+
+          FSys::copy_file(i.path(), l_ser_, FSys::copy_options::overwrite_existing);
+          FSys::last_write_time(l_ser_, i.last_write_time());
         } catch (const FSys::filesystem_error& error) {
           DOODLE_LOG_ERROR(boost::diagnostic_information(error));
         }
