@@ -69,6 +69,8 @@ void work::run() {
           } catch (const nlohmann::json::exception& e) {
             DOODLE_LOG_ERROR("json parse error: {}", boost::diagnostic_information(e));
           }
+        } else {
+          DOODLE_LOG_ERROR("未注册成功 {}", PH2.result_int());
         }
         do_wait();
       }
