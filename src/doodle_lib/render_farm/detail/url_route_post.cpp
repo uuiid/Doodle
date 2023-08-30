@@ -108,8 +108,8 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
           l_handle = entt::handle{*g_reg(), g_reg()->create()};
           l_handle.emplace<computer>().set_name(l_remote_ip);
         }
-        if (auto l_it = l_json.find("status"); l_it != l_json.end()) {
-          l_handle.get<computer>().delay(*l_it);
+        if (auto l_it = l_p.find("status"); l_it != l_p.end()) {
+          l_handle.get<computer>().delay((*l_it).value);
         } else {
           l_handle.get<computer>().delay();
         }
