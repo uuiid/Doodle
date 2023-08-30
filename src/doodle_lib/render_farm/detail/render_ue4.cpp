@@ -20,7 +20,8 @@ void render_ue4::run() {
     l_map.emplace(arg_.ProjectPath, boost::asio::make_strand(g_thread()));
   }
 
-  strand_ = l_map.at(arg_.ProjectPath);
+  strand_          = l_map.at(arg_.ProjectPath);
+  server_file_path = FSys::path{arg_.ProjectPath}.parent_path();
   boost::asio::post(strand_, [this]() {
     bool l_r;
     try {
