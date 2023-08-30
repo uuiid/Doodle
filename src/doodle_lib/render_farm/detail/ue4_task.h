@@ -27,7 +27,7 @@ class ue4_task {
   bool is_success() const;
 
   // 失败
-  void fail() { computer_handle_ == entt::handle{}; }
+  void fail();
 
   // arg
   [[nodiscard]] inline const arg_t& arg() const { return arg_; }

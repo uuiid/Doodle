@@ -26,6 +26,8 @@ void ue4_task::assign_tasks() {
 }
 bool ue4_task::is_assign() const { return computer_handle_ && computer_handle_.all_of<computer>(); }
 void ue4_task::success() { self_handle_.get<process_message>().set_state(process_message::state::success); }
+void ue4_task::fail() { computer_handle_ = entt::handle{}; }
+
 bool ue4_task::is_success() const {
   return self_handle_.get<process_message>().get_state() != process_message::state::success;
 }
