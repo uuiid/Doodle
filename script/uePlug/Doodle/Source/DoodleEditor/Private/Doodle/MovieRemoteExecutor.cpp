@@ -433,7 +433,7 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
     return;
   }
 
-  static FString L_Sub_URL{TEXT("v1/render_farm/client_submit_job")};
+  static FString L_Sub_URL{TEXT("v1/render_farm/render_job")};
 
   for (auto&& i : RemoteRenderJobArgs) {
     FString L_Url = FString::Printf(TEXT("http://127.0.0.1:%d/%s"), GetProt(), *L_Sub_URL);
