@@ -27,7 +27,7 @@ menu_bar::menu_bar() {
   });
   auto &&l_lib = doodle_lib::Get();
 
-  run_client = false, run_work = false;
+  run_client   = false;
 }
 
 void menu_bar::message(const std::string &in_m) {
