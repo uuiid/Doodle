@@ -67,21 +67,18 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
       // Read just the header from the input
       boost::beast::http::read_header(input, buffer, p, ec);
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
         return;
       }
 
       // Apply the caller's header transformation
       //    transform(p.get(), ec);
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
         return;
       }
 
       // Send the transformed message to the output
       boost::beast::http::write_header(output, sr, ec);
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
         if ((ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
              ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) &&
             isRequest) {
@@ -113,7 +110,6 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
           // This error is returned when buffer_body uses up the buffer
           if (ec == boost::beast::http::error::need_buffer) ec = {};
           if (ec) {
-            DOODLE_LOG_INFO("{}", ec);
             return;
           }
 
@@ -133,11 +129,9 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
 
         // This error is returned when buffer_body uses up the buffer
         if (ec == boost::beast::http::error::need_buffer) {
-          DOODLE_LOG_INFO("{}", ec);
           ec = {};
         }
         if (ec) {
-          DOODLE_LOG_INFO("{}", ec);
           return;
         }
       } while (!p.is_done() && !sr.is_done());
@@ -161,9 +155,25 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
     l_relay_res.server_ptr_ = ptr_->server_ptr_;
 
     l_relay_req.relay_handle(ptr_->server_stream_, ptr_->stream_, ptr_->buffer_req, ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      return;
+    }
     l_relay_req.relay_body(ptr_->server_stream_, ptr_->stream_, ptr_->buffer_req, ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      return;
+    }
     l_relay_res.relay_handle(ptr_->stream_, ptr_->server_stream_, ptr_->buffer_res, ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      return;
+    }
     l_relay_res.relay_body(ptr_->stream_, ptr_->server_stream_, ptr_->buffer_res, ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      return;
+    }
   }
 
   void run() {
@@ -423,7 +433,5 @@ void proxy_server::on_accept(boost::system::error_code ec, boost::asio::ip::tcp:
   }
   do_accept();
 }
-void proxy_server::do_connect_sync() {
-  boost::asio::connect(server_stream_->socket(), resolver_results_);
-}
+void proxy_server::do_connect_sync() { boost::asio::connect(server_stream_->socket(), resolver_results_); }
 }  // namespace doodle
