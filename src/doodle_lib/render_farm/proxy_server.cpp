@@ -403,7 +403,7 @@ void proxy_server::do_resolve() {
     }
     resolver_results_ = std::move(PH2);
     DOODLE_LOG_INFO("resolver_ success");
-    do_connect();
+    //    do_connect();
   });
 }
 void proxy_server::do_connect() {
