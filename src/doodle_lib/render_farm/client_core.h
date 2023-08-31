@@ -93,7 +93,11 @@ class client_core : public std::enable_shared_from_this<client_core> {
 
     void run(client_core* in_ptr) {
       in_ptr->ptr_->queue_running_ = true;
-      do_write();
+      if (socket_.socket().is_open()) {
+        do_write();
+      } else {
+        do_connect();
+      }
     }
 
     // async_write async_read 回调
