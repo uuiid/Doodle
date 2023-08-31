@@ -120,6 +120,7 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     );
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
+    L_Sk_Com->SetReceivesDecals(bReceivesDecals);
     // L_Sk_Com->LightingChannels = LightingChannels;
     L_Sk_Com->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
 

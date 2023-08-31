@@ -51,6 +51,10 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
       meta = (ClampMin = 1, ClampMax = 100)
   )
   bool bCluster;
+
+  UPROPERTY(EditAnywhere, Category = "Rendering", meta = (InlineEditConditionToggle = "bReceivesDecals"))
+  bool bReceivesDecals;
+
   UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "集群点", meta = (ClampMin = 1, ClampMax = 100)
   )

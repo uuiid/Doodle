@@ -43,6 +43,9 @@ class DOODLE_API ADoodleAiArrayGenerationMoveSpline : public AActor {
   )
   float RandomRadius;
 
+  UPROPERTY(EditAnywhere, Category = "Rendering", meta = (InlineEditConditionToggle = "bReceivesDecals"))
+  bool bReceivesDecals;
+
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "上下偏移值")
   float OffsetValue;
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "旋转偏移值")
