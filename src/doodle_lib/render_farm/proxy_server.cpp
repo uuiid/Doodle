@@ -36,13 +36,113 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
         response_parser_.get()};
 
     boost::beast::flat_buffer buffer_;
-    boost::signals2::scoped_connection connection_;
+    //    boost::signals2::scoped_connection connection_;
+
+    proxy_server* server_ptr_{};
   };
   std::shared_ptr<data_type> ptr_;
 
+  template <bool isRequest, class SyncWriteStream, class SyncReadStream, class DynamicBuffer>
+  void relay(SyncWriteStream& output, SyncReadStream& input, DynamicBuffer& buffer, boost::beast::error_code& ec) {
+    static_assert(boost::beast::is_sync_write_stream<SyncWriteStream>::value, "SyncWriteStream requirements not met");
+
+    static_assert(boost::beast::is_sync_read_stream<SyncReadStream>::value, "SyncReadStream requirements not met");
+
+    // A small buffer for relaying the body piece by piece
+    char buf[2048];
+
+    // Create a parser with a buffer body to read from the input.
+    boost::beast::http::parser<isRequest, boost::beast::http::buffer_body> p;
+
+    // Create a serializer from the message contained in the parser.
+    boost::beast::http::serializer<isRequest, boost::beast::http::buffer_body, boost::beast::http::fields> sr{p.get()};
+
+    // Read just the header from the input
+    boost::beast::http::read_header(input, buffer, p, ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      return;
+    }
+
+    // Apply the caller's header transformation
+    //    transform(p.get(), ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      return;
+    }
+
+    // Send the transformed message to the output
+    boost::beast::http::write_header(output, sr, ec);
+    if (ec) {
+      DOODLE_LOG_INFO("{}", ec);
+      if ((ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) &&
+          isRequest) {
+        ptr_->server_ptr_->do_connect_sync();
+        boost::beast::http::write_header(output, sr, ec);
+      } else {
+        return;
+      }
+    }
+
+    // Loop over the input and transfer it to the output
+    do {
+      if (!p.is_done()) {
+        // Set up the body for writing into our small buffer
+        p.get().body().data = buf;
+        p.get().body().size = sizeof(buf);
+
+        // Read as much as we can
+        boost::beast::http::read(input, buffer, p, ec);
+
+        // This error is returned when buffer_body uses up the buffer
+        if (ec == boost::beast::http::error::need_buffer) ec = {};
+        if (ec) {
+          DOODLE_LOG_INFO("{}", ec);
+          return;
+        }
+
+        // Set up the body for reading.
+        // This is how much was parsed:
+        p.get().body().size = sizeof(buf) - p.get().body().size;
+        p.get().body().data = buf;
+        p.get().body().more = !p.is_done();
+      } else {
+        p.get().body().data = nullptr;
+        p.get().body().size = 0;
+        p.get().body().more = !p.is_done();
+      }
+
+      // Write everything in the buffer (which might be empty)
+      boost::beast::http::write(output, sr, ec);
+
+      // This error is returned when buffer_body uses up the buffer
+      if (ec == boost::beast::http::error::need_buffer) {
+        DOODLE_LOG_INFO("{}", ec);
+        ec = {};
+      }
+      if (ec) {
+        DOODLE_LOG_INFO("{}", ec);
+        return;
+      }
+    } while (!p.is_done() && !sr.is_done());
+  }
+
  public:
-  explicit proxy_server_session(boost::asio::ip::tcp::socket in_socket, boost::beast::tcp_stream& in_server_stream_)
-      : ptr_(std::make_shared<data_type>(std::move(in_socket), in_server_stream_)) {}
+  explicit proxy_server_session(
+      boost::asio::ip::tcp::socket in_socket, boost::beast::tcp_stream& in_server_stream_, proxy_server* in_server_ptr
+  )
+      : ptr_(std::make_shared<data_type>(std::move(in_socket), in_server_stream_)) {
+    ptr_->server_ptr_ = in_server_ptr;
+  }
+
+  void run2() {
+    boost::beast::error_code ec;
+    relay<true>(ptr_->server_stream_, ptr_->stream_, ptr_->buffer_, ec);
+    DOODLE_LOG_INFO("开始回复");
+    ptr_->buffer_.clear();
+    relay<false>(ptr_->stream_, ptr_->server_stream_, ptr_->buffer_, ec);
+  }
 
   void run() {
     boost::asio::dispatch(
@@ -56,16 +156,33 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
         ptr_->stream_, ptr_->buffer_, ptr_->request_parser_,
         [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
           if (ec) {
-            if (ec == boost::beast::http::error::end_of_stream) {
-              return do_close();
-            }
+            //                      if (ec == boost::beast::http::error::end_of_stream) {
+            //                        return do_close();
+            //                      }
             DOODLE_LOG_ERROR("on_read error: {}", ec.message());
-            return do_close();
+            //                      return do_close();
           }
+          DOODLE_LOG_INFO("do_read_header {}", ptr_->request_parser_.get().target());
           ptr_->stream_.expires_after(10s);
           do_write_header();
         }
     );
+  }
+  void do_connect() {
+    ptr_->server_ptr_->do_connect();
+    ptr_->server_stream_.expires_after(10s);
+    DOODLE_LOG_INFO("do_connect {}", ptr_->server_ptr_->server_address_);
+
+    auto l_timer = std::make_shared<boost::asio::system_timer>(g_io_context());
+    l_timer->expires_after(1s);
+    l_timer->async_wait([l_timer, self = shared_from_this()](auto&& PH1) {
+      if (PH1) {
+        DOODLE_LOG_ERROR("timer error: {}", PH1.message());
+        return;
+      }
+      DOODLE_LOG_INFO("timer success");
+      self->do_write_header();
+    });
   }
 
   void do_write_header() {
@@ -77,9 +194,15 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
             if (ec == boost::beast::http::error::end_of_stream) {
               return do_close();
             }
+            if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+                ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
+              do_connect();
+              return;
+            }
             DOODLE_LOG_ERROR("on_read error: {}", ec.message());
             return do_close();
           }
+          DOODLE_LOG_INFO("do_write_header {}", ptr_->request_parser_.get().target());
           ptr_->stream_.expires_after(10s);
           do_read_body();
         }
@@ -88,7 +211,9 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
 
   void do_read_body() {
     if (ptr_->request_parser_.is_done()) {
-      do_server_read_header();
+      DOODLE_LOG_INFO("body is done");
+      do_write_body();
+      return;
     }
     // 这里清除缓冲区
     ptr_->buffer_.clear();
@@ -103,6 +228,7 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
             DOODLE_LOG_ERROR("on_read error: {}", ec.message());
             return do_close();
           }
+          DOODLE_LOG_INFO("do_read_body {}", ptr_->request_parser_.get().target());
           ptr_->stream_.expires_after(10s);
           do_write_body();
         }
@@ -118,7 +244,22 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
     ptr_->stream_.expires_after(10s);
     boost::beast::http::async_write(
         ptr_->server_stream_, ptr_->request_serializer_,
-        boost::beast::bind_front_handler(&proxy_server_session::do_read_body, shared_from_this())
+        [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
+          if (ec) {
+            if (ec == boost::beast::http::error::end_of_stream) {
+              return do_close();
+            }
+            DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+            return do_close();
+          }
+          DOODLE_LOG_INFO("do_write_body {}", ptr_->request_parser_.get().target());
+          ptr_->stream_.expires_after(10s);
+          if (ptr_->request_parser_.is_done() || ptr_->request_serializer_.is_done()) {
+            do_server_read_header();
+          }
+
+          do_read_body();
+        }
     );
   }
 
@@ -128,13 +269,14 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
     boost::beast::http::async_read_header(
         ptr_->server_stream_, ptr_->buffer_, ptr_->response_parser_,
         [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
-          if (ec) {
-            if (ec == boost::beast::http::error::end_of_stream) {
-              return do_close();
-            }
-            DOODLE_LOG_ERROR("on_read error: {}", ec.message());
-            return do_close();
-          }
+          //          if (ec == boost::beast::http::error::end_of_stream) {
+          //            do_server_write_header();
+          //          }
+          //          if (ec) {
+          //            DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+          //            return do_close();
+          //          }
+          DOODLE_LOG_INFO("do_server_read_header {}", ptr_->response_parser_.get().body().size);
           ptr_->server_stream_.expires_after(10s);
           do_server_write_header();
         }
@@ -152,6 +294,7 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
             DOODLE_LOG_ERROR("on_read error: {}", ec.message());
             return do_close();
           }
+          DOODLE_LOG_INFO("do_server_write_header {}", ptr_->response_parser_.get().body().size);
           ptr_->server_stream_.expires_after(10s);
           do_server_read_body();
         }
@@ -160,7 +303,8 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
 
   void do_server_read_body() {
     if (ptr_->response_parser_.is_done()) {
-      do_close();
+      DOODLE_LOG_INFO("body is done");
+      do_server_write_body();
     }
     // 这里清除缓冲区
     ptr_->buffer_.clear();
@@ -175,6 +319,7 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
             DOODLE_LOG_ERROR("on_read error: {}", ec.message());
             return do_close();
           }
+          DOODLE_LOG_INFO("do_server_read_body {}", ptr_->response_parser_.get().body().size);
           ptr_->server_stream_.expires_after(10s);
           do_server_write_body();
         }
@@ -190,7 +335,21 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
     ptr_->server_stream_.expires_after(10s);
     boost::beast::http::async_write(
         ptr_->stream_, ptr_->response_serializer_,
-        boost::beast::bind_front_handler(&proxy_server_session::do_server_read_body, shared_from_this())
+        [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
+          if (ec) {
+            if (ec == boost::beast::http::error::end_of_stream) {
+              return do_close();
+            }
+            DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+            return do_close();
+          }
+          DOODLE_LOG_INFO("do_server_write_body {}", ptr_->response_parser_.get().body().size);
+          ptr_->server_stream_.expires_after(10s);
+          if (ptr_->response_parser_.is_done() || ptr_->response_serializer_.is_done()) {
+            do_read_header();
+          }
+          do_server_read_body();
+        }
     );
   }
 
@@ -210,6 +369,7 @@ void proxy_server::do_resolve() {
       DOODLE_LOG_ERROR("resolver_ error: {}", PH1.message());
       return;
     }
+    resolver_results_ = std::move(PH2);
     DOODLE_LOG_INFO("resolver_ success");
     do_connect();
   });
@@ -236,11 +396,12 @@ void proxy_server::on_accept(boost::system::error_code ec, boost::asio::ip::tcp:
     }
     DOODLE_LOG_ERROR("on_accept error: {}", ec.what());
   } else {
-    using response_type_1 = boost::beast::http::response<boost::beast::http::empty_body>;
-    boost::beast::http::request<boost::beast::http::empty_body> l_request{boost::beast::http::verb::get, "", 11};
-    l_request.keep_alive(true);
-    std::make_shared<proxy_server_session>(std::move(socket), *server_stream_)->run();
+    std::make_shared<proxy_server_session>(std::move(socket), *server_stream_, this)->run2();
   }
   do_accept();
+}
+void proxy_server::do_connect_sync() {
+  boost::asio::connect(server_stream_->socket(), resolver_results_);
+  DOODLE_LOG_INFO("do_connect_sync success");
 }
 }  // namespace doodle

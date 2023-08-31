@@ -35,6 +35,7 @@ class proxy_server {
 
   void do_resolve();
   void do_connect();
+  void do_connect_sync();
 
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;

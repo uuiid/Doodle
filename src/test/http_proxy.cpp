@@ -48,7 +48,7 @@ class server_facet {
     l_r        = true;
     guard_     = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
 
-    auto& l_ptr = g_ctx().emplace<doodle::proxy_server>(g_io_context(), 50021, "baidu.com");
+    auto& l_ptr = g_ctx().emplace<doodle::proxy_server>(g_io_context(), 50021, "baidu.com", "http");
     l_ptr.run();
 
     return l_r;
