@@ -63,22 +63,14 @@ void working_machine::config_server() {
 
   route_ptr_->reg<detail::computer_reg_type_get>();
   route_ptr_->reg<detail::render_job_type_post>();
+  route_ptr_->reg<detail::repository_type_get>();
 
   g_reg()->ctx().emplace<ue_task_manage>().run();
   g_reg()->ctx().emplace<computer_manage>().run();
 
   run();
 }
-void working_machine::config_client() {
-  work_type_ = working_machine_work_type::client;
-  work_type_ = working_machine_work_type::server;
 
-  route_ptr_ = std::make_shared<detail::http_route>();
-  route_ptr_->reg<detail::get_root_type>();
-  route_ptr_->reg<detail::client_submit_job_type_post>();
-  route_ptr_->reg<detail::repository_type_get>();
-  run();
-}
 void working_machine::config_work() {
   work_type_ = working_machine_work_type::work;
   route_ptr_ = std::make_shared<detail::http_route>();
@@ -92,10 +84,7 @@ void working_machine::config(working_machine_work_type in_type) {
       config_server();
       break;
     }
-    case working_machine_work_type::client: {
-      config_client();
-      break;
-    }
+
     case working_machine_work_type::work: {
       config_work();
       break;

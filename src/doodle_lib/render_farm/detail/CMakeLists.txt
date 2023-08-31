@@ -10,7 +10,6 @@ target_sources(
         computer.h
         ue4_task.h
         aync_read_body.h
-        forward_to_server.h
         ue_task_manage.h
         computer_manage.h
         render_job_put.h
@@ -24,7 +23,6 @@ target_sources(
         basic_json_body.cpp
         computer.cpp
         ue4_task.cpp
-        forward_to_server.cpp
         ue_task_manage.cpp
         computer_manage.cpp
         render_job_put.cpp

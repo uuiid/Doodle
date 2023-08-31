@@ -9,7 +9,6 @@
 
 #include <doodle_lib/render_farm/detail/aync_read_body.h>
 #include <doodle_lib/render_farm/detail/computer.h>
-#include <doodle_lib/render_farm/detail/forward_to_server.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/detail/ue4_task.h>
 namespace doodle::render_farm {
@@ -51,16 +50,6 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
   );
-}
-void client_submit_job_type_post::operator()(
-    const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap
-) const {
-  using parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
-  auto& l_session   = in_handle.get<working_machine_session>();
-  auto l_parser_ptr = std::make_shared<parser_type>(std::move(l_session.request_parser()));
-  boost::beast::http::async_read(l_session.stream(), l_session.buffer(), *l_parser_ptr, [=](auto... in_item) {
-    in_handle.emplace<forward_to_server>(in_handle, l_parser_ptr)(std::move(in_item)...);
-  });
 }
 
 void computer_reg_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)

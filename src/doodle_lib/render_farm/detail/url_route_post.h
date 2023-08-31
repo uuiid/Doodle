@@ -20,11 +20,7 @@ struct render_job_type_post {
   boost::beast::http::verb verb_{boost::beast::http::verb::post};
   void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
 };
-struct client_submit_job_type_post {
-  std::vector<std::string> url_{"v1", "render_farm", "client_submit_job"};
-  boost::beast::http::verb verb_{boost::beast::http::verb::post};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
-};
+
 struct computer_reg_type_post {
   std::vector<std::string> url_{"v1", "render_farm", "computer"};
   boost::beast::http::verb verb_{boost::beast::http::verb::post};

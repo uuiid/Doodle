@@ -63,7 +63,6 @@ class server_facet {
     route_ptr->reg<render_farm::detail::computer_reg_type_get>();
     route_ptr->reg<render_farm::detail::render_job_type_post>();
 
-    route_ptr->reg<render_farm::detail::client_submit_job_type_post>();
     route_ptr->reg<render_farm::detail::repository_type_get>();
     route_ptr->reg<render_farm::detail::get_root_type>();
 

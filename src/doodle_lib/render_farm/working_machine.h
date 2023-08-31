@@ -12,7 +12,7 @@
 #include <memory>
 namespace doodle::render_farm {
 
-enum class working_machine_work_type { none, server, client, work };
+enum class working_machine_work_type { none, server, work };
 
 class working_machine : public std::enable_shared_from_this<working_machine> {
  public:
@@ -25,7 +25,6 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   void stop();
 
   void config_server();
-  void config_client();
   void config_work();
   void config(working_machine_work_type in_type);
   inline working_machine_work_type work_type() const { return work_type_; }
