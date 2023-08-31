@@ -46,13 +46,13 @@ class client {
     using response_type = boost::beast::http::response<render_farm::detail::basic_json_body>;
     return core_ptr_->async_read<response_type>(
         boost::asio::make_strand(g_io_context()), l_request,
-        [l_fun = std::move(in_completion)](boost::beast::error_code&& ec, const response_type& PH2) {
+        [l_fun = std::move(in_completion)](boost::beast::error_code ec, const response_type& PH2) {
           DOODLE_LOG_INFO("{}", PH2.body().dump());
           try {
             auto l_list = PH2.body().get<std::vector<computer>>();
             l_fun(ec, l_list);
           } catch (nlohmann::json::exception& e) {
-            DOODLE_LOG_ERROR("{}", e);
+            DOODLE_LOG_ERROR("{}", e.what());
             BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
             l_fun(ec, std::vector<computer>{});
           }
@@ -90,7 +90,7 @@ class client {
             auto l_list = PH2.body().get<std::vector<task_t>>();
             l_fun(ec, l_list);
           } catch (nlohmann::json::exception& e) {
-            DOODLE_LOG_ERROR("{}", e);
+            DOODLE_LOG_ERROR("{}", e.what());
             BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
             l_fun(ec, std::vector<task_t>{});
           }
