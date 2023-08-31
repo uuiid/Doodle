@@ -88,6 +88,7 @@ target_link_libraries(
 
         PRIVATE
         Iphlpapi.lib
+        windowsapp.lib
 )
 
 target_compile_definitions(doodle_core
