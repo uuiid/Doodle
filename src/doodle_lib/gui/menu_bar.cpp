@@ -98,10 +98,14 @@ void menu_bar::menu_tool() {
 }
 void menu_bar::menu_start_render_client(bool is_run) {
   if (is_run) {
-    g_ctx().emplace<doodle::proxy_server>(g_io_context(), 50021, core_set::get_set().server_ip, "50021").run();
+    g_ctx()
+        .emplace<proxy_server_ptr>(
+            std::make_shared<proxy_server>(g_io_context(), 50021, core_set::get_set().server_ip, "50021")
+        )
+        ->run();
   } else {
-    g_ctx().get<doodle::proxy_server>().stop();
-    g_ctx().erase<doodle::proxy_server>();
+    g_ctx().get<proxy_server_ptr>()->stop();
+    g_ctx().erase<proxy_server_ptr>();
   }
 }
 

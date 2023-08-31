@@ -12,7 +12,7 @@
 
 #include <memory>
 namespace doodle {
-class proxy_server {
+class proxy_server : public std::enable_shared_from_this<proxy_server> {
  public:
   using stream_t     = boost::beast::tcp_stream;
   using resolver_t   = boost::asio::ip::tcp::resolver;
@@ -46,5 +46,5 @@ class proxy_server {
   resolver_ptr resolver_{};
   resolver_t::results_type resolver_results_;
 };
-
+using proxy_server_ptr = std::shared_ptr<proxy_server>;
 }  // namespace doodle

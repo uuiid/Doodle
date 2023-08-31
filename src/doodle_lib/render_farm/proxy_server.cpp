@@ -394,7 +394,7 @@ void proxy_server::run() {
   do_resolve();
   do_accept();
 }
-void proxy_server::stop() {}
+void proxy_server::stop() { acceptor_.cancel(); }
 void proxy_server::do_resolve() {
   resolver_->async_resolve(server_address_, server_port_, [this](auto&& PH1, auto&& PH2) {
     if (PH1) {
@@ -418,7 +418,8 @@ void proxy_server::do_connect() {
 
 void proxy_server::do_accept() {
   acceptor_.async_accept(
-      boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&proxy_server::on_accept, this)
+      boost::asio::make_strand(g_io_context()),
+      boost::beast::bind_front_handler(&proxy_server::on_accept, shared_from_this())
   );
 }
 void proxy_server::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
