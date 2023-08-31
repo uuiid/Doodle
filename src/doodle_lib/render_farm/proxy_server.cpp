@@ -36,97 +36,113 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
         response_parser_.get()};
 
     boost::beast::flat_buffer buffer_;
+    boost::beast::flat_buffer buffer_req;
+    boost::beast::flat_buffer buffer_res;
     //    boost::signals2::scoped_connection connection_;
 
     proxy_server* server_ptr_{};
   };
   std::shared_ptr<data_type> ptr_;
-
-  template <bool isRequest, class SyncWriteStream, class SyncReadStream, class DynamicBuffer>
-  void relay(SyncWriteStream& output, SyncReadStream& input, DynamicBuffer& buffer, boost::beast::error_code& ec) {
-    static_assert(boost::beast::is_sync_write_stream<SyncWriteStream>::value, "SyncWriteStream requirements not met");
-
-    static_assert(boost::beast::is_sync_read_stream<SyncReadStream>::value, "SyncReadStream requirements not met");
-
-    // A small buffer for relaying the body piece by piece
-    char buf[2048];
-
+  template <bool isRequest>
+  struct relay_t {
     // Create a parser with a buffer body to read from the input.
     boost::beast::http::parser<isRequest, boost::beast::http::buffer_body> p;
 
     // Create a serializer from the message contained in the parser.
     boost::beast::http::serializer<isRequest, boost::beast::http::buffer_body, boost::beast::http::fields> sr{p.get()};
 
-    // Read just the header from the input
-    boost::beast::http::read_header(input, buffer, p, ec);
-    if (ec) {
-      DOODLE_LOG_INFO("{}", ec);
-      return;
-    }
+    // A small buffer for relaying the body piece by piece
+    char buf[2048];
 
-    // Apply the caller's header transformation
-    //    transform(p.get(), ec);
-    if (ec) {
-      DOODLE_LOG_INFO("{}", ec);
-      return;
-    }
+    proxy_server* server_ptr_{};
 
-    // Send the transformed message to the output
-    boost::beast::http::write_header(output, sr, ec);
-    if (ec) {
-      DOODLE_LOG_INFO("{}", ec);
-      if ((ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
-           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) &&
-          isRequest) {
-        ptr_->server_ptr_->do_connect_sync();
-        boost::beast::http::write_header(output, sr, ec);
-      } else {
-        return;
-      }
-    }
+    template <class SyncWriteStream, class SyncReadStream, class DynamicBuffer>
+    void relay_handle(
+        SyncWriteStream& output, SyncReadStream& input, DynamicBuffer& buffer, boost::beast::error_code& ec
+    ) {
+      static_assert(boost::beast::is_sync_write_stream<SyncWriteStream>::value, "SyncWriteStream requirements not met");
 
-    // Loop over the input and transfer it to the output
-    do {
-      if (!p.is_done()) {
-        // Set up the body for writing into our small buffer
-        p.get().body().data = buf;
-        p.get().body().size = sizeof(buf);
+      static_assert(boost::beast::is_sync_read_stream<SyncReadStream>::value, "SyncReadStream requirements not met");
 
-        // Read as much as we can
-        boost::beast::http::read(input, buffer, p, ec);
-
-        // This error is returned when buffer_body uses up the buffer
-        if (ec == boost::beast::http::error::need_buffer) ec = {};
-        if (ec) {
-          DOODLE_LOG_INFO("{}", ec);
-          return;
-        }
-
-        // Set up the body for reading.
-        // This is how much was parsed:
-        p.get().body().size = sizeof(buf) - p.get().body().size;
-        p.get().body().data = buf;
-        p.get().body().more = !p.is_done();
-      } else {
-        p.get().body().data = nullptr;
-        p.get().body().size = 0;
-        p.get().body().more = !p.is_done();
-      }
-
-      // Write everything in the buffer (which might be empty)
-      boost::beast::http::write(output, sr, ec);
-
-      // This error is returned when buffer_body uses up the buffer
-      if (ec == boost::beast::http::error::need_buffer) {
-        DOODLE_LOG_INFO("{}", ec);
-        ec = {};
-      }
+      // Read just the header from the input
+      boost::beast::http::read_header(input, buffer, p, ec);
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         return;
       }
-    } while (!p.is_done() && !sr.is_done());
-  }
+
+      // Apply the caller's header transformation
+      //    transform(p.get(), ec);
+      if (ec) {
+        DOODLE_LOG_INFO("{}", ec);
+        return;
+      }
+
+      // Send the transformed message to the output
+      boost::beast::http::write_header(output, sr, ec);
+      if (ec) {
+        DOODLE_LOG_INFO("{}", ec);
+        if ((ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
+             ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) &&
+            isRequest) {
+          server_ptr_->do_connect_sync();
+          boost::beast::http::write_header(output, sr, ec);
+        } else {
+          return;
+        }
+      }
+    }
+    template <class SyncWriteStream, class SyncReadStream, class DynamicBuffer>
+    void relay_body(
+        SyncWriteStream& output, SyncReadStream& input, DynamicBuffer& buffer, boost::beast::error_code& ec
+    ) {
+      static_assert(boost::beast::is_sync_write_stream<SyncWriteStream>::value, "SyncWriteStream requirements not met");
+
+      static_assert(boost::beast::is_sync_read_stream<SyncReadStream>::value, "SyncReadStream requirements not met");
+
+      // Loop over the input and transfer it to the output
+      do {
+        if (!p.is_done()) {
+          // Set up the body for writing into our small buffer
+          p.get().body().data = buf;
+          p.get().body().size = sizeof(buf);
+
+          // Read as much as we can
+          boost::beast::http::read(input, buffer, p, ec);
+
+          // This error is returned when buffer_body uses up the buffer
+          if (ec == boost::beast::http::error::need_buffer) ec = {};
+          if (ec) {
+            DOODLE_LOG_INFO("{}", ec);
+            return;
+          }
+
+          // Set up the body for reading.
+          // This is how much was parsed:
+          p.get().body().size = sizeof(buf) - p.get().body().size;
+          p.get().body().data = buf;
+          p.get().body().more = !p.is_done();
+        } else {
+          p.get().body().data = nullptr;
+          p.get().body().size = 0;
+          p.get().body().more = !p.is_done();
+        }
+
+        // Write everything in the buffer (which might be empty)
+        boost::beast::http::write(output, sr, ec);
+
+        // This error is returned when buffer_body uses up the buffer
+        if (ec == boost::beast::http::error::need_buffer) {
+          DOODLE_LOG_INFO("{}", ec);
+          ec = {};
+        }
+        if (ec) {
+          DOODLE_LOG_INFO("{}", ec);
+          return;
+        }
+      } while (!p.is_done() && !sr.is_done());
+    }
+  };
 
  public:
   explicit proxy_server_session(
@@ -138,10 +154,16 @@ class proxy_server_session : public std::enable_shared_from_this<proxy_server_se
 
   void run2() {
     boost::beast::error_code ec;
-    relay<true>(ptr_->server_stream_, ptr_->stream_, ptr_->buffer_, ec);
-    DOODLE_LOG_INFO("开始回复");
-    ptr_->buffer_.clear();
-    relay<false>(ptr_->stream_, ptr_->server_stream_, ptr_->buffer_, ec);
+    relay_t<true> l_relay_req{};
+    l_relay_req.server_ptr_ = ptr_->server_ptr_;
+
+    relay_t<false> l_relay_res{};
+    l_relay_res.server_ptr_ = ptr_->server_ptr_;
+
+    l_relay_req.relay_handle(ptr_->server_stream_, ptr_->stream_, ptr_->buffer_req, ec);
+    l_relay_req.relay_body(ptr_->server_stream_, ptr_->stream_, ptr_->buffer_req, ec);
+    l_relay_res.relay_handle(ptr_->stream_, ptr_->server_stream_, ptr_->buffer_res, ec);
+    l_relay_res.relay_body(ptr_->stream_, ptr_->server_stream_, ptr_->buffer_res, ec);
   }
 
   void run() {
@@ -396,12 +418,12 @@ void proxy_server::on_accept(boost::system::error_code ec, boost::asio::ip::tcp:
     }
     DOODLE_LOG_ERROR("on_accept error: {}", ec.what());
   } else {
+    do_connect_sync();
     std::make_shared<proxy_server_session>(std::move(socket), *server_stream_, this)->run2();
   }
   do_accept();
 }
 void proxy_server::do_connect_sync() {
   boost::asio::connect(server_stream_->socket(), resolver_results_);
-  DOODLE_LOG_INFO("do_connect_sync success");
 }
 }  // namespace doodle
