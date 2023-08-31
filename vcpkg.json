@@ -33,6 +33,7 @@
     "argh",
     "cmakerc",
     "treehh",
+    "wil",
     {
       "name": "opencv",
       "default-features": false,
