@@ -10,6 +10,7 @@
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/show_message.h>
 
+#include <doodle_lib/render_farm/proxy_server.h>
 #include <doodle_lib/render_farm/working_machine.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
@@ -94,51 +95,13 @@ void menu_bar::menu_tool() {
   if (dear::MenuItem("启动渲染客户端", &run_client)) {
     menu_start_render_client(run_client);
   }
-  if (dear::MenuItem("启动渲染工作端", &run_work)) {
-    menu_start_work(run_work);
-  }
 }
 void menu_bar::menu_start_render_client(bool is_run) {
-  if (is_run && !run_work) {
-    doodle_lib::Get()
-        .ctx()
-        .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-        )
-        ->config_client();
-    run_work = false;
+  if (is_run) {
+    g_ctx().emplace<doodle::proxy_server>(g_io_context(), 50021, core_set::get_set().server_ip, "50021").run();
   } else {
-    doodle_lib::Get()
-        .ctx()
-        .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-        )
-        ->stop();
-    g_ctx().erase<doodle::render_farm::working_machine_ptr>();
-    run_client = false;
-    run_work   = false;
-  }
-}
-
-void menu_bar::menu_start_work(bool is_run) {
-  if (is_run && !run_client) {
-    doodle_lib::Get()
-        .ctx()
-        .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-        )
-        ->config_work();
-    run_client = false;
-  } else {
-    doodle_lib::Get()
-        .ctx()
-        .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-        )
-        ->stop();
-    g_ctx().erase<doodle::render_farm::working_machine_ptr>();
-    run_work   = false;
-    run_client = false;
+    g_ctx().get<doodle::proxy_server>().stop();
+    g_ctx().erase<doodle::proxy_server>();
   }
 }
 
