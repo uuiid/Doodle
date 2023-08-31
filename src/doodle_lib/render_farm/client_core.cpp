@@ -10,14 +10,6 @@
 #include <boost/asio.hpp>
 namespace doodle::detail {
 
-client_core::queue_action_guard::~queue_action_guard() {
-  ptr_->queue_running_ = false;
-  ptr_->queue_.pop();
-  if (!ptr_->queue_.empty()) {
-    ptr_->queue_.front()();
-  }
-}
-
 void client_core::make_ptr() {
   auto l_s        = boost::asio::make_strand(g_io_context());
   ptr_->socket_   = std::make_shared<socket_t>(l_s);
@@ -48,6 +40,5 @@ void client_core::cancel() {
   if (ec) {
     DOODLE_LOG_INFO(ec);
   }
-  ptr_->queue_ = {};
 }
 }  // namespace doodle::detail
