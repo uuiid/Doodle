@@ -69,7 +69,6 @@ class client_core : public std::enable_shared_from_this<client_core> {
     };
     std::unique_ptr<data_type2> ptr_;
     socket_t& socket_;
-    resolver_t& resolver_;
     boost::asio::ip::tcp::resolver::results_type& results_;
     using base_type = boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>;
     explicit connect_write_read_op(
@@ -78,7 +77,6 @@ class client_core : public std::enable_shared_from_this<client_core> {
     )
         : base_type(std::move(in_handler), in_executor_type_1),
           socket_(in_ptr->stream()),
-          resolver_(in_ptr->resolver()),
           results_(in_ptr->ptr_->resolver_results_),
           ptr_(std::make_unique<data_type2>()) {
       ptr_->server_ip_ = in_ptr->server_ip();
