@@ -52,7 +52,7 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   )
   bool bCluster;
 
-  UPROPERTY(EditAnywhere, Category = "Doodle", meta = (InlineEditConditionToggle = "bReceivesDecals"))
+  UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "接收贴花")
   bool bReceivesDecals;
 
   UPROPERTY(

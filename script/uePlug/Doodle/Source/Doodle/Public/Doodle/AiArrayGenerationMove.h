@@ -46,7 +46,7 @@ class DOODLE_API ADoodleAiArrayGenerationMove : public AActor {
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "上下偏移值")
   float OffsetValue;
 
-  UPROPERTY(EditAnywhere, Category = "Doodle", meta = (InlineEditConditionToggle = "bReceivesDecals"))
+  UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "接收贴花")
   bool bReceivesDecals;
 
   UPROPERTY(
