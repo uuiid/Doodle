@@ -20,7 +20,7 @@
 #include <maya_plug/maya_render/hud_render_node.h>
 
 #include <maya/MFnPlugin.h>
-#include <maya/MQtUtil.h>
+// #include <maya/MQtUtil.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
 #include <stack>
