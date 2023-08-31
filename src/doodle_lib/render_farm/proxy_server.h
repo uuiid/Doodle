@@ -14,27 +14,36 @@
 namespace doodle {
 class proxy_server {
  public:
+  using stream_t     = boost::beast::tcp_stream;
+  using resolver_t   = boost::asio::ip::tcp::resolver;
+  using resolver_ptr = std::shared_ptr<resolver_t>;
   explicit proxy_server(
-      boost::asio::io_context& in_io_context, std::uint16_t in_port, std::string in_server_address
-      //      std::uint16_t server_port
+      boost::asio::io_context& in_io_context, std::uint16_t in_port, std::string in_server_address,
+      std::string in_server_port
   )
       : end_point_{boost::asio::ip::tcp::v4(), in_port},
         acceptor_{in_io_context, end_point_},
-        server_address_{std::move(in_server_address)} {
-    client_core_ptr_ = std::make_shared<detail::client_core>(server_address_);
-  }
+        server_address_{std::move(in_server_address)},
+        server_port_{std::move(in_server_port)} {}
   void run();
   void stop();
 
  private:
+  friend class proxy_server_session;
   void do_accept();
   void on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
+
+  void do_resolve();
+  void do_connect();
+
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;
-  std::shared_ptr<boost::beast::tcp_stream> server_stream_;
   std::string server_address_;
+  std::string server_port_{"50021"};
 
-  std::shared_ptr<detail::client_core> client_core_ptr_{};
+  std::shared_ptr<stream_t> server_stream_;
+  resolver_ptr resolver_{};
+  resolver_t::results_type resolver_results_;
 };
 
 }  // namespace doodle
