@@ -12,7 +12,7 @@
 #include <boost/beast.hpp>
 
 namespace doodle::detail {
-class client_core {
+class client_core : public std::enable_shared_from_this<client_core> {
  public:
   using socket_t     = boost::beast::tcp_stream;
   using socket_ptr   = std::shared_ptr<socket_t>;
@@ -25,6 +25,8 @@ class client_core {
     std::string server_ip_;
     socket_ptr socket_{};
     resolver_ptr resolver_{};
+    boost::asio::ip::tcp::resolver::results_type resolver_results_;
+    boost::asio::any_io_executor executor_;
 
     std::queue<std::function<void()>> queue_;
     std::atomic_bool queue_running_{};
@@ -32,6 +34,8 @@ class client_core {
   std::shared_ptr<data_type> ptr_;
 
   void make_ptr();
+  // on_resolve
+  void on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results);
 
  public:
   struct queue_action_guard {
@@ -60,14 +64,13 @@ class client_core {
       std::unique_ptr<client_core::queue_action_guard> guard_;
       std::string_view server_ip_;
 
-      // 解析路由结果
-      boost::asio::ip::tcp::resolver::results_type results_;
       // 重试次数
       std::size_t retry_count_{};
     };
     std::unique_ptr<data_type2> ptr_;
     socket_t& socket_;
     resolver_t& resolver_;
+    boost::asio::ip::tcp::resolver::results_type& results_;
     using base_type = boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>;
     explicit connect_write_read_op(
         client_core* in_ptr, RequestType&& in_req, CompletionHandler&& in_handler,
@@ -76,6 +79,7 @@ class client_core {
         : base_type(std::move(in_handler), in_executor_type_1),
           socket_(in_ptr->stream()),
           resolver_(in_ptr->resolver()),
+          results_(in_ptr->ptr_->resolver_results_),
           ptr_(std::make_unique<data_type2>()) {
       ptr_->server_ip_ = in_ptr->server_ip();
       ptr_->guard_     = std::make_unique<client_core::queue_action_guard>(in_ptr->ptr_.get());
@@ -91,11 +95,7 @@ class client_core {
 
     void run(client_core* in_ptr) {
       in_ptr->ptr_->queue_running_ = true;
-      if (socket_.socket().is_open()) {
-        do_write();
-      } else {
-        do_resolve();
-      }
+      do_write();
     }
 
     // async_write async_read 回调
@@ -110,7 +110,7 @@ class client_core {
           return;
         }
         DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
-        do_resolve();
+        do_connect();
         return;
       }
       if (ec) {
@@ -133,30 +133,7 @@ class client_core {
         }
       }
     }
-    // async_resolve 回调
-    void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
-      if (ec == boost::beast::errc::not_connected || ec == boost::beast::errc::connection_reset ||
-          ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
-        if (ptr_->retry_count_ > 3) {
-          ptr_->response_.result(boost::beast::http::status::request_timeout);
-          this->complete(false, ec, ptr_->response_);
-          return;
-        }
-        DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
-        do_resolve();
-        return;
-      }
 
-      if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
-        this->complete(false, ec, ptr_->response_);
-        return;
-      }
-      ptr_->retry_count_ = 0;
-      ptr_->results_     = results;
-
-      do_connect();
-    }
     // async_connect 回调
     void operator()(boost::system::error_code ec, const boost::asio::ip::tcp::endpoint& endpoint) {
       boost::ignore_unused(endpoint);
@@ -201,12 +178,7 @@ class client_core {
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
       DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
-      boost::asio::async_connect(socket_.socket(), ptr_->results_, std::move(*this));
-    }
-    void do_resolve() {
-      ptr_->state_ = start;
-      ++ptr_->retry_count_;
-      resolver_.async_resolve(ptr_->server_ip_, "50021", std::move(*this));
+      boost::asio::async_connect(socket_.socket(), results_, std::move(*this));
     }
   };
 
@@ -214,6 +186,22 @@ class client_core {
   template <typename ResponseType, typename ExecutorType, typename RequestType, typename CompletionHandler>
   auto async_read(const ExecutorType& in_executor_type, RequestType& in_type, CompletionHandler&& in_completion) {
     in_type.set(boost::beast::http::field::host, fmt::format("{}:50021", server_ip()));
+    in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
+        [](auto&& in_completion_, client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
+          auto l_h = std::make_shared<connect_op>(
+              in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
+          );
+          auto& l_queue = in_client_ptr->ptr_->queue_;
+          l_queue.emplace([l_self = l_h, in_client_ptr]() { l_self->run(in_client_ptr); });
+          if (!in_client_ptr->ptr_->queue_running_) l_queue.front()();
+        },
+        in_completion, this, in_executor_type, in_type
+    );
+  }
+  template <typename ResponseType, typename ExecutorType, typename RequestType, typename CompletionHandler>
+  auto async_read2(const ExecutorType& in_executor_type, RequestType& in_type, CompletionHandler&& in_completion) {
     in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(

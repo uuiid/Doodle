@@ -22,9 +22,18 @@ void client_core::make_ptr() {
   auto l_s        = boost::asio::make_strand(g_io_context());
   ptr_->socket_   = std::make_shared<socket_t>(l_s);
   ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
-  //  ptr_->signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
+  ptr_->resolver_->async_resolve(
+      ptr_->server_ip_, "50021", boost::beast::bind_front_handler(&client_core::on_resolve, this)
+  );
+  ptr_->executor_ = boost::asio::make_strand(g_io_context());
 }
-
+void client_core::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
+  if (ec) {
+    DOODLE_LOG_ERROR("on_resolve error: {}", ec.message());
+    return;
+  }
+  ptr_->resolver_results_ = std::move(results);
+}
 client_core::~client_core() = default;
 void client_core::do_close() {
   boost::system::error_code ec;
