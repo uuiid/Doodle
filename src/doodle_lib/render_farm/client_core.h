@@ -202,22 +202,6 @@ class client_core : public std::enable_shared_from_this<client_core> {
         in_completion, this, in_executor_type, in_type
     );
   }
-  template <typename ResponseType, typename ExecutorType, typename RequestType, typename CompletionHandler>
-  auto async_read2(const ExecutorType& in_executor_type, RequestType& in_type, CompletionHandler&& in_completion) {
-    in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
-        [](auto&& in_completion_, client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
-          auto l_h = std::make_shared<connect_op>(
-              in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
-          );
-          auto& l_queue = in_client_ptr->ptr_->queue_;
-          l_queue.emplace([l_self = l_h, in_client_ptr]() { l_self->run(in_client_ptr); });
-          if (!in_client_ptr->ptr_->queue_running_) l_queue.front()();
-        },
-        in_completion, this, in_executor_type, in_type
-    );
-  }
 
  public:
   explicit client_core(std::string in_server_ip) : ptr_(std::make_shared<data_type>()) {
