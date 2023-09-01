@@ -7,7 +7,7 @@ target_sources(
         proxy_server.h
         working_machine.h
         working_machine_session.h
-        dup_server.h
+        udp_server.h
 
         PRIVATE
         client_core.cpp
@@ -16,7 +16,7 @@ target_sources(
         proxy_server.cpp
         working_machine.cpp
         working_machine_session.cpp
-        dup_server.cpp
+        udp_server.cpp
 )
 add_subdirectory(exception)
 add_subdirectory(detail)
