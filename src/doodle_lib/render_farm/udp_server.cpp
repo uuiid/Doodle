@@ -26,8 +26,8 @@ void udp_server::do_accept(std::size_t in_size) {
     DOODLE_LOG_INFO("receive: {}", l_view);
     socket_.async_send_to(
         boost::asio::buffer("hello world! doodle"), end_point_,
-        [this](boost::system::error_code ec, std::size_t bytes) {
-          buffer_;
+        [this, in_size](boost::system::error_code ec, std::size_t bytes) {
+          std::memset(buffer_, 0, in_size);
           this->run();
         }
     );
