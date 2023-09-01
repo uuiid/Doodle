@@ -101,6 +101,22 @@ void work::send_server_state(const entt::handle& in_handle) {
 }
 
 void work::do_close() { ptr_->core_ptr_->cancel(); }
+bool work::find_server_address(std::uint16_t in_port) {
+  DOODLE_LOG_INFO("开始广播端口 {}", in_port);
+  boost::asio::ip::udp::socket l_socket{boost::asio::make_strand(g_io_context())};
+  l_socket.open(boost::asio::ip::udp::v4());
+  l_socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+  l_socket.set_option(boost::asio::socket_base::broadcast(true));
+  boost::asio::ip::udp::endpoint l_endpoint{boost::asio::ip::address_v4::broadcast(), in_port};
+  DOODLE_LOG_INFO("开始发送广播数据, 寻找服务器 ip");
+  l_socket.send_to(boost::asio::buffer("hello world! doodle"), l_endpoint);
+  char l_data[1024];
+  boost::asio::ip::udp::endpoint l_remote_endpoint;
+  l_socket.receive_from(boost::asio::buffer(l_data), l_remote_endpoint);
+  core_set::get_set().server_ip = l_remote_endpoint.address().to_string();
+  DOODLE_LOG_INFO("找到服务器ip {}", l_remote_endpoint.address().to_string());
+  return true;
+}
 
 }  // namespace render_farm
 }  // namespace doodle

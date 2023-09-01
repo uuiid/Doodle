@@ -40,6 +40,8 @@ class work {
     make_ptr();
   }
 
+  static bool find_server_address(std::uint16_t in_port = 50022);
+
   ~work() = default;
 
   void run();

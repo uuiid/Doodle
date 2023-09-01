@@ -36,15 +36,17 @@ bool work_facet::post() {
     g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "work"s);
 
     g_ctx().get<program_info>().use_gui_attr(false);
-    l_r    = true;
-    guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+    if (render_farm::work::find_server_address()) {
+      l_r    = true;
+      guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
 
-    g_ctx().emplace<doodle::render_farm::work>(core_set::get_set().server_ip).run();
-    g_ctx()
-        .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-        )
-        ->config_work();
+      g_ctx().emplace<doodle::render_farm::work>(core_set::get_set().server_ip).run();
+      g_ctx()
+          .emplace<doodle::render_farm::working_machine_ptr>(
+              std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+          )
+          ->config_work();
+    }
   }
   return l_r;
 }
