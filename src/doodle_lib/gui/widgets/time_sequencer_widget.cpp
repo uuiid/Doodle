@@ -367,11 +367,11 @@ bool time_sequencer_widget::render() {
 
   ImGui::PopItemWidth();
 
-  /// 如果时间个数不到三个, 不显示
-  if (p_i->time_list.size() < 3) {
-    ImGui::Text("项目小于 3 不显示");
-    return p_i->open;
-  }
+  //  /// 如果时间个数不到三个, 不显示
+  //  if (p_i->time_list.size() < 3) {
+  //    ImGui::Text("项目小于 3 不显示");
+  //    return p_i->open;
+  //  }
   if (p_i->time_list_x.empty() || p_i->time_list_y.empty() || p_i->time_list.empty()) return p_i->open;
 
   if (ImPlot::BeginPlot("时间折线图")) {
