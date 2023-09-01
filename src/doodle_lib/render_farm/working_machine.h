@@ -16,7 +16,7 @@ enum class working_machine_work_type { none, server, work };
 
 class working_machine : public std::enable_shared_from_this<working_machine> {
  public:
-  explicit working_machine(boost::asio::io_context& in_io_context, std::uint16_t in_port)
+  explicit working_machine(boost::asio::io_context& in_io_context, std::uint16_t in_port = 50021)
       : end_point_{boost::asio::ip::tcp::v4(), in_port},
         acceptor_{in_io_context, end_point_},
         signal_set_{g_io_context(), SIGINT, SIGTERM} {}

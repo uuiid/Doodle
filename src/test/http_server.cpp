@@ -7,6 +7,7 @@
 
 #include <doodle_app/app/program_options.h>
 
+#include "doodle_lib/render_farm/udp_server.h"
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/render_farm/client.h>
@@ -15,6 +16,7 @@
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/udp_server.h>
 #include <doodle_lib/render_farm/work.h>
 #include <doodle_lib/render_farm/working_machine.h>
 
@@ -50,7 +52,7 @@ class server_facet {
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
     g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
     auto l_ptr                    = g_ctx().emplace<doodle::render_farm::working_machine_ptr>(
-        std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+        std::make_shared<doodle::render_farm::working_machine>(g_io_context())
     );
     auto route_ptr = std::make_shared<render_farm::detail::http_route>();
 
@@ -70,6 +72,7 @@ class server_facet {
     g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
     g_reg()->ctx().emplace<render_farm::computer_manage>().run();
     l_ptr->run();
+    g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()));
     //    g_reg()->ctx().emplace<render_farm::work>("192.168.20.59").run();
     //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 
