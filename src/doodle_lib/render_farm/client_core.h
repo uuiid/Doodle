@@ -21,8 +21,10 @@ class client_core : public std::enable_shared_from_this<client_core> {
   using buffer_type  = boost::beast::flat_buffer;
 
  private:
+  struct strand_next_t;
   struct strand_next_t {
-    boost::signals2::signal<void()> next_signal_;
+    std::shared_ptr<strand_next_t> next_signal_;
+    virtual void run() = 0;
   };
   struct data_type {
     std::string server_ip_;
@@ -83,7 +85,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
     connect_write_read_op(const connect_write_read_op&)            = delete;
     connect_write_read_op& operator=(const connect_write_read_op&) = delete;
 
-    void run() {
+    void run() override {
       if (socket_.socket().is_open()) {
         do_write();
       } else {
@@ -100,6 +102,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         if (ptr_->retry_count_ > 3) {
           ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
+          next_signal_ ? next_signal_->run() : void();
           return;
         }
         DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
@@ -109,6 +112,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         this->complete(false, ec, ptr_->response_);
+        next_signal_ ? next_signal_->run() : void();
         return;
       }
 
@@ -119,7 +123,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         }
         case state::read: {
           this->complete(false, ec, ptr_->response_);
-          this->next_signal_();
+          next_signal_ ? next_signal_->run() : void();
           break;
         }
         default: {
@@ -137,6 +141,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         if (ptr_->retry_count_ > 3) {
           ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
+          next_signal_ ? next_signal_->run() : void();
           return;
         }
         DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
@@ -147,6 +152,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         this->complete(false, ec, ptr_->response_);
+        next_signal_ ? next_signal_->run() : void();
         return;
       }
 
@@ -189,7 +195,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
           );
 
           if (auto l_next = l_h->next_strand_.lock()) {
-            l_next->next_signal_.connect([l_self = l_h]() { l_self->run(); });
+            l_next->next_signal_ = l_h;
           } else {
             l_h->run();
           }
