@@ -23,7 +23,8 @@ class udp_server : std::enable_shared_from_this<udp_server> {
 
   boost::asio::ip::udp::endpoint end_point_;
   boost::asio::ip::udp::socket socket_;
-  boost::beast::flat_buffer buffer_;
+  std::string buffer_;
+
   boost::asio::signal_set signal_set_;
 };
 using udp_server_ptr = std::shared_ptr<udp_server>;
