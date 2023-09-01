@@ -194,7 +194,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
               in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
           );
 
-          if (auto l_next = l_h->next_strand_.lock()) {
+          if (auto l_next = in_client_ptr->ptr_->next_strand_.lock()) {
             l_next->next_signal_ = l_h;
           } else {
             l_h->run();
