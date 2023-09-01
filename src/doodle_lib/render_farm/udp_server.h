@@ -19,11 +19,11 @@ class udp_server : std::enable_shared_from_this<udp_server> {
   void run();
 
  private:
-  void do_accept();
+  void do_accept(std::size_t in_size);
 
   boost::asio::ip::udp::endpoint end_point_;
   boost::asio::ip::udp::socket socket_;
-  std::string buffer_;
+  char buffer_[65535];
 
   boost::asio::signal_set signal_set_;
 };

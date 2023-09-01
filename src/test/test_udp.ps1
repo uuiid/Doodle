@@ -1,4 +1,5 @@
-]function Test-NetConnectionUDP {
+function Test-NetConnectionUDP
+{
      [CmdletBinding()]
      param (
          # Desit
@@ -34,3 +35,4 @@
          $UdpObject.Close()
      }
  }
+# Test-NetConnectionUDP -Port 50022 -ComputerName 127.0.0.1
