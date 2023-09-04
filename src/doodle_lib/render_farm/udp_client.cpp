@@ -10,9 +10,9 @@
 namespace doodle {
 
 void udp_client::do_send() {
-  ++ptr_->recv_size_;
-  DOODLE_LOG_INFO("开始第 {} 次发送,广播端口 {} ", ptr_->recv_size_, ptr_->remove_port_);
-  if (ptr_->recv_size_ > 3) {
+  ++ptr_->retry_count_;
+  DOODLE_LOG_INFO("开始第 {} 次发送,广播端口 {} ", ptr_->retry_count_, ptr_->remove_port_);
+  if (ptr_->retry_count_ > 3) {
     DOODLE_LOG_ERROR("发送次数超过 3 次, 取消发送");
     ptr_->timer_.cancel();
     ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);

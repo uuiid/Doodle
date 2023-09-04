@@ -25,6 +25,7 @@ class udp_client {
     std::uint16_t remove_port_{};
     char recv_buffer_[1024]{};
     std::size_t recv_size_{};
+    std::size_t retry_count_{};
     boost::asio::cancellation_signal cancel_sig_;
   };
   std::unique_ptr<impl_t> ptr_;
@@ -39,6 +40,7 @@ class udp_client {
   auto async_find_server(std::uint16_t in_port, CompletionHandler&& in_completion) {
     ptr_->remove_port_ = in_port;
     ptr_->recv_size_   = 0;
+    ptr_->retry_count_ = 0;
     //    ptr_->signal_.disconnect_all_slots();
     //    ptr_->signal_.connect(std::forward<CompletionHandler>(in_completion));
     //    ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);
@@ -51,12 +53,14 @@ class udp_client {
             [this, l_ptr = ptr_.get(), l_fun = std::forward<CompletionHandler>(in_completion)](
                 boost::system::error_code ec, std::size_t in_size
             ) {
-              if (!receive_is_server()) {
+              ptr_->recv_size_ = in_size;
+              if (!ec && !receive_is_server()) {
                 BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
               }
 
               l_ptr->timer_.cancel();
               std::memset(l_ptr->recv_buffer_, 0, in_size);
+              ptr_->recv_size_ = 0;
               l_fun(ec, l_ptr->remove_endpoint_);
               //              l_ptr->signal_(ec, l_ptr->remove_endpoint_);
               //              l_ptr->signal_.disconnect_all_slots();
