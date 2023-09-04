@@ -44,6 +44,7 @@ void work::make_ptr() {
 }
 
 void work::run() {
+  find_server_address();
   boost::url l_url{"/v1/render_farm/computer"};
   auto l_view = g_reg()->view<render_ue4>();
   l_url.params().set("status", magic_enum::enum_name(l_view.empty() ? computer_status::idle : computer_status::busy));
@@ -109,12 +110,18 @@ bool work::find_server_address(std::uint16_t in_port) {
   l_socket.set_option(boost::asio::socket_base::broadcast(true));
   boost::asio::ip::udp::endpoint l_endpoint{boost::asio::ip::address_v4::broadcast(), in_port};
   DOODLE_LOG_INFO("开始发送广播数据, 寻找服务器 ip");
-  l_socket.send_to(boost::asio::buffer("hello world! doodle"), l_endpoint);
-  char l_data[1024];
-  boost::asio::ip::udp::endpoint l_remote_endpoint;
-  l_socket.receive_from(boost::asio::buffer(l_data), l_remote_endpoint);
-  core_set::get_set().server_ip = l_remote_endpoint.address().to_string();
-  DOODLE_LOG_INFO("找到服务器ip {}", l_remote_endpoint.address().to_string());
+  l_socket.send_to(
+      boost::asio::buffer(doodle_config::hello_world_doodle.data(), doodle_config::hello_world_doodle.size()),
+      l_endpoint
+  );
+  l_socket.async_receive_from(
+      boost::asio::buffer(ptr_->data_buff_), ptr_->remote_endpoint_,
+      [this](auto&& PH1, auto&& PH2) {
+        boost::ignore_unused(PH1);
+        core_set::get_set().server_ip = ptr_->remote_endpoint_.address().to_string();
+        DOODLE_LOG_INFO("收到服务器响应 {}", core_set::get_set().server_ip);
+      }
+  );
   return true;
 }
 

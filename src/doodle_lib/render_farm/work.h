@@ -30,6 +30,9 @@ class work {
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
     entt::entity computer_id{entt::null};
+
+    char data_buff_[1024]{};
+    boost::asio::ip::udp::endpoint remote_endpoint_;
   };
   std::shared_ptr<data_type> ptr_;
 
@@ -40,7 +43,7 @@ class work {
     make_ptr();
   }
 
-  static bool find_server_address(std::uint16_t in_port = 50022);
+  bool find_server_address(std::uint16_t in_port = 50022);
 
   ~work() = default;
 
