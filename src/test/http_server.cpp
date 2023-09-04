@@ -73,7 +73,7 @@ class server_facet {
     g_reg()->ctx().emplace<render_farm::computer_manage>().run();
     l_ptr->run();
     g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
-    g_reg()->ctx().emplace<render_farm::work>("192.168.20.59").find_server_address();
+    g_reg()->ctx().emplace<render_farm::work>().find_server_address();
     //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 
     return l_r;

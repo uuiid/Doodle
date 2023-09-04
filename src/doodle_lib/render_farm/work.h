@@ -39,6 +39,13 @@ class work {
  public:
   work() : ptr_{std::make_shared<data_type>()} { make_ptr(); }
 
+  // copy
+  work(const work&)            = default;
+  work& operator=(const work&) = default;
+  // move
+  work(work&&)                 = default;
+  work& operator=(work&&)      = default;
+
   bool find_server_address(std::uint16_t in_port = 50022);
 
   ~work() = default;
