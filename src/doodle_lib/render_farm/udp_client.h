@@ -11,7 +11,7 @@ class udp_client {
  public:
   using socket_t   = boost::asio::ip::udp::socket;
   using ednpoint_t = boost::asio::ip::udp::endpoint;
-  using timer_t    = boost::asio::high_resolution_timer;
+  using timer_t    = boost::asio::system_timer;
 
  private:
   struct impl_t {
