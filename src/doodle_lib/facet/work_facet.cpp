@@ -39,7 +39,7 @@ bool work_facet::post() {
     l_r    = true;
     guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
 
-    g_ctx().emplace<doodle::render_farm::work>(core_set::get_set().server_ip).run();
+    g_ctx().emplace<doodle::render_farm::work>().run();
     g_ctx()
         .emplace<doodle::render_farm::working_machine_ptr>(
             std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)

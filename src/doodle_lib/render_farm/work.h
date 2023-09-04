@@ -37,7 +37,7 @@ class work {
   std::shared_ptr<data_type> ptr_;
 
  public:
-  explicit work(std::string in_server_ip) : ptr_{std::make_shared<data_type>()} { make_ptr(); }
+  work() : ptr_{std::make_shared<data_type>()} { make_ptr(); }
 
   bool find_server_address(std::uint16_t in_port = 50022);
 
