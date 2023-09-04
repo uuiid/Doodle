@@ -47,11 +47,13 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     std::shared_ptr<client> client_ptr_{};
     strand_ptr_t strand_ptr_{};
     timer_ptr_t timer_ptr_{};
+    udp_client_ptr udp_client_ptr_{};
     std::once_flag once_flag_{};
   };
   std::unique_ptr<impl> p_i;
 
   void do_wait();
+  void do_find_server_address();
 
   void get_remote_data();
 
