@@ -27,7 +27,8 @@ constexpr const std::string_view ue_path_obj{"Engine/Binaries/Win64/UnrealEditor
 constexpr const std::string_view ue4_content{R"(Content)"};
 constexpr const std::string_view ue4_game{R"(/Game)"};
 constexpr const std::string_view ue4_shot{R"(Shot)"};
-constexpr const std::string_view hello_world_doodle{R"(hello world! doodle)"};
+constexpr const std::string_view hello_world_doodle{R"(hello world! doodle)"};                // 客户端发送
+constexpr const std::string_view hello_world_doodle_server{R"(hello world! doodle server)"};  // 服务器发送
 
 }  // namespace doodle_config
 namespace gui::config::menu_w {
