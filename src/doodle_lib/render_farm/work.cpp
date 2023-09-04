@@ -22,7 +22,7 @@ void work::on_wait(boost::system::error_code ec) {
     DOODLE_LOG_INFO("{}", ec);
     return;
   }
-  run();
+  do_register();
 }
 void work::do_wait() {
   DOODLE_LOG_INFO("开始等待下一次心跳");
@@ -51,8 +51,9 @@ void work::do_register() {
   auto l_view = g_reg()->view<render_ue4>();
   l_url.params().set("status", magic_enum::enum_name(l_view.empty() ? computer_status::idle : computer_status::busy));
   if (ptr_->computer_id != entt::null) l_url.params().set("id", fmt::to_string(ptr_->computer_id));
+  l_url.remove_origin();
 
-  request_type l_request{boost::beast::http::verb::post, "/v1/render_farm/computer", 11};
+  request_type l_request{boost::beast::http::verb::post, l_url.c_str(), 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
   nlohmann::json l_json;
