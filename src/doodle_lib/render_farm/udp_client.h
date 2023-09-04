@@ -4,6 +4,7 @@
 
 #pragma once
 #include <boost/asio.hpp>
+#include <boost/beast.hpp>
 #include <boost/signals2.hpp>
 namespace doodle {
 
@@ -29,6 +30,7 @@ class udp_client {
   std::unique_ptr<impl_t> ptr_;
 
   void do_send();
+  bool receive_is_server();
 
  public:
   explicit udp_client(boost::asio::io_context& in_context) : ptr_(std::make_unique<impl_t>(in_context)){};
@@ -46,8 +48,13 @@ class udp_client {
         boost::asio::buffer(ptr_->recv_buffer_), ptr_->remove_endpoint_,
         boost::asio::bind_cancellation_slot(
             ptr_->cancel_sig_.slot(),
-            [l_ptr = ptr_.get(), l_fun = std::forward<CompletionHandler>(in_completion
-                                 )](boost::system::error_code ec, std::size_t in_size) {
+            [this, l_ptr = ptr_.get(), l_fun = std::forward<CompletionHandler>(in_completion)](
+                boost::system::error_code ec, std::size_t in_size
+            ) {
+              if (!receive_is_server()) {
+                BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
+              }
+
               l_ptr->timer_.cancel();
               std::memset(l_ptr->recv_buffer_, 0, in_size);
               l_fun(ec, l_ptr->remove_endpoint_);

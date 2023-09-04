@@ -36,5 +36,9 @@ void udp_client::do_send() {
     do_send();
   });
 }
+bool udp_client::receive_is_server() {
+  std::string_view l_view{ptr_->recv_buffer_, ptr_->recv_size_};
+  return doodle_config::hello_world_doodle_server == l_view;
+}
 
 }  // namespace doodle
