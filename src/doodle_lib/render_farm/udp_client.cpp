@@ -14,13 +14,10 @@ void udp_client::do_send() {
 
   if (ptr_->recv_size_ > 3) {
     ptr_->timer_.cancel();
-    ptr_->signal_(boost::asio::error::make_error_code(boost::asio::error::timed_out), ptr_->remove_endpoint_);
-    ptr_->signal_.disconnect_all_slots();
-    ptr_->cancel_sig_.emit(boost::asio::cancellation_type::all);
+    ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);
     return;
   }
-
-  ptr_->send_socket_.open(boost::asio::ip::udp::v4());
+  if (!ptr_->send_socket_.is_open()) ptr_->send_socket_.open(boost::asio::ip::udp::v4());
   ptr_->send_socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
   ptr_->send_socket_.set_option(boost::asio::socket_base::broadcast(true));
   boost::asio::ip::udp::endpoint const l_endpoint{boost::asio::ip::address_v4::broadcast(), ptr_->remove_port_};

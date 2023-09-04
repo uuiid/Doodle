@@ -91,3 +91,24 @@ target_compile_definitions(http_proxy
 target_compile_options(http_proxy PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
+
+
+add_executable(
+        udp_server
+        EXCLUDE_FROM_ALL
+        udp_server.cpp
+)
+target_link_libraries(udp_server
+        PUBLIC
+        doodle_lib
+        Boost::unit_test_framework
+)
+target_compile_definitions(udp_server
+        PUBLIC
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        BOOST_TEST_DYN_LINK
+        BOOST_ALL_DYN_LINK
+)
+target_compile_options(udp_server PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
