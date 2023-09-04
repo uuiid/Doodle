@@ -8,6 +8,7 @@
 
 #include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
+#include <doodle_lib/render_farm/udp_client.h>
 
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
@@ -41,6 +42,7 @@ void work::make_ptr() {
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
     this->do_close();
   });
+  ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
 }
 
 void work::run() { find_server_address(); }
@@ -104,28 +106,19 @@ void work::do_close() {
   if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
 }
 bool work::find_server_address(std::uint16_t in_port) {
-  DOODLE_LOG_INFO("开始广播端口 {}", in_port);
-  boost::asio::ip::udp::socket l_socket{boost::asio::make_strand(g_io_context())};
-  l_socket.open(boost::asio::ip::udp::v4());
-  l_socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
-  l_socket.set_option(boost::asio::socket_base::broadcast(true));
-  boost::asio::ip::udp::endpoint l_endpoint{boost::asio::ip::address_v4::broadcast(), in_port};
-  DOODLE_LOG_INFO("开始发送广播数据, 寻找服务器 ip");
-  l_socket.send_to(
-      boost::asio::buffer(doodle_config::hello_world_doodle.data(), doodle_config::hello_world_doodle.size()),
-      l_endpoint
-  );
-  l_socket.async_receive_from(
-      boost::asio::buffer(ptr_->data_buff_), ptr_->remote_endpoint_,
-      [this](auto&& PH1, auto&& PH2) {
-        boost::ignore_unused(PH1);
-        auto l_remote_address         = ptr_->remote_endpoint_.address().to_string();
-        core_set::get_set().server_ip = l_remote_address;
-        DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
-        ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
-        do_register();
-      }
-  );
+  ptr_->udp_client_ptr_->async_find_server(in_port, [this](auto&& PH1, auto&& PH2) {
+    if (PH1) {
+      DOODLE_LOG_ERROR("{}", PH1);
+      find_server_address();
+      return;
+    }
+    boost::ignore_unused(PH1);
+    auto l_remote_address         = ptr_->remote_endpoint_.address().to_string();
+    core_set::get_set().server_ip = l_remote_address;
+    DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
+    ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
+    do_register();
+  });
   return true;
 }
 

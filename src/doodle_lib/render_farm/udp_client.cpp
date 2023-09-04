@@ -18,10 +18,12 @@ void udp_client::do_send() {
     ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);
     return;
   }
+  DOODLE_LOG_INFO("开始广播端口 {}", ptr_->remove_port_);
   if (!ptr_->send_socket_.is_open()) ptr_->send_socket_.open(boost::asio::ip::udp::v4());
   ptr_->send_socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
   ptr_->send_socket_.set_option(boost::asio::socket_base::broadcast(true));
   boost::asio::ip::udp::endpoint const l_endpoint{boost::asio::ip::address_v4::broadcast(), ptr_->remove_port_};
+  DOODLE_LOG_INFO("开始发送广播数据, 寻找服务器 ip");
   ptr_->send_socket_.send_to(
       boost::asio::buffer(doodle_config::hello_world_doodle.data(), doodle_config::hello_world_doodle.size()),
       l_endpoint

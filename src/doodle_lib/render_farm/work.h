@@ -9,6 +9,7 @@
 #include <boost/beast.hpp>
 
 namespace doodle {
+
 namespace render_farm {
 
 class work {
@@ -33,6 +34,8 @@ class work {
 
     char data_buff_[1024]{};
     boost::asio::ip::udp::endpoint remote_endpoint_;
+
+    udp_client_ptr udp_client_ptr_{};
   };
   std::shared_ptr<data_type> ptr_;
 
