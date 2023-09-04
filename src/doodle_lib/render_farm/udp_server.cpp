@@ -22,10 +22,11 @@ void udp_server::run() {
 }
 void udp_server::do_accept(std::size_t in_size) {
   std::string_view l_view{buffer_, in_size};
-  if (l_view == "hello world! doodle") {
+  if (doodle_config::hello_world_doodle == l_view) {
     DOODLE_LOG_INFO("receive: {}", l_view);
     socket_.async_send_to(
-        boost::asio::buffer("hello world! doodle"), end_point_,
+        boost::asio::buffer(doodle_config::hello_world_doodle.data(), doodle_config::hello_world_doodle.size()),
+        end_point_,
         [this, in_size](boost::system::error_code ec, std::size_t bytes) {
           std::memset(buffer_, 0, in_size);
           this->run();
