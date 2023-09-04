@@ -12,11 +12,11 @@
 namespace doodle {
 namespace gui {
 void render_monitor::init() {
-  p_i->strand_ptr_     = std::make_shared<strand_t>(boost::asio::make_strand(g_io_context()));
-  p_i->timer_ptr_      = std::make_shared<timer_t>(*p_i->strand_ptr_);
-  p_i->udp_client_ptr_ = std::make_shared<udp_client>(g_io_context());
-
-  do_wait();
+  p_i->strand_ptr_       = std::make_shared<strand_t>(boost::asio::make_strand(g_io_context()));
+  p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
+  p_i->udp_client_ptr_   = std::make_shared<udp_client>(g_io_context());
+  p_i->progress_message_ = "正在查找服务器";
+  do_find_server_address();
 }
 bool render_monitor::render() {
   if (ImGui::Button("ull")) {
