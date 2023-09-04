@@ -24,6 +24,7 @@ class udp_client {
     char recv_buffer_[1024]{};
     std::size_t recv_size_{};
     boost::signals2::signal<void(boost::system::error_code, ednpoint_t)> signal_;
+    boost::asio::cancellation_signal cancel_sig_;
   };
   std::unique_ptr<impl_t> ptr_;
 
@@ -41,12 +42,15 @@ class udp_client {
 
     ptr_->recv_socket_.async_receive_from(
         boost::asio::buffer(ptr_->recv_buffer_), ptr_->remove_endpoint_,
-        [l_ptr = ptr_.get()](boost::system::error_code ec, std::size_t in_size) {
-          l_ptr->timer_.cancel();
-          std::memset(l_ptr->recv_buffer_, 0, in_size);
-          l_ptr->signal_(ec, l_ptr->remove_endpoint_);
-          l_ptr->signal_.disconnect_all_slots();
-        }
+        boost::asio::bind_cancellation_slot(
+            ptr_->cancel_sig_,
+            [l_ptr = ptr_.get()](boost::system::error_code ec, std::size_t in_size) {
+              l_ptr->timer_.cancel();
+              std::memset(l_ptr->recv_buffer_, 0, in_size);
+              l_ptr->signal_(ec, l_ptr->remove_endpoint_);
+              l_ptr->signal_.disconnect_all_slots();
+            }
+        )
     );
   };
 };
