@@ -43,8 +43,8 @@ void work::make_ptr() {
   });
 }
 
-void work::run() {
-  find_server_address();
+void work::run() { find_server_address(); }
+void work::do_register() {
   boost::url l_url{"/v1/render_farm/computer"};
   auto l_view = g_reg()->view<render_ue4>();
   l_url.params().set("status", magic_enum::enum_name(l_view.empty() ? computer_status::idle : computer_status::busy));
@@ -77,7 +77,6 @@ void work::run() {
       }
   );
 }
-
 void work::send_server_state(const entt::handle& in_handle) {
   entt::entity l_id = in_handle.get<detail::ue_server_id>();
   request_type l_request{boost::beast::http::verb::post, fmt::format("/v1/render_farm/render_job/{}", l_id), 11};
@@ -101,7 +100,9 @@ void work::send_server_state(const entt::handle& in_handle) {
   );
 }
 
-void work::do_close() { ptr_->core_ptr_->cancel(); }
+void work::do_close() {
+  if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
+}
 bool work::find_server_address(std::uint16_t in_port) {
   DOODLE_LOG_INFO("开始广播端口 {}", in_port);
   boost::asio::ip::udp::socket l_socket{boost::asio::make_strand(g_io_context())};
@@ -118,8 +119,11 @@ bool work::find_server_address(std::uint16_t in_port) {
       boost::asio::buffer(ptr_->data_buff_), ptr_->remote_endpoint_,
       [this](auto&& PH1, auto&& PH2) {
         boost::ignore_unused(PH1);
-        core_set::get_set().server_ip = ptr_->remote_endpoint_.address().to_string();
-        DOODLE_LOG_INFO("收到服务器响应 {}", core_set::get_set().server_ip);
+        auto l_remote_address         = ptr_->remote_endpoint_.address().to_string();
+        core_set::get_set().server_ip = l_remote_address;
+        DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
+        ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
+        do_register();
       }
   );
   return true;
