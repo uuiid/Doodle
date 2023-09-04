@@ -107,14 +107,16 @@ void work::do_close() {
   if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
 }
 bool work::find_server_address(std::uint16_t in_port) {
-  ptr_->udp_client_ptr_->async_find_server(in_port, [this](auto&& PH1, auto&& PH2) {
-    if (PH1) {
+  ptr_->udp_client_ptr_->async_find_server(
+      in_port,
+      [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
+        if (PH1) {
       DOODLE_LOG_ERROR("{}", PH1);
       find_server_address();
       return;
     }
     boost::ignore_unused(PH1);
-    auto l_remote_address         = ptr_->remote_endpoint_.address().to_string();
+    auto l_remote_address         = in_remove_endpoint.address().to_string();
     core_set::get_set().server_ip = l_remote_address;
     DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
     ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));

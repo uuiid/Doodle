@@ -32,9 +32,6 @@ class work {
     std::shared_ptr<client_core> core_ptr_;
     entt::entity computer_id{entt::null};
 
-    char data_buff_[1024]{};
-    boost::asio::ip::udp::endpoint remote_endpoint_;
-
     udp_client_ptr udp_client_ptr_{};
   };
   std::shared_ptr<data_type> ptr_;
