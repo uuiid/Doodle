@@ -50,8 +50,6 @@ class DOODLE_APP_API gui_facet {
   virtual void destroy_windows();
   win::drop_manager* drop_manager();
 
-  ;
-
   void set_title(const std::string& in_title) const;
 
   [[nodiscard]] const std::string& name() const noexcept;
