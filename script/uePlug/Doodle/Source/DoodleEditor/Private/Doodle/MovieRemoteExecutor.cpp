@@ -31,6 +31,8 @@
 #include "MoviePipelineBlueprintLibrary.h"  // 蓝图库
 #include "MoviePipelineOutputSetting.h"     // 输出设置
 
+#include "Networking.h"
+
 #define LOCTEXT_NAMESPACE "DoodleMovieRemoteExecutor"
 
 class SDoodleRemoteNotification : public SCompoundWidget, public INotificationWidget {
@@ -419,9 +421,13 @@ TArray<TObjectPtr<UMoviePipelineQueue>> UDoodleMovieRemoteExecutor::GetQueuesToR
 void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   const UMoviePipelineInProcessExecutorSettings* ExecutorSettings =
       GetDefault<UMoviePipelineInProcessExecutorSettings>();
+
+  //----------------------------------------
+  
+  //-------------------------
   if (Remote_Repository.IsEmpty()) {
     FNotificationInfo L_Info{FText::FromString(TEXT("无法找到远程储存库"))};
-    L_Info.Text = FText::FromString(TEXT("无法找到远程储存库..."));
+    L_Info.Text = FText::FromString(TEXT("无法找到远程储存库"));
     FSlateNotificationManager::Get().AddNotification(L_Info);
 
     OnExecutorFinishedImpl();
@@ -436,7 +442,7 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   static FString L_Sub_URL{TEXT("v1/render_farm/render_job")};
 
   for (auto&& i : RemoteRenderJobArgs) {
-    FString L_Url = FString::Printf(TEXT("http://127.0.0.1:%d/%s"), GetProt(), *L_Sub_URL);
+    FString L_Url = FString::Printf(TEXT("http://%s:%d/%s"), *Remote_Server_Ip, GetProt(), *L_Sub_URL);
     UE_LOG(LogMovieRenderPipeline, Log, TEXT("RemoteClientRender URL: %s"), *L_Url);
 
     FString L_MSg{};
@@ -454,6 +460,58 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   if (ExecutorSettings->bCloseEditor) {
     FPlatformMisc::RequestExit(false);
   }
+}
+
+void UDoodleMovieRemoteExecutor::UDPOnTimeout()
+{
+    //----------------
+    if (socket2 != nullptr) 
+    {
+        //--------------------
+        socket2->Close();
+        ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(socket2);
+        socket2 = nullptr;
+        //--------------
+        StartRemoteClientRender();
+        //---------------
+        if (udp_rec != nullptr) //关闭监听线程
+        {
+            udp_rec->Stop();
+            delete udp_rec;
+            udp_rec = nullptr;
+        }
+    }
+    //-------------------------
+    
+    //-------------------
+    GEditor->GetTimerManager().Get().ClearTimer(TimerHandle);
+}
+
+void UDoodleMovieRemoteExecutor::UDPReceiver(const FArrayReaderPtr& arrayRender,const FIPv4Endpoint& endpoint)
+{
+    TSharedPtr<FArrayReader> ar = MakeShareable(arrayRender.Get());
+    uint8 data[512];
+    FMemory::Memzero(data, 512);
+    FMemory::Memcpy(data, arrayRender->GetData(), arrayRender->Num());
+    FString rec_data = ((const char*)data);
+    //----------------
+    if(rec_data.Equals("hello world! doodle server"))
+    {
+        //----------------
+        socket2->Close();
+        ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(socket2);
+        socket2 = nullptr;
+        Remote_Server_Ip = endpoint.Address.ToString();
+        //---------------------------------
+        StartRemoteClientRender();
+        //---------------
+        if (udp_rec != nullptr) //关闭监听线程
+        {
+            udp_rec->Stop();
+            delete udp_rec;
+            udp_rec = nullptr;
+        }
+    }
 }
 
 void UDoodleMovieRemoteExecutor::FindRemoteClient() {
@@ -480,7 +538,29 @@ void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 Resp
         Remote_Repository = L_JsonObj->GetStringField(TEXT("path"));
       }
     }
-    StartRemoteClientRender();
+    //-----------------------------------
+    if (socket2 == nullptr)
+    {
+        GEditor->GetTimerManager().Get().SetTimer(TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 3, true);
+        socket2 = FUdpSocketBuilder(TEXT("udp2")).AsNonBlocking().WithBroadcast().AsReusable().Build();
+        //---------------
+        FString msg = "hello world! doodle";
+        TArray<uint8> bytes;
+        FTCHARToUTF8 Converter(*msg);
+        int32 send = 0;
+        bytes.Append((const uint8*)Converter.Get(), Converter.Length());
+        //---------------------------
+        udp_rec = new FUdpSocketReceiver(socket2, FTimespan::FromSeconds(1000), TEXT("rec_thread"));
+        udp_rec->OnDataReceived().BindUObject(this, &UDoodleMovieRemoteExecutor::UDPReceiver);
+        udp_rec->Start();
+        //------------------
+        TSharedPtr<FInternetAddr> addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
+        addr->SetBroadcastAddress();
+        addr->SetPort(50022);
+        socket2->SendTo(bytes.GetData(), bytes.Num(), send, *addr);
+        //---------------------
+    }
+    //StartRemoteClientRender();
     return;
 
   } else if (Render_IDs.Contains(RequestIndex)) {

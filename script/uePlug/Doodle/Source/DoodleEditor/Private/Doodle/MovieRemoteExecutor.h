@@ -2,6 +2,8 @@
 #pragma once
 
 #include "MoviePipelineLinearExecutor.h"
+#include <Common/UdpSocketReceiver.h>
+//
 #include "MovieRemoteExecutor.generated.h"
 
 USTRUCT()
@@ -56,6 +58,8 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
  public:
   DoodleMovieRemoteState GetRenderState();
   float GetProgress();
+  void UDPOnTimeout();
+  void UDPReceiver(const FArrayReaderPtr& ArrayRender, const FIPv4Endpoint& Endpoint);
 
  protected:
   void CheckForProcessFinished();
@@ -71,8 +75,13 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   int32 GetRepository_ID{};
 
   FString Remote_Repository;
+  FString Remote_Server_Ip = ("127.0.0.1");
   TArray<FDoodleRemoteRenderJobArg> RemoteRenderJobArgs;
   TWeakPtr<class SWindow> WeakCustomWindow;
+
+  FSocket* socket2 = nullptr;
+  FTimerHandle TimerHandle;//计时器
+  FUdpSocketReceiver* udp_rec = nullptr;
 
   // 生成命令行
   void GenerateCommandLineArguments(UMoviePipelineQueue* InPipelineQueue);

@@ -54,7 +54,8 @@ public class doodleEditor : ModuleRules
 
                 // 资产自定义模块
                 // "ContentBrowserAssetDataSource"
-
+				"Sockets",
+				"Networking",
             }
 			);
 
