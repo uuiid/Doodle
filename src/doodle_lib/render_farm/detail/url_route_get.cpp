@@ -24,11 +24,13 @@ void get_root_type::operator()(const entt::handle& in_handle, const std::map<std
 
 void get_log_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
-  if (in_cap.count("handle") == 0) {
-    throw_exception(doodle_error("not found handle"));
-  }
-  auto l_h        = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
   auto& l_session = in_handle.get<working_machine_session>();
+  if (in_cap.count("handle") == 0) {
+    boost::system::error_code l_ec{};
+    BOOST_BEAST_ASSIGN_EC(l_ec, error_enum::invalid_handle);
+    l_session.send_error_code(l_ec, boost::beast::http::status::bad_request);
+  }
+  auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
   if (l_h && l_h.all_of<process_message>()) {
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
     l_response.body() = l_h.get<process_message>().log();
@@ -47,11 +49,13 @@ void get_log_type_get::operator()(const entt::handle& in_handle, const std::map<
 }
 void get_err_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
+  auto& l_session = in_handle.get<working_machine_session>();
   if (in_cap.count("handle") == 0) {
-    throw_exception(doodle_error("not found handle"));
+    boost::system::error_code l_ec{};
+    BOOST_BEAST_ASSIGN_EC(l_ec, error_enum::invalid_handle);
+    l_session.send_error_code(l_ec, boost::beast::http::status::bad_request);
   }
   auto l_h        = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
-  auto& l_session = in_handle.get<working_machine_session>();
 
   if (l_h && l_h.all_of<process_message>()) {
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
