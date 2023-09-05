@@ -91,7 +91,7 @@ class server_facet {
 // #include <boost/locale.hpp>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-extern "C" int main(int argc, const char* const argv[]) try {
+int http_server(int argc, char* argv[]) try {
   using main_app = doodle::app_command<server_facet>;
   main_app app{argc, argv};
   try {

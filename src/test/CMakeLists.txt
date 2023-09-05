@@ -50,65 +50,38 @@ add_subdirectory(ai)
 
 add_subdirectory(main_fixtures)
 
-
-add_executable(
-        http_server
-        EXCLUDE_FROM_ALL
-        http_server.cpp
-)
-target_link_libraries(http_server
-        PUBLIC
-        doodle_lib
-        Boost::unit_test_framework
-)
-target_compile_definitions(http_server
-        PUBLIC
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-        BOOST_TEST_DYN_LINK
-        BOOST_ALL_DYN_LINK
-)
-target_compile_options(http_server PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
-        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
-
-
-add_executable(
-        http_proxy
-        EXCLUDE_FROM_ALL
+# create the testing file and list of tests
+create_test_sourcelist(main_test
+        CommonCxxTests.cxx
         http_proxy.cpp
-)
-target_link_libraries(http_proxy
-        PUBLIC
-        doodle_lib
-        Boost::unit_test_framework
-)
-target_compile_definitions(http_proxy
-        PUBLIC
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-        BOOST_TEST_DYN_LINK
-        BOOST_ALL_DYN_LINK
-)
-target_compile_options(http_proxy PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
-        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
-
-
-add_executable(
-        udp_server
-        EXCLUDE_FROM_ALL
+        http_server.cpp
         udp_server.cpp
 )
-target_link_libraries(udp_server
+
+# add the executable
+add_executable(CommonCxxTests ${main_test})
+
+# remove the test driver source file
+set(TestsToRun ${main_test})
+remove(TestsToRun CommonCxxTests.cxx)
+
+# Add all the ADD_TEST for each test
+foreach (test ${TestsToRun})
+    get_filename_component(TName ${test} NAME_WE)
+    add_test(NAME ${TName} COMMAND CommonCxxTests ${TName})
+endforeach ()
+
+target_link_libraries(CommonCxxTests
         PUBLIC
         doodle_lib
         Boost::unit_test_framework
 )
-target_compile_definitions(udp_server
+target_compile_definitions(CommonCxxTests
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         BOOST_TEST_DYN_LINK
         BOOST_ALL_DYN_LINK
 )
-target_compile_options(udp_server PRIVATE
+target_compile_options(CommonCxxTests PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
