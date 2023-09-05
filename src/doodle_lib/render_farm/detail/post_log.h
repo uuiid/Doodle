@@ -38,8 +38,6 @@ class post_log {
 
   ~post_log() = default;
 
-  void add_log(const std::string& in_log) const;
-  void add_err(const std::string& in_err) const;
 
   void operator()(boost::system::error_code ec, std::size_t bytes_transferred) const;
 };
