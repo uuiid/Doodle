@@ -9,6 +9,7 @@
 
 #include <doodle_lib/render_farm/detail/aync_read_body.h>
 #include <doodle_lib/render_farm/detail/computer.h>
+#include <doodle_lib/render_farm/detail/post_log.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/detail/ue4_task.h>
 namespace doodle::render_farm {
@@ -155,23 +156,14 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
 }
 void get_log_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
-  using json_parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
-  auto& l_session        = in_handle.get<working_machine_session>();
-  auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+  using str_parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
+  auto& l_session       = in_handle.get<working_machine_session>();
+  auto l_parser_ptr     = std::make_shared<str_parser_type>(std::move(l_session.request_parser()));
+  auto l_h              = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
+
   boost::beast::http::async_read(
       l_session.stream(), l_session.buffer(), *l_parser_ptr,
-      [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
-        boost::ignore_unused(bytes_transferred);
-        auto& l_session = in_handle.get<working_machine_session>();
-        if (ec == boost::beast::http::error::end_of_stream) {
-          return l_session.do_close();
-        }
-        if (ec) {
-          DOODLE_LOG_ERROR("on_read error: {}", ec.message());
-          l_session.send_error_code(ec);
-          return;
-        }
-      }
+      post_log{in_handle, l_h, post_log::log_enum::log, l_parser_ptr}
   );
 }
 void get_err_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
@@ -179,6 +171,12 @@ void get_err_type_post::operator()(const entt::handle& in_handle, const std::map
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto& l_session        = in_handle.get<working_machine_session>();
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+  auto l_h               = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
+
+  boost::beast::http::async_read(
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
+      post_log{in_handle, l_h, post_log::log_enum::err, l_parser_ptr}
+  );
 }
 }  // namespace detail
 }  // namespace doodle::render_farm
