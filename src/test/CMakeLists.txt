@@ -63,7 +63,7 @@ add_executable(CommonCxxTests ${main_test})
 
 # remove the test driver source file
 set(TestsToRun ${main_test})
-remove(TestsToRun CommonCxxTests.cxx)
+list(REMOVE_ITEM TestsToRun CommonCxxTests.cxx)
 
 # Add all the ADD_TEST for each test
 foreach (test ${TestsToRun})
