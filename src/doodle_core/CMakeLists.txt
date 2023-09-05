@@ -5,22 +5,16 @@ cmrc_add_resource_library(
         ${DOODLE_RE_FILES_LIST}
         core/sql_file.sql
 )
-doodle_sqlpp_generate(
-        OUT_LISTS_sqlpp
-        LISTS_FILES
-        core/sql_file.sql
-)
 
 # 添加配置
 add_library(doodle_core
         #        SHARED
-        ${OUT_LISTS_sqlpp}
-        )
+)
 
 target_precompile_headers(doodle_core
         PRIVATE
         doodle_core_pch.h
-        )
+)
 # 寻找 winreg 文件
 find_path(WINREG_INCLUDE_DIRS "winreg/WinReg.hpp")
 
@@ -31,7 +25,7 @@ target_include_directories(doodle_core
         ${WINREG_INCLUDE_DIRS}
         PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
-        )
+)
 string(TIMESTAMP DOODLE_BUILD_TIME "%Y %m %d %H %M %S" UTC)
 message("build time ${DOODLE_BUILD_TIME}")
 configure_file(configure/config.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp)
@@ -44,7 +38,7 @@ target_sources(doodle_core
 
         PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp
-        )
+)
 target_compile_definitions(doodle_core PUBLIC BOOST_FILESYSTEM_VERSION=4)
 
 # 添加子目录
@@ -112,6 +106,6 @@ target_compile_options(doodle_core
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj >
 
 
-        )
+)
 set_target_properties(doodle_core
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
