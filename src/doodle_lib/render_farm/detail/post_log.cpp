@@ -24,7 +24,7 @@ void post_log::operator()(boost::system::error_code ec, std::size_t bytes_transf
 
   boost::ignore_unused(bytes_transferred);
 
-  if (!impl_->msg_type_ || !impl_->msg_handle_.all_of<process_message, ue4_task>()) {
+  if (!impl_->msg_handle_ || !impl_->msg_handle_.all_of<process_message, ue4_task>()) {
     BOOST_BEAST_ASSIGN_EC(ec, boost::beast::http::error::bad_target);
     l_session.send_error_code(ec);
   }
@@ -39,7 +39,7 @@ void post_log::operator()(boost::system::error_code ec, std::size_t bytes_transf
       break;
   }
 }
-}
+
 }  // namespace detail
 }  // namespace render_farm
 }  // namespace doodle
