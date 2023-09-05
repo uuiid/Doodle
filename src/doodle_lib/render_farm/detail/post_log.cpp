@@ -7,6 +7,7 @@
 #include <doodle_core/thread_pool/process_task.h>
 
 #include <doodle_lib/render_farm/detail/render_ue4.h>
+#include <doodle_lib/render_farm/detail/ue4_task.h>
 #include <doodle_lib/render_farm/working_machine_session.h>
 namespace doodle {
 namespace render_farm {
