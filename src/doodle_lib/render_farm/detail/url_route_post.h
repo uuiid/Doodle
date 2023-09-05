@@ -31,5 +31,16 @@ struct run_job_post {
   boost::beast::http::verb verb_{boost::beast::http::verb::post};
   void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
 };
+
+struct get_log_type_post {
+  std::vector<std::string> url_{"v1", "render_farm", "get_log", "{handle}"};
+  boost::beast::http::verb verb_{boost::beast::http::verb::get};
+  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
+};
+struct get_err_type_post {
+  std::vector<std::string> url_{"v1", "render_farm", "get_err", "{handle}"};
+  boost::beast::http::verb verb_{boost::beast::http::verb::get};
+  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
+};
 }  // namespace detail
 }  // namespace doodle::render_farm
