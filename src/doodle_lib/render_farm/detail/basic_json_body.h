@@ -38,16 +38,7 @@ struct basic_json_body {
     template <bool isRequest, class Fields>
     explicit reader(boost::beast::http::header<isRequest, Fields>&, value_type& b) : body_(b) {}
 
-    void init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec) {
-      if (length) {
-        if (*length > json_str_.max_size()) {
-          BOOST_BEAST_ASSIGN_EC(ec, boost::beast::http::error::buffer_overflow);
-          return;
-        }
-        json_str_.reserve(boost::beast::detail::clamp(*length));
-      }
-      ec = {};
-    }
+    void init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec);
 
     template <class ConstBufferSequence>
     std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
@@ -68,10 +59,7 @@ struct basic_json_body {
       return extra;
     }
 
-    void finish(boost::system::error_code& ec) {
-      ec    = {};
-      body_ = json_type::parse(json_str_);
-    }
+    void finish(boost::system::error_code& ec);
   };
 
   /** The algorithm for serializing the body
@@ -89,16 +77,9 @@ struct basic_json_body {
     template <bool isRequest, class Fields>
     explicit writer(boost::beast::http::header<isRequest, Fields> const&, value_type const& b) : body_(b) {}
 
-    void init(boost::system::error_code& ec) {
-      json_str_ = body_.dump();
-      json_str_ += '\n';
-      ec = {};
-    }
+    void init(boost::system::error_code& ec);
 
-    boost::optional<std::pair<const_buffers_type, bool>> get(boost::system::error_code& ec) {
-      ec = {};
-      return {{const_buffers_type{json_str_.data(), json_str_.size()}, false}};
-    }
+    boost::optional<std::pair<const_buffers_type, bool>> get(boost::system::error_code& ec);
   };
 };
 
