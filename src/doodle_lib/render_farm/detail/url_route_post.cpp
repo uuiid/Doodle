@@ -168,9 +168,9 @@ void get_log_type_post::operator()(const entt::handle& in_handle, const std::map
 }
 void get_err_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
-  using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
+  using str_parser_type  = boost::beast::http::request_parser<boost::beast::http::string_body>;
   auto& l_session        = in_handle.get<working_machine_session>();
-  auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+  auto l_parser_ptr      = std::make_shared<str_parser_type>(std::move(l_session.request_parser()));
   auto l_h               = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
 
   boost::beast::http::async_read(
