@@ -56,6 +56,7 @@ create_test_sourcelist(main_test
         http_proxy.cpp
         http_server.cpp
         udp_server.cpp
+        core/abc.cpp
 )
 
 # add the executable
@@ -67,14 +68,20 @@ list(REMOVE_ITEM TestsToRun CommonCxxTests.cxx)
 
 # Add all the ADD_TEST for each test
 foreach (test ${TestsToRun})
-    get_filename_component(TName ${test} NAME_WE)
-    add_test(NAME ${TName} COMMAND CommonCxxTests ${TName})
+    cmake_path(GET test PARENT_PATH TPath)
+    cmake_path(GET test STEM TStem)
+    if (TPath STREQUAL "")
+        set(test_name ${TStem})
+    else ()
+        set(test_name ${TPath}_${TStem})
+    endif ()
+    add_test(NAME ${test_name} COMMAND CommonCxxTests ${TPath}/${TStem})
 endforeach ()
 
 target_link_libraries(CommonCxxTests
         PUBLIC
         doodle_lib
-        Boost::unit_test_framework
+        Alembic::Alembic
 )
 target_compile_definitions(CommonCxxTests
         PUBLIC
