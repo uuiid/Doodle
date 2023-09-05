@@ -23,9 +23,9 @@ enum class error_enum : std::int32_t {
   invalid_handle,
   file_not_exists,
   time_to_tm_error,
-  nullptr_error,
+
   null_string,
-  parse_string,
+  bad_json_string,
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {

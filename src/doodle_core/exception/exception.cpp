@@ -2,10 +2,10 @@
 // Created by TD on 2022/8/18.
 //
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/lib_warp/enum_template_tool.h>
+
 #include <boost/system.hpp>
 #include <boost/system/error_code.hpp>
-
-#include <doodle_core/lib_warp/enum_template_tool.h>
 
 namespace doodle {
 // namespace bsys = boost::system;
@@ -30,10 +30,10 @@ std::string doodle_category::message(int ev) const {
       return "Invalid handle"s;
     case error_enum::file_not_exists:
       return "file not exists"s;
-    case error_enum::nullptr_error:
-      return "空指针错误"s;
     case error_enum::null_string:
       return "必要字符串为空"s;
+    case error_enum::bad_json_string:
+      return "json解析错误"s;
     default:
       return fmt::format("unknown error {}", ev);
   }
