@@ -94,7 +94,7 @@ bool gui_facet::post() {
   return true;
 }
 void gui_facet::deconstruction() {
-  p_i->timer_->cancel();
+  if (p_i->timer_) p_i->timer_->cancel();
   if (p_hwnd) {
     // Cleanup
     ImGui_ImplDX11_Shutdown();
@@ -275,8 +275,10 @@ void gui_facet::init_windows() {
 }
 void gui_facet::close_windows() {
   auto g_quit{[l_hwnd = p_hwnd, this]() {
-    p_i->timer_->cancel();
-    p_i->timer_->wait();
+    if (p_i->timer_) {
+      p_i->timer_->cancel();
+      p_i->timer_->wait();
+    }
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
     this->translate_message();
