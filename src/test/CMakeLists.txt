@@ -58,6 +58,7 @@ create_test_sourcelist(main_test
         udp_server.cpp
         core/abc.cpp
         core/submit_ue_task.cpp
+        core/run_ue.cpp
 )
 
 # add the executable

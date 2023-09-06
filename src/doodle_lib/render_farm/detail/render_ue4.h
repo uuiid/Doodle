@@ -43,8 +43,7 @@ class render_ue4 {
  public:
   using arg_t = ue4_arg;
 
-  explicit render_ue4(entt::handle self_handle, arg_t in_arg)
-      : arg_(std::move(in_arg)), self_handle_(std::move(self_handle)) {
+  explicit render_ue4(entt::handle in_msg, arg_t in_arg) : arg_(std::move(in_arg)), self_handle_(std::move(in_msg)) {
     set_meg();
   }
   ~render_ue4() = default;
@@ -75,5 +74,6 @@ class render_ue4 {
 };
 
 }  // namespace detail
-using render_ue4 = detail::render_ue4;
+using render_ue4     = detail::render_ue4;
+using render_ue4_ptr = std::shared_ptr<render_ue4>;
 }  // namespace doodle::render_farm

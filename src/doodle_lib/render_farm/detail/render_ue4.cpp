@@ -177,9 +177,9 @@ bool render_ue4::updata_file() {
 }
 
 void render_ue4::send_server_state() {
-  if (self_handle_ && g_ctx().contains<render_farm::work>()) {
+  if (self_handle_ && g_ctx().contains<render_farm::work_ptr>()) {
     DOODLE_LOG_INFO("开始沟通服务器");
-    g_ctx().get<render_farm::work>().send_server_state(self_handle_);
+    g_ctx().get<render_farm::work_ptr>()->send_server_state();
   } else {
     DOODLE_LOG_ERROR("服务器不存在");
   }

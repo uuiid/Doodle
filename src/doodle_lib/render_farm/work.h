@@ -26,6 +26,15 @@ class work {
   using signal_set_ptr  = std::shared_ptr<signal_set>;
 
  private:
+  struct ue_data {
+    ue_data() = default;
+    inline ~ue_data() {
+      if (run_handle) run_handle.destroy();
+    }
+
+    entt::entity server_id{entt::null};
+    entt::handle run_handle{};
+  };
   struct data_type {
     timer_ptr timer_{};
     signal_set_ptr signal_set_{};
@@ -33,7 +42,9 @@ class work {
     entt::entity computer_id{entt::null};
 
     udp_client_ptr udp_client_ptr_{};
+    std::shared_ptr<ue_data> ue_data_ptr_{};
   };
+
   std::shared_ptr<data_type> ptr_;
 
  public:
@@ -52,7 +63,9 @@ class work {
 
   void run();
 
-  void send_server_state(const entt::handle& in_handle);
+  void send_server_state();
+
+  void run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap);
 
  private:
   void make_ptr();
@@ -64,6 +77,7 @@ class work {
 
   void on_wait(boost::system::error_code ec);
 };
+using work_ptr = std::shared_ptr<work>;
 
 }  // namespace render_farm
 }  // namespace doodle
