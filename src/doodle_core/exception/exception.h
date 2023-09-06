@@ -2,14 +2,16 @@
 
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/doodle_core_pch.h>
-#include <boost/exception/exception.hpp>
-#include <boost/throw_exception.hpp>
+
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/exception/exception.hpp>
 #include <boost/system.hpp>
+#include <boost/throw_exception.hpp>
+
 #include <filesystem>
+#include <spdlog/common.h>
 #include <stdexcept>
 #include <string>
-#include <spdlog/common.h>
 
 namespace doodle {
 
@@ -27,6 +29,8 @@ enum class error_enum : std::int32_t {
   null_string,
   bad_json_string,
   not_find_work_class,
+  // 不允许多个工作
+  not_allow_multi_work,
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
@@ -63,28 +67,15 @@ template <typename exception_type>
 }
 
 template <typename Error>
-[[noreturn]] void throw_error(
-    Error in_error_index,
-    ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
-) {
-  boost::throw_exception(
-      sys_error{
-          bsys::error_code{in_error_index}},
-      in_loc
-  );
+[[noreturn]] void throw_error(Error in_error_index, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
+  boost::throw_exception(sys_error{bsys::error_code{in_error_index}}, in_loc);
 }
 
 template <typename Error>
 [[noreturn]] void throw_error(
-    Error in_error_index,
-    const std::string& mess,
-    ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+    Error in_error_index, const std::string& mess, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
 ) {
-  boost::throw_exception(
-      sys_error{
-          bsys::error_code{in_error_index}, mess},
-      in_loc
-  );
+  boost::throw_exception(sys_error{bsys::error_code{in_error_index}, mess}, in_loc);
 }
 
 #define DOODLE_CHICK(condition, ...) \
@@ -105,10 +96,7 @@ template <>
 struct formatter<::doodle::doodle_error> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const ::doodle::doodle_error& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        boost::diagnostic_information(in_),
-        ctx
-    );
+    return formatter<string_view>::format(boost::diagnostic_information(in_), ctx);
   }
 };
 }  // namespace fmt

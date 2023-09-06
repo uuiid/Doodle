@@ -36,6 +36,8 @@ std::string doodle_category::message(int ev) const {
       return "json解析错误"s;
     case error_enum::not_find_work_class:
       return "没有找到对应的work类"s;
+    case error_enum::not_allow_multi_work:
+      return "不允许多个work"s;
     default:
       return fmt::format("unknown error {}", ev);
   }
