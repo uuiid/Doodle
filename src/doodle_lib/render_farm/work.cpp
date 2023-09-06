@@ -175,6 +175,40 @@ void work::run_job(const entt::handle& in_handle, const std::map<std::string, st
       }
   );
 }
+void work::send_log(std::string in_log) {
+  request_type l_request{
+      boost::beast::http::verb::post, fmt::format("/v1/render_farm/log/{}", ptr_->ue_data_ptr_->server_id), 11};
+  l_request.set(boost::beast::http::field::content_type, "plain/text");
+  l_request.set(boost::beast::http::field::accept, "application/json");
+
+  l_request.body() = std::move(in_log);
+  l_request.prepare_payload();
+  using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
+  ptr_->core_ptr_->async_read<response_type_1>(
+      boost::asio::make_strand(g_io_context()), l_request,
+      [this](auto&& PH1, const response_type_1& PH2) {
+        DOODLE_LOG_INFO("{}", PH2.body());
+        do_wait();
+      }
+  );
+}
+void work::send_err(std::string in_err) {
+  request_type l_request{
+      boost::beast::http::verb::post, fmt::format("/v1/render_farm/err/{}", ptr_->ue_data_ptr_->server_id), 11};
+  l_request.set(boost::beast::http::field::content_type, "plain/text");
+  l_request.set(boost::beast::http::field::accept, "application/json");
+
+  l_request.body() = std::move(in_err);
+  l_request.prepare_payload();
+  using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
+  ptr_->core_ptr_->async_read<response_type_1>(
+      boost::asio::make_strand(g_io_context()), l_request,
+      [this](auto&& PH1, const response_type_1& PH2) {
+        DOODLE_LOG_INFO("{}", PH2.body());
+        do_wait();
+      }
+  );
+}
 
 }  // namespace render_farm
 }  // namespace doodle

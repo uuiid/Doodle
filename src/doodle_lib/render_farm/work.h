@@ -64,6 +64,8 @@ class work {
   void run();
 
   void send_server_state();
+  void send_log(std::string in_log);
+  void send_err(std::string in_err);
 
   void run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap);
 
