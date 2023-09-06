@@ -20,6 +20,7 @@ void ue4_task::assign_tasks() {
     if (c.status() == computer_status::idle) {
       c.run_task(self_handle_);
       computer_handle_ = entt::handle{*g_reg(), e};
+      self_handle_.get<process_message>().set_state(process_message::state::run);
       return;
     }
   }
