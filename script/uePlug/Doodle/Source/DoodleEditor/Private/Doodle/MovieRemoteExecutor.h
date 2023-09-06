@@ -63,8 +63,6 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
  public:
   DoodleMovieRemoteState GetRenderState();
   float GetProgress();
-  void UDPOnTimeout();
-  void UDPReceiver(const FArrayReaderPtr& ArrayRender, const FIPv4Endpoint& Endpoint);
 
   void UDPGetServerIp();
   void UDPOnTimeout();
