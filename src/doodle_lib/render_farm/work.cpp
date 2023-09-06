@@ -49,8 +49,9 @@ void work::make_ptr() {
 void work::run() { find_server_address(); }
 void work::do_register() {
   boost::url l_url{"/v1/render_farm/computer"};
-  auto l_view = g_reg()->view<render_ue4>();
-  l_url.params().set("status", magic_enum::enum_name(l_view.empty() ? computer_status::idle : computer_status::busy));
+  l_url.params().set(
+      "status", magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::idle : computer_status::busy)
+  );
   if (ptr_->computer_id != entt::null) l_url.params().set("id", fmt::to_string(ptr_->computer_id));
   l_url.remove_origin();
 
