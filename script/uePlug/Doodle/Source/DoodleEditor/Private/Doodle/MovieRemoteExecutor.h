@@ -89,13 +89,8 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   int32 GetRepository_ID{};
 
   FString Remote_Repository;
-  FString Remote_Server_Ip = ("127.0.0.1");
   TArray<FDoodleRemoteRenderJobArg> RemoteRenderJobArgs;
   TWeakPtr<class SWindow> WeakCustomWindow;
-
-  FSocket* socket2 = nullptr;
-  FTimerHandle TimerHandle;//计时器
-  FUdpSocketReceiver* udp_rec = nullptr;
 
   // 生成命令行
   void GenerateCommandLineArguments(UMoviePipelineQueue* InPipelineQueue);
