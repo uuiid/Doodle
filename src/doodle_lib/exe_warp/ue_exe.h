@@ -26,24 +26,21 @@ class ue_exe {
 
  private:
   class run_ue;
-  FSys::path ue_path_;
-  std::stack<std::shared_ptr<run_ue>> queue_list_{};
-  std::shared_ptr<run_ue> run_process_{};
-  std::atomic_char16_t run_size_attr{};
-
-  void notify_run();
-
-  void find_ue_exe();
 
   struct process_child {
     boost::process::async_pipe out_attr;
     boost::process::async_pipe err_attr;
     boost::process::child child_attr{};
-
-    boost::asio::streambuf out_strbuff_attr{};
-    boost::asio::streambuf err_strbuff_attr{};
-    boost::signals2::scoped_connection cancel_attr{};
   };
+  FSys::path ue_path_;
+  std::stack<std::shared_ptr<run_ue>> queue_list_{};
+  std::shared_ptr<run_ue> run_process_{};
+  std::atomic_char16_t run_size_attr{};
+  std::weak_ptr<process_child> child_weak_ptr_{};
+
+  void notify_run();
+
+  void find_ue_exe();
 
  protected:
   using call_fun_type = std::function<void(boost::system::error_code)>;
@@ -68,8 +65,17 @@ class ue_exe {
 
   std::string get_file_version(const FSys::path &in_path);
 
+  bool is_run() const { return !child_weak_ptr_.expired(); }
+
   template <typename CompletionHandler, typename Arg_t>
   std::shared_ptr<process_child> create_child(const Arg_t &in_arg, CompletionHandler &&in_completion) {
+    find_ue_exe();
+    if (ue_path_.empty()) {
+      throw_exception(doodle_error{"ue_exe path is empty or not exists"});
+    }
+    if (!FSys::exists(ue_path_)) {
+      throw_exception(doodle_error{"ue_exe path is empty or not exists"});
+    }
     auto l_child        = std::make_shared<process_child>(g_io_context(), g_io_context());
     l_child->child_attr = boost::process::child{
         g_io_context(),
@@ -80,6 +86,7 @@ class ue_exe {
                                       int in_exit, const std::error_code &in_error_code
                                   ) { (in_completion)(in_exit, in_error_code); },
         boost::process::windows::hide};
+    child_weak_ptr_ = l_child;
     return l_child;
   };
 
