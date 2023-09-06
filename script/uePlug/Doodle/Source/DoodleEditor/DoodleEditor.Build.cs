@@ -121,7 +121,10 @@ public class doodleEditor : ModuleRules
 				"MovieRenderPipelineEditor", //远程渲染需要
 				"GeometryCacheTracks", //导入缓存需要
 
-			}
+				//-----------
+				"Sockets",
+                "Networking",
+            }
 			);
 
 
