@@ -3,10 +3,13 @@
 //
 
 #pragma once
+#include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/asio/async_result.hpp>
+#include <boost/process.hpp>
+#include <boost/process/windows.hpp>
 #include <boost/system.hpp>
 
 #include <cstdint>
@@ -32,6 +35,16 @@ class ue_exe {
 
   void find_ue_exe();
 
+  struct process_child {
+    boost::process::async_pipe out_attr;
+    boost::process::async_pipe err_attr;
+    boost::process::child child_attr{};
+
+    boost::asio::streambuf out_strbuff_attr{};
+    boost::asio::streambuf err_strbuff_attr{};
+    boost::signals2::scoped_connection cancel_attr{};
+  };
+
  protected:
   using call_fun_type = std::function<void(boost::system::error_code)>;
   virtual void queue_up(
@@ -54,6 +67,21 @@ class ue_exe {
   ue_exe() = default;
 
   std::string get_file_version(const FSys::path &in_path);
+
+  template <typename CompletionHandler, typename Arg_t>
+  std::shared_ptr<process_child> create_child(const Arg_t &in_arg, CompletionHandler &&in_completion) {
+    auto l_child        = std::make_shared<process_child>(g_io_context(), g_io_context());
+    l_child->child_attr = boost::process::child{
+        g_io_context(),
+        boost::process::cmd     = fmt::format("{} {}", ue_path_, in_arg.to_string()),
+        boost::process::std_out = l_child->out_attr,
+        boost::process::std_err = l_child->err_attr,
+        boost::process::on_exit = [l_child, in_completion = std::forward<decltype(in_completion)>(in_completion)](
+                                      int in_exit, const std::error_code &in_error_code
+                                  ) { (in_completion)(in_exit, in_error_code); },
+        boost::process::windows::hide};
+    return l_child;
+  };
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
