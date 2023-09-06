@@ -9,6 +9,7 @@
 #include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/udp_client.h>
+#include <doodle_lib/render_farm/working_machine_session.h>
 
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
@@ -80,13 +81,13 @@ void work::do_register() {
       }
   );
 }
-void work::send_server_state(const entt::handle& in_handle) {
-  entt::entity l_id = in_handle.get<detail::ue_server_id>();
-  request_type l_request{boost::beast::http::verb::post, fmt::format("/v1/render_farm/render_job/{}", l_id), 11};
+void work::send_server_state() {
+  request_type l_request{
+      boost::beast::http::verb::post, fmt::format("/v1/render_farm/render_job/{}", ptr_->ue_data_ptr_->server_id), 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
   nlohmann::json l_json;
-  l_json["state"]  = in_handle.get<process_message>().get_state();
+  l_json["state"]  = ptr_->ue_data_ptr_->run_handle.get<process_message>().get_state();
 
   l_request.body() = l_json.dump();
   l_request.prepare_payload();
@@ -94,10 +95,9 @@ void work::send_server_state(const entt::handle& in_handle) {
 
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
-      [this, in_handle](auto&& PH1, const response_type_1& PH2) {
+      [this](auto&& PH1, const response_type_1& PH2) {
         DOODLE_LOG_INFO("{}", PH2.body());
-        auto l_h = in_handle;
-        l_h.destroy();
+        ptr_->ue_data_ptr_.reset();
         do_wait();
       }
   );
@@ -111,18 +111,68 @@ bool work::find_server_address(std::uint16_t in_port) {
       in_port,
       [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
         if (PH1) {
-      DOODLE_LOG_ERROR("{}", PH1);
-      find_server_address();
-      return;
-    }
-    boost::ignore_unused(PH1);
-    auto l_remote_address         = in_remove_endpoint.address().to_string();
-    core_set::get_set().server_ip = l_remote_address;
-    DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
-    ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
-    do_register();
-  });
+          DOODLE_LOG_ERROR("{}", PH1);
+          find_server_address();
+          return;
+        }
+        boost::ignore_unused(PH1);
+        auto l_remote_address         = in_remove_endpoint.address().to_string();
+        core_set::get_set().server_ip = l_remote_address;
+        DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
+        ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
+        do_register();
+      }
+  );
   return true;
+}
+
+void work::run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) {
+  auto& l_session        = in_handle.get<working_machine_session>();
+  using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
+  auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+
+  boost::beast::http::async_read(
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
+      [in_handle, l_parser_ptr, this](boost::system::error_code ec, std::size_t bytes_transferred) {
+        boost::ignore_unused(bytes_transferred);
+        auto& l_session = in_handle.get<working_machine_session>();
+        if (ec == boost::beast::http::error::end_of_stream) {
+          return l_session.do_close();
+        }
+        if (ec) {
+          DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+          l_session.send_error_code(ec);
+          return;
+        }
+
+        if (ptr_->ue_data_ptr_) {
+          BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_allow_multi_work);
+          l_session.send_error_code(ec, boost::beast::http::status::service_unavailable);
+          return;
+        }
+
+        auto l_json = l_parser_ptr->release().body();
+
+        auto l_ue   = std::make_shared<ue_data>();
+        try {
+          l_ue->server_id = l_json["id"].get<entt::entity>();
+          auto l_h        = entt::handle{*g_reg(), g_reg()->create()};
+          l_h.emplace<process_message>();
+          l_h.emplace<render_ue4>(l_h, l_json["arg"].get<render_ue4::arg_t>()).run();
+        } catch (const nlohmann::json::exception& e) {
+          DOODLE_LOG_ERROR("json parse error: {}", e.what());
+          l_session.send_error(e);
+          return;
+        }
+        ptr_->ue_data_ptr_ = l_ue;
+
+        boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
+        l_response.keep_alive(l_parser_ptr->keep_alive());
+        l_response.body() = {{"state", "ok"}};
+        l_response.prepare_payload();
+        l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
+      }
+  );
 }
 
 }  // namespace render_farm
