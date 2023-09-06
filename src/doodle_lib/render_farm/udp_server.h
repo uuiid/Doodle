@@ -14,7 +14,6 @@ class udp_server : std::enable_shared_from_this<udp_server> {
   explicit udp_server(boost::asio::io_context& in_io_context, std::uint16_t in_port = 50022)
       : socket_{in_io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), in_port)},
         signal_set_{in_io_context, SIGINT, SIGTERM} {}
-  udp_server() = default;
 
   void run();
 
