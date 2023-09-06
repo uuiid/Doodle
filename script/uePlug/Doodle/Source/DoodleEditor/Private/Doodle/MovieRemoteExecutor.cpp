@@ -415,8 +415,6 @@ void UDoodleMovieRemoteExecutor::UDPGetServerIp()
         udp_socket = MakeShareable(FUdpSocketBuilder(TEXT("udp2")).AsNonBlocking().WithBroadcast().AsReusable().Build(),
             [](FSocket* u) {
                 if (u) {
-                    FString aa = TEXT("111");
-                    UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("析构"));
                     ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(u);
                 }
             });
