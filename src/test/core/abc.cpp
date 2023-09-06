@@ -32,13 +32,9 @@
 namespace fmt {}
 
 using namespace std::literals;
-auto maya_abc_r() {
-  Alembic::Abc::IArchive l_ar{
-      Alembic::AbcCoreOgawa::ReadArchive{},
-      "D:/test_file/cloth_test/abc/cloth_test/cloth_test_cloth_test_rig_1001-1100.abc"s};
 
-  Alembic::AbcGeom::IXform l_geo{l_ar.getTop(), "pCube1"s};
-  Alembic::AbcGeom::IPolyMesh l_mesh{l_geo.getChild(0)};
+auto print_abc_xform(Alembic::AbcGeom::IXform& in_xform) {
+  Alembic::AbcGeom::IPolyMesh l_mesh{in_xform.getChild(0)};
   auto l_s       = l_mesh.getSchema();
   auto l_index_l = l_s.getUVsParam().getIndexedValue();
 
@@ -54,7 +50,7 @@ auto maya_abc_r() {
   {
     auto l_index_ll = *l_index_l.getVals();
     for (auto i = 0; i < l_index_ll.size(); ++i) {
-      //      DOODLE_LOG_INFO(" {} : {} ", i, l_index_ll[i]);
+      DOODLE_LOG_INFO(" {} : {} {} ", i, l_index_ll[i].x, l_index_ll[i].y);
     }
   }
 
@@ -71,6 +67,32 @@ auto maya_abc_r() {
       }
     }
   }
+}
+
+auto maya_abc_r() {
+  Alembic::Abc::IArchive l_ar{
+      Alembic::AbcCoreOgawa::ReadArchive{},
+      "D:/test_file/cloth_test/abc/cloth_test/cloth_test_cloth_test_rig_1001-1100.abc"s};
+  //  Alembic::AbcGeom::IObject l_obj{l_ar, Alembic::Abc::kTop};
+  auto l_top        = l_ar.getTop();
+  const auto l_meta = l_top.getMetaData();
+  if (!Alembic::AbcGeom::IXform::matches(l_meta)) {
+    DOODLE_LOG_ERROR("not a xform, name {}", l_top.getName());
+
+    const auto l_child_count = l_top.getNumChildren();
+    for (auto i = 0; i < l_child_count; ++i) {
+      auto l_child = l_top.getChild(i);
+      DOODLE_LOG_INFO("child {} : {} ", i, l_child.getName());
+
+      if (Alembic::AbcGeom::IXform::matches(l_child.getMetaData())) {
+        DOODLE_LOG_INFO("child {} is a xform", i);
+        Alembic::AbcGeom::IXform l_geo{l_child, Alembic::Abc::kWrapExisting};
+        print_abc_xform(l_geo);
+      }
+    }
+    return 0;
+  }
+
   return 0;
 }
 int core_abc(int, char** const) { return maya_abc_r(); }
