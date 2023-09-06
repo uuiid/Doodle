@@ -19,10 +19,7 @@ class DOODLELIB_API menu_bar : public main_menu_bar {
   void menu_tool() override;
 
  private:
-  // 启动渲染客户端
-  void menu_start_render_client(bool is_run);
 
-  bool run_client;
 
   boost::signals2::scoped_connection connection_;
 };

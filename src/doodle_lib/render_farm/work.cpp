@@ -8,6 +8,7 @@
 
 #include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
+#include <doodle_lib/render_farm/udp_client.h>
 
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
@@ -21,7 +22,7 @@ void work::on_wait(boost::system::error_code ec) {
     DOODLE_LOG_INFO("{}", ec);
     return;
   }
-  run();
+  do_register();
 }
 void work::do_wait() {
   DOODLE_LOG_INFO("开始等待下一次心跳");
@@ -41,15 +42,18 @@ void work::make_ptr() {
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
     this->do_close();
   });
+  ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
 }
 
-void work::run() {
+void work::run() { find_server_address(); }
+void work::do_register() {
   boost::url l_url{"/v1/render_farm/computer"};
   auto l_view = g_reg()->view<render_ue4>();
   l_url.params().set("status", magic_enum::enum_name(l_view.empty() ? computer_status::idle : computer_status::busy));
   if (ptr_->computer_id != entt::null) l_url.params().set("id", fmt::to_string(ptr_->computer_id));
+  l_url.remove_origin();
 
-  request_type l_request{boost::beast::http::verb::post, "/v1/render_farm/computer", 11};
+  request_type l_request{boost::beast::http::verb::post, l_url.c_str(), 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
   nlohmann::json l_json;
@@ -76,7 +80,6 @@ void work::run() {
       }
   );
 }
-
 void work::send_server_state(const entt::handle& in_handle) {
   entt::entity l_id = in_handle.get<detail::ue_server_id>();
   request_type l_request{boost::beast::http::verb::post, fmt::format("/v1/render_farm/render_job/{}", l_id), 11};
@@ -100,7 +103,27 @@ void work::send_server_state(const entt::handle& in_handle) {
   );
 }
 
-void work::do_close() { ptr_->core_ptr_->cancel(); }
+void work::do_close() {
+  if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
+}
+bool work::find_server_address(std::uint16_t in_port) {
+  ptr_->udp_client_ptr_->async_find_server(
+      in_port,
+      [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
+        if (PH1) {
+      DOODLE_LOG_ERROR("{}", PH1);
+      find_server_address();
+      return;
+    }
+    boost::ignore_unused(PH1);
+    auto l_remote_address         = in_remove_endpoint.address().to_string();
+    core_set::get_set().server_ip = l_remote_address;
+    DOODLE_LOG_INFO("收到服务器响应 {}", l_remote_address);
+    ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
+    do_register();
+  });
+  return true;
+}
 
 }  // namespace render_farm
 }  // namespace doodle

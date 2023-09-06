@@ -88,7 +88,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_5.2",
-        "Maya_Version": "2020",
         "Photoshop_Version": "120.0",
         "BUILD_USD": "ON",
         "PXR_USD_ROOT": "E:/usd_install",

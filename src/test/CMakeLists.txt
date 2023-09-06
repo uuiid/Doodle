@@ -50,44 +50,46 @@ add_subdirectory(ai)
 
 add_subdirectory(main_fixtures)
 
-
-add_executable(
-        http_server
-        EXCLUDE_FROM_ALL
-        http_server.cpp
-)
-target_link_libraries(http_server
-        PUBLIC
-        doodle_lib
-        Boost::unit_test_framework
-)
-target_compile_definitions(http_server
-        PUBLIC
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-        BOOST_TEST_DYN_LINK
-        BOOST_ALL_DYN_LINK
-)
-target_compile_options(http_server PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
-        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
-
-
-add_executable(
-        http_proxy
-        EXCLUDE_FROM_ALL
+# create the testing file and list of tests
+create_test_sourcelist(main_test
+        CommonCxxTests.cxx
         http_proxy.cpp
+        http_server.cpp
+        udp_server.cpp
+        core/abc.cpp
+        core/submit_ue_task.cpp
 )
-target_link_libraries(http_proxy
+
+# add the executable
+add_executable(CommonCxxTests ${main_test})
+
+# remove the test driver source file
+set(TestsToRun ${main_test})
+list(REMOVE_ITEM TestsToRun CommonCxxTests.cxx)
+
+# Add all the ADD_TEST for each test
+foreach (test ${TestsToRun})
+    cmake_path(GET test PARENT_PATH TPath)
+    cmake_path(GET test STEM TStem)
+    if (TPath STREQUAL "")
+        set(test_name ${TStem})
+    else ()
+        set(test_name ${TPath}_${TStem})
+    endif ()
+    add_test(NAME ${test_name} COMMAND CommonCxxTests ${TPath}/${TStem})
+endforeach ()
+
+target_link_libraries(CommonCxxTests
         PUBLIC
         doodle_lib
-        Boost::unit_test_framework
+        Alembic::Alembic
 )
-target_compile_definitions(http_proxy
+target_compile_definitions(CommonCxxTests
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         BOOST_TEST_DYN_LINK
         BOOST_ALL_DYN_LINK
 )
-target_compile_options(http_proxy PRIVATE
+target_compile_options(CommonCxxTests PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)

@@ -9,6 +9,7 @@
 
 #include <doodle_lib/render_farm/detail/aync_read_body.h>
 #include <doodle_lib/render_farm/detail/computer.h>
+#include <doodle_lib/render_farm/detail/post_log.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/detail/ue4_task.h>
 namespace doodle::render_farm {
@@ -151,6 +152,30 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
         l_response.prepare_payload();
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
+  );
+}
+void get_log_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
+    const {
+  using str_parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
+  auto& l_session       = in_handle.get<working_machine_session>();
+  auto l_parser_ptr     = std::make_shared<str_parser_type>(std::move(l_session.request_parser()));
+  auto l_h              = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
+
+  boost::beast::http::async_read(
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
+      post_log{in_handle, l_h, post_log::log_enum::log, l_parser_ptr}
+  );
+}
+void get_err_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
+    const {
+  using str_parser_type  = boost::beast::http::request_parser<boost::beast::http::string_body>;
+  auto& l_session        = in_handle.get<working_machine_session>();
+  auto l_parser_ptr      = std::make_shared<str_parser_type>(std::move(l_session.request_parser()));
+  auto l_h               = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
+
+  boost::beast::http::async_read(
+      l_session.stream(), l_session.buffer(), *l_parser_ptr,
+      post_log{in_handle, l_h, post_log::log_enum::err, l_parser_ptr}
   );
 }
 }  // namespace detail

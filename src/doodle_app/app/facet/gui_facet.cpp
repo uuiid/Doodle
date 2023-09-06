@@ -51,11 +51,13 @@
 namespace doodle::facet {
 class gui_facet::impl {
  public:
+  using timer_t   = boost::asio::high_resolution_timer;
+  using timer_ptr = std::shared_ptr<timer_t>;
   /// \brief 初始化 com
   [[maybe_unused]] win::ole_guard _guard{};
   win::d3d_device_ptr d3d_attr;
   std::string name_attr{"gui_windows"};
-  boost::asio::high_resolution_timer timer_{boost::asio::make_strand(g_io_context())};
+  timer_ptr timer_{};
   //  using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
   using drop_ptr_type = decltype(winrt::make_self<win::drop_manager>());
 
@@ -67,6 +69,8 @@ const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
   if (!g_ctx().get<program_info>().use_gui_attr()) return false;
+
+  p_i->timer_ = std::make_shared<impl::timer_t>(g_io_context());
 
   init_windows();
   windows_manage_ = &g_ctx().emplace<gui::windows_manage>(this);
@@ -80,17 +84,17 @@ bool gui_facet::post() {
     if (!this->translate_message()) return;
     this->tick();  /// 渲染
     if (!g_ctx().get<program_info>().stop_attr()) {
-      p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
-      p_i->timer_.async_wait(s_fun);
+      p_i->timer_->expires_after(doodle::chrono::seconds{1} / 60);
+      p_i->timer_->async_wait(s_fun);
     }
   };
 
-  p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
-  p_i->timer_.async_wait(s_fun);
+  p_i->timer_->expires_after(doodle::chrono::seconds{1} / 60);
+  p_i->timer_->async_wait(s_fun);
   return true;
 }
 void gui_facet::deconstruction() {
-  p_i->timer_.cancel();
+  if (p_i->timer_) p_i->timer_->cancel();
   if (p_hwnd) {
     // Cleanup
     ImGui_ImplDX11_Shutdown();
@@ -257,7 +261,8 @@ void gui_facet::init_windows() {
     auto l_title = boost::locale::conv::utf_to_utf<char>(g_ctx().get<program_info>().title_attr());
     auto l_str   = fmt::format(
         "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title,
-        g_ctx().get<database_n::file_translator_ptr>()->get_project_path(), l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str()
+        g_ctx().get<database_n::file_translator_ptr>()->get_project_path(), l_prj.p_path, l_prj.show_str(), l_prj.str(),
+        l_prj.short_str()
     );
     set_title(l_str);
   };
@@ -270,8 +275,10 @@ void gui_facet::init_windows() {
 }
 void gui_facet::close_windows() {
   auto g_quit{[l_hwnd = p_hwnd, this]() {
-    p_i->timer_.cancel();
-    p_i->timer_.wait();
+    if (p_i->timer_) {
+      p_i->timer_->cancel();
+      p_i->timer_->wait();
+    }
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
     this->translate_message();

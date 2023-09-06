@@ -63,5 +63,6 @@ class opencv_player_widget;
 class image_icon;
 
 class holidaycn_time;
-
+class udp_client;
+using udp_client_ptr = std::shared_ptr<udp_client>;
 }  // namespace doodle

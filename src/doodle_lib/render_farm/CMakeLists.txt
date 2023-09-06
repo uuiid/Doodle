@@ -7,6 +7,8 @@ target_sources(
         proxy_server.h
         working_machine.h
         working_machine_session.h
+        udp_server.h
+        udp_client.h
 
         PRIVATE
         client_core.cpp
@@ -15,6 +17,8 @@ target_sources(
         proxy_server.cpp
         working_machine.cpp
         working_machine_session.cpp
+        udp_server.cpp
+        udp_client.cpp
 )
 add_subdirectory(exception)
 add_subdirectory(detail)

@@ -53,10 +53,8 @@ core_set::core_set()
       assets_file_widgets_size(5),
       json_data(std::make_shared<nlohmann::json>()),
 #ifdef NDEBUG
-      server_ip{"192.168.20.59"},
       depot_ip{"\\\\192.168.10.218\\Doodletemp"}
 #else
-      server_ip{"192.168.20.59"},
       depot_ip{"\\\\192.168.20.59\\UE_Config\\Doodletemp"}
 #endif
 
@@ -160,7 +158,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["user_id"]                  = p.user_id;
   j["user_name"]                = p.user_name;
   j["program_location_attr"]    = p.program_location_attr;
-  j["server_ip"]                = p.server_ip;
   j["maya_version"]             = p.maya_version;
   j["layout_config"]            = p.layout_config;
   j["assets_file_widgets_size"] = p.assets_file_widgets_size;
@@ -191,7 +188,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("program_location_attr") && p.program_location_attr.empty()) {
     p.program_location_attr = j.at("program_location_attr").get<FSys::path>();
   }
-  if (j.contains("server_ip")) j.at("server_ip").get_to(p.server_ip);
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
   if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
   if (j.contains("assets_file_widgets_size")) j.at("assets_file_widgets_size").get_to(p.assets_file_widgets_size);

@@ -9,6 +9,7 @@
 #include <boost/beast.hpp>
 
 namespace doodle {
+
 namespace render_farm {
 
 class work {
@@ -30,15 +31,22 @@ class work {
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
     entt::entity computer_id{entt::null};
+
+    udp_client_ptr udp_client_ptr_{};
   };
   std::shared_ptr<data_type> ptr_;
 
  public:
-  explicit work(std::string in_server_ip) : ptr_{std::make_shared<data_type>()} {
-    ptr_->core_ptr_ = std::make_shared<client_core>(std::move(in_server_ip));
+  work() : ptr_{std::make_shared<data_type>()} { make_ptr(); }
 
-    make_ptr();
-  }
+  // copy
+  work(const work&)            = default;
+  work& operator=(const work&) = default;
+  // move
+  work(work&&)                 = default;
+  work& operator=(work&&)      = default;
+
+  bool find_server_address(std::uint16_t in_port = 50022);
 
   ~work() = default;
 
@@ -48,6 +56,8 @@ class work {
 
  private:
   void make_ptr();
+
+  void do_register();
 
   void do_wait();
   void do_close();

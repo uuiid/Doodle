@@ -21,6 +21,10 @@ class client_core : public std::enable_shared_from_this<client_core> {
   using buffer_type  = boost::beast::flat_buffer;
 
  private:
+  using next_fun_t          = std::function<void()>;
+  using next_fun_ptr_t      = std::shared_ptr<next_fun_t>;
+  using next_fun_weak_ptr_t = std::weak_ptr<next_fun_t>;
+
   struct data_type {
     std::string server_ip_;
     socket_ptr socket_{};
@@ -28,8 +32,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
     boost::asio::ip::tcp::resolver::results_type resolver_results_;
     boost::asio::any_io_executor executor_;
 
-    std::queue<std::function<void()>> queue_;
-    std::atomic_bool queue_running_{};
+    next_fun_weak_ptr_t next_;
   };
   std::shared_ptr<data_type> ptr_;
 
@@ -38,12 +41,6 @@ class client_core : public std::enable_shared_from_this<client_core> {
   void on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results);
 
  public:
-  struct queue_action_guard {
-    data_type* ptr_;
-    explicit queue_action_guard(data_type* in_ptr) : ptr_(in_ptr) {}
-    ~queue_action_guard();
-  };
-
   enum state {
     start,
     resolve,
@@ -61,8 +58,8 @@ class client_core : public std::enable_shared_from_this<client_core> {
       ResponseType response_;
       state state_ = start;
       RequestType request_;
-      std::unique_ptr<client_core::queue_action_guard> guard_;
-      std::string_view server_ip_;
+
+      next_fun_ptr_t next_;
 
       // 重试次数
       std::size_t retry_count_{};
@@ -79,9 +76,8 @@ class client_core : public std::enable_shared_from_this<client_core> {
           socket_(in_ptr->stream()),
           results_(in_ptr->ptr_->resolver_results_),
           ptr_(std::make_unique<data_type2>()) {
-      ptr_->server_ip_ = in_ptr->server_ip();
-      ptr_->guard_     = std::make_unique<client_core::queue_action_guard>(in_ptr->ptr_.get());
-      ptr_->request_   = std::move(in_req);
+      ptr_->request_ = std::move(in_req);
+      ptr_->next_    = std::make_shared<next_fun_t>([]() {});
     }
     ~connect_write_read_op()                                       = default;
     // move
@@ -91,14 +87,14 @@ class client_core : public std::enable_shared_from_this<client_core> {
     connect_write_read_op(const connect_write_read_op&)            = delete;
     connect_write_read_op& operator=(const connect_write_read_op&) = delete;
 
-    void run(client_core* in_ptr) {
-      in_ptr->ptr_->queue_running_ = true;
+    void run() {
       if (socket_.socket().is_open()) {
         do_write();
       } else {
         do_connect();
       }
     }
+    void next() { (*ptr_->next_)(); }
 
     // async_write async_read 回调
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
@@ -109,6 +105,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         if (ptr_->retry_count_ > 3) {
           ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
+          next();
           return;
         }
         DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
@@ -118,6 +115,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         this->complete(false, ec, ptr_->response_);
+        next();
         return;
       }
 
@@ -128,6 +126,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         }
         case state::read: {
           this->complete(false, ec, ptr_->response_);
+          next();
           break;
         }
         default: {
@@ -145,6 +144,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         if (ptr_->retry_count_ > 3) {
           ptr_->response_.result(boost::beast::http::status::request_timeout);
           this->complete(false, ec, ptr_->response_);
+          next();
           return;
         }
         DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
@@ -155,6 +155,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
       if (ec) {
         DOODLE_LOG_INFO("{}", ec);
         this->complete(false, ec, ptr_->response_);
+        next();
         return;
       }
 
@@ -195,25 +196,17 @@ class client_core : public std::enable_shared_from_this<client_core> {
           auto l_h = std::make_shared<connect_op>(
               in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
           );
-          auto& l_queue = in_client_ptr->ptr_->queue_;
-          l_queue.emplace([l_self = l_h, in_client_ptr]() { l_self->run(in_client_ptr); });
-          if (!in_client_ptr->ptr_->queue_running_) l_queue.front()();
-        },
-        in_completion, this, in_executor_type, in_type
-    );
-  }
-  template <typename ResponseType, typename ExecutorType, typename RequestType, typename CompletionHandler>
-  auto async_read2(const ExecutorType& in_executor_type, RequestType& in_type, CompletionHandler&& in_completion) {
-    in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
-        [](auto&& in_completion_, client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
-          auto l_h = std::make_shared<connect_op>(
-              in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
-          );
-          auto& l_queue = in_client_ptr->ptr_->queue_;
-          l_queue.emplace([l_self = l_h, in_client_ptr]() { l_self->run(in_client_ptr); });
-          if (!in_client_ptr->ptr_->queue_running_) l_queue.front()();
+          bool l_has_next = static_cast<bool>(in_client_ptr->ptr_->next_.lock());
+          auto l_next     = l_h->ptr_->next_;
+          if (l_has_next) {
+            (*in_client_ptr->ptr_->next_.lock()) = [l_h]() {
+              DOODLE_LOG_INFO("开始下一项");
+              l_h->run();
+            };
+          } else {
+            l_h->run();
+          }
+          in_client_ptr->ptr_->next_ = l_next;
         },
         in_completion, this, in_executor_type, in_type
     );

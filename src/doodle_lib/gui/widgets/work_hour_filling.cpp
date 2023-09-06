@@ -200,7 +200,7 @@ void work_hour_filling::modify_item(std::size_t in_index) {
 }
 
 void work_hour_filling::init() {
-  ptr->client_ = std::make_unique<distributed_computing::client>(core_set::get_set().server_ip);
+  //  ptr->client_ = std::make_unique<distributed_computing::client>( );
   try {
     ptr->current_user = ptr->client_->get_user(g_reg()->ctx().get<doodle::user::current_user>().uuid);
     //    ptr->current_user = g_reg()->ctx().get<doodle::user::current_user>().get_handle();
