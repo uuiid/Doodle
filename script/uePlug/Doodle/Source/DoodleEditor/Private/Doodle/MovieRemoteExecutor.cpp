@@ -411,7 +411,7 @@ void UDoodleMovieRemoteExecutor::UDPGetServerIp()
     if (udp_socket == nullptr)
     {
         UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPGetServerIp"));
-        GEditor->GetTimerManager().Get().SetTimer(TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 3);
+        GEditor->GetTimerManager().Get().SetTimer(TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 1,false,3);
         udp_socket = MakeShareable(FUdpSocketBuilder(TEXT("udp2")).AsNonBlocking().WithBroadcast().AsReusable().Build(),
             [](FSocket* u) {
                 if (u) {
@@ -466,7 +466,7 @@ void UDoodleMovieRemoteExecutor::UDPOnTimeout()
 void UDoodleMovieRemoteExecutor::UDPReceiver(const FArrayReaderPtr& arrayRender, const FIPv4Endpoint& endpoint)
 {
     UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPReceiver"));
-    FString rec_data = FString::FromBlob(arrayRender->GetData(), arrayRender->Num());
+    FString rec_data = UTF8_TO_TCHAR((char*)arrayRender->GetData());
     //----------------
     if (rec_data.Equals(TEXT("hello world! doodle server")))
     {
