@@ -26,6 +26,7 @@ enum class error_enum : std::int32_t {
 
   null_string,
   bad_json_string,
+  not_find_work_class,
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
