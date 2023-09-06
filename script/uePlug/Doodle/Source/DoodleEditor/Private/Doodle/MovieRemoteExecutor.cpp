@@ -546,58 +546,6 @@ void UDoodleMovieRemoteExecutor::StartRemoteClientRender() {
   }
 }
 
-void UDoodleMovieRemoteExecutor::UDPOnTimeout()
-{
-    //----------------
-    if (socket2 != nullptr) 
-    {
-        //--------------------
-        socket2->Close();
-        ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(socket2);
-        socket2 = nullptr;
-        //--------------
-        StartRemoteClientRender();
-        //---------------
-        if (udp_rec != nullptr) //关闭监听线程
-        {
-            udp_rec->Stop();
-            delete udp_rec;
-            udp_rec = nullptr;
-        }
-    }
-    //-------------------------
-    
-    //-------------------
-    GEditor->GetTimerManager().Get().ClearTimer(TimerHandle);
-}
-
-void UDoodleMovieRemoteExecutor::UDPReceiver(const FArrayReaderPtr& arrayRender,const FIPv4Endpoint& endpoint)
-{
-    TSharedPtr<FArrayReader> ar = MakeShareable(arrayRender.Get());
-    uint8 data[512];
-    FMemory::Memzero(data, 512);
-    FMemory::Memcpy(data, arrayRender->GetData(), arrayRender->Num());
-    FString rec_data = ((const char*)data);
-    //----------------
-    if(rec_data.Equals("hello world! doodle server"))
-    {
-        //----------------
-        socket2->Close();
-        ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(socket2);
-        socket2 = nullptr;
-        Remote_Server_Ip = endpoint.Address.ToString();
-        //---------------------------------
-        StartRemoteClientRender();
-        //---------------
-        if (udp_rec != nullptr) //关闭监听线程
-        {
-            udp_rec->Stop();
-            delete udp_rec;
-            udp_rec = nullptr;
-        }
-    }
-}
-
 void UDoodleMovieRemoteExecutor::FindRemoteClient() {
   HTTPResponseRecievedDelegate.AddDynamic(this, &UDoodleMovieRemoteExecutor::HttpRemoteClient);
 
@@ -623,28 +571,7 @@ void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 Resp
       }
     }
     //-----------------------------------
-    if (socket2 == nullptr)
-    {
-        GEditor->GetTimerManager().Get().SetTimer(TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 3, true);
-        socket2 = FUdpSocketBuilder(TEXT("udp2")).AsNonBlocking().WithBroadcast().AsReusable().Build();
-        //---------------
-        FString msg = "hello world! doodle";
-        TArray<uint8> bytes;
-        FTCHARToUTF8 Converter(*msg);
-        int32 send = 0;
-        bytes.Append((const uint8*)Converter.Get(), Converter.Length());
-        //---------------------------
-        udp_rec = new FUdpSocketReceiver(socket2, FTimespan::FromSeconds(1000), TEXT("rec_thread"));
-        udp_rec->OnDataReceived().BindUObject(this, &UDoodleMovieRemoteExecutor::UDPReceiver);
-        udp_rec->Start();
-        //------------------
-        TSharedPtr<FInternetAddr> addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-        addr->SetBroadcastAddress();
-        addr->SetPort(50022);
-        socket2->SendTo(bytes.GetData(), bytes.Num(), send, *addr);
-        //---------------------
-    }
-    //StartRemoteClientRender();
+    StartRemoteClientRender();
     return;
 
   } else if (Render_IDs.Contains(RequestIndex)) {
