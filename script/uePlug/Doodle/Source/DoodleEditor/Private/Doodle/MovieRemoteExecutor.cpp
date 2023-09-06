@@ -408,7 +408,7 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
 
 void UDoodleMovieRemoteExecutor::UDPGetServerIp()
 {
-    if (udp_socket == nullptr)
+    if (!udp_socket)
     {
         UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPGetServerIp"));
         GEditor->GetTimerManager().Get().SetTimer(TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 1,false,3);
@@ -416,6 +416,7 @@ void UDoodleMovieRemoteExecutor::UDPGetServerIp()
             [](FSocket* u) {
                 if (u) {
                     ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(u);
+                    UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("析构"));
                 }
             });
         //---------------
@@ -424,6 +425,7 @@ void UDoodleMovieRemoteExecutor::UDPGetServerIp()
         FTCHARToUTF8 Converter(*msg);
         bytes.Append((const uint8*)Converter.Get(), Converter.Length());
         //---------------------------
+        udp_rec.Reset();
         udp_rec = MakeShareable(new FUdpSocketReceiver(udp_socket.Get(), FTimespan::FromSeconds(500), TEXT("rec_thread")));
         udp_rec->OnDataReceived().BindUObject(this, &UDoodleMovieRemoteExecutor::UDPReceiver);
         udp_rec->Start();
@@ -441,18 +443,16 @@ void UDoodleMovieRemoteExecutor::UDPOnTimeout()
 {
     UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPOnTimeout"));
     //----------------
-    if (udp_socket != nullptr)
+    if (!udp_socket)
     {
         //--------------------
         udp_socket->Close();
         //---------------
-        if (udp_rec != nullptr)
+        if (udp_rec)
         {
             udp_rec->Stop();
-            udp_rec = nullptr;
         }
         //ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(udp_socket.Get());
-        udp_socket = nullptr;
         //--------------
         FNotificationInfo L_Info{ FText::FromString(TEXT("正在渲染...")) };
         L_Info.bFireAndForget = true;  // 自动取消
@@ -460,6 +460,8 @@ void UDoodleMovieRemoteExecutor::UDPOnTimeout()
         L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
         L_Info.Text = FText::FromString(TEXT("无服务器连接或服务器未启动"));
         FSlateNotificationManager::Get().AddNotification(L_Info);
+        //---------
+        udp_socket.Reset();
     }
 }
 
@@ -472,16 +474,18 @@ void UDoodleMovieRemoteExecutor::UDPReceiver(const FArrayReaderPtr& arrayRender,
     {
         //----------------
         udp_socket->Close();
-        if (udp_rec != nullptr)
+        if (udp_rec)
         {
             udp_rec->Stop();
-            udp_rec = nullptr;
         }
-        udp_socket = nullptr;
         Remote_Server_Ip = endpoint.Address.ToString();
         //---------------------------------
-        FindRemoteClient();
+        AsyncTask(ENamedThreads::GameThread, [=]()
+        {
+            FindRemoteClient();
+        });
         //---------------
+        //udp_socket.Reset();
     }
 }
 
