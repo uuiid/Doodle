@@ -55,7 +55,7 @@ void get_err_type_get::operator()(const entt::handle& in_handle, const std::map<
     BOOST_BEAST_ASSIGN_EC(l_ec, error_enum::invalid_handle);
     l_session.send_error_code(l_ec, boost::beast::http::status::bad_request);
   }
-  auto l_h        = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
+  auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
 
   if (l_h && l_h.all_of<process_message>()) {
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
@@ -91,12 +91,17 @@ struct render_job_tmp {
   entt::entity id_{};
   std::string name_{};
   std::string status_{};
+  std::string time_{};
   explicit render_job_tmp(const ue4_task& in_task, entt::entity in_id)
-      : name_(in_task.arg().ProjectPath), status_(in_task.is_assign() ? "已分配"s : "未分配"s), id_(in_id) {}
+      : name_(in_task.arg().ProjectPath),
+        status_(in_task.is_assign() ? "已分配"s : "未分配"s),
+        id_(in_id),
+        time_(fmt::to_string(entt::handle{*g_reg(), in_id}.get<process_message>().get_time())) {}
   friend void to_json(nlohmann::json& j, const render_job_tmp& in_tmp) {
     j["id"]     = in_tmp.id_;
     j["name"]   = in_tmp.name_;
     j["status"] = in_tmp.status_;
+    j["time"]   = in_tmp.time_;
   }
 };
 
