@@ -136,7 +136,16 @@ const process_message::state& process_message::get_state() const {
 }
 chrono::sys_time_pos::duration process_message::get_time() const {
   //  std::lock_guard _lock{_mutex};
-  return p_end ? (*p_end - p_time) : (chrono::system_clock::now() - p_time);
+
+  switch (p_state) {
+    case state::wait:
+      return chrono::sys_time_pos::duration{0};
+    case state::run:
+      return chrono::system_clock::now() - p_time;
+    case state::fail:
+    case state::success:
+      return p_end - p_time;
+  }
 }
 const std::string& process_message::message_back() const { return p_str_end; }
 

@@ -21,7 +21,7 @@ class DOODLE_CORE_API process_message {
 
  private:
   chrono::sys_time_pos p_time;
-  std::optional<chrono::sys_time_pos> p_end;
+  chrono::sys_time_pos p_end;
   std::string p_err;
   std::string p_log;
   std::string p_str_end;
