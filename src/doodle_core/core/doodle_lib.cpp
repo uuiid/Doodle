@@ -31,8 +31,8 @@ class doodle_lib::impl {
  public:
   boost::asio::io_context io_context_{};
   boost::asio::thread_pool thread_pool_attr{std::thread::hardware_concurrency() * 2};
-  registry_ptr reg{};
   logger_ctr_ptr p_log{};
+  registry_ptr reg{};
   entt::registry::context ctx_p{};
 
   inline static doodle_lib* self;
