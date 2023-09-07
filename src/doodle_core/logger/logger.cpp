@@ -51,7 +51,7 @@ logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" /
   init_temp_log();
 }
 
-auto make_log(const FSys::path &in_path, const std::string &in_name = "doodle_lib"s) {
+logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, const std::string &in_name) {
   if (!FSys::exists(in_path)) FSys::create_directories(in_path);
   auto l_path = in_path / fmt::format(
                               "{:%Y-%m-%d %H-%M-%S}_{}_{}.txt", chrono::system_clock::now(),
@@ -59,10 +59,10 @@ auto make_log(const FSys::path &in_path, const std::string &in_name = "doodle_li
                           );
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
-    auto l_file =
+    rotating_file_sink_ =
         std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024 * 1024, 100, true);
     l_logger = std::make_shared<spdlog::async_logger>(
-        in_name, l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block
+        in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
 #if !defined(NDEBUG)
     auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
@@ -80,11 +80,22 @@ auto make_log(const FSys::path &in_path, const std::string &in_name = "doodle_li
 }
 
 void logger_ctrl::init_temp_log() {
-  auto l_logger = make_log(p_log_path);
+  auto l_logger = make_log(p_log_path, {"doodle_lib"});
   spdlog::set_default_logger(l_logger);
 
   spdlog::flush_every(3s);
   spdlog::set_level(spdlog::level::debug);
+}
+
+logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, bool out_console) {
+  std::vector<spdlog::sink_ptr> l_sinks{rotating_file_sink_};
+  if (out_console) {
+    l_sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
+  }
+  auto l_logger = std::make_shared<spdlog::async_logger>(
+      in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+  );
+  return l_logger;
 }
 
 logger_ctrl::~logger_ctrl() {
