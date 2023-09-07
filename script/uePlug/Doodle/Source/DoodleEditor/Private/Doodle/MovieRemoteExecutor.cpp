@@ -412,11 +412,10 @@ void UDoodleMovieRemoteExecutor::UDPGetServerIp()
     {
         UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPGetServerIp"));
         GEditor->GetTimerManager().Get().SetTimer(TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 1,false,3);
-        udp_socket = MakeShareable(FUdpSocketBuilder(TEXT("udp2")).AsNonBlocking().WithBroadcast().AsReusable().Build(),
+        udp_socket = MakeShareable(FUdpSocketBuilder(TEXT("UDPSocket")).AsNonBlocking().WithBroadcast().AsReusable().Build(),
             [](FSocket* u) {
                 if (u) {
                     ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(u);
-                    UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("析构"));
                 }
             });
         //---------------
@@ -443,7 +442,7 @@ void UDoodleMovieRemoteExecutor::UDPOnTimeout()
 {
     UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPOnTimeout"));
     //----------------
-    if (!udp_socket)
+    if (udp_socket)
     {
         //--------------------
         udp_socket->Close();
