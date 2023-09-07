@@ -96,6 +96,10 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
     l_ofs << arg_.ManifestValue;
     manifest_path_ = manifest_path_.lexically_normal();
   }
+  {
+    // 删除陈旧输出
+    if (FSys::exists(loc_out_file_path_)) FSys::remove_all(loc_out_file_path_);
+  }
   return true;
 }
 std::string render_ue4::generate_command_line() const {
