@@ -17,16 +17,7 @@
 #include <fmt/core.h>
 #include <winreg/WinReg.hpp>
 namespace doodle::gui {
-menu_bar::menu_bar() {
-  connection_  = app_base::Get().on_stop.connect([this]() {
-    auto &&l_lib = doodle_lib::Get();
-    if (l_lib.ctx().contains<doodle::render_farm::working_machine_ptr>()) {
-      l_lib.ctx().get<doodle::render_farm::working_machine_ptr>()->stop();
-      l_lib.ctx().erase<doodle::render_farm::working_machine_ptr>();
-    }
-  });
-  auto &&l_lib = doodle_lib::Get();
-}
+menu_bar::menu_bar() = default;
 
 void menu_bar::message(const std::string &in_m) {
   g_windows_manage().create_windows_arg(
