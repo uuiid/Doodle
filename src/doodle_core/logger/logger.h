@@ -70,6 +70,31 @@ inline void log_error(
 ) {
   in_logger->log(in_loc, spdlog::level::err, in_msg);
 }
+inline void log_debug(
+    const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  spdlog::default_logger_raw()->log(in_loc, spdlog::level::debug, in_msg);
+}
+inline void log_info(
+    const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  spdlog::default_logger_raw()->log(in_loc, spdlog::level::info, in_msg);
+}
+
+inline void log_warn(
+    const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  spdlog::default_logger_raw()->log(in_loc, spdlog::level::warn, in_msg);
+}
+inline void log_error(
+    const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  spdlog::default_logger_raw()->log(in_loc, spdlog::level::err, in_msg);
+}
 }  // namespace doodle::details
 #define DOODLE_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
 
