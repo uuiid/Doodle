@@ -130,6 +130,7 @@ bool work::find_server_address(std::uint16_t in_port) {
 }
 
 void work::run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) {
+  boost::ignore_unused(in_cap);
   auto& l_session        = in_handle.get<working_machine_session>();
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
