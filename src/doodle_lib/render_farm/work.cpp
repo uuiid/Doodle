@@ -88,7 +88,8 @@ void work::send_server_state() {
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
   nlohmann::json l_json;
-  l_json["state"]  = ptr_->ue_data_ptr_->run_handle.get<process_message>().get_state();
+  auto l_state     = ptr_->ue_data_ptr_->run_handle.get<process_message>().get_state();
+  l_json["state"]  = l_state;
 
   l_request.body() = l_json.dump();
   l_request.prepare_payload();
@@ -96,9 +97,10 @@ void work::send_server_state() {
 
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
-      [this](auto&& PH1, const response_type_1& PH2) {
+      [this, l_state](auto&& PH1, const response_type_1& PH2) {
         DOODLE_LOG_INFO("{}", PH2.body());
-        ptr_->ue_data_ptr_.reset();
+        if (l_state == process_message::state::success || l_state == process_message::state::fail)
+          ptr_->ue_data_ptr_.reset();
         do_wait();
       }
   );
