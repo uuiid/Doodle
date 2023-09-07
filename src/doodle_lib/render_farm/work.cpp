@@ -168,6 +168,7 @@ void work::run_job(const entt::handle& in_handle, const std::map<std::string, st
           auto l_h        = entt::handle{*g_reg(), g_reg()->create()};
           l_h.emplace<process_message>();
           l_h.emplace<render_ue4>(l_h, l_json["arg"].get<render_ue4::arg_t>()).run();
+          l_ue->run_handle = l_h;
         } catch (const nlohmann::json::exception& e) {
           DOODLE_LOG_ERROR("json parse error: {}", e.what());
           l_session.send_error(e);
