@@ -218,6 +218,10 @@ void work::send_err(std::string in_err) {
       }
   );
 }
+void work::stop() {
+  ptr_->core_ptr_->cancel();
+  ptr_->timer_->cancel();
+}
 
 }  // namespace render_farm
 }  // namespace doodle
