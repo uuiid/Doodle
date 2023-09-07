@@ -18,6 +18,17 @@
 #include <utility>
 #include <vector>
 namespace doodle {
+namespace detail {
+struct process_child {
+  explicit process_child(boost::asio::io_context &in_io_context) : out_attr(in_io_context), err_attr(in_io_context) {}
+  boost::process::async_pipe out_attr;
+  boost::process::async_pipe err_attr;
+  boost::process::child child_attr{};
+
+  boost::asio::streambuf out_str{};
+  boost::asio::streambuf err_str{};
+};
+}  // namespace detail
 
 class ue_exe {
  public:
@@ -26,12 +37,7 @@ class ue_exe {
 
  private:
   class run_ue;
-
-  struct process_child {
-    boost::process::async_pipe out_attr;
-    boost::process::async_pipe err_attr;
-    boost::process::child child_attr{};
-  };
+  using process_child = detail::process_child;
   FSys::path ue_path_;
   std::stack<std::shared_ptr<run_ue>> queue_list_{};
   std::shared_ptr<run_ue> run_process_{};
@@ -76,7 +82,7 @@ class ue_exe {
     if (!FSys::exists(ue_path_)) {
       throw_exception(doodle_error{"ue_exe path is empty or not exists"});
     }
-    auto l_child        = std::make_shared<process_child>(g_io_context(), g_io_context());
+    auto l_child        = std::make_shared<process_child>(g_io_context());
     l_child->child_attr = boost::process::child{
         g_io_context(),
         boost::process::cmd     = fmt::format("{} {}", ue_path_, in_arg.to_string()),

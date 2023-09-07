@@ -44,6 +44,10 @@ using working_machine_ptr = std::shared_ptr<working_machine>;
 
 }  // namespace render_farm
 
+namespace detail {
+struct process_child;
+}
+using process_child_ptr = std::shared_ptr<detail::process_child>;
 using namespace entt::literals;
 using namespace std::literals;
 using namespace chrono::literals;
