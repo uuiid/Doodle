@@ -45,6 +45,31 @@ class DOODLE_CORE_API logger_ctrl {
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 };
 
+inline void log_debug(
+    const std::shared_ptr<spdlog::logger>& in_logger, const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  in_logger->log(in_loc, spdlog::level::debug, in_msg);
+}
+inline void log_info(
+    const std::shared_ptr<spdlog::logger>& in_logger, const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  in_logger->log(in_loc, spdlog::level::info, in_msg);
+}
+
+inline void log_warn(
+    const std::shared_ptr<spdlog::logger>& in_logger, const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  in_logger->log(in_loc, spdlog::level::warn, in_msg);
+}
+inline void log_error(
+    const std::shared_ptr<spdlog::logger>& in_logger, const std::string& in_msg,
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  in_logger->log(in_loc, spdlog::level::err, in_msg);
+}
 }  // namespace doodle::details
 #define DOODLE_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
 

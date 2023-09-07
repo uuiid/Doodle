@@ -22,6 +22,7 @@
 #include <date/date.h>
 #include <entt/entt.hpp>
 #include <spdlog/async.h>
+#include <spdlog/logger.h>
 
 namespace boost::asio {
 class io_context;
@@ -31,7 +32,7 @@ class thread_pool;
 // #include <>
 namespace doodle {
 using entt::literals::operator""_hs;
-using logger_ptr = std::shared_ptr<spdlog::async_logger>;
+using logger_ptr = std::shared_ptr<spdlog::logger>;
 namespace details {
 class database_info;
 class program_info;
