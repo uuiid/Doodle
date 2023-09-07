@@ -56,6 +56,7 @@ create_test_sourcelist(main_test
         core/abc.cpp
         core/submit_ue_task.cpp
         core/run_ue.cpp
+        core/sod_log.cpp
 )
 
 # add the executable
