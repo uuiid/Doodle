@@ -53,9 +53,6 @@ add_subdirectory(main_fixtures)
 # create the testing file and list of tests
 create_test_sourcelist(main_test
         CommonCxxTests.cxx
-        http_proxy.cpp
-        http_server.cpp
-        udp_server.cpp
         core/abc.cpp
         core/submit_ue_task.cpp
         core/run_ue.cpp
@@ -96,3 +93,10 @@ target_compile_definitions(CommonCxxTests
 target_compile_options(CommonCxxTests PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
+
+
+add_executable(
+        http_server
+        http_server.cpp
+)
+doodle_link_test(http_server)

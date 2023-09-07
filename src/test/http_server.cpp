@@ -63,7 +63,6 @@ class server_facet {
     route_ptr->reg<render_farm::detail::get_err_type_get>();
     route_ptr->reg<render_farm::detail::render_job_type_get>();
     route_ptr->reg<render_farm::detail::computer_reg_type_get>();
-    route_ptr->reg<render_farm::detail::render_job_type_post>();
 
     route_ptr->reg<render_farm::detail::repository_type_get>();
     route_ptr->reg<render_farm::detail::get_root_type>();
@@ -73,7 +72,7 @@ class server_facet {
     g_reg()->ctx().emplace<render_farm::computer_manage>().run();
     l_ptr->run();
     g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
-    g_reg()->ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->run("127.0.0.1");
+    g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->run("127.0.0.1");
     //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 
     return l_r;
@@ -91,7 +90,7 @@ class server_facet {
 // #include <boost/locale.hpp>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-int http_server(int argc, char* argv[]) try {
+int main(int argc, char* argv[]) try {
   using main_app = doodle::app_command<server_facet>;
   main_app app{argc, argv};
   try {
