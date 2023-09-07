@@ -38,50 +38,50 @@ class ue_exe_m : public doodle::ue_exe {
   }
 };
 
-class server_facet {
-  static constexpr auto name{"server"};
+void run_server() {
+  using namespace doodle;
+  g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
+  auto l_ptr                    = g_ctx().emplace<doodle::render_farm::working_machine_ptr>(
+      std::make_shared<doodle::render_farm::working_machine>(g_io_context())
+  );
+  auto route_ptr = std::make_shared<render_farm::detail::http_route>();
 
- public:
-  server_facet()  = default;
-  ~server_facet() = default;
+  l_ptr->route(route_ptr);
+  route_ptr->reg<render_farm::detail::render_job_type_post>();
+  route_ptr->reg<render_farm::detail::computer_reg_type_post>();
+  route_ptr->reg<render_farm::detail::get_log_type_get>();
+  route_ptr->reg<render_farm::detail::get_err_type_get>();
+  route_ptr->reg<render_farm::detail::render_job_type_get>();
+  route_ptr->reg<render_farm::detail::computer_reg_type_get>();
 
-  bool post() {
-    using namespace doodle;
-    bool l_r{};
-    l_r    = true;
-    guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
-    g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-    auto l_ptr                    = g_ctx().emplace<doodle::render_farm::working_machine_ptr>(
-        std::make_shared<doodle::render_farm::working_machine>(g_io_context())
-    );
-    auto route_ptr = std::make_shared<render_farm::detail::http_route>();
+  route_ptr->reg<render_farm::detail::repository_type_get>();
+  route_ptr->reg<render_farm::detail::get_root_type>();
 
-    l_ptr->route(route_ptr);
-    route_ptr->reg<render_farm::detail::render_job_type_post>();
-    route_ptr->reg<render_farm::detail::computer_reg_type_post>();
-    route_ptr->reg<render_farm::detail::get_log_type_get>();
-    route_ptr->reg<render_farm::detail::get_err_type_get>();
-    route_ptr->reg<render_farm::detail::render_job_type_get>();
-    route_ptr->reg<render_farm::detail::computer_reg_type_get>();
+  route_ptr->reg<render_farm::detail::run_job_post>();
+  g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
+  g_reg()->ctx().emplace<render_farm::computer_manage>().run();
+  l_ptr->run();
+  g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
+  g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->run("127.0.0.1");
+  //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
+}
 
-    route_ptr->reg<render_farm::detail::repository_type_get>();
-    route_ptr->reg<render_farm::detail::get_root_type>();
+// 注入
+void inject() {
+  using namespace doodle;
 
-    route_ptr->reg<render_farm::detail::run_job_post>();
-    g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
-    g_reg()->ctx().emplace<render_farm::computer_manage>().run();
-    l_ptr->run();
-    g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
-    g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->run("127.0.0.1");
-    //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
+  using timer_t = boost::asio::steady_timer;
+  auto l_ptr    = std::make_shared<timer_t>(g_io_context());
+  l_ptr->expires_after(std::chrono::seconds(1));
+  l_ptr->async_wait([l_ptr](boost::system::error_code in_ec) {
+    if (in_ec) {
+      DOODLE_LOG_ERROR("{}", in_ec.message());
+      return;
+    }
+    run_server();
+  });
+}
 
-    return l_r;
-  }
-  void add_program_options() {}
-
- private:
-  std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> guard_;
-};
 #include <doodle_lib/facet/main_facet.h>
 
 #include <iostream>
@@ -91,9 +91,10 @@ class server_facet {
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 int main(int argc, char* argv[]) try {
-  using main_app = doodle::app_command<server_facet>;
+  using main_app = doodle::app_command<doodle::main_facet>;
   main_app app{argc, argv};
   try {
+    inject();
     return app.run();
   } catch (const std::exception& err) {
     DOODLE_LOG_WARN(boost::diagnostic_information(err));
