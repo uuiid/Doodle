@@ -59,11 +59,12 @@ bool render_monitor::render() {
 
   if (auto l_ = dear::CollapsingHeader{
           *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen}) {
-    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 3}) {
+    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 4}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
       ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 100.0f);
       ImGui::TableSetupColumn("名称");
       ImGui::TableSetupColumn("状态");
+      ImGui::TableSetupColumn("时间");
 
       ImGui::TableHeadersRow();
 
@@ -75,6 +76,8 @@ bool render_monitor::render() {
         dear::Text(l_render_task.name_);
         ImGui::TableNextColumn();
         dear::Text(l_render_task.state_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.time_);
       }
     }
   }
@@ -125,10 +128,7 @@ void render_monitor::get_remote_data() {
     }
     p_i->progress_message_.clear();
 
-    p_i->computers_ = in_vector | ranges::views::transform([](auto&& in_item) -> computer {
-                        return computer{in_item.id_, in_item.name_, in_item.state_};
-                      }) |
-                      ranges::to_vector;
+    p_i->computers_ = in_vector;
     do_wait();
   });
   p_i->client_ptr_->async_task_list([this, self = shared_from_this()](
@@ -142,10 +142,7 @@ void render_monitor::get_remote_data() {
       return;
     }
     p_i->progress_message_.clear();
-    p_i->render_tasks_ = in_vector | ranges::views::transform([](auto&& in_item) -> render_task {
-                           return render_task{in_item.id_, in_item.name_, in_item.state_};
-                         }) |
-                         ranges::to_vector;
+    p_i->render_tasks_ = in_vector;
     do_wait();
   });
 }

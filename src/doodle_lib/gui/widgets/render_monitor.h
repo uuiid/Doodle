@@ -42,8 +42,8 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     // 进度信息
     std::float_t progress_{};
     std::string progress_message_{};
-    std::vector<computer> computers_{};
-    std::vector<render_task> render_tasks_{};
+    std::vector<client::computer> computers_{};
+    std::vector<client::task_t> render_tasks_{};
     std::shared_ptr<client> client_ptr_{};
     strand_ptr_t strand_ptr_{};
     timer_ptr_t timer_ptr_{};
