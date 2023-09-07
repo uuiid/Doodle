@@ -94,7 +94,10 @@ struct render_job_tmp {
   std::string time_{};
   explicit render_job_tmp(const ue4_task& in_task, entt::entity in_id)
       : name_(in_task.arg().ProjectPath),
-        status_(in_task.is_assign() ? "已分配"s : "未分配"s),
+        status_(fmt::format(
+            "{} {}", in_task.is_assign() ? "已分配"s : "未分配"s,
+            magic_enum::enum_name(entt::handle{*g_reg(), in_id}.get<process_message>().get_state())
+        )),
         id_(in_id),
         time_(fmt::to_string(entt::handle{*g_reg(), in_id}.get<process_message>().get_time())) {}
   friend void to_json(nlohmann::json& j, const render_job_tmp& in_tmp) {
