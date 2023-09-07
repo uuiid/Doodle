@@ -76,10 +76,10 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   /** A handle to the currently running process (if any) for the active job. */
   FProcHandle ProcessHandle;
 
-  FString Remote_Server_Ip = { "127.0.0.1" };
-  TSharedPtr<FSocket> udp_socket = nullptr;
+  FString Remote_Server_Ip{};
+  TSharedPtr<FSocket> UdpSocket;
   FTimerHandle TimerHandle;//计时器
-  TSharedPtr<FUdpSocketReceiver> udp_rec = nullptr;
+  TSharedPtr<FUdpSocketReceiver> UdpRec;
 
  private:
   TSet<int32> Render_IDs{};
