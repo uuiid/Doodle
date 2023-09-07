@@ -10,7 +10,6 @@
 #include <boost/asio.hpp>
 namespace doodle::detail {
 
-
 void client_core::make_ptr() {
   auto l_s        = boost::asio::make_strand(g_io_context());
   ptr_->socket_   = std::make_shared<socket_t>(l_s);
@@ -19,6 +18,7 @@ void client_core::make_ptr() {
       ptr_->server_ip_, "50021", boost::beast::bind_front_handler(&client_core::on_resolve, this)
   );
   ptr_->executor_ = boost::asio::make_strand(g_io_context());
+  ptr_->logger_   = g_logger_ctrl().make_log("client_core");
 }
 void client_core::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
   if (ec) {

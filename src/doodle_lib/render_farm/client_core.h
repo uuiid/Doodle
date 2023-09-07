@@ -28,6 +28,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
   struct data_type {
     std::string server_ip_;
     socket_ptr socket_{};
+    logger_ptr logger_{};
     resolver_ptr resolver_{};
     boost::asio::ip::tcp::resolver::results_type resolver_results_;
     boost::asio::any_io_executor executor_;
@@ -60,7 +61,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
       RequestType request_;
 
       next_fun_ptr_t next_;
-
+      logger_ptr logger_;
       // 重试次数
       std::size_t retry_count_{};
     };
@@ -77,6 +78,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
           results_(in_ptr->ptr_->resolver_results_),
           ptr_(std::make_unique<data_type2>()) {
       ptr_->request_ = std::move(in_req);
+      ptr_->logger_  = in_ptr->ptr_->logger_;
       ptr_->next_    = std::make_shared<next_fun_t>([]() {});
     }
     ~connect_write_read_op()                                       = default;
@@ -108,12 +110,12 @@ class client_core : public std::enable_shared_from_this<client_core> {
           next();
           return;
         }
-        DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
+        log_debug(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
         do_connect();
         return;
       }
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
+        log_info(ptr_->logger_, fmt::format("{}", ec));
         this->complete(false, ec, ptr_->response_);
         next();
         return;
@@ -147,13 +149,13 @@ class client_core : public std::enable_shared_from_this<client_core> {
           next();
           return;
         }
-        DOODLE_LOG_INFO("开始第{}次重试 出现错误 {}, ", ptr_->retry_count_, ec);
+        log_debug(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
         do_connect();
         return;
       }
 
       if (ec) {
-        DOODLE_LOG_INFO("{}", ec);
+        log_info(ptr_->logger_, fmt::format("{}", ec));
         this->complete(false, ec, ptr_->response_);
         next();
         return;
@@ -161,26 +163,26 @@ class client_core : public std::enable_shared_from_this<client_core> {
 
       ptr_->state_       = connect;
       ptr_->retry_count_ = 0;
-      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
+      log_debug(ptr_->logger_, fmt::format("{}", ec));
       do_write();
     }
 
     void do_write() {
       ptr_->state_ = write;
-      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
+      log_debug(ptr_->logger_, fmt::format("{}", ptr_->request_));
       //      auto l_req = ptr_->request_;
       //      boost::beast::async_write(socket_, message_generator_type{std::move(l_req)}, std::move(*this));
       boost::beast::http::async_write(socket_, ptr_->request_, std::move(*this));
     }
     void do_read() {
       ptr_->state_ = read;
-      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
+      log_debug(ptr_->logger_, fmt::format("{}", ptr_->response_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }
     void do_connect() {
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
-      DOODLE_LOG_INFO("state {}", magic_enum::enum_name(ptr_->state_));
+      log_debug(ptr_->logger_, fmt::format("{}", ptr_->request_));
       boost::asio::async_connect(socket_.socket(), results_, std::move(*this));
     }
   };
@@ -200,7 +202,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
           auto l_next     = l_h->ptr_->next_;
           if (l_has_next) {
             (*in_client_ptr->ptr_->next_.lock()) = [l_h]() {
-              DOODLE_LOG_INFO("开始下一项");
+              log_debug(l_h->ptr_->logger_, "开始下一项");
               l_h->run();
             };
           } else {
