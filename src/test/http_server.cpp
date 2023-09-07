@@ -5,6 +5,7 @@
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_app/app/app_command.h>
 #include <doodle_app/app/program_options.h>
 
 #include "doodle_lib/render_farm/udp_server.h"
@@ -63,6 +64,10 @@ void run_server() {
   l_ptr->run();
   g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
   g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->run("127.0.0.1");
+  app_base::Get().on_stop.connect([=]() {
+    l_ptr->stop();
+    g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->stop();
+  });
   //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 }
 
