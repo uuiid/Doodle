@@ -62,6 +62,7 @@ class work {
   ~work() = default;
 
   void run();
+  void run(const std::string& in_server_address, std::uint16_t in_port = 50021);
 
   void send_server_state();
   void send_log(std::string in_log);

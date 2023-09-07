@@ -47,6 +47,10 @@ void work::make_ptr() {
 }
 
 void work::run() { find_server_address(); }
+void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
+  ptr_->core_ptr_ = std::make_shared<client_core>(in_server_ip);
+  do_register();
+}
 void work::do_register() {
   boost::url l_url{"/v1/render_farm/computer"};
   l_url.params().set(
