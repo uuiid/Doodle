@@ -56,6 +56,7 @@ class render_ue4 {
   FSys::path manifest_path_;
   FSys::path loc_out_file_path_;
   FSys::path server_file_path;
+  process_child_ptr child_ptr_;
 
   boost::asio::any_io_executor strand_;
   void set_meg();
@@ -71,6 +72,9 @@ class render_ue4 {
   // 生成命令行
   [[nodiscard("")]] std::string generate_command_line() const;
   void run_impl(bool in_r);
+
+  void do_read_log();
+  void do_read_err();
 };
 
 }  // namespace detail

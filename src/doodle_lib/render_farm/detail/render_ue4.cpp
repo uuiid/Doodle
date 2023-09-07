@@ -113,10 +113,52 @@ void render_ue4::run_impl(bool in_r) {
   l_msg.message("开始启动ue4项目文件");
   // 生成命令行
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
-  g_ctx().get<ue_exe_ptr>()->async_run(self_handle_, ue_exe::arg_render_queue{generate_command_line()}, [this](auto&&) {
-    end_run();
-  });
+  child_ptr_ = g_ctx().get<ue_exe_ptr>()->create_child(
+      ue_exe::arg_render_queue{generate_command_line()},
+      [this](std::int32_t exit_code, std::error_code ec) { end_run(); }
+  );
+  do_read_err();
+  do_read_log();
+  self_handle_.get<process_message>().set_state(process_message::state::run);
+  send_server_state();
 }
+
+void render_ue4::do_read_log() {
+  boost::asio::async_read_until(
+      child_ptr_->out_attr, child_ptr_->out_str, "\n",
+      [child_ptr = child_ptr_, this](const boost::system::error_code& in_code, std::size_t in_size) {
+        if (!in_code) {
+          std::string l_line;
+          std::getline(std::istream{&child_ptr->out_str}, l_line);
+          auto& l_msg = self_handle_.get_or_emplace<process_message>();
+          l_msg.message(l_line + '\n');
+          do_read_log();
+        } else {
+          child_ptr->out_attr.close();
+          DOODLE_LOG_ERROR(in_code.what());
+        }
+      }
+  );
+}
+
+void render_ue4::do_read_err() {
+  boost::asio::async_read_until(
+      child_ptr_->err_attr, child_ptr_->err_str, "\n",
+      [child_ptr = child_ptr_, this](const boost::system::error_code& in_code, std::size_t in_size) {
+        if (!in_code) {
+          std::string l_line;
+          std::getline(std::istream{&child_ptr->err_str}, l_line);
+          auto& l_msg = self_handle_.get_or_emplace<process_message>();
+          l_msg.message(l_line + '\n');
+          do_read_err();
+        } else {
+          child_ptr->err_attr.close();
+          DOODLE_LOG_ERROR(in_code.what());
+        }
+      }
+  );
+}
+
 void render_ue4::set_meg() {
   auto& l_msg = self_handle_.get_or_emplace<process_message>();
   auto l_prj  = FSys::path{arg_.ProjectPath};
