@@ -54,7 +54,6 @@ public class doodleEditor : ModuleRules
 
                 // 资产自定义模块
                 // "ContentBrowserAssetDataSource"
-
             }
 			);
 
@@ -120,7 +119,10 @@ public class doodleEditor : ModuleRules
 				"MovieRenderPipelineEditor", //远程渲染需要
 				"GeometryCacheTracks", //导入缓存需要
 
-			}
+				//-----------
+				"Sockets",
+                "Networking",
+            }
 			);
 
 

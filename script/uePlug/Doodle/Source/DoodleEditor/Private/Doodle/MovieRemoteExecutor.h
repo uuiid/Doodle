@@ -2,7 +2,13 @@
 #pragma once
 
 #include "MoviePipelineLinearExecutor.h"
+//
 #include "MovieRemoteExecutor.generated.h"
+
+class FSocket;
+class FUdpSocketReceiver;
+struct FIPv4Endpoint;
+typedef TSharedPtr<FArrayReader, ESPMode::ThreadSafe> FArrayReaderPtr;
 
 USTRUCT()
 struct FDoodleRemoteRenderJobArg {
@@ -57,6 +63,10 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   DoodleMovieRemoteState GetRenderState();
   float GetProgress();
 
+  void UDPGetServerIp();
+  void UDPOnTimeout();
+  void UDPReceiver(const FArrayReaderPtr& ArrayRender, const FIPv4Endpoint& Endpoint);
+
  protected:
   void CheckForProcessFinished();
   // 上传文件
@@ -65,6 +75,11 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
  protected:
   /** A handle to the currently running process (if any) for the active job. */
   FProcHandle ProcessHandle;
+
+  FString Remote_Server_Ip = { "127.0.0.1" };
+  TSharedPtr<FSocket> udp_socket = nullptr;
+  FTimerHandle TimerHandle;//计时器
+  TSharedPtr<FUdpSocketReceiver> udp_rec = nullptr;
 
  private:
   TSet<int32> Render_IDs{};
