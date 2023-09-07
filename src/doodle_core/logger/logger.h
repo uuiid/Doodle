@@ -16,11 +16,11 @@
 #include <spdlog/async.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
-namespace doodle::details {
+namespace doodle {
 
-/**
- * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
- */
+namespace details { /**
+                     * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
+                     */
 class DOODLE_CORE_API logger_ctrl {
   FSys::path p_log_path;
   using rotating_file_sink_mt_ptr = std::shared_ptr<spdlog::sinks::rotating_file_sink_mt>;
@@ -44,6 +44,7 @@ class DOODLE_CORE_API logger_ctrl {
   async_logger_ptr make_log(const std::string& in_name, bool out_console = false);
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 };
+}  // namespace details
 
 inline void log_debug(
     const std::shared_ptr<spdlog::logger>& in_logger, const std::string& in_msg,
@@ -95,7 +96,7 @@ inline void log_error(
 ) {
   spdlog::default_logger_raw()->log(in_loc, spdlog::level::err, in_msg);
 }
-}  // namespace doodle::details
+}  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
 
 #define DOODLE_LOG_INFO(...) SPDLOG_INFO(__VA_ARGS__)
