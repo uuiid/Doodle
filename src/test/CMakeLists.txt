@@ -74,10 +74,12 @@ foreach (test ${TestsToRun})
     cmake_path(GET test STEM TStem)
     if (TPath STREQUAL "")
         set(test_name ${TStem})
+        set(test_comm ${TStem})
     else ()
         set(test_name ${TPath}_${TStem})
+        set(test_comm ${TPath}/${TStem})
     endif ()
-    add_test(NAME ${test_name} COMMAND CommonCxxTests ${TPath}/${TStem})
+    add_test(NAME ${test_name} COMMAND CommonCxxTests ${test_comm})
 endforeach ()
 
 target_link_libraries(CommonCxxTests
