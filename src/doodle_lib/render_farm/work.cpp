@@ -48,13 +48,14 @@ void work::make_ptr() {
 
 void work::run() { find_server_address(); }
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
+  boost::ignore_unused(in_port);
   ptr_->core_ptr_ = std::make_shared<client_core>(in_server_ip);
   do_register();
 }
 void work::do_register() {
   boost::url l_url{"/v1/render_farm/computer"};
   l_url.params().set(
-      "status", magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::idle : computer_status::busy)
+      "status", magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle)
   );
   if (ptr_->computer_id != entt::null) l_url.params().set("id", fmt::to_string(ptr_->computer_id));
   l_url.remove_origin();
