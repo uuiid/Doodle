@@ -30,7 +30,7 @@ app_base::app_base()
       stop_(false),
       lib_ptr(std::make_shared<doodle_lib>()) {
   self                   = this;
-  auto&& l_program_info  = lib_ptr->ctx().emplace<program_info>();
+  auto&& l_program_info  = g_ctx().emplace<program_info>();
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
   init();
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
@@ -70,7 +70,7 @@ std::int32_t app_base::poll_one() {
 }
 void app_base::stop_app(bool in_stop) {
   on_stop();
-  lib_ptr->ctx().emplace<program_info>().is_stop = true;
+  g_ctx().emplace<program_info>().is_stop = true;
   this->deconstruction();
   core_set_init{}.write_file();
 }
