@@ -89,7 +89,7 @@ void work::do_register() {
 }
 void work::send_server_state() {
   request_type l_request{
-      boost::beast::http::verb::post, fmt::format("/v1/render_farm/render_job/{}", ptr_->ue_data_ptr_->server_id), 11};
+      boost::beast::http::verb::put, fmt::format("/v1/render_farm/render_job/{}", ptr_->ue_data_ptr_->server_id), 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
   nlohmann::json l_json;
