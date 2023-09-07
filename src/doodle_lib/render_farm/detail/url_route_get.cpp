@@ -12,6 +12,14 @@
 #include <doodle_lib/render_farm/detail/ue4_task.h>
 namespace doodle::render_farm::detail {
 
+namespace {
+#if NDEBUG
+auto repository_path{R"(//192.168.10.218/Doodletemp)"};
+#else
+auto repository_path{R"(//192.168.20.59/UE_Config/Doodletemp)"};
+#endif
+}  // namespace
+
 void get_root_type::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) const {
   auto& l_session = in_handle.get<working_machine_session>();
   boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
@@ -92,6 +100,8 @@ struct render_job_tmp {
   std::string name_{};
   std::string status_{};
   std::string time_{};
+
+  FSys::path repository_path_{};
   explicit render_job_tmp(const ue4_task& in_task, entt::entity in_id)
       : name_(in_task.arg().ProjectPath),
         status_(fmt::format(
@@ -99,12 +109,15 @@ struct render_job_tmp {
             magic_enum::enum_name(entt::handle{*g_reg(), in_id}.get<process_message>().get_state())
         )),
         id_(in_id),
-        time_(fmt::to_string(entt::handle{*g_reg(), in_id}.get<process_message>().get_time())) {}
+        time_(fmt::to_string(entt::handle{*g_reg(), in_id}.get<process_message>().get_time())),
+        repository_path_{
+            FSys::path{repository_path} / FSys::path{in_task.arg().ProjectPath}.stem() / in_task.arg().out_file_path} {}
   friend void to_json(nlohmann::json& j, const render_job_tmp& in_tmp) {
     j["id"]     = in_tmp.id_;
     j["name"]   = in_tmp.name_;
     j["status"] = in_tmp.status_;
     j["time"]   = in_tmp.time_;
+    j["path"]   = in_tmp.repository_path_;
   }
 };
 
@@ -147,11 +160,7 @@ void computer_reg_type_get::operator()(const entt::handle& in_handle, const std:
 void repository_type_get::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
   nlohmann::json l_json{};
-#if NDEBUG
-  l_json["path"] = R"(//192.168.10.218/Doodletemp)";
-#else
-  l_json["path"] = R"(//192.168.20.59/UE_Config/Doodletemp)";
-#endif
+  l_json["path"] = repository_path;
   boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
   auto& l_session   = in_handle.get<working_machine_session>();
   l_response.body() = l_json;
