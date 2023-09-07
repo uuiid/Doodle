@@ -442,7 +442,7 @@ void UDoodleMovieRemoteExecutor::UDPOnTimeout()
 {
     UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPOnTimeout"));
     //----------------
-    if (udp_socket)
+    if (udp_rec)
     {
         //--------------------
         udp_socket->Close();
@@ -450,6 +450,7 @@ void UDoodleMovieRemoteExecutor::UDPOnTimeout()
         if (udp_rec)
         {
             udp_rec->Stop();
+            udp_rec.Reset();
         }
         //ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(udp_socket.Get());
         //--------------
@@ -469,20 +470,22 @@ void UDoodleMovieRemoteExecutor::UDPReceiver(const FArrayReaderPtr& arrayRender,
     UE_LOG(LogMovieRenderPipeline, Error, TEXT("Process: %s"), TEXT("UDPReceiver"));
     FString rec_data = UTF8_TO_TCHAR((char*)arrayRender->GetData());
     //----------------
-    if (rec_data.Equals(TEXT("hello world! doodle server")))
+    if (rec_data.Contains(TEXT("doodle server")))
     {
         //----------------
         udp_socket->Close();
-        if (udp_rec)
-        {
-            udp_rec->Stop();
-        }
+        
         Remote_Server_Ip = endpoint.Address.ToString();
         //---------------------------------
         AsyncTask(ENamedThreads::GameThread, [=]()
         {
             FindRemoteClient();
         });
+        if (udp_rec)
+        {
+            udp_rec->Stop();
+            udp_rec.Reset();
+        }
         //---------------
         //udp_socket.Reset();
     }
