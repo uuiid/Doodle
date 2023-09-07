@@ -109,7 +109,7 @@ struct render_job_tmp {
             magic_enum::enum_name(entt::handle{*g_reg(), in_id}.get<process_message>().get_state())
         )),
         id_(in_id),
-        time_(fmt::to_string(entt::handle{*g_reg(), in_id}.get<process_message>().get_time())),
+        time_(fmt::format("{:%H:%M:%S}", entt::handle{*g_reg(), in_id}.get<process_message>().get_time())),
         repository_path_{
             FSys::path{repository_path} / FSys::path{in_task.arg().ProjectPath}.stem() / in_task.arg().out_file_path} {}
   friend void to_json(nlohmann::json& j, const render_job_tmp& in_tmp) {
