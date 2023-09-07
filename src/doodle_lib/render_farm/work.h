@@ -43,6 +43,7 @@ class work {
 
     udp_client_ptr udp_client_ptr_{};
     std::shared_ptr<ue_data> ue_data_ptr_{};
+    logger_ptr logger_{};
   };
 
   std::shared_ptr<data_type> ptr_;

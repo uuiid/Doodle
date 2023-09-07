@@ -169,20 +169,20 @@ class client_core : public std::enable_shared_from_this<client_core> {
 
     void do_write() {
       ptr_->state_ = write;
-      log_debug(ptr_->logger_, fmt::format("{}", ptr_->request_));
+      log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       //      auto l_req = ptr_->request_;
       //      boost::beast::async_write(socket_, message_generator_type{std::move(l_req)}, std::move(*this));
       boost::beast::http::async_write(socket_, ptr_->request_, std::move(*this));
     }
     void do_read() {
       ptr_->state_ = read;
-      log_debug(ptr_->logger_, fmt::format("{}", ptr_->response_));
+      log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }
     void do_connect() {
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
-      log_debug(ptr_->logger_, fmt::format("{}", ptr_->request_));
+      log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::asio::async_connect(socket_.socket(), results_, std::move(*this));
     }
   };
