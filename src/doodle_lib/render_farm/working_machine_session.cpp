@@ -54,6 +54,7 @@ void working_machine_session::do_read() {
 
 void working_machine_session::on_parser(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
+  stream().expires_after(30s);
   if (ec) {
     if (ec != boost::beast::http::error::end_of_stream) {
       log_error(ptr_->logger_, fmt::format("on_write error: {} ", ec));
@@ -82,11 +83,12 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     l_response.prepare_payload();
     send_response(boost::beast::http::message_generator{std::move(l_response)});
   }
+  stream().expires_after(30s);
 }
 
 void working_machine_session::send_response(boost::beast::http::message_generator&& in_message_generator) {
   const bool keep_alive = in_message_generator.keep_alive();
-
+  stream().expires_after(30s);
   boost::beast::async_write(
       stream(), std::move(in_message_generator),
       bind_reg_handler(&working_machine_session::on_write, g_reg(), this, keep_alive)
@@ -106,6 +108,7 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
   ptr_->buffer_.clear();
   ptr_->url_.clear();
   ptr_->request_parser_ = std::make_shared<request_parser_type>();
+  stream().expires_after(30s);
   do_read();
 }
 void working_machine_session::do_close() {
