@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
+#include <doodle_core/lib_warp/boost_fmt_url.h>
 
 #include <doodle_lib/render_farm/detail/aync_read_body.h>
 #include <doodle_lib/render_farm/detail/computer.h>
@@ -30,7 +32,7 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
           return l_session.do_close();
         }
         if (ec) {
-          DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+          log_error(l_session.logger(), fmt::format("on_read error: {} ", ec));
           l_session.send_error_code(ec);
           return;
         }
@@ -40,7 +42,7 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
         try {
           l_h.emplace<ue4_task>(l_h, l_parser_ptr->release().body().get<ue4_task::arg_t>());
         } catch (const nlohmann::json::exception& e) {
-          DOODLE_LOG_ERROR("json parse error: {}", e.what());
+          log_error(l_session.logger(), fmt::format("json parse error:{} ", e.what()));
           l_session.send_error(e);
           return;
         }
@@ -68,14 +70,14 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
           return l_session.do_close();
         }
         if (ec) {
-          DOODLE_LOG_ERROR("on_read error: {}", ec.message());
+          log_error(l_session.logger(), fmt::format("on_read error: {} ", ec));
           l_session.send_error_code(ec);
           return;
         }
 
         auto l_json      = l_parser_ptr->release().body();
         auto l_remote_ip = l_session.stream().socket().remote_endpoint().address().to_string();
-        DOODLE_LOG_INFO("computer_reg: {}", l_remote_ip);
+        log_info(l_session.logger(), fmt::format("computer_reg: {}", l_remote_ip));
         entt::handle l_handle{};
         auto l_p = l_session.url().params();
 
@@ -90,7 +92,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
               }
             });
           } catch (const nlohmann::json::exception& e) {
-            DOODLE_LOG_ERROR("json parse error: {}", e.what());
+            log_info(l_session.logger(), fmt::format("json parse error: {} ", e.what()));
             l_session.send_error(e);
             return;
           }
@@ -107,8 +109,12 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
         l_response.keep_alive(l_parser_ptr->keep_alive());
         l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
-        DOODLE_LOG_INFO("send computer_reg: {}", l_session.url().data());
-        DOODLE_LOG_INFO("response version: {}", l_response.version());
+
+        log_info(
+            l_session.logger(),
+            fmt::format("send computer_reg: {} response version: {}", l_session.url(), l_response.version())
+        );
+
         l_response.prepare_payload();
         l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
@@ -123,6 +129,7 @@ void run_job_post::operator()(const entt::handle& in_handle, const std::map<std:
   } else {
     boost::system::error_code ec{};
     BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
+    log_error(l_session.logger(), fmt::format("没有在上下文中找到工作 {}", ec));
     l_session.send_error_code(ec, boost::beast::http::status::internal_server_error);
   }
 }

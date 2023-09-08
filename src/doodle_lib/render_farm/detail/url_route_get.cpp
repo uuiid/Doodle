@@ -36,6 +36,7 @@ void get_log_type_get::operator()(const entt::handle& in_handle, const std::map<
   if (in_cap.count("handle") == 0) {
     boost::system::error_code l_ec{};
     BOOST_BEAST_ASSIGN_EC(l_ec, error_enum::invalid_handle);
+    log_warn(l_session.logger(), fmt::format("未找到句柄id :{}", l_ec.message()));
     l_session.send_error_code(l_ec, boost::beast::http::status::bad_request);
   }
   auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
@@ -61,6 +62,7 @@ void get_err_type_get::operator()(const entt::handle& in_handle, const std::map<
   if (in_cap.count("handle") == 0) {
     boost::system::error_code l_ec{};
     BOOST_BEAST_ASSIGN_EC(l_ec, error_enum::invalid_handle);
+    log_warn(l_session.logger(), fmt::format("未找到句柄id :{}", l_ec.message()));
     l_session.send_error_code(l_ec, boost::beast::http::status::bad_request);
   }
   auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};

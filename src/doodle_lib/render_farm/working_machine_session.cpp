@@ -56,16 +56,16 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
   boost::ignore_unused(bytes_transferred);
   if (ec) {
     if (ec != boost::beast::http::error::end_of_stream) {
-      log_error(ptr_->logger_, fmt::format("on_write error: {} {}", ec, ptr_->stream_.socket()));
+      log_error(ptr_->logger_, fmt::format("on_write error: {} ", ec));
     } else {
-      log_error(ptr_->logger_, fmt::format("末端的流, 主动关闭 {} {}", ec, ptr_->stream_.socket()));
+      log_error(ptr_->logger_, fmt::format("末端的流, 主动关闭 {} ", ec));
     }
     do_close();
     return;
   }
 
   ptr_->url_ = boost::url{ptr_->request_parser_->get().target()};
-  log_info(ptr_->logger_, fmt::format("开始解析 uel {}{}", ptr_->url_, ptr_->stream_.socket()));
+  log_info(ptr_->logger_, fmt::format("开始解析 uel {}", ptr_->url_));
 
   try {
     auto l_has_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), make_handle(this));
@@ -96,7 +96,7 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
   boost::ignore_unused(bytes_transferred);
 
   if (ec) {
-    log_error(ptr_->logger_, fmt::format("on_write error: {} {}", ec, ptr_->stream_.socket()));
+    log_error(ptr_->logger_, fmt::format("on_write error: {}", ec));
     return;
   }
 
@@ -113,10 +113,10 @@ void working_machine_session::do_close() {
   if (ptr_->stream_.socket().is_open())
     ptr_->stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
   else
-    log_warn(ptr_->logger_, fmt::format("socket is not open {}", ptr_->stream_.socket()));
+    log_warn(ptr_->logger_, fmt::format("socket is not open "));
 
   if (ec) {
-    log_error(ptr_->logger_, fmt::format("do_close error: {} {}", ec, ptr_->stream_.socket()));
+    log_error(ptr_->logger_, fmt::format("do_close error: {}", ec));
   }
 }
 
