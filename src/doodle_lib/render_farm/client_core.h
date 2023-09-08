@@ -96,7 +96,10 @@ class client_core : public std::enable_shared_from_this<client_core> {
         do_connect();
       }
     }
-    void next() { (*ptr_->next_)(); }
+    void next() {
+      (*ptr_->next_)();
+      ptr_->next_.reset();
+    }
 
     // async_write async_read 回调
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
