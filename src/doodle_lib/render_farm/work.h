@@ -80,7 +80,7 @@ class work {
   work(work&&)                 = default;
   work& operator=(work&&)      = default;
 
-  bool find_server_address(std::uint16_t in_port = 50022);
+  void find_server_address(std::uint16_t in_port = 50022);
 
   ~work() = default;
 
