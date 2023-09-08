@@ -231,6 +231,9 @@ class client_core : public std::enable_shared_from_this<client_core> {
   inline socket_t::socket_type& socket() { return ptr_->socket_->socket(); }
   inline socket_t& stream() { return *ptr_->socket_; }
   inline resolver_t& resolver() { return *ptr_->resolver_; }
+  // logger
+  [[nodiscard]] inline logger_ptr& logger() { return ptr_->logger_; }
+  [[nodiscard]] inline const logger_ptr& logger() const { return ptr_->logger_; }
 
   template <typename ExecutorType, typename CompletionHandler>
   auto async_connect(const ExecutorType& in_executor_type, CompletionHandler&& in_completion) {
