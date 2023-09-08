@@ -112,8 +112,7 @@ void work::send_server_state() {
           return;
         }
         if (PH2.result() != boost::beast::http::status::ok) {
-          log_warn(ptr_->logger_, fmt::format("服务器回复 {} 错误, 重试!", PH2.result_int()));
-          send_server_state();
+          log_warn(ptr_->logger_, fmt::format("服务器回复 {} 错误", PH2.result_int()));
         }
         log_debug(ptr_->logger_, fmt::format("{}", PH2.body()));
         if (l_state == process_message::state::success || l_state == process_message::state::fail)
