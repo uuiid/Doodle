@@ -39,6 +39,7 @@ class working_machine_session {
   ) {
     boost::beast::http::response<detail::basic_json_body> l_response{in_status, 11};
     l_response.body() = {{"state", boost::diagnostic_information(in_error)}, {"id", -1}};
+    l_response.prepare_payload();
     l_response.keep_alive(false);
     send_response(boost::beast::http::message_generator{std::move(l_response)});
   };
@@ -48,6 +49,7 @@ class working_machine_session {
   ) {
     boost::beast::http::response<detail::basic_json_body> l_response{in_status, 11};
     l_response.body() = {{"state", in_error.message()}, {"id", -1}};
+    l_response.prepare_payload();
     l_response.keep_alive(false);
     send_response(boost::beast::http::message_generator{std::move(l_response)});
   };
