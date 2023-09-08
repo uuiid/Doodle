@@ -16,6 +16,35 @@
 #include <boost/url.hpp>
 namespace doodle {
 namespace render_farm {
+
+void work::next_run() {
+  if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::udp_find)]) {
+    ptr_->state_.reset(static_cast<std::uint64_t>(send_state_enum::udp_find));
+    udp_find_impl(50022);
+    return;
+  }
+  if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::reg_computer)]) {
+    ptr_->state_.reset(static_cast<std::uint64_t>(send_state_enum::reg_computer));
+    reg_computer_impl();
+    return;
+  }
+  if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_server_state)]) {
+    ptr_->state_.reset(static_cast<std::uint64_t>(send_state_enum::send_server_state));
+    send_server_state_impl();
+    return;
+  }
+  if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_log)]) {
+    ptr_->state_.reset(static_cast<std::uint64_t>(send_state_enum::send_log));
+    send_log_impl();
+    return;
+  }
+  if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_error)]) {
+    ptr_->state_.reset(static_cast<std::uint64_t>(send_state_enum::send_error));
+    send_error_impl();
+    return;
+  }
+}
+
 void work::on_wait(boost::system::error_code ec) {
   if (ec == boost::asio::error::operation_aborted) {
     return;
@@ -27,9 +56,11 @@ void work::on_wait(boost::system::error_code ec) {
   do_register();
 }
 void work::do_wait() {
-  log_debug(ptr_->logger_, "开始等待下一次心跳");
+  log_info(ptr_->logger_, "开始等待下一次心跳");
   ptr_->timer_->expires_after(doodle::chrono::seconds{2});
   ptr_->timer_->async_wait(std::bind(&work::on_wait, this, std::placeholders::_1));
+  log_info(ptr_->logger_, "开始运行下个方法");
+  next_run();
 }
 
 void work::make_ptr() {
@@ -45,16 +76,30 @@ void work::make_ptr() {
     log_debug(l_logger, fmt::format("signal_set_ signal: {}", signal));
     this->do_close();
   });
-  ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
 }
 
-void work::run() { find_server_address(); }
+void work::run() {
+  ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
+  find_server_address();
+}
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
   boost::ignore_unused(in_port);
   ptr_->core_ptr_ = std::make_shared<client_core>(in_server_ip);
   do_register();
 }
-void work::do_register() {
+void work::do_register() { ptr_->state_[static_cast<std::uint64_t>(send_state_enum::reg_computer)] = true; }
+
+void work::send_server_state() { ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_server_state)] = true; }
+void work::send_log(std::string in_log) {
+  ptr_->log_cache_ += std::move(in_log);
+  ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_log)] = true;
+}
+void work::send_err(std::string in_err) {
+  ptr_->err_cache_ += std::move(in_err);
+  ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_error)] = true;
+}
+
+void work::reg_computer_impl() {
   boost::url l_url{"/v1/render_farm/computer"};
   l_url.params().set(
       "status", magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle)
@@ -89,7 +134,7 @@ void work::do_register() {
       }
   );
 }
-void work::send_server_state() {
+void work::send_server_state_impl() {
   if (!ptr_->core_ptr_) {
     log_error(ptr_->logger_, "core_ptr_ is not valid");
     return;
@@ -128,7 +173,7 @@ void work::send_server_state() {
 void work::do_close() {
   if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
 }
-bool work::find_server_address(std::uint16_t in_port) {
+void work::udp_find_impl(std::uint16_t in_port) {
   ptr_->udp_client_ptr_->async_find_server(
       in_port,
       [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
@@ -145,7 +190,6 @@ bool work::find_server_address(std::uint16_t in_port) {
         do_register();
       }
   );
-  return true;
 }
 
 void work::run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) {
@@ -198,13 +242,14 @@ void work::run_job(const entt::handle& in_handle, const std::map<std::string, st
       }
   );
 }
-void work::send_log(std::string in_log) {
+void work::send_log_impl() {
   request_type l_request{
       boost::beast::http::verb::post, fmt::format("/v1/render_farm/log/{}", ptr_->ue_data_ptr_->server_id), 11};
   l_request.set(boost::beast::http::field::content_type, "plain/text");
   l_request.set(boost::beast::http::field::accept, "application/json");
 
-  l_request.body() = std::move(in_log);
+  l_request.body() = std::move(ptr_->log_cache_);
+  ptr_->log_cache_ = {};
   l_request.prepare_payload();
   using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
   ptr_->core_ptr_->async_read<response_type_1>(
@@ -215,13 +260,14 @@ void work::send_log(std::string in_log) {
       }
   );
 }
-void work::send_err(std::string in_err) {
+void work::send_error_impl() {
   request_type l_request{
       boost::beast::http::verb::post, fmt::format("/v1/render_farm/err/{}", ptr_->ue_data_ptr_->server_id), 11};
   l_request.set(boost::beast::http::field::content_type, "plain/text");
   l_request.set(boost::beast::http::field::accept, "application/json");
 
-  l_request.body() = std::move(in_err);
+  l_request.body() = std::move(ptr_->err_cache_);
+  ptr_->err_cache_ = {};
   l_request.prepare_payload();
   using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
   ptr_->core_ptr_->async_read<response_type_1>(

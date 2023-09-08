@@ -35,6 +35,15 @@ class work {
     entt::entity server_id{entt::null};
     entt::handle run_handle{};
   };
+  using send_state = std::bitset<8>;
+  enum class send_state_enum : std::uint64_t {
+    udp_find,
+    reg_computer,
+    send_server_state,
+    send_log,
+    send_error,
+  };
+
   struct data_type {
     timer_ptr timer_{};
     signal_set_ptr signal_set_{};
@@ -44,9 +53,22 @@ class work {
     udp_client_ptr udp_client_ptr_{};
     std::shared_ptr<ue_data> ue_data_ptr_{};
     logger_ptr logger_{};
+    // send_error send_log send_server_state reg_computer udp_find
+    std::bitset<8> state_{};
+
+    std::string log_cache_{};
+    std::string err_cache_{};
   };
 
   std::shared_ptr<data_type> ptr_;
+
+  void next_run();
+
+  void udp_find_impl(std::uint16_t in_port);
+  void reg_computer_impl();
+  void send_server_state_impl();
+  void send_log_impl();
+  void send_error_impl();
 
  public:
   work() : ptr_{std::make_shared<data_type>()} { make_ptr(); }
