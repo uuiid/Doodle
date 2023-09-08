@@ -13,6 +13,8 @@ target_sources(doodle_core
         std_fmt_set.h
         boost_fmt_rational.h
         std_fmt_optional.h
+        boost_fmt_asio.h
+        boost_fmt_url.h
 
         PRIVATE
         entt_warp.cpp
