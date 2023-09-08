@@ -110,7 +110,10 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
 }
 void working_machine_session::do_close() {
   boost::system::error_code ec;
-  ptr_->stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+  if (ptr_->stream_.socket().is_open())
+    ptr_->stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+  else
+    log_warn(ptr_->logger_, fmt::format("socket is not open {}", ptr_->stream_.socket()));
 
   if (ec) {
     log_error(ptr_->logger_, fmt::format("do_close error: {} {}", ec, ptr_->stream_.socket()));
