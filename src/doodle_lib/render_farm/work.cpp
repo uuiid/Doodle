@@ -107,9 +107,7 @@ void work::send_server_state() {
       boost::asio::make_strand(g_io_context()), l_request,
       [this, l_state](auto&& PH1, const response_type_1& PH2) {
         if (PH1) {
-          log_error(ptr_->logger_, fmt::format("{}", PH1.message()));
-          do_wait();
-          return;
+          log_error(ptr_->logger_, fmt::format("{}", PH1));
         }
         if (PH2.result() != boost::beast::http::status::ok) {
           log_warn(ptr_->logger_, fmt::format("服务器回复 {} 错误", PH2.result_int()));

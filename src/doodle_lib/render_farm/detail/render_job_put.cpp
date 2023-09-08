@@ -16,6 +16,7 @@ namespace detail {
 void render_job_put::operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
   auto& l_session = ptr_->session_handle_.get<working_machine_session>();
+  l_session.stream().expires_after(30s);
   if (ec) {
     log_error(l_session.logger(), fmt::format("on_read error: {} ", ec));
     l_session.send_error_code(ec);
