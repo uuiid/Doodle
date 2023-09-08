@@ -15,7 +15,7 @@ void render_job_type_put::operator()(const entt::handle& in_handle, const std::m
   auto l_job_handle      = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi(in_cap.at("handle")))};
   boost::beast::http::async_read(
       l_session.stream(), l_session.buffer(), *l_parser_ptr,
-      in_handle.emplace<render_job_put>(l_job_handle, l_parser_ptr)
+      in_handle.emplace<render_job_put>(l_job_handle, in_handle, l_parser_ptr)
   );
 }
 }  // namespace detail
