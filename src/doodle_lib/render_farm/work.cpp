@@ -95,8 +95,9 @@ void work::send_server_state() {
   l_request.set(boost::beast::http::field::content_type, "application/json");
   l_request.set(boost::beast::http::field::accept, "application/json");
   nlohmann::json l_json;
-  auto l_state     = ptr_->ue_data_ptr_->run_handle.get<process_message>().get_state();
-  l_json["state"]  = l_state;
+  auto l_state    = ptr_->ue_data_ptr_->run_handle.get<process_message>().get_state();
+  l_json["state"] = l_state;
+  log_debug(ptr_->logger_, fmt::format("send_server_state {}", l_state));
 
   l_request.body() = l_json.dump();
   l_request.prepare_payload();
@@ -105,6 +106,15 @@ void work::send_server_state() {
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
       [this, l_state](auto&& PH1, const response_type_1& PH2) {
+        if (PH1) {
+          log_error(ptr_->logger_, fmt::format("{}", PH1.message()));
+          do_wait();
+          return;
+        }
+        if (PH2.result() != boost::beast::http::status::ok) {
+          log_warn(ptr_->logger_, fmt::format("服务器回复 {} 错误, 重试!", PH2.result_int()));
+          send_server_state();
+        }
         log_debug(ptr_->logger_, fmt::format("{}", PH2.body()));
         if (l_state == process_message::state::success || l_state == process_message::state::fail)
           ptr_->ue_data_ptr_.reset();

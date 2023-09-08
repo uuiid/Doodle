@@ -17,6 +17,7 @@
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/detail/url_route_put.h>
 #include <doodle_lib/render_farm/udp_server.h>
 #include <doodle_lib/render_farm/work.h>
 #include <doodle_lib/render_farm/working_machine.h>
@@ -54,6 +55,7 @@ void run_server() {
   route_ptr->reg<render_farm::detail::get_err_type_get>();
   route_ptr->reg<render_farm::detail::render_job_type_get>();
   route_ptr->reg<render_farm::detail::computer_reg_type_get>();
+  route_ptr->reg<render_farm::detail::render_job_type_put>();
 
   route_ptr->reg<render_farm::detail::repository_type_get>();
   route_ptr->reg<render_farm::detail::get_root_type>();
