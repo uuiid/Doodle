@@ -200,6 +200,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
     in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
     this->stream().expires_after(30s);
+    log_info(ptr_->logger_, fmt::format("{} {}", in_type.target(), fmt::ptr(std::addressof(in_completion))));
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
         [](auto&& in_completion_, client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
           auto l_h = std::make_shared<connect_op>(
