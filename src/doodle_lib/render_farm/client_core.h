@@ -168,6 +168,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
     }
 
     void do_write() {
+      socket_.expires_after(30s);
       ptr_->state_ = write;
       log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       //      auto l_req = ptr_->request_;
@@ -175,11 +176,13 @@ class client_core : public std::enable_shared_from_this<client_core> {
       boost::beast::http::async_write(socket_, ptr_->request_, std::move(*this));
     }
     void do_read() {
+      socket_.expires_after(30s);
       ptr_->state_ = read;
       log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }
     void do_connect() {
+      socket_.expires_after(30s);
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
       log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
@@ -193,11 +196,13 @@ class client_core : public std::enable_shared_from_this<client_core> {
     in_type.set(boost::beast::http::field::host, fmt::format("{}:50021", server_ip()));
     in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
+    this->stream().expires_after(30s);
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
         [](auto&& in_completion_, client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
           auto l_h = std::make_shared<connect_op>(
               in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
           );
+          in_client_ptr->stream().expires_after(30s);
           bool l_has_next = static_cast<bool>(in_client_ptr->ptr_->next_.lock());
           auto l_next     = l_h->ptr_->next_;
           if (l_has_next) {
