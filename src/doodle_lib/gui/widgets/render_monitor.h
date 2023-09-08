@@ -49,6 +49,9 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     timer_ptr_t timer_ptr_{};
     udp_client_ptr udp_client_ptr_{};
     std::once_flag once_flag_{};
+
+    // logger
+    logger_ptr logger_ptr_{};
   };
   std::unique_ptr<impl> p_i;
 

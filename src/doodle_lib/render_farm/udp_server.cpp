@@ -23,7 +23,7 @@ void udp_server::run() {
 void udp_server::do_accept(std::size_t in_size) {
   std::string_view l_view{buffer_, in_size};
   if (doodle_config::hello_world_doodle == l_view) {
-    DOODLE_LOG_INFO("receive: {}", l_view);
+    log_info(logger_ptr_, fmt::format("receive: {}", l_view));
     socket_.async_send_to(
         boost::asio::buffer(
             doodle_config::hello_world_doodle_server.data(), doodle_config::hello_world_doodle_server.size()

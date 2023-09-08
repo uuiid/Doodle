@@ -16,6 +16,7 @@ void render_monitor::init() {
   p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
   p_i->udp_client_ptr_   = std::make_shared<udp_client>(g_io_context());
   p_i->progress_message_ = "正在查找服务器";
+  p_i->logger_ptr_ = g_logger_ctrl().make_log(fmt::format("{} {}", typeid(render_monitor).name(), fmt::ptr(this)));
   do_find_server_address();
 }
 bool render_monitor::render() {
@@ -91,13 +92,13 @@ void render_monitor::do_find_server_address() {
                                           ) {
     if (!open_) return;
     if (in_code) {
-      DOODLE_LOG_ERROR("{}", in_code);
+      log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
       p_i->progress_message_ = fmt::format("{}", in_code);
       if (open_) do_find_server_address();
       return;
     }
     p_i->progress_message_.clear();
-    DOODLE_LOG_INFO("找到服务器 ip {}", in_endpoint.address().to_string());
+    log_info(p_i->logger_ptr_, fmt::format("找到服务器 ip {}", in_endpoint.address().to_string()));
     p_i->client_ptr_ = std::make_shared<client>(in_endpoint.address().to_string());
     do_wait();
   });
@@ -109,7 +110,8 @@ void render_monitor::do_wait() {
     if (!open_) return;
     p_i->progress_ = 0.f;
     if (ec) {
-      DOODLE_LOG_ERROR("{}", ec);
+      p_i->progress_message_ = fmt::format("{}", ec);
+      log_error(p_i->logger_ptr_, fmt::format("{}", ec));
       return;
     }
     get_remote_data();
@@ -121,7 +123,7 @@ void render_monitor::get_remote_data() {
                                             const std::vector<client::computer>& in_vector
                                         ) {
     if (in_code) {
-      DOODLE_LOG_ERROR("{}", in_code);
+      log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
       p_i->progress_message_ = fmt::format("{}", in_code);
       do_wait();
       return;
@@ -136,7 +138,7 @@ void render_monitor::get_remote_data() {
                                         const std::vector<client::task_t>& in_vector
                                     ) {
     if (in_code) {
-      DOODLE_LOG_ERROR("{}", in_code);
+      log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
       p_i->progress_message_ = fmt::format("{}", in_code);
       do_wait();
       return;
