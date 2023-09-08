@@ -3,6 +3,7 @@
 //
 #include "client_core.h"
 
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
 #include <doodle_lib/core/bind_front_handler.h>
@@ -18,7 +19,9 @@ void client_core::make_ptr() {
       ptr_->server_ip_, "50021", boost::beast::bind_front_handler(&client_core::on_resolve, this)
   );
   ptr_->executor_ = boost::asio::make_strand(g_io_context());
-  ptr_->logger_   = g_logger_ctrl().make_log("client_core");
+  ptr_->logger_   = g_logger_ctrl().make_log(
+      fmt::format("{} {} {} {}", typeid(*this).name(), fmt::ptr(this), ptr_->server_ip_, ptr_->socket_->socket())
+  );
 }
 void client_core::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
   if (ec) {
