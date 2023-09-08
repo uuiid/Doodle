@@ -14,6 +14,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
 namespace doodle::details {
@@ -89,7 +90,7 @@ void logger_ctrl::init_temp_log() {
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, bool out_console) {
   std::vector<spdlog::sink_ptr> l_sinks{rotating_file_sink_};
-  l_sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_mt>())
+  l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
