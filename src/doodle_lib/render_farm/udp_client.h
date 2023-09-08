@@ -3,6 +3,10 @@
 //
 
 #pragma once
+
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/logger/logger.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/signals2.hpp>
@@ -27,6 +31,10 @@ class udp_client {
     std::size_t recv_size_{};
     std::size_t retry_count_{};
     boost::asio::cancellation_signal cancel_sig_;
+    // logger
+    logger_ptr logger_ptr_{};
+    // 成功
+    bool success_{};
   };
   std::unique_ptr<impl_t> ptr_;
 
@@ -34,13 +42,16 @@ class udp_client {
   bool receive_is_server();
 
  public:
-  explicit udp_client(boost::asio::io_context& in_context) : ptr_(std::make_unique<impl_t>(in_context)){};
+  explicit udp_client(boost::asio::io_context& in_context) : ptr_(std::make_unique<impl_t>(in_context)) {
+    ptr_->logger_ptr_ = g_logger_ctrl().make_log(fmt::format("udp_client_{}", fmt::ptr(this)));
+  };
   ~udp_client() = default;
   template <typename CompletionHandler>
   auto async_find_server(std::uint16_t in_port, CompletionHandler&& in_completion) {
     ptr_->remove_port_ = in_port;
     ptr_->recv_size_   = 0;
     ptr_->retry_count_ = 0;
+    ptr_->success_     = false;
     //    ptr_->signal_.disconnect_all_slots();
     //    ptr_->signal_.connect(std::forward<CompletionHandler>(in_completion));
     //    ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);
@@ -56,6 +67,9 @@ class udp_client {
               ptr_->recv_size_ = in_size;
               if (!ec && !receive_is_server()) {
                 BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
+              }
+              if (!ec) {
+                l_ptr->success_ = true;
               }
 
               l_ptr->timer_.cancel();

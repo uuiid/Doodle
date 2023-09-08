@@ -11,9 +11,9 @@ namespace doodle {
 
 void udp_client::do_send() {
   ++ptr_->retry_count_;
-  DOODLE_LOG_INFO("开始第 {} 次发送,广播端口 {} ", ptr_->retry_count_, ptr_->remove_port_);
+  log_info(ptr_->logger_ptr_, fmt::format("开始第 {} 次发送,广播端口 {} ", ptr_->retry_count_, ptr_->remove_port_));
   if (ptr_->retry_count_ > 3) {
-    DOODLE_LOG_ERROR("发送次数超过 3 次, 取消发送");
+    log_info(ptr_->logger_ptr_, fmt::format("发送次数超过 3 次, 取消发送"));
     ptr_->timer_.cancel();
     ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);
     return;
@@ -28,9 +28,9 @@ void udp_client::do_send() {
   );
 
   ptr_->timer_.expires_after(std::chrono::seconds(1));
-  ptr_->timer_.async_wait([this](auto&& PH1) {
-    if (PH1) {
-      DOODLE_LOG_ERROR("{}", PH1);
+  ptr_->timer_.async_wait([this, logger_ = ptr_->logger_ptr_](auto&& PH1) {
+    if (PH1 && !ptr_->success_) {
+      log_error(logger_, fmt::format("{}", PH1));
       return;
     }
     do_send();
