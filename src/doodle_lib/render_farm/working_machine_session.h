@@ -4,6 +4,7 @@
 
 #pragma once
 #include "doodle_core/core/global_function.h"
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
