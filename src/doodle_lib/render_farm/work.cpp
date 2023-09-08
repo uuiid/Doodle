@@ -78,18 +78,23 @@ void work::do_register() {
           try {
             auto l_json       = nlohmann::json::parse(PH2.body());
             ptr_->computer_id = num_to_enum<entt::entity>(l_json["id"].get<std::int32_t>());
-            log_debug(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
+            log_debug(ptr_->core_ptr_->logger(), fmt::format("computer_id: {}", ptr_->computer_id));
           } catch (const nlohmann::json::exception& e) {
-            log_debug(ptr_->logger_, fmt::format("json parse error: {}", boost::diagnostic_information(e)));
+            log_debug(ptr_->core_ptr_->logger(), fmt::format("json parse error: {}", boost::diagnostic_information(e)));
           }
         } else {
-          log_debug(ptr_->logger_, fmt::format("未注册成功 {}", PH2.result_int()));
+          log_debug(ptr_->core_ptr_->logger(), fmt::format("未注册成功 {}", PH2.result_int()));
         }
         do_wait();
       }
   );
 }
 void work::send_server_state() {
+  if (!ptr_->core_ptr_) {
+    log_error(ptr_->logger_, "core_ptr_ is not valid");
+    return;
+  }
+
   request_type l_request{
       boost::beast::http::verb::put, fmt::format("/v1/render_farm/render_job/{}", ptr_->ue_data_ptr_->server_id), 11};
   l_request.set(boost::beast::http::field::content_type, "application/json");
@@ -97,7 +102,7 @@ void work::send_server_state() {
   nlohmann::json l_json;
   auto l_state    = ptr_->ue_data_ptr_->run_handle.get<process_message>().get_state();
   l_json["state"] = l_state;
-  log_debug(ptr_->logger_, fmt::format("send_server_state {}", l_state));
+  log_debug(ptr_->core_ptr_->logger(), fmt::format("send_server_state {}", l_state));
 
   l_request.body() = l_json.dump();
   l_request.prepare_payload();
@@ -107,12 +112,12 @@ void work::send_server_state() {
       boost::asio::make_strand(g_io_context()), l_request,
       [this, l_state](auto&& PH1, const response_type_1& PH2) {
         if (PH1) {
-          log_error(ptr_->logger_, fmt::format("{}", PH1));
+          log_error(ptr_->core_ptr_->logger(), fmt::format("{}", PH1));
         }
         if (PH2.result() != boost::beast::http::status::ok) {
-          log_warn(ptr_->logger_, fmt::format("服务器回复 {} 错误", PH2.result_int()));
+          log_warn(ptr_->core_ptr_->logger(), fmt::format("服务器回复 {} 错误", PH2.result_int()));
         }
-        log_debug(ptr_->logger_, fmt::format("{}", PH2.body()));
+        log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
         if (l_state == process_message::state::success || l_state == process_message::state::fail)
           ptr_->ue_data_ptr_.reset();
         do_wait();
@@ -128,14 +133,14 @@ bool work::find_server_address(std::uint16_t in_port) {
       in_port,
       [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
         if (PH1) {
-          log_debug(ptr_->logger_, fmt::format("{}", PH1));
+          log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH1));
           find_server_address();
           return;
         }
         boost::ignore_unused(PH1);
         auto l_remote_address         = in_remove_endpoint.address().to_string();
         core_set::get_set().server_ip = l_remote_address;
-        log_debug(ptr_->logger_, fmt::format("收到服务器响应 {}", l_remote_address));
+        log_debug(ptr_->core_ptr_->logger(), fmt::format("收到服务器响应 {}", l_remote_address));
         ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
         do_register();
       }
@@ -158,7 +163,7 @@ void work::run_job(const entt::handle& in_handle, const std::map<std::string, st
           return l_session.do_close();
         }
         if (ec) {
-          log_debug(ptr_->logger_, fmt::format("on_read error: {}", ec.message()));
+          log_debug(ptr_->core_ptr_->logger(), fmt::format("on_read error: {}", ec.message()));
           l_session.send_error_code(ec);
           return;
         }
@@ -179,7 +184,7 @@ void work::run_job(const entt::handle& in_handle, const std::map<std::string, st
           l_h.emplace<render_ue4>(l_h, l_json["arg"].get<render_ue4::arg_t>()).run();
           l_ue->run_handle = l_h;
         } catch (const nlohmann::json::exception& e) {
-          log_debug(ptr_->logger_, fmt::format("json parse error: {}", boost::diagnostic_information(e)));
+          log_debug(ptr_->core_ptr_->logger(), fmt::format("json parse error: {}", boost::diagnostic_information(e)));
           l_session.send_error(e);
           return;
         }
@@ -205,7 +210,7 @@ void work::send_log(std::string in_log) {
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
       [this](auto&& PH1, const response_type_1& PH2) {
-        log_debug(ptr_->logger_, fmt::format("{}", PH2.body()));
+        log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
         do_wait();
       }
   );
@@ -222,7 +227,7 @@ void work::send_err(std::string in_err) {
   ptr_->core_ptr_->async_read<response_type_1>(
       boost::asio::make_strand(g_io_context()), l_request,
       [this](auto&& PH1, const response_type_1& PH2) {
-        log_debug(ptr_->logger_, fmt::format("{}", PH2.body()));
+        log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
         do_wait();
       }
   );
