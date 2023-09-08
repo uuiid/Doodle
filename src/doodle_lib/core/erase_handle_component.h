@@ -82,6 +82,17 @@ auto erase_reg_component(
     l_h.erase<Component_Type>();
   });
 }
+
+template <typename Component, typename IO_Context = boost::asio::io_context>
+auto erase_reg_component(
+    entt::handle in_handle, Component* in_instance, IO_Context& in_io_context = g_io_context(),
+    const registry_ptr& in_reg_ptr = g_reg()
+) {
+  using Component_Type = std::decay_t<Component>;
+  boost::ignore_unused(in_instance);
+
+  boost::asio::post(in_io_context, [l_h = in_handle]() { l_h.erase<Component_Type>(); });
+}
 template <typename Component, typename IO_Context = boost::asio::io_context>
 auto destroy_reg_handle(
     Component* in_instance, IO_Context& in_io_context = g_io_context(), const registry_ptr& in_reg_ptr = g_reg()
