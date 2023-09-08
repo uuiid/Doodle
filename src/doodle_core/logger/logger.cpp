@@ -89,9 +89,9 @@ void logger_ctrl::init_temp_log() {
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, bool out_console) {
   std::vector<spdlog::sink_ptr> l_sinks{rotating_file_sink_};
-  if (out_console) {
-    l_sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
-  }
+  l_sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_mt>())
+      ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
+
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
