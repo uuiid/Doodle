@@ -10,6 +10,6 @@
 #include <fmt/ostream.h>
 
 namespace fmt {
-template <typename Type>
+template <>
 struct formatter<::boost::url> : ostream_formatter {};
 }  // namespace fmt
