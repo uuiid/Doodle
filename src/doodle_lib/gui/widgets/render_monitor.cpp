@@ -110,8 +110,7 @@ void render_monitor::do_wait() {
     if (!open_) return;
     p_i->progress_ = 0.f;
     if (ec) {
-      p_i->progress_message_ = fmt::format("{}", ec);
-      log_error(p_i->logger_ptr_, fmt::format("{}", ec));
+      log_info(p_i->logger_ptr_, fmt::format("{}", ec));
       return;
     }
     get_remote_data();
@@ -125,13 +124,11 @@ void render_monitor::get_remote_data() {
     if (in_code) {
       log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
       p_i->progress_message_ = fmt::format("{}", in_code);
-      do_wait();
       return;
     }
     p_i->progress_message_.clear();
 
     p_i->computers_ = in_vector;
-    do_wait();
   });
   p_i->client_ptr_->async_task_list([this, self = shared_from_this()](
                                         const boost::system::error_code& in_code,
