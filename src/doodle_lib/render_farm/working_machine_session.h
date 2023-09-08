@@ -26,6 +26,7 @@ class working_machine_session {
   explicit working_machine_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr_)
       : ptr_(std::make_shared<data_type>(std::move(in_socket))) {
     ptr_->route_ptr_ = std::move(in_route_ptr_);
+    ptr_->logger_    = g_logger_ctrl().make_log("working_machine_session");
   }
 
   void run();
@@ -73,6 +74,7 @@ class working_machine_session {
     boost::url url_;
     boost::signals2::scoped_connection connection_;
     http_route_ptr route_ptr_;
+    logger_ptr logger_;
   };
   std::shared_ptr<data_type> ptr_;
 

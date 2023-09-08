@@ -6,6 +6,9 @@
 
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/lib_warp/boost_fmt_url.h>
 
 #include <doodle_lib/core/bind_front_handler.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
@@ -53,16 +56,17 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
   boost::ignore_unused(bytes_transferred);
   if (ec) {
     if (ec != boost::beast::http::error::end_of_stream) {
-      DOODLE_LOG_ERROR("on_write error: {}", ec.message());
+      log_error(ptr_->logger_, fmt::format("on_write error: {} {}", ec, ptr_->stream_.socket()));
     } else {
-      DOODLE_LOG_ERROR("末端的流, 主动关闭");
+      log_error(ptr_->logger_, fmt::format("末端的流, 主动关闭 {} {}", ec, ptr_->stream_.socket()));
     }
     do_close();
     return;
   }
 
   ptr_->url_ = boost::url{ptr_->request_parser_->get().target()};
-  DOODLE_LOG_INFO("开始解析 uel {}", ptr_->url_.path());
+  log_info(ptr_->logger_, fmt::format("开始解析 uel {}{}", ptr_->url_, ptr_->stream_.socket()));
+
   try {
     auto l_has_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), make_handle(this));
     if (!l_has_call) {
@@ -72,7 +76,7 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
       send_response(boost::beast::http::message_generator{std::move(l_response)});
     }
   } catch (const doodle_error& e) {
-    DOODLE_LOG_ERROR("doodle_error: {}", boost::diagnostic_information(e));
+    log_error(ptr_->logger_, fmt::format("doodle_error: {}", boost::diagnostic_information(e)));
     boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
     l_response.body() = e.what();
     l_response.prepare_payload();
@@ -92,7 +96,7 @@ void working_machine_session::on_write(bool keep_alive, boost::system::error_cod
   boost::ignore_unused(bytes_transferred);
 
   if (ec) {
-    DOODLE_LOG_ERROR("on_write error: {}", ec.message());
+    log_error(ptr_->logger_, fmt::format("on_write error: {} {}", ec, ptr_->stream_.socket()));
     return;
   }
 
@@ -109,7 +113,7 @@ void working_machine_session::do_close() {
   ptr_->stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
   if (ec) {
-    DOODLE_LOG_ERROR("do_close error: {}", ec.message());
+    log_error(ptr_->logger_, fmt::format("do_close error: {} {}", ec, ptr_->stream_.socket()));
   }
 }
 
