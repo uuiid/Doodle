@@ -17,9 +17,9 @@ struct formatter<boost::asio::basic_stream_socket<Protocol, Executor> > : format
       -> decltype(ctx.out()) {
     const auto l_is_open   = in_.is_open();
     const auto l_end_point = l_is_open ? in_.remote_endpoint() : boost::asio::ip::tcp::endpoint{};
-    auto l_str             = fmt::to_string(fmt::ptr(&in_)) +
-                 (l_is_open ? fmt::format("|{}:{}", l_end_point.address().to_string(), l_end_point.port())
-                            : std::string{"closed"});
+    auto l_str =
+        fmt::to_string(fmt::ptr(&in_)) +
+        (l_is_open ? fmt::format("|{}:{}", l_end_point.address().to_string(), l_end_point.port()) : std::string{});
     return formatter<std::string>::format(l_str, ctx);
   }
 };
