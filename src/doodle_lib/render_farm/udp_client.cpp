@@ -29,8 +29,8 @@ void udp_client::do_send() {
 
   ptr_->timer_.expires_after(std::chrono::seconds(1));
   ptr_->timer_.async_wait([this, logger_ = ptr_->logger_ptr_](auto&& PH1) {
-    if (PH1 && !ptr_->success_) {
-      log_error(logger_, fmt::format("{}", PH1));
+    if (PH1) {
+      if (!ptr_->success_) log_error(logger_, fmt::format("{}", PH1));
       return;
     }
     do_send();
