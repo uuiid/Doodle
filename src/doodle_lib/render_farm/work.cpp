@@ -36,6 +36,7 @@ void work::make_ptr() {
   auto l_s          = boost::asio::make_strand(g_io_context());
   ptr_->timer_      = std::make_shared<timer>(l_s);
   ptr_->signal_set_ = std::make_shared<signal_set>(l_s, SIGINT, SIGTERM);
+  ptr_->logger_     = g_logger_ctrl().make_log("work");
   ptr_->signal_set_->async_wait([&, l_logger = ptr_->logger_](boost::system::error_code ec, int signal) {
     if (ec) {
       log_debug(l_logger, fmt::format("signal_set_ error: {}", ec));
@@ -45,7 +46,6 @@ void work::make_ptr() {
     this->do_close();
   });
   ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
-  ptr_->logger_         = g_logger_ctrl().make_log("work");
 }
 
 void work::run() { find_server_address(); }
