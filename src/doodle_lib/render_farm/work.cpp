@@ -133,14 +133,14 @@ bool work::find_server_address(std::uint16_t in_port) {
       in_port,
       [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
         if (PH1) {
-          log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH1));
+          log_debug(ptr_->logger_, fmt::format("{}", PH1));
           find_server_address();
           return;
         }
         boost::ignore_unused(PH1);
         auto l_remote_address         = in_remove_endpoint.address().to_string();
         core_set::get_set().server_ip = l_remote_address;
-        log_debug(ptr_->core_ptr_->logger(), fmt::format("收到服务器响应 {}", l_remote_address));
+        log_debug(ptr_->logger_, fmt::format("收到服务器响应 {}", l_remote_address));
         ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
         do_register();
       }
