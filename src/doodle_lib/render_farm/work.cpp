@@ -54,6 +54,7 @@ void work::on_wait(boost::system::error_code ec) {
     return;
   }
   do_register();
+  next_run();
   do_wait();
 }
 void work::do_wait() {
@@ -137,8 +138,7 @@ void work::reg_computer_impl() {
         } else {
           log_debug(ptr_->core_ptr_->logger(), fmt::format("未注册成功 {}", PH2.result_int()));
         }
-        do_register();
-        next_run();
+        do_wait();
       }
   );
 }
@@ -173,7 +173,6 @@ void work::send_server_state_impl() {
         log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
         if (l_state == process_message::state::success || l_state == process_message::state::fail)
           ptr_->ue_data_ptr_.reset();
-        do_register();
         next_run();
       }
   );
@@ -194,7 +193,6 @@ void work::udp_find_impl(std::uint16_t in_port) {
         core_set::get_set().server_ip = l_remote_address;
         log_info(ptr_->logger_, fmt::format("收到服务器响应 {}", l_remote_address));
         ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
-        do_register();
         next_run();
       }
   );
@@ -264,7 +262,6 @@ void work::send_log_impl() {
       boost::asio::make_strand(g_io_context()), l_request,
       [this](auto&& PH1, const response_type_1& PH2) {
         log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
-        do_register();
         next_run();
       }
   );
@@ -283,7 +280,6 @@ void work::send_error_impl() {
       boost::asio::make_strand(g_io_context()), l_request,
       [this](auto&& PH1, const response_type_1& PH2) {
         log_debug(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
-        do_register();
         next_run();
       }
   );
