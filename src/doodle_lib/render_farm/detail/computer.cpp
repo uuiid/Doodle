@@ -44,7 +44,7 @@ class send_to_render {
         boost::asio::make_strand(g_io_context()), l_request,
         [this, in_handle](auto&& PH1, const response_type_1& PH2) {
           if (PH1) {
-            DOODLE_LOG_ERROR("{}", PH1.message());
+            DOODLE_LOG_ERROR("{}", PH1);
             in_handle.get<detail::ue4_task>().fail();
             return;
           }
