@@ -9,6 +9,7 @@
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/detail/url_route_put.h>
 #include <doodle_lib/render_farm/working_machine_session.h>
 
 #include <boost/asio.hpp>
@@ -57,15 +58,18 @@ void working_machine::config_server() {
   route_ptr_->reg<detail::get_root_type>();
   route_ptr_->reg<detail::render_job_type_post>();
   route_ptr_->reg<detail::computer_reg_type_post>();
+
   route_ptr_->reg<detail::get_log_type_get>();
   route_ptr_->reg<detail::get_err_type_get>();
   route_ptr_->reg<detail::render_job_type_get>();
-
-  route_ptr_->reg<detail::computer_reg_type_get>();
-  route_ptr_->reg<detail::render_job_type_post>();
   route_ptr_->reg<detail::repository_type_get>();
+  route_ptr_->reg<detail::computer_reg_type_get>();
+
+  route_ptr_->reg<detail::render_job_type_post>();
   route_ptr_->reg<detail::get_log_type_post>();
   route_ptr_->reg<detail::get_err_type_post>();
+
+  route_ptr_->reg<detail::render_job_type_put>();
 
   g_reg()->ctx().emplace<ue_task_manage>().run();
   g_reg()->ctx().emplace<computer_manage>().run();
