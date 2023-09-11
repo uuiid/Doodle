@@ -45,11 +45,11 @@ bool render_monitor::render() {
       for (auto& l_computer : p_i->computers_) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Text("%d", l_computer.id_);
+        ImGui::Text(l_computer.id_.c_str());
         ImGui::TableNextColumn();
-        dear::Text(l_computer.name_);
+        dear::Text(l_computer.computer_.name_);
         ImGui::TableNextColumn();
-        dear::Text(l_computer.state_);
+        dear::Text(l_computer.computer_.state_);
       }
     }
   }
@@ -68,13 +68,19 @@ bool render_monitor::render() {
       for (auto& l_render_task : p_i->render_tasks_) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Text("%d", l_render_task.id_);
+        if (ImGui::Selectable(
+                l_render_task.id_.c_str(), false,
+                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns |
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick
+            )) {
+          FSys::open_explorer(l_render_task.task_.path_);
+        }
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.name_);
+        dear::Text(l_render_task.task_.name_);
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.state_);
+        dear::Text(l_render_task.task_.state_);
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.time_);
+        dear::Text(l_render_task.task_.time_);
       }
     }
   }
@@ -124,7 +130,9 @@ void render_monitor::get_remote_data() {
     }
     p_i->progress_message_.clear();
 
-    p_i->computers_ = in_vector;
+    p_i->computers_ = in_vector |
+                      ranges::views::transform([](const auto& in_computer) { return computer_gui{in_computer}; }) |
+                      ranges::to<std::vector<computer_gui>>();
   });
   p_i->client_ptr_->async_task_list([this, self = shared_from_this()](
                                         const boost::system::error_code& in_code,
@@ -137,7 +145,8 @@ void render_monitor::get_remote_data() {
       return;
     }
     p_i->progress_message_.clear();
-    p_i->render_tasks_ = in_vector;
+    p_i->render_tasks_ = in_vector | ranges::views::transform([](const auto& in_task) { return task_t_gui{in_task}; }) |
+                         ranges::to<std::vector<task_t_gui>>();
     do_wait();
   });
 }
