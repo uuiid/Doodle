@@ -30,7 +30,7 @@ void working_machine::run() {
     }
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
     this->stop();
-    app_base::Get().stop_app();
+    //    app_base::Get().stop_app();
   });
 }
 void working_machine::do_accept() {
@@ -51,6 +51,8 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
   do_accept();
 }
 void working_machine::stop() {
+  g_reg()->ctx().get<ue_task_manage>().cancel();
+  g_reg()->ctx().get<computer_manage>().cancel();
   acceptor_.cancel();
   acceptor_.close();
 }

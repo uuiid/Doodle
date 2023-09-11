@@ -13,6 +13,7 @@ class computer_manage {
   computer_manage()  = default;
   ~computer_manage() = default;
   void run();
+  inline void cancel() { timer_->cancel(); }
 
  private:
   using timer = boost::asio::system_timer;

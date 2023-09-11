@@ -12,7 +12,11 @@ void udp_server::run() {
   socket_.async_receive_from(
       boost::asio::buffer(buffer_), end_point_,
       [this](boost::system::error_code ec, std::size_t bytes) {
+        if (ec == boost::asio::error::operation_aborted) {
+          return;
+        }
         if (ec) {
+          log_error(logger_ptr_, fmt::format("async_receive_from error: {}", ec.message()));
           run();
           return;
         }

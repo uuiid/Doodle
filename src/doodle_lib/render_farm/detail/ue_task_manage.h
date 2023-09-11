@@ -13,6 +13,7 @@ class ue_task_manage {
   ue_task_manage()  = default;
   ~ue_task_manage() = default;
   void run();
+  inline void cancel() { timer_->cancel(); }
 
  private:
   using timer = boost::asio::system_timer;
