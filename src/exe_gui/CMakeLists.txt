@@ -1,7 +1,7 @@
 add_executable(
         DoodleExe
         WIN32
-        main.cpp
+        main_gui.cpp
         ../DoodleExe.manifest
         ../icon.ico
         ../win_exe.rc
