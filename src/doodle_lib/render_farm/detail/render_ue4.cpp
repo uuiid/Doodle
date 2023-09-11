@@ -198,7 +198,11 @@ bool render_ue4::updata_file() {
     return false;
   }
 
-  if (!FSys::exists(server_file_path)) FSys::create_directories(server_file_path);
+  if (!FSys::exists(server_file_path)) {
+    FSys::create_directories(server_file_path);
+  } else {
+    FSys::backup_file(server_file_path);
+  }
 
   // 上传输出
   for (auto&& i : FSys::recursive_directory_iterator{loc_out_file_path_}) {
