@@ -53,6 +53,9 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
 void working_machine::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
   g_reg()->ctx().get<computer_manage>().cancel();
+  auto l_view = g_reg()->view<working_machine_session>();
+  g_reg()->destroy(l_view.begin(), l_view.end());
+
   acceptor_.cancel();
   acceptor_.close();
 }
