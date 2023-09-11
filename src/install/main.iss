@@ -36,7 +36,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "${CMAKE_INSTALL_PREFIX}/bin/{#MyAppExeName}"; DestDir: "{app}/bin"; Flags: ignoreversion
 Source: "${CMAKE_INSTALL_PREFIX}/bin/token.doodle_token"; DestDir: "{app}/bin"; Flags: ignoreversion
-Source: "${CMAKE_INSTALL_PREFIX}/bin/doodle_maya*.exe"; DestDir: "{app}/bin"; Flags: ignoreversion
+Source: "${CMAKE_INSTALL_PREFIX}/bin/doodle_*.exe"; DestDir: "{app}/bin"; Flags: ignoreversion
 Source: "${CMAKE_INSTALL_PREFIX}/bin/*.dll"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/houdini/*"; DestDir: "{app}/houdini"; Flags: ignoreversion recursesubdirs
 Source: "${CMAKE_INSTALL_PREFIX}/maya/*"; DestDir: "{app}/maya"; Flags: ignoreversion recursesubdirs
@@ -49,8 +49,6 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{app}\服务器"; Filename: "{app}\bin\{#MyAppExeName}"; Parameters: --server; Components: 运行服务器;
-Name: "{app}\工作端"; Filename: "{app}\bin\{#MyAppExeName}"; Parameters: --work; Components: 运行工作端;
 
 ; [Run]
 ; Filename: "{app}\bin\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
