@@ -4,6 +4,8 @@
 
 #include "working_machine.h"
 
+#include <doodle_app/app/app_command.h>
+
 #include <doodle_lib/render_farm/detail/computer_manage.h>
 #include <doodle_lib/render_farm/detail/ue_task_manage.h>
 #include <doodle_lib/render_farm/detail/url_route_base.h>
@@ -28,6 +30,7 @@ void working_machine::run() {
     }
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
     this->stop();
+    app_base::Get().stop_app();
   });
 }
 void working_machine::do_accept() {

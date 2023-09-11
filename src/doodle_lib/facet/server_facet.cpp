@@ -24,7 +24,6 @@ bool server_facet::post() {
   g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
 
   g_ctx().get<program_info>().use_gui_attr(false);
-  guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
   g_ctx()
       .emplace<doodle::render_farm::working_machine_ptr>(
           std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
