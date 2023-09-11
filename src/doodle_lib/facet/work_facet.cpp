@@ -38,7 +38,7 @@ bool work_facet::post() {
   g_ctx().emplace<doodle::render_farm::work_ptr>(std::make_shared<render_farm::work>())->run();
   g_ctx()
       .emplace<doodle::render_farm::working_machine_ptr>(
-          std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+          std::make_shared<doodle::render_farm::working_machine>(g_io_context(), doodle_config::http_port)
       )
       ->config_work();
 

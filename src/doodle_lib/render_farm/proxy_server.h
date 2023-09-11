@@ -2,6 +2,7 @@
 // Created by td_main on 2023/8/18.
 //
 #pragma once
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/core/global_function.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -40,7 +41,7 @@ class proxy_server : public std::enable_shared_from_this<proxy_server> {
   boost::asio::ip::tcp::endpoint end_point_;
   boost::asio::ip::tcp::acceptor acceptor_;
   std::string server_address_;
-  std::string server_port_{"50021"};
+  std::string server_port_{std::to_string(doodle_config::http_port)};
 
   std::shared_ptr<stream_t> server_stream_;
   resolver_ptr resolver_{};

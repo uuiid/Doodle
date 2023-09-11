@@ -196,7 +196,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
  public:
   template <typename ResponseType, typename ExecutorType, typename RequestType, typename CompletionHandler>
   auto async_read(const ExecutorType& in_executor_type, RequestType& in_type, CompletionHandler&& in_completion) {
-    in_type.set(boost::beast::http::field::host, fmt::format("{}:50021", server_ip()));
+    in_type.set(boost::beast::http::field::host, fmt::format("{}:{}", server_ip(), doodle_config::http_port));
     in_type.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     using connect_op = connect_write_read_op<ExecutorType, CompletionHandler, ResponseType, RequestType>;
     this->stream().expires_after(30s);

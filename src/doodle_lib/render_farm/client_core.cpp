@@ -16,7 +16,8 @@ void client_core::make_ptr() {
   ptr_->socket_   = std::make_shared<socket_t>(l_s);
   ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
   ptr_->resolver_->async_resolve(
-      ptr_->server_ip_, "50021", boost::beast::bind_front_handler(&client_core::on_resolve, this)
+      ptr_->server_ip_, std::to_string(doodle_config::http_port),
+      boost::beast::bind_front_handler(&client_core::on_resolve, this)
   );
   ptr_->executor_ = boost::asio::make_strand(g_io_context());
   ptr_->logger_   = g_logger_ctrl().make_log(

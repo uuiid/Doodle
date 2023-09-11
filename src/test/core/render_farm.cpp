@@ -41,7 +41,7 @@ struct http_server {
   boost::beast::tcp_stream stream_{boost::asio::make_strand(g_io_context())};
   http_server() {
     boost::asio::ip::tcp::resolver l_resolver{boost::asio::make_strand(g_io_context())};
-    auto l_results = l_resolver.resolve("127.0.0.1", "50021");
+    auto l_results = l_resolver.resolve("127.0.0.1", std::to_string(doodle_config::http_port));
     stream_.connect(l_results);
   }
   inline static std::int32_t id;

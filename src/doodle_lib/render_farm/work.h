@@ -87,7 +87,7 @@ class work {
   ~work() = default;
 
   void run();
-  void run(const std::string& in_server_address, std::uint16_t in_port = 50021);
+  void run(const std::string& in_server_address, std::uint16_t in_port = doodle_config::http_port);
   void stop();
 
   void send_server_state();
