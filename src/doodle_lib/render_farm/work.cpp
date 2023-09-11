@@ -88,6 +88,7 @@ void work::do_register() {
           }
         } else {
           log_debug(ptr_->core_ptr_->logger(), fmt::format("未注册成功 {}", PH2.result_int()));
+          ptr_->computer_id = entt::null;
           do_find_server_address();
           return;
         }

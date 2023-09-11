@@ -84,7 +84,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         if (auto l_it = l_p.find("id"); l_it != l_p.end()) {
           l_handle = entt::handle{*g_reg(), num_to_enum<entt::entity>(std::stoi((*l_it).value))};
         }
-        if (!l_handle) {
+        if (!l_handle || !l_handle.all_of<computer>()) {
           try {
             g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
               if (in_computer.name() == l_remote_ip) {
@@ -97,7 +97,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
             return;
           }
         }
-        if (!l_handle) {
+        if (!l_handle || !l_handle.all_of<computer>()) {
           l_handle = entt::handle{*g_reg(), g_reg()->create()};
           l_handle.emplace<computer>().set_name(l_remote_ip);
         }
