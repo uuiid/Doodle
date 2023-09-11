@@ -332,7 +332,7 @@ void UDoodleMovieRemoteExecutor::UDPGetServerIp()
         //------------------
         TSharedPtr<FInternetAddr> addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
         addr->SetBroadcastAddress();
-        addr->SetPort(50022);
+        addr->SetPort(GetUdpProt());
         int32 send = 0;
         UdpSocket->SendTo(bytes.GetData(), bytes.Num(), send, *addr);
         //---------------------

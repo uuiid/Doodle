@@ -96,6 +96,7 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   void StartRemoteClientRender();
 
   inline int32 GetProt() { return 50021; }
+  inline int32 GetUdpProt() { return 50022; }
 
   void FindRemoteClient();
   UFUNCTION()
