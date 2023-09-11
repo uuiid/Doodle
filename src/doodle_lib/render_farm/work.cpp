@@ -81,7 +81,6 @@ void work::make_ptr() {
 void work::run() {
   ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
   find_server_address();
-  do_wait();
   next_run();
 }
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
@@ -193,6 +192,7 @@ void work::udp_find_impl(std::uint16_t in_port) {
         core_set::get_set().server_ip = l_remote_address;
         log_info(ptr_->logger_, fmt::format("收到服务器响应 {}", l_remote_address));
         ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
+        do_wait();
         next_run();
       }
   );
