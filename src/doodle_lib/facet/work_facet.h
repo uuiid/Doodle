@@ -1,6 +1,7 @@
 //
 // Created by td_main on 2023/8/21.
 //
+#pragma once
 #include <boost/asio.hpp>
 namespace doodle {
 
