@@ -90,6 +90,7 @@ target_compile_definitions(doodle_core
         WIN32_LEAN_AND_MEAN
         _WIN32_WINNT=0x0A00
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,STATIC_LIBRARY>:DOODLE_CORE_STATIC_DEFINE>
+        SPDLOG_ACTIVE_LEVEL=0
         PRIVATE
 
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:DOODLE_CORE_EXPORT>
