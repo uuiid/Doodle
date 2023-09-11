@@ -70,7 +70,7 @@ install(CODE
         "
 # 修复dll
 include(BundleUtilities)
-fixup_bundle(\"$<TARGET_FILE:DoodleExe>\" \"\" \"\"
+fixup_bundle(\"${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:DoodleExe>.exe\" \"\" \"${CMAKE_INSTALL_PREFIX}/bin\"
         IGNORE_ITEM
         ${DOODLE_INSTALL_IGNORE_ITEM}
 )
