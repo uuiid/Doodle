@@ -20,23 +20,18 @@
 #include <spdlog/spdlog.h>
 namespace doodle {
 bool server_facet::post() {
-  bool l_r{};
-  auto l_name = g_ctx().get<program_options>().arg[name];
-  if (l_name) {
-    win::open_console_window();
-    g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
+  win::open_console_window();
+  g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
 
-    g_ctx().get<program_info>().use_gui_attr(false);
-    l_r    = true;
-    guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
-    g_ctx()
-        .emplace<doodle::render_farm::working_machine_ptr>(
-            std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
-        )
-        ->config_server();
-    g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
-  }
-  return l_r;
+  g_ctx().get<program_info>().use_gui_attr(false);
+  guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+  g_ctx()
+      .emplace<doodle::render_farm::working_machine_ptr>(
+          std::make_shared<doodle::render_farm::working_machine>(g_io_context(), 50021)
+      )
+      ->config_server();
+  g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
+  return true;
 }
 void server_facet::add_program_options() { /* g_ctx().get<program_options>().arg.add_param(name); */
 }
