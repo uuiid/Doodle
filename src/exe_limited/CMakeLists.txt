@@ -26,7 +26,6 @@ target_compile_definitions(doodle_limited_exe
 
         # WIN32_LEAN_AND_MEAN
         ISOLATION_AWARE_ENABLED
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
 
         # ENTT_API_IMPORT
 )

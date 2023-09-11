@@ -21,7 +21,6 @@ macro(doodle_link_test)
     )
     target_compile_definitions(${ARGV0}
             PUBLIC
-            $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
             CRTDBG_MAP_ALLOC
             BOOST_TEST_DYN_LINK
             BOOST_ALL_DYN_LINK
@@ -87,7 +86,6 @@ target_link_libraries(CommonCxxTests
 )
 target_compile_definitions(CommonCxxTests
         PUBLIC
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         BOOST_TEST_DYN_LINK
         BOOST_ALL_DYN_LINK
 )
