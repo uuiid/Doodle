@@ -48,6 +48,8 @@ class work {
 
   struct data_type {
     timer_ptr timer_{};
+    timer_ptr send_log_timer_{};
+    timer_ptr send_error_timer_{};
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
     entt::entity computer_id{entt::null};
@@ -63,14 +65,6 @@ class work {
   };
 
   std::shared_ptr<data_type> ptr_;
-
-  void next_run();
-
-  void udp_find_impl(std::uint16_t in_port);
-  void reg_computer_impl();
-  void send_server_state_impl();
-  void send_log_impl();
-  void send_error_impl();
 
  public:
   work() : ptr_{std::make_shared<data_type>()} { make_ptr(); }
@@ -98,13 +92,13 @@ class work {
 
  private:
   void make_ptr();
-
   void do_register();
-
   void do_wait();
   void do_close();
+  void do_find_server_address(std::uint16_t in_port = doodle_config::udp_port);
 
-  void on_wait(boost::system::error_code ec);
+  void send_log_impl();
+  void send_error_impl();
 };
 using work_ptr = std::shared_ptr<work>;
 
