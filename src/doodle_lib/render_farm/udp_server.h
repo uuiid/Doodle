@@ -16,7 +16,7 @@ namespace doodle {
 
 class udp_server : std::enable_shared_from_this<udp_server> {
  public:
-  explicit udp_server(boost::asio::io_context& in_io_context, std::uint16_t in_port = 50022)
+  explicit udp_server(boost::asio::io_context& in_io_context, std::uint16_t in_port = doodle_config::udp_port)
       : socket_{in_io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), in_port)},
         signal_set_{in_io_context, SIGINT, SIGTERM},
         logger_ptr_{g_logger_ctrl().make_log(fmt::format("udp_server {}", fmt::ptr(this)))} {

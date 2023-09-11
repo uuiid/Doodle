@@ -29,7 +29,8 @@ constexpr const std::string_view ue4_game{R"(/Game)"};
 constexpr const std::string_view ue4_shot{R"(Shot)"};
 constexpr const std::string_view hello_world_doodle{R"(hello world! doodle)"};                // 客户端发送
 constexpr const std::string_view hello_world_doodle_server{R"(hello world! doodle server)"};  // 服务器发送
-
+constexpr const std::uint16_t udp_port{50022};
+constexpr const std::uint16_t http_port{50021};
 }  // namespace doodle_config
 namespace gui::config::menu_w {
 constexpr const std::string_view project_widget{"项目"};

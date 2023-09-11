@@ -20,7 +20,7 @@ namespace render_farm {
 void work::next_run() {
   if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::udp_find)]) {
     ptr_->state_.reset(static_cast<std::uint64_t>(send_state_enum::udp_find));
-    udp_find_impl(50022);
+    udp_find_impl(doodle_config::udp_port);
     return;
   }
   if (ptr_->state_[static_cast<std::uint64_t>(send_state_enum::send_server_state)]) {

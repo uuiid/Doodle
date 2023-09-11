@@ -85,7 +85,7 @@ class udp_client {
 
   template <typename CompletionHandler>
   auto async_find_server(CompletionHandler&& in_completion) {
-    return async_find_server(50022, std::forward<CompletionHandler>(in_completion));
+    return async_find_server(doodle_config::udp_port, std::forward<CompletionHandler>(in_completion));
   }
   void cancel();
 };

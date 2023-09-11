@@ -1,6 +1,8 @@
 //
 // Created by td_main on 2023/8/21.
 //
+#include <doodle_core/configure/static_value.h>
+
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/render_farm/client_core.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
@@ -80,7 +82,7 @@ class work {
   work(work&&)                 = default;
   work& operator=(work&&)      = default;
 
-  void find_server_address(std::uint16_t in_port = 50022);
+  void find_server_address(std::uint16_t in_port = doodle_config::udp_port);
 
   ~work() = default;
 
