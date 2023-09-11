@@ -144,7 +144,7 @@ void render_ue4::do_read_log() {
           do_read_log();
         } else {
           child_ptr->out_attr.close();
-          if (in_code != boost::asio::error::eof) DOODLE_LOG_ERROR(in_code);
+          if (in_code != boost::asio::error::broken_pipe) DOODLE_LOG_ERROR(in_code);
         }
       }
   );
@@ -162,7 +162,7 @@ void render_ue4::do_read_err() {
           do_read_err();
         } else {
           child_ptr->err_attr.close();
-          if (in_code != boost::asio::error::eof) DOODLE_LOG_ERROR(in_code);
+          if (in_code != boost::asio::error::broken_pipe) DOODLE_LOG_ERROR(in_code);
         }
       }
   );
