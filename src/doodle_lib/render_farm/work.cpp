@@ -285,6 +285,7 @@ void work::send_error_impl() {
   );
 }
 void work::stop() {
+  ptr_->udp_client_ptr_->cancel();
   ptr_->core_ptr_->cancel();
   ptr_->timer_->cancel();
 }

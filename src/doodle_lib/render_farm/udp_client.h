@@ -87,6 +87,7 @@ class udp_client {
   auto async_find_server(CompletionHandler&& in_completion) {
     return async_find_server(50022, std::forward<CompletionHandler>(in_completion));
   }
+  void cancel();
 };
 
 using udp_client_ptr = std::shared_ptr<udp_client>;

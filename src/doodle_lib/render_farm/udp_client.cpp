@@ -41,4 +41,9 @@ bool udp_client::receive_is_server() {
   return doodle_config::hello_world_doodle_server == l_view;
 }
 
+void udp_client::cancel() {
+  ptr_->cancel_sig_.emit(boost::asio::cancellation_type::total);
+  ptr_->timer_.cancel();
+}
+
 }  // namespace doodle
