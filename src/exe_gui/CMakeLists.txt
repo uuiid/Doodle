@@ -15,6 +15,13 @@ target_link_libraries(DoodleExe
 )
 # target_link_options(DoodleExe PUBLIC /MAP:test.txt)
 target_link_options(DoodleExe PUBLIC /ENTRY:mainCRTStartup)
+
+# 定义安装逻辑
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
+include(InstallRequiredSystemLibraries)
+
+
 install(TARGETS DoodleExe
         RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
@@ -56,11 +63,6 @@ endmacro()
 add_doodle_exe(doodle_server main_server.cpp)
 add_doodle_exe(doodle_client main_work.cpp)
 
-
-# 定义安装逻辑
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
-include(InstallRequiredSystemLibraries)
 
 list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复
