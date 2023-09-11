@@ -79,3 +79,9 @@ BOOST_AUTO_TEST_CASE(test_entt_obs2) {
   BOOST_TEST(l_obs2.size() == 0);
   BOOST_TEST(l_obs3.size() == 2);
 }
+
+BOOST_AUTO_TEST_CASE(entt_ref_1) {
+  std::int32_t l_i{0};
+
+  auto l_any = entt::meta<std::int32_t>(0);
+}

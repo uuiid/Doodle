@@ -54,7 +54,8 @@ void working_machine::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
   g_reg()->ctx().get<computer_manage>().cancel();
   auto l_view = g_reg()->view<working_machine_session>();
-  g_reg()->destroy(l_view.begin(), l_view.end());
+  // close
+  ranges::for_each(l_view, [](auto& in_session) { g_reg()->get<working_machine_session>(in_session).do_close(); });
 
   acceptor_.cancel();
   acceptor_.close();
