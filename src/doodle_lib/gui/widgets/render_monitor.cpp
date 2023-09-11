@@ -20,12 +20,8 @@ void render_monitor::init() {
   do_find_server_address();
 }
 bool render_monitor::render() {
-  if (ImGui::Button("ull")) {
-    std::int32_t* l_id{nullptr};
-    throw doodle_error{""};
-  }
-
   std::call_once(p_i->once_flag_, [this]() { init(); });
+
   {
     ImGui::Text("渲染刷新");
     ImGui ::SameLine();
