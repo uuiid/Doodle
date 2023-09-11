@@ -23,7 +23,12 @@ void render_ue4::run() {
   strand_    = l_map.at(arg_.ProjectPath);
   auto l_prj = FSys::path{arg_.ProjectPath};
   static FSys::path l_loc_main_{"D:/doodle/cache/ue"};
-  server_file_path   = l_prj.parent_path() / arg_.out_file_path;
+  server_file_path = l_prj.parent_path() / arg_.out_file_path;
+  server_file_path = server_file_path.lexically_normal();
+  if (server_file_path.native().back() == FSys::path::preferred_separator) {
+    server_file_path = server_file_path.parent_path();
+  }
+  DOODLE_LOG_INFO("确认服务器路径 {}", server_file_path);
   loc_out_file_path_ = l_loc_main_ / l_prj.stem() / arg_.out_file_path;
   if (FSys::exists(loc_out_file_path_)) FSys::remove_all(loc_out_file_path_);
   DOODLE_LOG_INFO("确认输出路径 {}", loc_out_file_path_);
