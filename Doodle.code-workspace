@@ -54,7 +54,7 @@
 				"debugConfig": "Doodle_debug"
 			},
 		],
-		"C_Cpp.intelliSenseEngine": "default",
+		"C_Cpp.intelliSenseEngine": "disabled",
 		"cmake.configureOnEdit": false,
 		"cmake.configureOnOpen": false,
 		"cmake.automaticReconfigure": false,
