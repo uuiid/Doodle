@@ -113,7 +113,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
           next();
           return;
         }
-        log_debug(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
+        log_info(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
         do_connect();
         return;
       }
@@ -152,7 +152,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
           next();
           return;
         }
-        log_debug(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
+        log_info(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
         do_connect();
         return;
       }
@@ -166,14 +166,14 @@ class client_core : public std::enable_shared_from_this<client_core> {
 
       ptr_->state_       = connect;
       ptr_->retry_count_ = 0;
-      log_debug(ptr_->logger_, fmt::format("{}", ec));
+      log_info(ptr_->logger_, fmt::format("{}", ec));
       do_write();
     }
 
     void do_write() {
       socket_.expires_after(30s);
       ptr_->state_ = write;
-      log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
+      log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       //      auto l_req = ptr_->request_;
       //      boost::beast::async_write(socket_, message_generator_type{std::move(l_req)}, std::move(*this));
       boost::beast::http::async_write(socket_, ptr_->request_, std::move(*this));
@@ -181,14 +181,14 @@ class client_core : public std::enable_shared_from_this<client_core> {
     void do_read() {
       socket_.expires_after(30s);
       ptr_->state_ = read;
-      log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
+      log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }
     void do_connect() {
       socket_.expires_after(30s);
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
-      log_debug(ptr_->logger_, fmt::format("state {}", ptr_->state_));
+      log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::asio::async_connect(socket_.socket(), results_, std::move(*this));
     }
   };
@@ -211,7 +211,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
           auto l_next     = l_h->ptr_->next_;
           if (l_has_next) {
             (*in_client_ptr->ptr_->next_.lock()) = [l_h]() {
-              log_debug(l_h->ptr_->logger_, "开始下一项");
+              log_info(l_h->ptr_->logger_, "开始下一项");
               l_h->run();
             };
           } else {
