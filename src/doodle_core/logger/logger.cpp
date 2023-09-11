@@ -54,10 +54,7 @@ logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" /
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, const std::string &in_name) {
   if (!FSys::exists(in_path)) FSys::create_directories(in_path);
-  auto l_path = in_path / fmt::format(
-                              "{:%Y-%m-%d %H-%M-%S}_{}_{}.txt", chrono::system_clock::now(),
-                              boost::this_process::get_id(), in_name
-                          );
+  auto l_path = in_path / fmt::format("{}_{}.txt", in_name, boost::this_process::get_id());
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
     rotating_file_sink_ =
