@@ -50,7 +50,7 @@ void run(const FSys::path& in_abc_path) {
 
 }  // namespace doodle
 
-int http_proxy(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   using namespace doodle;
   argh::parser l_parser(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
   if (auto l_ss = l_parser("--abc"); l_ss) {
