@@ -47,6 +47,8 @@ add_subdirectory(math)
 add_subdirectory(ai)
 # 这一项要放在最后
 
+add_subdirectory(fbx_abc)
+
 add_subdirectory(main_fixtures)
 
 # create the testing file and list of tests
