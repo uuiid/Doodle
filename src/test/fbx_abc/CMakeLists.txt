@@ -7,5 +7,6 @@ if (TARGET Fbx::Fbx)
             PRIVATE
             doodle_lib
             Fbx::Fbx
+            Alembic::Alembic
     )
 endif ()
