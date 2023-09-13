@@ -31,7 +31,8 @@
 namespace doodle {
 void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   auto* l_manager = in_scene->GetFbxManager();
-  FbxExporter* l_exporter{FbxExporter::Create(in_scene->GetFbxManager(), "")};
+  std::shared_ptr<FbxExporter> l_exporter{
+      FbxExporter::Create(in_scene->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }};
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_MATERIAL, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_TEXTURE, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_EMBEDDED, true);
@@ -41,12 +42,13 @@ void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, false);
 
-  l_exporter->Initialize(
-      in_fbx_path.string().c_str(), l_manager->GetIOPluginRegistry()->GetNativeWriterFormat(),
-      in_scene->GetFbxManager()->GetIOSettings()
-  );
+  if (l_exporter->Initialize(
+          in_fbx_path.string().c_str(), l_manager->GetIOPluginRegistry()->GetNativeWriterFormat(),
+          in_scene->GetFbxManager()->GetIOSettings()
+      )) {
+    DOODLE_LOG_ERROR("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString());
+  }
   l_exporter->Export(in_scene);
-  l_exporter->Destroy();
 }
 // 写入fbx
 void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh& in_poly) {
