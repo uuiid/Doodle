@@ -50,6 +50,7 @@ void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   }
   l_exporter->Export(in_scene);
 }
+
 // 写入fbx
 void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh& in_poly) {
   std::shared_ptr<FbxManager> l_manager{FbxManager::Create(), [](FbxManager* in_manager) { in_manager->Destroy(); }};
@@ -81,18 +82,74 @@ void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh&
   l_scene->GetRootNode()->AddChild(l_node);
 
   // 写出网格
-  auto* l_mesh         = FbxMesh::Create(l_scene, "mesh");
+  auto* l_mesh = FbxMesh::Create(l_scene, "mesh");
   l_node->SetNodeAttribute(l_mesh);
 
-  const auto& l_sample = in_poly.getSchema();
+  const auto& l_sample       = in_poly.getSchema();
   // 写出顶点
-  auto l_sample_data   = l_sample.getValue();
-  l_mesh->InitControlPoints(l_sample_data.getPositions()->size());
+  auto l_sample_data         = l_sample.getValue();
+
+  auto l_sample_face_indices = l_sample_data.getFaceIndices();
+  auto l_sample_face_counts  = l_sample_data.getFaceCounts();
+  auto l_sample_pos          = l_sample_data.getPositions();
+
+  DOODLE_LOG_INFO("pos size: {}", l_sample_pos->size());
+  l_mesh->InitControlPoints(l_sample_pos->size());
   auto* l_pos_list = l_mesh->GetControlPoints();
-  for (std::size_t j = 0; j < l_sample_data.getPositions()->size(); ++j) {
-    const auto& l_pos = (*l_sample_data.getPositions())[j];
+  for (std::size_t j = 0; j < l_sample_pos->size(); ++j) {
+    const auto& l_pos = (*l_sample_pos)[j];
     l_pos_list[j]     = FbxVector4{l_pos.x, l_pos.y, l_pos.z};
+    //    DOODLE_LOG_INFO("pos: {} {} {}", l_pos.x, l_pos.y, l_pos.z);
   }
+  DOODLE_LOG_INFO("face size: {} {}", l_sample_face_counts->size(), l_sample_face_indices->size());
+  //  写出多边形连接
+  std::size_t l_index{};
+  for (std::size_t j = 0; j < l_sample_face_counts->size(); ++j) {
+    l_mesh->BeginPolygon();
+    // 在abc 多边形旋转顺序是相反的, 所以直接反向
+    for (std::int32_t k = (*l_sample_face_counts)[j] - 1; k > -1; --k) {
+      DOODLE_LOG_INFO("face index: {}", l_index + k);
+      l_mesh->AddPolygon((*l_sample_face_indices)[l_index + k]);
+    }
+    l_index += (*l_sample_face_counts)[j];
+    l_mesh->EndPolygon();
+  }
+
+  auto* l_layer = l_mesh->GetLayer(0);
+  if (!l_layer) {
+    l_mesh->CreateLayer();
+    l_layer = l_mesh->GetLayer(0);
+  }
+
+  auto* l_layer_element_normal = FbxLayerElementNormal::Create(l_mesh, "");
+  l_layer_element_normal->SetMappingMode(FbxLayerElement::eByControlPoint);
+  l_layer_element_normal->SetReferenceMode(FbxLayerElement::eDirect);
+  auto* l_layer_element_tangent = FbxLayerElementTangent::Create(l_mesh, "");
+  l_layer_element_tangent->SetMappingMode(FbxLayerElement::eByControlPoint);
+  l_layer_element_tangent->SetReferenceMode(FbxLayerElement::eDirect);
+  auto* l_layer_element_binormal = FbxLayerElementBinormal::Create(l_mesh, "");
+  l_layer_element_binormal->SetMappingMode(FbxLayerElement::eByControlPoint);
+  l_layer_element_binormal->SetReferenceMode(FbxLayerElement::eDirect);
+  // set normal
+  for (auto i = 0; i < l_sample_face_indices->size(); i += 3) {
+    //    auto l_normal = (l_pos_list[i + 1] - l_pos_list[i]).CrossProduct(l_pos_list[i + 2] - l_pos_list[i]);
+    //    l_normal.Normalize();
+    //    l_layer_element_normal->GetDirectArray().Add(FbxVector4{l_normal[0], l_normal[1], l_normal[2]});
+    //    l_layer_element_normal->GetIndexArray().Add(i);
+    //    l_layer_element_normal->GetIndexArray().Add(i + 1);
+    //    l_layer_element_normal->GetIndexArray().Add(i + 2);
+    l_layer_element_normal->GetDirectArray().Add(FbxVector4{});
+    l_layer_element_tangent->GetDirectArray().Add(FbxVector4{});
+    l_layer_element_binormal->GetDirectArray().Add(FbxVector4{});
+  }
+
+  l_layer->SetNormals(l_layer_element_normal);
+  l_layer->SetTangents(l_layer_element_tangent);
+  l_layer->SetBinormals(l_layer_element_binormal);
+
+  auto* l_fbx_mat = FbxSurfaceLambert::Create(l_scene, "Fbx Default Material");
+  l_node->AddMaterial(l_fbx_mat);
+
   write_fbx_impl(l_scene, in_fbx_path);
 }
 
