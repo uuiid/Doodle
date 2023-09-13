@@ -76,8 +76,14 @@ void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh&
   auto anim_layer = FbxAnimLayer::Create(l_scene, "anim_layer");
   anim_stack->AddMember(anim_layer);
 
+  // 先写出节点
+  auto* l_node = FbxNode::Create(l_scene, "node");
+  l_scene->GetRootNode()->AddChild(l_node);
+
   // 写出网格
   auto* l_mesh         = FbxMesh::Create(l_scene, "mesh");
+  l_node->SetNodeAttribute(l_mesh);
+
   const auto& l_sample = in_poly.getSchema();
   // 写出顶点
   auto l_sample_data   = l_sample.getValue();
