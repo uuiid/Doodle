@@ -42,7 +42,7 @@ void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, false);
 
-  if (l_exporter->Initialize(
+  if (!l_exporter->Initialize(
           in_fbx_path.string().c_str(), l_manager->GetIOPluginRegistry()->GetNativeWriterFormat(),
           in_scene->GetFbxManager()->GetIOSettings()
       )) {
