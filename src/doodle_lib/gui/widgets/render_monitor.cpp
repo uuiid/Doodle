@@ -96,7 +96,10 @@ void render_monitor::do_find_server_address() {
     if (in_code) {
       log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
       p_i->progress_message_ = fmt::format("{}", in_code);
-      if (open_) do_find_server_address();
+      if (open_) {
+        p_i->progress_ = 0.f;
+        do_find_server_address();
+      }
       return;
     }
     p_i->progress_message_.clear();
