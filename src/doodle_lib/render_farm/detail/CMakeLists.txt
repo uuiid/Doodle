@@ -14,6 +14,7 @@ target_sources(
         computer_manage.h
         render_job_put.h
         post_log.h
+        url_webscoket.h
 
         PRIVATE
         render_ue4.cpp
@@ -28,4 +29,5 @@ target_sources(
         computer_manage.cpp
         render_job_put.cpp
         post_log.cpp
+        url_webscoket.cpp
 )
