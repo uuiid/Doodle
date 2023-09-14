@@ -54,7 +54,7 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tas
 ; Filename: "{app}\bin\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Registry]
-Root: "HKCU"; Subkey: "SOFTWARE\Doodle\RenderFarm"; ValueType: string; ValueName: "server_address"; ValueData: "192.168.20.59"; Flags: deletekey deletevalue uninsdeletekeyifempty uninsdeletevalue
+Root: "HKCU"; Subkey: "SOFTWARE\Doodle\RenderFarm"; ValueType: string; ValueName: "server_address"; ValueData: "192.168.20.7"; Flags: deletekey deletevalue uninsdeletekeyifempty uninsdeletevalue
 Root: "HKA"; Subkey: "SOFTWARE\Classes\doodle.main"; ValueType: string; ValueName: ""; ValueData: "doodle"; Flags: uninsdeletekeyifempty uninsdeletevalue
 Root: "HKA"; Subkey: "SOFTWARE\Classes\doodle.main\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#MyAppExeName}"; Flags: uninsdeletekeyifempty uninsdeletevalue
 Root: "HKA"; Subkey: "SOFTWARE\Classes\doodle.main\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekeyifempty uninsdeletevalue
