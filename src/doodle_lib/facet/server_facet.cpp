@@ -29,7 +29,7 @@ bool server_facet::post() {
           std::make_shared<doodle::render_farm::working_machine>(g_io_context(), doodle_config::http_port)
       )
       ->config_server();
-  g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
+  //  g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
   return true;
 }
 }  // namespace doodle
