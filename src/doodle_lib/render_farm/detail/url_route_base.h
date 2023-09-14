@@ -34,18 +34,34 @@ class http_route {
  private:
   using map_actin_type = std::vector<capture_url>;
   std::map<boost::beast::http::verb, map_actin_type> actions;
+  map_actin_type websocket_actions;
+
+  template <typename type_t, typename = void>
+  struct has_verb : std::false_type {};
+  template <typename type_t>
+  struct has_verb<type_t, std::void_t<decltype(type_t::name)>> : std::true_type {};
+  template <typename type_t>
+  static constexpr bool has_verb_v = has_verb<type_t>::value;
 
  public:
   // 注册路由
   void reg(boost::beast::http::verb in_verb, std::vector<std::string> in_vector, capture_url::action_type in_function);
-  template <typename T>
+  void reg(std::vector<std::string> in_vector, capture_url::action_type in_function);
+
+  template <typename T, std::enable_if_t<has_verb_v<T>>* = nullptr>
   void reg() {
     T l_reg{};
     reg(l_reg.verb_, l_reg.url_, l_reg);
-  };
+  }
+  template <typename T, std::enable_if_t<!has_verb_v<T>>* = nullptr>
+  void reg() {
+    T l_reg{};
+    reg(l_reg.url_, l_reg);
+  }
 
   // 路由分发
   bool operator()(boost::beast::http::verb in_verb, const entt::handle& in_session) const;
+  bool operator()(const entt::handle& in_session) const;
 };
 
 }  // namespace detail
