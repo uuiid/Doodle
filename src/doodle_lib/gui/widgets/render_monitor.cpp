@@ -91,7 +91,7 @@ bool render_monitor::render() {
 }
 void render_monitor::do_find_server_address() {
   winreg::RegKey l_key{};
-  l_key.Open(HKEY_CURRENT_USER, L"Software\\Doodle\\RenderFarm", KEY_READ | KEY_WOW64_64KEY);
+  l_key.Open(HKEY_CURRENT_USER, L"Software\\Doodle\\RenderFarm", KEY_READ);
   auto l_server_address = conv::utf_to_utf<char>(l_key.GetStringValue(L"server_address"));
   log_info(p_i->logger_ptr_, fmt::format("找到服务器 ip {}", l_server_address));
   p_i->client_ptr_ = std::make_shared<client>(l_server_address);

@@ -21,7 +21,7 @@
 namespace doodle {
 std::string work_facet::get_server_address() {
   winreg::RegKey l_key{};
-  l_key.Open(HKEY_CURRENT_USER, L"Software\\Doodle\\RenderFarm", KEY_READ | KEY_WOW64_64KEY);
+  l_key.Open(HKEY_CURRENT_USER, L"Software\\Doodle\\RenderFarm", KEY_READ);
   return conv::utf_to_utf<char>(l_key.GetStringValue(L"server_address"));
 }
 
