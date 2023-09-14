@@ -32,6 +32,4 @@ bool server_facet::post() {
   g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
   return true;
 }
-void server_facet::add_program_options() { /* g_ctx().get<program_options>().arg.add_param(name); */
-}
 }  // namespace doodle

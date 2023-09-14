@@ -89,8 +89,10 @@ void work::do_register() {
         } else {
           log_info(ptr_->core_ptr_->logger(), fmt::format("未注册成功 {}", PH2.result_int()));
           ptr_->computer_id = entt::null;
-          do_find_server_address();
-          return;
+          if (ptr_->udp_client_ptr_) {
+            do_find_server_address();
+            return;
+          }
         }
         do_wait();
       }
