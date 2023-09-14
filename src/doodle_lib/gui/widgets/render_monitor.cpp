@@ -9,12 +9,14 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/render_farm/udp_client.h>
+
+#include <winreg/WinReg.hpp>
 namespace doodle {
 namespace gui {
 void render_monitor::init() {
   p_i->strand_ptr_       = std::make_shared<strand_t>(boost::asio::make_strand(g_io_context()));
   p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
-  p_i->udp_client_ptr_   = std::make_shared<udp_client>(g_io_context());
+
   p_i->progress_message_ = "正在查找服务器";
   p_i->logger_ptr_ = g_logger_ctrl().make_log(fmt::format("{} {}", typeid(render_monitor).name(), fmt::ptr(this)));
   do_find_server_address();
@@ -88,25 +90,12 @@ bool render_monitor::render() {
   return open_;
 }
 void render_monitor::do_find_server_address() {
-  p_i->udp_client_ptr_->async_find_server([this, self = shared_from_this()](
-                                              const boost::system::error_code& in_code,
-                                              const boost::asio::ip::udp::endpoint& in_endpoint
-                                          ) {
-    if (!open_) return;
-    if (in_code) {
-      log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-      p_i->progress_message_ = fmt::format("{}", in_code);
-      if (open_) {
-        p_i->progress_ = 0.f;
-        do_find_server_address();
-      }
-      return;
-    }
-    p_i->progress_message_.clear();
-    log_info(p_i->logger_ptr_, fmt::format("找到服务器 ip {}", in_endpoint.address().to_string()));
-    p_i->client_ptr_ = std::make_shared<client>(in_endpoint.address().to_string());
-    do_wait();
-  });
+  winreg::RegKey l_key{};
+  l_key.Open(HKEY_CURRENT_USER, L"Software\\Doodle\\RenderFarm", KEY_READ | KEY_WOW64_64KEY);
+  auto l_server_address = conv::utf_to_utf<char>(l_key.GetStringValue(L"server_address"));
+  log_info(p_i->logger_ptr_, fmt::format("找到服务器 ip {}", l_server_address));
+  p_i->client_ptr_ = std::make_shared<client>(l_server_address);
+  do_wait();
 }
 
 void render_monitor::do_wait() {
