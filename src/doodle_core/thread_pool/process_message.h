@@ -70,5 +70,5 @@ class DOODLE_CORE_API process_message {
 
   boost::signals2::signal<void()> aborted_sig;
 };
-auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
+inline auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
 }  // namespace doodle

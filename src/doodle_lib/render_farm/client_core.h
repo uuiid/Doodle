@@ -22,7 +22,7 @@ enum state {
   write,
   read,
 };
-auto format_as(state f) { return magic_enum::enum_name(f); }
+inline auto format_as(state f) { return magic_enum::enum_name(f); }
 }  // namespace client_core_ns
 
 class client_core : public std::enable_shared_from_this<client_core> {

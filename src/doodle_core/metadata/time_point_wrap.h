@@ -202,6 +202,8 @@ class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, time_point_wrap& p);
 };
 
+inline auto format_as(time_point_wrap f) { return f.get_sys_time(); }
+
 time_point_wrap::duration DOODLE_CORE_API operator-(const time_point_wrap& in_l, const time_point_wrap& in_r);
 
 }  // namespace doodle
