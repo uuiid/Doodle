@@ -146,6 +146,7 @@ chrono::sys_time_pos::duration process_message::get_time() const {
     case state::success:
       return p_end - p_time;
   }
+  return {};
 }
 const std::string& process_message::message_back() const { return p_str_end; }
 

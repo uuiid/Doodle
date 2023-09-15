@@ -5,6 +5,7 @@
 #include "computer.h"
 
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
 
 #include <doodle_lib/core/bind_front_handler.h>
 #include <doodle_lib/render_farm/client_core.h>

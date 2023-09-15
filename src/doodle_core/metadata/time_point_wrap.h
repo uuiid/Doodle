@@ -202,51 +202,11 @@ class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, time_point_wrap& p);
 };
 
+inline auto format_as(time_point_wrap f) { return f.get_sys_time(); }
+
 time_point_wrap::duration DOODLE_CORE_API operator-(const time_point_wrap& in_l, const time_point_wrap& in_r);
 
 }  // namespace doodle
-
-namespace fmt {
-/**
- * @brief 格式化时间包裹类
- *
- * @tparam 资产类
- */
-template <typename Char>
-struct formatter<::doodle::time_point_wrap, Char> : formatter<::doodle::time_point_wrap::time_point, Char> {
-  using base_type   = formatter<::doodle::time_point_wrap::time_point, Char>;
-
-  char presentation = 'L';
-
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
-    auto it = ctx.begin(), end = ctx.end();
-
-    if (it != end && (*it == 'L' || *it == 'S')) {
-      presentation = *it++;
-      ctx.advance_to(it);
-    }
-
-    return base_type::parse(ctx);
-  }
-
-  /**
-   * @brief 格式化函数
-   *
-   * @tparam FormatContext fmt上下文类
-   * @param in_ 传入的资产类
-   * @param ctx 上下文
-   * @return decltype(ctx.out()) 基本上时 std::string
-   */
-  template <typename FormatContext>
-  auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return base_type::format(
-        presentation == 'L' ? in_.get_local_point_to_fmt_lib() : in_.get_sys_point_to_fmt_lib(), ctx
-    );
-  }
-};
-
-}  // namespace fmt
 
 namespace doodle {
 template <typename CharType, typename CharTraits>

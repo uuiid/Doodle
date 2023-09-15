@@ -157,7 +157,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     child_attr = boost::process::child{
         g_io_context(),
         boost::process::exe       = program_path.generic_string(),
-        boost::process::start_dir = maya_program_path / "bin",
+        boost::process::start_dir = (maya_program_path / "bin").generic_string(),
         boost::process::args      = fmt::format("--{}={}", run_script_attr_key, l_path),
         boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,

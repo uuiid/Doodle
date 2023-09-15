@@ -49,7 +49,7 @@ void this_rpc_exe::create_move(
   auto l_tmp           = FSys::write_tmp_file("create_move", l_json.dump(), ".json");
   DOODLE_LOG_INFO("开始 doodle 进程 {} ", ptr->this_exe_path);
   ptr->this_exe_proces = boost::process::child{
-      g_io_context(), boost::process::exe = ptr->this_exe_path,
+      g_io_context(), boost::process::exe = ptr->this_exe_path.generic_string(),
       boost::process::args = {"--create_move"s, fmt::format(R"(--config_path="{}")", l_tmp)},
       //      boost::process::std_out > ptr->out_attr,
       //      boost::process::std_err > ptr->err_attr,

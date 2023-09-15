@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -12,6 +13,18 @@
 #include <boost/beast.hpp>
 
 namespace doodle::detail {
+
+namespace client_core_ns {
+enum state {
+  start,
+  resolve,
+  connect,
+  write,
+  read,
+};
+inline auto format_as(state f) { return magic_enum::enum_name(f); }
+}  // namespace client_core_ns
+
 class client_core : public std::enable_shared_from_this<client_core> {
  public:
   using socket_t     = boost::beast::tcp_stream;
@@ -42,13 +55,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
   void on_resolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results);
 
  public:
-  enum state {
-    start,
-    resolve,
-    connect,
-    write,
-    read,
-  };
+  using state = client_core_ns::state;
 
  private:
   template <typename ExecutorType, typename CompletionHandler, typename ResponseType, typename RequestType>
@@ -57,7 +64,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
     struct data_type2 {
       buffer_type buffer_;
       ResponseType response_;
-      state state_ = start;
+      state state_ = state::start;
       RequestType request_;
 
       next_fun_ptr_t next_;
@@ -164,7 +171,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
         return;
       }
 
-      ptr_->state_       = connect;
+      ptr_->state_       = state::connect;
       ptr_->retry_count_ = 0;
       log_info(ptr_->logger_, fmt::format("{}", ec));
       do_write();
@@ -172,7 +179,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
 
     void do_write() {
       socket_.expires_after(30s);
-      ptr_->state_ = write;
+      ptr_->state_ = state::write;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       //      auto l_req = ptr_->request_;
       //      boost::beast::async_write(socket_, message_generator_type{std::move(l_req)}, std::move(*this));
@@ -180,7 +187,7 @@ class client_core : public std::enable_shared_from_this<client_core> {
     }
     void do_read() {
       socket_.expires_after(30s);
-      ptr_->state_ = read;
+      ptr_->state_ = state::read;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
     }

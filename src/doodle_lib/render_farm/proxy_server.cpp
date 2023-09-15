@@ -3,6 +3,8 @@
 //
 
 #include "proxy_server.h"
+
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
 namespace doodle {
 
 class proxy_server_session : public std::enable_shared_from_this<proxy_server_session> {
