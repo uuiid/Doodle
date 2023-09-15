@@ -118,12 +118,6 @@ time_point_wrap::operator std::tm() const {
   if (!l_i) throw_error(error_enum::time_to_tm_error, "时间转换出错");
   return l_tm;
 }
-time_point_wrap::time_point time_point_wrap::get_local_point_to_fmt_lib() const {
-  return chrono::clock_cast<time_point::clock>(sys_point);
-}
-time_point_wrap::time_point time_point_wrap::get_sys_point_to_fmt_lib() const {
-  return chrono_ns::to_sys_point(chrono::clock_cast<time_local_point::clock>(sys_point));
-}
 
 time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r) {
   return in_l.get_sys_time() - in_r.get_sys_time();

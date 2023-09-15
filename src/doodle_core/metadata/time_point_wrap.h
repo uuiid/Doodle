@@ -191,12 +191,6 @@ class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
   [[nodiscard("not ")]] explicit operator std::tm() const;
 
  private:
-  template <typename T1, typename Char, typename Enable>
-  friend struct fmt::formatter;
-
-  [[nodiscard("not ")]] time_point get_local_point_to_fmt_lib() const;
-  [[nodiscard("not ")]] time_point get_sys_point_to_fmt_lib() const;
-
   // 这里是序列化的代码
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const time_point_wrap& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, time_point_wrap& p);
