@@ -40,13 +40,12 @@ std::tuple<bool, std::map<std::string, std::string>> http_route::capture_url::ma
   return {l_result, l_str};
 }
 
-bool http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref, const entt::handle& in_session)
-    const {
+http_route::action_type http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref) const {
   auto [l_result, l_map] = match_url(in_segments_ref);
   if (l_result) {
-    action_(in_session, l_map);
-  }
-  return l_result;
+    return [map_ = l_map, this](const entt::handle& in_handle) { action_(in_handle, map_); };
+  } else
+    return {};
 }
 void http_route::reg(
     boost::beast::http::verb in_verb, std::vector<std::string> in_vector,
@@ -59,19 +58,27 @@ void http_route::reg(std::vector<std::string> in_vector, capture_url::action_typ
   websocket_actions.emplace_back(std::move(in_vector), std::move(in_function));
 }
 
-bool http_route::operator()(boost::beast::http::verb in_verb, const entt::handle& in_session) const {
+http_route::action_type http_route::operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment)
+    const {
   auto l_it     = actions.find(in_verb);
-  bool l_result = false;
   if (l_it != actions.end()) {
-    auto l_segments_ref = in_session.get<working_machine_session>().url().segments();
-    l_result = ranges::any_of(l_it->second, [&](const auto& l_action) { return l_action(l_segments_ref, in_session); });
+    for (auto&& i : l_it->second) {
+      auto l_action = i(in_segment);
+      if (l_action) {
+        return l_action;
+      }
+    }
   }
-  return l_result;
+  return {};
 }
-bool http_route::operator()(const entt::handle& in_session) const {
-  return ranges::any_of(websocket_actions, [&](const capture_url& l_action) {
-    return l_action(in_session.get<working_machine_session>().url().segments(), in_session);
-  });
+http_route::action_type http_route::operator()(boost::urls::segments_ref in_segment) const {
+  for (auto&& i : websocket_actions) {
+    auto l_action = i(in_segment);
+    if (l_action) {
+      return l_action;
+    }
+  }
+  return {};
 }
 
 }  // namespace doodle::render_farm::detail

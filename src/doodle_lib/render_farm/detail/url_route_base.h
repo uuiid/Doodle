@@ -12,6 +12,7 @@ namespace detail {
 
 class http_route {
  public:
+  using action_type = std::function<void(const entt::handle&)>;
   class capture_url {
     std::vector<std::string> capture_vector_;
     boost::dynamic_bitset<> capture_bitset_{};
@@ -28,7 +29,7 @@ class http_route {
       set_cap_bit();
     };
 
-    bool operator()(boost::urls::segments_ref in_segments_ref, const entt::handle& in_session) const;
+    http_route::action_type operator()(boost::urls::segments_ref in_segments_ref) const;
   };
 
  private:
@@ -39,7 +40,7 @@ class http_route {
   template <typename type_t, typename = void>
   struct has_verb : std::false_type {};
   template <typename type_t>
-  struct has_verb<type_t, std::void_t<decltype(type_t::name)>> : std::true_type {};
+  struct has_verb<type_t, std::void_t<decltype(type_t::verb_)>> : std::true_type {};
   template <typename type_t>
   static constexpr bool has_verb_v = has_verb<type_t>::value;
 
@@ -60,8 +61,8 @@ class http_route {
   }
 
   // 路由分发
-  bool operator()(boost::beast::http::verb in_verb, const entt::handle& in_session) const;
-  bool operator()(const entt::handle& in_session) const;
+  action_type operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment) const;
+  action_type operator()(boost::urls::segments_ref in_segment) const;
 };
 
 }  // namespace detail
