@@ -4,6 +4,8 @@
 
 #include <boost/rational.hpp>
 #include <boost/signals2.hpp>
+
+#include <magic_enum.hpp>
 namespace doodle {
 
 using rational_int = boost::rational<std::size_t>;
@@ -68,5 +70,5 @@ class DOODLE_CORE_API process_message {
 
   boost::signals2::signal<void()> aborted_sig;
 };
-
+auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
 }  // namespace doodle

@@ -11,7 +11,7 @@
 namespace fmt {
 
 template <typename Protocol, typename Executor>
-struct formatter<boost::asio::basic_stream_socket<Protocol, Executor> > : formatter<std::string> {
+struct formatter<boost::asio::basic_stream_socket<Protocol, Executor>> : formatter<std::string> {
   template <typename FormatContext>
   auto format(const boost::asio::basic_stream_socket<Protocol, Executor> &in_, FormatContext &ctx) const
       -> decltype(ctx.out()) {
@@ -24,7 +24,7 @@ struct formatter<boost::asio::basic_stream_socket<Protocol, Executor> > : format
   }
 };
 template <typename Protocol, typename Executor, typename RatePolicy>
-struct formatter<boost::beast::basic_stream<Protocol, Executor, RatePolicy> > : formatter<std::string> {
+struct formatter<boost::beast::basic_stream<Protocol, Executor, RatePolicy>> : formatter<std::string> {
   template <typename FormatContext>
   auto format(const boost::beast::basic_stream<Protocol, Executor, RatePolicy> &in_, FormatContext &ctx) const
       -> decltype(ctx.out()) {
@@ -36,4 +36,9 @@ struct formatter<boost::beast::basic_stream<Protocol, Executor, RatePolicy> > : 
     return formatter<std::string>::format(l_str, ctx);
   }
 };
+}  // namespace fmt
+
+namespace fmt {
+template <typename Char_T>
+struct formatter<::boost::beast::basic_string_view<Char_T>> : ostream_formatter {};
 }  // namespace fmt
