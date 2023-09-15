@@ -16,6 +16,7 @@
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/websocket.h>
 #include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/url/urls.hpp"
@@ -69,9 +70,10 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
   log_info(ptr_->logger_, fmt::format("开始解析 uel {}", ptr_->url_));
   try {
     if (boost::beast::websocket::is_upgrade(ptr_->request_parser_->get())) {
-      auto l_has_call = (*ptr_->route_ptr_)(make_handle(this));
-      if (l_has_call) {
+      auto l_call = (*ptr_->route_ptr_)(ptr_->url_.segments());
+      if (l_call) {
         boost::beast::get_lowest_layer(ptr_->stream_).expires_never();
+        l_call(make_handle(this));
         return;
       } else {
         boost::beast::http::response<boost::beast::http::empty_body> l_response{
@@ -80,8 +82,10 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
         send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
     }
-    auto l_has_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), make_handle(this));
-    if (!l_has_call) {
+    auto l_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), ptr_->url_.segments());
+    if (l_call) {
+      l_call(make_handle(this));
+    } else {
       boost::beast::http::response<boost::beast::http::empty_body> l_response{
           boost::beast::http::status::not_found, 11};
       l_response.prepare_payload();

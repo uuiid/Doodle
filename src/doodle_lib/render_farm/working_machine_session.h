@@ -29,9 +29,9 @@ class working_machine_session {
     ptr_->route_ptr_ = std::move(in_route_ptr_);
     ptr_->logger_    = g_logger_ctrl().make_log(fmt::format("session {} {}", fmt::ptr(ptr_), ptr_->stream_.socket()));
   }
+  ~working_machine_session() = default;
 
   void run();
-  ~working_machine_session() { do_close(); }
 
   template <typename Error_Type>
   void send_error(
