@@ -1,19 +1,18 @@
 #include "Doodle/AiArrayGenerationMoveSpline.h"
 
 #include "AI/NavigationSystemBase.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/SkeletalMeshActor.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
+#include "Doodle/DoodleEigenHelper.h"
+#include "DoodleAiCrowd.h"
+#include "DoodleAiMoveToComponent.h"
+#include "DoodleAiSplineCrowd.h"
+#include "DoodleAiSplineMoveToCom.h"
+#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "Kismet/KismetSystemLibrary.h"
 #include "NavigationSystem.h"
-#include "Components/InstancedStaticMeshComponent.h"
-#include "Animation/SkeletalMeshActor.h"
-#include "Animation/AnimSingleNodeInstance.h"
-#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
-#include "Doodle/DoodleEigenHelper.h"
-#include "DoodleAiMoveToComponent.h"
-#include "DoodleAiSplineMoveToCom.h"
-#include "DoodleAiSplineCrowd.h"
-
-#include "DoodleAiCrowd.h"
 
 ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
   PrimaryActorTick.bCanEverTick = true;
@@ -35,7 +34,9 @@ ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
   Row                          = 10;
   Column                       = 10;
 
-  static ConstructorHelpers::FObjectFinder<UStaticMesh> CraneBaseMesh(TEXT("/ControlRig/Controls/ControlRig_Sphere_3mm.ControlRig_Sphere_3mm"));
+  static ConstructorHelpers::FObjectFinder<UStaticMesh> CraneBaseMesh(
+      TEXT("/ControlRig/Controls/ControlRig_Sphere_3mm.ControlRig_Sphere_3mm")
+  );
 
   TargetSpline = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponentPath"));
   TargetSpline->SetupAttachment(RootComponent);
@@ -44,11 +45,14 @@ ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
 #endif
   TargetSpline->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
   TargetSpline->SetCanEverAffectNavigation(false);
-  TargetSpline->bHiddenInGame          = true;
-  TargetSpline->CastShadow             = false;
+  TargetSpline->bHiddenInGame = true;
+  TargetSpline->CastShadow    = false;
 
-  Preview_InstancedStaticMeshComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>("InstancedStaticMeshComponent");
-  static ConstructorHelpers::FObjectFinder<UStaticMesh> Preview_InstancedStaticMeshComponent_Mesh(TEXT("/Niagara/DefaultAssets/S_Gnomon.S_Gnomon"));
+  Preview_InstancedStaticMeshComponent =
+      CreateDefaultSubobject<UInstancedStaticMeshComponent>("InstancedStaticMeshComponent");
+  static ConstructorHelpers::FObjectFinder<UStaticMesh> Preview_InstancedStaticMeshComponent_Mesh(
+      TEXT("/Niagara/DefaultAssets/S_Gnomon.S_Gnomon")
+  );
   Preview_Mesh = Preview_InstancedStaticMeshComponent_Mesh.Object;
   Preview_InstancedStaticMeshComponent->SetStaticMesh(Preview_InstancedStaticMeshComponent_Mesh.Object);
 #if WITH_EDITOR
@@ -66,21 +70,30 @@ ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
 
 void ADoodleAiArrayGenerationMoveSpline::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
+  for (auto&& L_Actor : MoveActors) {
+    ADoodleAiSplineCrowd* L_Crowd = Cast<ADoodleAiSplineCrowd>(L_Actor);
+    if (L_Crowd) {
+      if (UCharacterMovementComponent* CharacterMovementComponent =
+              Cast<UCharacterMovementComponent>(L_Crowd->GetMovementComponent())) {
+        CharacterMovementComponent->MaxWalkSpeed = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
+      }
+    }
+  }
 }
 
 void ADoodleAiArrayGenerationMoveSpline::PostActorCreated() {
   Super::PostActorCreated();
-  UMaterial* L_CraneBaseMaterial       = LoadObject<UMaterial>(this, TEXT("/ControlRig/Controls/ControlRigGizmoMaterial.ControlRigGizmoMaterial"));
+  UMaterial* L_CraneBaseMaterial =
+      LoadObject<UMaterial>(this, TEXT("/ControlRig/Controls/ControlRigGizmoMaterial.ControlRigGizmoMaterial"));
   UMaterialInstanceDynamic* L_Material = UMaterialInstanceDynamic::Create(L_CraneBaseMaterial, this);
   L_Material->SetVectorParameterValue(TEXT("Color"), FColor::Red);
   // GenPoint();
 }
 
-bool ADoodleAiArrayGenerationMoveSpline::ShouldTickIfViewportsOnly() const {
-  return true;
-}
+bool ADoodleAiArrayGenerationMoveSpline::ShouldTickIfViewportsOnly() const { return true; }
 
 void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
+  Super::BeginPlay();
   if (AnimAssets.IsEmpty() || SkinAssets.IsEmpty()) return;
 
   int32 L_Max_Skin = FMath::Max(0, SkinAssets.Num() - 1);
@@ -94,11 +107,15 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     }
   }
   FActorSpawnParameters L_ActorSpawnParameters{};
-  L_ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+  L_ActorSpawnParameters.SpawnCollisionHandlingOverride =
+      ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+  MoveActors.Empty(Points.Num());
   for (auto&& i : Points) {
-    auto L_Loc                      = i.GetLocation();
+    auto L_Loc = i.GetLocation();
     // L_Loc.Z += 70;
-    ADoodleAiSplineCrowd* L_Actor   = GetWorld()->SpawnActor<ADoodleAiSplineCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
+    ADoodleAiSplineCrowd* L_Actor =
+        GetWorld()->SpawnActor<ADoodleAiSplineCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
     UDoodleAiMoveToComponent* L_Com = L_Actor->GetDoodleMoveToComponent();
     if (L_Com) {
       L_Com->RandomRadius = RandomRadius_Move;
@@ -124,17 +141,19 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     // L_Sk_Com->LightingChannels = LightingChannels;
     L_Sk_Com->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
 
-    UCharacterMovementComponent* CharacterMovementComponent = Cast<UCharacterMovementComponent>(L_Actor->GetMovementComponent());
+    UCharacterMovementComponent* CharacterMovementComponent =
+        Cast<UCharacterMovementComponent>(L_Actor->GetMovementComponent());
     if (CharacterMovementComponent) {
-      CharacterMovementComponent->MaxAcceleration              = MaxAcceleration;
-      CharacterMovementComponent->MaxWalkSpeed                 = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
-      CharacterMovementComponent->GroundFriction               = 0.2f;
-      CharacterMovementComponent->RotationRate                 = {0.0f, 180.0f, 0.0f};
+      CharacterMovementComponent->MaxAcceleration = MaxAcceleration;
+      CharacterMovementComponent->MaxWalkSpeed    = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
+      CharacterMovementComponent->GroundFriction  = 0.2f;
+      CharacterMovementComponent->RotationRate    = {0.0f, 180.0f, 0.0f};
       CharacterMovementComponent->bOrientRotationToMovement    = true;
       CharacterMovementComponent->bUseRVOAvoidance             = true;
       CharacterMovementComponent->AvoidanceConsiderationRadius = 100.0f;
       CharacterMovementComponent->AvoidanceWeight              = 5.0f;
     }
+    MoveActors.Add(L_Actor);
   }
 }
 
@@ -143,8 +162,7 @@ void ADoodleAiArrayGenerationMoveSpline::GenPoint() {
   if (!NavSys) {
     return;
   }
-  if (NavSys->MainNavData == nullptr)
-    return;
+  if (NavSys->MainNavData == nullptr) return;
   // RandomStream.Initialize();
   // RandomStream.RandRange(0, 10);
   Points.Empty(Row * Column);
@@ -217,5 +235,7 @@ void ADoodleAiArrayGenerationMoveSpline::OnConstruction(const FTransform& Transf
   // if (SplineComponent->bSplineHasBeenEdited)
   GenPoint();
 
-  Preview_InstancedStaticMeshComponent->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
+  Preview_InstancedStaticMeshComponent->SetLightingChannels(
+      LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2
+  );
 }

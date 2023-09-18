@@ -51,7 +51,7 @@ class DOODLE_API ADoodleAiArrayGenerationMoveSpline : public AActor {
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "旋转偏移值")
   float SkinOffsetQuatValue;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机最大速度")
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Interp, Category = Doodle, DisplayName = "随机最大速度")
   FVector2D RandomAnimSpeed;
 
   UPROPERTY(Category = Doodle, EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
@@ -101,6 +101,8 @@ class DOODLE_API ADoodleAiArrayGenerationMoveSpline : public AActor {
   TObjectPtr<USplineComponent> TargetSpline;
 
   FVector Target_Transform;
+
+  TArray<TObjectPtr<AActor>> MoveActors;
 
   void GenPoint();
 
