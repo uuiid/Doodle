@@ -406,6 +406,22 @@ void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh&
 
     l_scene->AddPose(l_post);
   }
+
+  {  // 写一个混变
+    auto* l_blend         = FbxBlendShape::Create(l_scene, "blend");
+    auto* l_blend_channel = FbxBlendShapeChannel::Create(l_scene, "blend_channel");
+
+    auto* l_shape         = FbxShape::Create(l_scene, "shape");
+    l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
+    auto* l_shape_pos = l_shape->GetControlPoints();
+    for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
+      l_shape_pos[i] = l_mesh->GetControlPointAt(i);
+    }
+    l_blend_channel->AddTargetShape(l_shape);
+    l_blend->AddBlendShapeChannel(l_blend_channel);
+    l_mesh->AddDeformer(l_blend);
+  }
+
   return write_fbx_impl(l_scene, in_fbx_path);
 }
 
