@@ -40,16 +40,16 @@ target_compile_definitions(doodle_cloud_drive
 #target_link_options(doodle_cloud_drive PUBLIC)
 
 # 定义安装逻辑
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
-include(InstallRequiredSystemLibraries)
-
-install(TARGETS doodle_cloud_drive
-        RUNTIME_DEPENDENCIES
-        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
-        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-        COMPONENT exe_com
-        )
+#set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+#set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
+#include(InstallRequiredSystemLibraries)
+#
+#install(TARGETS doodle_cloud_drive
+#        RUNTIME_DEPENDENCIES
+#        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
+#        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+#        COMPONENT exe_com
+#        )
 ## 最后实现camke修复
 #install(CODE
 #        "
