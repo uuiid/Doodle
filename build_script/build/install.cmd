@@ -2,7 +2,6 @@ call %~dp0/set_venv.cmd
 
 call %~dp0/build_ue4_files.cmd
 call %~dp0/build_houdini.cmd
-call %~dp0/build_maya_plug.cmd 2019
 call %~dp0/build_maya_plug.cmd 2020
 call %~dp0/build_exe.cmd
 
