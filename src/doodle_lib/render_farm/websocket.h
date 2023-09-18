@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include <boost/beast.hpp>
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/logger/logger.h>
 
+#include <boost/beast.hpp>
 namespace doodle::render_farm {
 
 class websocket {
@@ -15,15 +17,21 @@ class websocket {
         : stream_(std::move(in_stream)) {}
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
     boost::beast::flat_buffer buffer_{};
+    logger_ptr logger_{};
   };
 
   std::unique_ptr<impl> impl_ptr_{};
-  void run();
+  void do_read();
+  void make_ptr();
+
+  void run_fun();
 
  public:
   websocket() = default;
   explicit websocket(boost::beast::websocket::stream<boost::asio::ip::tcp::socket> in_stream)
-      : impl_ptr_(std::make_unique<impl>(std::move(in_stream))) {}
+      : impl_ptr_(std::make_unique<impl>(std::move(in_stream))) {
+    make_ptr();
+  }
   ~websocket()                               = default;
 
   // copy
@@ -32,6 +40,8 @@ class websocket {
   // move
   websocket(websocket&&) noexcept            = default;
   websocket& operator=(websocket&&) noexcept = default;
+
+  void run(const boost::beast::http::request<boost::beast::http::string_body>& in_message);
 };
 
 }  // namespace doodle::render_farm

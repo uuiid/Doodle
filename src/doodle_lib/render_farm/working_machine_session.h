@@ -88,6 +88,8 @@ class working_machine_session {
     return *ptr_->request_parser_;
   };
   [[nodiscard("")]] inline boost::beast::tcp_stream& stream() { return ptr_->stream_; }
+  [[nodiscard("")]] inline const boost::beast::tcp_stream& stream() const { return ptr_->stream_; }
+  [[nodiscard("")]] inline boost::beast::tcp_stream stream_release() { return std::move(ptr_->stream_); }
   // buffer
   [[nodiscard("")]] inline boost::beast::flat_buffer& buffer() { return ptr_->buffer_; }
   [[nodiscard("")]] inline const boost::beast::flat_buffer& buffer() const { return ptr_->buffer_; }
