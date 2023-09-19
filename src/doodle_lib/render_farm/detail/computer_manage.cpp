@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/render_farm/detail/computer.h>
+#include <doodle_lib/render_farm/websocket.h>
 namespace doodle {
 namespace render_farm {
 void computer_manage::run() {

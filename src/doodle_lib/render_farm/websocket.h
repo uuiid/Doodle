@@ -47,6 +47,7 @@ class websocket : public std::enable_shared_from_this<websocket> {
 
   void run_fun();
   void do_write();
+  void do_destroy();
 
  public:
   websocket() = default;

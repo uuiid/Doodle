@@ -46,6 +46,7 @@ void websocket::do_read() {
        self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         if (ec == boost::beast::websocket::error::closed) {
+          do_destroy();
           return;
         }
         if (ec) {
@@ -131,6 +132,7 @@ void websocket::do_write() {
       boost::asio::buffer(l_data.write_queue.front()),
       [this, logger = l_data.logger_, self = shared_from_this()](boost::system::error_code ec, std::size_t) {
         if (ec == boost::beast::websocket::error::closed) {
+          do_destroy();
           return;
         }
         if (ec) {
@@ -146,6 +148,13 @@ void websocket::do_write() {
         }
       }
   );
+}
+
+void websocket::do_destroy() {
+  boost::asio::post(g_io_context(), [handle = data_] {
+    auto l = handle;
+    l.destroy();
+  });
 }
 
 }  // namespace doodle::render_farm
