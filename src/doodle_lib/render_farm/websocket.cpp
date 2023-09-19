@@ -53,6 +53,15 @@ void websocket::do_read() {
 }
 
 void websocket::run_fun() {
+  boost::system::error_code ec{};
+
+  if (!nlohmann::json::accept(impl_ptr_->read_queue.front())) {
+    log_error(impl_ptr_->logger_, fmt::format("json parse error: {} ", impl_ptr_->read_queue.front()));
+    impl_ptr_->read_queue.pop();
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::bad_json_string);
+    send_error_code(ec, 0);
+    return;
+  }
   auto l_json = nlohmann::json::parse(impl_ptr_->read_queue.front());
   impl_ptr_->read_queue.pop();
   // 这个是回复
@@ -71,10 +80,9 @@ void websocket::run_fun() {
     if (l_call) {
       l_json_rep["result"] = l_call(l_json["params"]);
     } else {
-      l_json_rep["error"]["code"]    = msg_error::method_not_found;
+      l_json_rep["error"]["code"]    = msg_error::error_enum::method_not_found;
       l_json_rep["error"]["message"] = "method not found";
     }
-
     l_json_rep["id"] = l_json["id"];
     impl_ptr_->write_queue.emplace(l_json_rep.dump());
     do_write();
