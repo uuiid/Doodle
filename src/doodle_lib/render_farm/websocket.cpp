@@ -13,7 +13,8 @@
 namespace doodle::render_farm {
 
 void websocket::run(const boost::beast::http::request<boost::beast::http::string_body>& in_message) {
-  auto& l_data = data_.get<websocket_data>();
+  auto& l_data          = data_.get<websocket_data>();
+  l_data.websocket_ptr_ = shared_from_this();
   l_data.stream_.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
   l_data.stream_.set_option(
       boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
@@ -77,13 +78,16 @@ void websocket::run_fun() {
   l_data.read_queue.pop();
   // 这个是回复
   if (l_json.contains("result")) {
-    log_info(l_data.logger_, fmt::format("开始检查回复 {}", l_json["id"].get<uint64_t>()));
+    auto id = l_json["id"].get<uint64_t>();
+    log_info(l_data.logger_, fmt::format("开始检查回复 {}", id));
     if (l_json.contains("error")) {  // 这个是回复的错误
       log_info(
           l_data.logger_,
           fmt::format("回复错误 {} {}", l_json["id"].get<uint64_t>(), l_json["error"]["message"].get<std::string>())
       );
     }
+    l_data.call_map_[id](l_json);
+    l_data.call_map_.erase(id);
   } else if (l_json.contains("method")) {  // 这个是请求
     log_info(l_data.logger_, fmt::format("开始检查请求 {}", l_json["id"].get<uint64_t>()));
     nlohmann::json l_json_rep{};

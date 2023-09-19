@@ -287,7 +287,7 @@ boost::system::error_code work::run_job(const entt::handle& in_handle, const nlo
     l_ue->run_handle = l_h;
   } catch (const nlohmann::json::exception& e) {
     log_info(ptr_->core_ptr_->logger(), fmt::format("json parse error: {}", boost::diagnostic_information(e)));
-    BOOST_BEAST_ASSIGN_EC(ec, error_enum::json_parse_error);
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::bad_json_string);
     return ec;
   }
   ptr_->ue_data_ptr_ = l_ue;

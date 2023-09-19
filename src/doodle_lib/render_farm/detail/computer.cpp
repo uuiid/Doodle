@@ -11,55 +11,14 @@
 #include <doodle_lib/render_farm/client_core.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
 #include <doodle_lib/render_farm/detail/ue4_task.h>
+#include <doodle_lib/render_farm/websocket.h>
 
 #include <boost/beast.hpp>
 
 #include <magic_enum.hpp>
+
 namespace doodle {
 namespace render_farm {
-namespace {
-class send_to_render;
-using send_to_render_ptr = std::shared_ptr<send_to_render>;
-class send_to_render {
- private:
-  std::shared_ptr<doodle::detail::client_core> client_core_ptr_{};
-
- public:
-  explicit send_to_render(std::string in_ip) : client_core_ptr_() {
-    client_core_ptr_ = std::make_shared<doodle::detail::client_core>(in_ip);
-  }
-
-  void run(entt::handle in_handle) {
-    using request_type_1  = boost::beast::http::request<detail::basic_json_body>;
-    using response_type_1 = boost::beast::http::response<detail::basic_json_body>;
-    request_type_1 l_request{boost::beast::http::verb::post, "/v1/render_farm/run_job", 11};
-    nlohmann::json l_json{};
-    l_json["id"] = in_handle.entity();
-    auto& l_arg  = in_handle.get<detail::ue4_task>().arg();
-    DOODLE_LOG_INFO("开始分派任务 id {} {} -> {}", in_handle, l_arg.ProjectPath, l_arg.out_file_path);
-    l_json["arg"]    = l_arg;
-    l_request.body() = l_json;
-    l_request.keep_alive(false);
-    l_request.prepare_payload();
-    client_core_ptr_->async_read<boost::beast::http::response<detail::basic_json_body>>(
-        boost::asio::make_strand(g_io_context()), l_request,
-        [this, in_handle](auto&& PH1, const response_type_1& PH2) {
-          if (PH1) {
-            DOODLE_LOG_ERROR("{}", PH1);
-            in_handle.get<detail::ue4_task>().fail();
-            return;
-          }
-          if (PH2.result() == boost::beast::http::status::ok) {
-            DOODLE_LOG_INFO("成功派发任务");
-          } else {
-            in_handle.get<detail::ue4_task>().fail();
-            DOODLE_LOG_INFO("派发任务失败");
-          }
-        }
-    );
-  };
-};
-}  // namespace
 
 void computer::delay(computer_status in_status) {
   if (chrono::sys_seconds::clock::now() - last_time_ < 1s) {
@@ -77,7 +36,28 @@ void computer::run_task(const entt::handle& in_handle) {
   status_            = computer_status::busy;
   last_time_         = chrono::sys_seconds::clock::now() + 10s;
   auto l_self_handle = make_handle(this);
-  l_self_handle.get_or_emplace<send_to_render>(name_).run(in_handle);
+
+  auto l_web_ptr     = l_self_handle.get<websocket_data>().websocket_ptr_.lock();
+  if (!l_web_ptr) {
+    return;
+  }
+
+  nlohmann::json l_json{};
+  l_json["method"]        = "run.ue.render.task";
+  l_json["params"]["id"]  = in_handle.entity();
+  l_json["params"]["arg"] = in_handle.get<ue4_task>().arg();
+
+  l_web_ptr->async_call(l_json, [in_handle](const nlohmann::json& in_r) {
+    if (in_r.contains("error")) {
+      in_handle.get<ue4_task>().fail();
+    }
+    if (in_r.contains("result")) {
+      DOODLE_LOG_INFO(
+          "成功派发任务 {} {}", in_handle.get<ue4_task>().arg().ProjectPath,
+          in_handle.get<ue4_task>().arg().out_file_path
+      );
+    }
+  });
 }
 }  // namespace render_farm
 }  // namespace doodle
