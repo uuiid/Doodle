@@ -67,10 +67,14 @@ void websocket::run_fun() {
   } else if (l_json.contains("method")) {  // 这个是请求
     log_info(impl_ptr_->logger_, fmt::format("开始检查请求 {}", l_json["id"].get<uint64_t>()));
     nlohmann::json l_json_rep{};
-    l_json_rep["result"] =
-        g_ctx().get<functional_registration_manager>().get_function(l_json["method"].get<std::string>())(
-            l_json["params"]
-        );
+    auto l_call = g_ctx().get<functional_registration_manager>().get_function(l_json["method"].get<std::string>());
+    if (l_call) {
+      l_json_rep["result"] = l_call(l_json["params"]);
+    } else {
+      l_json_rep["error"]["code"]    = msg_error::method_not_found;
+      l_json_rep["error"]["message"] = "method not found";
+    }
+
     l_json_rep["id"] = l_json["id"];
     impl_ptr_->write_queue.emplace(l_json_rep.dump());
     do_write();
