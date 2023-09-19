@@ -99,7 +99,6 @@ find_package(cryptopp CONFIG REQUIRED)
 
 # 寻找abc库
 find_package(Alembic CONFIG REQUIRED)
-find_package(msgpack-cxx CONFIG REQUIRED)
 # 寻找d3d辅助工具库
 #find_package(directxtk CONFIG REQUIRED)
 

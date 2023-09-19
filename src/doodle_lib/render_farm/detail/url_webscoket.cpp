@@ -30,7 +30,7 @@ void computer_reg_type_websocket::operator()(
           l_session.send_error_code(ec);
           return;
         }
-        in_handle.emplace<render_farm::websocket>(l_session.stream_release()).run(l_parser_ptr->release());
+        in_handle.emplace<render_farm::websocket>(l_session.stream().release_socket()).run(l_parser_ptr->release());
       }
   );
 }

@@ -13,8 +13,7 @@ namespace doodle::render_farm {
 class websocket {
  private:
   struct impl {
-    explicit impl(boost::beast::websocket::stream<boost::asio::ip::tcp::socket> in_stream)
-        : stream_(std::move(in_stream)) {}
+    explicit impl(boost::asio::ip::tcp::socket in_stream) : stream_(std::move(in_stream)) {}
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
     boost::beast::flat_buffer buffer_{};
     logger_ptr logger_{};
@@ -28,8 +27,7 @@ class websocket {
 
  public:
   websocket() = default;
-  explicit websocket(boost::beast::websocket::stream<boost::asio::ip::tcp::socket> in_stream)
-      : impl_ptr_(std::make_unique<impl>(std::move(in_stream))) {
+  explicit websocket(boost::asio::ip::tcp::socket in_stream) : impl_ptr_(std::make_unique<impl>(std::move(in_stream))) {
     make_ptr();
   }
   ~websocket()                               = default;

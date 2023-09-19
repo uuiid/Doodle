@@ -45,6 +45,7 @@ add_subdirectory(lib)
 add_subdirectory(rpc_test)
 add_subdirectory(math)
 add_subdirectory(ai)
+#add_subdirectory(rtt)
 # 这一项要放在最后
 
 add_subdirectory(fbx_abc)
