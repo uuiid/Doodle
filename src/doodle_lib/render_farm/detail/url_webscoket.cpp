@@ -6,9 +6,11 @@
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
+#include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/functional_registration_manager.h>
 #include <doodle_lib/render_farm/websocket.h>
 #include <doodle_lib/render_farm/work.h>
+
 namespace doodle::render_farm {
 namespace detail {
 
@@ -38,7 +40,7 @@ void computer_reg_type_websocket::operator()(
   );
 }
 
-void reg_websocket::operator()() {
+void reg_work_websocket::operator()() {
   auto& l_fun_reg = g_ctx().emplace<render_farm::functional_registration_manager>();
   l_fun_reg.register_function("run.ue.render.task", [](const entt::handle& in_handle, const nlohmann::json& in_json) {
     boost::system::error_code ec{};
@@ -59,6 +61,61 @@ void reg_websocket::operator()() {
 
     return l_json;
   });
+}
+
+void reg_server_websocket::operator()() {
+  struct run_reg_computer {
+    nlohmann::json operator()(const entt::handle& in_handle, const nlohmann::json& in_json) {
+      boost::system::error_code ec{};
+
+      auto l_remote_ip = boost::beast::get_lowest_layer(in_handle.get<websocket_data>().stream_)
+                             .remote_endpoint()
+                             .address()
+                             .to_string();
+      auto l_logger = in_handle.get<websocket_data>().logger_;
+      log_info(l_logger, fmt::format("开始注册机器 {}", l_remote_ip));
+      entt::handle l_handle{};
+
+      if (in_json.contains("id")) {
+        l_handle = entt::handle{*g_reg(), in_json["id"].get<entt::entity>()};
+      }
+
+      if (!l_handle || !l_handle.all_of<computer>()) {
+        try {
+          g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
+            if (in_computer.name() == l_remote_ip) {
+              l_handle = entt::handle{*g_reg(), e};
+            }
+          });
+        } catch (const nlohmann::json::exception& e) {
+          log_info(l_logger, fmt::format("json parse error: {} ", e.what()));
+          BOOST_BEAST_ASSIGN_EC(ec, error_enum::bad_json_string);
+        }
+      }
+
+      if (!l_handle || !l_handle.all_of<computer>()) {
+        l_handle = entt::handle{*g_reg(), g_reg()->create()};
+        l_handle.emplace<computer>().set_name(l_remote_ip);
+      }
+      if (in_json.contains("status")) {
+        l_handle.get<computer>().delay(in_json["status"].get<std::string>();
+      } else {
+        l_handle.get<computer>().delay();
+      }
+
+      nlohmann::json l_json{};
+      if (ec) {
+        l_json["error"]["code"]    = ec.value();
+        l_json["error"]["message"] = ec.message();
+      } else
+        l_json["result"] = l_handle.entity();
+
+      return l_json;
+    }
+  };
+
+  auto& l_fun_reg = g_ctx().emplace<render_farm::functional_registration_manager>();
+  l_fun_reg.register_function("run.reg.computer", run_reg_computer{});
 }
 
 }  // namespace detail

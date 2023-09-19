@@ -75,7 +75,6 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
           return;
         }
 
-        auto l_json      = l_parser_ptr->release().body();
         auto l_remote_ip = l_session.stream().socket().remote_endpoint().address().to_string();
         log_info(l_session.logger(), fmt::format("computer_reg: {}", l_remote_ip));
         entt::handle l_handle{};

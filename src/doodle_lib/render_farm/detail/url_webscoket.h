@@ -15,8 +15,14 @@ struct computer_reg_type_websocket {
   void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
 };
 
-struct reg_websocket {
-  reg_websocket() = default;
+struct reg_work_websocket {
+  reg_work_websocket() = default;
+
+  void operator()();
+};
+
+struct reg_server_websocket {
+  reg_server_websocket() = default;
 
   void operator()();
 };

@@ -11,11 +11,13 @@
 
 #include <doodle_app/app/program_options.h>
 
+#include <doodle_lib/render_farm/detail/url_webscoket.h>
 #include <doodle_lib/render_farm/work.h>
 #include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/asio/executor_work_guard.hpp"
 
+#include "render_farm/detail/url_webscoket.h"
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <winreg/WinReg.hpp>
 namespace doodle {
@@ -40,7 +42,7 @@ bool work_facet::post() {
   g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "work"s);
 
   g_ctx().get<program_info>().use_gui_attr(false);
-
+  render_farm::detail::reg_work_websocket{}();
   guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
 
   g_ctx().emplace<doodle::render_farm::work_ptr>(std::make_shared<render_farm::work>())->run(get_server_address());

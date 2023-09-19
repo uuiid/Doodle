@@ -11,6 +11,7 @@
 
 #include <doodle_app/app/program_options.h>
 
+#include <doodle_lib/render_farm/detail/url_webscoket.h>
 #include <doodle_lib/render_farm/functional_registration_manager.h>
 #include <doodle_lib/render_farm/udp_server.h>
 #include <doodle_lib/render_farm/working_machine.h>
@@ -25,7 +26,7 @@ bool server_facet::post() {
   g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "server"s);
 
   g_ctx().get<program_info>().use_gui_attr(false);
-  g_ctx().emplace<render_farm::functional_registration_manager>();
+  render_farm::detail::reg_server_websocket{}();
   g_ctx()
       .emplace<doodle::render_farm::working_machine_ptr>(
           std::make_shared<doodle::render_farm::working_machine>(g_io_context(), doodle_config::http_port)
