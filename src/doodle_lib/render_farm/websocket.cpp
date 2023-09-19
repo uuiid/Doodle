@@ -34,6 +34,10 @@ void websocket::run(const boost::beast::http::request<boost::beast::http::string
   });
 }
 void websocket::do_read() {
+  if (impl_ptr_->read_flag_) {
+    return;
+  }
+
   impl_ptr_->stream_.async_read(
       impl_ptr_->buffer_,
       [this](boost::system::error_code ec, std::size_t bytes_transferred) {
@@ -44,10 +48,11 @@ void websocket::do_read() {
         if (ec) {
           log_error(impl_ptr_->logger_, fmt::format("async_read error: {} ", ec));
         }
+        impl_ptr_->read_flag_ = false;
         impl_ptr_->read_queue.emplace(boost::beast::buffers_to_string(impl_ptr_->buffer_.data()));
         impl_ptr_->buffer_.consume(impl_ptr_->buffer_.size());
-        run_fun();
         do_read();
+        boost::asio::post(g_io_context(), [this] { run_fun(); });
       }
   );
 }
