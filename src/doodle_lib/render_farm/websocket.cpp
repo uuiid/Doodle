@@ -8,6 +8,8 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/msg_error.h>
+
+#include <doodle_lib/render_farm/functional_registration_manager.h>
 namespace doodle::render_farm {
 void websocket::make_ptr() {
   impl_ptr_->logger_ = g_logger_ctrl().make_log(
@@ -51,7 +53,6 @@ void websocket::do_read() {
 }
 
 void websocket::run_fun() {
-  boost::system::error_code ec{};
   auto l_json = nlohmann::json::parse(impl_ptr_->read_queue.front());
   impl_ptr_->read_queue.pop();
   // 这个是回复
@@ -65,6 +66,14 @@ void websocket::run_fun() {
     }
   } else if (l_json.contains("method")) {  // 这个是请求
     log_info(impl_ptr_->logger_, fmt::format("开始检查请求 {}", l_json["id"].get<uint64_t>()));
+    nlohmann::json l_json_rep{};
+    l_json_rep["result"] =
+        g_ctx().get<functional_registration_manager>().get_function(l_json["method"].get<std::string>())(
+            l_json["params"]
+        );
+    l_json_rep["id"] = l_json["id"];
+    impl_ptr_->write_queue.emplace(l_json_rep.dump());
+    do_write();
   }
 }
 
