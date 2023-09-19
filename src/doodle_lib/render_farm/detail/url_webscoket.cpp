@@ -75,11 +75,11 @@ void reg_server_websocket::operator()() {
       auto l_logger = in_handle.get<websocket_data>().logger_;
       log_info(l_logger, fmt::format("开始注册机器 {}", l_remote_ip));
 
-      if (!in_handle || !in_handle.all_of<computer>()) {
+      if (!in_handle.all_of<computer>()) {
         in_handle.emplace<computer>().set_name(l_remote_ip);
       }
       if (in_json.contains("status")) {
-        in_handle.get<computer>().delay(in_json["status"].get<std::string>();
+        in_handle.get<computer>().delay(in_json["status"].get<std::string>());
       } else {
         in_handle.get<computer>().delay();
       }
