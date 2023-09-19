@@ -89,7 +89,7 @@ void websocket::run_fun() {
     nlohmann::json l_json_rep{};
     auto l_call = g_ctx().get<functional_registration_manager>().get_function(l_json["method"].get<std::string>());
     if (l_call) {
-      l_json_rep["result"] = l_call(l_json["params"]);
+      l_json_rep = l_call(data_, l_json["params"]);
     } else {
       l_json_rep["error"]["code"]    = msg_error::error_enum::method_not_found;
       l_json_rep["error"]["message"] = "method not found";

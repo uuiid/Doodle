@@ -15,5 +15,11 @@ struct computer_reg_type_websocket {
   void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
 };
 
+struct reg_websocket {
+  reg_websocket() = default;
+
+  void operator()();
+};
+
 }  // namespace detail
 }  // namespace doodle::render_farm

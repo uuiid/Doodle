@@ -276,6 +276,23 @@ void work::stop() {
   ptr_->core_ptr_->cancel();
   ptr_->timer_->cancel();
 }
+boost::system::error_code work::run_job(const entt::handle& in_handle, const nlohmann::json& in_json) {
+  auto l_ue = std::make_shared<ue_data>();
+  boost::system::error_code ec{};
+  try {
+    l_ue->server_id = in_json["id"].get<entt::entity>();
+    auto l_h        = entt::handle{*g_reg(), g_reg()->create()};
+    l_h.emplace<process_message>();
+    l_h.emplace<render_ue4>(l_h, in_json["arg"].get<render_ue4::arg_t>()).run();
+    l_ue->run_handle = l_h;
+  } catch (const nlohmann::json::exception& e) {
+    log_info(ptr_->core_ptr_->logger(), fmt::format("json parse error: {}", boost::diagnostic_information(e)));
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::json_parse_error);
+    return ec;
+  }
+  ptr_->ue_data_ptr_ = l_ue;
+  return ec;
+}
 
 }  // namespace render_farm
 }  // namespace doodle

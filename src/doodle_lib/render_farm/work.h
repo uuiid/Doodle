@@ -89,6 +89,7 @@ class work {
   void send_err(std::string in_err);
 
   void run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap);
+  boost::system::error_code run_job(const entt::handle& in_handle, const nlohmann::json& in_json);
 
  private:
   void make_ptr();

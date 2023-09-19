@@ -120,19 +120,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
       }
   );
 }
-void run_job_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) const {
-  auto& l_session        = in_handle.get<working_machine_session>();
-  using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
-  auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
-  if (g_ctx().contains<render_farm::work_ptr>()) {
-    g_ctx().get<render_farm::work_ptr>()->run_job(in_handle, in_cap);
-  } else {
-    boost::system::error_code ec{};
-    BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
-    log_error(l_session.logger(), fmt::format("没有在上下文中找到工作 {}", ec));
-    l_session.send_error_code(ec, boost::beast::http::status::internal_server_error);
-  }
-}
+
 void get_log_type_post::operator()(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap)
     const {
   using str_parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
