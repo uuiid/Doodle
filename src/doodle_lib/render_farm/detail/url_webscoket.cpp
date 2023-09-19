@@ -74,33 +74,14 @@ void reg_server_websocket::operator()() {
                              .to_string();
       auto l_logger = in_handle.get<websocket_data>().logger_;
       log_info(l_logger, fmt::format("开始注册机器 {}", l_remote_ip));
-      entt::handle l_handle{};
 
-      if (in_json.contains("id")) {
-        l_handle = entt::handle{*g_reg(), in_json["id"].get<entt::entity>()};
-      }
-
-      if (!l_handle || !l_handle.all_of<computer>()) {
-        try {
-          g_reg()->view<computer>().each([&](const entt::entity& e, computer& in_computer) {
-            if (in_computer.name() == l_remote_ip) {
-              l_handle = entt::handle{*g_reg(), e};
-            }
-          });
-        } catch (const nlohmann::json::exception& e) {
-          log_info(l_logger, fmt::format("json parse error: {} ", e.what()));
-          BOOST_BEAST_ASSIGN_EC(ec, error_enum::bad_json_string);
-        }
-      }
-
-      if (!l_handle || !l_handle.all_of<computer>()) {
-        l_handle = entt::handle{*g_reg(), g_reg()->create()};
-        l_handle.emplace<computer>().set_name(l_remote_ip);
+      if (!in_handle || !in_handle.all_of<computer>()) {
+        in_handle.emplace<computer>().set_name(l_remote_ip);
       }
       if (in_json.contains("status")) {
-        l_handle.get<computer>().delay(in_json["status"].get<std::string>();
+        in_handle.get<computer>().delay(in_json["status"].get<std::string>();
       } else {
-        l_handle.get<computer>().delay();
+        in_handle.get<computer>().delay();
       }
 
       nlohmann::json l_json{};
@@ -108,7 +89,7 @@ void reg_server_websocket::operator()() {
         l_json["error"]["code"]    = ec.value();
         l_json["error"]["message"] = ec.message();
       } else
-        l_json["result"] = l_handle.entity();
+        l_json["result"] = in_handle.entity();
 
       return l_json;
     }
