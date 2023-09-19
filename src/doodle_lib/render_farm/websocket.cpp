@@ -6,6 +6,8 @@
 
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/metadata/msg_error.h>
 namespace doodle::render_farm {
 void websocket::make_ptr() {
   impl_ptr_->logger_ = g_logger_ctrl().make_log(
@@ -39,14 +41,68 @@ void websocket::do_read() {
         }
         if (ec) {
           log_error(impl_ptr_->logger_, fmt::format("async_read error: {} ", ec));
-          do_read();
-          return;
         }
+        impl_ptr_->read_queue.emplace(boost::beast::buffers_to_string(impl_ptr_->buffer_.data()));
+        impl_ptr_->buffer_.consume(impl_ptr_->buffer_.size());
         run_fun();
+        do_read();
       }
   );
 }
 
-void websocket::run_fun() {}
+void websocket::run_fun() {
+  boost::system::error_code ec{};
+  auto l_json = nlohmann::json::parse(impl_ptr_->read_queue.front());
+  impl_ptr_->read_queue.pop();
+  // 这个是回复
+  if (l_json.contains("result")) {
+    log_info(impl_ptr_->logger_, fmt::format("开始检查回复 {}", l_json["id"].get<uint64_t>()));
+    if (l_json.contains("error")) {  // 这个是回复的错误
+      log_info(
+          impl_ptr_->logger_,
+          fmt::format("回复错误 {} {}", l_json["id"].get<uint64_t>(), l_json["error"]["message"].get<std::string>())
+      );
+    }
+  } else if (l_json.contains("method")) {  // 这个是请求
+    log_info(impl_ptr_->logger_, fmt::format("开始检查请求 {}", l_json["id"].get<uint64_t>()));
+  }
+}
+
+void websocket::send_error_code(const boost::system::error_code& in_code, std::uint64_t in_id) {
+  nlohmann::json l_json{};
+  l_json["id"]               = in_id;
+  l_json["error"]["code"]    = in_code.value();
+  l_json["error"]["message"] = in_code.message();
+  l_json["error"]["data"]    = in_code.category().name();
+  impl_ptr_->write_queue.emplace(l_json.dump());
+  do_write();
+}
+
+void websocket::do_write() {
+  if (impl_ptr_->write_queue.empty()) {
+    return;
+  }
+  if (impl_ptr_->write_flag_) {
+    return;
+  }
+  impl_ptr_->write_flag_ = true;
+  impl_ptr_->stream_.async_write(
+      boost::asio::buffer(impl_ptr_->write_queue.front()),
+      [this](boost::system::error_code ec, std::size_t) {
+        impl_ptr_->write_flag_ = false;
+        if (ec == boost::beast::websocket::error::closed) {
+          return;
+        }
+        if (ec) {
+          log_error(impl_ptr_->logger_, fmt::format("async_write error: {} ", ec));
+        }
+
+        impl_ptr_->write_queue.pop();
+        if (!impl_ptr_->write_queue.empty()) {
+          do_write();
+        }
+      }
+  );
+}
 
 }  // namespace doodle::render_farm

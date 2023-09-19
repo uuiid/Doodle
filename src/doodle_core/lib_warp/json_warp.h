@@ -34,15 +34,11 @@ struct [[maybe_unused]] adl_serializer<boost::rational<T>> {
   }
 };
 
-// template <>
-// struct [[maybe_unused]] adl_serializer<entt::entity> {
-//   static void to_json(json& j, const entt::entity& in_entity) {
-//     j = in_entity;
-//   }
-//   static void from_json(const json& j, entt::entity& in_entity) {
-//     j.get_to(in_entity);
-//   }
-// };
+template <typename Type, Type value>
+struct [[maybe_unused]] adl_serializer<std::integral_constant<Type, value>> {
+  static void to_json(json& j, const std::integral_constant<Type, value>& in_entity) { j = in_entity(); }
+  static void from_json(const json& j, std::integral_constant<Type, value>& in_entity) {}
+};
 
 // template <>
 // struct adl_serializer<std::filesystem::path> {

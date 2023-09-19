@@ -9,6 +9,9 @@
 
 #include <boost/beast.hpp>
 namespace doodle::render_farm {
+using error_type_id   = entt::tag<"error_type_id"_hs>;
+using reply_type_id   = entt::tag<"reply_type_id"_hs>;
+using request_type_id = entt::tag<"request_type_id"_hs>;
 
 class websocket {
  private:
@@ -17,6 +20,12 @@ class websocket {
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
     boost::beast::flat_buffer buffer_{};
     logger_ptr logger_{};
+
+    std::queue<std::string> write_queue{};
+    bool write_flag_{};
+
+    std::queue<std::string> read_queue{};
+    bool read_flag_{};
   };
 
   std::unique_ptr<impl> impl_ptr_{};
@@ -24,6 +33,7 @@ class websocket {
   void make_ptr();
 
   void run_fun();
+  void do_write();
 
  public:
   websocket() = default;
@@ -40,6 +50,8 @@ class websocket {
   websocket& operator=(websocket&&) noexcept = default;
 
   void run(const boost::beast::http::request<boost::beast::http::string_body>& in_message);
+
+  void send_error_code(const boost::system::error_code& in_code, std::uint64_t in_id);
 };
 
 }  // namespace doodle::render_farm
