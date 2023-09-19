@@ -13,8 +13,8 @@ class functional_registration_manager {
   std::map<std::string, std::function<nlohmann::json(const nlohmann::json&)>> map_;
 
  public:
-  functional_registration_manager();
-  ~functional_registration_manager();
+  functional_registration_manager()                                                      = default;
+  ~functional_registration_manager()                                                     = default;
 
   // copy
   functional_registration_manager(const functional_registration_manager&)                = delete;

@@ -5,6 +5,8 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/boost_fmt_asio.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 
 #include <boost/beast.hpp>
@@ -13,33 +15,32 @@ using error_type_id   = entt::tag<"error_type_id"_hs>;
 using reply_type_id   = entt::tag<"reply_type_id"_hs>;
 using request_type_id = entt::tag<"request_type_id"_hs>;
 
-class websocket {
+struct websocket_data {
+  explicit websocket_data(boost::asio::ip::tcp::socket in_stream) : stream_(std::move(in_stream)) {
+    g_logger_ctrl().make_log(fmt::format("websocket {} {}", fmt::ptr(this), boost::beast::get_lowest_layer(stream_)));
+  }
+  boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
+  boost::beast::flat_buffer buffer_{};
+  logger_ptr logger_{};
+
+  std::queue<std::string> write_queue{};
+  bool write_flag_{};
+
+  std::queue<std::string> read_queue{};
+  bool read_flag_{};
+};
+
+class websocket : std::enable_shared_from_this<websocket> {
  private:
-  struct impl {
-    explicit impl(boost::asio::ip::tcp::socket in_stream) : stream_(std::move(in_stream)) {}
-    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
-    boost::beast::flat_buffer buffer_{};
-    logger_ptr logger_{};
-
-    std::queue<std::string> write_queue{};
-    bool write_flag_{};
-
-    std::queue<std::string> read_queue{};
-    bool read_flag_{};
-  };
-
-  std::unique_ptr<impl> impl_ptr_{};
+  entt::handle data_{};
   void do_read();
-  void make_ptr();
 
   void run_fun();
   void do_write();
 
  public:
   websocket() = default;
-  explicit websocket(boost::asio::ip::tcp::socket in_stream) : impl_ptr_(std::make_unique<impl>(std::move(in_stream))) {
-    make_ptr();
-  }
+  explicit websocket(entt::handle in_data) : data_(std::move(in_data)) {}
   ~websocket()                               = default;
 
   // copy

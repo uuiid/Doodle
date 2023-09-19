@@ -75,29 +75,23 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
         boost::beast::get_lowest_layer(ptr_->stream_).expires_never();
         l_call(make_handle(this));
         return;
-      } else {
-        boost::beast::http::response<boost::beast::http::empty_body> l_response{
-            boost::beast::http::status::not_found, 11};
-        l_response.prepare_payload();
-        send_response(boost::beast::http::message_generator{std::move(l_response)});
       }
+      goto end_tag;
     }
     auto l_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), ptr_->url_.segments());
     if (l_call) {
       l_call(make_handle(this));
     } else {
-      boost::beast::http::response<boost::beast::http::empty_body> l_response{
-          boost::beast::http::status::not_found, 11};
-      l_response.prepare_payload();
-      send_response(boost::beast::http::message_generator{std::move(l_response)});
+      goto end_tag;
     }
   } catch (const doodle_error& e) {
     log_error(ptr_->logger_, fmt::format("doodle_error: {}", boost::diagnostic_information(e)));
-    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::not_found, 11};
-    l_response.body() = e.what();
-    l_response.prepare_payload();
-    send_response(boost::beast::http::message_generator{std::move(l_response)});
+    goto end_tag;
   }
+
+end_tag:
+  BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
+  send_error_code(ec, boost::beast::http::status::internal_server_error);
   stream().expires_after(30s);
 }
 
