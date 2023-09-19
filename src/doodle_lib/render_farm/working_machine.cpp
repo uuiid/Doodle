@@ -89,28 +89,5 @@ void working_machine::config_server() {
   run();
 }
 
-void working_machine::config_work() {
-  work_type_ = working_machine_work_type::work;
-  route_ptr_ = std::make_shared<detail::http_route>();
-  route_ptr_->reg<detail::get_root_type>();
-  route_ptr_->reg<detail::run_job_post>();
-  run();
-}
-void working_machine::config(working_machine_work_type in_type) {
-  switch (in_type) {
-    case working_machine_work_type::server: {
-      config_server();
-      break;
-    }
 
-    case working_machine_work_type::work: {
-      config_work();
-      break;
-    }
-    default: {
-      DOODLE_LOG_ERROR("working_machine::config error: invalid work type");
-      break;
-    }
-  }
-}
 }  // namespace doodle::render_farm

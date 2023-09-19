@@ -44,11 +44,6 @@ bool work_facet::post() {
   guard_ = std::make_shared<decltype(guard_)::element_type>(boost::asio::make_work_guard(g_io_context()));
 
   g_ctx().emplace<doodle::render_farm::work_ptr>(std::make_shared<render_farm::work>())->run(get_server_address());
-  g_ctx()
-      .emplace<doodle::render_farm::working_machine_ptr>(
-          std::make_shared<doodle::render_farm::working_machine>(g_io_context(), doodle_config::http_port)
-      )
-      ->config_work();
 
   return true;
 }
