@@ -17,7 +17,9 @@ using request_type_id = entt::tag<"request_type_id"_hs>;
 
 struct websocket_data {
   explicit websocket_data(boost::asio::ip::tcp::socket in_stream) : stream_(std::move(in_stream)) {
-    g_logger_ctrl().make_log(fmt::format("websocket {} {}", fmt::ptr(this), boost::beast::get_lowest_layer(stream_)));
+    logger_ =
+        g_logger_ctrl().make_log(fmt::format("websocket {} {}", fmt::ptr(this), boost::beast::get_lowest_layer(stream_))
+        );
   }
   boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
   boost::beast::flat_buffer buffer_{};
@@ -30,7 +32,7 @@ struct websocket_data {
   bool read_flag_{};
 };
 
-class websocket : std::enable_shared_from_this<websocket> {
+class websocket : public std::enable_shared_from_this<websocket> {
  private:
   entt::handle data_{};
   void do_read();
