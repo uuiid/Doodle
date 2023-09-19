@@ -33,7 +33,7 @@ void websocket::run(const boost::beast::http::request<boost::beast::http::string
   );
 }
 void websocket::do_read() {
-  if (!data_) return;
+  if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
   if (l_data.read_flag_) {
     return;
@@ -50,7 +50,7 @@ void websocket::do_read() {
         if (ec) {
           log_error(logger, fmt::format("async_read error: {} ", ec));
         }
-        if (!data_) return;
+        if (!data_ || !data_.all_of<websocket_data>()) return;
         auto& l_data      = data_.get<websocket_data>();
         l_data.read_flag_ = false;
         l_data.read_queue.emplace(boost::beast::buffers_to_string(l_data.buffer_.data()));
@@ -63,7 +63,7 @@ void websocket::do_read() {
 
 void websocket::run_fun() {
   boost::system::error_code ec{};
-  if (!data_) return;
+  if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
 
   if (!nlohmann::json::accept(l_data.read_queue.front())) {
@@ -101,7 +101,7 @@ void websocket::run_fun() {
 }
 
 void websocket::send_error_code(const boost::system::error_code& in_code, std::uint64_t in_id) {
-  if (!data_) return;
+  if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
 
   nlohmann::json l_json{};
@@ -114,7 +114,7 @@ void websocket::send_error_code(const boost::system::error_code& in_code, std::u
 }
 
 void websocket::do_write() {
-  if (!data_) return;
+  if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
   if (l_data.write_queue.empty()) {
     return;
@@ -132,7 +132,7 @@ void websocket::do_write() {
         if (ec) {
           log_error(logger, fmt::format("async_write error: {} ", ec));
         }
-        if (!data_) return;
+        if (!data_ || !data_.all_of<websocket_data>()) return;
         auto& l_data       = data_.get<websocket_data>();
         l_data.write_flag_ = false;
 
