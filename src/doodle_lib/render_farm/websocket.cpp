@@ -29,9 +29,9 @@ void websocket::run(const boost::beast::http::request<boost::beast::http::string
                                   l_self = weak_from_this()](boost::system::error_code ec, int) {
     if (ec) {
       log_error(logger, fmt::format("signal_set error: {} ", ec));
-      return;
     }
     if (auto l = l_self.lock(); l) {
+      l->fail_call(ec);
       l->close();
     }
   });
@@ -47,6 +47,7 @@ void websocket::run(const boost::beast::http::request<boost::beast::http::string
       [this, logger = data_.get<socket_logger>().logger_, self = shared_from_this()](boost::system::error_code ec) {
         if (ec) {
           log_error(logger, fmt::format("async_accept error: {} ", ec));
+          fail_call(ec);
           return;
         }
         do_read();
@@ -66,6 +67,7 @@ void websocket::run(std::string server_address, std::string path, std::uint16_t 
        self = shared_from_this()](boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
         if (ec) {
           log_error(logger, fmt::format("async_resolve error: {} ", ec));
+          fail_call(ec);
           return;
         }
         if (!data_ || !data_.all_of<details::websocket_tmp_data>()) return;
@@ -87,6 +89,7 @@ void websocket::do_connect() {
           ) {
             if (ec) {
               log_error(logger, fmt::format("async_connect error: {} ", ec));
+              fail_call(ec);
               return;
             }
             if (!data_ || !data_.all_of<websocket_data>()) return;
@@ -111,6 +114,7 @@ void websocket::do_handshake() {
       [this, logger = data_.get<socket_logger>().logger_, self = shared_from_this()](boost::system::error_code ec) {
         if (ec) {
           log_error(logger, fmt::format("async_handshake error: {} ", ec));
+          fail_call(ec);
           return;
         }
         do_read();
@@ -131,16 +135,18 @@ void websocket::do_read() {
        self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
+          fail_call(ec);
           do_destroy();
           return;
-        }
-        if (ec) {
-          log_error(logger, fmt::format("async_read error: {} ", ec));
         }
         if (!data_ || !data_.all_of<websocket_data>()) return;
         auto& l_data      = data_.get<websocket_data>();
         l_data.read_flag_ = false;
-        l_data.read_queue.emplace(boost::beast::buffers_to_string(l_data.buffer_.data()));
+        if (ec) {
+          log_error(logger, fmt::format("async_read error: {} ", ec));
+        } else {
+          l_data.read_queue.emplace(boost::beast::buffers_to_string(l_data.buffer_.data()));
+        }
         l_data.buffer_.consume(l_data.buffer_.size());
         do_read();
         boost::asio::post(g_io_context(), [this, self = shared_from_this()] { run_fun(); });
@@ -173,7 +179,7 @@ void websocket::run_fun() {
           fmt::format("回复错误 {} {}", l_json["id"].get<uint64_t>(), l_json["error"]["message"].get<std::string>())
       );
     }
-    l_data.call_map_[id](l_json);
+    l_data.call_map_[id]({}, l_json);
     l_data.call_map_.erase(id);
   } else if (l_json.contains("method")) {  // 这个是请求
     log_info(l_logger, fmt::format("开始检查请求 {}", l_json["id"].get<uint64_t>()));
@@ -219,6 +225,7 @@ void websocket::do_write() {
       [this, logger = data_.get<socket_logger>().logger_,
        self = shared_from_this()](boost::system::error_code ec, std::size_t) {
         if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
+          fail_call(ec);
           do_destroy();
           return;
         }
@@ -254,6 +261,20 @@ void websocket::close() {
         }
       }
   );
+}
+
+void websocket::fail_call(boost::system::error_code in_code) {
+  if (!data_ || !data_.all_of<websocket_data>()) return;
+  for (auto&& [id, call] : data_.get<websocket_data>().call_map_) {
+    call(in_code, {});
+  }
+}
+void websocket::fail_call(boost::system::error_code in_code, std::int64_t in_id) {
+  if (!data_ || !data_.all_of<websocket_data>()) return;
+  auto& l_data = data_.get<websocket_data>();
+  if (l_data.call_map_.find(in_id) != l_data.call_map_.end()) {
+    l_data.call_map_[in_id](in_code, {});
+  }
 }
 
 }  // namespace doodle::render_farm

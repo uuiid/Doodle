@@ -31,14 +31,13 @@ struct websocket_data {
   std::queue<std::string> read_queue{};
   bool read_flag_{};
 
-  std::map<std::int64_t, std::function<void(const nlohmann::json&)>> call_map_{};
+  std::map<std::int64_t, std::function<void(boost::system::error_code, const nlohmann::json&)>> call_map_{};
   std::int64_t id_{};
 
   std::weak_ptr<websocket> websocket_ptr_{};
 
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
 };
-
 
 namespace details {
 struct websocket_tmp_data {
@@ -66,6 +65,8 @@ class websocket : public std::enable_shared_from_this<websocket> {
   void do_destroy();
   void do_connect();
   void do_handshake();
+  void fail_call(boost::system::error_code in_code);
+  void fail_call(boost::system::error_code in_code, std::int64_t in_id);
 
  public:
   websocket() = default;
