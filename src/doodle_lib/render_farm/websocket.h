@@ -185,6 +185,7 @@ class websocket : public std::enable_shared_from_this<websocket> {
     l_data.call_map_[l_id] = std::forward<Call_T>(in_call_);
     l_data.write_queue.emplace(in_json.dump());
     do_write();
+    do_read();
   }
 };
 
