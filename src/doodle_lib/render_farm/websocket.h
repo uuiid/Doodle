@@ -38,6 +38,8 @@ struct websocket_data {
   std::int64_t id_{};
 
   std::weak_ptr<websocket> websocket_ptr_{};
+
+  std::shared_ptr<boost::asio::signal_set> signal_set_{};
 };
 
 class websocket : public std::enable_shared_from_this<websocket> {
@@ -61,6 +63,7 @@ class websocket : public std::enable_shared_from_this<websocket> {
   websocket(websocket&&) noexcept            = default;
   websocket& operator=(websocket&&) noexcept = default;
 
+  void close();
   void run(const boost::beast::http::request<boost::beast::http::string_body>& in_message);
 
   void send_error_code(const boost::system::error_code& in_code, std::uint64_t in_id);

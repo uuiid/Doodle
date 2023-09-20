@@ -15,6 +15,17 @@ namespace doodle::render_farm {
 void websocket::run(const boost::beast::http::request<boost::beast::http::string_body>& in_message) {
   auto& l_data          = data_.get<websocket_data>();
   l_data.websocket_ptr_ = shared_from_this();
+  l_data.signal_set_    = std::make_shared<boost::asio::signal_set>(l_data.stream_.get_executor(), SIGINT, SIGTERM);
+  l_data.signal_set_->async_wait([logger = l_data.logger_,
+                                  l_self = weak_from_this()](boost::system::error_code ec, int) {
+    if (ec) {
+      log_error(logger, fmt::format("signal_set error: {} ", ec));
+      return;
+    }
+    if (auto l = l_self.lock(); l) {
+      l->close();
+    }
+  });
   l_data.stream_.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
   l_data.stream_.set_option(
       boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
@@ -45,7 +56,7 @@ void websocket::do_read() {
       [this, logger = l_data.logger_,
        self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
-        if (ec == boost::beast::websocket::error::closed) {
+        if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
           do_destroy();
           return;
         }
@@ -131,7 +142,7 @@ void websocket::do_write() {
   l_data.stream_.async_write(
       boost::asio::buffer(l_data.write_queue.front()),
       [this, logger = l_data.logger_, self = shared_from_this()](boost::system::error_code ec, std::size_t) {
-        if (ec == boost::beast::websocket::error::closed) {
+        if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
           do_destroy();
           return;
         }
@@ -155,6 +166,18 @@ void websocket::do_destroy() {
     auto l = handle;
     l.destroy();
   });
+}
+void websocket::close() {
+  if (!data_ || !data_.all_of<websocket_data>()) return;
+  auto& l_data = data_.get<websocket_data>();
+  l_data.stream_.async_close(
+      boost::beast::websocket::close_code::normal,
+      [logger = l_data.logger_](boost::system::error_code ec) {
+        if (ec) {
+          log_error(logger, fmt::format("async_close error: {} ", ec));
+        }
+      }
+  );
 }
 
 }  // namespace doodle::render_farm
