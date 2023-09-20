@@ -11,6 +11,7 @@ target_sources(
         udp_client.h
         websocket.h
         functional_registration_manager.h
+        render_farm_fwd.h
 
         PRIVATE
         client_core.cpp
