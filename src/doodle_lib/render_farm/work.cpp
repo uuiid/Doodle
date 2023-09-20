@@ -114,6 +114,7 @@ void work::send_err(std::string in_err) {
 }
 void work::do_close() {
   if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
+  if (ptr_->websocket_ptr_) ptr_->websocket_ptr_->close();
   ptr_->timer_->cancel();
 }
 
