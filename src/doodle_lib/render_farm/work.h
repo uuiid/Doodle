@@ -6,6 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/render_farm/client_core.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
+#include <doodle_lib/render_farm/websocket.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -26,6 +27,7 @@ class work {
   using request_type    = boost::beast::http::request<boost::beast::http::string_body>;
   using signal_set      = boost::asio::signal_set;
   using signal_set_ptr  = std::shared_ptr<signal_set>;
+  using websocket_ptr   = std::shared_ptr<websocket>;
 
  private:
   struct ue_data {
@@ -52,9 +54,9 @@ class work {
     timer_ptr send_error_timer_{};
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
+    websocket_ptr websocket_ptr_{};
     entt::entity computer_id{entt::null};
 
-    udp_client_ptr udp_client_ptr_{};
     std::shared_ptr<ue_data> ue_data_ptr_{};
     logger_ptr logger_{};
     // send_error send_log send_server_state reg_computer udp_find
@@ -80,7 +82,6 @@ class work {
 
   ~work() = default;
 
-  void run();
   void run(const std::string& in_server_address, std::uint16_t in_port = doodle_config::http_port);
   void stop();
 

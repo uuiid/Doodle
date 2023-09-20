@@ -47,56 +47,30 @@ void work::make_ptr() {
     log_info(l_logger, fmt::format("signal_set_ signal: {}", signal));
     this->do_close();
   });
+  ptr_->websocket_ptr_ = std::make_shared<websocket>(entt::handle{*g_reg(), g_reg()->create()});
 }
 
-void work::run() {
-  ptr_->udp_client_ptr_ = std::make_shared<doodle::udp_client>(g_io_context());
-  do_find_server_address();
-}
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
   boost::ignore_unused(in_port);
   ptr_->core_ptr_ = std::make_shared<client_core>(in_server_ip);
+  ptr_->websocket_ptr_->run(in_server_ip, "/v1/render_farm/computer", doodle_config::http_port);
   do_register();
 }
 void work::do_register() {
-  boost::url l_url{"/v1/render_farm/computer"};
-  l_url.params().set(
-      "status", magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle)
-  );
-  if (ptr_->computer_id != entt::null) l_url.params().set("id", fmt::to_string(ptr_->computer_id));
-  l_url.remove_origin();
+  nlohmann::json l_json{};
+  l_json["method"]           = "run.reg.computer";
+  l_json["params"]["status"] = ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle;
 
-  request_type l_request{boost::beast::http::verb::post, l_url.c_str(), 11};
-  l_request.set(boost::beast::http::field::content_type, "application/json");
-  l_request.set(boost::beast::http::field::accept, "application/json");
-  nlohmann::json l_json;
-  l_json["name"]   = boost::asio::ip::host_name();
-  l_request.body() = l_json.dump();
-  l_request.prepare_payload();
-  using response_type_1 = boost::beast::http::response<boost::beast::http::string_body>;
-
-  ptr_->core_ptr_->async_read<response_type_1>(
-      boost::asio::make_strand(g_io_context()), l_request,
-      [this](auto&& PH1, const response_type_1& PH2) {
-        if (PH2.result() == boost::beast::http::status::ok) {
-          try {
-            auto l_json       = nlohmann::json::parse(PH2.body());
-            ptr_->computer_id = num_to_enum<entt::entity>(l_json["id"].get<std::int32_t>());
-            log_info(ptr_->core_ptr_->logger(), fmt::format("computer_id: {}", ptr_->computer_id));
-          } catch (const nlohmann::json::exception& e) {
-            log_info(ptr_->core_ptr_->logger(), fmt::format("json parse error: {}", boost::diagnostic_information(e)));
-          }
-        } else {
-          log_info(ptr_->core_ptr_->logger(), fmt::format("未注册成功 {}", PH2.result_int()));
-          ptr_->computer_id = entt::null;
-          if (ptr_->udp_client_ptr_) {
-            do_find_server_address();
-            return;
-          }
-        }
-        do_wait();
-      }
-  );
+  ptr_->websocket_ptr_->async_call(l_json, [this](const nlohmann::json& in_json) {
+    if (in_json.contains("error")) {
+      log_info(ptr_->logger_, fmt::format("注册失败 {}", in_json["error"]["message"].get<std::string>()));
+      ptr_->computer_id = entt::null;
+    } else {
+      ptr_->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
+      log_info(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
+    }
+    do_wait();
+  });
 }
 
 void work::send_log(std::string in_log) {
@@ -163,25 +137,6 @@ void work::send_server_state() {
         log_info(ptr_->core_ptr_->logger(), fmt::format("{}", PH2.body()));
         if (l_state == process_message::state::success || l_state == process_message::state::fail)
           ptr_->ue_data_ptr_.reset();
-        do_wait();
-      }
-  );
-}
-
-void work::do_find_server_address(std::uint16_t in_port) {
-  ptr_->udp_client_ptr_->async_find_server(
-      in_port,
-      [this](auto&& PH1, boost::asio::ip::udp::endpoint& in_remove_endpoint) {
-        if (PH1) {
-          log_info(ptr_->logger_, fmt::format("{}", PH1));
-          do_find_server_address();
-          return;
-        }
-        boost::ignore_unused(PH1);
-        auto l_remote_address         = in_remove_endpoint.address().to_string();
-        core_set::get_set().server_ip = l_remote_address;
-        log_info(ptr_->logger_, fmt::format("收到服务器响应 {}", l_remote_address));
-        ptr_->core_ptr_ = std::make_shared<client_core>(std::move(l_remote_address));
         do_wait();
       }
   );
@@ -272,7 +227,6 @@ void work::send_error_impl() {
   );
 }
 void work::stop() {
-  ptr_->udp_client_ptr_->cancel();
   ptr_->core_ptr_->cancel();
   ptr_->timer_->cancel();
 }
