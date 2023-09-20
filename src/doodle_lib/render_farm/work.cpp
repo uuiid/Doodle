@@ -28,7 +28,10 @@ void work::do_wait() {
       log_info(ptr_->logger_, fmt::format("on_wait error: {}", ec));
       return;
     }
-    do_register();
+    if (ptr_->websocket_handle.get<websocket_data>().is_handshake_)
+      do_register();
+    else
+      do_connect();
   });
 }
 
@@ -53,14 +56,31 @@ void work::make_ptr() {
 
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
   boost::ignore_unused(in_port);
-  ptr_->core_ptr_ = std::make_shared<client_core>(in_server_ip);
-  ptr_->websocket_ptr_->run(in_server_ip, "/v1/render_farm/computer", doodle_config::http_port);
-  do_register();
+  ptr_->core_ptr_       = std::make_shared<client_core>(in_server_ip);
+  ptr_->server_address_ = in_server_ip;
+  do_connect();
 }
+
+void work::do_connect() {
+  ptr_->websocket_ptr_->async_connect(
+      ptr_->server_address_, "/v1/render_farm/computer", doodle_config::http_port,
+      [this](boost::system::error_code ec) {
+        if (ec) {
+          log_info(ptr_->logger_, fmt::format("连接失败 {}", ec));
+          do_wait();
+          return;
+        }
+        log_info(ptr_->logger_, "连接成功");
+        do_register();
+      }
+  );
+}
+
 void work::do_register() {
   nlohmann::json l_json{};
   l_json["method"]           = "run.reg.computer";
-  l_json["params"]["status"] = ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle;
+  l_json["params"]["status"] =
+      magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle);
   auto l_logger              = ptr_->websocket_handle.get<socket_logger>().logger_;
 
   ptr_->websocket_ptr_->async_call(

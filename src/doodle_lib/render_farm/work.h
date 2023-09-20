@@ -65,6 +65,7 @@ class work {
 
     std::string log_cache_{};
     std::string err_cache_{};
+    std::string server_address_{};
   };
 
   std::shared_ptr<data_type> ptr_;
@@ -98,7 +99,7 @@ class work {
   void do_register();
   void do_wait();
   void do_close();
-  void do_find_server_address(std::uint16_t in_port = doodle_config::udp_port);
+  void do_connect();
 
   void send_log_impl();
   void send_error_impl();
