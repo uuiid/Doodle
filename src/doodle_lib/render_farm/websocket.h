@@ -66,6 +66,7 @@ class websocket : public std::enable_shared_from_this<websocket> {
   void do_write();
   void fail_call(boost::system::error_code in_code);
   void fail_call(boost::system::error_code in_code, std::int64_t in_id);
+  void do_destroy();
 
   template <typename CompletionHandler, typename ExecutorType>
   struct connect_op : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>, boost::asio::coroutine {
@@ -135,6 +136,9 @@ class websocket : public std::enable_shared_from_this<websocket> {
       }
       if (!data_ || !data_.all_of<details::websocket_tmp_data>()) return;
       data_.get<websocket_data>().is_handshake_ = true;
+      if (auto l_web = data_.get<websocket_data>().websocket_ptr_.lock()) {
+        l_web->do_read();
+      }
       this->complete(false, ec);
     }
   };
@@ -160,7 +164,8 @@ class websocket : public std::enable_shared_from_this<websocket> {
   ) {
     auto l_strand = boost::asio::make_strand(g_io_context());
     if (!data_.all_of<socket_logger>()) data_.emplace<socket_logger>();
-    if (!data_.all_of<websocket_data>()) data_.emplace<websocket_data>(boost::beast::tcp_stream{l_strand});
+    if (!data_.all_of<websocket_data>())
+      data_.emplace<websocket_data>(boost::beast::tcp_stream{l_strand}).websocket_ptr_ = shared_from_this();
     auto& l_data           = data_.get_or_emplace<details::websocket_tmp_data>(l_strand);
     l_data.server_address_ = std::move(server_address);
     l_data.path_           = std::move(path);
@@ -185,7 +190,6 @@ class websocket : public std::enable_shared_from_this<websocket> {
     l_data.call_map_[l_id] = std::forward<Call_T>(in_call_);
     l_data.write_queue.emplace(in_json.dump());
     do_write();
-    do_read();
   }
 };
 
