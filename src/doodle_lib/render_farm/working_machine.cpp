@@ -13,6 +13,7 @@
 #include <doodle_lib/render_farm/detail/url_route_post.h>
 #include <doodle_lib/render_farm/detail/url_route_put.h>
 #include <doodle_lib/render_farm/detail/url_webscoket.h>
+#include <doodle_lib/render_farm/render_farm_fwd.h>
 #include <doodle_lib/render_farm/working_machine_session.h>
 
 #include <boost/asio.hpp>
@@ -47,7 +48,9 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
     }
     DOODLE_LOG_ERROR("on_accept error: {}", ec.what());
   } else {
-    entt::handle{*g_reg(), g_reg()->create()}.emplace<working_machine_session>(std::move(socket), route_ptr_).run();
+    entt::handle l_handle{*g_reg(), g_reg()->create()};
+    l_handle.emplace<socket_logger>();
+    l_handle.emplace<working_machine_session>(std::move(socket), route_ptr_).run();
   }
   do_accept();
 }
@@ -88,6 +91,5 @@ void working_machine::config_server() {
 
   run();
 }
-
 
 }  // namespace doodle::render_farm

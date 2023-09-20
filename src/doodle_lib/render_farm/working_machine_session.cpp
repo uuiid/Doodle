@@ -16,6 +16,7 @@
 #include <doodle_lib/render_farm/detail/url_route_base.h>
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
+#include <doodle_lib/render_farm/render_farm_fwd.h>
 #include <doodle_lib/render_farm/websocket.h>
 #include <doodle_lib/render_farm/working_machine.h>
 
@@ -42,6 +43,7 @@ void working_machine_session::run() {
       boost::asio::make_strand(stream().get_executor()),
       bind_reg_handler(&working_machine_session::do_read, g_reg(), this)
   );
+  ptr_->logger_ = make_handle(this).get<socket_logger>().logger_;
 }
 
 void working_machine_session::do_read() {

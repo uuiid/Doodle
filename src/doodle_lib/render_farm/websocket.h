@@ -3,11 +3,12 @@
 //
 
 #pragma once
-
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
+
+#include <doodle_lib/render_farm/render_farm_fwd.h>
 
 #include <boost/beast.hpp>
 
@@ -38,10 +39,6 @@ struct websocket_data {
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
 };
 
-struct socket_logger {
-  socket_logger() { logger_ = g_logger_ctrl().make_log(fmt::format("socket {}", entt::to_entity(*g_reg(), *this))); }
-  logger_ptr logger_{};
-};
 
 namespace details {
 struct websocket_tmp_data {

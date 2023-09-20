@@ -27,7 +27,6 @@ class working_machine_session {
   explicit working_machine_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr_)
       : ptr_(std::make_shared<data_type>(std::move(in_socket))) {
     ptr_->route_ptr_ = std::move(in_route_ptr_);
-    ptr_->logger_    = g_logger_ctrl().make_log(fmt::format("session {} {}", fmt::ptr(ptr_), ptr_->stream_.socket()));
   }
   ~working_machine_session() = default;
 
