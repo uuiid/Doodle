@@ -95,9 +95,6 @@ class working_machine_session {
   // url
   [[nodiscard("")]] inline boost::url& url() { return ptr_->url_; }
   [[nodiscard("")]] inline const boost::url& url() const { return ptr_->url_; }
-  // logger
-  [[nodiscard("")]] inline logger_ptr& logger() { return ptr_->logger_; }
-  [[nodiscard("")]] inline const logger_ptr& logger() const { return ptr_->logger_; }
 };
 
 }  // namespace doodle::render_farm
