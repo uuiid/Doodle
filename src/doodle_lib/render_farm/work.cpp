@@ -47,7 +47,8 @@ void work::make_ptr() {
     log_info(l_logger, fmt::format("signal_set_ signal: {}", signal));
     this->do_close();
   });
-  ptr_->websocket_ptr_ = std::make_shared<websocket>(entt::handle{*g_reg(), g_reg()->create()});
+  ptr_->websocket_handle = entt::handle{*g_reg(), g_reg()->create()};
+  ptr_->websocket_ptr_   = std::make_shared<websocket>(ptr_->websocket_handle);
 }
 
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
@@ -60,17 +61,27 @@ void work::do_register() {
   nlohmann::json l_json{};
   l_json["method"]           = "run.reg.computer";
   l_json["params"]["status"] = ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle;
+  auto l_logger              = ptr_->websocket_handle.get<socket_logger>().logger_;
 
-  ptr_->websocket_ptr_->async_call(l_json, [this](const nlohmann::json& in_json) {
-    if (in_json.contains("error")) {
-      log_info(ptr_->logger_, fmt::format("注册失败 {}", in_json["error"]["message"].get<std::string>()));
-      ptr_->computer_id = entt::null;
-    } else {
-      ptr_->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
-      log_info(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
-    }
-    do_wait();
-  });
+  ptr_->websocket_ptr_->async_call(
+      l_json,
+      [this, l_logger](boost::system::error_code ec, const nlohmann::json& in_json) {
+        if (ec) {
+          log_info(l_logger, fmt::format("注册失败 {}", ec));
+          ptr_->computer_id = entt::null;
+          do_wait();
+          return;
+        }
+        if (in_json.contains("error")) {
+          log_info(ptr_->logger_, fmt::format("注册失败 {}", in_json["error"]["message"].get<std::string>()));
+          ptr_->computer_id = entt::null;
+        } else {
+          ptr_->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
+          log_info(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
+        }
+        do_wait();
+      }
+  );
 }
 
 void work::send_log(std::string in_log) {

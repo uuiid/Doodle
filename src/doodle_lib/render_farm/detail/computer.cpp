@@ -38,6 +38,7 @@ void computer::run_task(const entt::handle& in_handle) {
   auto l_self_handle = make_handle(this);
 
   auto l_web_ptr     = l_self_handle.get<websocket_data>().websocket_ptr_.lock();
+  auto l_logger      = l_self_handle.get<socket_logger>().logger_;
   if (!l_web_ptr) {
     return;
   }
@@ -47,7 +48,12 @@ void computer::run_task(const entt::handle& in_handle) {
   l_json["params"]["id"]  = in_handle.entity();
   l_json["params"]["arg"] = in_handle.get<ue4_task>().arg();
 
-  l_web_ptr->async_call(l_json, [in_handle](const nlohmann::json& in_r) {
+  l_web_ptr->async_call(l_json, [in_handle, l_logger](boost::system::error_code ec, const nlohmann::json& in_r) {
+    if (ec) {
+      log_error(l_logger, fmt::format("任务派发失败: {}", ec));
+      in_handle.get<ue4_task>().fail();
+      return;
+    }
     if (in_r.contains("error")) {
       in_handle.get<ue4_task>().fail();
     }

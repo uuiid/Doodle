@@ -55,6 +55,7 @@ class work {
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
     websocket_ptr websocket_ptr_{};
+    entt::handle websocket_handle{};
     entt::entity computer_id{entt::null};
 
     std::shared_ptr<ue_data> ue_data_ptr_{};
