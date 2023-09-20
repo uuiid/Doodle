@@ -37,6 +37,7 @@ struct websocket_data {
   std::weak_ptr<websocket> websocket_ptr_{};
 
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
+  bool is_handshake_{};
 };
 
 namespace details {
@@ -51,6 +52,7 @@ struct websocket_tmp_data {
   std::string server_address_;
   std::uint16_t server_port_;
 };
+
 }  // namespace details
 /**
  * @brief websocket 两端对等,不区分客户端和服务器
@@ -67,6 +69,8 @@ class websocket : public std::enable_shared_from_this<websocket> {
   void do_handshake();
   void fail_call(boost::system::error_code in_code);
   void fail_call(boost::system::error_code in_code, std::int64_t in_id);
+
+  void do_resolve();
 
  public:
   websocket() = default;
