@@ -64,13 +64,8 @@ class websocket : public std::enable_shared_from_this<websocket> {
 
   void run_fun();
   void do_write();
-  void do_destroy();
-  void do_connect();
-  void do_handshake();
   void fail_call(boost::system::error_code in_code);
   void fail_call(boost::system::error_code in_code, std::int64_t in_id);
-
-  void do_resolve();
 
   template <typename CompletionHandler, typename ExecutorType>
   struct connect_op : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>, boost::asio::coroutine {
