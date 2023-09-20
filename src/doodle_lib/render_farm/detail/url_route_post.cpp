@@ -14,6 +14,7 @@
 #include <doodle_lib/render_farm/detail/post_log.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
 #include <doodle_lib/render_farm/detail/ue4_task.h>
+#include <doodle_lib/render_farm/render_farm_fwd.h>
 #include <doodle_lib/render_farm/work.h>
 namespace doodle::render_farm {
 namespace detail {
@@ -23,16 +24,17 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
   auto& l_session        = in_handle.get<working_machine_session>();
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+  auto l_logger          = in_handle.get<socket_logger>().logger_;
   boost::beast::http::async_read(
       l_session.stream(), l_session.buffer(), *l_parser_ptr,
-      [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
+      [in_handle, l_parser_ptr, l_logger](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         auto& l_session = in_handle.get<working_machine_session>();
         if (ec == boost::beast::http::error::end_of_stream) {
           return l_session.do_close();
         }
         if (ec) {
-          log_error(l_session.logger(), fmt::format("on_read error: {} ", ec));
+          log_error(l_logger, fmt::format("on_read error: {} ", ec));
           l_session.send_error_code(ec);
           return;
         }
@@ -42,7 +44,7 @@ void render_job_type_post::operator()(const entt::handle& in_handle, const std::
         try {
           l_h.emplace<ue4_task>(l_h, l_parser_ptr->release().body().get<ue4_task::arg_t>());
         } catch (const nlohmann::json::exception& e) {
-          log_error(l_session.logger(), fmt::format("json parse error:{} ", e.what()));
+          log_error(l_logger, fmt::format("json parse error:{} ", e.what()));
           l_session.send_error(e);
           return;
         }
@@ -61,22 +63,23 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
   auto& l_session        = in_handle.get<working_machine_session>();
   using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
   auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
+  auto l_logger          = in_handle.get<socket_logger>().logger_;
   boost::beast::http::async_read(
       l_session.stream(), l_session.buffer(), *l_parser_ptr,
-      [in_handle, l_parser_ptr](boost::system::error_code ec, std::size_t bytes_transferred) {
+      [in_handle, l_parser_ptr, l_logger](boost::system::error_code ec, std::size_t bytes_transferred) {
         boost::ignore_unused(bytes_transferred);
         auto& l_session = in_handle.get<working_machine_session>();
         if (ec == boost::beast::http::error::end_of_stream) {
           return l_session.do_close();
         }
         if (ec) {
-          log_error(l_session.logger(), fmt::format("on_read error: {} ", ec));
+          log_error(l_logger, fmt::format("on_read error: {} ", ec));
           l_session.send_error_code(ec);
           return;
         }
 
         auto l_remote_ip = l_session.stream().socket().remote_endpoint().address().to_string();
-        log_info(l_session.logger(), fmt::format("computer_reg: {}", l_remote_ip));
+        log_info(l_logger, fmt::format("computer_reg: {}", l_remote_ip));
         entt::handle l_handle{};
         auto l_p = l_session.url().params();
 
@@ -91,7 +94,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
               }
             });
           } catch (const nlohmann::json::exception& e) {
-            log_info(l_session.logger(), fmt::format("json parse error: {} ", e.what()));
+            log_info(l_logger, fmt::format("json parse error: {} ", e.what()));
             l_session.send_error(e);
             return;
           }
@@ -110,8 +113,7 @@ void computer_reg_type_post::operator()(const entt::handle& in_handle, const std
         l_response.body() = {{"state", "ok"}, {"id", l_handle.entity()}};
 
         log_info(
-            l_session.logger(),
-            fmt::format("send computer_reg: {} response version: {}", l_session.url(), l_response.version())
+            l_logger, fmt::format("send computer_reg: {} response version: {}", l_session.url(), l_response.version())
         );
 
         l_response.prepare_payload();
