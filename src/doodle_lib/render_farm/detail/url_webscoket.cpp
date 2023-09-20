@@ -91,7 +91,7 @@ void reg_server_websocket::operator()() {
         l_json["error"]["code"]    = ec.value();
         l_json["error"]["message"] = ec.message();
       } else
-        l_json["result"] = in_handle.entity();
+        l_json["result"]["id"] = in_handle.entity();
 
       return l_json;
     }
