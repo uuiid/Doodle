@@ -36,7 +36,7 @@ void get_log_type_get::operator()(const entt::handle& in_handle, const std::map<
   auto& l_session = in_handle.get<working_machine_session>();
   auto l_logger   = in_handle.get<socket_logger>().logger_;
 
-  auto l_logger   = in if (in_cap.count("handle") == 0) {
+  if (in_cap.count("handle") == 0) {
     boost::system::error_code l_ec{};
     BOOST_BEAST_ASSIGN_EC(l_ec, error_enum::invalid_handle);
     log_warn(l_logger, fmt::format("未找到句柄id :{}", l_ec.message()));
