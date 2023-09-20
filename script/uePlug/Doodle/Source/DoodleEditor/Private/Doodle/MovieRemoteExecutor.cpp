@@ -235,6 +235,7 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
       L_Path.Path += L_Out_Dir;
       L_Arg.OutFilePath          = L_Out_Dir;
       L_Setting->OutputDirectory = L_Path;
+      L_Setting->bOverrideExistingOutput = true;
       UE_LOG(LogMovieRenderPipeline, Error, TEXT("重定向输出. Path: %s"), *L_Path.Path);
     }
 
