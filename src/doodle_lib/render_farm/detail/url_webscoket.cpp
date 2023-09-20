@@ -34,7 +34,7 @@ void computer_reg_type_websocket::operator()(
           l_session.send_error_code(ec);
           return;
         }
-        in_handle.emplace<render_farm::websocket_data>(l_session.stream().release_socket());
+        in_handle.emplace<render_farm::websocket_data>(l_session.stream_release());
         std::make_shared<render_farm::websocket>(in_handle)->run(l_parser_ptr->release());
       }
   );
@@ -47,7 +47,7 @@ void reg_work_websocket::operator()() {
     if (g_ctx().contains<render_farm::work_ptr>()) {
       ec = g_ctx().get<render_farm::work_ptr>()->run_job(in_handle, in_json);
     } else {
-      log_error(in_handle.get<websocket_data>().logger_, fmt::format("没有在上下文中找到工作 {}", ec));
+      log_error(in_handle.get<socket_logger>().logger_, fmt::format("没有在上下文中找到工作 {}", ec));
       BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
     }
 
@@ -69,10 +69,11 @@ void reg_server_websocket::operator()() {
       boost::system::error_code ec{};
 
       auto l_remote_ip = boost::beast::get_lowest_layer(in_handle.get<websocket_data>().stream_)
+                             .socket()
                              .remote_endpoint()
                              .address()
                              .to_string();
-      auto l_logger = in_handle.get<websocket_data>().logger_;
+      auto l_logger = in_handle.get<socket_logger>().logger_;
       log_info(l_logger, fmt::format("开始注册机器 {}", l_remote_ip));
 
       if (!in_handle.all_of<computer>()) {

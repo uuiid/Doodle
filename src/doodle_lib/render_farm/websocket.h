@@ -19,14 +19,10 @@ using request_type_id = entt::tag<"request_type_id"_hs>;
 
 class websocket;
 struct websocket_data {
-  explicit websocket_data(boost::asio::ip::tcp::socket in_stream) : stream_(std::move(in_stream)) {
-    logger_ =
-        g_logger_ctrl().make_log(fmt::format("websocket {} {}", fmt::ptr(this), boost::beast::get_lowest_layer(stream_))
-        );
-  }
-  boost::beast::websocket::stream<boost::asio::ip::tcp::socket> stream_;
+  explicit websocket_data(boost::beast::tcp_stream in_stream) : stream_(std::move(in_stream)) {}
+
+  boost::beast::websocket::stream<boost::beast::tcp_stream> stream_;
   boost::beast::flat_buffer buffer_{};
-  logger_ptr logger_{};
 
   std::queue<std::string> write_queue{};
   bool write_flag_{};
@@ -42,6 +38,27 @@ struct websocket_data {
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
 };
 
+struct socket_logger {
+  socket_logger() { logger_ = g_logger_ctrl().make_log(fmt::format("socket {}", entt::to_entity(*g_reg(), *this))); }
+  logger_ptr logger_{};
+};
+
+namespace details {
+struct websocket_tmp_data {
+  using resolver_t = boost::asio::ip::tcp::resolver;
+  using result_t   = resolver_t::results_type;
+  template <typename T>
+  explicit websocket_tmp_data(T&& in_exe) : resolver_(std::forward<T>(in_exe)) {}
+  resolver_t resolver_;
+  result_t resolver_results_;
+  std::string path_;
+  std::string server_address_;
+  std::uint16_t server_port_;
+};
+}  // namespace details
+/**
+ * @brief websocket 两端对等,不区分客户端和服务器
+ */
 class websocket : public std::enable_shared_from_this<websocket> {
  private:
   entt::handle data_{};
@@ -50,6 +67,8 @@ class websocket : public std::enable_shared_from_this<websocket> {
   void run_fun();
   void do_write();
   void do_destroy();
+  void do_connect();
+  void do_handshake();
 
  public:
   websocket() = default;
@@ -64,7 +83,10 @@ class websocket : public std::enable_shared_from_this<websocket> {
   websocket& operator=(websocket&&) noexcept = default;
 
   void close();
+  /// 服务器回复使用
   void run(const boost::beast::http::request<boost::beast::http::string_body>& in_message);
+  /// 客户端连接使用
+  void run(std::string server_address, std::string path, std::uint16_t server_port = doodle_config::http_port);
 
   void send_error_code(const boost::system::error_code& in_code, std::uint64_t in_id);
 
