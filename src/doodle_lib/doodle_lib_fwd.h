@@ -40,7 +40,6 @@ class render_ue4;
 using render_ue4          = detail::render_ue4;
 using render_ue4_ptr      = std::shared_ptr<render_ue4>;
 using http_route_ptr      = std::shared_ptr<detail::http_route>;
-using working_machine_ptr = std::shared_ptr<working_machine>;
 
 }  // namespace render_farm
 

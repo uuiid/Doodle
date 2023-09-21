@@ -44,9 +44,7 @@ class ue_exe_m : public doodle::ue_exe {
 void run_server() {
   using namespace doodle;
   //  g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-  auto l_ptr = g_ctx().emplace<doodle::render_farm::working_machine_ptr>(
-      std::make_shared<doodle::render_farm::working_machine>(g_io_context())
-  );
+  auto l_ptr     = g_ctx().emplace<doodle::render_farm::working_machine>(g_io_context());
   auto route_ptr = std::make_shared<render_farm::detail::http_route>();
 
   l_ptr->route(route_ptr);

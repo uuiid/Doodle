@@ -12,7 +12,7 @@
 #include <memory>
 namespace doodle::render_farm {
 
-class working_machine : public std::enable_shared_from_this<working_machine> {
+class working_machine {
  public:
   explicit working_machine(boost::asio::io_context& in_io_context, std::uint16_t in_port = doodle_config::http_port)
       : end_point_{boost::asio::ip::tcp::v4(), in_port},
@@ -33,5 +33,4 @@ class working_machine : public std::enable_shared_from_this<working_machine> {
   boost::asio::ip::tcp::acceptor acceptor_;
   boost::asio::signal_set signal_set_{g_io_context(), SIGINT, SIGTERM};
 };
-using working_machine_ptr = std::shared_ptr<working_machine>;
 }  // namespace doodle::render_farm

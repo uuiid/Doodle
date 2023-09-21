@@ -58,8 +58,7 @@ void working_machine::run() {
 }
 void working_machine::do_accept() {
   acceptor_.async_accept(
-      boost::asio::make_strand(g_io_context()),
-      boost::beast::bind_front_handler(&working_machine::on_accept, shared_from_this())
+      boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&working_machine::on_accept, this)
   );
 }
 void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
