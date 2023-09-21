@@ -20,13 +20,13 @@
 namespace doodle {
 namespace detail {
 struct process_child {
-  explicit process_child(boost::asio::io_context &in_io_context) : out_attr(in_io_context), err_attr(in_io_context) {}
-  boost::process::async_pipe out_attr;
-  boost::process::async_pipe err_attr;
-  boost::process::child child_attr{};
+  explicit process_child(::boost::asio::io_context &in_io_context) : out_attr(in_io_context), err_attr(in_io_context) {}
+  ::boost::process::async_pipe out_attr;
+  ::boost::process::async_pipe err_attr;
+  ::boost::process::child child_attr{};
 
-  boost::asio::streambuf out_str{};
-  boost::asio::streambuf err_str{};
+  ::boost::asio::streambuf out_str{};
+  ::boost::asio::streambuf err_str{};
 };
 }  // namespace detail
 
@@ -37,12 +37,11 @@ class ue_exe {
 
  private:
   class run_ue;
-  using process_child = detail::process_child;
   FSys::path ue_path_;
   std::stack<std::shared_ptr<run_ue>> queue_list_{};
   std::shared_ptr<run_ue> run_process_{};
   std::atomic_char16_t run_size_attr{};
-  std::weak_ptr<process_child> child_weak_ptr_{};
+  std::weak_ptr<detail::process_child> child_weak_ptr_{};
 
   void notify_run();
 
@@ -74,7 +73,7 @@ class ue_exe {
   bool is_run() const { return !child_weak_ptr_.expired(); }
 
   template <typename CompletionHandler, typename Arg_t>
-  std::shared_ptr<process_child> create_child(const Arg_t &in_arg, CompletionHandler &&in_completion) {
+  std::shared_ptr<detail::process_child> create_child(const Arg_t &in_arg, CompletionHandler &&in_completion) {
     find_ue_exe();
     if (ue_path_.empty()) {
       throw_exception(doodle_error{"ue_exe path is empty or not exists"});
@@ -82,16 +81,16 @@ class ue_exe {
     if (!FSys::exists(ue_path_)) {
       throw_exception(doodle_error{"ue_exe path is empty or not exists"});
     }
-    auto l_child        = std::make_shared<process_child>(g_io_context());
-    l_child->child_attr = boost::process::child{
+    auto l_child        = std::make_shared<detail::process_child>(g_io_context());
+    l_child->child_attr = ::boost::process::child{
         g_io_context(),
-        boost::process::cmd     = fmt::format("{} {}", ue_path_, in_arg.to_string()),
-        boost::process::std_out = l_child->out_attr,
-        boost::process::std_err = l_child->err_attr,
-        boost::process::on_exit = [l_child, in_completion = std::forward<decltype(in_completion)>(in_completion)](
-                                      int in_exit, const std::error_code &in_error_code
-                                  ) { (in_completion)(in_exit, in_error_code); },
-        boost::process::windows::hide};
+        ::boost::process::cmd     = fmt::format("{} {}", ue_path_, in_arg.to_string()),
+        ::boost::process::std_out = l_child->out_attr,
+        ::boost::process::std_err = l_child->err_attr,
+        ::boost::process::on_exit = [l_child, in_completion = std::forward<decltype(in_completion)>(in_completion)](
+                                        int in_exit, const std::error_code &in_error_code
+                                    ) { (in_completion)(in_exit, in_error_code); },
+        ::boost::process::windows::hide};
     child_weak_ptr_ = l_child;
     return l_child;
   };
