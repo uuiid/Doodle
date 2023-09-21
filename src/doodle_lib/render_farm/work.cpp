@@ -28,6 +28,10 @@ void work::do_wait() {
       log_info(ptr_->logger_, fmt::format("on_wait error: {}", ec));
       return;
     }
+    if (!ptr_->websocket_handle) {
+      do_connect();
+      return;
+    }
     if (ptr_->websocket_handle.get<websocket_data>().is_handshake_)
       do_register();
     else
@@ -50,8 +54,6 @@ void work::make_ptr() {
     log_info(l_logger, fmt::format("signal_set_ signal: {}", signal));
     this->do_close();
   });
-  ptr_->websocket_handle = entt::handle{*g_reg(), g_reg()->create()};
-  ptr_->websocket_ptr_   = std::make_shared<websocket>(ptr_->websocket_handle);
 }
 
 void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
@@ -62,7 +64,9 @@ void work::run(const std::string& in_server_ip, std::uint16_t in_port) {
 }
 
 void work::do_connect() {
-  ptr_->websocket_ptr_->async_connect(
+  ptr_->websocket_handle = entt::handle{*g_reg(), g_reg()->create()};
+  auto l_websocket_ptr_  = std::make_shared<websocket>(ptr_->websocket_handle);
+  l_websocket_ptr_->async_connect(
       ptr_->server_address_, "/v1/render_farm/computer", doodle_config::http_port,
       [this](boost::system::error_code ec) {
         if (ec) {
@@ -77,17 +81,21 @@ void work::do_connect() {
 }
 
 void work::do_register() {
+  if (!ptr_->websocket_handle) {
+    do_wait();
+    return;
+  }
   nlohmann::json l_json{};
-  l_json["method"]           = "run.reg.computer";
+  l_json["method"] = "run.reg.computer";
   l_json["params"]["status"] =
       magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle);
-  auto l_logger              = ptr_->websocket_handle.get<socket_logger>().logger_;
-
-  ptr_->websocket_ptr_->async_call(
+  auto l_logger = ptr_->websocket_handle.get<socket_logger>().logger_;
+  ptr_->websocket_handle.get<websocket_data>().websocket_ptr_->async_call(
       l_json,
       [this, l_logger](boost::system::error_code ec, const nlohmann::json& in_json) {
         if (ec) {
           log_info(l_logger, fmt::format("注册失败 {}", ec));
+          ptr_->websocket_handle.get<websocket_data>().websocket_ptr_->close();
           ptr_->computer_id = entt::null;
           do_wait();
           return;
@@ -96,8 +104,13 @@ void work::do_register() {
           log_info(ptr_->logger_, fmt::format("注册失败 {}", in_json["error"]["message"].get<std::string>()));
           ptr_->computer_id = entt::null;
         } else {
-          ptr_->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
-          log_info(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
+          if (in_json["result"].contains("id")) {
+            ptr_->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
+            log_info(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
+          } else {
+            log_error(ptr_->logger_, fmt::format("注册失败 {}", in_json["result"].dump()));
+            ptr_->computer_id = entt::null;
+          }
         }
         do_wait();
       }
@@ -134,7 +147,7 @@ void work::send_err(std::string in_err) {
 }
 void work::do_close() {
   if (ptr_->core_ptr_) ptr_->core_ptr_->cancel();
-  if (ptr_->websocket_ptr_) ptr_->websocket_ptr_->close();
+  if (ptr_->websocket_handle) ptr_->websocket_handle.get<websocket_data>().websocket_ptr_->close();
   ptr_->timer_->cancel();
 }
 
@@ -174,56 +187,6 @@ void work::send_server_state() {
   );
 }
 
-void work::run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap) {
-  boost::ignore_unused(in_cap);
-  auto& l_session        = in_handle.get<working_machine_session>();
-  using json_parser_type = boost::beast::http::request_parser<detail::basic_json_body>;
-  auto l_parser_ptr      = std::make_shared<json_parser_type>(std::move(l_session.request_parser()));
-
-  boost::beast::http::async_read(
-      l_session.stream(), l_session.buffer(), *l_parser_ptr,
-      [in_handle, l_parser_ptr, this](boost::system::error_code ec, std::size_t bytes_transferred) {
-        boost::ignore_unused(bytes_transferred);
-        auto& l_session = in_handle.get<working_machine_session>();
-        if (ec == boost::beast::http::error::end_of_stream) {
-          return l_session.do_close();
-        }
-        if (ec) {
-          log_info(ptr_->core_ptr_->logger(), fmt::format("on_read error: {}", ec.message()));
-          l_session.send_error_code(ec);
-          return;
-        }
-
-        if (ptr_->ue_data_ptr_) {
-          BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_allow_multi_work);
-          l_session.send_error_code(ec, boost::beast::http::status::service_unavailable);
-          return;
-        }
-
-        auto l_json = l_parser_ptr->release().body();
-
-        auto l_ue   = std::make_shared<ue_data>();
-        try {
-          l_ue->server_id = l_json["id"].get<entt::entity>();
-          auto l_h        = entt::handle{*g_reg(), g_reg()->create()};
-          l_h.emplace<process_message>();
-          l_h.emplace<render_ue4>(l_h, l_json["arg"].get<render_ue4::arg_t>()).run();
-          l_ue->run_handle = l_h;
-        } catch (const nlohmann::json::exception& e) {
-          log_info(ptr_->core_ptr_->logger(), fmt::format("json parse error: {}", boost::diagnostic_information(e)));
-          l_session.send_error(e);
-          return;
-        }
-        ptr_->ue_data_ptr_ = l_ue;
-
-        boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
-        l_response.keep_alive(l_parser_ptr->keep_alive());
-        l_response.body() = {{"state", "ok"}};
-        l_response.prepare_payload();
-        l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
-      }
-  );
-}
 void work::send_log_impl() {
   request_type l_request{
       boost::beast::http::verb::post, fmt::format("/v1/render_farm/log/{}", ptr_->ue_data_ptr_->server_id), 11};

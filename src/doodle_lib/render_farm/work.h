@@ -54,7 +54,6 @@ class work {
     timer_ptr send_error_timer_{};
     signal_set_ptr signal_set_{};
     std::shared_ptr<client_core> core_ptr_;
-    websocket_ptr websocket_ptr_{};
     entt::handle websocket_handle{};
     entt::entity computer_id{entt::null};
 
@@ -91,7 +90,6 @@ class work {
   void send_log(std::string in_log);
   void send_err(std::string in_err);
 
-  void run_job(const entt::handle& in_handle, const std::map<std::string, std::string>& in_cap);
   boost::system::error_code run_job(const entt::handle& in_handle, const nlohmann::json& in_json);
 
  private:
