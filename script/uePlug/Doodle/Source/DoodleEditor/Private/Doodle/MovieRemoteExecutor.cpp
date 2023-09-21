@@ -217,12 +217,12 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
   UnrealURLParams += FString::Printf(TEXT("?game=%s"), *AMoviePipelineGameMode::StaticClass()->GetPathName());
 
   // 循环查看任务中的设置，让他们修改命令行参数。因为我们可能有多个任务，所以我们会遍历所有任务和所有设置，希望用户的设置不会发生冲突。
+  UMoviePipelinePrimaryConfig* L_Config = NewObject<UMoviePipelinePrimaryConfig>();
   for (const TObjectPtr<UMoviePipelineQueue> L_Queue : GetQueuesToRender(InPipelineQueue)) {
     FDoodleRemoteRenderJobArg& L_Arg = RemoteRenderJobArgs.Emplace_GetRef();
     L_Arg.Args                       = CommandLineArgs;
-
-    if (UMoviePipelineOutputSetting* L_Setting =
-            L_Queue->GetJobs()[0]->GetConfiguration()->FindSetting<UMoviePipelineOutputSetting>()) {
+    L_Config->CopyFrom(L_Queue->GetJobs()[0]->GetConfiguration());
+    if (UMoviePipelineOutputSetting* L_Setting = L_Config->FindSetting<UMoviePipelineOutputSetting>()) {
       FDirectoryPath L_Path{TEXT("Saved/MovieRenders/{sequence_name}/")};
       FMoviePipelineFilenameResolveParams L_Params{};
       L_Params.Job = L_Queue->GetJobs()[0];
@@ -233,11 +233,12 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
       // InPipelineQueue->
       L_Path.Path = TEXT("{project_dir}/");
       L_Path.Path += L_Out_Dir;
-      L_Arg.OutFilePath          = L_Out_Dir;
-      L_Setting->OutputDirectory = L_Path;
+      L_Arg.OutFilePath                  = L_Out_Dir;
+      L_Setting->OutputDirectory         = L_Path;
       L_Setting->bOverrideExistingOutput = true;
       UE_LOG(LogMovieRenderPipeline, Error, TEXT("重定向输出. Path: %s"), *L_Path.Path);
     }
+    L_Queue->GetJobs()[0]->SetConfiguration(L_Config);
 
     // Place the Queue in a package and serialize it to disk so we can pass their dynamic object
     // to another process without having to save/check in/etc.
