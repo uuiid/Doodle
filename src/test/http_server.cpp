@@ -18,6 +18,7 @@
 #include <doodle_lib/render_farm/detail/url_route_get.h>
 #include <doodle_lib/render_farm/detail/url_route_post.h>
 #include <doodle_lib/render_farm/detail/url_route_put.h>
+#include <doodle_lib/render_farm/detail/url_webscoket.h>
 #include <doodle_lib/render_farm/udp_server.h>
 #include <doodle_lib/render_farm/work.h>
 #include <doodle_lib/render_farm/working_machine.h>
@@ -59,14 +60,18 @@ void run_server() {
 
   route_ptr->reg<render_farm::detail::repository_type_get>();
   route_ptr->reg<render_farm::detail::get_root_type>();
+  route_ptr->reg<render_farm::detail::computer_reg_type_websocket>();
 
-  route_ptr->reg<render_farm::detail::run_job_post>();
   g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
   g_reg()->ctx().emplace<render_farm::computer_manage>().run();
+
+  render_farm::detail::reg_work_websocket{}();
+  render_farm::detail::reg_server_websocket{}();
+
   l_ptr->run();
   g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
   auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
-  l_w->run();
+  l_w->run("192.168.20.59"s);
   app_base::Get().on_stop.connect([=]() {
     l_ptr->stop();
     l_w->stop();
