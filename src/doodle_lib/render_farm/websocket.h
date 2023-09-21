@@ -34,7 +34,7 @@ struct websocket_data {
   std::map<std::int64_t, std::function<void(boost::system::error_code, const nlohmann::json&)>> call_map_{};
   std::int64_t id_{};
 
-  std::weak_ptr<websocket> websocket_ptr_{};
+  std::shared_ptr<websocket> websocket_ptr_{};
 
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
   bool is_handshake_{};
@@ -136,9 +136,7 @@ class websocket : public std::enable_shared_from_this<websocket> {
       }
       if (!data_ || !data_.all_of<details::websocket_tmp_data>()) return;
       data_.get<websocket_data>().is_handshake_ = true;
-      if (auto l_web = data_.get<websocket_data>().websocket_ptr_.lock()) {
-        l_web->do_read();
-      }
+      data_.get<websocket_data>().websocket_ptr_->do_read();
       this->complete(false, ec);
     }
   };
