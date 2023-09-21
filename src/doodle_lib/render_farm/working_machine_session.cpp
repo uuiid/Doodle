@@ -78,22 +78,24 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
         l_call(make_handle(this));
         return;
       }
-      goto end_tag;
+      goto err_tag;
     }
     auto l_call = (*ptr_->route_ptr_)(ptr_->request_parser_->get().method(), ptr_->url_.segments());
     if (l_call) {
       l_call(make_handle(this));
-    } else {
       goto end_tag;
+    } else {
+      goto err_tag;
     }
   } catch (const doodle_error& e) {
     log_error(ptr_->logger_, fmt::format("doodle_error: {}", boost::diagnostic_information(e)));
-    goto end_tag;
+    goto err_tag;
   }
 
-end_tag:
+err_tag:
   BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
   send_error_code(ec, boost::beast::http::status::internal_server_error);
+end_tag:
   stream().expires_after(30s);
 }
 
