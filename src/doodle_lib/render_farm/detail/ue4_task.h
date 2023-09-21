@@ -32,7 +32,6 @@ class ue4_task {
   // arg
   [[nodiscard]] inline const arg_t& arg() const { return arg_; }
 
- private:
   void set_meg();
   arg_t arg_;
   entt::handle self_handle_;
