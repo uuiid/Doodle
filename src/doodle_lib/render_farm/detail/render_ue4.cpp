@@ -94,12 +94,11 @@ bool render_ue4::download_file(const FSys::path& in_file_path) {
 
   {
     // 写入数据
-    manifest_path_ =
-        l_loc.parent_path() / "Saved" / "MovieRenderPipeline" / fmt::format("{}.utxt", core_set::get_set().get_uuid());
-    if (!FSys::exists(manifest_path_.parent_path())) FSys::create_directories(manifest_path_.parent_path());
-    std::ofstream l_ofs{manifest_path_, std::ios::binary};
+    manifest_path_    = FSys::path{"MovieRenderPipeline"} / fmt::format("{}.utxt", core_set::get_set().get_uuid());
+    auto l_write_path = l_loc.parent_path() / "Saved" / manifest_path_;
+    if (!FSys::exists(l_write_path.parent_path())) FSys::create_directories(l_write_path.parent_path());
+    std::ofstream l_ofs{l_write_path, std::ios::binary};
     l_ofs << arg_.ManifestValue;
-    manifest_path_ = manifest_path_.lexically_normal();
   }
   {
     // 删除陈旧输出
@@ -119,7 +118,7 @@ void render_ue4::run_impl(bool in_r) {
     l_msg.message(fmt::format("project path not exist: {}", arg_.ProjectPath));
     return;
   }
-  l_msg.message("开始启动ue4项目文件");
+  l_msg.message(fmt::format("开始启动ue4项目文件 {}", arg_.ProjectPath));
   // 生成命令行
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
   child_ptr_ = g_ctx().get<ue_exe_ptr>()->create_child(
