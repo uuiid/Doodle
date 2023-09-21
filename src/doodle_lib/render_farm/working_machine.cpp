@@ -24,6 +24,27 @@ void working_machine::run() {
   //  acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
   //  acceptor_.bind(end_point_);
   //  acceptor_.listen(boost::asio::socket_base::max_listen_connections);
+  route_ptr_ = std::make_shared<detail::http_route>();
+  route_ptr_->reg<detail::get_root_type>();
+  route_ptr_->reg<detail::render_job_type_post>();
+  route_ptr_->reg<detail::computer_reg_type_post>();
+
+  route_ptr_->reg<detail::get_log_type_get>();
+  route_ptr_->reg<detail::get_err_type_get>();
+  route_ptr_->reg<detail::render_job_type_get>();
+  route_ptr_->reg<detail::repository_type_get>();
+  route_ptr_->reg<detail::computer_reg_type_get>();
+
+  route_ptr_->reg<detail::render_job_type_post>();
+  route_ptr_->reg<detail::get_log_type_post>();
+  route_ptr_->reg<detail::get_err_type_post>();
+
+  route_ptr_->reg<detail::render_job_type_put>();
+
+  route_ptr_->reg<detail::computer_reg_type_websocket>();
+
+  g_reg()->ctx().emplace<ue_task_manage>().run();
+  g_reg()->ctx().emplace<computer_manage>().run();
   do_accept();
   signal_set_.async_wait([&](boost::system::error_code ec, int signal) {
     if (ec) {
@@ -64,32 +85,6 @@ void working_machine::stop() {
   acceptor_.cancel();
   acceptor_.close();
 }
-void working_machine::config_server() {
-  work_type_ = working_machine_work_type::server;
 
-  route_ptr_ = std::make_shared<detail::http_route>();
-  route_ptr_->reg<detail::get_root_type>();
-  route_ptr_->reg<detail::render_job_type_post>();
-  route_ptr_->reg<detail::computer_reg_type_post>();
-
-  route_ptr_->reg<detail::get_log_type_get>();
-  route_ptr_->reg<detail::get_err_type_get>();
-  route_ptr_->reg<detail::render_job_type_get>();
-  route_ptr_->reg<detail::repository_type_get>();
-  route_ptr_->reg<detail::computer_reg_type_get>();
-
-  route_ptr_->reg<detail::render_job_type_post>();
-  route_ptr_->reg<detail::get_log_type_post>();
-  route_ptr_->reg<detail::get_err_type_post>();
-
-  route_ptr_->reg<detail::render_job_type_put>();
-
-  route_ptr_->reg<detail::computer_reg_type_websocket>();
-
-  g_reg()->ctx().emplace<ue_task_manage>().run();
-  g_reg()->ctx().emplace<computer_manage>().run();
-
-  run();
-}
 
 }  // namespace doodle::render_farm

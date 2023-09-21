@@ -31,7 +31,7 @@ bool server_facet::post() {
       .emplace<doodle::render_farm::working_machine_ptr>(
           std::make_shared<doodle::render_farm::working_machine>(g_io_context(), doodle_config::http_port)
       )
-      ->config_server();
+      ->run();
   return true;
 }
 }  // namespace doodle
