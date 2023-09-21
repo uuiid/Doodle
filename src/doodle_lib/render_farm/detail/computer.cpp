@@ -37,11 +37,8 @@ void computer::run_task(const entt::handle& in_handle) {
   last_time_         = chrono::sys_seconds::clock::now() + 10s;
   auto l_self_handle = make_handle(this);
 
-  auto l_web_ptr     = l_self_handle.get<websocket_data>().websocket_ptr_.lock();
+  auto l_web_ptr     = l_self_handle.get<websocket_data>().websocket_ptr_;
   auto l_logger      = l_self_handle.get<socket_logger>().logger_;
-  if (!l_web_ptr) {
-    return;
-  }
 
   nlohmann::json l_json{};
   l_json["method"]        = "run.ue.render.task";
