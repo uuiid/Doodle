@@ -62,7 +62,7 @@ void working_machine_session::on_parser(boost::system::error_code ec, std::size_
     if (ec != boost::beast::http::error::end_of_stream) {
       log_error(ptr_->logger_, fmt::format("on_write error: {} ", ec));
     } else {
-      log_error(ptr_->logger_, fmt::format("末端的流, 主动关闭 {} ", ec));
+      log_warn(ptr_->logger_, fmt::format("末端的流, 主动关闭 {} ", ec));
     }
     do_close();
     return;
