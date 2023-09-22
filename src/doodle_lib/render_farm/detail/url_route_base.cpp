@@ -86,10 +86,6 @@ void http_route::reg(
   actions[in_verb].emplace_back(std::move(in_vector), std::move(in_function));
 }
 
-void http_route::reg(std::vector<std::string> in_vector, capture_url::action_type in_function) {
-  websocket_actions.emplace_back(std::move(in_vector), std::move(in_function));
-}
-
 http_route::action_type http_route::operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment)
     const {
   auto l_it = actions.find(in_verb);
@@ -99,15 +95,6 @@ http_route::action_type http_route::operator()(boost::beast::http::verb in_verb,
       if (l_action) {
         return l_action;
       }
-    }
-  }
-  return {};
-}
-http_route::action_type http_route::operator()(boost::urls::segments_ref in_segment) const {
-  for (auto&& i : websocket_actions) {
-    auto l_action = i(in_segment);
-    if (l_action) {
-      return l_action;
     }
   }
   return {};

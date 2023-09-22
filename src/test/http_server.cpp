@@ -56,7 +56,7 @@ void run_server() {
   auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
   l_w->run("192.168.20.59"s);
   app_base::Get().on_stop.connect([=]() {
-    g_ctx().get<doodle::render_farm::working_machine>(g_io_context())->stop();
+    g_ctx().get<doodle::render_farm::working_machine>().stop();
     l_w->stop();
     //    g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->stop();
   });

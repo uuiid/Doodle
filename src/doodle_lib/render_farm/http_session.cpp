@@ -63,15 +63,6 @@ void do_read::operator()(boost::system::error_code ec, std::size_t bytes_transfe
   l_data.url_  = boost::url{l_req.get().target()};
   log_info(l_logger, fmt::format("开始解析 uel {}", l_data.url_));
   try {
-    if (boost::beast::websocket::is_upgrade(l_req.get())) {
-      auto l_call = L_rote(l_data.url_.segments());
-      if (l_call) {
-        boost::beast::get_lowest_layer(l_data.stream_).expires_never();
-        l_call(handle_);
-        return;
-      }
-      goto err_tag;
-    }
     auto l_call = L_rote(l_req.get().method(), l_data.url_.segments());
     if (l_call) {
       l_call(handle_);
@@ -92,9 +83,7 @@ err_tag:
 void do_close::run() {
   if (handle_ && handle_.all_of<http_session_data>()) {
     logger_ = handle_.get<socket_logger>().logger_;
-    handle_.get<http_session_data>().stream_.socket().shutdown(
-        boost::asio::ip::tcp::socket::shutdown_send, ec
-    );
+    handle_.get<http_session_data>().stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
     boost::asio::post(g_io_context(), std::move(*this));
   }
 }

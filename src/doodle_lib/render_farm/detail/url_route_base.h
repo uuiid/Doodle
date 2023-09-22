@@ -37,7 +37,6 @@ class http_route {
  private:
   using map_actin_type = std::vector<capture_url>;
   std::map<boost::beast::http::verb, map_actin_type> actions;
-  map_actin_type websocket_actions;
 
   template <typename type_t, typename = void>
   struct has_verb : std::false_type {};
@@ -54,8 +53,7 @@ class http_route {
   template <typename MsgBody, typename CompletionHandler>
   static auto read_body(const entt::handle& in_handle, CompletionHandler&& in_completion) {
     using do_read_msg_body_t = session::do_read_msg_body<
-        MsgBody, std::decay_t<CompletionHandler>,
-        decltype(in_handle.get<http_session_data>().stream_)::executor_type>;
+        MsgBody, std::decay_t<CompletionHandler>, decltype(in_handle.get<http_session_data>().stream_)::executor_type>;
     do_read_msg_body_t{
         in_handle, std::forward<CompletionHandler>(in_completion),
         in_handle.get<http_session_data>().stream_.get_executor()}
@@ -103,7 +101,6 @@ class http_route {
 
   // 路由分发
   action_type operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment) const;
-  action_type operator()(boost::urls::segments_ref in_segment) const;
 };
 
 }  // namespace detail
