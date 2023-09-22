@@ -70,20 +70,20 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
   } else {
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<socket_logger>();
-    l_handle.emplace<working_machine_session>(std::move(socket), route_ptr_).run();
+    l_handle.emplace<detail::http_route>(*route_ptr_);
+    session::do_read{std::move(l_handle)}.run();
   }
   do_accept();
 }
 void working_machine::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
   g_reg()->ctx().get<computer_manage>().cancel();
-  auto l_view = g_reg()->view<working_machine_session>();
+  auto l_view = g_reg()->view<working_machine_session_data>();
   // close
-  ranges::for_each(l_view, [](auto& in_session) { g_reg()->get<working_machine_session>(in_session).do_close(); });
+  ranges::for_each(l_view, [](auto& in_session) { session::do_close{entt::handle{*g_reg(), in_session}}.run() });
 
   acceptor_.cancel();
   acceptor_.close();
 }
-
 
 }  // namespace doodle::render_farm
