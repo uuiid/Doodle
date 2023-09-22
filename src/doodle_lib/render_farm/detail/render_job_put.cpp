@@ -43,16 +43,6 @@ void render_job_put::operator()(boost::system::error_code ec, std::size_t bytes_
     l_response.keep_alive(ptr_->parser_->keep_alive());
     l_response.prepare_payload();
     l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
-    //    if (l_state) {
-    //
-    //    } else {
-    //      DOODLE_LOG_ERROR("on_read error: state is not valid");
-    //      auto l_response =
-    //          boost::beast::http::response<detail::basic_json_body>{boost::beast::http::status::bad_request, 11};
-    //      l_response.body() = {{"state", "error"}, {"error", "state is not valid"}};
-    //      l_response.keep_alive(ptr_->parser_->keep_alive());
-    //      l_session.send_response(boost::beast::http::message_generator{std::move(l_response)});
-    //    }
   } else {
     log_error(l_logger, fmt::format("json parse error: state is not valid"));
     l_session.send_error_code(
