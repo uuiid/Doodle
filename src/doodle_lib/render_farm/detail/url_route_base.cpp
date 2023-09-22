@@ -5,7 +5,9 @@
 #include "url_route_base.h"
 
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 
+#include <doodle_lib/render_farm/websocket.h>
 #include <doodle_lib/render_farm/working_machine_session.h>
 namespace doodle::render_farm::detail {
 
@@ -40,10 +42,47 @@ std::tuple<bool, std::map<std::string, std::string>> http_route::capture_url::ma
   return {l_result, l_str};
 }
 
+void http_route::upgrade_websocket(const entt::handle& in_handle) {
+  struct upgrade_websocket_data {
+    entt::handle handle_;
+    explicit upgrade_websocket_data(entt::handle in_handle) : handle_{in_handle} {}
+    void operator()(boost::system::error_code ec, boost::beast::http::request<boost::beast::http::string_body> in_msg) {
+      auto l_logger = handle_.get<socket_logger>().logger_;
+      if (ec == boost::beast::http::error::end_of_stream) {
+        session::do_close{handle_}.run();
+      }
+      if (ec) {
+        log_error(l_logger, fmt::format("on_read error: {} ", ec));
+        session::do_write::send_error_code(handle_, ec);
+        return;
+      }
+      handle_.emplace<render_farm::websocket_data>(std::move(handle_.get<working_machine_session_data>().stream_));
+      handle_.erase<working_machine_session_data>();
+      std::make_shared<render_farm::websocket>(handle_)->run(std::move(in_msg));
+    }
+  };
+  boost::beast::error_code ec{};
+  if (!boost::beast::websocket::is_upgrade(in_handle.get<session::request_parser_empty_body>()->get())) {
+    in_handle.get<working_machine_session_data>().stream_.expires_after(30s);
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
+    session::do_write::send_error_code(in_handle, ec);
+    return;
+  } else {
+    using do_read_msg_body = session::do_read_msg_body<
+        boost::beast::http::string_body, upgrade_websocket_data,
+        decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
+    auto l_exe = in_handle.get<working_machine_session_data>().stream_.get_executor();
+    do_read_msg_body{in_handle, upgrade_websocket_data{in_handle}, l_exe}.run();
+  }
+}
+
 http_route::action_type http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref) const {
   auto [l_result, l_map] = match_url(in_segments_ref);
   if (l_result) {
-    return [map_ = l_map, this](const entt::handle& in_handle) { action_(in_handle, map_); };
+    return [map_ = l_map, call = action_](const entt::handle& in_handle) {
+      in_handle.emplace_or_replace<session::capture_url>(map_);
+      call(in_handle);
+    };
   } else
     return {};
 }
@@ -60,7 +99,7 @@ void http_route::reg(std::vector<std::string> in_vector, capture_url::action_typ
 
 http_route::action_type http_route::operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment)
     const {
-  auto l_it     = actions.find(in_verb);
+  auto l_it = actions.find(in_verb);
   if (l_it != actions.end()) {
     for (auto&& i : l_it->second) {
       auto l_action = i(in_segment);
