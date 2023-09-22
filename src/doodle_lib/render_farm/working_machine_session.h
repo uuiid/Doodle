@@ -47,6 +47,9 @@ struct request_parser_empty_body {
   request_parser_empty_body& operator=(request_parser_empty_body&&) noexcept = default;
 
   inline boost::beast::http::request_parser<boost::beast::http::empty_body>& operator*() { return *request_parser_; }
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>* operator->() {
+    return request_parser_.get();
+  }
 };
 
 template <typename MsgBody>
@@ -74,6 +77,26 @@ struct async_read_body {
   }
 };
 
+struct capture_url {
+  std::map<std::string, std::string> capture_map_;
+  explicit capture_url(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
+
+  template <typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
+  T get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      return boost::lexical_cast<T>(capture_map_.at(in_str));
+    }
+    return T{};
+  }
+  template <typename T, std::enable_if_t<!std::is_arithmetic_v<T>>* = nullptr>
+  T get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      return capture_map_.at(in_str);
+    }
+    return T{};
+  }
+};
+
 struct do_read {
   entt::handle handle_{};
   explicit do_read(entt::handle in_handle) : handle_(std::move(in_handle)) {}
@@ -81,7 +104,7 @@ struct do_read {
   void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
 };
 
-template <typename MsgBody, typename ExecutorType, typename CompletionHandler>
+template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
 struct do_read_msg_body : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>,
                           boost::asio::coroutine {
   entt::handle handle_{};
@@ -103,6 +126,11 @@ struct do_read_msg_body : boost::beast::async_base<std::decay_t<CompletionHandle
       boost::beast::http::async_read(
           l_data.stream_, l_data.buffer_, *handle_.emplace_or_replace<async_read_body>(l_body), std::move(*this)
       );
+    } else {
+      boost::beast::error_code ec{};
+      BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
+      log_error(fmt::format("无效的句柄"));
+      this->complete(false, ec, msg_t{});
     }
   };
   void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
