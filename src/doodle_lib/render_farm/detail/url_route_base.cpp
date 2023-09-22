@@ -57,6 +57,7 @@ void http_route::upgrade_websocket(const entt::handle& in_handle) {
         session::do_write::send_error_code(in_handle, ec);
         return;
       }
+      boost::beast::get_lowest_layer(in_handle.get<http_session_data>().stream_).expires_never();
       in_handle.emplace<render_farm::websocket_data>(std::move(in_handle.get<http_session_data>().stream_));
       in_handle.erase<http_session_data>();
       std::make_shared<render_farm::websocket>(in_handle)->run(std::move(in_msg));
