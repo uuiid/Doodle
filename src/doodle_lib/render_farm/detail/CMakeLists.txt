@@ -12,8 +12,6 @@ target_sources(
         aync_read_body.h
         ue_task_manage.h
         computer_manage.h
-        render_job_put.h
-        post_log.h
         url_webscoket.h
 
         PRIVATE
@@ -27,7 +25,5 @@ target_sources(
         ue4_task.cpp
         ue_task_manage.cpp
         computer_manage.cpp
-        render_job_put.cpp
-        post_log.cpp
         url_webscoket.cpp
 )
