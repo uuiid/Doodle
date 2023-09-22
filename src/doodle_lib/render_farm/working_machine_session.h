@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include "doodle_core/core/global_function.h"
+#include <doodle_core/core/global_function.h>
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
-#include <doodle_core/lib_warp/boost_fmt_error.ho
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
@@ -82,18 +82,18 @@ struct capture_url {
   explicit capture_url(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
 
   template <typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
-  T get(const std::string& in_str) const {
+  std::optional<T> get(const std::string& in_str) const {
     if (capture_map_.find(in_str) != capture_map_.end()) {
       return boost::lexical_cast<T>(capture_map_.at(in_str));
     }
-    return T{};
+    return {};
   }
   template <typename T, std::enable_if_t<!std::is_arithmetic_v<T>>* = nullptr>
-  T get(const std::string& in_str) const {
+  std::optional<T> get(const std::string& in_str) const {
     if (capture_map_.find(in_str) != capture_map_.end()) {
       return capture_map_.at(in_str);
     }
-    return T{};
+    return {};
   }
 };
 
@@ -118,50 +118,8 @@ struct do_read_msg_body : boost::beast::async_base<std::decay_t<CompletionHandle
             ExecutorType>{std::forward<CompletionHandler>(in_handler), in_executor_type_1},
         boost::asio::coroutine{},
         handle_(std::move(in_handle)) {}
-  void run() {
-    if (handle_ && handle_.all_of<working_machine_session_data, request_parser_empty_body>()) {
-      auto&& [l_data, l_body] = handle_.get<working_machine_session_data, request_parser_empty_body>();
-      l_data.stream_.expires_after(30s);
-
-      boost::beast::http::async_read(
-          l_data.stream_, l_data.buffer_, *handle_.emplace_or_replace<async_read_body>(l_body), std::move(*this)
-      );
-    } else {
-      boost::beast::error_code ec{};
-      BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
-      log_error(fmt::format("无效的句柄"));
-      this->complete(false, ec, msg_t{});
-    }
-  };
-  void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
-    if (!handle_) {
-      BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
-      log_error(fmt::format("无效的句柄"));
-      this->complete(false, ec, msg_t{});
-      return;
-    }
-    auto l_logger = handle_.get<socket_logger>().logger_;
-    if (ec) {
-      if (ec != boost::beast::http::error::end_of_stream) {
-        log_error(l_logger, fmt::format("on_write error: {} ", ec));
-      } else {
-        log_warn(l_logger, fmt::format("末端的流, 主动关闭 {} ", ec));
-        do_close{handle_}.run();
-      }
-      this->complete(false, ec, msg_t{});
-      return;
-    }
-
-    if (handle_.all_of<working_machine_session_data, async_read_body>()) {
-      auto&& [l_data, l_body] = handle_.get<working_machine_session_data, async_read_body>();
-      l_data.stream_.expires_after(30s);
-      this->complete(true, ec, l_body->release());
-      return;
-    }
-    BOOST_BEAST_ASSIGN_EC(ec, error_enum::component_missing_error);
-    log_error(l_logger, fmt::format("缺失必要组件, working_machine_session_data, async_read_body"));
-    this->complete(false, ec, msg_t{});
-  };
+  void run();
+  void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
 };
 
 struct do_close {
@@ -189,6 +147,54 @@ struct do_write {
   void operator()(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
 };
 
+template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
+void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::run() {
+  if (handle_ && handle_.all_of<working_machine_session_data, request_parser_empty_body>()) {
+    auto&& [l_data, l_body] = handle_.get<working_machine_session_data, request_parser_empty_body>();
+    l_data.stream_.expires_after(30s);
+
+    boost::beast::http::async_read(
+        l_data.stream_, l_data.buffer_, *handle_.emplace_or_replace<async_read_body>(l_body), std::move(*this)
+    );
+  } else {
+    boost::beast::error_code ec{};
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
+    log_error(fmt::format("无效的句柄"));
+    this->complete(false, ec, handle_, msg_t{});
+  }
+}
+template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
+void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::operator()(
+    boost::system::error_code ec, std::size_t bytes_transferred
+) {
+  if (!handle_) {
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
+    log_error(fmt::format("无效的句柄"));
+    this->complete(false, ec, handle_, msg_t{});
+    return;
+  }
+  auto l_logger = handle_.get<socket_logger>().logger_;
+  if (ec) {
+    if (ec != boost::beast::http::error::end_of_stream) {
+      log_error(l_logger, fmt::format("on_write error: {} ", ec));
+    } else {
+      log_warn(l_logger, fmt::format("末端的流, 主动关闭 {} ", ec));
+      do_close{handle_}.run();
+    }
+    this->complete(false, ec, handle_, msg_t{});
+    return;
+  }
+
+  if (handle_.all_of<working_machine_session_data, async_read_body>()) {
+    auto&& [l_data, l_body] = handle_.get<working_machine_session_data, async_read_body>();
+    l_data.stream_.expires_after(30s);
+    this->complete(true, ec, handle_, l_body->release());
+    return;
+  }
+  BOOST_BEAST_ASSIGN_EC(ec, error_enum::component_missing_error);
+  log_error(l_logger, fmt::format("缺失必要组件, working_machine_session_data, async_read_body"));
+  this->complete(false, ec, handle_, msg_t{});
+}
 }  // namespace session
 
 /**
