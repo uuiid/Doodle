@@ -110,6 +110,7 @@ void do_write::run() {
   if (handle_ && handle_.all_of<working_machine_session_data>()) {
     auto& l_data = handle_.get<working_machine_session_data>();
     l_data.stream_.expires_after(30s);
+    keep_alive_ = message_generator_.keep_alive();
     boost::beast::async_write(l_data.stream_, std::move(message_generator_), std::move(*this));
   }
 }
@@ -122,6 +123,25 @@ void do_write::send_error_code(
   l_response.body() = ec.message();
   l_response.prepare_payload();
   do_write{in_handle, std::move(l_response)}.run();
+}
+
+void do_write::operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
+  boost::ignore_unused(bytes_transferred);
+  if (!handle_) {
+    log_error(fmt::format("无效的句柄"));
+    return;
+  }
+  auto& l_data  = handle_.get<working_machine_session_data>();
+  auto l_logger = handle_.get<socket_logger>().logger_;
+  if (ec) {
+    log_error(l_logger, fmt::format("on_write error: {} ", ec));
+    return;
+  }
+  if (!keep_alive_) {
+    return do_close{handle_}.run();
+  }
+  l_data.stream_.expires_after(30s);
+  do_read{handle_}.run();
 }
 
 }  // namespace session

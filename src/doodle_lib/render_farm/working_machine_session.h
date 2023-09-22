@@ -135,6 +135,7 @@ struct do_close {
 
 struct do_write {
   entt::handle handle_;
+  bool keep_alive_{};
   boost::beast::http::message_generator message_generator_;
   explicit do_write(entt::handle in_handle, boost::beast::http::message_generator in_message_generator)
       : handle_(std::move(in_handle)), message_generator_(std::move(in_message_generator)) {}
@@ -144,7 +145,7 @@ struct do_write {
       entt::handle in_handle, boost::system::error_code ec,
       boost::beast::http::status in_status = boost::beast::http::status::bad_request
   );
-  void operator()(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
+  void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
 };
 
 template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
