@@ -24,18 +24,9 @@ void websocket::run(const boost::beast::http::request<boost::beast::http::string
 
   auto& l_data          = data_.get<websocket_data>();
   l_data.websocket_ptr_ = shared_from_this();
-  l_data.signal_set_    = std::make_shared<boost::asio::signal_set>(l_data.stream_.get_executor(), SIGINT, SIGTERM);
-  l_data.signal_set_->async_wait([logger = data_.get<socket_logger>().logger_,
-                                  l_self = weak_from_this()](boost::system::error_code ec, int) {
-    if (ec) {
-      log_error(logger, fmt::format("signal_set error: {} ", ec));
-    }
-    if (auto l = l_self.lock(); l) {
-      l->fail_call(ec);
-      l->close();
-    }
-  });
+
   l_data.stream_.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
+  //  l_data.stream_.control_callback();
   l_data.stream_.set_option(
       boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
         res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
@@ -75,22 +66,17 @@ void websocket::do_read() {
         auto l_has_data = data_ && data_.all_of<websocket_data>();
         if (l_has_data) data_.get<websocket_data>().read_flag_ = false;
 
-        if (ec == boost::beast::websocket::error::closed) {
-          fail_call(ec);
-          do_destroy();
-          return;
-        }
-        if (ec == boost::asio::error::operation_aborted) {
-          fail_call(ec);
-          return;
+        if (ec) {
+          log_error(logger, fmt::format("async_write error: {} ", ec));
+          if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
+            fail_call(ec);
+            do_destroy();
+            return;
+          }
         }
         if (l_has_data) {
           auto& l_data = data_.get<websocket_data>();
-          if (ec) {
-            log_error(logger, fmt::format("async_read error: {} ", ec));
-          } else {
-            l_data.read_queue.emplace(boost::beast::buffers_to_string(l_data.buffer_.data()));
-          }
+          l_data.read_queue.emplace(boost::beast::buffers_to_string(l_data.buffer_.data()));
           l_data.buffer_.consume(l_data.buffer_.size());
           do_read();
           boost::asio::post(g_io_context(), [this, self = shared_from_this()] { run_fun(); });
@@ -174,17 +160,13 @@ void websocket::do_write() {
         auto l_has_data = data_ && data_.all_of<websocket_data>();
         if (l_has_data) data_.get<websocket_data>().write_flag_ = false;
 
-        if (ec == boost::beast::websocket::error::closed) {
-          fail_call(ec);
-          do_destroy();
-          return;
-        }
-        if (ec == boost::asio::error::operation_aborted) {
-          fail_call(ec);
-          return;
-        }
         if (ec) {
           log_error(logger, fmt::format("async_write error: {} ", ec));
+          if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
+            fail_call(ec);
+            do_destroy();
+            return;
+          }
         }
         if (l_has_data) {
           auto& l_data = data_.get<websocket_data>();
@@ -200,7 +182,7 @@ void websocket::do_write() {
 void websocket::do_destroy() {
   boost::asio::post(g_io_context(), [handle = data_] {
     auto l = handle;
-    l.destroy();
+    if (l) l.destroy();
   });
 }
 void websocket::close() {
@@ -208,10 +190,11 @@ void websocket::close() {
   auto& l_data = data_.get<websocket_data>();
   l_data.stream_.async_close(
       boost::beast::websocket::close_code::normal,
-      [logger = data_.get<socket_logger>().logger_](boost::system::error_code ec) {
+      [logger = data_.get<socket_logger>().logger_, this](boost::system::error_code ec) {
         if (ec) {
           log_error(logger, fmt::format("async_close error: {} ", ec));
         }
+        do_destroy();
       }
   );
 }
