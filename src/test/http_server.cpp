@@ -44,21 +44,7 @@ class ue_exe_m : public doodle::ue_exe {
 void run_server() {
   using namespace doodle;
   //  g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-  auto l_ptr     = g_ctx().emplace<doodle::render_farm::working_machine>(g_io_context());
-  auto route_ptr = std::make_shared<render_farm::detail::http_route>();
-
-  l_ptr->route(route_ptr);
-  route_ptr->reg<render_farm::detail::render_job_type_post>();
-  route_ptr->reg<render_farm::detail::computer_reg_type_post>();
-  route_ptr->reg<render_farm::detail::get_log_type_get>();
-  route_ptr->reg<render_farm::detail::get_err_type_get>();
-  route_ptr->reg<render_farm::detail::render_job_type_get>();
-  route_ptr->reg<render_farm::detail::computer_reg_type_get>();
-  route_ptr->reg<render_farm::detail::render_job_type_put>();
-
-  route_ptr->reg<render_farm::detail::repository_type_get>();
-  route_ptr->reg<render_farm::detail::get_root_type>();
-  route_ptr->reg<render_farm::detail::computer_reg_type_websocket>();
+  g_ctx().emplace<doodle::render_farm::working_machine>(g_io_context()).run();
 
   g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
   g_reg()->ctx().emplace<render_farm::computer_manage>().run();
@@ -66,12 +52,11 @@ void run_server() {
   render_farm::detail::reg_work_websocket{}();
   render_farm::detail::reg_server_websocket{}();
 
-  l_ptr->run();
   g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
   auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
   l_w->run("192.168.20.59"s);
   app_base::Get().on_stop.connect([=]() {
-    l_ptr->stop();
+    g_ctx().get<doodle::render_farm::working_machine>(g_io_context())->stop();
     l_w->stop();
     //    g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->stop();
   });
