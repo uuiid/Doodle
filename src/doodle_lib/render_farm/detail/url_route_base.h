@@ -57,7 +57,8 @@ class http_route {
         MsgBody, std::decay_t<CompletionHandler>,
         decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
     do_read_msg_body_t{
-        in_handle, in_completion, in_handle.template get<working_machine_session_data>().stream_.get_executor()}
+        in_handle, std::forward<CompletionHandler>(in_completion),
+        in_handle.get<working_machine_session_data>().stream_.get_executor()}
         .run();
   }
 
@@ -86,16 +87,16 @@ class http_route {
   template <typename MsgBody, typename CompletionHandler>
   http_route& put(std::string url, CompletionHandler&& in_handler) {
     reg(boost::beast::http::verb::put, split_str(url),
-        [handler_ = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) {
-          read_body<MsgBody>(in_handle, handler_);
+        [handler_ = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) mutable {
+          read_body<MsgBody>(in_handle, std::forward<decltype(handler_)>(handler_));
         });
     return *this;
   };
   template <typename MsgBody, typename CompletionHandler>
   http_route& post(std::string url, CompletionHandler&& in_handler) {
     reg(boost::beast::http::verb::post, split_str(url),
-        [handler_ = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) {
-          read_body<MsgBody>(in_handle, handler_);
+        [handler_ = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) mutable {
+          read_body<MsgBody>(in_handle, std::forward<decltype(handler_)>(handler_));
         });
     return *this;
   };
