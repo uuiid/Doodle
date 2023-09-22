@@ -18,24 +18,27 @@ namespace detail {
 struct render_job_type_post {
   std::vector<std::string> url_{"v1", "render_farm", "render_job"};
   boost::beast::http::verb verb_{boost::beast::http::verb::post};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
-};
-
-struct computer_reg_type_post {
-  std::vector<std::string> url_{"v1", "render_farm", "computer"};
-  boost::beast::http::verb verb_{boost::beast::http::verb::post};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
+  void operator()(
+      boost::system::error_code ec, const entt::handle &in_handle,
+      boost::beast::http::request<boost::beast::http::string_body> in_request
+  ) const;
 };
 
 struct get_log_type_post {
   std::vector<std::string> url_{"v1", "render_farm", "log", "{handle}"};
   boost::beast::http::verb verb_{boost::beast::http::verb::get};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
+  void operator()(
+      boost::system::error_code ec, const entt::handle &in_handle,
+      boost::beast::http::request<boost::beast::http::string_body> in_request
+  ) const;
 };
 struct get_err_type_post {
   std::vector<std::string> url_{"v1", "render_farm", "err", "{handle}"};
   boost::beast::http::verb verb_{boost::beast::http::verb::get};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
+  void operator()(
+      boost::system::error_code ec, const entt::handle &in_handle,
+      boost::beast::http::request<boost::beast::http::string_body> in_request
+  ) const;
 };
 }  // namespace detail
 }  // namespace doodle::render_farm
