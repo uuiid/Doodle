@@ -67,13 +67,12 @@ void http_route::upgrade_websocket(const entt::handle& in_handle) {
     BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
     session::do_write::send_error_code(in_handle, ec);
     return;
-  } else {
-    using do_read_msg_body = session::do_read_msg_body<
-        boost::beast::http::string_body, upgrade_websocket_data,
-        decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
-    auto l_exe = in_handle.get<working_machine_session_data>().stream_.get_executor();
-    do_read_msg_body{in_handle, upgrade_websocket_data{in_handle}, l_exe}.run();
   }
+  using do_read_msg_body = session::do_read_msg_body<
+      boost::beast::http::string_body, upgrade_websocket_data,
+      decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
+  auto l_exe = in_handle.get<working_machine_session_data>().stream_.get_executor();
+  do_read_msg_body{in_handle, upgrade_websocket_data{in_handle}, l_exe}.run();
 }
 
 http_route::action_type http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref) const {
