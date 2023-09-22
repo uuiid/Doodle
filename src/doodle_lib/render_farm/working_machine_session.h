@@ -48,8 +48,10 @@ struct request_parser_empty_body {
   request_parser_empty_body(request_parser_empty_body&&) noexcept            = default;
   request_parser_empty_body& operator=(request_parser_empty_body&&) noexcept = default;
 
-  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& operator*() { return *request_parser_; }
-  inline boost::beast::http::request_parser<boost::beast::http::empty_body>* operator->() {
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& operator*() const {
+    return *request_parser_;
+  }
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>* operator->() const {
     return request_parser_.get();
   }
 };
@@ -73,8 +75,10 @@ struct async_read_body {
   async_read_body(async_read_body&&) noexcept            = default;
   async_read_body& operator=(async_read_body&&) noexcept = default;
 
-  inline boost::beast::http::request_parser<boost::beast::http::string_body>& operator*() { return *request_parser_; }
-  inline boost::beast::http::request_parser<boost::beast::http::string_body>* operator->() {
+  inline boost::beast::http::request_parser<boost::beast::http::string_body>& operator*() const {
+    return *request_parser_;
+  }
+  inline boost::beast::http::request_parser<boost::beast::http::string_body>* operator->() const {
     return request_parser_.get();
   }
 };
@@ -199,8 +203,5 @@ void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::operator()(
   this->complete(false, ec, handle_, msg_t{});
 }
 }  // namespace session
-
-
-
 
 }  // namespace doodle::render_farm
