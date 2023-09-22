@@ -13,13 +13,11 @@ namespace doodle {
 namespace render_farm {
 namespace detail {
 void post_log::operator()(boost::system::error_code ec, std::size_t bytes_transferred) const {
-  auto& l_session = impl_->session_handle_.get<working_machine_session>();
   if (ec == boost::beast::http::error::end_of_stream) {
-    return l_session.do_close();
+    session::do_close{impl_->session_handle_}.run();
   }
   if (ec) {
-    DOODLE_LOG_ERROR("on_read error: {}", ec.message());
-    l_session.send_error_code(ec);
+    session::do_write::send_error_code(impl_->session_handle_, ec);
     return;
   }
 
@@ -27,7 +25,8 @@ void post_log::operator()(boost::system::error_code ec, std::size_t bytes_transf
 
   if (!impl_->msg_handle_ || !impl_->msg_handle_.all_of<process_message, ue4_task>()) {
     BOOST_BEAST_ASSIGN_EC(ec, boost::beast::http::error::bad_target);
-    l_session.send_error_code(ec);
+    session::do_write::send_error_code(impl_->session_handle_, ec);
+    return;
   }
 
   auto l_str = impl_->parser_->release().body();
