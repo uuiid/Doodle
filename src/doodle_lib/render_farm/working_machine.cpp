@@ -25,23 +25,19 @@ void working_machine::run() {
   //  acceptor_.bind(end_point_);
   //  acceptor_.listen(boost::asio::socket_base::max_listen_connections);
   route_ptr_ = std::make_shared<detail::http_route>();
-  route_ptr_->reg<detail::get_root_type>();
-  route_ptr_->reg<detail::render_job_type_post>();
-  route_ptr_->reg<detail::computer_reg_type_post>();
-
-  route_ptr_->reg<detail::get_log_type_get>();
-  route_ptr_->reg<detail::get_err_type_get>();
-  route_ptr_->reg<detail::render_job_type_get>();
-  route_ptr_->reg<detail::repository_type_get>();
-  route_ptr_->reg<detail::computer_reg_type_get>();
-
-  route_ptr_->reg<detail::render_job_type_post>();
-  route_ptr_->reg<detail::get_log_type_post>();
-  route_ptr_->reg<detail::get_err_type_post>();
-
-  route_ptr_->reg<detail::render_job_type_put>();
-
-  route_ptr_->reg<detail::computer_reg_type_websocket>();
+  (*route_ptr_)
+      .get("v1/render_farm", detail::get_root_type{})
+      .get("v1/render_farm/log/{handle}", detail::get_log_type_get{})
+      .get("v1/render_farm/err/{handle}", detail::get_err_type_get{})
+      .get("v1/render_farm/render_job", detail::render_job_type_get{})
+      .get("v1/render_farm/computer", detail::computer_reg_type_get{})
+      .get("v1/render_farm/repository", detail::repository_type_get{})
+      .post<boost::beast::http::string_body>("v1/render_farm/render_job", detail::render_job_type_post{})
+      .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", detail::get_log_type_post{})
+      .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", detail::get_err_type_post{})
+      .put<boost::beast::http::string_body>("v1/render_farm/render_job/{handle}", detail::render_job_type_put{})
+      //      .put("v1/render_farm/render_job/{handle}", detail::render_job_type_put{});
+      ;
 
   g_reg()->ctx().emplace<ue_task_manage>().run();
   g_reg()->ctx().emplace<computer_manage>().run();
@@ -80,7 +76,7 @@ void working_machine::stop() {
   g_reg()->ctx().get<computer_manage>().cancel();
   auto l_view = g_reg()->view<working_machine_session_data>();
   // close
-  ranges::for_each(l_view, [](auto& in_session) { session::do_close{entt::handle{*g_reg(), in_session}}.run() });
+  ranges::for_each(l_view, [](auto& in_session) { session::do_close{entt::handle{*g_reg(), in_session}}.run(); });
 
   acceptor_.cancel();
   acceptor_.close();
