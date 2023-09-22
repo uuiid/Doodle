@@ -17,7 +17,10 @@ namespace detail {
 struct render_job_type_put {
   std::vector<std::string> url_{"v1", "render_farm", "render_job", "{handle}"};
   boost::beast::http::verb verb_{boost::beast::http::verb::put};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
+  void operator()(
+      boost::system::error_code ec, const entt::handle &in_handle,
+      boost::beast::http::request<boost::beast::http::string_body> in_request
+  ) const;
 };
 }  // namespace detail
 }  // namespace doodle::render_farm
