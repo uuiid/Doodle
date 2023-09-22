@@ -44,35 +44,29 @@ std::tuple<bool, std::map<std::string, std::string>> http_route::capture_url::ma
 
 void http_route::upgrade_websocket(const entt::handle& in_handle) {
   struct upgrade_websocket_data {
-    entt::handle handle_;
-    explicit upgrade_websocket_data(entt::handle in_handle) : handle_{in_handle} {}
-    void operator()(boost::system::error_code ec, boost::beast::http::request<boost::beast::http::string_body> in_msg) {
-      auto l_logger = handle_.get<socket_logger>().logger_;
+    void operator()(
+        boost::system::error_code ec, entt::handle in_handle,
+        boost::beast::http::request<boost::beast::http::string_body> in_msg
+    ) {
+      auto l_logger = in_handle.get<socket_logger>().logger_;
       if (ec == boost::beast::http::error::end_of_stream) {
-        session::do_close{handle_}.run();
+        session::do_close{in_handle}.run();
       }
       if (ec) {
         log_error(l_logger, fmt::format("on_read error: {} ", ec));
-        session::do_write::send_error_code(handle_, ec);
+        session::do_write::send_error_code(in_handle, ec);
         return;
       }
-      handle_.emplace<render_farm::websocket_data>(std::move(handle_.get<working_machine_session_data>().stream_));
-      handle_.erase<working_machine_session_data>();
-      std::make_shared<render_farm::websocket>(handle_)->run(std::move(in_msg));
+      in_handle.emplace<render_farm::websocket_data>(std::move(in_handle.get<working_machine_session_data>().stream_));
+      in_handle.erase<working_machine_session_data>();
+      std::make_shared<render_farm::websocket>(in_handle)->run(std::move(in_msg));
     }
   };
-  boost::beast::error_code ec{};
-  if (!boost::beast::websocket::is_upgrade(in_handle.get<session::request_parser_empty_body>()->get())) {
-    in_handle.get<working_machine_session_data>().stream_.expires_after(30s);
-    BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
-    session::do_write::send_error_code(in_handle, ec);
-    return;
-  }
   using do_read_msg_body = session::do_read_msg_body<
       boost::beast::http::string_body, upgrade_websocket_data,
       decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
   auto l_exe = in_handle.get<working_machine_session_data>().stream_.get_executor();
-  do_read_msg_body{in_handle, upgrade_websocket_data{in_handle}, l_exe}.run();
+  do_read_msg_body{in_handle, upgrade_websocket_data{}, l_exe}.run();
 }
 
 http_route::action_type http_route::capture_url::operator()(boost::urls::segments_ref in_segments_ref) const {

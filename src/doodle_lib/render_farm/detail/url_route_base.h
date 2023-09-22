@@ -53,10 +53,10 @@ class http_route {
   }
   template <typename MsgBody, typename CompletionHandler>
   static auto read_body(const entt::handle& in_handle, CompletionHandler&& in_completion) {
-    using do_read_msg_body = session::do_read_msg_body<
-        MsgBody, CompletionHandler, decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
-
-    do_read_msg_body{
+    using do_read_msg_body_t = session::do_read_msg_body<
+        MsgBody, std::decay_t<CompletionHandler>,
+        decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
+    do_read_msg_body_t{
         in_handle, in_completion, in_handle.template get<working_machine_session_data>().stream_.get_executor()}
         .run();
   }
@@ -64,14 +64,10 @@ class http_route {
   static void upgrade_websocket(const entt::handle& in_handle);
   template <typename CompletionHandler>
   static auto not_upgrade_websocket(const entt::handle& in_handle, CompletionHandler&& in_completion) {
-    boost::beast::error_code ec{};
     if (boost::beast::websocket::is_upgrade(in_handle.get<session::request_parser_empty_body>()->get())) {
-      in_handle.get<working_machine_session_data>().stream_.expires_after(30s);
-      BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
-      session::do_write::send_error_code(in_handle, ec);
-      return;
-    }
-    in_completion(in_handle);
+      upgrade_websocket(in_handle);
+    } else
+      in_completion(in_handle);
   }
 
  public:
@@ -103,10 +99,6 @@ class http_route {
         });
     return *this;
   };
-  template <typename CompletionHandler>
-  http_route& web_socket(std::string url) {
-    return get(std::move(url), &http_route::upgrade_websocket);
-  }
 
   // 路由分发
   action_type operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment) const;
