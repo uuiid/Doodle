@@ -90,26 +90,27 @@ void work::do_register() {
   l_json["params"]["status"] =
       magic_enum::enum_name(ptr_->ue_data_ptr_ ? computer_status::busy : computer_status::idle);
   auto l_logger = ptr_->websocket_handle.get<socket_logger>().logger_;
+  ptr_->websocket_handle.get<websocket_data>().stream_.ping({});
   ptr_->websocket_handle.get<websocket_data>().websocket_ptr_->async_call(
       l_json,
-      [this, l_logger](boost::system::error_code ec, const nlohmann::json& in_json) {
+      [l_data = ptr_, l_logger, this](boost::system::error_code ec, const nlohmann::json& in_json) {
         if (ec) {
           log_info(l_logger, fmt::format("注册失败 {}", ec));
-          ptr_->websocket_handle.get<websocket_data>().websocket_ptr_->close();
-          ptr_->computer_id = entt::null;
+          l_data->websocket_handle.get<websocket_data>().websocket_ptr_->close();
+          l_data->computer_id = entt::null;
           do_wait();
           return;
         }
         if (in_json.contains("error")) {
-          log_info(ptr_->logger_, fmt::format("注册失败 {}", in_json["error"]["message"].get<std::string>()));
-          ptr_->computer_id = entt::null;
+          log_info(l_logger, fmt::format("注册失败 {}", in_json["error"]["message"].get<std::string>()));
+          l_data->computer_id = entt::null;
         } else {
           if (in_json["result"].contains("id")) {
-            ptr_->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
-            log_info(ptr_->logger_, fmt::format("computer_id: {}", ptr_->computer_id));
+            l_data->computer_id = num_to_enum<entt::entity>(in_json["result"]["id"].get<std::int32_t>());
+            log_info(l_logger, fmt::format("computer_id: {}", l_data->computer_id));
           } else {
-            log_error(ptr_->logger_, fmt::format("注册失败 {}", in_json["result"].dump()));
-            ptr_->computer_id = entt::null;
+            log_error(l_logger, fmt::format("注册失败 {}", in_json["result"].dump()));
+            l_data->computer_id = entt::null;
           }
         }
         do_wait();
