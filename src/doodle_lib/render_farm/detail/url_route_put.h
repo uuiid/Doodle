@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_lib/render_farm/detail/basic_json_body.h>
 #include <doodle_lib/render_farm/detail/url_route_base.h>
-#include <doodle_lib/render_farm/working_machine_session.h>
+#include <doodle_lib/render_farm/http_session.h>
 
 #include <boost/beast.hpp>
 #include <boost/url.hpp>

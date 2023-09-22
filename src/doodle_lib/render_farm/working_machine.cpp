@@ -13,8 +13,8 @@
 #include <doodle_lib/render_farm/detail/url_route_post.h>
 #include <doodle_lib/render_farm/detail/url_route_put.h>
 #include <doodle_lib/render_farm/detail/url_webscoket.h>
+#include <doodle_lib/render_farm/http_session.h>
 #include <doodle_lib/render_farm/render_farm_fwd.h>
-#include <doodle_lib/render_farm/working_machine_session.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>

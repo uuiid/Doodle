@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_lib/render_farm/working_machine_session.h>
+#include <doodle_lib/render_farm/http_session.h>
 namespace doodle::render_farm {
 // class working_machine_session;
 // namespace detail {

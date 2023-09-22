@@ -9,8 +9,8 @@
 
 #include <doodle_lib/render_farm/detail/computer.h>
 #include <doodle_lib/render_farm/detail/render_ue4.h>
+#include <doodle_lib/render_farm/http_session.h>
 #include <doodle_lib/render_farm/udp_client.h>
-#include <doodle_lib/render_farm/working_machine_session.h>
 
 #include <boost/beast.hpp>
 #include <boost/url.hpp>

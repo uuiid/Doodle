@@ -6,7 +6,7 @@ target_sources(
         work.h
         proxy_server.h
         working_machine.h
-        working_machine_session.h
+        http_session.h
         udp_server.h
         udp_client.h
         websocket.h
@@ -19,7 +19,7 @@ target_sources(
         work.cpp
         proxy_server.cpp
         working_machine.cpp
-        working_machine_session.cpp
+        http_session.cpp
         udp_server.cpp
         udp_client.cpp
         websocket.cpp

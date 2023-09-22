@@ -2,7 +2,7 @@
 // Created by td_main on 2023/8/3.
 //
 
-#include "working_machine_session.h"
+#include "http_session.h"
 
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/doodle_core_fwd.h>

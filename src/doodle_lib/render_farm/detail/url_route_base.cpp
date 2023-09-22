@@ -7,8 +7,8 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
+#include <doodle_lib/render_farm/http_session.h>
 #include <doodle_lib/render_farm/websocket.h>
-#include <doodle_lib/render_farm/working_machine_session.h>
 namespace doodle::render_farm::detail {
 
 void http_route::capture_url::set_cap_bit() {
