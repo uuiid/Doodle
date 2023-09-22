@@ -10,10 +10,6 @@
 namespace doodle::render_farm {
 namespace detail {
 
-struct computer_reg_type_websocket {
-  std::vector<std::string> url_{"v1", "render_farm", "computer"};
-  void operator()(const entt::handle &in_handle, const std::map<std::string, std::string> &in_cap) const;
-};
 
 struct reg_work_websocket {
   reg_work_websocket() = default;
