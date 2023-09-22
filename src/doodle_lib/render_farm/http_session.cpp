@@ -36,6 +36,8 @@ void do_read::run() {
         handle_.get<http_session_data>().stream_, handle_.get<http_session_data>().buffer_,
         *handle_.get<request_parser_empty_body>(), std::move(*this)
     );
+  } else {
+    log_error(handle_.get_or_emplace<socket_logger>().logger_, fmt::format("无效的句柄或缺失组件"));
   }
 }
 void do_read::operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
@@ -129,6 +131,7 @@ void do_write::operator()(boost::system::error_code ec, std::size_t bytes_transf
   if (!keep_alive_) {
     return do_close{handle_}.run();
   }
+  l_data.buffer_.clear();
   l_data.stream_.expires_after(30s);
   do_read{handle_}.run();
 }
