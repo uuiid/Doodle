@@ -74,7 +74,7 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
 void working_machine::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
   g_reg()->ctx().get<computer_manage>().cancel();
-  auto l_view = g_reg()->view<working_machine_session_data>();
+  auto l_view = g_reg()->view<http_session_data>();
   // close
   ranges::for_each(l_view, [](auto& in_session) { session::do_close{entt::handle{*g_reg(), in_session}}.run(); });
 

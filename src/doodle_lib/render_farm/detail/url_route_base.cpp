@@ -57,15 +57,15 @@ void http_route::upgrade_websocket(const entt::handle& in_handle) {
         session::do_write::send_error_code(in_handle, ec);
         return;
       }
-      in_handle.emplace<render_farm::websocket_data>(std::move(in_handle.get<working_machine_session_data>().stream_));
-      in_handle.erase<working_machine_session_data>();
+      in_handle.emplace<render_farm::websocket_data>(std::move(in_handle.get<http_session_data>().stream_));
+      in_handle.erase<http_session_data>();
       std::make_shared<render_farm::websocket>(in_handle)->run(std::move(in_msg));
     }
   };
   using do_read_msg_body = session::do_read_msg_body<
       boost::beast::http::string_body, upgrade_websocket_data,
-      decltype(in_handle.get<working_machine_session_data>().stream_)::executor_type>;
-  auto l_exe = in_handle.get<working_machine_session_data>().stream_.get_executor();
+      decltype(in_handle.get<http_session_data>().stream_)::executor_type>;
+  auto l_exe = in_handle.get<http_session_data>().stream_.get_executor();
   do_read_msg_body{in_handle, upgrade_websocket_data{}, l_exe}.run();
 }
 

@@ -21,17 +21,17 @@
 #include <nlohmann/json.hpp>
 namespace doodle::render_farm {
 
-struct working_machine_session_data {
-  explicit working_machine_session_data(boost::asio::ip::tcp::socket in_socket) : stream_(std::move(in_socket)) {}
+struct http_session_data {
+  explicit http_session_data(boost::asio::ip::tcp::socket in_socket) : stream_(std::move(in_socket)) {}
   boost::beast::tcp_stream stream_;
   boost::beast::flat_buffer buffer_;
   boost::url url_;
   // copy delete
-  working_machine_session_data(const working_machine_session_data&)                = delete;
-  working_machine_session_data& operator=(const working_machine_session_data&)     = delete;
+  http_session_data(const http_session_data&)                = delete;
+  http_session_data& operator=(const http_session_data&)     = delete;
   // move
-  working_machine_session_data(working_machine_session_data&&) noexcept            = default;
-  working_machine_session_data& operator=(working_machine_session_data&&) noexcept = default;
+  http_session_data(http_session_data&&) noexcept            = default;
+  http_session_data& operator=(http_session_data&&) noexcept = default;
 };
 /**
  * @brief 会话类 用于处理客户端的请求  一个句柄对应一个客户端
@@ -156,8 +156,8 @@ struct do_write {
 
 template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
 void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::run() {
-  if (handle_ && handle_.all_of<working_machine_session_data, request_parser_empty_body>()) {
-    auto&& [l_data, l_body] = handle_.get<working_machine_session_data, request_parser_empty_body>();
+  if (handle_ && handle_.all_of<http_session_data, request_parser_empty_body>()) {
+    auto&& [l_data, l_body] = handle_.get<http_session_data, request_parser_empty_body>();
     l_data.stream_.expires_after(30s);
 
     boost::beast::http::async_read(
@@ -192,14 +192,14 @@ void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::operator()(
     return;
   }
 
-  if (handle_.all_of<working_machine_session_data, async_read_body>()) {
-    auto&& [l_data, l_body] = handle_.get<working_machine_session_data, async_read_body>();
+  if (handle_.all_of<http_session_data, async_read_body>()) {
+    auto&& [l_data, l_body] = handle_.get<http_session_data, async_read_body>();
     l_data.stream_.expires_after(30s);
     this->complete(true, ec, handle_, l_body->release());
     return;
   }
   BOOST_BEAST_ASSIGN_EC(ec, error_enum::component_missing_error);
-  log_error(l_logger, fmt::format("缺失必要组件, working_machine_session_data, async_read_body"));
+  log_error(l_logger, fmt::format("缺失必要组件, http_session_data, async_read_body"));
   this->complete(false, ec, handle_, msg_t{});
 }
 }  // namespace session

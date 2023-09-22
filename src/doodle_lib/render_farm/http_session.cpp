@@ -29,11 +29,11 @@ namespace doodle::render_farm {
 
 namespace session {
 void do_read::run() {
-  if (handle_ && handle_.all_of<working_machine_session_data>()) {
-    handle_.get<working_machine_session_data>().stream_.expires_after(30s);
+  if (handle_ && handle_.all_of<http_session_data>()) {
+    handle_.get<http_session_data>().stream_.expires_after(30s);
     handle_.emplace_or_replace<request_parser_empty_body>();
     boost::beast::http::async_read_header(
-        handle_.get<working_machine_session_data>().stream_, handle_.get<working_machine_session_data>().buffer_,
+        handle_.get<http_session_data>().stream_, handle_.get<http_session_data>().buffer_,
         *handle_.get<request_parser_empty_body>(), std::move(*this)
     );
   }
@@ -44,7 +44,7 @@ void do_read::operator()(boost::system::error_code ec, std::size_t bytes_transfe
     return;
   }
 
-  auto& l_data = handle_.get<working_machine_session_data>();
+  auto& l_data = handle_.get<http_session_data>();
   boost::ignore_unused(bytes_transferred);
   l_data.stream_.expires_after(30s);
   auto l_logger = handle_.get<socket_logger>().logger_;
@@ -90,9 +90,9 @@ err_tag:
 }
 
 void do_close::run() {
-  if (handle_ && handle_.all_of<working_machine_session_data>()) {
+  if (handle_ && handle_.all_of<http_session_data>()) {
     logger_ = handle_.get<socket_logger>().logger_;
-    handle_.get<working_machine_session_data>().stream_.socket().shutdown(
+    handle_.get<http_session_data>().stream_.socket().shutdown(
         boost::asio::ip::tcp::socket::shutdown_send, ec
     );
     boost::asio::post(g_io_context(), std::move(*this));
@@ -107,8 +107,8 @@ void do_close::operator()() {
 }
 
 void do_write::run() {
-  if (handle_ && handle_.all_of<working_machine_session_data>()) {
-    auto& l_data = handle_.get<working_machine_session_data>();
+  if (handle_ && handle_.all_of<http_session_data>()) {
+    auto& l_data = handle_.get<http_session_data>();
     l_data.stream_.expires_after(30s);
     keep_alive_ = message_generator_.keep_alive();
     boost::beast::async_write(l_data.stream_, std::move(message_generator_), std::move(*this));
@@ -131,7 +131,7 @@ void do_write::operator()(boost::system::error_code ec, std::size_t bytes_transf
     log_error(fmt::format("无效的句柄"));
     return;
   }
-  auto& l_data  = handle_.get<working_machine_session_data>();
+  auto& l_data  = handle_.get<http_session_data>();
   auto l_logger = handle_.get<socket_logger>().logger_;
   if (ec) {
     log_error(l_logger, fmt::format("on_write error: {} ", ec));
