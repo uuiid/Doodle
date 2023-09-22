@@ -67,6 +67,7 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<socket_logger>();
     l_handle.emplace<detail::http_route>(*route_ptr_);
+    l_handle.emplace<http_session_data>(std::move(socket));
     session::do_read{std::move(l_handle)}.run();
   }
   do_accept();
