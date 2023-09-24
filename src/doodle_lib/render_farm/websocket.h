@@ -53,6 +53,13 @@ struct guard_data {
     data_  = {};
   }
 
+  // move
+  guard_data(guard_data&&) noexcept            = default;
+  guard_data& operator=(guard_data&&) noexcept = default;
+  // copy
+  guard_data(const guard_data&)                = delete;
+  guard_data& operator=(const guard_data&)     = delete;
+
   ~guard_data() {
     if (data_) *data_ = false;
   };
