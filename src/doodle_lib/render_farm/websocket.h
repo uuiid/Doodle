@@ -26,10 +26,10 @@ struct websocket_data {
   boost::beast::flat_buffer buffer_{};
 
   std::queue<std::string> write_queue{};
-  bool write_flag_{};
+  std::shared_ptr<bool> write_flag_{};
 
   std::queue<std::string> read_queue{};
-  bool read_flag_{};
+  std::shared_ptr<bool> read_flag_{};
 
   std::map<std::int64_t, std::function<void(boost::system::error_code, const nlohmann::json&)>> call_map_{};
   std::int64_t id_{};
@@ -39,9 +39,20 @@ struct websocket_data {
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
   bool is_handshake_{};
 
-  bool is_close{};
+  std::shared_ptr<bool> close_flag_{};
 };
+struct guard_data {
+ private:
+  mutable std::shared_ptr<bool> data_{};
 
+ public:
+  explicit guard_data(std::shared_ptr<bool> in_data) : data_(std::move(in_data)) { *data_ = true; }
+  void reset() const { data_.reset(); }
+
+  ~guard_data() {
+    if (data_) *data_ = false;
+  };
+};
 namespace details {
 struct websocket_tmp_data {
   using resolver_t = boost::asio::ip::tcp::resolver;
@@ -62,6 +73,7 @@ struct websocket_tmp_data {
 class websocket : public std::enable_shared_from_this<websocket> {
  private:
   entt::handle data_{};
+
   void do_read();
 
   void run_fun();

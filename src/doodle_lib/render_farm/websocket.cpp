@@ -51,23 +51,31 @@ void websocket::run(const boost::beast::http::request<boost::beast::http::string
 }
 
 void websocket::do_read() {
-  if (!data_ || !data_.all_of<websocket_data>()) return;
-  auto& l_data = data_.get<websocket_data>();
-
-  if (l_data.read_flag_) {
+  if (!data_) {
+    log_error("失效的句柄");
+  }
+  if (!data_.all_of<websocket_data>()) {
+    log_error(data_.get<socket_logger>().logger_, "缺失组件");
+    return;
+  }
+  auto& l_data  = data_.get<websocket_data>();
+  auto l_logger = data_.get<socket_logger>().logger_;
+  if (*l_data.read_flag_) {
+    log_error(l_logger, "重复的读取序列");
     return;
   }
 
   l_data.stream_.async_read(
       l_data.buffer_,
-      [this, logger = data_.get<socket_logger>().logger_,
-       self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred) {
+      [this, l_logger, self = shared_from_this(),
+       l_g = guard_data{l_data.read_flag_}](boost::system::error_code ec, std::size_t bytes_transferred) {
+        l_g.reset();
         boost::ignore_unused(bytes_transferred);
         auto l_has_data = data_ && data_.all_of<websocket_data>();
         if (l_has_data) data_.get<websocket_data>().read_flag_ = false;
 
         if (ec) {
-          log_error(logger, fmt::format("async_write error: {} ", ec));
+          log_error(l_logger, fmt::format("async_write error: {} ", ec));
           if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
             fail_call(ec);
             do_destroy();
@@ -145,18 +153,22 @@ void websocket::send_error_code(const boost::system::error_code& in_code, std::u
 void websocket::do_write() {
   if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
-
+  auto logger  = data_.get<socket_logger>().logger_;
   if (l_data.write_queue.empty()) {
+    log_info(logger, "没有需要写出的数据");
     return;
   }
-  if (l_data.write_flag_) {
+
+  if (*l_data.write_flag_) {
+    log_error(logger, "重复的写出序列");
     return;
   }
-  l_data.write_flag_ = true;
+
   l_data.stream_.async_write(
       boost::asio::buffer(l_data.write_queue.front()),
-      [this, logger = data_.get<socket_logger>().logger_,
-       self = shared_from_this()](boost::system::error_code ec, std::size_t) {
+      [this, logger, self = shared_from_this(),
+       l_g = guard_data{data_.get<websocket_data>().write_flag_}](boost::system::error_code ec, std::size_t) {
+        l_g.reset();
         auto l_has_data = data_ && data_.all_of<websocket_data>();
         if (l_has_data) data_.get<websocket_data>().write_flag_ = false;
 
@@ -188,19 +200,20 @@ void websocket::do_destroy() {
 void websocket::close() {
   if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
-  if (l_data.is_close) {
+  if (*l_data.close_flag_) {
     log_error(data_.get<socket_logger>().logger_, "正在关闭已经在关闭的项目");
     return;
   }
 
-  l_data.is_close = true;
   l_data.stream_.async_close(
       boost::beast::websocket::close_code::normal,
-      [logger = data_.get<socket_logger>().logger_, this](boost::system::error_code ec) {
+      [logger = data_.get<socket_logger>().logger_, this,
+       l_g    = guard_data{data_.get<websocket_data>().close_flag_}](boost::system::error_code ec) {
+        l_g.reset();
         if (ec) {
           log_error(logger, fmt::format("async_close error: {} ", ec));
         }
-        data_.get<websocket_data>().is_close = false;
+
         do_destroy();
       }
   );
