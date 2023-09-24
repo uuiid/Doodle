@@ -16,7 +16,7 @@ find_path(${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIR "fbxsdk.h"
         PATH_SUFFIXES "include"
 )
 
-find_library(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_DEBUG "libfbxsdk.lib"
+find_library(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_DEBUG "libfbxsdk-md.lib"
         PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
         PATH_SUFFIXES "lib/vs2022/x64/debug"
 )
@@ -25,7 +25,7 @@ find_library(${CMAKE_FIND_PACKAGE_NAME}_DLL_DEBUG "libfbxsdk.dll"
         PATH_SUFFIXES "lib/vs2022/x64/debug"
 )
 
-find_library(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_RELEASE "libfbxsdk.lib"
+find_library(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_RELEASE "libfbxsdk-md.lib"
         PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
         PATH_SUFFIXES "lib/vs2022/x64/release"
 )
