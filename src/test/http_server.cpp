@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) try {
   main_app app{argc, argv};
   try {
     inject1();
-    inject2();
+    //    inject2();
     return app.run();
   } catch (const std::exception& err) {
     DOODLE_LOG_WARN(boost::diagnostic_information(err));
