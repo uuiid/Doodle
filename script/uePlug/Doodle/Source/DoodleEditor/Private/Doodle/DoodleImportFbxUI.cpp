@@ -249,7 +249,7 @@ void UDoodleFbxImport_1::ImportFile() {
   k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_SkeletalMesh;
   k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
   k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
-  k_fbx_f->ImportUI->bCreatePhysicsAsset                         = false;
+  k_fbx_f->ImportUI->bCreatePhysicsAsset                         = true;
   k_fbx_f->ImportUI->bImportMesh                                 = true;
   k_fbx_f->ImportUI->bImportAnimations                           = true;
   k_fbx_f->ImportUI->bImportRigidMesh                            = true;
