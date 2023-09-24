@@ -58,26 +58,35 @@ void run_server() {
   app_base::Get().on_stop.connect([=]() {
     g_ctx().get<doodle::render_farm::working_machine>().stop();
     l_w->stop();
-    //    g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>())->stop();
+    g_ctx().get<render_farm::work_ptr>()->stop();
   });
   //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 }
 
-// 注入
-void inject() {
+void stop_work() {
   using namespace doodle;
-
-  using timer_t = boost::asio::steady_timer;
-  auto l_ptr    = std::make_shared<timer_t>(g_io_context());
-  l_ptr->expires_after(std::chrono::seconds(1));
-  l_ptr->async_wait([l_ptr](boost::system::error_code in_ec) {
-    if (in_ec) {
-      DOODLE_LOG_ERROR("{}", in_ec.message());
-      return;
-    }
-    run_server();
-  });
+  //  g_ctx().get<doodle::render_farm::working_machine>().stop();
+  //  l_w->stop();
+  g_ctx().get<render_farm::work_ptr>()->stop();
 }
+
+#define INJECT(name, time, fun)                                  \
+  void name() {                                                  \
+    using namespace doodle;                                      \
+    using timer_t = boost::asio::steady_timer;                   \
+    auto l_ptr    = std::make_shared<timer_t>(g_io_context());   \
+    l_ptr->expires_after(std::chrono::seconds(time));            \
+    l_ptr->async_wait([l_ptr](boost::system::error_code in_ec) { \
+      if (in_ec) {                                               \
+        DOODLE_LOG_ERROR("{}", in_ec.message());                 \
+        return;                                                  \
+      }                                                          \
+      fun();                                                     \
+    });                                                          \
+  }
+
+INJECT(inject1, 1, run_server)
+INJECT(inject2, 2, stop_work)
 
 #include <doodle_lib/facet/main_facet.h>
 
@@ -91,7 +100,8 @@ int main(int argc, char* argv[]) try {
   using main_app = doodle::app_command<doodle::main_facet>;
   main_app app{argc, argv};
   try {
-    inject();
+    inject1();
+    inject2();
     return app.run();
   } catch (const std::exception& err) {
     DOODLE_LOG_WARN(boost::diagnostic_information(err));
