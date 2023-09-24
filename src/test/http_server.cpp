@@ -57,7 +57,6 @@ void run_server() {
   l_w->run("192.168.20.59"s);
   app_base::Get().on_stop.connect([=]() {
     g_ctx().get<doodle::render_farm::working_machine>().stop();
-    l_w->stop();
     g_ctx().get<render_farm::work_ptr>()->stop();
   });
   //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
