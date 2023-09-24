@@ -224,6 +224,7 @@ void work::send_error_impl() {
 }
 void work::stop() {
   ptr_->core_ptr_->cancel();
+  if (ptr_->websocket_handle) ptr_->websocket_handle.get<websocket_data>().websocket_ptr_->close();
   ptr_->timer_->cancel();
 }
 boost::system::error_code work::run_job(const entt::handle& in_handle, const nlohmann::json& in_json) {
