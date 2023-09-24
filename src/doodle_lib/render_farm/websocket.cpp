@@ -72,7 +72,6 @@ void websocket::do_read() {
         l_g.reset();
         boost::ignore_unused(bytes_transferred);
         auto l_has_data = data_ && data_.all_of<websocket_data>();
-        if (l_has_data) data_.get<websocket_data>().read_flag_ = false;
 
         if (ec) {
           log_error(l_logger, fmt::format("async_write error: {} ", ec));
@@ -170,7 +169,6 @@ void websocket::do_write() {
        l_g = guard_data{data_.get<websocket_data>().write_flag_}](boost::system::error_code ec, std::size_t) {
         l_g.reset();
         auto l_has_data = data_ && data_.all_of<websocket_data>();
-        if (l_has_data) data_.get<websocket_data>().write_flag_ = false;
 
         if (ec) {
           log_error(logger, fmt::format("async_write error: {} ", ec));
