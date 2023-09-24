@@ -188,12 +188,19 @@ void websocket::do_destroy() {
 void websocket::close() {
   if (!data_ || !data_.all_of<websocket_data>()) return;
   auto& l_data = data_.get<websocket_data>();
+  if (l_data.is_close) {
+    log_error(data_.get<socket_logger>().logger_, "正在关闭已经在关闭的项目");
+    return;
+  }
+
+  l_data.is_close = true;
   l_data.stream_.async_close(
       boost::beast::websocket::close_code::normal,
       [logger = data_.get<socket_logger>().logger_, this](boost::system::error_code ec) {
         if (ec) {
           log_error(logger, fmt::format("async_close error: {} ", ec));
         }
+        data_.get<websocket_data>().is_close = false;
         do_destroy();
       }
   );

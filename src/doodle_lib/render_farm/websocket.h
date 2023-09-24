@@ -38,6 +38,8 @@ struct websocket_data {
 
   std::shared_ptr<boost::asio::signal_set> signal_set_{};
   bool is_handshake_{};
+
+  bool is_close{};
 };
 
 namespace details {
@@ -90,13 +92,20 @@ class websocket : public std::enable_shared_from_this<websocket> {
     connect_op& operator=(const connect_op&)     = delete;
     // on_resolve
     void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
+      if (!data_) {
+        log_error("失效的句柄");
+        return;
+      }
+      if (data_.all_of<socket_logger, details::websocket_tmp_data>()) {
+        log_error("缺失组件");
+        return;
+      }
       auto l_logger = data_.get<socket_logger>().logger_;
       if (ec) {
         log_error(l_logger, fmt::format("async_resolve error: {} ", ec));
         this->complete(false, ec);
         return;
       }
-      if (!data_ || !data_.all_of<details::websocket_tmp_data>()) return;
       data_.get<details::websocket_tmp_data>().resolver_results_ = std::move(results);
       boost::beast::get_lowest_layer(data_.get<websocket_data>().stream_)
           .async_connect(data_.get<details::websocket_tmp_data>().resolver_results_, std::move(*this));
