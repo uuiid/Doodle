@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DoodleLightningPostSection.generated.h"
 #include "EntitySystem/IMovieSceneEntityProvider.h"
 #include "MovieSceneSection.h"
-
+//
+#include "DoodleLightningPostSection.generated.h"
 class UMovieSceneSignedObject;
 
 class UMovieSceneEntitySystemLinker;
@@ -19,11 +19,12 @@ class FImportedEntity;
 UCLASS()
 class DOODLECLUSTER_API UDoodleLightningPostSection : public UMovieSceneSection, public IMovieSceneEntityProvider {
   GENERATED_BODY()
+
  public:
  public:
   /// 开始 IMovieSceneEntityProvider 接口
   virtual void ImportEntityImpl(
-      UMovieSceneEntitySystemLinker *EntityLinker, const FEntityImportParams &Params, FImportedEntity *OutImportedEntity
+      UMovieSceneEntitySystemLinker* EntityLinker, const FEntityImportParams& Params, FImportedEntity* OutImportedEntity
   ) override;
 
  protected:
