@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "DoodleLightningPostSectionTemplate.generated.h"
 #include "Evaluation/MovieSceneEvalTemplate.h"
 #include "UObject/ObjectMacros.h"
-
+//
+#include "DoodleLightningPostSectionTemplate.generated.h"
 class UDoodleLightningPostSection;
 
 USTRUCT()
