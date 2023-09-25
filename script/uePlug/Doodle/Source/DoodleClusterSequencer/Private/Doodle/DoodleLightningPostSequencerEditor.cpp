@@ -45,8 +45,7 @@ bool FDoodleLightningPostSequencerEditor::SupportsSequence(UMovieSceneSequence* 
 }
 
 bool FDoodleLightningPostSequencerEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const {
-  // return Type == UMovieSceneDoodleClusterTrack::StaticClass();
-  return {};
+  return Type == UDoodleLightningPostTrack::StaticClass();
 }
 
 TSharedPtr<SWidget> FDoodleLightningPostSequencerEditor::BuildOutlinerEditWidget(
@@ -62,22 +61,19 @@ void FDoodleLightningPostSequencerEditor::AddNewObjectBindingTrack(TArray<FGuid>
     return;
   }
 
-  UClass* ClassToAdd = ADoodleLightingPost::StaticClass();  // LoadClassFromAssetData(AssetData);
-
   MovieScene->Modify();
 
   for (const FGuid& ObjectBindingID : InObjectBindings) {
-    UDoodleLightningPostTrack* CustomTrack =
-        CastChecked<UDoodleLightningPostTrack>(MovieScene->AddTrack(ClassToAdd, ObjectBindingID));
-    TSharedPtr<ISequencer> SequencerPin = GetSequencer();
-    UClass* Class                       = UDoodleLightningPostSection::StaticClass();
+    UDoodleLightningPostTrack* CustomTrack = MovieScene->AddTrack<UDoodleLightningPostTrack>(ObjectBindingID);
+    TSharedPtr<ISequencer> SequencerPin    = GetSequencer();
+    UClass* Class                          = UDoodleLightningPostSection::StaticClass();
 
     if (Class && SequencerPin) {
       FScopedTransaction L_Transaction(FText::Format(
           LOCTEXT("AddCustomSection_Transaction", "Add New Section From Class %s"), FText::FromName(Class->GetFName())
       ));
 
-      const FQualifiedFrameTime CurrentTime         = SequencerPin->GetLocalTime();
+      const FQualifiedFrameTime CurrentTime = SequencerPin->GetLocalTime();
 
       const FFrameNumber Duration           = (5.f * CurrentTime.Rate).FrameNumber;
 
