@@ -28,6 +28,9 @@ class DOODLE_API ADoodleLightingPost : public APostProcessVolume {
   UPROPERTY(BlueprintReadOnly, Category = Doodle, meta = (DisplayName = "对比度乘数", ShouldShowInViewport = true))
   float ContrastMultiplier;
 
+  UPROPERTY(VisibleAnywhere, Category = Dooele)
+  TObjectPtr<UCurveFloat> IntensityCurve;
+
  private:
   UPROPERTY(VisibleAnywhere, Category = "Light")
   TObjectPtr<UDirectionalLightComponent> LightComponent;
