@@ -17,5 +17,5 @@ public:
 
   virtual void ShutdownModule() override;
 
-  FDelegateHandle TrackEditorBindingHandle;
+  FDelegateHandle TrackEditorBindingHandle, TrackEditorBindingHandle2;
 };
