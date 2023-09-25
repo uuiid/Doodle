@@ -41,7 +41,7 @@ bool UDoodleLightningPostTrack::IsEmpty() const { return AnimationSections.IsEmp
 const TArray<UMovieSceneSection*>& UDoodleLightningPostTrack::GetAllSections() const { return AnimationSections; }
 
 bool UDoodleLightningPostTrack::SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const {
-  return SectionClass == UDoodleLightningPostTrack::StaticClass();
+  return SectionClass == UDoodleLightningPostSection::StaticClass();
 }
 
 UMovieSceneSection* UDoodleLightningPostTrack::CreateNewSection() {
