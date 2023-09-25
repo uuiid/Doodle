@@ -17,7 +17,7 @@ class FSequencerSectionPainter;
 class UMovieSceneGeometryCacheSection;
 class UMovieSceneSequence;
 class UMovieSceneSection;
-class UDoodleClusterSection;
+class UDoodleLightningPostSection;
 
 class FDoodleLightningPostSequencerSection : public ISequencerSection,
                                              public TSharedFromThis<FDoodleLightningPostSequencerSection> {
@@ -43,6 +43,6 @@ class FDoodleLightningPostSequencerSection : public ISequencerSection,
   // virtual void DilateSection(const TRange<FFrameNumber> &NewRange, float DilationFactor) override;
 
  private:
-  UDoodleClusterSection *Section;
+  UDoodleLightningPostSection *Section;
   TWeakPtr<ISequencer> Sequencer;
 };

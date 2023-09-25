@@ -1,13 +1,15 @@
 #include "Doodle/DoodleLightningPostSequencerSection.h"
 
-#include "Doodle/DoodleClusterSectionRuntime.h"
+#include "Doodle/DoodleLightningPostSection.h"
 #include "EditorStyleSet.h"
 #include "Fonts/FontMeasure.h"
 #include "Rendering/SlateRenderer.h"
 #include "SequencerSectionPainter.h"
+
 FDoodleLightningPostSequencerSection::FDoodleLightningPostSequencerSection(
     UMovieSceneSection& InSection, TWeakPtr<ISequencer> InSequencer
-) {}
+)
+    : Section(CastChecked<UDoodleLightningPostSection>(&InSection)), Sequencer(InSequencer) {}
 
 FDoodleLightningPostSequencerSection::~FDoodleLightningPostSequencerSection() = default;
 
@@ -32,15 +34,7 @@ int32 FDoodleLightningPostSequencerSection::OnPaintSection(FSequencerSectionPain
     static const FSlateBrush* GenericDivider = FAppStyle::GetBrush("Sequencer.GenericDivider");
     const FLinearColor DrawColor             = FAppStyle::GetSlateColor("SelectionColor").GetColor(FWidgetStyle());
 
-    FString FrameString                      = FString::FromInt(0);
-    TArrayView<TWeakObjectPtr<UObject>> L_Objects =
-        SequencerPtr->FindObjectsInCurrentSequence(Section->DoodleLockAtObject.GetGuid());
-    for (auto&& i : L_Objects) {
-      if (i.IsValid()) {
-        FrameString = i.Get()->GetName();
-        break;
-      }
-    }
+    FString FrameString = Section->IntensityCurve ? Section->IntensityCurve.GetPath() : FString{TEXT("None")};
 
     const FSlateFontInfo SmallLayoutFont             = FCoreStyle::GetDefaultFontStyle("Bold", 10);
 
