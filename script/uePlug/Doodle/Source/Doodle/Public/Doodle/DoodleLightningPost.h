@@ -17,6 +17,17 @@ class DOODLE_API ADoodleLightingPost : public APostProcessVolume {
  public:
   ADoodleLightingPost();
 
+  TObjectPtr<UDirectionalLightComponent> GetLightComponent() const { return LightComponent; }
+  // 强度乘数
+  UPROPERTY(BlueprintReadOnly, Category = Doodle, meta = (DisplayName = "强度乘数", ShouldShowInViewport = true))
+  float IntensityMultiplier;
+  // 饱和度乘数
+  UPROPERTY(BlueprintReadOnly, Category = Doodle, meta = (DisplayName = "饱和度乘数", ShouldShowInViewport = true))
+  float SaturationMultiplier;
+  // 对比度乘数
+  UPROPERTY(BlueprintReadOnly, Category = Doodle, meta = (DisplayName = "对比度乘数", ShouldShowInViewport = true))
+  float ContrastMultiplier;
+
  private:
   UPROPERTY(VisibleAnywhere, Category = "Light")
   TObjectPtr<UDirectionalLightComponent> LightComponent;
