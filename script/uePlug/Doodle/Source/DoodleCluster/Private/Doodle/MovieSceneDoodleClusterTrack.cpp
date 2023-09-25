@@ -18,9 +18,8 @@
 /* UMovieSceneDoodleClusterTrack structors
  *****************************************************************************/
 
-UMovieSceneDoodleClusterTrack::UMovieSceneDoodleClusterTrack(const FObjectInitializer &ObjectInitializer)
-    : Super(ObjectInitializer)
-{
+UMovieSceneDoodleClusterTrack::UMovieSceneDoodleClusterTrack(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer) {
 #if WITH_EDITORONLY_DATA
   TrackTint = FColor(124, 15, 124, 65);
 #endif
@@ -28,74 +27,53 @@ UMovieSceneDoodleClusterTrack::UMovieSceneDoodleClusterTrack(const FObjectInitia
   SupportedBlendTypes.Add(EMovieSceneBlendType::Absolute);
 
   EvalOptions.bCanEvaluateNearestSection = true;
-  EvalOptions.bEvaluateInPreroll = true;
+  EvalOptions.bEvaluateInPreroll         = true;
 }
 
-void UMovieSceneDoodleClusterTrack::RemoveAllAnimationData()
-{
-  AnimationSections.Empty();
+void UMovieSceneDoodleClusterTrack::RemoveAllAnimationData() { AnimationSections.Empty();
 }
 
-bool UMovieSceneDoodleClusterTrack::HasSection(const UMovieSceneSection &Section) const
-{
+bool UMovieSceneDoodleClusterTrack::HasSection(const UMovieSceneSection& Section) const {
   return AnimationSections.Contains(&Section);
 }
 
-void UMovieSceneDoodleClusterTrack::AddSection(UMovieSceneSection &Section)
-{
-  AnimationSections.Add(&Section);
+void UMovieSceneDoodleClusterTrack::AddSection(UMovieSceneSection& Section) { AnimationSections.Add(&Section);
 }
 
-void UMovieSceneDoodleClusterTrack::RemoveSection(UMovieSceneSection &Section)
-{
-  AnimationSections.Remove(&Section);
+void UMovieSceneDoodleClusterTrack::RemoveSection(UMovieSceneSection& Section) { AnimationSections.Remove(&Section);
 }
 
-void UMovieSceneDoodleClusterTrack::RemoveSectionAt(int32 SectionIndex)
-{
-  AnimationSections.RemoveAt(SectionIndex);
+void UMovieSceneDoodleClusterTrack::RemoveSectionAt(int32 SectionIndex) { AnimationSections.RemoveAt(SectionIndex);
 }
 
-bool UMovieSceneDoodleClusterTrack::IsEmpty() const
-{
-  return AnimationSections.Num() == 0;
+bool UMovieSceneDoodleClusterTrack::IsEmpty() const { return AnimationSections.IsEmpty(); }
+
+const TArray<UMovieSceneSection*>& UMovieSceneDoodleClusterTrack::GetAllSections() const { return AnimationSections;
 }
 
-const TArray<UMovieSceneSection *> &UMovieSceneDoodleClusterTrack::GetAllSections() const
-{
-  return AnimationSections;
-}
-
-bool UMovieSceneDoodleClusterTrack::SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const
-{
+bool UMovieSceneDoodleClusterTrack::SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const {
   return SectionClass == UDoodleClusterSection::StaticClass();
 }
 
-UMovieSceneSection *UMovieSceneDoodleClusterTrack::CreateNewSection()
-{
+UMovieSceneSection* UMovieSceneDoodleClusterTrack::CreateNewSection() {
   return NewObject<UMovieSceneSection>(this,
                                        UDoodleClusterSection::StaticClass(),
                                        NAME_None,
                                        RF_Transactional);
 }
 
-bool UMovieSceneDoodleClusterTrack::SupportsMultipleRows() const
-{
-  return false;
+bool UMovieSceneDoodleClusterTrack::SupportsMultipleRows() const { return false;
 }
 
-FMovieSceneEvalTemplatePtr UMovieSceneDoodleClusterTrack::CreateTemplateForSection(const UMovieSceneSection &InSection) const
-{
+FMovieSceneEvalTemplatePtr UMovieSceneDoodleClusterTrack::CreateTemplateForSection(const UMovieSceneSection& InSection
+) const {
   return FMovieSceneDoodleSectionClusterTemplate{
       *CastChecked<const UDoodleClusterSection>(&InSection)};
 }
 
 #if WITH_EDITORONLY_DATA
 
-FText UMovieSceneDoodleClusterTrack::GetDefaultDisplayName() const
-{
-  return LOCTEXT("TrackName", "Doodle Cluster");
-}
+FText UMovieSceneDoodleClusterTrack::GetDefaultDisplayName() const { return LOCTEXT("TrackName", "Doodle Cluster"); }
 
 #endif
 
