@@ -1,7 +1,9 @@
 #include "Doodle/DoodleLightningPostSequencerEditor.h"
 
 #include "Doodle/DoodleLightningPost.h"
+#include "Doodle/DoodleLightningPostSection.h"
 #include "Doodle/DoodleLightningPostSequencerSection.h"
+#include "Doodle/DoodleLightningPostTrack.h"
 #include "LevelSequence.h"
 #include "ScopedTransaction.h"
 #define LOCTEXT_NAMESPACE "DoodleLightningPostSequencerEditor"
@@ -53,24 +55,46 @@ TSharedPtr<SWidget> FDoodleLightningPostSequencerEditor::BuildOutlinerEditWidget
   return FMovieSceneTrackEditor::BuildOutlinerEditWidget(ObjectBinding, Track, Params);
   // return {};
 }
+
 void FDoodleLightningPostSequencerEditor::AddNewObjectBindingTrack(TArray<FGuid> InObjectBindings) const {
-  TSharedPtr<ISequencer> SequencerPin = GetSequencer();
-
-  TSet<ADoodleLightingPost*> L_Sks;
-
-  for (auto&& I_ObjBind : InObjectBindings) {
-    TArrayView<TWeakObjectPtr<UObject>> L_UObjs = SequencerPin->FindObjectsInCurrentSequence(I_ObjBind);
-
-    for (auto&& I : L_UObjs) {
-      if (I.IsValid() && I.Get()->IsA<ADoodleLightingPost>()) {
-        L_Sks.Add(CastChecked<ADoodleLightingPost>(I.Get()));
-      }
-    }
+  UMovieScene* MovieScene = GetFocusedMovieScene();
+  if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
+    return;
   }
 
-  for (auto&& I_SkeletalComponent : L_Sks) {
-    // UAnimInstance* AnimInstance = I_SkeletalComponent->GetAnimInstance();
-    // SequencerPin->GetHandleToObject(AnimInstance ? AnimInstance : NewObject<UAnimInstance>(I_SkeletalComponent));
+  UClass* ClassToAdd = ADoodleLightingPost::StaticClass();  // LoadClassFromAssetData(AssetData);
+
+  MovieScene->Modify();
+
+  for (const FGuid& ObjectBindingID : InObjectBindings) {
+    UDoodleLightningPostTrack* CustomTrack =
+        CastChecked<UDoodleLightningPostTrack>(MovieScene->AddTrack(ClassToAdd, ObjectBindingID));
+    TSharedPtr<ISequencer> SequencerPin = GetSequencer();
+    UClass* Class                       = UDoodleLightningPostSection::StaticClass();
+
+    if (Class && SequencerPin) {
+      FScopedTransaction L_Transaction(FText::Format(
+          LOCTEXT("AddCustomSection_Transaction", "Add New Section From Class %s"), FText::FromName(Class->GetFName())
+      ));
+
+      const FQualifiedFrameTime CurrentTime         = SequencerPin->GetLocalTime();
+
+      const FFrameNumber Duration           = (5.f * CurrentTime.Rate).FrameNumber;
+
+      UDoodleLightningPostSection* NewAttachSection =
+          CastChecked<UDoodleLightningPostSection>(CustomTrack->CreateNewSection());
+      NewAttachSection->SetRange(
+          TRange<FFrameNumber>(CurrentTime.Time.FrameNumber, CurrentTime.Time.FrameNumber + Duration)
+      );
+      NewAttachSection->InitialPlacement(
+          CustomTrack->GetAllSections(), CurrentTime.Time.FrameNumber, Duration.Value,
+          CustomTrack->SupportsMultipleRows()
+      );
+      CustomTrack->AddSection(*NewAttachSection);
+
+      SequencerPin->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
+      SequencerPin->OnAddTrack(CustomTrack, FGuid());
+    }
   }
 }
 #undef LOCTEXT_NAMESPACE
