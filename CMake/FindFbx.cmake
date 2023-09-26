@@ -25,7 +25,7 @@ find_library(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_STATIC_DEBUG "libfbxsdk-md.lib"
         PATH_SUFFIXES "lib/vs2022/x64/debug"
 )
 
-find_library(${CMAKE_FIND_PACKAGE_NAME}_DLL_DEBUG "libfbxsdk.dll"
+find_file(${CMAKE_FIND_PACKAGE_NAME}_DLL_DEBUG "libfbxsdk.dll"
         PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
         PATH_SUFFIXES "lib/vs2022/x64/debug"
 )
@@ -38,7 +38,30 @@ find_library(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_STATIC_RELEASE "libfbxsdk-md.lib
         PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
         PATH_SUFFIXES "lib/vs2022/x64/release"
 )
-find_library(${CMAKE_FIND_PACKAGE_NAME}_DLL_RELEASE "libfbxsdk.dll"
+find_file(${CMAKE_FIND_PACKAGE_NAME}_DLL_RELEASE "libfbxsdk.dll"
+        PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
+        PATH_SUFFIXES "lib/vs2022/x64/release"
+)
+
+# find xml
+find_library(
+        ${CMAKE_FIND_PACKAGE_NAME}_XML_LIBRARY_DEBUG "libxml2-md.lib"
+        PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
+        PATH_SUFFIXES "lib/vs2022/x64/debug"
+)
+find_library(
+        ${CMAKE_FIND_PACKAGE_NAME}_XML_LIBRARY_RELEASE "libxml2-md.lib"
+        PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
+        PATH_SUFFIXES "lib/vs2022/x64/release"
+)
+# find zlib-md
+find_library(
+        ${CMAKE_FIND_PACKAGE_NAME}_ZLIB_LIBRARY_DEBUG "zlib-md.lib"
+        PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
+        PATH_SUFFIXES "lib/vs2022/x64/debug"
+)
+find_library(
+        ${CMAKE_FIND_PACKAGE_NAME}_ZLIB_LIBRARY_RELEASE "zlib-md.lib"
         PATHS ${${CMAKE_FIND_PACKAGE_NAME}_SDK_ROOT}
         PATH_SUFFIXES "lib/vs2022/x64/release"
 )
@@ -65,6 +88,20 @@ set_property(TARGET ${CMAKE_FIND_PACKAGE_NAME}
 add_library(${CMAKE_FIND_PACKAGE_NAME}-static STATIC IMPORTED)
 
 target_include_directories(${CMAKE_FIND_PACKAGE_NAME}-static INTERFACE ${${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIR})
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_libraries(${CMAKE_FIND_PACKAGE_NAME}-static INTERFACE
+            ${${CMAKE_FIND_PACKAGE_NAME}_XML_LIBRARY_DEBUG}
+            ${${CMAKE_FIND_PACKAGE_NAME}_ZLIB_LIBRARY_DEBUG}
+    )
+
+elseif ()
+    target_link_libraries(${CMAKE_FIND_PACKAGE_NAME}-static INTERFACE
+            ${${CMAKE_FIND_PACKAGE_NAME}_XML_LIBRARY_RELEASE}
+            ${${CMAKE_FIND_PACKAGE_NAME}_ZLIB_LIBRARY_RELEASE}
+    )
+endif ()
+
 
 set_target_properties(${CMAKE_FIND_PACKAGE_NAME}-static PROPERTIES
         IMPORTED_LOCATION_DEBUG "${${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_STATIC_DEBUG}"
