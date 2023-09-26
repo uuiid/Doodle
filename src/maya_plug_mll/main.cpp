@@ -13,6 +13,7 @@
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
+#include <maya_plug/maya_comm/doodle_to_ue_fbx.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
@@ -210,6 +211,8 @@ MStatus initializePlugin(MObject obj) {
 
   /// 添加加载实体命令
   status = maya_reg->register_command<::doodle::maya_plug::add_entt>(k_plugin);
+  ///  添加自定义fbx导出
+  status = maya_reg->register_command<::doodle::maya_plug::doodle_to_ue_fbx>(k_plugin);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {

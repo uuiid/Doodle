@@ -13,7 +13,12 @@ constexpr char doodle_to_ue_fbx[]{"doodle_to_ue_fbx"};
 MSyntax doodle_to_ue_fbx_syntax();
 
 class doodle_to_ue_fbx
-    : public TemplateAction<doodle_to_ue_fbx, doodle_to_ue_fbx_ns::doodle_to_ue_fbx, doodle_to_ue_fbx_syntax> {};
+    : public TemplateAction<doodle_to_ue_fbx, doodle_to_ue_fbx_ns::doodle_to_ue_fbx, doodle_to_ue_fbx_syntax> {
+ public:
+  doodle_to_ue_fbx();
+  ~doodle_to_ue_fbx() override;
+  MStatus doIt(const MArgList& in_list) override;
+};
 
 }  // namespace maya_plug
 }  // namespace doodle
