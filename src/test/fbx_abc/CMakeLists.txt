@@ -1,4 +1,4 @@
-find_package(Fbx 2020.3.4)
+#find_package(Fbx 2020.3.4)
 
 if (TARGET Fbx::Fbx)
     add_executable(abc2fbx abc2fbx.cpp)
