@@ -1,8 +1,10 @@
 ﻿#include "DoodleLightningPostSectionTemplate.h"
 
 #include "Components/DirectionalLightComponent.h"
+#include "Curves/CurveFloat.h"
 #include "Doodle/DoodleLightningPost.h"
 #include "Doodle/DoodleLightningPostSection.h"
+#include "Math/NumericLimits.h"
 
 struct FLightingPostEventTrackExecutionToken : IMovieSceneExecutionToken {
   FLightingPostEventTrackExecutionToken(const FDoodleLightningPostSectionTemplate* InSectionTemplate)
