@@ -95,7 +95,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
             ${${CMAKE_FIND_PACKAGE_NAME}_ZLIB_LIBRARY_DEBUG}
     )
 
-elseif ()
+else ()
     target_link_libraries(${CMAKE_FIND_PACKAGE_NAME}-static INTERFACE
             ${${CMAKE_FIND_PACKAGE_NAME}_XML_LIBRARY_RELEASE}
             ${${CMAKE_FIND_PACKAGE_NAME}_ZLIB_LIBRARY_RELEASE}
