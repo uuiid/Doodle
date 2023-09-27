@@ -32,4 +32,6 @@ class FdoodleEditorModule : public IModuleInterface {
 
   TArray<TSharedPtr<IAssetTypeActions>> CreateAssetActions;
   // TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
+
+  TWeakPtr<ISequencer> MySequencer;
 };

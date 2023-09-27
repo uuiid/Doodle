@@ -19,6 +19,10 @@ void FDoodleCommands::RegisterCommands() {
       DoodleImportFbxWindow, "Doodle Import Fbx", "Open Import Fbx Windows", EUserInterfaceActionType::Button,
       FInputGesture()
   );
+  UI_COMMAND(
+      DoodleVariantWindow, "Doodle Variant", "Open Variant Windows", EUserInterfaceActionType::Button,
+      FInputGesture()
+  );
 }
 
 #undef LOCTEXT_NAMESPACE

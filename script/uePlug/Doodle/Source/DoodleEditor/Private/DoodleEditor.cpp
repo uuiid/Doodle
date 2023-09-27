@@ -17,6 +17,15 @@
 #include "Doodle/CreateCharacter/Editor/CreateCharacterActor_Customization.h"
 #include "AssetToolsModule.h"  // 注册资产动作
 #include "Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.h"
+//--------------变体相关
+#include "DoodleVariantAssetTypeActions.h"
+#include "ISequencerModule.h"
+#include "ILevelSequenceEditorToolkit.h"
+#include "LevelSequence.h"
+#include "Animation/SkeletalMeshActor.h"
+#include "AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "DoodleVariantAssetUserData.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -39,6 +48,13 @@ void FdoodleEditorModule::StartupModule() {
       FCanExecuteAction()
   );
 
+  //zhanghang 23/09/25 变体相关代码
+  PluginCommands->MapAction(
+      FDoodleCommands::Get().DoodleVariantWindow,
+      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(DoodleVariantCompoundWidget::Name); }),
+      FCanExecuteAction()
+  );
+
   /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
       FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleEditorModule::RegisterMenus)
@@ -52,6 +68,11 @@ void FdoodleEditorModule::StartupModule() {
   FGlobalTabmanager::Get()
       ->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
       .SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  //----------------zhanghang 变体相关 tab
+  FGlobalTabmanager::Get()
+      ->RegisterNomadTabSpawner(DoodleVariantCompoundWidget::Name, FOnSpawnTab::CreateStatic(&DoodleVariantCompoundWidget::OnSpawnAction))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle3", "Doodle Variant"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   FContentBrowserModule &ContentBrowserModule =
@@ -96,6 +117,97 @@ void FdoodleEditorModule::StartupModule() {
   //                          AssetRegistryConstants::ModuleName)
   //                          .Get();
   // AssetRegistry->AddPath(R"(/../../tmp2/Content/)");
+  //---------------------注册 zhanghang 23/09/25 变体相关--------------------------------------------
+  IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+  EAssetTypeCategories::Type AssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName{ TEXT("Create Variant") }, LOCTEXT("Doodle", "Doodle Variant"));
+  TSharedPtr<DoodleVariantAssetTypeActions> actionType = MakeShareable(new DoodleVariantAssetTypeActions(AssetCategory));
+  AssetTools.RegisterAssetTypeActions(actionType.ToSharedRef());
+  //-------------------------
+  ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+  TSharedPtr<FExtensibilityManager> Manager = module.GetObjectBindingContextMenuExtensibilityManager();
+
+  module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
+
+      MySequencer = OwningSequencer.ToWeakPtr();
+      }));
+  //-----------------------
+    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([&] 
+        {
+        TSharedPtr<FExtender> extender = MakeShareable(new FExtender());
+        extender->AddMenuExtension("Edit", EExtensionHook::Before, TSharedPtr<FUICommandList>(), FMenuExtensionDelegate::CreateLambda([&](FMenuBuilder& builder)
+        {
+                TSharedPtr<ISequencer> sequencer = MySequencer.Pin();
+                TArray<FGuid> Objects;
+                sequencer.Get()->GetSelectedObjects(Objects);
+                //--------------------------
+                if (Objects.Num() > 0)
+                {
+                    AActor* actor = nullptr;
+                    for (TWeakObjectPtr<UObject> ptr : sequencer.Get()->FindObjectsInCurrentSequence(Objects[0]))
+                    {
+                        actor =  Cast<AActor>(ptr.Get());
+                        if (actor) { break; }
+                    }
+                    if (actor) 
+                    {
+                        TArray<UObject*> Assets;
+                        actor->GetReferencedContentObjects(Assets);
+                        if (Assets.Num() > 0 && Assets[0]->GetClass()->IsChildOf<USkeletalMesh>())
+                        {
+                            USkeletalMesh* mesh = Cast<USkeletalMesh>(Assets[0]);
+                            UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
+                            if (user_data&& user_data->variant_obj)
+                            {
+                                builder.BeginSection("Doodle Varaint", LOCTEXT("Varaint", "Varaint"));
+                                {
+                                    builder.AddSubMenu
+                                    (
+                                        FText::FromString(TEXT("切换变体")),
+                                        FText::FromString(TEXT("切换变体 tooltip")),
+                                        FNewMenuDelegate::CreateLambda([this, user_data, actor](FMenuBuilder& builder)
+                                            {
+                                                UDoodleVariantObject* myObject = user_data->variant_obj;
+                                                if (myObject)
+                                                {
+                                                    for (auto& e : myObject->all_varaint)
+                                                    {
+                                                        builder.AddMenuEntry(
+                                                            FText::FromString(e.Key),
+                                                            LOCTEXT("DoodleVaraintTooltip", "Change Skeletal Mesh Varaint"),
+                                                            FSlateIcon(),
+                                                            // NOTE 设置点击触发的函数
+                                                            FUIAction(FExecuteAction::CreateLambda([myObject, e, actor]()
+                                                                {
+                                                                    myObject->all_varaint[e.Key];
+                                                                    //----------------------
+                                                                    ASkeletalMeshActor* mesh = Cast<ASkeletalMeshActor>(actor);
+                                                                    TArray<FSkeletalMaterial> list = myObject->all_varaint[e.Key].varaints;
+                                                                    for (int i = 0;i < list.Num();i++)
+                                                                    {
+                                                                        mesh->GetSkeletalMeshComponent()->SetMaterial(i, list[i].MaterialInterface);
+                                                                    }
+                                                                    mesh->GetSkeletalMeshComponent()->PostApplyToComponent();
+                                                                })));
+                                                    }
+                                                }
+                                            }),
+                                        FUIAction(),
+                                        NAME_None,
+                                        EUserInterfaceActionType::Button,
+                                        false,
+                                        FSlateIcon()
+                                    );
+                                }
+                                builder.EndSection();
+                            }
+                        }
+                    }
+                }
+        }));
+        ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+        TSharedPtr<FExtensibilityManager> Manager = module.GetObjectBindingContextMenuExtensibilityManager();
+        Manager.Get()->AddExtender(extender);
+        }));
 }
 
 void FdoodleEditorModule::ShutdownModule() {
@@ -109,6 +221,8 @@ void FdoodleEditorModule::ShutdownModule() {
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
+  // zhanghang 变体相关 23/09/25
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DoodleVariantCompoundWidget::Name);
 
   // 取消注册资产动作
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
@@ -126,6 +240,11 @@ void FdoodleEditorModule::ShutdownModule() {
     L_Module.NotifyCustomizationModuleChanged();
   }
   // AssetDataSource.Reset();
+  //-------------取消注册 zhanghang 变体相关 23/09/25
+  if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
+      IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+      AssetTools.UnregisterAssetTypeActions(MakeShareable(new DoodleVariantAssetTypeActions));
+  }
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
     const FSpawnTabArgs &SpawnTabArgs
@@ -157,6 +276,7 @@ void FdoodleEditorModule::RegisterMenus() {
       FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().OpenPluginWindow, PluginCommands);
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands);
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleVariantWindow, PluginCommands);
     }
   }
 
