@@ -10,6 +10,8 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFnMesh.h>
+#include <maya/MItMeshFaceVertex.h>
+#include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPointArray.h>
@@ -62,12 +64,12 @@ struct fbx_write_data {
     }
     // 三角形
     {
-      MIntArray l_tri_vert_list{};
+      MIntArray l_vert_list{};
       for (auto i = 0; i < l_mesh.numPolygons(); ++i) {
         mesh->BeginPolygon();
-        maya_chick(l_mesh.getPolygonVertices(i, l_tri_vert_list));
-        for (auto j = 0; j < l_tri_vert_list.length(); ++j) {
-          mesh->AddPolygon(l_tri_vert_list[j]);
+        maya_chick(l_mesh.getPolygonVertices(i, l_vert_list));
+        for (auto j = 0; j < l_vert_list.length(); ++j) {
+          mesh->AddPolygon(l_vert_list[j]);
         }
         mesh->EndPolygon();
       }
@@ -80,36 +82,30 @@ struct fbx_write_data {
 
       for (auto&& i_name : l_uv_set_names) {
         auto l_uv_layer = mesh->GetLayer(mesh->CreateLayer());
+
+        auto l_layer    = FbxLayerElementUV::Create(mesh, i_name.asChar());
+        l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
+        l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+        // for maya uv
         MFloatArray l_u{};
         MFloatArray l_v{};
         l_mesh.getUVs(l_u, l_v, &i_name);
-
-        auto l_layer = FbxLayerElementUV::Create(mesh, i_name.asChar());
-        l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
-        // for maya uv
         for (auto i = 0; i < l_u.length(); ++i) {
           l_layer->GetDirectArray().Add(FbxVector2{l_u[i], l_v[i]});
         }
-        std::int32_t l_uv_id{};
+
+        //        l_layer->GetIndexArray().SetCount(l_mesh.numVertices());
         auto l_face_count = l_mesh.numPolygons();
-        std::vector<std::int32_t> l_uv_map{};
-        //        l_layer->GetIndexArray().SetCount()
         for (auto i = 0; i < l_face_count; ++i) {
-          auto l_len = l_mesh.polygonVertexCount(i);
-          for (auto j = 0; j < l_len; ++j) {
+          MIntArray l_vert_list{};
+          maya_chick(l_mesh.getPolygonVertices(i, l_vert_list));
+          for (auto j = 0; j < l_vert_list.length(); ++j) {
+            std::int32_t l_uv_id{};
             maya_chick(l_mesh.getPolygonUVid(i, j, l_uv_id, &i_name));
-            //            l_layer->GetIndexArray().SetAt(l_uv_id, i + j);
-            l_uv_map.emplace_back(l_uv_id);
+            l_layer->GetIndexArray().Add(l_uv_id);
           }
         }
-        l_layer->GetIndexArray().SetCount(l_uv_map.size());
-        for (auto&& i : l_uv_map) {
-          l_layer->GetIndexArray().Add(i);
-        }
-        log_error(fmt::format(
-            "uv [{}] uv size {} {} ", fmt::join(l_uv_map, "\n"), l_layer->GetDirectArray().GetCount(),
-            l_layer->GetIndexArray().GetCount()
-        ));
+
         l_uv_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
       }
     }
