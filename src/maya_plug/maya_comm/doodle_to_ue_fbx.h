@@ -14,6 +14,11 @@ MSyntax doodle_to_ue_fbx_syntax();
 
 class doodle_to_ue_fbx
     : public TemplateAction<doodle_to_ue_fbx, doodle_to_ue_fbx_ns::doodle_to_ue_fbx, doodle_to_ue_fbx_syntax> {
+  class impl_data;
+  std::unique_ptr<impl_data> p_i;
+
+  void write_fbx();
+
  public:
   doodle_to_ue_fbx();
   ~doodle_to_ue_fbx() override;
