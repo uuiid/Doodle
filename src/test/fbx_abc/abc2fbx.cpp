@@ -248,7 +248,7 @@ void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh&
   l_doc_info->LastSaved_ApplicationVersion.Set("1.0.0");
 
   l_scene->SetSceneInfo(l_doc_info);
-  l_scene->GetSrcObject<FbxMesh>(0);
+  //  l_scene->GetSrcObject<FbxMesh>(0);
 
   l_scene->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::cm);
   auto anim_stack = FbxAnimStack::Create(l_scene, "anim_stack");
