@@ -68,7 +68,7 @@ struct fbx_write_data {
   FbxNode* node{};
   FbxMesh* mesh{};
 
-  void write_mesh(const MObject& in_mesh) {
+  void write_mesh(const MDagPath& in_mesh) {
     if (!in_mesh.hasFn(MFn::kMesh)) {
       log_info("not mesh");
       return;
@@ -197,7 +197,7 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
     auto l_node = FbxNode::Create(p_i->scene_, l_path.partialPathName().asChar());
     p_i->scene_->GetRootNode()->AddChild(l_node);
     fbx_write_data l_data{l_node, nullptr};
-    l_data.write_mesh(l_path.node());
+    l_data.write_mesh(l_path);
   }
   write_fbx();
   return MS::kSuccess;
