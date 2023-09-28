@@ -8,14 +8,18 @@
 
 #include <fbxsdk.h>
 #include <maya/MArgDatabase.h>
+#include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPointArray.h>
+#include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
+#include <treehh/tree.hh>
 
 namespace doodle {
 namespace maya_plug {
@@ -68,11 +72,13 @@ struct fbx_write_data {
   FbxNode* node{};
   FbxMesh* mesh{};
 
-  void write_mesh(const MDagPath& in_mesh) {
+  void write_mesh(MDagPath& in_mesh) {
+    write_transform(in_mesh);
     if (!in_mesh.hasFn(MFn::kMesh)) {
-      log_info("not mesh");
+      //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
       return;
     }
+    maya_chick(in_mesh.extendToShape());
     MFnMesh l_mesh{in_mesh};
     mesh = FbxMesh::Create(node->GetScene(), l_mesh.name().asChar());
     node->SetNodeAttribute(mesh);
@@ -151,12 +157,68 @@ struct fbx_write_data {
       l_main_layer->SetSmoothing(l_layer);
     }
   }
+
+  void write_transform(const MDagPath& in_mesh) {
+    MFnTransform l_transform{in_mesh};
+    MStatus l_status{};
+    auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
+    maya_chick(l_status);
+    node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
+    MEulerRotation l_rot{};
+    maya_chick(l_transform.getRotation(l_rot));
+
+    node->LclRotation.Set(FbxVector4{l_rot.x, l_rot.y, l_rot.z});
+    switch (l_rot.order) {
+      case MTransformationMatrix::kXYZ:
+        node->RotationOrder = FbxEuler::eOrderXYZ;
+        break;
+      case MTransformationMatrix::kYZX:
+        node->RotationOrder = FbxEuler::eOrderYZX;
+        break;
+      case MTransformationMatrix::kZXY:
+        node->RotationOrder = FbxEuler::eOrderZXY;
+        break;
+      case MTransformationMatrix::kXZY:
+        node->RotationOrder = FbxEuler::eOrderXZY;
+        break;
+      case MTransformationMatrix::kYXZ:
+        node->RotationOrder = FbxEuler::eOrderYXZ;
+        break;
+      case MTransformationMatrix::kZYX:
+        node->RotationOrder = FbxEuler::eOrderZYX;
+        break;
+
+      default:
+        node->RotationOrder = FbxEuler::eOrderXYZ;
+        break;
+    }
+    std::double_t l_scale[3]{};
+    l_transform.getScale(l_scale);
+    node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
+  }
+};
+
+struct tree_dag_node {
+  MDagPath dag_path{};
+  FbxNode* node{};
 };
 
 class doodle_to_ue_fbx::impl_data {
  public:
   std::shared_ptr<FbxManager> manager_{};
   FbxScene* scene_{};
+  using tree_t = tree<tree_dag_node>;
+  tree_t tree_dag_{};
+
+  void iter_tree(const tree_t::iterator& in_parent) {
+    for (auto it = tree_t::begin(in_parent); it != tree_t::end(in_parent); ++it) {
+      it->node = FbxNode::Create(scene_, it->dag_path.partialPathName().asChar());
+      in_parent->node->AddChild(it->node);
+      fbx_write_data l_data{it->node, nullptr};
+      l_data.write_mesh(it->dag_path);
+      iter_tree(it);
+    }
+  }
 };
 
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
@@ -188,17 +250,32 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   auto anim_stack = FbxAnimStack::Create(p_i->scene_, "anim_stack");
   auto anim_layer = FbxAnimLayer::Create(p_i->scene_, "anim_layer");
   anim_stack->AddMember(anim_layer);
-  // for selectionlist
+
+  p_i->tree_dag_ = {tree_dag_node{MDagPath{}, p_i->scene_->GetRootNode()}};
+
+  // 从下方选择的网格体构建树
   MDagPath l_path{};
   for (MItSelectionList l_it{l_list}; !l_it.isDone(); l_it.next()) {
     maya_chick(l_it.getDagPath(l_path));
-    maya_chick(l_path.extendToShape());
+    // for dag path
+    auto l_begin = p_i->tree_dag_.begin();
+    for (std::int32_t i = l_path.length() - 1; i >= 0; --i) {
+      MDagPath l_sub_path{l_path};
+      l_sub_path.pop(i);
 
-    auto l_node = FbxNode::Create(p_i->scene_, l_path.partialPathName().asChar());
-    p_i->scene_->GetRootNode()->AddChild(l_node);
-    fbx_write_data l_data{l_node, nullptr};
-    l_data.write_mesh(l_path);
+      if (auto l_tree_it = ranges::find_if(
+              std::begin(l_begin), std::end(l_begin),
+              [&](const impl_data::tree_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
+          );
+          l_tree_it != std::end(l_begin)) {
+        l_begin = l_tree_it;
+      } else {
+        l_begin = p_i->tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+      }
+    }
   }
+
+  p_i->iter_tree(p_i->tree_dag_.begin());
   write_fbx();
   return MS::kSuccess;
 }
