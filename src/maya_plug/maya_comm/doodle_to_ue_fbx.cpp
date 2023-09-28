@@ -40,6 +40,31 @@ struct fbx_skin_data {
 };
 
 struct fbx_write_data {
+  FbxLayerElementUV* mesh_2_uv(MFnMesh& in_mesh, MString& in_set_name) {
+    auto* l_layer = FbxLayerElementUV::Create(mesh, in_set_name.asChar());
+    l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
+    l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+    // for maya uv
+    MFloatArray l_u{};
+    MFloatArray l_v{};
+    in_mesh.getUVs(l_u, l_v, &in_set_name);
+    for (auto i = 0; i < l_u.length(); ++i) {
+      l_layer->GetDirectArray().Add(FbxVector2{l_u[i], l_v[i]});
+    }
+
+    auto l_face_count = in_mesh.numPolygons();
+    for (auto i = 0; i < l_face_count; ++i) {
+      MIntArray l_vert_list{};
+      maya_chick(in_mesh.getPolygonVertices(i, l_vert_list));
+      for (auto j = 0; j < l_vert_list.length(); ++j) {
+        std::int32_t l_uv_id{};
+        maya_chick(in_mesh.getPolygonUVid(i, j, l_uv_id, &in_set_name));
+        l_layer->GetIndexArray().Add(l_uv_id);
+      }
+    }
+    return l_layer;
+  }
+
   FbxNode* node{};
   FbxMesh* mesh{};
 
@@ -80,31 +105,19 @@ struct fbx_write_data {
       // get uv set names
       MStringArray l_uv_set_names{};
       maya_chick(l_mesh.getUVSetNames(l_uv_set_names));
-
       for (auto&& i_name : l_uv_set_names) {
-        auto l_layer = FbxLayerElementUV::Create(mesh, i_name.asChar());
-        l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
-        l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-        // for maya uv
-        MFloatArray l_u{};
-        MFloatArray l_v{};
-        l_mesh.getUVs(l_u, l_v, &i_name);
-        for (auto i = 0; i < l_u.length(); ++i) {
-          l_layer->GetDirectArray().Add(FbxVector2{l_u[i], l_v[i]});
-        }
-
-        //        l_layer->GetIndexArray().SetCount(l_mesh.numVertices());
-        auto l_face_count = l_mesh.numPolygons();
-        for (auto i = 0; i < l_face_count; ++i) {
-          MIntArray l_vert_list{};
-          maya_chick(l_mesh.getPolygonVertices(i, l_vert_list));
-          for (auto j = 0; j < l_vert_list.length(); ++j) {
-            std::int32_t l_uv_id{};
-            maya_chick(l_mesh.getPolygonUVid(i, j, l_uv_id, &i_name));
-            l_layer->GetIndexArray().Add(l_uv_id);
-          }
-        }
+        auto* l_layer = mesh_2_uv(l_mesh, i_name);
         l_main_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
+        break;
+      }
+      if (l_uv_set_names.length() > 1) {
+        log_error(fmt::format("mesh {} uv set length > 1", get_node_name(in_mesh)));
+
+        for (auto i = 1; i < l_uv_set_names.length(); ++i) {
+          auto* l_uv_layer = mesh->GetLayer(mesh->CreateLayer());
+          auto* l_layer    = mesh_2_uv(l_mesh, l_uv_set_names[i]);
+          l_uv_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
+        }
       }
     }
 
