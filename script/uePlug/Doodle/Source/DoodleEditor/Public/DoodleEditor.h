@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 #include "UObject/StrongObjectPtr.h"
+#include "DoodleVariantAssetTypeActions.h"
 
 class FToolBarBuilder;
 class FMenuBuilder;

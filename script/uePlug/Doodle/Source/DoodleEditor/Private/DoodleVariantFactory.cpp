@@ -135,6 +135,12 @@ public:
     FAssetData meshAssetData;
 };
 
+UDoodleVariantFactory::UDoodleVariantFactory() {
+    bCreateNew = true;
+    bEditAfterNew = true;
+    SupportedClass = UDoodleVariantObject::StaticClass();
+}
+
 bool UDoodleVariantFactory::ConfigureProperties() 
 {
     TSharedRef<SCreateVariantDialog> Dialog = SNew(SCreateVariantDialog);
@@ -145,10 +151,10 @@ bool UDoodleVariantFactory::ConfigureProperties()
         USkeletalMesh* mesh = Cast<USkeletalMesh>(meshAssetData.GetAsset());
         UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
         FAssetData variant_date;
-        if (user_data && user_data->variant_obj)
+        if (user_data && user_data->variantObj)
         {
             FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-            variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(user_data->variant_obj));
+            variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(user_data->variantObj));
             UObject* object = variant_date.ToSoftObjectPath().TryLoad();
             UDoodleVariantObject* uObject = Cast<UDoodleVariantObject>(object);
             //--------------
@@ -183,18 +189,18 @@ UObject* UDoodleVariantFactory::FactoryCreateNew(UClass* InClass, UObject* InPar
        for (int m = 0; m < trangeMat.Num(); m++) {
            trangeMat[m] = mesh->GetMaterials()[m];
        }
-       uObject->mesh = mesh;
-       uObject->path = meshAssetData.PackagePath;
+       uObject->Mesh = mesh;
+       uObject->Path = meshAssetData.PackagePath;
        FDATA f;
        f.varaints = trangeMat;
        FString now_varaint = TEXT("default");
-       uObject->all_varaint.Add(now_varaint, f);
+       uObject->allVaraint.Add(now_varaint, f);
        //-----------------------------
        UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(mesh, NAME_None, RF_NoFlags);
        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
        FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(uObject));
        //UserData->variant_asset = variant_date;
-       UserData->variant_obj = uObject;
+       UserData->variantObj = uObject;
        mesh->AddAssetUserData(UserData);
     }
     return uObject;

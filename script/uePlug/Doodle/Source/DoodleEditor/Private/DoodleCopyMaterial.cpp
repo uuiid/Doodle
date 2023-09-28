@@ -56,6 +56,10 @@
 #include "Rendering/SkeletalMeshModel.h"
 #include "MeshDescription.h"
 #include "SkeletalMeshBuilder.h"
+
+//变体管理
+#include "DoodleVariantCompoundWidget.h"
+
 namespace {
 void print_test(USkeletalMesh *In_Obj) {
   auto L_Lod = In_Obj->GetImportedModel();

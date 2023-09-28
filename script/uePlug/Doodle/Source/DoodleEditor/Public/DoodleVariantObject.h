@@ -22,9 +22,9 @@ class DOODLEEDITOR_API UDoodleVariantObject : public UObject
 	GENERATED_BODY()
 public:
 	UPROPERTY(VisibleAnywhere, DisplayName = "")
-	USkeletalMesh* mesh;
+	USkeletalMesh* Mesh;
 	UPROPERTY(VisibleAnywhere,DisplayName = "lu_jin")
-	FName path;
+	FName Path;
 	UPROPERTY(EditAnywhere,DisplayName = "bian_ti")
-	TMap<FString,FDATA> all_varaint;
+	TMap<FString,FDATA> allVaraint;
 };

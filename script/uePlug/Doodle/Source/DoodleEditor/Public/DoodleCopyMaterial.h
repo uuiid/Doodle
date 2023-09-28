@@ -3,7 +3,6 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "UObject/GCObject.h"
-#include "DoodleVariantCompoundWidget.h"
 
 class DoodleCopyMat : public SCompoundWidget, public FGCObject {
  public:

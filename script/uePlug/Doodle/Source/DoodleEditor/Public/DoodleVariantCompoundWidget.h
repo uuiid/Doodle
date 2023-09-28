@@ -12,7 +12,7 @@
 struct ItemData
 {
 	FString name;
-	FString new_name;
+	FString newName;
 	int index = -1;
 };
 
@@ -52,13 +52,13 @@ public:
 	//------------------------
 	UDoodleVariantObject* myObject;
 
-	TSharedPtr<STextBlock> name_text;
-	TSharedPtr<STextBlock> select_text;
+	TSharedPtr<STextBlock> nameText;
+	TSharedPtr<STextBlock> selectText;
 
 	void SetSetVariantData(UDoodleVariantObject* obj);
 	void SetVariantInfo(FString varaint_name);
 
 	/** Pool for maintaining and rendering thumbnails */
 	TSharedPtr<FAssetThumbnailPool> AssetThumbnailPool = MakeShareable(new FAssetThumbnailPool(1024));
-	FString now_varaint;
+	FString nowVaraint;
 };

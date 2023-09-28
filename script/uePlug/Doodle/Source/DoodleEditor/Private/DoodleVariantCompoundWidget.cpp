@@ -45,8 +45,8 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     .AutoHeight()
                     .VAlign(VAlign_Top)
                     [
-                        SAssignNew(name_text, STextBlock)
-                            .Text(FText::FromString(myObject ? myObject->mesh->GetFullName() : FString(TEXT("None"))))
+                        SAssignNew(nameText, STextBlock)
+                            .Text(FText::FromString(myObject ? myObject->Mesh->GetFullName() : FString(TEXT("None"))))
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
@@ -58,7 +58,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     .AutoHeight()
                     .VAlign(VAlign_Top)
                     [
-                        SAssignNew(select_text, STextBlock)
+                        SAssignNew(selectText, STextBlock)
                             .Text(FText::FromString(FString(TEXT("None"))))
                     ]
                     + SVerticalBox::Slot()
@@ -112,28 +112,28 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 
                                                 FString new_name = InText.ToString();
                                                 FString old_name = *InItem;
-                                                if (!myObject->all_varaint.Contains(new_name))
+                                                if (!myObject->allVaraint.Contains(new_name))
                                                 {
-                                                    if (myObject->all_varaint.Contains(old_name))
+                                                    if (myObject->allVaraint.Contains(old_name))
                                                     {
-                                                        FDATA data = myObject->all_varaint[old_name];
-                                                        auto copy = myObject->all_varaint;
-                                                        myObject->all_varaint.Empty();
+                                                        FDATA data = myObject->allVaraint[old_name];
+                                                        auto copy = myObject->allVaraint;
+                                                        myObject->allVaraint.Empty();
                                                         for (auto& e : copy)
                                                         {
                                                             if (e.Key.Equals(old_name))
                                                             {
-                                                                myObject->all_varaint.Add(new_name, data);
+                                                                myObject->allVaraint.Add(new_name, data);
                                                             }
                                                             else
                                                             {
-                                                                myObject->all_varaint.Add(e.Key, e.Value);
+                                                                myObject->allVaraint.Add(e.Key, e.Value);
                                                             }
                                                         }
                                                         copy.Empty();
-                                                        if (now_varaint.Equals(old_name))
+                                                        if (nowVaraint.Equals(old_name))
                                                         {
-                                                            now_varaint = new_name;
+                                                            nowVaraint = new_name;
                                                         }
                                                     }
                                                 }
@@ -156,7 +156,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                                                 ]
                                                                 .ToolTipText(FText::FromString(TEXT("粘贴变体")))
                                                                 .OnClicked_Lambda([this, InItem] {
-                                                                now_varaint = *InItem;
+                                                                nowVaraint = *InItem;
                                                                 OnVariantAttach();
                                                                 return FReply::Handled();})
                                                         ]
@@ -262,12 +262,12 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                                         if (myObject)
                                                         {
                                                             int index = InItem.Get()->index;
-                                                            FDATA arr = myObject->all_varaint[now_varaint];
+                                                            FDATA arr = myObject->allVaraint[nowVaraint];
                                                             UObject* obj = AssetData.GetAsset();
                                                             /*TSharedPtr<UMaterial> sm = MakeShareable<UMaterial>(obj);*/
                                                             TObjectPtr<UMaterial> ui = Cast<UMaterial>(obj);
                                                             arr.varaints[index] = FSkeletalMaterial(ui);
-                                                            myObject->all_varaint[now_varaint] = arr;
+                                                            myObject->allVaraint[nowVaraint] = arr;
                                                             MaterialItems[index].Get()->material = arr.varaints[index].MaterialInterface;
                                                         }
                                                             })
@@ -332,12 +332,12 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         UObject* meshObj = data.GetAsset();
         USkeletalMesh* mesh = Cast<USkeletalMesh>(meshObj);
         UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-        if (user_data && user_data->variant_obj) 
+        if (user_data && user_data->variantObj) 
         {
             TArray<FString> OutKeys;
-            myObject = user_data->variant_obj;
-            myObject->all_varaint.GetKeys(OutKeys);
-            now_varaint = OutKeys[0];
+            myObject = user_data->variantObj;
+            myObject->allVaraint.GetKeys(OutKeys);
+            nowVaraint = OutKeys[0];
         }
         else
         {
@@ -355,7 +355,7 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             {
                 UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(mesh, NAME_None, RF_NoFlags);
                 FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(myObject));
-                UserData->variant_obj = myObject;
+                UserData->variantObj = myObject;
                 mesh->AddAssetUserData(UserData);
             }
             else
@@ -367,12 +367,12 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             for (int m = 0; m < trangeMat.Num(); m++) {
                 trangeMat[m] = mesh->GetMaterials()[m];
             }
-            myObject->mesh = mesh;
-            myObject->path = data.PackagePath;
+            myObject->Mesh = mesh;
+            myObject->Path = data.PackagePath;
             FDATA f;
             f.varaints = trangeMat;
-            now_varaint = TEXT("default");
-            myObject->all_varaint.Add(now_varaint, f);
+            nowVaraint = TEXT("default");
+            myObject->allVaraint.Add(nowVaraint, f);
             //----------------------------
             AssetRegistryModule.Get().AssetCreated(myObject);
         }
@@ -381,15 +381,15 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         Objects.Add(myObject);
         ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
         //-------------
-        name_text->SetText(FText::FromString(myObject->mesh->GetPathName()));
+        nameText->SetText(FText::FromString(myObject->Mesh->GetPathName()));
         Items.Empty();
-        for (auto& e : myObject->all_varaint)
+        for (auto& e : myObject->allVaraint)
         {
             TSharedPtr<FString> f = MakeShared<FString>(e.Key);
             Items.Add(f);
         }
         thisListView->RequestListRefresh();
-        SetVariantInfo(now_varaint);
+        SetVariantInfo(nowVaraint);
     }
 	return FReply::Handled();
 }
@@ -398,10 +398,10 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
 {
     myObject = obj;
     //------------------------
-    name_text->SetText(FText::FromString(myObject->mesh->GetPathName()));
+    nameText->SetText(FText::FromString(myObject->Mesh->GetPathName()));
     //----------------
     Items.Empty();
-    for (auto& e : myObject->all_varaint)
+    for (auto& e : myObject->allVaraint)
     {
         TSharedPtr<FString> f = MakeShared<FString>(e.Key);
         Items.Add(f);
@@ -409,21 +409,21 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     thisListView->RequestListRefresh();
     //------------------------
     TArray<FString> OutKeys;
-    myObject->all_varaint.GetKeys(OutKeys);
-    now_varaint = OutKeys[0];
-    SetVariantInfo(now_varaint);
+    myObject->allVaraint.GetKeys(OutKeys);
+    nowVaraint = OutKeys[0];
+    SetVariantInfo(nowVaraint);
 }
 
 void DoodleVariantCompoundWidget::SetVariantInfo(FString name)
 {
-    if (myObject->all_varaint.Contains(name))
+    if (myObject->allVaraint.Contains(name))
     {
-        now_varaint = name;
+        nowVaraint = name;
         //-------------
         MaterialItems.Empty();
-        if (myObject->all_varaint.Num() > 0)
+        if (myObject->allVaraint.Num() > 0)
         {
-            FDATA arr = myObject->all_varaint[name];
+            FDATA arr = myObject->allVaraint[name];
             for (int i = 0;i < arr.varaints.Num();i++)
             {
                 FSkeletalMaterial mat = arr.varaints[i];
@@ -447,12 +447,12 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();
     }
-    if (myObject->all_varaint.Num() > 0) 
+    if (myObject->allVaraint.Num() > 0) 
     {
         TArray<FString> OutKeys;
-        myObject->all_varaint.GetKeys(OutKeys);
+        myObject->allVaraint.GetKeys(OutKeys);
         //FString key = OutKeys[0];
-        FDATA nd = myObject->all_varaint[now_varaint];
+        FDATA nd = myObject->allVaraint[nowVaraint];
         FString name = TEXT("New");
         while (OutKeys.Contains(name))
         {
@@ -461,10 +461,10 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
             TestName.SetNumber(++Counter);
             name = TestName.ToString();
         }
-        myObject->all_varaint.Add(name, nd);
+        myObject->allVaraint.Add(name, nd);
         //----------------
         Items.Empty();
-        for (auto& e : myObject->all_varaint)
+        for (auto& e : myObject->allVaraint)
         {
             TSharedPtr<FString> f = MakeShared<FString>(e.Key);
             Items.Add(f);
@@ -499,8 +499,8 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
 
     UObject* target = selects->GetSelectedObject(0);
     ASkeletalMeshActor* skin = Cast<ASkeletalMeshActor>(target);
-    select_text->SetText(FText::FromString(skin->GetActorNameOrLabel()));
-    TArray<FSkeletalMaterial> list = myObject->all_varaint[now_varaint].varaints;
+    selectText->SetText(FText::FromString(skin->GetActorNameOrLabel()));
+    TArray<FSkeletalMaterial> list = myObject->allVaraint[nowVaraint].varaints;
     for (int i = 0;i < list.Num();i++)
     {
         skin->GetSkeletalMeshComponent()->SetMaterial(i, list[i].MaterialInterface);

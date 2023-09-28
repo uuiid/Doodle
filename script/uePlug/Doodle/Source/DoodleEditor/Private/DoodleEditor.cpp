@@ -26,6 +26,7 @@
 #include "AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "DoodleVariantAssetUserData.h"
+#include "DoodleVariantCompoundWidget.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -156,7 +157,7 @@ void FdoodleEditorModule::StartupModule() {
                         {
                             USkeletalMesh* mesh = Cast<USkeletalMesh>(Assets[0]);
                             UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-                            if (user_data&& user_data->variant_obj)
+                            if (user_data&& user_data->variantObj)
                             {
                                 builder.BeginSection("Doodle Varaint", LOCTEXT("Varaint", "Varaint"));
                                 {
@@ -166,10 +167,10 @@ void FdoodleEditorModule::StartupModule() {
                                         FText::FromString(TEXT("切换变体 tooltip")),
                                         FNewMenuDelegate::CreateLambda([this, user_data, actor](FMenuBuilder& builder)
                                             {
-                                                UDoodleVariantObject* myObject = user_data->variant_obj;
+                                                UDoodleVariantObject* myObject = user_data->variantObj;
                                                 if (myObject)
                                                 {
-                                                    for (auto& e : myObject->all_varaint)
+                                                    for (auto& e : myObject->allVaraint)
                                                     {
                                                         builder.AddMenuEntry(
                                                             FText::FromString(e.Key),
@@ -178,10 +179,10 @@ void FdoodleEditorModule::StartupModule() {
                                                             // NOTE 设置点击触发的函数
                                                             FUIAction(FExecuteAction::CreateLambda([myObject, e, actor]()
                                                                 {
-                                                                    myObject->all_varaint[e.Key];
+                                                                    myObject->allVaraint[e.Key];
                                                                     //----------------------
                                                                     ASkeletalMeshActor* mesh = Cast<ASkeletalMeshActor>(actor);
-                                                                    TArray<FSkeletalMaterial> list = myObject->all_varaint[e.Key].varaints;
+                                                                    TArray<FSkeletalMaterial> list = myObject->allVaraint[e.Key].varaints;
                                                                     for (int i = 0;i < list.Num();i++)
                                                                     {
                                                                         mesh->GetSkeletalMeshComponent()->SetMaterial(i, list[i].MaterialInterface);

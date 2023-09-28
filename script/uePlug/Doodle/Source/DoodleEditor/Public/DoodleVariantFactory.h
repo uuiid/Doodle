@@ -12,11 +12,7 @@ class DOODLEEDITOR_API UDoodleVariantFactory : public UFactory
 {
     GENERATED_BODY()
 public:
-    UDoodleVariantFactory() {
-        bCreateNew = true;
-        bEditAfterNew = true;
-        SupportedClass = UDoodleVariantObject::StaticClass();
-    }
+    UDoodleVariantFactory();
 
     virtual UObject* FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 
