@@ -75,15 +75,14 @@ struct fbx_write_data {
       }
     }
     // uv
+    auto l_main_layer = mesh->GetLayer(mesh->CreateLayer());
     {
       // get uv set names
       MStringArray l_uv_set_names{};
       maya_chick(l_mesh.getUVSetNames(l_uv_set_names));
 
       for (auto&& i_name : l_uv_set_names) {
-        auto l_uv_layer = mesh->GetLayer(mesh->CreateLayer());
-
-        auto l_layer    = FbxLayerElementUV::Create(mesh, i_name.asChar());
+        auto l_layer = FbxLayerElementUV::Create(mesh, i_name.asChar());
         l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
         l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
         // for maya uv
@@ -105,9 +104,38 @@ struct fbx_write_data {
             l_layer->GetIndexArray().Add(l_uv_id);
           }
         }
-
-        l_uv_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
+        l_main_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
       }
+    }
+
+    // normals
+    {
+      auto l_layer = FbxLayerElementNormal::Create(mesh, "");
+      l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
+      l_layer->SetReferenceMode(FbxLayerElement::eDirect);
+
+      for (auto i = 0; i < l_mesh.numPolygons(); ++i) {
+        MIntArray l_vert_list{};
+        maya_chick(l_mesh.getPolygonVertices(i, l_vert_list));
+        for (auto j = 0; j < l_vert_list.length(); ++j) {
+          MVector l_normal{};
+          maya_chick(l_mesh.getFaceVertexNormal(i, l_vert_list[j], l_normal, MSpace::kObject));
+          l_layer->GetDirectArray().Add(FbxVector4{l_normal.x, l_normal.y, l_normal.z});
+        }
+      }
+
+      l_main_layer->SetNormals(l_layer);
+    }
+    // smoothing
+    {
+      auto l_layer = FbxLayerElementSmoothing::Create(mesh, "");
+      l_layer->SetMappingMode(FbxLayerElement::eByEdge);
+      l_layer->SetReferenceMode(FbxLayerElement::eDirect);
+
+      for (auto i = 0; i < l_mesh.numEdges(); ++i) {
+        l_layer->GetDirectArray().Add(l_mesh.isEdgeSmooth(i));
+      }
+      l_main_layer->SetSmoothing(l_layer);
     }
   }
 };
@@ -173,11 +201,11 @@ void doodle_to_ue_fbx::write_fbx() {
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_GOBO, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_ANIMATION, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
-  l_manager->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, false);
+  l_manager->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, true);
 
   if (!l_exporter->Initialize(
           //          in_fbx_path.string().c_str(),
-          "D:/test.fbx", l_manager->GetIOPluginRegistry()->GetNativeWriterFormat(),
+          "D:/test.fbx", l_manager->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
           p_i->scene_->GetFbxManager()->GetIOSettings()
       )) {
     displayError(conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
