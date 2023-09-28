@@ -120,15 +120,15 @@ void FdoodleEditorModule::StartupModule() {
   //---------------------注册 zhanghang 23/09/25 变体相关--------------------------------------------
   IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
   EAssetTypeCategories::Type AssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName{ TEXT("Create Variant") }, LOCTEXT("Doodle", "Doodle Variant"));
-  TSharedPtr<DoodleVariantAssetTypeActions> actionType = MakeShareable(new DoodleVariantAssetTypeActions(AssetCategory));
-  AssetTools.RegisterAssetTypeActions(actionType.ToSharedRef());
+  RegisterActionType = MakeShareable(new DoodleVariantAssetTypeActions(AssetCategory));
+  AssetTools.RegisterAssetTypeActions(RegisterActionType.ToSharedRef());
   //-------------------------
   ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
   TSharedPtr<FExtensibilityManager> Manager = module.GetObjectBindingContextMenuExtensibilityManager();
 
   module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
 
-      MySequencer = OwningSequencer.ToWeakPtr();
+      TheSequencer = OwningSequencer.ToWeakPtr();
       }));
   //-----------------------
     UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([&] 
@@ -136,7 +136,7 @@ void FdoodleEditorModule::StartupModule() {
         TSharedPtr<FExtender> extender = MakeShareable(new FExtender());
         extender->AddMenuExtension("Edit", EExtensionHook::Before, TSharedPtr<FUICommandList>(), FMenuExtensionDelegate::CreateLambda([&](FMenuBuilder& builder)
         {
-                TSharedPtr<ISequencer> sequencer = MySequencer.Pin();
+                TSharedPtr<ISequencer> sequencer = TheSequencer.Pin();
                 TArray<FGuid> Objects;
                 sequencer.Get()->GetSelectedObjects(Objects);
                 //--------------------------
@@ -243,7 +243,8 @@ void FdoodleEditorModule::ShutdownModule() {
   //-------------取消注册 zhanghang 变体相关 23/09/25
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
       IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-      AssetTools.UnregisterAssetTypeActions(MakeShareable(new DoodleVariantAssetTypeActions));
+      if(RegisterActionType)
+      AssetTools.UnregisterAssetTypeActions(RegisterActionType.ToSharedRef());
   }
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
