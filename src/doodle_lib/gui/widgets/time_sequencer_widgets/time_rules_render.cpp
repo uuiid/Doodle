@@ -260,7 +260,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
       auto l_f = get();
       show_str = fmt::format(
           "{}: {:%F %H:%M} {:%F %H:%M} {}", l_f.is_extra_work ? ICON_FA_BRIEFCASE "工作" : ICON_FA_BED "休息",
-          l_f.first, l_f.second, l_f.info
+          l_f.first.get_local_time(), l_f.second.get_local_time(), l_f.info
       );
     }
 
@@ -270,7 +270,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
   void set(const friend_type& in_type) {
     show_str = fmt::format(
         "{}: {:%F %H:%M} {:%F %H:%M} {}", in_type.is_extra_work ? ICON_FA_BRIEFCASE "工作" : ICON_FA_BED "休息",
-        in_type.first, in_type.second, in_type.info
+        in_type.first.get_local_time(), in_type.second.get_local_time(), in_type.info
     );
     is_work    = in_type.is_extra_work;
     begin_time = time_warp_gui_data{in_type.first};
