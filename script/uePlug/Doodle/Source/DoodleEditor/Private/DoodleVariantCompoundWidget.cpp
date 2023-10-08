@@ -320,33 +320,33 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
 {
     FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>( "ContentBrowser");
-    TArray<FAssetData> selectedAss;
-    ContentBrowserModle.Get().GetSelectedAssets(selectedAss);
-    if (selectedAss.Num() <= 0) 
+    TArray<FAssetData> SelectedAsset;
+    ContentBrowserModle.Get().GetSelectedAssets(SelectedAsset);
+    if (SelectedAsset.Num() <= 0)
     {
         FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个骨骼网格体。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();
     }
-    FAssetData data = selectedAss[0];
+    FAssetData SelectedData = SelectedAsset[0];
     //----------------------------------------------------
-    if (data.GetClass()->IsChildOf<USkeletalMesh>()) 
+    if (SelectedData.GetClass()->IsChildOf<USkeletalMesh>())
     {
-        UObject* meshObj = data.GetAsset();
-        USkeletalMesh* mesh = Cast<USkeletalMesh>(meshObj);
-        UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-        if (user_data && user_data->VariantObj) 
+        UObject* MeshObj = SelectedData.GetAsset();
+        USkeletalMesh* L_Mesh = Cast<USkeletalMesh>(MeshObj);
+        UDoodleVariantAssetUserData* UserData = L_Mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
+        if (UserData && UserData->VariantObj)
         {
             TArray<FString> OutKeys;
-            MyObject = user_data->VariantObj;
+            MyObject = UserData->VariantObj;
             MyObject->AllVaraint.GetKeys(OutKeys);
             NowVaraint = OutKeys[0];
         }
         else
         {
             FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-            FString out_name = MakeUniqueObjectName(mesh, UDoodleVariantObject::StaticClass(), data.AssetName).ToString();
-            FString PackageName = data.PackagePath.ToString()+"/" + out_name;
+            FString out_name = MakeUniqueObjectName(L_Mesh, UDoodleVariantObject::StaticClass(), SelectedData.AssetName).ToString();
+            FString PackageName = SelectedData.PackagePath.ToString()+"/" + out_name;
             const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
             UPackage* package = CreatePackage(*PackageName);
             package->MarkPackageDirty();
@@ -356,22 +356,21 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             MyObject = Cast<UDoodleVariantObject>(object);
             if (MyObject) 
             {
-                UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(mesh, NAME_None, RF_NoFlags);
+                UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
                 FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(MyObject));
                 UserData->VariantObj = MyObject;
-                mesh->AddAssetUserData(UserData);
+                L_Mesh->AddAssetUserData(UserData);
             }
             else
             {
                 return FReply::Handled();
             }
-            //FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(MyObject));
-            TArray<FSkeletalMaterial> trangeMat = mesh->GetMaterials();
-            for (int m = 0; m < trangeMat.Num(); m++) {
-                trangeMat[m] = mesh->GetMaterials()[m];
+            TArray<FSkeletalMaterial> trangeMat = L_Mesh->GetMaterials();
+            for (int M = 0; M < trangeMat.Num(); M++) {
+                trangeMat[M] = L_Mesh->GetMaterials()[M];
             }
-            MyObject->Mesh = mesh;
-            MyObject->Path = data.PackagePath;
+            MyObject->Mesh = L_Mesh;
+            MyObject->Path = SelectedData.PackagePath;
             FDATA f;
             f.Variants = trangeMat;
             NowVaraint = TEXT("default");
