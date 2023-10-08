@@ -12,8 +12,6 @@
 #include "Widgets/Notifications/SNotificationList.h"
 #include "Framework/Notifications/NotificationManager.h"
 
-#define LOCTEXT_NAMESPACE "SCreateVariantDialog"
-
 class SCreateVariantDialog : public SCompoundWidget {
 public:
     SLATE_BEGIN_ARGS(SCreateVariantDialog)
@@ -65,7 +63,7 @@ public:
                                                         }
                                                     return FReply::Handled(); 
                                                      })
-                                                    .Text(LOCTEXT("CreateMotionFieldOk", "OK"))
+                                                    .Text(FText::FromString(TEXT("Ok")))
                                             ]
                                             + SUniformGridPanel::Slot(1, 0)
                                             [
@@ -78,7 +76,7 @@ public:
                                                             PickerWindow.Pin()->RequestDestroyWindow();
                                                         }
                                                     return FReply::Handled(); })
-                                                    .Text(LOCTEXT("CreateMotionFieldCancel", "Cancel"))
+                                                    .Text(FText::FromString(TEXT("Cancel")))
                                             ]
                                     ]
                             ]
@@ -104,7 +102,7 @@ public:
             .AutoHeight()
             [
                 SNew(STextBlock)
-                    .Text(LOCTEXT("TargetSkeletonMesh", "Target Skeleton Mesh:"))
+                    .Text(FText::FromString(TEXT("Target Skeleton Mesh:")))
                     .ShadowOffset(FVector2D(1.0f, 1.0f))
             ];
         SkeletonContainer->AddSlot()
@@ -116,7 +114,7 @@ public:
 
     void Show() {
         TSharedRef<SWindow> Window = SNew(SWindow)
-            .Title(LOCTEXT("Show", "Create Variant Config"))
+            .Title(FText::FromString(TEXT("Create Variant Config")))
             .ClientSize(FVector2D{ 600,700 })
             .SupportsMinimize(false)
             .SupportsMaximize(false)
@@ -147,8 +145,8 @@ bool UDoodleVariantFactory::ConfigureProperties()
     Dialog->Show();
     if (Dialog.Get().meshAssetData!= nullptr)
     {
-        meshAssetData = Dialog.Get().meshAssetData;
-        USkeletalMesh* mesh = Cast<USkeletalMesh>(meshAssetData.GetAsset());
+        MeshAssetData = Dialog.Get().meshAssetData;
+        USkeletalMesh* mesh = Cast<USkeletalMesh>(MeshAssetData.GetAsset());
         UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
         FAssetData variant_date;
         if (user_data && user_data->variantObj)
@@ -182,19 +180,19 @@ bool UDoodleVariantFactory::ConfigureProperties()
 UObject* UDoodleVariantFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
     UDoodleVariantObject* uObject = NewObject<UDoodleVariantObject>(InParent, InClass, InName, Flags | RF_Transactional);
-    if (meshAssetData.IsValid()) 
+    if (MeshAssetData.IsValid()) 
     {
-        USkeletalMesh* mesh = Cast<USkeletalMesh>(meshAssetData.GetAsset());
+        USkeletalMesh* mesh = Cast<USkeletalMesh>(MeshAssetData.GetAsset());
         TArray<FSkeletalMaterial> trangeMat = mesh->GetMaterials();
        for (int m = 0; m < trangeMat.Num(); m++) {
            trangeMat[m] = mesh->GetMaterials()[m];
        }
        uObject->Mesh = mesh;
-       uObject->Path = meshAssetData.PackagePath;
+       uObject->Path = MeshAssetData.PackagePath;
        FDATA f;
-       f.varaints = trangeMat;
+       f.Variants = trangeMat;
        FString now_varaint = TEXT("default");
-       uObject->allVaraint.Add(now_varaint, f);
+       uObject->AllVaraint.Add(now_varaint, f);
        //-----------------------------
        UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(mesh, NAME_None, RF_NoFlags);
        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));

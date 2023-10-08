@@ -8,19 +8,20 @@
 
 #include "PropertyEditorModule.h"
 #include "PropertyCustomizationHelpers.h"
+#include "ISequencer.h"
 
-struct ItemData
-{
-	FString name;
-	FString newName;
-	int index = -1;
-};
+//struct ItemData
+//{
+//	FString Name;
+//	FString NewName;
+//	int Index = -1;
+//};
 
 struct FMaterialItemData
 {
-	FName slot;
-	TObjectPtr<UMaterialInterface> material;
-	int index = -1;
+	FName Slot;
+	TObjectPtr<UMaterialInterface> Material;
+	int Index = -1;
 }; 
 
 /**
@@ -40,25 +41,31 @@ public:
 	FReply OnVariantAdd();
 	FReply OnVariantAttach();
 
+	//¹Ø¿¨ÐòÁÐ
+	static ISequencer* TheSequencer;
+	static void SequencerTrackObjectMenuBuilder(FMenuBuilder& builder);
+
 	const static FName Name;
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
 	///var
-	TSharedPtr<SListView< TSharedPtr<FString>>> thisListView;
+	TSharedPtr<SListView< TSharedPtr<FString>>> ThisListView;
 	TArray<TSharedPtr<FString>> Items = {};
 	//mate
 	TSharedPtr<SListView<TSharedPtr<FMaterialItemData> >> MaterialListView;
 	TArray< TSharedPtr< FMaterialItemData> > MaterialItems;
 	//------------------------
-	UDoodleVariantObject* myObject;
+	UDoodleVariantObject* MyObject;
 
-	TSharedPtr<STextBlock> nameText;
-	TSharedPtr<STextBlock> selectText;
+	TSharedPtr<STextBlock> NameText;
+	TSharedPtr<STextBlock> SelectText;
 
 	void SetSetVariantData(UDoodleVariantObject* obj);
 	void SetVariantInfo(FString varaint_name);
 
 	/** Pool for maintaining and rendering thumbnails */
 	TSharedPtr<FAssetThumbnailPool> AssetThumbnailPool = MakeShareable(new FAssetThumbnailPool(1024));
-	FString nowVaraint;
+	FString NowVaraint;
+
+	//----------------------
 };

@@ -27,6 +27,7 @@
 #include "AssetToolsModule.h"
 #include "DoodleVariantAssetUserData.h"
 #include "DoodleVariantCompoundWidget.h"
+#include "LevelSequenceEditor/Private/LevelSequenceEditorToolkit.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -128,83 +129,15 @@ void FdoodleEditorModule::StartupModule() {
   TSharedPtr<FExtensibilityManager> Manager = module.GetObjectBindingContextMenuExtensibilityManager();
 
   module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
-
-      TheSequencer = OwningSequencer.ToWeakPtr();
+      TWeakPtr<ISequencer> Seq = OwningSequencer.ToWeakPtr();
+      DoodleVariantCompoundWidget::TheSequencer = Seq.Pin().Get();
       }));
   //-----------------------
-    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([&] 
+    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([this] 
         {
         TSharedPtr<FExtender> extender = MakeShareable(new FExtender());
-        extender->AddMenuExtension("Edit", EExtensionHook::Before, TSharedPtr<FUICommandList>(), FMenuExtensionDelegate::CreateLambda([&](FMenuBuilder& builder)
-        {
-                TSharedPtr<ISequencer> sequencer = TheSequencer.Pin();
-                TArray<FGuid> Objects;
-                sequencer.Get()->GetSelectedObjects(Objects);
-                //--------------------------
-                if (Objects.Num() > 0)
-                {
-                    AActor* actor = nullptr;
-                    for (TWeakObjectPtr<UObject> ptr : sequencer.Get()->FindObjectsInCurrentSequence(Objects[0]))
-                    {
-                        actor =  Cast<AActor>(ptr.Get());
-                        if (actor) { break; }
-                    }
-                    if (actor) 
-                    {
-                        TArray<UObject*> Assets;
-                        actor->GetReferencedContentObjects(Assets);
-                        if (Assets.Num() > 0 && Assets[0]->GetClass()->IsChildOf<USkeletalMesh>())
-                        {
-                            USkeletalMesh* mesh = Cast<USkeletalMesh>(Assets[0]);
-                            UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-                            if (user_data&& user_data->variantObj)
-                            {
-                                builder.BeginSection("Doodle Varaint", LOCTEXT("Varaint", "Varaint"));
-                                {
-                                    builder.AddSubMenu
-                                    (
-                                        FText::FromString(TEXT("切换变体")),
-                                        FText::FromString(TEXT("切换变体 tooltip")),
-                                        FNewMenuDelegate::CreateLambda([this, user_data, actor](FMenuBuilder& builder)
-                                            {
-                                                UDoodleVariantObject* myObject = user_data->variantObj;
-                                                if (myObject)
-                                                {
-                                                    for (auto& e : myObject->allVaraint)
-                                                    {
-                                                        builder.AddMenuEntry(
-                                                            FText::FromString(e.Key),
-                                                            LOCTEXT("DoodleVaraintTooltip", "Change Skeletal Mesh Varaint"),
-                                                            FSlateIcon(),
-                                                            // NOTE 设置点击触发的函数
-                                                            FUIAction(FExecuteAction::CreateLambda([myObject, e, actor]()
-                                                                {
-                                                                    myObject->allVaraint[e.Key];
-                                                                    //----------------------
-                                                                    ASkeletalMeshActor* mesh = Cast<ASkeletalMeshActor>(actor);
-                                                                    TArray<FSkeletalMaterial> list = myObject->allVaraint[e.Key].varaints;
-                                                                    for (int i = 0;i < list.Num();i++)
-                                                                    {
-                                                                        mesh->GetSkeletalMeshComponent()->SetMaterial(i, list[i].MaterialInterface);
-                                                                    }
-                                                                    mesh->GetSkeletalMeshComponent()->PostApplyToComponent();
-                                                                })));
-                                                    }
-                                                }
-                                            }),
-                                        FUIAction(),
-                                        NAME_None,
-                                        EUserInterfaceActionType::Button,
-                                        false,
-                                        FSlateIcon()
-                                    );
-                                }
-                                builder.EndSection();
-                            }
-                        }
-                    }
-                }
-        }));
+        extender->AddMenuExtension("Edit", EExtensionHook::Before, TSharedPtr<FUICommandList>(), 
+            FMenuExtensionDelegate::CreateStatic(&DoodleVariantCompoundWidget::SequencerTrackObjectMenuBuilder));
         ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
         TSharedPtr<FExtensibilityManager> Manager = module.GetObjectBindingContextMenuExtensibilityManager();
         Manager.Get()->AddExtender(extender);

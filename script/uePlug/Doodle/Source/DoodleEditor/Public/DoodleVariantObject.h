@@ -11,7 +11,7 @@ struct FDATA
 {   GENERATED_USTRUCT_BODY()
 public:
 	UPROPERTY(EditAnywhere)
-	TArray<FSkeletalMaterial> varaints;
+	TArray<FSkeletalMaterial> Variants;
 };
 /**
  * 
@@ -26,5 +26,5 @@ public:
 	UPROPERTY(VisibleAnywhere,DisplayName = "lu_jin")
 	FName Path;
 	UPROPERTY(EditAnywhere,DisplayName = "bian_ti")
-	TMap<FString,FDATA> allVaraint;
+	TMap<FString,FDATA> AllVaraint;
 };

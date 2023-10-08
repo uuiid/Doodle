@@ -18,5 +18,5 @@ public:
 
     virtual bool ConfigureProperties() override;
 
-    FAssetData meshAssetData;
+    FAssetData MeshAssetData;
 };
