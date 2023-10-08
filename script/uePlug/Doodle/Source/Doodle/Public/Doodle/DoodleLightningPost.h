@@ -28,8 +28,8 @@ class DOODLE_API ADoodleLightingPost : public APostProcessVolume {
   UPROPERTY(EditAnywhere, Category = Doodle, meta = (DisplayName = "对比度乘数", ShouldShowInViewport = true))
   float ContrastMultiplier;
 
-  UPROPERTY(EditAnywhere, Category = Doodle)
-  TObjectPtr<UCurveFloat> IntensityCurve;
+  // UPROPERTY(EditAnywhere, Category = Doodle)
+  // TObjectPtr<UCurveFloat> IntensityCurve;
 
  private:
   UPROPERTY(VisibleAnywhere, Category = "Light")
