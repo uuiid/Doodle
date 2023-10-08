@@ -19,6 +19,7 @@
 #include "maya_plug/exception/exception.h"
 #include <maya_plug/abc/alembic_archive_out.h>
 #include <maya_plug/data/cloth_interface.h>
+#include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
@@ -88,20 +89,14 @@ std::vector<MDagPath> export_file_abc::find_out_group_child_suffix_node(
 
   return l_r;
 }
-struct cmp_dag {
-  bool operator()(const MDagPath& lhs, const MDagPath& rhs) const {
-    std::string const name1{lhs.fullPathName().asChar()};
-    std::string const name2{rhs.fullPathName().asChar()};
-    return (name1.compare(name2) < 0);
-  }
-};
+
 void export_file_abc::export_abc(const MSelectionList& in_select, const FSys::path& in_path) {
   DOODLE_LOG_INFO("导出物体 {} 路径 {}", in_select, in_path);
   MAnimControl::setCurrentTime(begin_time);
   MStatus l_status{};
   MItDag k_it{};
 
-  std::set<MDagPath, cmp_dag> l_export_set{};
+  std::set<MDagPath, details::cmp_dag> l_export_set{};
 
   for (auto i = 0; i < in_select.length(); ++i) {
     MDagPath k_path{};

@@ -23,6 +23,7 @@ target_sources(doodle_maya_lib
         export_file_abc.h
         export_file_fbx.h
         maya_conv_str.h
+        dagpath_cmp.h
 
         PRIVATE
         create_hud_node.cpp
@@ -45,4 +46,5 @@ target_sources(doodle_maya_lib
         qcloth_factory.cpp
         export_file_fbx.cpp
         export_file_abc.cpp
+        dagpath_cmp.cpp
         )
