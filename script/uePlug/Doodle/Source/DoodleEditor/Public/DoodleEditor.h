@@ -4,6 +4,7 @@
 #include "Modules/ModuleManager.h"
 #include "UObject/StrongObjectPtr.h"
 #include "DoodleVariantAssetTypeActions.h"
+#include "DoodleVariantMenuExtension.h"
 
 class FToolBarBuilder;
 class FMenuBuilder;
@@ -35,5 +36,5 @@ class FdoodleEditorModule : public IModuleInterface {
   // TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
   //-------------------------------------
   TSharedPtr<DoodleVariantAssetTypeActions> RegisterActionType;
-  
+  TSharedPtr<DoodleVariantMenuExtension> VariantExtender;
 };

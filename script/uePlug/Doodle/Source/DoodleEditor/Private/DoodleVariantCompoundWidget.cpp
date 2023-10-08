@@ -22,11 +22,9 @@
 #include "Selection.h"
 #include "DoodleVariantAssetUserData.h"
 #include "Textures/SlateIcon.h"
-#include "LevelSequenceEditor/Private/LevelSequenceEditorToolkit.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 
-ISequencer* DoodleVariantCompoundWidget::TheSequencer = nullptr;
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
@@ -514,77 +512,6 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
 
 TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
     return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)];  // 这里创建我们自己的界面
-}
-
-void DoodleVariantCompoundWidget::SequencerTrackObjectMenuBuilder(FMenuBuilder& builder)
-{
-    TArray<FGuid> Objects;
-    TSharedPtr<ISequencer> TempSequencer = MakeShareable(TheSequencer);
-    TempSequencer.Get()->GetSelectedObjects(Objects);
-    //--------------------------
-    if (Objects.Num() > 0)
-    {
-        AActor* TempActor = nullptr;
-        for (TWeakObjectPtr<UObject> ptr : TempSequencer.Get()->FindObjectsInCurrentSequence(Objects[0]))
-        {
-            TempActor = Cast<AActor>(ptr.Get());
-            if (TempActor) { break; }
-        }
-        if (TempActor)
-        {
-            TArray<UObject*> Assets;
-            TempActor->GetReferencedContentObjects(Assets);
-            if (Assets.Num() > 0 && Assets[0]->GetClass()->IsChildOf<USkeletalMesh>())
-            {
-                USkeletalMesh* mesh = Cast<USkeletalMesh>(Assets[0]);
-                UDoodleVariantAssetUserData* UserData = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-                if (UserData && UserData->VariantObj)
-                {
-                    builder.BeginSection("Doodle Variant");
-                    {
-                        builder.AddSubMenu
-                        (
-                            FText::FromString(TEXT("切换变体")),
-                            FText::FromString(TEXT("切换变体 tooltip")),
-                            FNewMenuDelegate::CreateLambda([&, UserData, TempActor](FMenuBuilder& builder)
-                                {
-                                    UDoodleVariantObject* MyObject = UserData->VariantObj;
-                                    if (MyObject)
-                                    {
-                                        for (auto& e : MyObject->AllVaraint)
-                                        {
-                                            builder.AddMenuEntry(
-                                                FText::FromString(e.Key),
-                                                FText::FromString(TEXT("Change Skeletal Mesh Variant")),
-                                                FSlateIcon(),
-                                                // NOTE 设置点击触发的函数
-                                                FUIAction(FExecuteAction::CreateLambda([&,MyObject, e, TempActor]()
-                                                    {
-                                                        MyObject->AllVaraint[e.Key];
-                                                        //----------------------
-                                                        ASkeletalMeshActor* Mesh = Cast<ASkeletalMeshActor>(TempActor);
-                                                        TArray<FSkeletalMaterial> TempList = MyObject->AllVaraint[e.Key].Variants;
-                                                        for (int i = 0;i < TempList.Num();i++)
-                                                        {
-                                                            Mesh->GetSkeletalMeshComponent()->SetMaterial(i, TempList[i].MaterialInterface);
-                                                        }
-                                                        Mesh->GetSkeletalMeshComponent()->PostApplyToComponent();
-                                                    })));
-                                        }
-                                    }
-                                }),
-                            FUIAction(),
-                            NAME_None,
-                            EUserInterfaceActionType::Button,
-                            false,
-                            FSlateIcon()
-                        );
-                    }
-                    builder.EndSection();
-                }
-            }
-        }
-    }
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

@@ -8,14 +8,6 @@
 
 #include "PropertyEditorModule.h"
 #include "PropertyCustomizationHelpers.h"
-#include "ISequencer.h"
-
-//struct ItemData
-//{
-//	FString Name;
-//	FString NewName;
-//	int Index = -1;
-//};
 
 struct FMaterialItemData
 {
@@ -40,10 +32,6 @@ public:
 	FReply OnLoadAllVariant();
 	FReply OnVariantAdd();
 	FReply OnVariantAttach();
-
-	//¹Ø¿¨ÐòÁÐ
-	static ISequencer* TheSequencer;
-	static void SequencerTrackObjectMenuBuilder(FMenuBuilder& builder);
 
 	const static FName Name;
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
