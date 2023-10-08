@@ -201,7 +201,13 @@ struct fbx_write_data {
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   }
 
-  std::vector<MDagPath> find_joint(const MObject& in_msk) {
+  void write_skeletion() {
+    auto l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
+    l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
+    node->SetNodeAttribute(l_sk_attr);
+  }
+
+  static std::vector<MDagPath> find_joint(const MObject& in_msk) {
     if (in_msk.isNull()) return {};
     MFnSkinCluster l_skin_cluster{in_msk};
     MDagPathArray l_joint_array{};
@@ -221,7 +227,12 @@ struct tree_dag_node {
   MDagPath dag_path{};
   FbxNode* node{};
   MObject skin_cluster_{};
+
   FbxNode* skin_cluster_fbx_{};
+
+  std::function<void(tree_dag_node*)> write_file_{};
+
+  void write() { write_file_(this); }
 };
 
 class doodle_to_ue_fbx::impl_data {
@@ -229,17 +240,6 @@ class doodle_to_ue_fbx::impl_data {
   using tree_mesh_t = tree<tree_dag_node>;
 
  private:
-  void iter_tree_2(const tree_mesh_t::iterator& in_parent) {
-    for (auto it = tree_mesh_t::begin(in_parent); it != tree_mesh_t::end(in_parent); ++it) {
-      it->node          = FbxNode::Create(scene_, it->dag_path.partialPathName().asChar());
-      it->skin_cluster_ = get_skin_custer(it->dag_path);
-      in_parent->node->AddChild(it->node);
-      fbx_write_data l_data{it->node, nullptr};
-      l_data.write_transform(it->dag_path);
-      iter_tree_2(it);
-    }
-  }
-
  public:
   std::shared_ptr<FbxManager> manager_{};
   FbxScene* scene_{};
@@ -248,24 +248,9 @@ class doodle_to_ue_fbx::impl_data {
 
   std::vector<MDagPath> joints_{};
 
-  void iter_tree(const tree_mesh_t::iterator& in_parent) {
-    for (auto it = tree_mesh_t::begin(in_parent); it != tree_mesh_t::end(in_parent); ++it) {
-      it->node          = FbxNode::Create(scene_, it->dag_path.partialPathName().asChar());
-      it->skin_cluster_ = get_skin_custer(it->dag_path);
-      in_parent->node->AddChild(it->node);
-      fbx_write_data l_data{it->node, nullptr};
-      l_data.write_mesh(it->dag_path);
-      if (!it->skin_cluster_.isNull() && it->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
-        MGlobal::displayInfo(conv::to_ms(fmt::format("写出皮肤簇 {}", it->dag_path)));
-        joints_ |= ranges::action::push_back(l_data.find_joint(it->skin_cluster_));
-      }
-      iter_tree(it);
-    }
-  }
-
   void build_joint_tree() {
     for (auto&& i : joints_) {
-      auto l_begin = tree_bone_dag_.begin();
+      auto l_begin = tree_dag_.begin();
       for (std::int32_t j = i.length() - 1; j >= 0; --j) {
         MDagPath l_sub_path{i};
         l_sub_path.pop(j);
@@ -277,14 +262,62 @@ class doodle_to_ue_fbx::impl_data {
             l_tree_it != std::end(l_begin)) {
           l_begin = l_tree_it;
         } else {
-          l_begin = tree_bone_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+          l_begin              = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+          l_begin->write_file_ = [](tree_dag_node* self) {
+            fbx_write_data l_data{self->node, nullptr};
+            l_data.write_transform(self->dag_path);
+            if (!self->skin_cluster_.isNull() && self->skin_cluster_.hasFn(MFn::kJoint)) l_data.write_skeletion();
+          };
         }
       }
     }
   }
 
+  void build_mesh_tree(const MSelectionList& in_list) {
+    MDagPath l_path{};
+    for (MItSelectionList l_it{in_list}; !l_it.isDone(); l_it.next()) {
+      maya_chick(l_it.getDagPath(l_path));
+      // for dag path
+      auto l_begin = tree_dag_.begin();
+      for (std::int32_t i = l_path.length() - 1; i >= 0; --i) {
+        MDagPath l_sub_path{l_path};
+        l_sub_path.pop(i);
+
+        if (auto l_tree_it = ranges::find_if(
+                std::begin(l_begin), std::end(l_begin),
+                [&](const impl_data::tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
+            );
+            l_tree_it != std::end(l_begin)) {
+          l_begin = l_tree_it;
+        } else {
+          l_begin              = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+          l_begin->write_file_ = [](tree_dag_node* self) {
+            fbx_write_data l_data{self->node, nullptr};
+            l_data.write_mesh(self->dag_path);
+          };
+          l_begin->skin_cluster_ = get_skin_custer(l_begin->dag_path);
+          if (!l_begin->skin_cluster_.isNull() && l_begin->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
+            MGlobal::displayInfo(conv::to_ms(fmt::format("写出皮肤簇 {}", l_begin->dag_path)));
+            joints_ |= ranges::action::push_back(fbx_write_data::find_joint(l_begin->skin_cluster_));
+          }
+        }
+      }
+    }
+  }
+
+  void init() {
+    tree_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode(), MObject::kNullObj, nullptr, [](auto...) {}}};
+  }
+
+  void build_tree(const MSelectionList& in_list) {
+    build_mesh_tree(in_list);
+    build_joint_tree();
+    iter_tree(tree_dag_.begin());
+  }
+
   void write_joint() {
     tree_bone_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode()}};
+    build_joint_tree();
     iter_tree_2(tree_bone_dag_.begin());
   }
 
@@ -338,32 +371,8 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   auto anim_layer = FbxAnimLayer::Create(p_i->scene_, "anim_layer");
   anim_stack->AddMember(anim_layer);
 
-  p_i->tree_dag_ = {tree_dag_node{MDagPath{}, p_i->scene_->GetRootNode()}};
-
-  // 从下方选择的网格体构建树
-  MDagPath l_path{};
-  for (MItSelectionList l_it{l_list}; !l_it.isDone(); l_it.next()) {
-    maya_chick(l_it.getDagPath(l_path));
-    // for dag path
-    auto l_begin = p_i->tree_dag_.begin();
-    for (std::int32_t i = l_path.length() - 1; i >= 0; --i) {
-      MDagPath l_sub_path{l_path};
-      l_sub_path.pop(i);
-
-      if (auto l_tree_it = ranges::find_if(
-              std::begin(l_begin), std::end(l_begin),
-              [&](const impl_data::tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
-          );
-          l_tree_it != std::end(l_begin)) {
-        l_begin = l_tree_it;
-      } else {
-        l_begin = p_i->tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
-      }
-    }
-  }
-
-  p_i->iter_tree(p_i->tree_dag_.begin());
-  p_i->build_joint_tree();
+  p_i->init();
+  p_i->build_tree(l_list);
   p_i->write_joint();
   write_fbx();
   return MS::kSuccess;
