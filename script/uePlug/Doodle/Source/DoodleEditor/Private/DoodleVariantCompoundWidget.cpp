@@ -335,10 +335,10 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         UObject* meshObj = data.GetAsset();
         USkeletalMesh* mesh = Cast<USkeletalMesh>(meshObj);
         UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-        if (user_data && user_data->variantObj) 
+        if (user_data && user_data->VariantObj) 
         {
             TArray<FString> OutKeys;
-            MyObject = user_data->variantObj;
+            MyObject = user_data->VariantObj;
             MyObject->AllVaraint.GetKeys(OutKeys);
             NowVaraint = OutKeys[0];
         }
@@ -358,7 +358,7 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             {
                 UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(mesh, NAME_None, RF_NoFlags);
                 FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(MyObject));
-                UserData->variantObj = MyObject;
+                UserData->VariantObj = MyObject;
                 mesh->AddAssetUserData(UserData);
             }
             else
@@ -521,26 +521,26 @@ TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabA
 void DoodleVariantCompoundWidget::SequencerTrackObjectMenuBuilder(FMenuBuilder& builder)
 {
     TArray<FGuid> Objects;
-    TSharedPtr<ISequencer> sequencer = MakeShareable(TheSequencer);
-    sequencer.Get()->GetSelectedObjects(Objects);
+    TSharedPtr<ISequencer> TempSequencer = MakeShareable(TheSequencer);
+    TempSequencer.Get()->GetSelectedObjects(Objects);
     //--------------------------
     if (Objects.Num() > 0)
     {
-        AActor* actor = nullptr;
-        for (TWeakObjectPtr<UObject> ptr : sequencer.Get()->FindObjectsInCurrentSequence(Objects[0]))
+        AActor* TempActor = nullptr;
+        for (TWeakObjectPtr<UObject> ptr : TempSequencer.Get()->FindObjectsInCurrentSequence(Objects[0]))
         {
-            actor = Cast<AActor>(ptr.Get());
-            if (actor) { break; }
+            TempActor = Cast<AActor>(ptr.Get());
+            if (TempActor) { break; }
         }
-        if (actor)
+        if (TempActor)
         {
             TArray<UObject*> Assets;
-            actor->GetReferencedContentObjects(Assets);
+            TempActor->GetReferencedContentObjects(Assets);
             if (Assets.Num() > 0 && Assets[0]->GetClass()->IsChildOf<USkeletalMesh>())
             {
                 USkeletalMesh* mesh = Cast<USkeletalMesh>(Assets[0]);
-                UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-                if (user_data && user_data->variantObj)
+                UDoodleVariantAssetUserData* UserData = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
+                if (UserData && UserData->VariantObj)
                 {
                     builder.BeginSection("Doodle Variant");
                     {
@@ -548,9 +548,9 @@ void DoodleVariantCompoundWidget::SequencerTrackObjectMenuBuilder(FMenuBuilder& 
                         (
                             FText::FromString(TEXT("切换变体")),
                             FText::FromString(TEXT("切换变体 tooltip")),
-                            FNewMenuDelegate::CreateLambda([&,user_data, actor](FMenuBuilder& builder)
+                            FNewMenuDelegate::CreateLambda([&, UserData, TempActor](FMenuBuilder& builder)
                                 {
-                                    UDoodleVariantObject* MyObject = user_data->variantObj;
+                                    UDoodleVariantObject* MyObject = UserData->VariantObj;
                                     if (MyObject)
                                     {
                                         for (auto& e : MyObject->AllVaraint)
@@ -560,17 +560,17 @@ void DoodleVariantCompoundWidget::SequencerTrackObjectMenuBuilder(FMenuBuilder& 
                                                 FText::FromString(TEXT("Change Skeletal Mesh Variant")),
                                                 FSlateIcon(),
                                                 // NOTE 设置点击触发的函数
-                                                FUIAction(FExecuteAction::CreateLambda([&,MyObject, e, actor]()
+                                                FUIAction(FExecuteAction::CreateLambda([&,MyObject, e, TempActor]()
                                                     {
                                                         MyObject->AllVaraint[e.Key];
                                                         //----------------------
-                                                        ASkeletalMeshActor* mesh = Cast<ASkeletalMeshActor>(actor);
-                                                        TArray<FSkeletalMaterial> list = MyObject->AllVaraint[e.Key].Variants;
-                                                        for (int i = 0;i < list.Num();i++)
+                                                        ASkeletalMeshActor* Mesh = Cast<ASkeletalMeshActor>(TempActor);
+                                                        TArray<FSkeletalMaterial> TempList = MyObject->AllVaraint[e.Key].Variants;
+                                                        for (int i = 0;i < TempList.Num();i++)
                                                         {
-                                                            mesh->GetSkeletalMeshComponent()->SetMaterial(i, list[i].MaterialInterface);
+                                                            Mesh->GetSkeletalMeshComponent()->SetMaterial(i, TempList[i].MaterialInterface);
                                                         }
-                                                        mesh->GetSkeletalMeshComponent()->PostApplyToComponent();
+                                                        Mesh->GetSkeletalMeshComponent()->PostApplyToComponent();
                                                     })));
                                         }
                                     }

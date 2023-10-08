@@ -149,10 +149,10 @@ bool UDoodleVariantFactory::ConfigureProperties()
         USkeletalMesh* mesh = Cast<USkeletalMesh>(MeshAssetData.GetAsset());
         UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
         FAssetData variant_date;
-        if (user_data && user_data->variantObj)
+        if (user_data && user_data->VariantObj)
         {
             FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-            variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(user_data->variantObj));
+            variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(user_data->VariantObj));
             UObject* object = variant_date.ToSoftObjectPath().TryLoad();
             UDoodleVariantObject* uObject = Cast<UDoodleVariantObject>(object);
             //--------------
@@ -198,7 +198,7 @@ UObject* UDoodleVariantFactory::FactoryCreateNew(UClass* InClass, UObject* InPar
        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
        FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(uObject));
        //UserData->variant_asset = variant_date;
-       UserData->variantObj = uObject;
+       UserData->VariantObj = uObject;
        mesh->AddAssetUserData(UserData);
     }
     return uObject;

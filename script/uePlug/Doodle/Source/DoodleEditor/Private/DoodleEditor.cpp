@@ -120,14 +120,11 @@ void FdoodleEditorModule::StartupModule() {
   //                          .Get();
   // AssetRegistry->AddPath(R"(/../../tmp2/Content/)");
   //---------------------注册 zhanghang 23/09/25 变体相关--------------------------------------------
-  IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-  EAssetTypeCategories::Type AssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName{ TEXT("Create Variant") }, LOCTEXT("Doodle", "Doodle Variant"));
+  EAssetTypeCategories::Type AssetCategory = L_AssetTools.RegisterAdvancedAssetCategory(FName{ TEXT("Create Variant") }, LOCTEXT("Doodle", "Doodle Variant"));
   RegisterActionType = MakeShareable(new DoodleVariantAssetTypeActions(AssetCategory));
-  AssetTools.RegisterAssetTypeActions(RegisterActionType.ToSharedRef());
+  L_AssetTools.RegisterAssetTypeActions(RegisterActionType.ToSharedRef());
   //-------------------------
   ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
-  TSharedPtr<FExtensibilityManager> Manager = module.GetObjectBindingContextMenuExtensibilityManager();
-
   module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
       TWeakPtr<ISequencer> Seq = OwningSequencer.ToWeakPtr();
       DoodleVariantCompoundWidget::TheSequencer = Seq.Pin().Get();
@@ -177,7 +174,6 @@ void FdoodleEditorModule::ShutdownModule() {
   //-------------取消注册 zhanghang 变体相关 23/09/25
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
       IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-      if(RegisterActionType)
       AssetTools.UnregisterAssetTypeActions(RegisterActionType.ToSharedRef());
   }
 }

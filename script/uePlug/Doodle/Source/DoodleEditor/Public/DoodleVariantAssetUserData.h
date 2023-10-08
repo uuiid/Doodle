@@ -19,5 +19,5 @@ class DOODLEEDITOR_API UDoodleVariantAssetUserData : public UAssetUserData
 public:
 	UPROPERTY(VisibleAnyWhere, Category = "Custom Data ")
 
-	UDoodleVariantObject* variantObj;
+	UDoodleVariantObject* VariantObj;
 };
