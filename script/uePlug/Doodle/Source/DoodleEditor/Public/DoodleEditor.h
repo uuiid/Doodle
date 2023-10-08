@@ -36,5 +36,5 @@ class FdoodleEditorModule : public IModuleInterface {
   // TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
   //-------------------------------------
   TSharedPtr<DoodleVariantAssetTypeActions> RegisterActionType;
-  TSharedPtr<DoodleVariantMenuExtension> VariantExtender;
+  TSharedPtr<FDoodleVariantMenuExtension> VariantExtender;
 };

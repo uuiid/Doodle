@@ -90,132 +90,58 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                 SAssignNew(ThisListView, SListView< TSharedPtr<FString> >)
                                     .ItemHeight(24)
                                     .ListItemsSource(&Items)
-                                    .OnGenerateRow_Lambda([this](TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable)->TSharedRef<ITableRow>
+                                    .OnGenerateRow(this, &DoodleVariantCompoundWidget::VariantListOnGenerateRow)
+                                    .OnSelectionChanged_Lambda([&](TSharedPtr<FString> inSelectItem, ESelectInfo::Type SelectType)
+                                    {
+                                        if (inSelectItem)
                                         {
-                                            TSharedRef<STableRow<TSharedPtr<FString>>> TableRowWidget = SNew(STableRow<TSharedPtr<FString>>, OwnerTable);
-                                            TSharedPtr<SHorizontalBox> ContentBox{};
-
-                                            int index = OwnerTable.Get().GetNumGeneratedChildren();
-
-                                            TSharedRef<SWidget> Content =
-                                                SNew(SBorder)
-                                                .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
-                                                .Padding(0)
-                                                .Cursor(EMouseCursor::GrabHand)
-                                                [SAssignNew(ContentBox, SHorizontalBox)];
-
-                                            ContentBox->AddSlot()
+                                            FString name = *inSelectItem;
+                                            if (CurrentObject)
+                                            {
+                                                SetVariantInfo(name);
+                                            }
+                                            ESelectInfo::Type t = SelectType;
+                                        }
+                                    })
+                                    .SelectionMode(ESelectionMode::Type::Single)
+                                    .HeaderRow
+                                    (
+                                        SNew(SHeaderRow)
+                                        + SHeaderRow::Column("Name")
+                                        .HAlignHeader(HAlign_Left)
+                                        .HAlignCell(HAlign_Left)
+                                        [
+                                            SNew(SHorizontalBox)
+                                                + SHorizontalBox::Slot()
                                                 .HAlign(HAlign_Left)
                                                 .VAlign(VAlign_Center)
-                                                [SNew(SEditableTextBox)
-                                                .Text(FText::FromString(*InItem))
-                                                .OnTextCommitted_Lambda([&, InItem, this](const FText& InText, const ETextCommit::Type InTextAction) {
-
-                                                FString NewName = InText.ToString();
-                                                FString OldName = *InItem;
-                                                if (!CurrentObject->AllVaraint.Contains(NewName))
-                                                {
-                                                    if (CurrentObject->AllVaraint.Contains(OldName))
-                                                    {
-                                                        FVariantInfo L_Data = CurrentObject->AllVaraint[OldName];
-                                                        auto copy = CurrentObject->AllVaraint;
-                                                        CurrentObject->AllVaraint.Empty();
-                                                        for (auto& e : copy)
-                                                        {
-                                                            if (e.Key.Equals(OldName))
-                                                            {
-                                                                CurrentObject->AllVaraint.Add(NewName, L_Data);
-                                                            }
-                                                            else
-                                                            {
-                                                                CurrentObject->AllVaraint.Add(e.Key, e.Value);
-                                                            }
-                                                        }
-                                                        copy.Empty();
-                                                        if (NowVaraint.Equals(OldName))
-                                                        {
-                                                            NowVaraint = NewName;
-                                                        }
-                                                    }
-                                                }
-                                                    })
-                                                ];
-                                            ContentBox->AddSlot()
+                                                .AutoWidth()
+                                                [
+                                                    SNew(STextBlock)
+                                                        .Text(FText::FromString(TEXT("变体列表:")))
+                                                ]
+                                        ]
+                                        + SHeaderRow::Column("Tool")
+                                        .HAlignHeader(HAlign_Right)
+                                        .HAlignCell(HAlign_Right)
+                                        [
+                                            SNew(SHorizontalBox)
+                                                + SHorizontalBox::Slot()
                                                 .HAlign(HAlign_Right)
-                                                .VAlign(VAlign_Center)
+                                                .AutoWidth()
                                                 [
-                                                    SNew(SHorizontalBox)
-                                                        + SHorizontalBox::Slot()
-                                                        .AutoWidth()
+                                                    SNew(SButton)
+                                                        .Content()
                                                         [
-                                                            SNew(SButton)
-                                                                .Text(FText::FromString(TEXT("粘贴")))
-                                                                .Content()
-                                                                [
-                                                                    SNew(SImage)
-                                                                        .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GenericCommands.Paste").GetSmallIcon())
-                                                                ]
-                                                                .ToolTipText(FText::FromString(TEXT("粘贴变体")))
-                                                                .OnClicked_Lambda([this, InItem] {
-                                                                NowVaraint = *InItem;
-                                                                OnVariantAttach();
-                                                                return FReply::Handled();})
+                                                            SNew(SImage)
+                                                                .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "WorldBrowser.NewFolderIcon").GetSmallIcon())
                                                         ]
-                                                ];
-                                            TableRowWidget->SetContent(Content);
-                                            return TableRowWidget;
-                                        })
-                                    .OnSelectionChanged_Lambda([&](TSharedPtr<FString> inSelectItem, ESelectInfo::Type SelectType)
-                                        {
-                                            if (inSelectItem)
-                                            {
-                                                FString name = *inSelectItem;
-                                                if (CurrentObject)
-                                                {
-                                                    SetVariantInfo(name);
-                                                }
-                                                ESelectInfo::Type t = SelectType;
-                                            }
-                                        })
-                                            .SelectionMode(ESelectionMode::Type::Single)
-                                            .HeaderRow
-                                            (
-                                                SNew(SHeaderRow)
-                                                + SHeaderRow::Column("Name")
-                                                .HAlignHeader(HAlign_Left)
-                                                .HAlignCell(HAlign_Left)
-                                                [
-                                                    SNew(SHorizontalBox)
-                                                        + SHorizontalBox::Slot()
-                                                        .HAlign(HAlign_Left)
-                                                        .VAlign(VAlign_Center)
-                                                        .AutoWidth()
-                                                        [
-                                                            SNew(STextBlock)
-                                                                .Text(FText::FromString(TEXT("变体列表:")))
-                                                        ]
+                                                        .Text(FText::FromString(TEXT("添加")))
+                                                        .ToolTipText(FText::FromString(TEXT("添加变体")))
+                                                        .OnClicked(this, &DoodleVariantCompoundWidget::OnVariantAdd)
                                                 ]
-                                                + SHeaderRow::Column("Tool")
-                                                .HAlignHeader(HAlign_Right)
-                                                .HAlignCell(HAlign_Right)
-                                                [
-                                                    SNew(SHorizontalBox)
-                                                        + SHorizontalBox::Slot()
-                                                        .HAlign(HAlign_Right)
-                                                        .AutoWidth()
-                                                        [
-                                                            SNew(SButton)
-                                                                .Content()
-                                                                [
-                                                                    SNew(SImage)
-                                                                        .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "WorldBrowser.NewFolderIcon").GetSmallIcon())
-                                                                ]
-                                                                .Text(FText::FromString(TEXT("添加")))
-                                                                .ToolTipText(FText::FromString(TEXT("添加变体")))
-                                                                .OnClicked(this, &DoodleVariantCompoundWidget::OnVariantAdd)
-                                                        ]
-                                                ]
-                                            )
+                                        ]
+                                    )
                             ]
 
                     ]
@@ -228,90 +154,168 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                             [
                                 SAssignNew(MaterialListView, SListView<TSharedPtr< FMaterialItemData> >)
                                     .ListItemsSource(&MaterialItems)
-                                    .OnGenerateRow_Lambda([&](TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable)->TSharedRef<ITableRow>
-                                        {
-                                            TSharedRef<STableRow<TSharedPtr<FMaterialItemData>>> TableRowWidget = SNew(STableRow<TSharedPtr<FMaterialItemData>>, OwnerTable);
-                                            TSharedPtr<SVerticalBox> ContentBox{};
-                                            TSharedRef<SWidget> Content =
-                                                SNew(SBorder)
-                                                .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
-                                                .Padding(0)
-                                                .Cursor(EMouseCursor::GrabHand)
-                                                [SAssignNew(ContentBox, SVerticalBox)];
-                                            ContentBox->AddSlot()
-                                                .AutoHeight()
-                                                .HAlign(HAlign_Left)
-                                                .VAlign(VAlign_Center)
-                                                [SNew(STextBlock)
-                                                .Text(FText::FromName(InItem->Slot))
-                                                ];
-                                            ContentBox->AddSlot()
-                                                .AutoHeight()
-                                                .HAlign(HAlign_Left)
-                                                .VAlign(VAlign_Center)
-                                                [SNew(SObjectPropertyEntryBox)
-                                                .ObjectPath_Lambda([InItem]()
-                                                    {
-                                                        if (InItem)
-                                                            return InItem->Material.GetPathName();
-                                                        else
-                                                            return FString(TEXT(""));
-                                                    }
-                                                )
-                                                .AllowedClass(UMaterialInterface::StaticClass())
-                                                        .OnObjectChanged_Lambda([&, InItem](const FAssetData& AssetData) {
-                                                        if (CurrentObject)
-                                                        {
-                                                            int index = InItem.Get()->Index;
-                                                            FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
-                                                            UObject* obj = AssetData.GetAsset();
-                                                            TObjectPtr<UMaterial> ui = Cast<UMaterial>(obj);
-                                                            Arr.Variants[index] = FSkeletalMaterial(ui);
-                                                            CurrentObject->AllVaraint[NowVaraint] = Arr;
-                                                            MaterialItems[index].Get()->Material = Arr.Variants[index].MaterialInterface;
-                                                        }
-                                                            })
-                                                        .AllowClear(true)
-                                                                .DisplayUseSelected(true)
-                                                                .DisplayBrowse(true)
-                                                                .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
-                                                                //.IsEnabled(this, &SMaterialAnalyzer::IsMaterialSelectionAllowed);
-                                                ];
-                                            TableRowWidget->SetContent(Content);
-                                            return TableRowWidget;
-                                        }
-                                    )
+                                    .OnGenerateRow(this, &DoodleVariantCompoundWidget::MaterialListOnGenerateRow)
                                     .OnSelectionChanged_Lambda([](TSharedPtr<FMaterialItemData> inSelectItem, ESelectInfo::Type SelectType)
+                                    {
+                                        if (inSelectItem)
                                         {
-                                            if (inSelectItem)
-                                            {
-                                                TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
-                                                ESelectInfo::Type t = SelectType;
-                                            }
-                                            //UE_LOG("LogSizeof", Log, TEXT("Select Item, type = %s, size = %s"), *inSelectItem, TEXT("111"))
-                                        })
-                                            .SelectionMode(ESelectionMode::Type::Single)
-                                            .HeaderRow
-                                            (
-                                                SNew(SHeaderRow)
-                                                + SHeaderRow::Column("Name")
+                                            TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
+                                            ESelectInfo::Type t = SelectType;
+                                        }
+                                        //UE_LOG("LogSizeof", Log, TEXT("Select Item, type = %s, size = %s"), *inSelectItem, TEXT("111"))
+                                    })
+                                    .SelectionMode(ESelectionMode::Type::Single)
+                                    .HeaderRow
+                                    (
+                                        SNew(SHeaderRow)
+                                        + SHeaderRow::Column("Name")
+                                        [
+                                            SNew(SBorder)
+                                                .Padding(5)
+                                                .Content()
                                                 [
-                                                    SNew(SBorder)
-                                                        .Padding(5)
-                                                        .Content()
-                                                        [
-                                                            SNew(STextBlock)
-                                                                .Text(FText::FromString(TEXT("插槽")))
-                                                        ]
+                                                    SNew(STextBlock)
+                                                        .Text(FText::FromString(TEXT("插槽")))
                                                 ]
-                                                + SHeaderRow::Column("Number").DefaultLabel(FText::FromString(TEXT("材质")))
-                                            )
+                                        ]
+                                        + SHeaderRow::Column("Number").DefaultLabel(FText::FromString(TEXT("材质")))
+                                    )
                             ]
                     ]
             ]
        
 	];
     
+}
+
+TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+     TSharedRef<STableRow<TSharedPtr<FString>>> TableRowWidget = SNew(STableRow<TSharedPtr<FString>>, OwnerTable);
+     TSharedPtr<SHorizontalBox> ContentBox{};
+     //-------------------------
+     int index = OwnerTable.Get().GetNumGeneratedChildren();
+     TSharedRef<SWidget> Content =
+         SNew(SBorder)
+         .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+         .Padding(0)
+         .Cursor(EMouseCursor::GrabHand)
+         [SAssignNew(ContentBox, SHorizontalBox)];
+
+     ContentBox->AddSlot()
+         .HAlign(HAlign_Left)
+         .VAlign(VAlign_Center)
+         [SNew(SEditableTextBox)
+         .Text(FText::FromString(*InItem))
+         .OnTextCommitted(this, &DoodleVariantCompoundWidget::VariantNameOnTextCommitted, InItem)
+         ];
+     ContentBox->AddSlot()
+         .HAlign(HAlign_Right)
+         .VAlign(VAlign_Center)
+         [
+             SNew(SHorizontalBox)
+                 + SHorizontalBox::Slot()
+                 .AutoWidth()
+                 [
+                     SNew(SButton)
+                         .Text(FText::FromString(TEXT("粘贴")))
+                         .Content()
+                         [
+                             SNew(SImage)
+                                 .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GenericCommands.Paste").GetSmallIcon())
+                         ]
+                         .ToolTipText(FText::FromString(TEXT("粘贴变体")))
+                         .OnClicked_Lambda([this, InItem] {
+                         NowVaraint = *InItem;
+                         OnVariantAttach();
+                         return FReply::Handled();})
+                 ]
+         ];
+     TableRowWidget->SetContent(Content);
+     return TableRowWidget;
+}
+
+void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText, const ETextCommit::Type InTextAction, TSharedPtr<FString> InItem)
+{
+    FString NewName = InText.ToString();
+    FString OldName = *InItem;
+    if (!CurrentObject->AllVaraint.Contains(NewName))
+    {
+        if (CurrentObject->AllVaraint.Contains(OldName))
+        {
+            FVariantInfo L_Data = CurrentObject->AllVaraint[OldName];
+            auto copy = CurrentObject->AllVaraint;
+            CurrentObject->AllVaraint.Empty();
+            for (auto& e : copy)
+            {
+                if (e.Key.Equals(OldName))
+                {
+                    CurrentObject->AllVaraint.Add(NewName, L_Data);
+                }
+                else
+                {
+                    CurrentObject->AllVaraint.Add(e.Key, e.Value);
+                }
+            }
+            copy.Empty();
+            if (NowVaraint.Equals(OldName))
+            {
+                NowVaraint = NewName;
+            }
+        }
+    }
+}
+
+TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    TSharedRef<STableRow<TSharedPtr<FMaterialItemData>>> TableRowWidget = SNew(STableRow<TSharedPtr<FMaterialItemData>>, OwnerTable);
+    TSharedPtr<SVerticalBox> ContentBox{};
+    TSharedRef<SWidget> Content =
+        SNew(SBorder)
+        .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+        .Padding(0)
+        .Cursor(EMouseCursor::GrabHand)
+        [SAssignNew(ContentBox, SVerticalBox)];
+    ContentBox->AddSlot()
+        .AutoHeight()
+        .HAlign(HAlign_Left)
+        .VAlign(VAlign_Center)
+        [SNew(STextBlock)
+        .Text(FText::FromName(InItem->Slot))
+        ];
+    ContentBox->AddSlot()
+        .AutoHeight()
+        .HAlign(HAlign_Left)
+        .VAlign(VAlign_Center)
+        [SNew(SObjectPropertyEntryBox)
+        .ObjectPath_Lambda([InItem]()
+            {
+                if (InItem)
+                    return InItem->Material.GetPathName();
+                else
+                    return FString(TEXT(""));
+            }
+        )
+        .AllowedClass(UMaterialInterface::StaticClass())
+                .OnObjectChanged_Lambda([&, InItem](const FAssetData& AssetData) {
+                if (CurrentObject)
+                {
+                    int index = InItem.Get()->Index;
+                    FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
+                    UObject* obj = AssetData.GetAsset();
+                    TObjectPtr<UMaterial> ui = Cast<UMaterial>(obj);
+                    Arr.Variants[index] = FSkeletalMaterial(ui);
+                    CurrentObject->AllVaraint[NowVaraint] = Arr;
+                    MaterialItems[index].Get()->Material = Arr.Variants[index].MaterialInterface;
+                }
+                    })
+                .AllowClear(true)
+                        .DisplayUseSelected(true)
+                        .DisplayBrowse(true)
+                        .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
+                        //.IsEnabled(this, &SMaterialAnalyzer::IsMaterialSelectionAllowed);
+        ];
+    TableRowWidget->SetContent(Content);
+    return TableRowWidget;
 }
 
 FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
@@ -367,7 +371,6 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
                 trangeMat[M] = L_Mesh->GetMaterials()[M];
             }
             CurrentObject->Mesh = L_Mesh;
-            CurrentObject->Path = SelectedData.PackagePath;
             FVariantInfo Info;
             Info.Variants = trangeMat;
             NowVaraint = TEXT("default");

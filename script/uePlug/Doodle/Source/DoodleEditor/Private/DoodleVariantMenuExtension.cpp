@@ -6,19 +6,22 @@
 #include "DoodleVariantAssetUserData.h"
 #include "Animation/SkeletalMeshActor.h"
 
-DoodleVariantMenuExtension::DoodleVariantMenuExtension()
+FDoodleVariantMenuExtension::FDoodleVariantMenuExtension()
 {
 }
 
-DoodleVariantMenuExtension::~DoodleVariantMenuExtension()
+FDoodleVariantMenuExtension::~FDoodleVariantMenuExtension()
 {
 }
 
-void DoodleVariantMenuExtension::AddMenuEntry(FMenuBuilder& builder) 
+void FDoodleVariantMenuExtension::AddMenuEntry(FMenuBuilder& builder) 
 {
     TArray<FGuid> Objects;
     TSharedPtr<ISequencer> TempSequencer = TheSequencer.Pin();
     TempSequencer.Get()->GetSelectedObjects(Objects);
+    //-----------------------------------------------
+    //UMovieScene* MovieScene = TempSequencer->GetFocusedMovieSceneSequence()->GetMovieScene();
+    //const TArray<FMovieSceneBinding>& Bindings = MovieScene->GetBindings();//Binding.GetObjectGuid()//Binding.GetTracks()
     //--------------------------
     if (Objects.Num() > 0)
     {
@@ -44,7 +47,7 @@ void DoodleVariantMenuExtension::AddMenuEntry(FMenuBuilder& builder)
                         (
                             FText::FromString(TEXT("切换变体")),
                             FText::FromString(TEXT("切换变体 tooltip")),
-                            FNewMenuDelegate::CreateRaw(this,&DoodleVariantMenuExtension::AddNewMenu,UserData, TempActor),
+                            FNewMenuDelegate::CreateRaw(this,&FDoodleVariantMenuExtension::AddNewMenu,UserData, TempActor),
                             FUIAction(),
                             NAME_None,
                             EUserInterfaceActionType::Button,
@@ -59,24 +62,24 @@ void DoodleVariantMenuExtension::AddMenuEntry(FMenuBuilder& builder)
     }
 }
 
-void DoodleVariantMenuExtension::AddNewMenu(FMenuBuilder& builder, UDoodleVariantAssetUserData* UserData, AActor* TempActor)
+void FDoodleVariantMenuExtension::AddNewMenu(FMenuBuilder& builder, UDoodleVariantAssetUserData* UserData, AActor* TempActor)
 {
-    UDoodleVariantObject* MyObject = UserData->VariantObj;
-    if (MyObject)
+    UDoodleVariantObject* VObject = UserData->VariantObj;
+    if (VObject)
     {
-        for (auto& e : MyObject->AllVaraint)
+        for (auto& e : VObject->AllVaraint)
         {
             builder.AddMenuEntry(
                 FText::FromString(e.Key),
                 FText::FromString(TEXT("Change Skeletal Mesh Variant")),
                 FSlateIcon(),
                 // NOTE 设置点击触发的函数
-                FUIAction(FExecuteAction::CreateLambda([&, MyObject, e, TempActor]()
+                FUIAction(FExecuteAction::CreateLambda([&, VObject, e, TempActor]()
                 {
-                    MyObject->AllVaraint[e.Key];
+                    VObject->AllVaraint[e.Key];
                     //----------------------
                     ASkeletalMeshActor* L_Mesh = Cast<ASkeletalMeshActor>(TempActor);
-                    TArray<FSkeletalMaterial> TempList = MyObject->AllVaraint[e.Key].Variants;
+                    TArray<FSkeletalMaterial> TempList = VObject->AllVaraint[e.Key].Variants;
                     for (int i = 0;i < TempList.Num();i++)
                     {
                         L_Mesh->GetSkeletalMeshComponent()->SetMaterial(i, TempList[i].MaterialInterface);

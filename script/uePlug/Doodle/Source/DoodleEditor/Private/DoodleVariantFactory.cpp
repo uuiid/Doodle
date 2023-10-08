@@ -188,7 +188,6 @@ UObject* UDoodleVariantFactory::FactoryCreateNew(UClass* InClass, UObject* InPar
            trangeMat[m] = mesh->GetMaterials()[m];
        }
        uObject->Mesh = mesh;
-       uObject->Path = MeshAssetData.PackagePath;
        FVariantInfo Info;
        Info.Variants = trangeMat;
        FString NowVaraint = TEXT("default");

@@ -8,11 +8,11 @@
 /**
  * 
  */
-class DOODLEEDITOR_API DoodleVariantMenuExtension
+class DOODLEEDITOR_API FDoodleVariantMenuExtension
 {
 public:
-	DoodleVariantMenuExtension();
-	~DoodleVariantMenuExtension();
+	FDoodleVariantMenuExtension();
+	~FDoodleVariantMenuExtension();
 
 	void AddMenuEntry(FMenuBuilder& MenuBuilder);
 	void AddNewMenu(FMenuBuilder& builder, UDoodleVariantAssetUserData* UserData, AActor* TempActor);

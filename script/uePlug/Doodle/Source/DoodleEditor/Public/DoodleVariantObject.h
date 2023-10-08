@@ -23,8 +23,6 @@ class DOODLEEDITOR_API UDoodleVariantObject : public UObject
 public:
 	UPROPERTY(VisibleAnywhere, DisplayName = "")
 	USkeletalMesh* Mesh;
-	UPROPERTY(VisibleAnywhere,DisplayName = "lu_jin")
-	FName Path;
 	UPROPERTY(EditAnywhere,DisplayName = "bian_ti")
 	TMap<FString, FVariantInfo> AllVaraint;
 };
