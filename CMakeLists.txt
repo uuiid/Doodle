@@ -101,6 +101,7 @@ find_package(cryptopp CONFIG REQUIRED)
 find_package(Alembic CONFIG REQUIRED)
 # 寻找d3d辅助工具库
 #find_package(directxtk CONFIG REQUIRED)
+find_package(Fbx 2020.3.4 REQUIRED)
 
 # 启用测试
 enable_testing()

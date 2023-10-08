@@ -1,4 +1,4 @@
-find_package(Fbx 2020.3.4)
+#find_package(Fbx 2020.3.4)
 
 if (TARGET Fbx::Fbx)
     add_executable(abc2fbx abc2fbx.cpp)
@@ -6,7 +6,7 @@ if (TARGET Fbx::Fbx)
             abc2fbx
             PRIVATE
             doodle_lib
-            Fbx::Fbx
+            Fbx::Fbx-static
             Alembic::Alembic
     )
 endif ()

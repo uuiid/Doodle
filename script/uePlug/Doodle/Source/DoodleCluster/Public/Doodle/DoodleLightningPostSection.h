@@ -12,6 +12,7 @@ class UMovieSceneSignedObject;
 class UMovieSceneEntitySystemLinker;
 class FEntityImportParams;
 class FImportedEntity;
+class UCurveFloat;
 
 /**
  *

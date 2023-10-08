@@ -13,6 +13,7 @@
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
+#include <maya_plug/maya_comm/doodle_to_ue_fbx.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
@@ -91,8 +92,6 @@ MStatus initializePlugin(MObject obj) {
   MFnPlugin k_plugin{
       obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()};
 
-  auto k_st = MGlobal::mayaState(&status);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
   maya_reg = std::make_shared<::doodle::maya_plug::maya_register>();
 
   doodle::maya_plug::open_windows();
@@ -137,23 +136,14 @@ MStatus initializePlugin(MObject obj) {
   // ));
   // CHECK_MSTATUS(status);
 
-  if (doodle::core_set::get_set().maya_replace_save_dialog) {
-    maya_reg->register_callback(MSceneMessage::addCheckCallback(
-        MSceneMessage::Message::kBeforeSaveCheck,
-        [](bool* retCode, void* clientData) { *retCode = maya_plug::clear_scene_comm::show_save_mag(); }, nullptr,
-        &status
-    ));
-    CHECK_MSTATUS(status);
-  }
-
   maya_reg->register_callback(MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
-        ::doodle::app_base::Get().stop_app();
-        p_doodle_app->run();
-        p_doodle_app.reset();
+        if (auto l_doodle_app = static_cast<app_base*>(in)) {
+          l_doodle_app->stop_app();
+        }
       },
-      nullptr, &status
+      p_doodle_app.get(), &status
   ));
   CHECK_MSTATUS(status);
 
@@ -162,11 +152,11 @@ MStatus initializePlugin(MObject obj) {
   maya_reg->register_callback(MTimerMessage::addTimerCallback(
       0.001,
       [](float elapsedTime, float lastTime, void* clientData) {
-        if (p_doodle_app) {
-          p_doodle_app->poll_one();
+        if (auto l_doodle_app = static_cast<app_base*>(clientData)) {
+          l_doodle_app->poll_one();
         }
       },
-      nullptr, &status
+      p_doodle_app.get(), &status
   ));
   CHECK_MSTATUS(status);
 
@@ -210,19 +200,16 @@ MStatus initializePlugin(MObject obj) {
 
   /// 添加加载实体命令
   status = maya_reg->register_command<::doodle::maya_plug::add_entt>(k_plugin);
+  ///  添加自定义fbx导出
+  status = maya_reg->register_command<::doodle::maya_plug::doodle_to_ue_fbx>(k_plugin);
 
   /// 等所有命令完成后加载工具架
-  switch (k_st) {
-    case MGlobal::MMayaState::kInteractive:
-      status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
+  status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
 scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
 scripts.Doodle_shelf.DoodleUIManage.creation()
 )");
-      CHECK_MSTATUS(status);
-      break;
-    default:
-      break;
-  }
+  CHECK_MSTATUS(status);
+
   if (!::doodle::core_set::get_set().maya_force_resolve_link) {
     status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
     CHECK_MSTATUS(status);

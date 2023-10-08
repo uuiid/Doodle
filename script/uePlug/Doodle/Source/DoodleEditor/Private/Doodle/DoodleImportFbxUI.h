@@ -11,6 +11,7 @@
 namespace UnFbx {
 class FFbxImporter;
 }
+
 class UGeometryCache;
 
 USTRUCT()
@@ -18,7 +19,9 @@ struct FDoodleUSkeletonData_1 {
  public:
   GENERATED_BODY()
   FDoodleUSkeletonData_1(){};
+
   FDoodleUSkeletonData_1(const TSet<FString>& InString, USkeleton* InSkin) : BoneNames(InString), SkinObj(InSkin) {}
+
   ~FDoodleUSkeletonData_1() {}
 
   TSet<FString> BoneNames;
@@ -28,13 +31,36 @@ struct FDoodleUSkeletonData_1 {
   static TArray<FDoodleUSkeletonData_1> ListAllSkeletons();
 };
 
+class FSearchEpShotModel_1 {
+ public:
+  int64 Eps{};
+  int64 Shot{};
+  FString ShotAb{};
+  int32_t StartTime{};
+  int32_t EndTime{};
+  void GenStartAndEndTime(const FString& In_ImportPath);
+};
+
+class FSearchEpShotModel_2 {
+ public:
+  int64 Eps{};
+  int64 Shot{};
+  FString ShotAb{};
+  int32_t StartTime{};
+  int32_t EndTime{};
+  void GenStartAndEndTime(const FString& In_ImportPath);
+};
+
 UCLASS()
 class UDoodleBaseImportData : public UObject {
  public:
   GENERATED_BODY()
   UDoodleBaseImportData(){};
+
   UDoodleBaseImportData(const FString& InString) : ImportPath(InString) {}
+
   virtual ~UDoodleBaseImportData() {}
+
   /// @brief 导入的文件路径
   FString ImportPath;
 
@@ -47,13 +73,15 @@ class UDoodleBaseImportData : public UObject {
 
   /// @brief 导入后的路径
   FString ImportPathDir{};
+  /// 搜索导入的文件路径, 生成各种信息
+  TVariant<FSearchEpShotModel_1, FSearchEpShotModel_2> Search_Model;
 
  protected:
   // 生成导入的路径
-  FString GetImportPath(const FString& In_Path_Prefix);
+  FString GetImportPath(const FString& In_Path_Prefix) const;
 
  public:
-  // @brief获取文件名称中的开始和结束
+  // @brief获取文件名称中的开始和结束, 以及集数, 镜头号等等
   void GenStartAndEndTime();
   /**
    * @brief 根据导入的路径, 提取信息,  生成要导入ue4的路径
@@ -62,7 +90,9 @@ class UDoodleBaseImportData : public UObject {
    * @return FString  返回的导入ue4的路径
    */
   virtual void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix){};
+
   virtual void ImportFile(){};
+
   virtual void AssembleScene(){};
 
   static FString GetPathPrefix(const FString& In_Path);
@@ -73,7 +103,9 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
  public:
   GENERATED_BODY()
   UDoodleFbxImport_1(){};
+
   UDoodleFbxImport_1(const FString& InString) : UDoodleBaseImportData(InString), SkinObj() {}
+
   ~UDoodleFbxImport_1() override {}
 
   /// @brief 寻找到的骨骼
@@ -97,9 +129,13 @@ class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData {
   GENERATED_BODY()
   // 初次导入
   bool FirstImport{false};
+
   UDoodleFbxCameraImport_1(){};
+
   UDoodleFbxCameraImport_1(const FString& InString) : UDoodleBaseImportData(InString) {}
+
   ~UDoodleFbxCameraImport_1() override {}
+
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
   void AssembleScene() override;
@@ -114,8 +150,11 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
   UDoodleFbxCameraImport_1* CameraImport;
 
   UDoodleAbcImport_1(){};
+
   UDoodleAbcImport_1(const FString& InString) : UDoodleBaseImportData(InString) {}
+
   ~UDoodleAbcImport_1() override {}
+
   void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
   void AssembleScene() override;
@@ -124,6 +163,7 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
  public:
   SLATE_BEGIN_ARGS(SDoodleImportFbxUI) {}
+
   SLATE_END_ARGS()
 
   using UDoodleBaseImportDataPtrType = TObjectPtr<UDoodleBaseImportData>;
@@ -154,7 +194,7 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   ECheckBoxState OnlyCamera{ECheckBoxState::Unchecked};
 
   // 判断fbx是否是相机fbx
-  bool IsCamera(UnFbx::FFbxImporter* InFbx);
+  bool IsCamera(const UnFbx::FFbxImporter* InFbx);
   void AddCameraFile(const FString& In_File);
   // 寻找骨骼排匹配
   void FindSK();

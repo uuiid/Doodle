@@ -57,6 +57,10 @@ FMovieSceneEvalTemplatePtr UDoodleLightningPostTrack::CreateTemplateForSection(c
   return FDoodleLightningPostSectionTemplate{CastChecked<const UDoodleLightningPostSection>(&InSection)};
 }
 
+#if WITH_EDITORONLY_DATA
+
 FText UDoodleLightningPostTrack::GetDefaultDisplayName() const {
   return FText::FromString("Doodle Lightning Post Track");
 }
+
+#endif

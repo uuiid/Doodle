@@ -10,6 +10,7 @@ target_sources(doodle_maya_lib
         afterimage_comm.h
         add_entt.h
         ref_file_export.h
+        doodle_to_ue_fbx.h
 
         PRIVATE
         open_doodle_main.cpp
@@ -22,4 +23,5 @@ target_sources(doodle_maya_lib
         dem_bones_comm.cpp
         add_entt.cpp
         ref_file_export.cpp
+        doodle_to_ue_fbx.cpp
 )
