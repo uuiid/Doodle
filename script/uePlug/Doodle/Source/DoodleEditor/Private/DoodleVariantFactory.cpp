@@ -189,10 +189,10 @@ UObject* UDoodleVariantFactory::FactoryCreateNew(UClass* InClass, UObject* InPar
        }
        uObject->Mesh = mesh;
        uObject->Path = MeshAssetData.PackagePath;
-       FDATA f;
-       f.Variants = trangeMat;
-       FString now_varaint = TEXT("default");
-       uObject->AllVaraint.Add(now_varaint, f);
+       FVariantInfo Info;
+       Info.Variants = trangeMat;
+       FString NowVaraint = TEXT("default");
+       uObject->AllVaraint.Add(NowVaraint, Info);
        //-----------------------------
        UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(mesh, NAME_None, RF_NoFlags);
        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));

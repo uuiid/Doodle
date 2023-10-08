@@ -55,7 +55,7 @@ public:
 	TSharedPtr<SListView<TSharedPtr<FMaterialItemData> >> MaterialListView;
 	TArray< TSharedPtr< FMaterialItemData> > MaterialItems;
 	//------------------------
-	UDoodleVariantObject* MyObject;
+	UDoodleVariantObject* CurrentObject;
 
 	TSharedPtr<STextBlock> NameText;
 	TSharedPtr<STextBlock> SelectText;

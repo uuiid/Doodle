@@ -7,7 +7,7 @@
 #include "DoodleVariantObject.generated.h"
 
 USTRUCT()
-struct FDATA
+struct FVariantInfo
 {   GENERATED_USTRUCT_BODY()
 public:
 	UPROPERTY(EditAnywhere)
@@ -26,5 +26,5 @@ public:
 	UPROPERTY(VisibleAnywhere,DisplayName = "lu_jin")
 	FName Path;
 	UPROPERTY(EditAnywhere,DisplayName = "bian_ti")
-	TMap<FString,FDATA> AllVaraint;
+	TMap<FString, FVariantInfo> AllVaraint;
 };
