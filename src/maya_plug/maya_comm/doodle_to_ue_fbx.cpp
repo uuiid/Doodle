@@ -244,7 +244,6 @@ class doodle_to_ue_fbx::impl_data {
   std::shared_ptr<FbxManager> manager_{};
   FbxScene* scene_{};
   tree_mesh_t tree_dag_{};
-  tree_mesh_t tree_bone_dag_{};
 
   std::vector<MDagPath> joints_{};
 
@@ -312,13 +311,11 @@ class doodle_to_ue_fbx::impl_data {
   void build_tree(const MSelectionList& in_list) {
     build_mesh_tree(in_list);
     build_joint_tree();
-    iter_tree(tree_dag_.begin());
   }
-
-  void write_joint() {
-    tree_bone_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode()}};
-    build_joint_tree();
-    iter_tree_2(tree_bone_dag_.begin());
+  void write() {
+    for (auto&& i : tree_dag_) {
+      i.write();
+    }
   }
 
   MObject get_skin_custer(MDagPath in_dag_path) {
@@ -373,7 +370,7 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
 
   p_i->init();
   p_i->build_tree(l_list);
-  p_i->write_joint();
+  p_i->write();
   write_fbx();
   return MS::kSuccess;
 }
