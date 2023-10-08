@@ -5,13 +5,17 @@
 #include "doodle_to_ue_fbx.h"
 
 #include <maya_plug/data/maya_tool.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
 
 #include <fbxsdk.h>
 #include <maya/MArgDatabase.h>
+#include <maya/MDagPathArray.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
+#include <maya/MItDependencyGraph.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
@@ -196,28 +200,111 @@ struct fbx_write_data {
     l_transform.getScale(l_scale);
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   }
+
+  std::vector<MDagPath> find_joint(const MObject& in_msk) {
+    if (in_msk.isNull()) return {};
+    MFnSkinCluster l_skin_cluster{in_msk};
+    MDagPathArray l_joint_array{};
+    MStatus l_status{};
+    auto l_joint_count = l_skin_cluster.influenceObjects(l_joint_array, &l_status);
+    maya_chick(l_status);
+
+    std::vector<MDagPath> l_joint_vector{};
+    for (auto i = 0; i < l_joint_count; ++i) {
+      l_joint_vector.emplace_back(l_joint_array[i]);
+    }
+    return l_joint_vector;
+  }
 };
 
 struct tree_dag_node {
   MDagPath dag_path{};
   FbxNode* node{};
+  MObject skin_cluster_{};
+  FbxNode* skin_cluster_fbx_{};
 };
 
 class doodle_to_ue_fbx::impl_data {
  public:
+  using tree_mesh_t = tree<tree_dag_node>;
+
+ private:
+  void iter_tree_2(const tree_mesh_t::iterator& in_parent) {
+    for (auto it = tree_mesh_t::begin(in_parent); it != tree_mesh_t::end(in_parent); ++it) {
+      it->node          = FbxNode::Create(scene_, it->dag_path.partialPathName().asChar());
+      it->skin_cluster_ = get_skin_custer(it->dag_path);
+      in_parent->node->AddChild(it->node);
+      fbx_write_data l_data{it->node, nullptr};
+      l_data.write_transform(it->dag_path);
+      iter_tree_2(it);
+    }
+  }
+
+ public:
   std::shared_ptr<FbxManager> manager_{};
   FbxScene* scene_{};
-  using tree_t = tree<tree_dag_node>;
-  tree_t tree_dag_{};
+  tree_mesh_t tree_dag_{};
+  tree_mesh_t tree_bone_dag_{};
 
-  void iter_tree(const tree_t::iterator& in_parent) {
-    for (auto it = tree_t::begin(in_parent); it != tree_t::end(in_parent); ++it) {
-      it->node = FbxNode::Create(scene_, it->dag_path.partialPathName().asChar());
+  std::vector<MDagPath> joints_{};
+
+  void iter_tree(const tree_mesh_t::iterator& in_parent) {
+    for (auto it = tree_mesh_t::begin(in_parent); it != tree_mesh_t::end(in_parent); ++it) {
+      it->node          = FbxNode::Create(scene_, it->dag_path.partialPathName().asChar());
+      it->skin_cluster_ = get_skin_custer(it->dag_path);
       in_parent->node->AddChild(it->node);
       fbx_write_data l_data{it->node, nullptr};
       l_data.write_mesh(it->dag_path);
+      if (!it->skin_cluster_.isNull() && it->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
+        MGlobal::displayInfo(conv::to_ms(fmt::format("写出皮肤簇 {}", it->dag_path)));
+        joints_ |= ranges::action::push_back(l_data.find_joint(it->skin_cluster_));
+      }
       iter_tree(it);
     }
+  }
+
+  void build_joint_tree() {
+    for (auto&& i : joints_) {
+      auto l_begin = tree_bone_dag_.begin();
+      for (std::int32_t j = i.length() - 1; j >= 0; --j) {
+        MDagPath l_sub_path{i};
+        l_sub_path.pop(j);
+
+        if (auto l_tree_it = ranges::find_if(
+                std::begin(l_begin), std::end(l_begin),
+                [&](const impl_data::tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
+            );
+            l_tree_it != std::end(l_begin)) {
+          l_begin = l_tree_it;
+        } else {
+          l_begin = tree_bone_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+        }
+      }
+    }
+  }
+
+  void write_joint() {
+    tree_bone_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode()}};
+    iter_tree_2(tree_bone_dag_.begin());
+  }
+
+  MObject get_skin_custer(MDagPath in_dag_path) {
+    if (!in_dag_path.hasFn(MFn::kMesh)) return {};
+
+    MStatus l_s{};
+    MObject l_skin_cluster{};
+    maya_chick(in_dag_path.extendToShape());
+    /// \brief 获得组件点上下文
+    auto l_shape = in_dag_path.node(&l_s);
+    maya_chick(l_s);
+
+    /// 寻找高模的皮肤簇
+    for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
+         i.next()) {
+      l_skin_cluster = i.currentItem(&l_s);
+      maya_chick(l_s);
+    }
+    return l_skin_cluster;
   }
 };
 
@@ -265,7 +352,7 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
 
       if (auto l_tree_it = ranges::find_if(
               std::begin(l_begin), std::end(l_begin),
-              [&](const impl_data::tree_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
+              [&](const impl_data::tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
           );
           l_tree_it != std::end(l_begin)) {
         l_begin = l_tree_it;
@@ -276,6 +363,8 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   }
 
   p_i->iter_tree(p_i->tree_dag_.begin());
+  p_i->build_joint_tree();
+  p_i->write_joint();
   write_fbx();
   return MS::kSuccess;
 }
