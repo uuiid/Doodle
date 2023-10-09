@@ -16,6 +16,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
+#include <doodle_lib/gui/widgets/derail/user_edit.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -116,7 +117,8 @@ class time_sequencer_widget::impl {
   bool open{true};
 
   /// 过滤用户
-  user_list_cache combox_user_id{};
+  render::select_all_user_t user_select{true};
+  entt::handle current_user{};
   /// 过滤月份
   time_cache combox_month{};
   /// 获取日期的接口
@@ -340,32 +342,26 @@ bool time_sequencer_widget::render() {
   ImGui::SameLine();
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
 
-  ImGui::PushItemWidth(100);
-  if (ImGui::InputInt2(*p_i->combox_month.cache, p_i->combox_month.cache().data())) {
-    auto&& [l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
-    p_i->combox_month.time_data =
-        time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
+  if (const auto l_item = dear::ItemWidth{100}) {
+    if (ImGui::InputInt2(*p_i->combox_month.cache, p_i->combox_month.cache().data())) {
+      auto&& [l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
+      p_i->combox_month.time_data =
+          time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
+    }
   }
   ImGui::SameLine();
-  dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
-    gen_user();
-    for (auto&& l_u : p_i->combox_user_id.user_list) {
-      if (dear::Selectable(l_u.first.c_str())) {
-        p_i->combox_user_id()            = l_u.first;
-        p_i->combox_user_id.current_user = l_u.second;
-        p_i->rules_render.rules_attr(p_i->combox_user_id.current_user.get_or_emplace<doodle::business::rules>(
-            doodle::business::rules::get_default()
-        ));
-      }
-    }
-  };
+  if (auto&& [l_r, l_user] = p_i->user_select.render(g_reg()); l_r) {
+    p_i->current_user = l_user;
+    p_i->rules_render.rules_attr(
+        p_i->current_user.get_or_emplace<doodle::business::rules>(doodle::business::rules::get_default())
+    );
+  }
+
   ImGui::SameLine();
   if (ImGui::Button("过滤")) fliter_select();
   if (ImGui::Button("刷新")) p_i->refresh_work_clock_();
 
   if (ImGui::Button("提交更新")) p_i->save();
-
-  ImGui::PopItemWidth();
 
   //  /// 如果时间个数不到三个, 不显示
   //  if (p_i->time_list.size() < 3) {
@@ -467,8 +463,8 @@ bool time_sequencer_widget::render() {
   if (ImGui::Button("平均时间")) p_i->average_time();
 
   if (p_i->rules_render.render())
-    if (p_i->combox_user_id.current_user) {
-      p_i->combox_user_id.current_user.emplace_or_replace<doodle::business::rules>(p_i->rules_render.rules_attr());
+    if (p_i->current_user) {
+      p_i->current_user.emplace_or_replace<doodle::business::rules>(p_i->rules_render.rules_attr());
     }
 
   return p_i->open;
@@ -491,7 +487,7 @@ void time_sequencer_widget::fliter_select() {
                    return l_t <= l_end && l_t >= l_begin;
                  }) |
                  ranges::views::filter([&](const entt::handle& in_handle) -> bool {
-                   auto l_user = p_i->combox_user_id.current_user;
+                   auto l_user = p_i->current_user;
                    return in_handle.get<assets_file>().user_attr() == l_user;
                  }) |
                  ranges::to_vector;
@@ -504,7 +500,7 @@ void time_sequencer_widget::fliter_select() {
                      return impl::point_cache{in_handle, in_handle.get<time_point_wrap>()};
                    }) |
                    ranges::to_vector;
-  auto l_user = p_i->combox_user_id.current_user;
+  auto l_user = p_i->current_user;
 
   if (!l_user) {
     g_windows_manage().create_windows_arg(windows_init_arg{}
@@ -552,17 +548,6 @@ void time_sequencer_widget::fliter_select() {
         DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
       }
   );
-};
-
-void time_sequencer_widget::gen_user() {
-  p_i->combox_user_id.user_list.clear();
-
-  auto l_v = g_reg()->view<database, user>();
-  for (auto&& [e, l_d, l_u] : l_v.each()) {
-    if (l_u.get_name().empty()) continue;
-    auto l_h = entt::handle{*g_reg(), e};
-    p_i->combox_user_id.user_list.emplace(l_u.get_name(), l_h);
-  }
-  p_i->combox_user_id.user_list.emplace("all", entt::handle{});
 }
+
 }  // namespace doodle::gui

@@ -15,7 +15,6 @@ class DOODLELIB_API time_sequencer_widget {
   std::unique_ptr<impl> p_i;
 
   void fliter_select();
-  void gen_user();
   void refresh_work_rule();
 
  public:

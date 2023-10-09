@@ -427,20 +427,17 @@ bool xlsx_export_widgets::render() {
     ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
     ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
   };
-  ImGui::PushItemWidth(100);
-
-  if (ImGui::InputInt2(*p_i->combox_month.cache, p_i->combox_month.cache().data())) {
-    auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
-    p_i->combox_month.time_data =
-        time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
+  if (const auto l_item = dear::ItemWidth{100}) {
+    if (ImGui::InputInt2(*p_i->combox_month.cache, p_i->combox_month.cache().data())) {
+      auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
+      p_i->combox_month.time_data =
+          time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
+    }
   }
   ImGui::SameLine();
-
   if (auto &&[l_r, l_user] = p_i->user_select.render(g_reg()); l_r) {
     p_i->current_user = l_user;
   }
-
-  ImGui::PopItemWidth();
   ImGui::SameLine();
   if (ImGui::Button(*p_i->filter)) {
     filter_();
