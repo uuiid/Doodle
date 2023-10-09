@@ -56,7 +56,17 @@ void assets_tree::delete_node_(const tree_type_t::iterator_base &in_node) {
 
 bool assets_tree::render() {
   edit_data = false;
-  return render_child(tree_.begin());
+  const ImGuiTreeNodeFlags k_f{assets_tree_node_base_flags};
+  if (auto l_root = dear::TreeNodeEx{"root", k_f | ImGuiTreeNodeFlags_DefaultOpen}) {
+    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+      ranges::for_each(tree_, [](assets_tree_node &in_node) { in_node.has_select = false; });
+      edit_data             = true;
+      current_select_handle = {};
+      filter_list();
+    }
+    edit_data |= render_child(tree_.begin());
+    return edit_data;
+  }
 }
 
 void assets_tree::popen_menu(const tree_type_t::sibling_iterator &in) {
@@ -208,7 +218,7 @@ void assets_tree::filter_list() {
   filter_list_handles = l_view |
                         ranges::views::filter([this](const decltype(l_view)::value_type &in_value_type) -> bool {
                           auto &&[l_e, l_ass] = in_value_type;
-                          return l_ass.assets_attr() == current_select_handle;
+                          return !current_select_handle || l_ass.assets_attr() == current_select_handle;
                         }) |
                         ranges::views::transform([](const decltype(l_view)::value_type &in_value_type) -> entt::handle {
                           auto &&[l_e, l_ass] = in_value_type;
