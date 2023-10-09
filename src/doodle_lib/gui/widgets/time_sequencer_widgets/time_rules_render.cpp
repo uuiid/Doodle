@@ -390,7 +390,7 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
   print_show_str();
 }
 bool time_rules_render::render() {
-  modify_guard_ = false;
+  modify_guard_ = post_modify_;
 
   dear::Text(p_i->show_str);
 
@@ -473,17 +473,17 @@ bool time_rules_render::render() {
   });
 
   if (modify_guard_) print_show_str();
-
+  post_modify_ = false;
   return modify_guard_;
 }
 
 void time_rules_render::refresh() {
+  post_modify_                    = true;
   p_i->rules_attr.work_weekdays_p = p_i->work_gui_data_attr.get();
-
   ranges::for_each(ranges::views::ints(0ull, p_i->time_work_gui_data_attr.size()), [&](std::size_t in_index) {
     p_i->rules_attr.work_pair_p[in_index] = p_i->time_work_gui_data_attr[in_index].get();
   });
-  ranges::for_each(ranges::views::ints(0ull, p_i->time_work_gui_data_attr.size()), [&](std::size_t in_index) {
+  ranges::for_each(ranges::views::ints(0ull, p_i->extra_work_attr.size()), [&](std::size_t in_index) {
     p_i->rules_attr.extra_p[in_index] = p_i->extra_work_attr[in_index].get();
   });
 }

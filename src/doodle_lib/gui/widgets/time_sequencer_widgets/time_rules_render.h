@@ -29,6 +29,8 @@ class DOODLELIB_API time_rules_render {
   void print_show_str();
   std::string get_work_str(std::size_t in_index);
 
+  bool post_modify_{};
+
  public:
   bool modify_guard_{};
   time_rules_render();
