@@ -94,7 +94,7 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
     auto l_t1 = i.first & l_d;
     if (!boost::icl::is_empty(l_t1))
       l_r += fmt::format(
-          R"("{:%Y-%m-%d %H:%M} 到 {:%Y-%m-%d %H:%M}  信息 {}")", ++boost::icl::lower(i.first).get_local_time(),
+          R"("{:%Y-%m-%d %H:%M} 到 {:%Y-%m-%d %H:%M}  信息 {}")", (++boost::icl::lower(i.first)).get_local_time(),
           boost::icl::upper(i.first).get_local_time(), fmt::join(i.second, " ")
       );
   }
