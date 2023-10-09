@@ -15,6 +15,7 @@
 #include <maya/MDagPathArray.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
+#include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
@@ -215,13 +216,31 @@ struct fbx_write_data {
     }
     std::double_t l_scale[3]{};
     l_transform.getScale(l_scale);
+
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   }
 
-  void write_joint() {
+  void write_joint(const MDagPath& in_mesh) {
     auto* l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
     l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
     node->SetNodeAttribute(l_sk_attr);
+    MStatus l_status{};
+    auto l_is_ = get_plug(in_mesh.node(), "segmentScaleCompensate").asBool(&l_status);
+
+    maya_chick(l_status);
+
+    if (l_is_) {
+      node->SetRotationActiveProperty(true);
+      auto l_vector_x = get_plug(in_mesh.node(), "jointOrientX").asDouble(&l_status);
+      maya_chick(l_status);
+      auto l_vector_y = get_plug(in_mesh.node(), "jointOrientY").asDouble(&l_status);
+      maya_chick(l_status);
+      auto l_vector_z = get_plug(in_mesh.node(), "jointOrientZ").asDouble(&l_status);
+      maya_chick(l_status);
+      node->PreRotation.Set(FbxVector4{l_vector_x, l_vector_y, l_vector_z});
+      node->SetPreRotation(FbxNode::eSourcePivot, FbxVector4{l_vector_x, l_vector_y, l_vector_z});
+      node->InheritType.Set(FbxTransform::eInheritRrs);
+    }
   }
 
   void write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin);
@@ -273,7 +292,7 @@ class doodle_to_ue_fbx::impl_data {
           l_begin->write_file_ = [](tree_dag_node* self) {
             fbx_write_data l_data{self->node, nullptr};
             l_data.write_transform(self->dag_path);
-            if (self->dag_path.hasFn(MFn::kJoint)) l_data.write_joint();
+            if (self->dag_path.hasFn(MFn::kJoint)) l_data.write_joint(self->dag_path);
           };
         }
       }
