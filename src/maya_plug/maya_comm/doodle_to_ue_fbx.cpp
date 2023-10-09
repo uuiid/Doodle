@@ -4,6 +4,9 @@
 
 #include "doodle_to_ue_fbx.h"
 
+#include <boost/lambda2.hpp>
+
+#include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 
@@ -16,6 +19,7 @@
 #include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MItGeometry.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
@@ -24,7 +28,6 @@
 #include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
 #include <treehh/tree.hh>
-
 namespace doodle {
 namespace maya_plug {
 
@@ -41,11 +44,21 @@ MSyntax doodle_to_ue_fbx_syntax() {
   return l_syntax;
 }
 
-// fbx 皮肤写入数据
-struct fbx_skin_data {
-  MObject skin{};
-  MObjectArray joints{};
+struct tree_dag_node {
+  MDagPath dag_path{};
+  FbxNode* node{};
+  MObject skin_cluster_{};
+
+  FbxNode* skin_cluster_fbx_{};
+
+  std::function<void(tree_dag_node*)> write_file_{};
+  std::shared_ptr<std::once_flag> write_flag_{std::make_shared<std::once_flag>()};
+  void write() {
+    std::call_once(*write_flag_, write_file_, this);
+    //    write_file_(this);
+  }
 };
+using tree_mesh_t = tree<tree_dag_node>;
 
 struct fbx_write_data {
   FbxLayerElementUV* mesh_2_uv(MFnMesh& in_mesh, MString& in_set_name) {
@@ -201,11 +214,13 @@ struct fbx_write_data {
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   }
 
-  void write_skeletion() {
-    auto l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
+  void write_joint() {
+    auto* l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
     l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
     node->SetNodeAttribute(l_sk_attr);
   }
+
+  void write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin);
 
   static std::vector<MDagPath> find_joint(const MObject& in_msk) {
     if (in_msk.isNull()) return {};
@@ -223,22 +238,8 @@ struct fbx_write_data {
   }
 };
 
-struct tree_dag_node {
-  MDagPath dag_path{};
-  FbxNode* node{};
-  MObject skin_cluster_{};
-
-  FbxNode* skin_cluster_fbx_{};
-
-  std::function<void(tree_dag_node*)> write_file_{};
-
-  void write() { write_file_(this); }
-};
-
 class doodle_to_ue_fbx::impl_data {
  public:
-  using tree_mesh_t = tree<tree_dag_node>;
-
  private:
  public:
   std::shared_ptr<FbxManager> manager_{};
@@ -256,16 +257,19 @@ class doodle_to_ue_fbx::impl_data {
 
         if (auto l_tree_it = ranges::find_if(
                 std::begin(l_begin), std::end(l_begin),
-                [&](const impl_data::tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
+                [&](const tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
             );
             l_tree_it != std::end(l_begin)) {
           l_begin = l_tree_it;
         } else {
-          l_begin              = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+          auto l_parent_node = l_begin->node;
+          l_begin            = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+          l_begin->node      = FbxNode::Create(scene_, l_sub_path.partialPathName().asChar());
+          l_parent_node->AddChild(l_begin->node);
           l_begin->write_file_ = [](tree_dag_node* self) {
             fbx_write_data l_data{self->node, nullptr};
             l_data.write_transform(self->dag_path);
-            if (!self->skin_cluster_.isNull() && self->skin_cluster_.hasFn(MFn::kJoint)) l_data.write_skeletion();
+            if (!self->skin_cluster_.isNull() && self->skin_cluster_.hasFn(MFn::kJoint)) l_data.write_joint();
           };
         }
       }
@@ -284,15 +288,19 @@ class doodle_to_ue_fbx::impl_data {
 
         if (auto l_tree_it = ranges::find_if(
                 std::begin(l_begin), std::end(l_begin),
-                [&](const impl_data::tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
+                [&](const tree_mesh_t::value_type& in_value) { return in_value.dag_path == l_sub_path; }
             );
             l_tree_it != std::end(l_begin)) {
           l_begin = l_tree_it;
         } else {
-          l_begin              = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
-          l_begin->write_file_ = [](tree_dag_node* self) {
+          auto l_parent_node = l_begin->node;
+          l_begin            = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
+          l_begin->node      = FbxNode::Create(scene_, l_sub_path.partialPathName().asChar());
+          l_parent_node->AddChild(l_begin->node);
+          l_begin->write_file_ = [this](tree_dag_node* self) {
             fbx_write_data l_data{self->node, nullptr};
             l_data.write_mesh(self->dag_path);
+            l_data.write_skeletion(tree_dag_, self->skin_cluster_);
           };
           l_begin->skin_cluster_ = get_skin_custer(l_begin->dag_path);
           if (!l_begin->skin_cluster_.isNull() && l_begin->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
@@ -337,6 +345,64 @@ class doodle_to_ue_fbx::impl_data {
     return l_skin_cluster;
   }
 };
+
+void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin) {
+  if (mesh == nullptr) {
+    log_error(fmt::format(" {} is not mesh", node->GetName()));
+    return;
+  }
+  auto* l_sk = FbxSkin::Create(node->GetScene(), "skin");
+  mesh->AddDeformer(l_sk);
+
+  auto l_joint_list = find_joint(in_skin);
+
+  MFnSkinCluster l_skin_cluster{in_skin};
+
+  std::map<MDagPath, tree_dag_node, details::cmp_dag> l_dag_tree_map{};
+  for (auto&& i : in_tree) {
+    if (ranges::find_if(l_joint_list, boost::lambda2::_1 == i.dag_path) != std::end(l_joint_list)) {
+      i.write();
+      l_dag_tree_map.emplace(i.dag_path, i);
+    }
+  }
+  std::map<MDagPath, FbxCluster*, details::cmp_dag> l_dag_fbx_map{};
+
+  for (auto&& i : l_joint_list) {
+    auto l_joint    = l_dag_tree_map[i];
+    auto* l_cluster = FbxCluster::Create(node->GetScene(), "");
+    l_cluster->SetLink(l_joint.node);
+    l_cluster->SetLinkMode(FbxCluster::eTotalOne);
+    l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
+    l_cluster->SetTransformLinkMatrix(l_joint.node->EvaluateGlobalTransform());
+    l_dag_fbx_map.emplace(i, l_cluster);
+    if (!l_sk->AddCluster(l_cluster)) {
+      log_error(fmt::format("add cluster error: {}", node->GetName()));
+    }
+  }
+
+  MStatus l_status{};
+  for (auto i = 0; i < l_skin_cluster.numOutputConnections(); ++i) {
+    auto l_index = l_skin_cluster.indexForOutputConnection(i, &l_status);
+    maya_chick(l_status);
+    MDagPath l_skin_cluster_path{};
+    maya_chick(l_skin_cluster.getPathAtIndex(l_index, l_skin_cluster_path));
+
+    MItGeometry l_it_geo{l_skin_cluster_path};
+    log_info(fmt::format("写出皮肤簇 {} 顶点数 {}", l_skin_cluster_path, l_it_geo.count()));
+    for (; !l_it_geo.isDone(); l_it_geo.next()) {
+      auto l_com = l_it_geo.currentItem(&l_status);
+      maya_chick(l_status);
+      MIntArray l_influence_indices{};
+      MDoubleArray l_influence_weights{};
+      maya_chick(l_skin_cluster.getWeights(l_skin_cluster_path, l_com, l_influence_indices, l_influence_weights));
+      // 写出权重
+      for (auto j = 0; j < l_influence_indices.length(); ++j) {
+        auto l_joint = l_dag_fbx_map[l_joint_list[l_influence_indices[j]]];
+        l_joint->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
+      }
+    }
+  }
+}
 
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
 
