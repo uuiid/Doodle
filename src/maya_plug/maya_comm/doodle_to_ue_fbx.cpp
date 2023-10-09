@@ -44,12 +44,10 @@ MSyntax doodle_to_ue_fbx_syntax() {
   return l_syntax;
 }
 
-struct tree_dag_node {
+struct tree_dag_node /* : boost::equality_comparable<tree_dag_node> */ {
   MDagPath dag_path{};
   FbxNode* node{};
   MObject skin_cluster_{};
-
-  FbxNode* skin_cluster_fbx_{};
 
   std::function<void(tree_dag_node*)> write_file_{};
   std::shared_ptr<std::once_flag> write_flag_{std::make_shared<std::once_flag>()};
@@ -57,6 +55,12 @@ struct tree_dag_node {
     std::call_once(*write_flag_, write_file_, this);
     //    write_file_(this);
   }
+
+  //  bool operator!=(const tree_dag_node& rhs) const {
+  //    auto l_string  = dag_path.fullPathName();
+  //    auto l_string2 = rhs.dag_path.fullPathName();
+  //    return std::tie(l_string, node) != std::tie(l_string2, rhs.node);
+  //  }
 };
 using tree_mesh_t = tree<tree_dag_node>;
 
@@ -269,7 +273,7 @@ class doodle_to_ue_fbx::impl_data {
           l_begin->write_file_ = [](tree_dag_node* self) {
             fbx_write_data l_data{self->node, nullptr};
             l_data.write_transform(self->dag_path);
-            if (!self->skin_cluster_.isNull() && self->skin_cluster_.hasFn(MFn::kJoint)) l_data.write_joint();
+            if (self->dag_path.hasFn(MFn::kJoint)) l_data.write_joint();
           };
         }
       }
@@ -313,7 +317,7 @@ class doodle_to_ue_fbx::impl_data {
   }
 
   void init() {
-    tree_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode(), MObject::kNullObj, nullptr, [](auto...) {}}};
+    tree_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode(), MObject::kNullObj, [](auto...) {}, nullptr}};
   }
 
   void build_tree(const MSelectionList& in_list) {
@@ -402,6 +406,8 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
       }
     }
   }
+
+  mesh->AddDeformer(l_sk);
 }
 
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
