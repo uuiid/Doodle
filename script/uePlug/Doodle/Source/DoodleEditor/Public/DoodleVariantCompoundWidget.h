@@ -35,6 +35,7 @@ public:
 	//-----------------------
 	FReply OnLoadAllVariant();
 	FReply OnVariantAdd();
+	void OnVariantDelete();
 	FReply OnVariantAttach();
 
 	const static FName Name;

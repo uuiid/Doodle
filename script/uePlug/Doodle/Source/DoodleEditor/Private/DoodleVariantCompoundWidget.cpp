@@ -124,6 +124,14 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                             }
                                         }
                                     })
+                                    .OnContextMenuOpening_Lambda([this]() {
+                                        FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction::CreateLambda([]() {return true;}));
+                                        FMenuBuilder MenuBuilder(true, false);
+                                        MenuBuilder.AddMenuSeparator();
+                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")), 
+                                            FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Delete"), ActionDelete);
+                                        return MenuBuilder.MakeWidget();
+                                     })
                                     .SelectionMode(ESelectionMode::Type::Single)
                                     .HeaderRow
                                     (
@@ -183,7 +191,6 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                             TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
                                             ESelectInfo::Type t = SelectType;
                                         }
-                                        //UE_LOG("LogSizeof", Log, TEXT("Select Item, type = %s, size = %s"), *inSelectItem, TEXT("111"))
                                     })
                                     .SelectionMode(ESelectionMode::Type::Single)
                                     .HeaderRow
@@ -217,11 +224,6 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSha
      int index = OwnerTable.Get().GetNumGeneratedChildren();
      TSharedRef<SWidget> Content =
          SAssignNew(ContentBox, SHorizontalBox);
-         /*.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
-         .Padding(0)
-         .Cursor(EMouseCursor::GrabHand)
-         [SAssignNew(ContentBox, SHorizontalBox)];*/
-
      ContentBox->AddSlot()
          .HAlign(HAlign_Left)
          .VAlign(VAlign_Center)
@@ -429,8 +431,8 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         Items.Empty();
         for (auto& e : CurrentObject->AllVaraint)
         {
-            TSharedPtr<FString> f = MakeShared<FString>(e.Key);
-            Items.Add(f);
+            TSharedPtr<FString> Str = MakeShared<FString>(e.Key);
+            Items.Add(Str);
         }
         ThisListView->RequestListRefresh();
         SetVariantInfo(NowVaraint);
@@ -520,6 +522,35 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
     return FReply::Handled();
 }
 
+void DoodleVariantCompoundWidget::OnVariantDelete()
+{
+    const TArray<TSharedPtr<FString>> Selection = ThisListView.Get()->GetSelectedItems();
+    if (!Selection.IsEmpty())
+    {
+        if (CurrentObject->AllVaraint.Num() > 0)
+        {
+            FString L_Key = *Selection[0];
+            if (CurrentObject->AllVaraint.Contains(L_Key))
+            {
+                CurrentObject->AllVaraint.Remove(L_Key);
+                //--------------
+                Items.Empty();
+                for (auto& e : CurrentObject->AllVaraint)
+                {
+                    TSharedPtr<FString> Str = MakeShared<FString>(e.Key);
+                    Items.Add(Str);
+                }
+                ThisListView->RequestListRefresh();
+                //------------------------
+                TArray<FString> OutKeys;
+                CurrentObject->AllVaraint.GetKeys(OutKeys);
+                NowVaraint = OutKeys[0];
+                SetVariantInfo(NowVaraint);
+            }
+        }
+    }
+}
+
 FReply DoodleVariantCompoundWidget::OnVariantAttach()
 {
     if (!CurrentObject)
@@ -530,9 +561,9 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
         return FReply::Handled();
     }
     //----------------------
-    USelection* selects = GEditor->GetSelectedActors();
+    USelection* L_Selects = GEditor->GetSelectedActors();
     TArray<UObject*> outObject;
-    selects->GetSelectedObjects(outObject);
+    L_Selects->GetSelectedObjects(outObject);
     if (outObject.Num() <= 0 || !outObject[0]->GetClass()->IsChildOf<ASkeletalMeshActor>())
     {
         FText DialogText = FText::FromString("");
@@ -541,16 +572,15 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
         return FReply::Handled();
     }
 
-    UObject* target = selects->GetSelectedObject(0);
-    ASkeletalMeshActor* skin = Cast<ASkeletalMeshActor>(target);
-    SelectText->SetText(FText::FromString(skin->GetActorNameOrLabel()));
-    TArray<FSkeletalMaterial> list = CurrentObject->AllVaraint[NowVaraint].Variants;
-    for (int i = 0;i < list.Num();i++)
+    UObject* L_Target = L_Selects->GetSelectedObject(0);
+    ASkeletalMeshActor* L_Skin = Cast<ASkeletalMeshActor>(L_Target);
+    SelectText->SetText(FText::FromString(L_Skin->GetActorNameOrLabel()));
+    TArray<FSkeletalMaterial> L_List = CurrentObject->AllVaraint[NowVaraint].Variants;
+    for (int i = 0;i < L_List.Num();i++)
     {
-        skin->GetSkeletalMeshComponent()->SetMaterial(i, list[i].MaterialInterface);
+        L_Skin->GetSkeletalMeshComponent()->SetMaterial(i, L_List[i].MaterialInterface);
     }
-    skin->GetSkeletalMeshComponent()->PostApplyToComponent();
-    //    // Get the level editor module
+    L_Skin->GetSkeletalMeshComponent()->PostApplyToComponent();
    //-----------------------
     return FReply::Handled();
 }
