@@ -301,12 +301,19 @@ class doodle_to_ue_fbx::impl_data {
           l_begin            = tree_dag_.append_child(l_begin, tree_dag_node{l_sub_path});
           l_begin->node      = FbxNode::Create(scene_, l_sub_path.partialPathName().asChar());
           l_parent_node->AddChild(l_begin->node);
-          l_begin->write_file_ = [this](tree_dag_node* self) {
-            fbx_write_data l_data{self->node, nullptr};
-            l_data.write_mesh(self->dag_path);
-            l_data.write_skeletion(tree_dag_, self->skin_cluster_);
-          };
           l_begin->skin_cluster_ = get_skin_custer(l_begin->dag_path);
+          if (l_begin->dag_path.hasFn(MFn::kMesh) && !l_begin->skin_cluster_.isNull()) {
+            l_begin->write_file_ = [this](tree_dag_node* self) {
+              fbx_write_data l_data{self->node, nullptr};
+              l_data.write_mesh(self->dag_path);
+              l_data.write_skeletion(tree_dag_, self->skin_cluster_);
+            };
+          } else {
+            l_begin->write_file_ = [](tree_dag_node* self) {
+              fbx_write_data l_data{self->node, nullptr};
+              l_data.write_transform(self->dag_path);
+            };
+          }
           if (!l_begin->skin_cluster_.isNull() && l_begin->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
             MGlobal::displayInfo(conv::to_ms(fmt::format("写出皮肤簇 {}", l_begin->dag_path)));
             joints_ |= ranges::action::push_back(fbx_write_data::find_joint(l_begin->skin_cluster_));
@@ -324,9 +331,12 @@ class doodle_to_ue_fbx::impl_data {
     build_mesh_tree(in_list);
     build_joint_tree();
   }
-  void write() {
-    for (auto&& i : tree_dag_) {
-      i.write();
+  void write() { iter_tree(tree_dag_.begin()); }
+
+  void iter_tree(const tree_mesh_t ::iterator& in_iterator) {
+    for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
+      i->write();
+      iter_tree(i);
     }
   }
 
