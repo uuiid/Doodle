@@ -71,7 +71,6 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                             .OnClicked(this, &DoodleVariantCompoundWidget::OnLoadAllVariant)
                     ]
                     + SVerticalBox::Slot()
-                    .AutoHeight()
                     .VAlign(VAlign_Top)
                     [
                         SNew(STextBlock)
@@ -101,6 +100,28 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                                 SetVariantInfo(name);
                                             }
                                             ESelectInfo::Type t = SelectType;
+                                        }
+                                    })
+                                    .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FString> inSelectItem)
+                                    {
+                                        TSharedPtr<ITableRow> TableRow = ThisListView.Get()->WidgetFromItem(inSelectItem);
+                                        if (TableRow.IsValid())
+                                        {
+                                            TSharedPtr<SWidget> L_TableRow = TableRow.Get()->AsWidget();
+                                            if (L_TableRow.IsValid())
+                                            {
+                                                TSharedPtr<SWidget> HorBox = L_TableRow.Get()->GetChildren()->GetChildAt(0);
+                                                FChildren* HorWidgets = HorBox.Get()->GetChildren();
+                                                for (int32 ChildItr = 0; ChildItr < HorWidgets->Num(); ChildItr++)
+                                                {
+                                                    TSharedPtr<SWidget> Child = HorWidgets->GetChildAt(ChildItr);
+                                                    if (Child.Get()->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
+                                                    {
+                                                        TSharedPtr<SEditableText> text = StaticCastSharedPtr<SEditableText>(Child);
+                                                        text->SetEnabled(true);
+                                                    }
+                                                }
+                                            }
                                         }
                                     })
                                     .SelectionMode(ESelectionMode::Type::Single)
@@ -195,20 +216,23 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSha
      //-------------------------
      int index = OwnerTable.Get().GetNumGeneratedChildren();
      TSharedRef<SWidget> Content =
-         SNew(SBorder)
-         .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+         SAssignNew(ContentBox, SHorizontalBox);
+         /*.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
          .Padding(0)
          .Cursor(EMouseCursor::GrabHand)
-         [SAssignNew(ContentBox, SHorizontalBox)];
+         [SAssignNew(ContentBox, SHorizontalBox)];*/
 
      ContentBox->AddSlot()
          .HAlign(HAlign_Left)
          .VAlign(VAlign_Center)
-         [SNew(SEditableTextBox)
+         [SNew(SEditableText)
+         .MinDesiredWidth(400)
+         .IsEnabled(false)
          .Text(FText::FromString(*InItem))
          .OnTextCommitted(this, &DoodleVariantCompoundWidget::VariantNameOnTextCommitted, InItem)
          ];
      ContentBox->AddSlot()
+         .AutoWidth()
          .HAlign(HAlign_Right)
          .VAlign(VAlign_Center)
          [
@@ -238,31 +262,49 @@ void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText
 {
     FString NewName = InText.ToString();
     FString OldName = *InItem;
+    TSharedPtr<SEditableText> text = nullptr;
+    //-----------------------
+    TSharedPtr<ITableRow> TableRow = ThisListView.Get()->WidgetFromItem(InItem);
+    if (TableRow.IsValid())
+    {
+        TSharedPtr<SWidget> L_TableRow = TableRow.Get()->AsWidget();
+        if (L_TableRow.IsValid())
+        {
+            TSharedPtr<SWidget> HorBox = L_TableRow.Get()->GetChildren()->GetChildAt(0);
+            FChildren* HorWidgets = HorBox.Get()->GetChildren();
+            for (int32 ChildItr = 0; ChildItr < HorWidgets->Num(); ChildItr++)
+            {
+                TSharedPtr<SWidget> Child = HorWidgets->GetChildAt(ChildItr);
+                if (Child.Get()->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
+                {
+                    text = StaticCastSharedPtr<SEditableText>(Child);
+                    text->SetEnabled(false);
+                }
+            }
+        }
+    }
+    //----------------------------------
     if (!CurrentObject->AllVaraint.Contains(NewName))
     {
         if (CurrentObject->AllVaraint.Contains(OldName))
         {
             FVariantInfo L_Data = CurrentObject->AllVaraint[OldName];
-            auto copy = CurrentObject->AllVaraint;
-            CurrentObject->AllVaraint.Empty();
-            for (auto& e : copy)
-            {
-                if (e.Key.Equals(OldName))
-                {
-                    CurrentObject->AllVaraint.Add(NewName, L_Data);
-                }
-                else
-                {
-                    CurrentObject->AllVaraint.Add(e.Key, e.Value);
-                }
-            }
-            copy.Empty();
+            CurrentObject->AllVaraint.Remove(OldName);    // Get rid of the old key (and it's value)
+            CurrentObject->AllVaraint.Shrink();
+            CurrentObject->AllVaraint.Add(NewName, L_Data);
             if (NowVaraint.Equals(OldName))
             {
                 NowVaraint = NewName;
             }
         }
     }
+    Items.Empty();
+    for (auto& e : CurrentObject->AllVaraint)
+    {
+        TSharedPtr<FString> f = MakeShared<FString>(e.Key);
+        Items.Add(f);
+    }
+    ThisListView->RequestListRefresh();
 }
 
 TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable)
@@ -317,7 +359,7 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
     TableRowWidget->SetContent(Content);
     return TableRowWidget;
 }
-
+//-------------------------------------------
 FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
 {
     FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>( "ContentBrowser");
