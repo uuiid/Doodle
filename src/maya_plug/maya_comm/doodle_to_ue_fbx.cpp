@@ -11,6 +11,7 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 
 #include <fbxsdk.h>
+#include <maya/MAngle.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MEulerRotation.h>
@@ -183,64 +184,66 @@ struct fbx_write_data {
   void write_transform(const MDagPath& in_mesh) {
     MFnTransform l_transform{in_mesh};
     MStatus l_status{};
-    auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
-    maya_chick(l_status);
-    node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
+    node->SetRotationActive(true);
     MEulerRotation l_rot{};
     maya_chick(l_transform.getRotation(l_rot));
-
-    node->LclRotation.Set(FbxVector4{l_rot.x, l_rot.y, l_rot.z});
     switch (l_rot.order) {
       case MTransformationMatrix::kXYZ:
-        node->RotationOrder = FbxEuler::eOrderXYZ;
+        node->RotationOrder.Set(FbxEuler::eOrderXYZ);
         break;
       case MTransformationMatrix::kYZX:
-        node->RotationOrder = FbxEuler::eOrderYZX;
+        node->RotationOrder.Set(FbxEuler::eOrderYZX);
         break;
       case MTransformationMatrix::kZXY:
-        node->RotationOrder = FbxEuler::eOrderZXY;
+        node->RotationOrder.Set(FbxEuler::eOrderZXY);
         break;
       case MTransformationMatrix::kXZY:
-        node->RotationOrder = FbxEuler::eOrderXZY;
+        node->RotationOrder.Set(FbxEuler::eOrderXZY);
         break;
       case MTransformationMatrix::kYXZ:
-        node->RotationOrder = FbxEuler::eOrderYXZ;
+        node->RotationOrder.Set(FbxEuler::eOrderYXZ);
         break;
       case MTransformationMatrix::kZYX:
-        node->RotationOrder = FbxEuler::eOrderZYX;
+        node->RotationOrder.Set(FbxEuler::eOrderZYX);
         break;
 
       default:
-        node->RotationOrder = FbxEuler::eOrderXYZ;
+        node->RotationOrder.Set(FbxEuler::eOrderXYZ);
         break;
     }
+    node->UpdatePivotsAndLimitsFromProperties();
+
+    auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
+    maya_chick(l_status);
+    node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
+    node->LclRotation.Set(FbxVector4{l_rot.x, l_rot.y, l_rot.z});
     std::double_t l_scale[3]{};
     l_transform.getScale(l_scale);
-
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
+    //    node->SetRotationOrder(FbxNode::eSourcePivot, node->RotationOrder.Get());
   }
 
   void write_joint(const MDagPath& in_mesh) {
     auto* l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
     l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
-    node->SetNodeAttribute(l_sk_attr);
     MStatus l_status{};
     auto l_is_ = get_plug(in_mesh.node(), "segmentScaleCompensate").asBool(&l_status);
-
     maya_chick(l_status);
+    //    node->;
+    node->RotationActive.Set(true);
+    auto l_vector_x = get_plug(in_mesh.node(), "jointOrientX").asMAngle(&l_status);
+    maya_chick(l_status);
+    auto l_vector_y = get_plug(in_mesh.node(), "jointOrientY").asMAngle(&l_status);
+    maya_chick(l_status);
+    auto l_vector_z = get_plug(in_mesh.node(), "jointOrientZ").asMAngle(&l_status);
+    maya_chick(l_status);
+    node->PreRotation.Set(FbxVector4{l_vector_x.asDegrees(), l_vector_y.asDegrees(), l_vector_z.asDegrees()});
+    //      node->SetPreRotation(FbxNode::eSourcePivot, FbxVector4{l_vector_x, l_vector_y, l_vector_z});
+    node->InheritType.Set(FbxTransform::eInheritRrs);
+    node->UpdatePivotsAndLimitsFromProperties();
+    node->SetNodeAttribute(l_sk_attr);
 
-    if (l_is_) {
-      node->SetRotationActiveProperty(true);
-      auto l_vector_x = get_plug(in_mesh.node(), "jointOrientX").asDouble(&l_status);
-      maya_chick(l_status);
-      auto l_vector_y = get_plug(in_mesh.node(), "jointOrientY").asDouble(&l_status);
-      maya_chick(l_status);
-      auto l_vector_z = get_plug(in_mesh.node(), "jointOrientZ").asDouble(&l_status);
-      maya_chick(l_status);
-      node->PreRotation.Set(FbxVector4{l_vector_x, l_vector_y, l_vector_z});
-      node->SetPreRotation(FbxNode::eSourcePivot, FbxVector4{l_vector_x, l_vector_y, l_vector_z});
-      node->InheritType.Set(FbxTransform::eInheritRrs);
-    }
+    write_transform(in_mesh);
   }
 
   void write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin);
@@ -291,8 +294,11 @@ class doodle_to_ue_fbx::impl_data {
           l_parent_node->AddChild(l_begin->node);
           l_begin->write_file_ = [](tree_dag_node* self) {
             fbx_write_data l_data{self->node, nullptr};
-            l_data.write_transform(self->dag_path);
-            if (self->dag_path.hasFn(MFn::kJoint)) l_data.write_joint(self->dag_path);
+
+            if (self->dag_path.hasFn(MFn::kJoint))
+              l_data.write_joint(self->dag_path);
+            else
+              l_data.write_transform(self->dag_path);
           };
         }
       }
