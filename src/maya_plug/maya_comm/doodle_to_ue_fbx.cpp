@@ -446,6 +446,7 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
       maya_chick(l_skin_cluster.getWeights(l_skin_cluster_path, l_com, l_influence_weights, l_influence_count));
       // 写出权重
       for (auto j = 0; j < l_influence_count; ++j) {
+        if (l_influence_weights[j] == 0) continue;
         auto l_cluster = l_dag_fbx_map[l_joint_list[j]];
         l_cluster->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
       }
