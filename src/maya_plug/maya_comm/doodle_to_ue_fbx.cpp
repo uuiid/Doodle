@@ -430,10 +430,10 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
   }
 
   MStatus l_status{};
+  MDagPath l_skin_cluster_path{};
   for (auto i = 0; i < l_skin_cluster.numOutputConnections(); ++i) {
     auto l_index = l_skin_cluster.indexForOutputConnection(i, &l_status);
     maya_chick(l_status);
-    MDagPath l_skin_cluster_path{};
     maya_chick(l_skin_cluster.getPathAtIndex(l_index, l_skin_cluster_path));
 
     MItGeometry l_it_geo{l_skin_cluster_path};
@@ -450,24 +450,34 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
         l_cluster->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
       }
     }
+    break;
   }
-  // build post
-  auto* l_post = FbxPose::Create(node->GetScene(), fmt::format("{}_post", node->GetName()).c_str());
-  l_post->SetIsBindPose(true);
-  std::function<void(tree_mesh_t::iterator)> l_iter{};
-  l_iter = [&](tree_mesh_t::iterator in_parent) {
-    for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
-      if (l_it->dag_path.hasFn(MFn::kJoint)) {
-        auto l_joint = l_dag_fbx_map[l_it->dag_path];
-        l_post->Add(l_joint, l_joint->GetLink()->EvaluateGlobalTransform());
+  {  // build post
+    auto* l_post = FbxPose::Create(node->GetScene(), fmt::format("{}_post", get_node_name(in_skin)).c_str());
+    l_post->SetIsBindPose(true);
+    std::vector<tree_mesh_t::iterator> post_add{};
+
+    std::function<bool(tree_mesh_t::iterator)> l_iter{};
+    l_iter = [&](tree_mesh_t::iterator in_parent) -> bool {
+      bool l_r{};
+      for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
+        if (ranges::find_if(l_joint_list, boost::lambda2::_1 == l_it->dag_path) != std::end(l_joint_list) ||
+            l_it->dag_path == l_skin_cluster_path) {
+          post_add.emplace_back(l_it);
+          l_r |= true;
+        }
+        l_r |= l_iter(l_it);
       }
-      l_iter(l_it);
+      return l_r;
+    };
+
+    l_iter(in_tree.begin());
+
+    for (auto&& i : post_add) {
+      l_post->Add(i->node, i->node->EvaluateGlobalTransform());
     }
-  };
-  for (auto&& i : in_tree) {
-    if (!i.dag_path.hasFn(MFn::kMesh)) l_post->Add(i.node, i.node->EvaluateGlobalTransform());
+    node->GetScene()->AddPose(l_post);
   }
-  node->GetScene()->AddPose(l_post);
   mesh->AddDeformer(l_sk);
 }
 
