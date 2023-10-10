@@ -89,7 +89,7 @@ public:
                                     .Content()
                                     [
                                         SNew(SImage)
-                                            .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GenericCommands.Paste").GetSmallIcon())
+                                            .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
                                     ]
                                     .ToolTipText(FText::FromString(TEXT("粘贴变体")))
                                     .OnClicked_Lambda([this] 
@@ -131,7 +131,7 @@ public:
         .Padding(InPadding)
         [
             SNew(SBorder)
-            .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+            .BorderImage(FCoreStyle::Get().GetBrush(TEXT("NoBorder")))
             .Padding(0)
             [
                 SNew(SVerticalBox)
@@ -177,7 +177,6 @@ public:
     FAssetDataParamDelegate OnObjectChanged;
 };
 
-BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 {
 	ChildSlot
@@ -255,18 +254,18 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                     })
                                     .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FString> inSelectItem)
                                     {
-                                        TSharedPtr<ITableRow> TableRow = ThisListView.Get()->WidgetFromItem(inSelectItem);
+                                        TSharedPtr<ITableRow> TableRow = ThisListView->WidgetFromItem(inSelectItem);
                                         if (TableRow.IsValid())
                                         {
-                                            TSharedPtr<SWidget> L_TableRow = TableRow.Get()->AsWidget();
+                                            TSharedPtr<SWidget> L_TableRow = TableRow->AsWidget();
                                             if (L_TableRow.IsValid())
                                             {
-                                                TSharedPtr<SWidget> HorBox = L_TableRow.Get()->GetChildren()->GetChildAt(0);
-                                                FChildren* HorWidgets = HorBox.Get()->GetChildren();
+                                                TSharedPtr<SWidget> HorBox = L_TableRow->GetChildren()->GetChildAt(0);
+                                                FChildren* HorWidgets = HorBox->GetChildren();
                                                 for (int32 ChildItr = 0; ChildItr < HorWidgets->Num(); ChildItr++)
                                                 {
                                                     TSharedPtr<SWidget> Child = HorWidgets->GetChildAt(ChildItr);
-                                                    if (Child.Get()->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
+                                                    if (Child->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
                                                     {
                                                         TSharedPtr<SEditableText> text = StaticCastSharedPtr<SEditableText>(Child);
                                                         text->SetEnabled(true);
@@ -280,14 +279,14 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                         FMenuBuilder MenuBuilder(true, false);
                                         MenuBuilder.AddMenuSeparator();
                                         MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")), 
-                                            FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Delete"), ActionDelete);
+                                            FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")), ActionDelete);
                                         return MenuBuilder.MakeWidget();
                                      })
                                     .SelectionMode(ESelectionMode::Type::Single)
                                     .HeaderRow
                                     (
                                         SNew(SHeaderRow)
-                                        + SHeaderRow::Column("Name")
+                                        + SHeaderRow::Column(TEXT("Name"))
                                         .HAlignHeader(HAlign_Left)
                                         .HAlignCell(HAlign_Left)
                                         [
@@ -301,7 +300,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                                         .Text(FText::FromString(TEXT("变体列表:")))
                                                 ]
                                         ]
-                                        + SHeaderRow::Column("Tool")
+                                        + SHeaderRow::Column(TEXT("Tool"))
                                         .HAlignHeader(HAlign_Right)
                                         .HAlignCell(HAlign_Right)
                                         [
@@ -347,7 +346,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                     .HeaderRow
                                     (
                                         SNew(SHeaderRow)
-                                        + SHeaderRow::Column("Name")
+                                        + SHeaderRow::Column(TEXT("Name"))
                                         [
                                             SNew(SBorder)
                                                 .Padding(5)
@@ -357,7 +356,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                                         .Text(FText::FromString(TEXT("插槽")))
                                                 ]
                                         ]
-                                        + SHeaderRow::Column("Number").DefaultLabel(FText::FromString(TEXT("材质")))
+                                        + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("材质")))
                                     )
                             ]
                     ]
@@ -388,18 +387,18 @@ void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText
     FString OldName = *InItem;
     TSharedPtr<SEditableText> text = nullptr;
     //-----------------------
-    TSharedPtr<ITableRow> TableRow = ThisListView.Get()->WidgetFromItem(InItem);
+    TSharedPtr<ITableRow> TableRow = ThisListView->WidgetFromItem(InItem);
     if (TableRow.IsValid())
     {
-        TSharedPtr<SWidget> L_TableRow = TableRow.Get()->AsWidget();
+        TSharedPtr<SWidget> L_TableRow = TableRow->AsWidget();
         if (L_TableRow.IsValid())
         {
-            TSharedPtr<SWidget> HorBox = L_TableRow.Get()->GetChildren()->GetChildAt(0);
-            FChildren* HorWidgets = HorBox.Get()->GetChildren();
+            TSharedPtr<SWidget> HorBox = L_TableRow->GetChildren()->GetChildAt(0);
+            FChildren* HorWidgets = HorBox->GetChildren();
             for (int32 ChildItr = 0; ChildItr < HorWidgets->Num(); ChildItr++)
             {
                 TSharedPtr<SWidget> Child = HorWidgets->GetChildAt(ChildItr);
-                if (Child.Get()->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
+                if (Child->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
                 {
                     text = StaticCastSharedPtr<SEditableText>(Child);
                     text->SetEnabled(false);
@@ -439,19 +438,19 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
         {
             if (CurrentObject)
             {
-                int index = InItem.Get()->Index;
+                int index = InItem->Index;
                 FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
                 TObjectPtr<UMaterial> ui = Cast<UMaterial>(AssetData.GetAsset());
                 Arr.Variants[index] = FSkeletalMaterial(ui);
                 CurrentObject->AllVaraint[NowVaraint] = Arr;
-                MaterialItems[index].Get()->Material = Arr.Variants[index].MaterialInterface;
+                MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
             }
         });
 }
 //-------------------------------------------
 FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
 {
-    FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>( "ContentBrowser");
+    FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
     TArray<FAssetData> SelectedAsset;
     ContentBrowserModle.Get().GetSelectedAssets(SelectedAsset);
     if (SelectedAsset.Num() <= 0)
@@ -483,7 +482,7 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             UPackage* package = CreatePackage(*PackageName);
             package->MarkPackageDirty();
             UDoodleVariantFactory* MyFactory = NewObject<UDoodleVariantFactory>(UDoodleVariantFactory::StaticClass());
-            FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+            FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
             UObject* object = AssetToolsModule.Get().CreateAsset(out_name, PackagePath, UDoodleVariantObject::StaticClass(), MyFactory);
             CurrentObject = Cast<UDoodleVariantObject>(object);
             if (CurrentObject)
@@ -560,11 +559,11 @@ void DoodleVariantCompoundWidget::SetVariantInfo(FString name)
             for (int i = 0;i < Arr.Variants.Num();i++)
             {
                 FSkeletalMaterial Mat = Arr.Variants[i];
-                TSharedPtr < FMaterialItemData> mItem = MakeShareable(new FMaterialItemData());
-                mItem.Get()->Material = Mat.MaterialInterface;
-                mItem.Get()->Index = i;
-                mItem.Get()->Slot = Mat.MaterialSlotName;
-                MaterialItems.Add(mItem);
+                TSharedPtr < FMaterialItemData> MatItem = MakeShareable(new FMaterialItemData());
+                MatItem->Material = Mat.MaterialInterface;
+                MatItem->Index = i;
+                MatItem->Slot = Mat.MaterialSlotName;
+                MaterialItems.Add(MatItem);
             }
         }
         MaterialListView->RequestListRefresh();
@@ -575,7 +574,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
 {
     if (!CurrentObject)
     {
-        FText DialogText = FText::FromString("");
+        FText DialogText = {};
         DialogText = FText::FromString(TEXT("请先载入变体。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();
@@ -586,15 +585,13 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
         CurrentObject->AllVaraint.GetKeys(OutKeys);
         //FString key = OutKeys[0];
         FVariantInfo Nd = CurrentObject->AllVaraint[NowVaraint];
-        FString L_Name = TEXT("New");
-        while (OutKeys.Contains(L_Name))
+        FName L_Name = TEXT("New");
+        while (OutKeys.Contains(L_Name.ToString()))
         {
-            FName TestName = FName(L_Name);
-            int Counter = TestName.GetNumber();
-            TestName.SetNumber(++Counter);
-            L_Name = TestName.ToString();
+            int Counter = L_Name.GetNumber();
+            L_Name.SetNumber(++Counter);
         }
-        CurrentObject->AllVaraint.Add(L_Name, Nd);
+        CurrentObject->AllVaraint.Add(L_Name.ToString(), Nd);
         //----------------
         Items.Empty();
         for (auto& e : CurrentObject->AllVaraint)
@@ -603,7 +600,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
             Items.Add(Str);
         }
         ThisListView->RequestListRefresh();
-        SetVariantInfo(L_Name);
+        SetVariantInfo(L_Name.ToString());
     }
       
     return FReply::Handled();
@@ -611,29 +608,43 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
 
 void DoodleVariantCompoundWidget::OnVariantDelete()
 {
-    const TArray<TSharedPtr<FString>> Selection = ThisListView.Get()->GetSelectedItems();
+    const TArray<TSharedPtr<FString>> Selection = ThisListView->GetSelectedItems();
     if (!Selection.IsEmpty())
     {
         if (CurrentObject->AllVaraint.Num() > 0)
         {
-            FString L_Key = *Selection[0];
-            if (CurrentObject->AllVaraint.Contains(L_Key))
+            for (TSharedPtr<FString> L_Key : Selection)
             {
-                CurrentObject->AllVaraint.Remove(L_Key);
-                //--------------
-                Items.Empty();
-                for (auto& e : CurrentObject->AllVaraint)
+                if (CurrentObject->AllVaraint.Contains(*L_Key))
                 {
-                    TSharedPtr<FString> Str = MakeShared<FString>(e.Key);
-                    Items.Add(Str);
+                    CurrentObject->AllVaraint.Remove(*L_Key);
+                    //--------------
+                    Items.Empty();
+                    for (auto& e : CurrentObject->AllVaraint)
+                    {
+                        TSharedPtr<FString> Str = MakeShared<FString>(e.Key);
+                        Items.Add(Str);
+                    }
+                    ThisListView->RequestListRefresh();
+                    //------------------------
+                    TArray<FString> OutKeys;
+                    CurrentObject->AllVaraint.GetKeys(OutKeys);
+                    NowVaraint = OutKeys[0];
+                    SetVariantInfo(NowVaraint);
                 }
-                ThisListView->RequestListRefresh();
-                //------------------------
-                TArray<FString> OutKeys;
-                CurrentObject->AllVaraint.GetKeys(OutKeys);
-                NowVaraint = OutKeys[0];
-                SetVariantInfo(NowVaraint);
             }
+            Items.Empty();
+            for (auto& Ve : CurrentObject->AllVaraint)
+            {
+                TSharedPtr<FString> Str = MakeShared<FString>(Ve.Key);
+                Items.Add(Str);
+            }
+            ThisListView->RequestListRefresh();
+            //------------------------
+            TArray<FString> OutKeys;
+            CurrentObject->AllVaraint.GetKeys(OutKeys);
+            NowVaraint = OutKeys[0];
+            SetVariantInfo(NowVaraint);
         }
     }
 }
@@ -642,7 +653,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
 {
     if (!CurrentObject)
     {
-        FText DialogText = FText::FromString("");
+        FText DialogText = FText::FromString(TEXT(""));
         DialogText = FText::FromString(TEXT("请先载入变体。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();
@@ -653,7 +664,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
     L_Selects->GetSelectedObjects(outObject);
     if (outObject.Num() <= 0 || !outObject[0]->GetClass()->IsChildOf<ASkeletalMeshActor>())
     {
-        FText DialogText = FText::FromString("");
+        FText DialogText = FText::FromString(TEXT(""));
         DialogText = FText::FromString(TEXT("请先选择粘贴目标。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();
@@ -675,6 +686,4 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
 TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
     return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)];  // 这里创建我们自己的界面
 }
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 

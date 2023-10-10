@@ -56,9 +56,7 @@ public:
 	void SetSetVariantData(UDoodleVariantObject* obj);
 	void SetVariantInfo(FString varaint_name);
 
-	/** Pool for maintaining and rendering thumbnails */
-	TSharedPtr<FAssetThumbnailPool> AssetThumbnailPool = MakeShareable(new FAssetThumbnailPool(1024));
-	FString NowVaraint;
 
+	FString NowVaraint;
 	//----------------------
 };
