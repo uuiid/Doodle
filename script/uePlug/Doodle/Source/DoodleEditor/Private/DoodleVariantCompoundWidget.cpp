@@ -618,19 +618,6 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
                 if (CurrentObject->AllVaraint.Contains(*L_Key))
                 {
                     CurrentObject->AllVaraint.Remove(*L_Key);
-                    //--------------
-                    Items.Empty();
-                    for (auto& e : CurrentObject->AllVaraint)
-                    {
-                        TSharedPtr<FString> Str = MakeShared<FString>(e.Key);
-                        Items.Add(Str);
-                    }
-                    ThisListView->RequestListRefresh();
-                    //------------------------
-                    TArray<FString> OutKeys;
-                    CurrentObject->AllVaraint.GetKeys(OutKeys);
-                    NowVaraint = OutKeys[0];
-                    SetVariantInfo(NowVaraint);
                 }
             }
             Items.Empty();

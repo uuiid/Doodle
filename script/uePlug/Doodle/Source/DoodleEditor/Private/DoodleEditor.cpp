@@ -124,7 +124,7 @@ void FdoodleEditorModule::StartupModule() {
   RegisterActionType = MakeShareable(new DoodleVariantAssetTypeActions(AssetCategory));
   L_AssetTools.RegisterAssetTypeActions(RegisterActionType.ToSharedRef());
   //-------------------------
-  ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+  ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
   VariantExtender = MakeShareable(new FDoodleVariantMenuExtension());
   module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
       VariantExtender.Get()->TheSequencer = OwningSequencer.ToWeakPtr();
@@ -137,7 +137,7 @@ void FdoodleEditorModule::StartupModule() {
         "Edit", EExtensionHook::Before, TSharedPtr<FUICommandList>(),
         FMenuExtensionDelegate::CreateSP(VariantExtender.ToSharedRef(), &FDoodleVariantMenuExtension::AddMenuEntry)
     );
-    ISequencerModule& l_Module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
+    ISequencerModule& l_Module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
     TSharedPtr<FExtensibilityManager> Manager = l_Module.GetObjectBindingContextMenuExtensibilityManager();
     Manager.Get()->AddExtender(extender);
     }));
