@@ -9,6 +9,7 @@
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
+#include <maya_plug/fmt/fmt_warp.h>
 
 #include <fbxsdk.h>
 #include <maya/MAngle.h>
@@ -183,6 +184,16 @@ struct fbx_write_data {
 
   void write_transform(const MDagPath& in_mesh) {
     MFnTransform l_transform{in_mesh};
+    write_loc_attr(in_mesh);
+    auto l_attr_null = FbxNull::Create(node->GetScene(), l_transform.name().asChar());
+    l_attr_null->Look.Set(FbxNull::eNone);
+    node->SetNodeAttribute(l_attr_null);
+
+    //    node->SetRotationOrder(FbxNode::eSourcePivot, node->RotationOrder.Get());
+  }
+
+  void write_loc_attr(const MDagPath& in_mesh) {
+    MFnTransform l_transform{in_mesh};
     MStatus l_status{};
     node->SetRotationActive(true);
     MEulerRotation l_rot{};
@@ -220,7 +231,7 @@ struct fbx_write_data {
     std::double_t l_scale[3]{};
     l_transform.getScale(l_scale);
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
-    //    node->SetRotationOrder(FbxNode::eSourcePivot, node->RotationOrder.Get());
+    node->ScalingMax.Set({});
   }
 
   void write_joint(const MDagPath& in_mesh) {
@@ -229,7 +240,7 @@ struct fbx_write_data {
     MStatus l_status{};
     auto l_is_ = get_plug(in_mesh.node(), "segmentScaleCompensate").asBool(&l_status);
     maya_chick(l_status);
-    //    node->;
+
     node->RotationActive.Set(true);
     auto l_vector_x = get_plug(in_mesh.node(), "jointOrientX").asMAngle(&l_status);
     maya_chick(l_status);
@@ -239,11 +250,11 @@ struct fbx_write_data {
     maya_chick(l_status);
     node->PreRotation.Set(FbxVector4{l_vector_x.asDegrees(), l_vector_y.asDegrees(), l_vector_z.asDegrees()});
     //      node->SetPreRotation(FbxNode::eSourcePivot, FbxVector4{l_vector_x, l_vector_y, l_vector_z});
-    node->InheritType.Set(FbxTransform::eInheritRrs);
     node->UpdatePivotsAndLimitsFromProperties();
     node->SetNodeAttribute(l_sk_attr);
 
-    write_transform(in_mesh);
+    write_loc_attr(in_mesh);
+    node->InheritType.Set(l_is_ ? FbxTransform::eInheritRrs : FbxTransform::eInheritRSrs);
   }
 
   void write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin);
@@ -294,7 +305,6 @@ class doodle_to_ue_fbx::impl_data {
           l_parent_node->AddChild(l_begin->node);
           l_begin->write_file_ = [](tree_dag_node* self) {
             fbx_write_data l_data{self->node, nullptr};
-
             if (self->dag_path.hasFn(MFn::kJoint))
               l_data.write_joint(self->dag_path);
             else
@@ -431,13 +441,13 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
     for (; !l_it_geo.isDone(); l_it_geo.next()) {
       auto l_com = l_it_geo.currentItem(&l_status);
       maya_chick(l_status);
-      MIntArray l_influence_indices{};
+      std::uint32_t l_influence_count{};
       MDoubleArray l_influence_weights{};
-      maya_chick(l_skin_cluster.getWeights(l_skin_cluster_path, l_com, l_influence_indices, l_influence_weights));
+      maya_chick(l_skin_cluster.getWeights(l_skin_cluster_path, l_com, l_influence_weights, l_influence_count));
       // 写出权重
-      for (auto j = 0; j < l_influence_indices.length(); ++j) {
-        auto l_joint = l_dag_fbx_map[l_joint_list[l_influence_indices[j]]];
-        l_joint->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
+      for (auto j = 0; j < l_influence_count; ++j) {
+        auto l_cluster = l_dag_fbx_map[l_joint_list[j]];
+        l_cluster->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
       }
     }
   }
