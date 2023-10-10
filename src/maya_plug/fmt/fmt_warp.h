@@ -7,6 +7,8 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <maya/MDagPath.h>
+#include <maya/MDoubleArray.h>
+#include <maya/MIntArray.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
 
@@ -38,4 +40,8 @@ template <>
 struct formatter<MTime> : ostream_formatter {};
 template <>
 struct formatter<MStatus> : ostream_formatter {};
+template <>
+struct formatter<MIntArray> : ostream_formatter {};
+template <>
+struct formatter<MDoubleArray> : ostream_formatter {};
 }  // namespace fmt
