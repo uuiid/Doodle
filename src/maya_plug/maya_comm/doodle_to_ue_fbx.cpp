@@ -462,12 +462,12 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
     l_iter = [&](tree_mesh_t::iterator in_parent) -> bool {
       bool l_r{};
       for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
+        auto l_sub_has = l_iter(l_it);
         if (ranges::find_if(l_joint_list, boost::lambda2::_1 == l_it->dag_path) != std::end(l_joint_list) ||
-            l_it->dag_path == l_skin_mesh_path) {
+            l_it->dag_path == l_skin_mesh_path || l_sub_has) {
           post_add.emplace_back(l_it);
           l_r |= true;
         }
-        l_r |= l_iter(l_it);
       }
       return l_r;
     };
