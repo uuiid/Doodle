@@ -22,9 +22,160 @@
 #include "Selection.h"
 #include "DoodleVariantAssetUserData.h"
 #include "Textures/SlateIcon.h"
+#include "Widgets/Views/STableRow.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 
+DECLARE_DELEGATE_OneParam(FAssetDataParamDelegate, FAssetData);
+DECLARE_DELEGATE_OneParam(FTextParamDelegate, FText);
+
+class SVariantItemTableRow :public STableRow<TSharedPtr<FString>>
+{
+public:
+    using Super = STableRow<TSharedPtr<FString>>;
+
+    SLATE_BEGIN_ARGS(SVariantItemTableRow)
+        : _InItem(), _OnTextCommittedEvent(), _OnClickedEvent() {}
+        SLATE_ARGUMENT(TSharedPtr<FString>, InItem)
+        SLATE_EVENT(FTextParamDelegate, OnTextCommittedEvent)
+        SLATE_EVENT(FSimpleDelegate, OnClickedEvent)
+    SLATE_END_ARGS()
+    //-----------------------
+    TSharedPtr<FString> InItem;
+    FTextParamDelegate OnTextCommittedEvent;
+    FSimpleDelegate OnClickedEvent;
+
+    void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& In_OwnerTableView)
+    {
+        InItem = InArgs._InItem;
+        OnTextCommittedEvent = InArgs._OnTextCommittedEvent;
+        OnClickedEvent = InArgs._OnClickedEvent;
+        Super::FArguments L_Arg{};
+        Super::Construct(L_Arg, In_OwnerTableView);
+    }
+
+    void ConstructChildren(ETableViewMode::Type InOwnerTableMode, const TAttribute<FMargin>& InPadding, const TSharedRef<SWidget>& InContent) override
+    {
+        this->Content = InContent;
+        InnerContentSlot = nullptr;
+        this->ChildSlot
+            .Padding(InPadding)
+            [
+                SNew(SHorizontalBox)
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    [
+                        SNew(SEditableText)
+                            .MinDesiredWidth(400)
+                            .IsEnabled(false)
+                            .Text(FText::FromString(*InItem))
+                            .OnTextCommitted_Lambda([this](const FText& InText, const ETextCommit::Type InTextAction) 
+                            {
+                                OnTextCommittedEvent.ExecuteIfBound(InText);
+                            })
+                    ]
+                    + SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    [
+                        SNew(SHorizontalBox)
+                            + SHorizontalBox::Slot()
+                            .AutoWidth()
+                            [
+                                SNew(SButton)
+                                    .Text(FText::FromString(TEXT("粘贴")))
+                                    .Content()
+                                    [
+                                        SNew(SImage)
+                                            .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GenericCommands.Paste").GetSmallIcon())
+                                    ]
+                                    .ToolTipText(FText::FromString(TEXT("粘贴变体")))
+                                    .OnClicked_Lambda([this] 
+                                    {
+                                    OnClickedEvent.ExecuteIfBound();;
+                                    return FReply::Handled();})
+                            ]
+                    ]
+            ];
+        InnerContentSlot = &ChildSlot.AsSlot();
+    }
+};
+
+class SMaterialItemTableRow :public STableRow<TSharedPtr<FMaterialItemData>>
+{
+public:
+    using Super = STableRow<TSharedPtr<FMaterialItemData>>;
+
+    SLATE_BEGIN_ARGS(SMaterialItemTableRow)
+        : _InItem(),_OnObjectChanged(){}
+    SLATE_ARGUMENT(TSharedPtr<FMaterialItemData>, InItem)
+    SLATE_EVENT(FAssetDataParamDelegate, OnObjectChanged)
+    SLATE_END_ARGS()
+
+    void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& In_OwnerTableView)
+    {
+        InItem = InArgs._InItem;
+        OnObjectChanged = InArgs._OnObjectChanged;
+        Super::FArguments L_Arg{};
+        Super::Construct(L_Arg, In_OwnerTableView);
+    }
+
+    void ConstructChildren(ETableViewMode::Type InOwnerTableMode, const TAttribute<FMargin>& InPadding, const TSharedRef<SWidget>& InContent) override
+    {
+        //-----------------------
+        this->Content = InContent;
+        InnerContentSlot = nullptr;
+        this->ChildSlot
+        .Padding(InPadding)
+        [
+            SNew(SBorder)
+            .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+            .Padding(0)
+            [
+                SNew(SVerticalBox)
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    [SNew(STextBlock)
+                    .Text(FText::FromName(InItem->Slot))
+                    ]
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    [
+                        SNew(SObjectPropertyEntryBox)
+                            .ObjectPath_Lambda([this]()
+                                {
+                                    if (InItem)
+                                        return InItem->Material.GetPathName();
+                                    else
+                                        return FString(TEXT(""));
+                                }
+                            )
+                            .AllowedClass(UMaterialInterface::StaticClass())
+                            .OnObjectChanged_Lambda([this](const FAssetData& AssetData) {
+                            if (AssetData.IsValid())
+                            {
+                                OnObjectChanged.ExecuteIfBound(AssetData);
+                            }
+                                })
+                            .AllowClear(true)
+                            .DisplayUseSelected(true)
+                            .DisplayBrowse(true)
+                            .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
+                    ]
+            ]
+        ];
+        InnerContentSlot = &ChildSlot.AsSlot();
+    }
+
+    TSharedPtr<FMaterialItemData> InItem;
+    FAssetDataParamDelegate OnObjectChanged;
+};
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
@@ -125,7 +276,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                         }
                                     })
                                     .OnContextMenuOpening_Lambda([this]() {
-                                        FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction::CreateLambda([]() {return true;}));
+                                        FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction());
                                         FMenuBuilder MenuBuilder(true, false);
                                         MenuBuilder.AddMenuSeparator();
                                         MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")), 
@@ -218,49 +369,20 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 
 TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
-     TSharedRef<STableRow<TSharedPtr<FString>>> TableRowWidget = SNew(STableRow<TSharedPtr<FString>>, OwnerTable);
-     TSharedPtr<SHorizontalBox> ContentBox{};
-     //-------------------------
-     int index = OwnerTable.Get().GetNumGeneratedChildren();
-     TSharedRef<SWidget> Content =
-         SAssignNew(ContentBox, SHorizontalBox);
-     ContentBox->AddSlot()
-         .HAlign(HAlign_Left)
-         .VAlign(VAlign_Center)
-         [SNew(SEditableText)
-         .MinDesiredWidth(400)
-         .IsEnabled(false)
-         .Text(FText::FromString(*InItem))
-         .OnTextCommitted(this, &DoodleVariantCompoundWidget::VariantNameOnTextCommitted, InItem)
-         ];
-     ContentBox->AddSlot()
-         .AutoWidth()
-         .HAlign(HAlign_Right)
-         .VAlign(VAlign_Center)
-         [
-             SNew(SHorizontalBox)
-                 + SHorizontalBox::Slot()
-                 .AutoWidth()
-                 [
-                     SNew(SButton)
-                         .Text(FText::FromString(TEXT("粘贴")))
-                         .Content()
-                         [
-                             SNew(SImage)
-                                 .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GenericCommands.Paste").GetSmallIcon())
-                         ]
-                         .ToolTipText(FText::FromString(TEXT("粘贴变体")))
-                         .OnClicked_Lambda([this, InItem] {
-                         NowVaraint = *InItem;
-                         OnVariantAttach();
-                         return FReply::Handled();})
-                 ]
-         ];
-     TableRowWidget->SetContent(Content);
-     return TableRowWidget;
+    return SNew(SVariantItemTableRow, OwnerTable)
+        .InItem(InItem)
+        .OnTextCommittedEvent_Lambda([this,InItem](FText InText)
+        {
+            VariantNameOnTextCommitted(InText, InItem);
+        })
+        .OnClickedEvent_Lambda([this,InItem]() 
+        {
+            NowVaraint = *InItem;
+            OnVariantAttach();
+        });
 }
 
-void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText, const ETextCommit::Type InTextAction, TSharedPtr<FString> InItem)
+void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText, TSharedPtr<FString> InItem)
 {
     FString NewName = InText.ToString();
     FString OldName = *InItem;
@@ -311,55 +433,20 @@ void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText
 
 TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
-    TSharedRef<STableRow<TSharedPtr<FMaterialItemData>>> TableRowWidget = SNew(STableRow<TSharedPtr<FMaterialItemData>>, OwnerTable);
-    TSharedPtr<SVerticalBox> ContentBox{};
-    TSharedRef<SWidget> Content =
-        SNew(SBorder)
-        .BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
-        .Padding(0)
-        .Cursor(EMouseCursor::GrabHand)
-        [SAssignNew(ContentBox, SVerticalBox)];
-    ContentBox->AddSlot()
-        .AutoHeight()
-        .HAlign(HAlign_Left)
-        .VAlign(VAlign_Center)
-        [SNew(STextBlock)
-        .Text(FText::FromName(InItem->Slot))
-        ];
-    ContentBox->AddSlot()
-        .AutoHeight()
-        .HAlign(HAlign_Left)
-        .VAlign(VAlign_Center)
-        [SNew(SObjectPropertyEntryBox)
-        .ObjectPath_Lambda([InItem]()
+    return SNew(SMaterialItemTableRow, OwnerTable)
+        .InItem(InItem)
+        .OnObjectChanged_Lambda([this, InItem](FAssetData AssetData)
+        {
+            if (CurrentObject)
             {
-                if (InItem)
-                    return InItem->Material.GetPathName();
-                else
-                    return FString(TEXT(""));
+                int index = InItem.Get()->Index;
+                FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
+                TObjectPtr<UMaterial> ui = Cast<UMaterial>(AssetData.GetAsset());
+                Arr.Variants[index] = FSkeletalMaterial(ui);
+                CurrentObject->AllVaraint[NowVaraint] = Arr;
+                MaterialItems[index].Get()->Material = Arr.Variants[index].MaterialInterface;
             }
-        )
-        .AllowedClass(UMaterialInterface::StaticClass())
-                .OnObjectChanged_Lambda([&, InItem](const FAssetData& AssetData) {
-                if (CurrentObject)
-                {
-                    int index = InItem.Get()->Index;
-                    FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
-                    UObject* obj = AssetData.GetAsset();
-                    TObjectPtr<UMaterial> ui = Cast<UMaterial>(obj);
-                    Arr.Variants[index] = FSkeletalMaterial(ui);
-                    CurrentObject->AllVaraint[NowVaraint] = Arr;
-                    MaterialItems[index].Get()->Material = Arr.Variants[index].MaterialInterface;
-                }
-                    })
-                .AllowClear(true)
-                        .DisplayUseSelected(true)
-                        .DisplayBrowse(true)
-                        .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
-                        //.IsEnabled(this, &SMaterialAnalyzer::IsMaterialSelectionAllowed);
-        ];
-    TableRowWidget->SetContent(Content);
-    return TableRowWidget;
+        });
 }
 //-------------------------------------------
 FReply DoodleVariantCompoundWidget::OnLoadAllVariant()

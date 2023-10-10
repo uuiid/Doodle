@@ -31,7 +31,7 @@ public:
 
 	TSharedRef<ITableRow> VariantListOnGenerateRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	TSharedRef<ITableRow> MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable);
-	void VariantNameOnTextCommitted(const FText& InText, const ETextCommit::Type InTextAction, TSharedPtr<FString> InItem);
+	void VariantNameOnTextCommitted(const FText& InText,TSharedPtr<FString> InItem);
 	//-----------------------
 	FReply OnLoadAllVariant();
 	FReply OnVariantAdd();
