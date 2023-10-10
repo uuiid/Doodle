@@ -430,20 +430,20 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
   }
 
   MStatus l_status{};
-  MDagPath l_skin_cluster_path{};
+  MDagPath l_skin_mesh_path{};
   for (auto i = 0; i < l_skin_cluster.numOutputConnections(); ++i) {
     auto l_index = l_skin_cluster.indexForOutputConnection(i, &l_status);
     maya_chick(l_status);
-    maya_chick(l_skin_cluster.getPathAtIndex(l_index, l_skin_cluster_path));
+    maya_chick(l_skin_cluster.getPathAtIndex(l_index, l_skin_mesh_path));
 
-    MItGeometry l_it_geo{l_skin_cluster_path};
-    log_info(fmt::format("写出皮肤簇 {} 顶点数 {}", l_skin_cluster_path, l_it_geo.count()));
+    MItGeometry l_it_geo{l_skin_mesh_path};
+    log_info(fmt::format("写出皮肤簇 {} 顶点数 {}", l_skin_mesh_path, l_it_geo.count()));
     for (; !l_it_geo.isDone(); l_it_geo.next()) {
       auto l_com = l_it_geo.currentItem(&l_status);
       maya_chick(l_status);
       std::uint32_t l_influence_count{};
       MDoubleArray l_influence_weights{};
-      maya_chick(l_skin_cluster.getWeights(l_skin_cluster_path, l_com, l_influence_weights, l_influence_count));
+      maya_chick(l_skin_cluster.getWeights(l_skin_mesh_path, l_com, l_influence_weights, l_influence_count));
       // 写出权重
       for (auto j = 0; j < l_influence_count; ++j) {
         if (l_influence_weights[j] == 0) continue;
@@ -463,7 +463,7 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
       bool l_r{};
       for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
         if (ranges::find_if(l_joint_list, boost::lambda2::_1 == l_it->dag_path) != std::end(l_joint_list) ||
-            l_it->dag_path == l_skin_cluster_path) {
+            l_it->dag_path == l_skin_mesh_path) {
           post_add.emplace_back(l_it);
           l_r |= true;
         }
