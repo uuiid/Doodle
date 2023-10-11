@@ -15,10 +15,15 @@
 #include <maya/MAngle.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagPathArray.h>
+#include <maya/MDataHandle.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
+#include <maya/MFnBlendShapeDeformer.h>
+#include <maya/MFnComponentListData.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnPointArrayData.h>
+#include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
 #include <maya/MItDependencyGraph.h>
@@ -261,6 +266,8 @@ struct fbx_write_data {
   }
 
   void write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin);
+  // 写出混合变形
+  void write_blend_shape(MDagPath in_mesh);
 
   static std::vector<MDagPath> find_joint(const MObject& in_msk) {
     if (in_msk.isNull()) return {};
@@ -275,6 +282,24 @@ struct fbx_write_data {
       l_joint_vector.emplace_back(l_joint_array[i]);
     }
     return l_joint_vector;
+  }
+
+  static std::vector<MObject> find_blend_shape(MDagPath in_mesh) {
+    if (!in_mesh.hasFn(MFn::kMesh)) return {};
+
+    MStatus l_s{};
+    std::vector<MObject> l_blend_shapes{};
+    maya_chick(in_mesh.extendToShape());
+    /// \brief 获得组件点上下文
+    auto l_shape = in_mesh.node(&l_s);
+    maya_chick(l_s);
+
+    for (MItDependencyGraph i{l_shape, MFn::kBlendShape, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
+         i.next()) {
+      l_blend_shapes.emplace_back(i.currentItem(&l_s));
+      maya_chick(l_s);
+    }
+    return l_blend_shapes;
   }
 };
 
@@ -345,6 +370,7 @@ class doodle_to_ue_fbx::impl_data {
               fbx_write_data l_data{self->node, nullptr};
               l_data.write_mesh(self->dag_path);
               l_data.write_skeletion(tree_dag_, self->skin_cluster_);
+              l_data.write_blend_shape(self->dag_path);
             };
           } else {
             l_begin->write_file_ = [](tree_dag_node* self) {
@@ -498,6 +524,122 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
   mesh->AddDeformer(l_sk);
 }
 
+void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
+  auto l_bls = find_blend_shape(in_mesh);
+  MFnBlendShapeDeformer l_blend_shape{};
+  auto l_fbx_bl =
+      FbxBlendShape::Create(node->GetScene(), fmt::format("{}_blend_shape", get_node_name(in_mesh)).c_str());
+  MStatus l_status{};
+  for (auto&& i : l_bls) {
+    maya_chick(l_blend_shape.setObject(i));
+    maya_chick(l_status);
+    MObjectArray l_shape_array{};
+    maya_chick(l_blend_shape.getBaseObjects(l_shape_array));
+    if (l_shape_array.length() != 1) {
+      log_error(fmt::format("blend shape {} base object length != 1", get_node_name(i)));
+      continue;
+    }
+    if (l_shape_array[0].isNull()) {
+      log_error(fmt::format("blend shape {} base object is null", get_node_name(i)));
+      continue;
+    }
+
+    MIntArray l_index_list{};
+    maya_chick(l_blend_shape.weightIndexList(l_index_list));
+    //    std::cout << fmt::format("{} weight_index {}", get_node_name(l_shape_array[0]), l_index_list) << std::endl;
+
+    auto l_input_target_plug_1 = get_plug(i, "inputTarget").elementByPhysicalIndex(0, &l_status);
+    maya_chick(l_status);
+    auto l_input_target_group_array = l_input_target_plug_1.child(0, &l_status);
+    maya_chick(l_status);
+    //    std::cout << fmt::format("get plug {}", l_input_target_group_array.name()) << std::endl;
+    auto l_shape_count = l_input_target_group_array.evaluateNumElements(&l_status);
+    maya_chick(l_status);
+    for (auto j = 0; j < l_shape_count; ++j) {
+      auto l_input_target_group = l_input_target_group_array.elementByPhysicalIndex(j, &l_status);
+      maya_chick(l_status);
+      auto l_input_target_item = l_input_target_group.child(0).elementByPhysicalIndex(0, &l_status);
+      maya_chick(l_status);
+
+      //      for (auto k = 0; k < l_input_target_item.numChildren(); ++k) {
+      //        auto l_input_target_item_child = l_input_target_item.child(k, &l_status);
+      //        maya_chick(l_status);
+      //        std::cout << fmt::format(
+      //                         "info {}: {}|{}: {}", j, l_input_target_item_child.name(),
+      //                         l_input_target_item_child.info()
+      //                     )
+      //                  << std::endl;
+      //      }
+
+      auto l_input_point_target = l_input_target_item.child(3, &l_status);
+      maya_chick(l_status);
+      auto l_input_components_target = l_input_target_item.child(4, &l_status);
+      maya_chick(l_status);
+      //      std::cout << fmt::format(
+      //                       "{} info {}: {}|{}: {}", j, l_input_point_target.name(), l_input_point_target.info(),
+      //                       l_input_components_target.name(), l_input_components_target.info()
+      //                   )
+      //                << std::endl;
+      auto l_input_point_target_data_handle = l_input_point_target.asMDataHandle(&l_status);
+      maya_chick(l_status);
+      auto l_input_components_target_data_handle = l_input_components_target.asMDataHandle(&l_status);
+      maya_chick(l_status);
+
+      MFnPointArrayData l_point_data{l_input_point_target_data_handle.data(), &l_status};
+      maya_chick(l_status);
+      if (l_point_data.length() == 0) {
+        log_info(fmt::format("blend shape {} point data length == 0", get_node_name(i)));
+        continue;
+      }
+
+      MFnComponentListData l_component_data{l_input_components_target_data_handle.data(), &l_status};
+      maya_chick(l_status);
+
+      std::vector<std::int32_t> l_point_index_main{};
+      for (auto k = 0; k < l_component_data.length(); ++k) {
+        MFnSingleIndexedComponent l_component{l_component_data[k], &l_status};
+        maya_chick(l_status);
+        MIntArray l_point_index{};
+        maya_chick(l_component.getElements(l_point_index));
+        for (auto l_index : l_point_index) {
+          l_point_index_main.emplace_back(l_index);
+        }
+      }
+
+      if (l_point_data.length() != l_point_index_main.size()) {
+        log_error(fmt::format(
+            "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
+            l_point_index_main.size()
+        ));
+        continue;
+      }
+      for (auto k = 0; k < l_point_index_main.size(); ++k) {
+        auto l_point_index = l_point_index_main[k];
+        std::cout << l_point_index_main[k] << " [" << l_point_data[k].x << "," << l_point_data[k].y << ","
+                  << l_point_data[k].z << "], ";
+      }
+      std::cout << std::endl;
+    }
+
+    //    for (auto j = 0; j < l_shape_count; ++j) {
+    //      auto l_shape_name = l_blend_shape.weightName(j, &l_status);
+    //      maya_chick(l_status);
+    //      auto l_shape_weight = l_blend_shape.weight(j, &l_status);
+    //      maya_chick(l_status);
+    //      auto* l_fbx_shape  = FbxBlendShapeChannel::Create(node->GetScene(), l_shape_name.asChar());
+    //      auto* l_fbx_deform = FbxShape::Create(node->GetScene(), l_shape_name.asChar());
+    //      l_fbx_deform->InitControlPoints(mesh->GetControlPointsCount());
+    //      auto l_point_count = mesh->GetControlPointsCount();
+    //      for (auto k = 0; k < l_point_count; ++k) {
+    //        auto l_point = mesh->GetControlPointAt(k);
+    //        l_fbx_deform->SetControlPointAt(FbxVector4{l_point[0], l_point[1], l_point[2]}, k);
+    //      }
+    //      l_fbx_shape->AddDeformer(l_fbx_deform, l_shape_weight);
+    //      l_fbx_bl->AddBlendShapeChannel(l_fbx_shape);
+    //    }
+  }
+}
+
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
 
 MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
@@ -530,7 +672,12 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
 
   p_i->init();
   p_i->build_tree(l_list);
-  p_i->write();
+  try {
+    p_i->write();
+  } catch (const maya_error& in_error) {
+    displayError(conv::to_ms(in_error.what()));
+    return MS::kFailure;
+  }
   write_fbx();
   return MS::kSuccess;
 }
