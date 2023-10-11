@@ -175,7 +175,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     .AutoHeight()
                     [
                         SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("骨骼网格体:")))
+                            .Text(FText::FromString(TEXT("对应骨骼网格体:")))
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
@@ -188,7 +188,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     .AutoHeight()
                     [
                         SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("粘贴到目标:")))
+                            .Text(FText::FromString(TEXT("粘贴到场景中目标:")))
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
@@ -456,6 +456,7 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             TArray<FString> OutKeys;
             CurrentObject = UserData->VariantObj;
             CurrentObject->AllVaraint.GetKeys(OutKeys);
+            if(OutKeys.Num()>0)
             NowVaraint = OutKeys[0];
         }
         else
@@ -470,34 +471,32 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
             FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
             UObject* object = AssetToolsModule.Get().CreateAsset(out_name, PackagePath, UDoodleVariantObject::StaticClass(), MyFactory);
             CurrentObject = Cast<UDoodleVariantObject>(object);
-            if (CurrentObject)
-            {
-                UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
-                FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(CurrentObject));
-                UserData->VariantObj = CurrentObject;
-                L_Mesh->AddAssetUserData(UserData);
-            }
-            else
-            {
-                return FReply::Handled();
-            }
+            //-------------------------
+            UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
+            FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(CurrentObject));
+            UserData->VariantObj = CurrentObject;
+            L_Mesh->AddAssetUserData(UserData);
+            //----------------------------
+            AssetRegistryModule.Get().AssetCreated(CurrentObject);
+        }
+        CurrentObject->Mesh = L_Mesh;
+        if (CurrentObject->AllVaraint.Num() <= 0) 
+        {
             TArray<FSkeletalMaterial> trangeMat = L_Mesh->GetMaterials();
             for (int M = 0; M < trangeMat.Num(); M++) {
                 trangeMat[M] = L_Mesh->GetMaterials()[M];
             }
-            CurrentObject->Mesh = L_Mesh;
             FVariantInfo Info;
             Info.Variants = trangeMat;
             NowVaraint = TEXT("default");
             CurrentObject->AllVaraint.Add(NowVaraint, Info);
-            //----------------------------
-            AssetRegistryModule.Get().AssetCreated(CurrentObject);
         }
         //-----------------------------
         TArray<UObject*> Objects;
         Objects.Add(CurrentObject);
         ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
         //-------------
+        NameText->SetColorAndOpacity(FLinearColor::White);
         NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
         Items.Empty();
         for (auto& e : CurrentObject->AllVaraint)
@@ -515,7 +514,22 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
 {
     CurrentObject = obj;
     //------------------------
-    NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
+    if (CurrentObject->Mesh) 
+    {
+        NameText->SetColorAndOpacity(FLinearColor::White);
+        NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
+    }
+    else
+    {
+        FNotificationInfo Info(FText::FromString(TEXT("骨骼网格体已丢失，请重新载入")));
+        Info.FadeInDuration = 2.0f;  // 淡入淡出时间
+        Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
+        FSlateNotificationManager::Get().AddNotification(Info);
+        //--------------
+        NameText->SetColorAndOpacity(FLinearColor::Red);
+        NameText->SetText(FText::FromString(TEXT("骨骼网格体已丢失，请重新载入...")));
+        CurrentObject->AllVaraint.Empty();
+    }
     //----------------
     Items.Empty();
     for (auto& e : CurrentObject->AllVaraint)
@@ -527,8 +541,11 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     //------------------------
     TArray<FString> OutKeys;
     CurrentObject->AllVaraint.GetKeys(OutKeys);
-    NowVaraint = OutKeys[0];
-    SetVariantInfo(NowVaraint);
+    if (OutKeys.Num() > 0) 
+    {
+        NowVaraint = OutKeys[0];
+        SetVariantInfo(NowVaraint);
+    }
 }
 
 void DoodleVariantCompoundWidget::SetVariantInfo(FString name)

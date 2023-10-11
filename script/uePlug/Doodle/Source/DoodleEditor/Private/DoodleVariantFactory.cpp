@@ -17,6 +17,12 @@ public:
     SLATE_BEGIN_ARGS(SCreateVariantDialog)
         {}
     SLATE_END_ARGS()
+//--------------
+private:
+    TSharedPtr<SVerticalBox> SkeletonContainer;
+    TWeakPtr<SWindow> PickerWindow;
+public:
+    FAssetData meshAssetData;
 
     void Construct(const FArguments& InArgs) {
         //-------------------------------------------
@@ -88,16 +94,15 @@ public:
         FAssetPickerConfig AssetPickerConfig;
         AssetPickerConfig.Filter.ClassPaths.Add(FTopLevelAssetPath{ USkeletalMesh::StaticClass()->GetPathName() });
         AssetPickerConfig.OnAssetSelected = FOnAssetSelected::CreateLambda([this](const FAssetData& AssetData)
-            {
-                meshAssetData = AssetData;
-            });
+        {
+            meshAssetData = AssetData;
+        });
         AssetPickerConfig.OnShouldFilterAsset = FOnShouldFilterAsset::CreateLambda([](const FAssetData& AssetData) {return false;});
         AssetPickerConfig.bAllowNullSelection = true;
         AssetPickerConfig.InitialAssetViewType = EAssetViewType::Column;
         AssetPickerConfig.InitialAssetSelection = meshAssetData;
 
         SkeletonContainer->ClearChildren();
-        // clang-format off
         SkeletonContainer->AddSlot()
             .AutoHeight()
             [
@@ -125,12 +130,6 @@ public:
         PickerWindow = Window;
         GEditor->EditorAddModalWindow(Window);
     }
-
-private:
-    TSharedPtr<SVerticalBox> SkeletonContainer;
-    TWeakPtr<SWindow> PickerWindow;
-public:
-    FAssetData meshAssetData;
 };
 
 UDoodleVariantFactory::UDoodleVariantFactory() {
@@ -146,8 +145,8 @@ bool UDoodleVariantFactory::ConfigureProperties()
     if (Dialog.Get().meshAssetData!= nullptr)
     {
         MeshAssetData = Dialog.Get().meshAssetData;
-        USkeletalMesh* mesh = Cast<USkeletalMesh>(MeshAssetData.GetAsset());
-        UDoodleVariantAssetUserData* user_data = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
+        USkeletalMesh* L_Mesh = Cast<USkeletalMesh>(MeshAssetData.GetAsset());
+        UDoodleVariantAssetUserData* user_data = L_Mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
         FAssetData variant_date;
         if (user_data && user_data->VariantObj)
         {
