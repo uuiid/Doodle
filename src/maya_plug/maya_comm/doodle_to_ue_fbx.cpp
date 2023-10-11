@@ -546,10 +546,6 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
       continue;
     }
 
-    MIntArray l_index_list{};
-    maya_chick(l_blend_shape.weightIndexList(l_index_list));
-    //    std::cout << fmt::format("{} weight_index {}", get_node_name(l_shape_array[0]), l_index_list) << std::endl;
-
     auto l_input_target_plug_1 = get_plug(i, "inputTarget").elementByPhysicalIndex(0, &l_status);
     maya_chick(l_status);
     auto l_input_target_group_array = l_input_target_plug_1.child(0, &l_status);
@@ -616,10 +612,16 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
         continue;
       }
 
-      auto l_fbx_bl_channel =
-          FbxBlendShapeChannel::Create(node->GetScene(), fmt::format("{}_bl_c", get_node_name(i)).c_str());
+      auto l_bl_weight_plug = get_plug(i, "weight").elementByPhysicalIndex(j, &l_status);
+      auto l_fbx_bl_channel = FbxBlendShapeChannel::Create(
+          node->GetScene(),
+          fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
+      );
       l_fbx_bl->AddBlendShapeChannel(l_fbx_bl_channel);
-      auto l_fbx_deform = FbxShape::Create(node->GetScene(), fmt::format("{}_bl_d", get_node_name(i)).c_str());
+      auto l_fbx_deform = FbxShape::Create(
+          node->GetScene(),
+          fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
+      );
       l_fbx_bl_channel->AddTargetShape(l_fbx_deform, 100);
 
       l_fbx_deform->InitControlPoints(l_point_index_main.size());
