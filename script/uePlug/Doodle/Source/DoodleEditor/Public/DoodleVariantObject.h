@@ -10,7 +10,7 @@ USTRUCT()
 struct FVariantInfo
 {   GENERATED_USTRUCT_BODY()
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Materials")
 	TArray<FSkeletalMaterial> Variants;
 };
 /**
@@ -21,8 +21,8 @@ class DOODLEEDITOR_API UDoodleVariantObject : public UObject
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnywhere, DisplayName = "", Category = "SkeletalMesh")
+	UPROPERTY(VisibleAnywhere, Category = "SkeletalMesh")
 	USkeletalMesh* Mesh;
-	UPROPERTY(EditAnywhere,DisplayName = "bian_ti", Category = "Varaints")
+	UPROPERTY(EditAnywhere,Category = "Varaints")
 	TMap<FString, FVariantInfo> AllVaraint;
 };
