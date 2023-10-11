@@ -52,6 +52,7 @@ MSyntax doodle_to_ue_fbx_syntax() {
   return l_syntax;
 }
 
+struct fbx_write_data;
 struct tree_dag_node /* : boost::equality_comparable<tree_dag_node> */ {
   MDagPath dag_path{};
   FbxNode* node{};
@@ -59,6 +60,7 @@ struct tree_dag_node /* : boost::equality_comparable<tree_dag_node> */ {
 
   std::function<void(tree_dag_node*)> write_file_{};
   std::shared_ptr<std::once_flag> write_flag_{std::make_shared<std::once_flag>()};
+  std::shared_ptr<fbx_write_data> write_data_{std::make_shared<fbx_write_data>()};
   void write() {
     std::call_once(*write_flag_, write_file_, this);
     //    write_file_(this);
@@ -332,11 +334,11 @@ class doodle_to_ue_fbx::impl_data {
           l_begin->node      = FbxNode::Create(scene_, l_sub_path.partialPathName().asChar());
           l_parent_node->AddChild(l_begin->node);
           l_begin->write_file_ = [](tree_dag_node* self) {
-            fbx_write_data l_data{self->node, nullptr};
+            *self->write_data_ = {self->node, nullptr};
             if (self->dag_path.hasFn(MFn::kJoint))
-              l_data.write_joint(self->dag_path);
+              self->write_data_->write_joint(self->dag_path);
             else
-              l_data.write_transform(self->dag_path);
+              self->write_data_->write_transform(self->dag_path);
           };
         }
       }
@@ -367,15 +369,15 @@ class doodle_to_ue_fbx::impl_data {
           l_begin->skin_cluster_ = get_skin_custer(l_begin->dag_path);
           if (l_begin->dag_path.hasFn(MFn::kMesh) && !l_begin->skin_cluster_.isNull()) {
             l_begin->write_file_ = [this](tree_dag_node* self) {
-              fbx_write_data l_data{self->node, nullptr};
-              l_data.write_mesh(self->dag_path);
-              l_data.write_skeletion(tree_dag_, self->skin_cluster_);
-              l_data.write_blend_shape(self->dag_path);
+              *self->write_data_ = {self->node, nullptr};
+              self->write_data_->write_mesh(self->dag_path);
+              self->write_data_->write_skeletion(tree_dag_, self->skin_cluster_);
+              self->write_data_->write_blend_shape(self->dag_path);
             };
           } else {
             l_begin->write_file_ = [](tree_dag_node* self) {
-              fbx_write_data l_data{self->node, nullptr};
-              l_data.write_transform(self->dag_path);
+              *self->write_data_ = {self->node, nullptr};
+              self->write_data_->write_transform(self->dag_path);
             };
           }
           if (!l_begin->skin_cluster_.isNull() && l_begin->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
