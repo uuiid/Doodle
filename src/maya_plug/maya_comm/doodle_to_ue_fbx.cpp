@@ -240,7 +240,10 @@ struct fbx_write_data {
     MStatus l_status{};
     auto l_is_ = get_plug(in_mesh.node(), "segmentScaleCompensate").asBool(&l_status);
     maya_chick(l_status);
+    auto l_size = get_plug(in_mesh.node(), "radius").asDouble(&l_status);
+    maya_chick(l_status);
 
+    l_sk_attr->Size.Set(l_size);
     node->RotationActive.Set(true);
     auto l_vector_x = get_plug(in_mesh.node(), "jointOrientX").asMAngle(&l_status);
     maya_chick(l_status);
@@ -366,13 +369,25 @@ class doodle_to_ue_fbx::impl_data {
     build_mesh_tree(in_list);
     build_joint_tree();
   }
-  void write() { iter_tree(tree_dag_.begin()); }
+  void write() {
+    std::function<void(const tree_mesh_t ::iterator& in_iterator)> l_iter_fun{};
+    l_iter_fun = [&](const tree_mesh_t ::iterator& in_iterator) {
+      for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
+        if (!i->dag_path.hasFn(MFn::kMesh)) i->write();
+        l_iter_fun(i);
+      }
+    };
+    l_iter_fun(tree_dag_.begin());
 
-  void iter_tree(const tree_mesh_t ::iterator& in_iterator) {
-    for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      i->write();
-      iter_tree(i);
-    }
+    std::function<void(const tree_mesh_t ::iterator& in_iterator)> l_iter_fun2{};
+    l_iter_fun2 = [&](const tree_mesh_t ::iterator& in_iterator) {
+      for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
+        i->write();
+        l_iter_fun2(i);
+      }
+    };
+
+    l_iter_fun2(tree_dag_.begin());
   }
 
   MObject get_skin_custer(MDagPath in_dag_path) {
@@ -400,17 +415,18 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
     log_error(fmt::format(" {} is not mesh", node->GetName()));
     return;
   }
-  auto* l_sk = FbxSkin::Create(node->GetScene(), "skin");
+  auto* l_sk = FbxSkin::Create(node->GetScene(), get_node_name(in_skin).c_str());
   mesh->AddDeformer(l_sk);
 
   auto l_joint_list = find_joint(in_skin);
 
   MFnSkinCluster l_skin_cluster{in_skin};
+  auto l_skinning_method = get_plug(in_skin, "skinningMethod").asInt();
+  l_sk->SetSkinningType(static_cast<FbxSkin::EType>(l_skinning_method + 1));
 
   std::map<MDagPath, tree_mesh_t::iterator, details::cmp_dag> l_dag_tree_map{};
   for (auto l_it = in_tree.begin(); l_it != in_tree.end(); ++l_it) {
     if (ranges::find_if(l_joint_list, boost::lambda2::_1 == l_it->dag_path) != std::end(l_joint_list)) {
-      l_it->write();
       l_dag_tree_map.emplace(l_it->dag_path, l_it);
     }
   }
