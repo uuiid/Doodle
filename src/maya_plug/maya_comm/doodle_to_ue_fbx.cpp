@@ -529,6 +529,8 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
   MFnBlendShapeDeformer l_blend_shape{};
   auto l_fbx_bl =
       FbxBlendShape::Create(node->GetScene(), fmt::format("{}_blend_shape", get_node_name(in_mesh)).c_str());
+  mesh->AddDeformer(l_fbx_bl);
+
   MStatus l_status{};
   for (auto&& i : l_bls) {
     maya_chick(l_blend_shape.setObject(i));
@@ -613,12 +615,25 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
         ));
         continue;
       }
+
+      auto l_fbx_bl_channel =
+          FbxBlendShapeChannel::Create(node->GetScene(), fmt::format("{}_bl_c", get_node_name(i)).c_str());
+      l_fbx_bl->AddBlendShapeChannel(l_fbx_bl_channel);
+      auto l_fbx_deform = FbxShape::Create(node->GetScene(), fmt::format("{}_bl_d", get_node_name(i)).c_str());
+      l_fbx_bl_channel->AddTargetShape(l_fbx_deform, 100);
+
+      l_fbx_deform->InitControlPoints(l_point_index_main.size());
+      l_fbx_deform->SetControlPointIndicesCount(l_point_index_main.size());
+      auto* l_fbx_points = l_fbx_deform->GetControlPoints();
+      auto* l_fbx_index  = l_fbx_deform->GetControlPointIndices();
       for (auto k = 0; k < l_point_index_main.size(); ++k) {
-        auto l_point_index = l_point_index_main[k];
-        std::cout << l_point_index_main[k] << " [" << l_point_data[k].x << "," << l_point_data[k].y << ","
-                  << l_point_data[k].z << "], ";
+        l_fbx_points[k] = FbxVector4{
+            l_point_data[k].x,
+            l_point_data[k].y,
+            l_point_data[k].z,
+        };
+        l_fbx_index[k] = l_point_index_main[k];
       }
-      std::cout << std::endl;
     }
 
     //    for (auto j = 0; j < l_shape_count; ++j) {
