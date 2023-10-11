@@ -50,56 +50,49 @@ public:
         InItem = InArgs._InItem;
         OnTextCommittedEvent = InArgs._OnTextCommittedEvent;
         OnClickedEvent = InArgs._OnClickedEvent;
+        //---------------------------------------
         Super::FArguments L_Arg{};
-        Super::Construct(L_Arg, In_OwnerTableView);
-    }
-
-    void ConstructChildren(ETableViewMode::Type InOwnerTableMode, const TAttribute<FMargin>& InPadding, const TSharedRef<SWidget>& InContent) override
-    {
-        this->Content = InContent;
-        InnerContentSlot = nullptr;
-        this->ChildSlot
-            .Padding(InPadding)
-            [
-                SNew(SHorizontalBox)
-                    +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Center)
-                    [
-                        SNew(SEditableText)
-                            .MinDesiredWidth(400)
-                            .IsEnabled(false)
-                            .Text(FText::FromString(*InItem))
-                            .OnTextCommitted_Lambda([this](const FText& InText, const ETextCommit::Type InTextAction) 
-                            {
-                                OnTextCommittedEvent.ExecuteIfBound(InText);
-                            })
-                    ]
-                    + SHorizontalBox::Slot()
-                    .AutoWidth()
-                    .HAlign(HAlign_Right)
-                    .VAlign(VAlign_Center)
-                    [
-                        SNew(SHorizontalBox)
-                            + SHorizontalBox::Slot()
-                            .AutoWidth()
+        L_Arg.Content()[
+            SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                .HAlign(HAlign_Left)
+                .VAlign(VAlign_Center)
+                [
+                    SNew(SEditableText)
+                        .MinDesiredWidth(400)
+                        .IsEnabled(false)
+                        .Text(FText::FromString(*InItem))
+                        .OnTextCommitted_Lambda([this](const FText& InText, const ETextCommit::Type InTextAction)
+                        {
+                            OnTextCommittedEvent.ExecuteIfBound(InText);
+                        })
+                ]
+                + SHorizontalBox::Slot()
+                .AutoWidth()
+                .HAlign(HAlign_Right)
+                .VAlign(VAlign_Center)
+                [
+                    SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .AutoWidth()
+                        [
+                            SNew(SButton)
+                            .Text(FText::FromString(TEXT("粘贴")))
+                            .Content()
                             [
-                                SNew(SButton)
-                                    .Text(FText::FromString(TEXT("粘贴")))
-                                    .Content()
-                                    [
-                                        SNew(SImage)
-                                            .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
-                                    ]
-                                    .ToolTipText(FText::FromString(TEXT("粘贴变体")))
-                                    .OnClicked_Lambda([this] 
-                                    {
-                                    OnClickedEvent.ExecuteIfBound();;
-                                    return FReply::Handled();})
+                                SNew(SImage)
+                                    .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
                             ]
-                    ]
-            ];
-        InnerContentSlot = &ChildSlot.AsSlot();
+                            .ToolTipText(FText::FromString(TEXT("粘贴变体")))
+                            .OnClicked_Lambda([this]
+                            {
+                                OnClickedEvent.ExecuteIfBound();;
+                                return FReply::Handled();
+                            })
+                        ]
+                ]
+        ];
+        Super::Construct(L_Arg, In_OwnerTableView);
     }
 };
 
@@ -113,36 +106,31 @@ public:
     SLATE_ARGUMENT(TSharedPtr<FMaterialItemData>, InItem)
     SLATE_EVENT(FAssetDataParamDelegate, OnObjectChanged)
     SLATE_END_ARGS()
+    //--------------------------
+    TSharedPtr<FMaterialItemData> InItem;
+    FAssetDataParamDelegate OnObjectChanged;
 
     void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& In_OwnerTableView)
     {
         InItem = InArgs._InItem;
         OnObjectChanged = InArgs._OnObjectChanged;
+        //------------------
         Super::FArguments L_Arg{};
-        Super::Construct(L_Arg, In_OwnerTableView);
-    }
-
-    void ConstructChildren(ETableViewMode::Type InOwnerTableMode, const TAttribute<FMargin>& InPadding, const TSharedRef<SWidget>& InContent) override
-    {
-        //-----------------------
-        this->Content = InContent;
-        InnerContentSlot = nullptr;
-        this->ChildSlot
-        .Padding(InPadding)
+        L_Arg.Content()
         [
             SNew(SBorder)
             .BorderImage(FCoreStyle::Get().GetBrush(TEXT("NoBorder")))
             .Padding(0)
             [
                 SNew(SVerticalBox)
-                + SVerticalBox::Slot()
+                    + SVerticalBox::Slot()
                     .AutoHeight()
                     .HAlign(HAlign_Left)
                     .VAlign(VAlign_Center)
                     [SNew(STextBlock)
                     .Text(FText::FromName(InItem->Slot))
                     ]
-                + SVerticalBox::Slot()
+                    + SVerticalBox::Slot()
                     .AutoHeight()
                     .HAlign(HAlign_Left)
                     .VAlign(VAlign_Center)
@@ -170,11 +158,8 @@ public:
                     ]
             ]
         ];
-        InnerContentSlot = &ChildSlot.AsSlot();
+        Super::Construct(L_Arg, In_OwnerTableView);
     }
-
-    TSharedPtr<FMaterialItemData> InItem;
-    FAssetDataParamDelegate OnObjectChanged;
 };
 
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
@@ -640,7 +625,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
 {
     if (!CurrentObject)
     {
-        FText DialogText = FText::FromString(TEXT(""));
+        FText DialogText = {};
         DialogText = FText::FromString(TEXT("请先载入变体。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();
@@ -651,7 +636,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach()
     L_Selects->GetSelectedObjects(outObject);
     if (outObject.Num() <= 0 || !outObject[0]->GetClass()->IsChildOf<ASkeletalMeshActor>())
     {
-        FText DialogText = FText::FromString(TEXT(""));
+        FText DialogText = {};
         DialogText = FText::FromString(TEXT("请先选择粘贴目标。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return FReply::Handled();

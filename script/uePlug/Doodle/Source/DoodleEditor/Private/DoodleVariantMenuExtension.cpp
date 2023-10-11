@@ -41,7 +41,7 @@ void FDoodleVariantMenuExtension::AddMenuEntry(FMenuBuilder& builder)
                 UDoodleVariantAssetUserData* UserData = mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
                 if (UserData && UserData->VariantObj)
                 {
-                    builder.BeginSection("Doodle Variant");
+                    builder.BeginSection(TEXT("Doodle Variant"));
                     {
                         builder.AddSubMenu
                         (

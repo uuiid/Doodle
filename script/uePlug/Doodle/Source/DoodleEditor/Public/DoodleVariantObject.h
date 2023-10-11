@@ -21,8 +21,8 @@ class DOODLEEDITOR_API UDoodleVariantObject : public UObject
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnywhere, DisplayName = "")
+	UPROPERTY(VisibleAnywhere, DisplayName = "", Category = "SkeletalMesh")
 	USkeletalMesh* Mesh;
-	UPROPERTY(EditAnywhere,DisplayName = "bian_ti")
+	UPROPERTY(EditAnywhere,DisplayName = "bian_ti", Category = "Varaints")
 	TMap<FString, FVariantInfo> AllVaraint;
 };
