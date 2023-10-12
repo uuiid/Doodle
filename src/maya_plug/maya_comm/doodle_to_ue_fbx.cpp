@@ -691,7 +691,33 @@ void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
     }
   }
 }
-void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {}
+void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
+  FbxTime l_fbx_time{};
+  l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
+
+  auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
+
+  std::vector<std::pair<std::string, std::string>> create_anim{
+      {FBXSDK_CURVENODE_COMPONENT_X, "translateX"},  //
+      {FBXSDK_CURVENODE_COMPONENT_Y, "translateY"},  //
+      {FBXSDK_CURVENODE_COMPONENT_Z, "translateZ"},  //
+      {FBXSDK_CURVENODE_COMPONENT_X, "rotateX"},     //
+      {FBXSDK_CURVENODE_COMPONENT_Y, "rotateY"},     //
+      {FBXSDK_CURVENODE_COMPONENT_Z, "rotateZ"},     //
+      {FBXSDK_CURVENODE_COMPONENT_X, "scaleX"},      //
+      {FBXSDK_CURVENODE_COMPONENT_Y, "scaleY"},      //
+      {FBXSDK_CURVENODE_COMPONENT_Z, "scaleZ"},      //
+  };
+
+  for (auto&& [l_fbx_, l_maya] : create_anim) {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, l_fbx_.c_str(), true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_x    = get_plug(in_dag_path.node(), l_maya.c_str()).asDouble();
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_x);
+    l_anim_curve->KeyModifyEnd();
+  }
+}
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
 
 MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
