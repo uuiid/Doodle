@@ -561,16 +561,6 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
       auto l_input_target_item = l_input_target_group.child(0).elementByPhysicalIndex(0, &l_status);
       maya_chick(l_status);
 
-      //      for (auto k = 0; k < l_input_target_item.numChildren(); ++k) {
-      //        auto l_input_target_item_child = l_input_target_item.child(k, &l_status);
-      //        maya_chick(l_status);
-      //        std::cout << fmt::format(
-      //                         "info {}: {}|{}: {}", j, l_input_target_item_child.name(),
-      //                         l_input_target_item_child.info()
-      //                     )
-      //                  << std::endl;
-      //      }
-
       auto l_input_point_target = l_input_target_item.child(3, &l_status);
       maya_chick(l_status);
       auto l_input_components_target = l_input_target_item.child(4, &l_status);
@@ -624,7 +614,7 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
           node->GetScene(),
           fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
       );
-      l_fbx_bl_channel->AddTargetShape(l_fbx_deform, 100);
+      l_fbx_bl_channel->AddTargetShape(l_fbx_deform, l_bl_weight_plug.asDouble());
 
       l_fbx_deform->InitControlPoints(l_point_index_main.size());
       l_fbx_deform->SetControlPointIndicesCount(l_point_index_main.size());
