@@ -13,6 +13,7 @@
 
 #include <fbxsdk.h>
 #include <maya/MAngle.h>
+#include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
@@ -60,13 +61,14 @@ struct tree_dag_node /* : boost::equality_comparable<tree_dag_node> */ {
   MObject skin_cluster_{};
 
   std::function<void(tree_dag_node*)> write_file_{};
+  std::function<void(tree_dag_node*, MTime)> write_anim_{};
   std::shared_ptr<std::once_flag> write_flag_{std::make_shared<std::once_flag>()};
   std::shared_ptr<fbx_write_data> write_data_{std::make_shared<fbx_write_data>()};
   void write() {
     std::call_once(*write_flag_, write_file_, this);
     //    write_file_(this);
   }
-
+  void write_anim(const MTime& in_time) { write_anim_(this, in_time); }
   //  bool operator!=(const tree_dag_node& rhs) const {
   //    auto l_string  = dag_path.fullPathName();
   //    auto l_string2 = rhs.dag_path.fullPathName();
@@ -104,7 +106,7 @@ struct fbx_write_data {
   FbxNode* node{};
   FbxMesh* mesh{};
 
-  std::vector<FbxBlendShapeChannel*> blend_shape_channel_{};
+  std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
   FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value) {
     switch (in_value) {
       case MTime::k25FPS:
@@ -358,6 +360,9 @@ class doodle_to_ue_fbx::impl_data {
             else
               self->write_data_->write_transform(self->dag_path);
           };
+          l_begin->write_anim_ = [](tree_dag_node* self, MTime in_time) {
+            self->write_data_->write_tran_anim(self->dag_path, in_time);
+          };
         }
       }
     }
@@ -392,10 +397,16 @@ class doodle_to_ue_fbx::impl_data {
               self->write_data_->write_skeletion(tree_dag_, self->skin_cluster_);
               self->write_data_->write_blend_shape(self->dag_path);
             };
+            l_begin->write_anim_ = [](tree_dag_node* self, MTime in_time) {
+              self->write_data_->write_mesh_anim(self->dag_path, in_time);
+            };
           } else {
             l_begin->write_file_ = [](tree_dag_node* self) {
               *self->write_data_ = {self->node, nullptr};
               self->write_data_->write_transform(self->dag_path);
+            };
+            l_begin->write_anim_ = [](tree_dag_node* self, MTime in_time) {
+              self->write_data_->write_tran_anim(self->dag_path, in_time);
             };
           }
           if (!l_begin->skin_cluster_.isNull() && l_begin->skin_cluster_.hasFn(MFn::kSkinClusterFilter)) {
@@ -434,6 +445,17 @@ class doodle_to_ue_fbx::impl_data {
     };
 
     l_iter_fun2(tree_dag_.begin());
+  }
+
+  void write_anim(const MTime& in_time) {
+    std::function<void(const tree_mesh_t ::iterator& in_iterator)> l_iter_fun{};
+    l_iter_fun = [&](const tree_mesh_t ::iterator& in_iterator) {
+      for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
+        i->write_anim(in_time);
+        l_iter_fun(i);
+      }
+    };
+    l_iter_fun(tree_dag_.begin());
   }
 
   MObject get_skin_custer(MDagPath in_dag_path) {
@@ -596,7 +618,7 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
       MFnPointArrayData l_point_data{l_input_point_target_data_handle.data(), &l_status};
       maya_chick(l_status);
       if (l_point_data.length() == 0) {
-        log_info(fmt::format("blend shape {} point data length == 0", get_node_name(i)));
+        //        log_info(fmt::format("blend shape {} point data length == 0", get_node_name(i)));
         continue;
       }
 
@@ -633,7 +655,7 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
           fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
       );
       l_fbx_bl_channel->AddTargetShape(l_fbx_deform, l_bl_weight_plug.asDouble() * 100);
-      blend_shape_channel_.emplace_back(l_fbx_bl_channel);
+      blend_shape_channel_.emplace_back(l_bl_weight_plug, l_fbx_bl_channel);
 
       l_fbx_deform->InitControlPoints(l_point_index_main.size());
       l_fbx_deform->SetControlPointIndicesCount(l_point_index_main.size());
@@ -652,8 +674,6 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
 }
 
 void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
-  auto l_bls = find_blend_shape(in_dag_path);
-  MFnBlendShapeDeformer l_blend_shape{};
   auto l_fbx_bl =
       FbxBlendShape::Create(node->GetScene(), fmt::format("{}_blend_shape", get_node_name(in_dag_path)).c_str());
   mesh->AddDeformer(l_fbx_bl);
@@ -663,39 +683,19 @@ void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
   MStatus l_status{};
-  for (auto&& i : l_bls) {
-    maya_chick(l_blend_shape.setObject(i));
-    maya_chick(l_status);
-    MObjectArray l_shape_array{};
-    maya_chick(l_blend_shape.getBaseObjects(l_shape_array));
-    if (l_shape_array.length() != 1) {
-      log_error(fmt::format("blend shape {} base object length != 1", get_node_name(i)));
-      continue;
-    }
-    if (l_shape_array[0].isNull()) {
-      log_error(fmt::format("blend shape {} base object is null", get_node_name(i)));
-      continue;
-    }
-
-    auto l_bl_weight_plug_list = get_plug(i, "weight");
-    auto l_shape_count         = l_bl_weight_plug_list.evaluateNumElements(&l_status);
-    maya_chick(l_status);
-    for (auto j = 0; j < l_shape_count; ++j) {
-      auto l_bl_weight_plug = l_bl_weight_plug_list.elementByPhysicalIndex(j, &l_status);
-      maya_chick(l_status);
-      auto* l_anim_curve = blend_shape_channel_[j]->DeformPercent.GetCurve(l_layer, true);
-      l_anim_curve->KeyModifyBegin();
-      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_bl_weight_plug.asDouble() * 100);
-      l_anim_curve->KeyModifyEnd();
-    }
+  for (auto&& [l_bl_weight_plug, l_blend_shape_channel_] : blend_shape_channel_) {
+    auto* l_anim_curve = l_blend_shape_channel_->DeformPercent.GetCurve(l_layer, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_bl_weight_plug.asDouble() * 100);
+    l_anim_curve->KeyModifyEnd();
   }
 }
 void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
-  auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
+  auto* l_layer = node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
 
   std::vector<std::pair<std::string, std::string>> create_anim{
       {FBXSDK_CURVENODE_COMPONENT_X, "translateX"},  //
@@ -747,6 +747,7 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   auto anim_stack = FbxAnimStack::Create(p_i->scene_, "anim_stack");
   auto anim_layer = FbxAnimLayer::Create(p_i->scene_, "anim_layer");
   anim_stack->AddMember(anim_layer);
+  p_i->scene_->SetCurrentAnimationStack(anim_stack);
 
   p_i->init();
   p_i->build_tree(l_list);
@@ -756,6 +757,15 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
     displayError(conv::to_ms(in_error.what()));
     return MS::kFailure;
   }
+
+  auto l_begin_time = MAnimControl::minTime();
+  auto l_end_time   = MAnimControl::maxTime();
+
+  for (auto l_time = l_begin_time; l_time <= l_end_time; ++l_time) {
+    MAnimControl::setCurrentTime(l_time);
+    p_i->write_anim(l_time);
+  }
+
   write_fbx();
   return MS::kSuccess;
 }
