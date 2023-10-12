@@ -107,7 +107,7 @@ struct fbx_write_data {
   FbxMesh* mesh{};
 
   std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
-  FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value) {
+  static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value) {
     switch (in_value) {
       case MTime::k25FPS:
         return FbxTime::ePAL;
@@ -696,7 +696,7 @@ void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
   auto* l_layer = node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
-
+  MStatus l_status{};
   // tran x
   {
     auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
@@ -730,8 +730,9 @@ void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
     auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
     l_anim_curve->KeyModifyBegin();
     auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    auto l_rot_x     = get_plug(in_dag_path.node(), "rotateX").asDouble();
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_x);
+    auto l_rot_x     = get_plug(in_dag_path.node(), "rotateX").asMAngle(&l_status);
+    maya_chick(l_status);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_x.asDegrees());
     l_anim_curve->KeyModifyEnd();
   }
 
@@ -740,8 +741,9 @@ void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
     auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
     l_anim_curve->KeyModifyBegin();
     auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    auto l_rot_y     = get_plug(in_dag_path.node(), "rotateY").asDouble();
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_y);
+    auto l_rot_y     = get_plug(in_dag_path.node(), "rotateY").asMAngle(&l_status);
+    maya_chick(l_status);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_y.asDegrees());
     l_anim_curve->KeyModifyEnd();
   }
 
@@ -750,8 +752,9 @@ void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
     auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
     l_anim_curve->KeyModifyBegin();
     auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    auto l_rot_z     = get_plug(in_dag_path.node(), "rotateZ").asDouble();
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_z);
+    auto l_rot_z     = get_plug(in_dag_path.node(), "rotateZ").asMAngle(&l_status);
+    maya_chick(l_status);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_z.asDegrees());
     l_anim_curve->KeyModifyEnd();
   }
 
@@ -791,6 +794,9 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   maya_chick(l_statu);
   MSelectionList l_list{};
   maya_chick(l_arg_data.getObjects(l_list));
+  auto l_begin_time = MAnimControl::minTime();
+  auto l_end_time   = MAnimControl::maxTime();
+  MAnimControl::setCurrentTime(l_begin_time);
 
   p_i->manager_ = std::shared_ptr<FbxManager>{FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); }};
   p_i->scene_   = FbxScene::Create(p_i->manager_.get(), "doodle_to_ue_fbx");
@@ -809,8 +815,15 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   l_doc_info->LastSaved_ApplicationVersion.Set("1.0.0");
   p_i->scene_->SetSceneInfo(l_doc_info);
   p_i->scene_->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::cm);
+  p_i->scene_->GetGlobalSettings().SetTimeMode(fbx_write_data::maya_to_fbx_time(MTime::uiUnit()));
   auto anim_stack = FbxAnimStack::Create(p_i->scene_, "anim_stack");
-  auto anim_layer = FbxAnimLayer::Create(p_i->scene_, "anim_layer");
+  FbxTime l_fbx_begin{};
+  l_fbx_begin.SetFrame(l_begin_time.value(), fbx_write_data::maya_to_fbx_time(l_begin_time.unit()));
+  anim_stack->LocalStart = l_fbx_begin;
+  FbxTime l_fbx_end{};
+  l_fbx_end.SetFrame(l_end_time.value(), fbx_write_data::maya_to_fbx_time(l_end_time.unit()));
+  anim_stack->LocalStop = l_fbx_end;
+  auto anim_layer       = FbxAnimLayer::Create(p_i->scene_, "anim_layer");
   anim_stack->AddMember(anim_layer);
   p_i->scene_->SetCurrentAnimationStack(anim_stack);
 
@@ -822,9 +835,6 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
     displayError(conv::to_ms(in_error.what()));
     return MS::kFailure;
   }
-
-  auto l_begin_time = MAnimControl::minTime();
-  auto l_end_time   = MAnimControl::maxTime();
 
   for (auto l_time = l_begin_time; l_time <= l_end_time; ++l_time) {
     MAnimControl::setCurrentTime(l_time);
