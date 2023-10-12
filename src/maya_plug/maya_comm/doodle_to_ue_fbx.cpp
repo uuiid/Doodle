@@ -35,6 +35,7 @@
 #include <maya/MPointArray.h>
 #include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
+#include <maya/MTime.h>
 #include <treehh/tree.hh>
 namespace doodle {
 namespace maya_plug {
@@ -102,6 +103,20 @@ struct fbx_write_data {
 
   FbxNode* node{};
   FbxMesh* mesh{};
+
+  std::vector<FbxBlendShapeChannel*> blend_shape_channel_{};
+  FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value) {
+    switch (in_value) {
+      case MTime::k25FPS:
+        return FbxTime::ePAL;
+      case MTime::k24FPS:
+        return FbxTime::eFrames24;
+      case MTime::k30FPS:
+        return FbxTime::eFrames30;
+      default:
+        return FbxTime::ePAL;
+    }
+  }
 
   void write_mesh(MDagPath& in_mesh) {
     write_transform(in_mesh);
@@ -270,6 +285,9 @@ struct fbx_write_data {
   void write_skeletion(const tree_mesh_t& in_tree, const MObject& in_skin);
   // 写出混合变形
   void write_blend_shape(MDagPath in_mesh);
+
+  void write_mesh_anim(MDagPath in_dag_path, MTime in_time);
+  void write_tran_anim(MDagPath in_dag_path, MTime in_time);
 
   static std::vector<MDagPath> find_joint(const MObject& in_msk) {
     if (in_msk.isNull()) return {};
@@ -614,7 +632,8 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
           node->GetScene(),
           fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
       );
-      l_fbx_bl_channel->AddTargetShape(l_fbx_deform, l_bl_weight_plug.asDouble());
+      l_fbx_bl_channel->AddTargetShape(l_fbx_deform, l_bl_weight_plug.asDouble() * 100);
+      blend_shape_channel_.emplace_back(l_fbx_bl_channel);
 
       l_fbx_deform->InitControlPoints(l_point_index_main.size());
       l_fbx_deform->SetControlPointIndicesCount(l_point_index_main.size());
@@ -629,26 +648,50 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
         l_fbx_index[k] = l_point_index_main[k];
       }
     }
-
-    //    for (auto j = 0; j < l_shape_count; ++j) {
-    //      auto l_shape_name = l_blend_shape.weightName(j, &l_status);
-    //      maya_chick(l_status);
-    //      auto l_shape_weight = l_blend_shape.weight(j, &l_status);
-    //      maya_chick(l_status);
-    //      auto* l_fbx_shape  = FbxBlendShapeChannel::Create(node->GetScene(), l_shape_name.asChar());
-    //      auto* l_fbx_deform = FbxShape::Create(node->GetScene(), l_shape_name.asChar());
-    //      l_fbx_deform->InitControlPoints(mesh->GetControlPointsCount());
-    //      auto l_point_count = mesh->GetControlPointsCount();
-    //      for (auto k = 0; k < l_point_count; ++k) {
-    //        auto l_point = mesh->GetControlPointAt(k);
-    //        l_fbx_deform->SetControlPointAt(FbxVector4{l_point[0], l_point[1], l_point[2]}, k);
-    //      }
-    //      l_fbx_shape->AddDeformer(l_fbx_deform, l_shape_weight);
-    //      l_fbx_bl->AddBlendShapeChannel(l_fbx_shape);
-    //    }
   }
 }
 
+void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
+  auto l_bls = find_blend_shape(in_dag_path);
+  MFnBlendShapeDeformer l_blend_shape{};
+  auto l_fbx_bl =
+      FbxBlendShape::Create(node->GetScene(), fmt::format("{}_blend_shape", get_node_name(in_dag_path)).c_str());
+  mesh->AddDeformer(l_fbx_bl);
+
+  auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
+  FbxTime l_fbx_time{};
+  l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
+
+  MStatus l_status{};
+  for (auto&& i : l_bls) {
+    maya_chick(l_blend_shape.setObject(i));
+    maya_chick(l_status);
+    MObjectArray l_shape_array{};
+    maya_chick(l_blend_shape.getBaseObjects(l_shape_array));
+    if (l_shape_array.length() != 1) {
+      log_error(fmt::format("blend shape {} base object length != 1", get_node_name(i)));
+      continue;
+    }
+    if (l_shape_array[0].isNull()) {
+      log_error(fmt::format("blend shape {} base object is null", get_node_name(i)));
+      continue;
+    }
+
+    auto l_bl_weight_plug_list = get_plug(i, "weight");
+    auto l_shape_count         = l_bl_weight_plug_list.evaluateNumElements(&l_status);
+    maya_chick(l_status);
+    for (auto j = 0; j < l_shape_count; ++j) {
+      auto l_bl_weight_plug = l_bl_weight_plug_list.elementByPhysicalIndex(j, &l_status);
+      maya_chick(l_status);
+      auto* l_anim_curve = blend_shape_channel_[j]->DeformPercent.GetCurve(l_layer, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_bl_weight_plug.asDouble() * 100);
+      l_anim_curve->KeyModifyEnd();
+    }
+  }
+}
+void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {}
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
 
 MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
