@@ -177,23 +177,7 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                     })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
                     .ToolTipText_Lambda([]() -> FText { return FText::FromString(
                                                             TEXT("测试使用")
-                                                        ); })] +
-        SHorizontalBox::Slot()
-            .AutoWidth()
-            .HAlign(HAlign_Left)
-            .Padding(FMargin{ 1.f, 1.f })
-            [SNew(SButton)
-            .OnClicked_Lambda([this]() -> FReply {
-             FGlobalTabmanager::Get()->TryInvokeTab(DoodleVariantCompoundWidget::Name);
-             //  TSharedPtr<SVariantCompoundWidget> myWdiget;
-             //myWdiget->OnTestButtonClicked();
-            //SNew(SVariantCompoundWidget);
-
-            return FReply::Handled();
-                })[SNew(STextBlock).Text(FText::FromString(TEXT("变体")))]
-                    .ToolTipText_Lambda([]() -> FText { return FText::FromString(
-                        TEXT("变体")
-                    ); })]];
+                                                        ); })] ];
   /// clang-format on
 }
 

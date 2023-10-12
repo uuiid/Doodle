@@ -22,7 +22,7 @@ private:
     TSharedPtr<SVerticalBox> SkeletonContainer;
     TWeakPtr<SWindow> PickerWindow;
 public:
-    FAssetData meshAssetData;
+    FAssetData MeshAssetData;
 
     void Construct(const FArguments& InArgs) {
         //-------------------------------------------
@@ -77,7 +77,7 @@ public:
                                                     .HAlign(HAlign_Center)
                                                     .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
                                                     .OnClicked_Lambda([this]() {
-                                                    meshAssetData = nullptr;
+                                                    MeshAssetData = nullptr;
                                                         if (PickerWindow.IsValid()) {
                                                             PickerWindow.Pin()->RequestDestroyWindow();
                                                         }
@@ -95,12 +95,12 @@ public:
         AssetPickerConfig.Filter.ClassPaths.Add(FTopLevelAssetPath{ USkeletalMesh::StaticClass()->GetPathName() });
         AssetPickerConfig.OnAssetSelected = FOnAssetSelected::CreateLambda([this](const FAssetData& AssetData)
         {
-            meshAssetData = AssetData;
+            MeshAssetData = AssetData;
         });
         AssetPickerConfig.OnShouldFilterAsset = FOnShouldFilterAsset::CreateLambda([](const FAssetData& AssetData) {return false;});
         AssetPickerConfig.bAllowNullSelection = true;
         AssetPickerConfig.InitialAssetViewType = EAssetViewType::Column;
-        AssetPickerConfig.InitialAssetSelection = meshAssetData;
+        AssetPickerConfig.InitialAssetSelection = MeshAssetData;
 
         SkeletonContainer->ClearChildren();
         SkeletonContainer->AddSlot()
@@ -142,9 +142,9 @@ bool UDoodleVariantFactory::ConfigureProperties()
 {
     TSharedRef<SCreateVariantDialog> Dialog = SNew(SCreateVariantDialog);
     Dialog->Show();
-    if (Dialog.Get().meshAssetData!= nullptr)
+    if (Dialog.Get().MeshAssetData!= nullptr)
     {
-        MeshAssetData = Dialog.Get().meshAssetData;
+        MeshAssetData = Dialog.Get().MeshAssetData;
         USkeletalMesh* L_Mesh = Cast<USkeletalMesh>(MeshAssetData.GetAsset());
         UDoodleVariantAssetUserData* user_data = L_Mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
         FAssetData variant_date;

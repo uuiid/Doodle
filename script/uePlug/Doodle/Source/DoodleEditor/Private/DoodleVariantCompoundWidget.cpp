@@ -173,6 +173,22 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                 SNew(SVerticalBox)
                     + SVerticalBox::Slot()
                     .AutoHeight()
+                    .VAlign(VAlign_Top)
+                    [
+                        SAssignNew(ButtonLoadVariant, SButton)
+                            .Text(FText::FromString(TEXT("载入所有变体")))
+                            .OnClicked(this, &DoodleVariantCompoundWidget::OnLoadAllVariant)
+                            .Visibility_Lambda([this]() 
+                            {
+                                if (!CurrentObject|| (!CurrentObject->Mesh && CurrentObject->AllVaraint.Num() <= 0))
+                                {
+                                    return  EVisibility::Visible;
+                                }
+                                return  EVisibility::Hidden;
+                            })
+                    ]
+                    + SVerticalBox::Slot()
+                    .AutoHeight()
                     [
                         SNew(STextBlock)
                             .Text(FText::FromString(TEXT("对应骨骼网格体:")))
@@ -181,8 +197,20 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     .AutoHeight()
                     .VAlign(VAlign_Top)
                     [
-                        SAssignNew(NameText, STextBlock)
-                            .Text(FText::FromString(CurrentObject ? CurrentObject->Mesh->GetFullName() : FString(TEXT("None"))))
+                        SNew(SHorizontalBox)
+                            +SHorizontalBox::Slot()
+                            .AutoWidth()
+                            [
+                                SAssignNew(NameText, STextBlock)
+                                    .Text(FText::FromString(CurrentObject ? CurrentObject->Mesh->GetFullName() : FString(TEXT("None"))))
+                            ]
+                            + SHorizontalBox::Slot()
+                            [
+                                SAssignNew(ButtonLinkMesh, SButton)
+                                    .Visibility(EVisibility::Hidden)
+                                    .Text(FText::FromString(TEXT("链接到骨骼网格体")))
+                                    .OnClicked(this, &DoodleVariantCompoundWidget::OnLinkSkeletalMesh)
+                            ]
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
@@ -197,14 +225,14 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                         SAssignNew(SelectText, STextBlock)
                             .Text(FText::FromString(FString(TEXT("None"))))
                     ]
-                    + SVerticalBox::Slot()
+                    /*+ SVerticalBox::Slot()
                     .AutoHeight()
                     .VAlign(VAlign_Top)
                     [
-                        SNew(SButton)
-                            .Text(FText::FromString(TEXT("载入所有变体")))
-                            .OnClicked(this, &DoodleVariantCompoundWidget::OnLoadAllVariant)
-                    ]
+                        SAssignNew(ButtonLoadVariant,SButton)
+                            .Text(FText::FromString(TEXT("链接到骨骼网格体")))
+                            .OnClicked(this, &DoodleVariantCompoundWidget::OnLinkSkeletalMesh)
+                    ]*/
                     + SVerticalBox::Slot()
                     .VAlign(VAlign_Top)
                     [
@@ -260,12 +288,16 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                         }
                                     })
                                     .OnContextMenuOpening_Lambda([this]() {
-                                        FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction());
-                                        FMenuBuilder MenuBuilder(true, false);
-                                        MenuBuilder.AddMenuSeparator();
-                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")), 
-                                            FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")), ActionDelete);
-                                        return MenuBuilder.MakeWidget();
+                                        if (CurrentObject && CurrentObject->AllVaraint.Num() > 1) 
+                                        {
+                                            FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction());
+                                            FMenuBuilder MenuBuilder(true, false);
+                                            MenuBuilder.AddMenuSeparator();
+                                            MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")),
+                                                FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")), ActionDelete);
+                                            return MenuBuilder.MakeWidget();
+                                        }
+                                        return SNullWidget::NullWidget;
                                      })
                                     .SelectionMode(ESelectionMode::Type::Single)
                                     .HeaderRow
@@ -438,7 +470,7 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
     FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
     TArray<FAssetData> SelectedAsset;
     ContentBrowserModle.Get().GetSelectedAssets(SelectedAsset);
-    if (SelectedAsset.Num() <= 0)
+    if (SelectedAsset.Num() <= 0|| !SelectedAsset[0].GetClass()->IsChildOf<USkeletalMesh>())
     {
         FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个骨骼网格体。"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
@@ -446,50 +478,121 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
     }
     FAssetData SelectedData = SelectedAsset[0];
     //----------------------------------------------------
-    if (SelectedData.GetClass()->IsChildOf<USkeletalMesh>())
+    UObject* MeshObj = SelectedData.GetAsset();
+    USkeletalMesh* L_Mesh = Cast<USkeletalMesh>(MeshObj);
+    UDoodleVariantAssetUserData* UserData = L_Mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
+    if (UserData && UserData->VariantObj)
     {
-        UObject* MeshObj = SelectedData.GetAsset();
-        USkeletalMesh* L_Mesh = Cast<USkeletalMesh>(MeshObj);
-        UDoodleVariantAssetUserData* UserData = L_Mesh->GetAssetUserData<UDoodleVariantAssetUserData>();
-        if (UserData && UserData->VariantObj)
-        {
-            TArray<FString> OutKeys;
-            CurrentObject = UserData->VariantObj;
-            CurrentObject->AllVaraint.GetKeys(OutKeys);
-            if(OutKeys.Num()>0)
+        TArray<FString> OutKeys;
+        CurrentObject = UserData->VariantObj;
+        CurrentObject->AllVaraint.GetKeys(OutKeys);
+        if (OutKeys.Num() > 0)
             NowVaraint = OutKeys[0];
-        }
-        else
+        if (!UserData->VariantObj->Mesh) 
         {
-            FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-            FString out_name = MakeUniqueObjectName(L_Mesh, UDoodleVariantObject::StaticClass(), SelectedData.AssetName).ToString();
-            FString PackageName = SelectedData.PackagePath.ToString()+"/" + out_name;
-            const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
-            UPackage* package = CreatePackage(*PackageName);
-            package->MarkPackageDirty();
-            UDoodleVariantFactory* MyFactory = NewObject<UDoodleVariantFactory>(UDoodleVariantFactory::StaticClass());
-            FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-            UObject* object = AssetToolsModule.Get().CreateAsset(out_name, PackagePath, UDoodleVariantObject::StaticClass(), MyFactory);
-            CurrentObject = Cast<UDoodleVariantObject>(object);
-            //-------------------------
-            UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
-            FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(CurrentObject));
-            UserData->VariantObj = CurrentObject;
+            UserData->VariantObj->Mesh = L_Mesh;
             L_Mesh->AddAssetUserData(UserData);
-            //----------------------------
-            AssetRegistryModule.Get().AssetCreated(CurrentObject);
         }
-        CurrentObject->Mesh = L_Mesh;
-        if (CurrentObject->AllVaraint.Num() <= 0) 
+    }
+    else
+    {
+        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+        FString out_name = MakeUniqueObjectName(L_Mesh, UDoodleVariantObject::StaticClass(), SelectedData.AssetName).ToString();
+        FString PackageName = SelectedData.PackagePath.ToString() + "/" + out_name;
+        const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
+        UPackage* package = CreatePackage(*PackageName);
+        package->MarkPackageDirty();
+        UDoodleVariantFactory* MyFactory = NewObject<UDoodleVariantFactory>(UDoodleVariantFactory::StaticClass());
+        FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+        UObject* object = AssetToolsModule.Get().CreateAsset(out_name, PackagePath, UDoodleVariantObject::StaticClass(), MyFactory);
+        CurrentObject = Cast<UDoodleVariantObject>(object);
+        //-------------------------
+        UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
+        FAssetData variant_date = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(CurrentObject));
+        UserData->VariantObj = CurrentObject;
+        L_Mesh->AddAssetUserData(UserData);
+        //----------------------------
+        AssetRegistryModule.Get().AssetCreated(CurrentObject);
+    }
+    CurrentObject->Mesh = L_Mesh;
+    if (CurrentObject->AllVaraint.Num() <= 0)
+    {
+        TArray<FSkeletalMaterial> trangeMat = L_Mesh->GetMaterials();
+        for (int M = 0; M < trangeMat.Num(); M++) {
+            trangeMat[M] = L_Mesh->GetMaterials()[M];
+        }
+        FVariantInfo Info;
+        Info.Variants = trangeMat;
+        NowVaraint = TEXT("default");
+        CurrentObject->AllVaraint.Add(NowVaraint, Info);
+    }
+    //-----------------------------
+    TArray<UObject*> Objects;
+    Objects.Add(CurrentObject);
+    ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
+    //-------------
+    NameText->SetColorAndOpacity(FLinearColor::White);
+    NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
+    Items.Empty();
+    for (auto& e : CurrentObject->AllVaraint)
+    {
+        TSharedPtr<FString> Str = MakeShared<FString>(e.Key);
+        Items.Add(Str);
+    }
+    ThisListView->RequestListRefresh();
+    SetVariantInfo(NowVaraint);
+    ButtonLoadVariant->SetVisibility(EVisibility::Hidden);
+	return FReply::Handled();
+}
+
+FReply DoodleVariantCompoundWidget::OnLinkSkeletalMesh() 
+{
+    FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+    TArray<FAssetData> SelectedAsset;
+    ContentBrowserModle.Get().GetSelectedAssets(SelectedAsset);
+    if (SelectedAsset.Num() <= 0|| !SelectedAsset[0].GetClass()->IsChildOf<USkeletalMesh>())
+    {
+        FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个骨骼网格体。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+    FAssetData SelectedData = SelectedAsset[0];
+    //----------------------------------------------------
+    UObject* MeshObj = SelectedData.GetAsset();
+    USkeletalMesh* L_Mesh = Cast<USkeletalMesh>(MeshObj);
+    if (CurrentObject) 
+    {
+        if (!CurrentObject->Mesh)
         {
-            TArray<FSkeletalMaterial> trangeMat = L_Mesh->GetMaterials();
-            for (int M = 0; M < trangeMat.Num(); M++) {
-                trangeMat[M] = L_Mesh->GetMaterials()[M];
+            if (CurrentObject->AllVaraint.Num() <= 0)
+            {
+                CurrentObject->Mesh = L_Mesh;
+                TArray<FSkeletalMaterial> trangeMat = L_Mesh->GetMaterials();
+                for (int M = 0; M < trangeMat.Num(); M++) {
+                    trangeMat[M] = L_Mesh->GetMaterials()[M];
+                }
+                FVariantInfo Info;
+                Info.Variants = trangeMat;
+                NowVaraint = TEXT("default");
+                CurrentObject->AllVaraint.Add(NowVaraint, Info);
             }
-            FVariantInfo Info;
-            Info.Variants = trangeMat;
-            NowVaraint = TEXT("default");
-            CurrentObject->AllVaraint.Add(NowVaraint, Info);
+            else
+            {
+                if (L_Mesh->GetMaterials().Num() != CurrentObject->AllVaraint.begin().Value().Variants.Num())
+                {
+                    FNotificationInfo Info(FText::FromString(TEXT("链接失败，网格体不匹配")));
+                    Info.FadeInDuration = 2.0f;  // 淡入淡出时间
+                    Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
+                    FSlateNotificationManager::Get().AddNotification(Info);
+                    return FReply::Handled();
+                }
+                CurrentObject->Mesh = L_Mesh;
+                TArray<FString> OutKeys;
+                CurrentObject->AllVaraint.GetKeys(OutKeys);
+                if (OutKeys.Num() > 0)
+                    NowVaraint = OutKeys[0];
+                ButtonLinkMesh.Get()->SetVisibility(EVisibility::Hidden);
+            }
         }
         //-----------------------------
         TArray<UObject*> Objects;
@@ -507,7 +610,7 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         ThisListView->RequestListRefresh();
         SetVariantInfo(NowVaraint);
     }
-	return FReply::Handled();
+    return FReply::Handled();
 }
 
 void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
@@ -518,17 +621,18 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     {
         NameText->SetColorAndOpacity(FLinearColor::White);
         NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
+        ButtonLinkMesh.Get()->SetVisibility(EVisibility::Hidden);
     }
     else
     {
-        FNotificationInfo Info(FText::FromString(TEXT("骨骼网格体已丢失，请重新载入")));
+        FNotificationInfo Info(FText::FromString(TEXT("骨骼网格体已丢失，请重新链接")));
         Info.FadeInDuration = 2.0f;  // 淡入淡出时间
         Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
         FSlateNotificationManager::Get().AddNotification(Info);
         //--------------
         NameText->SetColorAndOpacity(FLinearColor::Red);
-        NameText->SetText(FText::FromString(TEXT("骨骼网格体已丢失，请重新载入...")));
-        CurrentObject->AllVaraint.Empty();
+        NameText->SetText(FText::FromString(TEXT("骨骼网格体已丢失，请重新链接...")));
+        ButtonLinkMesh->SetVisibility(EVisibility::Visible);
     }
     //----------------
     Items.Empty();
@@ -613,7 +717,7 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
     const TArray<TSharedPtr<FString>> Selection = ThisListView->GetSelectedItems();
     if (!Selection.IsEmpty())
     {
-        if (CurrentObject->AllVaraint.Num() > 0)
+        if (CurrentObject->AllVaraint.Num() > 1)
         {
             for (TSharedPtr<FString> L_Key : Selection)
             {
@@ -632,8 +736,10 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
             //------------------------
             TArray<FString> OutKeys;
             CurrentObject->AllVaraint.GetKeys(OutKeys);
-            NowVaraint = OutKeys[0];
-            SetVariantInfo(NowVaraint);
+            if (OutKeys.Num() > 0) {
+                NowVaraint = OutKeys[0];
+                SetVariantInfo(NowVaraint);
+            }
         }
     }
 }

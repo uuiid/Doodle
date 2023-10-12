@@ -33,6 +33,7 @@ public:
 	TSharedRef<ITableRow> MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	void VariantNameOnTextCommitted(const FText& InText,TSharedPtr<FString> InItem);
 	//-----------------------
+	FReply OnLinkSkeletalMesh();
 	FReply OnLoadAllVariant();
 	FReply OnVariantAdd();
 	void OnVariantDelete();
@@ -58,5 +59,7 @@ public:
 
 
 	FString NowVaraint;
+	TSharedPtr<SButton> ButtonLoadVariant;
+	TSharedPtr<SButton> ButtonLinkMesh;
 	//----------------------
 };
