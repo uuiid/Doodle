@@ -225,14 +225,6 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                         SAssignNew(SelectText, STextBlock)
                             .Text(FText::FromString(FString(TEXT("None"))))
                     ]
-                    /*+ SVerticalBox::Slot()
-                    .AutoHeight()
-                    .VAlign(VAlign_Top)
-                    [
-                        SAssignNew(ButtonLoadVariant,SButton)
-                            .Text(FText::FromString(TEXT("链接到骨骼网格体")))
-                            .OnClicked(this, &DoodleVariantCompoundWidget::OnLinkSkeletalMesh)
-                    ]*/
                     + SVerticalBox::Slot()
                     .VAlign(VAlign_Top)
                     [
@@ -363,17 +355,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                     .HeaderRow
                                     (
                                         SNew(SHeaderRow)
-                                        + SHeaderRow::Column(TEXT("Name"))
-                                        [
-                                            SNew(SBorder)
-                                                .Padding(5)
-                                                .Content()
-                                                [
-                                                    SNew(STextBlock)
-                                                        .Text(FText::FromString(TEXT("插槽")))
-                                                ]
-                                        ]
-                                        + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("材质")))
+                                        + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("插槽-材质")))
                                     )
                             ]
                     ]
@@ -429,13 +411,14 @@ void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText
         if (CurrentObject->AllVaraint.Contains(OldName))
         {
             FVariantInfo L_Data = CurrentObject->AllVaraint[OldName];
-            CurrentObject->AllVaraint.Remove(OldName);    // Get rid of the old key (and it's value)
+            CurrentObject->AllVaraint.Remove(OldName);    
             CurrentObject->AllVaraint.Shrink();
             CurrentObject->AllVaraint.Add(NewName, L_Data);
             if (NowVaraint.Equals(OldName))
             {
                 NowVaraint = NewName;
             }
+            CurrentObject->Modify();
         }
     }
     Items.Empty();
@@ -461,6 +444,7 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
                 Arr.Variants[index] = FSkeletalMaterial(ui);
                 CurrentObject->AllVaraint[NowVaraint] = Arr;
                 MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
+                CurrentObject->Modify();
             }
         });
 }
@@ -526,10 +510,6 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         NowVaraint = TEXT("default");
         CurrentObject->AllVaraint.Add(NowVaraint, Info);
     }
-    //-----------------------------
-    TArray<UObject*> Objects;
-    Objects.Add(CurrentObject);
-    ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
     //-------------
     NameText->SetColorAndOpacity(FLinearColor::White);
     NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
@@ -580,24 +560,27 @@ FReply DoodleVariantCompoundWidget::OnLinkSkeletalMesh()
             {
                 if (L_Mesh->GetMaterials().Num() != CurrentObject->AllVaraint.begin().Value().Variants.Num())
                 {
-                    FNotificationInfo Info(FText::FromString(TEXT("链接失败，网格体不匹配")));
-                    Info.FadeInDuration = 2.0f;  // 淡入淡出时间
-                    Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
-                    FSlateNotificationManager::Get().AddNotification(Info);
+                    FNotificationInfo L_Info{ FText::FromString(TEXT("链接失败，网格体不匹配")) };
+                    L_Info.FadeInDuration = 2.0f;  // 
+                    L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
+                    FSlateNotificationManager::Get().AddNotification(L_Info);
                     return FReply::Handled();
                 }
                 CurrentObject->Mesh = L_Mesh;
+                //------------------------
+                UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
+                UserData->VariantObj = CurrentObject;
+                L_Mesh->AddAssetUserData(UserData);
+                //-----------------------
                 TArray<FString> OutKeys;
                 CurrentObject->AllVaraint.GetKeys(OutKeys);
                 if (OutKeys.Num() > 0)
                     NowVaraint = OutKeys[0];
-                ButtonLinkMesh.Get()->SetVisibility(EVisibility::Hidden);
+                ButtonLinkMesh->SetVisibility(EVisibility::Hidden);
+                //------------------
+                CurrentObject->Modify();
             }
         }
-        //-----------------------------
-        TArray<UObject*> Objects;
-        Objects.Add(CurrentObject);
-        ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
         //-------------
         NameText->SetColorAndOpacity(FLinearColor::White);
         NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
@@ -621,7 +604,7 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     {
         NameText->SetColorAndOpacity(FLinearColor::White);
         NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
-        ButtonLinkMesh.Get()->SetVisibility(EVisibility::Hidden);
+        ButtonLinkMesh->SetVisibility(EVisibility::Hidden);
     }
     else
     {
@@ -707,6 +690,7 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
         }
         ThisListView->RequestListRefresh();
         SetVariantInfo(L_Name.ToString());
+        CurrentObject->Modify();
     }
       
     return FReply::Handled();
@@ -740,6 +724,7 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
                 NowVaraint = OutKeys[0];
                 SetVariantInfo(NowVaraint);
             }
+            CurrentObject->Modify();
         }
     }
 }

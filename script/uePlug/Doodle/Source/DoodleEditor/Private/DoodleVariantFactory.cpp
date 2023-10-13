@@ -156,8 +156,7 @@ bool UDoodleVariantFactory::ConfigureProperties()
             UDoodleVariantObject* uObject = Cast<UDoodleVariantObject>(object);
             //--------------
             FNotificationInfo L_Info{ FText::FromString(TEXT("创建失败...")) };
-            L_Info.bFireAndForget = true;  // 自动取消
-            L_Info.FadeInDuration = 2.0f;  // 淡入淡出时间
+            L_Info.FadeInDuration = 2.0f;  // 
             L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
             L_Info.Text = FText::FromString(TEXT("创建失败，变体文件已经存在。"));
             FSlateNotificationManager::Get().AddNotification(L_Info);
