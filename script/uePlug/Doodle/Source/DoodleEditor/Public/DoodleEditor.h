@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 #include "UObject/StrongObjectPtr.h"
+#include "DoodleVariantAssetTypeActions.h"
+#include "DoodleVariantMenuExtension.h"
 
 class FToolBarBuilder;
 class FMenuBuilder;
@@ -32,4 +34,7 @@ class FdoodleEditorModule : public IModuleInterface {
 
   TArray<TSharedPtr<IAssetTypeActions>> CreateAssetActions;
   // TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
+  //-------------------------------------
+  TSharedPtr<DoodleVariantAssetTypeActions> RegisterActionType;
+  TSharedPtr<FDoodleVariantMenuExtension> VariantExtender;
 };

@@ -17,6 +17,17 @@
 #include "Doodle/CreateCharacter/Editor/CreateCharacterActor_Customization.h"
 #include "AssetToolsModule.h"  // 注册资产动作
 #include "Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.h"
+//--------------变体相关
+#include "DoodleVariantAssetTypeActions.h"
+#include "ISequencerModule.h"
+#include "ILevelSequenceEditorToolkit.h"
+#include "LevelSequence.h"
+#include "Animation/SkeletalMeshActor.h"
+#include "AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "DoodleVariantAssetUserData.h"
+#include "DoodleVariantCompoundWidget.h"
+#include "LevelSequenceEditor/Private/LevelSequenceEditorToolkit.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -39,6 +50,13 @@ void FdoodleEditorModule::StartupModule() {
       FCanExecuteAction()
   );
 
+  //zhanghang 23/09/25 变体相关代码
+  PluginCommands->MapAction(
+      FDoodleCommands::Get().DoodleVariantWindow,
+      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(DoodleVariantCompoundWidget::Name); }),
+      FCanExecuteAction()
+  );
+
   /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
       FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleEditorModule::RegisterMenus)
@@ -52,6 +70,11 @@ void FdoodleEditorModule::StartupModule() {
   FGlobalTabmanager::Get()
       ->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
       .SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  //----------------zhanghang 变体相关 tab
+  FGlobalTabmanager::Get()
+      ->RegisterNomadTabSpawner(DoodleVariantCompoundWidget::Name, FOnSpawnTab::CreateStatic(&DoodleVariantCompoundWidget::OnSpawnAction))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle3", "Doodle Variant"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   FContentBrowserModule &ContentBrowserModule =
@@ -96,6 +119,28 @@ void FdoodleEditorModule::StartupModule() {
   //                          AssetRegistryConstants::ModuleName)
   //                          .Get();
   // AssetRegistry->AddPath(R"(/../../tmp2/Content/)");
+  //---------------------注册 zhanghang 23/09/25 变体相关--------------------------------------------
+  EAssetTypeCategories::Type AssetCategory = L_AssetTools.RegisterAdvancedAssetCategory(FName{ TEXT("Create Variant") }, LOCTEXT("Doodle", "Doodle Variant"));
+  RegisterActionType = MakeShareable(new DoodleVariantAssetTypeActions(AssetCategory));
+  L_AssetTools.RegisterAssetTypeActions(RegisterActionType.ToSharedRef());
+  //-------------------------
+  ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
+  VariantExtender = MakeShareable(new FDoodleVariantMenuExtension());
+  module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
+      VariantExtender.Get()->TheSequencer = OwningSequencer.ToWeakPtr();
+      }));
+  //-----------------------
+    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([this] 
+    {
+    TSharedPtr<FExtender> extender = MakeShareable(new FExtender());
+    extender->AddMenuExtension(
+        "Edit", EExtensionHook::Before, TSharedPtr<FUICommandList>(),
+        FMenuExtensionDelegate::CreateSP(VariantExtender.ToSharedRef(), &FDoodleVariantMenuExtension::AddMenuEntry)
+    );
+    ISequencerModule& l_Module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
+    TSharedPtr<FExtensibilityManager> Manager = l_Module.GetObjectBindingContextMenuExtensibilityManager();
+    Manager.Get()->AddExtender(extender);
+    }));
 }
 
 void FdoodleEditorModule::ShutdownModule() {
@@ -109,6 +154,8 @@ void FdoodleEditorModule::ShutdownModule() {
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
+  // zhanghang 变体相关 23/09/25
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DoodleVariantCompoundWidget::Name);
 
   // 取消注册资产动作
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
@@ -126,6 +173,11 @@ void FdoodleEditorModule::ShutdownModule() {
     L_Module.NotifyCustomizationModuleChanged();
   }
   // AssetDataSource.Reset();
+  //-------------取消注册 zhanghang 变体相关 23/09/25
+  if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
+      IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+      AssetTools.UnregisterAssetTypeActions(RegisterActionType.ToSharedRef());
+  }
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
     const FSpawnTabArgs &SpawnTabArgs
@@ -157,6 +209,7 @@ void FdoodleEditorModule::RegisterMenus() {
       FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().OpenPluginWindow, PluginCommands);
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands);
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleVariantWindow, PluginCommands);
     }
   }
 
