@@ -8,15 +8,19 @@
 #include "DoodleVariantFactory.generated.h"
 
 UCLASS()
-class DOODLEEDITOR_API UDoodleVariantFactory : public UFactory
-{
-    GENERATED_BODY()
-public:
-    UDoodleVariantFactory();
+class DOODLEEDITOR_API UDoodleVariantFactory : public UFactory {
+  GENERATED_BODY()
 
-    virtual UObject* FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
+ public:
+  UDoodleVariantFactory();
 
-    virtual bool ConfigureProperties() override;
+  virtual UObject* FactoryCreateNew(
+      UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn
+  ) override;
 
-    FAssetData MeshAssetData;
+  virtual bool ConfigureProperties() override;
+  FString GetDefaultNewAssetName() const override;
+  FAssetData MeshAssetData;
+
+  FString NewVaraint{"NewVariant"};
 };

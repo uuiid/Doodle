@@ -71,11 +71,6 @@ void FdoodleEditorModule::StartupModule() {
       ->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
       .SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
-  //----------------zhanghang 变体相关 tab
-  FGlobalTabmanager::Get()
-      ->RegisterNomadTabSpawner(DoodleVariantCompoundWidget::Name, FOnSpawnTab::CreateStatic(&DoodleVariantCompoundWidget::OnSpawnAction))
-      .SetDisplayName(LOCTEXT("FdoodleTabTitle3", "Doodle Variant"))
-      .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   FContentBrowserModule &ContentBrowserModule =
       FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));

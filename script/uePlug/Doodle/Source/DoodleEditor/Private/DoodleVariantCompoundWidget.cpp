@@ -47,6 +47,7 @@ public:
 
     void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& In_OwnerTableView)
     {
+      // clang-format off
         InItem = InArgs._InItem;
         OnTextCommittedEvent = InArgs._OnTextCommittedEvent;
         OnClickedEvent = InArgs._OnClickedEvent;
@@ -72,26 +73,22 @@ public:
                 .HAlign(HAlign_Right)
                 .VAlign(VAlign_Center)
                 [
-                    SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
-                        .AutoWidth()
-                        [
-                            SNew(SButton)
-                            .Text(FText::FromString(TEXT("粘贴")))
-                            .Content()
-                            [
-                                SNew(SImage)
-                                    .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
-                            ]
-                            .ToolTipText(FText::FromString(TEXT("粘贴变体")))
-                            .OnClicked_Lambda([this]
-                            {
-                                OnClickedEvent.ExecuteIfBound();;
-                                return FReply::Handled();
-                            })
-                        ]
+                SNew(SButton)
+                         .Text(FText::FromString(TEXT("粘贴")))
+                         .Content()
+                         [
+                             SNew(SImage)
+                                 .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
+                         ]
+                         .ToolTipText(FText::FromString(TEXT("粘贴变体")))
+                         .OnClicked_Lambda([this]
+                         {
+                             OnClickedEvent.ExecuteIfBound();;
+                             return FReply::Handled();
+                         })
                 ]
         ];
+      // clang-format on
         Super::Construct(L_Arg, In_OwnerTableView);
     }
 };
@@ -112,6 +109,7 @@ public:
 
     void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& In_OwnerTableView)
     {
+      // clang-format off
         InItem = InArgs._InItem;
         OnObjectChanged = InArgs._OnObjectChanged;
         //------------------
@@ -122,48 +120,39 @@ public:
             .BorderImage(FCoreStyle::Get().GetBrush(TEXT("NoBorder")))
             .Padding(0)
             [
-                SNew(SVerticalBox)
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Center)
-                    [SNew(STextBlock)
-                    .Text(FText::FromName(InItem->Slot))
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Center)
-                    [
-                        SNew(SObjectPropertyEntryBox)
-                            .ObjectPath_Lambda([this]()
-                                {
-                                    if (InItem)
-                                        return InItem->Material.GetPathName();
-                                    else
-                                        return FString(TEXT(""));
-                                }
-                            )
+              SNew(SObjectPropertyEntryBox)
+                            .ObjectPath_Lambda([this]() {
+                                               if (InItem)
+                                                 return InItem->Material.GetPathName();
+                                               else
+                                                 return FString(TEXT(""));
+                                             }
+                                           )
                             .AllowedClass(UMaterialInterface::StaticClass())
                             .OnObjectChanged_Lambda([this](const FAssetData& AssetData) {
-                            if (AssetData.IsValid())
-                            {
-                                OnObjectChanged.ExecuteIfBound(AssetData);
-                            }
-                                })
+                                             if (AssetData.IsValid()) {
+                                               OnObjectChanged.ExecuteIfBound(AssetData);
+                                             }
+                                           })
                             .AllowClear(true)
                             .DisplayUseSelected(true)
                             .DisplayBrowse(true)
                             .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
-                    ]
+                            .CustomContentSlot()
+              [
+                SNew(STextBlock)
+                .Text(FText::FromName(InItem->Slot))
+              ]
             ]
         ];
         Super::Construct(L_Arg, In_OwnerTableView);
+      // clang-format on
     }
 };
 
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 {
+  // clang-format off
 	ChildSlot
 	[
         SNew(SVerticalBox)
@@ -171,22 +160,6 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
             .AutoHeight()
             [
                 SNew(SVerticalBox)
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .VAlign(VAlign_Top)
-                    [
-                        SAssignNew(ButtonLoadVariant, SButton)
-                            .Text(FText::FromString(TEXT("载入所有变体")))
-                            .OnClicked(this, &DoodleVariantCompoundWidget::OnLoadAllVariant)
-                            .Visibility_Lambda([this]() 
-                            {
-                                if (!CurrentObject|| (!CurrentObject->Mesh && CurrentObject->AllVaraint.Num() <= 0))
-                                {
-                                    return  EVisibility::Visible;
-                                }
-                                return  EVisibility::Hidden;
-                            })
-                    ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
                     [
@@ -220,16 +193,11 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
+                    .Padding(0.f,0.f,0.f,10.f)
                     .VAlign(VAlign_Top)
                     [
                         SAssignNew(SelectText, STextBlock)
                             .Text(FText::FromString(FString(TEXT("None"))))
-                    ]
-                    + SVerticalBox::Slot()
-                    .VAlign(VAlign_Top)
-                    [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(FString(TEXT(""))))
                     ]
             ]
             + SVerticalBox::Slot()
@@ -237,11 +205,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                 SNew(SHorizontalBox)
                     + SHorizontalBox::Slot()
                     [
-                        SNew(SVerticalBox)
-                            + SVerticalBox::Slot()
-                            .VAlign(VAlign_Top)
-                            [
-                                SAssignNew(ThisListView, SListView< TSharedPtr<FString> >)
+                              SAssignNew(ThisListView, SListView< TSharedPtr<FString> >)
                                     .ItemHeight(24)
                                     .ListItemsSource(&Items)
                                     .OnGenerateRow(this, &DoodleVariantCompoundWidget::VariantListOnGenerateRow)
@@ -330,38 +294,33 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                                 ]
                                         ]
                                     )
-                            ]
 
                     ]
                     + SHorizontalBox::Slot()
                     .HAlign(HAlign_Fill)
                     [
-                        SNew(SVerticalBox)
-                            + SVerticalBox::Slot()
-                            .VAlign(VAlign_Fill)
-                            [
-                                SAssignNew(MaterialListView, SListView<TSharedPtr< FMaterialItemData> >)
-                                    .ListItemsSource(&MaterialItems)
-                                    .OnGenerateRow(this, &DoodleVariantCompoundWidget::MaterialListOnGenerateRow)
-                                    .OnSelectionChanged_Lambda([](TSharedPtr<FMaterialItemData> inSelectItem, ESelectInfo::Type SelectType)
-                                    {
-                                        if (inSelectItem)
-                                        {
-                                            TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
-                                            ESelectInfo::Type t = SelectType;
-                                        }
-                                    })
-                                    .SelectionMode(ESelectionMode::Type::Single)
-                                    .HeaderRow
-                                    (
-                                        SNew(SHeaderRow)
-                                        + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("插槽-材质")))
-                                    )
-                            ]
+                    SAssignNew(MaterialListView, SListView<TSharedPtr< FMaterialItemData> >)
+                           .ListItemsSource(&MaterialItems)
+                           .OnGenerateRow(this, &DoodleVariantCompoundWidget::MaterialListOnGenerateRow)
+                           .OnSelectionChanged_Lambda([](TSharedPtr<FMaterialItemData> inSelectItem, ESelectInfo::Type SelectType)
+                           {
+                               if (inSelectItem)
+                               {
+                                   TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
+                                   ESelectInfo::Type t = SelectType;
+                               }
+                           })
+                           .SelectionMode(ESelectionMode::Type::Single)
+                           .HeaderRow
+                           (
+                               SNew(SHeaderRow)
+                               + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("插槽-材质")))
+                           )
                     ]
             ]
        
 	];
+  // clang-format on
     
 }
 

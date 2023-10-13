@@ -169,11 +169,16 @@ bool UDoodleVariantFactory::ConfigureProperties()
         }
         else
         {
+            NewVaraint = L_Mesh->GetName() + "_Variant";
             return true;
         }
     }
     return false;
 }
+
+FString UDoodleVariantFactory::GetDefaultNewAssetName() const {
+  return NewVaraint;
+};
 
 UObject* UDoodleVariantFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
