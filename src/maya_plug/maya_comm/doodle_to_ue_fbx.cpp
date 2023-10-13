@@ -568,9 +568,10 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
 
 void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
   auto l_bls = find_blend_shape(in_mesh);
+  if (l_bls.empty()) return;
+
   MFnBlendShapeDeformer l_blend_shape{};
-  auto l_fbx_bl =
-      FbxBlendShape::Create(node->GetScene(), fmt::format("{}_blend_shape", get_node_name(in_mesh)).c_str());
+  auto l_fbx_bl = FbxBlendShape::Create(node->GetScene(), fmt::format("{}", get_node_name(l_bls[0])).c_str());
   mesh->AddDeformer(l_fbx_bl);
 
   MStatus l_status{};
