@@ -504,7 +504,7 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
     auto l_joint    = l_dag_tree_map[i];
     auto* l_cluster = FbxCluster::Create(node->GetScene(), "");
     l_cluster->SetLink(l_joint->node);
-    l_cluster->SetLinkMode(FbxCluster::eTotalOne);
+    l_cluster->SetLinkMode(FbxCluster::eNormalize);
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
     l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
     l_dag_fbx_map.emplace(i, l_cluster);
@@ -567,6 +567,7 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
 }
 
 void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
+  return;
   auto l_bls = find_blend_shape(in_mesh);
   if (l_bls.empty()) return;
 
@@ -577,17 +578,6 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
   MStatus l_status{};
   for (auto&& i : l_bls) {
     maya_chick(l_blend_shape.setObject(i));
-    maya_chick(l_status);
-    MObjectArray l_shape_array{};
-    maya_chick(l_blend_shape.getBaseObjects(l_shape_array));
-    if (l_shape_array.length() != 1) {
-      log_error(fmt::format("blend shape {} base object length != 1", get_node_name(i)));
-      continue;
-    }
-    if (l_shape_array[0].isNull()) {
-      log_error(fmt::format("blend shape {} base object is null", get_node_name(i)));
-      continue;
-    }
 
     auto l_input_target_plug_1 = get_plug(i, "inputTarget").elementByPhysicalIndex(0, &l_status);
     maya_chick(l_status);
@@ -655,26 +645,26 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
           node->GetScene(),
           fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
       );
-      l_fbx_bl_channel->AddTargetShape(l_fbx_deform, l_bl_weight_plug.asDouble() * 100);
+      l_fbx_bl_channel->AddTargetShape(l_fbx_deform);
       blend_shape_channel_.emplace_back(l_bl_weight_plug, l_fbx_bl_channel);
 
-      l_fbx_deform->InitControlPoints(l_point_index_main.size());
-      l_fbx_deform->SetControlPointIndicesCount(l_point_index_main.size());
+      l_fbx_deform->InitControlPoints(mesh->GetControlPointsCount());
       auto* l_fbx_points = l_fbx_deform->GetControlPoints();
-      auto* l_fbx_index  = l_fbx_deform->GetControlPointIndices();
+      //      std::memcpy(l_fbx_points, mesh->GetControlPoints(), mesh->GetControlPointsCount() * sizeof(FbxVector4));
+      std::copy(mesh->GetControlPoints(), mesh->GetControlPoints() + mesh->GetControlPointsCount(), l_fbx_points);
       for (auto k = 0; k < l_point_index_main.size(); ++k) {
-        l_fbx_points[k] = FbxVector4{
+        l_fbx_points[l_point_index_main[k]] += FbxVector4{
             l_point_data[k].x,
             l_point_data[k].y,
             l_point_data[k].z,
         };
-        l_fbx_index[k] = l_point_index_main[k];
       }
     }
   }
 }
 
 void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
+  return;
   auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
