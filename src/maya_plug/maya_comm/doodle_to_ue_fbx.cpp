@@ -153,6 +153,7 @@ struct fbx_write_data {
         mesh->EndPolygon();
       }
     }
+    mesh->BuildMeshEdgeArray();
     // uv
     auto l_main_layer = mesh->GetLayer(mesh->CreateLayer());
     {
@@ -217,12 +218,12 @@ struct fbx_write_data {
   }
 
   void write_loc_attr(const MDagPath& in_mesh) {
-    MFnTransform l_transform{in_mesh};
     MStatus l_status{};
     node->SetRotationActive(true);
-    MEulerRotation l_rot{};
-    maya_chick(l_transform.getRotation(l_rot));
-    switch (l_rot.order) {
+    MFnTransform l_transform{in_mesh};
+    auto l_rotate_order = l_transform.rotationOrder(&l_status);
+    maya_chick(l_status);
+    switch (l_rotate_order) {
       case MTransformationMatrix::kXYZ:
         node->RotationOrder.Set(FbxEuler::eOrderXYZ);
         break;
@@ -251,7 +252,19 @@ struct fbx_write_data {
     auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
     maya_chick(l_status);
     node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
-    node->LclRotation.Set(FbxVector4{l_rot.x, l_rot.y, l_rot.z});
+
+    // rot
+    {
+      auto l_rot_x = get_plug(in_mesh.node(), "rotateX").asMAngle(&l_status);
+      maya_chick(l_status);
+      auto l_rot_y = get_plug(in_mesh.node(), "rotateY").asMAngle(&l_status);
+      maya_chick(l_status);
+      auto l_rot_z = get_plug(in_mesh.node(), "rotateZ").asMAngle(&l_status);
+      maya_chick(l_status);
+
+      node->LclRotation.Set({l_rot_x.asDegrees(), l_rot_y.asDegrees(), l_rot_z.asDegrees()});
+    }
+
     std::double_t l_scale[3]{};
     l_transform.getScale(l_scale);
     node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
@@ -679,6 +692,7 @@ void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
   }
 }
 void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
+  return;
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
