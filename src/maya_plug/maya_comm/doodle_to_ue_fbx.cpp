@@ -580,7 +580,6 @@ void fbx_write_data::write_skeletion(const tree_mesh_t& in_tree, const MObject& 
 }
 
 void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
-  return;
   auto l_bls = find_blend_shape(in_mesh);
   if (l_bls.empty()) return;
 
@@ -677,7 +676,6 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
 }
 
 void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
-  return;
   auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
@@ -692,7 +690,6 @@ void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
   }
 }
 void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
-  return;
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
