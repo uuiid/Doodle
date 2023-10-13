@@ -647,12 +647,12 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
       auto l_bl_weight_plug = get_plug(i, "weight").elementByPhysicalIndex(j, &l_status);
       auto l_fbx_bl_channel = FbxBlendShapeChannel::Create(
           node->GetScene(),
-          fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
+          fmt::format("{}", l_bl_weight_plug.partialName(true, false, false, true, false, true)).c_str()
       );
       l_fbx_bl->AddBlendShapeChannel(l_fbx_bl_channel);
       auto l_fbx_deform = FbxShape::Create(
           node->GetScene(),
-          fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, true, true)).c_str()
+          fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
       );
       l_fbx_bl_channel->AddTargetShape(l_fbx_deform, l_bl_weight_plug.asDouble() * 100);
       blend_shape_channel_.emplace_back(l_bl_weight_plug, l_fbx_bl_channel);
@@ -674,10 +674,6 @@ void fbx_write_data::write_blend_shape(MDagPath in_mesh) {
 }
 
 void fbx_write_data::write_mesh_anim(MDagPath in_dag_path, MTime in_time) {
-  auto l_fbx_bl =
-      FbxBlendShape::Create(node->GetScene(), fmt::format("{}_blend_shape", get_node_name(in_dag_path)).c_str());
-  mesh->AddDeformer(l_fbx_bl);
-
   auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
