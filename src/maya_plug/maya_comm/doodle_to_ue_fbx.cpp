@@ -24,12 +24,14 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnPointArrayData.h>
+#include <maya/MFnSet.h>
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshFaceVertex.h>
+#include <maya/MItMeshPolygon.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MObjectArray.h>
@@ -141,11 +143,39 @@ struct fbx_write_data {
         l_points[i] = FbxVector4{l_m_points[i].x, l_m_points[i].y, l_m_points[i].z, l_m_points[i].w};
       }
     }
+
+    std::vector<std::int32_t> l_mat_ids{};
+    {
+      auto* l_layer                        = mesh->GetLayer(0);
+      FbxLayerElementMaterial* l_mat_layer = FbxLayerElementMaterial::Create(mesh, "");
+      l_mat_layer->SetMappingMode(FbxLayerElement::eByPolygon);
+      l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+      l_layer->SetMaterials(l_mat_layer);
+
+      auto l_mats = get_shading_engines(in_mesh);
+      MFnSet l_fn_set{};
+      l_mat_ids.reserve(l_mesh.numPolygons());
+      MStatus l_status{};
+      for (auto l_mat : l_mats) {
+        auto* l_mat_surface =
+            FbxSurfaceLambert::Create(node->GetScene(), get_node_name(details::shading_engine_to_mat(l_mat)).c_str());
+        auto l_mat_index = node->AddMaterial(l_mat_surface);
+        maya_chick(l_fn_set.setObject(l_mat));
+        for (MItMeshPolygon l_it_geo{in_mesh}; !l_it_geo.isDone(); l_it_geo.next()) {
+          MObject const l_comp = l_it_geo.currentItem(&l_status);
+          maya_chick(l_status);
+          if (l_fn_set.isMember(l_comp)) {
+            l_mat_ids[l_it_geo.index()] = l_mat_index;
+          }
+        }
+      }
+    }
+
     // 三角形
     {
       MIntArray l_vert_list{};
       for (auto i = 0; i < l_mesh.numPolygons(); ++i) {
-        mesh->BeginPolygon();
+        mesh->BeginPolygon(l_mat_ids[i]);
         maya_chick(l_mesh.getPolygonVertices(i, l_vert_list));
         for (auto j = 0; j < l_vert_list.length(); ++j) {
           mesh->AddPolygon(l_vert_list[j]);
@@ -303,6 +333,7 @@ struct fbx_write_data {
 
   void write_mesh_anim(MDagPath in_dag_path, MTime in_time);
   void write_tran_anim(MDagPath in_dag_path, MTime in_time);
+  std::int32_t write_material(MDagPath in_dag_path);
 
   static std::vector<MDagPath> find_joint(const MObject& in_msk) {
     if (in_msk.isNull()) return {};
@@ -784,6 +815,9 @@ void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
     l_anim_curve->KeyModifyEnd();
   }
 }
+
+std::int32_t fbx_write_data::write_material(MDagPath in_dag_path) {}
+
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
 
 MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
