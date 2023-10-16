@@ -675,7 +675,7 @@ fbx_write::fbx_write() {
 }
 
 void fbx_write::write(
-    const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const std::string& in_path
+    const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
 ) {
   path_            = in_path;
   auto* anim_stack = scene_->GetCurrentAnimationStack();
@@ -696,6 +696,18 @@ void fbx_write::write(
     build_animation(l_time);
   }
   write_end();
+}
+
+void fbx_write::write(
+    const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
+) {
+  std::vector<MDagPath> l_objs{};
+  MDagPath l_path{};
+  for (MItSelectionList l_it{in_vector}; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getDagPath(l_path));
+    l_objs.emplace_back(l_path);
+  }
+  write(l_objs, in_begin, in_end, in_path);
 }
 
 void fbx_write::write_end() {

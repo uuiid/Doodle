@@ -91,8 +91,9 @@ class fbx_write {
   ~fbx_write();
 
   void write(
-      const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const std::string& in_path
+      const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
   );
+  void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path);
 };
 
 }  // namespace doodle::maya_plug
