@@ -143,39 +143,68 @@ struct fbx_write_data {
         l_points[i] = FbxVector4{l_m_points[i].x, l_m_points[i].y, l_m_points[i].z, l_m_points[i].w};
       }
     }
-
+    // uv
+    auto l_main_layer = mesh->GetLayer(mesh->CreateLayer());
     std::vector<std::int32_t> l_mat_ids{};
     {
-      auto* l_layer                        = mesh->GetLayer(0);
-      FbxLayerElementMaterial* l_mat_layer = FbxLayerElementMaterial::Create(mesh, "");
-      l_mat_layer->SetMappingMode(FbxLayerElement::eByPolygon);
-      l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-      l_layer->SetMaterials(l_mat_layer);
+      auto* l_mat_layer = mesh->CreateElementMaterial();
+      auto l_mats       = get_shading_engines(in_mesh);
 
-      auto l_mats = get_shading_engines(in_mesh);
-      MFnSet l_fn_set{};
-      l_mat_ids.reserve(l_mesh.numPolygons());
-      MStatus l_status{};
-      for (auto l_mat : l_mats) {
-        auto* l_mat_surface =
-            FbxSurfaceLambert::Create(node->GetScene(), get_node_name(details::shading_engine_to_mat(l_mat)).c_str());
-        auto l_mat_index = node->AddMaterial(l_mat_surface);
-        maya_chick(l_fn_set.setObject(l_mat));
-        for (MItMeshPolygon l_it_geo{in_mesh}; !l_it_geo.isDone(); l_it_geo.next()) {
-          MObject const l_comp = l_it_geo.currentItem(&l_status);
-          maya_chick(l_status);
-          if (l_fn_set.isMember(l_comp)) {
-            l_mat_ids[l_it_geo.index()] = l_mat_index;
+#ifdef DOODLE_TEST_123
+      if (l_mats.size() == 1) {
+        l_mat_layer->SetMappingMode(FbxLayerElement::eAllSame);
+        l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+        auto* l_mat_surface = FbxSurfaceLambert::Create(
+            node->GetScene(), get_node_name(details::shading_engine_to_mat(l_mats.front())).c_str()
+        );
+        node->AddMaterial(l_mat_surface);
+      } else {
+        l_mat_layer->SetMappingMode(FbxLayerElement::eByPolygon);
+        l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+        MFnSet l_fn_set{};
+        l_mat_ids.resize(l_mesh.numPolygons());
+        MStatus l_status{};
+        for (auto l_mat : l_mats) {
+          auto* l_mat_surface =
+              FbxSurfaceLambert::Create(node->GetScene(), get_node_name(details::shading_engine_to_mat(l_mat)).c_str());
+          auto l_mat_index = node->AddMaterial(l_mat_surface);
+          maya_chick(l_fn_set.setObject(l_mat));
+
+          MSelectionList l_list{};
+          maya_chick(l_fn_set.getMembers(l_list, false));
+          MDagPath l_path{};
+          MObject l_comp{};
+          for (MItSelectionList l_it_geo{l_list}; !l_it_geo.isDone(); l_it_geo.next()) {
+            maya_chick(l_it_geo.getDagPath(l_path, l_comp));
+            if (l_comp.hasFn(MFn::kMeshPolygonComponent)) {
+              MFnSingleIndexedComponent l_fn_comp{l_comp, &l_status};
+              maya_chick(l_status);
+              for (auto i = 0; i < l_fn_comp.elementCount(); ++i) {
+                auto l_index = l_fn_comp.element(i, &l_status);
+                maya_chick(l_status);
+                l_mat_ids[l_index] = l_mat_index;
+              }
+            }
           }
         }
+        std::cout << fmt::format("{} {}", l_mat_ids.size(), l_mat_ids) << std::endl;
       }
+#else
+      l_mat_layer->SetMappingMode(FbxLayerElement::eAllSame);
+      l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+      auto* l_mat_surface = FbxSurfaceLambert::Create(
+          node->GetScene(),
+          fmt::format("{}_{}", get_node_name(details::shading_engine_to_mat(l_mats.front())), fmt::ptr(this)).c_str()
+      );
+      node->AddMaterial(l_mat_surface);
+#endif
     }
 
     // 三角形
     {
       MIntArray l_vert_list{};
       for (auto i = 0; i < l_mesh.numPolygons(); ++i) {
-        mesh->BeginPolygon(l_mat_ids[i]);
+        mesh->BeginPolygon(l_mat_ids.empty() ? -1 : l_mat_ids[i]);
         maya_chick(l_mesh.getPolygonVertices(i, l_vert_list));
         for (auto j = 0; j < l_vert_list.length(); ++j) {
           mesh->AddPolygon(l_vert_list[j]);
@@ -184,8 +213,7 @@ struct fbx_write_data {
       }
     }
     mesh->BuildMeshEdgeArray();
-    // uv
-    auto l_main_layer = mesh->GetLayer(mesh->CreateLayer());
+
     {
       // get uv set names
       MStringArray l_uv_set_names{};
@@ -333,7 +361,6 @@ struct fbx_write_data {
 
   void write_mesh_anim(MDagPath in_dag_path, MTime in_time);
   void write_tran_anim(MDagPath in_dag_path, MTime in_time);
-  std::int32_t write_material(MDagPath in_dag_path);
 
   static std::vector<MDagPath> find_joint(const MObject& in_msk) {
     if (in_msk.isNull()) return {};
@@ -815,8 +842,6 @@ void fbx_write_data::write_tran_anim(MDagPath in_dag_path, MTime in_time) {
     l_anim_curve->KeyModifyEnd();
   }
 }
-
-std::int32_t fbx_write_data::write_material(MDagPath in_dag_path) {}
 
 doodle_to_ue_fbx::doodle_to_ue_fbx() : p_i{std::make_unique<impl_data>()} {}
 
