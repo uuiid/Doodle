@@ -29,7 +29,7 @@ struct fbx_node {
   virtual void build_data(const fbx_tree_t& in_tree)                            = 0;
   virtual void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) = 0;
 
-  void build_node_transform(MDagPath in_path);
+  void build_node_transform(MDagPath in_path) const;
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
 };
 

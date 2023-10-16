@@ -10,19 +10,15 @@
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
-#include <maya_plug/fmt/fmt_warp.h>
 
 #include <fbxsdk.h>
-#include <maya/MAngle.h>
 #include <maya/MAnimControl.h>
-#include <maya/MArgDatabase.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MFnComponentListData.h>
-#include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnPointArrayData.h>
 #include <maya/MFnSet.h>
@@ -34,13 +30,9 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshFaceVertex.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
-#include <maya/MObjectArray.h>
 #include <maya/MPointArray.h>
 #include <maya/MQuaternion.h>
-#include <maya/MSelectionList.h>
 #include <maya/MTime.h>
 #include <treehh/tree.hh>
 
@@ -59,10 +51,10 @@ FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
   }
 }
 
-void fbx_node::build_node_transform(MDagPath in_path) {
+void fbx_node::build_node_transform(MDagPath in_path) const {
   MStatus l_status{};
   node->SetRotationActive(true);
-  MFnTransform l_transform{in_path};
+  MFnTransform const l_transform{in_path};
   auto l_rotate_order = l_transform.rotationOrder(&l_status);
   maya_chick(l_status);
   switch (l_rotate_order) {
@@ -875,7 +867,7 @@ void fbx_write::build_animation(const MTime& in_time) {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
   l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->build_animation(in_time);
+      (*i)->build_animation(tree_, in_time);
       l_iter_fun(i);
     }
   };
