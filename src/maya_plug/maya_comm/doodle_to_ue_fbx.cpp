@@ -28,6 +28,7 @@
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
+#include <maya/MItDag.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshFaceVertex.h>
@@ -467,6 +468,44 @@ class doodle_to_ue_fbx::impl_data {
     }
   }
 
+  void build_joint_tree_2(MDagPath in_path) {
+    MDagPath l_parent_path{};
+    MItDag l_it{};
+    l_it.reset(in_path, MItDag::kDepthFirst);
+    for (; !l_it.isDone(); l_it.next()) {
+      MDagPath l_path{};
+      maya_chick(l_it.getPath(l_path));
+
+      if (auto l_tree_it = ranges::find_if(
+              std::begin(tree_dag_), std::end(tree_dag_),
+              [&](tree_mesh_t::value_type& in_value) -> bool { return in_value.dag_path == l_path; }
+          );
+          l_tree_it == std::end(tree_dag_) && (l_path.hasFn(MFn::kTransform) && !l_path.hasFn(MFn::kConstraint))) {
+        l_parent_path = l_path;
+        l_parent_path.pop();
+        auto l_tree_parent =
+            ranges::find_if(std::begin(tree_dag_), std::end(tree_dag_), [&](tree_mesh_t::value_type& in_value) -> bool {
+              return in_value.dag_path == l_parent_path;
+            });
+
+        auto l_parent_node = l_tree_parent->node;
+        auto l_tree_node   = tree_dag_.append_child(l_tree_parent, tree_dag_node{l_path});
+        l_tree_node->node  = FbxNode::Create(scene_, l_path.partialPathName().asChar());
+        l_parent_node->AddChild(l_tree_node->node);
+        l_tree_node->write_file_ = [](tree_dag_node* self) {
+          *self->write_data_ = {self->node, nullptr};
+          if (self->dag_path.hasFn(MFn::kJoint))
+            self->write_data_->write_joint(self->dag_path);
+          else
+            self->write_data_->write_transform(self->dag_path);
+        };
+        l_tree_node->write_anim_ = [](tree_dag_node* self, MTime in_time) {
+          self->write_data_->write_tran_anim(self->dag_path, in_time);
+        };
+      }
+    }
+  }
+
   void init() {
     tree_dag_ = {tree_dag_node{MDagPath{}, scene_->GetRootNode(), MObject::kNullObj, [](auto...) {}, nullptr}};
   }
@@ -474,6 +513,14 @@ class doodle_to_ue_fbx::impl_data {
   void build_tree(const MSelectionList& in_list) {
     build_mesh_tree(in_list);
     build_joint_tree();
+
+    std::function<bool(tree_mesh_t ::value_type & in_iterator)> l_iter_fun{};
+
+    l_iter_fun = [&](tree_mesh_t::value_type in_iterator) { return in_iterator.dag_path.hasFn(MFn::kJoint); };
+
+    if (auto l_it = ranges::find_if(tree_dag_.begin(), tree_dag_.end(), l_iter_fun); l_it != tree_dag_.end()) {
+      build_joint_tree_2(l_it->dag_path);
+    }
   }
   void write() {
     std::function<void(const tree_mesh_t ::iterator& in_iterator)> l_iter_fun{};
