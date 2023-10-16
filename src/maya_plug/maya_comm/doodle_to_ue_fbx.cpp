@@ -81,7 +81,7 @@ using tree_mesh_t = tree<tree_dag_node>;
 
 struct fbx_write_data {
   FbxLayerElementUV* mesh_2_uv(MFnMesh& in_mesh, MString& in_set_name) {
-    auto* l_layer = FbxLayerElementUV::Create(mesh, in_set_name.asChar());
+    auto* l_layer = mesh->CreateElementUV(in_set_name.asChar());
     l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
     l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
     // for maya uv
@@ -144,16 +144,14 @@ struct fbx_write_data {
       }
     }
     // uv
-    auto l_main_layer = mesh->GetLayer(mesh->CreateLayer());
     std::vector<std::int32_t> l_mat_ids{};
     {
       auto* l_mat_layer = mesh->CreateElementMaterial();
       auto l_mats       = get_shading_engines(in_mesh);
-
-#ifdef DOODLE_TEST_123
       if (l_mats.size() == 1) {
         l_mat_layer->SetMappingMode(FbxLayerElement::eAllSame);
         l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+        l_mat_layer->GetIndexArray().Add(0);
         auto* l_mat_surface = FbxSurfaceLambert::Create(
             node->GetScene(), get_node_name(details::shading_engine_to_mat(l_mats.front())).c_str()
         );
@@ -187,17 +185,11 @@ struct fbx_write_data {
             }
           }
         }
-        std::cout << fmt::format("{} {}", l_mat_ids.size(), l_mat_ids) << std::endl;
+        l_mat_layer->GetIndexArray().SetCount(l_mat_ids.size());
+        for (auto i = 0; i < l_mat_ids.size(); ++i) {
+          l_mat_layer->GetIndexArray().SetAt(i, l_mat_ids[i]);
+        }
       }
-#else
-      l_mat_layer->SetMappingMode(FbxLayerElement::eAllSame);
-      l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-      auto* l_mat_surface = FbxSurfaceLambert::Create(
-          node->GetScene(),
-          fmt::format("{}_{}", get_node_name(details::shading_engine_to_mat(l_mats.front())), fmt::ptr(this)).c_str()
-      );
-      node->AddMaterial(l_mat_surface);
-#endif
     }
 
     // 三角形
@@ -218,25 +210,14 @@ struct fbx_write_data {
       // get uv set names
       MStringArray l_uv_set_names{};
       maya_chick(l_mesh.getUVSetNames(l_uv_set_names));
-      for (auto&& i_name : l_uv_set_names) {
-        auto* l_layer = mesh_2_uv(l_mesh, i_name);
-        l_main_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
-        break;
-      }
-      if (l_uv_set_names.length() > 1) {
-        log_error(fmt::format("mesh {} uv set length > 1", get_node_name(in_mesh)));
-
-        for (auto i = 1; i < l_uv_set_names.length(); ++i) {
-          auto* l_uv_layer = mesh->GetLayer(mesh->CreateLayer());
-          auto* l_layer    = mesh_2_uv(l_mesh, l_uv_set_names[i]);
-          l_uv_layer->SetUVs(l_layer, FbxLayerElement::eTextureDiffuse);
-        }
+      for (auto i = 0; i < l_uv_set_names.length(); ++i) {
+        mesh_2_uv(l_mesh, l_uv_set_names[i]);
       }
     }
 
     // normals
     {
-      auto l_layer = FbxLayerElementNormal::Create(mesh, "");
+      auto l_layer = mesh->CreateElementNormal();
       l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
       l_layer->SetReferenceMode(FbxLayerElement::eDirect);
 
@@ -249,19 +230,16 @@ struct fbx_write_data {
           l_layer->GetDirectArray().Add(FbxVector4{l_normal.x, l_normal.y, l_normal.z});
         }
       }
-
-      l_main_layer->SetNormals(l_layer);
     }
     // smoothing
     {
-      auto l_layer = FbxLayerElementSmoothing::Create(mesh, "");
+      auto l_layer = mesh->CreateElementSmoothing();
       l_layer->SetMappingMode(FbxLayerElement::eByEdge);
       l_layer->SetReferenceMode(FbxLayerElement::eDirect);
 
       for (auto i = 0; i < l_mesh.numEdges(); ++i) {
         l_layer->GetDirectArray().Add(l_mesh.isEdgeSmooth(i));
       }
-      l_main_layer->SetSmoothing(l_layer);
     }
   }
 
