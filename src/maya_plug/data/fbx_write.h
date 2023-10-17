@@ -22,15 +22,20 @@ using fbx_tree_t   = tree<fbx_node_ptr>;
 struct fbx_node {
   MDagPath dag_path{};
   FbxNode* node{};
+  std::once_flag flag_{};
 
   fbx_node() = default;
   explicit fbx_node(const MDagPath& in_dag_path, FbxNode* in_node) : dag_path(in_dag_path), node(in_node) {}
 
-  virtual void build_data(const fbx_tree_t& in_tree)                            = 0;
+  void build_node(const fbx_tree_t& in_tree);
+
   virtual void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) = 0;
 
   void build_node_transform(MDagPath in_path) const;
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
+
+ protected:
+  virtual void build_data(const fbx_tree_t& in_tree)                            = 0;
 };
 
 struct fbx_node_mesh : public fbx_node {

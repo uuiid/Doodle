@@ -38,6 +38,9 @@
 
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
+void fbx_node::build_node(const fbx_tree_t& in_tree) {
+  std::call_once(flag_, [&]() { build_data(in_tree); });
+}
 FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
   switch (in_value) {
     case MTime::k25FPS:
@@ -117,7 +120,6 @@ void fbx_node_mesh::build_data(const doodle::maya_plug::fbx_write_ns::fbx_tree_t
   build_skin(in_tree);
   build_blend_shape();
 }
-
 void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
     //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
@@ -214,17 +216,17 @@ void fbx_node_mesh::build_mesh() {
       MFloatArray l_u{};
       MFloatArray l_v{};
       l_fn_mesh.getUVs(l_u, l_v, &l_uv_set_names[i]);
-      for (auto i = 0; i < l_u.length(); ++i) {
-        l_layer->GetDirectArray().Add(FbxVector2{l_u[i], l_v[i]});
+      for (auto j = 0; j < l_u.length(); ++j) {
+        l_layer->GetDirectArray().Add(FbxVector2{l_u[j], l_v[j]});
       }
 
       auto l_face_count = l_fn_mesh.numPolygons();
-      for (auto i = 0; i < l_face_count; ++i) {
+      for (auto k = 0; k < l_face_count; ++k) {
         MIntArray l_vert_list{};
-        maya_chick(l_fn_mesh.getPolygonVertices(i, l_vert_list));
+        maya_chick(l_fn_mesh.getPolygonVertices(k, l_vert_list));
         for (auto j = 0; j < l_vert_list.length(); ++j) {
           std::int32_t l_uv_id{};
-          maya_chick(l_fn_mesh.getPolygonUVid(i, j, l_uv_id, &l_uv_set_names[i]));
+          maya_chick(l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]));
           l_layer->GetIndexArray().Add(l_uv_id);
         }
       }
@@ -314,7 +316,7 @@ void fbx_node_mesh::build_skin(const fbx_tree_t& in_tree) {
       for (auto j = 0; j < l_influence_count; ++j) {
         if (l_influence_weights[j] == 0) continue;
         auto l_cluster = l_dag_fbx_map[l_joint_list[j]];
-        l_cluster->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
+        if (l_influence_weights[j] > 0) l_cluster->AddControlPointIndex(l_it_geo.index(), l_influence_weights[j]);
       }
     }
     break;
@@ -355,6 +357,7 @@ void fbx_node_mesh::build_blend_shape() {
   MFnBlendShapeDeformer l_blend_shape{};
   auto l_fbx_bl = FbxBlendShape::Create(node->GetScene(), fmt::format("{}", get_node_name(l_bls[0])).c_str());
   mesh->AddDeformer(l_fbx_bl);
+  FbxProperty::Create(l_fbx_bl->RootProperty, FbxStringDT, "RootGroup");
 
   MStatus l_status{};
   for (auto&& i : l_bls) {
@@ -417,6 +420,10 @@ void fbx_node_mesh::build_blend_shape() {
       }
 
       auto l_bl_weight_plug = get_plug(i, "weight").elementByPhysicalIndex(j, &l_status);
+      FbxProperty::Create(
+          l_fbx_bl->RootProperty, FbxStringDT,
+          fmt::format("RootGroup|{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
+      );
       auto l_fbx_bl_channel = FbxBlendShapeChannel::Create(
           node->GetScene(),
           fmt::format("{}", l_bl_weight_plug.partialName(true, false, false, true, false, true)).c_str()
@@ -690,7 +697,14 @@ void fbx_write::write(
 
   init();
   build_tree(in_vector);
-  build_data();
+
+  try {
+    build_data();
+  } catch (const maya_error& in_error) {
+    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    return;
+  }
+
   for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
     MAnimControl::setCurrentTime(l_time);
     build_animation(l_time);
@@ -724,8 +738,8 @@ void fbx_write::write_end() {
 
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
-          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(
-          ),  // manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
+          //  manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),//
+          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
           scene_->GetFbxManager()->GetIOSettings()
       )) {
     MGlobal::displayError(
@@ -859,7 +873,7 @@ void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
   l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      if (!(*i)->dag_path.hasFn(MFn::kMesh)) (*i)->build_data(tree_);
+      if (!(*i)->dag_path.hasFn(MFn::kMesh)) (*i)->build_node(tree_);
       l_iter_fun(i);
     }
   };
@@ -868,7 +882,7 @@ void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun2{};
   l_iter_fun2 = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->build_data(tree_);
+      (*i)->build_node(tree_);
       l_iter_fun2(i);
     }
   };
