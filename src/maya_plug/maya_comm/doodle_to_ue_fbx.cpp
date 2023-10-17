@@ -46,8 +46,8 @@ namespace doodle {
 namespace maya_plug {
 
 namespace {
-constexpr char file_path[]   = "-file_path";
-constexpr char file_path_l[] = "-fp";
+constexpr char file_path[]   = "-fp";
+constexpr char file_path_l[] = "-file_path";
 }  // namespace
 MSyntax doodle_to_ue_fbx_syntax() {
   MSyntax l_syntax{};
