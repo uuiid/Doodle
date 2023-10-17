@@ -20,6 +20,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   std::any obs{};
   registry_ptr registry_attr{};
   std::atomic_bool save_all{};
+  bool only_ctx{};
 
  protected:
   FSys::path project_path;
@@ -32,6 +33,8 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   file_translator();
   explicit file_translator(registry_ptr in_registry);
   ~file_translator() = default;
+
+  inline void set_only_ctx(bool in_only_ctx) { only_ctx = in_only_ctx; }
   /**
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径

@@ -286,7 +286,12 @@ class obs_main {
     std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
   }
-
+  void open_ctx(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
+    std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn), ...); }, ctx_data_);
+    std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
+  }
   //  void add_ref_project(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
   //    std::map<std::int64_t, entt::handle> l_map{};
   //    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
@@ -390,7 +395,7 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
 
   {
     g_ctx().get<database_info>().path_ = project_path.empty() ? FSys::path{database_info::memory_data} : project_path;
-    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    auto& k_msg                        = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("加载数据");
     k_msg.set_state(k_msg.run);
     g_reg()->clear();
@@ -406,7 +411,8 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
     k_msg.set_state(k_msg.success);
     g_reg()->ctx().erase<process_message>();
     core_set::get_set().add_recent_project(project_path);
-    is_run = false;
+    is_run   = false;
+    only_ctx = false;
   };
 
   boost::asio::post(
@@ -417,7 +423,12 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
         auto& l_obs = std::any_cast<obs_all&>(obs);
 
         if (!l_select.is_old(project_path, l_k_con)) {
-          l_obs.open(registry_attr, l_k_con);
+          if (only_ctx) {
+            l_obs.open_ctx(registry_attr, l_k_con);
+          } else {
+            l_obs.open(registry_attr, l_k_con);
+          }
+
         } else {
           l_obs.disconnect();
           l_select(*registry_attr, project_path, l_k_con);
@@ -476,23 +487,21 @@ void file_translator::async_save_impl() {
     is_run = false;
   };
 
-  boost::asio::post(
-      g_thread(), [this, l_k_con = g_ctx().get<database_info>().get_connection(), l_end_call]() mutable {
+  boost::asio::post(g_thread(), [this, l_k_con = g_ctx().get<database_info>().get_connection(), l_end_call]() mutable {
     try {
-          auto l_tx = sqlpp::start_transaction(*l_k_con);
-          if (save_all) {
-            std::any_cast<obs_all&>(obs).save_all(registry_attr, l_k_con);
-            save_all = false;
-          } else {
-            std::any_cast<obs_all&>(obs).save(registry_attr, l_k_con);
-          }
-          l_tx.commit();
-        } catch (const sqlpp::exception& in_error) {
-          DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
-        }
-        boost::asio::post(g_io_context(), l_end_call);
+      auto l_tx = sqlpp::start_transaction(*l_k_con);
+      if (save_all) {
+        std::any_cast<obs_all&>(obs).save_all(registry_attr, l_k_con);
+        save_all = false;
+      } else {
+        std::any_cast<obs_all&>(obs).save(registry_attr, l_k_con);
       }
-  );
+      l_tx.commit();
+    } catch (const sqlpp::exception& in_error) {
+      DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
+    }
+    boost::asio::post(g_io_context(), l_end_call);
+  });
 }
 
 void file_translator::async_import_impl(const FSys::path& in_path) {
@@ -501,7 +510,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
 
   {
     g_ctx().get<database_info>().path_ = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
-    auto& k_msg = g_reg()->ctx().emplace<process_message>();
+    auto& k_msg                        = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("导入数据");
     k_msg.set_state(k_msg.run);
     g_reg()->ctx().get<core_sig>().project_begin_open(project_path);

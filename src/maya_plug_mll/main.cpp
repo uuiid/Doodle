@@ -1,6 +1,9 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
+#include <doodle_core/database_task/sqlite_client.h>
+
+#include <doodle_app/app/program_options.h>
 
 #include <maya_plug/data/create_hud_node.h>
 #include <maya_plug/data/maya_register_main.h>
@@ -71,6 +74,9 @@ void open_windows() {
       HWND win_id  = find_windows();
       p_doodle_app = std::make_shared<maya_gui_app>();
       g_ctx().get<program_info>().parent_windows_attr(win_id);
+      /// 在这里我们加载项目
+      g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
+      g_ctx().get<program_options>().init_project();
       break;
     }
     case MGlobal::MMayaState::kBatch:

@@ -7,8 +7,10 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/gui_template/show_windows.h"
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/database_task/sqlite_client.h>
 
 #include "doodle_app/gui/base/base_window.h"
+#include <doodle_app/app/program_options.h>
 #include <doodle_app/gui/main_menu_bar.h>
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
@@ -28,7 +30,6 @@
 namespace doodle::maya_plug {
 void maya_facet::load_windows() {
   using namespace gui;
-
   g_windows_manage().register_layout(layout_init_arg{}.create<maya_layout>());
 
   g_windows_manage().create_windows_arg(windows_init_arg{}.create<maya_menu>().set_render_type<dear::MainMenuBar>());

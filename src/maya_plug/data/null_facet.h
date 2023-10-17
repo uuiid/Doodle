@@ -15,7 +15,7 @@ class null_facet {
   null_facet();
 
   const std::string& name() const noexcept;
-  inline bool post() { return true; };
+  bool post();
   void deconstruction();
   void add_program_options(){};
 };
