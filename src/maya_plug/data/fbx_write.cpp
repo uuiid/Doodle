@@ -227,6 +227,7 @@ void fbx_node_mesh::build_mesh() {
     //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
     return;
   }
+  log_info(fmt::format("build mesh {}", dag_path));
 
   auto l_mesh = dag_path;
   maya_chick(l_mesh.extendToShape());
@@ -244,9 +245,9 @@ void fbx_node_mesh::build_mesh() {
       l_points[i] = FbxVector4{l_m_points[i].x, l_m_points[i].y, l_m_points[i].z, l_m_points[i].w};
     }
   }
-  // uv
-  std::vector<std::int32_t> l_mat_ids{};
+
   {
+    std::vector<std::int32_t> l_mat_ids{};
     auto* l_mat_layer = mesh->CreateElementMaterial();
     auto l_mats       = get_shading_engines(l_mesh);
     if (l_mats.size() == 1) {
@@ -275,13 +276,19 @@ void fbx_node_mesh::build_mesh() {
         MObject l_comp{};
         for (MItSelectionList l_it_geo{l_list}; !l_it_geo.isDone(); l_it_geo.next()) {
           maya_chick(l_it_geo.getDagPath(l_path, l_comp));
-          if (l_comp.hasFn(MFn::kMeshPolygonComponent)) {
-            MFnSingleIndexedComponent l_fn_comp{l_comp, &l_status};
-            maya_chick(l_status);
-            for (auto i = 0; i < l_fn_comp.elementCount(); ++i) {
-              auto l_index = l_fn_comp.element(i, &l_status);
+          if (l_path == dag_path) {
+            if (l_comp.hasFn(MFn::kMeshPolygonComponent)) {
+              MFnSingleIndexedComponent l_fn_comp{l_comp, &l_status};
               maya_chick(l_status);
-              l_mat_ids[l_index] = l_mat_index;
+              for (auto i = 0; i < l_fn_comp.elementCount(); ++i) {
+                auto l_index = l_fn_comp.element(i, &l_status);
+                maya_chick(l_status);
+                if (l_index >= l_mat_ids.size()) {
+                  log_error(fmt::format("mat index out of range {} {}", l_index, l_mat_ids.size()));
+                  continue;
+                }
+                l_mat_ids[l_index] = l_mat_index;
+              }
             }
           }
         }
@@ -291,10 +298,8 @@ void fbx_node_mesh::build_mesh() {
         l_mat_layer->GetIndexArray().SetAt(i, l_mat_ids[i]);
       }
     }
-  }
 
-  // 三角形
-  {
+    // 三角形
     MIntArray l_vert_list{};
     for (auto i = 0; i < l_fn_mesh.numPolygons(); ++i) {
       mesh->BeginPolygon(l_mat_ids.empty() ? -1 : l_mat_ids[i]);
@@ -304,14 +309,15 @@ void fbx_node_mesh::build_mesh() {
       }
       mesh->EndPolygon();
     }
+    mesh->BuildMeshEdgeArray();
   }
-  mesh->BuildMeshEdgeArray();
 
   {
     // get uv set names
     MStringArray l_uv_set_names{};
     maya_chick(l_fn_mesh.getUVSetNames(l_uv_set_names));
     for (auto i = 0; i < l_uv_set_names.length(); ++i) {
+      log_info(fmt::format("uv set name: {}", l_uv_set_names[i]));
       auto* l_layer = mesh->CreateElementUV(l_uv_set_names[i].asChar());
       l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
       l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
