@@ -9,6 +9,8 @@
 #include "PropertyEditorModule.h"
 #include "PropertyCustomizationHelpers.h"
 
+DECLARE_DELEGATE_OneParam(FVariantInfoParamDelegate, FVariantInfo);
+
 struct FMaterialItemData
 {
 	FName Slot;
@@ -37,7 +39,6 @@ public:
 	FReply OnLoadAllVariant();
 	FReply OnVariantAdd();
 	void OnVariantDelete();
-	FReply OnVariantAttach();
 
 	const static FName Name;
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
@@ -52,7 +53,6 @@ public:
 	UDoodleVariantObject* CurrentObject;
 
 	TSharedPtr<STextBlock> NameText;
-	TSharedPtr<STextBlock> SelectText;
 
 	void SetSetVariantData(UDoodleVariantObject* obj);
 	void SetVariantInfo(FString varaint_name);
@@ -62,4 +62,5 @@ public:
 	TSharedPtr<SButton> ButtonLoadVariant;
 	TSharedPtr<SButton> ButtonLinkMesh;
 	//----------------------
+	FVariantInfoParamDelegate OnVariantChange;
 };

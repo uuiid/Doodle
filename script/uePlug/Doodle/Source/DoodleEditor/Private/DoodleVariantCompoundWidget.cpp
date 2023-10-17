@@ -23,6 +23,7 @@
 #include "DoodleVariantAssetUserData.h"
 #include "Textures/SlateIcon.h"
 #include "Widgets/Views/STableRow.h"
+#include "DoodleVariantEditorViewport.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 
@@ -83,7 +84,7 @@ public:
                          .ToolTipText(FText::FromString(TEXT("粘贴变体")))
                          .OnClicked_Lambda([this]
                          {
-                             OnClickedEvent.ExecuteIfBound();;
+                                OnClickedEvent.ExecuteIfBound();
                              return FReply::Handled();
                          })
                 ]
@@ -153,52 +154,67 @@ public:
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 {
   // clang-format off
-	ChildSlot
-	[
-        SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-            .AutoHeight()
-            [
-                SNew(SVerticalBox)
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("对应骨骼网格体:")))
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .VAlign(VAlign_Top)
-                    [
-                        SNew(SHorizontalBox)
-                            +SHorizontalBox::Slot()
-                            .AutoWidth()
-                            [
-                                SAssignNew(NameText, STextBlock)
-                                    .Text(FText::FromString(CurrentObject ? CurrentObject->Mesh->GetFullName() : FString(TEXT("None"))))
-                            ]
-                            + SHorizontalBox::Slot()
-                            [
-                                SAssignNew(ButtonLinkMesh, SButton)
-                                    .Visibility(EVisibility::Hidden)
-                                    .Text(FText::FromString(TEXT("链接到骨骼网格体")))
-                                    .OnClicked(this, &DoodleVariantCompoundWidget::OnLinkSkeletalMesh)
-                            ]
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("粘贴到场景中目标:")))
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
+    ChildSlot
+        [
+            SNew(SVerticalBox)
+                + SVerticalBox::Slot()
+                .AutoHeight()
+                [
+                    SNew(SVerticalBox)
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        .VAlign(VAlign_Top)
+                        [
+                            SAssignNew(ButtonLoadVariant, SButton)
+                                .Text(FText::FromString(TEXT("载入所有变体")))
+                                .OnClicked(this, &DoodleVariantCompoundWidget::OnLoadAllVariant)
+                                .Visibility_Lambda([this]()
+                                    {
+                                        if (!CurrentObject || (!CurrentObject->Mesh && CurrentObject->AllVaraint.Num() <= 0))
+                                        {
+                                            return  EVisibility::Visible;
+                                        }
+                                        return  EVisibility::Hidden;
+                                    })
+                        ]
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("对应骨骼网格体")))
+                        ]
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        .VAlign(VAlign_Top)
+                        [
+                            SNew(SHorizontalBox)
+                                + SHorizontalBox::Slot()
+                                .AutoWidth()
+                                [
+                                    SAssignNew(NameText, STextBlock)
+                                        .Text(FText::FromString(CurrentObject ? CurrentObject->Mesh->GetFullName() : FString(TEXT("None"))))
+                                ]
+                                + SHorizontalBox::Slot()
+                                [
+                                    SAssignNew(ButtonLinkMesh, SButton)
+                                        .Visibility(EVisibility::Hidden)
+                                        .Text(FText::FromString(TEXT("链接到骨骼网格体")))
+                                        .OnClicked(this, &DoodleVariantCompoundWidget::OnLinkSkeletalMesh)
+                                ]
+                        ]
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("")))
+                        ]
+                        + SVerticalBox::Slot()
                     .Padding(0.f,0.f,0.f,10.f)
-                    .VAlign(VAlign_Top)
-                    [
-                        SAssignNew(SelectText, STextBlock)
-                            .Text(FText::FromString(FString(TEXT("None"))))
-                    ]
+                        .VAlign(VAlign_Top)
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromString(FString(TEXT(""))))
+                        ]
             ]
             + SVerticalBox::Slot()
             [
@@ -335,7 +351,9 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSha
         .OnClickedEvent_Lambda([this,InItem]() 
         {
             NowVaraint = *InItem;
-            OnVariantAttach();
+            if (CurrentObject && CurrentObject->AllVaraint.Num() > 0)
+                OnVariantChange.ExecuteIfBound(CurrentObject->AllVaraint[NowVaraint]);
+            //-----------------------
         });
 }
 
@@ -399,8 +417,17 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
             {
                 int index = InItem->Index;
                 FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
+                UObject* u = AssetData.GetAsset();
                 TObjectPtr<UMaterial> ui = Cast<UMaterial>(AssetData.GetAsset());
-                Arr.Variants[index] = FSkeletalMaterial(ui);
+                if (ui) 
+                {
+                    Arr.Variants[index] = FSkeletalMaterial(ui);
+                }
+                else
+                {
+                    TObjectPtr<UMaterialInterface> uii = Cast<UMaterialInterface>(AssetData.GetAsset());
+                    Arr.Variants[index] = FSkeletalMaterial(uii);
+                }
                 CurrentObject->AllVaraint[NowVaraint] = Arr;
                 MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
                 CurrentObject->Modify();
@@ -568,7 +595,7 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     else
     {
         FNotificationInfo Info(FText::FromString(TEXT("骨骼网格体已丢失，请重新链接")));
-        Info.FadeInDuration = 2.0f;  // 淡入淡出时间
+        Info.FadeInDuration = 2.0f;  // 娣″叆娣″嚭鏃堕棿
         Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
         FSlateNotificationManager::Get().AddNotification(Info);
         //--------------
@@ -688,41 +715,7 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
     }
 }
 
-FReply DoodleVariantCompoundWidget::OnVariantAttach()
-{
-    if (!CurrentObject)
-    {
-        FText DialogText = {};
-        DialogText = FText::FromString(TEXT("请先载入变体。"));
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-        return FReply::Handled();
-    }
-    //----------------------
-    USelection* L_Selects = GEditor->GetSelectedActors();
-    TArray<UObject*> outObject;
-    L_Selects->GetSelectedObjects(outObject);
-    if (outObject.Num() <= 0 || !outObject[0]->GetClass()->IsChildOf<ASkeletalMeshActor>())
-    {
-        FText DialogText = {};
-        DialogText = FText::FromString(TEXT("请先选择粘贴目标。"));
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-        return FReply::Handled();
-    }
-
-    UObject* L_Target = L_Selects->GetSelectedObject(0);
-    ASkeletalMeshActor* L_Skin = Cast<ASkeletalMeshActor>(L_Target);
-    SelectText->SetText(FText::FromString(L_Skin->GetActorNameOrLabel()));
-    TArray<FSkeletalMaterial> L_List = CurrentObject->AllVaraint[NowVaraint].Variants;
-    for (int i = 0;i < L_List.Num();i++)
-    {
-        L_Skin->GetSkeletalMeshComponent()->SetMaterial(i, L_List[i].MaterialInterface);
-    }
-    L_Skin->GetSkeletalMeshComponent()->PostApplyToComponent();
-   //-----------------------
-    return FReply::Handled();
-}
-
 TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
-    return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)];  // 这里创建我们自己的界面
+    return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)];  // 杩欓噷鍒涘缓鎴戜滑鑷繁鐨勭晫闈
 }
 

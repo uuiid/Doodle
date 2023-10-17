@@ -6,6 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "DoodleVariantObject.h"
 #include "DoodleVariantCompoundWidget.h"
+#include "DoodleVariantEditorViewport.h"
 
 /**
  * 
@@ -22,7 +23,11 @@ public:
 	virtual FLinearColor GetWorldCentricTabColorScale() const override;
 
 	void Initialize(const EToolkitMode::Type Mode,const TSharedPtr<IToolkitHost>& InitToolkitHost,UDoodleVariantObject* Asset);
-	FName ViewportID{ TEXT("Doodle_ViewportID") };
+	FName Variant{ TEXT("Doodle_Variant") };
+	FName Viewport{ TEXT("Doodle_Viewport") };
+
 	FName AppIdentifier{ TEXT("Doodle_AppIdentifier") };
 	TSharedPtr<DoodleVariantCompoundWidget> VariantEditorWidget;
+
+	TSharedPtr<DoodleVariantEditorViewport> ViewEditorViewport;
 };
