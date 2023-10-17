@@ -7,7 +7,6 @@
 
 void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
     FAssetEditorToolkit::RegisterTabSpawners(In_TabManager);
-    In_TabManager->UnregisterAllTabSpawners();
     In_TabManager->RegisterTabSpawner(
         UDoodleVariantEditorToolkit::Variant,FOnSpawnTab::CreateLambda([&](const FSpawnTabArgs& Args)
             {
@@ -95,7 +94,7 @@ void UDoodleVariantEditorToolkit::Initialize(const EToolkitMode::Type Mode, cons
     if (ViewEditorViewport&& VariantEditorWidget)
     {
         VariantEditorWidget->SetSetVariantData(Asset);
-       FString NowVaraint = VariantEditorWidget->NowVaraint;
+        FString NowVaraint = VariantEditorWidget->NowVaraint;
         ViewEditorViewport->SetViewportSkeletal(Asset->Mesh, VariantEditorWidget.Get()->CurrentObject->AllVaraint[NowVaraint].Variants);
         VariantEditorWidget->OnVariantChange.BindLambda([this,Asset](FVariantInfo variant)
         {

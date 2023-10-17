@@ -163,22 +163,6 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     SNew(SVerticalBox)
                         + SVerticalBox::Slot()
                         .AutoHeight()
-                        .VAlign(VAlign_Top)
-                        [
-                            SAssignNew(ButtonLoadVariant, SButton)
-                                .Text(FText::FromString(TEXT("载入所有变体")))
-                                .OnClicked(this, &DoodleVariantCompoundWidget::OnLoadAllVariant)
-                                .Visibility_Lambda([this]()
-                                    {
-                                        if (!CurrentObject || (!CurrentObject->Mesh && CurrentObject->AllVaraint.Num() <= 0))
-                                        {
-                                            return  EVisibility::Visible;
-                                        }
-                                        return  EVisibility::Hidden;
-                                    })
-                        ]
-                        + SVerticalBox::Slot()
-                        .AutoHeight()
                         [
                             SNew(STextBlock)
                                 .Text(FText::FromString(TEXT("对应骨骼网格体")))
@@ -203,13 +187,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                 ]
                         ]
                         + SVerticalBox::Slot()
-                        .AutoHeight()
-                        [
-                            SNew(STextBlock)
-                                .Text(FText::FromString(TEXT("")))
-                        ]
-                        + SVerticalBox::Slot()
-                    .Padding(0.f,0.f,0.f,10.f)
+                        .Padding(0.f,0.f,0.f,15.f)
                         .VAlign(VAlign_Top)
                         [
                             SNew(STextBlock)
@@ -418,19 +396,14 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
                 int index = InItem->Index;
                 FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
                 UObject* u = AssetData.GetAsset();
-                TObjectPtr<UMaterial> ui = Cast<UMaterial>(AssetData.GetAsset());
+                TObjectPtr<UMaterialInterface> ui = Cast<UMaterialInterface>(AssetData.GetAsset());
                 if (ui) 
                 {
                     Arr.Variants[index] = FSkeletalMaterial(ui);
+                    CurrentObject->AllVaraint[NowVaraint] = Arr;
+                    MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
+                    CurrentObject->Modify();
                 }
-                else
-                {
-                    TObjectPtr<UMaterialInterface> uii = Cast<UMaterialInterface>(AssetData.GetAsset());
-                    Arr.Variants[index] = FSkeletalMaterial(uii);
-                }
-                CurrentObject->AllVaraint[NowVaraint] = Arr;
-                MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
-                CurrentObject->Modify();
             }
         });
 }
@@ -716,6 +689,6 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
 }
 
 TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
-    return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)];  // 杩欓噷鍒涘缓鎴戜滑鑷繁鐨勭晫闈
+    return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)]; 
 }
 
