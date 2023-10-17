@@ -82,6 +82,7 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: hair_uv.main())
         self.addButon("blend", icon="icons/blend.png",
                       command=self.blendkeyframe)
+        self.addButon("test", command=self.export_doodle_fbx)
 
     def polyremesh(self):
         self.re()
@@ -99,6 +100,11 @@ class DlsShelf(shelfBase._shelf):
 
     def blendkeyframe(self):
         Doodle_blend_keyframe.backeProcess()
+
+    def export_doodle_fbx(self):
+        l_files = cmds.fileDialog2(fileMode=0)
+        if l_files:
+            cmds.doodle_to_ue_fbx(file_path=l_files[0])
 
     @staticmethod
     def print_r(str_list):
