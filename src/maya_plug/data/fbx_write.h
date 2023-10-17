@@ -38,12 +38,19 @@ struct fbx_node {
   virtual void build_data(const fbx_tree_t& in_tree)                            = 0;
 };
 
-struct fbx_node_mesh : public fbx_node {
+struct fbx_node_transform : public fbx_node {
+  fbx_node_transform() = default;
+  explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
+  void build_data(const fbx_tree_t& in_tree) override;
+  void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
+};
+
+struct fbx_node_mesh : public fbx_node_transform {
   fbxsdk::FbxMesh* mesh{};
   std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
   fbx_node_mesh() = default;
   explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
-      : fbx_node(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
+      : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
   void build_data(const fbx_tree_t& in_tree) override;
   void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
 
@@ -56,12 +63,6 @@ struct fbx_node_mesh : public fbx_node {
   [[nodiscard]] std::vector<MObject> find_blend_shape() const;
 };
 
-struct fbx_node_transform : public fbx_node {
-  fbx_node_transform() = default;
-  explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
-  void build_data(const fbx_tree_t& in_tree) override;
-  void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
-};
 
 struct fbx_node_joint : public fbx_node_transform {
   fbx_node_joint() = default;
