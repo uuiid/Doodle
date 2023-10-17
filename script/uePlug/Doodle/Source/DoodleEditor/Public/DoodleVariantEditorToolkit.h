@@ -13,7 +13,7 @@
  */
 class DOODLEEDITOR_API UDoodleVariantEditorToolkit : public FAssetEditorToolkit
 {
-public:
+protected:
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) override;
 
@@ -21,8 +21,9 @@ public:
 	virtual FText GetBaseToolkitName() const override;
 	virtual FString GetWorldCentricTabPrefix() const override;
 	virtual FLinearColor GetWorldCentricTabColorScale() const override;
-
+public:
 	void Initialize(const EToolkitMode::Type Mode,const TSharedPtr<IToolkitHost>& InitToolkitHost,UDoodleVariantObject* Asset);
+private:
 	FName Variant{ TEXT("Doodle_Variant") };
 	FName Viewport{ TEXT("Doodle_Viewport") };
 

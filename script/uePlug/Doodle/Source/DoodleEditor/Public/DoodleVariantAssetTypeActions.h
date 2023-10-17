@@ -16,7 +16,7 @@ public:
 	DoodleVariantAssetTypeActions();
 	DoodleVariantAssetTypeActions(EAssetTypeCategories::Type InAssetCategory);
 	~DoodleVariantAssetTypeActions();
-
+protected:
 	virtual FText GetName() const override { return FText::FromString("Doodle Variant"); };
 	virtual FColor GetTypeColor() const override { return FColor(100, 100, 100); };
 	virtual UClass* GetSupportedClass() const override { return  UDoodleVariantObject::StaticClass(); };

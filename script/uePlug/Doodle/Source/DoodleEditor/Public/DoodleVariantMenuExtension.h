@@ -15,7 +15,9 @@ public:
 	~FDoodleVariantMenuExtension();
 
 	void AddMenuEntry(FMenuBuilder& MenuBuilder);
-	void AddNewMenu(FMenuBuilder& builder, UDoodleVariantAssetUserData* UserData, AActor* TempActor);
 
+private:
+	void AddNewMenu(FMenuBuilder& builder, UDoodleVariantAssetUserData* UserData, AActor* TempActor);
+public:
 	TWeakPtr<ISequencer> TheSequencer;
 };

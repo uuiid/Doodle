@@ -189,10 +189,6 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                         + SVerticalBox::Slot()
                         .Padding(0.f,0.f,0.f,15.f)
                         .VAlign(VAlign_Top)
-                        [
-                            SNew(STextBlock)
-                                .Text(FText::FromString(FString(TEXT(""))))
-                        ]
             ]
             + SVerticalBox::Slot()
             [
@@ -568,7 +564,7 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     else
     {
         FNotificationInfo Info(FText::FromString(TEXT("骨骼网格体已丢失，请重新链接")));
-        Info.FadeInDuration = 2.0f;  // 娣″叆娣″嚭鏃堕棿
+        Info.FadeInDuration = 2.0f;  
         Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
         FSlateNotificationManager::Get().AddNotification(Info);
         //--------------

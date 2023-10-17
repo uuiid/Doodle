@@ -27,10 +27,9 @@ public:
 	SLATE_BEGIN_ARGS(DoodleVariantCompoundWidget)
 	{}
 	SLATE_END_ARGS()
-
-	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
+private:
 	TSharedRef<ITableRow> VariantListOnGenerateRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	TSharedRef<ITableRow> MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	void VariantNameOnTextCommitted(const FText& InText,TSharedPtr<FString> InItem);
@@ -40,27 +39,27 @@ public:
 	FReply OnVariantAdd();
 	void OnVariantDelete();
 
-	const static FName Name;
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
-	///var
 	TSharedPtr<SListView< TSharedPtr<FString>>> ThisListView;
 	TArray<TSharedPtr<FString>> Items = {};
 	//mate
 	TSharedPtr<SListView<TSharedPtr<FMaterialItemData> >> MaterialListView;
 	TArray< TSharedPtr< FMaterialItemData> > MaterialItems;
 	//------------------------
-	UDoodleVariantObject* CurrentObject;
-
 	TSharedPtr<STextBlock> NameText;
 
-	void SetSetVariantData(UDoodleVariantObject* obj);
 	void SetVariantInfo(FString varaint_name);
 
-
-	FString NowVaraint;
 	TSharedPtr<SButton> ButtonLoadVariant;
 	TSharedPtr<SButton> ButtonLinkMesh;
+
+public:
+	FString NowVaraint;
+	const static FName Name;
+	void SetSetVariantData(UDoodleVariantObject* obj);
+
+	UDoodleVariantObject* CurrentObject;
 	//----------------------
 	FVariantInfoParamDelegate OnVariantChange;
 };

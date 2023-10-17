@@ -17,7 +17,6 @@ class DOODLEEDITOR_API UDoodleVariantAssetUserData : public UAssetUserData
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnyWhere, Category = "Custom Data ")
-
+	UPROPERTY(VisibleAnyWhere, Category = "Custom Data")
 	UDoodleVariantObject* VariantObj;
 };

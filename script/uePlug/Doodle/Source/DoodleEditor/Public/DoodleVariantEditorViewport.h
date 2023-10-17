@@ -44,7 +44,8 @@ public:
 	~DoodleVariantEditorViewport();
 
 	void Construct(const FArguments& Arg);
-
+	void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh, TArray<FSkeletalMaterial> Variants);
+private:
 	TSharedPtr<FEditorViewportClient> ViewportClient;
 	TSharedPtr<FAssetEditorModeManager> AssetEditorModeManager;
 	TSharedPtr<FAdvancedPreviewScene> AdvancedPreviewScene;
@@ -54,7 +55,6 @@ public:
 	void OnFloatingButtonClicked() override;
 
 	AActor* PreviewActor;
-	void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh, TArray<FSkeletalMaterial> Variants);
 
 protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
