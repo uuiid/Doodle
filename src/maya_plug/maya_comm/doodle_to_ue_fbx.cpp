@@ -4,46 +4,25 @@
 
 #include "doodle_to_ue_fbx.h"
 
-#include <boost/lambda2.hpp>
-
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/fbx_write.h>
-#include <maya_plug/data/maya_tool.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
-#include <maya_plug/fmt/fmt_warp.h>
 
-#include <fbxsdk.h>
 #include <maya/MAngle.h>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
 #include <maya/MEulerRotation.h>
-#include <maya/MFloatArray.h>
-#include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MFnComponentListData.h>
-#include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
-#include <maya/MFnPointArrayData.h>
-#include <maya/MFnSet.h>
-#include <maya/MFnSingleIndexedComponent.h>
-#include <maya/MFnSkinCluster.h>
-#include <maya/MFnTransform.h>
-#include <maya/MItDag.h>
 #include <maya/MItDependencyGraph.h>
-#include <maya/MItGeometry.h>
-#include <maya/MItMeshFaceVertex.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MItMeshVertex.h>
-#include <maya/MItSelectionList.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPointArray.h>
 #include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
-#include <maya/MTime.h>
-#include <treehh/tree.hh>
-namespace doodle {
-namespace maya_plug {
+
+namespace doodle::maya_plug {
 
 namespace {
 constexpr char file_path[]   = "-fp";
@@ -57,11 +36,11 @@ MSyntax doodle_to_ue_fbx_syntax() {
   return l_syntax;
 }
 
-doodle_to_ue_fbx::doodle_to_ue_fbx() {}
+doodle_to_ue_fbx::doodle_to_ue_fbx() = default;
 
 MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   MStatus l_statu{};
-  MArgDatabase l_arg_data{syntax(), in_list, &l_statu};
+  MArgDatabase const l_arg_data{syntax(), in_list, &l_statu};
   maya_chick(l_statu);
   MSelectionList l_list{};
   maya_chick(l_arg_data.getObjects(l_list));
@@ -88,5 +67,4 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
 
 doodle_to_ue_fbx::~doodle_to_ue_fbx() = default;
 
-}  // namespace maya_plug
-}  // namespace doodle
+}  // namespace doodle::maya_plug
