@@ -8,9 +8,11 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include "maya_plug_fwd.h"
+#include <maya_plug/data/fbx_write.h>
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sequence_to_blend_shape.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 
 #include "data/maya_tool.h"
@@ -23,7 +25,6 @@
 #include <maya/MDagPath.h>
 #include <maya/MItDag.h>
 #include <memory>
-#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/view/transform.hpp>
 #include <vector>
 
@@ -85,8 +86,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 void export_file_fbx::export_anim(
     const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view, const MSelectionList& in_exclude
 ) {
-  MSelectionList l_select{};
-  MStatus l_satus{};
+  std::vector<MDagPath> l_export_list{};
   auto& k_cfg         = g_reg()->ctx().get<project_config::base_config>();
   auto& l_ref         = in_handle_view.get<reference_file>();
   auto l_export_group = l_ref.export_group_attr();
@@ -94,54 +94,33 @@ void export_file_fbx::export_anim(
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return;
   }
-  if (in_exclude.isEmpty()) {
-    l_select.add(*l_export_group);
-  } else {
-    MItDag l_it{};
-    maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
-    MDagPath l_path{};
-    for (; !l_it.isDone(); l_it.next()) {
-      maya_chick(l_it.getPath(l_path));
-      l_path.pop();
-      if (in_exclude.hasItem(l_path)) {
-        continue;
-      }
-      //    if (in_exclude.hasItem(l_path.transform())) {
-      //      continue;
-      //    }
-      maya_chick(l_select.add(l_path));
-    }
 
-    maya_chick(l_satus);
+  MItDag l_it{};
+  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
+  MDagPath l_path{};
+  for (; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getPath(l_path));
+    l_path.pop();
+    if (in_exclude.hasItem(l_path)) {
+      continue;
+    }
+    //    if (in_exclude.hasItem(l_path.transform())) {
+    //      continue;
+    //    }
+    l_export_list.push_back(l_path);
   }
 
   m_namespace_ = l_ref.get_namespace();
-  DOODLE_LOG_INFO("导出选中物体 {} 排除物体 {}", l_select, in_exclude);
+  log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));
 
-  maya_chick(MGlobal::setActiveSelectionList(l_select));
   auto l_arg = in_handle_view.get<generate_file_path_ptr>();
   bake_anim(l_arg->begin_end_time.first, l_arg->begin_end_time.second, *l_export_group);
 
-  auto k_file_path = (*l_arg)(l_ref);
-  DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
+  auto l_file_path = (*l_arg)(l_ref);
+  log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
 
-  auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", l_arg->begin_end_time.first.value());
-  maya_chick(MGlobal::executeCommand(d_str{k_comm}));
-
-  k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", l_arg->begin_end_time.second.value());
-  maya_chick(MGlobal::executeCommand(d_str{k_comm}));
-  maya_chick(MGlobal::executeCommand(conv::to_ms("FBXExportBakeComplexAnimation -v true;")));
-  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportConstraints -v false;)")));
-  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportInputConnections -v true;)")));
-  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportSkeletonDefinitions -v true;)")));
-  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportSkins -v true;)")));
-  maya_chick(MGlobal::executeCommand(conv::to_ms(R"(FBXExportSmoothingGroups -v true;)")));
-
-  k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
-  maya_chick(MGlobal::executeCommand(d_str{k_comm}));
-  //  maya_chick(MGlobal::executeCommand(conv::to_ms(
-  //      fmt::format(R"(file -force -options "v=0;" -typ "FBX export" -pr -es "{}";)", k_file_path.generic_string())
-  //  )));
+  fbx_write l_fbx_write{};
+  l_fbx_write.write(l_export_list, l_arg->begin_end_time.first, l_arg->begin_end_time.second, l_file_path);
 }
 
 void export_file_fbx::cloth_to_blendshape(

@@ -18,6 +18,7 @@
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFnBlendShapeDeformer.h>
+#include <maya/MFnCamera.h>
 #include <maya/MFnComponentListData.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnPointArrayData.h>
@@ -35,7 +36,6 @@
 #include <maya/MQuaternion.h>
 #include <maya/MTime.h>
 #include <treehh/tree.hh>
-
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
 void fbx_node::build_node(const fbx_tree_t& in_tree) {
@@ -107,6 +107,33 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
   node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   node->ScalingMax.Set({});
 }
+
+///
+
+void fbx_node_cam::build_data(const fbx_tree_t& in_tree) {
+  fbx_node_transform::build_data(in_tree);
+  auto* l_cam = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
+  node->SetNodeAttribute(l_cam);
+  MFnCamera l_fn_cam{dag_path};
+  l_cam->ProjectionType.Set(l_fn_cam.isOrtho() ? FbxCamera::eOrthogonal : FbxCamera::ePerspective);
+  std::int32_t l_width{}, l_height{};
+  std::double_t l_horizontal_fov{}, l_vertical_fov{};
+  l_fn_cam.getPortFieldOfView(l_width, l_height, l_horizontal_fov, l_vertical_fov);
+  l_cam->SetAspect(FbxCamera::EAspectRatioMode::eWindowSize, l_width, l_height);
+  l_cam->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
+
+  l_cam->SetApertureWidth(l_fn_cam.horizontalFilmAperture());
+  l_cam->SetApertureHeight(l_fn_cam.verticalFilmAperture());
+  l_cam->SetApertureMode(FbxCamera::eFocalLength);
+  l_cam->FocalLength.Set(l_fn_cam.focalLength());
+  l_cam->FocusDistance.Set(l_fn_cam.focusDistance());
+
+  l_cam->Position.Set(l_cam->EvaluatePosition());
+  //  l_cam->EvaluateUpDirection(l_cam->EvaluatePosition(), l_cam->EvaluateLookAtPosition());
+}
+void fbx_node_cam::build_animation(const fbx_tree_t& in_tree, const MTime& in_time) {}
+
+///
 
 ////
 void fbx_node_transform::build_data(const fbx_tree_t& in_tree) {
@@ -725,6 +752,35 @@ void fbx_write::write(
     l_objs.emplace_back(l_path);
   }
   write(l_objs, in_begin, in_end, in_path);
+}
+
+void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path) {
+  path_            = in_path;
+  auto* anim_stack = scene_->GetCurrentAnimationStack();
+  FbxTime l_fbx_begin{};
+  l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
+  anim_stack->LocalStart = l_fbx_begin;
+  FbxTime l_fbx_end{};
+  l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
+  anim_stack->LocalStop = l_fbx_end;
+
+  MAnimControl::setCurrentTime(in_begin);
+
+  init();
+  //  build_tree(in_vector);
+  return;
+  try {
+    build_data();
+  } catch (const maya_error& in_error) {
+    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    return;
+  }
+
+  for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+    MAnimControl::setCurrentTime(l_time);
+    build_animation(l_time);
+  }
+  write_end();
 }
 
 void fbx_write::write_end() {

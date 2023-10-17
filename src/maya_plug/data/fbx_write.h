@@ -35,12 +35,19 @@ struct fbx_node {
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
 
  protected:
-  virtual void build_data(const fbx_tree_t& in_tree)                            = 0;
+  virtual void build_data(const fbx_tree_t& in_tree) = 0;
 };
 
 struct fbx_node_transform : public fbx_node {
   fbx_node_transform() = default;
   explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
+  void build_data(const fbx_tree_t& in_tree) override;
+  void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
+};
+
+struct fbx_node_cam : public fbx_node_transform {
+  fbx_node_cam() = default;
+  explicit fbx_node_cam(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {}
   void build_data(const fbx_tree_t& in_tree) override;
   void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
 };
@@ -62,7 +69,6 @@ struct fbx_node_mesh : public fbx_node_transform {
   [[nodiscard]] std::vector<MDagPath> find_joint(const MObject& in_msk) const;
   [[nodiscard]] std::vector<MObject> find_blend_shape() const;
 };
-
 
 struct fbx_node_joint : public fbx_node_transform {
   fbx_node_joint() = default;
@@ -100,6 +106,8 @@ class fbx_write {
       const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
   );
   void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path);
+
+  void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path);
 };
 
 }  // namespace doodle::maya_plug
