@@ -4,6 +4,8 @@
 
 #include "ue_task_manage.h"
 
+#include <doodle_core/doodle_core_fwd.h>
+
 #include <doodle_server/render_farm/detail/ue4_task.h>
 namespace doodle {
 namespace render_farm {

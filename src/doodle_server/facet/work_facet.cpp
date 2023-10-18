@@ -8,16 +8,15 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/boost_locale_warp.h>
 
 #include <doodle_app/app/program_options.h>
 
-#include <doodle_lib/render_farm/detail/url_webscoket.h>
-#include <doodle_lib/render_farm/work.h>
-#include <doodle_lib/render_farm/working_machine.h>
+#include <boost/asio/executor_work_guard.hpp>
 
-#include "boost/asio/executor_work_guard.hpp"
-
-#include "render_farm/detail/url_webscoket.h"
+#include <doodle_server/render_farm/detail/url_webscoket.h>
+#include <doodle_server/render_farm/work.h>
+#include <doodle_server/render_farm/working_machine.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <winreg/WinReg.hpp>
 namespace doodle {

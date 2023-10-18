@@ -1,8 +1,6 @@
 target_sources(
         doodle_server_lib
         PUBLIC
-        client_core.h
-        client.h
         work.h
         proxy_server.h
         working_machine.h
@@ -14,8 +12,6 @@ target_sources(
         render_farm_fwd.h
 
         PRIVATE
-        client_core.cpp
-        client.cpp
         work.cpp
         proxy_server.cpp
         working_machine.cpp

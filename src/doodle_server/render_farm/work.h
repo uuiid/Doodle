@@ -2,12 +2,12 @@
 // Created by td_main on 2023/8/21.
 //
 #include <doodle_core/configure/static_value.h>
+#include <doodle_core/render_farm/basic_json_body.h>
+#include <doodle_core/render_farm/client_core.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
-#include <doodle_server/render_farm/client_core.h>
-#include <doodle_server/render_farm/detail/basic_json_body.h>
 #include <doodle_server/render_farm/websocket.h>
 
 namespace doodle {

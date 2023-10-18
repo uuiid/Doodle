@@ -3,12 +3,11 @@
 //
 #pragma once
 #include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/render_farm/basic_json_body.h>
+#include <doodle_core/render_farm/client_core.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
-
-#include <doodle_server/render_farm/client_core.h>
-#include <doodle_server/render_farm/detail/basic_json_body.h>
 
 namespace doodle {
 

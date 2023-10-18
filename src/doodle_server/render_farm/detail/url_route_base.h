@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <boost/algorithm/string.hpp>
 #include <boost/beast.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/url.hpp>

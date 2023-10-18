@@ -6,6 +6,8 @@ add_library(doodle_server_lib
 
 )
 
+add_subdirectory(core)
+add_subdirectory(facet)
 add_subdirectory(render_farm)
 
 

@@ -3,6 +3,7 @@
 //
 #include "url_route_put.h"
 
+#include <doodle_core/thread_pool/process_message.h>
 namespace doodle::render_farm {
 namespace detail {
 void render_job_type_put::operator()(

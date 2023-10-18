@@ -19,6 +19,7 @@ target_sources(
         rules.h
         work_task.h
         file_one_path.h
+        render_ue4_arg.h
 
         PRIVATE
         assets.cpp
@@ -40,6 +41,7 @@ target_sources(
         rules.cpp
         work_task.cpp
         file_one_path.cpp
+        render_ue4_arg.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)

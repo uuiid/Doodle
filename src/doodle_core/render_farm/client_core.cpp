@@ -8,7 +8,6 @@
 
 #include <boost/asio.hpp>
 
-#include <doodle_server/core/bind_front_handler.h>
 namespace doodle::detail {
 
 void client_core::make_ptr() {

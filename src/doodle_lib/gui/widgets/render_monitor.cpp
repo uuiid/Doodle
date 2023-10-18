@@ -8,8 +8,6 @@
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <doodle_lib/render_farm/udp_client.h>
-
 #include <winreg/WinReg.hpp>
 namespace doodle {
 namespace gui {

@@ -7,11 +7,12 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 
+#include <doodle_lib/render_farm/render_ue4.h>
+
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
 #include <doodle_server/render_farm/detail/computer.h>
-#include <doodle_server/render_farm/detail/render_ue4.h>
 #include <doodle_server/render_farm/http_session.h>
 #include <doodle_server/render_farm/udp_client.h>
 namespace doodle {

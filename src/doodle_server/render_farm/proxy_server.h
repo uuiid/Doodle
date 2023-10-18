@@ -4,11 +4,11 @@
 #pragma once
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/core/global_function.h>
+#include <doodle_core/render_farm/client_core.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
-#include <doodle_server/render_farm/client_core.h>
 #include <memory>
 namespace doodle {
 class proxy_server : public std::enable_shared_from_this<proxy_server> {

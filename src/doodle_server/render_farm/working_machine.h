@@ -2,12 +2,13 @@
 // Created by td_main on 2023/8/3.
 //
 #pragma once
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/core/global_function.h>
-
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
+#include <doodle_server/render_farm/render_farm_fwd.h>
 #include <memory>
 namespace doodle::render_farm {
 

@@ -3,13 +3,17 @@
 //
 
 #pragma once
+#include <doodle_core/configure/static_value.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/logger/logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
-#include <doodle_server/render_farm/detail/basic_json_body.h>
+#include <magic_enum.hpp>
+// #include <doodle_server/render_farm/detail/basic_json_body.h>
 
 namespace doodle::detail {
 

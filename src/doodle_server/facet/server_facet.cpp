@@ -11,15 +11,11 @@
 
 #include <doodle_app/app/program_options.h>
 
-#include <doodle_lib/render_farm/detail/url_webscoket.h>
-#include <doodle_lib/render_farm/functional_registration_manager.h>
-#include <doodle_lib/render_farm/udp_server.h>
-#include <doodle_lib/render_farm/working_machine.h>
-
-#include "boost/asio/executor_work_guard.hpp"
-
+#include <doodle_server/render_farm/detail/url_webscoket.h>
+#include <doodle_server/render_farm/functional_registration_manager.h>
+#include <doodle_server/render_farm/udp_server.h>
+#include <doodle_server/render_farm/working_machine.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
 namespace doodle {
 bool server_facet::post() {
   win::open_console_window();

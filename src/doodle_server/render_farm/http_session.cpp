@@ -9,6 +9,7 @@
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/lib_warp/boost_fmt_url.h>
+#include <doodle_core/render_farm/basic_json_body.h>
 
 #include "boost/url/urls.hpp"
 #include <boost/beast/core.hpp>
@@ -17,8 +18,6 @@
 #include <boost/url.hpp>
 
 #include <doodle_server/core/bind_front_handler.h>
-#include <doodle_server/render_farm/detail/basic_json_body.h>
-#include <doodle_server/render_farm/detail/render_ue4.h>
 #include <doodle_server/render_farm/detail/url_route_base.h>
 #include <doodle_server/render_farm/detail/url_route_get.h>
 #include <doodle_server/render_farm/detail/url_route_post.h>

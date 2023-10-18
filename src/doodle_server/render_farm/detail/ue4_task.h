@@ -3,7 +3,10 @@
 //
 
 #pragma once
-#include <doodle_server/render_farm/detail/render_ue4.h>
+#include <doodle_core/metadata/render_ue4_arg.h>
+
+#include <entt/entt.hpp>
+
 namespace doodle {
 namespace render_farm {
 namespace detail {

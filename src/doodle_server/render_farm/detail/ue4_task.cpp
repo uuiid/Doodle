@@ -4,6 +4,8 @@
 
 #include "ue4_task.h"
 
+#include <doodle_core/thread_pool/process_message.h>
+
 #include <doodle_server/render_farm/detail/computer.h>
 namespace doodle {
 namespace render_farm {
