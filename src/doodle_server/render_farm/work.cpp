@@ -14,7 +14,6 @@
 
 #include <doodle_server/render_farm/detail/computer.h>
 #include <doodle_server/render_farm/http_session.h>
-#include <doodle_server/render_farm/udp_client.h>
 namespace doodle {
 namespace render_farm {
 

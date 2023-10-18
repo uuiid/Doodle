@@ -13,7 +13,6 @@
 
 #include <doodle_server/render_farm/detail/url_webscoket.h>
 #include <doodle_server/render_farm/functional_registration_manager.h>
-#include <doodle_server/render_farm/udp_server.h>
 #include <doodle_server/render_farm/working_machine.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 namespace doodle {

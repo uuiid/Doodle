@@ -5,8 +5,6 @@ target_sources(
         proxy_server.h
         working_machine.h
         http_session.h
-        udp_server.h
-        udp_client.h
         websocket.h
         functional_registration_manager.h
         render_farm_fwd.h
@@ -17,8 +15,6 @@ target_sources(
         proxy_server.cpp
         working_machine.cpp
         http_session.cpp
-        udp_server.cpp
-        udp_client.cpp
         websocket.cpp
         logger_com.cpp
         functional_registration_manager.cpp
