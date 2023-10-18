@@ -21,7 +21,7 @@ using render_ue4     = detail::render_ue4;
 using render_ue4_ptr = std::shared_ptr<render_ue4>;
 using http_route_ptr = std::shared_ptr<detail::http_route>;
 struct socket_logger {
-  socket_logger() { logger_ = g_logger_ctrl().make_log(fmt::format("socket {}", entt::to_entity(*g_reg(), *this))); }
+  socket_logger();
   logger_ptr logger_{};
 };
 }  // namespace render_farm
