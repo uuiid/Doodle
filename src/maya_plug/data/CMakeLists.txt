@@ -16,8 +16,6 @@ target_sources(doodle_maya_lib
         sim_cloth_tools.h
         sim_cover_attr.h
         sequence_to_blend_shape.h
-        null_facet.h
-        maya_create_movie.h
         ncloth_factory.h
         qcloth_factory.h
         export_file_abc.h
@@ -41,8 +39,6 @@ target_sources(doodle_maya_lib
         sim_cloth_tools.cpp
         sim_cover_attr.cpp
         sequence_to_blend_shape.cpp
-        null_facet.cpp
-        maya_create_movie.cpp
         ncloth_factory.cpp
         qcloth_factory.cpp
         export_file_fbx.cpp

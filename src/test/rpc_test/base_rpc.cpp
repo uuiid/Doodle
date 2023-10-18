@@ -15,7 +15,6 @@
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/facet/gui_facet.h>
-#include <doodle_app/app/this_rpc_exe.h>
 
 #include "doodle_lib/distributed_computing/client.h"
 #include <doodle_lib/distributed_computing/server.h>

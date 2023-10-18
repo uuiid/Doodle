@@ -17,8 +17,6 @@
 
 #include <boost/asio/post.hpp>
 
-#include <maya_plug/data/maya_create_movie.h>
-#include <maya_plug/data/null_facet.h>
 #include <maya_plug/gui/action/comm_check_scenes.h>
 #include <maya_plug/gui/action/create_sim_cloth.h>
 #include <maya_plug/gui/action/dem_cloth_to_fbx.h>
@@ -46,7 +44,6 @@ void maya_facet::load_windows() {
 }
 void maya_facet::close_windows() { ::ShowWindow(p_hwnd, SW_HIDE); }
 maya_facet::maya_facet() : doodle::facet::gui_facet() {
-  g_reg()->ctx().get<image_to_move>() = std::make_shared<detail::maya_create_movie>();
 }
 
 }  // namespace doodle::maya_plug

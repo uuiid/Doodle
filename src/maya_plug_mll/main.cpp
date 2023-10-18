@@ -7,7 +7,6 @@
 
 #include <maya_plug/data/create_hud_node.h>
 #include <maya_plug/data/maya_register_main.h>
-#include <maya_plug/data/null_facet.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
@@ -65,8 +64,7 @@ HWND find_windows() {
 }
 
 void open_windows() {
-  using maya_gui_app     = doodle::app_plug<maya_facet>;
-  using maya_command_app = doodle::app_plug<null_facet>;
+  using maya_gui_app = doodle::app_plug<maya_facet>;
 
   switch (MGlobal::mayaState()) {
     case MGlobal::MMayaState::kBaseUIMode:
@@ -82,7 +80,6 @@ void open_windows() {
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
     default: {
-      p_doodle_app = std::make_shared<maya_command_app>();
     } break;
   }
 
