@@ -3,7 +3,7 @@ target_sources(
         PUBLIC
         work.h
         proxy_server.h
-        working_machine.h
+        http_listener.h
         http_session.h
         websocket.h
         functional_registration_manager.h
@@ -13,7 +13,7 @@ target_sources(
         PRIVATE
         work.cpp
         proxy_server.cpp
-        working_machine.cpp
+        http_listener.cpp
         http_session.cpp
         websocket.cpp
         logger_com.cpp

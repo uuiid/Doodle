@@ -2,7 +2,7 @@
 // Created by td_main on 2023/8/3.
 //
 
-#include "working_machine.h"
+#include "http_listener.h"
 
 #include <doodle_app/app/app_command.h>
 
@@ -20,7 +20,7 @@
 #include <doodle_server/render_farm/render_farm_fwd.h>
 namespace doodle::render_farm {
 
-void working_machine::run() {
+void http_listener::run() {
   //  acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
   //  acceptor_.bind(end_point_);
   //  acceptor_.listen(boost::asio::socket_base::max_listen_connections);
@@ -52,12 +52,12 @@ void working_machine::run() {
     //    app_base::Get().stop_app();
   });
 }
-void working_machine::do_accept() {
+void http_listener::do_accept() {
   acceptor_.async_accept(
-      boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&working_machine::on_accept, this)
+      boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&http_listener::on_accept, this)
   );
 }
-void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
+void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
   if (ec) {
     if (ec == boost::asio::error::operation_aborted) {
       return;
@@ -72,7 +72,7 @@ void working_machine::on_accept(boost::system::error_code ec, boost::asio::ip::t
   }
   do_accept();
 }
-void working_machine::stop() {
+void http_listener::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
   g_reg()->ctx().get<computer_manage>().cancel();
   auto l_view = g_reg()->view<http_session_data>();

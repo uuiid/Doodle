@@ -15,8 +15,8 @@
 #include <boost/asio/executor_work_guard.hpp>
 
 #include <doodle_server/render_farm/detail/url_webscoket.h>
+#include <doodle_server/render_farm/http_listener.h>
 #include <doodle_server/render_farm/work.h>
-#include <doodle_server/render_farm/working_machine.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <winreg/WinReg.hpp>
 namespace doodle {

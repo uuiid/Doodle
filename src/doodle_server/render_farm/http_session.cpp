@@ -21,9 +21,9 @@
 #include <doodle_server/render_farm/detail/url_route_base.h>
 #include <doodle_server/render_farm/detail/url_route_get.h>
 #include <doodle_server/render_farm/detail/url_route_post.h>
+#include <doodle_server/render_farm/http_listener.h>
 #include <doodle_server/render_farm/render_farm_fwd.h>
 #include <doodle_server/render_farm/websocket.h>
-#include <doodle_server/render_farm/working_machine.h>
 namespace doodle::render_farm {
 
 namespace session {

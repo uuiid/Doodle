@@ -12,13 +12,13 @@
 #include <memory>
 namespace doodle::render_farm {
 
-class working_machine {
+class http_listener {
  public:
-  explicit working_machine(boost::asio::io_context& in_io_context, std::uint16_t in_port = doodle_config::http_port)
+  explicit http_listener(boost::asio::io_context& in_io_context, std::uint16_t in_port = doodle_config::http_port)
       : end_point_{boost::asio::ip::tcp::v4(), in_port},
         acceptor_{in_io_context, end_point_},
         signal_set_{g_io_context(), SIGINT, SIGTERM} {}
-  ~working_machine() = default;
+  http_listener() = default;
   void run();
   void stop();
 

@@ -9,7 +9,7 @@
 namespace doodle {
 namespace render_farm {
 class working_machine_session;
-class working_machine;
+class http_listener;
 namespace detail {
 struct basic_json_body;
 class http_route;
