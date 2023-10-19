@@ -4,7 +4,7 @@
 #include "logger_com.h"
 
 namespace doodle::render_farm {
-socket_logger::socket_logger {
+socket_logger::socket_logger() {
   logger_ = g_logger_ctrl().make_log(fmt::format("socket {}", entt::to_entity(*g_reg(), *this)));
 }
 }  // namespace doodle::render_farm
