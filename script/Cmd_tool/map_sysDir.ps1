@@ -9,7 +9,7 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\DuBuXiaoYao_8"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
     [map_dir]@{link = "C:\sy\ChengXv_8"; source = "\\192.168.10.250\public\Prism_projects"; name = "程序开发_250" },
     [map_dir]@{link = "C:\sy\donghuagongxiang_8"; source = "\\192.168.10.250\public\动画共享"; name = "动画共享_250" },
-    [map_dir]@{link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.250\public\renjianzuideyi"; name = "人间最得意_250" },
+    [map_dir]@{ link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" },
     [map_dir]@{link = "C:\sy\HouQi_8"; source = "\\192.168.10.250\public\HouQi"; name = "后期_250" },
     [map_dir]@{link = "C:\sy\MeiYiGiao_8"; source = "\\192.168.10.250\public\美易高"; name = "美易高" },
     [map_dir]@{link = "C:\sy\jianji_250"; source = "\\192.168.10.250\public\11-剪辑" ; name = "剪辑_250" },
