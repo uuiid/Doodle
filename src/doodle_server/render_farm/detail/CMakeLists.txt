@@ -12,7 +12,6 @@ target_sources(
         ue_task_manage.h
         computer_manage.h
         url_webscoket.h
-        project.h
 
         PRIVATE
         url_route_base.cpp
@@ -24,5 +23,4 @@ target_sources(
         ue_task_manage.cpp
         computer_manage.cpp
         url_webscoket.cpp
-        project.cpp
 )
