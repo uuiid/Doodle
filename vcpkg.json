@@ -35,6 +35,11 @@
     "treehh",
     "wil",
     {
+      "name": "fmt",
+      "default-features": true,
+      "version>=": "10.1.1"
+    },
+    {
       "name": "opencv",
       "default-features": false,
       "features": [
@@ -57,7 +62,11 @@
     "nlohmann-json",
     "date",
     "spdlog",
-    "entt",
+    {
+      "name": "entt",
+      "default-features": true,
+      "version>=": "3.12.2"
+    },
     {
       "name": "sqlpp11",
       "default-features": false,
