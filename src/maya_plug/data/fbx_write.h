@@ -27,7 +27,7 @@ struct fbx_node {
   fbx_node() = default;
   explicit fbx_node(const MDagPath& in_dag_path, FbxNode* in_node) : dag_path(in_dag_path), node(in_node) {}
 
-  void build_node(const fbx_tree_t& in_tree);
+  void build_node(const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map);
 
   virtual void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) = 0;
 
@@ -35,20 +35,24 @@ struct fbx_node {
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
 
  protected:
-  virtual void build_data(const fbx_tree_t& in_tree) = 0;
+  virtual void build_data(
+      const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map
+  ) = 0;
 };
 
 struct fbx_node_transform : public fbx_node {
   fbx_node_transform() = default;
   explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
-  void build_data(const fbx_tree_t& in_tree) override;
+  void build_data(const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map)
+      override;
   void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
 };
 
 struct fbx_node_cam : public fbx_node_transform {
   fbx_node_cam() = default;
   explicit fbx_node_cam(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {}
-  void build_data(const fbx_tree_t& in_tree) override;
+  void build_data(const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map)
+      override;
   void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
 };
 
@@ -58,10 +62,11 @@ struct fbx_node_mesh : public fbx_node_transform {
   fbx_node_mesh() = default;
   explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
       : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
-  void build_data(const fbx_tree_t& in_tree) override;
+  void build_data(const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map)
+      override;
   void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) override;
 
-  void build_mesh();
+  void build_mesh(std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map);
   void build_skin(const fbx_tree_t& in_tree);
   void build_blend_shape();
 
@@ -73,7 +78,8 @@ struct fbx_node_mesh : public fbx_node_transform {
 struct fbx_node_joint : public fbx_node_transform {
   fbx_node_joint() = default;
   explicit fbx_node_joint(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {}
-  void build_data(const fbx_tree_t& in_tree) override;
+  void build_data(const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map)
+      override;
 };
 
 }  // namespace fbx_write_ns
@@ -90,6 +96,7 @@ class fbx_write {
   using fbx_tree_t           = fbx_write_ns::fbx_tree_t;
 
   fbx_tree_t tree_{};                                              // 用于存储节点的树
+  std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};  // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   void write_end();
