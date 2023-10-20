@@ -24,70 +24,70 @@ private:
 public:
     FAssetData MeshAssetData;
 
-    void Construct(const FArguments& InArgs) {
-        //-------------------------------------------
+    void Construct(const FArguments& InArgs) 
+    {
         ChildSlot
-            [
-                SNew(SBorder)
-                    .Visibility(EVisibility::Visible)
-                    .BorderImage(FAppStyle::GetBrush("Menu.Background"))
-                    [
-                        SNew(SBox)
-                            .Visibility(EVisibility::Visible)
-                            .WidthOverride(500.0f)
-                            [
-                                SNew(SVerticalBox)
-                                    + SVerticalBox::Slot()
-                                    .FillHeight(1)
-                                    .Padding(0.0f, 10.0f, 0.0f, 0.0f)
-                                    [
-                                        SNew(SBorder)
-                                            .BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-                                            .Content()
-                                            [
-                                                SAssignNew(SkeletonContainer, SVerticalBox)
-                                            ]
-                                    ]
-                                    + SVerticalBox::Slot()
-                                    .AutoHeight()
-                                    .HAlign(HAlign_Right)
-                                    .VAlign(VAlign_Bottom)
-                                    .Padding(8)
-                                    [
-                                        SNew(SUniformGridPanel)
-                                            .SlotPadding(FAppStyle::GetMargin("StandardDialog.SlotPadding"))
-                                            .MinDesiredSlotWidth(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
-                                            .MinDesiredSlotHeight(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
-                                            + SUniformGridPanel::Slot(0, 0)
-                                            [
-                                                SNew(SButton)
-                                                    .HAlign(HAlign_Center)
-                                                    .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
-                                                    .OnClicked_Lambda([this]() {	
-                                                        if (PickerWindow.IsValid()) {
-                                                            PickerWindow.Pin()->RequestDestroyWindow();
-                                                        }
-                                                    return FReply::Handled(); 
-                                                     })
-                                                    .Text(FText::FromString(TEXT("Ok")))
-                                            ]
-                                            + SUniformGridPanel::Slot(1, 0)
-                                            [
-                                                SNew(SButton)
-                                                    .HAlign(HAlign_Center)
-                                                    .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
-                                                    .OnClicked_Lambda([this]() {
-                                                    MeshAssetData = nullptr;
-                                                        if (PickerWindow.IsValid()) {
-                                                            PickerWindow.Pin()->RequestDestroyWindow();
-                                                        }
-                                                    return FReply::Handled(); })
-                                                    .Text(FText::FromString(TEXT("Cancel")))
-                                            ]
-                                    ]
-                            ]
-                    ]
-            ];
+        [
+            SNew(SBorder)
+                .Visibility(EVisibility::Visible)
+                .BorderImage(FAppStyle::GetBrush("Menu.Background"))
+                [
+                    SNew(SBox)
+                        .Visibility(EVisibility::Visible)
+                        .WidthOverride(500.0f)
+                        [
+                            SNew(SVerticalBox)
+                                + SVerticalBox::Slot()
+                                .FillHeight(1)
+                                .Padding(0.0f, 10.0f, 0.0f, 0.0f)
+                                [
+                                    SNew(SBorder)
+                                        .BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+                                        .Content()
+                                        [
+                                            SAssignNew(SkeletonContainer, SVerticalBox)
+                                        ]
+                                ]
+                                + SVerticalBox::Slot()
+                                .AutoHeight()
+                                .HAlign(HAlign_Right)
+                                .VAlign(VAlign_Bottom)
+                                .Padding(8)
+                                [
+                                    SNew(SUniformGridPanel)
+                                        .SlotPadding(FAppStyle::GetMargin("StandardDialog.SlotPadding"))
+                                        .MinDesiredSlotWidth(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
+                                        .MinDesiredSlotHeight(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
+                                        + SUniformGridPanel::Slot(0, 0)
+                                        [
+                                            SNew(SButton)
+                                                .HAlign(HAlign_Center)
+                                                .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
+                                                .OnClicked_Lambda([this]() {	
+                                                    if (PickerWindow.IsValid()) {
+                                                        PickerWindow.Pin()->RequestDestroyWindow();
+                                                    }
+                                                return FReply::Handled(); 
+                                                    })
+                                                .Text(FText::FromString(TEXT("Ok")))
+                                        ]
+                                        + SUniformGridPanel::Slot(1, 0)
+                                        [
+                                            SNew(SButton)
+                                                .HAlign(HAlign_Center)
+                                                .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
+                                                .OnClicked_Lambda([this]() {
+                                                MeshAssetData = nullptr;
+                                                    if (PickerWindow.IsValid()) {
+                                                        PickerWindow.Pin()->RequestDestroyWindow();
+                                                    }
+                                                return FReply::Handled(); })
+                                                .Text(FText::FromString(TEXT("Cancel")))
+                                        ]
+                                ]
+                        ]
+                ]
+        ];
         //-----------------------------------------------------
         FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
 
@@ -104,17 +104,17 @@ public:
 
         SkeletonContainer->ClearChildren();
         SkeletonContainer->AddSlot()
-            .AutoHeight()
-            [
-                SNew(STextBlock)
-                    .Text(FText::FromString(TEXT("Target Skeleton Mesh:")))
-                    .ShadowOffset(FVector2D(1.0f, 1.0f))
-            ];
+        .AutoHeight()
+        [
+            SNew(STextBlock)
+                .Text(FText::FromString(TEXT("Target Skeleton Mesh:")))
+                .ShadowOffset(FVector2D(1.0f, 1.0f))
+        ];
         SkeletonContainer->AddSlot()
-            [
-                ContentBrowserModule.Get()
-                    .CreateAssetPicker(AssetPickerConfig)
-            ];
+        [
+            ContentBrowserModule.Get()
+                .CreateAssetPicker(AssetPickerConfig)
+        ];
     }
 
     void Show() {

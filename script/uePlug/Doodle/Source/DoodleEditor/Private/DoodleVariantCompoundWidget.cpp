@@ -23,11 +23,14 @@
 #include "DoodleVariantAssetUserData.h"
 #include "Textures/SlateIcon.h"
 #include "Widgets/Views/STableRow.h"
+#include "DoodleVariantEditorViewport.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 
 DECLARE_DELEGATE_OneParam(FAssetDataParamDelegate, FAssetData);
 DECLARE_DELEGATE_OneParam(FTextParamDelegate, FText);
+DECLARE_DELEGATE_OneParam(FECheckBoxStateParamDelegate, ECheckBoxState);
+DECLARE_DELEGATE_RetVal(ECheckBoxState,FReturnECheckBoxStateParam);
 
 class SVariantItemTableRow :public STableRow<TSharedPtr<FString>>
 {
@@ -74,21 +77,20 @@ public:
                 .VAlign(VAlign_Center)
                 [
                 SNew(SButton)
-                         .Text(FText::FromString(TEXT("粘贴")))
-                         .Content()
-                         [
-                             SNew(SImage)
-                                 .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
-                         ]
-                         .ToolTipText(FText::FromString(TEXT("粘贴变体")))
-                         .OnClicked_Lambda([this]
-                         {
-                             OnClickedEvent.ExecuteIfBound();;
-                             return FReply::Handled();
-                         })
+                    .Text(FText::FromString(TEXT("粘贴")))
+                    .Content()
+                    [
+                        SNew(SImage)
+                            .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Paste")).GetSmallIcon())
+                    ]
+                    .ToolTipText(FText::FromString(TEXT("粘贴变体")))
+                    .OnClicked_Lambda([this]
+                    {
+                        OnClickedEvent.ExecuteIfBound();
+                        return FReply::Handled();
+                    })
                 ]
         ];
-      // clang-format on
         Super::Construct(L_Arg, In_OwnerTableView);
     }
 };
@@ -99,62 +101,95 @@ public:
     using Super = STableRow<TSharedPtr<FMaterialItemData>>;
 
     SLATE_BEGIN_ARGS(SMaterialItemTableRow)
-        : _InItem(),_OnObjectChanged(){}
+        : _InItem(),_OnObjectChanged(),_OnCheckStateChanged(),_GetCheckState(){}
     SLATE_ARGUMENT(TSharedPtr<FMaterialItemData>, InItem)
     SLATE_EVENT(FAssetDataParamDelegate, OnObjectChanged)
+    SLATE_EVENT(FECheckBoxStateParamDelegate, OnCheckStateChanged)
+    SLATE_EVENT(FReturnECheckBoxStateParam, GetCheckState)
     SLATE_END_ARGS()
     //--------------------------
     TSharedPtr<FMaterialItemData> InItem;
     FAssetDataParamDelegate OnObjectChanged;
+    FECheckBoxStateParamDelegate OnCheckStateChanged;
+    FReturnECheckBoxStateParam GetCheckState;
 
     void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& In_OwnerTableView)
     {
       // clang-format off
         InItem = InArgs._InItem;
         OnObjectChanged = InArgs._OnObjectChanged;
+        OnCheckStateChanged = InArgs._OnCheckStateChanged;
+        GetCheckState = InArgs._GetCheckState;
         //------------------
         Super::FArguments L_Arg{};
         L_Arg.Content()
         [
             SNew(SBorder)
             .BorderImage(FCoreStyle::Get().GetBrush(TEXT("NoBorder")))
-            .Padding(0)
+            .Padding(2,0,0,0)
             [
-              SNew(SObjectPropertyEntryBox)
-                            .ObjectPath_Lambda([this]() {
-                                               if (InItem)
-                                                 return InItem->Material.GetPathName();
-                                               else
-                                                 return FString(TEXT(""));
-                                             }
-                                           )
-                            .AllowedClass(UMaterialInterface::StaticClass())
-                            .OnObjectChanged_Lambda([this](const FAssetData& AssetData) {
-                                             if (AssetData.IsValid()) {
-                                               OnObjectChanged.ExecuteIfBound(AssetData);
-                                             }
-                                           })
-                            .AllowClear(true)
-                            .DisplayUseSelected(true)
-                            .DisplayBrowse(true)
-                            .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
-                            .CustomContentSlot()
-              [
-                SNew(STextBlock)
-                .Text(FText::FromName(InItem->Slot))
-              ]
+              SNew(SHorizontalBox)
+                +SHorizontalBox::Slot()
+                .FillWidth(0.3f)
+                [
+                    SNew(SCheckBox)
+                        .IsChecked_Lambda([this]() 
+                        {
+                            if (GetCheckState.IsBound())
+                                return GetCheckState.Execute();
+                            else
+                                return ECheckBoxState::Undetermined;
+                        })
+                        .OnCheckStateChanged_Lambda([this](ECheckBoxState state)
+                        {
+                            OnCheckStateChanged.ExecuteIfBound(state);
+                        })
+                        .ToolTipText(FText::FromString(TEXT("Isolates this material in the viewport")))
+                        [
+                            SNew(STextBlock)
+                                .ColorAndOpacity(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+                                .Text(FText::FromString(TEXT("独显")))
+                        ]
+                ]
+                +SHorizontalBox::Slot()
+                [
+                    SNew(SObjectPropertyEntryBox)
+                        .ObjectPath_Lambda([this]() 
+                        {
+                            if (InItem)
+                                return InItem->Material.GetPathName();
+                            else
+                                return FString(TEXT(""));
+                        })
+                        .AllowedClass(UMaterialInterface::StaticClass())
+                        .OnObjectChanged_Lambda([this](const FAssetData& AssetData) 
+                        {
+                            if (AssetData.IsValid()) 
+                            {
+                                OnObjectChanged.ExecuteIfBound(AssetData);
+                            }
+                        })
+                        .AllowClear(true)
+                        .DisplayUseSelected(true)
+                        .DisplayBrowse(true)
+                        .ThumbnailPool(UThumbnailManager::Get().GetSharedThumbnailPool())
+                        .CustomContentSlot()
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromName(InItem->Slot))
+                        ]
+                ]
             ]
         ];
         Super::Construct(L_Arg, In_OwnerTableView);
-      // clang-format on
     }
 };
 
 void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
 {
   // clang-format off
-	ChildSlot
-	[
+    ChildSlot
+    [
         SNew(SVerticalBox)
             + SVerticalBox::Slot()
             .AutoHeight()
@@ -164,14 +199,14 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                     .AutoHeight()
                     [
                         SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("对应骨骼网格体:")))
+                            .Text(FText::FromString(TEXT("对应骨骼网格体")))
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
                     .VAlign(VAlign_Top)
                     [
                         SNew(SHorizontalBox)
-                            +SHorizontalBox::Slot()
+                            + SHorizontalBox::Slot()
                             .AutoWidth()
                             [
                                 SAssignNew(NameText, STextBlock)
@@ -186,140 +221,131 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                             ]
                     ]
                     + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("粘贴到场景中目标:")))
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(0.f,0.f,0.f,10.f)
+                    .Padding(0.f,0.f,0.f,15.f)
                     .VAlign(VAlign_Top)
-                    [
-                        SAssignNew(SelectText, STextBlock)
-                            .Text(FText::FromString(FString(TEXT("None"))))
-                    ]
             ]
             + SVerticalBox::Slot()
             [
                 SNew(SHorizontalBox)
                     + SHorizontalBox::Slot()
+                    .FillWidth(1.0f)
                     [
-                              SAssignNew(ThisListView, SListView< TSharedPtr<FString> >)
-                                    .ItemHeight(24)
-                                    .ListItemsSource(&Items)
-                                    .OnGenerateRow(this, &DoodleVariantCompoundWidget::VariantListOnGenerateRow)
-                                    .OnSelectionChanged_Lambda([&](TSharedPtr<FString> inSelectItem, ESelectInfo::Type SelectType)
+                        SAssignNew(ThisListView, SListView< TSharedPtr<FString> >)
+                            .ItemHeight(24)
+                            .ListItemsSource(&Items)
+                            .OnGenerateRow(this, &DoodleVariantCompoundWidget::VariantListOnGenerateRow)
+                            .OnSelectionChanged_Lambda([&](TSharedPtr<FString> inSelectItem, ESelectInfo::Type SelectType)
+                            {
+                                if (inSelectItem)
+                                {
+                                    FString name = *inSelectItem;
+                                    if (CurrentObject)
                                     {
-                                        if (inSelectItem)
-                                        {
-                                            FString name = *inSelectItem;
-                                            if (CurrentObject)
-                                            {
-                                                SetVariantInfo(name);
-                                            }
-                                            ESelectInfo::Type t = SelectType;
-                                        }
-                                    })
-                                    .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FString> inSelectItem)
+                                        SetVariantInfo(name);
+                                    }
+                                    ESelectInfo::Type t = SelectType;
+                                }
+                            })
+                            .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FString> inSelectItem)
+                            {
+                                TSharedPtr<ITableRow> TableRow = ThisListView->WidgetFromItem(inSelectItem);
+                                if (TableRow.IsValid())
+                                {
+                                    TSharedPtr<SWidget> L_TableRow = TableRow->AsWidget();
+                                    if (L_TableRow.IsValid())
                                     {
-                                        TSharedPtr<ITableRow> TableRow = ThisListView->WidgetFromItem(inSelectItem);
-                                        if (TableRow.IsValid())
+                                        TSharedPtr<SWidget> HorBox = L_TableRow->GetChildren()->GetChildAt(0);
+                                        FChildren* HorWidgets = HorBox->GetChildren();
+                                        for (int32 ChildItr = 0; ChildItr < HorWidgets->Num(); ChildItr++)
                                         {
-                                            TSharedPtr<SWidget> L_TableRow = TableRow->AsWidget();
-                                            if (L_TableRow.IsValid())
+                                            TSharedPtr<SWidget> Child = HorWidgets->GetChildAt(ChildItr);
+                                            if (Child->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
                                             {
-                                                TSharedPtr<SWidget> HorBox = L_TableRow->GetChildren()->GetChildAt(0);
-                                                FChildren* HorWidgets = HorBox->GetChildren();
-                                                for (int32 ChildItr = 0; ChildItr < HorWidgets->Num(); ChildItr++)
-                                                {
-                                                    TSharedPtr<SWidget> Child = HorWidgets->GetChildAt(ChildItr);
-                                                    if (Child->GetWidgetClass().GetWidgetType().IsEqual(SEditableText::StaticWidgetClass().GetWidgetType()))
-                                                    {
-                                                        TSharedPtr<SEditableText> text = StaticCastSharedPtr<SEditableText>(Child);
-                                                        text->SetEnabled(true);
-                                                    }
-                                                }
+                                                TSharedPtr<SEditableText> text = StaticCastSharedPtr<SEditableText>(Child);
+                                                text->SetEnabled(true);
                                             }
                                         }
-                                    })
-                                    .OnContextMenuOpening_Lambda([this]() {
-                                        if (CurrentObject && CurrentObject->AllVaraint.Num() > 1) 
-                                        {
-                                            FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction());
-                                            FMenuBuilder MenuBuilder(true, false);
-                                            MenuBuilder.AddMenuSeparator();
-                                            MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")),
-                                                FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")), ActionDelete);
-                                            return MenuBuilder.MakeWidget();
-                                        }
-                                        return SNullWidget::NullWidget;
-                                     })
-                                    .SelectionMode(ESelectionMode::Type::Single)
-                                    .HeaderRow
-                                    (
-                                        SNew(SHeaderRow)
-                                        + SHeaderRow::Column(TEXT("Name"))
-                                        .HAlignHeader(HAlign_Left)
-                                        .HAlignCell(HAlign_Left)
+                                    }
+                                }
+                            })
+                            .OnContextMenuOpening_Lambda([this]() 
+                            {
+                                if (CurrentObject && CurrentObject->AllVaraint.Num() > 1) 
+                                {
+                                    FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction());
+                                    FMenuBuilder MenuBuilder(true, false);
+                                    MenuBuilder.AddMenuSeparator();
+                                    MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")),
+                                        FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")), ActionDelete);
+                                    return MenuBuilder.MakeWidget();
+                                }
+                                return SNullWidget::NullWidget;
+                            })
+                            .SelectionMode(ESelectionMode::Type::Single)
+                            .HeaderRow
+                            (
+                                SNew(SHeaderRow)
+                                + SHeaderRow::Column(TEXT("Name"))
+                                .HAlignHeader(HAlign_Left)
+                                .HAlignCell(HAlign_Left)
+                                [
+                                    SNew(SHorizontalBox)
+                                        + SHorizontalBox::Slot()
+                                        .HAlign(HAlign_Left)
+                                        .VAlign(VAlign_Center)
+                                        .AutoWidth()
                                         [
-                                            SNew(SHorizontalBox)
-                                                + SHorizontalBox::Slot()
-                                                .HAlign(HAlign_Left)
-                                                .VAlign(VAlign_Center)
-                                                .AutoWidth()
-                                                [
-                                                    SNew(STextBlock)
-                                                        .Text(FText::FromString(TEXT("变体列表:")))
-                                                ]
+                                            SNew(STextBlock)
+                                                .Text(FText::FromString(TEXT("变体列表:")))
                                         ]
-                                        + SHeaderRow::Column(TEXT("Tool"))
-                                        .HAlignHeader(HAlign_Right)
-                                        .HAlignCell(HAlign_Right)
+                                ]
+                                + SHeaderRow::Column(TEXT("Tool"))
+                                .HAlignHeader(HAlign_Right)
+                                .HAlignCell(HAlign_Right)
+                                [
+                                    SNew(SHorizontalBox)
+                                        + SHorizontalBox::Slot()
+                                        .HAlign(HAlign_Right)
+                                        .AutoWidth()
                                         [
-                                            SNew(SHorizontalBox)
-                                                + SHorizontalBox::Slot()
-                                                .HAlign(HAlign_Right)
-                                                .AutoWidth()
+                                            SNew(SButton)
+                                                .Content()
                                                 [
-                                                    SNew(SButton)
-                                                        .Content()
-                                                        [
-                                                            SNew(SImage)
-                                                                .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "WorldBrowser.NewFolderIcon").GetSmallIcon())
-                                                        ]
-                                                        .Text(FText::FromString(TEXT("添加")))
-                                                        .ToolTipText(FText::FromString(TEXT("添加变体")))
-                                                        .OnClicked(this, &DoodleVariantCompoundWidget::OnVariantAdd)
+                                                    SNew(SImage)
+                                                        .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "WorldBrowser.NewFolderIcon").GetSmallIcon())
                                                 ]
+                                                .Text(FText::FromString(TEXT("添加")))
+                                                .ToolTipText(FText::FromString(TEXT("添加变体")))
+                                                .OnClicked(this, &DoodleVariantCompoundWidget::OnVariantAdd)
                                         ]
-                                    )
-
+                                ]
+                            )
                     ]
                     + SHorizontalBox::Slot()
                     .HAlign(HAlign_Fill)
+                    .FillWidth(1.5f)
                     [
-                    SAssignNew(MaterialListView, SListView<TSharedPtr< FMaterialItemData> >)
-                           .ListItemsSource(&MaterialItems)
-                           .OnGenerateRow(this, &DoodleVariantCompoundWidget::MaterialListOnGenerateRow)
-                           .OnSelectionChanged_Lambda([](TSharedPtr<FMaterialItemData> inSelectItem, ESelectInfo::Type SelectType)
-                           {
-                               if (inSelectItem)
-                               {
-                                   TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
-                                   ESelectInfo::Type t = SelectType;
-                               }
-                           })
-                           .SelectionMode(ESelectionMode::Type::Single)
-                           .HeaderRow
-                           (
-                               SNew(SHeaderRow)
-                               + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("插槽-材质")))
-                           )
+                        SAssignNew(MaterialListView, SListView<TSharedPtr< FMaterialItemData> >)
+                            .ListItemsSource(&MaterialItems)
+                            .OnGenerateRow(this, &DoodleVariantCompoundWidget::MaterialListOnGenerateRow)
+                            .OnSelectionChanged_Lambda([](TSharedPtr<FMaterialItemData> inSelectItem, ESelectInfo::Type SelectType)
+                            {
+                                if (inSelectItem)
+                                {
+                                    TObjectPtr<UMaterialInterface> mat = inSelectItem->Material;
+                                    ESelectInfo::Type t = SelectType;
+                                }
+                            })
+                            .SelectionMode(ESelectionMode::Type::Single)
+                            .HeaderRow
+                            (
+                                SNew(SHeaderRow)
+                                + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("插槽-材质")))
+                            )
                     ]
             ]
        
-	];
+    ];
   // clang-format on
     
 }
@@ -335,7 +361,9 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSha
         .OnClickedEvent_Lambda([this,InItem]() 
         {
             NowVaraint = *InItem;
-            OnVariantAttach();
+            if (CurrentObject && CurrentObject->AllVaraint.Num() > 0)
+                OnVariantChange.ExecuteIfBound(CurrentObject->AllVaraint[NowVaraint]);
+            //-----------------------
         });
 }
 
@@ -393,17 +421,32 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
 {
     return SNew(SMaterialItemTableRow, OwnerTable)
         .InItem(InItem)
+        .GetCheckState_Lambda([this, InItem]()
+        {
+            if (MaterialGetCheckState.IsBound())
+                return MaterialGetCheckState.Execute(InItem->Index);
+            else
+                return ECheckBoxState::Undetermined;
+        })
+        .OnCheckStateChanged_Lambda([this, InItem](ECheckBoxState state)
+        {
+            OnMaterialCheckStateChanged.ExecuteIfBound(state, InItem->Index);
+        })
         .OnObjectChanged_Lambda([this, InItem](FAssetData AssetData)
         {
             if (CurrentObject)
             {
                 int index = InItem->Index;
                 FVariantInfo Arr = CurrentObject->AllVaraint[NowVaraint];
-                TObjectPtr<UMaterial> ui = Cast<UMaterial>(AssetData.GetAsset());
-                Arr.Variants[index] = FSkeletalMaterial(ui);
-                CurrentObject->AllVaraint[NowVaraint] = Arr;
-                MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
-                CurrentObject->Modify();
+                UObject* u = AssetData.GetAsset();
+                TObjectPtr<UMaterialInterface> ui = Cast<UMaterialInterface>(AssetData.GetAsset());
+                if (ui) 
+                {
+                    Arr.Variants[index] = FSkeletalMaterial(ui);
+                    CurrentObject->AllVaraint[NowVaraint] = Arr;
+                    MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
+                    CurrentObject->Modify();
+                }
             }
         });
 }
@@ -568,7 +611,7 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     else
     {
         FNotificationInfo Info(FText::FromString(TEXT("骨骼网格体已丢失，请重新链接")));
-        Info.FadeInDuration = 2.0f;  // 淡入淡出时间
+        Info.FadeInDuration = 2.0f;  
         Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
         FSlateNotificationManager::Get().AddNotification(Info);
         //--------------
@@ -688,41 +731,6 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
     }
 }
 
-FReply DoodleVariantCompoundWidget::OnVariantAttach()
-{
-    if (!CurrentObject)
-    {
-        FText DialogText = {};
-        DialogText = FText::FromString(TEXT("请先载入变体。"));
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-        return FReply::Handled();
-    }
-    //----------------------
-    USelection* L_Selects = GEditor->GetSelectedActors();
-    TArray<UObject*> outObject;
-    L_Selects->GetSelectedObjects(outObject);
-    if (outObject.Num() <= 0 || !outObject[0]->GetClass()->IsChildOf<ASkeletalMeshActor>())
-    {
-        FText DialogText = {};
-        DialogText = FText::FromString(TEXT("请先选择粘贴目标。"));
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-        return FReply::Handled();
-    }
-
-    UObject* L_Target = L_Selects->GetSelectedObject(0);
-    ASkeletalMeshActor* L_Skin = Cast<ASkeletalMeshActor>(L_Target);
-    SelectText->SetText(FText::FromString(L_Skin->GetActorNameOrLabel()));
-    TArray<FSkeletalMaterial> L_List = CurrentObject->AllVaraint[NowVaraint].Variants;
-    for (int i = 0;i < L_List.Num();i++)
-    {
-        L_Skin->GetSkeletalMeshComponent()->SetMaterial(i, L_List[i].MaterialInterface);
-    }
-    L_Skin->GetSkeletalMeshComponent()->PostApplyToComponent();
-   //-----------------------
-    return FReply::Handled();
-}
-
 TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
-    return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)];  // 这里创建我们自己的界面
+    return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(DoodleVariantCompoundWidget)]; 
 }
-

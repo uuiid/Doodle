@@ -9,6 +9,11 @@
 #include "PropertyEditorModule.h"
 #include "PropertyCustomizationHelpers.h"
 
+DECLARE_DELEGATE_OneParam(FVariantInfoParamDelegate, FVariantInfo);
+DECLARE_DELEGATE_TwoParams(FECheckBoxStateIntParamDelegate, ECheckBoxState,int);
+DECLARE_DELEGATE_OneParam(FIntParamDelegate, int);
+DECLARE_DELEGATE_RetVal_OneParam(ECheckBoxState, FIntReturnECheckBoxStateParam,int);
+
 struct FMaterialItemData
 {
 	FName Slot;
@@ -25,10 +30,9 @@ public:
 	SLATE_BEGIN_ARGS(DoodleVariantCompoundWidget)
 	{}
 	SLATE_END_ARGS()
-
-	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
+private:
 	TSharedRef<ITableRow> VariantListOnGenerateRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	TSharedRef<ITableRow> MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	void VariantNameOnTextCommitted(const FText& InText,TSharedPtr<FString> InItem);
@@ -37,29 +41,31 @@ public:
 	FReply OnLoadAllVariant();
 	FReply OnVariantAdd();
 	void OnVariantDelete();
-	FReply OnVariantAttach();
 
-	const static FName Name;
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
-	///var
 	TSharedPtr<SListView< TSharedPtr<FString>>> ThisListView;
 	TArray<TSharedPtr<FString>> Items = {};
 	//mate
 	TSharedPtr<SListView<TSharedPtr<FMaterialItemData> >> MaterialListView;
 	TArray< TSharedPtr< FMaterialItemData> > MaterialItems;
 	//------------------------
-	UDoodleVariantObject* CurrentObject;
-
 	TSharedPtr<STextBlock> NameText;
-	TSharedPtr<STextBlock> SelectText;
 
-	void SetSetVariantData(UDoodleVariantObject* obj);
 	void SetVariantInfo(FString varaint_name);
 
-
-	FString NowVaraint;
 	TSharedPtr<SButton> ButtonLoadVariant;
 	TSharedPtr<SButton> ButtonLinkMesh;
+
+public:
+	FString NowVaraint;
+	const static FName Name;
+	void SetSetVariantData(UDoodleVariantObject* obj);
+
+	UDoodleVariantObject* CurrentObject;
 	//----------------------
+	FVariantInfoParamDelegate OnVariantChange;
+	FIntParamDelegate IsIsolateMaterialEnabled;
+	FECheckBoxStateIntParamDelegate OnMaterialCheckStateChanged;
+	FIntReturnECheckBoxStateParam MaterialGetCheckState;
 };

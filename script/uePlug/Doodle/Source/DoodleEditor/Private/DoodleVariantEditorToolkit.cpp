@@ -3,16 +3,16 @@
 
 #include "DoodleVariantEditorToolkit.h"
 #include "DoodleVariantCompoundWidget.h"
+#include "DoodleVariantEditorViewport.h"
 
-
-void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
+void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) 
+{
     FAssetEditorToolkit::RegisterTabSpawners(In_TabManager);
     In_TabManager->RegisterTabSpawner(
-        UDoodleVariantEditorToolkit::ViewportID,
-        FOnSpawnTab::CreateLambda([&](const FSpawnTabArgs& Args)
+        UDoodleVariantEditorToolkit::Variant,FOnSpawnTab::CreateLambda([&](const FSpawnTabArgs& Args)
             {
                 return SNew(SDockTab)
-                    .Label(FText::FromString(TEXT("SpawnTab_Viewport")))
+                    .Label(FText::FromString(TEXT("Variant")))
                     [
                         SNew(SVerticalBox)
                             + SVerticalBox::Slot()
@@ -22,26 +22,43 @@ void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManag
                     ];
             })
     );
+    In_TabManager
+        ->RegisterTabSpawner(
+            UDoodleVariantEditorToolkit::Viewport, FOnSpawnTab::CreateLambda([&](const FSpawnTabArgs& Args)
+                {
+                    return SNew(SDockTab)
+                        .Label(FText::FromString(TEXT("Viewport")))
+                        [
+                            SNew(SVerticalBox)
+                                + SVerticalBox::Slot()
+                                [
+                                    SAssignNew(ViewEditorViewport, DoodleVariantEditorViewport)
+                                ]
+                        ];
+                })
+        );
 }
 
-void UDoodleVariantEditorToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
+void UDoodleVariantEditorToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) 
+{
+    In_TabManager->UnregisterTabSpawner(UDoodleVariantEditorToolkit::Viewport);
+    In_TabManager->UnregisterTabSpawner(UDoodleVariantEditorToolkit::Variant);
     FAssetEditorToolkit::UnregisterTabSpawners(In_TabManager);
-    In_TabManager->UnregisterTabSpawner(UDoodleVariantEditorToolkit::ViewportID);
 }
 
 FName UDoodleVariantEditorToolkit::GetToolkitFName() const
 {
-	return FName(TEXT(""));
+	return FName(TEXT("ToolkitFName"));
 }
 
 FText UDoodleVariantEditorToolkit::GetBaseToolkitName() const
 {
-	return FText::FromString(TEXT(""));
+	return FText::FromString(TEXT("BaseToolkitName"));
 }
 
 FString UDoodleVariantEditorToolkit::GetWorldCentricTabPrefix() const
 {
-	return FString(TEXT(""));
+	return FString(TEXT("WorldCentricTabPrefix"));
 }
 
 FLinearColor UDoodleVariantEditorToolkit::GetWorldCentricTabColorScale() const
@@ -53,20 +70,40 @@ void UDoodleVariantEditorToolkit::Initialize(const EToolkitMode::Type Mode, cons
 {
     const TSharedRef<FTabManager::FLayout> L_Layout =
         FTabManager::NewLayout(
-            "UDoodleVariantEditorToolkit_Initialize_Layout"
+            "DoodleVariantEditorToolkit_Initialize_Layout"
         )
         ->AddArea(
             FTabManager::NewPrimaryArea()
-            ->SetOrientation(Orient_Vertical)
+            ->SetOrientation(Orient_Horizontal)
             ->Split
             (
                 FTabManager::NewStack()
                 ->SetSizeCoefficient(3.f)
                 ->SetHideTabWell(true)
-                ->AddTab(UDoodleVariantEditorToolkit::ViewportID, ETabState::OpenedTab)
+                ->AddTab(UDoodleVariantEditorToolkit::Variant, ETabState::OpenedTab)
+            )
+            ->Split
+            (
+                FTabManager::NewStack()
+                ->SetSizeCoefficient(3.f)
+                ->SetHideTabWell(true)
+                ->AddTab(UDoodleVariantEditorToolkit::Viewport, ETabState::OpenedTab)
             )
         );
+    //--------------
     InitAssetEditor(Mode, InitToolkitHost, AppIdentifier, L_Layout, true, true, Asset);
-    if(VariantEditorWidget)
-    VariantEditorWidget->SetSetVariantData(Asset);
+    //-----------------
+    if (ViewEditorViewport&& VariantEditorWidget)
+    {
+        VariantEditorWidget->SetSetVariantData(Asset);
+        FString NowVaraint = VariantEditorWidget->NowVaraint;
+        ViewEditorViewport->SetViewportSkeletal(Asset->Mesh, VariantEditorWidget.Get()->CurrentObject->AllVaraint[NowVaraint].Variants);
+        VariantEditorWidget->OnVariantChange.BindLambda([this,Asset](FVariantInfo variant)
+        {
+            ViewEditorViewport->SetViewportSkeletal(Asset->Mesh, variant.Variants);
+        });
+        VariantEditorWidget->MaterialGetCheckState.BindSP(ViewEditorViewport.Get(), &DoodleVariantEditorViewport::IsIsolateMaterialEnabled);
+        VariantEditorWidget->OnMaterialCheckStateChanged.BindSP(ViewEditorViewport.Get(), &DoodleVariantEditorViewport::OnMaterialIsolatedChanged);
+    }
+   
 }

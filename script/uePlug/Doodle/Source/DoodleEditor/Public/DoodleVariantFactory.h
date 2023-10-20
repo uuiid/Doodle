@@ -13,14 +13,14 @@ class DOODLEEDITOR_API UDoodleVariantFactory : public UFactory {
 
  public:
   UDoodleVariantFactory();
-
+ protected:
   virtual UObject* FactoryCreateNew(
       UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn
   ) override;
 
   virtual bool ConfigureProperties() override;
   FString GetDefaultNewAssetName() const override;
+private:
   FAssetData MeshAssetData;
-
   FString NewVaraint{"NewVariant"};
 };

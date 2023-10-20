@@ -122,7 +122,7 @@ void FdoodleEditorModule::StartupModule() {
   ISequencerModule& module = FModuleManager::Get().LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
   VariantExtender = MakeShareable(new FDoodleVariantMenuExtension());
   module.RegisterOnSequencerCreated(FOnSequencerCreated::FDelegate::CreateLambda([this](TSharedRef<ISequencer> OwningSequencer) {
-      VariantExtender.Get()->TheSequencer = OwningSequencer.ToWeakPtr();
+      VariantExtender->TheSequencer = OwningSequencer.ToWeakPtr();
       }));
   //-----------------------
     UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([this] 
