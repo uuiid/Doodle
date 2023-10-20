@@ -12,6 +12,8 @@
 #include "CameraController.h"
 #include "SkeletalRenderPublic.h"
 #include "EditorViewportCommands.h"
+#include "Rendering/SkeletalMeshRenderData.h"
+#include "Rendering/SkeletalMeshLODRenderData.h"
 
 DoodleVariantEditorPreviewScene::DoodleVariantEditorPreviewScene()
     : FAdvancedPreviewScene(FAdvancedPreviewScene::ConstructionValues{}.SetCreatePhysicsScene(false).ShouldSimulatePhysics(false)) {
@@ -183,11 +185,6 @@ void DoodleVariantEditorViewport::OnFocusViewportToSelection(){
     {
         ViewportSize = ViewportClient->Viewport->GetSizeXY();
     }
-    //--------------------
-    if (!(ViewportSize.SizeSquared() > 0))
-    {
-        return;
-    }
     //---------------
     if (USkeletalMesh* const SkelMesh = PreviewMeshComponent->GetSkeletalMeshAsset())
     {
@@ -199,7 +196,6 @@ void DoodleVariantEditorViewport::OnFocusViewportToSelection(){
             {
                 ViewportClient->FocusViewportOnBox(SelectedSectionBounds);
             }
-
             return;
         }
     }
@@ -211,7 +207,8 @@ void DoodleVariantEditorViewport::OnFocusViewportToSelection(){
     ViewportClient->FocusViewportOnBox(Box, true);
 }
 
-TSharedRef<FEditorViewportClient> DoodleVariantEditorViewport::MakeEditorViewportClient() {
+TSharedRef<FEditorViewportClient> DoodleVariantEditorViewport::MakeEditorViewportClient() 
+{
     if (!PreviewScene)PreviewScene = MakeShared<DoodleVariantEditorPreviewScene>();
     //----------------
     if (!ViewportClient)
@@ -280,13 +277,13 @@ void DoodleVariantEditorViewport::OnMaterialIsolatedChanged(ECheckBoxState NewSt
             {
                 MeshComponent->SetSelectedEditorMaterial(INDEX_NONE);
             }
-            //Remove any section isolate or highlight
-            MeshComponent->SetSelectedEditorSection(INDEX_NONE);
             MeshComponent->SetSectionPreview(INDEX_NONE);
+            MeshComponent->SetSelectedEditorSection(MaterialIndex);
         }
         else if (NewState == ECheckBoxState::Unchecked)
         {
             MeshComponent->SetMaterialPreview(INDEX_NONE);
+            MeshComponent->SetSelectedEditorSection(INDEX_NONE);
         }
     }
 }

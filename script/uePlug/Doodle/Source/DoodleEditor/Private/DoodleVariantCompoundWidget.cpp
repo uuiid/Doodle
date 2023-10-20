@@ -142,7 +142,6 @@ public:
                         })
                         .OnCheckStateChanged_Lambda([this](ECheckBoxState state)
                         {
-                            UE_LOG(LogTemp, Warning, TEXT("OnCheckStateChanged Hello World"));
                             OnCheckStateChanged.ExecuteIfBound(state);
                         })
                         .ToolTipText(FText::FromString(TEXT("Isolates this material in the viewport")))
@@ -180,7 +179,6 @@ public:
                                 .Text(FText::FromName(InItem->Slot))
                         ]
                 ]
-             
             ]
         ];
         Super::Construct(L_Arg, In_OwnerTableView);
