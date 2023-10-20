@@ -42,7 +42,7 @@ void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::h
       l_pre.params.parent_id.set_null();
     }
     auto l_r = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets>().name());
+    // DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets>().name());
   }
 }
 
@@ -71,7 +71,7 @@ void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::map<std::int64
     else
       l_pre.params.parent_id.set_null();
     auto l_r = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets>().name());
+    // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets>().name());
   }
 }
 
@@ -104,9 +104,9 @@ void sql_com<doodle::assets>::select(
       if (auto l_p_id = row.parent_id.value(); !row.parent_id.is_null() && in_handle.find(l_p_id) != in_handle.end()) {
         l_ass_parent.emplace(in_handle.at(l_id), in_handle.at(l_p_id));
       }
-      DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+      // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
     } else {
-      DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
   in_reg->insert<doodle::assets>(l_entts.begin(), l_entts.end(), l_assets.begin());

@@ -31,7 +31,7 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::
     l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
     auto l_r                = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
+    // DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
   }
 }
 
@@ -59,7 +59,7 @@ void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::map<std::int6
     l_pre.params.id         = id;
 
     auto l_r                = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
+    // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
   }
 }
 
@@ -95,9 +95,9 @@ void sql_com<doodle::project>::select(
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_u));
         l_entts.emplace_back(in_handle.at(l_id));
-        DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+        // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
       } else {
-        DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+        // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
     in_reg->insert<doodle::project>(l_entts.begin(), l_entts.end(), l_works.begin());
@@ -120,7 +120,7 @@ void sql_ctx<project>::insert(conn_ptr& in_ptr, const project& in_id) {
       l_tabl.p_path = in_id.p_path.generic_string(), l_tabl.p_shor_str = in_id.p_shor_str
   ));
 
-  DOODLE_LOG_INFO("插入数据库组件 {} ", entt::type_id<project>().name());
+  // DOODLE_LOG_INFO("插入数据库组件 {} ", entt::type_id<project>().name());
 }
 
 void sql_ctx<project>::select(conn_ptr& in_ptr, project& in_handle) {
@@ -138,7 +138,7 @@ void sql_ctx<project>::select(conn_ptr& in_ptr, project& in_handle) {
       in_handle.p_path     = row.p_path.value();
       in_handle.p_shor_str = row.p_shor_str.value();
       auto l_id            = row.entity_id.value();
-      DOODLE_LOG_INFO("选择数据库 id {} 插入上下文", l_id);
+      // DOODLE_LOG_INFO("选择数据库 id {} 插入上下文", l_id);
       break;
     }
   }

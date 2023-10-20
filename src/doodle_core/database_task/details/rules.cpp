@@ -122,9 +122,9 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
       l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
       auto l_r                   = l_conn(l_pre);
       l_map_id.emplace(l_h, l_r);
-      DOODLE_LOG_INFO(
-          "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<business::rules>().name()
-      );
+      //      DOODLE_LOG_INFO(
+      //          "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<business::rules>().name()
+      //      );
     }
   }
   insert_sub(in_ptr, in_id, l_map_id);
@@ -149,9 +149,9 @@ void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::map<s
       l_pre.params.id            = id;
 
       auto l_r                   = l_conn(l_pre);
-      DOODLE_LOG_INFO(
-          "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<business::rules>().name()
-      );
+      //      DOODLE_LOG_INFO(
+      //          "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<business::rules>().name()
+      //      );
     }
   }
   auto map_id = in_id | ranges::views::transform([](auto&& l_pair) -> std::pair<entt::handle, std::int64_t> {
@@ -194,9 +194,9 @@ void sql_com<doodle::business::rules>::select(
           l_assets.emplace_back(std::move(l_s));
           l_entts.emplace_back(in_handle.at(l_id));
           l_map_id.emplace(in_handle.at(l_id), row.id.value());
-          DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+          // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
         } else {
-          DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+          // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
         }
       }
     }
