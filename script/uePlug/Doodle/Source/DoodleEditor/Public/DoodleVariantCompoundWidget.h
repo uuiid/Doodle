@@ -10,6 +10,9 @@
 #include "PropertyCustomizationHelpers.h"
 
 DECLARE_DELEGATE_OneParam(FVariantInfoParamDelegate, FVariantInfo);
+DECLARE_DELEGATE_TwoParams(FECheckBoxStateIntParamDelegate, ECheckBoxState,int);
+DECLARE_DELEGATE_OneParam(FIntParamDelegate, int);
+DECLARE_DELEGATE_RetVal_OneParam(ECheckBoxState, FIntReturnECheckBoxStateParam,int);
 
 struct FMaterialItemData
 {
@@ -62,4 +65,7 @@ public:
 	UDoodleVariantObject* CurrentObject;
 	//----------------------
 	FVariantInfoParamDelegate OnVariantChange;
+	FIntParamDelegate IsIsolateMaterialEnabled;
+	FECheckBoxStateIntParamDelegate OnMaterialCheckStateChanged;
+	FIntReturnECheckBoxStateParam MaterialGetCheckState;
 };

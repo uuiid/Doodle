@@ -3,9 +3,10 @@
 
 #include "DoodleVariantEditorToolkit.h"
 #include "DoodleVariantCompoundWidget.h"
+#include "DoodleVariantEditorViewport.h"
 
-
-void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
+void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) 
+{
     FAssetEditorToolkit::RegisterTabSpawners(In_TabManager);
     In_TabManager->RegisterTabSpawner(
         UDoodleVariantEditorToolkit::Variant,FOnSpawnTab::CreateLambda([&](const FSpawnTabArgs& Args)
@@ -38,7 +39,8 @@ void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManag
         );
 }
 
-void UDoodleVariantEditorToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
+void UDoodleVariantEditorToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) 
+{
     In_TabManager->UnregisterTabSpawner(UDoodleVariantEditorToolkit::Viewport);
     In_TabManager->UnregisterTabSpawner(UDoodleVariantEditorToolkit::Variant);
     FAssetEditorToolkit::UnregisterTabSpawners(In_TabManager);
@@ -100,6 +102,8 @@ void UDoodleVariantEditorToolkit::Initialize(const EToolkitMode::Type Mode, cons
         {
             ViewEditorViewport->SetViewportSkeletal(Asset->Mesh, variant.Variants);
         });
+        VariantEditorWidget->MaterialGetCheckState.BindSP(ViewEditorViewport.Get(), &DoodleVariantEditorViewport::IsIsolateMaterialEnabled);
+        VariantEditorWidget->OnMaterialCheckStateChanged.BindSP(ViewEditorViewport.Get(), &DoodleVariantEditorViewport::OnMaterialIsolatedChanged);
     }
    
 }
