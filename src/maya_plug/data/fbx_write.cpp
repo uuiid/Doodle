@@ -797,8 +797,8 @@ void fbx_write::write_end() {
 
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
-          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
-          //          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
+          //          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
+          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
           scene_->GetFbxManager()->GetIOSettings()
       )) {
     MGlobal::displayError(
@@ -826,22 +826,20 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
         auto l_parent_node = (*l_begin)->node;
 
         if (l_sub_path.hasFn(MFn::kMesh)) {
-          auto l_mesh = std::make_shared<fbx_node_mesh_t>(
-              l_sub_path, FbxNode::Create(scene_, l_sub_path.partialPathName().asChar())
-          );
+          auto l_mesh =
+              std::make_shared<fbx_node_mesh_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()));
           joints_ |= ranges::action::push_back(l_mesh->find_joint(l_mesh->get_skin_custer()));
 
           l_begin = tree_.append_child(l_begin, l_mesh);
         } else if (l_sub_path.hasFn(MFn::kJoint)) {
           l_begin = tree_.append_child(
-              l_begin, std::make_shared<fbx_node_joint_t>(
-                           l_sub_path, FbxNode::Create(scene_, l_sub_path.partialPathName().asChar())
-                       )
+              l_begin,
+              std::make_shared<fbx_node_joint_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()))
           );
         } else {
           l_begin = tree_.append_child(
               l_begin, std::make_shared<fbx_node_transform_t>(
-                           l_sub_path, FbxNode::Create(scene_, l_sub_path.partialPathName().asChar())
+                           l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
                        )
           );
         }
@@ -868,14 +866,13 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
 
         if (l_sub_path.hasFn(MFn::kJoint)) {
           l_begin = tree_.append_child(
-              l_begin, std::make_shared<fbx_node_joint_t>(
-                           l_sub_path, FbxNode::Create(scene_, l_sub_path.partialPathName().asChar())
-                       )
+              l_begin,
+              std::make_shared<fbx_node_joint_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()))
           );
         } else {
           l_begin = tree_.append_child(
               l_begin, std::make_shared<fbx_node_transform_t>(
-                           l_sub_path, FbxNode::Create(scene_, l_sub_path.partialPathName().asChar())
+                           l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
                        )
           );
         }
@@ -914,12 +911,12 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
         if (l_path.hasFn(MFn::kJoint)) {
           l_node_iter = tree_.append_child(
               l_tree_parent,
-              std::make_shared<fbx_node_joint_t>(l_path, FbxNode::Create(scene_, l_path.partialPathName().asChar()))
+              std::make_shared<fbx_node_joint_t>(l_path, FbxNode::Create(scene_, get_node_name(l_path).c_str()))
           );
         } else {
           l_node_iter = tree_.append_child(
               l_tree_parent,
-              std::make_shared<fbx_node_transform_t>(l_path, FbxNode::Create(scene_, l_path.partialPathName().asChar()))
+              std::make_shared<fbx_node_transform_t>(l_path, FbxNode::Create(scene_, get_node_name(l_path).c_str()))
           );
         }
         l_parent_node->AddChild((*l_node_iter)->node);
