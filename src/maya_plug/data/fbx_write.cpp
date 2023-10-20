@@ -32,9 +32,11 @@
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MMatrix.h>
 #include <maya/MPointArray.h>
 #include <maya/MQuaternion.h>
 #include <maya/MTime.h>
+#include <maya/MTransformationMatrix.h>
 #include <treehh/tree.hh>
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
@@ -87,29 +89,49 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
       break;
   }
   node->UpdatePivotsAndLimitsFromProperties();
-
-  auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
+  set_node_transform_matrix(l_transform.transformation());
+  //  auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
+  //  maya_chick(l_status);
+  //  node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
+  //
+  //  // rot
+  //  {
+  //    auto l_rot_x = get_plug(in_path.node(), "rotateX").asMAngle(&l_status);
+  //    maya_chick(l_status);
+  //    auto l_rot_y = get_plug(in_path.node(), "rotateY").asMAngle(&l_status);
+  //    maya_chick(l_status);
+  //    auto l_rot_z = get_plug(in_path.node(), "rotateZ").asMAngle(&l_status);
+  //    maya_chick(l_status);
+  //
+  //    node->LclRotation.Set({l_rot_x.asDegrees(), l_rot_y.asDegrees(), l_rot_z.asDegrees()});
+  //  }
+  //
+  //  std::double_t l_scale[3]{};
+  //  l_transform.getScale(l_scale);
+  //  node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
+}
+void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix) const {
+  MStatus l_status{};
+  auto l_loc = in_matrix.getTranslation(MSpace::kTransform, &l_status);
   maya_chick(l_status);
   node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
+  auto l_rot = in_matrix.eulerRotation();
+  MAngle l_angle_x{};
+  l_angle_x.setUnit(MAngle::kRadians);
+  l_angle_x.setValue(l_rot.x);
+  MAngle l_angle_y{};
+  l_angle_y.setUnit(MAngle::kRadians);
+  l_angle_y.setValue(l_rot.y);
+  MAngle l_angle_z{};
+  l_angle_z.setUnit(MAngle::kRadians);
+  l_angle_z.setValue(l_rot.z);
 
-  // rot
-  {
-    auto l_rot_x = get_plug(in_path.node(), "rotateX").asMAngle(&l_status);
-    maya_chick(l_status);
-    auto l_rot_y = get_plug(in_path.node(), "rotateY").asMAngle(&l_status);
-    maya_chick(l_status);
-    auto l_rot_z = get_plug(in_path.node(), "rotateZ").asMAngle(&l_status);
-    maya_chick(l_status);
-
-    node->LclRotation.Set({l_rot_x.asDegrees(), l_rot_y.asDegrees(), l_rot_z.asDegrees()});
-  }
-
+  node->LclRotation.Set({l_angle_x.asDegrees(), l_angle_y.asDegrees(), l_angle_z.asDegrees()});
   std::double_t l_scale[3]{};
-  l_transform.getScale(l_scale);
+  in_matrix.getScale(l_scale, MSpace::kTransform);
   node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   node->ScalingMax.Set({});
 }
-
 ///
 
 void fbx_node_cam::build_data(
@@ -264,6 +286,39 @@ void fbx_node_mesh::build_mesh(std::map<std::string, fbxsdk::FbxSurfaceLambert*>
     return;
   }
   log_info(fmt::format("build mesh {}", dag_path));
+
+  auto l_sk      = get_skin_custer();
+  auto l_bl_list = find_blend_shape();
+  struct skin_guard {
+    MObject skin_{};
+    explicit skin_guard(const MObject& in_sk) : skin_{in_sk} {
+      if (!skin_.isNull()) {
+        get_plug(skin_, "envelope").setDouble(0.0);
+      }
+    }
+    ~skin_guard() {
+      if (!skin_.isNull()) {
+        MFnSkinCluster l_fn_skin{skin_};
+        get_plug(skin_, "envelope").setDouble(1.0);
+      }
+    }
+  };
+  struct blend_shape_guard {
+    std::vector<MObject> blend_shape_list_{};
+    explicit blend_shape_guard(const std::vector<MObject>& in_list) : blend_shape_list_{in_list} {
+      for (auto& l_blend_shape : blend_shape_list_) {
+        get_plug(l_blend_shape, "envelope").setDouble(0.0);
+      }
+    }
+    ~blend_shape_guard() {
+      for (auto& l_blend_shape : blend_shape_list_) {
+        get_plug(l_blend_shape, "envelope").setDouble(1.0);
+      }
+    }
+  };
+
+  skin_guard l_guard{l_sk};
+  blend_shape_guard l_blend_guard{l_bl_list};
 
   auto l_mesh = dag_path;
   maya_chick(l_mesh.extendToShape());
@@ -704,6 +759,18 @@ void fbx_node_joint::build_data(
 
   build_node_transform(dag_path);
   node->InheritType.Set(l_is_ ? FbxTransform::eInheritRrs : FbxTransform::eInheritRSrs);
+
+  // 重新设置初始的值, 使用 bind post 属性
+
+  auto l_bind_post        = get_plug(dag_path.node(), "bindPose");
+  auto l_post_data_handle = l_bind_post.asMDataHandle(&l_status);
+  maya_chick(l_status);
+  if (l_post_data_handle.type() == MFnData::Type::kMatrix) {
+    MTransformationMatrix l_matrix_data = l_post_data_handle.asMatrix();
+    set_node_transform_matrix(l_matrix_data);
+  } else {
+    log_error(fmt::format("bind post type error {}", get_node_name(dag_path)));
+  }
 }
 
 }  // namespace fbx_write_ns

@@ -32,6 +32,8 @@ struct fbx_node {
   virtual void build_animation(const fbx_tree_t& in_tree, const MTime& in_time) = 0;
 
   void build_node_transform(MDagPath in_path) const;
+  void set_node_transform_matrix(const MTransformationMatrix& in_matrix) const;
+
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
 
  protected:
@@ -95,9 +97,9 @@ class fbx_write {
   using fbx_node_ptr         = fbx_write_ns::fbx_node_ptr;
   using fbx_tree_t           = fbx_write_ns::fbx_tree_t;
 
-  fbx_tree_t tree_{};                                              // 用于存储节点的树
+  fbx_tree_t tree_{};                                                 // 用于存储节点的树
   std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
-  std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};  // 用于存储节点的map
+  std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};     // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   void write_end();
   void init();
