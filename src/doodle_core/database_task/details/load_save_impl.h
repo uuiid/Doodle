@@ -2,9 +2,15 @@
 // Created by td_main on 2023/10/19.
 //
 #pragma once
+#include <doodle_core/configure/static_value.h>
+#include <doodle_core/core/core_help_impl.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/file_sys.h>
+#include <doodle_core/core/global_function.h>
+#include <doodle_core/core/status_info.h>
 #include <doodle_core/database_task/details/assets.h>
 #include <doodle_core/database_task/details/assets_file.h>
 #include <doodle_core/database_task/details/comment.h>
@@ -24,7 +30,10 @@
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/details/user.h>
 #include <doodle_core/database_task/details/work_task.h>
+#include <doodle_core/database_task/select.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_task.h>
@@ -32,16 +41,10 @@
 
 #include "boost/asio/any_io_executor.hpp"
 #include "boost/core/ignore_unused.hpp"
-#include "boost/filesystem/path.hpp"
 #include <boost/asio.hpp>
 
-#include "configure/static_value.h"
-#include "core/core_help_impl.h"
-#include "core/file_sys.h"
-#include "core/global_function.h"
 #include "entt/entity/fwd.hpp"
 #include "entt/signal/sigh.hpp"
-#include "logger/logger.h"
 #include "range/v3/action/push_back.hpp"
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/algorithm/all_of.hpp"
@@ -51,12 +54,8 @@
 #include "range/v3/view/map.hpp"
 #include <any>
 #include <atomic>
-#include <core/core_set.h>
-#include <core/status_info.h>
-#include <database_task/select.h>
 #include <filesystem>
 #include <fmt/core.h>
-#include <metadata/metadata.h>
 #include <range/v3/action/unique.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
