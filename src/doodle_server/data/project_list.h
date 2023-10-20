@@ -23,7 +23,7 @@ class project_storage_type {
   void load_project();
 
   void save_project();
-  executor_type get_executor() noexcept;
+  inline executor_type get_executor() const noexcept { return executor_; };
 
  private:
   entt::registry registry_;
