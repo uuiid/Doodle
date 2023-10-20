@@ -820,8 +820,8 @@ void fbx_write::write_end() {
 
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
-          //          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
-          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
+          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
+          //          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
           scene_->GetFbxManager()->GetIOSettings()
       )) {
     MGlobal::displayError(
