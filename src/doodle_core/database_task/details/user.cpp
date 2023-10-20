@@ -29,7 +29,7 @@ void sql_com<doodle::user>::insert(conn_ptr& in_ptr, const std::vector<entt::han
     l_pre.params.entity_id        = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
     auto l_r                      = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<user>().name());
+    // DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<user>().name());
   }
 }
 
@@ -55,7 +55,7 @@ void sql_com<doodle::user>::update(conn_ptr& in_ptr, const std::map<std::int64_t
     l_pre.params.id               = id;
 
     auto l_r                      = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<user>().name());
+    // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<user>().name());
   }
 }
 
@@ -88,9 +88,9 @@ void sql_com<doodle::user>::select(
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_u));
         l_entts.emplace_back(in_handle.at(l_id));
-        DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+        // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
       } else {
-        DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+        // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
     reg_->insert<doodle::user>(l_entts.begin(), l_entts.end(), l_works.begin());

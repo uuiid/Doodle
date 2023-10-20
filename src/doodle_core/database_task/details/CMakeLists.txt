@@ -21,6 +21,7 @@ target_sources(doodle_core
         rules.h
         time_point_wrap.h
         file_one_path.h
+        load_save_impl.h
 
 
         PRIVATE
@@ -28,7 +29,6 @@ target_sources(doodle_core
         column.h
         drop_if.h
         tables.h
-
         user.cpp
         work_task.cpp
         database.cpp
@@ -48,4 +48,5 @@ target_sources(doodle_core
         rules.cpp
         time_point_wrap.cpp
         file_one_path.cpp
-        )
+        load_save_impl.cpp
+)

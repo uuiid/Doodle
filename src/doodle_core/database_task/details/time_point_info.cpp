@@ -78,10 +78,10 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
     l_pre.params.id            = id;
 
     auto l_r                   = l_conn(l_pre);
-    DOODLE_LOG_INFO(
-        "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),
-        entt::type_id<business::rules_ns::time_point_info>().name()
-    );
+    //    DOODLE_LOG_INFO(
+    //        "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),
+    //        entt::type_id<business::rules_ns::time_point_info>().name()
+    //    );
   }
 }
 void sql_com<doodle::business::rules_ns::time_point_info>::select(
@@ -114,9 +114,9 @@ void sql_com<doodle::business::rules_ns::time_point_info>::select(
     if (in_handle.find(l_id) != in_handle.end()) {
       l_time.emplace_back(std::move(l_t));
       l_entts.emplace_back(in_handle.at(l_id));
-      DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+      // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
     } else {
-      DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
   reg_->insert<doodle::business::rules_ns::time_point_info>(l_entts.begin(), l_entts.end(), l_time.begin());

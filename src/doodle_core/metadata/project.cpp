@@ -154,4 +154,27 @@ FSys::path project_config::base_config::get_upload_path() const {
   else
     return g_reg()->ctx().get<project>().p_path / upload_path;
 }
+
+project_config::base_config project_config::base_config::get_default() {
+  project_config::base_config l_config{};
+  l_config.maya_camera_select = {
+      std::make_pair(R"(front|persp|side|top|camera)"s, -1000),
+      std::make_pair(R"(ep\d+_sc\d+)"s, 30),
+      std::make_pair(R"(ep\d+)"s, 10),
+      std::make_pair(R"(sc\d+)"s, 10),
+      std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
+      std::make_pair(R"(ep_\d+)"s, 5),
+      std::make_pair(R"(sc_\d+)"s, 5),
+      std::make_pair(R"(^[A-Z]+_)"s, 2),
+      std::make_pair(R"(_\d+_\d+)"s, 2)};
+  l_config.icon_extensions         = {".png", ".jpg", ".jpeg", ".tga", ".tif"};
+  l_config.export_group            = "UE4";
+  l_config.cloth_proxy_            = "_cloth_proxy";
+  l_config.simple_module_proxy_    = "_proxy";
+  l_config.maya_camera_suffix      = "camera";
+  l_config.maya_out_put_abc_suffix = "_output_abc";
+  l_config.season_count            = 20;
+  return l_config;
+}
+
 }  // namespace doodle

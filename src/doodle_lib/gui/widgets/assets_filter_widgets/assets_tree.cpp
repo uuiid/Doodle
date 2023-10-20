@@ -67,6 +67,7 @@ bool assets_tree::render() {
     edit_data |= render_child(tree_.begin());
     return edit_data;
   }
+  return edit_data;
 }
 
 void assets_tree::popen_menu(const tree_type_t::sibling_iterator &in) {

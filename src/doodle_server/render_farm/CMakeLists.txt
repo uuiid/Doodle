@@ -1,0 +1,23 @@
+target_sources(
+        doodle_server_lib
+        PUBLIC
+        work.h
+        proxy_server.h
+        http_listener.h
+        http_session.h
+        websocket.h
+        functional_registration_manager.h
+        render_farm_fwd.h
+        logger_com.h
+
+        PRIVATE
+        work.cpp
+        proxy_server.cpp
+        http_listener.cpp
+        http_session.cpp
+        websocket.cpp
+        logger_com.cpp
+        functional_registration_manager.cpp
+)
+add_subdirectory(exception)
+add_subdirectory(detail)

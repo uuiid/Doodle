@@ -7,7 +7,6 @@ target_sources(doodle_lib
         observable_container.h
 
         holidaycn_time.h
-        bind_front_handler.h
         erase_handle_component.h
 
         PRIVATE

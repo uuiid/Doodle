@@ -7,5 +7,7 @@
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
 
+#include <doodle_lib/facet/main_facet.h>
+
 #include "main_macro.h"
 DOODLE_MAIN_IMPL(doodle::main_facet)

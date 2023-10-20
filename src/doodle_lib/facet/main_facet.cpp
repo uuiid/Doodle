@@ -46,6 +46,8 @@ main_facet::main_facet() : facet::gui_facet() {
 }
 
 void main_facet::load_windows() {
+  /// 在这里我们加载项目
+  g_ctx().get<program_options>().init_project();
   {
     using namespace gui;
     g_windows_manage().register_layout(layout_init_arg{}.create<layout_window>());

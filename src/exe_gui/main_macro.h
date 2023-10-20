@@ -2,14 +2,8 @@
 // Created by td_main on 2023/9/11.
 //
 #pragma once
-#include <doodle_lib/facet/main_facet.h>
-#include <doodle_lib/facet/server_facet.h>
-#include <doodle_lib/facet/work_facet.h>
 
-#include <iostream>
-
-// #include <doodle_lib/DoodleApp.h>
-// #include <boost/locale.hpp>
+#include <doodle_app/app/app_command.h>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 #define DOODLE_MAIN_IMPL(facet)                                                      \

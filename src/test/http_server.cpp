@@ -44,7 +44,7 @@ class ue_exe_m : public doodle::ue_exe {
 void run_server() {
   using namespace doodle;
   //  g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-  g_ctx().emplace<doodle::render_farm::working_machine>(g_io_context()).run();
+  g_ctx().emplace<doodle::render_farm::http_listener>(g_io_context()).run();
 
   g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
   g_reg()->ctx().emplace<render_farm::computer_manage>().run();
@@ -56,7 +56,7 @@ void run_server() {
   auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
   l_w->run("192.168.20.59"s);
   app_base::Get().on_stop.connect([=]() {
-    g_ctx().get<doodle::render_farm::working_machine>().stop();
+    g_ctx().get<doodle::render_farm::http_listener>().stop();
     g_ctx().get<render_farm::work_ptr>()->stop();
   });
   //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
@@ -64,7 +64,7 @@ void run_server() {
 
 void stop_work() {
   using namespace doodle;
-  //  g_ctx().get<doodle::render_farm::working_machine>().stop();
+  //  g_ctx().get<doodle::render_farm::http_listener>().stop();
   //  l_w->stop();
   g_ctx().get<render_farm::work_ptr>()->stop();
 }

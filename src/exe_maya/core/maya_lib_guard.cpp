@@ -32,8 +32,8 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "xgenToolkit";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "Unfold3D";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "MASH";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "mtoa";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "Substance";)"));
+  MGlobal::executeCommand(R"(loadPlugin "mtoa";)");
+  MGlobal::executeCommand(R"(loadPlugin "Substance";)");
 
   if (MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer()) {
     if (auto* l_f = renderer->getFragmentManager()) {
@@ -46,4 +46,4 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   maya_chick(MFileIO::newFile(true));
 }
 maya_lib_guard::~maya_lib_guard() { MLibrary::cleanup(0, false); }
-}  // namespace doodle
+}  // namespace doodle::maya_plug

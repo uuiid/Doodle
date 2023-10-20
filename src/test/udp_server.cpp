@@ -20,7 +20,7 @@
 #include <doodle_lib/render_farm/udp_client.h>
 #include <doodle_lib/render_farm/udp_server.h>
 #include <doodle_lib/render_farm/work.h>
-#include <doodle_lib/render_farm/working_machine.h>
+#include <doodle_lib/render_farm/http_listener.h>
 
 #include "boost/asio/executor_work_guard.hpp"
 #include <boost/asio.hpp>

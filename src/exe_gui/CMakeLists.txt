@@ -50,6 +50,7 @@ macro(add_doodle_exe _name _src)
     target_link_libraries(${_name}
             PUBLIC
             doodle_lib
+            doodle_server_lib
     )
     # target_link_options(DoodleExe PUBLIC /MAP:test.txt)
     target_link_options(${_name} PUBLIC /ENTRY:mainCRTStartup)

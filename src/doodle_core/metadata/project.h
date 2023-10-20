@@ -144,6 +144,8 @@ class DOODLE_CORE_API base_config {
   [[nodiscard]] bool match_icon_extensions(const FSys::path& in_path) const;
 
   [[nodiscard]] FSys::path get_upload_path() const;
+
+  static base_config get_default();
 };
 
 }  // namespace project_config

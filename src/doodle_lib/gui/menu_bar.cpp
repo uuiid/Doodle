@@ -10,8 +10,6 @@
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/show_message.h>
 
-#include <doodle_lib/render_farm/proxy_server.h>
-#include <doodle_lib/render_farm/working_machine.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
 #include <fmt/core.h>
