@@ -9,6 +9,7 @@
 #include <maya/MDagPath.h>
 #include <maya/MDoubleArray.h>
 #include <maya/MIntArray.h>
+#include <maya/MMatrix.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
 
@@ -44,4 +45,6 @@ template <>
 struct formatter<MIntArray> : ostream_formatter {};
 template <>
 struct formatter<MDoubleArray> : ostream_formatter {};
+template <>
+struct formatter<MMatrix> : ostream_formatter {};
 }  // namespace fmt
