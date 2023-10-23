@@ -81,6 +81,8 @@ struct fbx_node_mesh : public fbx_node_transform {
   [[nodiscard]] MObject get_skin_custer() const;
   [[nodiscard]] std::vector<MDagPath> find_joint(const MObject& in_msk) const;
   [[nodiscard]] std::vector<MObject> find_blend_shape() const;
+
+  [[nodiscard]] MObject get_bind_post() const;
 };
 
 struct fbx_node_joint : public fbx_node_transform {
