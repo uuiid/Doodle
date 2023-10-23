@@ -10,6 +10,7 @@
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
+#include <maya_plug/fmt/fmt_warp.h>
 
 #include <fbxsdk.h>
 #include <maya/MAnimControl.h>
@@ -40,10 +41,8 @@
 #include <treehh/tree.hh>
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
-void fbx_node::build_node(
-    const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map
-) {
-  std::call_once(flag_, [&]() { build_data(in_tree, in_material_map); });
+void fbx_node::build_node() {
+  std::call_once(flag_, [&]() { build_data(); });
 }
 FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
   switch (in_value) {
@@ -134,10 +133,8 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
 }
 ///
 
-void fbx_node_cam::build_data(
-    const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map
-) {
-  fbx_node_transform::build_data(in_tree, in_material_map);
+void fbx_node_cam::build_data() {
+  fbx_node_transform::build_data();
   auto* l_cam = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
   node->SetNodeAttribute(l_cam);
   MFnCamera l_fn_cam{dag_path};
@@ -157,14 +154,12 @@ void fbx_node_cam::build_data(
   l_cam->Position.Set(l_cam->EvaluatePosition());
   //  l_cam->EvaluateUpDirection(l_cam->EvaluatePosition(), l_cam->EvaluateLookAtPosition());
 }
-void fbx_node_cam::build_animation(const fbx_tree_t& in_tree, const MTime& in_time) {}
+void fbx_node_cam::build_animation(const MTime& in_time) {}
 
 ///
 
 ////
-void fbx_node_transform::build_data(
-    const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map
-) {
+void fbx_node_transform::build_data() {
   build_node_transform(dag_path);
   MFnTransform l_transform{dag_path};
   auto l_attr_null = FbxNull::Create(node->GetScene(), l_transform.name().asChar());
@@ -172,7 +167,7 @@ void fbx_node_transform::build_data(
   node->SetNodeAttribute(l_attr_null);
 }
 
-void fbx_node_transform::build_animation(const fbx_tree_t& in_tree, const MTime& in_time) {
+void fbx_node_transform::build_animation(const MTime& in_time) {
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
@@ -269,18 +264,15 @@ void fbx_node_transform::build_animation(const fbx_tree_t& in_tree, const MTime&
 }
 ////
 
-void fbx_node_mesh::build_data(
-    const doodle::maya_plug::fbx_write_ns::fbx_tree_t& in_tree,
-    std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map
-) {
+void fbx_node_mesh::build_data() {
   if (!dag_path.isValid()) return;
-  fbx_node_transform::build_data(in_tree, in_material_map);
+  fbx_node_transform::build_data();
 
-  build_mesh(in_material_map);
-  build_skin(in_tree);
+  build_mesh();
+  build_skin();
   build_blend_shape();
 }
-void fbx_node_mesh::build_mesh(std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map) {
+void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
     //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
     return;
@@ -347,11 +339,11 @@ void fbx_node_mesh::build_mesh(std::map<std::string, fbxsdk::FbxSurfaceLambert*>
       l_mat_layer->GetIndexArray().Add(0);
       FbxSurfaceLambert* l_mat_surface{};
       const auto l_name = get_node_name(details::shading_engine_to_mat(l_mats.front()));
-      if (in_material_map.count(l_name) == 1) {
-        l_mat_surface = in_material_map.at(l_name);
+      if (extra_data_.material_map_->count(l_name) == 1) {
+        l_mat_surface = extra_data_.material_map_->at(l_name);
       } else {
         l_mat_surface = FbxSurfaceLambert::Create(node->GetScene(), l_name.c_str());
-        in_material_map.emplace(l_name, l_mat_surface);
+        extra_data_.material_map_->emplace(l_name, l_mat_surface);
       }
       node->AddMaterial(l_mat_surface);
     } else {
@@ -363,11 +355,11 @@ void fbx_node_mesh::build_mesh(std::map<std::string, fbxsdk::FbxSurfaceLambert*>
       for (auto l_mat : l_mats) {
         FbxSurfaceLambert* l_mat_surface{};
         const auto l_name = get_node_name(details::shading_engine_to_mat(l_mat));
-        if (in_material_map.count(l_name) == 1) {
-          l_mat_surface = in_material_map.at(l_name);
+        if (extra_data_.material_map_->count(l_name) == 1) {
+          l_mat_surface = extra_data_.material_map_->at(l_name);
         } else {
           l_mat_surface = FbxSurfaceLambert::Create(node->GetScene(), l_name.c_str());
-          in_material_map.emplace(l_name, l_mat_surface);
+          extra_data_.material_map_->emplace(l_name, l_mat_surface);
         }
 
         auto l_mat_index = node->AddMaterial(l_mat_surface);
@@ -473,7 +465,7 @@ void fbx_node_mesh::build_mesh(std::map<std::string, fbxsdk::FbxSurfaceLambert*>
   }
 }
 
-void fbx_node_mesh::build_skin(const fbx_tree_t& in_tree) {
+void fbx_node_mesh::build_skin() {
   if (mesh == nullptr) {
     log_error(fmt::format(" {} is not mesh", dag_path));
     return;
@@ -489,7 +481,7 @@ void fbx_node_mesh::build_skin(const fbx_tree_t& in_tree) {
   l_sk->SetSkinningType(static_cast<FbxSkin::EType>(l_skinning_method + 1));
 
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> l_dag_tree_map{};
-  for (auto l_it = in_tree.begin(); l_it != in_tree.end(); ++l_it) {
+  for (auto l_it = extra_data_.tree_->begin(); l_it != extra_data_.tree_->end(); ++l_it) {
     if (ranges::find_if(l_joint_list, boost::lambda2::_1 == (*l_it)->dag_path) != std::end(l_joint_list)) {
       l_dag_tree_map.emplace((*l_it)->dag_path, (*l_it));
     }
@@ -552,10 +544,37 @@ void fbx_node_mesh::build_skin(const fbx_tree_t& in_tree) {
       return l_r;
     };
 
-    l_iter(in_tree.begin());
+    l_iter(extra_data_.tree_->begin());
 
     for (auto&& i : post_add) {
+      //      if (i->dag_path.hasFn(MFn::kJoint)) {
+      //        auto l_bind_post = get_plug(i->dag_path.node(), "bindPose");
+      //        if (!l_bind_post.isNull()) {
+      //          auto l_post_data_handle = l_bind_post.asMDataHandle(&l_status);
+      //          maya_chick(l_status);
+      //          if (l_post_data_handle.type() == MFnData::Type::kMatrix) {
+      //            MMatrix l_matrix_data = l_post_data_handle.asMatrix();
+      //            l_post->Add(
+      //                i->node,
+      //                FbxMatrix{
+      //                    l_matrix_data.matrix[0][0], l_matrix_data.matrix[1][0], l_matrix_data.matrix[2][0],
+      //                    l_matrix_data.matrix[3][0], l_matrix_data.matrix[0][1], l_matrix_data.matrix[1][1],
+      //                    l_matrix_data.matrix[2][1], l_matrix_data.matrix[3][1], l_matrix_data.matrix[0][2],
+      //                    l_matrix_data.matrix[1][2], l_matrix_data.matrix[2][2], l_matrix_data.matrix[3][2],
+      //                    l_matrix_data.matrix[0][3], l_matrix_data.matrix[1][3], l_matrix_data.matrix[2][3],
+      //                    l_matrix_data.matrix[3][3]}
+      //            );
+      //          }
+      //        } else {
+      //          //          l_post->Add(i->node, i->node->EvaluateGlobalTransform());
+      //        }
+      //
+      //      } else {
+      //      }
       l_post->Add(i->node, i->node->EvaluateGlobalTransform());
+      //      else {
+      //        log_error(fmt::format("bind post type error {}", get_node_name(dag_path)));
+      //      }
     }
     node->GetScene()->AddPose(l_post);
   }
@@ -716,7 +735,7 @@ std::vector<MObject> fbx_node_mesh::find_blend_shape() const {
   return l_blend_shapes;
 }
 
-void fbx_node_mesh::build_animation(const fbx_tree_t& in_tree, const MTime& in_time) {
+void fbx_node_mesh::build_animation(const MTime& in_time) {
   if (!dag_path.isValid()) return;
 
   auto* l_layer = mesh->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
@@ -733,9 +752,7 @@ void fbx_node_mesh::build_animation(const fbx_tree_t& in_tree, const MTime& in_t
   }
 }
 
-void fbx_node_joint::build_data(
-    const fbx_tree_t& in_tree, std::map<std::string, fbxsdk::FbxSurfaceLambert*>& in_material_map
-) {
+void fbx_node_joint::build_data() {
   auto* l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
   l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
   MStatus l_status{};
@@ -761,13 +778,21 @@ void fbx_node_joint::build_data(
   node->InheritType.Set(l_is_ ? FbxTransform::eInheritRrs : FbxTransform::eInheritRSrs);
 
   // 重新设置初始的值, 使用 bind post 属性
-
-  auto l_bind_post        = get_plug(dag_path.node(), "bindPose");
-  auto l_post_data_handle = l_bind_post.asMDataHandle(&l_status);
+  //  auto l_bind_post = get_plug(dag_path.node(), "bindPose");
+  MFnDagNode l_dag_node{dag_path};
+  auto l_bind_post = l_dag_node.findPlug("bindPose", true, &l_status);
   maya_chick(l_status);
+  MDataHandle l_post_data_handle{};
+  maya_chick(l_bind_post.getValue(l_post_data_handle));
   if (l_post_data_handle.type() == MFnData::Type::kMatrix) {
-    MTransformationMatrix l_matrix_data = l_post_data_handle.asMatrix();
-    set_node_transform_matrix(l_matrix_data);
+    MMatrix l_parent_matrix{
+        (node->GetParent() ? node->GetParent()->EvaluateGlobalTransform() : FbxMatrix{}).Double44()};
+    MMatrix l_matrix_data = l_post_data_handle.asMatrix();
+    l_matrix_data *= l_parent_matrix.inverse();
+
+    std::cout << fmt::format("bind joint {} {}", dag_path, l_matrix_data) << std::endl;
+
+    set_node_transform_matrix(MTransformationMatrix{l_matrix_data});
   } else {
     log_error(fmt::format("bind post type error {}", get_node_name(dag_path)));
   }
@@ -824,11 +849,12 @@ void fbx_write::write(
     MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
     return;
   }
-
+#ifdef DOODLE_WRITE_ANIMATION
   for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
     MAnimControl::setCurrentTime(l_time);
     build_animation(l_time);
   }
+#endif
   write_end();
 }
 
@@ -887,8 +913,8 @@ void fbx_write::write_end() {
 
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
-          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
-          //          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
+          //          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
+          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
           scene_->GetFbxManager()->GetIOSettings()
       )) {
     MGlobal::displayError(
@@ -1016,10 +1042,31 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
   }
 }
 void fbx_write::build_data() {
+  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_init{};
+  l_iter_init = [&](const fbx_tree_t::iterator& in_iterator) {
+    for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
+      (*i)->extra_data_.tree_         = &tree_;
+      (*i)->extra_data_.material_map_ = &material_map_;
+      (*i)->extra_data_.bind_post     = &bind_post_;
+      l_iter_init(i);
+    }
+  };
+  l_iter_init(tree_.begin());
+
+  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_bind_post{};
+  l_iter_bind_post = [&](const fbx_tree_t::iterator& in_iterator) {
+    for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
+      if ((*i)->dag_path.hasFn(MFn::kMesh))
+        if (auto l_ptr = std::dynamic_pointer_cast<fbx_node_mesh_t>(*i); l_ptr) l_ptr->build_bind_post();
+      l_iter_bind_post(i);
+    }
+  };
+  l_iter_bind_post(tree_.begin());
+
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
   l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      if (!(*i)->dag_path.hasFn(MFn::kMesh)) (*i)->build_node(tree_, material_map_);
+      if (!(*i)->dag_path.hasFn(MFn::kMesh)) (*i)->build_node();
       l_iter_fun(i);
     }
   };
@@ -1028,7 +1075,7 @@ void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun2{};
   l_iter_fun2 = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->build_node(tree_, material_map_);
+      (*i)->build_node();
       l_iter_fun2(i);
     }
   };
@@ -1039,7 +1086,7 @@ void fbx_write::build_animation(const MTime& in_time) {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
   l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->build_animation(tree_, in_time);
+      (*i)->build_animation(in_time);
       l_iter_fun(i);
     }
   };
