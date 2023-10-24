@@ -21,6 +21,7 @@
 #include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnComponentListData.h>
+#include <maya/MFnMatrixData.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnPointArrayData.h>
 #include <maya/MFnSet.h>
@@ -38,6 +39,7 @@
 #include <maya/MQuaternion.h>
 #include <maya/MTime.h>
 #include <maya/MTransformationMatrix.h>
+#include <maya/MVector.h>
 #include <treehh/tree.hh>
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
@@ -109,39 +111,12 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
       node->RotationOrder.Set(FbxEuler::eOrderXYZ);
       break;
   }
-  //  node->UpdatePivotsAndLimitsFromProperties();
+  node->UpdatePivotsAndLimitsFromProperties();
   if (extra_data_.bind_post->count(dag_path)) {
-    set_node_transform_matrix(MTransformationMatrix{extra_data_.bind_post->at(dag_path)});
+    set_node_transform_matrix(extra_data_.bind_post->at(dag_path));
   } else {
     set_node_transform_matrix(l_transform.transformation());
   }
-  node->UpdatePivotsAndLimitsFromProperties();
-  std::cout << fmt::format(
-                   "{} set tran {} {} {} , rot {} {} {}, s {} {} {}", dag_path, node->LclTranslation.Get()[0],
-                   node->LclTranslation.Get()[1], node->LclTranslation.Get()[2], node->LclRotation.Get()[0],
-                   node->LclRotation.Get()[1], node->LclRotation.Get()[2], node->LclScaling.Get()[0],
-                   node->LclScaling.Get()[1], node->LclScaling.Get()[2]
-               )
-            << std::endl;
-  //  auto l_loc = l_transform.getTranslation(MSpace::kTransform, &l_status);
-  //  maya_chick(l_status);
-  //  node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
-  //
-  //  // rot
-  //  {
-  //    auto l_rot_x = get_plug(in_path.node(), "rotateX").asMAngle(&l_status);
-  //    maya_chick(l_status);
-  //    auto l_rot_y = get_plug(in_path.node(), "rotateY").asMAngle(&l_status);
-  //    maya_chick(l_status);
-  //    auto l_rot_z = get_plug(in_path.node(), "rotateZ").asMAngle(&l_status);
-  //    maya_chick(l_status);
-  //
-  //    node->LclRotation.Set({l_rot_x.asDegrees(), l_rot_y.asDegrees(), l_rot_z.asDegrees()});
-  //  }
-  //
-  //  std::double_t l_scale[3]{};
-  //  l_transform.getScale(l_scale);
-  //  node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
 }
 ///
 
@@ -316,12 +291,14 @@ void fbx_node_mesh::build_bind_post() {
     MFnDagNode l_fn_node{l_node};
     MDagPath l_path{};
     maya_chick(l_fn_node.getPath(l_path));
-    auto l_matrix_plug = l_is_global ? l_world_matrix_list.elementByPhysicalIndex(i, &l_status)
-                                     : l_xform_matrix_list.elementByPhysicalIndex(i, &l_status);
+    auto l_matrix_plug = l_xform_matrix_list.elementByPhysicalIndex(i, &l_status);
     maya_chick(l_status);
-    MDataHandle l_handle{};
+    MObject l_handle{};
     maya_chick(l_matrix_plug.getValue(l_handle));
-    MMatrix l_matrix = l_handle.asMatrix();
+    MFnMatrixData l_matrix_data{l_handle};
+
+    auto l_matrix = l_matrix_data.transformation(&l_status);
+    maya_chick(l_status);
 
     std::function<MPlug(MPlug)> l_get_parent_fun{[&](MPlug in_plug) -> MPlug {
       MStatus l_status{};
@@ -360,12 +337,7 @@ void fbx_node_mesh::build_bind_post() {
     };
 
     /// 寻找父矩阵
-    if (l_is_global) {
-      auto l_parent_matrix = l_get_globle_matrix(l_matrix_plug);
-      l_matrix *= l_parent_matrix.inverse();
-    }
     (*extra_data_.bind_post)[l_path] = l_matrix;
-    log_info(fmt::format("构建 {} 矩阵 {}", l_path, l_matrix));
   }
 }
 
@@ -695,7 +667,6 @@ void fbx_node_mesh::build_blend_shape() {
     maya_chick(l_status);
     auto l_input_target_group_array = l_input_target_plug_1.child(0, &l_status);
     maya_chick(l_status);
-    //    std::cout << fmt::format("get plug {}", l_input_target_group_array.name()) << std::endl;
     auto l_shape_count = l_input_target_group_array.evaluateNumElements(&l_status);
     maya_chick(l_status);
     for (auto j = 0; j < l_shape_count; ++j) {
@@ -708,11 +679,6 @@ void fbx_node_mesh::build_blend_shape() {
       maya_chick(l_status);
       auto l_input_components_target = l_input_target_item.child(4, &l_status);
       maya_chick(l_status);
-      //      std::cout << fmt::format(
-      //                       "{} info {}: {}|{}: {}", j, l_input_point_target.name(), l_input_point_target.info(),
-      //                       l_input_components_target.name(), l_input_components_target.info()
-      //                   )
-      //                << std::endl;
       auto l_input_point_target_data_handle = l_input_point_target.asMDataHandle(&l_status);
       maya_chick(l_status);
       auto l_input_components_target_data_handle = l_input_components_target.asMDataHandle(&l_status);
@@ -721,7 +687,6 @@ void fbx_node_mesh::build_blend_shape() {
       MFnPointArrayData l_point_data{l_input_point_target_data_handle.data(), &l_status};
       maya_chick(l_status);
       if (l_point_data.length() == 0) {
-        //        log_info(fmt::format("blend shape {} point data length == 0", get_node_name(i)));
         continue;
       }
 

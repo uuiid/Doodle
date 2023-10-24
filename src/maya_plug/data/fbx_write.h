@@ -23,7 +23,7 @@ using fbx_tree_t   = tree<fbx_node_ptr>;
 struct fbx_extra_data {
   fbx_tree_t* tree_{};
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
-  std::map<MDagPath, MMatrix, details::cmp_dag>* bind_post{};
+  std::map<MDagPath, MTransformationMatrix, details::cmp_dag>* bind_post{};
   fbx_extra_data() = default;
 };
 
@@ -108,7 +108,7 @@ class fbx_write {
   std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};     // 用于存储节点的map
   std::vector<MDagPath> joints_{};
-  std::map<MDagPath, MMatrix, details::cmp_dag> bind_post_{};
+  std::map<MDagPath, MTransformationMatrix, details::cmp_dag> bind_post_{};
   void write_end();
   void init();
   void build_tree(const std::vector<MDagPath>& in_vector);
