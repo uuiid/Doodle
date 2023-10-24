@@ -910,12 +910,10 @@ void fbx_write::write(
     MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
     return;
   }
-#ifdef DOODLE_WRITE_ANIMATION
   for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
     MAnimControl::setCurrentTime(l_time);
     build_animation(l_time);
   }
-#endif
   write_end();
 }
 
@@ -941,7 +939,7 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
   anim_stack->LocalStop = l_fbx_end;
 
-  MAnimControl::setCurrentTime(in_begin);
+  MAnimControl::setCurrentTime(in_begin - 1);
 
   init();
   //  build_tree(in_vector);
@@ -974,8 +972,8 @@ void fbx_write::write_end() {
 
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
-          //          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
-          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
+          manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),  //
+          //          manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
           scene_->GetFbxManager()->GetIOSettings()
       )) {
     MGlobal::displayError(
