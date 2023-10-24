@@ -7,17 +7,19 @@
 
 #include "Doodle/DoodleClusterSectionRuntime.h"
 #include "EditorStyleSet.h"
-FDoodleClusterSection::FDoodleClusterSection(UMovieSceneSection &InSection, TWeakPtr<ISequencer> InSequencer)
+
+FDoodleClusterSection::FDoodleClusterSection(UMovieSceneSection& InSection, TWeakPtr<ISequencer> InSequencer)
     : ISequencerSection(), Section(CastChecked<UDoodleClusterSection>(&InSection)), Sequencer(InSequencer) {}
+
 FDoodleClusterSection::~FDoodleClusterSection() = default;
 
-UMovieSceneSection *FDoodleClusterSection::GetSectionObject() { return Section; }
+UMovieSceneSection* FDoodleClusterSection::GetSectionObject() { return Section; }
 
 FText FDoodleClusterSection::GetSectionTitle() const { return FText::FromString(TEXT("Doodle Section")); }
 
 float FDoodleClusterSection::GetSectionHeight() const { return 20.0f; }
 
-int32 FDoodleClusterSection::OnPaintSection(FSequencerSectionPainter &InPainter) const {
+int32 FDoodleClusterSection::OnPaintSection(FSequencerSectionPainter& InPainter) const {
   const int32 LayerId = InPainter.PaintSectionBackground();
 
   if (!Section->HasStartFrame() || !Section->HasEndFrame()) {
@@ -28,18 +30,13 @@ int32 FDoodleClusterSection::OnPaintSection(FSequencerSectionPainter &InPainter)
   if (InPainter.bIsSelected && SequencerPtr.IsValid()) {
     const ESlateDrawEffect DrawEffects =
         InPainter.bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
-    static const FSlateBrush *GenericDivider = FAppStyle::GetBrush("Sequencer.GenericDivider");
+    static const FSlateBrush* GenericDivider      = FAppStyle::GetBrush("Sequencer.GenericDivider");
     const FLinearColor DrawColor             = FAppStyle::GetSlateColor("SelectionColor").GetColor(FWidgetStyle());
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
-    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-    static const FSlateBrush *GenericDivider = FEditorStyle::GetBrush("Sequencer.GenericDivider");
-    const FLinearColor DrawColor             = FEditorStyle::GetSlateColor("SelectionColor").GetColor(FWidgetStyle());
-#endif
-    FString FrameString = FString::FromInt(0);
+
+    FString FrameString                           = FString::FromInt(0);
     TArrayView<TWeakObjectPtr<UObject>> L_Objects =
         SequencerPtr->FindObjectsInCurrentSequence(Section->DoodleLockAtObject.GetGuid());
-    for (auto &&i : L_Objects) {
+    for (auto&& i : L_Objects) {
       if (i.IsValid()) {
         FrameString = i.Get()->GetName();
         break;

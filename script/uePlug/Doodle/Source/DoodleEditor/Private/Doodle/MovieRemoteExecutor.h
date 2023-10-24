@@ -6,7 +6,6 @@
 #include "MovieRemoteExecutor.generated.h"
 
 class FSocket;
-class FUdpSocketReceiver;
 struct FIPv4Endpoint;
 typedef TSharedPtr<FArrayReader, ESPMode::ThreadSafe> FArrayReaderPtr;
 
@@ -63,9 +62,6 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   DoodleMovieRemoteState GetRenderState();
   float GetProgress();
 
-  void UDPGetServerIp();
-  void UDPOnTimeout();
-  void UDPReceiver(const FArrayReaderPtr& ArrayRender, const FIPv4Endpoint& Endpoint);
 
  protected:
   void CheckForProcessFinished();
@@ -77,9 +73,7 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   FProcHandle ProcessHandle;
 
   FString Remote_Server_Ip{};
-  TSharedPtr<FSocket> UdpSocket;
   FTimerHandle TimerHandle;//计时器
-  TSharedPtr<FUdpSocketReceiver> UdpRec;
 
  private:
   TSet<int32> Render_IDs{};
@@ -97,7 +91,6 @@ class UDoodleMovieRemoteExecutor : public UMoviePipelineExecutorBase {
   void StartRemoteClientRender();
 
   inline int32 GetProt() { return 50021; }
-  inline int32 GetUdpProt() { return 50022; }
 
   void FindRemoteClient();
   UFUNCTION()

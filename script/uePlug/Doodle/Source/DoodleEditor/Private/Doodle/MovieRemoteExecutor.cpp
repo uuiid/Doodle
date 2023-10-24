@@ -26,12 +26,13 @@
 #include "Widgets/Notifications/SNotificationList.h"      // 通知消息结构
 #include "Widgets/Notifications/SProgressBar.h"           // 进度条
 //
-#include "Algo/Rotate.h"                    // 旋转数组
-#include "JsonObjectConverter.h"            // json转换
+#include "Algo/Rotate.h"          // 旋转数组
+#include "JsonObjectConverter.h"  // json转换
+#include "Modules/ModuleManager.h"
 #include "MoviePipelineBlueprintLibrary.h"  // 蓝图库
 #include "MoviePipelineOutputSetting.h"     // 输出设置
-#include "Networking.h"
-#include <Common/UdpSocketReceiver.h>
+#include "SocketSubsystem.h"
+#include "Sockets.h"
 
 #define LOCTEXT_NAMESPACE "DoodleMovieRemoteExecutor"
 
@@ -88,7 +89,8 @@ bool UDoodleMovieRemoteExecutor::UploadFiles() {
   FString L_Prj_Name            = FPaths::GetBaseFilename(FPaths::GetProjectFilePath());
   FString L_R_Prj = Remote_Repository / L_Prj_Name / FPaths::GetCleanFilename(FPaths::GetProjectFilePath());
 
-  {  // 复制项目
+  {
+    // 复制项目
     if (L_PlatformFile.FileExists(*L_R_Prj)) {
       L_PlatformFile.DeleteFile(*L_R_Prj);
     }
@@ -306,87 +308,6 @@ void UDoodleMovieRemoteExecutor::GenerateCommandLineArguments(UMoviePipelineQueu
   for (auto&& i : RemoteRenderJobArgs) UE_LOG(LogMovieRenderPipeline, Log, TEXT("%s"), *i.Args);
 }
 
-void UDoodleMovieRemoteExecutor::UDPGetServerIp() {
-  if (!UdpSocket) {
-    UE_LOG(LogMovieRenderPipeline, Log, TEXT("Process: %s"), TEXT("UDPGetServerIp"));
-    GEditor->GetTimerManager().Get().SetTimer(
-        TimerHandle, this, &UDoodleMovieRemoteExecutor::UDPOnTimeout, 1, false, 3
-    );
-    UdpSocket = MakeShareable(
-        FUdpSocketBuilder(TEXT("UDPSocket")).AsNonBlocking().WithBroadcast().AsReusable().Build(),
-        [](FSocket* u) {
-          if (u) {
-            ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(u);
-          }
-        }
-    );
-    //---------------
-    FString msg = "hello world! doodle";
-    TArray<uint8> bytes;
-    FTCHARToUTF8 Converter(*msg);
-    bytes.Append((const uint8*)Converter.Get(), Converter.Length());
-    //---------------------------
-    UdpRec.Reset();
-    UdpRec = MakeShareable(new FUdpSocketReceiver(UdpSocket.Get(), FTimespan::FromSeconds(500), TEXT("rec_thread")));
-    UdpRec->OnDataReceived().BindUObject(this, &UDoodleMovieRemoteExecutor::UDPReceiver);
-    UdpRec->Start();
-    //------------------
-    TSharedPtr<FInternetAddr> addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-    addr->SetBroadcastAddress();
-    addr->SetPort(GetUdpProt());
-    int32 send = 0;
-    UdpSocket->SendTo(bytes.GetData(), bytes.Num(), send, *addr);
-    //---------------------
-  }
-}
-
-void UDoodleMovieRemoteExecutor::UDPOnTimeout() {
-  UE_LOG(LogMovieRenderPipeline, Log, TEXT("Process: %s"), TEXT("UDPOnTimeout"));
-  //----------------
-  if (UdpRec) {
-    //--------------------
-    UdpSocket->Close();
-    //---------------
-    if (UdpRec) {
-      UdpRec->Stop();
-      UdpRec.Reset();
-    }
-    // ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(UdpSocket.Get());
-    //--------------
-    FNotificationInfo L_Info{FText::FromString(TEXT("正在渲染..."))};
-    L_Info.bFireAndForget = true;  // 自动取消
-    L_Info.FadeInDuration = 1.0f;  // 淡入淡出时间
-    L_Info.Image          = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
-    L_Info.Text           = FText::FromString(TEXT("无服务器连接或服务器未启动"));
-    FSlateNotificationManager::Get().AddNotification(L_Info);
-    //---------
-    UdpSocket.Reset();
-  }
-}
-
-void UDoodleMovieRemoteExecutor::UDPReceiver(const FArrayReaderPtr& arrayRender, const FIPv4Endpoint& endpoint) {
-  UE_LOG(LogMovieRenderPipeline, Log, TEXT("Process: %s"), TEXT("UDPReceiver"));
-  FString rec_data = UTF8_TO_TCHAR((char*)arrayRender->GetData());
-  //----------------
-  if (rec_data.Contains(TEXT("doodle server"))) {
-    //----------------
-    UdpSocket->Close();
-
-    Remote_Server_Ip = endpoint.Address.ToString();
-    //---------------------------------
-    AsyncTask(ENamedThreads::GameThread, [=]() {
-      GEditor->GetTimerManager().Get().ClearTimer(TimerHandle);
-      FindRemoteClient();
-    });
-    if (UdpRec) {
-      UdpRec->Stop();
-      UdpRec.Reset();
-    }
-
-    //---------------
-    // UdpSocket.Reset();
-  }
-}
 
 TArray<TObjectPtr<UMoviePipelineQueue>> UDoodleMovieRemoteExecutor::GetQueuesToRender(
     UMoviePipelineQueue* InPipelineQueue
@@ -482,7 +403,6 @@ void UDoodleMovieRemoteExecutor::HttpRemoteClient(int32 RequestIndex, int32 Resp
     //-----------------------------------
     StartRemoteClientRender();
     return;
-
   } else if (Render_IDs.Contains(RequestIndex)) {
     FNotificationInfo L_Info{FText::FromString(TEXT("正在渲染..."))};
     // L_Info.ContentWidget        = SNew(SDoodleRemoteNotification, this);

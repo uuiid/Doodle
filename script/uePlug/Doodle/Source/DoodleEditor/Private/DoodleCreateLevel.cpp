@@ -151,6 +151,7 @@
 /// 关卡编辑器子系统
 #include "LevelEditorSubsystem.h"
 #include "Misc/ScopeExit.h"  // 作用域退出
+
 void FDoodleCreateLevel::ImportSkeletalMesh(const FString& InFbxpath) {
   UDoodleFbxImport_1* L_FbxImport = NewObject<UDoodleFbxImport_1>();
   L_FbxImport->ImportPath         = InFbxpath;
@@ -202,6 +203,7 @@ void FDoodleCreateLevel::ImportFile(const FString& InFile) {
     ImportGeometryCache(InFile);
   }
 }
+
 void FDoodleCreateLevel::PreparationImport(const FString& InFile) {
   if (!FPaths::FileExists(InFile)) {
     return;
@@ -240,3 +242,5 @@ void FDoodleCreateLevel::AddReferencedObjects(FReferenceCollector& Collector) {
     Collector.AddReferencedObject(i);
   }
 }
+
+FString FDoodleCreateLevel::GetReferencerName() const { return TEXT("Doodle Import"); }

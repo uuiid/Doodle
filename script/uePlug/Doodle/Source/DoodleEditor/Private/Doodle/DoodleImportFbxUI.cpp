@@ -1389,4 +1389,6 @@ TArray<FDoodleUSkeletonData_1> FDoodleUSkeletonData_1::ListAllSkeletons() {
   return L_AllSkinObjs;
 }
 
+FString SDoodleImportFbxUI::GetReferencerName() const { return TEXT("SDoodleImportFbxUI"); }
+
 #undef LOCTEXT_NAMESPACE

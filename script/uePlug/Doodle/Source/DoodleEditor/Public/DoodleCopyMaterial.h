@@ -12,6 +12,7 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
   void Construct(const FArguments& Arg);
   // 知道了原因, 感觉用不到(垃圾回收)
   virtual void AddReferencedObjects(FReferenceCollector& collector) override;
+  FString GetReferencerName() const override;
 
  private:
   FReply getSelect();

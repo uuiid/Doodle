@@ -71,9 +71,7 @@ static float GetNextSpacing(uint32 CurrentStep) {
   }
 }
 
-FCreateCharacterSliderController::FCreateCharacterSliderController(
-    const FTimeSliderArgs& InArgs
-)
+FCreateCharacterSliderController::FCreateCharacterSliderController(const FTimeSliderArgs& InArgs)
     : TimeSliderArgs(InArgs),
       DistanceDragged(0.0f),
       MouseDragType(DRAG_NONE),
@@ -216,8 +214,8 @@ void FCreateCharacterSliderController::DrawTicks(
       );
       FSlateDrawElement::MakeText(
           OutDrawElements, InArgs.StartLayer + 1,
-          InArgs.AllottedGeometry.ToPaintGeometry(InArgs.AllottedGeometry.Size, FSlateLayoutTransform{TextOffset}), FrameString,
-          SmallLayoutFont, InArgs.DrawEffects, InArgs.TickColor * 0.65f
+          InArgs.AllottedGeometry.ToPaintGeometry(InArgs.AllottedGeometry.Size, FSlateLayoutTransform{TextOffset}),
+          FrameString, SmallLayoutFont, InArgs.DrawEffects, InArgs.TickColor * 0.65f
       );
     }
 
@@ -225,9 +223,9 @@ void FCreateCharacterSliderController::DrawTicks(
       // Compute the size of each tick mark.  If we are half way between to visible values display a slightly larger
       // tick mark
       const float MinorTickHeight = ((MinorDivisions % 2 == 0) && (Step % (MinorDivisions / 2)) == 0) ? 6.0f : 2.0f;
-      const float MinorLinePx     = RangeToScreen.InputToLocalX(CurrentMajorLine + Step * MajorGridStep / MinorDivisions);
+      const float MinorLinePx = RangeToScreen.InputToLocalX(CurrentMajorLine + Step * MajorGridStep / MinorDivisions);
 
-      LinePoints[0]               = FVector2D(
+      LinePoints[0]           = FVector2D(
           MinorLinePx, InArgs.bMirrorLabels ? 0.0f : FMath::Abs(InArgs.AllottedGeometry.Size.Y - MinorTickHeight)
       );
       LinePoints[1] = FVector2D(MinorLinePx, LinePoints[0].Y + MinorTickHeight);
@@ -348,8 +346,9 @@ int32 FCreateCharacterSliderController::OnPaintTimeSlider(
       );
 
       FSlateDrawElement::MakeText(
-          OutDrawElements, Args.StartLayer + 1, Args.AllottedGeometry.ToPaintGeometry(TextSize, FSlateLayoutTransform{TextOffset}),
-          FrameString, SmallLayoutFont, Args.DrawEffects, Args.TickColor
+          OutDrawElements, Args.StartLayer + 1,
+          Args.AllottedGeometry.ToPaintGeometry(TextSize, FSlateLayoutTransform{TextOffset}), FrameString,
+          SmallLayoutFont, Args.DrawEffects, Args.TickColor
       );
     }
 
@@ -369,7 +368,9 @@ int32 FCreateCharacterSliderController::OnPaintTimeSlider(
 
       FSlateDrawElement::MakeBox(
           OutDrawElements, LayerId + 1,
-          AllottedGeometry.ToPaintGeometry(FVector2D(RangeSizeX, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D{RangePosX, 0.f}}),
+          AllottedGeometry.ToPaintGeometry(
+              FVector2D(RangeSizeX, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D{RangePosX, 0.f}}
+          ),
           bMirrorLabels ? ScrubHandleDownBrush : ScrubHandleUpBrush, DrawEffects,
           MouseStartPosX < MouseEndPosX ? FLinearColor(0.5f, 0.5f, 0.5f) : FLinearColor(0.25f, 0.3f, 0.3f)
       );
@@ -396,7 +397,8 @@ int32 FCreateCharacterSliderController::DrawSelectionRange(
       FSlateDrawElement::MakeBox(
           OutDrawElements, LayerId + 1,
           AllottedGeometry.ToPaintGeometry(
-              FVector2D(SelectionRangeR - SelectionRangeL, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(SelectionRangeL, 0.f)}
+              FVector2D(SelectionRangeR - SelectionRangeL, AllottedGeometry.Size.Y),
+              FSlateLayoutTransform{FVector2D(SelectionRangeL, 0.f)}
           ),
           FAppStyle::GetBrush("WhiteBrush"), ESlateDrawEffect::None, DrawColor.CopyWithNewOpacity(Args.SolidFillOpacity)
       );
@@ -413,7 +415,8 @@ int32 FCreateCharacterSliderController::DrawSelectionRange(
     FSlateDrawElement::MakeBox(
         OutDrawElements, LayerId + 1,
         AllottedGeometry.ToPaintGeometry(
-            FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(SelectionRangeR - Args.BrushWidth, 0.f)}
+            FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y),
+            FSlateLayoutTransform{FVector2D(SelectionRangeR - Args.BrushWidth, 0.f)}
         ),
         Args.EndBrush, ESlateDrawEffect::None, DrawColor
     );
@@ -435,7 +438,7 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   TRange<FFrameNumber> PlaybackRange = TimeSliderArgs.PlaybackRange.Get();
   FFrameRate TickResolution          = GetTickResolution();
   const float PlaybackRangeL         = RangeToScreen.InputToLocalX(PlaybackRange.GetLowerBoundValue() / TickResolution);
-  const float PlaybackRangeR         = RangeToScreen.InputToLocalX(PlaybackRange.GetUpperBoundValue() / TickResolution) - 1;
+  const float PlaybackRangeR = RangeToScreen.InputToLocalX(PlaybackRange.GetUpperBoundValue() / TickResolution) - 1;
 
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
@@ -448,7 +451,8 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
       AllottedGeometry.ToPaintGeometry(
-          FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(PlaybackRangeR - Args.BrushWidth, 0.f)}
+          FVector2D(Args.BrushWidth, AllottedGeometry.Size.Y),
+          FSlateLayoutTransform{FVector2D(PlaybackRangeR - Args.BrushWidth, 0.f)}
       ),
       Args.EndBrush, ESlateDrawEffect::None, FColor(128, 32, 32, OpacityBlend)  // 0, 75, 50 (HSV)
   );
@@ -456,7 +460,9 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   // Black tint for excluded regions
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
-      AllottedGeometry.ToPaintGeometry(FVector2D(PlaybackRangeL, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(0.f, 0.f)}),
+      AllottedGeometry.ToPaintGeometry(
+          FVector2D(PlaybackRangeL, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(0.f, 0.f)}
+      ),
       FAppStyle::GetBrush("WhiteBrush"), ESlateDrawEffect::None,
       FLinearColor::Black.CopyWithNewOpacity(0.3f * OpacityBlend / 255.f)
   );
@@ -464,7 +470,8 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
       AllottedGeometry.ToPaintGeometry(
-          FVector2D(AllottedGeometry.Size.X - PlaybackRangeR, AllottedGeometry.Size.Y), FSlateLayoutTransform{FVector2D(PlaybackRangeR, 0.f)}
+          FVector2D(AllottedGeometry.Size.X - PlaybackRangeR, AllottedGeometry.Size.Y),
+          FSlateLayoutTransform{FVector2D(PlaybackRangeR, 0.f)}
       ),
       FAppStyle::GetBrush("WhiteBrush"), ESlateDrawEffect::None,
       FLinearColor::Black.CopyWithNewOpacity(0.3f * OpacityBlend / 255.f)
@@ -512,7 +519,7 @@ FReply FCreateCharacterSliderController::OnMouseButtonUp(
                                  WidgetOwner.HasMouseCapture() && TimeSliderArgs.AllowZoom;
 
   FScrubRangeToScreen RangeToScreen = FScrubRangeToScreen(TimeSliderArgs.ViewRange.Get(), MyGeometry.Size);
-  FFrameTime MouseTime              = ComputeFrameTimeFromMouse(MyGeometry, MouseEvent.GetScreenSpacePosition(), RangeToScreen);
+  FFrameTime MouseTime = ComputeFrameTimeFromMouse(MyGeometry, MouseEvent.GetScreenSpacePosition(), RangeToScreen);
 
   if (bHandleRightMouseButton) {
     if (!bPanning && DistanceDragged == 0.0f) {
@@ -623,12 +630,12 @@ FReply FCreateCharacterSliderController::OnMouseMove(
         // UAnimMontage* AnimMontage        = Cast<UAnimMontage>(WeakModel.Pin()->GetAnimSequenceBase());
         // bool bChildAnimMontage           = AnimMontage && AnimMontage->HasParentAsset();
 
-        FFrameTime MouseDownFree         = ComputeFrameTimeFromMouse(MyGeometry, MouseDownPosition[0], RangeToScreen, false);
+        FFrameTime MouseDownFree = ComputeFrameTimeFromMouse(MyGeometry, MouseDownPosition[0], RangeToScreen, false);
 
         const FFrameRate FrameResolution = GetTickResolution();
         const bool bLockedPlayRange      = TimeSliderArgs.IsPlaybackRangeLocked.Get();
         const float MouseDownPixel       = RangeToScreen.InputToLocalX(MouseDownFree / FrameResolution);
-        const bool bHitScrubber          = GetHitTestScrubberPixelRange(TimeSliderArgs.ScrubPosition.Get(), RangeToScreen)
+        const bool bHitScrubber = GetHitTestScrubberPixelRange(TimeSliderArgs.ScrubPosition.Get(), RangeToScreen)
                                       .HandleRange.Contains(MouseDownPixel);
         const int32 HitTimeIndex      = HitTestTimes(RangeToScreen, MouseDownPixel);
         const bool bHitTime           = /*!bChildAnimMontage &&*/ HitTimeIndex != INDEX_NONE;
@@ -714,7 +721,7 @@ void FCreateCharacterSliderController::CommitScrubPosition(FFrameTime NewValue, 
   TimeSliderArgs.OnScrubPositionChanged.ExecuteIfBound(
       NewValue, bIsScrubbing, /*bEvaluate*/ true
   );  // todo change if anim timeline needs to handle sequencer style middle mouse manipulation which changes time but
-      // doesn't evaluate
+  // doesn't evaluate
 }
 
 FReply FCreateCharacterSliderController::OnMouseWheel(
@@ -785,9 +792,9 @@ int32 FCreateCharacterSliderController::OnPaintViewArea(
 
   if (Args.PlaybackRangeArgs.IsSet()) {
     FPaintPlaybackRangeArgs PaintArgs = Args.PlaybackRangeArgs.GetValue();
-    LayerId                           = DrawPlaybackRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
-    PaintArgs.SolidFillOpacity        = 0.2f;
-    LayerId                           = DrawSelectionRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
+    LayerId = DrawPlaybackRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
+    PaintArgs.SolidFillOpacity = 0.2f;
+    LayerId = DrawSelectionRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
   }
 
   if (Args.bDisplayTickLines) {
@@ -825,7 +832,8 @@ int32 FCreateCharacterSliderController::OnPaintViewArea(
     }
 
     FSlateDrawElement::MakeLines(
-        OutDrawElements, LayerId + 1, AllottedGeometry.ToPaintGeometry(FVector2D(1.0f, 1.0f), FSlateLayoutTransform{FVector2D(LinePos, 0.0f)}),
+        OutDrawElements, LayerId + 1,
+        AllottedGeometry.ToPaintGeometry(FVector2D(1.0f, 1.0f), FSlateLayoutTransform{FVector2D(LinePos, 0.0f)}),
         LinePoints, DrawEffects, FLinearColor(1.f, 1.f, 1.f, .5f), false
     );
   }
@@ -872,7 +880,7 @@ TSharedRef<SWidget> FCreateCharacterSliderController::OpenSetPlaybackRangeMenu(F
   FMenuBuilder MenuBuilder(bShouldCloseWindowAfterMenuSelection, nullptr);
 
   FText CurrentTimeText;
-  CurrentTimeText                     = FText::FromString(TimeSliderArgs.NumericTypeInterface->ToString(FrameNumber.Value));
+  CurrentTimeText = FText::FromString(TimeSliderArgs.NumericTypeInterface->ToString(FrameNumber.Value));
 
   TRange<FFrameNumber> PlaybackRange  = TimeSliderArgs.PlaybackRange.Get();
 
@@ -885,8 +893,8 @@ TSharedRef<SWidget> FCreateCharacterSliderController::OpenSetPlaybackRangeMenu(F
     MenuBuilder.AddMenuEntry(
         LOCTEXT("SetSelectionStart", "Set Selection Start"), FText(), FSlateIcon(),
         FUIAction(
-            FExecuteAction::CreateLambda([=] { SetSelectionRangeStart(FrameNumber); }),
-            FCanExecuteAction::CreateLambda([=] {
+            FExecuteAction::CreateLambda([this, FrameNumber] { SetSelectionRangeStart(FrameNumber); }),
+            FCanExecuteAction::CreateLambda([=, this] {
               return SelectionRange.IsEmpty() || FrameNumber < UE::MovieScene::DiscreteExclusiveUpper(SelectionRange);
             })
         )
@@ -895,8 +903,8 @@ TSharedRef<SWidget> FCreateCharacterSliderController::OpenSetPlaybackRangeMenu(F
     MenuBuilder.AddMenuEntry(
         LOCTEXT("SetSelectionEnd", "Set Selection End"), FText(), FSlateIcon(),
         FUIAction(
-            FExecuteAction::CreateLambda([=] { SetSelectionRangeEnd(FrameNumber); }),
-            FCanExecuteAction::CreateLambda([=] {
+            FExecuteAction::CreateLambda([=, this] { SetSelectionRangeEnd(FrameNumber); }),
+            FCanExecuteAction::CreateLambda([=, this] {
               return SelectionRange.IsEmpty() || FrameNumber >= UE::MovieScene::DiscreteInclusiveLower(SelectionRange);
             })
         )
@@ -905,10 +913,10 @@ TSharedRef<SWidget> FCreateCharacterSliderController::OpenSetPlaybackRangeMenu(F
     MenuBuilder.AddMenuEntry(
         LOCTEXT("ClearSelectionRange", "Clear Selection Range"), FText(), FSlateIcon(),
         FUIAction(
-            FExecuteAction::CreateLambda([=] {
+            FExecuteAction::CreateLambda([=, this] {
               TimeSliderArgs.OnSelectionRangeChanged.ExecuteIfBound(TRange<FFrameNumber>::Empty());
             }),
-            FCanExecuteAction::CreateLambda([=] { return !SelectionRange.IsEmpty(); })
+            FCanExecuteAction::CreateLambda([=, this] { return !SelectionRange.IsEmpty(); })
         )
     );
   }

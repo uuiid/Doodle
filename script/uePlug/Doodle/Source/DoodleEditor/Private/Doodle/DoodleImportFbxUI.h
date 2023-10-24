@@ -173,6 +173,7 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   // 垃圾回收
   virtual void AddReferencedObjects(FReferenceCollector& collector) override;
+  FString GetReferencerName() const override;
 
   const static FName Name;
 

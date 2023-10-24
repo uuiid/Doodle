@@ -22,6 +22,7 @@ class FCreateCharacterMianUI : public FAssetEditorToolkit, public FGCObject {
   // IToolkit 接口
   virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) override;
   virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) override;
+  FString GetReferencerName() const override;
   // 结束 of IToolkit 接口
 
   // FAssetEditorToolkit 接口

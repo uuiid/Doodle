@@ -27,8 +27,9 @@ void FDoodleLightningPostSequencerEditor::BuildObjectBindingTrackMenu(
   if (ObjectClass->IsChildOf(ADoodleLightingPost::StaticClass())) {
     MenuBuilder.AddMenuEntry(
         LOCTEXT("Add_Doodle_Object", "Add Curve"), LOCTEXT("Add_Doodle_Object", "Add Curve"),
-        FSlateIcon("Subtitle", "EventIcon"),
-        FUIAction{FExecuteAction::CreateLambda([=]() { this->AddNewObjectBindingTrack(ObjectBindings); })}
+        FSlateIcon("Subtitle", "EventIcon"), FUIAction{FExecuteAction::CreateLambda([this, ObjectBindings]() {
+          this->AddNewObjectBindingTrack(ObjectBindings);
+        })}
     );
   }
 }

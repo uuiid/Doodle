@@ -61,7 +61,7 @@
 #include "DoodleVariantCompoundWidget.h"
 
 namespace {
-void print_test(USkeletalMesh *In_Obj) {
+void print_test(USkeletalMesh* In_Obj) {
   auto L_Lod = In_Obj->GetImportedModel();
   FSkeletalMeshImportData L_Data{};
   In_Obj->LoadLODImportedData(0, L_Data);
@@ -73,9 +73,9 @@ void print_test(USkeletalMesh *In_Obj) {
   //for (auto &&[name, ele] : L_Des.GetElements()) {
   //  UE_LOG(LogTemp, Log, TEXT("bone name %s"), *(name.ToString()));
   //}
-  for (auto &&L_Mesh : L_Lod->LODModels) {
+  for (auto&& L_Mesh : L_Lod->LODModels) {
     int32 L_Num{};
-    for (auto &&L_Info : L_Mesh.ImportedMeshInfos) {
+    for (auto&& L_Info : L_Mesh.ImportedMeshInfos) {
       L_Num += L_Info.NumVertices;
       UE_LOG(LogTemp, Log, TEXT("bone name %s"), *(L_Info.Name.ToString()));
     }
@@ -84,7 +84,7 @@ void print_test(USkeletalMesh *In_Obj) {
 }
 }  // namespace
 
-void DoodleCopyMat::Construct(const FArguments &Arg) {
+void DoodleCopyMat::Construct(const FArguments& Arg) {
   // 这个是ue界面的创建方法
   /// clang-format off
   ChildSlot
@@ -96,12 +96,11 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                1.f,
                1.f
            ))[SNew(SButton)  // 创建按钮
-                  .OnClicked(this,
-                             &DoodleCopyMat::getSelect)  // 添加回调函数
-                      [SNew(STextBlock)
-                           .Text(FText::FromString(
-                               TEXT("获得选择物体")
-                           ))  // 按钮中的字符
+                  .OnClicked(
+                      this,
+                      &DoodleCopyMat::getSelect
+                  )                                                                    // 添加回调函数
+                      [SNew(STextBlock).Text(FText::FromString(TEXT("获得选择物体")))  // 按钮中的字符
   ]
                   .ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("获得选中物体")); })] +
 
@@ -112,47 +111,41 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                1.f,
                1.f
            ))[SNew(SButton)  // 创建按钮
-                  .OnClicked(this,
-                             &DoodleCopyMat::CopyMateral)  // 添加回调函数
-                      [SNew(STextBlock)
-                           .Text(FText::FromString(
-                               TEXT("复制材质列表")
-                           ))  // 按钮中的字符
+                  .OnClicked(
+                      this,
+                      &DoodleCopyMat::CopyMateral
+                  )                                                                    // 添加回调函数
+                      [SNew(STextBlock).Text(FText::FromString(TEXT("复制材质列表")))  // 按钮中的字符
   ]
-                  .ToolTipText_Lambda([=]() -> FText { return FText::FromString(
-                                                           TEXT("复制选中物体的材质列表")
-                                                       ); })] +
+                  .ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("复制选中物体的材质列表")); })] +
 
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(FMargin(
-               1.f,
-               1.f
-           ))[SNew(SButton)
-                  .OnClicked_Lambda([]() -> FReply {
-                    FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name);
-                    return FReply::Handled();
-                  })  // 批量导入
-                      [SNew(STextBlock)
-                           .Text(FText::FromString(TEXT("批量导入")))]
-                  .ToolTipText_Lambda([=]() -> FText { return FText::FromString(
-                                                           TEXT("批量导入fbx和abc文件")
-                                                       ); })] +
+           .Padding(FMargin(1.f, 1.f)
+           )[SNew(SButton)
+                 .OnClicked_Lambda([]() -> FReply {
+                   FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name);
+                   return FReply::Handled();
+                 })  // 批量导入
+                     [SNew(STextBlock).Text(FText::FromString(TEXT("批量导入")))]
+                 .ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("批量导入fbx和abc文件")); })] +
 
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(FMargin(1.f, 1.f))
-               [SNew(SButton)
-                    .OnClicked(this,
-                               &DoodleCopyMat::BathReameAss)  // 批量重命名
-                        [SNew(STextBlock)
-                             .Text(FText::FromString(TEXT("批量修改材质名称")))]
-                    .ToolTipText_Lambda([=]() -> FText { return FText::FromString(
-                                                             TEXT("选中骨骼物体,"
-                                                                  "会将材料名称和骨骼物体的插槽名称统一")
-                                                         ); })] +
+           .Padding(FMargin(1.f, 1.f))[SNew(SButton)
+                                           .OnClicked(
+                                               this,
+                                               &DoodleCopyMat::BathReameAss
+                                           )  // 批量重命名
+                                               [SNew(STextBlock).Text(FText::FromString(TEXT("批量修改材质名称")))]
+                                           .ToolTipText_Lambda([=]() -> FText {
+                                             return FText::FromString(
+                                                 TEXT("选中骨骼物体,"
+                                                      "会将材料名称和骨骼物体的插槽名称统一")
+                                             );
+                                           })] +
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
@@ -169,19 +162,16 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(FMargin{1.f, 1.f})
-               [SNew(SButton)
-                    .OnClicked_Lambda([this]() -> FReply {
-
-                      return FReply::Handled();
-                    })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
-                    .ToolTipText_Lambda([]() -> FText { return FText::FromString(
-                                                            TEXT("测试使用")
-                                                        ); })] ];
+           .Padding(FMargin{1.f, 1.f}
+           )[SNew(SButton)
+                 .OnClicked_Lambda([this]() -> FReply {
+                   return FReply::Handled();
+                 })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
+                 .ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("测试使用")); })]];
   /// clang-format on
 }
 
-void DoodleCopyMat::AddReferencedObjects(FReferenceCollector &collector) {
+void DoodleCopyMat::AddReferencedObjects(FReferenceCollector& collector) {
   // collector.AddReferencedObjects();
 }
 
@@ -192,10 +182,8 @@ FReply DoodleCopyMat::getSelect() {
             */
 
   // 获得文件管理器的模块(或者类?)
-  FContentBrowserModule &contentBrowserModle =
-      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
-          "ContentBrowser"
-      );
+  FContentBrowserModule& contentBrowserModle =
+      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
   TArray<FAssetData> selectedAss;
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
   for (int i = 0; i < selectedAss.Num(); i++) {
@@ -204,19 +192,18 @@ FReply DoodleCopyMat::getSelect() {
       // 如果是骨骼物体就可以复制材质了
       UE_LOG(LogTemp, Log, TEXT("确认骨骼物体 %s"), *(selectedAss[i].GetFullName()));
 
-      UObject *skinObj = selectedAss[i].ToSoftObjectPath().TryLoad();
+      UObject* skinObj = selectedAss[i].ToSoftObjectPath().TryLoad();
       // assLoad.LoadAsset(selectedAss[i].GetFullName( ));
       // 将加载的类转换为skeletalMesh类并进行储存
       if (skinObj) {
         copySoureSkinObj = Cast<USkeletalMesh>(skinObj);
         UE_LOG(LogTemp, Log, TEXT("%s"), *(copySoureSkinObj->GetPathName()));
       }
-
     }  // 测试是否是几何缓存物体
     else if (selectedAss[i].GetClass() == UGeometryCache::StaticClass()) {
       // 如果是骨骼物体就可以复制材质了
       UE_LOG(LogTemp, Log, TEXT("确认几何缓存  %s"), *(selectedAss[i].GetFullName()));
-      UObject *cacheObj = selectedAss[i].ToSoftObjectPath().TryLoad();
+      UObject* cacheObj = selectedAss[i].ToSoftObjectPath().TryLoad();
       if (cacheObj) {
         copySoureGeoCache = cacheObj;
         //*(cacheObj->GetFullName( )
@@ -231,24 +218,20 @@ FReply DoodleCopyMat::getSelect() {
 }
 
 FReply DoodleCopyMat::CopyMateral() {
-  FContentBrowserModule &contentBrowserModle =
-      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
-          "ContentBrowser"
-      );
+  FContentBrowserModule& contentBrowserModle =
+      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
   TArray<FAssetData> selectedAss;
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
   for (int i = 0; i < selectedAss.Num(); i++) {
-    UObject *loadObj =
-        selectedAss[i]
-            .ToSoftObjectPath()
-            .TryLoad();  // assLoad.LoadAsset(selectedAss[i].GetFullName( ));
+    UObject* loadObj =
+        selectedAss[i].ToSoftObjectPath().TryLoad();  // assLoad.LoadAsset(selectedAss[i].GetFullName( ));
 
     // 测试选中物体是否是骨骼物体
     if (selectedAss[i].GetClass()->IsChildOf<USkeletalMesh>()) {
       // 如果是骨骼物体就可以复制材质了
       UE_LOG(LogTemp, Log, TEXT("开始复制材质 %s"), *(selectedAss[i].GetFullName()));
 
-      USkeletalMesh *copyTrange = Cast<USkeletalMesh>(loadObj);
+      USkeletalMesh* copyTrange = Cast<USkeletalMesh>(loadObj);
 
       UE_LOG(LogTemp, Log, TEXT("确认并加载为几何物体 %s"), *(copyTrange->GetPathName()));
 
@@ -261,13 +244,12 @@ FReply DoodleCopyMat::CopyMateral() {
         //   //  材质插槽命名
         // }
         copyTrange->SetMaterials(copySoureSkinObj->GetMaterials());
-
     }  // 如果是几何缓存就复制几何缓存
     else if (selectedAss[i].GetClass() == UGeometryCache::StaticClass()) {
       UE_LOG(LogTemp, Log, TEXT("开始复制材质 %s"), *(selectedAss[i].GetFullName()));
 
-      UGeometryCache *copyTrange          = Cast<UGeometryCache>(loadObj);
-      TArray<UMaterialInterface *> trange = copyTrange->Materials;
+      UGeometryCache* copyTrange         = Cast<UGeometryCache>(loadObj);
+      TArray<UMaterialInterface*> trange = copyTrange->Materials;
 
       if (copySoureGeoCache) {
         auto soure = Cast<UGeometryCache>(copySoureGeoCache);
@@ -284,54 +266,41 @@ FReply DoodleCopyMat::CopyMateral() {
 
 
 FReply DoodleCopyMat::BathReameAss() {
-  FContentBrowserModule &contentBrowserModle =
-      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
-          "ContentBrowser"
-      );
+  FContentBrowserModule& contentBrowserModle =
+      FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
   TArray<FAssetData> selectedAss;
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
 
-  for (auto &&item : selectedAss) {
-    UObject *loadObj = item.GetAsset();
+  for (auto&& item : selectedAss) {
+    UObject* loadObj = item.GetAsset();
     if (loadObj == nullptr)
       continue;
     if (item.GetClass()->IsChildOf<USkeletalMesh>()) {
       // 确认时骨骼物体
-      USkeletalMesh *skinObj = Cast<USkeletalMesh>(loadObj);
+      USkeletalMesh* skinObj = Cast<USkeletalMesh>(loadObj);
       UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"), *(skinObj->GetPathName()));
       if (skinObj == nullptr)
         UE_LOG(LogTemp, Log, TEXT("不是骨骼物体 %s"), *(skinObj->GetPathName()));
 
-      for (FSkeletalMaterial &mat : skinObj->GetMaterials()) {
+      for (FSkeletalMaterial& mat : skinObj->GetMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
         }
       }
-
     } else if (item.GetClass()->IsChildOf<UStaticMesh>()) {
-      UStaticMesh *k_st = Cast<UStaticMesh>(loadObj);
+      UStaticMesh* k_st = Cast<UStaticMesh>(loadObj);
       UE_LOG(LogTemp, Log, TEXT("确认物体, 并进行转换 %s"), *(k_st->GetPathName()));
       if (k_st == nullptr) {
         UE_LOG(LogTemp, Log, TEXT("不是静态网格体 %s"), *(k_st->GetPathName()));
         continue;
       }
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
-      for (auto &mat : k_st->GetStaticMaterials()) {
+      for (auto& mat : k_st->GetStaticMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
         }
       }
-
-#else if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 26
-      for (auto &mat : k_st->StaticMaterials) {
-        if (mat.ImportedMaterialSlotName.IsValid()) {
-          set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
-        }
-      }
-#endif
     } else {
       UE_LOG(LogTemp, Log, TEXT("不支持的类型"));
-      continue;
     }
   }
   return FReply::Handled();
@@ -344,11 +313,11 @@ void DoodleCopyMat::FindErrorMaterials() {
   LFilter.bRecursiveClasses        = true;
   LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
 
-  TArray<UObject *> ErrorMaterials{};
+  TArray<UObject*> ErrorMaterials{};
 
   FString L_MatName{TEXT("材质 :")};
-  IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData &InAss) -> bool {
-    UMaterial *L_Material = Cast<UMaterial>(InAss.GetAsset());
+  IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool {
+    UMaterial* L_Material = Cast<UMaterial>(InAss.GetAsset());
     if (L_Material) {
       TArray<FMaterialParameterInfo> L_ParameterInfo{};
       TArray<FGuid> L_ParameterIds{};
@@ -371,7 +340,7 @@ void DoodleCopyMat::FindErrorMaterials() {
 }
 
 FReply DoodleCopyMat::set_marteral_deep() {
-  FContentBrowserModule &contentBrowserModle =
+  FContentBrowserModule& contentBrowserModle =
       FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
   TArray<FAssetData> selectedAss;
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
@@ -421,40 +390,37 @@ FReply DoodleCopyMat::set_marteral_deep() {
   return FReply::Handled();
 }
 
-TArray<FString> DoodleCopyMat::OpenFileDialog(const FString &DialogTitle, const FString &DefaultPath, const FString &FileTypes) {
+TArray<FString> DoodleCopyMat::OpenFileDialog(
+    const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes
+) {
   TArray<FString> OutFileNames;
   // FString OutDir;
-  void *ParentWindowPtr = FSlateApplication::Get()
-                              .GetActiveTopLevelWindow()
-                              ->GetNativeWindow()
-                              ->GetOSWindowHandle();
-  IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
+  void* ParentWindowPtr = FSlateApplication::Get().GetActiveTopLevelWindow()->GetNativeWindow()->GetOSWindowHandle();
+  IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
   if (DesktopPlatform) {
-    uint32 SelectionFlag =
-        1;  // A value of 0 represents single file selection while a value of 1
-            // represents multiple file selection
-    DesktopPlatform->OpenFileDialog(ParentWindowPtr, DialogTitle, DefaultPath, FString(""), FileTypes, SelectionFlag, OutFileNames);
+    uint32 SelectionFlag = 1;  // A value of 0 represents single file selection while a value of 1
+    // represents multiple file selection
+    DesktopPlatform->OpenFileDialog(
+        ParentWindowPtr, DialogTitle, DefaultPath, FString(""), FileTypes, SelectionFlag, OutFileNames
+    );
     // DesktopPlatform->OpenDirectoryDialog(ParentWindowPtr, DialogTitle,
     //                                     DefaultPath, OutDir);
   }
   return OutFileNames;
 }
 
-FString DoodleCopyMat::OpenDirDialog(const FString &DialogTitle, const FString &DefaultPath) {
+FString DoodleCopyMat::OpenDirDialog(const FString& DialogTitle, const FString& DefaultPath) {
   FString OutDir;
-  void *ParentWindowPtr = FSlateApplication::Get()
-                              .GetActiveTopLevelWindow()
-                              ->GetNativeWindow()
-                              ->GetOSWindowHandle();
-  IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
+  void* ParentWindowPtr = FSlateApplication::Get().GetActiveTopLevelWindow()->GetNativeWindow()->GetOSWindowHandle();
+  IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
   if (DesktopPlatform) {
     DesktopPlatform->OpenDirectoryDialog(ParentWindowPtr, DialogTitle, DefaultPath, OutDir);
   }
   return OutDir;
 }
 
-void DoodleCopyMat::set_material_attr(UMaterialInterface *in_mat, const FString &in_SlotName) {
-  IPlatformFile &FileManager = FPlatformFileManager::Get().GetPlatformFile();
+void DoodleCopyMat::set_material_attr(UMaterialInterface* in_mat, const FString& in_SlotName) {
+  IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
 
   UE_LOG(LogTemp, Log, TEXT("确认材质插槽名称 %s"), *in_SlotName);
   auto old_path = in_mat->GetPathName();
@@ -486,3 +452,5 @@ void DoodleCopyMat::set_material_attr(UMaterialInterface *in_mat, const FString 
     UE_LOG(LogTemp, Log, TEXT("使材料支持集合缓存 %s"), *(mat_m->GetPathName()));
   }
 }
+
+FString DoodleCopyMat::GetReferencerName() const { return TEXT("DoodleCopyMat"); }

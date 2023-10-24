@@ -1,29 +1,26 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "DoodleVariantCompoundWidget.h"
-#include "SlateOptMacros.h"
 
+#include "Animation/SkeletalMeshActor.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "AssetTypeActions_Base.h"
+#include "DoodleVariantAssetUserData.h"
+#include "DoodleVariantEditorViewport.h"
+#include "DoodleVariantFactory.h"
 #include "Editor/ContentBrowser/Public/ContentBrowserModule.h"
 #include "Editor/ContentBrowser/Public/IContentBrowserSingleton.h"
-#include "GeometryCache.h"
-
-#include "AssetToolsModule.h"
-#include "AssetRegistryModule.h"
 #include "Factories/BlueprintFactory.h"
-#include "DoodleVariantFactory.h"
-#include "AssetTypeActions_Base.h"
-
-#include "LevelEditor.h"
-#include "Animation/SkeletalMeshActor.h"
-#include "SequencerUtilities.h"
+#include "GeometryCache.h"
 #include "IMovieSceneTools.h"
+#include "LevelEditor.h"
 #include "MovieSceneToolsModule.h"
 #include "Selection.h"
-#include "DoodleVariantAssetUserData.h"
+#include "SequencerUtilities.h"
+#include "SlateOptMacros.h"
 #include "Textures/SlateIcon.h"
 #include "Widgets/Views/STableRow.h"
-#include "DoodleVariantEditorViewport.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 

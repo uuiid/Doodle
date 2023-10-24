@@ -25,4 +25,5 @@ class FDoodleCreateLevel : public FGCObject {
   void ImportFiles(const TArray<FString>& InFiles);
 
   void AddReferencedObjects(FReferenceCollector& Collector) override;
+  FString GetReferencerName() const override;
 };

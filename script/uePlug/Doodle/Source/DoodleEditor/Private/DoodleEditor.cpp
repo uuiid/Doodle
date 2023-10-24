@@ -18,16 +18,15 @@
 #include "AssetToolsModule.h"  // 注册资产动作
 #include "Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.h"
 //--------------变体相关
-#include "DoodleVariantAssetTypeActions.h"
-#include "ISequencerModule.h"
-#include "ILevelSequenceEditorToolkit.h"
-#include "LevelSequence.h"
 #include "Animation/SkeletalMeshActor.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "DoodleVariantAssetTypeActions.h"
 #include "DoodleVariantAssetUserData.h"
 #include "DoodleVariantCompoundWidget.h"
-#include "LevelSequenceEditor/Private/LevelSequenceEditorToolkit.h"
+#include "ILevelSequenceEditorToolkit.h"
+#include "ISequencerModule.h"
+#include "LevelSequence.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"

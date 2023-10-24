@@ -235,4 +235,6 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_CurveEditor(const FSpawnTa
   // clang-format on
 }
 
+FString FCreateCharacterMianUI::GetReferencerName() const { return TEXT("CreateCharacterMianUI"); }
+
 #undef LOCTEXT_NAMESPACE

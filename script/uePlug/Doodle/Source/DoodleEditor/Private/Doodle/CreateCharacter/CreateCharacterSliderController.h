@@ -1,10 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ITimeSlider.h"
 #include "Input/CursorReply.h"
 #include "Input/Reply.h"
+#include "TimeSliderArgs.h"
 #include "Widgets/SWidget.h"
-#include "ITimeSlider.h"
 
 class FSlateWindowElementList;
 struct FContextMenuSuppressor;

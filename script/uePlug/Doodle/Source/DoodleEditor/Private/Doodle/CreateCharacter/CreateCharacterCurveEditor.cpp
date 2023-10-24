@@ -32,8 +32,7 @@
 
 class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
  public:
-  FCreateCharacterCurveEditorBounds(SCreateCharacterCurveEditor* In_Edit) : Editor(In_Edit) {
-  }
+  FCreateCharacterCurveEditorBounds(SCreateCharacterCurveEditor* In_Edit) : Editor(In_Edit) {}
 
   virtual void GetInputBounds(double& OutMin, double& OutMax) const override {
     // FAnimatedRange ViewRange = ExternalTimeSliderController.Pin()->GetViewRange();
@@ -104,8 +103,9 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
   virtual void CreateCurveModels(TArray<TUniquePtr<FCurveModel>>& OutCurveModels) override {
     if (!CreateCharacterConfig.IsValid()) return;
 
-    TUniquePtr<FRichCurveEditorModelRaw> NewCurveModel =
-        MakeUnique<FRichCurveEditorModelRaw>(static_cast<FRichCurve*>(Curve_Data.CurveToEdit), CreateCharacterConfig.Get());
+    TUniquePtr<FRichCurveEditorModelRaw> NewCurveModel = MakeUnique<FRichCurveEditorModelRaw>(
+        static_cast<FRichCurve*>(Curve_Data.CurveToEdit), CreateCharacterConfig.Get()
+    );
 
     NewCurveModel->SetLongDisplayName(CurveName);
     NewCurveModel->SetColor(Curve_Color);
@@ -141,7 +141,8 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   CreateCharacterConfigConfig = InArgs._CreateCharacterConfigConfig;
   static FFrameRate G_FrameRate{};
 
-  TSharedPtr<FFrameNumberInterface> NumericTypeInterface = MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, G_FrameRate, G_FrameRate});
+  TSharedPtr<FFrameNumberInterface> NumericTypeInterface =
+      MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, G_FrameRate, G_FrameRate});
 
   FTimeSliderArgs TimeSliderArgs;
   {
@@ -152,21 +153,24 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
         return FFrameTime{0};
       }
     });
-    TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateLambda([this](FFrameTime In_Time, bool bIsScrubbing, bool bEvaluate) {
-      // UE_LOG(LogTemp, Log, TEXT("OnScrubPositionChanged %f %d %d"), In_Time.AsDecimal(), bIsScrubbing, bEvaluate);
-      if (this->CurrentSelect && *this->CurrentSelect) {
-        this->CurrentSelect->Get().Value = In_Time / G_FrameRate;
-      }
-    });
-    TimeSliderArgs.ViewRange              = MakeAttributeLambda([this]() {
+    TimeSliderArgs.OnScrubPositionChanged =
+        FOnScrubPositionChanged::CreateLambda([this](FFrameTime In_Time, bool bIsScrubbing, bool bEvaluate) {
+          // UE_LOG(LogTemp, Log, TEXT("OnScrubPositionChanged %f %d %d"), In_Time.AsDecimal(), bIsScrubbing,
+          // bEvaluate);
+          if (this->CurrentSelect && *this->CurrentSelect) {
+            this->CurrentSelect->Get().Value = In_Time / G_FrameRate;
+          }
+        });
+    TimeSliderArgs.ViewRange          = MakeAttributeLambda([this]() {
       if (ViewRange_Attr.HasLowerBound() && ViewRange_Attr.HasUpperBound())
         return FAnimatedRange{ViewRange_Attr.GetLowerBoundValue(), ViewRange_Attr.GetUpperBoundValue()};
       else
         return FAnimatedRange{-2.0f, 2.0f};
     });
-    TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateLambda([this](TRange<double> In_Range, EViewRangeInterpolation) {
-      Set_ViewRange(In_Range);
-    });
+    TimeSliderArgs.OnViewRangeChanged =
+        FOnViewRangeChanged::CreateLambda([this](TRange<double> In_Range, EViewRangeInterpolation) {
+          Set_ViewRange(In_Range);
+        });
 
     TimeSliderArgs.IsPlaybackRangeLocked  = false;
     TimeSliderArgs.PlaybackRange          = MakeAttributeLambda([this]() {
@@ -188,20 +192,21 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
       else
         return FAnimatedRange{-2.0f, 2.0f};
     });
-    TimeSliderArgs.OnClampRangeChanged    = FOnTimeRangeChanged::CreateLambda([this](TRange<double> In_Range) {
-      Set_WorkingRange(In_Range);
+    TimeSliderArgs.OnClampRangeChanged =
+        FOnTimeRangeChanged::CreateLambda([this](TRange<double> In_Range) { Set_WorkingRange(In_Range);
     });
 
-    TimeSliderArgs.DisplayRate            = G_FrameRate;
-    TimeSliderArgs.TickResolution         = G_FrameRate;
+    TimeSliderArgs.DisplayRate          = G_FrameRate;
+    TimeSliderArgs.TickResolution       = G_FrameRate;
 
-    TimeSliderArgs.PlaybackStatus         = EMovieScenePlayerStatus::Stopped;
-    TimeSliderArgs.NumericTypeInterface   = NumericTypeInterface;
+    TimeSliderArgs.PlaybackStatus       = EMovieScenePlayerStatus::Stopped;
+    TimeSliderArgs.NumericTypeInterface = NumericTypeInterface;
   }
   // 时间时间控制器渲染
   // TSharedPtr<FCreateCharacterSliderController> CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
   // 时间范围
-  ISequencerWidgetsModule& SequencerWidgets = FModuleManager::Get().LoadModuleChecked<ISequencerWidgetsModule>("SequencerWidgets");
+  ISequencerWidgetsModule& SequencerWidgets =
+      FModuleManager::Get().LoadModuleChecked<ISequencerWidgetsModule>("SequencerWidgets");
   // TopTimeSlider                             = SequencerWidgets.CreateTimeSlider(TimeSliderControllerRef, bMirrorLabels);
 
   // Create bottom time range slider
@@ -217,7 +222,7 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   //    //SequencerWidgets.CreateTimeRangeSlider(CreateCharacterSliderController.ToSharedRef())
   //);
 
-  CurveEditor                               = MakeShared<FCurveEditor>();
+  CurveEditor = MakeShared<FCurveEditor>();
   FCurveEditorInitParams CurveEditorInitParams;
   CurveEditor->InitCurveEditor(CurveEditorInitParams);
   CurveEditor->GridLineLabelFormatXAttribute = LOCTEXT("GridXLabelFormat", "{0}");
@@ -237,37 +242,37 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
           //.ContentSplitterWidth(0.8f)
           .TreeContent()
               // clang-format off
-           [
-             SNew(SVerticalBox) 
-             + SVerticalBox::Slot()
-               .AutoHeight()
-                [
-                  SAssignNew(CurveEditorSearchBox, SCurveEditorTreeTextFilter, CurveEditor)
-                ] 
-             + SVerticalBox::Slot()
-               [
-                 SNew(SScrollBorder, CurveEditorTree.ToSharedRef())
-                 [
-                   CurveEditorTree.ToSharedRef()
-                 ]
-               ] 
-             + SVerticalBox::Slot()
-               .AutoHeight()
-               [
-                 SNew(SCurveEditorTreeFilterStatusBar, CurveEditor)
-               ] 
-           ];
+      [
+        SNew(SVerticalBox)
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        [
+          SAssignNew(CurveEditorSearchBox, SCurveEditorTreeTextFilter, CurveEditor)
+        ]
+        + SVerticalBox::Slot()
+        [
+          SNew(SScrollBorder, CurveEditorTree.ToSharedRef())
+          [
+            CurveEditorTree.ToSharedRef()
+          ]
+        ]
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        [
+          SNew(SCurveEditorTreeFilterStatusBar, CurveEditor)
+        ]
+      ];
   // clang-format on
 
   ChildSlot
       // clang-format off
-  [
-    SNew(SVerticalBox) 
-    + SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 3.0f)[MakeToolbar(CurveEditorPanel)] 
-    + SVerticalBox::Slot().FillHeight(1.0f)[CurveEditorPanel]
-    //+ SVerticalBox::Slot().AutoHeight()[BottomTimeRange]
+      [
+        SNew(SVerticalBox)
+        + SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 3.0f)[MakeToolbar(CurveEditorPanel)]
+        + SVerticalBox::Slot().FillHeight(1.0f)[CurveEditorPanel]
+        //+ SVerticalBox::Slot().AutoHeight()[BottomTimeRange]
 
-  ];
+      ];
   // clang-format on
 }
 
@@ -285,12 +290,12 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
     auto& L_Rot       = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.RotationCurve;
     FString Bone_Name = CreateCharacterConfigConfig->ListConfigNode[L_Key].BoneName.ToString();
 
-    FVectorCurve::EIndex::X;
-
-#define DOODLE_ADD_CURVE_IMPL(Owner, Index)                                                                                                                                                 \
-  {                                                                                                                                                                                         \
-    FRichCurveEditInfo L_Info{&Owner.FloatCurves[(int32)FVectorCurve::EIndex::Index], FName{Bone_Name + "." + Owner.Name.DisplayName.ToString() + TEXT(PREPROCESSOR_TO_STRING(.##Index))}}; \
-    AddCurve(L_Info);                                                                                                                                                                       \
+#define DOODLE_ADD_CURVE_IMPL(Owner, Index)                                                    \
+  {                                                                                            \
+    FRichCurveEditInfo L_Info{                                                                 \
+        &Owner.FloatCurves[(int32)FVectorCurve::EIndex::Index],                                \
+        FName{Bone_Name + TEXT(".") + Owner.GetName().ToString() + TEXT(".") + TEXT(#Index)}}; \
+    AddCurve(L_Info);                                                                          \
   }
 
 #define DOODLE_ADD_CURVE(Owner)    \
@@ -330,15 +335,13 @@ void SCreateCharacterCurveEditor::ResetCurves() {
   CurveEditor->RemoveAllCurves();
 }
 
-void SCreateCharacterCurveEditor::AddCurve(
-    const FRichCurveEditInfo& In_Info
-) {
+void SCreateCharacterCurveEditor::AddCurve(const FRichCurveEditInfo& In_Info) {
   FCurveEditorTreeItem* TreeItem = CurveEditor->AddTreeItem(FCurveEditorTreeItemID::Invalid());
 
   TreeItem->SetStrongItem(MakeShared<FCreateCharacterCurveEditorItem>(
-      In_Info, CreateCharacterConfigConfig, FLinearColor::MakeFromHSV8((uint8)(FRandomStream{In_Info.CurveName}.FRand() * 255.0f), (uint8)196, (uint8)196)
-  )
-  );
+      In_Info, CreateCharacterConfigConfig,
+      FLinearColor::MakeFromHSV8((uint8)(FRandomStream{In_Info.CurveName}.FRand() * 255.0f), (uint8)196, (uint8)196)
+  ));
 
   // Update selection
   // const TMap<FCurveEditorTreeItemID, ECurveEditorTreeSelectionState>& Selection = CurveEditor->GetTreeSelection();
@@ -357,7 +360,9 @@ void SCreateCharacterCurveEditor::ZoomToFit() {
 }
 
 TSharedRef<SWidget> SCreateCharacterCurveEditor::MakeToolbar(TSharedRef<SCurveEditorPanel> InEditorPanel) {
-  FToolBarBuilder ToolBarBuilder(InEditorPanel->GetCommands(), FMultiBoxCustomization::None, InEditorPanel->GetToolbarExtender(), true);
+  FToolBarBuilder ToolBarBuilder(
+      InEditorPanel->GetCommands(), FMultiBoxCustomization::None, InEditorPanel->GetToolbarExtender(), true
+  );
   ToolBarBuilder.SetStyle(&FAppStyle::Get(), "Sequencer.ToolBar");
   ToolBarBuilder.BeginSection("Asset");
   ToolBarBuilder.EndSection();
@@ -379,13 +384,10 @@ TSharedPtr<SWidget> SCreateCharacterCurveEditor::OnContextMenuOpening() {
 
     FToolMenuSection& Section = Menu->AddSection("Selection", LOCTEXT("SelectionLablel", "Selection"));
     Section.AddMenuEntry(
-        "RemoveSelectedCurves",
-        LOCTEXT("RemoveCurveLabel", "Stop editing selected curve(s)"),
-        LOCTEXT("RemoveCurveTooltip", "Removes the currently selected curve(s) from editing"),
-        FSlateIcon{},
-        FToolUIActionChoice{
-            FExecuteAction::CreateLambda([this]() {
-              // Remove all selected tree items, and associated curves
+        "RemoveSelectedCurves", LOCTEXT("RemoveCurveLabel", "Stop editing selected curve(s)"),
+        LOCTEXT("RemoveCurveTooltip", "Removes the currently selected curve(s) from editing"), FSlateIcon{},
+        FToolUIActionChoice{FExecuteAction::CreateLambda([this]() {
+          // Remove all selected tree items, and associated curves
               TArray<FCurveModelID> ModelIDs;
               TArray<FCurveEditorTreeItemID> Selection = CurveEditorTree->GetSelectedItems();
               for (const FCurveEditorTreeItemID& SelectedItem : Selection) {
@@ -397,8 +399,7 @@ TSharedPtr<SWidget> SCreateCharacterCurveEditor::OnContextMenuOpening() {
               for (const FCurveModelID& ID : ModelIDs) {
                 CurveEditor->RemoveCurve(ID);
               }
-            }
-            )
+            })
 
         }
     );

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AnimatedRange.h"
 #include "Animation/AnimCurveTypes.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/SmartName.h"
@@ -25,8 +26,7 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
  public:
   SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor)
-      : _CreateCharacterConfigConfig(),
-        _TabManager() {}
+      : _CreateCharacterConfigConfig(), _TabManager() {}
 
   SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, CreateCharacterConfigConfig)
   SLATE_ARGUMENT(TSharedPtr<FTabManager>, TabManager)
@@ -42,9 +42,7 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
   void Set_ViewRange(const TRange<double>& In_Range);
   void Set_WorkingRange(const TRange<double>& In_Range);
   void ResetCurves();
-  void AddCurve(
-      const FRichCurveEditInfo& In_Info
-  );
+  void AddCurve(const FRichCurveEditInfo& In_Info);
   // 为这个曲线编辑器建立工具条
   TSharedRef<SWidget> MakeToolbar(TSharedRef<SCurveEditorPanel> InEditorPanel);
   TSharedPtr<SWidget> OnContextMenuOpening();

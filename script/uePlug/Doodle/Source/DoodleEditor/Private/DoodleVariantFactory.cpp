@@ -1,16 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "DoodleVariantFactory.h"
 
-#include "Widgets/Layout/SUniformGridPanel.h"
-#include "ContentBrowserModule.h"
-#include "IContentBrowserSingleton.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
-#include "AssetRegistryModule.h"
+#include "ContentBrowserModule.h"
 #include "DoodleVariantAssetUserData.h"
-#include "Widgets/Notifications/SNotificationList.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "IContentBrowserSingleton.h"
+#include "Widgets/Layout/SUniformGridPanel.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 class SCreateVariantDialog : public SCompoundWidget {
 public:

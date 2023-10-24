@@ -1,5 +1,6 @@
 #include "DoodleCreateCharacterInstance.h"
 
+#include "Animation/AnimCurveUtils.h"
 #include "Animation/AnimNodeBase.h"
 
 void UDoodleCreateCharacterInstance::SetCreateCharacterConfig(const TObjectPtr<UDoodleCreateCharacterConfig>& InConfig
@@ -55,6 +56,10 @@ bool FDoodleCreateCharacterProxy::Evaluate(FPoseContext& Output) {
   for (TPair<SmartName::UID_Type, float> Pair : StoredCurves) {
     Output.Curve.Set(Pair.Key, Pair.Value);
   }
+  // UE::Anim::FCurveUtils::BulkSet(Output.Curve, StoredCurves,
+  //                                [](const TPair<SmartName::UID_Type, float>& in_value) {
+  //                                  return in_value.Key;
+  //                                });
 
   return true;
   // return Super::Evaluate(Output);

@@ -4,8 +4,8 @@
 
 /// 资产模块
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "AssetTools/Public/IAssetTools.h"
 #include "AssetToolsModule.h"
+#include "IAssetTools.h"
 
 // 调整贴图大小
 #include "ResizeTexture.h"
