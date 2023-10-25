@@ -3,3 +3,4 @@
 //
 
 #include "load_save_impl.h"
+namespace doodle::database_n {}

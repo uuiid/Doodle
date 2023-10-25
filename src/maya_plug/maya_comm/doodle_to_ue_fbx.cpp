@@ -36,8 +36,8 @@ constexpr char ascii_fbx_l[]   = "-ascii_fbx";
 MSyntax doodle_to_ue_fbx_syntax() {
   MSyntax l_syntax{};
   l_syntax.addFlag(file_path, file_path_l, MSyntax::kString);
-  l_syntax.addFlag(export_anim, export_anim_l, MSyntax::kBoolean);
-  l_syntax.addFlag(ascii_fbx, ascii_fbx_l, MSyntax::kBoolean);
+  l_syntax.addFlag(export_anim, export_anim_l, MSyntax::kNoArg);
+  l_syntax.addFlag(ascii_fbx, ascii_fbx_l, MSyntax::kNoArg);
   l_syntax.setObjectType(MSyntax::kSelectionList);
   l_syntax.useSelectionAsDefault(true);
   return l_syntax;

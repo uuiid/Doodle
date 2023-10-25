@@ -31,6 +31,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MItDependencyNodes.h>
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshFaceVertex.h>
 #include <maya/MItSelectionList.h>
@@ -113,7 +114,7 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
   }
   node->UpdatePivotsAndLimitsFromProperties();
   if (extra_data_.bind_post->count(dag_path)) {
-    set_node_transform_matrix(extra_data_.bind_post->at(dag_path));
+    set_node_transform_matrix(extra_data_.bind_post->at(dag_path).form_matrix);
   } else {
     set_node_transform_matrix(l_transform.transformation());
   }
@@ -154,7 +155,7 @@ void fbx_node_transform::build_data() {
   node->SetNodeAttribute(l_attr_null);
 
   if (extra_data_.bind_post->count(dag_path)) {
-    previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).eulerRotation();
+    previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).form_matrix.eulerRotation();
   } else {
     previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
   }
@@ -298,8 +299,8 @@ void fbx_node_mesh::build_bind_post() {
   const auto l_couts = l_member_list.evaluateNumElements(&l_status);
   maya_chick(l_status);
   for (auto i = 0; i < l_couts; ++i) {
-    bool l_is_global = l_global_list.elementByPhysicalIndex(i, &l_status).asBool();
-    maya_chick(l_status);
+    //    bool l_is_global = l_global_list.elementByPhysicalIndex(i, &l_status).asBool();
+    //    maya_chick(l_status);
     auto l_member = l_member_list.elementByPhysicalIndex(i, &l_status);
     maya_chick(l_status);
     auto l_member_source = l_member.source(&l_status);
@@ -310,56 +311,71 @@ void fbx_node_mesh::build_bind_post() {
       MFnDagNode l_fn_node{l_node};
       MDagPath l_path{};
       maya_chick(l_fn_node.getPath(l_path));
-      auto l_matrix_plug = l_xform_matrix_list.elementByPhysicalIndex(i, &l_status);
-      maya_chick(l_status);
-      MObject l_handle{};
-      maya_chick(l_matrix_plug.getValue(l_handle));
-      MFnMatrixData l_matrix_data{l_handle};
+      //      auto l_matrix_plug = l_xform_matrix_list.elementByPhysicalIndex(i, &l_status);
+      //      maya_chick(l_status);
+      //      MObject l_handle{};
+      //      maya_chick(l_matrix_plug.getValue(l_handle));
+      //      MFnMatrixData l_matrix_data{l_handle};
+      //
+      //      auto l_matrix = l_matrix_data.transformation(&l_status);
+      //      maya_chick(l_status);
+      MTransformationMatrix l_world_matrix{};
 
-      auto l_matrix = l_matrix_data.transformation(&l_status);
-      maya_chick(l_status);
+      if (l_node.hasFn(MFn::Type::kJoint)) {
+        auto l_post_plug = get_plug(l_node, "bindPose");
 
-      std::function<MPlug(MPlug)> l_get_parent_fun{[&](MPlug in_plug) -> MPlug {
-        MStatus l_status{};
-        auto l_index = in_plug.logicalIndex(&l_status);
-        maya_chick(l_status);
-        auto l_parent_obj_plug = l_parent_list.elementByLogicalIndex(l_index, &l_status);
-        maya_chick(l_status);
-        auto l_r = l_parent_obj_plug.source(&l_status);
-        maya_chick(l_status);
-        return l_r;
-      }};
-      std::function<MMatrix(MPlug)> l_get_globle_matrix{};
-      l_get_globle_matrix = [&](MPlug in_plug) -> MMatrix {
-        auto l_parent_plug = l_get_parent_fun(in_plug);
-        if (l_parent_plug == l_world) return MMatrix::identity;
-
-        MStatus l_status{};
-        auto l_index = l_parent_plug.logicalIndex(&l_status);
-        maya_chick(l_status);
-        auto l_global = l_global_list.elementByLogicalIndex(l_index, &l_status).asBool();
+        MObject l_post_handle{};
+        maya_chick(l_post_plug.getValue(l_post_handle));
+        const MFnMatrixData l_data{l_post_handle};
+        l_world_matrix = l_data.transformation(&l_status);
         maya_chick(l_status);
 
-        if (l_global) {
-          auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(l_index, &l_status);
-          maya_chick(l_status);
-          MDataHandle l_handle{};
-          maya_chick(l_world_matrix_plug.getValue(l_handle));
-          return l_handle.asMatrix();
-        } else {
-          auto l_xform_matrix_plug = l_xform_matrix_list.elementByLogicalIndex(l_index, &l_status);
-          maya_chick(l_status);
-          MDataHandle l_handle{};
-          maya_chick(l_xform_matrix_plug.getValue(l_handle));
-          return l_handle.asMatrix() * l_get_globle_matrix(l_parent_plug);
-        }
-      };
+      } else if (l_node.hasFn(MFn::Type::kTransform)) {
+        auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
+        maya_chick(l_status);
+        MObject l_world_handle{};
+        maya_chick(l_world_matrix_plug.getValue(l_world_handle));
+        const MFnMatrixData l_data{l_world_handle};
+        l_world_matrix = l_data.transformation(&l_status);
+        maya_chick(l_status);
+      } else {
+        throw_exception(doodle_error{"not_find_bind_post {}", i});
+      }
 
       /// 寻找父矩阵
-      (*extra_data_.bind_post)[l_path] = l_matrix;
+      (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_world_matrix};
     } else {
       log_error(fmt::format("node {} is not dag node", get_node_full_name(l_node)));
     }
+  }
+
+  for (auto& l_bp : *extra_data_.bind_post) {
+    if (l_bp.first.length() == 1) continue;
+    MDagPath l_parent_path{l_bp.first};
+    maya_chick(l_parent_path.pop());
+
+    if (extra_data_.bind_post->count(l_parent_path) == 0) {
+      throw_exception(doodle_error{"not_find_parent_bind_post {}", l_bp.first});
+    }
+    auto l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix;
+
+    MEulerRotation l_joint_rotate{};
+
+    if (l_bp.first.hasFn(MFn::Type::kJoint)) {
+      auto l_vector_x = get_plug(l_bp.first.node(), "jointOrientX").asDouble(&l_status);
+      maya_chick(l_status);
+      auto l_vector_y = get_plug(l_bp.first.node(), "jointOrientY").asDouble(&l_status);
+      maya_chick(l_status);
+      auto l_vector_z = get_plug(l_bp.first.node(), "jointOrientZ").asDouble(&l_status);
+      maya_chick(l_status);
+      l_joint_rotate.setValue(l_vector_x, l_vector_y, l_vector_z);
+    }
+    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse();
+    //    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse() *
+    //                              l_joint_rotate.asMatrix().inverse();
+    //    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_joint_rotate.asMatrix().inverse() *
+    //                              l_parent_world_matrix.asMatrixInverse();
+    l_bp.second.form_matrix.rotateBy(l_joint_rotate.inverse(), MSpace::kTransform);
   }
 }
 
@@ -876,7 +892,6 @@ void fbx_node_joint::build_data() {
   //      node->SetPreRotation(FbxNode::eSourcePivot, FbxVector4{l_vector_x, l_vector_y, l_vector_z});
   node->UpdatePivotsAndLimitsFromProperties();
   node->SetNodeAttribute(l_sk_attr);
-
   build_node_transform(dag_path);
   node->InheritType.Set(l_is_ ? FbxTransform::eInheritRrs : FbxTransform::eInheritRSrs);
 }
@@ -932,9 +947,11 @@ void fbx_write::write(
     MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
     return;
   }
-  for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-    MAnimControl::setCurrentTime(l_time);
-    build_animation(l_time);
+  if (export_anim_) {
+    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+      MAnimControl::setCurrentTime(l_time);
+      build_animation(l_time);
+    }
   }
   write_end();
 }
@@ -961,7 +978,7 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
   anim_stack->LocalStop = l_fbx_end;
 
-  MAnimControl::setCurrentTime(in_begin - 1);
+  MAnimControl::setCurrentTime(find_begin_anim_time());
 
   init();
   //  build_tree(in_vector);
@@ -969,6 +986,9 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   try {
     build_data();
   } catch (const maya_error& in_error) {
+    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    return;
+  } catch (const doodle_error& in_error) {
     MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
     return;
   }
@@ -996,8 +1016,8 @@ void fbx_write::write_end() {
 
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
-          ascii_fbx_ ? manager_->GetIOPluginRegistry()->GetNativeWriterFormat()
-                     : manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"),
+          ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
+                     : manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),
           scene_->GetFbxManager()->GetIOSettings()
       )) {
     MGlobal::displayError(
@@ -1181,6 +1201,23 @@ void fbx_write::build_animation(const MTime& in_time) {
     }
   };
   l_iter_fun(tree_.begin());
+}
+
+MTime fbx_write::find_begin_anim_time() {
+  MTime l_begin_time{MAnimControl::minTime()};
+  MFnAnimCurve l_anim_curve{};
+  for (MItDependencyNodes it{MFn::Type::kAnimCurve}; !it.isDone(); it.next()) {
+    auto l_obj = it.thisNode();
+    if (l_obj.hasFn(MFn::Type::kAnimCurveTimeToAngular) || l_obj.hasFn(MFn::Type::kAnimCurveTimeToDistance) ||
+        l_obj.hasFn(MFn::Type::kAnimCurveTimeToTime) || l_obj.hasFn(MFn::Type::kAnimCurveTimeToUnitless)) {
+      maya_chick(l_anim_curve.setObject(it.thisNode()));
+      auto l_key_count = l_anim_curve.numKeys();
+      if (l_key_count == 0) continue;
+      auto l_time = l_anim_curve.time(0);
+      if (l_time < l_begin_time) l_begin_time = l_time;
+    }
+  }
+  return l_begin_time;
 }
 
 void fbx_write::not_export_anim(bool in_value) { export_anim_ = !in_value; }

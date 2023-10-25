@@ -22,9 +22,16 @@ using fbx_node_ptr = std::shared_ptr<fbx_node>;
 using fbx_tree_t   = tree<fbx_node_ptr>;
 // 额外数据
 struct fbx_extra_data {
+  struct bind_post_matrix {
+    MTransformationMatrix world_matrix{};
+    MTransformationMatrix form_matrix{};
+  };
   fbx_tree_t* tree_{};
+
+  using bind_post_matrix_map_t = std::map<MDagPath, bind_post_matrix, details::cmp_dag>;
+
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
-  std::map<MDagPath, MTransformationMatrix, details::cmp_dag>* bind_post{};
+  std::map<MDagPath, bind_post_matrix, details::cmp_dag>* bind_post{};
   fbx_extra_data() = default;
 };
 
@@ -111,7 +118,7 @@ class fbx_write {
   std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};     // 用于存储节点的map
   std::vector<MDagPath> joints_{};
-  std::map<MDagPath, MTransformationMatrix, details::cmp_dag> bind_post_{};
+  fbx_write_ns::fbx_extra_data::bind_post_matrix_map_t bind_post_{};
 
   bool export_anim_{true};
   bool ascii_fbx_{false};
@@ -121,6 +128,7 @@ class fbx_write {
   void build_tree(const std::vector<MDagPath>& in_vector);
   void build_data();
   void build_animation(const MTime& in_time);
+  MTime find_begin_anim_time();
 
  public:
   fbx_write();
