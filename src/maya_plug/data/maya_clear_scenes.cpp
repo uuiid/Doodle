@@ -72,7 +72,7 @@ bool maya_clear_scenes::duplicate_name(MSelectionList& in_select) {
     auto k_name = k_dag_node.name(&k_s);
     DOODLE_MAYA_CHICK(k_s);
 
-    k_name_list.insert({std::string{k_name.asUTF8()}, k_dag_path});
+    k_name_list.insert({std::string{k_name.toLowerCase().asUTF8()}, k_dag_path});
   }
   for (auto& i : k_name_list) {
     if (k_name_list.count(i.first) > 1) {
