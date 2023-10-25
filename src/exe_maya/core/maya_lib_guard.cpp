@@ -42,7 +42,7 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
     }
   }
   maya_chick(MGlobal::executePythonCommand(R"(import maya.cmds as cmds)"));
-  maya_chick(MGlobal::executePythonCommand(R"(import pymel.core)"));
+  //  maya_chick(MGlobal::executePythonCommand(R"(import pymel.core)"));
   maya_chick(MFileIO::newFile(true));
 }
 maya_lib_guard::~maya_lib_guard() { MLibrary::cleanup(0, false); }
