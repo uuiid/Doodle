@@ -25,12 +25,19 @@
 namespace doodle::maya_plug {
 
 namespace {
-constexpr char file_path[]   = "-fp";
-constexpr char file_path_l[] = "-file_path";
+constexpr char file_path[]     = "-fp";
+constexpr char file_path_l[]   = "-file_path";
+constexpr char export_anim[]   = "-nam";
+constexpr char export_anim_l[] = "-not_export_anim";
+constexpr char ascii_fbx[]     = "-asc";
+constexpr char ascii_fbx_l[]   = "-ascii_fbx";
+
 }  // namespace
 MSyntax doodle_to_ue_fbx_syntax() {
   MSyntax l_syntax{};
   l_syntax.addFlag(file_path, file_path_l, MSyntax::kString);
+  l_syntax.addFlag(export_anim, export_anim_l, MSyntax::kBoolean);
+  l_syntax.addFlag(ascii_fbx, ascii_fbx_l, MSyntax::kBoolean);
   l_syntax.setObjectType(MSyntax::kSelectionList);
   l_syntax.useSelectionAsDefault(true);
   return l_syntax;
@@ -58,6 +65,15 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   } else {
     displayError(conv::to_ms(fmt::format("no file path")));
     return MS::kFailure;
+  }
+
+  if (l_arg_data.isFlagSet(export_anim, &l_status)) {
+    maya_chick(l_status);
+    l_fbx_write.not_export_anim();
+  }
+  if (l_arg_data.isFlagSet(ascii_fbx, &l_status)) {
+    maya_chick(l_status);
+    l_fbx_write.ascii_fbx();
   }
 
   l_fbx_write.write(l_list, l_begin_time, l_end_time, l_path);

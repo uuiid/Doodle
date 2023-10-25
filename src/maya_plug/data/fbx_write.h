@@ -9,6 +9,7 @@
 
 #include <fbxsdk.h>
 #include <maya/MDagPath.h>
+#include <maya/MEulerRotation.h>
 #include <maya/MPlug.h>
 #include <maya/MTime.h>
 #include <treehh/tree.hh>
@@ -50,6 +51,8 @@ struct fbx_node {
 };
 
 struct fbx_node_transform : public fbx_node {
+  MEulerRotation previous_frame_euler_rotation{};
+
   fbx_node_transform() = default;
   explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
   void build_data() override;
@@ -109,6 +112,10 @@ class fbx_write {
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};     // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   std::map<MDagPath, MTransformationMatrix, details::cmp_dag> bind_post_{};
+
+  bool export_anim_{true};
+  bool ascii_fbx_{false};
+
   void write_end();
   void init();
   void build_tree(const std::vector<MDagPath>& in_vector);
@@ -118,6 +125,9 @@ class fbx_write {
  public:
   fbx_write();
   ~fbx_write();
+
+  void not_export_anim(bool in_value = true);
+  void ascii_fbx(bool in_value = true);
 
   void write(
       const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
