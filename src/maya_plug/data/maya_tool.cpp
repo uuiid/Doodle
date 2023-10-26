@@ -73,7 +73,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
     }
   }
 
-  DOODLE_CHICK(!l_plug.isNull(), doodle_error{" {} 无法找到属性 {}", get_node_name(in_node), in_name});
+  DOODLE_CHICK(!l_plug.isNull(), doodle_error{fmt::format(" {} 无法找到属性 {}", get_node_name(in_node), in_name)});
   return l_plug;
 }
 

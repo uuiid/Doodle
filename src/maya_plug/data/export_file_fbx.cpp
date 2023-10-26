@@ -47,7 +47,7 @@ void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, cons
    *
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
-  static std::string maya_bakeResults_str{R"(
+  constexpr static auto maya_bakeResults_str{R"(
 bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}";)"};
   auto l_comm =
       fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, get_node_full_name(in_path));

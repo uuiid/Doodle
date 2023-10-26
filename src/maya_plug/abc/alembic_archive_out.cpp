@@ -91,7 +91,7 @@ std::tuple<std::vector<Imath::V2f>, std::vector<std::uint32_t>> get_mesh_uv(cons
   MFloatArray l_v_array{};
   in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
   if (l_u_array.length() != l_v_array.length()) {
-    throw_exception(doodle_error{"{} uv length not equal", maya_plug::get_node_name(in_mesh.object())});
+    throw_exception(doodle_error{fmt::format("{} uv length not equal", maya_plug::get_node_name(in_mesh.object()))});
   }
   for (auto i = 0; i < l_u_array.length(); ++i) {
     l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);

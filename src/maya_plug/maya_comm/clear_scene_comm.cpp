@@ -162,7 +162,7 @@ confirmDialog
 -icon "warning"
 -message "{}"
 ;
-)"s,
+)",
           fmt::join(l_msg, R"(\n)")
       )},
       l_com_r, false, false

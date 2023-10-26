@@ -264,7 +264,8 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
       l_ctx_mesh.numVertices(), l_ctx_mesh.numPolygons(), l_vertexArray, l_polygonCounts, l_polygonConnects
   );
 
-  if (!l_create_obj.isNull()) throw_exception(doodle_error{"创建网格出错 {}", get_node_name(ptr->select_path)});
+  if (!l_create_obj.isNull())
+    throw_exception(doodle_error{fmt::format("创建网格出错 {}", get_node_name(ptr->select_path))});
   DOODLE_MAYA_CHICK(ptr->create_point_list.append(l_center));
   DOODLE_MAYA_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_obj)));
   DOODLE_MAYA_CHICK(l_status);
