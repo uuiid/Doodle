@@ -19,7 +19,6 @@
 #include <boost/locale.hpp>
 
 #include <core/status_info.h>
-#include <date/tz.h>
 #include <exception/exception.h>
 #include <logger/logger.h>
 #include <memory>

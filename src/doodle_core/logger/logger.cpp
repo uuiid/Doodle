@@ -7,8 +7,6 @@
 
 #include <Windows.h>
 #include <chrono>
-#include <date/date.h>
-#include <date/tz.h>
 #include <fmt/core.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>

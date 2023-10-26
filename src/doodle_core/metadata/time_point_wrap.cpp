@@ -8,10 +8,6 @@
 
 #include <Windows.h>
 #include <chrono>
-#include <date/date.h>
-#include <date/tz.h>
-// #include <timeapi.h>
-// #include <timezoneapi.h>
 
 namespace doodle {
 

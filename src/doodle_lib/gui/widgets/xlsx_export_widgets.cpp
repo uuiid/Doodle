@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
-#include <date/date.h>
 #include <entt/entity/fwd.hpp>
 #include <fmt/chrono.h>
 #include <fmt/core.h>

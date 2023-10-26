@@ -6,7 +6,6 @@
 #include "doodle_core/metadata/time_point_wrap.h"
 
 #include <chrono>
-#include <date/date.h>
 #include <entt/entity/fwd.hpp>
 #include <string>
 

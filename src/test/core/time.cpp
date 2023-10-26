@@ -18,8 +18,6 @@
 #include <boost/test/unit_test_log.hpp>
 
 #include <chrono>
-#include <date/date.h>
-#include <date/tz.h>
 #include <fmt/core.h>
 #include <main_fixtures/lib_fixtures.h>
 

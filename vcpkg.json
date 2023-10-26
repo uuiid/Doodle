@@ -60,7 +60,6 @@
     "xlnt",
     "magic-enum",
     "nlohmann-json",
-    "date",
     "spdlog",
     {
       "name": "entt",

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <chrono>
-#include <date/date.h>
 
 namespace doodle::chrono {
 namespace literals {

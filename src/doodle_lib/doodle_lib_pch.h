@@ -49,7 +49,6 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <date/date.h>
 #include <entt/entt.hpp>
 #include <fmt/chrono.h>
 #include <fmt/color.h>

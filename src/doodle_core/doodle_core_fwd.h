@@ -21,7 +21,6 @@
 #include <doodle_core/lib_warp/sqlppWarp.h>
 #include <doodle_core/lib_warp/std_warp.h>
 
-#include <date/date.h>
 #include <entt/entt.hpp>
 #include <spdlog/async.h>
 #include <spdlog/logger.h>
