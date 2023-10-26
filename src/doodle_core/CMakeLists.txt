@@ -101,12 +101,13 @@ target_compile_definitions(doodle_core
 
 target_compile_options(doodle_core
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /EHs >
+        $<$<CXX_COMPILER_ID:MSVC>:/EHs>
+        $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
+        $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor>
+
         PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/MP>
-        $<$<CXX_COMPILER_ID:MSVC>: /bigobj >
-
-
+        $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 )
 set_target_properties(doodle_core
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

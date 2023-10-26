@@ -70,7 +70,7 @@ struct formatter<::doodle::shot> : formatter<std::int32_t> {
 
     formatter<std::int32_t>::format(in_.p_shot, ctx);
     if (in_.p_shot_enum != doodle::shot::shot_ab_enum::None)
-      format_to(ctx.out(), magic_enum::enum_name(in_.p_shot_enum));
+      format_to(ctx.out(), "{}", magic_enum::enum_name(in_.p_shot_enum));
     return ctx.out();
   }
 };

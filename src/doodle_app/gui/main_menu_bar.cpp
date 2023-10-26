@@ -98,7 +98,7 @@ void main_menu_bar::menu_file() {
   dear::MenuItem("样式设置"s, &p_i->p_style_show);
   dear::MenuItem("关于"s, &p_i->p_about_show);
   ImGui::Separator();
-  if (dear::MenuItem(u8"退出")) {
+  if (dear::MenuItem("退出")) {
     app_base::Get().stop_app();
   }
 }

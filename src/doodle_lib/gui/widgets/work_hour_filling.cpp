@@ -254,7 +254,7 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   l_w.save(l_f);
 
   g_windows_manage().create_windows_arg(windows_init_arg{}
-                                            .create<show_message>(fmt::format("完成导出表格 {}"s, l_path))
+                                            .create<show_message>(fmt::format("完成导出表格 {}", l_path))
                                             .set_title("显示消息")
                                             .set_render_type<dear::Popup>());
 }

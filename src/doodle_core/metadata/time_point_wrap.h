@@ -17,32 +17,19 @@ namespace doodle {
 class time_point_wrap;
 
 namespace chrono_ns {
-
 using namespace std::chrono;
-using namespace date;
 namespace detail {
 minutes get_local_bias();
 }
-struct current_clock {
-  using rep                       = long long;
-  using period                    = std::ratio<1, 10'000'000>;  // 100 nanoseconds
-  using duration                  = std::chrono::duration<rep, period>;
-  using time_point                = std::chrono::time_point<current_clock>;
-  static constexpr bool is_steady = false;
-
-  _NODISCARD static time_point now() noexcept {  // get current time
-    return time_point(std::chrono::system_clock::now().time_since_epoch());
-  }
-};
 
 template <typename Duration_T>
-time_point<local_t, Duration_T> to_local_point(const time_point<system_clock, Duration_T>& in) {
-  return time_point<local_t, Duration_T>{
+time_point<chrono::local_t, Duration_T> to_local_point(const time_point<system_clock, Duration_T>& in) {
+  return time_point<chrono::local_t, Duration_T>{
       std::chrono::round<Duration_T>(in - detail::get_local_bias()).time_since_epoch()};
 }
 
 template <typename Duration_T>
-time_point<system_clock, Duration_T> to_sys_point(const time_point<local_t, Duration_T>& in) {
+time_point<system_clock, Duration_T> to_sys_point(const time_point<chrono::local_t, Duration_T>& in) {
   return time_point<system_clock, Duration_T>{
       std::chrono::round<Duration_T>(in + detail::get_local_bias()).time_since_epoch()};
 }

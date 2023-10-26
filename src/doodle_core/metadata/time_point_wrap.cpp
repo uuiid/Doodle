@@ -44,14 +44,14 @@ time_point_wrap::time_point_wrap(
           chrono::hours{in_hours} + chrono::minutes{in_minutes} + chrono::seconds{in_seconds}}) {}
 
 std::int32_t time_point_wrap::get_week_int() const {
-  date::weekday k_weekday{chrono::time_point_cast<date::days>(get_local_time())};
+  chrono::weekday k_weekday{chrono::time_point_cast<chrono::days>(get_local_time())};
   return boost::numeric_cast<std::int32_t>(k_weekday.c_encoding());
 }
 
 time_point_wrap::compose_type time_point_wrap::compose() const {
   auto&& [l_d, l_s] = compose_1();
-  date::year_month_day k_day{l_d};
-  date::hh_mm_ss k_hh_mm_ss{l_s};
+  chrono::year_month_day k_day{l_d};
+  chrono::hh_mm_ss k_hh_mm_ss{l_s};
 
   return time_point_wrap::compose_type{
       boost::numeric_cast<std::uint16_t>((std::int32_t)k_day.year()),
@@ -78,7 +78,7 @@ time_point_wrap time_point_wrap::min() { return time_point_wrap{time_point::min(
 time_point_wrap time_point_wrap::max() { return time_point_wrap{time_point::max()}; }
 time_point_wrap time_point_wrap::current_month_start(const time_point_wrap& in_time) {
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
-  auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / 1_d;
+  auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / 1d;
   return time_point_wrap{chrono::local_days{l_mo}};
 }
 time_point_wrap time_point_wrap::current_month_end() const { return current_month_end(*this); }

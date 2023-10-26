@@ -84,7 +84,6 @@ using maya_rig_file  = detail::one_file_base<detail::maya_rig_file_id>;
 using ue_file_preset = detail::one_file_base<detail::ue_file_preset_id>;
 
 using namespace std::literals;
-using namespace date::literals;
 
 class doodle_lib;
 using string_list    = std::vector<std::string>;

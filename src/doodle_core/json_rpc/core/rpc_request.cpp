@@ -64,7 +64,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, rpc_reply& nlohmann_json_t
   }
   auto&& l_j = nlohmann_json_j.at("id");
   if (l_j.is_number())
-    nlohmann_json_t.id_ = l_j.get<std::uint64_t>();
+    nlohmann_json_t.id_ = boost::numeric_cast<std::int32_t>(l_j.get<std::uint64_t>());
   else if (l_j.is_string())
     nlohmann_json_t.id_ = l_j.get<std::string>();
   else

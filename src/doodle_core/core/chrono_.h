@@ -10,11 +10,8 @@
 namespace doodle::chrono {
 namespace literals {
 using namespace std::chrono_literals;
-using namespace date::literals;
-
 }  // namespace literals
 using namespace std::chrono;
-using namespace date;
 
 using hours_double   = duration<std::double_t, std::ratio<3600>>;
 using sys_time_pos   = time_point<system_clock>;

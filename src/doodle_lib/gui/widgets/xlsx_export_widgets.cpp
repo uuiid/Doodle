@@ -54,8 +54,6 @@
 namespace doodle::gui {
 class xlsx_line_gui {
  public:
-  xlsx_line_gui() = default;
-
   std::string organization_{};
   std::string user_{};
   std::string project_season_name_{};
@@ -73,7 +71,6 @@ class xlsx_line_gui {
 
 class xlsx_line_statistics_gui {
  public:
-  xlsx_line_statistics_gui() = default;
   std::string user_name;
   std::string len_time;
 };
@@ -128,7 +125,9 @@ xlsx_line::xlsx_line(
     auto l_p = l_ass_h;
     //    k_ass_path = l_p ? l_p.get<assets>().p_path : ""s;
     while (l_p) {
-      k_ass_path = fmt::format(k_ass_path.empty() ? "{}{}" : "{}/{}", l_p.get<assets>().p_path, k_ass_path);
+      k_ass_path = fmt::vformat(
+          k_ass_path.empty() ? "{}{}" : "{}/{}", fmt::make_format_args(l_p.get<assets>().p_path, k_ass_path)
+      );
       if (auto l_pp = l_p.get<assets>().get_parent()) {
         l_p = l_pp;
       } else {
@@ -142,18 +141,22 @@ xlsx_line::xlsx_line(
     }
   }
 
-  auto l_season =                                                          //"季数"
-      in_handle.all_of<season>()                                           //
-          ? fmt::format(in_season_fmt_str, in_handle.get<season>().p_int)  //
+  auto l_season =                                                                                  //"季数"
+      in_handle.all_of<season>()                                                                   //
+          ? fmt::vformat(in_season_fmt_str, fmt::make_format_args(in_handle.get<season>().p_int))  //
           : ""s;
   organization_        = k_ass.organization_attr();
   user_                = in_user_handle.get<user>().get_name();
   project_season_name_ = fmt::format("《{}》 {}", l_prj_name, l_season);
-  episodes_ =
-      in_handle.all_of<episodes>() ? fmt::format(in_episodes_fmt_str, in_handle.get<episodes>().p_episodes) : ""s;
-  shot_         = in_handle.all_of<shot>()
-                      ? fmt::format(in_shot_fmt_str, in_handle.get<shot>().p_shot, in_handle.get<shot>().p_shot_enum)
-                      : ""s;
+  episodes_            = in_handle.all_of<episodes>()
+                             ? fmt::vformat(in_episodes_fmt_str, fmt::make_format_args(in_handle.get<episodes>().p_episodes))
+                             : ""s;
+  shot_ =
+      in_handle.all_of<shot>()
+          ? fmt::vformat(
+                in_shot_fmt_str, fmt::make_format_args(in_handle.get<shot>().p_shot, in_handle.get<shot>().p_shot_enum)
+            )
+          : ""s;
   start_time_   = start_time;
   end_time_     = end_time;
   len_time_     = chrono::round<chrono::seconds>(k_time);

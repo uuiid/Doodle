@@ -34,7 +34,6 @@ struct time_cpp_suite {
 BOOST_FIXTURE_TEST_SUITE(tset_time, time_cpp_suite)
 
 BOOST_AUTO_TEST_CASE(date_) {
-  using namespace date::literals;
   using namespace std::literals;
   /// utc时间为 2022/05/07 3:46:55
   auto l_time_l = time_point_wrap{date::local_days{2022_y / 5 / 7_d} + 11h + 46min + 55s};
