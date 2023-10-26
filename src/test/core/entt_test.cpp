@@ -80,8 +80,47 @@ BOOST_AUTO_TEST_CASE(test_entt_obs2) {
   BOOST_TEST(l_obs3.size() == 2);
 }
 
-BOOST_AUTO_TEST_CASE(entt_ref_1) {
-  std::int32_t l_i{0};
+class archive_t {
+ public:
+  void operator()(entt::entity in_entity) { entity_.emplace_back(in_entity); }
+  void operator()(std::underlying_type_t<entt::entity> in_underlying_type) {
+    underlying_type_.emplace_back(in_underlying_type);
+  }
+  void operator()(const std::int32_t& in_int_32) { int_32_.emplace_back(in_int_32); }
+  void operator()(const std::string& in_string) { string_.emplace_back(in_string); }
+  void print() {
+    auto l_string = fmt::format(
+        "entt [{}] size  [{}] com: [{}] [{}]", fmt::join(entity_, ","), fmt::join(underlying_type_, ","),
+        fmt::join(int_32_, ","), fmt::join(string_, ",")
 
-  //  auto l_any = entt::meta<std::int32_t>(0);
+    );
+    BOOST_TEST_MESSAGE(l_string);
+  }
+
+ private:
+  std::vector<std::int32_t> int_32_{};
+  std::vector<entt::entity> entity_{};
+  std::vector<std::string> string_{};
+  std::vector<std::underlying_type_t<entt::entity>> underlying_type_{};
+};
+
+BOOST_AUTO_TEST_CASE(save) {
+  entt::registry reg{};
+
+  entt::handle l_h{reg, reg.create()};
+  l_h.emplace<std::int32_t>(1);
+  l_h.emplace<std::string>("test");
+
+  l_h = entt::handle{reg, reg.create()};
+  l_h.emplace<std::int32_t>(2);
+  l_h.emplace<std::string>("test2");
+
+  l_h = entt::handle{reg, reg.create()};
+  l_h.emplace<std::int32_t>(3);
+  l_h.emplace<std::string>("test3");
+
+  entt::snapshot l_snapshot{reg};
+  archive_t l_archive{};
+  l_snapshot.get<std::int32_t>(l_archive).get<std::string>(l_archive);
+  l_archive.print();
 }

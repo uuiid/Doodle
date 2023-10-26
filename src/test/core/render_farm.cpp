@@ -26,10 +26,9 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/pin_yin/convert.h>
+#include <doodle_core/render_farm/basic_json_body.h>
 
 #include "doodle_app/app/app_command.h"
-
-#include <doodle_lib/render_farm/detail/basic_json_body.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
