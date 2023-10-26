@@ -5,6 +5,13 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.3/Plugins/Doodle/
         PATTERN "*.pdb" EXCLUDE
         PATTERN "Source" EXCLUDE
         )
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.2/Plugins/Doodle/
+        DESTINATION ue52_Plug
+        COMPONENT ue4_plug
+        PATTERN "Intermediate" EXCLUDE
+        PATTERN "*.pdb" EXCLUDE
+        PATTERN "Source" EXCLUDE
+)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/SideFX_Labs/
         DESTINATION SideFX_Labs
         COMPONENT ue4_plug
