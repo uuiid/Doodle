@@ -73,7 +73,6 @@ class http_route {
  public:
   // 注册路由
   void reg(boost::beast::http::verb in_verb, std::vector<std::string> in_vector, capture_url::action_type in_function);
-  void reg(std::vector<std::string> in_vector, capture_url::action_type in_function);
 
   template <typename CompletionHandler>
   http_route& get(std::string url, CompletionHandler&& in_handler) {
