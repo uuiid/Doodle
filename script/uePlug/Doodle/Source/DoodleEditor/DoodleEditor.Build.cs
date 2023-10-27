@@ -10,6 +10,7 @@ public class doodleEditor : ModuleRules
 	public doodleEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		CppStandard = CppStandardVersion.Cpp20;
 		/// 启用rtti, 用来使用 std::dynamic_pointer_cast
 		//bForceEnableRTTI = true;
 
