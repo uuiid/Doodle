@@ -11,11 +11,12 @@
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
 #include "boost/hana.hpp"
+#include "boost/lexical_cast.hpp"
 #include "boost/signals2.hpp"
 #include "boost/url.hpp"
 
+#include "doodle_server_fwd.h"
 #include "nlohmann/json.hpp"
-#include "render_farm/render_farm_fwd.h"
 #include <memory>
 namespace doodle::render_farm {
 

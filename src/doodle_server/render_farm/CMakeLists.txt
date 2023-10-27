@@ -5,7 +5,6 @@ target_sources(
         proxy_server.h
         websocket.h
         functional_registration_manager.h
-        render_farm_fwd.h
         logger_com.h
 
         PRIVATE

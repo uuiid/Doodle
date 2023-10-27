@@ -8,9 +8,9 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include "doodle_server_fwd.h"
 #include <doodle_server/render_farm/detail/computer.h>
 #include <doodle_server/render_farm/detail/ue4_task.h>
-#include <doodle_server/render_farm/render_farm_fwd.h>
 #include <magic_enum.hpp>
 namespace doodle::render_farm::detail {
 

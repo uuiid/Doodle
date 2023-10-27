@@ -10,7 +10,7 @@
 
 #include <boost/beast.hpp>
 
-#include <doodle_server/render_farm/render_farm_fwd.h>
+#include "doodle_server/doodle_server_fwd.h"
 #include <nlohmann/json.hpp>
 namespace doodle::render_farm {
 using error_type_id   = entt::tag<"error_type_id"_hs>;

@@ -9,6 +9,7 @@
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
 
+#include "doodle_server_fwd.h"
 #include "http_session.h"
 #include "render_farm/detail/computer_manage.h"
 #include "render_farm/detail/ue_task_manage.h"
@@ -17,7 +18,6 @@
 #include "render_farm/detail/url_route_post.h"
 #include "render_farm/detail/url_route_put.h"
 #include "render_farm/detail/url_webscoket.h"
-#include "render_farm/render_farm_fwd.h"
 namespace doodle {
 
 void http_listener::cancellation_signals::emit(boost::asio::cancellation_type ct) {

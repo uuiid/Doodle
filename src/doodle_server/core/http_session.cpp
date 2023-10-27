@@ -12,8 +12,8 @@
 #include "boost/beast/version.hpp"
 
 #include "bind_front_handler.h"
+#include "doodle_server_fwd.h"
 #include "render_farm/detail/url_route_base.h"
-#include "render_farm/render_farm_fwd.h"
 namespace doodle::render_farm {
 
 namespace session {

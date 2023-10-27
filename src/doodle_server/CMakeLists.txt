@@ -9,7 +9,11 @@ add_subdirectory(data)
 add_subdirectory(core)
 add_subdirectory(facet)
 add_subdirectory(render_farm)
-
+target_sources(
+        doodle_server_lib
+        PUBLIC
+        doodle_server_fwd.h
+)
 
 set_target_properties(doodle_server_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
