@@ -722,6 +722,22 @@ void fbx_node_mesh::build_blend_shape() {
       auto l_input_components_target_data_handle = l_input_components_target.asMDataHandle(&l_status);
       maya_chick(l_status);
 
+      if (l_input_point_target_data_handle.type() != MFnData::Type::kPointArray) {
+        log_info(fmt::format("blend shape {} point data type error", get_node_name(dag_path)));
+        continue;
+      }
+      if (l_input_components_target_data_handle.type() != MFnData::Type::kComponentList) {
+        log_info(fmt::format("blend shape {} component data type error", get_node_name(dag_path)));
+        continue;
+      }
+      if (l_input_point_target_data_handle.data().isNull()) {
+        log_info(fmt::format("blend shape {} point data is null", get_node_name(dag_path)));
+        continue;
+      }
+      if (l_input_components_target_data_handle.data().isNull()) {
+        log_info(fmt::format("blend shape {} component data is null", get_node_name(dag_path)));
+        continue;
+      }
       MFnPointArrayData l_point_data{l_input_point_target_data_handle.data(), &l_status};
       maya_chick(l_status);
       if (l_point_data.length() == 0) {
