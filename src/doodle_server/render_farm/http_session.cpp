@@ -19,10 +19,10 @@ namespace doodle::render_farm {
 namespace session {
 void do_read::run() {
   if (handle_ && handle_.all_of<http_session_data>()) {
-    handle_.get<http_session_data>().stream_.expires_after(30s);
+    handle_.get<http_session_data>().stream_->expires_after(30s);
     handle_.emplace_or_replace<request_parser_empty_body>();
     boost::beast::http::async_read_header(
-        handle_.get<http_session_data>().stream_, handle_.get<http_session_data>().buffer_,
+        *handle_.get<http_session_data>().stream_, handle_.get<http_session_data>().buffer_,
         *handle_.get<request_parser_empty_body>(), std::move(*this)
     );
   } else {
@@ -37,7 +37,7 @@ void do_read::operator()(boost::system::error_code ec, std::size_t bytes_transfe
 
   auto& l_data = handle_.get<http_session_data>();
   boost::ignore_unused(bytes_transferred);
-  l_data.stream_.expires_after(30s);
+  l_data.stream_->expires_after(30s);
   auto l_logger = handle_.get<socket_logger>().logger_;
   if (ec) {
     if (ec != boost::beast::http::error::end_of_stream) {
@@ -74,7 +74,7 @@ err_tag:
 void do_close::run() {
   if (handle_ && handle_.all_of<http_session_data>()) {
     logger_ = handle_.get<socket_logger>().logger_;
-    handle_.get<http_session_data>().stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+    handle_.get<http_session_data>().stream_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
     boost::asio::post(g_io_context(), std::move(*this));
   }
 }
@@ -89,9 +89,9 @@ void do_close::operator()() {
 void do_write::run() {
   if (handle_ && handle_.all_of<http_session_data>()) {
     auto& l_data = handle_.get<http_session_data>();
-    l_data.stream_.expires_after(30s);
+    l_data.stream_->expires_after(30s);
     keep_alive_ = message_generator_.keep_alive();
-    boost::beast::async_write(l_data.stream_, std::move(message_generator_), std::move(*this));
+    boost::beast::async_write(*l_data.stream_, std::move(message_generator_), std::move(*this));
   }
 }
 void do_write::send_error_code(
@@ -121,7 +121,7 @@ void do_write::operator()(boost::system::error_code ec, std::size_t bytes_transf
     return do_close{handle_}.run();
   }
   l_data.buffer_.clear();
-  l_data.stream_.expires_after(30s);
+  l_data.stream_->expires_after(30s);
   do_read{handle_}.run();
 }
 

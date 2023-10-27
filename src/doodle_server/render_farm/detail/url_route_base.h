@@ -53,11 +53,11 @@ class http_route {
   }
   template <typename MsgBody, typename CompletionHandler>
   static auto read_body(const entt::handle& in_handle, CompletionHandler&& in_completion) {
-    using do_read_msg_body_t = session::do_read_msg_body<
-        MsgBody, std::decay_t<CompletionHandler>, decltype(in_handle.get<http_session_data>().stream_)::executor_type>;
+    using do_read_msg_body_t =
+        session::do_read_msg_body<MsgBody, std::decay_t<CompletionHandler>, boost::asio::any_io_executor>;
     do_read_msg_body_t{
         in_handle, std::forward<CompletionHandler>(in_completion),
-        in_handle.get<http_session_data>().stream_.get_executor()}
+        in_handle.get<http_session_data>().stream_->get_executor()}
         .run();
   }
 

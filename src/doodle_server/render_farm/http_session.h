@@ -20,10 +20,15 @@
 namespace doodle::render_farm {
 
 struct http_session_data {
-  explicit http_session_data(boost::asio::ip::tcp::socket in_socket) : stream_(std::move(in_socket)) {}
-  boost::beast::tcp_stream stream_;
+  explicit http_session_data(boost::asio::ip::tcp::socket in_socket)
+      : stream_(std::make_unique<boost::beast::tcp_stream>(std::move(in_socket))) {}
+  std::unique_ptr<boost::beast::tcp_stream> stream_;
   boost::beast::flat_buffer buffer_;
   boost::url url_;
+
+  inline boost::beast::tcp_stream& operator*() const { return *stream_; }
+  inline boost::beast::tcp_stream* operator->() const { return stream_.get(); }
+
   // copy delete
   http_session_data(const http_session_data&)                = delete;
   http_session_data& operator=(const http_session_data&)     = delete;
@@ -157,10 +162,10 @@ template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
 void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::run() {
   if (handle_ && handle_.all_of<http_session_data, request_parser_empty_body>()) {
     auto&& [l_data, l_body] = handle_.get<http_session_data, request_parser_empty_body>();
-    l_data.stream_.expires_after(30s);
+    l_data.stream_->expires_after(30s);
 
     boost::beast::http::async_read(
-        l_data.stream_, l_data.buffer_, *handle_.emplace_or_replace<async_read_body>(l_body), std::move(*this)
+        *l_data, l_data.buffer_, *handle_.emplace_or_replace<async_read_body>(l_body), std::move(*this)
     );
   } else {
     boost::beast::error_code ec{};
@@ -193,7 +198,7 @@ void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::operator()(
 
   if (handle_.all_of<http_session_data, async_read_body>()) {
     auto&& [l_data, l_body] = handle_.get<http_session_data, async_read_body>();
-    l_data.stream_.expires_after(30s);
+    l_data.stream_->expires_after(30s);
     this->complete(true, ec, handle_, l_body->release());
     return;
   }
