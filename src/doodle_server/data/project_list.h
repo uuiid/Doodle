@@ -36,6 +36,7 @@ class project_storage_type {
 class project_storage_list_type {
  public:
   project_storage_list_type() = default;
+  FSys::path project_root{};
   std::map<std::string, project_storage_type> project_list_;
 };
 }  // namespace doodle::http

@@ -31,6 +31,8 @@ enum class error_enum : std::int32_t {
   not_find_work_class,
   // 不允许多个工作
   not_allow_multi_work,
+  // 没有找到project
+  project_not_exist
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {

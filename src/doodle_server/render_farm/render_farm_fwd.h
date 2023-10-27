@@ -7,6 +7,11 @@
 #include <doodle_core/logger/logger.h>
 
 namespace doodle {
+struct socket_logger {
+  socket_logger();
+  logger_ptr logger_{};
+};
+
 namespace render_farm {
 class http_listener;
 namespace detail {
@@ -19,9 +24,5 @@ class render_ue4;
 using render_ue4     = detail::render_ue4;
 using render_ue4_ptr = std::shared_ptr<render_ue4>;
 using http_route_ptr = std::shared_ptr<detail::http_route>;
-struct socket_logger {
-  socket_logger();
-  logger_ptr logger_{};
-};
 }  // namespace render_farm
 }  // namespace doodle
