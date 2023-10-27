@@ -10,8 +10,7 @@
 #include <boost/url.hpp>
 
 #include "core/http_session.h"
-namespace doodle::render_farm {
-namespace detail {
+namespace doodle::detail {
 
 class http_route {
  public:
@@ -54,17 +53,17 @@ class http_route {
   template <typename MsgBody, typename CompletionHandler>
   static auto read_body(const entt::handle& in_handle, CompletionHandler&& in_completion) {
     using do_read_msg_body_t =
-        session::do_read_msg_body<MsgBody, std::decay_t<CompletionHandler>, boost::asio::any_io_executor>;
+        render_farm::session::do_read_msg_body<MsgBody, std::decay_t<CompletionHandler>, boost::asio::any_io_executor>;
     do_read_msg_body_t{
         in_handle, std::forward<CompletionHandler>(in_completion),
-        in_handle.get<http_session_data>().stream_->get_executor()}
+        in_handle.get<render_farm::http_session_data>().stream_->get_executor()}
         .run();
   }
 
   static void upgrade_websocket(const entt::handle& in_handle);
   template <typename CompletionHandler>
   static auto not_upgrade_websocket(const entt::handle& in_handle, CompletionHandler&& in_completion) {
-    if (boost::beast::websocket::is_upgrade(in_handle.get<session::request_parser_empty_body>()->get())) {
+    if (boost::beast::websocket::is_upgrade(in_handle.get<render_farm::session::request_parser_empty_body>()->get())) {
       upgrade_websocket(in_handle);
     } else
       in_completion(in_handle);
@@ -103,5 +102,4 @@ class http_route {
   action_type operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment) const;
 };
 
-}  // namespace detail
-}  // namespace doodle::render_farm
+}  // namespace doodle::detail

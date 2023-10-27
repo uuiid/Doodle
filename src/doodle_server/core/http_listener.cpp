@@ -45,21 +45,23 @@ void http_listener::run() {
   //  acceptor_.listen(boost::asio::socket_base::max_listen_connections);
   route_ptr_ = std::make_shared<detail::http_route>();
   (*route_ptr_)
-      .get("v1/render_farm", detail::get_root_type{})
-      .get("v1/render_farm/log/{handle}", detail::get_log_type_get{})
-      .get("v1/render_farm/err/{handle}", detail::get_err_type_get{})
-      .get("v1/render_farm/render_job", detail::render_job_type_get{})
-      .get("v1/render_farm/computer", detail::computer_reg_type_get{})
-      .get("v1/render_farm/repository", detail::repository_type_get{})
-      .post<boost::beast::http::string_body>("v1/render_farm/render_job", detail::render_job_type_post{})
-      .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", detail::get_log_type_post{})
-      .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", detail::get_err_type_post{})
-      .put<boost::beast::http::string_body>("v1/render_farm/render_job/{handle}", detail::render_job_type_put{})
+      .get("v1/render_farm", render_farm::detail::get_root_type{})
+      .get("v1/render_farm/log/{handle}", render_farm::detail::get_log_type_get{})
+      .get("v1/render_farm/err/{handle}", render_farm::detail::get_err_type_get{})
+      .get("v1/render_farm/render_job", render_farm::detail::render_job_type_get{})
+      .get("v1/render_farm/computer", render_farm::detail::computer_reg_type_get{})
+      .get("v1/render_farm/repository", render_farm::detail::repository_type_get{})
+      .post<boost::beast::http::string_body>("v1/render_farm/render_job", render_farm::detail::render_job_type_post{})
+      .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", render_farm::detail::get_log_type_post{})
+      .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", render_farm::detail::get_err_type_post{})
+      .put<boost::beast::http::string_body>(
+          "v1/render_farm/render_job/{handle}", render_farm::detail::render_job_type_put{}
+      )
       //      .put("v1/render_farm/render_job/{handle}", detail::render_job_type_put{});
       ;
 
-  g_reg()->ctx().emplace<ue_task_manage>().run();
-  g_reg()->ctx().emplace<computer_manage>().run();
+  g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
+  g_reg()->ctx().emplace<render_farm::computer_manage>().run();
   acceptor_ptr_ = std::make_shared<acceptor_type>(g_io_context(), end_point_);
   do_accept();
   signal_set_.async_wait([&](boost::system::error_code ec, int signal) {
@@ -91,16 +93,18 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<socket_logger>();
     l_handle.emplace<detail::http_route>(*route_ptr_);
-    l_handle.emplace<http_session_data>(std::move(socket));
-    session::do_read{std::move(l_handle)}.run();
+    l_handle.emplace<render_farm::http_session_data>(std::move(socket));
+    render_farm::session::do_read{std::move(l_handle)}.run();
   }
 }
 void http_listener::stop() {
-  g_reg()->ctx().get<ue_task_manage>().cancel();
-  g_reg()->ctx().get<computer_manage>().cancel();
-  auto l_view = g_reg()->view<http_session_data>();
+  g_reg()->ctx().get<render_farm::ue_task_manage>().cancel();
+  g_reg()->ctx().get<render_farm::computer_manage>().cancel();
+  auto l_view = g_reg()->view<render_farm::http_session_data>();
   // close
-  ranges::for_each(l_view, [](auto& in_session) { session::do_close{entt::handle{*g_reg(), in_session}}.run(); });
+  ranges::for_each(l_view, [](auto& in_session) {
+    render_farm::session::do_close{entt::handle{*g_reg(), in_session}}.run();
+  });
 }
 
-}  // namespace doodle::render_farm
+}  // namespace doodle

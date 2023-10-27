@@ -13,18 +13,19 @@ struct socket_logger {
 };
 
 namespace http {}
-
+namespace detail {
+class http_route;
+}
 class http_listener;
+using http_route_ptr = std::shared_ptr<detail::http_route>;
 namespace render_farm {
 namespace detail {
 struct basic_json_body;
-class http_route;
 class ue4_task;
 class render_ue4;
 
 }  // namespace detail
 using render_ue4     = detail::render_ue4;
 using render_ue4_ptr = std::shared_ptr<render_ue4>;
-using http_route_ptr = std::shared_ptr<detail::http_route>;
 }  // namespace render_farm
 }  // namespace doodle

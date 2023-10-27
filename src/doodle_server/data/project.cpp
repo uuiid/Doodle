@@ -77,7 +77,7 @@ void post_type::operator()(
 
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
       boost::beast::http::status::ok,
-      in_handle.get<boost::beast::http::request<boost::beast::http::string_body>>().version()};
+      in_request.version()};
   l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_response.keep_alive(in_handle.get<render_farm::session::request_parser_empty_body>()->keep_alive());
   l_response.prepare_payload();
@@ -120,7 +120,7 @@ void delete_type::operator()(boost::system::error_code ec, const entt::handle &i
 
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
       boost::beast::http::status::ok,
-      in_handle.get<boost::beast::http::request<boost::beast::http::string_body>>().version()};
+      in_handle.get<render_farm::session::request_parser_empty_body>()->get().version()};
   l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_response.keep_alive(in_handle.get<render_farm::session::request_parser_empty_body>()->keep_alive());
   l_response.prepare_payload();

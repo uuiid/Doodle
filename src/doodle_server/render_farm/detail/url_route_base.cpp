@@ -9,7 +9,7 @@
 
 #include "core/http_session.h"
 #include <doodle_server/render_farm/websocket.h>
-namespace doodle::render_farm::detail {
+namespace doodle::detail {
 
 void http_route::capture_url::set_cap_bit() {
   for (const auto& l_str : capture_vector_) {
@@ -50,22 +50,23 @@ void http_route::upgrade_websocket(const entt::handle& in_handle) {
     ) {
       auto l_logger = in_handle.get<socket_logger>().logger_;
       if (ec == boost::beast::http::error::end_of_stream) {
-        session::do_close{in_handle}.run();
+        render_farm::session::do_close{in_handle}.run();
       }
       if (ec) {
         log_error(l_logger, fmt::format("on_read error: {} ", ec));
-        session::do_write::send_error_code(in_handle, ec);
+        render_farm::session::do_write::send_error_code(in_handle, ec);
         return;
       }
-      boost::beast::get_lowest_layer(*in_handle.get<http_session_data>().stream_).expires_never();
-      in_handle.emplace<render_farm::websocket_data>(std::move(*in_handle.get<http_session_data>().stream_));
-      in_handle.erase<http_session_data>();
+      boost::beast::get_lowest_layer(*in_handle.get<render_farm::http_session_data>().stream_).expires_never();
+      in_handle.emplace<render_farm::websocket_data>(std::move(*in_handle.get<render_farm::http_session_data>().stream_)
+      );
+      in_handle.erase<render_farm::http_session_data>();
       std::make_shared<render_farm::websocket>(in_handle)->run(std::move(in_msg));
     }
   };
-  using do_read_msg_body = session::do_read_msg_body<
+  using do_read_msg_body = render_farm::session::do_read_msg_body<
       boost::beast::http::string_body, upgrade_websocket_data, boost::asio::any_io_executor>;
-  auto l_exe = in_handle.get<http_session_data>().stream_->get_executor();
+  auto l_exe = in_handle.get<render_farm::http_session_data>().stream_->get_executor();
   do_read_msg_body{in_handle, upgrade_websocket_data{}, l_exe}.run();
 }
 
@@ -73,7 +74,7 @@ http_route::action_type http_route::capture_url::operator()(boost::urls::segment
   auto [l_result, l_map] = match_url(in_segments_ref);
   if (l_result) {
     return [map_ = l_map, call = action_](const entt::handle& in_handle) {
-      in_handle.emplace_or_replace<session::capture_url>(map_);
+      in_handle.emplace_or_replace<render_farm::session::capture_url>(map_);
       call(in_handle);
     };
   } else

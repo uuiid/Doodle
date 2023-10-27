@@ -8,7 +8,7 @@
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
 
-#include "render_farm/render_farm_fwd.h"
+#include "doodle_server/render_farm/render_farm_fwd.h"
 #include <memory>
 namespace doodle {
 
