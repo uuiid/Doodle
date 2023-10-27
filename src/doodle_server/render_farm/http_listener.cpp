@@ -7,6 +7,7 @@
 #include <doodle_app/app/app_command.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/beast.hpp>
 
 #include <doodle_server/render_farm/detail/computer_manage.h>
@@ -19,6 +20,25 @@
 #include <doodle_server/render_farm/http_session.h>
 #include <doodle_server/render_farm/render_farm_fwd.h>
 namespace doodle::render_farm {
+
+void http_listener::cancellation_signals::emit(boost::asio::cancellation_type ct) {
+  std::lock_guard<std::mutex> _(mtx);
+
+  for (auto& sig : sigs) sig.emit(ct);
+}
+
+boost::asio::cancellation_slot http_listener::cancellation_signals::slot() {
+  std::lock_guard<std::mutex> _(mtx);
+
+  auto itr = std::find_if(sigs.begin(), sigs.end(), [](boost::asio::cancellation_signal& sig) {
+    return !sig.slot().has_handler();
+  });
+
+  if (itr != sigs.end())
+    return itr->slot();
+  else
+    return sigs.emplace_back().slot();
+}
 
 void http_listener::run() {
   //  acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
@@ -41,18 +61,32 @@ void http_listener::run() {
 
   g_reg()->ctx().emplace<ue_task_manage>().run();
   g_reg()->ctx().emplace<computer_manage>().run();
-  do_accept();
+  boost::asio::co_spawn(
+      g_io_context(), this->do_accept(),
+      boost::asio::bind_cancellation_slot(cancellation_signals_.slot(), boost::asio::detached)
+  );
   signal_set_.async_wait([&](boost::system::error_code ec, int signal) {
     if (ec) {
       DOODLE_LOG_ERROR("signal_set_ error: {}", ec.message());
       return;
     }
     DOODLE_LOG_INFO("signal_set_ signal: {}", signal);
+    cancellation_signals_.emit();
     this->stop();
     //    app_base::Get().stop_app();
   });
 }
-void http_listener::do_accept() {
+boost::asio::awaitable<void, boost::asio::io_context::executor_type> http_listener::do_accept() {
+  auto l_acceptor = boost::asio::use_awaitable.as_default_on(acceptor_type{co_await boost::asio::this_coro::executor});
+  if (!l_acceptor.is_open()) {
+    l_acceptor.open(end_point_.protocol());
+    l_acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+    l_acceptor.bind(end_point_);
+    l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
+  }
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::all) {
+  }
+
   acceptor_.async_accept(
       boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&http_listener::on_accept, this)
   );
@@ -70,7 +104,7 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
     l_handle.emplace<http_session_data>(std::move(socket));
     session::do_read{std::move(l_handle)}.run();
   }
-  do_accept();
+  //  do_accept();
 }
 void http_listener::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
