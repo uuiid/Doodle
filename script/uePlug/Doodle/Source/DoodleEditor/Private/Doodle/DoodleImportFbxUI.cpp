@@ -187,7 +187,7 @@ void FSearchEpShotModel_1::GenStartAndEndTime(const FString& In_ImportPath) {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep](\d+)_)" };
+  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep]_?(\d+))" };
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_ImportPath}; L_Reg_Ep.FindNext()) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
@@ -213,7 +213,7 @@ void FSearchEpShotModel_2::GenStartAndEndTime(const FString& In_ImportPath) {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep](\d+)_)" };
+  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep]_?(\d+))" };
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_ImportPath}; L_Reg_Ep.FindNext()) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
@@ -244,7 +244,7 @@ void UDoodleBaseImportData::GenStartAndEndTime() {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep](\d+)_)" };
+  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep]_?(\d+))" };
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, ImportPath}; L_Reg_Ep.FindNext()) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
