@@ -240,18 +240,18 @@ void UDoodleBaseImportData::GenStartAndEndTime() {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
+  const FRegexPattern L_Reg_Ep_Pattern{LR"((ep|EP|Ep)_?(\d+))"};
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, ImportPath}; L_Reg_Ep.FindNext()) {
-    Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
+    Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(2));
   }
 
-  const FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-zA-Z])?)"};
+  const FRegexPattern L_Reg_ScPattern{LR"((sc|SC|Sc)_?(\d+)([a-zA-Z])?)"};
 
   if (FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, ImportPath}; L_Reg_Sc.FindNext()) {
-    Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(1));
-    if (L_Reg_Sc.GetEndLimit() > 2) {
-      ShotAb = L_Reg_Sc.GetCaptureGroup(2).ToUpper();
+    Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(2));
+    if (L_Reg_Sc.GetEndLimit() > 3) {
+      ShotAb = L_Reg_Sc.GetCaptureGroup(3).ToUpper();
     }
   }
 }
