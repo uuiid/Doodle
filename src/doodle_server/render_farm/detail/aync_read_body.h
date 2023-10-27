@@ -5,7 +5,6 @@
 #pragma once
 #include <doodle_server/render_farm/http_session.h>
 namespace doodle::render_farm {
-// class working_machine_session;
 // namespace detail {
 // template <typename Body_type>
 // class async_read_body_op {
