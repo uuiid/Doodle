@@ -102,6 +102,10 @@
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
 
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Factories/LevelFactory.h"
+#include "EditorLevelUtils.h"
+
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 
@@ -183,7 +187,7 @@ void FSearchEpShotModel_1::GenStartAndEndTime(const FString& In_ImportPath) {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
+  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep]_?(\d+))" };
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_ImportPath}; L_Reg_Ep.FindNext()) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
@@ -209,7 +213,7 @@ void FSearchEpShotModel_2::GenStartAndEndTime(const FString& In_ImportPath) {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
+  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep]_?(\d+))" };
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_ImportPath}; L_Reg_Ep.FindNext()) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
@@ -240,7 +244,7 @@ void UDoodleBaseImportData::GenStartAndEndTime() {
     StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
     EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
-  const FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
+  const FRegexPattern L_Reg_Ep_Pattern{ LR"([ep|EP|Ep]_?(\d+))" };
 
   if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, ImportPath}; L_Reg_Ep.FindNext()) {
     Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
@@ -383,8 +387,8 @@ void UDoodleFbxImport_1::AssembleScene() {
       {
         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
             L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-
-        L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
+        UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
+        AnimSection->SetPreRollFrames(50);
       }
       L_Actor->Destroy();
     }
@@ -547,9 +551,10 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   L_ShotSequence->GetMovieScene()->Modify();
 
   /// 设置范围
-  L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
-  L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
-  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start, L_End}, true);
+  FFrameNumber offset{ 50 };
+  L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
+  L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
+  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End}, true);
   L_ShotSequence->Modify();
   ALevelSequenceActor* L_LevelSequenceActor{};
 
@@ -664,6 +669,51 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     GEngine->Tick(FApp::GetDeltaTime(), false);
   }
   UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
+  //--------------------------------生成关卡
+  //L_Task_Scoped.EnterProgressFrame(1,FText::Format(LOCTEXT("Import_ImportingCameraFile7", "检查关卡\"{0}\"..."), FText::FromString(ImportPathDir)));
+  //----------------
+  //ULevel* L_ShotLevel = LoadObject<ULevel>(nullptr, *ImportPathDir);
+  //if (!L_ShotLevel)
+  //{
+  //    FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + TEXT("_LEVEL");
+  //    UPackage* L_Package = CreatePackage(*PackageName);
+  //    L_Package->FullyLoad();
+  //    L_Package->MarkPackageDirty();
+
+  //    FName L_Name = FName(FPaths::GetBaseFilename(ImportPathDir) + TEXT("_LEVEL"));
+
+  //    L_ShotLevel = NewObject<ULevel>(L_Package, L_Name, RF_Public | RF_Standalone | RF_Transactional);
+  //    L_ShotLevel->Initialize(FURL(nullptr));
+  //    L_ShotLevel->MarkPackageDirty();
+
+  //    FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+  //    ULevelFactory* Factory = NewObject<ULevelFactory>(ULevelFactory::StaticClass());
+  //    const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
+  //    //UObject* object = AssetToolsModule.Get().CreateAsset(L_Name.ToString(), PackagePath, ULevel::StaticClass(), Factory);
+  //    //L_ShotLevel = Cast<ULevel>(L_ShotLevel);
+  //    //FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+  //    //AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
+
+  //    UWorld* editorWorld = GEditor->GetEditorWorldContext().World();
+  //    if (editorWorld)
+  //    {
+  //        ULevelStreaming* level = EditorLevelUtils::CreateNewStreamingLevel(ULevelStreaming::StaticClass(), PackagePath);
+  //        if (level)
+  //        {
+  //            /* manually save after creation once the level has a name, so we don't have to specify one, and thus we
+  //            still get the proper file saving path (as if the user was prompted). */
+  //            FEditorFileUtils::SaveLevel(level->GetLoadedLevel());
+  //        }
+  //    }
+  //    //--------------------------
+  //    //UEditorAssetLibrary::SaveAsset(L_ShotLevel->GetPathName());
+  //    //UPackage::SavePackage(L_Package, L_ShotLevel, EObjectFlags::RF_Public | EObjectFlags::RF_Standalone, *PackageName, GError, nullptr, true, true, SAVE_NoError);
+  //    ////------------------------
+  //    //L_Package->MarkPackageDirty();
+  //    //SavePackageHelper(L_Package, PackageName);
+  //}
+  // 设置关卡属性----------------
+  //L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
 }
 
 void UDoodleFbxCameraImport_1::AssembleScene() {}
@@ -739,7 +789,8 @@ void UDoodleAbcImport_1::AssembleScene() {
       {
         UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
             L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
-        L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_SK_Actor->GetGeometryCacheComponent());
+        UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_SK_Actor->GetGeometryCacheComponent());
+        AnimSection->SetPreRollFrames(50);
       }
       L_Actor->Destroy();
     }
