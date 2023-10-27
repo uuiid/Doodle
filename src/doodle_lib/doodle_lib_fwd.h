@@ -28,7 +28,6 @@ using server_ptr = std::shared_ptr<server>;
 }  // namespace distributed_computing
 
 namespace render_farm {
-class working_machine_session;
 class http_listener;
 namespace detail {
 struct basic_json_body;
