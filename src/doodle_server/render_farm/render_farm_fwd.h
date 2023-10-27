@@ -12,8 +12,10 @@ struct socket_logger {
   logger_ptr logger_{};
 };
 
-namespace render_farm {
+namespace http {}
+
 class http_listener;
+namespace render_farm {
 namespace detail {
 struct basic_json_body;
 class http_route;

@@ -12,8 +12,8 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
+#include "core/http_session.h"
 #include <doodle_server/render_farm/detail/computer.h>
-#include <doodle_server/render_farm/http_session.h>
 namespace doodle {
 namespace render_farm {
 

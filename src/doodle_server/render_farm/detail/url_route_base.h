@@ -9,7 +9,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/url.hpp>
 
-#include <doodle_server/render_farm/http_session.h>
+#include "core/http_session.h"
 namespace doodle::render_farm {
 namespace detail {
 

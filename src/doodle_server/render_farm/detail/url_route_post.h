@@ -8,8 +8,8 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
+#include "core/http_session.h"
 #include <doodle_server/render_farm/detail/url_route_base.h>
-#include <doodle_server/render_farm/http_session.h>
 #include <nlohmann/json.hpp>
 #include <utility>
 namespace doodle::render_farm {

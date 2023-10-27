@@ -7,7 +7,7 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
-#include <doodle_server/render_farm/http_session.h>
+#include "core/http_session.h"
 #include <doodle_server/render_farm/websocket.h>
 namespace doodle::render_farm::detail {
 

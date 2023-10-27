@@ -44,7 +44,7 @@ class ue_exe_m : public doodle::ue_exe {
 void run_server() {
   using namespace doodle;
   //  g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-  g_ctx().emplace<doodle::render_farm::http_listener>(g_io_context()).run();
+  g_ctx().emplace<doodle::http_listener>(g_io_context()).run();
 
   g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
   g_reg()->ctx().emplace<render_farm::computer_manage>().run();
