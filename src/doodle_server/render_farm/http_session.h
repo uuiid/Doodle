@@ -35,6 +35,7 @@ struct http_session_data {
  * @brief 会话类 用于处理客户端的请求  一个句柄对应一个客户端
  */
 namespace session {
+
 struct request_parser_empty_body {
   std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>> request_parser_;
   request_parser_empty_body()

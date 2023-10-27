@@ -6,7 +6,6 @@
 #include <doodle_core/core/global_function.h>
 
 #include <boost/asio.hpp>
-#include <boost/asio/awaitable.hpp>
 #include <boost/beast.hpp>
 
 #include <doodle_server/render_farm/render_farm_fwd.h>
@@ -36,10 +35,10 @@ class http_listener {
   inline void route(http_route_ptr in_route_ptr) { route_ptr_ = std::move(in_route_ptr); }
 
  private:
-  boost::asio::awaitable<void, boost::asio::io_context::executor_type> do_accept();
+  void do_accept();
   void on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
   http_route_ptr route_ptr_;
-  acceptor_type acceptor_;
+  std::shared_ptr<acceptor_type> acceptor_ptr_;
   endpoint_type end_point_;
   boost::asio::signal_set signal_set_;
   cancellation_signals cancellation_signals_;

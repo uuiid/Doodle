@@ -7,7 +7,6 @@
 #include <doodle_app/app/app_command.h>
 
 #include <boost/asio.hpp>
-#include <boost/asio/co_spawn.hpp>
 #include <boost/beast.hpp>
 
 #include <doodle_server/render_farm/detail/computer_manage.h>
@@ -61,10 +60,8 @@ void http_listener::run() {
 
   g_reg()->ctx().emplace<ue_task_manage>().run();
   g_reg()->ctx().emplace<computer_manage>().run();
-  boost::asio::co_spawn(
-      g_io_context(), this->do_accept(),
-      boost::asio::bind_cancellation_slot(cancellation_signals_.slot(), boost::asio::detached)
-  );
+  acceptor_ptr_ = std::make_shared<acceptor_type>(g_io_context(), end_point_);
+  do_accept();
   signal_set_.async_wait([&](boost::system::error_code ec, int signal) {
     if (ec) {
       DOODLE_LOG_ERROR("signal_set_ error: {}", ec.message());
@@ -76,19 +73,12 @@ void http_listener::run() {
     //    app_base::Get().stop_app();
   });
 }
-boost::asio::awaitable<void, boost::asio::io_context::executor_type> http_listener::do_accept() {
-  auto l_acceptor = boost::asio::use_awaitable.as_default_on(acceptor_type{co_await boost::asio::this_coro::executor});
-  if (!l_acceptor.is_open()) {
-    l_acceptor.open(end_point_.protocol());
-    l_acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-    l_acceptor.bind(end_point_);
-    l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
-  }
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::all) {
-  }
-
-  acceptor_.async_accept(
-      boost::asio::make_strand(g_io_context()), boost::beast::bind_front_handler(&http_listener::on_accept, this)
+void http_listener::do_accept() {
+  acceptor_ptr_->async_accept(
+      boost::asio::make_strand(g_io_context()),
+      boost::asio::bind_cancellation_slot(
+          cancellation_signals_.slot(), boost::beast::bind_front_handler(&http_listener::on_accept, this)
+      )
   );
 }
 void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
@@ -104,7 +94,6 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
     l_handle.emplace<http_session_data>(std::move(socket));
     session::do_read{std::move(l_handle)}.run();
   }
-  //  do_accept();
 }
 void http_listener::stop() {
   g_reg()->ctx().get<ue_task_manage>().cancel();
@@ -112,9 +101,6 @@ void http_listener::stop() {
   auto l_view = g_reg()->view<http_session_data>();
   // close
   ranges::for_each(l_view, [](auto& in_session) { session::do_close{entt::handle{*g_reg(), in_session}}.run(); });
-
-  acceptor_.cancel();
-  acceptor_.close();
 }
 
 }  // namespace doodle::render_farm
