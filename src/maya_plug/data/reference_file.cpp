@@ -114,7 +114,7 @@ FSys::path generate_abc_file_path::get_path() const {
 }
 FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) const {
   auto l_name = fmt::format(
-      "{}_{}"s, get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
+      "{}_{}", get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
       get_extract_reference_name(in_ref_name)
   );
   if (add_external_string) l_name = fmt::format("{}_{}", l_name, *add_external_string);
@@ -150,7 +150,7 @@ FSys::path generate_fbx_file_path::get_path() const {
 }
 FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) const {
   auto l_name = fmt::format(
-      "{}_{}"s, get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
+      "{}_{}", get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
       is_camera_attr ? camera_suffix : get_extract_reference_name(in_ref_name)
   );
   if (add_external_string) l_name = fmt::format("{}_{}", l_name, *add_external_string);

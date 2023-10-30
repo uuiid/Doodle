@@ -355,7 +355,9 @@ void fbx_node_mesh::build_bind_post() {
     maya_chick(l_parent_path.pop());
 
     if (extra_data_.bind_post->count(l_parent_path) == 0) {
-      throw_exception(doodle_error{"not_find_parent_bind_post {}", l_bp.first});
+      log_error(fmt::format("not_find_parent_bind_post {}", l_bp.first));
+      l_bp.second.form_matrix = MMatrix::identity;
+      continue;
     }
     auto l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix;
 
