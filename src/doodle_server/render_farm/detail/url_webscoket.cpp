@@ -7,8 +7,8 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
 #include "core/functional_registration_manager.h"
+#include "core/websocket.h"
 #include <doodle_server/render_farm/detail/computer.h>
-#include <doodle_server/render_farm/websocket.h>
 #include <doodle_server/render_farm/work.h>
 
 namespace doodle::render_farm {

@@ -11,9 +11,9 @@
 
 #include <boost/beast.hpp>
 
+#include "core/websocket.h"
 #include <doodle_server/core/bind_front_handler.h>
 #include <doodle_server/render_farm/detail/ue4_task.h>
-#include <doodle_server/render_farm/websocket.h>
 #include <magic_enum.hpp>
 
 namespace doodle {

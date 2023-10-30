@@ -8,7 +8,7 @@
 #include "doodle_core/lib_warp/boost_fmt_error.h"
 
 #include "core/http_session.h"
-#include "render_farm/websocket.h"
+#include "websocket.h"
 namespace doodle::detail {
 
 void http_route::capture_url::set_cap_bit() {

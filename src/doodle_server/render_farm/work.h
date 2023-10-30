@@ -8,7 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
-#include <doodle_server/render_farm/websocket.h>
+#include "core/websocket.h"
 
 namespace doodle {
 
