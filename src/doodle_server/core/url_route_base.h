@@ -9,7 +9,7 @@
 #include "boost/dynamic_bitset.hpp"
 #include "boost/url.hpp"
 
-#include "core/http_session.h"
+#include "doodle_server/core/http_session.h"
 namespace doodle::detail {
 
 class http_route {

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "core/http_session.h"
+#include "doodle_server/core/http_session.h"
 namespace doodle::render_farm {
 // namespace detail {
 // template <typename Body_type>

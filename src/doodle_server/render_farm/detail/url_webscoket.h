@@ -6,10 +6,9 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
-#include "core/http_session.h"
+#include "doodle_server/core/http_session.h"
 namespace doodle::render_farm {
 namespace detail {
-
 
 struct reg_work_websocket {
   reg_work_websocket() = default;

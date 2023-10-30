@@ -8,7 +8,7 @@
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
 
-#include "doodle_server_fwd.h"
+#include "doodle_server/doodle_server_fwd.h"
 #include <memory>
 namespace doodle {
 
@@ -43,4 +43,4 @@ class http_listener {
   boost::asio::signal_set signal_set_;
   cancellation_signals cancellation_signals_;
 };
-}  // namespace doodle::render_farm
+}  // namespace doodle

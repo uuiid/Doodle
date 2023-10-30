@@ -8,23 +8,22 @@
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/program_options.h>
 
-#include "doodle_lib/render_farm/udp_server.h"
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/render_farm/client.h>
-#include <doodle_lib/render_farm/detail/computer_manage.h>
-#include <doodle_lib/render_farm/detail/ue_task_manage.h>
-#include <doodle_lib/render_farm/detail/url_route_base.h>
-#include <doodle_lib/render_farm/detail/url_route_get.h>
-#include <doodle_lib/render_farm/detail/url_route_post.h>
-#include <doodle_lib/render_farm/detail/url_route_put.h>
-#include <doodle_lib/render_farm/detail/url_webscoket.h>
-#include <doodle_lib/render_farm/udp_server.h>
-#include <doodle_lib/render_farm/work.h>
-#include <doodle_lib/render_farm/working_machine.h>
 
 #include "boost/asio/executor_work_guard.hpp"
 #include <boost/asio.hpp>
+
+#include <doodle_server/core/http_listener.h>
+#include <doodle_server/core/url_route_base.h>
+#include <doodle_server/render_farm/detail/computer_manage.h>
+#include <doodle_server/render_farm/detail/ue_task_manage.h>
+#include <doodle_server/render_farm/detail/url_route_get.h>
+#include <doodle_server/render_farm/detail/url_route_post.h>
+#include <doodle_server/render_farm/detail/url_route_put.h>
+#include <doodle_server/render_farm/detail/url_webscoket.h>
+#include <doodle_server/render_farm/work.h>
 
 class ue_exe_m : public doodle::ue_exe {
  public:
@@ -52,11 +51,10 @@ void run_server() {
   render_farm::detail::reg_work_websocket{}();
   render_farm::detail::reg_server_websocket{}();
 
-  g_ctx().emplace<doodle::udp_server_ptr>(std::make_shared<udp_server>(g_io_context()))->run();
   auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
   l_w->run("192.168.20.59"s);
   app_base::Get().on_stop.connect([=]() {
-    g_ctx().get<doodle::render_farm::http_listener>().stop();
+    g_ctx().get<doodle::http_listener>().stop();
     g_ctx().get<render_farm::work_ptr>()->stop();
   });
   //    g_reg()->ctx().emplace<client>("192.168.20.59").run();

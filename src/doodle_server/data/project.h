@@ -15,7 +15,9 @@ namespace doodle::http::project {
 
 struct get_type {
   const std::vector<std::string> url_{"v1", "render_farm", "project"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_request
+  ) const;
 };
 
 struct post_type {

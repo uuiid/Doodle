@@ -8,20 +8,21 @@
 
 #include <boost/beast.hpp>
 
-#include "core/http_session.h"
-#include "doodle_server_fwd.h"
+#include "doodle_server/core/http_session.h"
+#include "doodle_server/doodle_server_fwd.h"
 #include <doodle_server/data/project_list.h>
 namespace doodle::http::project {
-void get_type::operator()(const entt::handle &in_handle) const {
+void get_type::operator()(
+    const entt::handle &in_handle, const boost::beast::http::request<boost::beast::http::empty_body> &in_request
+) const {
   auto &l_list     = g_ctx().get<project_storage_list_type>().project_list_;
 
   auto l_name_list = l_list | ranges::views::keys | ranges::to<std::vector<std::string>>();
   boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok,
-      in_handle.get<render_farm::session::request_parser_empty_body>()->get().version()};
+      boost::beast::http::status::ok, in_request.version()};
   l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.keep_alive(in_handle.get<render_farm::session::request_parser_empty_body>()->keep_alive());
+  l_response.keep_alive(in_request.keep_alive());
   l_response.body() = nlohmann::json(l_name_list).dump();
   l_response.prepare_payload();
   render_farm::session::do_write{in_handle, std::move(l_response)}.run();
@@ -76,8 +77,7 @@ void post_type::operator()(
   }
 
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
-      boost::beast::http::status::ok,
-      in_request.version()};
+      boost::beast::http::status::ok, in_request.version()};
   l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_response.keep_alive(in_handle.get<render_farm::session::request_parser_empty_body>()->keep_alive());
   l_response.prepare_payload();

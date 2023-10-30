@@ -9,6 +9,7 @@
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
 
+#include "doodle_server/data/project.h"
 #include "doodle_server_fwd.h"
 #include "http_session.h"
 #include "render_farm/detail/computer_manage.h"
@@ -16,7 +17,6 @@
 #include "render_farm/detail/url_route_get.h"
 #include "render_farm/detail/url_route_post.h"
 #include "render_farm/detail/url_route_put.h"
-#include "render_farm/detail/url_webscoket.h"
 #include "url_route_base.h"
 namespace doodle {
 
@@ -51,9 +51,11 @@ void http_listener::run() {
       .get("v1/render_farm/render_job", render_farm::detail::render_job_type_get{})
       .get("v1/render_farm/computer", render_farm::detail::computer_reg_type_get{})
       .get("v1/render_farm/repository", render_farm::detail::repository_type_get{})
+      .get("v1/project", http::project::get_type{})
       .post<boost::beast::http::string_body>("v1/render_farm/render_job", render_farm::detail::render_job_type_post{})
       .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", render_farm::detail::get_log_type_post{})
       .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", render_farm::detail::get_err_type_post{})
+      .post<boost::beast::http::string_body>("v1/project/{handle}", http::project::post_type{})
       .put<boost::beast::http::string_body>(
           "v1/render_farm/render_job/{handle}", render_farm::detail::render_job_type_put{}
       )

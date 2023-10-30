@@ -7,8 +7,8 @@
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/lib_warp/boost_fmt_error.h"
 
-#include "core/http_session.h"
-#include "websocket.h"
+#include "doodle_server/core/http_session.h"
+#include "doodle_server/core/websocket.h"
 namespace doodle::detail {
 
 void http_route::capture_url::set_cap_bit() {
@@ -101,4 +101,4 @@ http_route::action_type http_route::operator()(boost::beast::http::verb in_verb,
   return {};
 }
 
-}  // namespace doodle::render_farm::detail
+}  // namespace doodle::detail

@@ -15,7 +15,7 @@
 #include "boost/signals2.hpp"
 #include "boost/url.hpp"
 
-#include "doodle_server_fwd.h"
+#include "doodle_server/doodle_server_fwd.h"
 #include "nlohmann/json.hpp"
 #include <memory>
 namespace doodle::render_farm {
