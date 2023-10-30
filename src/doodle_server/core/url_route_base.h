@@ -66,7 +66,7 @@ class http_route {
     if (boost::beast::websocket::is_upgrade(in_handle.get<render_farm::session::request_parser_empty_body>()->get())) {
       upgrade_websocket(in_handle);
     } else
-      in_completion(in_handle);
+      in_completion(in_handle, in_handle.get<render_farm::session::request_parser_empty_body>()->get());
   }
 
  public:

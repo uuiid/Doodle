@@ -15,27 +15,39 @@ namespace doodle::render_farm::detail {
 
 struct get_root_type {
   std::vector<std::string> url_{"v1", "render_farm"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+  ) const;
 };
 
 struct get_log_type_get {
   std::vector<std::string> url_{"v1", "render_farm", "log", "{handle}"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+  ) const;
 };
 struct get_err_type_get {
   std::vector<std::string> url_{"v1", "render_farm", "err", "{handle}"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+  ) const;
 };
 struct render_job_type_get {
   std::vector<std::string> url_{"v1", "render_farm", "render_job"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+  ) const;
 };
 struct computer_reg_type_get {
   std::vector<std::string> url_{"v1", "render_farm", "computer"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+  ) const;
 };
 struct repository_type_get {
   std::vector<std::string> url_{"v1", "render_farm", "repository"};
-  void operator()(const entt::handle& in_handle) const;
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+  ) const;
 };
 }  // namespace doodle::render_farm::detail

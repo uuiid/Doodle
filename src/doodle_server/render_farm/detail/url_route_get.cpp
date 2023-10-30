@@ -22,8 +22,11 @@ auto repository_path{R"(//192.168.20.59/UE_Config/Doodletemp)"};
 #endif
 }  // namespace
 
-void get_root_type::operator()(const entt::handle& in_handle) const {
-  boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+void get_root_type::operator()(
+    const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+) const {
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, in_req.version()};
   l_response.body() = "hello world";
   l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "text/html");
@@ -31,7 +34,9 @@ void get_root_type::operator()(const entt::handle& in_handle) const {
   session::do_write{in_handle, std::move(l_response)}.run();
 }
 
-void get_log_type_get::operator()(const entt::handle& in_handle) const {
+void get_log_type_get::operator()(
+    const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+) const {
   auto l_logger = in_handle.get<socket_logger>().logger_;
   auto l_cap    = in_handle.get<session::capture_url>().get<entt::id_type>("handle");
 
@@ -43,9 +48,10 @@ void get_log_type_get::operator()(const entt::handle& in_handle) const {
   }
   auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(*l_cap)};
   if (l_h && l_h.all_of<process_message>()) {
-    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, in_req.version()};
     l_response.body() = l_h.get<process_message>().log();
-    l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
+    l_response.keep_alive(in_req.keep_alive());
     l_response.insert(boost::beast::http::field::content_type, "text/html");
     l_response.prepare_payload();
     session::do_write{in_handle, std::move(l_response)}.run();
@@ -55,7 +61,9 @@ void get_log_type_get::operator()(const entt::handle& in_handle) const {
     session::do_write::send_error_code(in_handle, l_ec, boost::beast::http::status::not_found);
   }
 }
-void get_err_type_get::operator()(const entt::handle& in_handle) const {
+void get_err_type_get::operator()(
+    const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+) const {
   auto l_logger = in_handle.get<socket_logger>().logger_;
   auto l_cap    = in_handle.get<session::capture_url>().get<entt::id_type>("handle");
 
@@ -69,9 +77,10 @@ void get_err_type_get::operator()(const entt::handle& in_handle) const {
   auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(*l_cap)};
 
   if (l_h && l_h.all_of<process_message>()) {
-    boost::beast::http::response<boost::beast::http::string_body> l_response{boost::beast::http::status::ok, 11};
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, in_req.version()};
     l_response.body() = l_h.get<process_message>().err();
-    l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
+    l_response.keep_alive(in_req.keep_alive());
     l_response.insert(boost::beast::http::field::content_type, "text/html");
     l_response.prepare_payload();
     session::do_write{in_handle, std::move(l_response)}.run();
@@ -123,7 +132,9 @@ struct render_job_tmp {
 
 }  // namespace
 
-void render_job_type_get::operator()(const entt::handle& in_handle) const {
+void render_job_type_get::operator()(
+    const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+) const {
   auto l_view = g_reg()->view<ue4_task>().each();
   auto l_ids  = l_view | ranges::views::transform([](auto&& in_item) -> render_job_tmp {
                  auto& l_task = std::get<1>(in_item);
@@ -131,35 +142,39 @@ void render_job_type_get::operator()(const entt::handle& in_handle) const {
                }) |
                ranges::to_vector;
 
-  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, in_req.version()};
   l_response.body() = l_ids;
-  l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
+  l_response.keep_alive(in_req.keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
   l_response.prepare_payload();
   session::do_write{in_handle, std::move(l_response)}.run();
 }
 
-void computer_reg_type_get::operator()(const entt::handle& in_handle) const {
+void computer_reg_type_get::operator()(
+    const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+) const {
   auto l_view = g_reg()->view<render_farm::computer>().each();
   auto l_ids  = l_view | ranges::views::transform([](auto&& in_item) -> computer_tmp {
                  auto& l_computer = std::get<1>(in_item);
                  return computer_tmp{l_computer, std::get<0>(in_item)};
                }) |
                ranges::to_vector;
-  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, in_req.version()};
   l_response.body() = l_ids;
-  l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
+  l_response.keep_alive(in_req.keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
   l_response.prepare_payload();
   session::do_write{in_handle, std::move(l_response)}.run();
 }
-void repository_type_get::operator()(const entt::handle& in_handle) const {
+void repository_type_get::operator()(
+    const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
+) const {
   nlohmann::json l_json{};
   l_json["path"] = repository_path;
-  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, 11};
+  boost::beast::http::response<basic_json_body> l_response{boost::beast::http::status::ok, in_req.version()};
 
   l_response.body() = l_json;
-  l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
+  l_response.keep_alive(in_req.keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "application/json");
   l_response.prepare_payload();
   session::do_write{in_handle, std::move(l_response)}.run();
