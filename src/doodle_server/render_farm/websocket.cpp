@@ -9,7 +9,7 @@
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/msg_error.h>
 
-#include <doodle_server/render_farm/functional_registration_manager.h>
+#include "core/functional_registration_manager.h"
 namespace doodle::render_farm {
 
 void websocket::run(const boost::beast::http::request<boost::beast::http::string_body>& in_message) {

@@ -11,9 +11,9 @@
 
 #include <doodle_app/app/program_options.h>
 
+#include "core/functional_registration_manager.h"
 #include "core/http_listener.h"
 #include <doodle_server/render_farm/detail/url_webscoket.h>
-#include <doodle_server/render_farm/functional_registration_manager.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 namespace doodle {
 bool server_facet::post() {

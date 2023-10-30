@@ -6,8 +6,8 @@
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 
+#include "core/functional_registration_manager.h"
 #include <doodle_server/render_farm/detail/computer.h>
-#include <doodle_server/render_farm/functional_registration_manager.h>
 #include <doodle_server/render_farm/websocket.h>
 #include <doodle_server/render_farm/work.h>
 

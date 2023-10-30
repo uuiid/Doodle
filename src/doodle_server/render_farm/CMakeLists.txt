@@ -4,7 +4,6 @@ target_sources(
         work.h
         proxy_server.h
         websocket.h
-        functional_registration_manager.h
         logger_com.h
 
         PRIVATE
@@ -12,7 +11,6 @@ target_sources(
         proxy_server.cpp
         websocket.cpp
         logger_com.cpp
-        functional_registration_manager.cpp
 )
 add_subdirectory(exception)
 add_subdirectory(detail)
