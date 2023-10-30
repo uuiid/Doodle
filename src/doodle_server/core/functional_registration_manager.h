@@ -6,7 +6,7 @@
 
 #include "doodle_core/doodle_core_fwd.h"
 
-namespace doodle::render_farm {
+namespace doodle::web_socket {
 
 class functional_registration_manager {
  private:

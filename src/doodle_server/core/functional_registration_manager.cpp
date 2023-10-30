@@ -3,7 +3,7 @@
 //
 
 #include "functional_registration_manager.h"
-namespace doodle::render_farm {
+namespace doodle::web_socket {
 
 void functional_registration_manager::register_function(
     std::string in_name, std::function<nlohmann::json(const entt::handle &, const nlohmann::json &)> in_function

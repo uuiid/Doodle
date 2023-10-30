@@ -15,7 +15,7 @@ namespace doodle::render_farm {
 namespace detail {
 
 void reg_work_websocket::operator()() {
-  auto& l_fun_reg = g_ctx().emplace<render_farm::functional_registration_manager>();
+  auto& l_fun_reg = g_ctx().emplace<web_socket::functional_registration_manager>();
   l_fun_reg.register_function("run.ue.render.task", [](const entt::handle& in_handle, const nlohmann::json& in_json) {
     boost::system::error_code ec{};
     if (g_ctx().contains<render_farm::work_ptr>()) {
@@ -70,7 +70,7 @@ void reg_server_websocket::operator()() {
     }
   };
 
-  auto& l_fun_reg = g_ctx().emplace<render_farm::functional_registration_manager>();
+  auto& l_fun_reg = g_ctx().emplace<web_socket::functional_registration_manager>();
   l_fun_reg.register_function("run.reg.computer", run_reg_computer{});
 }
 

@@ -123,7 +123,8 @@ void websocket::run_fun() {
   } else if (l_json.contains("method")) {  // 这个是请求
     log_info(l_logger, fmt::format("开始检查请求 {}", l_json["id"].get<uint64_t>()));
     nlohmann::json l_json_rep{};
-    auto l_call = g_ctx().get<functional_registration_manager>().get_function(l_json["method"].get<std::string>());
+    auto l_call =
+        g_ctx().get<web_socket::functional_registration_manager>().get_function(l_json["method"].get<std::string>());
     if (l_call) {
       l_json_rep = l_call(data_, l_json["params"]);
     } else {
