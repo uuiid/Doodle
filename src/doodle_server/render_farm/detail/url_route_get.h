@@ -9,7 +9,7 @@
 #include <boost/url.hpp>
 
 #include "core/http_session.h"
-#include <doodle_server/render_farm/detail/url_route_base.h>
+#include "core/url_route_base.h"
 
 namespace doodle::render_farm::detail {
 

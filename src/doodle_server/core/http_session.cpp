@@ -13,7 +13,7 @@
 
 #include "bind_front_handler.h"
 #include "doodle_server_fwd.h"
-#include "render_farm/detail/url_route_base.h"
+#include "url_route_base.h"
 namespace doodle::render_farm {
 
 namespace session {

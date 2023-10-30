@@ -2,7 +2,6 @@ target_sources(
         doodle_server_lib
 
         PUBLIC
-        url_route_base.h
         url_route_get.h
         url_route_post.h
         url_route_put.h
@@ -14,7 +13,6 @@ target_sources(
         url_webscoket.h
 
         PRIVATE
-        url_route_base.cpp
         url_route_get.cpp
         url_route_post.cpp
         url_route_put.cpp

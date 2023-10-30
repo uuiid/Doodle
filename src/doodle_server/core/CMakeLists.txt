@@ -5,9 +5,11 @@ target_sources(
         http_listener.h
         http_session.h
         functional_registration_manager.h
+        url_route_base.h
 
         PRIVATE
         http_listener.cpp
         http_session.cpp
         functional_registration_manager.cpp
+        url_route_base.cpp
 )
