@@ -52,13 +52,14 @@ void http_listener::run() {
       .get("v1/render_farm/computer", render_farm::detail::computer_reg_type_get{})
       .get("v1/render_farm/repository", render_farm::detail::repository_type_get{})
       .get("v1/project", http::project::get_type{})
+      .get("v1/project/{handle}", http::project::get_project_type{})
       .post<boost::beast::http::string_body>("v1/render_farm/render_job", render_farm::detail::render_job_type_post{})
       .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", render_farm::detail::get_log_type_post{})
       .post<boost::beast::http::string_body>("v1/render_farm/log/{handle}", render_farm::detail::get_err_type_post{})
-      .post<boost::beast::http::string_body>("v1/project/{handle}", http::project::post_type{})
       .put<boost::beast::http::string_body>(
           "v1/render_farm/render_job/{handle}", render_farm::detail::render_job_type_put{}
       )
+      .post<boost::beast::http::string_body>("v1/project/{handle}", http::project::post_type{})
       //      .put("v1/render_farm/render_job/{handle}", detail::render_job_type_put{});
       ;
 
@@ -98,6 +99,7 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
     l_handle.emplace<render_farm::http_session_data>(std::move(socket));
     render_farm::session::do_read{std::move(l_handle)}.run();
   }
+  do_accept();
 }
 void http_listener::stop() {
   g_reg()->ctx().get<render_farm::ue_task_manage>().cancel();

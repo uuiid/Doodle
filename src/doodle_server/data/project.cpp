@@ -27,6 +27,33 @@ void get_type::operator()(
   l_response.prepare_payload();
   render_farm::session::do_write{in_handle, std::move(l_response)}.run();
 }
+void get_project_type::operator()(
+    const entt::handle &in_handle, const boost::beast::http::request<boost::beast::http::empty_body> &in_request
+) const {
+  auto l_logger = in_handle.get<socket_logger>().logger_;
+  boost::beast::error_code ec{};
+  auto l_cap = in_handle.get<render_farm::session::capture_url>().get<std::string>("handle");
+  if (!l_cap) {
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
+    render_farm::session::do_write::send_error_code(in_handle, ec);
+    return;
+  }
+  auto &l_list = g_ctx().get<project_storage_list_type>().project_list_;
+  if (!l_list.contains(*l_cap)) {
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::project_not_exist);
+    render_farm::session::do_write::send_error_code(in_handle, ec);
+    return;
+  }
+  nlohmann::json const l_json = l_list.at(*l_cap).get_registry().ctx().get<project_config::base_config>();
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, in_request.version()};
+  l_response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.keep_alive(in_request.keep_alive());
+  l_response.body() = l_json.dump();
+  l_response.prepare_payload();
+  render_farm::session::do_write{in_handle, std::move(l_response)}.run();
+}
 
 void post_type::operator()(
     boost::system::error_code ec, const entt::handle &in_handle,

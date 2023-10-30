@@ -17,6 +17,7 @@
 
 #include <doodle_server/core/http_listener.h>
 #include <doodle_server/core/url_route_base.h>
+#include <doodle_server/data/project_list.h>
 #include <doodle_server/render_farm/detail/computer_manage.h>
 #include <doodle_server/render_farm/detail/ue_task_manage.h>
 #include <doodle_server/render_farm/detail/url_route_get.h>
@@ -42,21 +43,27 @@ class ue_exe_m : public doodle::ue_exe {
 
 void run_server() {
   using namespace doodle;
+  auto& l_list = g_ctx().emplace<http::project_storage_list_type>();
+  l_list.project_list_.emplace("test1", http::project_storage_type{"D:/test/test1.doodle_db"});
+  l_list.project_list_["test1"].load_project();
+
+  l_list.project_list_.emplace("test2", http::project_storage_type{"D:/test/test2.doodle_db"});
+  l_list.project_list_["test2"].load_project();
   //  g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe_m>();
-  g_ctx().emplace<doodle::http_listener>(g_io_context()).run();
-
-  g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
-  g_reg()->ctx().emplace<render_farm::computer_manage>().run();
-
-  render_farm::detail::reg_work_websocket{}();
-  render_farm::detail::reg_server_websocket{}();
-
-  auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
-  l_w->run("192.168.20.59"s);
-  app_base::Get().on_stop.connect([=]() {
-    g_ctx().get<doodle::http_listener>().stop();
-    g_ctx().get<render_farm::work_ptr>()->stop();
-  });
+  //  g_ctx().emplace<doodle::http_listener>(g_io_context()).run();
+  //
+  //  g_reg()->ctx().emplace<render_farm::ue_task_manage>().run();
+  //  g_reg()->ctx().emplace<render_farm::computer_manage>().run();
+  //
+  //  render_farm::detail::reg_work_websocket{}();
+  //  render_farm::detail::reg_server_websocket{}();
+  //
+  //  auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
+  //  l_w->run("192.168.20.59"s);
+  //  app_base::Get().on_stop.connect([=]() {
+  //    g_ctx().get<doodle::http_listener>().stop();
+  //    g_ctx().get<render_farm::work_ptr>()->stop();
+  //  });
   //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
 }
 
@@ -87,14 +94,14 @@ INJECT(inject2, 2, stop_work)
 
 #include <doodle_lib/facet/main_facet.h>
 
+#include <doodle_server/facet/server_facet.h>
 #include <iostream>
-
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 int main(int argc, char* argv[]) try {
-  using main_app = doodle::app_command<doodle::main_facet>;
+  using main_app = doodle::app_command<doodle::server_facet>;
   main_app app{argc, argv};
   try {
     inject1();

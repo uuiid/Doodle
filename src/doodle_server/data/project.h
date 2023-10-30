@@ -14,14 +14,18 @@
 namespace doodle::http::project {
 
 struct get_type {
-  const std::vector<std::string> url_{"v1", "render_farm", "project"};
+  void operator()(
+      const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_request
+  ) const;
+};
+
+struct get_project_type {
   void operator()(
       const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_request
   ) const;
 };
 
 struct post_type {
-  const std::vector<std::string> url_{"v1", "render_farm", "project", "{name}"};
   void operator()(
       boost::system::error_code ec, const entt::handle& in_handle,
       const boost::beast::http::request<boost::beast::http::string_body>& in_request
@@ -34,7 +38,6 @@ struct post_type {
 // };
 
 struct delete_type {
-  const std::vector<std::string> url_{"v1", "render_farm", "project", "{name}"};
   void operator()(boost::system::error_code ec, const entt::handle& in_handle) const;
 };
 

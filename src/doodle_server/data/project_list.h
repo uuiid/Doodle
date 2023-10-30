@@ -18,7 +18,7 @@ class project_storage_type {
   project_storage_type();
   explicit project_storage_type(FSys::path in_project_path);
 
-  entt::registry& get_registry() { return registry_; }
+  entt::registry& get_registry() { return *registry_; }
 
   void load_project();
 
@@ -26,7 +26,7 @@ class project_storage_type {
   inline executor_type get_executor() const noexcept { return executor_; };
 
  private:
-  entt::registry registry_;
+  registry_ptr registry_;
   std::string project_name_;
   FSys::path project_path_;
   std::any loader_;
@@ -37,6 +37,6 @@ class project_storage_list_type {
  public:
   project_storage_list_type() = default;
   FSys::path project_root{};
-  std::map<std::string, project_storage_type> project_list_;
+  std::map<std::string, project_storage_type> project_list_{};
 };
 }  // namespace doodle::http
