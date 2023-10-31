@@ -52,5 +52,7 @@ constexpr const std::string_view all_user_view_widget{"用户列表"};
 constexpr const std::string_view render_monitor{"渲染监控"};
 constexpr const std::string_view work_hour_filling{"工时填报"};
 
+constexpr const std::string_view zh_model_upload{"模型上传"};
+
 }  // namespace gui::config::menu_w
 }  // namespace doodle

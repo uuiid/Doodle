@@ -11,7 +11,7 @@ find_program(
         NAMES ISCC
 
         HINTS
-        "C:/Program Files (x86)/Inno Setup 6"
+        "D:/Program Files (x86)/Inno Setup 6"
 
         PATH_SUFFIXES
         bin

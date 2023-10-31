@@ -105,8 +105,13 @@
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
 
+#include "GeometryCacheComponent.h"
+#include "Subsystems/EditorAssetSubsystem.h"
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
+
+FString SDoodleImportFbxUI::Path_Suffix{TEXT("")};
+FString SDoodleImportFbxUI::NewFolderName{TEXT("")};
 
 namespace {
 FString MakeName(const ANSICHAR* Name) {
@@ -336,9 +341,13 @@ void UDoodleFbxImport_1::ImportFile() {
     LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
     USkeletalMesh* L_Sk = CastChecked<USkeletalMesh>(L_Objs.Top());
     IAssetRegistry::Get()->EnumerateAssets(LFilter, [this, L_Sk](const FAssetData& InAss) -> bool {
+    //-----------------------
+      UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+      EditorAssetSubsystem->SaveLoadedAsset(InAss.GetAsset());
       if (UAnimSequence* L_Anim = Cast<UAnimSequence>(InAss.GetAsset());
           L_Anim && L_Anim->GetSkeleton() == L_Sk->GetSkeleton()) {
         AnimSeq                         = L_Anim;
+        SkeletalMesh                    = L_Sk;
         L_Anim->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
             L_Anim, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
         );
@@ -349,6 +358,8 @@ void UDoodleFbxImport_1::ImportFile() {
       return true;
     });
   } else {
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    EditorAssetSubsystem->SaveLoadedAssets(L_Objs);
     for (UObject* L_Obj : L_Objs) {
       if (UAnimSequence* L_Seq = Cast<UAnimSequence>(L_Obj)) {
         AnimSeq                        = L_Seq;
@@ -367,29 +378,34 @@ void UDoodleFbxImport_1::AssembleScene() {
       UE_LOG(LogTemp, Log, TEXT("序列 %s 未能加载"), *CameraImport->ImportPathDir);
       return;
     }
-    UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
-    if (auto* L_Actor =
-            EditorActorSubsystem->SpawnActorFromObject(AnimSeq, FVector::ZeroVector, FRotator::ZeroRotator)) {
-      auto* L_SK_Actor = CastChecked<ASkeletalMeshActor>(
-          L_ShotSequence->MakeSpawnableTemplateFromInstance(*L_Actor, L_Actor->GetFName())
-      );
-      UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
-      const FGuid L_GUID       = L_MoveScene->AddSpawnable(L_SK_Actor->GetName(), *L_SK_Actor);
-      {
+    //-------------------------------------------
+    FString Dir = CameraImport->ImportPathDir + TEXT("_LV");
+    UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *Dir);
+    if (L_ShotLevel)
+    {
+        ASkeletalMeshActor* L_Actor = L_ShotLevel->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+        L_Actor->SetActorLabel(SkeletalMesh->GetName());
+        L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(SkeletalMesh);
+        //---------------------
+        UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
+        const FGuid L_GUID = L_MoveScene->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
+        L_ShotSequence->BindPossessableObject(L_GUID, *L_Actor, L_ShotLevel);
+        L_ShotSequence->Modify();
+        //-----------------------
         UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = L_MoveScene->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
         UMovieSceneSpawnSection* L_MovieSceneSpawnSection =
             CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
         L_MovieSceneSpawnSection->GetChannel().Reset();
         L_MovieSceneSpawnSection->GetChannel().SetDefault(true);
         L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
-      }
-      {
         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
             L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
         UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
         AnimSection->SetPreRollFrames(50);
-      }
-      L_Actor->Destroy();
+        L_Actor->Modify();
+        L_ShotLevel->Modify();
+        UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+        EditorAssetSubsystem->SaveLoadedAssets({L_ShotSequence, L_ShotLevel });
     }
   }
 }
@@ -668,56 +684,56 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     GEngine->Tick(FApp::GetDeltaTime(), false);
   }
   UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
-  //--------------------------------生成关卡
-  // L_Task_Scoped.EnterProgressFrame(1,FText::Format(LOCTEXT("Import_ImportingCameraFile7", "检查关卡\"{0}\"..."),
   // FText::FromString(ImportPathDir)));
-  //----------------
-  // ULevel* L_ShotLevel = LoadObject<ULevel>(nullptr, *ImportPathDir);
-  // if (!L_ShotLevel)
-  //{
-  //    FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + TEXT("_LEVEL");
-  //    UPackage* L_Package = CreatePackage(*PackageName);
-  //    L_Package->FullyLoad();
-  //    L_Package->MarkPackageDirty();
-
-  //    FName L_Name = FName(FPaths::GetBaseFilename(ImportPathDir) + TEXT("_LEVEL"));
-
-  //    L_ShotLevel = NewObject<ULevel>(L_Package, L_Name, RF_Public | RF_Standalone | RF_Transactional);
-  //    L_ShotLevel->Initialize(FURL(nullptr));
-  //    L_ShotLevel->MarkPackageDirty();
-
-  //    FAssetToolsModule& AssetToolsModule =
-  //    FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools")); ULevelFactory* Factory =
-  //    NewObject<ULevelFactory>(ULevelFactory::StaticClass()); const FString PackagePath =
-  //    FPackageName::GetLongPackagePath(PackageName);
   //    //UObject* object = AssetToolsModule.Get().CreateAsset(L_Name.ToString(), PackagePath, ULevel::StaticClass(),
   //    Factory);
-  //    //L_ShotLevel = Cast<ULevel>(L_ShotLevel);
-  //    //FAssetRegistryModule& AssetRegistryModule =
   //    FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-  //    //AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
 
-  //    UWorld* editorWorld = GEditor->GetEditorWorldContext().World();
-  //    if (editorWorld)
-  //    {
-  //        ULevelStreaming* level = EditorLevelUtils::CreateNewStreamingLevel(ULevelStreaming::StaticClass(),
-  //        PackagePath); if (level)
-  //        {
-  //            /* manually save after creation once the level has a name, so we don't have to specify one, and thus we
-  //            still get the proper file saving path (as if the user was prompted). */
-  //            FEditorFileUtils::SaveLevel(level->GetLoadedLevel());
-  //        }
-  //    }
-  //    //--------------------------
-  //    //UEditorAssetLibrary::SaveAsset(L_ShotLevel->GetPathName());
-  //    //UPackage::SavePackage(L_Package, L_ShotLevel, EObjectFlags::RF_Public | EObjectFlags::RF_Standalone,
-  //    *PackageName, GError, nullptr, true, true, SAVE_NoError);
-  //    ////------------------------
-  //    //L_Package->MarkPackageDirty();
-  //    //SavePackageHelper(L_Package, PackageName);
-  //}
-  // 设置关卡属性----------------
-  // L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
+  //--------------------------------生成关卡
+  UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+  L_Task_Scoped.EnterProgressFrame(1,FText::Format(LOCTEXT("Import_ImportingCameraFile7", "检查关卡\"{0}\"..."), FText::FromString(ImportPathDir)));
+  FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + TEXT("_LV");
+  UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
+  if (!L_ShotLevel) 
+  {
+      UWorldFactory* Factory = NewObject<UWorldFactory>();
+      UPackage* Pkg = CreatePackage(*PackageName);
+      Pkg->FullyLoad();
+      Pkg->MarkPackageDirty();
+      //L_ShotLevel = CastChecked<UWorld>(Factory->FactoryCreateNew(UWorld::StaticClass(), Pkg, TEXT("Untitled"), RF_Public | RF_Standalone, NULL, GWarn));
+      const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
+      FString BaseFileName = FPaths::GetBaseFilename(PackageName);
+      //---------------
+      FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+      UObject* object = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
+      L_ShotLevel = Cast<UWorld>(object);
+      FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+      AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
+      //------------------------
+      L_ShotLevel->Modify();
+      EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel);
+  }
+  //---------------
+  if (SDoodleImportFbxUI::Path_Suffix == TEXT("Vfx"))
+  {
+      FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
+      FString FolderPath = FPaths::Combine(LongImportPathDir, TEXT("Vfx"));
+      if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
+      {
+          EditorAssetSubsystem->MakeDirectory(FolderPath);
+      }
+  }
+  //--------------
+  if (SDoodleImportFbxUI::NewFolderName != TEXT(""))
+  {
+      FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
+      FString FolderPath = FPaths::Combine(LongImportPathDir, SDoodleImportFbxUI::NewFolderName);
+      if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
+      {
+          EditorAssetSubsystem->MakeDirectory(FolderPath);
+      }
+  }
+  L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
 }
 
 void UDoodleFbxCameraImport_1::AssembleScene() {}
@@ -762,7 +778,11 @@ void UDoodleAbcImport_1::ImportFile() {
 
   const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-  if (TArray<UObject*> L_Geos = AssetToolsModule.Get().ImportAssetsAutomated(L_Data); !L_Geos.IsEmpty()) {
+  TArray<UObject*> L_Geos = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+  UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+  EditorAssetSubsystem->SaveLoadedAssets(L_Geos);
+  if (!L_Geos.IsEmpty()) 
+  {
     GeometryCache = Cast<UGeometryCache>(L_Geos.Top());
   }
 }
@@ -774,30 +794,34 @@ void UDoodleAbcImport_1::AssembleScene() {
       UE_LOG(LogTemp, Log, TEXT("序列 %s 未能加载"), *CameraImport->ImportPathDir);
       return;
     }
-    UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
-    if (auto* L_Actor =
-            EditorActorSubsystem->SpawnActorFromObject(GeometryCache, FVector::ZeroVector, FRotator::ZeroRotator)) {
-      auto* L_SK_Actor = CastChecked<AGeometryCacheActor>(
-          L_ShotSequence->MakeSpawnableTemplateFromInstance(*L_Actor, L_Actor->GetFName())
-      );
-      UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
-      const FGuid L_GUID       = L_MoveScene->AddSpawnable(L_SK_Actor->GetName(), *L_SK_Actor);
-      {
+    //--------------------------------
+    FString Dir = CameraImport->ImportPathDir + TEXT("_LV");
+    UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *Dir);
+    if (L_ShotLevel) 
+    {
+        AGeometryCacheActor* L_Actor = L_ShotLevel->SpawnActor<AGeometryCacheActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+        L_Actor->SetActorLabel(GeometryCache->GetName());
+        L_Actor->GetGeometryCacheComponent()->SetGeometryCache(GeometryCache);
+        //---------------------------------
+        UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
+        const FGuid L_GUID = L_MoveScene->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
+        L_ShotSequence->BindPossessableObject(L_GUID, *L_Actor, L_ShotLevel);
+        L_ShotSequence->Modify();
+        //-----------------------------------
         UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = L_MoveScene->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
-        UMovieSceneSpawnSection* L_MovieSceneSpawnSection =
-            CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+        UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
         L_MovieSceneSpawnSection->GetChannel().Reset();
         L_MovieSceneSpawnSection->GetChannel().SetDefault(true);
         L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
-      }
-      {
+        //------------------------------
         UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
             L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
-        UMovieSceneSection* AnimSection =
-            L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_SK_Actor->GetGeometryCacheComponent());
+        UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_Actor->GetGeometryCacheComponent());
         AnimSection->SetPreRollFrames(50);
-      }
-      L_Actor->Destroy();
+        L_Actor->Modify();
+        L_ShotLevel->Modify();
+        UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+        EditorAssetSubsystem->SaveLoadedAssets({ L_ShotSequence, L_ShotLevel });
     }
   }
 }
@@ -1053,6 +1077,39 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         ]
       ]
 
+      + SVerticalBox::Slot()
+      .AutoHeight()
+      .VAlign(VAlign_Center)
+      .Padding(2.0f)
+      [
+        SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+            .FillWidth(1.0f)
+            [
+                SNew(STextBlock)
+                    .Text(LOCTEXT("New Folder", "制作人名称"))
+                    .Font(Font)
+            ]
+            + SHorizontalBox::Slot()
+            .FillWidth(8.0f)
+            [
+                SNew(SEditableTextBox)
+                    .Text_Lambda([this]()-> FText 
+                    {
+                        GConfig->GetString(TEXT("DoodleImportFbx"), TEXT("NewFolderName"), NewFolderName, GEngineIni);
+                        return FText::FromString(NewFolderName);
+                    })
+                    .OnTextChanged_Lambda([this](const FText& In_Text) 
+                    {
+                        NewFolderName = In_Text.ToString();
+                    })
+                    .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) 
+                    {
+                        NewFolderName = In_Text.ToString();
+                        GConfig->SetString(TEXT("DoodleImportFbx"), TEXT("NewFolderName"), *NewFolderName, GEngineIni);
+                    })
+            ]
+      ]
       + SVerticalBox::Slot()
         .AutoHeight()
         .VAlign(VAlign_Center)

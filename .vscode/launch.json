@@ -25,6 +25,23 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+            "name": "Doodle_server_debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetPath}",
+            "args": ["--server"],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "environment": [
+                {
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
+                }
+            ],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
             "name": "Doodle_maya_debug",
             "type": "cppvsdbg",
             "request": "launch",
@@ -51,7 +68,7 @@
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2018/bin/maya.exe",
+            "program": "D:/AutoDesk/Maya2020/bin/maya.exe",
             "args": [
                 "-noAutoloadPlugins"
             ],

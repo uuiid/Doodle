@@ -34,6 +34,8 @@
 #include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <doodle_lib/gui/widgets/zh_model_upload.h>
+
 #include "boost/asio/ssl.hpp"
 #include <boost/asio.hpp>
 
@@ -79,6 +81,8 @@ void main_facet::load_windows() {
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<all_user_view_widget>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<render_monitor>());
+
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<zh_model_upload>());
     //    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<upload_files>());
     g_windows_manage().create_windows_arg(
         windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
