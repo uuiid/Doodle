@@ -536,8 +536,11 @@ void fbx_node_mesh::build_mesh() {
         maya_chick(l_fn_mesh.getPolygonVertices(k, l_vert_list));
         for (auto j = 0; j < l_vert_list.length(); ++j) {
           std::int32_t l_uv_id{};
-          maya_chick(l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]));
-          l_layer->GetIndexArray().Add(l_uv_id);
+          if (l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i])) {
+            l_layer->GetIndexArray().Add(l_uv_id);
+          } else {
+            log_error(fmt::format("getPolygonUVid error: {} {} {}", k, j, l_uv_set_names[i]));
+          }
         }
       }
     }
@@ -695,13 +698,17 @@ void fbx_node_mesh::build_blend_shape() {
   auto l_fbx_bl = FbxBlendShape::Create(node->GetScene(), fmt::format("{}", get_node_name(l_bls[0])).c_str());
   mesh->AddDeformer(l_fbx_bl);
   FbxProperty::Create(l_fbx_bl->RootProperty, FbxStringDT, "RootGroup");
+  log_info(fmt::format("{} build blend shape {}", dag_path, get_node_name(l_bls[0])));
 
   MStatus l_status{};
   for (auto&& i : l_bls) {
     maya_chick(l_blend_shape.setObject(i));
 
     auto l_input_target_plug_1 = get_plug(i, "inputTarget").elementByPhysicalIndex(0, &l_status);
-    maya_chick(l_status);
+    if (l_status != MStatus::kSuccess) {
+      log_error(fmt::format("blend shape {} inputTarget error", get_node_name(dag_path)));
+      continue;
+    }
     auto l_input_target_group_array = l_input_target_plug_1.child(0, &l_status);
     maya_chick(l_status);
     auto l_shape_count = l_input_target_group_array.evaluateNumElements(&l_status);
