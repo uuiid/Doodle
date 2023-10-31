@@ -43,11 +43,11 @@ namespace fmt {
  * @tparam
  */
 template <>
-struct formatter<::doodle::season> : formatter<std::int32_t> {
+struct formatter<::doodle::season> : formatter<std::string> {
   template <typename FormatContext>
   auto format(const ::doodle::season& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    format_to(ctx.out(), "seas_");
-    return formatter<std::int32_t>::format(in_.p_int, ctx);
+    auto l_str = fmt::format("seas_{}", in_.p_int);
+    return formatter<std::string>::format(l_str, ctx);
   }
 };
 }  // namespace fmt
