@@ -58,24 +58,6 @@ class DOODLE_CORE_API shot {
 
 namespace fmt {
 /**
- * @brief 镜头格式化程序
- *
- * @tparam
- */
-template <>
-struct formatter<::doodle::shot> : formatter<std::int32_t> {
-  template <typename FormatContext>
-  auto format(const ::doodle::shot &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
-    format_to(ctx.out(), "sc_");
-
-    formatter<std::int32_t>::format(in_.p_shot, ctx);
-    if (in_.p_shot_enum != doodle::shot::shot_ab_enum::None)
-      format_to(ctx.out(), "{}", magic_enum::enum_name(in_.p_shot_enum));
-    return ctx.out();
-  }
-};
-
-/**
  * @brief 镜头枚举格式化程序
  *
  * @tparam
@@ -95,4 +77,19 @@ struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
     return ctx.out();
   }
 };
+/**
+ * @brief 镜头格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::shot> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const ::doodle::shot &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
+    auto l_str = fmt::format("sc_{}{}", in_.p_shot, in_.p_shot_enum);
+    formatter<std::string>::format(l_str, ctx);
+    return ctx.out();
+  }
+};
+
 }  // namespace fmt
