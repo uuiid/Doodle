@@ -483,19 +483,13 @@ void fbx_node_mesh::build_mesh() {
         MObject l_comp{};
         for (MItSelectionList l_it_geo{l_list}; !l_it_geo.isDone(); l_it_geo.next()) {
           maya_chick(l_it_geo.getDagPath(l_path, l_comp));
-          if (l_path == dag_path) {
-            if (l_comp.hasFn(MFn::kMeshPolygonComponent)) {
-              MFnSingleIndexedComponent l_fn_comp{l_comp, &l_status};
-              maya_chick(l_status);
-              for (auto i = 0; i < l_fn_comp.elementCount(); ++i) {
-                auto l_index = l_fn_comp.element(i, &l_status);
-                maya_chick(l_status);
-                if (l_index >= l_mat_ids.size()) {
-                  log_error(fmt::format("mat index out of range {} {}", l_index, l_mat_ids.size()));
-                  continue;
-                }
-                l_mat_ids[l_index] = l_mat_index;
-              }
+          if (l_path == l_mesh && !l_comp.isNull()) {
+            MFnSingleIndexedComponent const l_fn_comp{l_comp, &l_status};
+            maya_chick(l_status);
+            MIntArray l_indices{};
+            maya_chick(l_fn_comp.getElements(l_indices));
+            for (int l_indice : l_indices) {
+              l_mat_ids[l_indice] = l_mat_index;
             }
           }
         }
