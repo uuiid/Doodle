@@ -334,10 +334,13 @@ void fbx_node_mesh::build_bind_post() {
         auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
         maya_chick(l_status);
         MObject l_world_handle{};
-        maya_chick(l_world_matrix_plug.getValue(l_world_handle));
-        const MFnMatrixData l_data{l_world_handle};
-        l_world_matrix = l_data.transformation(&l_status);
-        maya_chick(l_status);
+        if (l_world_matrix_plug.getValue(l_world_handle)) {
+          const MFnMatrixData l_data{l_world_handle};
+          l_world_matrix = l_data.transformation(&l_status);
+          maya_chick(l_status);
+        } else {
+          l_world_matrix = MMatrix::identity;
+        }
       } else {
         throw_exception(doodle_error{"not_find_bind_post {}", i});
       }
