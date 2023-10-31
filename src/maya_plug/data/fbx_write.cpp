@@ -915,6 +915,12 @@ void fbx_node_joint::build_data() {
   node->UpdatePivotsAndLimitsFromProperties();
   node->SetNodeAttribute(l_sk_attr);
   build_node_transform(dag_path);
+
+  auto l_parent_path = dag_path;
+  l_parent_path.pop();
+  if (l_parent_path.hasFn(MFn::kTransform) && !l_parent_path.hasFn(MFn::kJoint)) {
+    l_is_ = false;
+  }
   node->InheritType.Set(l_is_ ? FbxTransform::eInheritRrs : FbxTransform::eInheritRSrs);
 }
 
