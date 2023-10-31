@@ -31,6 +31,7 @@ void get_project_type::operator()(
     const entt::handle &in_handle, const boost::beast::http::request<boost::beast::http::empty_body> &in_request
 ) const {
   auto l_logger = in_handle.get<socket_logger>().logger_;
+  log_info(l_logger, fmt::format("get_project_type {}", in_request.target()));
   boost::beast::error_code ec{};
   auto l_cap = in_handle.get<render_farm::session::capture_url>().get<std::string>("handle");
   if (!l_cap) {
