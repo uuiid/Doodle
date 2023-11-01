@@ -277,113 +277,6 @@ void fbx_node_mesh::build_data() {
   build_blend_shape();
 }
 
-void fbx_node_mesh::build_bind_post() {
-  MStatus l_status{};
-  auto l_bind_post_obj = get_bind_post();
-
-  if (l_bind_post_obj.isNull() || !l_bind_post_obj.hasFn(MFn::Type::kDagPose)) {
-    log_info(fmt::format("{} is not dag pose", dag_path));
-    return;
-  }
-
-  auto l_member_list       = get_plug(l_bind_post_obj, "members");
-  auto l_world_matrix_list = get_plug(l_bind_post_obj, "worldMatrix");
-  auto l_xform_matrix_list = get_plug(l_bind_post_obj, "xformMatrix");
-  auto l_world             = get_plug(l_bind_post_obj, "world");
-  auto l_global_list       = get_plug(l_bind_post_obj, "global");
-  auto l_parent_list       = get_plug(l_bind_post_obj, "parents");
-  l_world_matrix_list.evaluateNumElements(&l_status);
-  l_xform_matrix_list.evaluateNumElements(&l_status);
-  maya_chick(l_status);
-
-  const auto l_couts = l_member_list.evaluateNumElements(&l_status);
-  maya_chick(l_status);
-  for (auto i = 0; i < l_couts; ++i) {
-    //    bool l_is_global = l_global_list.elementByPhysicalIndex(i, &l_status).asBool();
-    //    maya_chick(l_status);
-    auto l_member = l_member_list.elementByPhysicalIndex(i, &l_status);
-    maya_chick(l_status);
-    auto l_member_source = l_member.source(&l_status);
-    maya_chick(l_status);
-    auto l_node = l_member_source.node(&l_status);
-    maya_chick(l_status);
-    if (l_node.hasFn(MFn::kDagNode)) {
-      MFnDagNode l_fn_node{l_node};
-      MDagPath l_path{};
-      maya_chick(l_fn_node.getPath(l_path));
-      //      auto l_matrix_plug = l_xform_matrix_list.elementByPhysicalIndex(i, &l_status);
-      //      maya_chick(l_status);
-      //      MObject l_handle{};
-      //      maya_chick(l_matrix_plug.getValue(l_handle));
-      //      MFnMatrixData l_matrix_data{l_handle};
-      //
-      //      auto l_matrix = l_matrix_data.transformation(&l_status);
-      //      maya_chick(l_status);
-      MTransformationMatrix l_world_matrix{};
-
-      if (l_node.hasFn(MFn::Type::kJoint)) {
-        auto l_post_plug = get_plug(l_node, "bindPose");
-
-        MObject l_post_handle{};
-        maya_chick(l_post_plug.getValue(l_post_handle));
-        const MFnMatrixData l_data{l_post_handle};
-        l_world_matrix = l_data.transformation(&l_status);
-        maya_chick(l_status);
-
-      } else if (l_node.hasFn(MFn::Type::kTransform)) {
-        auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
-        maya_chick(l_status);
-        MObject l_world_handle{};
-        if (l_world_matrix_plug.getValue(l_world_handle)) {
-          const MFnMatrixData l_data{l_world_handle};
-          l_world_matrix = l_data.transformation(&l_status);
-          maya_chick(l_status);
-        } else {
-          l_world_matrix = MMatrix::identity;
-        }
-      } else {
-        throw_exception(doodle_error{"not_find_bind_post {}", i});
-      }
-
-      /// 寻找父矩阵
-      (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_world_matrix};
-    } else {
-      log_error(fmt::format("node {} is not dag node", get_node_full_name(l_node)));
-    }
-  }
-
-  for (auto& l_bp : *extra_data_.bind_post) {
-    if (l_bp.first.length() == 1) continue;
-    MDagPath l_parent_path{l_bp.first};
-    maya_chick(l_parent_path.pop());
-
-    if (extra_data_.bind_post->count(l_parent_path) == 0) {
-      log_error(fmt::format("not_find_parent_bind_post {}", l_bp.first));
-      l_bp.second.form_matrix = MMatrix::identity;
-      continue;
-    }
-    auto l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix;
-
-    MEulerRotation l_joint_rotate{};
-
-    if (l_bp.first.hasFn(MFn::Type::kJoint)) {
-      auto l_vector_x = get_plug(l_bp.first.node(), "jointOrientX").asDouble(&l_status);
-      maya_chick(l_status);
-      auto l_vector_y = get_plug(l_bp.first.node(), "jointOrientY").asDouble(&l_status);
-      maya_chick(l_status);
-      auto l_vector_z = get_plug(l_bp.first.node(), "jointOrientZ").asDouble(&l_status);
-      maya_chick(l_status);
-      l_joint_rotate.setValue(l_vector_x, l_vector_y, l_vector_z);
-    }
-    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse();
-    //    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse() *
-    //                              l_joint_rotate.asMatrix().inverse();
-    //    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_joint_rotate.asMatrix().inverse() *
-    //                              l_parent_world_matrix.asMatrixInverse();
-    l_bp.second.form_matrix.rotateBy(l_joint_rotate.inverse(), MSpace::kTransform);
-  }
-}
-
 void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
     //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
@@ -393,38 +286,8 @@ void fbx_node_mesh::build_mesh() {
 
   auto l_sk      = get_skin_custer();
   auto l_bl_list = find_blend_shape();
-  struct skin_guard {
-    MObject skin_{};
-    explicit skin_guard(const MObject& in_sk) : skin_{in_sk} {
-      if (!skin_.isNull()) {
-        get_plug(skin_, "envelope").setDouble(0.0);
-      }
-    }
-    ~skin_guard() {
-      if (!skin_.isNull()) {
-        MFnSkinCluster l_fn_skin{skin_};
-        get_plug(skin_, "envelope").setDouble(1.0);
-      }
-    }
-  };
-  struct blend_shape_guard {
-    std::vector<MObject> blend_shape_list_{};
-    explicit blend_shape_guard(const std::vector<MObject>& in_list) : blend_shape_list_{in_list} {
-      for (auto& l_blend_shape : blend_shape_list_) {
-        get_plug(l_blend_shape, "envelope").setDouble(0.0);
-      }
-    }
-    ~blend_shape_guard() {
-      for (auto& l_blend_shape : blend_shape_list_) {
-        get_plug(l_blend_shape, "envelope").setDouble(1.0);
-      }
-    }
-  };
 
-  skin_guard l_guard{l_sk};
-  blend_shape_guard l_blend_guard{l_bl_list};
-
-  auto l_mesh = dag_path;
+  auto l_mesh    = dag_path;
   maya_chick(l_mesh.extendToShape());
   MFnMesh l_fn_mesh{l_mesh};
   mesh = FbxMesh::Create(node->GetScene(), "");
@@ -656,34 +519,7 @@ void fbx_node_mesh::build_skin() {
     l_iter(extra_data_.tree_->begin());
 
     for (auto&& i : post_add) {
-      //      if (i->dag_path.hasFn(MFn::kJoint)) {
-      //        auto l_bind_post = get_plug(i->dag_path.node(), "bindPose");
-      //        if (!l_bind_post.isNull()) {
-      //          auto l_post_data_handle = l_bind_post.asMDataHandle(&l_status);
-      //          maya_chick(l_status);
-      //          if (l_post_data_handle.type() == MFnData::Type::kMatrix) {
-      //            MMatrix l_matrix_data = l_post_data_handle.asMatrix();
-      //            l_post->Add(
-      //                i->node,
-      //                FbxMatrix{
-      //                    l_matrix_data.matrix[0][0], l_matrix_data.matrix[1][0], l_matrix_data.matrix[2][0],
-      //                    l_matrix_data.matrix[3][0], l_matrix_data.matrix[0][1], l_matrix_data.matrix[1][1],
-      //                    l_matrix_data.matrix[2][1], l_matrix_data.matrix[3][1], l_matrix_data.matrix[0][2],
-      //                    l_matrix_data.matrix[1][2], l_matrix_data.matrix[2][2], l_matrix_data.matrix[3][2],
-      //                    l_matrix_data.matrix[0][3], l_matrix_data.matrix[1][3], l_matrix_data.matrix[2][3],
-      //                    l_matrix_data.matrix[3][3]}
-      //            );
-      //          }
-      //        } else {
-      //          //          l_post->Add(i->node, i->node->EvaluateGlobalTransform());
-      //        }
-      //
-      //      } else {
-      //      }
       l_post->Add(i->node, i->node->EvaluateGlobalTransform());
-      //      else {
-      //        log_error(fmt::format("bind post type error {}", get_node_name(dag_path)));
-      //      }
     }
     node->GetScene()->AddPose(l_post);
   }
@@ -694,6 +530,43 @@ void fbx_node_mesh::build_blend_shape() {
   auto l_bls = find_blend_shape();
   if (l_bls.empty()) return;
 
+  struct skin_guard {
+    MObject skin_{};
+    explicit skin_guard(const MObject& in_sk) : skin_{in_sk} {
+      if (!skin_.isNull()) {
+        get_plug(skin_, "envelope").setDouble(0.0);
+      }
+    }
+    ~skin_guard() {
+      if (!skin_.isNull()) {
+        MFnSkinCluster l_fn_skin{skin_};
+        get_plug(skin_, "envelope").setDouble(1.0);
+      }
+    }
+  };
+  struct blend_shape_guard {
+    std::vector<MObject> blend_shape_list_{};
+    explicit blend_shape_guard(const std::vector<MObject>& in_list) : blend_shape_list_{in_list} {
+      for (auto& l_blend_shape : blend_shape_list_) {
+        get_plug(l_blend_shape, "envelope").setDouble(0.0);
+      }
+    }
+    ~blend_shape_guard() {
+      for (auto& l_blend_shape : blend_shape_list_) {
+        get_plug(l_blend_shape, "envelope").setDouble(1.0);
+      }
+    }
+  };
+
+  skin_guard l_guard{get_skin_custer()};
+  blend_shape_guard l_blend_guard{l_bls};
+  MFnMesh l_mfn_mesh{};
+  {
+    auto l_mesh = dag_path;
+    maya_chick(l_mesh.extendToShape());
+    maya_chick(l_mfn_mesh.setObject(l_mesh));
+  }
+
   MFnBlendShapeDeformer l_blend_shape{};
   auto l_fbx_bl = FbxBlendShape::Create(node->GetScene(), fmt::format("{}", get_node_name(l_bls[0])).c_str());
   mesh->AddDeformer(l_fbx_bl);
@@ -701,15 +574,47 @@ void fbx_node_mesh::build_blend_shape() {
   log_info(fmt::format("{} build blend shape {}", dag_path, get_node_name(l_bls[0])));
 
   MStatus l_status{};
+  auto l_skin_obj = get_skin_custer();
   for (auto&& i : l_bls) {
     maya_chick(l_blend_shape.setObject(i));
 
-    auto l_input_target_plug_1 = get_plug(i, "inputTarget").elementByPhysicalIndex(0, &l_status);
-    if (l_status != MStatus::kSuccess) {
-      log_error(fmt::format("blend shape {} inputTarget error", get_node_name(dag_path)));
+    auto l_input_target_plug_array = get_plug(i, "inputTarget");
+    auto l_output_geometry_array   = get_plug(i, "outputGeometry");
+    MPlug l_input_target_plug{};
+
+    // 寻找正确的变形几何插头
+    for (auto j = 0; j < l_input_target_plug_array.numElements(); ++j) {
+      l_input_target_plug = l_input_target_plug_array.elementByPhysicalIndex(j, &l_status);
+      if (l_status != MStatus::kSuccess) {
+        log_error(fmt::format("blend shape {} inputTarget error", get_node_name(dag_path)));
+        continue;
+      }
+      auto l_output_geometry = l_output_geometry_array.elementByPhysicalIndex(j, &l_status);
+      if (l_status != MStatus::kSuccess) {
+        log_error(fmt::format("blend shape {} outputGeometry error", get_node_name(dag_path)));
+        continue;
+      }
+      bool l_is_skin{};
+      for (MItDependencyGraph l_it_graph{
+               l_output_geometry, MFn::kSkinClusterFilter, MItDependencyGraph::kDownstream,
+               MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, &l_status};
+           !l_it_graph.isDone(); l_it_graph.next()) {
+        maya_chick(l_status);
+        if (l_it_graph.thisNode() == l_skin_obj) {
+          l_is_skin = true;
+          log_info(fmt::format("find skin {}", get_node_name(l_skin_obj)));
+          break;
+        }
+      }
+      if (l_is_skin) break;
+    }
+
+    if (l_input_target_plug.isNull()) {
+      log_error(fmt::format("blend shape {} inputTarget is null", get_node_name(dag_path)));
       continue;
     }
-    auto l_input_target_group_array = l_input_target_plug_1.child(0, &l_status);
+
+    auto l_input_target_group_array = l_input_target_plug.child(0, &l_status);
     maya_chick(l_status);
     auto l_shape_count = l_input_target_group_array.evaluateNumElements(&l_status);
     maya_chick(l_status);
@@ -791,8 +696,25 @@ void fbx_node_mesh::build_blend_shape() {
 
       l_fbx_deform->InitControlPoints(mesh->GetControlPointsCount());
       auto* l_fbx_points = l_fbx_deform->GetControlPoints();
-      std::copy(mesh->GetControlPoints(), mesh->GetControlPoints() + mesh->GetControlPointsCount(), l_fbx_points);
+
+      // 顶点
+      {
+        const auto l_point_count = l_mfn_mesh.numVertices();
+        MPointArray l_m_points{};
+        l_mfn_mesh.getPoints(l_m_points, MSpace::kObject);
+        for (auto l_p_index = 0; l_p_index < l_point_count; ++l_p_index) {
+          l_fbx_points[l_p_index] = FbxVector4{
+              l_m_points[l_p_index].x, l_m_points[l_p_index].y, l_m_points[l_p_index].z, l_m_points[l_p_index].w};
+        }
+      }
+      auto l_max_count = mesh->GetControlPointsCount();
       for (auto k = 0; k < l_point_index_main.size(); ++k) {
+        if (l_point_index_main[k] >= l_max_count) {
+          log_error(fmt::format(
+              "blend shape {} point index {} >= max count {}", get_node_name(i), l_point_index_main[k], l_max_count
+          ));
+          continue;
+        }
         l_fbx_points[l_point_index_main[k]] += FbxVector4{
             l_point_data[k].x,
             l_point_data[k].y,
@@ -890,6 +812,25 @@ MObject fbx_node_mesh::get_bind_post() const {
       return l_obj;
     }
   }
+
+  // 沙雕其他绑定,  需要向上游寻找其他骨骼后再向下游寻找bindpose
+
+  for (auto l_j : l_joint_list) {
+    auto l_shape = l_j.node(&l_s);
+    maya_chick(l_s);
+
+    /// 寻找高模的皮肤簇
+    for (MItDependencyGraph i{l_shape, MFn::kJoint, MItDependencyGraph::Direction::kUpstream}; !i.isDone(); i.next()) {
+      auto l_obj = i.currentItem(&l_s);
+      for (MItDependencyGraph i{l_obj, MFn::kDagPose, MItDependencyGraph::Direction::kDownstream}; !i.isDone();
+           i.next()) {
+        auto l_post_obj = i.currentItem(&l_s);
+        maya_chick(l_s);
+        return l_post_obj;
+      }
+    }
+  }
+
   return MObject::kNullObj;
 }
 
@@ -1183,23 +1124,6 @@ void fbx_write::build_data() {
     }
   };
   l_iter_init(tree_.begin());
-
-  std::function<bool(const fbx_tree_t::iterator& in_iterator)> l_iter_bind_post{};
-
-  l_iter_bind_post = [&](const fbx_tree_t::iterator& in_iterator) -> bool {
-    auto l_ret = false;
-    for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      if ((*i)->dag_path.hasFn(MFn::kMesh))
-        if (auto l_ptr = std::dynamic_pointer_cast<fbx_node_mesh_t>(*i); l_ptr) {
-          l_ptr->build_bind_post();
-          return true;
-        }
-      l_ret = l_iter_bind_post(i);
-      if (l_ret) return true;
-    }
-    return false;
-  };
-  l_iter_bind_post(tree_.begin());
 
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
   l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {

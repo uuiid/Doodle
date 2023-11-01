@@ -80,7 +80,6 @@ struct fbx_node_mesh : public fbx_node_transform {
   explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
       : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
 
-  void build_bind_post();
   void build_data() override;
   void build_animation(const MTime& in_time) override;
 
