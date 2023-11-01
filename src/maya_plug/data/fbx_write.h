@@ -31,7 +31,6 @@ struct fbx_extra_data {
   using bind_post_matrix_map_t = std::map<MDagPath, bind_post_matrix, details::cmp_dag>;
 
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
-  std::map<MDagPath, bind_post_matrix, details::cmp_dag>* bind_post{};
   fbx_extra_data() = default;
 };
 

@@ -113,11 +113,7 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
       break;
   }
   node->UpdatePivotsAndLimitsFromProperties();
-  if (extra_data_.bind_post->count(dag_path)) {
-    set_node_transform_matrix(extra_data_.bind_post->at(dag_path).form_matrix);
-  } else {
-    set_node_transform_matrix(l_transform.transformation());
-  }
+  set_node_transform_matrix(l_transform.transformation());
 }
 ///
 
@@ -154,11 +150,7 @@ void fbx_node_transform::build_data() {
   l_attr_null->Look.Set(FbxNull::eNone);
   node->SetNodeAttribute(l_attr_null);
 
-  if (extra_data_.bind_post->count(dag_path)) {
-    previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).form_matrix.eulerRotation();
-  } else {
-    previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
-  }
+  previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
 }
 
 void fbx_node_transform::build_animation(const MTime& in_time) {
@@ -1119,7 +1111,6 @@ void fbx_write::build_data() {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       (*i)->extra_data_.tree_         = &tree_;
       (*i)->extra_data_.material_map_ = &material_map_;
-      (*i)->extra_data_.bind_post     = &bind_post_;
       l_iter_init(i);
     }
   };
