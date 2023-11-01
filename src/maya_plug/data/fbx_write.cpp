@@ -44,6 +44,35 @@
 #include <treehh/tree.hh>
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
+
+struct skin_guard {
+  MObject skin_{};
+  explicit skin_guard(const MObject& in_sk) : skin_{in_sk} {
+    if (!skin_.isNull()) {
+      get_plug(skin_, "envelope").setDouble(0.0);
+    }
+  }
+  ~skin_guard() {
+    if (!skin_.isNull()) {
+      MFnSkinCluster l_fn_skin{skin_};
+      get_plug(skin_, "envelope").setDouble(1.0);
+    }
+  }
+};
+struct blend_shape_guard {
+  std::vector<MObject> blend_shape_list_{};
+  explicit blend_shape_guard(const std::vector<MObject>& in_list) : blend_shape_list_{in_list} {
+    for (auto& l_blend_shape : blend_shape_list_) {
+      get_plug(l_blend_shape, "envelope").setDouble(0.0);
+    }
+  }
+  ~blend_shape_guard() {
+    for (auto& l_blend_shape : blend_shape_list_) {
+      get_plug(l_blend_shape, "envelope").setDouble(1.0);
+    }
+  }
+};
+
 void fbx_node::build_node() {
   std::call_once(flag_, [&]() { build_data(); });
 }
@@ -274,12 +303,14 @@ void fbx_node_mesh::build_mesh() {
     //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
     return;
   }
+
   log_info(fmt::format("build mesh {}", dag_path));
 
-  auto l_sk      = get_skin_custer();
-  auto l_bl_list = find_blend_shape();
+  auto l_sk = get_skin_custer();
+  skin_guard const l_guard{l_sk};
+  blend_shape_guard const l_blend_guard{find_blend_shape()};
 
-  auto l_mesh    = dag_path;
+  auto l_mesh = dag_path;
   maya_chick(l_mesh.extendToShape());
   MFnMesh l_fn_mesh{l_mesh};
   mesh = FbxMesh::Create(node->GetScene(), "");
@@ -457,12 +488,7 @@ void fbx_node_mesh::build_skin() {
     auto* l_cluster = FbxCluster::Create(node->GetScene(), "");
     l_cluster->SetLink(l_joint->node);
     l_cluster->SetLinkMode(FbxCluster::eNormalize);
-    l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
-    l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
     l_dag_fbx_map.emplace(i, l_cluster);
-    if (!l_sk->AddCluster(l_cluster)) {
-      log_error(fmt::format("add cluster error: {}", node->GetName()));
-    }
   }
 
   MStatus l_status{};
@@ -489,6 +515,29 @@ void fbx_node_mesh::build_skin() {
     }
     break;
   }
+
+  for (auto&& i : l_joint_list) {
+    auto l_joint    = l_dag_tree_map[i];
+    auto* l_cluster = l_dag_fbx_map[i];
+    l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
+    auto l_node      = l_joint->dag_path.node();
+    auto l_post_plug = get_plug(l_node, "bindPose");
+
+    MObject l_post_handle{};
+    maya_chick(l_post_plug.getValue(l_post_handle));
+    const MFnMatrixData l_data{l_post_handle};
+    auto l_world_matrix = l_data.matrix(&l_status);
+    maya_chick(l_status);
+
+    fbxsdk::FbxAMatrix l_fbx_matrix{};
+    for (auto i = 0; i < 4; ++i)
+      for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
+    l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
+    if (!l_sk->AddCluster(l_cluster)) {
+      log_error(fmt::format("add cluster error: {}", node->GetName()));
+    }
+  }
+
   {  // build post
     auto* l_post = FbxPose::Create(node->GetScene(), fmt::format("{}_post", get_node_name(l_skin_obj)).c_str());
     l_post->SetIsBindPose(true);
@@ -522,36 +571,6 @@ void fbx_node_mesh::build_blend_shape() {
   auto l_bls = find_blend_shape();
   if (l_bls.empty()) return;
 
-  struct skin_guard {
-    MObject skin_{};
-    explicit skin_guard(const MObject& in_sk) : skin_{in_sk} {
-      if (!skin_.isNull()) {
-        get_plug(skin_, "envelope").setDouble(0.0);
-      }
-    }
-    ~skin_guard() {
-      if (!skin_.isNull()) {
-        MFnSkinCluster l_fn_skin{skin_};
-        get_plug(skin_, "envelope").setDouble(1.0);
-      }
-    }
-  };
-  struct blend_shape_guard {
-    std::vector<MObject> blend_shape_list_{};
-    explicit blend_shape_guard(const std::vector<MObject>& in_list) : blend_shape_list_{in_list} {
-      for (auto& l_blend_shape : blend_shape_list_) {
-        get_plug(l_blend_shape, "envelope").setDouble(0.0);
-      }
-    }
-    ~blend_shape_guard() {
-      for (auto& l_blend_shape : blend_shape_list_) {
-        get_plug(l_blend_shape, "envelope").setDouble(1.0);
-      }
-    }
-  };
-
-  skin_guard l_guard{get_skin_custer()};
-  blend_shape_guard l_blend_guard{l_bls};
   MFnMesh l_mfn_mesh{};
   {
     auto l_mesh = dag_path;
@@ -690,15 +709,7 @@ void fbx_node_mesh::build_blend_shape() {
       auto* l_fbx_points = l_fbx_deform->GetControlPoints();
 
       // 顶点
-      {
-        const auto l_point_count = l_mfn_mesh.numVertices();
-        MPointArray l_m_points{};
-        l_mfn_mesh.getPoints(l_m_points, MSpace::kObject);
-        for (auto l_p_index = 0; l_p_index < l_point_count; ++l_p_index) {
-          l_fbx_points[l_p_index] = FbxVector4{
-              l_m_points[l_p_index].x, l_m_points[l_p_index].y, l_m_points[l_p_index].z, l_m_points[l_p_index].w};
-        }
-      }
+      std::copy(mesh->GetControlPoints(), mesh->GetControlPoints() + mesh->GetControlPointsCount(), l_fbx_points);
       auto l_max_count = mesh->GetControlPointsCount();
       for (auto k = 0; k < l_point_index_main.size(); ++k) {
         if (l_point_index_main[k] >= l_max_count) {
