@@ -338,7 +338,6 @@ void UDoodleFbxImport_1::ImportFile() {
     LFilter.bRecursivePaths          = true;
     LFilter.bRecursiveClasses        = true;
     LFilter.PackagePaths.Add(FName{ImportPathDir});
-    LFilter.ClassPaths.Add(UAnimSequence::StaticClass()->GetClassPathName());
     USkeletalMesh* L_Sk = CastChecked<USkeletalMesh>(L_Objs.Top());
     IAssetRegistry::Get()->EnumerateAssets(LFilter, [this, L_Sk](const FAssetData& InAss) -> bool {
     //-----------------------
@@ -727,7 +726,8 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   if (SDoodleImportFbxUI::NewFolderName != TEXT(""))
   {
       FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
-      FString FolderPath = FPaths::Combine(LongImportPathDir, SDoodleImportFbxUI::NewFolderName);
+      FString AbovePath = FPaths::GetPath(LongImportPathDir);
+      FString FolderPath = FPaths::Combine(AbovePath, SDoodleImportFbxUI::NewFolderName);
       if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
       {
           EditorAssetSubsystem->MakeDirectory(FolderPath);
