@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 20,
@@ -239,5 +239,15 @@
       }
     }
   ],
+  "packagePresets": [
+    {
+      "name": "package_wix",
+      "displayName": "package_wix",
+      "description": "package_wix",
+      "configurePreset": "Ninja_release",
+      "generators": []
+    }
+  ],
+  "workflowPresets": [],
   "vendor": {}
 }

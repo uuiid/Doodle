@@ -62,7 +62,7 @@ find_package(Boost REQUIRED COMPONENTS
         log
         log_setup
         url
-        )
+)
 
 find_package(Doxygen)
 
@@ -114,10 +114,15 @@ if (BUILD_USD)
     include(build_usd)
 endif ()
 
-#include(CPack)
+include(CPack)
+set(CPACK_PACKAGE_NAME ${DOODLE_PACKAGE_NAME})
+set(CPACK_PACKAGE_VENDOR "uuiid")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doodle")
+set(CPACK_GENERATOR "INNOSETUP")
 #set(CPACK_EXTERNAL_ENABLE_STAGING TRUE)
 add_subdirectory(script)
 add_subdirectory(src)
+
 
 #[==[
 一些杂项工具和命令
