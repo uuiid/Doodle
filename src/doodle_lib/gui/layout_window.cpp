@@ -25,8 +25,6 @@
 #include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include <doodle_lib/gui/widgets/zh_model_upload.h>
-
 #include "widgets/all_user_view_widget.h"
 #include <utility>
 namespace doodle::gui {
@@ -61,8 +59,6 @@ void layout_window::layout(ImGuiID in_id, const ImVec2 &in_size) {
   ImGui::DockBuilderDockWindow(menu_w::extract_subtitles.data(), dock_id_tools);    /// \brief 工具所在的id
   ImGui::DockBuilderDockWindow(menu_w::subtitle_processing.data(), dock_id_tools);  /// \brief 工具所在的id
 
-  ImGui::DockBuilderDockWindow(menu_w::zh_model_upload.data(), dock_id_tools);    /// \brief 工具所在的id
-
   ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_main);           /// \brief 主窗口的停靠
   ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);       /// \brief 主窗口的停靠
   ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);             /// \brief 主窗口的停靠
@@ -83,7 +79,6 @@ void layout_window::set_show() {
   g_windows_manage().open_windows<time_sequencer_widget>();
   g_windows_manage().open_windows<xlsx_export_widgets>();
 
-  g_windows_manage().open_windows<zh_model_upload>();
 }
 
 layout_window::~layout_window() = default;

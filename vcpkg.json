@@ -37,7 +37,7 @@
     {
       "name": "fmt",
       "default-features": true,
-      "version>=": "10.1.0"
+      "version>=": "10.1.1"
     },
     {
       "name": "opencv",

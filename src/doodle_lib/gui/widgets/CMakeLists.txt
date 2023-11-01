@@ -24,7 +24,6 @@ target_sources(doodle_lib
         update_self.h
         upload_files.h
         render_monitor.h
-        zh_model_upload.h
 
         PRIVATE
         edit_widget.cpp
@@ -47,5 +46,4 @@ target_sources(doodle_lib
         update_self.cpp
         upload_files.cpp
         render_monitor.cpp
-        zh_model_upload.cpp
         )
