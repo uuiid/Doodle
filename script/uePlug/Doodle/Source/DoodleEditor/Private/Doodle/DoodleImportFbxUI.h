@@ -112,6 +112,7 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
   USkeleton* SkinObj;
   UAnimSequence* AnimSeq;
 
+  USkeletalMesh* SkeletalMesh;
   UDoodleFbxCameraImport_1* CameraImport;
 
   bool OnlyAnim{true};
@@ -179,6 +180,8 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
+  static FString Path_Suffix;
+  static FString NewFolderName;
  private:
   /// @brief 导入的列表
   TSharedPtr<class SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
@@ -190,7 +193,6 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   /// 导入路径的后缀
   FString Path_Prefix;
-  FString Path_Suffix;
 
   ECheckBoxState OnlyCamera{ECheckBoxState::Unchecked};
 
