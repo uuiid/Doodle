@@ -2,8 +2,7 @@ call %~dp0/set_venv.cmd
 
 echo ----------------- build --------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---build ^
---preset debug_maya_plug --target doodle_maya
+--workflow --preset build_release%Doodle_suffix%
 
 echo -----------------copy file--------------------
 if not exist "%my_pwd%\build\html\file" goto create_file_dir
