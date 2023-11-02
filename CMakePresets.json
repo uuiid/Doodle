@@ -54,32 +54,9 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "Photoshop_Version": "120.0",
-        "ADD_VERSION_LABEL": true
-      }
-    },
-    {
-      "name": "Ninja_release_maya_2018",
-      "inherits": "Ninja_release",
-      "cacheVariables": {
-        "Maya_Version": "2018"
-      },
-      "hidden": true
-    },
-    {
-      "name": "Ninja_release_maya_2019",
-      "inherits": "Ninja_release",
-      "cacheVariables": {
-        "Maya_Version": "2019"
-      },
-      "hidden": true
-    },
-    {
-      "name": "Ninja_release_maya_2020",
-      "inherits": "Ninja_release",
-      "cacheVariables": {
+        "ADD_VERSION_LABEL": true,
         "Maya_Version": "2020"
-      },
-      "hidden": true
+      }
     },
     {
       "name": "Ninja_debug",
@@ -89,15 +66,6 @@
         "Photoshop_Version": "120.0",
         "BUILD_USD": "ON",
         "PXR_USD_ROOT": "E:/usd_install"
-      }
-    },
-    {
-      "name": "Ninja_debug_limited_1",
-      "inherits": "Ninja_build",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "Maya_Version": "2018",
-        "Photoshop_Version": "120.0"
       }
     },
     {
@@ -120,7 +88,10 @@
       "inherits": "debug",
       "targets": [
         "DoodleExe",
-        "test_main"
+        "generate_token",
+        "doodle_server",
+        "doodle_client",
+        "Doxygen"
       ]
     },
     {
@@ -174,33 +145,6 @@
         "doodle_maya",
         "doodle_maya_exe"
       ]
-    },
-    {
-      "name": "Release_maya_2018",
-      "configurePreset": "Ninja_release_maya_2018",
-      "jobs": 10,
-      "targets": [
-        "doodle_maya"
-      ],
-      "hidden": true
-    },
-    {
-      "name": "Release_maya_2019",
-      "configurePreset": "Ninja_release_maya_2019",
-      "jobs": 10,
-      "targets": [
-        "doodle_maya"
-      ],
-      "hidden": true
-    },
-    {
-      "name": "Release_maya_2020",
-      "configurePreset": "Ninja_release_maya_2020",
-      "jobs": 10,
-      "targets": [
-        "doodle_maya"
-      ],
-      "hidden": true
     }
   ],
   "testPresets": [
@@ -241,13 +185,69 @@
   ],
   "packagePresets": [
     {
-      "name": "package_wix",
-      "displayName": "package_wix",
-      "description": "package_wix",
+      "name": "package_7z_debug",
+      "displayName": "package_7z_debug",
+      "description": "package_7z_debug",
+      "configurePreset": "Ninja_debug",
+      "generators": [
+        "7Z",
+        "NSIS"
+      ]
+    },
+    {
+      "name": "package_release",
+      "displayName": "package_release",
+      "description": "package_release",
       "configurePreset": "Ninja_release",
-      "generators": []
+      "generators": [
+        "7Z",
+        "NSIS"
+      ]
     }
   ],
-  "workflowPresets": [],
+  "workflowPresets": [
+    {
+      "name": "build_release",
+      "displayName": "build_release",
+      "description": "构建优化版",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Ninja_release"
+        },
+        {
+          "type": "build",
+          "name": "Release_Exe"
+        },
+        {
+          "type": "build",
+          "name": "Release_Maya"
+        },
+        {
+          "type": "package",
+          "name": "package_release"
+        }
+      ]
+    },
+    {
+      "name": "build_debug",
+      "displayName": "build_debug",
+      "description": "构建debug工作流",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Ninja_debug"
+        },
+        {
+          "type": "build",
+          "name": "debug_doodle"
+        },
+        {
+          "type": "package",
+          "name": "package_7z_debug"
+        }
+      ]
+    }
+  ],
   "vendor": {}
 }
