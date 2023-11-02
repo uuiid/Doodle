@@ -4,7 +4,9 @@
 #include "ITimeSlider.h"
 #include "Input/CursorReply.h"
 #include "Input/Reply.h"
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3
 #include "TimeSliderArgs.h"
+#endif
 #include "Widgets/SWidget.h"
 
 class FSlateWindowElementList;

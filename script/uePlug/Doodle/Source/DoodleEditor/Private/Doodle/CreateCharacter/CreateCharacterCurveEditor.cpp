@@ -294,7 +294,7 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
   {                                                                                            \
     FRichCurveEditInfo L_Info{                                                                 \
         &Owner.FloatCurves[(int32)FVectorCurve::EIndex::Index],                                \
-        FName{Bone_Name + TEXT(".") + Owner.GetName().ToString() + TEXT(".") + TEXT(#Index)}}; \
+        FName{Bone_Name + TEXT(".") + Owner.Name.DisplayName.ToString() + TEXT(".") + TEXT(#Index)}}; \
     AddCurve(L_Info);                                                                          \
   }
 

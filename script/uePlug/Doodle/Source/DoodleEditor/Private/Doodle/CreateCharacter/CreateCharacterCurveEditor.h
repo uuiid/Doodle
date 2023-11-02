@@ -1,6 +1,7 @@
 #pragma once
-
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3
 #include "AnimatedRange.h"
+#endif
 #include "Animation/AnimCurveTypes.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/SmartName.h"
