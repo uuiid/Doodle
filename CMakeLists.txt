@@ -114,6 +114,30 @@ if (BUILD_USD)
     include(build_usd)
 endif ()
 
+set(CPACK_VERBATIM_VARIABLES TRUE)
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
+        [==[
+        DeleteRegValue HKCU "SOFTWARE\Doodle\RenderFarm" "server_address"
+        DeleteRegKey HKCU "SOFTWARE\Doodle\RenderFarm"
+        WriteRegStr HKCU "SOFTWARE\Doodle\RenderFarm" "server_address" "192.168.20.7"
+        WriteRegStr HKCU "SOFTWARE\Classes\doodle.main" "" "doodle"
+        WriteRegStr HKCU "SOFTWARE\Classes\doodle.main\DefaultIcon" "" "$INSTDIR\bin\DoodleExe.exe"
+        WriteRegStr HKCU "SOFTWARE\Classes\doodle.main\shell\open\command" "" '"$INSTDIR\bin\DoodleExe.exe" "%1"'
+        WriteRegStr HKCU "SOFTWARE\Classes\.doodle_db" "" "doodle.main"
+        WriteRegStr HKCU "SOFTWARE\Classes\.doodle_db\OpenWithProgids" "doodle.main" ""
+       ]==]
+)
+set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
+        [==[
+        DeleteRegKey HKCU "SOFTWARE\Classes\.doodle_db\OpenWithProgids"
+        DeleteRegKey HKCU "SOFTWARE\Classes\.doodle_db"
+        DeleteRegKey HKCU "SOFTWARE\Classes\doodle.main\shell\open\command"
+        DeleteRegKey HKCU "SOFTWARE\Classes\doodle.main\DefaultIcon"
+        DeleteRegKey HKCU "SOFTWARE\Classes\doodle.main"
+        DeleteRegKey HKCU "SOFTWARE\Doodle\RenderFarm"
+        ]==]
+
+)
 include(CPack)
 #set(CPACK_PACKAGE_NAME ${DOODLE_PACKAGE_NAME})
 #set(CPACK_PACKAGE_VENDOR "uuiid")

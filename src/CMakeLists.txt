@@ -75,7 +75,7 @@ doxygen_add_docs(Doxygen
         exe_maya
         exe_gui
         maya_plug_mll
-        )
+)
 
 cmrc_add_resource_library(
         DoodleLibResourceFont
@@ -112,10 +112,7 @@ endif ()
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
-find_package(Inno)
 
-if (TARGET Inno_exe)
-    add_subdirectory(install)
-endif ()
+add_subdirectory(install)
 
 add_subdirectory(test)
