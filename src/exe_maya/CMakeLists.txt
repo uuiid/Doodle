@@ -48,5 +48,4 @@ install(TARGETS doodle_maya_exe
         DIRECTORIES ${MAYA_BASE_DIR}/bin
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
-        COMPONENT maya_plug_com
 )

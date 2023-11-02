@@ -26,7 +26,6 @@ install(TARGETS DoodleExe
         RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-        COMPONENT exe_com
 )
 
 set(DOODLE_INSTALL_IGNORE_ITEM
@@ -58,7 +57,7 @@ macro(add_doodle_exe _name _src)
             RUNTIME_DEPENDENCIES
             PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
             POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-            COMPONENT exe_com)
+    )
     list(APPEND DOODLE_INSTALL_IGNORE_ITEM ${_name}.exe)
 endmacro()
 add_doodle_exe(doodle_server main_server.cpp)
@@ -82,4 +81,4 @@ execute_process(
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 )
         "
-        COMPONENT exe_com)
+)

@@ -115,10 +115,10 @@ if (BUILD_USD)
 endif ()
 
 include(CPack)
-set(CPACK_PACKAGE_NAME ${DOODLE_PACKAGE_NAME})
-set(CPACK_PACKAGE_VENDOR "uuiid")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doodle")
-set(CPACK_GENERATOR "INNOSETUP")
+#set(CPACK_PACKAGE_NAME ${DOODLE_PACKAGE_NAME})
+#set(CPACK_PACKAGE_VENDOR "uuiid")
+#set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doodle")
+set(CPACK_GENERATOR "7Z")
 #set(CPACK_EXTERNAL_ENABLE_STAGING TRUE)
 add_subdirectory(script)
 add_subdirectory(src)
@@ -126,15 +126,7 @@ add_subdirectory(src)
 
 #[==[
 一些杂项工具和命令
-"D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
-"D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
-"D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
-"D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
-"D:\Program Files\Epic Games\UE_5.0\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\5.0\Plugins\Doodle
-"D:\Program Files\Epic Games\UE_5.1\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\5.1\Plugins\Doodle
-"D:\Program Files\Epic Games\UE_5.2\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\5.2\Plugins\Doodle
 
 $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
 "$(SolutionDir)doodle_plug.uproject" -skipcompile -run=DoodleAssCreate -path="E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json"
-GenerateProjectFiles.bat -projectfiles -vscode -project=F:\doodle_plug_dev_4.27\doodle_plug.uproject -game -engine
 ]==]

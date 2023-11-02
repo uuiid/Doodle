@@ -90,7 +90,6 @@ add_subdirectory(doodle_cloud_drive)
 add_subdirectory(doodle_lib)
 
 add_subdirectory(exe_gui)
-add_subdirectory(houdini_plug)
 add_subdirectory(doodle_server)
 
 if (DEFINED Maya_Version)
