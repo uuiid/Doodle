@@ -13,6 +13,7 @@
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include <fbxsdk.h>
+#include <fmt/std.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
@@ -466,10 +467,28 @@ void fbx_node_mesh::build_skin() {
     return;
   }
   auto l_skin_obj = get_skin_custer();
-  auto* l_sk      = FbxSkin::Create(node->GetScene(), get_node_name(l_skin_obj).c_str());
+  if (l_skin_obj.isNull()) {
+    log_error(fmt::format(" {} is not skin", dag_path));
+    return;
+  }
+  auto* l_sk = FbxSkin::Create(node->GetScene(), get_node_name(l_skin_obj).c_str());
   mesh->AddDeformer(l_sk);
 
   auto l_joint_list = find_joint(l_skin_obj);
+
+  std::vector<MPlug> l_skin_world_matrix_plug_list{};
+  {
+    MStatus l_status{};
+    auto l_skin_world_matrix_plug_list_plug = get_plug(l_skin_obj, "matrix");
+    for (auto i = 0; i < l_skin_world_matrix_plug_list_plug.numElements(); ++i) {
+      if (l_skin_world_matrix_plug_list_plug[i].isConnected()) {
+        l_skin_world_matrix_plug_list.emplace_back(
+            l_skin_world_matrix_plug_list_plug.elementByPhysicalIndex(i).source(&l_status)
+        );
+        maya_chick(l_status);
+      }
+    }
+  }
 
   MFnSkinCluster l_skin_cluster{l_skin_obj};
   auto l_skinning_method = get_plug(l_skin_obj, "skinningMethod").asInt();
@@ -520,13 +539,24 @@ void fbx_node_mesh::build_skin() {
     auto l_joint    = l_dag_tree_map[i];
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
-    auto l_node      = l_joint->dag_path.node();
-    auto l_post_plug = get_plug(l_node, "bindPose");
 
+    auto l_node              = l_joint->dag_path.node();
+
+    auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
+    auto l_index             = ranges::distance(
+        std::begin(l_skin_world_matrix_plug_list),
+        ranges::find_if(l_skin_world_matrix_plug_list, boost::lambda2::_1 == l_world_matrix_plug)
+    );
+    if (l_index == l_skin_world_matrix_plug_list.size()) {
+      log_error(fmt::format("can not find world matrix plug: {}", get_node_name(l_node)));
+      throw_exception(doodle_error{fmt::format("can not find world matrix plug: {}", get_node_name(l_node))});
+    }
+
+    auto l_post_plug = get_plug(l_skin_obj, "bindPreMatrix")[l_index];
     MObject l_post_handle{};
     maya_chick(l_post_plug.getValue(l_post_handle));
     const MFnMatrixData l_data{l_post_handle};
-    auto l_world_matrix = l_data.matrix(&l_status);
+    auto l_world_matrix = l_data.matrix(&l_status).inverse();
     maya_chick(l_status);
 
     fbxsdk::FbxAMatrix l_fbx_matrix{};
@@ -916,7 +946,9 @@ void fbx_write::write(
   try {
     build_data();
   } catch (const maya_error& in_error) {
-    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    auto l_err = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_err));
+    log_error(fmt::format("未写出 {} {}", path_, l_err));
     return;
   }
   if (export_anim_) {
