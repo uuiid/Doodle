@@ -400,9 +400,7 @@ void UDoodleFbxImport_1::AssembleScene() {
         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
             L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
         UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3 
         AnimSection->SetPreRollFrames(50);
-#endif
         L_Actor->Modify();
         L_ShotLevel->Modify();
         UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
@@ -567,11 +565,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   L_ShotSequence->GetMovieScene()->Modify();
 
   /// 设置范围
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3 
   FFrameNumber offset{50};
-#else
-  FFrameNumber offset{ 0 };
-#endif
   L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
   L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
   L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End}, true);
@@ -823,9 +817,7 @@ void UDoodleAbcImport_1::AssembleScene() {
         UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
             L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
         UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_Actor->GetGeometryCacheComponent());
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3 
         AnimSection->SetPreRollFrames(50);
-#endif
         L_Actor->Modify();
         L_ShotLevel->Modify();
         UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
