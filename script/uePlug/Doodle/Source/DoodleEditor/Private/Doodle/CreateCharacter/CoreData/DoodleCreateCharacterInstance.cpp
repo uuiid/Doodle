@@ -1,6 +1,8 @@
 #include "DoodleCreateCharacterInstance.h"
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3
 #include "Animation/AnimCurveUtils.h"
+#endif
 #include "Animation/AnimNodeBase.h"
 
 void UDoodleCreateCharacterInstance::SetCreateCharacterConfig(const TObjectPtr<UDoodleCreateCharacterConfig>& InConfig
