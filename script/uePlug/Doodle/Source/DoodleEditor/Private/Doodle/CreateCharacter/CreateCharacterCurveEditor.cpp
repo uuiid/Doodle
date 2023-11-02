@@ -290,14 +290,23 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
     auto& L_Rot       = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.RotationCurve;
     FString Bone_Name = CreateCharacterConfigConfig->ListConfigNode[L_Key].BoneName.ToString();
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3
+#define DOODLE_ADD_CURVE_IMPL(Owner, Index)                                                           \
+  {                                                                                                   \
+    FRichCurveEditInfo L_Info{                                                                        \
+        &Owner.FloatCurves[(int32)FVectorCurve::EIndex::Index],                                       \
+        FName{Bone_Name + TEXT(".") + Owner.GetName().ToString() + TEXT(".") + TEXT(#Index)}}; \
+    AddCurve(L_Info);                                                                                 \
+  }
+#else
 #define DOODLE_ADD_CURVE_IMPL(Owner, Index)                                                    \
   {                                                                                            \
     FRichCurveEditInfo L_Info{                                                                 \
         &Owner.FloatCurves[(int32)FVectorCurve::EIndex::Index],                                \
-        FName{Bone_Name + TEXT(".") + Owner.GetName().ToString() + TEXT(".") + TEXT(#Index)}}; \
+        FName{Bone_Name + TEXT(".") + Owner.Name.DisplayName.ToString() + TEXT(".") + TEXT(#Index)}}; \
     AddCurve(L_Info);                                                                          \
   }
-
+#endif
 #define DOODLE_ADD_CURVE(Owner)    \
   DOODLE_ADD_CURVE_IMPL(Owner, X); \
   DOODLE_ADD_CURVE_IMPL(Owner, Y); \

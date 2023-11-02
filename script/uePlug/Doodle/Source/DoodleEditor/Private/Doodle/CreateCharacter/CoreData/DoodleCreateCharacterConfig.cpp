@@ -30,9 +30,15 @@ TOptional<FGuid> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bo
   FDoodleCreateCharacterConfigNode& L_Node = ListConfigNode.Emplace(L_Key);
 
   L_Node.WeightCurve.Resize(4.0f, true, -1.0f, 1.0f);
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3
   L_Node.WeightCurve.TranslationCurve.SetName(FName{TEXT("TranslationCurve")});
   L_Node.WeightCurve.RotationCurve.SetName(FName{TEXT("RotationCurve")});
   L_Node.WeightCurve.ScaleCurve.SetName(FName{TEXT("ScaleCurve")});
+#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2
+  L_Node.WeightCurve.TranslationCurve.Name.DisplayName = FName{ TEXT("TranslationCurve") };
+  L_Node.WeightCurve.RotationCurve.Name.DisplayName = FName{ TEXT("RotationCurve") };
+  L_Node.WeightCurve.ScaleCurve.Name.DisplayName = FName{ TEXT("ScaleCurve") };
+#endif
   L_Node.WeightCurve.UpdateOrAddKey(FTransform::Identity, -1.f);
   L_Node.WeightCurve.UpdateOrAddKey(FTransform::Identity, 0.f);
   L_Node.WeightCurve.UpdateOrAddKey(FTransform::Identity, 1.f);
