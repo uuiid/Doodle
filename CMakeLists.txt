@@ -117,6 +117,7 @@ endif ()
 set(CPACK_VERBATIM_VARIABLES TRUE)
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         [==[
+        CreateShortCut "$DESKTOP\Doodle 6.lnk" "$INSTDIR\bin\DoodleExe.exe"
         DeleteRegValue HKCU "SOFTWARE\Doodle\RenderFarm" "server_address"
         DeleteRegKey HKCU "SOFTWARE\Doodle\RenderFarm"
         WriteRegStr HKCU "SOFTWARE\Doodle\RenderFarm" "server_address" "192.168.20.7"
@@ -129,6 +130,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
         [==[
+        Delete "$DESKTOP\Doodle 6.lnk"
         DeleteRegKey HKCU "SOFTWARE\Classes\.doodle_db\OpenWithProgids"
         DeleteRegKey HKCU "SOFTWARE\Classes\.doodle_db"
         DeleteRegKey HKCU "SOFTWARE\Classes\doodle.main\shell\open\command"
