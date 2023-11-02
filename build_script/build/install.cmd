@@ -1,9 +1,9 @@
 call %~dp0/set_venv.cmd
 
-call %~dp0/build_ue4_files.cmd
-call %~dp0/build_houdini.cmd
-call %~dp0/build_maya_plug.cmd 2020
-call %~dp0/build_exe.cmd
+echo ----------------- build --------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset debug_maya_plug --target doodle_maya
 
 echo -----------------copy file--------------------
 if not exist "%my_pwd%\build\html\file" goto create_file_dir
@@ -13,12 +13,13 @@ goto copy_file
 mkdir %my_pwd%\build\html\file
 
 :copy_file
-echo "%my_pwd%\build\html\file *.msi -> %my_pwd%\build\install"
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.exe
 
-echo "%my_pwd%\build\html\file *.7z -> %my_pwd%\build\install "
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z
+echo -----------------copy file--------------------
 
-@REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.exe
-@REM robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.7z
+robocopy %my_pwd%\build\Ninja_release %my_pwd%\build\html\file *.exe
+robocopy %my_pwd%\build\Ninja_release %my_pwd%\build\html\file *.7z
+robocopy %my_pwd%\build\Ninja_release\src\html %my_pwd%\build\html /s /NFL /NDL
+python %my_pwd%/docs/generate_directory_index_caddystyle.py %my_pwd%/build/html/file
+python %my_pwd%/docs/generate_updata_log.py %my_pwd%/build/html/update.html
+
 
