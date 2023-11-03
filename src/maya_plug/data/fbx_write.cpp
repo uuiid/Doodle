@@ -95,7 +95,7 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
   maya_chick(l_status);
   node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
   auto l_rot = in_matrix.eulerRotation();
-  l_rot      = l_rot.boundIt().closestSolution(previous_frame_euler_rotation);
+  //  l_rot      = l_rot.boundIt().closestSolution(previous_frame_euler_rotation);
 
   MAngle l_angle_x{};
   l_angle_x.setUnit(MAngle::kRadians);
@@ -655,30 +655,33 @@ void fbx_node_mesh::build_skin() {
     auto l_joint    = l_dag_tree_map[i];
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
+    if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
+      auto l_node              = l_joint->dag_path.node();
 
-    auto l_node              = l_joint->dag_path.node();
+      auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
+      auto l_index             = ranges::distance(
+          std::begin(l_skin_world_matrix_plug_list),
+          ranges::find_if(l_skin_world_matrix_plug_list, boost::lambda2::_1 == l_world_matrix_plug)
+      );
+      if (l_index == l_skin_world_matrix_plug_list.size()) {
+        log_error(fmt::format("can not find world matrix plug: {}", get_node_name(l_node)));
+        throw_exception(doodle_error{fmt::format("can not find world matrix plug: {}", get_node_name(l_node))});
+      }
 
-    auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
-    auto l_index             = ranges::distance(
-        std::begin(l_skin_world_matrix_plug_list),
-        ranges::find_if(l_skin_world_matrix_plug_list, boost::lambda2::_1 == l_world_matrix_plug)
-    );
-    if (l_index == l_skin_world_matrix_plug_list.size()) {
-      log_error(fmt::format("can not find world matrix plug: {}", get_node_name(l_node)));
-      throw_exception(doodle_error{fmt::format("can not find world matrix plug: {}", get_node_name(l_node))});
+      auto l_post_plug = get_plug(l_skin_obj, "bindPreMatrix")[l_index];
+      MObject l_post_handle{};
+      maya_chick(l_post_plug.getValue(l_post_handle));
+      const MFnMatrixData l_data{l_post_handle};
+      auto l_world_matrix = l_data.matrix(&l_status).inverse();
+      maya_chick(l_status);
+
+      fbxsdk::FbxAMatrix l_fbx_matrix{};
+      for (auto i = 0; i < 4; ++i)
+        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
+      l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
+    } else {
+      l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
     }
-
-    auto l_post_plug = get_plug(l_skin_obj, "bindPreMatrix")[l_index];
-    MObject l_post_handle{};
-    maya_chick(l_post_plug.getValue(l_post_handle));
-    const MFnMatrixData l_data{l_post_handle};
-    auto l_world_matrix = l_data.matrix(&l_status).inverse();
-    maya_chick(l_status);
-
-    fbxsdk::FbxAMatrix l_fbx_matrix{};
-    for (auto i = 0; i < 4; ++i)
-      for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
-    l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
       log_error(fmt::format("add cluster error: {}", node->GetName()));
     }
@@ -1282,8 +1285,8 @@ void fbx_write::build_data() {
     }
   };
 
-  l_iter_fun_mesh(tree_.begin());
   l_iter_fun_tran(tree_.begin());
+  l_iter_fun_mesh(tree_.begin());
 }
 void fbx_write::build_animation(const MTime& in_time) {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
