@@ -3,3 +3,4 @@
 //
 
 #include "sqlite_snapshot.h"
+namespace doodle::snapshot {}
