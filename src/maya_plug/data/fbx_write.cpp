@@ -560,11 +560,6 @@ void fbx_node_mesh::build_skin() {
     auto l_world_matrix = l_data.matrix(&l_status).inverse();
     maya_chick(l_status);
 
-    {
-      MTransformationMatrix l_tran_matrix{l_world_matrix};
-      l_joint->previous_frame_euler_rotation = l_tran_matrix.eulerRotation();
-    }
-
     fbxsdk::FbxAMatrix l_fbx_matrix{};
     for (auto i = 0; i < 4; ++i)
       for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
@@ -1192,24 +1187,24 @@ void fbx_write::build_data() {
   };
   l_iter_init(tree_.begin());
 
-  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
-  l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {
+  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun_tran{};
+  l_iter_fun_tran = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       if (!(*i)->dag_path.hasFn(MFn::kMesh)) (*i)->build_node();
-      l_iter_fun(i);
+      l_iter_fun_tran(i);
     }
   };
-  l_iter_fun(tree_.begin());
 
-  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun2{};
-  l_iter_fun2 = [&](const fbx_tree_t::iterator& in_iterator) {
+  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun_mesh{};
+  l_iter_fun_mesh = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       (*i)->build_node();
-      l_iter_fun2(i);
+      l_iter_fun_mesh(i);
     }
   };
 
-  l_iter_fun2(tree_.begin());
+  l_iter_fun_mesh(tree_.begin());
+  l_iter_fun_tran(tree_.begin());
 }
 void fbx_write::build_animation(const MTime& in_time) {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
