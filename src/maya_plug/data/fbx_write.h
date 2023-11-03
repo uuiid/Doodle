@@ -29,7 +29,7 @@ struct fbx_extra_data {
   fbx_tree_t* tree_{};
 
   using bind_post_matrix_map_t = std::map<MDagPath, bind_post_matrix, details::cmp_dag>;
-
+  std::map<MDagPath, bind_post_matrix, details::cmp_dag>* bind_post{};
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
   fbx_extra_data() = default;
 };
@@ -78,6 +78,7 @@ struct fbx_node_mesh : public fbx_node_transform {
   explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
       : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
 
+  void build_bind_post();
   void build_data() override;
   void build_animation(const MTime& in_time) override;
 
