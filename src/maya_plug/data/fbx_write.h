@@ -39,6 +39,7 @@ struct fbx_node {
   FbxNode* node{};
   std::once_flag flag_{};
   fbx_extra_data extra_data_{};
+  MEulerRotation previous_frame_euler_rotation{};
 
   fbx_node() = default;
   explicit fbx_node(const MDagPath& in_dag_path, FbxNode* in_node) : dag_path(in_dag_path), node(in_node) {}
@@ -57,8 +58,6 @@ struct fbx_node {
 };
 
 struct fbx_node_transform : public fbx_node {
-  MEulerRotation previous_frame_euler_rotation{};
-
   fbx_node_transform() = default;
   explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
   void build_data() override;

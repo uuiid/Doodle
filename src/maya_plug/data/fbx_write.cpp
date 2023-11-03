@@ -95,6 +95,8 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
   maya_chick(l_status);
   node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
   auto l_rot = in_matrix.eulerRotation();
+  l_rot      = l_rot.boundIt().closestSolution(previous_frame_euler_rotation);
+
   MAngle l_angle_x{};
   l_angle_x.setUnit(MAngle::kRadians);
   l_angle_x.setValue(l_rot.x);
@@ -174,13 +176,12 @@ void fbx_node_cam::build_animation(const MTime& in_time) {}
 
 ////
 void fbx_node_transform::build_data() {
-  build_node_transform(dag_path);
   MFnTransform l_transform{dag_path};
   auto l_attr_null = FbxNull::Create(node->GetScene(), l_transform.name().asChar());
   l_attr_null->Look.Set(FbxNull::eNone);
   node->SetNodeAttribute(l_attr_null);
-
   previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
+  build_node_transform(dag_path);
 }
 
 void fbx_node_transform::build_animation(const MTime& in_time) {
@@ -559,6 +560,11 @@ void fbx_node_mesh::build_skin() {
     auto l_world_matrix = l_data.matrix(&l_status).inverse();
     maya_chick(l_status);
 
+    {
+      MTransformationMatrix l_tran_matrix{l_world_matrix};
+      l_joint->previous_frame_euler_rotation = l_tran_matrix.eulerRotation();
+    }
+
     fbxsdk::FbxAMatrix l_fbx_matrix{};
     for (auto i = 0; i < 4; ++i)
       for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
@@ -888,6 +894,33 @@ void fbx_node_joint::build_data() {
   //      node->SetPreRotation(FbxNode::eSourcePivot, FbxVector4{l_vector_x, l_vector_y, l_vector_z});
   node->UpdatePivotsAndLimitsFromProperties();
   node->SetNodeAttribute(l_sk_attr);
+
+  //  auto l_node              = dag_path.node();
+  //
+  //  auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
+  //  MPlugArray l_plug_array{};
+  //  if (l_world_matrix_plug.isSource()) {
+  //    if (l_world_matrix_plug.destinations(l_plug_array, &l_status)) {
+  //      maya_chick(l_status);
+  //      auto l_skin_world_matrix_plug           = l_plug_array[0];
+  //      auto l_skin_obj                         = l_skin_world_matrix_plug.node();
+  //      auto l_skin_world_matrix_plug_list_plug = get_plug(l_skin_obj, "matrix");
+  //      auto l_post_plug_list                   = get_plug(l_skin_obj, "bindPreMatrix");
+  //
+  //      for (auto i = 0; i < l_skin_world_matrix_plug_list_plug.numElements(); ++i) {
+  //        if (l_skin_world_matrix_plug_list_plug[i] == l_skin_world_matrix_plug) {
+  //          MObject l_post_handle{};
+  //          maya_chick(l_post_plug_list[i].getValue(l_post_handle));
+  //          const MFnMatrixData l_data{l_post_handle};
+  //          auto l_world_matrix = l_data.matrix(&l_status).inverse();
+  //          maya_chick(l_status);
+  //          const MTransformationMatrix l_tran_matrix{l_world_matrix};
+  //          previous_frame_euler_rotation = l_tran_matrix.eulerRotation();
+  //        }
+  //      }
+  //    }
+  //  }
+
   build_node_transform(dag_path);
 
   auto l_parent_path = dag_path;
