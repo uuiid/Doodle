@@ -242,7 +242,7 @@ void assets_file_widgets::switch_rander() {
 
 void assets_file_widgets::init() {
   g_reg()->ctx().emplace<assets_file_widgets&>(*this);
-  auto& l_sig = g_reg()->ctx().get<core_sig>();
+  auto& l_sig = g_ctx().get<core_sig>();
   auto l_view = g_reg()->view<assets_file>();
 
   generate_lists(
@@ -323,7 +323,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     ranges::for_each(l_list, [](entt::handle& in_handle) {
       if (in_handle) in_handle.destroy();
     });
-    auto& l_sig = g_reg()->ctx().get<core_sig>();
+    auto& l_sig = g_ctx().get<core_sig>();
     l_sig.select_handles({});
     l_sig.select_handle({});
     boost::asio::post(g_io_context(), [this, l_list]() {
@@ -367,7 +367,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   if (!l_handle_list.empty()) {
     g_reg()->ctx().erase<std::vector<entt::handle>>();
     g_reg()->ctx().emplace<std::vector<entt::handle>>(l_handle_list);
-    auto& l_sig = g_reg()->ctx().get<core_sig>();
+    auto& l_sig = g_ctx().get<core_sig>();
     l_sig.select_handles(l_handle_list);
     l_sig.select_handle(i.handle_);
     g_reg()->ctx().get<status_info>().select_size = l_handle_list.size();

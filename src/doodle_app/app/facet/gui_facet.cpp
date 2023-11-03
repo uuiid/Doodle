@@ -266,7 +266,7 @@ void gui_facet::init_windows() {
     );
     set_title(l_str);
   };
-  g_reg()->ctx().get<core_sig>().project_end_open.connect(s_set_title_fun);
+  g_ctx().get<core_sig>().project_end_open.connect(s_set_title_fun);
 
   s_set_title_fun();
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });

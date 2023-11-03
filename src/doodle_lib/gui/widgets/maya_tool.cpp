@@ -97,7 +97,7 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
 }
 
 void maya_tool::init() {
-  ptr_attr->scoped_connection_1 = g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
+  ptr_attr->scoped_connection_1 = g_ctx().get<core_sig>().project_end_open.connect([this]() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
   p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();

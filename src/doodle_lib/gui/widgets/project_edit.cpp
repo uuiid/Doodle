@@ -189,7 +189,7 @@ project_edit::~project_edit() = default;
 
 void project_edit::init() {
   p_i->config_init();
-  p_i->scoped_connections_.emplace_back(g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
+  p_i->scoped_connections_.emplace_back(g_ctx().get<core_sig>().project_end_open.connect([this]() {
     p_i->config_init();
   }));
 }

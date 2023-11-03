@@ -221,7 +221,7 @@ class assets_filter_widget::impl {
 
 assets_filter_widget::assets_filter_widget() : p_impl(std::make_unique<impl>()) {
   p_impl->title_name_ = std::string{name};
-  auto& l_sig         = g_reg()->ctx().get<core_sig>();
+  auto& l_sig         = g_ctx().get<core_sig>();
   p_impl->connection  = l_sig.project_end_open.connect([&]() { init(); });
   init();
 }
@@ -317,7 +317,7 @@ void assets_filter_widget::filter_list() {
       }) |
       ranges::to_vector;
 
-  g_reg()->ctx().get<core_sig>().filter_handle(list);
+  g_ctx().get<core_sig>().filter_handle(list);
 }
 
 }  // namespace doodle::gui

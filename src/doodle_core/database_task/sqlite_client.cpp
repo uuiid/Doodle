@@ -58,13 +58,13 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
     k_msg.set_name("加载数据");
     k_msg.set_state(k_msg.run);
     g_reg()->clear();
-    g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
+    g_ctx().get<core_sig>().project_begin_open(project_path);
     registry_attr = g_reg();
   }
 
   auto l_end_call = [this]() {
     registry_attr->ctx().get<project>().set_path(project_path.parent_path());
-    g_reg()->ctx().get<core_sig>().project_end_open();
+    g_ctx().get<core_sig>().project_end_open();
     auto& k_msg = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("完成写入数据");
     k_msg.set_state(k_msg.success);
@@ -172,7 +172,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
     auto& k_msg                        = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("导入数据");
     k_msg.set_state(k_msg.run);
-    g_reg()->ctx().get<core_sig>().project_begin_open(project_path);
+    g_ctx().get<core_sig>().project_begin_open(project_path);
   }
   auto l_old      = std::make_shared<bool>();
   auto l_end_call = [this, l_old]() {
@@ -185,7 +185,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
       k_msg.set_state(k_msg.success);
     }
     g_reg()->ctx().erase<process_message>();
-    g_reg()->ctx().get<core_sig>().project_end_open();
+    g_ctx().get<core_sig>().project_end_open();
     is_run = false;
   };
   boost::asio::post(

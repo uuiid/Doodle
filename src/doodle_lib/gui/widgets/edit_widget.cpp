@@ -124,7 +124,7 @@ class edit_widgets::impl {
 edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
   g_reg()->ctx().emplace<edit_widgets &>(*this);
-  auto &l_sig      = g_reg()->ctx().get<core_sig>();
+  auto &l_sig      = g_ctx().get<core_sig>();
   p_i->p_sc        = l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) {
     p_i->p_h = in;
     gen_text();
