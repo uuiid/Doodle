@@ -17,5 +17,4 @@ class one_file_base {
 };
 
 }  // namespace detail
-
 }  // namespace doodle

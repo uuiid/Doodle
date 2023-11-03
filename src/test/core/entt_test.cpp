@@ -112,11 +112,10 @@ BOOST_AUTO_TEST_CASE(save) {
   l_h.emplace<std::string>("test");
 
   l_h = entt::handle{reg, reg.create()};
-  l_h.emplace<std::int32_t>(2);
+  l_h.emplace<std::int32_t>(5);
   l_h.emplace<std::string>("test2");
 
   l_h = entt::handle{reg, reg.create()};
-  l_h.emplace<std::int32_t>(3);
   l_h.emplace<std::string>("test3");
 
   entt::snapshot l_snapshot{reg};

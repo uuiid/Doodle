@@ -2,17 +2,10 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/pin_yin/convert.h>
 
-#include <boost/phoenix.hpp>
-#include <boost/phoenix/bind/bind_member_variable.hpp>
-#include <boost/phoenix/core/reference.hpp>
-#include <boost/phoenix/core/value.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
-#include <cstddef>
-#include <entt/entity/fwd.hpp>
-#include <fmt/core.h>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/iota.hpp>
 #include <range/v3/view/transform.hpp>
