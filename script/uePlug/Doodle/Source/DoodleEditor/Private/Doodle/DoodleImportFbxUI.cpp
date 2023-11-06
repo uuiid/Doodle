@@ -1482,6 +1482,9 @@ TArray<FDoodleUSkeletonData_1> FDoodleUSkeletonData_1::ListAllSkeletons() {
   LFilter.ClassPaths.Add(USkeleton::StaticClass()->GetClassPathName());
 
   IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool {
+    if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Shot/"))) {
+      return true;
+    }
     if (USkeleton* L_SK = Cast<USkeleton>(InAss.GetAsset())) {
       FDoodleUSkeletonData_1& L_Ref_Data = L_AllSkinObjs.Emplace_GetRef();
       L_Ref_Data.SkinObj                 = L_SK;
