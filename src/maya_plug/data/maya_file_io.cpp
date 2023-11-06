@@ -159,8 +159,18 @@ void maya_file_io::set_workspace(const FSys::path& in_path) {
   }
 }
 
+auto open_file_impl(const MString& in_str, MFileIO::ReferenceMode in_mod) {
+  MStatus l_s{};
+  __try {
+    l_s = MFileIO::open(in_str, nullptr, true, in_mod, true);
+  } __except (EXCEPTION_CONTINUE_SEARCH) {
+  }
+  return l_s;
+}
+
 void maya_file_io::open_file(const FSys::path& in_file_path, MFileIO::ReferenceMode in_mode) {
-  maya_chick(MFileIO::open(conv::to_ms(in_file_path.generic_string()), nullptr, true, in_mode, true));
+  auto l_str = conv::to_ms(in_file_path.generic_string());
+  maya_chick(open_file_impl(l_str, in_mode));
 }
 
 }  // namespace doodle::maya_plug

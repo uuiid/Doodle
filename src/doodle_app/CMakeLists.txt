@@ -43,7 +43,6 @@ target_link_libraries(
 
 target_compile_options(doodle_app
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /EHs >
         PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj >
         $<$<CXX_COMPILER_ID:MSVC>: /MP >

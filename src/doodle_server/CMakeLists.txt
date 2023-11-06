@@ -54,7 +54,6 @@ target_compile_definitions(doodle_server_lib
 )
 target_compile_options(doodle_server_lib
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /EHs>
         $<$<CXX_COMPILER_ID:MSVC>: /MP>
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )

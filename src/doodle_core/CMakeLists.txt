@@ -101,7 +101,6 @@ target_compile_definitions(doodle_core
 
 target_compile_options(doodle_core
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>:/EHs>
         $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
         $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor>
 

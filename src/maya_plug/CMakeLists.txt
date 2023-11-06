@@ -38,6 +38,7 @@ target_link_libraries(doodle_maya_lib
         Alembic::Alembic
         Fbx::Fbx-static
 )
+
 target_compile_options(
         doodle_maya_lib
         PRIVATE
@@ -45,3 +46,15 @@ target_compile_options(
         $<$<CXX_COMPILER_ID:MSVC>:/MP>
         $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 )
+
+
+#target_compile_options(
+#        doodle_maya_lib
+#        PRIVATE
+#        $<$<CXX_COMPILER_ID:MSVC>:/EHa>
+#)
+#
+#string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+#string(REPLACE "/EHs" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+#string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+#string(REPLACE "/EHs" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")

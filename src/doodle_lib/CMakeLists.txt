@@ -96,7 +96,6 @@ target_compile_definitions(doodle_lib
 )
 target_compile_options(doodle_lib
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /EHs>
         $<$<CXX_COMPILER_ID:MSVC>: /MP>
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
