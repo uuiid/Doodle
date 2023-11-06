@@ -70,14 +70,14 @@ install(CODE
         "
 # 修复dll
 include(BundleUtilities)
-fixup_bundle(\"${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:DoodleExe>.exe\" \"\" \"${CMAKE_INSTALL_PREFIX}/bin\"
+fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:DoodleExe>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\"
         IGNORE_ITEM
         ${DOODLE_INSTALL_IGNORE_ITEM}
 )
 
 # 生成授权文件
 execute_process(
-        COMMAND $<TARGET_FILE:generate_token> ${CMAKE_INSTALL_PREFIX}/bin/
+        COMMAND $<TARGET_FILE:generate_token> \${CMAKE_INSTALL_PREFIX}/bin/
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 )
         "
