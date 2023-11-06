@@ -417,7 +417,7 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
   L_ImportFbx->ImportFromFile(*ImportPath, FPaths::GetExtension(ImportPath));
   ON_SCOPE_EXIT { L_ImportFbx->ReleaseScene(); };
   FScopedSlowTask L_Task_Scoped2{
-      (float_t)L_ImportFbx->Scene->GetNodeCount() * 2, LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
+      (float_t)L_ImportFbx->Scene->GetNodeCount(), LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
 
   TSet<FString> L_NodeNameSet{};
 
@@ -439,7 +439,6 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
   }
 
   for (auto&& L_SK_Data : In_Skeleton) {
-    L_Task_Scoped2.EnterProgressFrame(1.0f);
     if (FString L_BaseName = FPaths::GetBaseFilename(ImportPath);
         !L_SK_Data.SkinTag.IsEmpty() && L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE) {
       SkinObj = L_SK_Data.SkinObj;
@@ -447,7 +446,6 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
     }
   }
   for (auto&& L_SK_Data : In_Skeleton) {
-    L_Task_Scoped2.EnterProgressFrame(1.0f);
     if (Algo::AllOf(
             L_SK_Data.BoneNames, [&](const FString& IN_Str) { return L_NodeNameSet.Contains(IN_Str); }
         )  /// 进一步确认骨骼内容
