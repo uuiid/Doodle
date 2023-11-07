@@ -63,6 +63,10 @@ class windows_manage::warp_w {
               *l_s = in;
               std::call_once(once_flag_popup_, [this]() { ImGui::OpenPopup(args_.title_.data()); });
             },
+            [l_s = &l_show, this](dear::PopupModal& in) {
+              *l_s = in;
+              std::call_once(once_flag_popup_, [this]() { ImGui::OpenPopup(args_.title_.data()); });
+            },
             [l_s = &l_show, this](dear::Begin& in) { *l_s = *args_.init_show_; },  // open会永远返回true, 不使用返回值
             [l_s = &l_show](dear::MainMenuBar& in) { *l_s = in; },
             [l_s = &l_show](dear::ViewportSideBar& in) { *l_s = in; },

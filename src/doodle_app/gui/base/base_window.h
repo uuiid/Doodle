@@ -132,7 +132,7 @@ class windows_manage {
 
 class windows_init_arg {
   friend class windows_manage;
-  using dear_types = std::variant<dear::Popup, dear::Begin, dear::MainMenuBar, dear::ViewportSideBar>;
+  using dear_types = std::variant<dear::Popup, dear::PopupModal, dear::Begin, dear::MainMenuBar, dear::ViewportSideBar>;
 
   enum class render_enum : std::uint8_t {
     kpopup = 0,
@@ -214,6 +214,16 @@ class windows_init_arg {
   inline windows_init_arg& set_render_type() {
     create_guard_ = [](windows_init_arg* in) {
       return dear_types{std::in_place_type_t<dear::Popup>{}, in->title_.data(), in->flags_};
+    };
+    render_enum_ = render_enum::kpopup;
+
+    return *this;
+  };
+
+  template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::PopupModal>>* = nullptr>
+  inline windows_init_arg& set_render_type() {
+    create_guard_ = [](windows_init_arg* in) {
+      return dear_types{std::in_place_type_t<dear::PopupModal>{}, in->title_.data(), nullptr, in->flags_};
     };
     render_enum_ = render_enum::kpopup;
 

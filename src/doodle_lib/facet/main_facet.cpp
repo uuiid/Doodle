@@ -13,6 +13,7 @@
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
+#include <doodle_app/gui/open_project.h>
 
 #include <doodle_lib/gui/asset_library_layout.h>
 #include <doodle_lib/gui/layout_window.h>
@@ -48,8 +49,8 @@ main_facet::main_facet() : facet::gui_facet() {
 void main_facet::load_windows() {
   /// 在这里我们加载项目
   g_ctx().get<program_options>().init_project();
+  using namespace gui;
   {
-    using namespace gui;
     g_windows_manage().register_layout(layout_init_arg{}.create<layout_window>());
     g_windows_manage().register_layout(layout_init_arg{}.create<asset_library_layout>());
     g_windows_manage().register_layout(layout_init_arg{}.create<solving_fabric_layout>());
@@ -57,6 +58,9 @@ void main_facet::load_windows() {
     //     core_set::get_set().layout_config.empty() ? layout_window::name : core_set::get_set().layout_config
     // );
   }
+
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create<open_project>().set_render_type<dear::PopupModal>());
+
   gui::g_windows_manage().create_windows_arg(
       gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
   );
@@ -66,7 +70,6 @@ void main_facet::load_windows() {
       )
   );
   {
-    using namespace gui;
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<edit_widgets>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_filter_widget>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<maya_tool>());
