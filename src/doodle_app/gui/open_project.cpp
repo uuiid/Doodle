@@ -13,7 +13,7 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 namespace doodle::gui {
 #ifdef DNDEBUG
-constexpr auto main_project{""};
+constexpr auto main_project{"//192.168.10.250/public/Prism_projects/db_file/doodle_main.doodle_db"};
 #else
 constexpr auto main_project{"E:/cache/doodle_main.doodle_db"};
 #endif

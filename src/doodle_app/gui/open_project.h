@@ -11,7 +11,7 @@ class open_project {
  public:
   open_project()  = default;
   ~open_project() = default;
-  constexpr static std::string_view name{"打开项目"};
+  constexpr static std::string_view name{"初始化"};
   static constexpr std::array<float, 2> sizexy{640, 360};
   bool render();
 };
