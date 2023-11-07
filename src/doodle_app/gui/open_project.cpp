@@ -7,6 +7,9 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/database_task/sqlite_client.h>
 
+#include <doodle_app/app/app_command.h>
+#include <doodle_app/gui/base/ref_base.h>
+#include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 namespace doodle::gui {
 #ifdef DNDEBUG
@@ -25,13 +28,21 @@ bool open_project::render() {
   for (auto&& l_p : core_set::get_set().project_root) {
     if (!l_p.empty()) {
       if (ImGui::Button(l_p.generic_string().c_str())) {
-        g_ctx().get<database_n::file_translator_ptr>()->async_open(main_project);
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_p);
         open = false;
       }
     }
   }
 
   if (ImGui::Button("其他文件")) {
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}
+            .create<file_dialog>(file_dialog::dialog_args{}.async_read([](const FSys::path& in) mutable {
+              g_ctx().get<database_n::file_translator_ptr>()->async_open(in);
+            }))
+            .set_title("打开项目")
+            .set_render_type<dear::Popup>()
+    );
     open = false;
   }
   return open;
