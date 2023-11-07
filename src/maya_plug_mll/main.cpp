@@ -74,7 +74,6 @@ void open_windows() {
       g_ctx().get<program_info>().parent_windows_attr(win_id);
       /// 在这里我们加载项目
       g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
-      g_ctx().get<program_options>().init_project();
       break;
     }
     case MGlobal::MMayaState::kBatch:
