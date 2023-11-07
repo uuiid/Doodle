@@ -48,8 +48,9 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
 
 void file_translator::async_open_impl(const FSys::path& in_path) {
   if (is_run) return;
-  is_run       = true;
+  if (!project_path.empty() && !FSys::exists(in_path)) return;
 
+  is_run       = true;
   project_path = in_path;
 
   {

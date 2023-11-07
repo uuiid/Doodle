@@ -64,9 +64,11 @@ class sqlite_snapshot {
   void operator()(entt::entity& in_entity);
 
   template <typename... Component>
-  void load_(entt::snapshot_loader& in_loader) {
+  void load(FSys::path in_data_path, entt::snapshot_loader& in_loader) {
     (in_loader.get<Component>(*this), ...);
   }
+
+  void save(FSys::path in_data_path, const std::vector<std::int64_t>& in_delete_id);
 
   // 组件的加载和保存
   template <typename T>
