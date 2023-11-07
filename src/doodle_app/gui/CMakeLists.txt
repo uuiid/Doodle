@@ -7,6 +7,7 @@ target_sources(doodle_app
         open_file_dialog.h
         show_message.h
         layout_window_base.h
+        open_project.h
 
         PRIVATE
         get_input_dialog.cpp
@@ -16,6 +17,6 @@ target_sources(doodle_app
         open_file_dialog.cpp
         show_message.cpp
         layout_window_base.cpp
-
+        open_project.cpp
         )
 add_subdirectory(base)
