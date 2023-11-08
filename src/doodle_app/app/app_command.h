@@ -23,12 +23,6 @@ namespace doodle {
  */
 template <typename Facet_Defaute, typename... Facet_>
 class app_command : public app_base {
- protected:
-  bool chick_authorization() override {
-    DOODLE_LOG_INFO("开始检查授权");
-    return authorization{}.is_expire();
-  };
-
  public:
   app_command() : app_base() {
     g_ctx().emplace<program_options>();
