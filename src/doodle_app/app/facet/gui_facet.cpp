@@ -273,9 +273,9 @@ void gui_facet::init_windows() {
 void gui_facet::close_windows() {
   auto g_quit{[l_hwnd = p_hwnd, this]() {
     ::ShowWindow(l_hwnd, SW_HIDE);
-    doodle::app_base::Get().stop_app();
     ::DestroyWindow(l_hwnd);
     this->translate_message();
+    doodle::app_base::Get().stop_app();
   }};
 
   boost::asio::post(g_io_context(), g_quit);
