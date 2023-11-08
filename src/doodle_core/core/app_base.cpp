@@ -33,15 +33,6 @@ app_base::app_base()
   auto&& l_program_info  = g_ctx().emplace<program_info>();
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
   init();
-  auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  l_timer->expires_after(1s);
-  l_timer->async_wait([l_timer, this](auto) {
-    /// 检查授权失败直接退出
-    if (!chick_authorization()) {
-      DOODLE_LOG_INFO("授权失败, 退出");
-      stop_app();
-    }
-  });
 }
 
 void app_base::init() {
