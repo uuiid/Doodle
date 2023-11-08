@@ -68,6 +68,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   std::string depot_ip{};
 
   std::uint8_t assets_file_widgets_size;
+  bool next_time_{};
 
  private:
   // 用户名称

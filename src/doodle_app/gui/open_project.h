@@ -15,12 +15,15 @@ class open_project {
   std::string expire_time_str_;
   // 授权码
   gui_cache<std::string> auth_code_{"授权码"};
+  // 下次不显示, 直接跳过
+  gui_cache<bool> next_time_{"下次不显示, 直接打开上次的项目", false};
+  bool next_time_backup_{false};
 
  public:
   open_project();
   ~open_project() = default;
   constexpr static std::string_view name{"初始化"};
-  static constexpr std::array<float, 2> sizexy{640, 360};
+  static constexpr std::array<float, 2> sizexy{940, 560};
   bool render();
 };
 
