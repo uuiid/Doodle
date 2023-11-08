@@ -40,40 +40,25 @@ bool authorization::is_build_near() {
 
 void authorization::load_authorization_data(const std::string& in_data) {
   DOODLE_LOG_INFO("开始检查授权文件内容");
-  std::string ciphertext{in_data};
+
   std::string decryptedtext{};
 
   {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
     l_decryption.SetKeyWithIV(
-        doodle_config::cryptopp_key.data(), CryptoPP::AES::DEFAULT_KEYLENGTH, doodle_config::cryptopp_iv.data(),
-        CryptoPP::AES::BLOCKSIZE
+        doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
+        doodle_config::cryptopp_iv.size()
     );
 
-    const std::string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_iv.size());
-    const std::string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_iv.size());
-
-    DOODLE_CHICK(ciphertext.size() == enc.size() + mac.size(), doodle_error{"授权码解码失误"});
-    DOODLE_CHICK(doodle_config::cryptopp_iv.size() == mac.size(), doodle_error{"授权码解码失误"});
-
-    CryptoPP::AuthenticatedDecryptionFilter df{
-        l_decryption, new CryptoPP::StringSink{decryptedtext},
-        CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
-            CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
-        doodle_config::cryptopp_iv.size()};
-
-    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)mac.data(), mac.size());
-    df.ChannelPut(
-        CryptoPP::AAD_CHANNEL, (const CryptoPP::byte*)doodle_config::authorization_data.data(),
-        doodle_config::authorization_data.size()
-    );
-    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)enc.data(), enc.size());
-
-    df.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
-    df.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
+    CryptoPP::StringSource l_file{
+        in_data, true,
+        new CryptoPP::HexDecoder{new CryptoPP::AuthenticatedDecryptionFilter{
+            l_decryption, new CryptoPP::StringSink{decryptedtext},
+            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size}}};
+    //    l_file.Flush(true);
   }
-  *p_i                 = nlohmann::json::parse(decryptedtext).get<impl>();
-  p_i->ciphertext_data = std::move(ciphertext);
+  *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
+  //  p_i->ciphertext_data = std::move(ciphertext);
 }
 
 void authorization::load_authorization_data(std::istream& in_path) {
@@ -96,6 +81,9 @@ void authorization::load_authorization_data(std::istream& in_path) {
     //    l_file.Flush(true);
   }
   *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
+  in_path.clear();
+  in_path.seekg(0, std::ios::beg);
+  p_i->ciphertext_data = std::string{std::istreambuf_iterator<char>{in_path}, std::istreambuf_iterator<char>{}};
 }
 
 authorization::authorization(const std::string& in_data) : p_i(std::make_unique<impl>()) {
@@ -120,7 +108,6 @@ authorization::authorization() : p_i(std::make_unique<impl>()) {
     FSys::ifstream ifstream{l_p, std::ifstream::binary};
     //    std::string l_s{std::istream_iterator<char>{ifstream}, std::istream_iterator<char>{}};
     load_authorization_data(ifstream);
-    //    load_authorization_data(l_s);
   }
 }
 authorization::~authorization() { save(); }
@@ -153,6 +140,9 @@ void authorization::save(const FSys::path& in_path) const {
   if (!exists(in_path.parent_path())) create_directories(in_path.parent_path());
   FSys::ofstream{in_path, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc} << p_i->ciphertext_data;
 }
+
+time_point_wrap::time_duration authorization::get_expire_time() const { return p_i->l_time - time_point_wrap::now(); }
+
 void authorization::save() const { save(core_set::get_set().get_doc() / FSys::path{doodle_config::token_name.data()}); }
 
 }  // namespace doodle

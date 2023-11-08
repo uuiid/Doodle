@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include <doodle_core/metadata/time_point_wrap.h>
+
 #include "doodle_app/doodle_app_fwd.h"
 
 namespace doodle {
@@ -10,7 +12,6 @@ class DOODLE_APP_API authorization {
   class impl;
   std::unique_ptr<impl> p_i;
 
-  void load_authorization_data(const std::string& in_str);
   void load_authorization_data(std::istream& in_apth);
 
   bool is_build_near();
@@ -23,6 +24,9 @@ class DOODLE_APP_API authorization {
   [[nodiscard]] bool is_expire() const;
   void save(const FSys::path& in_path) const;
   void save() const;
+  void load_authorization_data(const std::string& in_str);
+
+  time_point_wrap::time_duration get_expire_time() const;
 
   static void generate_token(const FSys::path& in_path);
 };
