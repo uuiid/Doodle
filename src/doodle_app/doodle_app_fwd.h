@@ -9,6 +9,7 @@
 #include <doodle_app/configure/doodle_app_export.h>
 
 namespace doodle {
+class authorization;
 
 namespace details {
 class program_options;
