@@ -14,6 +14,7 @@
 #include <doodle_app/gui/main_menu_bar.h>
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
+#include <doodle_app/gui/open_project.h>
 
 #include <boost/asio/post.hpp>
 
@@ -34,6 +35,8 @@ void maya_facet::load_windows() {
   g_windows_manage().create_windows_arg(
       windows_init_arg{}.create<main_status_bar>().set_render_type<dear::ViewportSideBar>(nullptr, ImGuiDir_Down)
   );
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create<open_project>().set_render_type<dear::PopupModal>());
+
   g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<comm_check_scenes>());
   g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<reference_attr_setting>());
   g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<create_sim_cloth>());

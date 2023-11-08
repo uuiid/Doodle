@@ -57,9 +57,6 @@ void main_facet::load_windows() {
     //     core_set::get_set().layout_config.empty() ? layout_window::name : core_set::get_set().layout_config
     // );
   }
-
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create<open_project>().set_render_type<dear::PopupModal>());
-
   gui::g_windows_manage().create_windows_arg(
       gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
   );
@@ -69,6 +66,8 @@ void main_facet::load_windows() {
       )
   );
   {
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create<open_project>().set_render_type<dear::PopupModal>()
+    );
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<edit_widgets>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_filter_widget>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<maya_tool>());
