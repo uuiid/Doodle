@@ -43,7 +43,7 @@ void authorization::load_authorization_data(const std::string& in_data) {
 
   std::string decryptedtext{};
 
-  {
+  try {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
     l_decryption.SetKeyWithIV(
         doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
@@ -56,7 +56,11 @@ void authorization::load_authorization_data(const std::string& in_data) {
             l_decryption, new CryptoPP::StringSink{decryptedtext},
             CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size}}};
     //    l_file.Flush(true);
+  } catch (const CryptoPP::Exception& error) {
+    log_error(fmt::format("解析授权码错误 : {}", error.what()));
+    return;
   }
+
   *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
   //  p_i->ciphertext_data = std::move(ciphertext);
 }
@@ -66,7 +70,7 @@ void authorization::load_authorization_data(std::istream& in_path) {
 
   std::string decryptedtext{};
 
-  {
+  try {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
     l_decryption.SetKeyWithIV(
         doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
@@ -79,6 +83,9 @@ void authorization::load_authorization_data(std::istream& in_path) {
             l_decryption, new CryptoPP::StringSink{decryptedtext},
             CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size}}};
     //    l_file.Flush(true);
+  } catch (const CryptoPP::Exception& error) {
+    log_error(fmt::format("解析授权码错误 : {}", error.what()));
+    return;
   }
   *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
   in_path.clear();
