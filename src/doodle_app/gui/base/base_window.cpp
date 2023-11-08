@@ -35,7 +35,6 @@ class windows_manage::warp_w {
   std::once_flag once_flag_size_{};
   std::once_flag once_flag_popup_{};
   windows_init_arg::windows_t win_render{};
-  gui_cache_name_id title{};
 
   explicit warp_w(windows_init_arg in_arg) : args_(std::move(in_arg)) {}
   ~warp_w() { *args_.init_show_ = false; }
@@ -43,7 +42,11 @@ class windows_manage::warp_w {
   bool render() {
     switch (args_.render_enum_) {
       case windows_init_arg::render_enum::kpopup:
-        ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]}, ImGuiCond_Once);
+        std::call_once(once_flag_popup_, [this]() {
+          log_info(fmt::format("打开弹出窗口 {}", args_.title_));
+          ImGui::OpenPopup(args_.title_.data());
+          ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]}, ImGuiCond_Once);
+        });
         //        ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]});
         break;
       case windows_init_arg::render_enum::kbegin:
@@ -59,14 +62,8 @@ class windows_manage::warp_w {
     bool l_show{};
     std::visit(
         entt::overloaded{
-            [l_s = &l_show, this](dear::Popup& in) {
-              *l_s = in;
-              std::call_once(once_flag_popup_, [this]() { ImGui::OpenPopup(args_.title_.data()); });
-            },
-            [l_s = &l_show, this](dear::PopupModal& in) {
-              *l_s = in;
-              std::call_once(once_flag_popup_, [this]() { ImGui::OpenPopup(args_.title_.data()); });
-            },
+            [l_s = &l_show, this](dear::Popup& in) { *l_s = in; },
+            [l_s = &l_show, this](dear::PopupModal& in) { *l_s = in; },
             [l_s = &l_show, this](dear::Begin& in) { *l_s = *args_.init_show_; },  // open会永远返回true, 不使用返回值
             [l_s = &l_show](dear::MainMenuBar& in) { *l_s = in; },
             [l_s = &l_show](dear::ViewportSideBar& in) { *l_s = in; },
@@ -74,9 +71,10 @@ class windows_manage::warp_w {
         l_win
     );
     if (!l_show) {
+      log_info(fmt::format("关闭窗口: {}", args_.title_));
       args_.set_open(l_show, win_render.storage_);
       win_render.reset();
-      return *args_.init_show_;
+      return *args_.init_show_ && l_show;
     }
 
     if (win_render) {

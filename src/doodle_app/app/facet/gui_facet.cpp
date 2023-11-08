@@ -282,14 +282,8 @@ void gui_facet::close_windows() {
     this->translate_message();
     doodle::app_base::Get().stop_app();
   }};
-  if (::GetForegroundWindow() == p_hwnd) {
-    gui::g_windows_manage().create_windows_arg(
-        gui::windows_init_arg{}.create<gui::close_exit_dialog>([=]() { boost::asio::post(g_io_context(), g_quit); }
-        ).set_render_type<dear::Popup>()
-    );
 
-  } else
-    boost::asio::post(g_io_context(), g_quit);
+  boost::asio::post(g_io_context(), g_quit);
 }
 void gui_facet::show_windows() const { ::ShowWindow(p_hwnd, SW_SHOW); }
 void gui_facet::set_title(const std::string& in_title) const {
