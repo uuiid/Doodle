@@ -23,6 +23,15 @@ namespace doodle {
 class DOODLE_CORE_API app_base {
  public:
  protected:
+  class cancellation_signals {
+    std::list<boost::asio::cancellation_signal> sigs;
+    std::mutex mtx;
+
+   public:
+    void emit(boost::asio::cancellation_type ct = boost::asio::cancellation_type::all);
+
+    boost::asio::cancellation_slot slot();
+  };
   static app_base* self;
   doodle_lib_ptr lib_ptr;
 
@@ -61,6 +70,7 @@ class DOODLE_CORE_API app_base {
   virtual std::int32_t poll_one();
 
   boost::signals2::signal<void()> on_stop;
+  cancellation_signals on_cancel;
 
   void stop_app(bool in_stop = false);
 

@@ -85,16 +85,15 @@ bool gui_facet::post() {
     this->tick();  /// 渲染
     if (!g_ctx().get<program_info>().stop_attr()) {
       p_i->timer_->expires_after(doodle::chrono::seconds{1} / 60);
-      p_i->timer_->async_wait(s_fun);
+      p_i->timer_->async_wait(boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), s_fun));
     }
   };
 
   p_i->timer_->expires_after(doodle::chrono::seconds{1} / 60);
-  p_i->timer_->async_wait(s_fun);
+  p_i->timer_->async_wait(boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), s_fun));
   return true;
 }
 void gui_facet::deconstruction() {
-  if (p_i->timer_) p_i->timer_->cancel();
   if (p_hwnd) {
     // Cleanup
     ImGui_ImplDX11_Shutdown();
@@ -273,14 +272,10 @@ void gui_facet::init_windows() {
 }
 void gui_facet::close_windows() {
   auto g_quit{[l_hwnd = p_hwnd, this]() {
-    if (p_i->timer_) {
-      p_i->timer_->cancel();
-      p_i->timer_->wait();
-    }
     ::ShowWindow(l_hwnd, SW_HIDE);
+    doodle::app_base::Get().stop_app();
     ::DestroyWindow(l_hwnd);
     this->translate_message();
-    doodle::app_base::Get().stop_app();
   }};
 
   boost::asio::post(g_io_context(), g_quit);

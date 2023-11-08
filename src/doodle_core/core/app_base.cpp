@@ -22,6 +22,25 @@
 
 namespace doodle {
 
+void app_base::cancellation_signals::emit(boost::asio::cancellation_type ct) {
+  std::lock_guard<std::mutex> _(mtx);
+
+  for (auto& sig : sigs) sig.emit(ct);
+}
+
+boost::asio::cancellation_slot app_base::cancellation_signals::slot() {
+  std::lock_guard<std::mutex> _(mtx);
+
+  auto itr = std::find_if(sigs.begin(), sigs.end(), [](boost::asio::cancellation_signal& sig) {
+    return !sig.slot().has_handler();
+  });
+
+  if (itr != sigs.end())
+    return itr->slot();
+  else
+    return sigs.emplace_back().slot();
+}
+
 app_base* app_base::self = nullptr;
 
 app_base::app_base()
@@ -60,6 +79,7 @@ std::int32_t app_base::poll_one() {
   return 0;
 }
 void app_base::stop_app(bool in_stop) {
+  on_cancel.emit();
   on_stop();
   g_ctx().emplace<program_info>().is_stop = true;
   this->deconstruction();
