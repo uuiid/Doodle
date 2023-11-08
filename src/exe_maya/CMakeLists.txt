@@ -36,7 +36,7 @@ target_compile_definitions(doodle_maya_exe
 target_link_options(doodle_maya_exe
         PUBLIC
         /ENTRY:mainCRTStartup
-        $<$<CXX_COMPILER_ID:MSVC>:/STACK:10485760>
+        $<$<CXX_COMPILER_ID:MSVC>:/STACK:16777216>
 
 )
 set_target_properties(
