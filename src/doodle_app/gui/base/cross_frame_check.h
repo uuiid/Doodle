@@ -90,9 +90,6 @@ class cross_frame_check {
       check_p = in_data;
       return *this;
     }
-    /**
-     * @copybrief guard_lock& operator^(const Cache_T& in_data) const
-     */
     guard_lock& operator^(const Cache_T& in_data) {
       check_p = in_data;
       return *this;

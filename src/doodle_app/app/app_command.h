@@ -19,7 +19,6 @@ namespace doodle {
 
 /**
  * @brief 基本的命令行类
- *  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
  */
 template <typename Facet_Defaute, typename... Facet_>
 class app_command : public app_base {

@@ -79,9 +79,6 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
 
   /**
    * @brief 获取用户的任务列表
-   *
-   * @param in_tocken 传入的权限句柄
-   * @param in_user 使用传入的用户过滤
    * @return std::vector<std::tuple<entt::entity, doodle::work_task_info>> 实体和任务列表
    */
   std::vector<std::tuple<entt::entity, doodle::work_task_info>> get_user_work_task_info(
@@ -101,7 +98,6 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
    *
    * @param in_tocken 传入的权限句柄
    * @param in_ 实体
-   * @param in_work
    */
   void delete_work_task_info(const entt::handle& in_tocken, const entt::entity& in_);
 

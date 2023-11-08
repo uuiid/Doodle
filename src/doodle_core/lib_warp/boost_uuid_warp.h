@@ -14,7 +14,6 @@ namespace fmt {
 /**
  * @brief 格式化boost uuid
  *
- * @tparam  ::boost::uuids::uuid
  */
 template <>
 struct formatter<::boost::uuids::uuid> : formatter<fmt::string_view> {

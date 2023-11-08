@@ -10,8 +10,8 @@ namespace doodle::gui {
 /**
  * @brief 使用正则去除一些东西
  *
- * [^\u4e00-\u9fa5|\(|\)|（|）|：|:]
  */
+// [^\u4e00-\u9fa5|\(|\)|（|）|：|:]
 class DOODLELIB_API subtitle_processing {
   class impl;
   std::unique_ptr<impl> p_i;

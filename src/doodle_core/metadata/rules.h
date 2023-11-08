@@ -79,7 +79,6 @@ namespace fmt {
 /**
  * @brief 季数格式化程序
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::business::rules> : formatter<string_view> {

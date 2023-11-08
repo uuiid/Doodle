@@ -49,11 +49,6 @@ class file_one_path : public detail::sql_create_table_base<table_type> {
       // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<base_type>().name());
     }
   };
-  /**
-   *
-   * @param in_ptr
-   * @param in_handle id与之相对的实体
-   */
   void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg) {
     auto& l_conn = *in_ptr;
     const table_type l_table{};

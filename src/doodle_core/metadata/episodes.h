@@ -37,7 +37,6 @@ namespace fmt {
 /**
  * @brief 集数格式化程序
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::episodes> : formatter<std::string> {

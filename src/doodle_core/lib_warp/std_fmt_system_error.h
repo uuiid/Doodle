@@ -11,7 +11,6 @@ namespace fmt {
 /**
  * @brief 格式化库异常
  *
- * @tparam
  */
 template <>
 struct formatter<::std::runtime_error> : formatter<string_view> {

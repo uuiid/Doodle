@@ -228,8 +228,6 @@ class reference_file_factory {
 namespace fmt {
 /**
  * @brief
- *
- * @tparam
  */
 template <>
 struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path> : formatter<std::string> {

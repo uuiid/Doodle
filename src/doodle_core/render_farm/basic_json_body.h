@@ -11,17 +11,11 @@ struct basic_json_body {
  public:
   /** The type of container used for the body
 
-  This determines the type of @ref message::body
-          when this body type is used with a message container.
               */
   using json_type  = nlohmann::json;
   using value_type = json_type;
 
   /** Returns the payload size of the body
-
-      When this body is used with @ref message::prepare_payload,
-      the Content-Length will be set to the payload size, and
-      any chunked Transfer-Encoding will be removed.
   */
   static std::uint64_t size(value_type const& body) { return body.dump().size(); }
 

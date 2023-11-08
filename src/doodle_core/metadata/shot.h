@@ -60,7 +60,6 @@ namespace fmt {
 /**
  * @brief 镜头枚举格式化程序
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
@@ -80,7 +79,6 @@ struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
 /**
  * @brief 镜头格式化程序
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::shot> : formatter<std::string> {

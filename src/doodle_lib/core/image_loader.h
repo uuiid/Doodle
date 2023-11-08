@@ -53,13 +53,15 @@ class DOODLELIB_API image_loader {
   /**
    * @brief 保存图片
    * @param in_handle 将句柄中添加 image_icon
+   * @param in_image 传入的图片
+   * @param in_rect 传入的图片的区域
    * @return 是否保存成功
    */
   bool save(const entt::handle& in_handle, const cv::Mat& in_image, const cv::Rect2f& in_rect);
   /**
    * @brief 从路径中加载缩略图 并保存到库
    * @param in_handle  传入的句柄
-   * @param in_path 传入的路径
+   * @param in 传入的路径
    * @return 是否加载成功
    */
   bool save(const entt::handle& in_handle, const FSys::path& in);

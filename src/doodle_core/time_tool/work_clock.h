@@ -68,7 +68,8 @@ class DOODLE_CORE_API work_clock {
 
   /**
    * @brief 获取当前点所在时间段段的备注
-   * @param in_time 时间点
+   * @param in_min 开始时间
+   * @param in_max 结束时间
    * @return 可选段备注
    */
   std::optional<std::string> get_time_info(const time_type& in_min, const time_type& in_max) const;

@@ -140,7 +140,6 @@ class qcloth_shape : public cloth_interface::element_type {
 
   /**
    * @brief 根据引用文件创建布料句柄
-   * @param in_ref_file 传入的引用文件句柄
    * @return 完成布料网格的创建的句柄
    */
 

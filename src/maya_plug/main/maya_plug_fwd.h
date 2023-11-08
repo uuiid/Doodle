@@ -63,7 +63,6 @@ namespace fmt {
 /**
  * @brief 格式化和maya异常
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::maya_plug::maya_error> : formatter<string_view> {

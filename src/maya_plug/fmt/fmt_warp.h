@@ -16,8 +16,6 @@
 namespace fmt {
 /**
  * @brief 格式化maya字符串
- *
- * @tparam
  */
 template <>
 struct formatter<MString> : formatter<string_view> {

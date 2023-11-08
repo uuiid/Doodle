@@ -14,7 +14,6 @@ namespace fmt {
 /**
  * @brief 格式化::std::filesystem::path
  *
- * @tparam  ::std::filesystem::path
  */
 template <>
 struct formatter<::std::filesystem::path> : formatter<string_view> {

@@ -43,7 +43,6 @@ namespace fmt {
 /**
  * @brief 集数格式化程序
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::business::rules_ns::time_point_info> : formatter<std::string> {

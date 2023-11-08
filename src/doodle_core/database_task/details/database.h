@@ -19,8 +19,9 @@ struct sql_com<doodle::database> : detail::sql_create_table_base<tables::entity>
   void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   /**
    *
-   * @param in_ptr
+   * @param in_ptr 数据库连接
    * @param in_handle id与之相对的实体
+   * @param in_reg 注册表
    */
   void select(conn_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg);
   void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);

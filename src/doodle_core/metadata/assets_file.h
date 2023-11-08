@@ -92,7 +92,6 @@ namespace fmt {
 /**
  * @brief 格式化资产文件, 使用name属性
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::assets_file> : formatter<std::string_view> {

@@ -53,8 +53,6 @@ class DOODLELIB_API edit_widgets {
   [[nodiscard("")]] const std::string& title() const;
   /**
    * @brief 每帧刷新函数
-   *
-   * @param data 自定义数据
    */
   bool render();
 };

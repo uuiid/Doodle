@@ -96,10 +96,6 @@ class observable_container : public container_type, public details::no_copy {
         sig_push_back(),
         sig_resize(),
         sig_swap(){};
-  /**
-   * @brief
-   * @param
-   */
   explicit observable_container(const _allocator_type& _al)
       : container_type(_al),
         sig_begin_clear(),

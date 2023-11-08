@@ -92,7 +92,6 @@ namespace fmt {
 /**
  * @brief 格式化库异常
  *
- * @tparam
  */
 template <>
 struct formatter<::doodle::doodle_error> : formatter<string_view> {

@@ -189,6 +189,7 @@ get_mesh_poly(const MFnMesh& in_mesh) {
  * @brief 获取网格的面集
  *
  * @param in_path 传入的着色集
+ * @param in_obj_path 传入的对象路径
  * @return std::tuple<std::string, std::vector<std::int32_t>> 对应的材质名称, 面列表
  */
 std::tuple<std::string, std::vector<std::int32_t>> get_face_set(const MObject& in_path, const MDagPath& in_obj_path) {

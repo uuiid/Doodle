@@ -12,7 +12,6 @@
 namespace doodle::gui {
 /**
  * @addtogroup 设置窗口
- * @image html doodle_setting.jpg 设置窗口
  *
  * @li @b 部门 所在部门 (默认为 None_)
  * @li @b 用户 制作者的名称， 可以使用任意中英文字符，
@@ -22,7 +21,6 @@ namespace doodle::gui {
  * @warning 在这里尽量不要出现中文 \n
  *
  * maya的可执行文件应该在这个目录里面
- * @image html maya_help_find_path.jpg maya路径寻找
  * 在这里可以使用快捷方式右键 @b 打开文件所在位置 来找到这个路径
  * 同时， 如果安装在默认路径的话， 软件会自动寻找到
  *

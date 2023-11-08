@@ -38,8 +38,6 @@ class maya_camera {
   explicit maya_camera(const MDagPath& in_path);
   /**
    * @brief 将相机导出到文件中,
-   * @param in_start 开始时间
-   * @param in_end 结束时间
    * @return 如果dag path 无效则返回false
    * @throw maya_error maya返回值错误
    */

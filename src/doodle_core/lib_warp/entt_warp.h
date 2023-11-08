@@ -106,7 +106,6 @@ namespace fmt {
 /**
  * @brief 集数格式化程序
  *
- * @tparam
  */
 template <>
 struct formatter<::entt::entity> : formatter<typename ::entt::entt_traits<::entt::entity>::entity_type> {

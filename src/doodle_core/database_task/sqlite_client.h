@@ -44,7 +44,6 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
 
   /**
    * @brief 使用路径打开项目文件
-   * @param in_path 传入的项目文件路径
    */
 
   inline auto async_save() { return async_save_impl(); };
