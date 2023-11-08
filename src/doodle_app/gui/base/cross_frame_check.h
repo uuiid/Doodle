@@ -162,9 +162,6 @@ class cross_frame_check {
   }
 };
 
-/**
- * @brief void 模板的特化
- */
 // template <>
 // class cross_frame_check<void> {
 //  public:

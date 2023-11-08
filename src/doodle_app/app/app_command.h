@@ -53,10 +53,6 @@ class app_command : public app_base {
   virtual void deconstruction() override { facet_list.clear(); }
 };
 
-/**
- * @brief 基本的命令行类
- *  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
- */
 template <typename Facet_Defaute>
 using app_plug = app_command<Facet_Defaute>;
 

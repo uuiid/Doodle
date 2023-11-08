@@ -8,9 +8,6 @@
 
 #include <bitset>
 namespace doodle::gui {
-/**
- * @brief
- */
 class DOODLE_APP_API file_panel {
   class impl;
   class path_info;

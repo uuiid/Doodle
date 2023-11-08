@@ -13,9 +13,7 @@ namespace doodle {
 using namespace entt::literals;
 namespace entt_tool {
 namespace detail {
-/**
- * @copydoc save_comm(entt::handle &in_handle, Archive &in_archive)
- */
+
 template <typename Component, typename Archive>
 bool _save_(const entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   auto &&k_comm      = in_handle.template get<Component>();
@@ -23,9 +21,6 @@ bool _save_(const entt::handle &in_handle, std::size_t in_size, Archive &in_arch
   return true;
 }
 
-/**
- * @copydoc load_comm
- */
 template <typename Component, typename Archive>
 bool _load_(entt::handle &in_handle, Archive &in_archive) {
   Component l_component{};
