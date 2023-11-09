@@ -16,11 +16,16 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file_translator> {
  private:
-  bool is_run{};
+  using timer_t = boost::asio::steady_timer;
+
   std::any obs{};
   registry_ptr registry_attr{};
   std::atomic_bool save_all{};
   bool only_ctx{};
+
+  std::shared_ptr<timer_t> timer_{};  // 定时器
+
+  void begin_save();
 
  protected:
   FSys::path project_path;
