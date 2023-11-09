@@ -81,6 +81,7 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
 
   bool operator<(const assets_file& in_rhs) const;
   bool operator==(const assets_file& in_rhs) const;
+  entt::handle file_association_{};
 
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const assets_file& p);
