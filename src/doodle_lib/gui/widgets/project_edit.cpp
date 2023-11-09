@@ -5,6 +5,7 @@
 #include "project_edit.h"
 
 #include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/metadata/user.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/database_task/sqlite_client.h>
@@ -309,12 +310,17 @@ bool project_edit::render() {
   ImGui::InputInt(*p_i->season_count.gui_name, &p_i->season_count.data);
 
   if (ImGui::Button("保存")) {
-    g_reg()->ctx().get<project_config::base_config>() = p_i->get_config_();
-    g_reg()->ctx().get<project>().set_name(p_i->project_name.data);
-
+    save();
   }
 
   return p_i->open;
 }
+
+void project_edit::save() {
+  g_reg()->ctx().get<user::current_user>().get_handle().patch<user>();
+  g_reg()->ctx().get<project_config::base_config>() = p_i->get_config_();
+  g_reg()->ctx().get<project>().set_name(p_i->project_name.data);
+}
+
 const std::string& project_edit::title() const { return p_i->title_name_; }
 }  // namespace doodle::gui

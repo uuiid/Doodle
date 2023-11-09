@@ -13,6 +13,7 @@ namespace doodle::gui {
 class DOODLELIB_API project_edit {
   class impl;
   std::unique_ptr<impl> p_i;
+  void save();
 
  public:
   project_edit();
