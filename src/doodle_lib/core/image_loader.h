@@ -88,6 +88,7 @@ class image_loader_init {
 
  public:
   image_loader_init() { init(); };
+  image_loader_init& Get();
 };
 
 }  // namespace image_loader_ns

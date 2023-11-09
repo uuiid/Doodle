@@ -52,7 +52,7 @@ class image_loader::impl {
 };
 
 image_loader::image_loader() : p_i(std::make_unique<impl>()) {
-  //const static image_loader_ns::image_loader_init loader_init{};
+  //  const static image_loader_ns::image_loader_init loader_init{};
   if (g_reg()->ctx().contains<cache>()) {
     p_i->cache_p = g_reg()->ctx().get<cache>();
   }
@@ -224,7 +224,10 @@ void image_loader_ns::image_loader_init::init() const {
   }
   g_reg()->ctx().emplace<image_loader::cache>(l_cache);
 }
-
+image_loader_ns::image_loader_init& image_loader_ns::image_loader_init::Get() {
+  static image_loader_init s_init{};
+  return s_init;
+}
 DOODLE_REGISTER_BEGIN(image_loader_ns::image_loader_init) {
   entt::meta<image_loader_ns::image_loader_init>()
       .type(entt::type_id<image_loader_ns::image_loader_init>().hash())
