@@ -144,10 +144,14 @@ class assets_file_widgets::impl {
               handle_,
               [handle_ = handle_, self = shared_from_this(), max_length]() {
                 if (!self) return;
-                auto&& k_icon       = handle_.get<image_icon>();
-                self->image         = k_icon.image;
-                self->image.size2d_ = k_icon.size2d_;
-                self->compute_size(max_length);
+                if (handle_ && handle_.any_of<image_icon::image_load_tag>()) {
+                  auto&& k_icon       = handle_.get<image_icon>();
+                  self->image         = k_icon.image;
+                  self->image.size2d_ = k_icon.size2d_;
+                  self->compute_size(max_length);
+                } else {
+                  log_error(fmt::format("无效的句柄 {} 或者缺失组件", handle_));
+                }
               }
           );
           return;
