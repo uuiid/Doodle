@@ -16,6 +16,7 @@ class file_association {
   entt::handle maya_file;
   entt::handle maya_rig_file;
   entt::handle ue_file;
+  entt::handle ue_preset_file;
 
   //  void set_maya_file(const entt::handle& in_maya_file);
   //  void set_maya_rig_file(const entt::handle& in_maya_rig_file);

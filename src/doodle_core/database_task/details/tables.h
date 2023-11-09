@@ -67,9 +67,7 @@ namespace column {
 DOODLE_SQL_COLUMN_IMP(work_weekdays, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(first_time_seconds, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(second_time_seconds, sqlpp::integer, detail::can_be_null);
-
 DOODLE_SQL_COLUMN_IMP(work_index, sqlpp::integer, detail::can_be_null);
-
 }  // namespace column
 
 DOODLE_SQL_TABLE_IMP(business_rules, column::id, column::entity_id, column::work_weekdays);
@@ -90,4 +88,15 @@ DOODLE_SQL_TABLE_IMP(maya_file, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(ue_file, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(maya_rig_file, column::id, column::entity_id, column::path);
 DOODLE_SQL_TABLE_IMP(ue_file_preset, column::id, column::entity_id, column::path);
+namespace column_file_association {
+DOODLE_SQL_COLUMN_IMP(entity_maya_file, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(entity_maya_rig_file, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(entity_ue_file, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(entity_ue_preset_file, sqlpp::integer, detail::can_be_null);
+}  // namespace column_file_association
+DOODLE_SQL_TABLE_IMP(
+    file_association, column::id, column::entity_id, column_file_association::entity_maya_file,
+    column_file_association::entity_maya_rig_file, column_file_association::entity_ue_file,
+    column_file_association::entity_ue_preset_file
+);
 }  // namespace doodle::database_n::tables
