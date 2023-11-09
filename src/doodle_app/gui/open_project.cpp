@@ -26,7 +26,8 @@ constexpr auto updata_log{R"(本次更新:
 {0} 新增了启动界面,{1} 同时由于和退出弹窗有冲突,我们去除了退出弹窗
 {0} 新增授权查看, 可以在界面中更新授权
 {0} maya导出fbx已经完成, 可以进行使用了
-{0} 新加入主项目,  为灯光自动化做初步的准备
+{0} 新加入主项目, 为灯光自动化做初步的准备
+{0} 取消了保存, 改为自动保存, 每次修改都会自动保存
 )"};
 
 open_project::open_project() : auth_ptr_(std::make_shared<authorization>()) {
