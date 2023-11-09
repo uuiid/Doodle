@@ -161,9 +161,10 @@ void maya_file_io::set_workspace(const FSys::path& in_path) {
 
 auto open_file_impl(const MString& in_str, MFileIO::ReferenceMode in_mod) {
   MStatus l_s{};
-  __try {
+  try {
     l_s = MFileIO::open(in_str, nullptr, true, in_mod, true);
-  } __except (EXCEPTION_CONTINUE_SEARCH) {
+  } catch (...) {
+    log_error(boost::current_exception_diagnostic_information());
   }
   return l_s;
 }
