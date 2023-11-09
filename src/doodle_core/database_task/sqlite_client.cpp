@@ -53,55 +53,45 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   if (!in_path.empty() && !FSys::exists(in_path)) return;
 
   project_path = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
-  ;
-
   {
     g_ctx().get<database_info>().path_ = project_path;
     auto& k_msg                        = g_reg()->ctx().emplace<process_message>();
     k_msg.set_name("加载数据");
     k_msg.set_state(k_msg.run);
-    g_reg()->clear();
     g_ctx().get<core_sig>().project_begin_open(project_path);
     registry_attr = g_reg();
+    registry_attr->clear();
   }
 
-  auto l_end_call = [this]() {
-    registry_attr->ctx().get<project>().set_path(project_path.parent_path());
-    g_ctx().get<core_sig>().project_end_open();
-    auto& k_msg = g_reg()->ctx().emplace<process_message>();
-    k_msg.set_name("完成写入数据");
-    k_msg.set_state(k_msg.success);
-    g_reg()->ctx().erase<process_message>();
-    core_set::get_set().add_recent_project(project_path);
-    only_ctx = false;
-    begin_save();
-  };
+  save_all = false;
+  database_n::select l_select{};
+  auto& l_obs  = std::any_cast<obs_all&>(obs);
+  auto l_k_con = g_ctx().emplace<database_info>().get_connection_const();
+  if (!l_select.is_old(project_path, l_k_con)) {
+    if (only_ctx) {
+      l_obs.open_ctx(registry_attr, l_k_con);
+    } else {
+      l_obs.open(registry_attr, l_k_con);
+    }
 
-  boost::asio::post(
-      g_thread(),
-      [this, l_k_con = g_ctx().emplace<database_info>().get_connection_const(), l_end_call]() mutable {
-        save_all = false;
-        database_n::select l_select{};
-        auto& l_obs = std::any_cast<obs_all&>(obs);
+  } else {
+    l_obs.disconnect();
+    l_select(*registry_attr, project_path, l_k_con);
+    l_select.patch();
+    save_all = true;
+    /// 先监听
+    l_obs.connect(registry_attr);
+  }
 
-        if (!l_select.is_old(project_path, l_k_con)) {
-          if (only_ctx) {
-            l_obs.open_ctx(registry_attr, l_k_con);
-          } else {
-            l_obs.open(registry_attr, l_k_con);
-          }
-
-        } else {
-          l_obs.disconnect();
-          l_select(*registry_attr, project_path, l_k_con);
-          l_select.patch();
-          save_all = true;
-          /// 先监听
-          l_obs.connect(registry_attr);
-        }
-        boost::asio::post(g_io_context(), l_end_call);
-      }
-  );
+  registry_attr->ctx().get<project>().set_path(project_path.parent_path());
+  g_ctx().get<core_sig>().project_end_open();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("完成写入数据");
+  k_msg.set_state(k_msg.success);
+  g_reg()->ctx().erase<process_message>();
+  core_set::get_set().add_recent_project(project_path);
+  only_ctx = false;
+  begin_save();
 }
 
 void file_translator::begin_save() {
@@ -121,6 +111,11 @@ void file_translator::begin_save() {
 }
 
 void file_translator::async_save_impl() {
+  if (!std::any_cast<obs_all&>(obs).has_update()) {
+    begin_save();
+    return;
+  }
+
   if (project_path.empty()) {
     begin_save();
     return;
