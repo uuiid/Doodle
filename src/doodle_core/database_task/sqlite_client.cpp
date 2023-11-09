@@ -159,7 +159,7 @@ void file_translator::async_save_impl() {
     }
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
-    DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
+    log_error(boost::diagnostic_information(in_error));
   }
 
   g_reg()->ctx().get<status_info>().need_save = false;

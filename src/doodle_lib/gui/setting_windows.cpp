@@ -84,7 +84,6 @@ void setting_windows::save() {
   auto&& l_u                   = g_reg()->ctx().get<user::current_user>();
   l_u.user_name_attr(p_i->p_user());
   core_set_init{}.write_file();
-  g_ctx().get<database_n::file_translator_ptr>()->async_save();
 }
 setting_windows::~setting_windows() = default;
 

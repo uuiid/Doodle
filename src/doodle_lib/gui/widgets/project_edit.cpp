@@ -312,7 +312,6 @@ bool project_edit::render() {
     g_reg()->ctx().get<project_config::base_config>() = p_i->get_config_();
     g_reg()->ctx().get<project>().set_name(p_i->project_name.data);
 
-    g_ctx().get<database_n::file_translator_ptr>()->async_save();
   }
 
   return p_i->open;

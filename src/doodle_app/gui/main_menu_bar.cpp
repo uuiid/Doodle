@@ -91,7 +91,6 @@ void main_menu_bar::menu_file() {
 
   ImGui::Separator();
 
-  if (dear::MenuItem("保存"s, "Ctrl+S")) g_ctx().get<database_n::file_translator_ptr>()->async_save();
 
   ImGui::Separator();
   dear::MenuItem("调试"s, &p_i->p_debug_show);
@@ -104,9 +103,6 @@ void main_menu_bar::menu_file() {
 }
 
 bool main_menu_bar::render() {
-  if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl)
-    g_ctx().get<database_n::file_translator_ptr>()->async_save();
-
   dear::Menu{"文件"} && [this]() { this->menu_file(); };
   dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
   //  dear::Menu{"编辑"} && [this]() { this->menu_edit(); };

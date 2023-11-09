@@ -134,8 +134,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_save) {
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
-
-  g_ctx().get<file_translator_ptr>()->async_save();
 }
 
 BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
@@ -143,7 +141,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   doodle_lib l_lib{};
   g_ctx().get<file_translator_ptr>()->async_open(FSys::path{});
   create_test_database();
-  g_ctx().get<file_translator_ptr>()->async_save();
 
   g_ctx().get<file_translator_ptr>()->async_open("D:/test.sqlite");
   BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
@@ -180,6 +177,5 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
-  g_ctx().get<file_translator_ptr>()->async_save();
   g_ctx().get<file_translator_ptr>()->async_open("D:/test_file/cloth_test/JG2.doodle_db");
 }
