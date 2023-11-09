@@ -78,7 +78,7 @@ bool open_project::render() {
     }
 
     if (next_time_backup_) {
-      g_ctx().get<database_n::file_translator_ptr>()->async_open(core_set::get_set().project_root[0]);
+      g_ctx().get<program_options>().init_project();
       open = false;
     }
   } else {
