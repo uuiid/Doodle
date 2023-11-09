@@ -18,6 +18,8 @@ class open_project {
   // 下次不显示, 直接跳过
   gui_cache<bool> next_time_{"下次不显示, 直接打开上次的项目", false};
   bool next_time_backup_{false};
+  // 命令行传入路径
+  FSys::path cmd_path_{};
 
  public:
   open_project();

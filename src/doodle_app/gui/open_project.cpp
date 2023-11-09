@@ -35,6 +35,7 @@ open_project::open_project() : auth_ptr_(std::make_shared<authorization>()) {
   //  expire_time_str_  = fmt::vformat("还有 {:%d} 天到期", fmt::make_format_args(l_time));
   expire_time_str_  = fmt::format("还有 {} 天到期", l_time);
   next_time_.data = next_time_backup_ = core_set::get_set().next_time_;
+  cmd_path_                           = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(1).str());
 }
 
 bool open_project::render() {
@@ -50,6 +51,12 @@ bool open_project::render() {
   if (auth_ptr_->is_expire()) {
     if (ImGui::Button("主项目", ImVec2{-FLT_MIN, 0})) {
       g_ctx().get<database_n::file_translator_ptr>()->async_open(main_project);
+      open = false;
+    }
+
+    ImGui::Text("传入的项目");
+    if (ImGui::Button(cmd_path_.generic_string().c_str(), ImVec2{-FLT_MIN, 0})) {
+      g_ctx().get<database_n::file_translator_ptr>()->async_open(cmd_path_);
       open = false;
     }
 
