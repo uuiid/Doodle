@@ -76,6 +76,8 @@ class impl_obs {
   impl_obs& operator=(impl_obs&&)      = delete;
   ~impl_obs()                          = default;
 
+  bool has_update() const { return !obs_update_.empty() || !obs_create_.empty() || !additional_save_handles_.empty(); }
+
   void connect(const registry_ptr& in_registry_ptr) {
     obs_update_.connect(*in_registry_ptr, entt::collector.update<type_t>().where<database>());
     obs_create_.connect(*in_registry_ptr, entt::collector.group<database, type_t>());
@@ -163,6 +165,8 @@ class impl_obs<database> {
   impl_obs& operator=(const impl_obs&) = delete;
   impl_obs& operator=(impl_obs&&)      = delete;
   ~impl_obs()                          = default;
+
+  bool has_update() const { return !destroy_ids_.empty() || !obs_create_.empty() || !additional_save_handles_.empty(); }
 
   void connect(const registry_ptr& in_registry_ptr) {
     obs_create_.connect(*in_registry_ptr, entt::collector.group<database>());
@@ -273,6 +277,10 @@ class obs_main {
 
  public:
   explicit obs_main() : obs_data_{obs_tuple_type_make::make_tuple()}, ctx_data_{ctx_tuple_type_make::make_tuple()} {}
+
+  bool has_update() const {
+    return std::apply([&](auto&&... x) { return ((x->has_update() || ...)); }, obs_data_);
+  }
 
   void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     std::map<std::int64_t, entt::handle> l_map{};
