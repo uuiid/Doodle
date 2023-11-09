@@ -34,10 +34,15 @@ DOODLE_SQL_TABLE_IMP(
     column::ref_file, column::export_type_
 );
 DOODLE_SQL_TABLE_IMP(image_icon, column::id, column::entity_id, column::path);
+
+namespace assets_file2_column {
+DOODLE_SQL_COLUMN_IMP(file_association_ref_id, sqlpp::integer, detail::can_be_null);
+}
 DOODLE_SQL_TABLE_IMP(
     assets_file, column::id, column::entity_id, column::name, column::path, column::version, column::ref_id,
-    column::organization, column::assets_ref_id
+    column::organization, column::assets_ref_id, assets_file2_column::file_association_ref_id
 );
+
 DOODLE_SQL_TABLE_IMP(
     time_point_info, column::id, column::entity_id, column::first_time, column::second_time, column::info,
     column::is_extra_work

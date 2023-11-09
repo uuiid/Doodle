@@ -54,8 +54,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
       l_pre.params.assets_ref_id.set_null();
     }
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    auto l_r               = l_conn(l_pre);
-    // DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets_file>().name());
+    l_conn(l_pre);
   }
 }
 
@@ -95,9 +94,7 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
     }
 
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    auto l_r               = l_conn(l_pre);
-
-    // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets_file>().name());
+    l_conn(l_pre);
   }
 }
 void sql_com<doodle::assets_file>::select(
@@ -105,7 +102,6 @@ void sql_com<doodle::assets_file>::select(
 ) {
   auto& l_conn = *in_ptr;
   const tables::assets_file l_table{};
-  const tables::entity l_entt_id{};
   std::vector<assets_file> l_assets;
   std::vector<entt::entity> l_entts;
   // 调整内存
@@ -153,10 +149,10 @@ void sql_com<doodle::assets_file>::select(
       l_a.name_attr(row.name.value());
       l_a.path_attr(row.path.value());
       l_a.version_attr(row.version.value());
-      if (!row.ref_id.is_null() && in_handle.count(row.ref_id.value()) != 0)
+      if (!row.ref_id.is_null() && in_handle.contains(row.ref_id.value()) != 0)
         l_a.user_ref.handle_cache = in_handle.at(row.ref_id.value());
 
-      if (!row.assets_ref_id.is_null() && in_handle.count(row.assets_ref_id.value()) != 0)
+      if (!row.assets_ref_id.is_null() && in_handle.contains(row.assets_ref_id.value()))
         l_a.assets_attr(in_handle.at(row.assets_ref_id.value()));
 
       auto l_id = row.entity_id.value();
@@ -174,5 +170,4 @@ void sql_com<doodle::assets_file>::select(
 void sql_com<doodle::assets_file>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets_file>(in_ptr, in_handle);
 }
-
 }  // namespace doodle::database_n
