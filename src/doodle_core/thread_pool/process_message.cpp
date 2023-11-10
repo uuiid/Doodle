@@ -54,7 +54,7 @@ void process_message::progress_step(const rational_int& in_rational_int) {
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
   auto l_msg{in_string};
 
-  boost::locale::generator k_gen{};
+  static boost::locale::generator k_gen{};
   //  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
 
   static auto l_local{k_gen("zh_CN.UTF-8")};
