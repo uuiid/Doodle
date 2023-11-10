@@ -245,7 +245,10 @@ class impl_ctx {
  public:
   void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     database_n::sql_ctx<type_t> l_table{};
-    if (l_table.has_table(in_conn)) l_table.select(in_conn, in_registry_ptr->ctx().emplace<type_t>());
+    if (l_table.has_table(in_conn)) {
+      if (in_registry_ptr->ctx().contains<type_t>()) in_registry_ptr->ctx().erase<type_t>();
+      l_table.select(in_conn, in_registry_ptr->ctx().emplace<type_t>());
+    }
   }
   void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
     if (!in_registry_ptr->ctx().contains<type_t>()) return;
