@@ -49,6 +49,7 @@ void process_message::set_name(const std::string& in_string) {
 void process_message::progress_step(const rational_int& in_rational_int) {
   std::lock_guard _lock{_mutex};
   p_progress += in_rational_int;
+  if (p_progress > 1) --p_progress;
 }
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
   auto l_msg{in_string};
