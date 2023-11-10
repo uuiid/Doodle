@@ -35,12 +35,6 @@ class DOODLELIB_API image_loader {
   virtual ~image_loader();
 
   /**
-   * @brief 加载图片
-   * @param in_handle 具有 image_icon 组件的句柄
-   * @return 是否加载成功
-   */
-  bool load(const entt::handle& in_handle);
-  /**
    * @brief 可以使用后台线程进行加载(完全不访问注册表)
    *
    * @param in_icon 需要加载的图标组件

@@ -91,17 +91,7 @@ bool image_loader::load(image_icon& in_icon, const FSys::path& in_root) {
 
   return false;
 }
-bool image_loader::load(const entt::handle& in_handle) {
-  DOODLE_CHICK(in_handle.any_of<image_icon>(), doodle_error{"缺失图标组件"});
-  DOODLE_CHICK(in_handle.registry()->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
-  auto& l_image     = in_handle.get<image_icon>();
-  auto l_local_path = l_image.image_root(in_handle);
 
-  load(in_handle.get<image_icon>(), l_local_path);
-  in_handle.patch<image_icon>();
-
-  return false;
-}
 bool image_loader::save(const entt::handle& in_handle, const cv::Mat& in_image, const cv::Rect2f& in_rect) {
   auto k_reg = g_reg();
   DOODLE_CHICK(k_reg->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
