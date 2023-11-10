@@ -45,7 +45,17 @@
 
 namespace doodle::gui {
 
-enum class assets_file_widgets_column : std::uint32_t { id, assets, episodes, shot, path, name, time, user };
+enum class assets_file_widgets_column : std::uint32_t {
+  id,
+  assets,
+  episodes,
+  shot,
+  path,
+  name,
+  file_association,
+  time,
+  user
+};
 template <typename T>
 struct sort_by {
   bool operator()(const entt::handle& in_l, const entt::handle& in_r) const {
@@ -193,9 +203,10 @@ class assets_file_widgets::impl {
       to_s<assets_file>(name_p, in_h);
       to_s<time_point_wrap>(time_p, in_h);
       if (in_h.any_of<assets_file>()) {
-        auto&& l_ass = in_h.get<assets_file>();
-        user_p       = l_ass.user_attr().get<user>().get_name();
-        file_path_p  = in_h.get<assets_file>().get_path_normal().generic_string();
+        auto&& l_ass       = in_h.get<assets_file>();
+        user_p             = l_ass.user_attr().get<user>().get_name();
+        file_path_p        = l_ass.get_path_normal().generic_string();
+        file_association_p = fmt::format("{}", l_ass.file_association_ ? "以关联" : "未关联");
       }
     }
 
@@ -206,6 +217,7 @@ class assets_file_widgets::impl {
     std::string file_path_p;
     std::string time_p;
     std::string user_p;
+    std::string file_association_p;
   };
   std::vector<base_data_ptr> lists;
   std::size_t select_index{};
@@ -389,11 +401,19 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
   g_reg()->ctx().erase<std::vector<entt::handle>>();
   g_reg()->ctx().emplace<std::vector<entt::handle>>(l_lists);
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) {
+    auto l_fmt = fmt::format(
+        "拖拽实体 {}", fmt::join(
+                           l_lists | ranges::views::transform([](entt::handle& in) {
+                             return fmt::to_string(in.get<database>().get_id());
+                           }),
+                           ","
+                       )
+    );
     ImGui::SetDragDropPayload(
         doodle_config::drop_handle_list.data(), &(g_reg()->ctx().get<std::vector<entt::handle>>()),
         sizeof(g_reg()->ctx().get<std::vector<entt::handle>>())
     );
-    ImGui::Text("拖拽实体");
+    ImGui::Text(l_fmt.c_str());
   }
 }
 
@@ -456,7 +476,7 @@ void assets_file_widgets::render_by_icon() {
   }
 }
 void assets_file_widgets::render_by_info() {
-  const static auto l_size{8u};
+  const static auto l_size{9u};
 
   dear::Table{
       "list",
@@ -486,6 +506,10 @@ void assets_file_widgets::render_by_info() {
     );
     ImGui::TableSetupColumn(
         "名称", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::name)
+    );
+    ImGui::TableSetupColumn(
+        "关联", ImGuiTableColumnFlags_DefaultHide, 0.0F,
+        magic_enum::enum_integer(assets_file_widgets_column::file_association)
     );
     ImGui::TableSetupColumn(
         "时间", ImGuiTableColumnFlags_None, 0.0F, magic_enum::enum_integer(assets_file_widgets_column::time)
@@ -529,6 +553,8 @@ void assets_file_widgets::render_by_info() {
         dear::Text(i.file_path_p);
         ImGui::TableNextColumn();
         dear::Text(i.name_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.file_association_p);
         ImGui::TableNextColumn();
         dear::Text(i.time_p);
         ImGui::TableNextColumn();
