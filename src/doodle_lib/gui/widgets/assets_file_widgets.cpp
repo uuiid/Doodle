@@ -203,11 +203,11 @@ class assets_file_widgets::impl {
       to_s<assets_file>(name_p, in_h);
       to_s<time_point_wrap>(time_p, in_h);
       if (in_h.any_of<assets_file>()) {
-        auto&& l_ass       = in_h.get<assets_file>();
-        user_p             = l_ass.user_attr().get<user>().get_name();
-        file_path_p        = l_ass.get_path_normal().generic_string();
-        file_association_p = fmt::format("{}", l_ass.file_association_ ? "以关联" : "未关联");
+        auto&& l_ass = in_h.get<assets_file>();
+        user_p       = l_ass.user_attr().get<user>().get_name();
+        file_path_p  = l_ass.get_path_normal().generic_string();
       }
+      file_association_p = fmt::format("{}", in_h.any_of<file_association_ref>() ? "以关联" : "未关联");
     }
 
     std::string ass_p;

@@ -12,8 +12,8 @@ namespace doodle::gui::render {
 void file_association_edit_t::init(const entt::handle& in_handle) {
   if (in_handle == render_id_) return;
 
-  if (in_handle.any_of<assets_file>() && in_handle.get<assets_file>().file_association_) {
-    auto& l_path = in_handle.get<assets_file>().file_association_.get<file_association>();
+  if (in_handle.any_of<file_association_ref>() && in_handle.get<file_association_ref>()) {
+    auto& l_path = in_handle.get<file_association_ref>().get<file_association>();
     name_        = l_path.name;
 
     if (auto l_h = l_path.maya_file; l_h) maya_file_ = l_h.get<doodle::assets_file>().path_attr().generic_string();
@@ -65,7 +65,6 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
     auto& l_path                                          = l_h.get<assets_file>();
     maya_file_                                            = l_path.path_attr().generic_string();
     in_handle_view.patch<file_association>().maya_file    = l_h;
-    in_handle_view.patch<assets_file>().file_association_ = render_id_;
     on_change                                             = true;
   }
 

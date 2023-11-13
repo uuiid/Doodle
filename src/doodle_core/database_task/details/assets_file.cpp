@@ -97,7 +97,7 @@ void sql_com<doodle::assets_file>::select(
   {
     std::size_t l_index{};
     for (const auto& row :
-         l_conn(sqlpp::select(l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id, )
+         l_conn(sqlpp::select(l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id)
                     .from(l_table)
                     .where(l_table.entity_id.is_not_null())
                     .order_by(l_table.id.asc()))) {
