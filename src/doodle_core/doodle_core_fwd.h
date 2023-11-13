@@ -55,9 +55,18 @@ struct entt_id {
 };
 template <typename Id, typename Registry = entt::registry, typename... Scope>
 struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
-  using base_type = entt::basic_handle<Registry, Scope...>;
+  using base_type          = entt::basic_handle<Registry, Scope...>;
   constexpr static auto id = Id::value;
+  explicit entt_handle_ref(const base_type& in_base) : base_type(in_base) {}
   using base_type::base_type;
+  using base_type::operator bool;
+  using base_type::operator entt::entity;
+
+  entt_handle_ref& operator=(const entt_handle_ref& in_ref) = default;
+  entt_handle_ref& operator=(const base_type& in_ref) {
+    base_type::operator=(in_ref);
+    return *this;
+  }
 };
 using maya_file_id         = entt::tag<"maya_file"_hs>;
 using ue_file_id           = entt::tag<"ue_file"_hs>;
