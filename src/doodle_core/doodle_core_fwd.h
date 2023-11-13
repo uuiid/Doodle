@@ -53,16 +53,16 @@ struct entt_id {
   inline friend void to_json(nlohmann::json& j, const entt_id& p) { j = p.id; }
   inline friend void from_json(const nlohmann::json& j, entt_id& p) { p.id = j.get<entt::entity>(); }
 };
-template <typename>
-struct entt_handle {
-  entt::handle handle_;
-  inline operator entt::handle() const { return handle_; }
-  inline operator bool() const { return static_cast<bool>(handle_); }
+template <typename Id, typename Registry = entt::registry, typename... Scope>
+struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
+  using base_type = entt::basic_handle<Registry, Scope...>;
+  using base_type::base_type;
 };
-using maya_file_id      = entt::tag<"maya_file"_hs>;
-using ue_file_id        = entt::tag<"ue_file"_hs>;
-using maya_rig_file_id  = entt::tag<"maya_rig_file"_hs>;
-using ue_file_preset_id = entt::tag<"ue_file_preset"_hs>;
+using maya_file_id         = entt::tag<"maya_file"_hs>;
+using ue_file_id           = entt::tag<"ue_file"_hs>;
+using maya_rig_file_id     = entt::tag<"maya_rig_file"_hs>;
+using ue_file_preset_id    = entt::tag<"ue_file_preset"_hs>;
+using file_association_ref = entt::tag<"file_association_ref"_hs>;
 }  // namespace detail
 
 using database_info = details::database_info;
@@ -77,10 +77,11 @@ class project;
 class work_task_info;
 class comment;
 class assets;
-using maya_file      = detail::one_file_base<detail::maya_file_id>;
-using ue_file        = detail::one_file_base<detail::ue_file_id>;
-using maya_rig_file  = detail::one_file_base<detail::maya_rig_file_id>;
-using ue_file_preset = detail::one_file_base<detail::ue_file_preset_id>;
+using maya_file            = detail::one_file_base<detail::maya_file_id>;
+using ue_file              = detail::one_file_base<detail::ue_file_id>;
+using maya_rig_file        = detail::one_file_base<detail::maya_rig_file_id>;
+using ue_file_preset       = detail::one_file_base<detail::ue_file_preset_id>;
+using file_association_ref = detail::entt_handle_ref<detail::file_association_ref>;
 
 using namespace std::literals;
 
