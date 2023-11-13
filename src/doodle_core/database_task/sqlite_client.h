@@ -45,7 +45,9 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @param in_path 传入的项目文件路径
    */
 
-  inline auto async_open(const FSys::path& in_path) { return async_open_impl(in_path); };
+  inline auto async_open(const FSys::path& in_path) {
+    return boost::asio::post(g_io_context(), [this, in_path]() { async_open_impl(in_path); });
+  };
 
   /**
    * @brief 使用路径打开项目文件
