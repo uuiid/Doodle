@@ -15,6 +15,7 @@
 #include <doodle_core/database_task/details/assets_file.h>
 #include <doodle_core/database_task/details/comment.h>
 #include <doodle_core/database_task/details/database.h>
+#include <doodle_core/database_task/details/entt_handle_ref.h>
 #include <doodle_core/database_task/details/episodes.h>
 #include <doodle_core/database_task/details/file_association.h>
 #include <doodle_core/database_task/details/file_one_path.h>
@@ -355,6 +356,6 @@ using obs_all = obs_main<
     std::tuple<
         doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap,
         doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, doodle::business::rules,
-        doodle::user, doodle::work_task_info, doodle::project_config::base_config, maya_file, ue_file, maya_rig_file,
-        ue_file_preset, doodle::file_association>>;
+        doodle::user, doodle::work_task_info, doodle::project_config::base_config, doodle::file_association,
+        file_association_ref>>;
 }  // namespace doodle::database_n

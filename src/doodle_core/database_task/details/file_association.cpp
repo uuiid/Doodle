@@ -99,7 +99,7 @@ void sql_com<doodle::file_association>::select(
     l_i.name  = row.name.value();
 
     auto l_id = row.entity_id.value();
-    if (in_handle.find(l_id) != in_handle.end()) {
+    if (in_handle.contains(l_id)) {
       l_img.emplace_back(std::move(l_i));
       l_entts.emplace_back(in_handle.at(l_id));
       // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
