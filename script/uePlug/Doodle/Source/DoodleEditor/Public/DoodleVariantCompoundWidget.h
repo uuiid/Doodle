@@ -44,8 +44,6 @@ private:
 
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
-	TSharedPtr<SListView< TSharedPtr<FString>>> ThisListView;
-	TArray<TSharedPtr<FString>> Items = {};
 	//mate
 	TSharedPtr<SListView<TSharedPtr<FMaterialItemData> >> MaterialListView;
 	TArray< TSharedPtr< FMaterialItemData> > MaterialItems;
@@ -68,4 +66,8 @@ public:
 	FIntParamDelegate IsIsolateMaterialEnabled;
 	FECheckBoxStateIntParamDelegate OnMaterialCheckStateChanged;
 	FIntReturnECheckBoxStateParam MaterialGetCheckState;
+
+	FReply OnVariantAttach(FString TheVaraint);
+	TSharedPtr<SListView< TSharedPtr<FString>>> ThisListView;
+	TArray<TSharedPtr<FString>> Items = {};
 };
