@@ -56,6 +56,7 @@ struct entt_id {
 template <typename Id, typename Registry = entt::registry, typename... Scope>
 struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
   using base_type = entt::basic_handle<Registry, Scope...>;
+  constexpr static auto id = Id::value;
   using base_type::base_type;
 };
 using maya_file_id         = entt::tag<"maya_file"_hs>;
