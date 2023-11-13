@@ -23,6 +23,7 @@ target_sources(doodle_core
         file_one_path.h
         load_save_impl.h
         file_association.h
+        entt_handle_ref.h
 
 
         PRIVATE
@@ -51,4 +52,5 @@ target_sources(doodle_core
         file_one_path.cpp
         load_save_impl.cpp
         file_association.cpp
+        entt_handle_ref.cpp
 )
