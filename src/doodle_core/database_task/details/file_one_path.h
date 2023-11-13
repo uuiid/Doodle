@@ -84,12 +84,5 @@ class file_one_path : public detail::sql_create_table_base<table_type> {
     detail::sql_com_destroy<table_type>(in_ptr, in_handle);
   };
 };
-template <>
-struct sql_com<doodle::maya_file> : public file_one_path<tables::maya_file, doodle::maya_file> {};
-template <>
-struct sql_com<doodle::ue_file> : public file_one_path<tables::ue_file, doodle::ue_file> {};
-template <>
-struct sql_com<doodle::maya_rig_file> : public file_one_path<tables::maya_rig_file, doodle::maya_rig_file> {};
-template <>
-struct sql_com<doodle::ue_file_preset> : public file_one_path<tables::ue_file_preset, doodle::ue_file_preset> {};
+
 }  // namespace doodle::database_n
