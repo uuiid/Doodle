@@ -26,6 +26,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
       l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
       l_table.version = sqlpp::parameter(l_table.version), l_table.ref_id = sqlpp::parameter(l_table.ref_id),
       l_table.entity_id    = sqlpp::parameter(l_table.entity_id),
+      l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id),
       l_table.organization = sqlpp::parameter(l_table.organization)
   ));
 
@@ -40,7 +41,11 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
     else {
       l_pre.params.ref_id.set_null();
     }
-
+    if (auto l_h_assets = l_assets.assets_attr(); l_h_assets && l_h_assets.any_of<database>())
+      l_pre.params.assets_ref_id = l_h_assets.get<database>().get_id();
+    else {
+      l_pre.params.assets_ref_id.set_null();
+    }
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     l_conn(l_pre);
   }
@@ -56,6 +61,7 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
           .set(
               l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
               l_table.version = sqlpp::parameter(l_table.version), l_table.ref_id = sqlpp::parameter(l_table.ref_id),
+              l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id),
               l_table.organization = sqlpp::parameter(l_table.organization)
           )
           .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
@@ -72,6 +78,12 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
       l_pre.params.ref_id = l_h_user.get<database>().get_id();
     else {
       l_pre.params.ref_id.set_null();
+    }
+
+    if (auto l_h_assets = l_assets.assets_attr(); l_h_assets && l_h_assets.any_of<database>())
+      l_pre.params.assets_ref_id = l_h_assets.get<database>().get_id();
+    else {
+      l_pre.params.assets_ref_id.set_null();
     }
 
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -96,17 +108,21 @@ void sql_com<doodle::assets_file>::select(
 
   {
     std::size_t l_index{};
-    for (const auto& row :
-         l_conn(sqlpp::select(l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id)
-                    .from(l_table)
-                    .where(l_table.entity_id.is_not_null())
-                    .order_by(l_table.id.asc()))) {
+    for (const auto& row : l_conn(sqlpp::select(
+                                      l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.ref_id,
+                                      l_table.assets_ref_id
+         )
+                                      .from(l_table)
+                                      .where(l_table.entity_id.is_not_null())
+                                      .order_by(l_table.id.asc()))) {
       assets_file l_a{};
       l_a.name_attr(row.name.value());
       l_a.path_attr(row.path.value());
       l_a.version_attr(row.version.value());
       if (!row.ref_id.is_null() && in_handle.contains(row.ref_id.value()))
         l_a.user_ref.handle_cache = in_handle.at(row.ref_id.value());
+      if (!row.assets_ref_id.is_null() && in_handle.contains(row.assets_ref_id.value()))
+        l_a.assets_attr(in_handle.at(row.assets_ref_id.value()));
 
       auto l_id = row.entity_id.value();
       if (in_handle.contains(l_id)) {
