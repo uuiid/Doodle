@@ -96,6 +96,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
     maya_rig_file_ = l_h.get<doodle::assets_file>().path_attr().generic_string();
     on_change      = true;
   }
+  ImGui::SameLine();
   if (ImGui::Button("设置自身为maya rig文件")) {
     entt::handle l_file_ref  = render_id_.any_of<file_association_ref>() ? render_id_.get<file_association_ref>()
                                                                          : entt::handle{*g_reg(), g_reg()->create()};
@@ -120,6 +121,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
     ue_file_  = l_h.get<doodle::assets_file>().path_attr().generic_string();
     on_change = true;
   }
+  ImGui::SameLine();
   if (ImGui::Button("设置自身为ue文件")) {
     entt::handle l_file_ref    = render_id_.any_of<file_association_ref>() ? render_id_.get<file_association_ref>()
                                                                            : entt::handle{*g_reg(), g_reg()->create()};
@@ -143,6 +145,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
     ue_preset_file_ = l_h.get<doodle::assets_file>().path_attr().generic_string();
     on_change       = true;
   }
+  ImGui::SameLine();
   if (ImGui::Button("设置自身为ue preset文件")) {
     entt::handle l_file_ref  = render_id_.any_of<file_association_ref>() ? render_id_.get<file_association_ref>()
                                                                          : entt::handle{*g_reg(), g_reg()->create()};
