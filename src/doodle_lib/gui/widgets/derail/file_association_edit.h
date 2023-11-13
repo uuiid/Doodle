@@ -12,7 +12,7 @@ class file_association_edit_t {
   gui_cache_name_id path_id_{};
   gui_cache_name_id add{};
   std::string name_{};
-  std::string tool_tip_{"拖拽两个文件, 将会对两个文嘉进行关联"};
+  std::string tool_tip_{"拖拽两个文件到输入框中, 将会对两个文嘉进行关联"};
   std::string maya_file_{};
   std::string maya_rig_file_{};
   std::string ue_file_{};
