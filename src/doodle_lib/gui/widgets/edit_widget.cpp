@@ -21,6 +21,7 @@
 #include <doodle_lib/gui/widgets/derail/assets_file_edit.h>
 #include <doodle_lib/gui/widgets/derail/command_edit.h>
 #include <doodle_lib/gui/widgets/derail/episodes_edit.h>
+#include <doodle_lib/gui/widgets/derail/file_association_edit.h>
 #include <doodle_lib/gui/widgets/derail/file_one_edit_t.h>
 #include <doodle_lib/gui/widgets/derail/importance_edit.h>
 #include <doodle_lib/gui/widgets/derail/season_edit.h>
@@ -87,14 +88,6 @@ class edit_widgets::impl {
    */
   std::vector<entt::handle> p_h;
 
-  render::season_edit_t season_edit{};
-  render::episodes_edit_t episodes_edit{};
-  render::shot_edit_t shot_edit{};
-  render::assets_file_edit_t assets_file_edit{};
-  render::command_edit_t command_edit{};
-  render::importance_edit_t importance_edit{};
-  render::time_edit_t time_edit{};
-
   std::tuple<
       std::shared_ptr<render_edit_impl<season, render::season_edit_t>>,
       std::shared_ptr<render_edit_impl<episodes, render::episodes_edit_t>>,
@@ -103,21 +96,12 @@ class edit_widgets::impl {
       std::shared_ptr<render_edit_impl<comment, render::command_edit_t>>,
       std::shared_ptr<render_edit_impl<importance, render::importance_edit_t>>,
       std::shared_ptr<render_edit_impl<time_point_wrap, render::time_edit_t>>,
-      std::shared_ptr<render::maya_file_edit_t>,       //
-      std::shared_ptr<render::ue_file_edit_t>,         //
-      std::shared_ptr<render::maya_rig_file_edit_t>,   //
-      std::shared_ptr<render::ue_file_preset_edit_t>>  //
+      std::shared_ptr<render::file_association_edit_t>>
       render_data;
-
-  std::tuple<
-      std::shared_ptr<render::maya_file_edit_t>, std::shared_ptr<render::ue_file_edit_t>,
-      std::shared_ptr<render::maya_rig_file_edit_t>, std::shared_ptr<render::ue_file_preset_edit_t>>
-      file_one_edit{};
 
   std::string title_name_;
   bool open{true};
   boost::signals2::scoped_connection p_sc;
-
   std::string database_info{};
 };
 
@@ -138,10 +122,7 @@ edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
       std::make_shared<impl::render_edit_impl<comment, render::command_edit_t>>(p_i.get()),
       std::make_shared<impl::render_edit_impl<importance, render::importance_edit_t>>(p_i.get()),
       std::make_shared<impl::render_edit_impl<time_point_wrap, render::time_edit_t>>(p_i.get()),
-      std::make_shared<render::maya_file_edit_t>("maya路径"s),      //
-      std::make_shared<render::ue_file_edit_t>("ue路径"s),          //
-      std::make_shared<render::maya_rig_file_edit_t>("绑定路径"s),  //
-      std::make_shared<render::ue_file_preset_edit_t>("预调路径"s)  //
+      std::make_shared<render::file_association_edit_t>("关系编辑"s)  //
 
   );
 }
