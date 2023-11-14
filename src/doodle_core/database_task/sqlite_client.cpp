@@ -92,7 +92,7 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   core_set::get_set().add_recent_project(project_path);
   only_ctx = false;
 
-  if (only_open) begin_save();
+  if (!only_open) begin_save();
 }
 
 void file_translator::begin_save() {
