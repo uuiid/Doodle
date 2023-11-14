@@ -357,10 +357,23 @@ void fbx_node_mesh::build_bind_post() {
         auto l_post_plug = get_plug(l_node, "bindPose");
 
         MObject l_post_handle{};
-        maya_chick(l_post_plug.getValue(l_post_handle));
-        const MFnMatrixData l_data{l_post_handle};
-        l_world_matrix = l_data.transformation(&l_status);
-        maya_chick(l_status);
+        if (l_post_plug.getValue(l_post_handle)) {
+          const MFnMatrixData l_data{l_post_handle};
+          l_world_matrix = l_data.transformation(&l_status);
+          maya_chick(l_status);
+        } else {
+          auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
+          maya_chick(l_status);
+          MObject l_world_handle{};
+          if (l_world_matrix_plug.getValue(l_world_handle)) {
+            const MFnMatrixData l_data{l_world_handle};
+            l_world_matrix = l_data.transformation(&l_status);
+            maya_chick(l_status);
+          } else {
+            throw_exception(doodle_error{
+                fmt::format("没有找到 bindpose 属性 {} 的值", conv::to_s(l_world_matrix_plug.partialName()))});
+          }
+        }
 
       } else if (l_node.hasFn(MFn::Type::kTransform)) {
         auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
@@ -371,7 +384,8 @@ void fbx_node_mesh::build_bind_post() {
           l_world_matrix = l_data.transformation(&l_status);
           maya_chick(l_status);
         } else {
-          l_world_matrix = MMatrix::identity;
+          throw_exception(doodle_error{
+              fmt::format("没有找到 bindpose 属性 {} 的值", conv::to_s(l_world_matrix_plug.partialName()))});
         }
       } else {
         throw_exception(doodle_error{"没有找到bindpose, 找绑定 {}", i});
