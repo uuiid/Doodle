@@ -374,13 +374,14 @@ void fbx_node_mesh::build_bind_post() {
           l_world_matrix = MMatrix::identity;
         }
       } else {
-        throw_exception(doodle_error{"not_find_bind_post {}", i});
+        throw_exception(doodle_error{"没有找到bindpose, 找绑定 {}", i});
       }
 
       /// 寻找父矩阵
       (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_world_matrix};
     } else {
       log_error(fmt::format("node {} is not dag node", get_node_full_name(l_node)));
+      throw_exception(doodle_error{"错误的 bindpose, 找绑定 {}", i});
     }
   }
 
@@ -656,6 +657,10 @@ void fbx_node_mesh::build_skin() {
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
     if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
+      log_info(
+          extra_data_.logger_, fmt::format("本次导出文件可能出错, 最好寻找绑定, 出错的骨骼 {}", l_joint->dag_path)
+      );
+
       auto l_node              = l_joint->dag_path.node();
 
       auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
@@ -665,7 +670,7 @@ void fbx_node_mesh::build_skin() {
       );
       if (l_index == l_skin_world_matrix_plug_list.size()) {
         log_error(fmt::format("can not find world matrix plug: {}", get_node_name(l_node)));
-        throw_exception(doodle_error{fmt::format("can not find world matrix plug: {}", get_node_name(l_node))});
+        throw_exception(doodle_error{fmt::format("没有寻找到绑定矩阵, 请寻求绑定解决: {}", get_node_name(l_node))});
       }
 
       auto l_post_plug = get_plug(l_skin_obj, "bindPreMatrix")[l_index];
@@ -1023,6 +1028,14 @@ fbx_write::fbx_write() {
 void fbx_write::write(
     const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
 ) {
+  if (!g_ctx().contains<fbx_logger>())
+    logger_ =
+        g_ctx()
+            .emplace<fbx_logger>(g_logger_ctrl().make_log_file(in_path.parent_path() / "fbx_log.txt", "fbx_logger"))
+            .logger_;
+  else
+    logger_ = g_ctx().get<fbx_logger>().logger_;
+
   path_            = in_path;
   auto* anim_stack = scene_->GetCurrentAnimationStack();
   FbxTime l_fbx_begin{};
@@ -1040,9 +1053,17 @@ void fbx_write::write(
   try {
     build_data();
   } catch (const maya_error& in_error) {
-    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
+    return;
+  } catch (const doodle_error& in_error) {
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
     return;
   }
+
   if (export_anim_) {
     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
       MAnimControl::setCurrentTime(l_time);
@@ -1082,10 +1103,14 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   try {
     build_data();
   } catch (const maya_error& in_error) {
-    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
     return;
   } catch (const doodle_error& in_error) {
-    MGlobal::displayError(conv::to_ms(boost::diagnostic_information(in_error)));
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
     return;
   }
 
@@ -1247,6 +1272,7 @@ void fbx_write::build_data() {
       (*i)->extra_data_.tree_         = &tree_;
       (*i)->extra_data_.material_map_ = &material_map_;
       (*i)->extra_data_.bind_post     = &bind_post_;
+      (*i)->extra_data_.logger_       = logger_;
       l_iter_init(i);
     }
   };

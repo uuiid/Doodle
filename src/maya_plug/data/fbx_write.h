@@ -3,7 +3,9 @@
 //
 
 #pragma once
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/file_sys.h>
+#include <doodle_core/logger/logger.h>
 
 #include <maya_plug/data/dagpath_cmp.h>
 
@@ -27,6 +29,7 @@ struct fbx_extra_data {
     MTransformationMatrix form_matrix{};
   };
   fbx_tree_t* tree_{};
+  logger_ptr logger_{};
 
   using bind_post_matrix_map_t = std::map<MDagPath, bind_post_matrix, details::cmp_dag>;
   std::map<MDagPath, bind_post_matrix, details::cmp_dag>* bind_post{};
@@ -117,6 +120,12 @@ class fbx_write {
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};     // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   fbx_write_ns::fbx_extra_data::bind_post_matrix_map_t bind_post_{};
+
+  struct fbx_logger {
+    logger_ptr logger_{};
+  };
+
+  logger_ptr logger_{};
 
   bool export_anim_{true};
   bool ascii_fbx_{false};
