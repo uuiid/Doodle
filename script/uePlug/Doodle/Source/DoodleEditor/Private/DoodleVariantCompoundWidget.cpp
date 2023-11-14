@@ -9,7 +9,7 @@
 #include "DoodleVariantAssetUserData.h"
 #include "DoodleVariantEditorViewport.h"
 #include "DoodleVariantFactory.h"
-#include "Editor/ContentBrowser/Public/ContentBrowserModule.h"
+#include "ContentBrowserModule.h"
 #include "Editor/ContentBrowser/Public/IContentBrowserSingleton.h"
 #include "Factories/BlueprintFactory.h"
 #include "GeometryCache.h"
@@ -21,6 +21,8 @@
 #include "SlateOptMacros.h"
 #include "Textures/SlateIcon.h"
 #include "Widgets/Views/STableRow.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 
@@ -241,6 +243,10 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                         SetVariantInfo(name);
                                     }
                                     ESelectInfo::Type t = SelectType;
+                                    //------------------------------
+                                    NowVaraint = *inSelectItem;
+                                    if (CurrentObject && CurrentObject->AllVaraint.Num() > 0)
+                                        OnVariantChange.ExecuteIfBound(CurrentObject->AllVaraint[NowVaraint]);
                                 }
                             })
                             .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FString> inSelectItem)
@@ -357,10 +363,8 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::VariantListOnGenerateRow(TSha
         })
         .OnClickedEvent_Lambda([this,InItem]() 
         {
-            NowVaraint = *InItem;
-            if (CurrentObject && CurrentObject->AllVaraint.Num() > 0)
-                OnVariantChange.ExecuteIfBound(CurrentObject->AllVaraint[NowVaraint]);
-            //-----------------------
+            FString TheVaraint = *InItem;
+            OnVariantAttach(TheVaraint);
         });
 }
 
@@ -412,6 +416,15 @@ void DoodleVariantCompoundWidget::VariantNameOnTextCommitted(const FText& InText
         Items.Add(f);
     }
     ThisListView->RequestListRefresh();
+    //-------------
+    for (TSharedPtr<FString> Item : Items)
+    {
+        if (*Item == NewName)
+        {
+            ThisListView->Private_SetItemSelection(Item, true);
+            break;
+        }
+    }
 }
 
 TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSharedPtr<FMaterialItemData> InItem, const TSharedRef<STableViewBase>& OwnerTable)
@@ -444,6 +457,10 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
                     MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
                     CurrentObject->Modify();
                 }
+                //----------------
+                //NowVaraint = *InItem;
+                if (CurrentObject && CurrentObject->AllVaraint.Num() > 0)
+                    OnVariantChange.ExecuteIfBound(CurrentObject->AllVaraint[NowVaraint]);
             }
         });
 }
@@ -519,6 +536,15 @@ FReply DoodleVariantCompoundWidget::OnLoadAllVariant()
         Items.Add(Str);
     }
     ThisListView->RequestListRefresh();
+    //-------------
+    for (TSharedPtr<FString> Item : Items)
+    {
+        if (*Item == NowVaraint)
+        {
+            ThisListView->SetItemSelection(Item, true);
+            break;
+        }
+    }
     SetVariantInfo(NowVaraint);
     ButtonLoadVariant->SetVisibility(EVisibility::Hidden);
 	return FReply::Handled();
@@ -590,6 +616,15 @@ FReply DoodleVariantCompoundWidget::OnLinkSkeletalMesh()
             Items.Add(Str);
         }
         ThisListView->RequestListRefresh();
+        //-------------
+        for (TSharedPtr<FString> Item : Items)
+        {
+            if (*Item == NowVaraint)
+            {
+                ThisListView->SetItemSelection(Item, true);
+                break;
+            }
+        }
         SetVariantInfo(NowVaraint);
     }
     return FReply::Handled();
@@ -631,6 +666,15 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
     {
         NowVaraint = OutKeys[0];
         SetVariantInfo(NowVaraint);
+    }
+    //-------------
+    for (TSharedPtr<FString> Item : Items)
+    {
+        if (*Item == NowVaraint)
+        {
+            ThisListView->SetItemSelection(Item, true);
+            break;
+        }
     }
 }
 
@@ -688,6 +732,15 @@ FReply DoodleVariantCompoundWidget::OnVariantAdd()
             Items.Add(Str);
         }
         ThisListView->RequestListRefresh();
+        //-------------
+        for (TSharedPtr<FString> Item : Items)
+        {
+            if (*Item == NowVaraint)
+            {
+                ThisListView->SetItemSelection(Item, true);
+                break;
+            }
+        }
         SetVariantInfo(L_Name.ToString());
         CurrentObject->Modify();
     }
@@ -724,8 +777,50 @@ void DoodleVariantCompoundWidget::OnVariantDelete()
                 SetVariantInfo(NowVaraint);
             }
             CurrentObject->Modify();
+            //-------------
+            for (TSharedPtr<FString> Item : Items)
+            {
+                if (*Item == NowVaraint)
+                {
+                    ThisListView->Private_SetItemSelection(Item, true);
+                    break;
+                }
+            }
         }
     }
+}
+
+FReply DoodleVariantCompoundWidget::OnVariantAttach(FString TheVaraint)
+{
+    if (!CurrentObject)
+    {
+        FText DialogText = {};
+        DialogText = FText::FromString(TEXT("请先载入变体。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+    //----------------------
+    USelection* L_Selects = GEditor->GetSelectedActors();
+    TArray<UObject*> outObject;
+    L_Selects->GetSelectedObjects(outObject);
+    if (outObject.Num() <= 0 || !outObject[0]->GetClass()->IsChildOf<ASkeletalMeshActor>())
+    {
+        FText DialogText = {};
+        DialogText = FText::FromString(TEXT("请先在关卡中，选择粘贴目标。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+
+    UObject* L_Target = L_Selects->GetSelectedObject(0);
+    ASkeletalMeshActor* L_Skin = Cast<ASkeletalMeshActor>(L_Target);
+    TArray<FSkeletalMaterial> L_List = CurrentObject->AllVaraint[TheVaraint].Variants;
+    for (int i = 0;i < L_List.Num();i++)
+    {
+        L_Skin->GetSkeletalMeshComponent()->SetMaterial(i, L_List[i].MaterialInterface);
+    }
+    L_Skin->GetSkeletalMeshComponent()->PostApplyToComponent();
+    //-----------------------
+    return FReply::Handled();
 }
 
 TSharedRef<SDockTab> DoodleVariantCompoundWidget::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
