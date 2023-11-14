@@ -97,6 +97,15 @@ void UDoodleVariantEditorToolkit::Initialize(const EToolkitMode::Type Mode, cons
     {
         VariantEditorWidget->SetSetVariantData(Asset);
         FString NowVaraint = VariantEditorWidget->NowVaraint;
+        //-------------
+        for (TSharedPtr<FString> Item : VariantEditorWidget->Items)
+        {
+            if (*Item == NowVaraint)
+            {
+                VariantEditorWidget->ThisListView->SetItemSelection(Item, true);
+                break;
+            }
+        }
         ViewEditorViewport->SetViewportSkeletal(Asset->Mesh, VariantEditorWidget.Get()->CurrentObject->AllVaraint[NowVaraint].Variants);
         VariantEditorWidget->OnVariantChange.BindLambda([this,Asset](FVariantInfo variant)
         {
