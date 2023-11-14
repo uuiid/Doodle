@@ -1036,6 +1036,8 @@ void fbx_write::write(
   else
     logger_ = g_ctx().get<fbx_logger>().logger_;
 
+  log_info(logger_, fmt::format("开始导出文件 {}", in_path.generic_string()));
+
   path_            = in_path;
   auto* anim_stack = scene_->GetCurrentAnimationStack();
   FbxTime l_fbx_begin{};
@@ -1063,6 +1065,7 @@ void fbx_write::write(
     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
     return;
   }
+  log_info(logger_, "开始导出动画");
 
   if (export_anim_) {
     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
