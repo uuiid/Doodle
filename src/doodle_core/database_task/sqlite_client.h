@@ -22,6 +22,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   registry_ptr registry_attr{};
   std::atomic_bool save_all{};
   bool only_ctx{};
+  bool only_open{};
 
   std::shared_ptr<timer_t> timer_{};  // 定时器
 
@@ -40,6 +41,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   ~file_translator() = default;
 
   inline void set_only_ctx(bool in_only_ctx) { only_ctx = in_only_ctx; }
+  inline void set_only_open(bool in_only_open) { only_open = in_only_open; }
   /**
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径

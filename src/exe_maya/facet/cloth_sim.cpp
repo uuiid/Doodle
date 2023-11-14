@@ -67,6 +67,7 @@ bool cloth_sim::post() {
 
   l_ret      = true;
 
+  g_ctx().get<database_n::file_translator_ptr>()->set_only_open(true);
   g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));

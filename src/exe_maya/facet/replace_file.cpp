@@ -50,6 +50,7 @@ bool replace_file_facet::post() {
   g_ctx().emplace<reference_file_factory>();
   l_ret = true;
 
+  g_ctx().get<database_n::file_translator_ptr>()->set_only_open(true);
   g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   maya_file_io::set_workspace(l_arg.file_path);
 

@@ -1074,6 +1074,7 @@ void fbx_write::write(
     }
   }
   write_end();
+  logger_->flush();
 }
 
 void fbx_write::write(
