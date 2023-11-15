@@ -64,7 +64,8 @@ HWND find_windows() {
 }
 
 void open_windows() {
-  using maya_gui_app = doodle::app_plug<maya_facet>;
+  using maya_gui_app  = doodle::app_plug<maya_facet>;
+  using maya_null_app = doodle::app_command<>;
 
   switch (MGlobal::mayaState()) {
     case MGlobal::MMayaState::kBaseUIMode:
@@ -80,6 +81,7 @@ void open_windows() {
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
     default: {
+      p_doodle_app = std::make_shared<maya_null_app>();
     } break;
   }
 }

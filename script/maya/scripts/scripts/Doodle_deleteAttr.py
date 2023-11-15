@@ -7,8 +7,7 @@ from PySide2 import QtWidgets
 from maya import OpenMayaUI as omui
 from shiboken2 import wrapInstance
 
-mayaMainWindowPtr = omui.MQtUtil.mainWindow()
-mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtWidgets.QWidget)
+
 
 
 class deleButten(QtWidgets.QPushButton):
@@ -40,6 +39,8 @@ class deleButten(QtWidgets.QPushButton):
 class deleteShape(QtWidgets.QMainWindow):
     def __init__(self):
         super(deleteShape, self).__init__()
+        mayaMainWindowPtr = omui.MQtUtil.mainWindow()
+        mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtWidgets.QWidget)
         self.setParent(mayaMainWindow)
         self.setWindowFlags(QtCore.Qt.Window)
         self.resize(400, 800)

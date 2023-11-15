@@ -20,13 +20,12 @@ namespace doodle {
 /**
  * @brief 基本的命令行类
  */
-template <typename Facet_Defaute, typename... Facet_>
+template <typename... Facet_>
 class app_command : public app_base {
  public:
   app_command() : app_base() {
     g_ctx().emplace<program_options>();
 
-    add_facet<Facet_Defaute>();
     (add_facet<Facet_>(), ...);
   };
 
@@ -52,7 +51,7 @@ class app_command : public app_base {
   virtual void deconstruction() override { facet_list.clear(); }
 };
 
-template <typename Facet_Defaute>
-using app_plug = app_command<Facet_Defaute>;
+template <typename... Facet_>
+using app_plug = app_command<Facet_...>;
 
 }  // namespace doodle
