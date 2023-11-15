@@ -27,6 +27,7 @@ class file_association_edit_t {
 
   void init(const entt::handle& in_handle);
   void create_file_association();
+  entt::handle create_file_association_handle(const entt::handle& in_handle = {});
 
   entt::handle get_drop_handle();
 
