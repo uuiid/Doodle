@@ -80,7 +80,7 @@ class maya_register {
   }
 
   template <typename Fun_t>
-  MStatus register_lab(Fun_t&& in_fun) {
+  MStatus register_unregister_fun(Fun_t&& in_fun) {
     maya_comm_call_back.emplace(std::forward<Fun_t>(in_fun));
     return {};
   }

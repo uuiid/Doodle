@@ -74,6 +74,7 @@ void open_windows() {
       g_ctx().get<program_info>().parent_windows_attr(win_id);
       /// 在这里我们加载项目
       g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
+      g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
       break;
     }
     case MGlobal::MMayaState::kBatch:
@@ -81,8 +82,6 @@ void open_windows() {
     default: {
     } break;
   }
-
-  g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
 }
 }  // namespace doodle::maya_plug
 
@@ -106,7 +105,7 @@ MStatus initializePlugin(MObject obj) {
       doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status
   );
   if (status)
-    maya_reg->register_lab([](MFnPlugin& in_plug) {
+    maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
       // 这一部分是删除菜单项的
       MStatus status{};
       MStringArray menuItems{};
@@ -117,26 +116,6 @@ MStatus initializePlugin(MObject obj) {
     });
   else
     DOODLE_LOG_ERROR(status);
-
-  /// \brief  自定义hud回调
-  // maya_reg->register_callback(MSceneMessage::addCallback(
-  //     MSceneMessage::Message::kAfterOpen,
-  //     [](void* clientData) {
-  //       ::doodle::maya_plug::create_hud_node k_c{};
-  //       k_c();
-  //     },
-  //     nullptr, &status
-  // ));
-  // CHECK_MSTATUS(status);
-  // maya_reg->register_callback(MSceneMessage::addCallback(
-  //     MSceneMessage::Message::kAfterNew,
-  //     [](void* clientData) {
-  //       ::doodle::maya_plug::create_hud_node k_c{};
-  //       k_c();
-  //     },
-  //     nullptr, &status
-  // ));
-  // CHECK_MSTATUS(status);
 
   maya_reg->register_callback(MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
@@ -212,9 +191,18 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
 )");
   CHECK_MSTATUS(status);
 
+  maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
+    return MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
+scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
+)");
+  });
+
   if (!::doodle::core_set::get_set().maya_force_resolve_link) {
     status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
     CHECK_MSTATUS(status);
+    maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
+      return MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
+    });
   }
   return status;
 }
@@ -223,25 +211,13 @@ MStatus uninitializePlugin(MObject obj) {
   MStatus status{};
 
   MFnPlugin k_plugin{obj};
-
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  if (!::doodle::core_set::get_set().maya_force_resolve_link) {
-    /// \brief
-    status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
-    CHECK_MSTATUS(status);
-  }
   // 这里要停止app
-  p_doodle_app->stop_app();
-  p_doodle_app->run();
-  /// 先删除工具架
-  status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
-scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
-)");
-  CHECK_MSTATUS(status);
-
+  if (p_doodle_app) {
+    p_doodle_app->stop_app();
+    p_doodle_app->run();
+  }
   status = maya_reg->unregister(k_plugin);
   CHECK_MSTATUS(status);
-
   p_doodle_app.reset();
   maya_reg.reset();
   return status;
