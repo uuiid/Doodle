@@ -27,6 +27,8 @@
 #include "ILevelSequenceEditorToolkit.h"
 #include "ISequencerModule.h"
 #include "LevelSequence.h"
+//----------------文件管理
+#include "DoodleOrganizeCompoundWidget.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -55,6 +57,11 @@ void FdoodleEditorModule::StartupModule() {
       FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(DoodleVariantCompoundWidget::Name); }),
       FCanExecuteAction()
   );
+  PluginCommands->MapAction(
+      FDoodleCommands::Get().DoodleOrganizeWindow,
+      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name); }),
+      FCanExecuteAction()
+  );
 
   /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
@@ -69,6 +76,10 @@ void FdoodleEditorModule::StartupModule() {
   FGlobalTabmanager::Get()
       ->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
       .SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  FGlobalTabmanager::Get() //文件管理
+      ->RegisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name, FOnSpawnTab::CreateStatic(&UDoodleOrganizeCompoundWidget::OnSpawnAction))
+      .SetDisplayName(FText::FromString(TEXT("文件分类整理")))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   FContentBrowserModule &ContentBrowserModule =
@@ -150,6 +161,7 @@ void FdoodleEditorModule::ShutdownModule() {
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
   // zhanghang 变体相关 23/09/25
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DoodleVariantCompoundWidget::Name);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name);
 
   // 取消注册资产动作
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
@@ -203,7 +215,8 @@ void FdoodleEditorModule::RegisterMenus() {
       FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().OpenPluginWindow, PluginCommands);
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands);
-      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleVariantWindow, PluginCommands);
+      //Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleVariantWindow, PluginCommands);
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleOrganizeWindow, PluginCommands);
     }
   }
 
