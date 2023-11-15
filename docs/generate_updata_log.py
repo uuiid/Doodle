@@ -46,7 +46,7 @@ class comm_mess():
 
 class git_log():
     def __call__(self, *args, **kwargs):
-        self.mess_reg = re.compile("""log|doc|\.\.\.|\.\.|(\d\.\d\.\d)""")
+        self.mess_reg = re.compile("""log|doc|\\.\\.\\.|\\.\\.|(\\d\\.\\d\\.\\d)""")
 
         git_sub = git.Repo(".", search_parent_directories=True)
 
