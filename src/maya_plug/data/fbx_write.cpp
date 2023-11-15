@@ -314,8 +314,10 @@ void fbx_node_mesh::build_bind_post() {
   auto l_bind_post_obj = get_bind_post();
 
   if (l_bind_post_obj.isNull() || !l_bind_post_obj.hasFn(MFn::Type::kDagPose)) {
-    throw_exception(doodle_error{fmt::format("{} is not dag pose", dag_path)});
+    log_warn(extra_data_.logger_, fmt::format("{} 中, 未找到 bind pose 节点", dag_path));
+    return;
   }
+
   if (std::find_if(
           extra_data_.bind_pose_array_.begin(), extra_data_.bind_pose_array_.end(),
           [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
@@ -978,6 +980,20 @@ MObject fbx_node_mesh::get_bind_post() const {
     maya_chick(l_s);
     return l_obj;
   }
+  auto l_joint_list = find_joint(get_skin_custer());
+  for (const auto& l_j : l_joint_list) {
+    auto l_shape = l_j.node(&l_s);
+    maya_chick(l_s);
+
+    /// 寻找高模的皮肤簇
+    for (MItDependencyGraph i{l_shape, MFn::kDagPose, MItDependencyGraph::Direction::kDownstream}; !i.isDone();
+         i.next()) {
+      auto l_obj = i.currentItem(&l_s);
+      maya_chick(l_s);
+      return l_obj;
+    }
+  }
+
   return MObject::kNullObj;
 }
 
