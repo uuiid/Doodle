@@ -314,9 +314,17 @@ void fbx_node_mesh::build_bind_post() {
   auto l_bind_post_obj = get_bind_post();
 
   if (l_bind_post_obj.isNull() || !l_bind_post_obj.hasFn(MFn::Type::kDagPose)) {
-    log_info(fmt::format("{} is not dag pose", dag_path));
+    throw_exception(doodle_error{fmt::format("{} is not dag pose", dag_path)});
+  }
+  if (std::find_if(
+          extra_data_.bind_pose_array_.begin(), extra_data_.bind_pose_array_.end(),
+          [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
+      ) != extra_data_.bind_pose_array_.end()) {
+    log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_bind_post_obj)));
     return;
   }
+
+  extra_data_.bind_pose_array_.append(l_bind_post_obj);
 
   auto l_member_list       = get_plug(l_bind_post_obj, "members");
   auto l_world_matrix_list = get_plug(l_bind_post_obj, "worldMatrix");
@@ -962,20 +970,13 @@ void fbx_node_mesh::build_animation(const MTime& in_time) {
 }
 
 MObject fbx_node_mesh::get_bind_post() const {
-  auto l_joint_list = find_joint(get_skin_custer());
-
+  auto l_skin = get_skin_custer();
   MStatus l_s{};
-  for (auto l_j : l_joint_list) {
-    auto l_shape = l_j.node(&l_s);
+  /// 寻找高模的皮肤簇
+  for (MItDependencyGraph i{l_skin, MFn::kDagPose, MItDependencyGraph::Direction::kUpstream}; !i.isDone(); i.next()) {
+    auto l_obj = i.currentItem(&l_s);
     maya_chick(l_s);
-
-    /// 寻找高模的皮肤簇
-    for (MItDependencyGraph i{l_shape, MFn::kDagPose, MItDependencyGraph::Direction::kDownstream}; !i.isDone();
-         i.next()) {
-      auto l_obj = i.currentItem(&l_s);
-      maya_chick(l_s);
-      return l_obj;
-    }
+    return l_obj;
   }
   return MObject::kNullObj;
 }
@@ -1296,18 +1297,15 @@ void fbx_write::build_data() {
   };
   l_iter_init(tree_.begin());
 
-  std::function<bool(const fbx_tree_t::iterator& in_iterator)> l_iter_bind_post{};
+  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_bind_post{};
 
-  l_iter_bind_post = [&](const fbx_tree_t::iterator& in_iterator) -> bool {
-    auto l_ret = false;
+  l_iter_bind_post = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       if ((*i)->dag_path.hasFn(MFn::kMesh))
         if (auto l_ptr = std::dynamic_pointer_cast<fbx_node_mesh_t>(*i); l_ptr) {
           l_ptr->build_bind_post();
-          return true;
         }
-      l_ret = l_iter_bind_post(i);
-      if (l_ret) return true;
+      l_iter_bind_post(i);
     }
     return false;
   };

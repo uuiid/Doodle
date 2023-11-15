@@ -12,6 +12,7 @@
 #include <fbxsdk.h>
 #include <maya/MDagPath.h>
 #include <maya/MEulerRotation.h>
+#include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MTime.h>
 #include <treehh/tree.hh>
@@ -34,6 +35,7 @@ struct fbx_extra_data {
   using bind_post_matrix_map_t = std::map<MDagPath, bind_post_matrix, details::cmp_dag>;
   std::map<MDagPath, bind_post_matrix, details::cmp_dag>* bind_post{};
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
+  MObjectArray bind_pose_array_{};
   fbx_extra_data() = default;
 };
 
