@@ -11,6 +11,7 @@ namespace doodle::gui::render {
 class file_association_edit_t {
   gui_cache_name_id path_id_{};
   gui_cache_name_id add{};
+  gui_cache_name_id name_id_{"关联名称"};
   std::string name_{};
   std::string tool_tip_{"拖拽两个文件到输入框中, 将会对两个文嘉进行关联"};
   std::string maya_file_{};

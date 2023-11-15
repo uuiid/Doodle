@@ -72,7 +72,10 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
 
   bool on_change{false};
 
-  dear::Text(name_);
+  if (ImGui::InputText(*name_id_, &name_)) {
+    create_file_association_handle().get_or_emplace<file_association>().name = name_;
+    on_change                                                                = true;
+  }
   dear::Text(tool_tip_);
 
   if (ImGui::Button("关联自身##1")) {
