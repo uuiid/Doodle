@@ -561,65 +561,23 @@ FReply UDoodleOrganizeCompoundWidget::OnResizeTextureSize()
         UTexture* In_Texture = Cast<UTexture>(Selected.GetAsset());
         FTextureSource& L_Soure = In_Texture->Source;
         //--------------------
-        if(L_Soure.IsValid())
+        if(In_Texture &&L_Soure.IsValid())
         {
             int32 L_Max_Size_Count = FMath::Max(FMath::CeilLogTwo(L_Soure.GetSizeX()), FMath::CeilLogTwo(L_Soure.GetSizeY()));//----------
             int32 L_Max_Size = FMath::Pow(2.0, L_Max_Size_Count);
             if (L_Max_Size != L_Soure.GetSizeX() || L_Max_Size != L_Soure.GetSizeY())
             {
-                if (L_Soure.GetNumSlices() == 1 && L_Soure.GetNumBlocks() == 1 && !L_Soure.IsHDR(L_Soure.GetFormat()))
-                {
-                    FImage L_Image{};
-                    switch (L_Soure.GetFormat())
-                    {
-                        case ETextureSourceFormat::TSF_G8: 
-                        {
-                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::G8);
-                        } break;
-                        case ETextureSourceFormat::TSF_BGRA8: 
-                        {
-                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::BGRA8);
-                        } break;
-                        case ETextureSourceFormat::TSF_BGRE8: 
-                        {
-                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::BGRE8);
-                        } break;
-                        case ETextureSourceFormat::TSF_RGBA16: 
-                        {
-                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::RGBA16);
-                        } break;
-                        case ETextureSourceFormat::TSF_RGBA16F: 
-                        {
-                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::RGBA16F);
-                        } break;
-                        case ETextureSourceFormat::TSF_G16: 
-                        {
-                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::G16);
-                        } break;
-                        default:
-                            return FReply::Handled();
-                            break;
-                    }
-                    ///-------------------------
-                    In_Texture->ReleaseResource();
-                    L_Soure.GetMipData(L_Image.RawData, 0);
-                    //-----------------
-                    FImage L_Dest;
-                    L_Image.ResizeTo(L_Dest, L_Max_Size, L_Max_Size, L_Image.Format, L_Image.GammaSpace);
-                    L_Soure.Init(L_Max_Size, L_Max_Size, 1, 1, L_Soure.GetFormat(), L_Dest.RawData.GetData());
-                    In_Texture->MipGenSettings = TextureMipGenSettings::TMGS_FromTextureGroup;
-                    //--------------
-                    In_Texture->MarkPackageDirty();
-                    In_Texture->PostEditChange();
-                    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-                    EditorAssetSubsystem->SaveLoadedAsset(In_Texture);
-                    //-----------------------
-                    FString Info = FString::Format(TEXT("重置贴图{0}成功"), { Selected.PackageName.ToString() });
-                    FNotificationInfo L_Info{ FText::FromString(Info) };
-                    L_Info.FadeInDuration = 2.0f;  // 
-                    L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
-                    FSlateNotificationManager::Get().AddNotification(L_Info);
-                }
+                FResizeTexture L_Resize{};
+                L_Resize.Resize(In_Texture);
+                //----------------------
+                UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+                EditorAssetSubsystem->SaveLoadedAsset(In_Texture);
+                //-----------------------
+                FString Info = FString::Format(TEXT("重置贴图{0}成功"), { Selected.PackageName.ToString() });
+                FNotificationInfo L_Info{ FText::FromString(Info) };
+                L_Info.FadeInDuration = 2.0f;  // 
+                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                FSlateNotificationManager::Get().AddNotification(L_Info);
             }
         }
     }

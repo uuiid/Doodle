@@ -1,12 +1,12 @@
 #include "ResizeTexture.h"
-#include "Engine/Texture2D.h"
+#include "Engine/Texture.h"
 #include "ImageCore.h"
 /// 进度框
 #include "Misc/ScopedSlowTask.h"
 
 #define LOCTEXT_NAMESPACE "FResizeTexture"
 
-void FResizeTexture::Resize(UTexture2D* In_Texture) {
+void FResizeTexture::Resize(UTexture* In_Texture) {
   FScopedSlowTask L_Task_Scoped{5.0f, LOCTEXT("FResizeTexture", "开始转换...")};
   L_Task_Scoped.MakeDialog();
   //   UE_LOG(LogTemp, Log, TEXT("确认调整贴图 %s"), *(In_Texture->GetPathName()));
