@@ -79,7 +79,7 @@ FSys::path find_maya_work(const FSys::path &in_file_path) {
   return in_file_path.parent_path();
 }
 
-class run_maya : public std::enable_shared_from_this<run_maya> {
+class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_ns::maya_process_base {
  public:
   entt::handle mag_attr{};
   FSys::path file_path_attr{};
@@ -96,15 +96,17 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   boost::asio::streambuf out_strbuff_attr{};
   boost::asio::streambuf err_strbuff_attr{};
 
-  std::shared_ptr<std::function<void(boost::system::error_code)>> call_attr{};
+  maya_exe::call_fun_type call_attr{};
 
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
   boost::signals2::scoped_connection cancel_attr{};
 
-  run_maya()          = default;
-  virtual ~run_maya() = default;
+  explicit run_maya(maya_exe *in_maya_exe) : maya_exe_ns::maya_process_base(in_maya_exe) {}
+  ~run_maya() override = default;
 
-  void run() {
+  bool running() override { return child_attr.running(); }
+
+  void run() override {
     if (program_path.empty()) throw doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"};
 
     auto l_path  = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
@@ -137,23 +139,6 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     l_eve["Path"] += (maya_program_path / "bin").generic_string();
     l_eve["Path"] += program_path.parent_path().generic_string();
     l_eve["Path"] += core_set::get_set().program_location().generic_string();
-
-    // boost::process::v2::process_environment l_env{
-    //     std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value>{
-    //         {"MAYA_LOCATION"s, program_path.parent_path().parent_path().generic_string()},
-    //         {"PATH"s, program_path.parent_path().generic_string()}}};
-
-    // boost::asio::readable_pipe l_out_pipe{g_io_context()};
-    // boost::asio::readable_pipe l_err_pipe{g_io_context()};
-    // boost::process::v2::process_stdio l_io{nullptr, l_out_pipe, l_err_pipe};
-    // boost::process::v2::process l_process{
-    //     g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io};
-    // boost::asio::cancellation_signal sig{};
-    // boost::process::v2::async_execute(
-    //     boost::process::v2::process{
-    //         g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io},
-    //     boost::asio::bind_cancellation_slot(sig, [](boost::system::error_code ec, int exit_code) {})
-    // );
     child_attr = boost::process::child{
         g_io_context(),
         boost::process::exe       = program_path.generic_string(),
@@ -167,7 +152,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
               auto &&l_msg = mag_attr.get<process_message>();
               l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
               l_msg.message(fmt::format("退出代码 {}", in_exit));
-              (*call_attr)(in_error_code);
+              call_attr(in_error_code);
+              next_run();
             },
         boost::process::windows::hide,
         l_eve};
@@ -175,6 +161,24 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     read_out();
     read_err();
   }
+  //  void run2(){
+  // boost::process::v2::process_environment l_env{
+  //     std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value>{
+  //         {"MAYA_LOCATION"s, program_path.parent_path().parent_path().generic_string()},
+  //         {"PATH"s, program_path.parent_path().generic_string()}}};
+
+  // boost::asio::readable_pipe l_out_pipe{g_io_context()};
+  // boost::asio::readable_pipe l_err_pipe{g_io_context()};
+  // boost::process::v2::process_stdio l_io{nullptr, l_out_pipe, l_err_pipe};
+  // boost::process::v2::process l_process{
+  //     g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io};
+  // boost::asio::cancellation_signal sig{};
+  // boost::process::v2::async_execute(
+  //     boost::process::v2::process{
+  //         g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io},
+  //     boost::asio::bind_cancellation_slot(sig, [](boost::system::error_code ec, int exit_code) {})
+  // );
+  //  }
 
   void read_out() {
     boost::asio::async_read_until(
@@ -236,7 +240,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     );
   }
 
-  void cancel() {
+  void cancel() override {
     timer_attr.cancel();
     child_attr.terminate();
   }
@@ -246,12 +250,17 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
 
 class maya_exe::impl {
  public:
-  std::stack<std::shared_ptr<maya_exe_ns::run_maya>> run_process_arg_attr;
-  std::vector<std::shared_ptr<maya_exe_ns::run_maya>> run_attr{};
+  std::stack<std::shared_ptr<maya_exe_ns::maya_process_base>> run_process_arg_attr;
+  std::vector<std::shared_ptr<maya_exe_ns::maya_process_base>> run_attr{};
 
   std::atomic_char16_t run_size_attr{};
   FSys::path run_path{};
 };
+
+void maya_exe_ns::maya_process_base::next_run() {
+  --maya_exe_->p_i->run_size_attr;
+  maya_exe_->notify_run();
+}
 
 maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
 
@@ -293,9 +302,6 @@ void maya_exe::install_maya_exe() {
   } catch (const winreg::RegException &in_err) {
     DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
   }
-  //  p_i->run_path =
-  //      core_set::get_set().program_location() / fmt::format("doodle_maya_exe_{}.exe",
-  //      core_set::get_set().maya_version);
 }
 
 void maya_exe::notify_run() {
@@ -310,7 +316,7 @@ void maya_exe::notify_run() {
 
   /// @brief 清除运行完成的程序
   for (auto &&l_i : p_i->run_attr) {
-    if (!l_i->child_attr.running()) {
+    if (!l_i->running()) {
       boost::asio::post(g_io_context(), [l_i, this]() {
         this->p_i->run_attr |= ranges::actions::remove_if([&](auto &&j) -> bool { return l_i == j; });
       });
@@ -319,11 +325,13 @@ void maya_exe::notify_run() {
 }
 void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
-    const std::shared_ptr<call_fun_type> &in_call_fun, const FSys::path &in_run_path
+    call_fun_type in_call_fun, const FSys::path &in_run_path
 ) {
   install_maya_exe();
 
-  auto l_run                 = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
+  auto l_run = std::dynamic_pointer_cast<maya_exe_ns::run_maya>(
+      p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>(this))
+  );
   l_run->mag_attr            = in_msg;
   l_run->run_script_attr_key = in_key;
   l_run->run_script_attr     = in_string;
@@ -332,14 +340,7 @@ void maya_exe::queue_up(
   l_run->maya_program_path   = find_maya_path();
   auto &&l_msg               = in_msg.get<process_message>();
   l_msg.set_name(in_run_path.filename().generic_string());
-  l_run->call_attr =
-      std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
-        boost::asio::post(g_io_context(), [=]() {
-          --p_i->run_size_attr;
-          (*in_call_fun)(in_code);
-          this->notify_run();
-        });
-      });
+  l_run->call_attr = std::move(in_call_fun);
   notify_run();
 }
 maya_exe::~maya_exe() {

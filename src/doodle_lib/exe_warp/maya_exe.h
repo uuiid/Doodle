@@ -6,6 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/asio.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/thread_pool.hpp>
 
@@ -15,7 +16,9 @@
 #include <string_view>
 #include <utility>
 
-namespace doodle::maya_exe_ns {
+namespace doodle {
+class maya_exe;
+namespace maya_exe_ns {
 namespace flags {
 static constexpr std::bitset<8> k_replace_ref_file{0b1 << 0};
 static constexpr std::bitset<8> k_sim_file{0b1 << 1};
@@ -110,18 +113,35 @@ class DOODLELIB_API clear_file_arg : public maya_exe_ns::arg {
     nlohmann_json_j["save_file_extension_attr"] = nlohmann_json_t.save_file_extension_attr;
   };
 };
+// 单独maya过程类基类
+class maya_process_base {
+ protected:
+  maya_exe *maya_exe_{};
 
-}  // namespace doodle::maya_exe_ns
-namespace doodle {
+  void next_run();
+
+ public:
+  explicit maya_process_base(maya_exe *in_maya_exe) : maya_exe_(in_maya_exe) {}
+  virtual ~maya_process_base() = default;
+  virtual void run()           = 0;
+  virtual bool running()       = 0;
+  virtual void cancel()        = 0;
+};
+}  // namespace maya_exe_ns
+
 class DOODLELIB_API maya_exe {
+ public:
+  using call_fun_type = boost::asio::any_completion_handler<void(boost::system::error_code)>;
+
+ private:
+  friend class maya_exe_ns::maya_process_base;
   class impl;
   std::unique_ptr<impl> p_i;
 
   void notify_run();
-  using call_fun_type = std::function<void(boost::system::error_code)>;
   void queue_up(
       const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
-      const std::shared_ptr<call_fun_type> &in_call_fun, const FSys::path &in_run_path
+      call_fun_type in_call_fun, const FSys::path &in_run_path
   );
 
  public:
@@ -142,8 +162,7 @@ class DOODLELIB_API maya_exe {
         [this, l_msg_ref, l_arg, in_handle](auto &&in_completion_handler) {
           nlohmann::json l_json{};
           l_json = l_arg;
-          auto l_fun =
-              std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
+          call_fun_type l_fun{std::forward<decltype(in_completion_handler)>(in_completion_handler)};
           this->queue_up(in_handle, Arg_t::k_name, l_json, l_fun, l_arg.file_path);
         },
         in_completion
