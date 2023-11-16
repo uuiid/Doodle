@@ -163,7 +163,7 @@ class DOODLELIB_API maya_exe {
           nlohmann::json l_json{};
           l_json = l_arg;
           call_fun_type l_fun{std::forward<decltype(in_completion_handler)>(in_completion_handler)};
-          this->queue_up(in_handle, Arg_t::k_name, l_json, l_fun, l_arg.file_path);
+          this->queue_up(in_handle, Arg_t::k_name, l_json, std::move(l_fun), l_arg.file_path);
         },
         in_completion
     );
