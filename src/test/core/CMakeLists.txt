@@ -12,6 +12,7 @@ target_sources(test_main
         abc.cpp
         wenrt.cpp
         render_farm.cpp
+        run_process_v2.cpp
 )
 
 target_link_libraries(
