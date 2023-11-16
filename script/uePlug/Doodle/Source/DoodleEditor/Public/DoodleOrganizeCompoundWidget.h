@@ -73,4 +73,5 @@ private:
 	FReply GetReferenceEngineTexture();
 	void OnAssginRepeatTexture(TSharedPtr<FTreeItem> Item);
 	FReply OnResizeTextureSize();
+	void FixupAllReferencers();
 };

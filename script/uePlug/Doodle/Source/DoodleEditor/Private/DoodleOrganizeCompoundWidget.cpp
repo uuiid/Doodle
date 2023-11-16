@@ -387,7 +387,6 @@ void UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree(TSharedPtr<FTreeIte
 
 void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> Item)
 {
-    TArray<FString> ReferencerPath;
     TArray<FString> AssetPath;
     FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
     //--------------------
@@ -399,15 +398,6 @@ void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> 
         if (!AssetPath.Contains(Child->Asset.PackagePath.ToString()))
         {
             AssetPath.Add(Child->Asset.PackagePath.ToString());
-        }
-        for (FAssetDependency Dependency : Dependencys)
-        {
-            Dependency.AssetId.PackageName;
-            FString PackagePath = FPackageName::GetLongPackagePath(Dependency.AssetId.PackageName.ToString());
-            if (!ReferencerPath.Contains(PackagePath))
-            {
-                ReferencerPath.Add(PackagePath);
-            }
         }
         //-------------------
         FinalConsolidationObjects.Add(Child->Asset.GetAsset());
@@ -434,18 +424,6 @@ void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> 
             Item->parent->Children.Remove(Remove);
         }
         //------------------------------------------
-        TArray<UObject*> Objects;
-        if (AssetViewUtils::LoadAssetsIfNeeded(ReferencerPath, Objects, true, true))
-        {
-            TArray<UObjectRedirector*> Redirectors;
-            for (UObject* Object : Objects)
-            {
-                if (Object->GetClass()->IsChildOf(UObjectRedirector::StaticClass()))
-                    Redirectors.Add(CastChecked<UObjectRedirector>(Object));
-            }
-            FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-            AssetToolsModule.Get().FixupReferencers(Redirectors);
-        }
         for (FString Path : AssetPath)
         {
             TArray<FAssetData> AssetDatas;
@@ -455,15 +433,46 @@ void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> 
                 EditorAssetSubsystem->DeleteDirectory(Path);
             }
         }
+        //------------------
+        FixupAllReferencers();
         //----------------------------------------
         FNotificationInfo L_Info{ FText::FromString(TEXT("指定成功")) };
         L_Info.FadeInDuration = 2.0f;  // 
         L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Info"));
         FSlateNotificationManager::Get().AddNotification(L_Info);
         //-----------------------------------
-        //GetAllRepetitiveTexture();
     }
     TreeView->RequestTreeRefresh();
+}
+
+void UDoodleOrganizeCompoundWidget::FixupAllReferencers()
+{
+    FARFilter LFilter{};
+    LFilter.bRecursivePaths = true;
+    LFilter.bRecursiveClasses = true;
+    LFilter.PackagePaths.Add(FName{ GamePath });
+    LFilter.ClassPaths.Add(UObjectRedirector::StaticClass()->GetClassPathName());
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    TArray<FAssetData> AllAsset;
+    AssetRegistryModule.Get().GetAssets(LFilter, AllAsset);
+    TArray<FString> SelectedAssetPaths;
+    TArray<UObject*> Objects;
+    for (FAssetData Selected : AllAsset) 
+    {
+        if(!SelectedAssetPaths.Contains(Selected.GetObjectPathString()))
+            SelectedAssetPaths.Add(Selected.GetObjectPathString());
+    }
+    if (AssetViewUtils::LoadAssetsIfNeeded(SelectedAssetPaths, Objects, true, true))
+    {
+        TArray<UObjectRedirector*> Redirectors;
+        for (UObject* Object : Objects)
+        {
+            if (Object->GetClass()->IsChildOf(UObjectRedirector::StaticClass()))
+                Redirectors.Add(CastChecked<UObjectRedirector>(Object));
+        }
+        FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+        AssetToolsModule.Get().FixupReferencers(Redirectors);
+    }
 }
 
 FReply UDoodleOrganizeCompoundWidget::GetReferenceEngineTexture()
@@ -519,21 +528,6 @@ FReply UDoodleOrganizeCompoundWidget::GetReferenceEngineTexture()
                             {
                                 EditorAssetSubsystem->SaveLoadedAsset(Obj);
                                 //EditorAssetSubsystem->SaveLoadedAsset(SourceObj);
-                                //---------------------------------------
-                                TArray<UObject*> Objects;
-                                TArray<FString> SelectedAssetPaths;
-                                SelectedAssetPaths.Add(Selected.GetObjectPathString());
-                                if (AssetViewUtils::LoadAssetsIfNeeded(SelectedAssetPaths, Objects, true, true))
-                                {
-                                    TArray<UObjectRedirector*> Redirectors;
-                                    for (UObject* Object : Objects)
-                                    {
-                                        if(Object->GetClass()->IsChildOf(UObjectRedirector::StaticClass()))
-                                            Redirectors.Add(CastChecked<UObjectRedirector>(Object));
-                                    }
-                                    FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-                                    AssetToolsModule.Get().FixupReferencers(Redirectors);
-                                }
                                 //-----------------------
                                 FString Info = FString::Format(TEXT("复制贴图{0}到{1}成功"), { Dependency.AssetId.PackageName.ToString(), FilePath });
                                 FNotificationInfo L_Info{ FText::FromString(Info) };
@@ -547,6 +541,7 @@ FReply UDoodleOrganizeCompoundWidget::GetReferenceEngineTexture()
             }
         }
     };
+    FixupAllReferencers();
     return FReply::Handled();
 }
 
