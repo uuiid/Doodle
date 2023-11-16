@@ -212,25 +212,9 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             std::string l_line{};
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
-            /// @brief 此处在主线程调用
-            // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
-            const static std::wregex l_fatal_error_znch{fatal_error_znch};
-            // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
-            const static std::wregex l_fatal_error_en_us{fatal_error_en_us};
-            auto l_w_str = conv::to_utf<wchar_t>(l_line, "GBK");
-            if (std::regex_search(l_w_str, l_fatal_error_znch) || std::regex_search(l_w_str, l_fatal_error_en_us)) {
-              DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
-              auto l_mstr = fmt::format("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
-              l_msg.message(l_mstr, l_msg.warning);
-              l_msg.set_state(l_msg.fail);
-              cancel();
-              return;
-            } else {
-              auto l_str = conv::to_utf<char>(l_line, "GBK");
-              l_msg.progress_step({1, 20000});
-              l_msg.message(l_str + '\n');
-            }
-
+            auto l_str = conv::to_utf<char>(l_line, "GBK");
+            l_msg.progress_step({1, 20000});
+            l_msg.message(l_str + '\n');
             read_err();
           } else {
             err_attr.close();
