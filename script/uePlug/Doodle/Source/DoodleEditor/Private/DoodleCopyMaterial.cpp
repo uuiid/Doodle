@@ -57,8 +57,8 @@
 #include "MeshDescription.h"
 #include "SkeletalMeshBuilder.h"
 
-//变体管理
-#include "DoodleVariantCompoundWidget.h"
+//文件夹整理
+#include "DoodleOrganizeCompoundWidget.h"
 
 namespace {
 void print_test(USkeletalMesh* In_Obj) {
@@ -167,7 +167,24 @@ void DoodleCopyMat::Construct(const FArguments& Arg) {
                  .OnClicked_Lambda([this]() -> FReply {
                    return FReply::Handled();
                  })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
-                 .ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("测试使用")); })]];
+                 .ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("测试使用")); })]
+      +SHorizontalBox::Slot()
+      .AutoWidth()
+      .HAlign(HAlign_Left)
+      .Padding(FMargin{ 1.f, 1.f })
+      [
+          SNew(SButton)
+          .OnClicked_Lambda([this]() -> FReply
+          {
+            FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name);
+            return FReply::Handled();
+          })
+          [
+              SNew(STextBlock).Text(FText::FromString(TEXT("整理文件夹")))
+          ]
+          .ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类整理文件夹")); })
+      ]
+      ];
   /// clang-format on
 }
 
