@@ -401,11 +401,24 @@ void fbx_node_mesh::build_bind_post() {
         throw_exception(doodle_error{"没有找到bindpose, 找绑定 {}", i});
       }
 
-      /// 寻找父矩阵
       (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_world_matrix};
     } else {
       log_error(fmt::format("node {} is not dag node", get_node_full_name(l_node)));
       throw_exception(doodle_error{"错误的 bindpose, 找绑定 {}", i});
+    }
+  }
+
+  std::set<MDagPath, details::cmp_dag> l_all_path{};
+  for (auto& l_bp : *extra_data_.bind_post) {
+    auto l_parent_path = l_bp.first;
+    while (l_parent_path.length() > 0) {
+      l_all_path.insert(l_parent_path);
+      maya_chick(l_parent_path.pop());
+    }
+  }
+  for (auto&& l_path : l_all_path) {
+    if (!extra_data_.bind_post->contains(l_path)) {
+      (*extra_data_.bind_post)[l_path] = {MTransformationMatrix::identity, MTransformationMatrix::identity};
     }
   }
 
@@ -414,11 +427,6 @@ void fbx_node_mesh::build_bind_post() {
     MDagPath l_parent_path{l_bp.first};
     maya_chick(l_parent_path.pop());
 
-    if (extra_data_.bind_post->count(l_parent_path) == 0) {
-      log_error(fmt::format("not_find_parent_bind_post {}", l_bp.first));
-      l_bp.second.form_matrix = MMatrix::identity;
-      continue;
-    }
     auto l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix;
 
     MEulerRotation l_joint_rotate{};
