@@ -18,7 +18,7 @@ public:
 	FName Name{ TEXT("") };
 	FString Path{TEXT("")};
 	FAssetData Asset;
-	const FSlateBrush* Brush;
+	TSharedPtr<FSlateBrush> Brush;
 	TSharedPtr<FTreeItem> parent;
 	TArray<TSharedPtr<FTreeItem>> Children;
 

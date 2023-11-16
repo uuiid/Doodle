@@ -95,7 +95,7 @@ const FSlateBrush* STextureTreeItem::ShowImage() const
     {
         if (WeakTreeElement->Brush != nullptr)
         {
-            return WeakTreeElement->Brush;
+            return WeakTreeElement->Brush.Get();
         }
     }
     return FAppStyle::GetBrush("Icons.Search");
@@ -167,6 +167,13 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                     .OnGenerateRow(this, &UDoodleOrganizeCompoundWidget::MakeTableRowWidget)
                     .OnGetChildren(this, &UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree)
                     .HighlightParentNodesForSelection(true)
+                    .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FTreeItem> inSelectItem) 
+                    {
+                        TArray<UObject*> Objects;
+                        Objects.Add(inSelectItem->Asset.GetAsset());
+                        FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+                        ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
+                    })
                     .HeaderRow
                     (
                         SNew(SHeaderRow)
@@ -196,13 +203,13 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                     + SHorizontalBox::Slot()
                     [
                         SNew(SButton)
-                            .Text(FText::FromString(TEXT("获取引用的引擎内置贴图到本地")))
+                            .Text(FText::FromString(TEXT("获取（材质球）引用的引擎内置贴图到本地目录")))
                             .OnClicked(this, &UDoodleOrganizeCompoundWidget::GetReferenceEngineTexture)
                     ]
                     +SHorizontalBox::Slot()
                     [
                         SNew(SButton)
-                            .Text(FText::FromString(TEXT("重置贴图大小（2的幂次方）")))
+                            .Text(FText::FromString(TEXT("重置所有贴图大小（2的幂次方）")))
                             .OnClicked(this, &UDoodleOrganizeCompoundWidget::OnResizeTextureSize)
                     ]
             ]
@@ -347,10 +354,9 @@ FReply UDoodleOrganizeCompoundWidget::GetAllRepetitiveTexture()
                 Item.Get()->Path = Texture.PackageName.ToString();
                 Item->Asset = Texture;
                 Item->parent = root;
-                FSlateBrush* TheBrush = new FSlateBrush();
+                TSharedPtr<FSlateBrush> TheBrush = MakeShareable(new FSlateBrush());
                 TheBrush->SetResourceObject(Texture.GetAsset());
                 TheBrush->ImageSize = FVector2D(32, 32);
-                TheBrush->Tiling = ESlateBrushTileType::Both;
                 TheBrush->ImageType = ESlateBrushImageType::Linear;
                 TheBrush->DrawAs = ESlateBrushDrawType::Image;
                 Item->Brush = TheBrush;
@@ -434,7 +440,8 @@ void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> 
             TArray<UObjectRedirector*> Redirectors;
             for (UObject* Object : Objects)
             {
-                Redirectors.Add(CastChecked<UObjectRedirector>(Object));
+                if (Object->GetClass()->IsChildOf(UObjectRedirector::StaticClass()))
+                    Redirectors.Add(CastChecked<UObjectRedirector>(Object));
             }
             FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
             AssetToolsModule.Get().FixupReferencers(Redirectors);
@@ -461,15 +468,6 @@ void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> 
 
 FReply UDoodleOrganizeCompoundWidget::GetReferenceEngineTexture()
 {
-    FContentBrowserModule& ContentModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
-    TArray<FAssetData> SelectedAsset;
-    ContentModule.Get().GetSelectedAssets(SelectedAsset);
-    if (SelectedAsset.Num() <= 0)
-    {
-        FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个文件。"));
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-        return FReply::Handled();
-    }
     if (TargetFolderName.TrimEnd().IsEmpty())
     {
         FText  DialogText = FText::FromString(TEXT("目标文件夹名称不能为空。"));
@@ -477,102 +475,157 @@ FReply UDoodleOrganizeCompoundWidget::GetReferenceEngineTexture()
         return FReply::Handled();
     }
     //------------
-    for (FAssetData Selected :SelectedAsset)
+    FARFilter LFilter{};
+    LFilter.bRecursivePaths = true;
+    LFilter.bRecursiveClasses = true;
+    LFilter.PackagePaths.Add(FName{ GamePath });
+    LFilter.ClassPaths.Add(UMaterialInterface::StaticClass()->GetClassPathName());
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    TArray<FAssetData> AllAsset;
+    AssetRegistryModule.Get().GetAssets(LFilter,AllAsset);
+    for (FAssetData Selected : AllAsset)
     {
-        TArray<FAssetIdentifier> AssetIdentifiers;
-       
-        FPrimaryAssetId PrimaryAssetId = FPrimaryAssetId(Selected.AssetClassPath.GetAssetName(), Selected.AssetName);
-
-        if (PrimaryAssetId.IsValid())
-        {
-            AssetIdentifiers.Add(PrimaryAssetId);
-        }
-        else
-        {
-            AssetIdentifiers.Add(Selected.PackageName);
-        }
         //--------------
         TArray<FAssetDependency> Dependencys;
-        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
         AssetRegistryModule.Get().GetDependencies(Selected.PackageName, Dependencys);
         for (FAssetDependency Dependency : Dependencys)
         {
-            FString PackagePath = FPackageName::GetLongPackagePath(Dependency.AssetId.PackageName.ToString());
-            if (!PackagePath.StartsWith("/Game/")) 
+            UObject* SourceObj = LoadObject<UObject>(nullptr, *Dependency.AssetId.PackageName.ToString());
+            if (SourceObj&&SourceObj->GetClass()->IsChildOf(UTexture::StaticClass())) 
             {
-                UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-                FString FolderPath = FPaths::Combine(GamePath, TargetFolderName.TrimEnd());
-                FString Path = FPaths::Combine(FolderPath, TexturePath);
-                FString FileName = FPaths::GetBaseFilename(Dependency.AssetId.PackageName.ToString(), true);
-                FString backUpPath = Dependency.AssetId.PackageName.ToString() + TEXT("_bu");
-                if (!EditorAssetSubsystem->DoesAssetExist(backUpPath))
+                if (!Dependency.AssetId.PackageName.ToString().StartsWith(GamePath))
                 {
-                    EditorAssetSubsystem->DuplicateAsset(Dependency.AssetId.PackageName.ToString(), backUpPath);
-                }
-                ///-------------------------
-                FString FilePath = FPaths::Combine(Path, FileName);
-                if (!EditorAssetSubsystem->DoesAssetExist(FilePath))
-                {
-                    UObject* Obj =EditorAssetSubsystem->DuplicateAsset(Dependency.AssetId.PackageName.ToString(),FilePath);
-                    if (Obj) 
+                    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+                    ///-------------------------
+                    FString FolderPath = FPaths::Combine(GamePath, TargetFolderName.TrimEnd());
+                    FString Path = FPaths::Combine(FolderPath, TexturePath);
+                    FString FileName = FPaths::GetBaseFilename(Dependency.AssetId.PackageName.ToString(), true);
+                    FString FilePath = FPaths::Combine(Path, FileName);
+                    if (!EditorAssetSubsystem->DoesAssetExist(FilePath))
                     {
-                        UObject* SourceObj = LoadObject<UObject>(nullptr, *Dependency.AssetId.PackageName.ToString());
-                        TArray<UObject*> ObjectsToReplace(&SourceObj, 1);
-                        bool ConsResults = EditorAssetSubsystem->ConsolidateAssets(Obj, ObjectsToReplace);
-                        if (ConsResults) 
+                        FString backUpPath = Dependency.AssetId.PackageName.ToString() + TEXT("_bu");
+                        if (!EditorAssetSubsystem->DoesAssetExist(backUpPath))
                         {
+                            UObject* Obj = EditorAssetSubsystem->DuplicateAsset(Dependency.AssetId.PackageName.ToString(), backUpPath);
                             EditorAssetSubsystem->SaveLoadedAsset(Obj);
-                            //---------------------------------------
-                            TArray<UObject*> Objects;
-                            if (AssetViewUtils::LoadAssetsIfNeeded({ Selected.PackagePath.ToString() }, Objects, true, true))
-                            {
-                                TArray<UObjectRedirector*> Redirectors;
-                                for (UObject* Object : Objects)
-                                {
-                                    Redirectors.Add(CastChecked<UObjectRedirector>(Object));
-                                }
-                                FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-                                AssetToolsModule.Get().FixupReferencers(Redirectors);
-                            }
-                            //-----------------------
-                            FString Info = FString::Format(TEXT("复制贴图{0}到{1}成功"), { Dependency.AssetId.PackageName.ToString(), FilePath });
-                            FNotificationInfo L_Info{ FText::FromString(Info) };
-                            L_Info.FadeInDuration = 2.0f;  // 
-                            L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
-                            FSlateNotificationManager::Get().AddNotification(L_Info);
                         }
-                        //TArray<UObject*> ObjectsToReplace(&SourceObj, 1);
-                        //ObjectTools::ForceReplaceReferences(Obj, ObjectsToReplace);
+                        //-----------------
+                        UObject* Obj = EditorAssetSubsystem->DuplicateAsset(Dependency.AssetId.PackageName.ToString(), FilePath);
+                        if (Obj)
+                        {
+                            TArray<UObject*> ObjectsToReplace(&SourceObj, 1);
+                            bool ConsResults = EditorAssetSubsystem->ConsolidateAssets(Obj, ObjectsToReplace);
+                            if (ConsResults)
+                            {
+                                EditorAssetSubsystem->SaveLoadedAsset(Obj);
+                                //EditorAssetSubsystem->SaveLoadedAsset(SourceObj);
+                                //---------------------------------------
+                                TArray<UObject*> Objects;
+                                TArray<FString> SelectedAssetPaths;
+                                SelectedAssetPaths.Add(Selected.GetObjectPathString());
+                                if (AssetViewUtils::LoadAssetsIfNeeded(SelectedAssetPaths, Objects, true, true))
+                                {
+                                    TArray<UObjectRedirector*> Redirectors;
+                                    for (UObject* Object : Objects)
+                                    {
+                                        if(Object->GetClass()->IsChildOf(UObjectRedirector::StaticClass()))
+                                            Redirectors.Add(CastChecked<UObjectRedirector>(Object));
+                                    }
+                                    FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+                                    AssetToolsModule.Get().FixupReferencers(Redirectors);
+                                }
+                                //-----------------------
+                                FString Info = FString::Format(TEXT("复制贴图{0}到{1}成功"), { Dependency.AssetId.PackageName.ToString(), FilePath });
+                                FNotificationInfo L_Info{ FText::FromString(Info) };
+                                L_Info.FadeInDuration = 2.0f;  // 
+                                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                                FSlateNotificationManager::Get().AddNotification(L_Info);
+                            }
+                        }
                     }
                 }
             }
         }
-    }
+    };
     return FReply::Handled();
 }
 
 FReply UDoodleOrganizeCompoundWidget::OnResizeTextureSize() 
 {
-    FContentBrowserModule& ContentModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
-    TArray<FAssetData> SelectedAsset;
-    ContentModule.Get().GetSelectedAssets(SelectedAsset);
-    if (SelectedAsset.Num() <= 0|| !SelectedAsset[0].GetClass()->IsChildOf(UTexture::StaticClass()))
-    {
-        FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个图片。"));
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-        return FReply::Handled();
-    }
     //-------------------
-    for (FAssetData Selected : SelectedAsset) 
+    FARFilter LFilter{};
+    LFilter.bRecursivePaths = true;
+    LFilter.bRecursiveClasses = true;
+    LFilter.PackagePaths.Add(FName{ GamePath });
+    LFilter.ClassPaths.Add(UTexture::StaticClass()->GetClassPathName());
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    TArray<FAssetData> AllAsset;
+    AssetRegistryModule.Get().GetAssets(LFilter, AllAsset);
+    for (FAssetData Selected : AllAsset)
     {
-        FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-        IAssetTools& AssetTool = AssetToolsModule.Get();
-        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-        //---------------------
-        FResizeTexture L_Resize{};
-        if (UTexture2D* L_Tex = Cast<UTexture2D>(Selected.GetAsset()))
+        UTexture* In_Texture = Cast<UTexture>(Selected.GetAsset());
+        FTextureSource& L_Soure = In_Texture->Source;
+        //--------------------
+        if(L_Soure.IsValid())
         {
-            L_Resize.Resize(L_Tex);
+            int32 L_Max_Size_Count = FMath::Max(FMath::CeilLogTwo(L_Soure.GetSizeX()), FMath::CeilLogTwo(L_Soure.GetSizeY()));//----------
+            int32 L_Max_Size = FMath::Pow(2.0, L_Max_Size_Count);
+            if (L_Max_Size != L_Soure.GetSizeX() || L_Max_Size != L_Soure.GetSizeY())
+            {
+                if (L_Soure.GetNumSlices() == 1 && L_Soure.GetNumBlocks() == 1 && !L_Soure.IsHDR(L_Soure.GetFormat()))
+                {
+                    FImage L_Image{};
+                    switch (L_Soure.GetFormat())
+                    {
+                        case ETextureSourceFormat::TSF_G8: 
+                        {
+                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::G8);
+                        } break;
+                        case ETextureSourceFormat::TSF_BGRA8: 
+                        {
+                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::BGRA8);
+                        } break;
+                        case ETextureSourceFormat::TSF_BGRE8: 
+                        {
+                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::BGRE8);
+                        } break;
+                        case ETextureSourceFormat::TSF_RGBA16: 
+                        {
+                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::RGBA16);
+                        } break;
+                        case ETextureSourceFormat::TSF_RGBA16F: 
+                        {
+                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::RGBA16F);
+                        } break;
+                        case ETextureSourceFormat::TSF_G16: 
+                        {
+                            L_Image.Init(L_Soure.GetSizeX(), L_Soure.GetSizeY(), ERawImageFormat::Type::G16);
+                        } break;
+                        default:
+                            return FReply::Handled();
+                            break;
+                    }
+                    ///-------------------------
+                    In_Texture->ReleaseResource();
+                    L_Soure.GetMipData(L_Image.RawData, 0);
+                    //-----------------
+                    FImage L_Dest;
+                    L_Image.ResizeTo(L_Dest, L_Max_Size, L_Max_Size, L_Image.Format, L_Image.GammaSpace);
+                    L_Soure.Init(L_Max_Size, L_Max_Size, 1, 1, L_Soure.GetFormat(), L_Dest.RawData.GetData());
+                    In_Texture->MipGenSettings = TextureMipGenSettings::TMGS_FromTextureGroup;
+                    //--------------
+                    In_Texture->MarkPackageDirty();
+                    In_Texture->PostEditChange();
+                    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+                    EditorAssetSubsystem->SaveLoadedAsset(In_Texture);
+                    //-----------------------
+                    FString Info = FString::Format(TEXT("重置贴图{0}成功"), { Selected.PackageName.ToString() });
+                    FNotificationInfo L_Info{ FText::FromString(Info) };
+                    L_Info.FadeInDuration = 2.0f;  // 
+                    L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                    FSlateNotificationManager::Get().AddNotification(L_Info);
+                }
+            }
         }
     }
     return FReply::Handled();
