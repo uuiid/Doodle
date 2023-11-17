@@ -101,7 +101,6 @@ void maya_tool::init() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
   p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
-  g_reg()->ctx().emplace<maya_tool&>(*this);
 }
 
 bool maya_tool::render() {
@@ -192,7 +191,6 @@ bool maya_tool::render() {
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
-        DOODLE_LOG_ERROR("完成任务");
       });
     });
   }
@@ -200,9 +198,9 @@ bool maya_tool::render() {
   if (imgui::Button("引用文件替换")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
-      auto k_arg             = maya_exe_ns::replace_file_arg{};
-      k_arg.file_path        = i;
-      k_arg.file_list        = ptr_attr->ref_attr.ref_attr() |
+      auto k_arg      = maya_exe_ns::replace_file_arg{};
+      k_arg.file_path = i;
+      k_arg.file_list = ptr_attr->ref_attr.ref_attr() |
                         ranges::views::transform(
                             [](const maya_tool_ns::maya_reference_info& in_info) -> std::pair<FSys::path, FSys::path> {
                               return {in_info.f_file_path_attr.data, in_info.to_file_path_attr.data};

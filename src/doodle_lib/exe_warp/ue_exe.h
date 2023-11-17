@@ -87,9 +87,7 @@ class ue_exe {
         ::boost::process::cmd     = fmt::format("{} {}", ue_path_, in_arg.to_string()),
         ::boost::process::std_out = l_child->out_attr,
         ::boost::process::std_err = l_child->err_attr,
-        ::boost::process::on_exit = [l_child, in_completion = std::forward<decltype(in_completion)>(in_completion)](
-                                        int in_exit, const std::error_code &in_error_code
-                                    ) { (in_completion)(in_exit, in_error_code); },
+        ::boost::process::on_exit = in_completion,
         ::boost::process::windows::hide};
     child_weak_ptr_ = l_child;
     return l_child;
