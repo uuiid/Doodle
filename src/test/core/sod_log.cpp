@@ -16,4 +16,5 @@ inline void log_debug(
 int core_sod_log(int, char** const) {
   //  log_debug(spdlog::default_logger(), "tset {}", "111");
   //  log_debug(spdlog::default_logger(), "tset {}", "111");
+  return 0;
 }

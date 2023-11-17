@@ -7,4 +7,5 @@ int core_error_enum(int, char** const) {
   using namespace doodle;
   boost::system::error_code l_ec{error_enum::file_not_exists};
   BOOST_ASIO_ERROR_LOCATION(l_ec);
+  return 0;
 }
