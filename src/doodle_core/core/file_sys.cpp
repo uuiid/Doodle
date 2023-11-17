@@ -16,6 +16,7 @@
 #include <nlohmann/json.hpp>
 #include <shellapi.h>
 #include <tchar.h>
+#include <wil/result.h>
 
 namespace doodle::FSys {
 
@@ -154,21 +155,42 @@ FSys::path get_cache_path(const FSys::path &in_path) {
 }
 
 bool folder_is_save(const FSys::path &in_file_path) {
-  auto l_path = FSys::is_regular_file(in_file_path) ? in_file_path.parent_path() : in_file_path;
-  auto l_temp = l_path / core_set::get_set().get_uuid_str();
-  try {
-    FSys::fstream{l_temp, std::ios::out} << "test_file";
-  } catch (const FSys::filesystem_error &e) {
-    DOODLE_LOG_INFO("文件 {} 不可写入 {}", l_path.generic_string(), e.what());
-    return false;
+  DWORD l_len{};
+  if ((::GetFileSecurityW(
+           in_file_path.c_str(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+           nullptr, 0, &l_len
+       ) != FALSE) ||
+      ::GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    THROW_WIN32(::GetLastError());
   }
-  try {
-    FSys::remove(l_temp);
-  } catch (const FSys::filesystem_error &e) {
-    DOODLE_LOG_INFO("文件 {} 不可删除 {}", l_path.generic_string(), e.what());
-    return false;
-  }
-  return true;
+  wil::unique_hlocal_security_descriptor const l_sd{::LocalAlloc(LMEM_FIXED, l_len)};
+  THROW_IF_WIN32_BOOL_FALSE(::GetFileSecurityW(
+      in_file_path.c_str(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+      l_sd.get(), l_len, &l_len
+  ));
+
+  wil::unique_handle l_token{};
+  THROW_IF_WIN32_BOOL_FALSE(::OpenProcessToken(
+      ::GetCurrentProcess(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+      l_token.addressof()
+  ));
+
+  wil::unique_handle l_duplicate_token{};
+  THROW_IF_WIN32_BOOL_FALSE(::DuplicateToken(
+      l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
+  ));
+  ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
+  ::DWORD l_access{FILE_GENERIC_READ | FILE_GENERIC_WRITE | DELETE};
+  ::MapGenericMask(&l_access, &l_mapping);
+
+  PRIVILEGE_SET l_privileges{0};
+  DWORD l_grantedAccess = 0, l_privilegesLength = sizeof(l_privileges);
+  BOOL l_result{FALSE};
+  THROW_IF_WIN32_BOOL_FALSE(::AccessCheck(
+      l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength, &l_grantedAccess,
+      &l_result
+  ));
+  return l_result == TRUE;
 }
 
 }  // namespace doodle::FSys
