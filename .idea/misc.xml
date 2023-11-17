@@ -7,6 +7,10 @@
   <component name="CidrRootsConfiguration">
     <excludeRoots>
       <file path="$PROJECT_DIR$/.venv" />
+      <file path="$PROJECT_DIR$/build/.cache" />
+      <file path="$PROJECT_DIR$/build/SymbolCache" />
+      <file path="$PROJECT_DIR$/build/html" />
+      <file path="$PROJECT_DIR$/deprecated" />
       <file path="$PROJECT_DIR$/external" />
       <file path="$PROJECT_DIR$/script/uePlug/4.27" />
       <file path="$PROJECT_DIR$/script/uePlug/5.0" />
