@@ -89,8 +89,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   FSys::path program_path{};
   FSys::path maya_program_path{};
 
-  boost::process::async_pipe out_attr{g_io_context()};
-  boost::process::async_pipe err_attr{g_io_context()};
   boost::process::child child_attr{};
 
   boost::asio::streambuf out_strbuff_attr{};
@@ -98,6 +96,8 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
   maya_exe::call_fun_type call_attr{};
 
+  boost::process::async_pipe out_attr{g_io_context()};
+  boost::process::async_pipe err_attr{g_io_context()};
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
   boost::signals2::scoped_connection cancel_attr{};
 
@@ -107,11 +107,17 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   bool running() override { return child_attr.running(); }
 
   void run() override {
-    if (program_path.empty()) throw doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"};
-
-    auto l_path  = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
-
     auto &&l_msg = mag_attr.get<process_message>();
+
+    if (program_path.empty()) {
+      boost::system::error_code l_ec{error_enum::file_not_exists};
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      l_msg.message("没有找到maya文件");
+      call_attr(l_ec);
+    }
+
+    auto l_path = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
+
     l_msg.set_state(l_msg.run);
     l_msg.message(fmt::format("开始写入配置文件 {} \n", l_path), l_msg.warning);
     cancel_attr = l_msg.aborted_sig.connect([this]() {
@@ -119,7 +125,10 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
       l_msg.set_state(l_msg.fail);
       l_msg.message("进程被主动结束\n");
       child_attr.terminate();
+      static boost::system::error_code l_ec{error_enum::user_cancel};
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
       cancel();
+      call_attr(l_ec);
     });
 
     timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
@@ -129,6 +138,8 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
         l_msg.set_state(l_msg.fail);
         l_msg.message("进程超时，结束任务\n");
         child_attr.terminate();
+        in_code = error_enum::time_out;
+        call_attr(in_code);
       } else {
         DOODLE_LOG_ERROR(in_code);
       }
@@ -197,7 +208,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             read_out();
           } else {
             out_attr.close();
-            DOODLE_LOG_ERROR(in_code.what());
+            log_error(in_code.what());
           }
         }
     );
@@ -218,7 +229,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             read_err();
           } else {
             err_attr.close();
-            DOODLE_LOG_ERROR(in_code.what());
+            log_error(in_code.what());
           }
         }
     );

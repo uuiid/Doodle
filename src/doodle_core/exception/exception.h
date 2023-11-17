@@ -32,7 +32,11 @@ enum class error_enum : std::int32_t {
   // 不允许多个工作
   not_allow_multi_work,
   // 没有找到project
-  project_not_exist
+  project_not_exist,
+  // 超时
+  time_out,
+  // 用户取消
+  user_cancel,
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
