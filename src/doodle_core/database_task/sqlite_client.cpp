@@ -139,7 +139,6 @@ void file_translator::async_save_impl() {
     // 提前测试存在
     if (save_all && FSys::exists(project_path)) {
       log_error(fmt::format("{} 已经存在, 不保存", project_path));
-      begin_save();
       return;
     }
     if (save_all) log_error(fmt::format("{} 转换旧版数据, 较慢", project_path));
