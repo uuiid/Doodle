@@ -14,5 +14,15 @@ int core_folder_is_save(int argc, char* argv[]) {
     std::cout << "test_folder_is_save false" << std::endl;
   } else
     return 1;
+
+  if (FSys::folder_is_save("//192.168.20.7/test_delte")) {
+    std::cout << "test_folder_is_save true" << std::endl;
+  } else
+    return 1;
+  if (!FSys::folder_is_save("//192.168.20.7/test_read_write")) {
+    std::cout << "test_folder_is_save false" << std::endl;
+  } else
+    return 1;
+
   return 0;
 }
