@@ -172,24 +172,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     read_out();
     read_err();
   }
-  //  void run2(){
-  // boost::process::v2::process_environment l_env{
-  //     std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value>{
-  //         {"MAYA_LOCATION"s, program_path.parent_path().parent_path().generic_string()},
-  //         {"PATH"s, program_path.parent_path().generic_string()}}};
-
-  // boost::asio::readable_pipe l_out_pipe{g_io_context()};
-  // boost::asio::readable_pipe l_err_pipe{g_io_context()};
-  // boost::process::v2::process_stdio l_io{nullptr, l_out_pipe, l_err_pipe};
-  // boost::process::v2::process l_process{
-  //     g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io};
-  // boost::asio::cancellation_signal sig{};
-  // boost::process::v2::async_execute(
-  //     boost::process::v2::process{
-  //         g_io_context(), program_path, {fmt::format("--{}={}", run_script_attr_key, l_path)}, l_env, l_io},
-  //     boost::asio::bind_cancellation_slot(sig, [](boost::system::error_code ec, int exit_code) {})
-  // );
-  //  }
 
   void read_out() {
     boost::asio::async_read_until(
