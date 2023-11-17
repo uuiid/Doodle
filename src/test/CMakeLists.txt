@@ -61,6 +61,7 @@ create_test_sourcelist(main_test
         core/run_ue.cpp
         core/sod_log.cpp
         core/error_enum.cpp
+        core/folder_is_save.cpp
 )
 
 # add the executable
