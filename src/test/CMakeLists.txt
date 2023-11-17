@@ -60,6 +60,7 @@ create_test_sourcelist(main_test
         core/submit_ue_task.cpp
         core/run_ue.cpp
         core/sod_log.cpp
+        core/error_enum.cpp
 )
 
 # add the executable
