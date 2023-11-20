@@ -195,7 +195,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
 void software_flag_file(const FSys::path &in_file_path, boost::uuids::uuid in_uuid) {
   auto l_path = in_file_path;
   l_path.replace_extension(doodle_config::doodle_flag_name);
-  FSys::ofstream{l_path, FSys::ofstream::out | FSys::ofstream::trunc} << boost::uuids::to_string(in_uuid);
+  FSys::ofstream{l_path, FSys::ofstream::out | FSys::ofstream::trunc} << in_uuid;
 
   auto l_file_attr = ::GetFileAttributesW(l_path.c_str());
   if (l_file_attr == INVALID_FILE_ATTRIBUTES) {
