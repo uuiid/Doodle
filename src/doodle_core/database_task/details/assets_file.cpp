@@ -1,18 +1,20 @@
 #include "assets_file.h"
 
+#include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sql_com.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/metadata.h>
 
-#include "core/core_help_impl.h"
-#include "metadata/assets_file.h"
-#include "metadata/metadata.h"
+#include "wil/win32_helpers.h"
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
 #include <sqlpp11/aggregate_functions/count.h>
 #include <sqlpp11/parameter.h>
 #include <sqlpp11/sqlpp11.h>
 #include <vector>
-
+#include <wil/result.h>
 namespace doodle::database_n {
 
 void sql_com<doodle::assets_file>::create_table(conn_ptr& in_ptr) { sql_create_table_base::create_table(in_ptr); }
@@ -25,9 +27,9 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
       l_table.version = sqlpp::parameter(l_table.version), l_table.ref_id = sqlpp::parameter(l_table.ref_id),
-      l_table.entity_id    = sqlpp::parameter(l_table.entity_id),
+      l_table.entity_id     = sqlpp::parameter(l_table.entity_id),
       l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id),
-      l_table.organization = sqlpp::parameter(l_table.organization)
+      l_table.organization  = sqlpp::parameter(l_table.organization)
   ));
 
   for (const auto& l_h : in_id) {
@@ -48,6 +50,11 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
     }
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     l_conn(l_pre);
+    try {
+      FSys::software_flag_file(l_assets.path_attr(), l_h.get<database>().uuid());
+    } catch (const wil::ResultException& e) {
+      log_error(fmt::format("创建软件标记文件失败 {}", e.what()));
+    }
   }
 }
 
@@ -62,7 +69,7 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
               l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
               l_table.version = sqlpp::parameter(l_table.version), l_table.ref_id = sqlpp::parameter(l_table.ref_id),
               l_table.assets_ref_id = sqlpp::parameter(l_table.assets_ref_id),
-              l_table.organization = sqlpp::parameter(l_table.organization)
+              l_table.organization  = sqlpp::parameter(l_table.organization)
           )
           .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
   );
@@ -88,6 +95,11 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
 
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     l_conn(l_pre);
+    try {
+      FSys::software_flag_file(l_assets.path_attr(), l_h.get<database>().uuid());
+    } catch (const wil::ResultException& e) {
+      log_error(fmt::format("创建软件标记文件失败 {}", e.what()));
+    }
   }
 }
 void sql_com<doodle::assets_file>::select(
