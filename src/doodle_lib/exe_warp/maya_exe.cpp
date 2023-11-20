@@ -55,7 +55,7 @@
 
 // #include <boost/process/v2.hpp>
 // #include <boost/process/v2/src.hpp>
-
+#include <boost/interprocess/managed_shared_memory.hpp>
 namespace doodle {
 namespace {
 // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
