@@ -28,7 +28,9 @@ public:
 
 class STextureTreeItem : public SMultiColumnTableRow<TSharedPtr<FTreeItem>>
 {
-	SLATE_BEGIN_ARGS(STextureTreeItem) {}
+	SLATE_BEGIN_ARGS(STextureTreeItem) 
+		:_OnTextCommittedEvent() {}
+		SLATE_EVENT(FTreeItemParamDelegate, OnTextCommittedEvent)
 	SLATE_END_ARGS()
 
 public:
@@ -39,8 +41,14 @@ public:
 	virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override;
 	const FSlateBrush* ShowImage() const;
 
+	const TSharedRef<SWidget> GetWidgetFromColumnId(FName ColumnId)
+	{
+		return *SMultiColumnTableRow::GetWidgetFromColumnId(ColumnId);
+	}
+	TSharedPtr<SEditableText> EditableText;
 private:
 	TSharedPtr<FTreeItem> WeakTreeElement;
+	FTreeItemParamDelegate OnTextCommittedEvent;
 };
 /**
  * 
@@ -63,15 +71,20 @@ public:
 private:
 	FReply GenerateFolders();
 	FReply GetAllRepetitiveTexture();
+	FReply OneTouchDeleteRepectTexture();
 
 	TSharedPtr<STreeView<TSharedPtr<FTreeItem>>> TreeView;
 	TArray<TSharedPtr<FTreeItem>> RootChildren;
 
 	TSharedRef<ITableRow> MakeTableRowWidget(TSharedPtr<FTreeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleGetChildrenForTree(TSharedPtr<FTreeItem> InItem, TArray<TSharedPtr<FTreeItem>>& OutChildren);
+	void MakeDirectoryByType(FString FolderPath, FAssetData SelectedData, FString DirectoryName);
 
+	void DeleteAllEmptyDirectory();
 	FReply GetReferenceEngineTexture();
 	void OnAssginRepeatTexture(TSharedPtr<FTreeItem> Item);
 	FReply OnResizeTextureSize();
 	void FixupAllReferencers();
+	void OnRenameTexture();
+	TSharedPtr<FTreeItem> NowSelectItem;
 };

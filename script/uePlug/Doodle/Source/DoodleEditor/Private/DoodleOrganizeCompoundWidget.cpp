@@ -14,6 +14,9 @@
 #include "Widgets/Notifications/SNotificationList.h"
 #include "ObjectTools.h"
 #include "Doodle/ResizeTexture.h"
+#include "Materials/MaterialInstance.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "HAL/FileManager.h"
 
 const FName UDoodleOrganizeCompoundWidget::Name{ TEXT("DoodleOrganizeCompoundWidget") };
 
@@ -24,6 +27,7 @@ TArray<TSharedPtr<FTreeItem>>& FTreeItem::GetChildren()
 
 void STextureTreeItem::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, const TSharedPtr<FTreeItem> InTreeElement)
 {
+    OnTextCommittedEvent = InArgs._OnTextCommittedEvent;
     WeakTreeElement = InTreeElement;
 
     FSuperRowType::FArguments SuperArgs = FSuperRowType::FArguments();
@@ -55,11 +59,43 @@ TSharedRef<SWidget> STextureTreeItem::GenerateWidgetForColumn(const FName& Colum
             .VAlign(VAlign_Center)
             .HAlign(HAlign_Left)
             [
-                SNew(STextBlock)
+                SAssignNew(EditableText,SEditableText)
+                    .MinDesiredWidth(400)
+                    .IsEnabled(false)
                     .Text(WeakTreeElement->Path.Len()>0? FText::FromString(WeakTreeElement->Path) : FText::FromName(WeakTreeElement->Name))
-                    //.ToolTipText(this, &STextureTreeItem::GetToolTipText)
-                    //.ColorAndOpacity(this, &STextureTreeItem::GetTextColor)
-                    //.OnDoubleClicked(this, &STextureTreeItem::OnDoubleClicked)
+                    .OnTextCommitted_Lambda([this](const FText& InText, const ETextCommit::Type InTextAction)
+                    {
+                        EditableText->SetText(FText::FromString(WeakTreeElement->Path));
+                        EditableText->SetEnabled(false);
+                        if (InText.ToString().Len() > 0) 
+                        {
+                            UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+                            FString NewPath = FPaths::Combine(WeakTreeElement->Asset.PackagePath.ToString(), InText.ToString());
+                            if(!EditorAssetSubsystem->DoesAssetExist(NewPath))
+                            {
+                                if (EditorAssetSubsystem->RenameAsset(WeakTreeElement->Asset.PackageName.ToString(), NewPath))
+                                {
+                                    //-----------------------
+                                    FString Info = FString::Format(TEXT("重命名为{0}成功"), { InText.ToString() });
+                                    FNotificationInfo L_Info{ FText::FromString(Info) };
+                                    L_Info.FadeInDuration = 2.0f;  // 
+                                    L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                                    FSlateNotificationManager::Get().AddNotification(L_Info);
+                                    //---------------------------
+                                    OnTextCommittedEvent.ExecuteIfBound(WeakTreeElement);
+                                }
+                            }
+                            else
+                            {
+                                //-----------------------
+                                FString Info = FString::Format(TEXT("重命名为{0}失败，该命名文件已存在"), { InText.ToString() });
+                                FNotificationInfo L_Info{ FText::FromString(Info) };
+                                L_Info.FadeInDuration = 2.0f;  // 
+                                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
+                                FSlateNotificationManager::Get().AddNotification(L_Info);
+                            }
+                        }
+                    })
             ];
     }
     else if (ColumnName == FName(TEXT("Column2")))
@@ -110,11 +146,89 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
             .AutoHeight()
             [
                 SNew(STextBlock)
+                    .Text(FText::FromString(TEXT("重复贴图：")))
+                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+            ]
+            + SVerticalBox::Slot()
+            .FillHeight(0.1)
+            [
+                SNew(SHorizontalBox)
+                    +SHorizontalBox::Slot()
+                    [
+                        SNew(SButton)
+                            .Text(FText::FromString(TEXT("查找所有重复贴图")))
+                            .OnClicked(this, &UDoodleOrganizeCompoundWidget::GetAllRepetitiveTexture)
+                    ]
+                    + SHorizontalBox::Slot()
+                    [
+                        SNew(SButton)
+                            .Text(FText::FromString(TEXT("一键删除重复贴图")))
+                            .OnClicked(this, &UDoodleOrganizeCompoundWidget::OneTouchDeleteRepectTexture)
+                    ]
+            ]
+            + SVerticalBox::Slot()
+            .Padding(2.0f)
+            [
+                SAssignNew(TreeView, STreeView<TSharedPtr<FTreeItem>>)
+                    .TreeItemsSource(&RootChildren)
+                    .SelectionMode(ESelectionMode::Single)
+                    .OnGenerateRow(this, &UDoodleOrganizeCompoundWidget::MakeTableRowWidget)
+                    .OnGetChildren(this, &UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree)
+                    .HighlightParentNodesForSelection(true)
+                    .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FTreeItem> inSelectItem)
+                        {
+                            TArray<UObject*> Objects;
+                            Objects.Add(inSelectItem->Asset.GetAsset());
+                            FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+                            ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
+                        })
+                    .OnSelectionChanged_Lambda([&](TSharedPtr<FTreeItem> inSelectItem, ESelectInfo::Type SelectType)
+                        {
+                            NowSelectItem = inSelectItem;
+                        })
+                            .OnContextMenuOpening_Lambda([this]()
+                                {
+                                    if (NowSelectItem && NowSelectItem->Path.Len() > 0)
+                                    {
+                                        FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &UDoodleOrganizeCompoundWidget::OnRenameTexture), FCanExecuteAction());
+                                        FMenuBuilder MenuBuilder(true, false);
+                                        MenuBuilder.AddMenuSeparator();
+                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名贴图")),
+                                            FSlateIcon(), ActionDelete);
+                                        return MenuBuilder.MakeWidget();
+                                    }
+                                    return SNullWidget::NullWidget;
+                                })
+                            .HeaderRow
+                            (
+                                SNew(SHeaderRow)
+
+                                + SHeaderRow::Column(FName(TEXT("Column1")))
+                                .DefaultLabel(FText::FromString(TEXT("贴图路径")))
+                                //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
+                                .FillWidth(0.8f)
+
+                                + SHeaderRow::Column(FName(TEXT("Column2")))
+                                //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
+                                .FixedWidth(90.0f)
+                                .VAlignHeader(VAlign_Center)
+                                .HeaderContent()
+                                [
+                                    SNew(STextBlock)
+                                        .Text(FText::FromString(TEXT("")))
+                                        .ToolTipText(FText::FromString(TEXT("TotalMilisecondsIncTooltip")))
+                                ]
+                            )
+            ]
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            [
+                SNew(STextBlock)
                     .Text(FText::FromString(TEXT("自动整理选定文件到指定文件夹：")))
                     .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
             ]
             + SVerticalBox::Slot()
-            .AutoHeight()
+            .FillHeight(0.1)
             [
                 SNew(SHorizontalBox)
                     + SHorizontalBox::Slot()
@@ -147,56 +261,25 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                     .FillWidth(2.0f)
                     [
                         SNew(SButton)
-                            .Text(FText::FromString(TEXT("整理")))
+                            .Text(FText::FromString(TEXT("整理选中资源")))
                             .OnClicked(this, &UDoodleOrganizeCompoundWidget::GenerateFolders)
                     ]
             ]
+          
             + SVerticalBox::Slot()
-            .AutoHeight()
+            .FillHeight(0.1)
+            .Padding(2)
             [
                 SNew(SButton)
-                    .Text(FText::FromString(TEXT("获取所有重复贴图")))
-                    .OnClicked(this, &UDoodleOrganizeCompoundWidget::GetAllRepetitiveTexture)
-            ]
-            + SVerticalBox::Slot()
-            .Padding(2.0f)
-            [
-                SAssignNew(TreeView, STreeView<TSharedPtr<FTreeItem>>)
-                    .TreeItemsSource(&RootChildren)
-                    .SelectionMode(ESelectionMode::Single)
-                    .OnGenerateRow(this, &UDoodleOrganizeCompoundWidget::MakeTableRowWidget)
-                    .OnGetChildren(this, &UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree)
-                    .HighlightParentNodesForSelection(true)
-                    .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FTreeItem> inSelectItem) 
+                    .Text(FText::FromString(TEXT("删除所有空文件夹")))
+                    .OnClicked_Lambda([this]() 
                     {
-                        TArray<UObject*> Objects;
-                        Objects.Add(inSelectItem->Asset.GetAsset());
-                        FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-                        ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
+                        DeleteAllEmptyDirectory();
+                        return FReply::Handled();
                     })
-                    .HeaderRow
-                    (
-                        SNew(SHeaderRow)
-
-                        + SHeaderRow::Column(FName(TEXT("Column1")))
-                        .DefaultLabel(FText::FromString(TEXT("贴图路径")))
-                        //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
-                        .FillWidth(0.8f)
-
-                        + SHeaderRow::Column(FName(TEXT("Column2")))
-                        //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
-                        .FixedWidth(90.0f)
-                        .VAlignHeader(VAlign_Center)
-                        .HeaderContent()
-                        [
-                            SNew(STextBlock)
-                                .Text(FText::FromString(TEXT("")))
-                                .ToolTipText(FText::FromString(TEXT("TotalMilisecondsIncTooltip")))
-                        ]
-                    )
             ]
             + SVerticalBox::Slot()
-            .AutoHeight()
+            .FillHeight(0.1)
             .Padding(2)
             [
                 SNew(SHorizontalBox)
@@ -248,61 +331,79 @@ FReply UDoodleOrganizeCompoundWidget::GenerateFolders()
     {
         if (SelectedData.GetClass()->IsChildOf<UFXSystemAsset>())
         {
-            FString Path = FPaths::Combine(FolderPath, TEXT("Fx"));
-            if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
-            {
-                EditorAssetSubsystem->MakeDirectory(Path);
-            }
-            AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Fx"));
         }
-        if (SelectedData.GetClass()->IsChildOf<UStaticMesh>())
+        else if (SelectedData.GetClass()->IsChildOf<UStaticMesh>())
         {
-            FString Path = FPaths::Combine(FolderPath, TEXT("Mesh"));
-            if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
-            {
-                EditorAssetSubsystem->MakeDirectory(Path);
-            }
-            AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Mesh"));
         }
-        if (SelectedData.GetClass()->IsChildOf<UTexture>())
+        else if (SelectedData.GetClass()->IsChildOf<UTexture>())
         {
-            FString Path = FPaths::Combine(FolderPath, TEXT("Tex"));
-            if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
-            {
-                EditorAssetSubsystem->MakeDirectory(Path);
-            }
-            AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Tex"));
         }
-        if (SelectedData.GetClass()->IsChildOf<UMaterial>())
+        else if (SelectedData.GetClass() == UMaterialInstance::StaticClass())
         {
-            FString Path = FPaths::Combine(FolderPath, TEXT("Mat"));
-            if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
-            {
-                EditorAssetSubsystem->MakeDirectory(Path);
-            }
-            AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Mat/MatInst"));
         }
-        if (SelectedData.GetClass()->IsChildOf<UWorld>())
+        else if (SelectedData.GetClass() == UMaterial::StaticClass())
         {
-            FString Path = FPaths::Combine(FolderPath, TEXT("Maps"));
-            if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
-            {
-                EditorAssetSubsystem->MakeDirectory(Path);
-            }
-            AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Mat/Mat"));
         }
-        if (SelectedData.GetClass()->IsChildOf<UBlueprint>())
+        else if (SelectedData.GetClass() == UMaterialParameterCollection::StaticClass())
         {
-            FString Path = FPaths::Combine(FolderPath, TEXT("Blue"));
-            if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
-            {
-                EditorAssetSubsystem->MakeDirectory(Path);
-            }
-            AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Mat/MatParSet"));
+        }
+        else if (SelectedData.GetClass() == UMaterialFunction::StaticClass())
+        {
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Mat/MatFun"));
+        }
+        else if (SelectedData.GetClass()->IsChildOf<UWorld>())
+        {
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Maps"));
+        }
+        else if (SelectedData.GetClass()->IsChildOf<UBlueprint>())
+        {
+            MakeDirectoryByType(FolderPath, SelectedData, TEXT("Blue"));
+        }
+        else
+        {
+            MakeDirectoryByType(FolderPath,SelectedData, TEXT("Other"));
         }
     }
     //--------------------------
     return FReply::Handled();
+}
+
+void UDoodleOrganizeCompoundWidget::MakeDirectoryByType(FString FolderPath,FAssetData SelectedData,FString DirectoryName)
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    FString Path = FPaths::Combine(FolderPath, DirectoryName);
+    if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
+    {
+        EditorAssetSubsystem->MakeDirectory(Path);
+    }
+    FName AssetName = SelectedData.AssetName;
+    if (!EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
+    {
+        AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+    }
+    else
+    {
+        while (EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
+        {
+            int Counter = AssetName.GetNumber();
+            AssetName.SetNumber(++Counter);
+        }
+        if (EditorAssetSubsystem->RenameAsset(SelectedData.PackageName.ToString(), FPaths::Combine(Path, AssetName.ToString())))
+        {
+            FString Info = FString::Format(TEXT("文件重命名为:{0}"), { FPaths::Combine(SelectedData.PackagePath.ToString(), AssetName.ToString()) });
+            FNotificationInfo L_Info{ FText::FromString(Info) };
+            L_Info.FadeInDuration = 2.0f;  // 
+            L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+            FSlateNotificationManager::Get().AddNotification(L_Info);
+        }
+    }
+    EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
 }
 
 FReply UDoodleOrganizeCompoundWidget::GetAllRepetitiveTexture()
@@ -376,7 +477,12 @@ FReply UDoodleOrganizeCompoundWidget::GetAllRepetitiveTexture()
 
 TSharedRef<ITableRow> UDoodleOrganizeCompoundWidget::MakeTableRowWidget(TSharedPtr<FTreeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable)
 {
-    return SNew(STextureTreeItem, OwnerTable, InTreeElement);
+    return SNew(STextureTreeItem, OwnerTable, InTreeElement)
+        .OnTextCommittedEvent_Lambda([this](TSharedPtr<FTreeItem> InItem)
+        {
+            InItem->parent->Children.Remove(InItem);
+            TreeView->RequestTreeRefresh();
+        });
 }
 
 void UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree(TSharedPtr<FTreeItem> InItem, TArray<TSharedPtr<FTreeItem>>& OutChildren)
@@ -387,18 +493,11 @@ void UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree(TSharedPtr<FTreeIte
 
 void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> Item)
 {
-    TArray<FString> AssetPath;
     FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
     //--------------------
     TArray<UObject*> FinalConsolidationObjects;
     for (TSharedPtr<FTreeItem> Child : Item->parent->Children)
     {
-        TArray<FAssetDependency> Dependencys;
-        AssetRegistryModule.Get().GetReferencers(Child->Asset.PackageName, Dependencys);
-        if (!AssetPath.Contains(Child->Asset.PackagePath.ToString()))
-        {
-            AssetPath.Add(Child->Asset.PackagePath.ToString());
-        }
         //-------------------
         FinalConsolidationObjects.Add(Child->Asset.GetAsset());
     }
@@ -423,22 +522,12 @@ void UDoodleOrganizeCompoundWidget::OnAssginRepeatTexture(TSharedPtr<FTreeItem> 
         {
             Item->parent->Children.Remove(Remove);
         }
-        //------------------------------------------
-        for (FString Path : AssetPath)
-        {
-            TArray<FAssetData> AssetDatas;
-            AssetRegistryModule.Get().GetAssetsByPath(FName(Path), AssetDatas, true);
-            if (AssetDatas.Num() <=0)
-            {
-                EditorAssetSubsystem->DeleteDirectory(Path);
-            }
-        }
         //------------------
         FixupAllReferencers();
         //----------------------------------------
         FNotificationInfo L_Info{ FText::FromString(TEXT("指定成功")) };
         L_Info.FadeInDuration = 2.0f;  // 
-        L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Info"));
+        L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
         FSlateNotificationManager::Get().AddNotification(L_Info);
         //-----------------------------------
     }
@@ -582,4 +671,85 @@ FReply UDoodleOrganizeCompoundWidget::OnResizeTextureSize()
         }
     }
     return FReply::Handled();
+}
+
+void UDoodleOrganizeCompoundWidget::OnRenameTexture()
+{
+    if (NowSelectItem) 
+    {
+        TSharedPtr<ITableRow> TableRow = TreeView->WidgetFromItem(NowSelectItem);
+        TSharedPtr <STextureTreeItem> Row = StaticCastSharedPtr<STextureTreeItem>(TableRow);
+        if (Row.IsValid())
+        {
+            Row->EditableText->SetText(FText::FromName(NowSelectItem->Asset.AssetName));
+            Row->EditableText->SetEnabled(true);
+        }
+    }
+}
+
+FReply UDoodleOrganizeCompoundWidget::OneTouchDeleteRepectTexture()
+{
+    for (TSharedPtr<FTreeItem>  root: RootChildren)
+    {
+        if (root->Children.Num() > 1) 
+        {
+            TSharedPtr<FTreeItem> child = root->Children.Top();
+            OnAssginRepeatTexture(child);
+        }
+    }
+    GetAllRepetitiveTexture();
+    return FReply::Handled();
+}
+
+void UDoodleOrganizeCompoundWidget::DeleteAllEmptyDirectory()
+{
+    TArray<FString> AssetPaths;
+    IFileManager::Get().IterateDirectoryRecursively(*FPaths::ProjectContentDir(),[&](const TCHAR* FilenameOrDirectory, bool bIsDirectory) -> bool
+    {
+        if (bIsDirectory) 
+        {
+            FString DirectoryStr = FPaths::ConvertRelativePathToFull(FilenameOrDirectory);
+            //FString DirectoryStr = FilenameOrDirectory;
+            TArray<FString> Files;
+            FString FinalPath = DirectoryStr / TEXT("*");
+            IFileManager::Get().FindFiles(Files, *FinalPath, true, true);
+            if (Files.Num() <= 0)
+            {
+                if (!AssetPaths.Contains(DirectoryStr))
+                {
+                    AssetPaths.Add(DirectoryStr);
+                }
+            }
+        }
+        return true;
+    });
+    //------------------------------------------
+    TArray<FString> RemovePath;
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    for (FString Path : AssetPaths)
+    {
+        TArray<FAssetData> AssetDatas;
+        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+        AssetRegistryModule.Get().GetAssetsByPath(FName(Path), AssetDatas, true);
+        if (AssetDatas.Num() <= 0)
+        {
+            UE_LOG(LogTemp, Log, TEXT("空文件夹:  %s"), *Path);
+            bool res = IFileManager::Get().DeleteDirectory(*Path, false, true);
+            if (res) 
+            {
+                RemovePath.Add(Path);
+                //-----------------------
+                FString Info = FString::Format(TEXT("删除问价夹{0}成功"), { Path });
+                FNotificationInfo L_Info{ FText::FromString(Info) };
+                L_Info.FadeInDuration = 2.0f;  // 
+                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                FSlateNotificationManager::Get().AddNotification(L_Info);
+            }
+            EditorAssetSubsystem->SaveDirectory(Path);
+        }
+    }
+    if (RemovePath.Num() > 0)
+    {
+        DeleteAllEmptyDirectory();
+    }
 }
