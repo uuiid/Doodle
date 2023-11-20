@@ -206,6 +206,8 @@ void software_flag_file(const FSys::path &in_file_path, boost::uuids::uuid in_uu
 boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
   auto l_path = in_file_path;
   l_path.replace_extension(doodle_config::doodle_flag_name);
+  if (!FSys::exists(l_path)) return boost::uuids::nil_uuid();
+
   boost::uuids::uuid l_uuid{};
   FSys::ifstream{l_path} >> l_uuid;
 
