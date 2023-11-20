@@ -192,6 +192,25 @@ bool folder_is_save(const FSys::path &in_file_path) {
   ));
   return l_result == TRUE;
 }
+void software_flag_file(const FSys::path &in_file_path, boost::uuids::uuid in_uuid) {
+  auto l_path = in_file_path;
+  l_path.replace_extension(".doodle_flag");
+  FSys::ofstream{l_path, FSys::ofstream::out | FSys::ofstream::trunc} << boost::uuids::to_string(in_uuid);
+
+  auto l_file_attr = ::GetFileAttributesW(l_path.c_str());
+  if (l_file_attr == INVALID_FILE_ATTRIBUTES) {
+    THROW_WIN32(::GetLastError());
+  }
+  THROW_IF_WIN32_BOOL_FALSE(::SetFileAttributesW(l_path.c_str(), l_file_attr | FILE_ATTRIBUTE_HIDDEN));
+}
+boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
+  auto l_path = in_file_path;
+  l_path.replace_extension(".doodle_flag");
+  boost::uuids::uuid l_uuid{};
+  FSys::ifstream{l_path} >> l_uuid;
+
+  return l_uuid;
+};
 
 }  // namespace doodle::FSys
 

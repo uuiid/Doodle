@@ -8,6 +8,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <filesystem>
 #include <fmt/format.h>
@@ -55,6 +56,9 @@ FSys::path DOODLE_CORE_API get_cache_path();
 FSys::path DOODLE_CORE_API get_cache_path(const FSys::path& in_path);
 
 bool DOODLE_CORE_API folder_is_save(const FSys::path& in_file_path);
+// 软件标识符文件
+void DOODLE_CORE_API software_flag_file(const FSys::path& in_file_path, boost::uuids::uuid in_uuid);
+boost::uuids::uuid DOODLE_CORE_API software_flag_file(const FSys::path& in_file_path);
 
 }  // namespace doodle::FSys
 
