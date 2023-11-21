@@ -16,8 +16,12 @@ class maya_to_exe_file {
   entt::handle msg_{};
   boost::asio::any_io_executor executor_{};
   mutable FSys::path render_project_{};
+  mutable FSys::path render_project_file_{};
 
   void down_file(const FSys::path& in_path, bool is_scene) const;
+  void render() const;
+  FSys::path gen_render_config_file() const;
+  FSys::path write_python_script() const;
 
  public:
   explicit maya_to_exe_file(std::string in_maya_out_data) : maya_out_data_(std::move(in_maya_out_data)) {
