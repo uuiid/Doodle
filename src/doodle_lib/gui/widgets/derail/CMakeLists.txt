@@ -11,7 +11,7 @@ target_sources(doodle_lib
         time_edit.h
         file_one_edit_t.h
         file_association_edit.h
-        main_map_edit.h
+        ue_main_map_edit.h
 
         PRIVATE
         all_user_combox.cpp
@@ -25,5 +25,5 @@ target_sources(doodle_lib
         time_edit.cpp
         file_one_edit_t.cpp
         file_association_edit.cpp
-        main_map_edit.cpp
+        ue_main_map_edit.cpp
 )
