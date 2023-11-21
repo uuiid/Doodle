@@ -369,12 +369,28 @@ void UDoodleFbxImport_1::ImportFile() {
           L_Seq->GetPreloadDependencies(Ll);
         }
       }
+      if (SkinObj) {
+        FARFilter LFilter{};
+        LFilter.bIncludeOnlyOnDiskAssets = false;
+        LFilter.bRecursivePaths          = true;
+        LFilter.bRecursiveClasses        = true;
+        LFilter.PackagePaths.Add(FName{ImportPathDir});
+        IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
+          //-----------------------
+          UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+          EditorAssetSubsystem->SaveLoadedAsset(InAss.GetAsset());
+          if (USkeletalMesh* L_Sk = Cast<USkeletalMesh>(InAss.GetAsset()); L_Sk && L_Sk->GetSkeleton() == SkinObj) {
+            SkeletalMesh = L_Sk;
+          }
+          return true;
+        });
+      }
     }
   }
 }
 
 void UDoodleFbxImport_1::AssembleScene() {
-  if (CameraImport && CameraImport->FirstImport && AnimSeq) {
+  if (CameraImport && CameraImport->FirstImport && AnimSeq && SkeletalMesh) {
     ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *CameraImport->ImportPathDir);
     if (!L_ShotSequence) {
       UE_LOG(LogTemp, Log, TEXT("序列 %s 未能加载"), *CameraImport->ImportPathDir);
