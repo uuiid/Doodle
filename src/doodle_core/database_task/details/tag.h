@@ -48,12 +48,10 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
     auto& l_conn = *in_ptr;
     const tables::tag_table l_table{};
     const tables::entity l_entt_id{};
-    std::vector<tag_type> l_assets;
     std::vector<entt::entity> l_entts;
     // 调整内存
     for (auto&& raw :
          l_conn(sqlpp::select(sqlpp::count(l_table.entity_id)).from(l_table).where(l_table.entity_id.is_not_null()))) {
-      l_assets.reserve(raw.count.value());
       l_entts.reserve(raw.count.value());
       break;
     }
@@ -63,13 +61,12 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
                                 .where(l_table.entity_id.is_not_null(), l_table.tag_id == tag_type{}()))) {
       auto l_id = row.entity_id.value();
       if (in_handle.find(l_id) != in_handle.end()) {
-        l_assets.emplace_back();
         l_entts.emplace_back(in_handle.at(l_id));
       } else {
         log_error(fmt::format("数据库id {} 没有找到实体", l_id));
       }
     }
-    in_reg->insert<tag_type>(l_entts.begin(), l_entts.end(), l_assets.begin());
+    in_reg->insert<tag_type>(l_entts.begin(), l_entts.end(), tag_type{});
   }
   void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
     detail::sql_com_destroy<tables::tag_table>(in_ptr, in_handle);
