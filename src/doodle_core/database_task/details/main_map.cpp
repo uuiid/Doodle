@@ -3,6 +3,7 @@
 //
 #include "main_map.h"
 
+#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/main_map.h>
 namespace doodle::database_n {
 
@@ -57,7 +58,8 @@ void sql_com<doodle::ue_main_map>::select(
   }
 
   for (auto &row :
-       l_conn(sqlpp::select(l_table.entity_id, l_table.path).from(l_table).where(l_table.entity_id.is_not_null()))) {
+       l_conn(sqlpp::select(l_table.entity_id, l_table.map_path_).from(l_table).where(l_table.entity_id.is_not_null())
+       )) {
     ue_main_map l_i{};
     l_i.map_path_ = row.map_path_.value();
     auto l_id     = row.entity_id.value();
@@ -68,7 +70,7 @@ void sql_com<doodle::ue_main_map>::select(
       log_error(fmt::format("image_icon id {} not found", l_id));
     }
   }
-  in_reg->insert<doodle::image_icon>(l_entts.begin(), l_entts.end(), l_ue.begin());
+  in_reg->insert<doodle::ue_main_map>(l_entts.begin(), l_entts.end(), l_ue.begin());
 }
 void sql_com<doodle::ue_main_map>::destroy(conn_ptr &in_ptr, const std::vector<std::int64_t> &in_handle) {
   detail::sql_com_destroy<tables::ue_main_map>(in_ptr, in_handle);
