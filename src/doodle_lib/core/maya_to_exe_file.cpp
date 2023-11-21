@@ -100,7 +100,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
       }) |
       ranges::to<std::vector<maya_to_exe_file_ns::out_file_export>>();
 
-  nlohmann::json l_json = l_out_file;
+  nlohmann::json const l_json = l_out_file;
   return FSys::write_tmp_file("render_ue", l_json.dump(), ".json");
 }
 
