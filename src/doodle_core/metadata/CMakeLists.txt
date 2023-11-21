@@ -21,6 +21,7 @@ target_sources(
         file_one_path.h
         render_ue4_arg.h
         file_association.h
+        main_map.h
 
 
         PRIVATE
@@ -45,6 +46,7 @@ target_sources(
         file_one_path.cpp
         render_ue4_arg.cpp
         file_association.cpp
+        main_map.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
