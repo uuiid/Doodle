@@ -3,6 +3,7 @@
 #include "AI/NavigationSystemBase.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/SkeletalMeshActor.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
 #include "Doodle/DoodleEigenHelper.h"
@@ -132,8 +133,11 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     TObjectPtr<UAnimationAsset> L_Anim = (*L_Array)[RandomStream_Anim.RandRange(0, L_Array->Num() - 1)];
     USkeletalMeshComponent* L_Sk_Com   = L_Actor->GetMesh();
     FVector::ZAxisVector;
+    float L_Size = L_Skin->GetBounds().GetBox().GetExtent().Y;
+    L_Actor->GetCapsuleComponent()->SetCapsuleHalfHeight(L_Size);
+
     L_Sk_Com->SetRelativeLocationAndRotation(
-        {0.f, 0.f, -85.f}, FQuat{FVector::ZAxisVector, FMath::DegreesToRadians(SkinOffsetQuatValue)}
+        {0.f, 0.f, -L_Size}, FQuat{FVector::ZAxisVector, FMath::DegreesToRadians(SkinOffsetQuatValue)}
     );
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
