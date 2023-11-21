@@ -123,6 +123,7 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
   constexpr auto g_uproject = ".uproject";
   if (is_scene) {
     render_project_ = g_root / in_path.stem();
+    if (!FSys::exists(render_project_)) FSys::create_directories(render_project_);
   }
 
   auto l_loc_prj = render_project_ / g_content;
