@@ -28,6 +28,7 @@
 #include <doodle_core/database_task/details/rules.h>
 #include <doodle_core/database_task/details/season.h>
 #include <doodle_core/database_task/details/shot.h>
+#include <doodle_core/database_task/details/tag.h>
 #include <doodle_core/database_task/details/time_point_wrap.h>
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/details/user.h>
