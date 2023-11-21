@@ -374,6 +374,7 @@ void UDoodleFbxImport_1::ImportFile() {
         LFilter.bIncludeOnlyOnDiskAssets = false;
         LFilter.bRecursivePaths          = true;
         LFilter.bRecursiveClasses        = true;
+        LFilter.PackagePaths.Add(FName{FPaths::GetPath(SkinObj->GetPackage()->GetLoadedPath().GetPackageName())});
         LFilter.PackagePaths.Add(FName{ImportPathDir});
         IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
           //-----------------------
@@ -381,6 +382,7 @@ void UDoodleFbxImport_1::ImportFile() {
           EditorAssetSubsystem->SaveLoadedAsset(InAss.GetAsset());
           if (USkeletalMesh* L_Sk = Cast<USkeletalMesh>(InAss.GetAsset()); L_Sk && L_Sk->GetSkeleton() == SkinObj) {
             SkeletalMesh = L_Sk;
+            return false;
           }
           return true;
         });
