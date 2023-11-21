@@ -25,7 +25,7 @@ class file_one_path : public detail::sql_create_table_base<table_type> {
       auto& l_file           = l_h.get<base_type>();
       l_pre.params.path      = l_file.path_.generic_string();
       l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-      auto l_r               = l_conn(l_pre);
+      l_conn(l_pre);
       // DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<base_type>().name());
     }
   };
@@ -44,9 +44,7 @@ class file_one_path : public detail::sql_create_table_base<table_type> {
       l_pre.params.id        = id;
       l_pre.params.path      = l_assets.path_.generic_string();
       l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-      auto l_r               = l_conn(l_pre);
-
-      // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<base_type>().name());
+      l_conn(l_pre);
     }
   };
   void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg) {

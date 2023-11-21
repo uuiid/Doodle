@@ -103,4 +103,8 @@ DOODLE_SQL_TABLE_IMP(
     column_file_association::entity_maya_rig_file, column_file_association::entity_ue_file,
     column_file_association::entity_ue_preset_file
 );
+namespace column_tag {
+DOODLE_SQL_COLUMN_IMP(tag_id, sqlpp::integer, detail::can_be_null);
+}
+DOODLE_SQL_TABLE_IMP(tag_table, column::id, column::entity_id, column_tag::tag_id);
 }  // namespace doodle::database_n::tables
