@@ -107,4 +107,10 @@ namespace column_tag {
 DOODLE_SQL_COLUMN_IMP(tag_id, sqlpp::integer, detail::can_be_null);
 }
 DOODLE_SQL_TABLE_IMP(tag_table, column::id, column::entity_id, column_tag::tag_id);
+
+namespace column_ue_main_map {
+DOODLE_SQL_COLUMN_IMP(map_path_, sqlpp::text, detail::can_be_null);
+
+}
+DOODLE_SQL_TABLE_IMP(ue_main_map, column::id, column::entity_id, column_ue_main_map::map_path_);
 }  // namespace doodle::database_n::tables

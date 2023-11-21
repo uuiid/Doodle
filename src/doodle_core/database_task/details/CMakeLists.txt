@@ -25,6 +25,7 @@ target_sources(doodle_core
         file_association.h
         entt_handle_ref.h
         tag.h
+        main_map.h
 
 
         PRIVATE
@@ -55,4 +56,5 @@ target_sources(doodle_core
         file_association.cpp
         entt_handle_ref.cpp
         tag.cpp
+        main_map.cpp
 )

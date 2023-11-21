@@ -3,4 +3,9 @@
 //
 
 #pragma once
-namespace doodle {}
+namespace doodle {
+class ue_main_map {
+ public:
+  std::string map_path_{};
+};
+}  // namespace doodle
