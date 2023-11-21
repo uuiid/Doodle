@@ -6,6 +6,7 @@
 
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/main_map.h>
 
 namespace doodle::database_n {
 template <>
