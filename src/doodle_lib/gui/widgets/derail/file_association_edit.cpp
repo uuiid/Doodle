@@ -31,11 +31,6 @@ void file_association_edit_t::init(const entt::handle& in_handle) {
   }
   render_id_ = in_handle;
 }
-void file_association_edit_t::create_file_association() {
-  if (!render_id_.any_of<file_association_ref>()) {
-    render_id_.emplace<file_association_ref>();
-  }
-}
 
 entt::handle file_association_edit_t::get_drop_handle() {
   if (auto l_drag = dear::DragDropTarget{}) {
