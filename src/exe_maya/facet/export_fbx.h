@@ -24,6 +24,8 @@ class export_fbx_facet final {
   std::shared_ptr<maya_lib_guard> lib_guard_{};
   std::vector<entt::handle> ref_files_{};
   std::vector<entt::handle> cloth_lists_{};
+  // 输出结果路径
+  FSys::path out_path_file_{};
 
  public:
   export_fbx_facet()  = default;

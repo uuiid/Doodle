@@ -40,7 +40,7 @@ void maya_camera::chick() const {
   DOODLE_MAYA_CHICK(k_s);
 }
 
-bool maya_camera::export_file(
+std::tuple<bool, FSys::path> maya_camera::export_file(
     const MTime& in_start, const MTime& in_end, const reference_file_ns::generate_fbx_file_path& in_name
 ) {
   chick();
@@ -75,7 +75,7 @@ bool maya_camera::export_file(
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
 
-  return true;
+  return {true, k_file_path};
 }
 bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
   chick();

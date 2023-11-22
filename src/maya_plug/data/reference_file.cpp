@@ -51,7 +51,7 @@ namespace doodle::maya_plug {
 namespace reference_file_ns {
 
 FSys::path generate_file_path_base::operator()(const reference_file &in_ref) const {
-  return get_path() / get_name(in_ref ? in_ref.get_namespace() : ""s);
+  return get_path() / get_name(in_ref.export_group_attr().has_value() ? in_ref.get_namespace() : ""s);
 }
 
 bool generate_file_path_base::operator==(const generate_file_path_base &in) const noexcept {
@@ -173,9 +173,6 @@ generate_fbx_file_path::~generate_fbx_file_path() = default;
 
 reference_file::reference_file() : path(), use_sim(false), collision_model(), p_m_object(), file_namespace(){};
 
-reference_file::reference_file(const std::string &in_maya_namespace) : reference_file() {
-  set_namespace(in_maya_namespace);
-}
 void reference_file::set_path(const MObject &in_ref_node) {
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
@@ -262,7 +259,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  DOODLE_CHICK(this->find_ref_node(), doodle_error{"缺失引用"});
+  DOODLE_CHICK(this->p_m_object.isNull(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -328,11 +325,11 @@ bool reference_file::set_namespace(const std::string &in_namespace) {
 
   file_namespace = in_namespace.front() == ':' ? in_namespace.substr(1) : in_namespace;
   find_ref_node();
-  return has_chick_group();
+  return export_group_attr().has_value();
 }
-bool reference_file::find_ref_node() {
+void reference_file::find_ref_node() {
   chick_mobject();
-  if (!p_m_object.isNull()) return true;
+  if (!p_m_object.isNull()) return;
 
   MStatus k_s;
   MFnReference k_file;
@@ -341,21 +338,22 @@ bool reference_file::find_ref_node() {
     k_s = k_file.setObject(refIter.thisNode());
     DOODLE_MAYA_CHICK(k_s);
     const auto &&k_mata_str = k_file.associatedNamespace(false, &k_s);
-    if (k_mata_str == file_namespace.c_str()) {
+    if (k_mata_str.asUTF8() == file_namespace.c_str()) {
       p_m_object = refIter.thisNode();
+      break;
     }
   }
   if (p_m_object.isNull()) {
     DOODLE_LOG_INFO("名称空间 {} 没有引用文件,使用名称空间作为引用", file_namespace);
     path = file_namespace;
-    return false;
+    return;
   }
 
   MFnReference k_ref{p_m_object, &k_s};
   DOODLE_MAYA_CHICK(k_s);
   path = d_str{k_ref.fileName(false, true, true, &k_s)};
   DOODLE_LOG_INFO("获得引用路径 {} 名称空间 {}", path, file_namespace);
-  return true;
+  return;
 }
 
 bool reference_file::replace_file(const FSys::path &in_handle) {
@@ -396,8 +394,8 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
   k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
   DOODLE_MAYA_CHICK(k_s);
   file_namespace = l_name_d;
-  DOODLE_CHICK(find_ref_node(), doodle_error{"没有在新的名称空间中查询到引用节点"});
-  if (!has_chick_group()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");
+  find_ref_node();
+  if (!export_group_attr()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");
   return false;
 }
 FSys::path reference_file::get_path() const {
@@ -510,26 +508,7 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
   return l_export_path;
 }
 
-bool reference_file::has_chick_group() const {
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  try {
-    chick_mobject();
-    MStatus k_s{};
-
-    MSelectionList k_select{};
-    k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
-    maya_chick(k_s);
-    return true;
-  } catch (const maya_error &err) {
-    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组 {}", file_namespace, k_cfg.export_group, err.what());
-    return false;
-  } catch (const doodle_error &err) {
-    DOODLE_LOG_ERROR("{}", boost::diagnostic_information(err));
-    return false;
-  }
-}
-
-std::vector<entt::handle> reference_file_factory::create_ref() const {
+std::vector<entt::handle> reference_file_factory::create_ref(bool is_filter) const {
   std::vector<entt::handle> l_ret{};
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
@@ -543,8 +522,8 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     if (std::find(g_not_find_ui.begin(), g_not_find_ui.end(), k_name.asUTF8()) != g_not_find_ui.end()) {
       continue;
     }
-    reference_file k_ref{k_name};
-    if (k_ref) {
+    reference_file k_ref{};
+    if (!is_filter || k_ref.set_namespace(conv::to_s(k_name))) {
       DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
       auto l_h = entt::handle{*g_reg(), g_reg()->create()};
       l_h.emplace<reference_file>(k_ref);
@@ -556,7 +535,7 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
 
   return l_ret;
 }
-std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list) const {
+std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list, bool is_filter) const {
   std::vector<entt::handle> l_ret{};
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
@@ -570,8 +549,8 @@ std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionLis
     l_names.emplace(m_namespace::get_namespace_from_name(l_name));
   }
   for (auto &&k_name : l_names) {
-    reference_file k_ref{k_name};
-    if (k_ref) {
+    reference_file k_ref{};
+    if (k_ref.set_namespace(k_name)) {
       DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
       auto l_h = entt::handle{*g_reg(), g_reg()->create()};
       l_h.emplace<reference_file>(k_ref);

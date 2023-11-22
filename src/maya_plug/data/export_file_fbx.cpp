@@ -83,7 +83,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   }
 }
 
-void export_file_fbx::export_anim(
+FSys::path export_file_fbx::export_anim(
     const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view, const MSelectionList& in_exclude
 ) {
   std::vector<MDagPath> l_export_list{};
@@ -92,7 +92,7 @@ void export_file_fbx::export_anim(
   auto l_export_group = l_ref.export_group_attr();
   if (!l_export_group) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
-    return;
+    return {};
   }
 
   MItDag l_it{};
@@ -121,6 +121,7 @@ void export_file_fbx::export_anim(
 
   fbx_write l_fbx_write{};
   l_fbx_write.write(l_export_list, l_arg->begin_end_time.first, l_arg->begin_end_time.second, l_file_path);
+  return l_file_path;
 }
 
 void export_file_fbx::cloth_to_blendshape(
@@ -177,14 +178,16 @@ void export_file_fbx::cloth_to_blendshape(
   }
 }
 
-void export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {
+FSys::path export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view
+) {
   auto& l_arg = in_handle_view.get<generate_file_path_ptr>();
   auto& l_ref = in_handle_view.get<reference_file>();
   cloth_to_blendshape(l_arg->begin_end_time.first, l_arg->begin_end_time.second, l_ref.get_alll_cloth_obj());
   export_anim(in_handle_view);
+  return {};
 }
 
-void export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view) {
+FSys::path export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view) {
   auto& l_arg = in_handle_view.get<generate_file_path_ptr>();
   auto& l_cam = g_reg()->ctx().get<maya_camera>();
   l_cam.unlock_attr();
@@ -193,10 +196,11 @@ void export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>
   if (l_cam.camera_parent_is_word()) {
     l_cam.fix_group_camera(l_arg->begin_end_time.first, l_arg->begin_end_time.second);
   }
-  g_reg()->ctx().get<maya_camera>().export_file(
+  auto&& [l_b, l_p] = g_reg()->ctx().get<maya_camera>().export_file(
       l_arg->begin_end_time.first, l_arg->begin_end_time.second,
       *std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(l_arg)
   );
+  return l_p;
 }
 
 }  // namespace doodle::maya_plug

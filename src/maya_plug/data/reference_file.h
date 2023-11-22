@@ -101,15 +101,15 @@ class reference_file {
    * @param in_ref_uuid
    */
   void find_ref_node(const std::string &in_ref_uuid);
-  bool find_ref_node();
-
-  bool has_chick_group() const;
+  void find_ref_node();
 
   std::vector<MObject> ref_objs{};
   /**
    * @brief 这个路径是显示的路径,  带有后缀以区分相同路径的多个引用
    */
   std::string path;
+
+  void set_path(const MObject &in_ref_node);
 
  public:
   /**
@@ -125,10 +125,8 @@ class reference_file {
   std::vector<std::string> collision_model_show_str;
 
   reference_file();
-  explicit reference_file(const std::string &in_maya_namespace);
-  explicit reference_file(const MString &in_maya) : reference_file(std::string{in_maya.asUTF8()}) {}
+
   void init_show_name();
-  void set_path(const MObject &in_ref_node);
   bool set_namespace(const std::string &in_namespace);
   /// 获取引用标帜路径
   const std::string &get_key_path() const;
@@ -188,8 +186,6 @@ class reference_file {
 
   std::vector<MDagPath> get_alll_cloth_obj() const;
 
-  explicit inline operator bool() const { return has_chick_group(); }
-
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
     j["path"]            = p.path;
@@ -219,8 +215,8 @@ class reference_file_factory {
   reference_file_factory()  = default;
   ~reference_file_factory() = default;
 
-  [[nodiscard]] std::vector<entt::handle> create_ref() const;
-  [[nodiscard]] std::vector<entt::handle> create_ref(const MSelectionList &in_list) const;
+  [[nodiscard]] std::vector<entt::handle> create_ref(bool is_filter = true) const;
+  [[nodiscard]] std::vector<entt::handle> create_ref(const MSelectionList &in_list, bool is_filter = true) const;
 };
 
 }  // namespace doodle::maya_plug

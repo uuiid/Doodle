@@ -41,6 +41,8 @@ class arg {
   std::int32_t export_anim_time{};
   std::bitset<8> bitset_;
   FSys::path maya_path;
+  // 输出结果路径
+  FSys::path out_path_file_{};
   friend void to_json(nlohmann::json &in_nlohmann_json_j, const arg &in_nlohmann_json_t) {
     in_nlohmann_json_j["path"]             = in_nlohmann_json_t.file_path.generic_string();
     in_nlohmann_json_j["project_"]         = in_nlohmann_json_t.project_.generic_string();
@@ -48,6 +50,7 @@ class arg {
     in_nlohmann_json_j["export_anim_time"] = in_nlohmann_json_t.export_anim_time;
     in_nlohmann_json_j["bitset_"]          = in_nlohmann_json_t.bitset_;
     in_nlohmann_json_j["maya_path"]        = in_nlohmann_json_t.maya_path;
+    in_nlohmann_json_j["out_path_file_"]   = in_nlohmann_json_t.out_path_file_;
   }
   friend void from_json(const nlohmann::json &in_nlohmann_json_j, arg &in_nlohmann_json_t) {
     in_nlohmann_json_j["path"].get_to(in_nlohmann_json_t.file_path);
@@ -56,6 +59,7 @@ class arg {
     in_nlohmann_json_j["export_anim_time"].get_to(in_nlohmann_json_t.export_anim_time);
     in_nlohmann_json_j["bitset_"].get_to(in_nlohmann_json_t.bitset_);
     in_nlohmann_json_j["maya_path"].get_to(in_nlohmann_json_t.maya_path);
+    in_nlohmann_json_j["out_path_file_"].get_to(in_nlohmann_json_t.out_path_file_);
   }
 };
 

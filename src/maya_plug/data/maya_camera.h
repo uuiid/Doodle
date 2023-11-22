@@ -2,6 +2,8 @@
 // Created by TD on 2021/12/13.
 //
 
+#include <doodle_core/core/file_sys.h>
+
 #include "maya/MApiNamespace.h"
 #include <maya/MDagPath.h>
 #include <regex>
@@ -41,7 +43,7 @@ class maya_camera {
    * @return 如果dag path 无效则返回false
    * @throw maya_error maya返回值错误
    */
-  bool export_file(
+  std::tuple<bool, FSys::path> export_file(
       const MTime& in_start, const MTime& in_end, const reference_file_ns::generate_fbx_file_path& in_name
   );
   /**

@@ -46,22 +46,34 @@
 #include <maya/MGlobal.h>
 
 namespace doodle::maya_plug {
-
+struct maya_out_arg {
+  FSys::path out_file{};
+  // 引用文件
+  FSys::path ref_file{};
+  friend void to_json(nlohmann::json& j, const maya_out_arg& p) {
+    j["out_file"] = p.out_file.generic_string();
+    j["ref_file"] = p.ref_file.generic_string();
+  }
+};
 void export_fbx_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
-  ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-  ref_files_ |= ranges::actions::remove_if([](entt::handle& in_handle) -> bool {
-    auto&& l_ref = in_handle.get<reference_file>();
-    return !l_ref;
-  });
+  ref_files_ = g_ctx().get<reference_file_factory>().create_ref(false);
 }
 void export_fbx_facet::export_fbx() {
   export_file_fbx l_ex{};
+  std::vector<maya_out_arg> l_out_arg{};
   auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
   for (auto&& i : ref_files_) {
-    i.emplace<generate_file_path_ptr>(l_gen);
-    l_ex.export_anim(i);
+    if (i.get<reference_file>().export_group_attr()) {
+      i.emplace<generate_file_path_ptr>(l_gen);
+      auto l_path = l_ex.export_anim(i);
+      if (!l_path.empty()) {
+        l_out_arg.emplace_back(l_path, i.get<reference_file>().get_path());
+      }
+    } else {
+      l_out_arg.emplace_back(FSys::path{}, i.get<reference_file>().get_path());
+    }
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
@@ -101,10 +113,11 @@ bool export_fbx_facet::post() {
   }
 
   if (l_arg.file_path.empty()) return l_ret;
+  out_path_file_ = l_arg.out_path_file_;
 
-  lib_guard_ = std::make_shared<maya_lib_guard>(l_arg.maya_path);
+  lib_guard_     = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 
-  l_ret      = true;
+  l_ret          = true;
   g_ctx().get<database_n::file_translator_ptr>()->set_only_open(true);
   g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
