@@ -56,9 +56,12 @@ entt::handle ref_data::handle() const {
 }  // namespace database_ns
 
 database::database() : p_id(0), p_uuid_(core_set::get_set().get_uuid()) {}
-database::database(const boost::uuids::uuid &in_uuid) : p_id(0), p_uuid_(in_uuid) {}
+database::database(const boost::uuids::uuid &in_uuid)
+    : p_id(0), p_uuid_(in_uuid.is_nil() ? core_set::get_set().get_uuid() : in_uuid) {}
 database::database(const std::string &in_uuid_str)
-    : p_id(0), p_uuid_(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {}
+    : p_id(0), p_uuid_(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {
+  if (p_uuid_.is_nil()) p_uuid_ = core_set::get_set().get_uuid();
+}
 
 database::~database() = default;
 

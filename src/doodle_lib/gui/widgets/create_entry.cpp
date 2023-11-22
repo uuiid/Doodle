@@ -112,7 +112,7 @@ void create_entry::render_other_files() {
               l_ent.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
             }
             find_icon(l_ent, in_path);
-            l_ent.emplace<database>();
+            l_ent.emplace<database>(FSys::software_flag_file(in_path));
             l_ent.emplace<assets_file>(in_path).assets_attr(l_ass);
             return l_ent;
           }) |
