@@ -8,7 +8,9 @@
 // #include <windef.h>
 // #include <boost/winapi/handles.hpp>
 // #include <boost/winapi/show_window.hpp>
+#include <doodle_core/configure/doodle_core_export.h>
 
+#include <string>
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct IDXGISwapChain;
