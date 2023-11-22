@@ -12,11 +12,12 @@ namespace doodle {
 class maya_to_exe_file {
  private:
   // maya 输出结果文件内容
-  std::string maya_out_data_{};
+  FSys::path maya_out_file_{};
   entt::handle msg_{};
   boost::asio::any_io_executor executor_{};
 
   struct data_t {
+    std::string maya_out_data_{};
     FSys::path render_project_{};
     FSys::path render_project_file_{};
     std::string render_map_{};
@@ -29,11 +30,17 @@ class maya_to_exe_file {
   FSys::path write_python_script() const;
 
  public:
-  explicit maya_to_exe_file(std::string in_maya_out_data)
-      : maya_out_data_(std::move(in_maya_out_data)), data_(std::make_unique<data_t>()) {
+  explicit maya_to_exe_file(std::string in_maya_out_data) : data_(std::make_unique<data_t>()) {
+    data_->maya_out_data_ = std::move(in_maya_out_data);
+    msg_                  = {*g_reg(), g_reg()->create()};
+    executor_             = boost::asio::make_strand(g_thread());
+  };
+  explicit maya_to_exe_file(FSys::path in_maya_out_file)
+      : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_unique<data_t>()) {
     msg_      = {*g_reg(), g_reg()->create()};
     executor_ = boost::asio::make_strand(g_thread());
   };
+
   virtual ~maya_to_exe_file() = default;
 
   void operator()(boost::system::error_code in_error_code) const;

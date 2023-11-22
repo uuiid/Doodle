@@ -62,9 +62,10 @@ struct out_file {
 }  // namespace maya_to_exe_file_ns
 
 FSys::path maya_to_exe_file::gen_render_config_file() const {
-  auto l_maya_out_arg = nlohmann::json ::parse(maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
+  auto l_maya_out_arg =
+      nlohmann::json ::parse(data_->maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
 
-  auto l_path         = l_maya_out_arg[0].ref_file.filename();
+  auto l_path = l_maya_out_arg[0].ref_file.filename();
 
   maya_to_exe_file_ns::out_file l_out_file{};
   {
@@ -110,15 +111,21 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     log_error(fmt::format("maya_to_exe_file error:{}", in_error_code));
     return;
   }
+  if (!maya_out_file_.empty() && FSys::exists(maya_out_file_)) {
+    std::ifstream l_file{maya_out_file_};
+    data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
+  }
+
   auto &l_msg = msg_.get<process_message>();
   l_msg.set_state(l_msg.run);
   l_msg.message("开始处理 maya 输出文件");
-  if (maya_out_data_.empty()) {
+  if (data_->maya_out_data_.empty()) {
     l_msg.message("maya结束进程后未能成功输出文件");
     l_msg.set_state(l_msg.fail);
     return;
   }
-  auto l_maya_out_arg = nlohmann::json ::parse(maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
+  auto l_maya_out_arg =
+      nlohmann::json ::parse(data_->maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
 
   if (l_maya_out_arg.empty()) {
     auto &l_msg = msg_.get<process_message>();
