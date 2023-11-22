@@ -15,8 +15,13 @@ class maya_to_exe_file {
   std::string maya_out_data_{};
   entt::handle msg_{};
   boost::asio::any_io_executor executor_{};
-  mutable FSys::path render_project_{};
-  mutable FSys::path render_project_file_{};
+
+  struct data_t {
+    FSys::path render_project_{};
+    FSys::path render_project_file_{};
+    std::string render_map_{};
+  };
+  std::unique_ptr<data_t> data_{};
 
   void down_file(const FSys::path& in_path, bool is_scene) const;
   void render() const;
@@ -24,7 +29,8 @@ class maya_to_exe_file {
   FSys::path write_python_script() const;
 
  public:
-  explicit maya_to_exe_file(std::string in_maya_out_data) : maya_out_data_(std::move(in_maya_out_data)) {
+  explicit maya_to_exe_file(std::string in_maya_out_data)
+      : maya_out_data_(std::move(in_maya_out_data)), data_(std::make_unique<data_t>()) {
     msg_      = {*g_reg(), g_reg()->create()};
     executor_ = boost::asio::make_strand(g_thread());
   };

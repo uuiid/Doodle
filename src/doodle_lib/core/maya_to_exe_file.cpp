@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/file_association.h>
+#include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/thread_pool/process_message.h>
@@ -89,7 +90,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
     }
   }
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
-  l_out_file.out_file_dir = render_project_ / "Saved" / "MovieRenders" /
+  l_out_file.out_file_dir = data_->render_project_ / "Saved" / "MovieRenders" /
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
 
   l_out_file.files =
@@ -99,7 +100,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
             in_arg.out_file};
       }) |
       ranges::to<std::vector<maya_to_exe_file_ns::out_file_export>>();
-
+  l_out_file.main_map         = data_->render_map_;
   nlohmann::json const l_json = l_out_file;
   return FSys::write_tmp_file("render_ue", l_json.dump(), ".json");
 }
@@ -173,7 +174,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     return;
   }
   if (ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
-        return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<main_project>();
+        return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
       })) {
     auto &l_msg = msg_.get<process_message>();
     l_msg.message("未查找到主项目文件");
@@ -181,17 +182,17 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     return;
   }
 
-  // sort main_project
+  // sort ue_main_map
   l_refs |= ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) {
-    return in_r.get<file_association_ref>().get<file_association>().ue_file.all_of<main_project>() &&
-           !in_l.get<file_association_ref>().get<file_association>().ue_file.all_of<main_project>();
+    return in_r.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>() &&
+           !in_l.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
   });
 
   for (auto &&h : l_refs) {
-    down_file(
-        h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr(),
-        h.get<file_association_ref>().get<file_association>().ue_file.all_of<main_project>()
-    );
+    auto l_is_se = h.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
+    down_file(h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr(), l_is_se);
+    if (l_is_se)
+      data_->render_map_ = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
@@ -204,11 +205,11 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
   constexpr auto g_content  = "Content";
   constexpr auto g_uproject = ".uproject";
   if (is_scene) {
-    render_project_ = g_root / in_path.stem();
-    if (!FSys::exists(render_project_)) FSys::create_directories(render_project_);
+    data_->render_project_ = g_root / in_path.stem();
+    if (!FSys::exists(data_->render_project_)) FSys::create_directories(data_->render_project_);
   }
 
-  auto l_loc_prj = render_project_ / g_content;
+  auto l_loc_prj = data_->render_project_ / g_content;
   auto l_rem_prj = in_path / g_content;
 
   // 复制内容文件夹
@@ -233,15 +234,15 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
   if (!is_scene) return;
 
   // 复制配置文件夹
-  auto l_loc_config = render_project_ / g_config;
+  auto l_loc_config = data_->render_project_ / g_config;
   auto l_rem_config = in_path / g_config;
   FSys::copy(l_rem_config, l_loc_config, FSys::copy_options::overwrite_existing | FSys::copy_options::recursive);
   // 复制项目文件
   for (auto &&l_file : FSys::directory_iterator{in_path}) {
-    auto l_loc_file = render_project_ / l_file.path().filename();
+    auto l_loc_file = data_->render_project_ / l_file.path().filename();
     if (l_file.path().extension() == g_uproject) {
       FSys::copy(l_file.path(), l_loc_file, FSys::copy_options::overwrite_existing);
-      render_project_file_ = l_loc_file;
+      data_->render_project_file_ = l_loc_file;
       break;
     }
   }
@@ -254,7 +255,7 @@ void maya_to_exe_file::render() const {
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
-          fmt::format("{} -ExecutePythonScript={} {}", render_project_file_, write_python_script(), l_path)},
+          fmt::format("{} -ExecutePythonScript={} {}", data_->render_project_file_, write_python_script(), l_path)},
       [this](const boost::system::error_code &in_code) {
         boost::asio::post(executor_, [=]() {
           auto &l_msg = msg_.get<process_message>();
