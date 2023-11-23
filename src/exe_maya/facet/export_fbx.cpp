@@ -78,7 +78,12 @@ void export_fbx_facet::export_fbx() {
   g_reg()->ctx().emplace<maya_camera>().conjecture();
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
   l_h.emplace<generate_file_path_ptr>(l_gen);
-  l_ex.export_cam(l_h);
+  auto l_cam_path = l_ex.export_cam(l_h);
+
+  l_out_arg.emplace_back(l_cam_path, FSys::path{});
+
+  nlohmann::json l_json = l_out_arg;
+  FSys::ofstream{out_path_file_} << l_json.dump(4);
 }
 
 void export_fbx_facet::play_blast() {
