@@ -143,7 +143,9 @@ class DOODLELIB_API maya_exe {
   std::unique_ptr<impl> p_i;
 
   void notify_run();
-  void queue_up(
+
+ protected:
+  virtual void queue_up(
       const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
       call_fun_type in_call_fun, const FSys::path &in_run_path
   );
