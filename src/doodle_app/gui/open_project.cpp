@@ -88,6 +88,7 @@ bool open_project::render() {
     if (next_time_backup_) {
       g_ctx().get<program_options>().init_project();
       open = false;
+      ImGui::CloseCurrentPopup();
     }
   } else {
     ImGui::Text("授权已过期");
