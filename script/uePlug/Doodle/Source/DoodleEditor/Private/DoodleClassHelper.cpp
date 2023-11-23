@@ -46,5 +46,6 @@ void UDoodleClassHelper::OnMoviePipelineWorkFinished(FMoviePipelineOutputData Da
             }
         }
     }
+    if(ActiveMoviePipeline)
     ActiveMoviePipeline->OnMoviePipelineWorkFinished().RemoveAll(this);
 }
