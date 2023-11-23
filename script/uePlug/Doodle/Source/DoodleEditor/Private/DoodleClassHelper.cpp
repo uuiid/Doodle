@@ -8,10 +8,10 @@ void UDoodleClassHelper::OnBeginFrame()
         ActiveMoviePipeline = *It;
         if (ActiveMoviePipeline && ActiveMoviePipeline->GetPipelineState() != EMovieRenderPipelineState::Finished)
         {
-            FCoreDelegates::OnBeginFrame.RemoveAll(this);
             ActiveMoviePipeline->OnMoviePipelineWorkFinished().AddUObject(this,&UDoodleClassHelper::OnMoviePipelineWorkFinished);
         }
     }
+    FCoreDelegates::OnBeginFrame.RemoveAll(this);
 }
 
 void UDoodleClassHelper::OnMoviePipelineWorkFinished(FMoviePipelineOutputData Data)

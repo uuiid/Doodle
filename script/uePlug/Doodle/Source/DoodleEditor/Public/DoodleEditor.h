@@ -40,4 +40,5 @@ class FdoodleEditorModule : public IModuleInterface {
   TSharedPtr<FDoodleVariantMenuExtension> VariantExtender;
 //--------------
   UDoodleClassHelper* HelperCallback;
+  FDelegateHandle PostPIEStartedHandle;
 };
