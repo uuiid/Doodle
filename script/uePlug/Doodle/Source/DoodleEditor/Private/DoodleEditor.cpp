@@ -146,6 +146,14 @@ void FdoodleEditorModule::StartupModule() {
     TSharedPtr<FExtensibilityManager> Manager = l_Module.GetObjectBindingContextMenuExtensibilityManager();
     Manager.Get()->AddExtender(extender);
     }));
+//-------------
+    PostPIEStartedHandle = FEditorDelegates::PostPIEStarted.AddLambda([this](const bool IsDone)
+    {
+        //UE_LOG(LogTemp, Warning, TEXT("PostPIEStarted"));
+        if (!HelperCallback)
+            HelperCallback = NewObject<UDoodleClassHelper>(GetTransientPackage());
+        FCoreDelegates::OnBeginFrame.AddUObject(HelperCallback, &UDoodleClassHelper::OnBeginFrame);
+    });
 }
 
 void FdoodleEditorModule::ShutdownModule() {
@@ -183,6 +191,11 @@ void FdoodleEditorModule::ShutdownModule() {
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
       IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
       AssetTools.UnregisterAssetTypeActions(RegisterActionType.ToSharedRef());
+  }
+  //--------------------
+  if (PostPIEStartedHandle.IsValid()) 
+  {
+      FEditorDelegates::PostPIEStarted.Remove(PostPIEStartedHandle);
   }
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
