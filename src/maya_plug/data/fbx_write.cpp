@@ -404,7 +404,7 @@ void fbx_node_mesh::build_bind_post() {
       (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_world_matrix};
     } else {
       log_error(fmt::format("node {} is not dag node", get_node_full_name(l_node)));
-      throw_exception(doodle_error{"错误的 bindpose, 找绑定 {}", i});
+      //      throw_exception(doodle_error{"错误的 bindpose, 找绑定 {}", i});
     }
   }
 
