@@ -7,6 +7,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <boost/asio.hpp>
+#include <boost/asio/any_completion_handler.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/process.hpp>
 #include <boost/process/windows.hpp>
@@ -37,6 +39,7 @@ class ue_exe {
 
  private:
   class run_ue;
+  friend class run_ue;
   FSys::path ue_path_;
   std::stack<std::shared_ptr<run_ue>> queue_list_{};
   std::shared_ptr<run_ue> run_process_{};
@@ -48,10 +51,8 @@ class ue_exe {
   void find_ue_exe();
 
  protected:
-  using call_fun_type = std::function<void(boost::system::error_code)>;
-  virtual void queue_up(
-      const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
-  );
+  using call_fun_type = boost::asio::any_completion_handler<void(boost::system::error_code)>;
+  virtual void queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun);
 
  public:
   struct arg_render_queue {
@@ -66,7 +67,8 @@ class ue_exe {
     std::string to_string() const;
   };
 
-  ue_exe() = default;
+  ue_exe()          = default;
+  virtual ~ue_exe() = default;
 
   std::string get_file_version(const FSys::path &in_path);
 
@@ -99,9 +101,10 @@ class ue_exe {
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, l_msg_ref, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {
-          auto l_fun =
-              std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          this->queue_up(in_handle, l_arg, l_fun);
+          this->queue_up(
+              in_handle, l_arg,
+              std::move(call_fun_type{std::forward<decltype(in_completion_handler)>(in_completion_handler)})
+          );
         },
         in_completion
     );

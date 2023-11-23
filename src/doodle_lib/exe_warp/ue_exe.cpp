@@ -34,10 +34,11 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
 
  public:
   boost::process::child child_attr{};
-  std::shared_ptr<std::function<void(boost::system::error_code)>> call_attr{};
+  ue_exe::call_fun_type call_attr{};
   FSys::path ue_path{};
   entt::handle mag_attr{};
   std::string arg_attr{};
+  ue_exe *self_{};
   void run() {
     if (ue_path.empty() || !FSys::exists(ue_path)) throw_exception(doodle_error{"ue_exe path is empty or not exists"});
 
@@ -64,7 +65,8 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
               auto &&l_msg = mag_attr.get<process_message>();
               l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
               l_msg.message(fmt::format("退出代码 {}", in_exit));
-              (*call_attr)(in_error_code);
+              call_attr(in_error_code);
+              self_->notify_run();
             },
         boost::process::windows::hide};
 
@@ -127,23 +129,14 @@ void ue_exe::notify_run() {
   }
 }
 
-void ue_exe::queue_up(
-    const entt::handle &in_msg, const std::string &in_command_line, const std::shared_ptr<call_fun_type> &in_call_fun
-) {
+void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun) {
   if (ue_path_.empty()) find_ue_exe();
   auto l_run       = queue_list_.emplace(std::make_shared<run_ue>());
   l_run->ue_path   = ue_path_;
   l_run->mag_attr  = in_msg;
   l_run->arg_attr  = in_command_line;
-  l_run->call_attr = in_call_fun;
-
-  l_run->call_attr = std::make_shared<call_fun_type>([in_call_fun, this](const boost::system::error_code &in_code) {
-    boost::asio::post(g_io_context(), [=]() {
-      --run_size_attr;
-      (*in_call_fun)(in_code);
-      this->notify_run();
-    });
-  });
+  l_run->call_attr = std::move(in_call_fun);
+  l_run->self_     = this;
   notify_run();
 }
 void ue_exe::find_ue_exe() {
