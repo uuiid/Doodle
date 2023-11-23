@@ -321,9 +321,9 @@ bool reference_file::has_node(const MObject &in_node) const {
   return false;
 }
 bool reference_file::set_namespace(const std::string &in_namespace) {
-  DOODLE_CHICK(!in_namespace.empty(), doodle_error{"空名称空间"});
-
+  if (in_namespace.empty()) return false;
   file_namespace = in_namespace.front() == ':' ? in_namespace.substr(1) : in_namespace;
+  if (file_namespace.empty()) return false;
   find_ref_node();
   return export_group_attr().has_value();
 }
@@ -337,8 +337,8 @@ void reference_file::find_ref_node() {
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
     k_s = k_file.setObject(refIter.thisNode());
     DOODLE_MAYA_CHICK(k_s);
-    const auto &&k_mata_str = k_file.associatedNamespace(false, &k_s);
-    if (k_mata_str.asUTF8() == file_namespace.c_str()) {
+    const std::string k_mata_str = conv::to_s(k_file.associatedNamespace(false, &k_s));
+    if (k_mata_str == file_namespace) {
       p_m_object = refIter.thisNode();
       break;
     }
@@ -428,19 +428,20 @@ MSelectionList reference_file::get_all_object() const {
   return l_select;
 }
 std::optional<MDagPath> reference_file::export_group_attr() const {
-  chick_mobject();
+  if (file_namespace.empty()) return {};
+
   MStatus k_s{};
 
   DOODLE_MAYA_CHICK(k_s);
   MSelectionList k_select{};
   auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   MDagPath l_path;
-  try {
-    k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_MAYA_CHICK(k_s);
+
+  k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
+  if (k_s) {
     k_s = k_select.getDagPath(0, l_path);
     DOODLE_MAYA_CHICK(k_s);
-  } catch (const std::runtime_error &err) {
+  } else {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
   }
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
@@ -523,7 +524,7 @@ std::vector<entt::handle> reference_file_factory::create_ref(bool is_filter) con
       continue;
     }
     reference_file k_ref{};
-    if (!is_filter || k_ref.set_namespace(conv::to_s(k_name))) {
+    if (k_ref.set_namespace(conv::to_s(k_name)) || !is_filter) {
       DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
       auto l_h = entt::handle{*g_reg(), g_reg()->create()};
       l_h.emplace<reference_file>(k_ref);

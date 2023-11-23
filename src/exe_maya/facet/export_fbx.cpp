@@ -69,10 +69,10 @@ void export_fbx_facet::export_fbx() {
       i.emplace<generate_file_path_ptr>(l_gen);
       auto l_path = l_ex.export_anim(i);
       if (!l_path.empty()) {
-        l_out_arg.emplace_back(l_path, i.get<reference_file>().get_path());
+        l_out_arg.emplace_back(l_path, i.get<reference_file>().get_abs_path());
       }
     } else {
-      l_out_arg.emplace_back(FSys::path{}, i.get<reference_file>().get_path());
+      l_out_arg.emplace_back(FSys::path{}, i.get<reference_file>().get_abs_path());
     }
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
