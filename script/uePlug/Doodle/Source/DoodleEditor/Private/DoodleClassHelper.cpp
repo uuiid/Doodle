@@ -31,10 +31,20 @@ void UDoodleClassHelper::OnMoviePipelineWorkFinished(FMoviePipelineOutputData Da
                         FString FileName = FPaths::GetCleanFilename(OutputData.FilePaths[i]);
                         TArray<FString> stringArray;
                         FileName.ParseIntoArray(stringArray, TEXT("."), false);
-                        if (stringArray.Num() > 2)
+                        if (stringArray.Num() >= 2)
                         {
                             FString NumStr = stringArray[stringArray.Num() - 2];
-                            int Num = FCString::Atoi(*NumStr);
+                            NumStr.ParseIntoArray(stringArray, TEXT("_"), false);
+                            int Num = 0;
+                            if(stringArray.Num()>1)
+                            {
+                                NumStr = stringArray[stringArray.Num() - 1];
+                                Num = FCString::Atoi(*NumStr);
+                            }
+                            else
+                            {
+                                Num = FCString::Atoi(*NumStr);
+                            }
                             if (Num <= 1000)
                             {
                                 IFileManager::Get().Delete(*OutputData.FilePaths[i]);
