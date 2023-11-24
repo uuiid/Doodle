@@ -428,7 +428,7 @@ void fbx_node_mesh::build_bind_post() {
     MObject l_xform_handle{};
     if (l_xform_matrix_plug.getValue(l_xform_handle)) {
       const MFnMatrixData l_data{l_xform_handle};
-      auto l_xform_matrix = l_data.matrix(&l_status);
+      const auto& l_xform_matrix = l_data.matrix(&l_status);
       maya_chick(l_status);
 
       auto l_world_matrix              = l_xform_matrix * l_parent_world_matrix;
