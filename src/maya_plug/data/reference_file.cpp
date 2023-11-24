@@ -259,7 +259,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  DOODLE_CHICK(this->p_m_object.isNull(), doodle_error{"缺失引用"});
+  DOODLE_CHICK(!this->p_m_object.isNull(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
