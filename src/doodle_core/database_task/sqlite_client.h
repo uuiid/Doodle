@@ -40,8 +40,14 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   explicit file_translator(registry_ptr in_registry);
   ~file_translator() = default;
 
-  inline void set_only_ctx(bool in_only_ctx) { only_ctx = in_only_ctx; }
-  inline void set_only_open(bool in_only_open) { only_open = in_only_open; }
+  inline file_translator& set_only_ctx(bool in_only_ctx) {
+    only_ctx = in_only_ctx;
+    return *this;
+  }
+  inline file_translator& set_only_open(bool in_only_open) {
+    only_open = in_only_open;
+    return *this;
+  }
   /**
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径

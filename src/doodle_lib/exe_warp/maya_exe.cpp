@@ -128,7 +128,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
       static boost::system::error_code l_ec{error_enum::user_cancel};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
       cancel();
-      call_attr(l_ec);
     });
 
     timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});

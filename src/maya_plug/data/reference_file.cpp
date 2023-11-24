@@ -259,7 +259,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  DOODLE_CHICK(this->p_m_object.isNull(), doodle_error{"缺失引用"});
+  DOODLE_CHICK(!this->p_m_object.isNull(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -400,20 +400,25 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
 }
 FSys::path reference_file::get_path() const {
   MStatus k_s{};
-  MFnReference k_ref{p_m_object, &k_s};
-  DOODLE_MAYA_CHICK(k_s);
-  FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
-  DOODLE_MAYA_CHICK(k_s);
-  DOODLE_LOG_INFO("获取引用路径 {}", l_path);
-  return l_path;
+  MFnReference k_ref{};
+  if (k_ref.setObject(p_m_object)) {
+    FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
+    DOODLE_MAYA_CHICK(k_s);
+    return l_path;
+  } else {
+    return {};
+  }
 }
 FSys::path reference_file::get_abs_path() const {
   MStatus k_s{};
-  MFnReference k_ref{p_m_object, &k_s};
-  DOODLE_MAYA_CHICK(k_s);
-  FSys::path l_path = d_str{k_ref.fileName(false, false, false, &k_s)}.str();
-  DOODLE_MAYA_CHICK(k_s);
-  return l_path;
+  MFnReference k_ref{};
+  if (k_ref.setObject(p_m_object)) {
+    FSys::path l_path = d_str{k_ref.fileName(false, false, false, &k_s)}.str();
+    DOODLE_MAYA_CHICK(k_s);
+    return l_path;
+  } else {
+    return {};
+  }
 }
 
 MSelectionList reference_file::get_all_object() const {

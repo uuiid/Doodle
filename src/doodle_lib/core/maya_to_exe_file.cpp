@@ -143,6 +143,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   auto l_refs =
       l_maya_out_arg |
       ranges::views::transform([](const maya_to_exe_file_ns::maya_out_arg &in_arg) { return in_arg.ref_file; }) |
+      ranges::views::filter([](const FSys::path &in_arg) { return FSys::exists(in_arg); }) |
       ranges::views::transform([&](const FSys::path &in_arg) -> entt::handle {
         auto l_uuid = FSys::software_flag_file(in_arg);
 

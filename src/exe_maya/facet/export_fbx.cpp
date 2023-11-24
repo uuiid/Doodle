@@ -72,7 +72,8 @@ void export_fbx_facet::export_fbx() {
         l_out_arg.emplace_back(l_path, i.get<reference_file>().get_abs_path());
       }
     } else {
-      l_out_arg.emplace_back(FSys::path{}, i.get<reference_file>().get_abs_path());
+      auto l_path = i.get<reference_file>().get_abs_path();
+      if (!l_path.empty()) l_out_arg.emplace_back(FSys::path{}, l_path);
     }
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
@@ -83,7 +84,10 @@ void export_fbx_facet::export_fbx() {
   l_out_arg.emplace_back(l_cam_path, FSys::path{});
 
   nlohmann::json l_json = l_out_arg;
-  FSys::ofstream{out_path_file_} << l_json.dump(4);
+  if (!out_path_file_.empty())
+    FSys::ofstream{out_path_file_} << l_json.dump(4);
+  else
+    log_info(fmt::format("导出文件 {}", l_json.dump(4)));
 }
 
 void export_fbx_facet::play_blast() {
