@@ -45,6 +45,7 @@ class maya_to_exe_file {
       boost::asio::any_completion_handler<void(boost::system::error_code)> in_ue_end_call_
   ) {
     data_->ue_end_call_ = std::move(in_ue_end_call_);
+    return *this;
   }
 
   virtual ~maya_to_exe_file() = default;
