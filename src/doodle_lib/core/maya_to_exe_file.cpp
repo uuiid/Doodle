@@ -205,8 +205,10 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
-  boost::asio::post(executor_, [this]() { boost::asio::post(g_io_context(), [this]() { render(); }); });
+  boost::asio::post(executor_, boost::asio::bind_executor(g_io_context(), *this));
 }
+
+void maya_to_exe_file::operator()() const { render(); }
 
 void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const {
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
@@ -265,7 +267,19 @@ void maya_to_exe_file::render() const {
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
           fmt::format("{} -ExecutePythonScript={} {}", data_->render_project_file_, write_python_script(), l_path)},
-      std::move(data_->ue_end_call_)
+      [l_data = data_, l_ue_msg = msg_](boost::system::error_code in_code) {
+        auto &l_msg = l_ue_msg.get<process_message>();
+        if (in_code) {
+          auto l_msg_str = fmt::format("render error:{}", in_code);
+          log_error(l_msg_str);
+          l_msg.message(l_msg_str);
+          l_msg.set_state(l_msg.fail);
+        } else {
+          l_msg.set_name("排屏完成");
+          l_msg.set_state(l_msg.success);
+        }
+        l_data->ue_end_call_(in_code);
+      }
   );
 }
 
