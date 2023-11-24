@@ -22,21 +22,21 @@ class maya_to_exe_file {
     FSys::path render_project_file_{};
     std::string render_map_{};
   };
-  std::unique_ptr<data_t> data_{};
+  std::shared_ptr<data_t> data_{};
 
   void down_file(const FSys::path& in_path, bool is_scene) const;
   void render() const;
-  FSys::path gen_render_config_file() const;
-  FSys::path write_python_script() const;
+  [[nodiscard]] FSys::path gen_render_config_file() const;
+  [[nodiscard]] FSys::path write_python_script() const;
 
  public:
-  explicit maya_to_exe_file(std::string in_maya_out_data) : data_(std::make_unique<data_t>()) {
+  explicit maya_to_exe_file(std::string in_maya_out_data) : data_(std::make_shared<data_t>()) {
     data_->maya_out_data_ = std::move(in_maya_out_data);
     msg_                  = {*g_reg(), g_reg()->create()};
     executor_             = boost::asio::make_strand(g_thread());
   };
   explicit maya_to_exe_file(FSys::path in_maya_out_file)
-      : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_unique<data_t>()) {
+      : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_t>()) {
     msg_      = {*g_reg(), g_reg()->create()};
     executor_ = boost::asio::make_strand(g_thread());
   };

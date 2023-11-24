@@ -61,6 +61,8 @@ struct out_file {
 };
 }  // namespace maya_to_exe_file_ns
 
+FSys::path maya_to_exe_file::write_python_script() const { return "D:/test"; }
+
 FSys::path maya_to_exe_file::gen_render_config_file() const {
   auto l_maya_out_arg =
       nlohmann::json ::parse(data_->maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
