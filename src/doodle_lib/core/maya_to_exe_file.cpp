@@ -158,7 +158,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       }) |
       ranges::to<std::vector<entt::handle>>();
 
-  if (ranges::all_of(l_refs, [&](const entt::handle &in_handle) -> bool {
+  if (!ranges::all_of(l_refs, [&](const entt::handle &in_handle) -> bool {
         if (!in_handle) {
           return false;
         }
@@ -182,7 +182,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     l_msg.set_state(l_msg.fail);
     return;
   }
-  if (ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
+  if (!ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
         return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
       })) {
     auto &l_msg = msg_.get<process_message>();
@@ -265,21 +265,7 @@ void maya_to_exe_file::render() const {
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
           fmt::format("{} -ExecutePythonScript={} {}", data_->render_project_file_, write_python_script(), l_path)},
-      [this](const boost::system::error_code &in_code) {
-        boost::asio::post(executor_, [=]() {
-          auto &l_msg = msg_.get<process_message>();
-          if (in_code) {
-            auto l_msg_str = fmt::format("render error:{}", in_code);
-            log_error(l_msg_str);
-            l_msg.message(l_msg_str);
-            l_msg.set_state(l_msg.fail);
-            return;
-          }
-          l_msg.set_name("排屏完成");
-          l_msg.set_state(l_msg.success);
-          g_reg()->ctx().erase<process_message>();
-        });
-      }
+      std::move(data_->ue_end_call_)
   );
 }
 

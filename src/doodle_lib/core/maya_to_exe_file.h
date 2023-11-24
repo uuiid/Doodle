@@ -21,6 +21,7 @@ class maya_to_exe_file {
     FSys::path render_project_{};
     FSys::path render_project_file_{};
     std::string render_map_{};
+    boost::asio::any_completion_handler<void(boost::system::error_code)> ue_end_call_{};
   };
   std::shared_ptr<data_t> data_{};
 
@@ -40,6 +41,11 @@ class maya_to_exe_file {
     msg_      = {*g_reg(), g_reg()->create()};
     executor_ = boost::asio::make_strand(g_thread());
   };
+  inline maya_to_exe_file& set_ue_call_fun(
+      boost::asio::any_completion_handler<void(boost::system::error_code)> in_ue_end_call_
+  ) {
+    data_->ue_end_call_ = std::move(in_ue_end_call_);
+  }
 
   virtual ~maya_to_exe_file() = default;
 
