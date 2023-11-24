@@ -192,16 +192,27 @@ bool folder_is_save(const FSys::path &in_file_path) {
   ));
   return l_result == TRUE;
 }
-void software_flag_file(const FSys::path &in_file_path, boost::uuids::uuid in_uuid) {
+void software_flag_file(const FSys::path &in_file_path, const boost::uuids::uuid &in_uuid) {
+  if (!FSys::exists(in_file_path.parent_path())) return;
+
   auto l_path = in_file_path;
   l_path.replace_extension(doodle_config::doodle_flag_name);
-  FSys::ofstream{l_path, FSys::ofstream::out | FSys::ofstream::trunc} << in_uuid;
 
-  auto l_file_attr = ::GetFileAttributesW(l_path.c_str());
-  if (l_file_attr == INVALID_FILE_ATTRIBUTES) {
+  wil::unique_handle l_file_handle{::CreateFileW(
+      l_path.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, FSys::exists(l_path) ? TRUNCATE_EXISTING : CREATE_NEW,
+      FILE_ATTRIBUTE_HIDDEN, nullptr
+  )};
+  if (!l_file_handle.is_valid()) {
     THROW_WIN32(::GetLastError());
   }
-  THROW_IF_WIN32_BOOL_FALSE(::SetFileAttributesW(l_path.c_str(), l_file_attr | FILE_ATTRIBUTE_HIDDEN));
+  std::string l_uuid_str = boost::uuids::to_string(in_uuid);
+  THROW_IF_WIN32_BOOL_FALSE(::WriteFile(l_file_handle.get(), l_uuid_str.data(), l_uuid_str.size(), nullptr, nullptr));
+
+  //  auto l_file_attr = ::GetFileAttributesW(l_path.c_str());
+  //  if (l_file_attr == INVALID_FILE_ATTRIBUTES) {
+  //    THROW_WIN32(::GetLastError());
+  //  }
+  //  THROW_IF_WIN32_BOOL_FALSE(::SetFileAttributesW(l_path.c_str(), l_file_attr | FILE_ATTRIBUTE_HIDDEN));
 }
 boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
   auto l_path = in_file_path;
@@ -209,7 +220,7 @@ boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
   if (!FSys::exists(l_path)) return boost::uuids::nil_uuid();
 
   boost::uuids::uuid l_uuid{};
-  FSys::ifstream{l_path} >> l_uuid;
+  FSys::ifstream{l_path, FSys::ofstream::in | FSys::ifstream::binary} >> l_uuid;
 
   return l_uuid;
 };
