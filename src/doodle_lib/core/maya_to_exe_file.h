@@ -30,12 +30,12 @@ class maya_to_exe_file {
   [[nodiscard]] FSys::path write_python_script() const;
 
  public:
-  explicit maya_to_exe_file(std::string in_maya_out_data) : data_(std::make_shared<data_t>()) {
+  explicit maya_to_exe_file(entt::handle in_msg, std::string in_maya_out_data) : data_(std::make_shared<data_t>()) {
     data_->maya_out_data_ = std::move(in_maya_out_data);
     msg_                  = {*g_reg(), g_reg()->create()};
     executor_             = boost::asio::make_strand(g_thread());
   };
-  explicit maya_to_exe_file(FSys::path in_maya_out_file)
+  explicit maya_to_exe_file(entt::handle in_msg, FSys::path in_maya_out_file)
       : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_t>()) {
     msg_      = {*g_reg(), g_reg()->create()};
     executor_ = boost::asio::make_strand(g_thread());

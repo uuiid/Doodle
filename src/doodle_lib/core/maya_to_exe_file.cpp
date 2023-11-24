@@ -118,7 +118,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
   }
 
-  auto &l_msg = msg_.get<process_message>();
+  auto &l_msg = msg_.get_or_emplace<process_message>();
   l_msg.set_state(l_msg.run);
   l_msg.message("开始处理 maya 输出文件");
   if (data_->maya_out_data_.empty()) {
@@ -148,6 +148,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       ranges::views::filter([](const FSys::path &in_arg) { return FSys::exists(in_arg); }) |
       ranges::views::transform([&](const FSys::path &in_arg) -> entt::handle {
         auto l_uuid = FSys::software_flag_file(in_arg);
+        log_info(fmt::format("maya_to_exe_file get uuid :{}", l_uuid));
 
         if (l_id_map.contains(l_uuid)) {
           return entt::handle{*g_reg(), l_id_map.at(l_uuid)};
@@ -156,10 +157,8 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
         return entt::handle{};
       }) |
       ranges::to<std::vector<entt::handle>>();
-  for (auto &&h : l_refs) {
-  }
 
-  if (ranges::all_of(l_refs, [&](const entt::handle &in_handle) {
+  if (ranges::all_of(l_refs, [&](const entt::handle &in_handle) -> bool {
         if (!in_handle) {
           return false;
         }
