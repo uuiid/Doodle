@@ -338,6 +338,9 @@ void fbx_node_mesh::build_bind_post() {
   l_xform_matrix_list.evaluateNumElements(&l_status);
   maya_chick(l_status);
 
+  // 缺失bindpose的tran节点和对于的索引
+  std::map<MDagPath, std::int32_t, details::cmp_dag> l_tran_map{};
+
   const auto l_couts = l_member_list.evaluateNumElements(&l_status);
   maya_chick(l_status);
   for (auto i = 0; i < l_couts; ++i) {
@@ -394,8 +397,13 @@ void fbx_node_mesh::build_bind_post() {
           l_world_matrix = l_data.transformation(&l_status);
           maya_chick(l_status);
         } else {
-          throw_exception(doodle_error{
-              fmt::format("没有找到 bindpose 属性 {} 的值", conv::to_s(l_world_matrix_plug.partialName()))});
+          l_tran_map.emplace(l_path, i);
+          log_error(
+              extra_data_.logger_, fmt::format(
+                                       "没有找到 节点{} bindpose 属性 {} 的值, 将在第二次中寻找", l_path,
+                                       conv::to_s(l_world_matrix_plug.partialName())
+                                   )
+          );
         }
       } else {
         throw_exception(doodle_error{"没有找到bindpose, 找绑定 {}", i});
@@ -405,6 +413,30 @@ void fbx_node_mesh::build_bind_post() {
     } else {
       log_error(fmt::format("node {} is not dag node", l_member.name()));
       //      throw_exception(doodle_error{"错误的 bindpose, 找绑定 {}", i});
+    }
+  }
+
+  for (const auto& [l_path, l_index] : l_tran_map) {
+    MMatrix l_parent_world_matrix{};
+    auto l_parent_path = l_path;
+    l_parent_path.pop();
+    if (extra_data_.bind_post->contains(l_parent_path)) {
+      l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix.asMatrix();
+    }
+    auto l_xform_matrix_plug = l_xform_matrix_list.elementByLogicalIndex(l_index, &l_status);
+    maya_chick(l_status);
+    MObject l_xform_handle{};
+    if (l_xform_matrix_plug.getValue(l_xform_handle)) {
+      const MFnMatrixData l_data{l_xform_handle};
+      auto l_xform_matrix = l_data.matrix(&l_status);
+      maya_chick(l_status);
+
+      auto l_world_matrix              = l_xform_matrix * l_parent_world_matrix;
+      (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_xform_matrix};
+    } else {
+      throw_exception(doodle_error{fmt::format(
+          "在二次寻找中没有找到 {} bindpose 属性 {} 的值", l_path, conv::to_s(l_xform_matrix_plug.partialName())
+      )});
     }
   }
 
