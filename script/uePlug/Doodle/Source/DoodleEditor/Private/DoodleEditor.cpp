@@ -150,8 +150,7 @@ void FdoodleEditorModule::StartupModule() {
     PostPIEStartedHandle = FEditorDelegates::PostPIEStarted.AddLambda([this](const bool IsDone)
     {
         //UE_LOG(LogTemp, Warning, TEXT("PostPIEStarted"));
-        if (!HelperCallback)
-            HelperCallback = NewObject<UDoodleClassHelper>(GetTransientPackage());
+        UDoodleClassHelper* HelperCallback = NewObject<UDoodleClassHelper>(GetTransientPackage());
         FCoreDelegates::OnBeginFrame.AddUObject(HelperCallback, &UDoodleClassHelper::OnBeginFrame);
     });
 }
