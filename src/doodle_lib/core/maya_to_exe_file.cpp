@@ -66,8 +66,12 @@ FSys::path maya_to_exe_file::write_python_script() const { return "D:/test"; }
 FSys::path maya_to_exe_file::gen_render_config_file() const {
   auto l_maya_out_arg =
       nlohmann::json ::parse(data_->maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
+  l_maya_out_arg = l_maya_out_arg | ranges::views::filter([](const maya_to_exe_file_ns::maya_out_arg &in_arg) {
+                     return !in_arg.out_file.empty() && FSys::exists(in_arg.out_file);
+                   }) |
+                   ranges::to_vector;
 
-  auto l_path = l_maya_out_arg[0].ref_file.filename();
+  auto l_path = l_maya_out_arg[0].out_file.filename();
 
   maya_to_exe_file_ns::out_file l_out_file{};
   {
@@ -79,8 +83,8 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   {
     shot l_shot{};
     if (l_shot.analysis(l_path)) {
-      l_out_file.shot    = l_shot.p_shot;
-      l_out_file.shot_ab = l_shot.p_shot_ab;
+      l_out_file.shot = l_shot.p_shot;
+      if (l_shot.p_shot_enum != shot::shot_ab_enum::None) l_out_file.shot_ab = l_shot.p_shot_ab;
     }
   }
 

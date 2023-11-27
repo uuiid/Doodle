@@ -84,19 +84,8 @@ void test_fun3(boost::system::error_code in_code) {
   l_maya_exe->async_run_maya(
       entt::handle{*g_reg(), g_reg()->create()}, k_arg,
       maya_to_exe_file{entt::handle{}, FSys::path{l_out_path}}.set_ue_call_fun(boost::asio::bind_executor(
-          g_io_context(),
-          [l_ue_msg](boost::system::error_code in_code) {
-            auto& l_msg = l_ue_msg.get<process_message>();
-            if (in_code) {
-              auto l_msg_str = fmt::format("render error:{}", in_code);
-              log_error(l_msg_str);
-              l_msg.message(l_msg_str);
-              l_msg.set_state(l_msg.fail);
-              return;
-            }
-            l_msg.set_name("排屏完成");
-            l_msg.set_state(l_msg.success);
-          }
+          g_io_context(), [l_guard = boost::asio::make_work_guard(g_io_context())](boost::system::error_code
+                          ) { app_base::Get().stop_app(); }
       ))
   );
 }
