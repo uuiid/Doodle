@@ -118,17 +118,13 @@ void file_translator::async_save_impl() {
   }
 
   if (project_path.empty()) {
-    begin_save();
     return;
   }
 
   {
-    if (project_path != "") {
-      if (!FSys::folder_is_save(project_path)) {
-        log_info(fmt::format("{} 权限不够, 不保存", project_path));
-        begin_save();
-        return;
-      }
+    if (!FSys::folder_is_save(project_path)) {
+      log_warn(fmt::format("{} 权限不够, 不保存", project_path));
+      return;
     }
     if (save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
     DOODLE_LOG_INFO("文件位置 {}", project_path);
