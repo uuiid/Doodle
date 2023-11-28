@@ -177,6 +177,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
       l_token.addressof()
   ));
 
+  BOOL l_result{FALSE};
   {
     THROW_IF_WIN32_BOOL_FALSE(::ImpersonateLoggedOnUser(l_token.get()));
     auto l_scope_exit = wil::scope_exit([&]() { ::RevertToSelf(); });
@@ -191,7 +192,6 @@ bool folder_is_save(const FSys::path &in_file_path) {
 
     PRIVILEGE_SET l_privileges{0};
     DWORD l_grantedAccess = 0, l_privilegesLength = sizeof(l_privileges);
-    BOOL l_result{FALSE};
     THROW_IF_WIN32_BOOL_FALSE(::AccessCheck(
         l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength, &l_grantedAccess,
         &l_result
