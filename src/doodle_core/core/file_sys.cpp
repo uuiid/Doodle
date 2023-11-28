@@ -155,7 +155,7 @@ FSys::path get_cache_path(const FSys::path &in_path) {
 }
 
 bool folder_is_save(const FSys::path &in_file_path) {
-#define DOODLE_FSYS_WIN32
+// #define DOODLE_FSYS_WIN32
 #ifdef DOODLE_FSYS_WIN32
   DWORD l_len{};
   if ((::GetFileSecurityW(
