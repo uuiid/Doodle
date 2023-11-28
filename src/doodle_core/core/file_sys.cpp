@@ -180,7 +180,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
       l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
   ));
   ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
-  ::DWORD l_access{GENERIC_READ | GENERIC_WRITE | DELETE};
+  ::DWORD l_access{GENERIC_READ | GENERIC_WRITE | DELETE | FILE_DELETE_CHILD};
   ::MapGenericMask(&l_access, &l_mapping);
 
   PRIVILEGE_SET l_privileges{0};
@@ -190,7 +190,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
       l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength, &l_grantedAccess,
       &l_result
   ));
-  return l_result == TRUE;
+  return l_result == TRUE && (!FSys::is_regular_file(in_file_path) || folder_is_save(in_file_path.parent_path()));
 }
 void software_flag_file(const FSys::path &in_file_path, const boost::uuids::uuid &in_uuid) {
   if (!FSys::exists(in_file_path.parent_path())) return;
