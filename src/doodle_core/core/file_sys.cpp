@@ -171,7 +171,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
 
   wil::unique_handle l_token{};
   THROW_IF_WIN32_BOOL_FALSE(::OpenProcessToken(
-      ::GetCurrentProcess(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+      ::GetCurrentProcess(), TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ,
       l_token.addressof()
   ));
 
@@ -180,7 +180,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
       l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
   ));
   ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
-  ::DWORD l_access{FILE_GENERIC_READ | FILE_GENERIC_WRITE | DELETE};
+  ::DWORD l_access{GENERIC_READ | GENERIC_WRITE | DELETE};
   ::MapGenericMask(&l_access, &l_mapping);
 
   PRIVILEGE_SET l_privileges{0};
