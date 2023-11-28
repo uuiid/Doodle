@@ -155,6 +155,8 @@ FSys::path get_cache_path(const FSys::path &in_path) {
 }
 
 bool folder_is_save(const FSys::path &in_file_path) {
+#define DOODLE_FSYS_WIN32
+#ifdef DOODLE_FSYS_WIN32
   DWORD l_len{};
   if ((::GetFileSecurityW(
            in_file_path.c_str(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
@@ -180,7 +182,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
       l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
   ));
   ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
-  ::DWORD l_access{GENERIC_READ | GENERIC_WRITE | DELETE | FILE_DELETE_CHILD};
+  ::DWORD l_access{DELETE};
   ::MapGenericMask(&l_access, &l_mapping);
 
   PRIVILEGE_SET l_privileges{0};
@@ -191,6 +193,23 @@ bool folder_is_save(const FSys::path &in_file_path) {
       &l_result
   ));
   return l_result == TRUE && (!FSys::is_regular_file(in_file_path) || folder_is_save(in_file_path.parent_path()));
+#else
+  auto l_path = FSys::is_regular_file(in_file_path) ? in_file_path.parent_path() : in_file_path;
+  auto l_temp = l_path / core_set::get_set().get_uuid_str();
+  try {
+    FSys::fstream{l_temp, std::ios::out} << "test_file";
+  } catch (const FSys::filesystem_error &e) {
+    DOODLE_LOG_INFO("文件 {} 不可写入 {}", l_path.generic_string(), e.what());
+    return false;
+  }
+  std::error_code l_error_code{};
+  FSys::remove(l_temp, l_error_code);
+  if (l_error_code) {
+    DOODLE_LOG_INFO("文件 {} 不可删除 {}", l_path.generic_string(), l_error_code.message());
+    return false;
+  }
+  return true;
+#endif
 }
 void software_flag_file(const FSys::path &in_file_path, const boost::uuids::uuid &in_uuid) {
   if (!FSys::exists(in_file_path.parent_path())) return;
