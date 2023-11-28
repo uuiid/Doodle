@@ -60,7 +60,7 @@ class setting_windows::impl {
   gui::gui_cache_name_id new_user_id{"切换新用户"s};
   std::string title_name_;
   // 欢迎窗口显示
-  gui_cache<bool> welcome_show{"初始窗口显示"s, true};
+  gui_cache<bool> welcome_show{"不显示初始窗口"s, true};
   bool open{true};
 };
 
