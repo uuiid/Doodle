@@ -59,6 +59,8 @@ class setting_windows::impl {
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"切换新用户"s};
   std::string title_name_;
+  // 欢迎窗口显示
+  gui_cache<bool> welcome_show{"初始窗口显示"s, true};
   bool open{true};
 };
 
@@ -80,6 +82,7 @@ void setting_windows::save() {
   set.timeout                  = p_i->p_timeout.data;
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
+  set.next_time_               = p_i->welcome_show;
 
   auto&& l_u                   = g_reg()->ctx().get<user::current_user>();
   l_u.user_name_attr(p_i->p_user());
@@ -102,6 +105,7 @@ void setting_windows::init() {
   p_i->p_timeout.data                  = core_set::get_set().timeout;
   p_i->p_maya_replace_save_dialog.data = core_set::get_set().maya_replace_save_dialog;
   p_i->p_maya_force_resolve_link.data  = core_set::get_set().maya_force_resolve_link;
+  p_i->welcome_show                    = core_set::get_set().next_time_;
 }
 
 bool setting_windows::render() {
@@ -158,6 +162,7 @@ bool setting_windows::render() {
   imgui::Checkbox(*p_i->p_maya_replace_save_dialog.gui_name, &(p_i->p_maya_replace_save_dialog.data));
   imgui::Checkbox(*p_i->p_maya_force_resolve_link.gui_name, &(p_i->p_maya_force_resolve_link.data));
   dear::HelpMarker{"强制maya解析硬链接, 这个是在插件中使用的选项"s};
+  imgui::Checkbox(*p_i->welcome_show.gui_name, &(p_i->welcome_show.data));
 
   if (imgui::Button("save")) save();
 
