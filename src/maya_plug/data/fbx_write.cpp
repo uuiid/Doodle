@@ -607,7 +607,7 @@ void fbx_node_mesh::build_mesh() {
           if (l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i])) {
             l_layer->GetIndexArray().Add(l_uv_id);
           } else {
-            log_error(fmt::format("getPolygonUVid error: {} {} {}", k, j, l_uv_set_names[i]));
+            log_error(fmt::format("{} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]));
           }
         }
       }
