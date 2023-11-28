@@ -177,21 +177,27 @@ bool folder_is_save(const FSys::path &in_file_path) {
       l_token.addressof()
   ));
 
-  wil::unique_handle l_duplicate_token{};
-  THROW_IF_WIN32_BOOL_FALSE(::DuplicateToken(
-      l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
-  ));
-  ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
-  ::DWORD l_access{DELETE};
-  ::MapGenericMask(&l_access, &l_mapping);
+  {
+    THROW_IF_WIN32_BOOL_FALSE(::ImpersonateLoggedOnUser(l_token.get()));
+    auto l_scope_exit = wil::scope_exit([&]() { ::RevertToSelf(); });
 
-  PRIVILEGE_SET l_privileges{0};
-  DWORD l_grantedAccess = 0, l_privilegesLength = sizeof(l_privileges);
-  BOOL l_result{FALSE};
-  THROW_IF_WIN32_BOOL_FALSE(::AccessCheck(
-      l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength, &l_grantedAccess,
-      &l_result
-  ));
+    wil::unique_handle l_duplicate_token{};
+    THROW_IF_WIN32_BOOL_FALSE(::DuplicateToken(
+        l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
+    ));
+    ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
+    ::DWORD l_access{DELETE};
+    ::MapGenericMask(&l_access, &l_mapping);
+
+    PRIVILEGE_SET l_privileges{0};
+    DWORD l_grantedAccess = 0, l_privilegesLength = sizeof(l_privileges);
+    BOOL l_result{FALSE};
+    THROW_IF_WIN32_BOOL_FALSE(::AccessCheck(
+        l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength, &l_grantedAccess,
+        &l_result
+    ));
+  }
+
   return l_result == TRUE && (!FSys::is_regular_file(in_file_path) || folder_is_save(in_file_path.parent_path()));
 #else
   auto l_path = FSys::is_regular_file(in_file_path) ? in_file_path.parent_path() : in_file_path;
