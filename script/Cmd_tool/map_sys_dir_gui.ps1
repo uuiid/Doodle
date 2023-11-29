@@ -11,7 +11,7 @@ $map_item = @(
 @( "C:\sy\WuJinShenYu_8", "", "无尽神域" ),
 @( "C:\sy\WanYuFengShen_9", "", "万域封神" ),
 @( "C:\sy\KuangShenMoZun_9", "", "狂神魔尊" ),
-@( "C:\sy\DuBuXiaoYao_3", "", "独步万古" )
+@( "C:\sy\WGXD", "", "独步万古" )
 )
 
 function Add-SyDir
