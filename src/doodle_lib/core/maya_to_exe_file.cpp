@@ -340,8 +340,16 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
   }
 
   // 复制输出的文件
-  auto l_out_loc_dir = data_->render_project_ / g_saved / g_movie_renders;
-  auto l_out_rem_dir = update_dir_ / g_saved / g_movie_renders;
+  auto l_out_loc_dir = data_->out_dir;
+  if (!FSys::exists(l_out_loc_dir)) {
+    l_msg.message(fmt::format("输出文件夹 {} 不存在", l_out_loc_dir));
+    boost::system::error_code l_error_code{error_enum::file_not_exists};
+    BOOST_ASIO_ERROR_LOCATION(l_error_code);
+    data_->end_call_(l_error_code);
+    return;
+  }
+
+  auto l_out_rem_dir = update_dir_ / g_saved / g_movie_renders / l_out_loc_dir.filename();
   if (!FSys::exists(l_out_rem_dir)) FSys::create_directories(l_out_rem_dir);
   for (auto &&l_file : FSys::directory_iterator{l_out_loc_dir}) {
     auto l_rem_file = l_out_rem_dir / l_file.path().filename();
