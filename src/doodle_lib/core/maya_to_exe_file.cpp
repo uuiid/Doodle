@@ -97,7 +97,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
     }
   }
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
-  l_out_file.out_file_dir = data_->render_project_ / "Saved" / "MovieRenders" /
+  l_out_file.out_file_dir = data_->render_project_ / g_saved / g_movie_renders /
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
   data_->out_dir = l_out_file.out_file_dir;
 
@@ -196,7 +196,6 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     l_msg.message("未查找到主项目文件");
     data_->end_call_(in_error_code);
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-
     return;
   }
 
@@ -226,21 +225,33 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   switch (data_->render_type_) {
     case render_type::render:
       begin_render(in_error_code);
-      data_->render_type_ = render_type::update;
       break;
     case render_type::update:
+      data_->render_type_ = render_type::update_end;
       update_file(in_error_code);
+      break;
+    case render_type::update_end:
       break;
   }
 }
 
-void maya_to_exe_file::operator()() const { render(); }
+void maya_to_exe_file::operator()() const {
+  switch (data_->render_type_) {
+    case render_type::render:
+      data_->render_type_ = render_type::update;
+      render();
+      break;
+    case render_type::update:
+      break;
+    case render_type::update_end:
+      data_->end_call_(boost::system::error_code{});
+      break;
+  }
+}
 
 void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const {
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
-  constexpr auto g_config   = "Config";
-  constexpr auto g_content  = "Content";
-  constexpr auto g_uproject = ".uproject";
+
   if (is_scene) {
     data_->render_project_ = g_root / in_path.stem();
     if (!FSys::exists(data_->render_project_)) FSys::create_directories(data_->render_project_);
@@ -299,15 +310,54 @@ void maya_to_exe_file::render() const {
 
 void maya_to_exe_file::update_file(boost::system::error_code in_error_code) const {
   auto &l_msg = msg_.get<process_message>();
-  if (in_error_code) {
-    auto l_msg_str = fmt::format("render error:{}", in_error_code);
-    log_error(l_msg_str);
-    l_msg.message(l_msg_str);
-    l_msg.set_state(l_msg.fail);
-    data_->end_call_(in_error_code);
-    return;
-  }
   l_msg.set_name("排屏完成, 开始上传文件");
+
+  if (!FSys::exists(update_dir_)) {
+    FSys::create_directories(update_dir_);
+  }
+
+  auto l_loc_prj = data_->render_project_ / g_content;
+  auto l_rem_prj = update_dir_ / g_content;
+
+  // 复制内容文件夹
+  for (auto &&l_file : FSys::recursive_directory_iterator{l_loc_prj}) {
+    auto l_rem_file = l_rem_prj / l_file.path().lexically_relative(l_loc_prj);
+    if (l_file.is_directory())
+      FSys::create_directories(l_rem_file);
+    else {
+      if (!FSys::exists(l_rem_file) || l_file.file_size() != FSys::file_size(l_rem_file) ||
+          l_file.last_write_time() != FSys::last_write_time(l_rem_file)) {
+        boost::asio::post(executor_, [=, l_path = l_file.path()] {
+          try {
+            FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
+            FSys::last_write_time(l_rem_file, l_file.last_write_time());
+          } catch (const FSys::filesystem_error &error) {
+            DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+          }
+        });
+      }
+    }
+  }
+
+  // 复制输出的文件
+  auto l_out_loc_dir = data_->render_project_ / g_saved / g_movie_renders;
+  auto l_out_rem_dir = update_dir_ / g_saved / g_movie_renders;
+  if (!FSys::exists(l_out_rem_dir)) FSys::create_directories(l_out_rem_dir);
+  for (auto &&l_file : FSys::directory_iterator{l_out_loc_dir}) {
+    auto l_rem_file = l_out_rem_dir / l_file.path().filename();
+    if (!FSys::exists(l_rem_file) || l_file.file_size() != FSys::file_size(l_rem_file) ||
+        l_file.last_write_time() != FSys::last_write_time(l_rem_file)) {
+      boost::asio::post(executor_, [=, l_path = l_file.path()] {
+        try {
+          FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
+          FSys::last_write_time(l_rem_file, l_file.last_write_time());
+        } catch (const FSys::filesystem_error &error) {
+          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+        }
+      });
+    }
+  }
+  boost::asio::post(executor_, boost::asio::bind_executor(g_io_context(), *this));
 }
 
 }  // namespace doodle

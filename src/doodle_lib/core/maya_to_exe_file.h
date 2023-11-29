@@ -16,10 +16,16 @@ class maya_to_exe_file {
   FSys::path update_dir_{};
   entt::handle msg_{};
   boost::asio::any_io_executor executor_{};
+  static constexpr auto g_config        = "Config";
+  static constexpr auto g_content       = "Content";
+  static constexpr auto g_uproject      = ".uproject";
+  static constexpr auto g_saved         = "Saved";
+  static constexpr auto g_movie_renders = "MovieRenders";
 
   enum class render_type {
     render,
     update,
+    update_end,
   };
 
   struct data_t {
@@ -42,15 +48,18 @@ class maya_to_exe_file {
   [[nodiscard]] FSys::path write_python_script() const;
 
  public:
-  explicit maya_to_exe_file(entt::handle in_msg, std::string in_maya_out_data) : data_(std::make_shared<data_t>()) {
+  explicit maya_to_exe_file(entt::handle in_msg, std::string in_maya_out_data, FSys::path in_update_path)
+      : data_(std::make_shared<data_t>()) {
     data_->maya_out_data_ = std::move(in_maya_out_data);
-    msg_                  = {*g_reg(), g_reg()->create()};
+    update_dir_           = std::move(in_update_path);
+    msg_                  = in_msg ? std::move(in_msg) : entt::handle{*g_reg(), g_reg()->create()};
     executor_             = boost::asio::make_strand(g_thread());
   };
-  explicit maya_to_exe_file(entt::handle in_msg, FSys::path in_maya_out_file)
+  explicit maya_to_exe_file(entt::handle in_msg, FSys::path in_maya_out_file, FSys::path in_update_path)
       : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_t>()) {
-    msg_      = {*g_reg(), g_reg()->create()};
-    executor_ = boost::asio::make_strand(g_thread());
+    msg_        = in_msg ? std::move(in_msg) : entt::handle{*g_reg(), g_reg()->create()};
+    update_dir_ = std::move(in_update_path);
+    executor_   = boost::asio::make_strand(g_thread());
   };
   inline maya_to_exe_file& set_ue_call_fun(
       boost::asio::any_completion_handler<void(boost::system::error_code)> in_end_call_
