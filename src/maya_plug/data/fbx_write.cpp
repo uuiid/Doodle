@@ -367,19 +367,24 @@ void fbx_node_mesh::build_bind_post() {
       MTransformationMatrix l_world_matrix{};
 
       if (l_node.hasFn(MFn::Type::kJoint)) {
-        auto l_post_plug = get_plug(l_node, "bindPose");
-
-        MObject l_post_handle{};
-        if (l_post_plug.getValue(l_post_handle)) {
-          const MFnMatrixData l_data{l_post_handle};
+        auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
+        maya_chick(l_status);
+        MObject l_world_handle{};
+        if (l_world_matrix_plug.getValue(l_world_handle)) {
+          const MFnMatrixData l_data{l_world_handle};
           l_world_matrix = l_data.transformation(&l_status);
           maya_chick(l_status);
         } else {
-          auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
-          maya_chick(l_status);
-          MObject l_world_handle{};
-          if (l_world_matrix_plug.getValue(l_world_handle)) {
-            const MFnMatrixData l_data{l_world_handle};
+          log_error(
+              extra_data_.logger_, fmt::format(
+                                       "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
+                                       conv::to_s(l_world_matrix_plug.partialName())
+                                   )
+          );
+          auto l_post_plug = get_plug(l_node, "bindPose");
+          MObject l_post_handle{};
+          if (l_post_plug.getValue(l_post_handle)) {
+            const MFnMatrixData l_data{l_post_handle};
             l_world_matrix = l_data.transformation(&l_status);
             maya_chick(l_status);
           } else {
