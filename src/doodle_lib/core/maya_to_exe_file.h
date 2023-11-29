@@ -13,20 +13,31 @@ class maya_to_exe_file {
  private:
   // maya 输出结果文件内容
   FSys::path maya_out_file_{};
+  FSys::path update_dir_{};
   entt::handle msg_{};
   boost::asio::any_io_executor executor_{};
 
+  enum class render_type {
+    render,
+    update,
+  };
+
   struct data_t {
+    render_type render_type_{render_type::render};
     std::string maya_out_data_{};
     FSys::path render_project_{};
     FSys::path render_project_file_{};
     std::string render_map_{};
-    boost::asio::any_completion_handler<void(boost::system::error_code)> ue_end_call_{};
+    FSys::path out_dir{};
+    boost::asio::any_completion_handler<void(boost::system::error_code)> end_call_{};
   };
   std::shared_ptr<data_t> data_{};
 
   void down_file(const FSys::path& in_path, bool is_scene) const;
   void render() const;
+  void update_file(boost::system::error_code in_error_code) const;
+
+  void begin_render(boost::system::error_code in_error_code) const;
   [[nodiscard]] FSys::path gen_render_config_file() const;
   [[nodiscard]] FSys::path write_python_script() const;
 
@@ -42,9 +53,9 @@ class maya_to_exe_file {
     executor_ = boost::asio::make_strand(g_thread());
   };
   inline maya_to_exe_file& set_ue_call_fun(
-      boost::asio::any_completion_handler<void(boost::system::error_code)> in_ue_end_call_
+      boost::asio::any_completion_handler<void(boost::system::error_code)> in_end_call_
   ) {
-    data_->ue_end_call_ = std::move(in_ue_end_call_);
+    data_->end_call_ = std::move(in_end_call_);
     return *this;
   }
 

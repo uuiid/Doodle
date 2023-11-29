@@ -99,6 +99,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
   l_out_file.out_file_dir = data_->render_project_ / "Saved" / "MovieRenders" /
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
+  data_->out_dir = l_out_file.out_file_dir;
 
   l_out_file.files =
       l_maya_out_arg | ranges::views::transform([](const maya_to_exe_file_ns::maya_out_arg &in_arg) {
@@ -111,12 +112,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   nlohmann::json const l_json = l_out_file;
   return FSys::write_tmp_file("render_ue", l_json.dump(), ".json");
 }
-
-void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
-  if (in_error_code) {
-    log_error(fmt::format("maya_to_exe_file error:{}", in_error_code));
-    return;
-  }
+void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) const {
   if (!maya_out_file_.empty() && FSys::exists(maya_out_file_)) {
     std::ifstream l_file{maya_out_file_};
     data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
@@ -127,7 +123,9 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   l_msg.message("开始处理 maya 输出文件");
   if (data_->maya_out_data_.empty()) {
     l_msg.message("maya结束进程后未能成功输出文件");
-    l_msg.set_state(l_msg.fail);
+    in_error_code = {error_enum::file_not_exists};
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    data_->end_call_(in_error_code);
     return;
   }
   auto l_maya_out_arg =
@@ -136,7 +134,9 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   if (l_maya_out_arg.empty()) {
     auto &l_msg = msg_.get<process_message>();
     l_msg.message("maya结束进程后未能成功输出文件");
-    l_msg.set_state(l_msg.fail);
+    in_error_code = {error_enum::file_not_exists};
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    data_->end_call_(in_error_code);
     return;
   }
 
@@ -181,9 +181,12 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
         }
         return true;
       })) {
-    auto &l_msg = msg_.get<process_message>();
+    auto &l_msg   = msg_.get<process_message>();
+    in_error_code = {error_enum::file_not_exists};
     l_msg.message("maya结束进程后 输出文件引用查找有误");
-    l_msg.set_state(l_msg.fail);
+    data_->end_call_(in_error_code);
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+
     return;
   }
   if (!ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
@@ -191,7 +194,9 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       })) {
     auto &l_msg = msg_.get<process_message>();
     l_msg.message("未查找到主项目文件");
-    l_msg.set_state(l_msg.fail);
+    data_->end_call_(in_error_code);
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+
     return;
   }
 
@@ -210,6 +215,23 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
   boost::asio::post(executor_, boost::asio::bind_executor(g_io_context(), *this));
+}
+
+void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
+  if (in_error_code) {
+    log_error(fmt::format("maya_to_exe_file error:{}", in_error_code));
+    data_->end_call_(in_error_code);
+    return;
+  }
+  switch (data_->render_type_) {
+    case render_type::render:
+      begin_render(in_error_code);
+      data_->render_type_ = render_type::update;
+      break;
+    case render_type::update:
+      update_file(in_error_code);
+      break;
+  }
 }
 
 void maya_to_exe_file::operator()() const { render(); }
@@ -271,20 +293,21 @@ void maya_to_exe_file::render() const {
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
           fmt::format("{} -ExecutePythonScript={} {}", data_->render_project_file_, write_python_script(), l_path)},
-      [l_data = data_, l_ue_msg = msg_](boost::system::error_code in_code) {
-        auto &l_msg = l_ue_msg.get<process_message>();
-        if (in_code) {
-          auto l_msg_str = fmt::format("render error:{}", in_code);
-          log_error(l_msg_str);
-          l_msg.message(l_msg_str);
-          l_msg.set_state(l_msg.fail);
-        } else {
-          l_msg.set_name("排屏完成");
-          l_msg.set_state(l_msg.success);
-        }
-        l_data->ue_end_call_(in_code);
-      }
+      *this
   );
+}
+
+void maya_to_exe_file::update_file(boost::system::error_code in_error_code) const {
+  auto &l_msg = msg_.get<process_message>();
+  if (in_error_code) {
+    auto l_msg_str = fmt::format("render error:{}", in_error_code);
+    log_error(l_msg_str);
+    l_msg.message(l_msg_str);
+    l_msg.set_state(l_msg.fail);
+    data_->end_call_(in_error_code);
+    return;
+  }
+  l_msg.set_name("排屏完成, 开始上传文件");
 }
 
 }  // namespace doodle
