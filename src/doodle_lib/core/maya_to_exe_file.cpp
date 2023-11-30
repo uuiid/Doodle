@@ -106,7 +106,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
   l_out_file.out_file_dir = data_->render_project_ / g_saved / g_movie_renders /
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
-  data_->out_dir        = l_out_file.out_file_dir;
+  data_->out_dir = l_out_file.out_file_dir;
 
   // 渲染配置
   {
@@ -239,7 +239,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
-  import_file();
+  boost::asio::post(g_io_context(), [this]() { this->import_file(); });
 }
 
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
@@ -341,7 +341,7 @@ void maya_to_exe_file::render(boost::system::error_code) const {
           data_->render_project_file_, data_->render_map_, data_->render_sequence_, data_->render_config_,
           gen_render_config_file()
       )},
-      boost::asio::bind_executor(g_io_context(), *this)
+      boost::asio::bind_executor(g_thread(), *this)
   );
 }
 
