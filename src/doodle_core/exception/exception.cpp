@@ -16,7 +16,7 @@ const char* doodle_category::name() const noexcept {
 }
 std::string doodle_category::message(int ev) const {
   using namespace std::literals;
-  switch (num_to_enum<error_enum>(ev)) {
+  switch (ev) {
     case error_enum::success:
       return "no error"s;
     case error_enum::sqlite3_save_error:
@@ -51,7 +51,7 @@ bsys::error_condition doodle_category::default_error_condition(int ev) const noe
   return error_category::default_error_condition(ev);
 }
 
-[[maybe_unused]] bsys::error_code make_error_code(error_enum e) {
+[[maybe_unused]] bsys::error_code make_error_code(error_enum::error_t e) {
   return bsys::error_code{enum_to_num(e), doodle_category::get()};
   //  return boost::system::error_code{enum_to_num(e), doodle_category{}};
 }

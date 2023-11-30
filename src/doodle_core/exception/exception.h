@@ -17,7 +17,8 @@ namespace doodle {
 
 namespace bsys = boost::system;
 
-enum class error_enum : std::int32_t {
+namespace error_enum {
+enum error_t : std::int32_t {
   success = 0,
   sqlite3_save_error,
   file_copy_error,
@@ -38,7 +39,8 @@ enum class error_enum : std::int32_t {
   // 用户取消
   user_cancel,
 };
-
+[[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(error_t e);
+}  // namespace error_enum
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
   explicit doodle_error(const std::string& message) : std::runtime_error(message){};
@@ -62,8 +64,6 @@ class DOODLE_CORE_API doodle_category : public bsys::error_category {
 
   static const bsys::error_category& get();
 };
-
-[[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(error_enum e);
 
 template <typename exception_type>
 [[noreturn]] inline void throw_exception(
@@ -108,9 +108,9 @@ struct formatter<::doodle::doodle_error> : formatter<string_view> {
 
 namespace boost::system {
 template <>
-struct DOODLE_CORE_API is_error_code_enum<::doodle::error_enum> : std::true_type {};
+struct DOODLE_CORE_API is_error_code_enum<::doodle::error_enum::error_t> : std::true_type {};
 }  // namespace boost::system
 namespace std {
 template <>
-struct DOODLE_CORE_API is_error_code_enum<::doodle::error_enum> : std::true_type {};
+struct DOODLE_CORE_API is_error_code_enum<::doodle::error_enum::error_t> : std::true_type {};
 }  // namespace std

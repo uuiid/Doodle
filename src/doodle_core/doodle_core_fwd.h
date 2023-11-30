@@ -23,6 +23,7 @@
 
 #include <entt/entt.hpp>
 #include <spdlog/async.h>
+#include <spdlog/common.h>
 #include <spdlog/logger.h>
 
 namespace boost::asio {
@@ -33,12 +34,17 @@ class thread_pool;
 namespace spdlog {
 class logger;
 SPDLOG_API spdlog::logger* default_logger_raw();
+namespace level {}  // namespace level
 }  // namespace spdlog
 
 // #include <>
 namespace doodle {
 using entt::literals::operator""_hs;
 using logger_ptr = std::shared_ptr<spdlog::logger>;
+namespace level {
+using spdlog::level::level_enum;
+}
+
 namespace details {
 class database_info;
 class program_info;
