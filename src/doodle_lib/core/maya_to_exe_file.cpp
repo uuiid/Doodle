@@ -108,27 +108,29 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
   data_->out_dir        = l_out_file.out_file_dir;
 
-  // 渲染配置文件
-  data_->render_config_ = fmt::format(
-      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_Config", l_out_file.project, l_out_file.episode,
-      l_out_file.shot, l_out_file.shot_ab
-  );
-  l_out_file.movie_pipeline_config = data_->render_config_;
-  data_->render_sequence_          = fmt::format(
-      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}", l_out_file.project, l_out_file.episode, l_out_file.shot,
-      l_out_file.shot_ab
-  );
-  l_out_file.level_sequence = data_->render_sequence_;
-  data_->render_world_      = fmt::format(
-      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_LV", l_out_file.project, l_out_file.episode, l_out_file.shot,
-      l_out_file.shot_ab
-  );
-  l_out_file.world   = data_->render_world_;
-  data_->import_dir_ = fmt::format(
-      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_out_file.project, l_out_file.episode,
-      l_out_file.shot, l_out_file.shot_ab, time_point_wrap{}.get_local_time()
-  );
-  l_out_file.import_dir = data_->import_dir_;
+  // 渲染配置
+  {
+    data_->render_config_ = fmt::format(
+        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_Config", l_out_file.project, l_out_file.episode,
+        l_out_file.shot, l_out_file.shot_ab
+    );
+    l_out_file.movie_pipeline_config = data_->render_config_;
+    data_->render_sequence_          = fmt::format(
+        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}", l_out_file.project, l_out_file.episode, l_out_file.shot,
+        l_out_file.shot_ab
+    );
+    l_out_file.level_sequence = data_->render_sequence_;
+    data_->render_world_      = fmt::format(
+        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_LV", l_out_file.project, l_out_file.episode,
+        l_out_file.shot, l_out_file.shot_ab
+    );
+    l_out_file.world   = data_->render_world_;
+    data_->import_dir_ = fmt::format(
+        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_out_file.project, l_out_file.episode,
+        l_out_file.shot, l_out_file.shot_ab, time_point_wrap{}.get_local_time()
+    );
+    l_out_file.import_dir = data_->import_dir_;
+  }
 
   l_out_file.files =
       l_maya_out_arg | ranges::views::transform([](const maya_to_exe_file_ns::maya_out_arg &in_arg) {
@@ -335,7 +337,7 @@ void maya_to_exe_file::render(boost::system::error_code) const {
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{fmt::format(
-          R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -StdOut -allowStdOutLogVerbosity -Unattended )",
+          R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -StdOut -allowStdOutLogVerbosity -Unattended)",
           data_->render_project_file_, data_->render_map_, data_->render_sequence_, data_->render_config_,
           gen_render_config_file()
       )},
