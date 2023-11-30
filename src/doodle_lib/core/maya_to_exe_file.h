@@ -71,8 +71,6 @@ class maya_to_exe_file {
   virtual ~maya_to_exe_file() = default;
 
   void operator()(boost::system::error_code in_error_code) const;
-  /// 异步渲染
-  void operator()() const;
 };
 
 }  // namespace doodle

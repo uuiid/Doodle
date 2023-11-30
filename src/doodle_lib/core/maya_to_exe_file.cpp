@@ -213,7 +213,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
-  boost::asio::post(executor_, boost::asio::bind_executor(g_io_context(), *this));
+  render();
 }
 
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
@@ -235,19 +235,6 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   }
 }
 
-void maya_to_exe_file::operator()() const {
-  switch (data_->render_type_) {
-    case render_type::render:
-      data_->render_type_ = render_type::update;
-      render();
-      break;
-    case render_type::update:
-      break;
-    case render_type::update_end:
-      data_->end_call_(boost::system::error_code{});
-      break;
-  }
-}
 
 void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const {
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
@@ -268,14 +255,12 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
     else {
       if (!FSys::exists(l_loc_file) || l_file.file_size() != FSys::file_size(l_loc_file) ||
           l_file.last_write_time() != FSys::last_write_time(l_loc_file)) {
-        boost::asio::post(executor_, [=, l_path = l_file.path()] {
-          try {
-            FSys::copy_file(l_file.path(), l_loc_file, FSys::copy_options::overwrite_existing);
-            FSys::last_write_time(l_loc_file, l_file.last_write_time());
-          } catch (const FSys::filesystem_error &error) {
-            DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-          }
-        });
+        try {
+          FSys::copy_file(l_file.path(), l_loc_file, FSys::copy_options::overwrite_existing);
+          FSys::last_write_time(l_loc_file, l_file.last_write_time());
+        } catch (const FSys::filesystem_error &error) {
+          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+        }
       }
     }
   }
@@ -327,14 +312,12 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     else {
       if (!FSys::exists(l_rem_file) || l_file.file_size() != FSys::file_size(l_rem_file) ||
           l_file.last_write_time() != FSys::last_write_time(l_rem_file)) {
-        boost::asio::post(executor_, [=, l_path = l_file.path()] {
-          try {
-            FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
-            FSys::last_write_time(l_rem_file, l_file.last_write_time());
-          } catch (const FSys::filesystem_error &error) {
-            DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-          }
-        });
+        try {
+          FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
+          FSys::last_write_time(l_rem_file, l_file.last_write_time());
+        } catch (const FSys::filesystem_error &error) {
+          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+        }
       }
     }
   }
@@ -355,17 +338,16 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     auto l_rem_file = l_out_rem_dir / l_file.path().filename();
     if (!FSys::exists(l_rem_file) || l_file.file_size() != FSys::file_size(l_rem_file) ||
         l_file.last_write_time() != FSys::last_write_time(l_rem_file)) {
-      boost::asio::post(executor_, [=, l_path = l_file.path()] {
-        try {
-          FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
-          FSys::last_write_time(l_rem_file, l_file.last_write_time());
-        } catch (const FSys::filesystem_error &error) {
-          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-        }
-      });
+      try {
+        FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
+        FSys::last_write_time(l_rem_file, l_file.last_write_time());
+      } catch (const FSys::filesystem_error &error) {
+        DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+      }
     }
   }
-  boost::asio::post(executor_, boost::asio::bind_executor(g_io_context(), *this));
+
+  data_->end_call_(in_error_code);
 }
 
 }  // namespace doodle

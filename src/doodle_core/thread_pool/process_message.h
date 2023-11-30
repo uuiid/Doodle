@@ -9,11 +9,11 @@
 namespace doodle {
 
 using rational_int = boost::rational<std::size_t>;
-
+namespace details {
+template <class Mutex>
+class process_message_sink;
+}
 class DOODLE_CORE_API process_message {
-  friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const process_message& nlohmann_json_t);
-  friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, process_message& nlohmann_json_t);
-
  public:
   enum level {
     info    = 0,
@@ -22,24 +22,27 @@ class DOODLE_CORE_API process_message {
   enum state { success = 1, fail = 2, wait = 3, run = 4 };
 
  private:
-  chrono::sys_time_pos p_time;
-  chrono::sys_time_pos p_end;
-  std::string p_err;
-  std::string p_log;
-  std::string p_str_end;
-  std::string p_name;
-  std::string p_name_id;
-  state p_state;
-  rational_int p_progress;
-  std::mutex _mutex;
+  struct data_t {
+    chrono::sys_time_pos p_time;
+    chrono::sys_time_pos p_end;
+    std::string p_err;
+    std::string p_log;
+    std::string p_str_end;
+    std::string p_name;
+    std::string p_name_id;
+    state p_state;
+    rational_int p_progress;
+    std::mutex _mutex;
+
+    logger_ptr p_logger;
+  };
+  std::shared_ptr<data_t> data_;
+
+  template <class Mutex>
+  friend class details::process_message_sink;
 
  public:
   process_message();
-
-  process_message(process_message&&) noexcept;
-  process_message& operator=(process_message&&) noexcept;
-  process_message(const process_message&) noexcept;
-  process_message& operator=(const process_message&) noexcept;
 
   [[nodiscard]] const std::string& get_name() const;
   [[nodiscard]] const std::string& get_name_id() const;
@@ -52,9 +55,7 @@ class DOODLE_CORE_API process_message {
 
   void set_state(state in_state);
   [[nodiscard]] std::string_view err() const;
-  [[nodiscard]] std::string_view err(std::size_t in_begin, std::size_t in_end) const;
   [[nodiscard]] std::string_view log() const;
-  [[nodiscard]] std::string_view log(std::size_t in_begin, std::size_t in_end) const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] inline std::double_t get_progress_f() const {
@@ -69,6 +70,8 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
 
   boost::signals2::signal<void()> aborted_sig;
+
+  inline void aborted() { aborted_sig(); }
 };
 inline auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
 }  // namespace doodle

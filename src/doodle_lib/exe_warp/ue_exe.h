@@ -97,10 +97,10 @@ class ue_exe {
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
-    auto l_msg_ref = in_handle.get_or_emplace<process_message>();
+    if (in_handle.all_of<process_message>()) in_handle.emplace<process_message>();
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
-        [this, l_msg_ref, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {
+        [this, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {
           this->queue_up(
               in_handle, l_arg,
               std::move(call_fun_type{std::forward<decltype(in_completion_handler)>(in_completion_handler)})
