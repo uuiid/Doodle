@@ -30,6 +30,11 @@ class io_context;
 class thread_pool;
 }  // namespace boost::asio
 
+namespace spdlog {
+class logger;
+spdlog::logger* default_logger_raw();
+}  // namespace spdlog
+
 // #include <>
 namespace doodle {
 using entt::literals::operator""_hs;
@@ -103,7 +108,7 @@ using doodle_lib_ptr = std::shared_ptr<doodle_lib>;
 using registry_ptr   = std::shared_ptr<entt::registry>;
 
 using uuid           = boost::uuids::uuid;
-
+using spdlog::default_logger_raw;
 namespace pool_n {}  // namespace pool_n
 
 DOODLE_CORE_API boost::asio::io_context& g_io_context();

@@ -102,7 +102,7 @@ inline void log_error(
 ) {
   spdlog::default_logger_raw()->log(in_loc, spdlog::level::err, in_msg);
 }
-
+using spdlog::default_logger_raw;
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
 
