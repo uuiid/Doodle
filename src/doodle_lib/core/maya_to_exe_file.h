@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/asio.hpp>
 
@@ -29,6 +30,7 @@ class maya_to_exe_file {
   };
 
   struct data_t {
+    logger_ptr logger_{};
     render_type render_type_{render_type::render};
     std::string maya_out_data_{};
     FSys::path render_project_{};
@@ -50,6 +52,7 @@ class maya_to_exe_file {
  public:
   explicit maya_to_exe_file(entt::handle in_msg, std::string in_maya_out_data, FSys::path in_update_path)
       : data_(std::make_shared<data_t>()) {
+    data_->logger_        = in_msg.get<process_message>().logger();
     data_->maya_out_data_ = std::move(in_maya_out_data);
     update_dir_           = std::move(in_update_path);
     msg_                  = std::move(in_msg);
@@ -57,9 +60,10 @@ class maya_to_exe_file {
   };
   explicit maya_to_exe_file(entt::handle in_msg, FSys::path in_maya_out_file, FSys::path in_update_path)
       : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_t>()) {
-    msg_        = std::move(in_msg);
-    update_dir_ = std::move(in_update_path);
-    executor_   = boost::asio::make_strand(g_thread());
+    data_->logger_ = in_msg.get<process_message>().logger();
+    msg_           = std::move(in_msg);
+    update_dir_    = std::move(in_update_path);
+    executor_      = boost::asio::make_strand(g_thread());
   };
   inline maya_to_exe_file& set_ue_call_fun(
       boost::asio::any_completion_handler<void(boost::system::error_code)> in_end_call_

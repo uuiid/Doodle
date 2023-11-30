@@ -123,7 +123,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   l_msg.message("开始处理 maya 输出文件");
   if (data_->maya_out_data_.empty()) {
     l_msg.message("maya结束进程后未能成功输出文件");
-    in_error_code = {error_enum::file_not_exists};
+    in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     data_->end_call_(in_error_code);
     return;
@@ -134,7 +134,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   if (l_maya_out_arg.empty()) {
     auto &l_msg = msg_.get<process_message>();
     l_msg.message("maya结束进程后未能成功输出文件");
-    in_error_code = {error_enum::file_not_exists};
+    in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     data_->end_call_(in_error_code);
     return;
@@ -182,7 +182,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
         return true;
       })) {
     auto &l_msg   = msg_.get<process_message>();
-    in_error_code = {error_enum::file_not_exists};
+    in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     l_msg.message("maya结束进程后 输出文件引用查找有误");
     data_->end_call_(in_error_code);
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
@@ -217,6 +217,12 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
 }
 
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
+  if (!data_->logger_) {
+    default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
+    in_error_code.assign(error_enum::component_missing_error, doodle_category::get());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    return;
+  }
   if (in_error_code) {
     log_error(fmt::format("maya_to_exe_file error:{}", in_error_code));
     data_->end_call_(in_error_code);
@@ -234,7 +240,6 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       break;
   }
 }
-
 
 void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const {
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
