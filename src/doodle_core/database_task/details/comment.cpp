@@ -32,8 +32,7 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::
     l_pre.params.comment_string = l_shot.p_comment;
     l_pre.params.comment_time   = l_shot.p_time_info;
     l_pre.params.entity_id      = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    auto l_r                    = l_conn(l_pre);
-    // DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<comment>().name());
+    l_conn(l_pre);
   }
 }
 
@@ -57,8 +56,7 @@ void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::map<std::int6
     l_pre.params.id             = id;
     l_pre.params.entity_id      = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r                    = l_conn(l_pre);
-    // DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<comment>().name());
+    l_conn(l_pre);
   }
 }
 void sql_com<doodle::comment>::select(
@@ -68,6 +66,7 @@ void sql_com<doodle::comment>::select(
   tables::comment l_table{};
   std::vector<comment> l_comment;
   std::vector<entt::entity> l_entts;
+  std::set<std::int64_t> l_ids{};
   // 调整内存
   for (auto&& raw :
        l_conn(sqlpp::select(sqlpp::count(l_table.entity_id)).from(l_table).where(l_table.entity_id.is_not_null()))) {
@@ -83,14 +82,23 @@ void sql_com<doodle::comment>::select(
     l_s.p_comment   = row.comment_string.value();
     l_s.p_time_info = row.comment_time.value();
     auto l_id       = row.entity_id.value();
-    if (in_handle.find(l_id) != in_handle.end()) {
+    if (in_handle.contains(l_id)) {
+      if (l_ids.contains(l_id)) {
+        spdlog::default_logger_raw()->error("实体 {} id {} 重复", in_handle.at(l_id), l_id);
+        continue;
+      }
       l_comment.emplace_back(std::move(l_s));
       l_entts.emplace_back(in_handle.at(l_id));
-      // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+      l_ids.emplace(l_id);
     } else {
-      // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      spdlog::default_logger_raw()->error("实体 {} 不存在", l_id);
     }
   }
+  //  for (auto&& [l_entt, l_com] : ranges::views::zip(l_entts, l_comment)) {
+  //    if (!in_reg->all_of<doodle::comment>(l_entt)) {
+  //      in_reg->emplace<doodle::comment>(l_entt, l_com);
+  //    }
+  //  }
   in_reg->insert<doodle::comment>(l_entts.begin(), l_entts.end(), l_comment.begin());
 }
 void sql_com<doodle::comment>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
