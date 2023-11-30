@@ -24,6 +24,8 @@ class maya_to_exe_file {
   static constexpr auto g_movie_renders = "MovieRenders";
 
   enum class render_type {
+    down_file,
+    import_file,
     render,
     update,
     update_end,
@@ -31,23 +33,28 @@ class maya_to_exe_file {
 
   struct data_t {
     logger_ptr logger_{};
-    render_type render_type_{render_type::render};
+    render_type render_type_{render_type::down_file};
     std::string maya_out_data_{};
     FSys::path render_project_{};
     FSys::path render_project_file_{};
+    std::string import_dir_{};  // 导入路径
+
     std::string render_map_{};
+    std::string render_config_{};    // 渲染配置文件
+    std::string render_world_{};     // 渲染生成关卡
+    std::string render_sequence_{};  // 渲染序列文件
     FSys::path out_dir{};
     boost::asio::any_completion_handler<void(boost::system::error_code)> end_call_{};
   };
   std::shared_ptr<data_t> data_{};
 
   void down_file(const FSys::path& in_path, bool is_scene) const;
-  void render() const;
+  void import_file() const;
+  void render(boost::system::error_code in_error_code) const;
   void update_file(boost::system::error_code in_error_code) const;
 
   void begin_render(boost::system::error_code in_error_code) const;
   [[nodiscard]] FSys::path gen_render_config_file() const;
-  [[nodiscard]] FSys::path write_python_script() const;
 
  public:
   explicit maya_to_exe_file(entt::handle in_msg, std::string in_maya_out_data, FSys::path in_update_path)

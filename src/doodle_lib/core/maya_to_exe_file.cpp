@@ -12,7 +12,7 @@
 #include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/shot.h>
-#include <doodle_core/thread_pool/process_message.h>
+#include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 
@@ -46,22 +46,29 @@ struct out_file {
   std::string shot_ab;
   FSys::path out_file_dir;
   std::string main_map;
+  std::string import_dir;
+  std::string level_sequence;
+  std::string world;
+  std::string movie_pipeline_config;
+
   std::vector<out_file_export> files;
   friend void to_json(nlohmann::json &j, const out_file &p) {
-    j["project"]      = p.project;
-    j["begin_time"]   = p.begin_time;
-    j["end_time"]     = p.end_time;
-    j["episode"]      = p.episode;
-    j["shot"]         = p.shot;
-    j["shot_ab"]      = p.shot_ab;
-    j["out_file_dir"] = p.out_file_dir.generic_string();
-    j["main_map"]     = p.main_map;
-    j["files"]        = p.files;
+    j["project"]               = p.project;
+    j["begin_time"]            = p.begin_time;
+    j["end_time"]              = p.end_time;
+    j["episode"]               = p.episode;
+    j["shot"]                  = p.shot;
+    j["shot_ab"]               = p.shot_ab;
+    j["out_file_dir"]          = p.out_file_dir.generic_string();
+    j["main_map"]              = p.main_map;
+    j["files"]                 = p.files;
+    j["import_dir"]            = p.import_dir;
+    j["level_sequence"]        = p.level_sequence;
+    j["world"]                 = p.world;
+    j["movie_pipeline_config"] = p.movie_pipeline_config;
   }
 };
 }  // namespace maya_to_exe_file_ns
-
-FSys::path maya_to_exe_file::write_python_script() const { return "D:/test"; }
 
 FSys::path maya_to_exe_file::gen_render_config_file() const {
   auto l_maya_out_arg =
@@ -99,7 +106,29 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
   l_out_file.out_file_dir = data_->render_project_ / g_saved / g_movie_renders /
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
-  data_->out_dir = l_out_file.out_file_dir;
+  data_->out_dir        = l_out_file.out_file_dir;
+
+  // 渲染配置文件
+  data_->render_config_ = fmt::format(
+      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_Config", l_out_file.project, l_out_file.episode,
+      l_out_file.shot, l_out_file.shot_ab
+  );
+  l_out_file.movie_pipeline_config = data_->render_config_;
+  data_->render_sequence_          = fmt::format(
+      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}", l_out_file.project, l_out_file.episode, l_out_file.shot,
+      l_out_file.shot_ab
+  );
+  l_out_file.level_sequence = data_->render_sequence_;
+  data_->render_world_      = fmt::format(
+      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_LV", l_out_file.project, l_out_file.episode, l_out_file.shot,
+      l_out_file.shot_ab
+  );
+  l_out_file.world   = data_->render_world_;
+  data_->import_dir_ = fmt::format(
+      "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_out_file.project, l_out_file.episode,
+      l_out_file.shot, l_out_file.shot_ab, time_point_wrap{}.get_local_time()
+  );
+  l_out_file.import_dir = data_->import_dir_;
 
   l_out_file.files =
       l_maya_out_arg | ranges::views::transform([](const maya_to_exe_file_ns::maya_out_arg &in_arg) {
@@ -118,11 +147,9 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
   }
 
-  auto &l_msg = msg_.get<process_message>();
-  l_msg.set_state(l_msg.run);
-  l_msg.message("开始处理 maya 输出文件");
+  data_->logger_->log(log_loc(), level::level_enum::info, "开始处理 maya 输出文件");
   if (data_->maya_out_data_.empty()) {
-    l_msg.message("maya结束进程后未能成功输出文件");
+    data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件");
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     data_->end_call_(in_error_code);
@@ -132,8 +159,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
       nlohmann::json ::parse(data_->maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
 
   if (l_maya_out_arg.empty()) {
-    auto &l_msg = msg_.get<process_message>();
-    l_msg.message("maya结束进程后未能成功输出文件");
+    data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件");
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     data_->end_call_(in_error_code);
@@ -157,7 +183,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
         if (l_id_map.contains(l_uuid)) {
           return entt::handle{*g_reg(), l_id_map.at(l_uuid)};
         }
-        l_msg.message(fmt::format("文件 {} 找不到引用, 继续输出将变为不正确排屏", in_arg));
+        data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 找不到引用, 继续输出将变为不正确排屏", in_arg);
         return entt::handle{};
       }) |
       ranges::to<std::vector<entt::handle>>();
@@ -168,22 +194,21 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
         }
         const auto &l_file = in_handle.get<assets_file>().path_attr();
         if (!in_handle.get<file_association_ref>()) {
-          l_msg.message(fmt::format("未查找到文件 {} 的引用", l_file));
+          data_->logger_->log(log_loc(), level::level_enum::err, "未查找到文件 {} 的引用", l_file);
           return false;
         }
         if (!in_handle.get<file_association_ref>().get<file_association>().ue_file) {
-          l_msg.message(fmt::format("未查找到文件 {} 的 ue 引用", l_file));
+          data_->logger_->log(log_loc(), level::level_enum::err, "未查找到文件 {} 的 ue 引用", l_file);
           return false;
         }
         if (!in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<assets_file>()) {
-          l_msg.message(fmt::format("文件 {} 的 ue 引用无效", l_file));
+          data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 的 ue 引用无效", l_file);
           return false;
         }
         return true;
       })) {
-    auto &l_msg   = msg_.get<process_message>();
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
-    l_msg.message("maya结束进程后 输出文件引用查找有误");
+    data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后 输出文件引用查找有误");
     data_->end_call_(in_error_code);
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
 
@@ -192,8 +217,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   if (!ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
         return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
       })) {
-    auto &l_msg = msg_.get<process_message>();
-    l_msg.message("未查找到主项目文件");
+    data_->logger_->log(log_loc(), level::level_enum::err, "未查找到主项目文件");
     data_->end_call_(in_error_code);
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     return;
@@ -213,7 +237,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
-  render();
+  import_file();
 }
 
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
@@ -224,18 +248,24 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     return;
   }
   if (in_error_code) {
-    log_error(fmt::format("maya_to_exe_file error:{}", in_error_code));
+    data_->logger_->log(log_loc(), level::level_enum::err, "maya_to_exe_file error:{}", in_error_code);
     data_->end_call_(in_error_code);
     return;
   }
   switch (data_->render_type_) {
+    case render_type::down_file:
+      begin_render(in_error_code);  // 以及下载完成,进入导入文件过程
+      data_->render_type_ = render_type::import_file;
+      break;
+    case render_type::import_file:
+      render(in_error_code);  // 导入文件完成,进入排屏过程
+      data_->render_type_ = render_type::render;
+      break;
     case render_type::render:
-      begin_render(in_error_code);
+      update_file(in_error_code);  // 排屏完成,进入上传文件过程
+      data_->render_type_ = render_type::update;
       break;
     case render_type::update:
-      data_->render_type_ = render_type::update_end;
-      update_file(in_error_code);
-      break;
     case render_type::update_end:
       break;
   }
@@ -264,7 +294,10 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
           FSys::copy_file(l_file.path(), l_loc_file, FSys::copy_options::overwrite_existing);
           FSys::last_write_time(l_loc_file, l_file.last_write_time());
         } catch (const FSys::filesystem_error &error) {
-          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+          data_->logger_->log(
+              log_loc(), level::level_enum::err, "复制文件 {} 失败 {}", l_file.path(),
+              boost::diagnostic_information(error)
+          );
         }
       }
     }
@@ -285,21 +318,37 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
     }
   }
 }
-void maya_to_exe_file::render() const {
-  auto &l_msg = msg_.get<process_message>();
+void maya_to_exe_file::import_file() const {
   auto l_exe  = g_ctx().get<ue_exe_ptr>();
   auto l_path = gen_render_config_file();
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
-          fmt::format("{} -ExecutePythonScript={} {}", data_->render_project_file_, write_python_script(), l_path)},
-      *this
+          fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->render_project_file_, l_path)},
+      boost::asio::bind_executor(g_io_context(), *this)
+  );
+}
+
+void maya_to_exe_file::render(boost::system::error_code) const {
+  data_->logger_->log(log_loc(), level::level_enum::info, "开始排屏");
+  auto l_exe = g_ctx().get<ue_exe_ptr>();
+  l_exe->async_run(
+      msg_,
+      ue_exe_ptr::element_type ::arg_render_queue{fmt::format(
+          R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -StdOut -allowStdOutLogVerbosity -Unattended )",
+          data_->render_project_file_, data_->render_map_, data_->render_sequence_, data_->render_config_,
+          gen_render_config_file()
+      )},
+      boost::asio::bind_executor(g_io_context(), *this)
   );
 }
 
 void maya_to_exe_file::update_file(boost::system::error_code in_error_code) const {
-  auto &l_msg = msg_.get<process_message>();
-  l_msg.message("排屏完成, 开始上传文件");
+  data_->logger_->log(log_loc(), level::level_enum::info, "排屏完成, 开始上传文件");
+  if (update_dir_.empty()) {
+    data_->end_call_(in_error_code);
+    return;
+  }
 
   if (!FSys::exists(update_dir_)) {
     FSys::create_directories(update_dir_);
@@ -320,7 +369,10 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
           FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
           FSys::last_write_time(l_rem_file, l_file.last_write_time());
         } catch (const FSys::filesystem_error &error) {
-          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+          data_->logger_->log(
+              log_loc(), level::level_enum::err, "复制文件 {} 失败 {}", l_file.path(),
+              boost::diagnostic_information(error)
+          );
         }
       }
     }
@@ -329,7 +381,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
   // 复制输出的文件
   auto l_out_loc_dir = data_->out_dir;
   if (!FSys::exists(l_out_loc_dir)) {
-    l_msg.message(fmt::format("输出文件夹 {} 不存在", l_out_loc_dir));
+    data_->logger_->log(log_loc(), level::level_enum::err, "输出文件夹 {} 不存在", l_out_loc_dir);
     boost::system::error_code l_error_code{error_enum::file_not_exists};
     BOOST_ASIO_ERROR_LOCATION(l_error_code);
     data_->end_call_(l_error_code);
@@ -346,7 +398,10 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
         FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
         FSys::last_write_time(l_rem_file, l_file.last_write_time());
       } catch (const FSys::filesystem_error &error) {
-        DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+        data_->logger_->log(
+            log_loc(), level::level_enum::err, "复制文件 {} 失败 {}", l_file.path(),
+            boost::diagnostic_information(error)
+        );
       }
     }
   }
