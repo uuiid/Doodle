@@ -64,6 +64,7 @@ process_message::process_message(std::string in_name) : data_(std::make_shared<d
 }
 
 const std::string& process_message::get_name() const { return data_->p_name; }
+logger_ptr process_message::logger() const { return data_->p_logger; }
 
 void process_message::progress_step(const rational_int& in_rational_int) {
   std::lock_guard _lock{data_->_mutex};
