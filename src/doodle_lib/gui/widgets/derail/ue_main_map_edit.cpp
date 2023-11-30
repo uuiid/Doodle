@@ -13,6 +13,7 @@ namespace doodle::gui::render {
 
 void ue_main_map_edit::test_is_ue_dir(const FSys::path &in_path) {
   if (!FSys::exists(in_path)) return;
+  if (!FSys::is_directory(in_path)) return;
   for (auto &&l_file : FSys::directory_iterator(in_path)) {
     if (l_file.path().extension() == ".uproject") {
       is_ue_dir_ = true;
