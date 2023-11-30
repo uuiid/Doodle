@@ -64,11 +64,7 @@ process_message::process_message(std::string in_name) : data_(std::make_shared<d
 }
 
 const std::string& process_message::get_name() const { return data_->p_name; }
-void process_message::set_name(const std::string& in_string) {
-  std::lock_guard _lock{data_->_mutex};
-  data_->p_name    = in_string;
-  data_->p_name_id = fmt::format("{}##{}", get_name(), fmt::ptr(this));
-}
+
 void process_message::progress_step(const rational_int& in_rational_int) {
   std::lock_guard _lock{data_->_mutex};
   data_->p_progress += in_rational_int;

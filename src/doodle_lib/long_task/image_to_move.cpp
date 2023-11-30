@@ -90,7 +90,6 @@ void image_to_move::create_move(
   in_msg.message(fmt::format("获得图片路径 {}", l_vector.front().path_attr.parent_path()));
 
   in_msg.message(fmt::format("开始创建视频 {}", in_out_path));
-  in_msg.set_name(in_out_path.filename().generic_string());
 
   const static cv::Size k_size{1920, 1080};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};

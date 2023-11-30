@@ -282,7 +282,6 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
 }
 void maya_to_exe_file::render() const {
   auto &l_msg = msg_.get<process_message>();
-  l_msg.set_name("开始排屏");
   auto l_exe  = g_ctx().get<ue_exe_ptr>();
   auto l_path = gen_render_config_file();
   l_exe->async_run(
@@ -295,7 +294,7 @@ void maya_to_exe_file::render() const {
 
 void maya_to_exe_file::update_file(boost::system::error_code in_error_code) const {
   auto &l_msg = msg_.get<process_message>();
-  l_msg.set_name("排屏完成, 开始上传文件");
+  l_msg.message("排屏完成, 开始上传文件");
 
   if (!FSys::exists(update_dir_)) {
     FSys::create_directories(update_dir_);

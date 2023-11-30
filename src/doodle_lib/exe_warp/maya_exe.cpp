@@ -314,8 +314,6 @@ void maya_exe::queue_up(
   l_run->file_path_attr      = in_run_path;
   l_run->program_path        = p_i->run_path;
   l_run->maya_program_path   = find_maya_path();
-  auto &&l_msg               = in_msg.get<process_message>();
-  l_msg.set_name(in_run_path.filename().generic_string());
   l_run->call_attr = std::move(in_call_fun);
   notify_run();
 }

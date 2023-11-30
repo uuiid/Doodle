@@ -588,7 +588,6 @@ bool xlsx_export_widgets::get_work_time() {
   auto l_size  = p_i->user_handle.size();
   /// 显示一下进度条
   auto &l_p    = g_reg()->ctx().emplace<process_message>("导出表格");
-  l_p.set_name("开始计算数据");
   l_p.set_state(l_p.run);
   DOODLE_LOG_INFO("开始计算时间 {} -> {}", l_begin, l_end);
   p_i->user_size = l_size;

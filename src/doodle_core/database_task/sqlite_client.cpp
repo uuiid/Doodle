@@ -55,8 +55,7 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   project_path = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
   {
     g_ctx().get<database_info>().path_ = project_path;
-    auto& k_msg                        = g_reg()->ctx().emplace<process_message>("保存");
-    k_msg.set_name("加载数据");
+    auto& k_msg                        = g_reg()->ctx().emplace<process_message>("加载数据");
     k_msg.set_state(k_msg.run);
     g_ctx().get<core_sig>().project_begin_open(project_path);
     registry_attr = g_reg();
@@ -86,7 +85,6 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   registry_attr->ctx().get<project>().set_path(project_path.parent_path());
   g_ctx().get<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().get<process_message>();
-  k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
   g_reg()->ctx().erase<process_message>();
   core_set::get_set().add_recent_project(project_path);
@@ -172,7 +170,6 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
       k_msg.message(fmt::format("{}, 旧版文件, 不导入", project_path));
       k_msg.set_state(k_msg.fail);
     } else {
-      k_msg.set_name("完成导入数据");
       k_msg.set_state(k_msg.success);
     }
     g_reg()->ctx().erase<process_message>();
