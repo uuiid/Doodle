@@ -97,7 +97,13 @@ class ue_exe {
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
-    if (in_handle.all_of<process_message>()) in_handle.emplace<process_message>();
+    if (!in_handle.all_of<process_message>()) {
+      boost::system::error_code l_ec{error_enum::component_missing_error};
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      default_logger_raw()->error("组件缺失 process_message");
+      in_completion(l_ec);
+      return;
+    }
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {

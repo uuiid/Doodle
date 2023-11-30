@@ -32,7 +32,7 @@ class thread_pool;
 
 namespace spdlog {
 class logger;
-spdlog::logger* default_logger_raw();
+SPDLOG_API spdlog::logger* default_logger_raw();
 }  // namespace spdlog
 
 // #include <>

@@ -459,7 +459,7 @@ bool xlsx_export_widgets::render() {
 
 const std::string &xlsx_export_widgets::title() const { return p_i->title_name_; }
 void xlsx_export_widgets::generate_table() {
-  auto &l_p = g_reg()->ctx().emplace<process_message>();
+  auto &l_p = g_reg()->ctx().emplace<process_message>("导出表格");
   l_p.set_state(l_p.success);
   p_i->list =
       p_i->list |
@@ -587,7 +587,7 @@ bool xlsx_export_widgets::get_work_time() {
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
   auto l_size  = p_i->user_handle.size();
   /// 显示一下进度条
-  auto &l_p    = g_reg()->ctx().emplace<process_message>();
+  auto &l_p    = g_reg()->ctx().emplace<process_message>("导出表格");
   l_p.set_name("开始计算数据");
   l_p.set_state(l_p.run);
   DOODLE_LOG_INFO("开始计算时间 {} -> {}", l_begin, l_end);
@@ -597,7 +597,7 @@ bool xlsx_export_widgets::get_work_time() {
         item.first, l_begin, l_end,
         [l_handle = item.first, l_size,
          this](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-          auto &l_p = g_reg()->ctx().emplace<process_message>();
+          auto &l_p = g_reg()->ctx().emplace<process_message>("导出表格");
           l_p.message(fmt::format("完成用户 {} 时间获取", l_handle.get<user>().get_name()));
           l_p.progress_step({1, l_size});
 

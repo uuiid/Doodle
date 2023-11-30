@@ -118,7 +118,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
   }
 
-  auto &l_msg = msg_.get_or_emplace<process_message>();
+  auto &l_msg = msg_.get<process_message>();
   l_msg.set_state(l_msg.run);
   l_msg.message("开始处理 maya 输出文件");
   if (data_->maya_out_data_.empty()) {

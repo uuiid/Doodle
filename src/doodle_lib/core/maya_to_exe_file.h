@@ -52,12 +52,12 @@ class maya_to_exe_file {
       : data_(std::make_shared<data_t>()) {
     data_->maya_out_data_ = std::move(in_maya_out_data);
     update_dir_           = std::move(in_update_path);
-    msg_                  = in_msg ? std::move(in_msg) : entt::handle{*g_reg(), g_reg()->create()};
+    msg_                  = std::move(in_msg);
     executor_             = boost::asio::make_strand(g_thread());
   };
   explicit maya_to_exe_file(entt::handle in_msg, FSys::path in_maya_out_file, FSys::path in_update_path)
       : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_t>()) {
-    msg_        = in_msg ? std::move(in_msg) : entt::handle{*g_reg(), g_reg()->create()};
+    msg_        = std::move(in_msg);
     update_dir_ = std::move(in_update_path);
     executor_   = boost::asio::make_strand(g_thread());
   };

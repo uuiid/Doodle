@@ -29,6 +29,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
   void sink_it_(const spdlog::details::log_msg& msg) override {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    std::lock_guard const _lock{data_->_mutex};
 
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
@@ -51,12 +52,14 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
 }  // namespace details
 using process_message_sink_mt = details::process_message_sink<std::mutex>;
 
-process_message::process_message() : data_(std::make_shared<data_t>()) {
+process_message::process_message(std::string in_name) : data_(std::make_shared<data_t>()) {
   data_->p_state   = state::wait;
   data_->p_time    = chrono::system_clock::now();
-  data_->p_name_id = "##none";
 
-  data_->p_logger  = g_logger_ctrl().make_log("process_message");
+  data_->p_name    = std::move(in_name);
+  data_->p_name_id = fmt::format("{}##{}", data_->p_name, fmt::ptr(this));
+
+  data_->p_logger  = g_logger_ctrl().make_log(in_name);
   data_->p_logger->sinks().emplace_back(std::make_shared<process_message_sink_mt>(this->data_));
 }
 

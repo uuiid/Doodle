@@ -42,7 +42,7 @@ class DOODLE_CORE_API process_message {
   friend class details::process_message_sink;
 
  public:
-  process_message();
+  explicit process_message(std::string in_name);
 
   [[nodiscard]] const std::string& get_name() const;
   [[nodiscard]] const std::string& get_name_id() const;

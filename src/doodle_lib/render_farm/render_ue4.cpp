@@ -13,7 +13,7 @@ namespace doodle::render_farm {
 namespace detail {
 
 void render_ue4::run() {
-  auto&& l_msg = self_handle_.get_or_emplace<process_message>();
+  auto&& l_msg = self_handle_.get_or_emplace<process_message>(FSys::path{arg_.ProjectPath}.filename().generic_string());
   l_msg.message("开始下载ue4项目文件");
   auto& l_map = g_reg()->ctx().emplace<std::map<std::string, decltype(boost::asio::make_strand(g_thread()))>>();
 
@@ -113,7 +113,7 @@ std::string render_ue4::generate_command_line() const {
   );
 }
 void render_ue4::run_impl(bool in_r) {
-  auto&& l_msg = self_handle_.get_or_emplace<process_message>();
+  auto&& l_msg = self_handle_.get_or_emplace<process_message>(FSys::path{arg_.ProjectPath}.filename().generic_string());
   if (!in_r) {
     l_msg.set_state(process_message::state::fail);
     l_msg.message(fmt::format("project path not exist: {}", arg_.ProjectPath));
@@ -139,7 +139,7 @@ void render_ue4::do_read_log() {
         if (!in_code) {
           std::string l_line;
           std::getline(std::istream{&child_ptr->out_str}, l_line);
-          auto& l_msg = self_handle_.get_or_emplace<process_message>();
+          auto& l_msg = self_handle_.get<process_message>();
           l_msg.message(l_line + '\n');
           do_read_log();
         } else {
@@ -157,7 +157,7 @@ void render_ue4::do_read_err() {
         if (!in_code) {
           std::string l_line;
           std::getline(std::istream{&child_ptr->err_str}, l_line);
-          auto& l_msg = self_handle_.get_or_emplace<process_message>();
+          auto& l_msg = self_handle_.get<process_message>();
           l_msg.message(l_line + '\n');
           do_read_err();
         } else {
@@ -169,10 +169,9 @@ void render_ue4::do_read_err() {
 }
 
 void render_ue4::set_meg() {
-  auto& l_msg = self_handle_.get_or_emplace<process_message>();
   auto l_prj  = FSys::path{arg_.ProjectPath};
+  auto& l_msg = self_handle_.get_or_emplace<process_message>(l_prj.filename().generic_string());
   l_msg.message(fmt::format("开始准备 {}", l_prj));
-  l_msg.set_name(l_prj.filename().generic_string());
 }
 void render_ue4::end_run() {
   boost::asio::post(strand_, [this]() {

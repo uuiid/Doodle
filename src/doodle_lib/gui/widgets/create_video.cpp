@@ -186,7 +186,7 @@ bool create_video::render() {
     });
 
     p_i->out_video_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
-    p_i->out_video_h.emplace_or_replace<process_message>();
+    p_i->out_video_h.emplace_or_replace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
   }
 
   dear::ListBox{"video_list"} && [this]() {
@@ -198,7 +198,7 @@ bool create_video::render() {
 }
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_h.emplace<process_message>();
+  l_h.emplace<process_message>(in_path.filename().generic_string());
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);

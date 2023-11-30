@@ -522,14 +522,13 @@ void time_sequencer_widget::fliter_select() {
   }
 
   /// 显示一下进度条
-  auto& l_p = g_reg()->ctx().emplace<process_message>();
-  l_p.set_name("开始计算数据");
+  auto& l_p = g_reg()->ctx().emplace<process_message>("开始计算数据");
   l_p.set_state(l_p.run);
 
   p_i->attendance_ptr->async_get_work_clock(
       l_user, l_begin, l_end,
       [=](const boost::system::error_code& in_code, const business::work_clock& in_clock) {
-        auto& l_p = g_reg()->ctx().emplace<process_message>();
+        auto& l_p = g_reg()->ctx().get<process_message>();
         l_p.message(fmt::format("完成用户 {} 时间获取", l_user.get<user>().get_name()));
         l_p.progress_step(1);
         if (in_code) {
