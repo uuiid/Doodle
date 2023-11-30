@@ -47,7 +47,11 @@ class DOODLE_CORE_API logger_ctrl {
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 };
 }  // namespace details
-
+inline ::spdlog::source_loc log_loc(
+    ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
+) {
+  return in_loc;
+}
 inline void log_debug(
     const std::shared_ptr<spdlog::logger>& in_logger, const std::string& in_msg,
     ::spdlog::source_loc const& in_loc = {__builtin_FILE(), __builtin_LINE(), __builtin_FUNCTION()}
@@ -98,6 +102,7 @@ inline void log_error(
 ) {
   spdlog::default_logger_raw()->log(in_loc, spdlog::level::err, in_msg);
 }
+
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
 
