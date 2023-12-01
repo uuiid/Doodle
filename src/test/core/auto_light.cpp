@@ -42,7 +42,9 @@ class maya_exe_test : public doodle::maya_exe {
   ) override {
     auto l_path = in_string.get<doodle::maya_exe_ns::export_fbx_arg>().out_path_file_;
     doodle::FSys::ofstream{l_path} << l_data;
-    in_call_fun(boost::system::error_code{});  // 通知完成
+    //    in_call_fun(boost::system::error_code{});  // 通知完成
+    //    boost::asio::get_associated_executor(in_call_fun) ;
+    boost::asio::post(std::bind(std::move(in_call_fun), boost::system::error_code{}));
   }
 };
 
@@ -53,8 +55,12 @@ class ue_exe_test : public doodle::ue_exe {
 
  private:
   void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
-    doodle::log_info(fmt::format("ue_exe_test", in_command_line));
-    in_call_fun(boost::system::error_code{});  // 通知完成
+    doodle::log_info(fmt::format("ue_exe_test {}", in_command_line));
+    doodle::FSys::copy(
+        "C:/Users/TD/Pictures/Screenshots", "D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89",
+        doodle::FSys::copy_options::overwrite_existing
+    );
+    boost::asio::post(std::bind(std::move(in_call_fun), boost::system::error_code{}));
   }
 };
 
@@ -74,6 +80,7 @@ void test_fun3(boost::system::error_code in_code) {
   auto l_maya_exe = g_ctx().get<maya_exe_ptr>();
   auto k_arg      = maya_exe_ns::export_fbx_arg{};
   const FSys::path l_out_path{"D:/test_files/test_ue_auto_main/test.json"};
+  const FSys::path l_update_path{"D:/test_files/test_ue_auto_main/result"};
   const FSys::path l_file_path{"D:/test_files/test_ue_auto_main/LQ_ep092_sc089.ma"};
 
   k_arg.file_path        = l_file_path;
@@ -81,12 +88,15 @@ void test_fun3(boost::system::error_code in_code) {
   k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
   k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
   auto l_ue_msg          = entt::handle{*g_reg(), g_reg()->create()};
+  l_ue_msg.emplace<process_message>("测试");
   l_maya_exe->async_run_maya(
-      entt::handle{*g_reg(), g_reg()->create()}, k_arg,
-      maya_to_exe_file{entt::handle{}, FSys::path{l_out_path}}.set_ue_call_fun(boost::asio::bind_executor(
-          g_io_context(), [l_guard = boost::asio::make_work_guard(g_io_context())](boost::system::error_code
-                          ) { app_base::Get().stop_app(); }
-      ))
+      l_ue_msg, k_arg,
+      boost::asio::bind_executor(
+          g_thread(), maya_to_exe_file{l_ue_msg, l_out_path, l_update_path}.set_ue_call_fun(boost::asio::bind_executor(
+                          g_io_context(), [l_guard = boost::asio::make_work_guard(g_io_context()
+                                           )](boost::system::error_code) { app_base::Get().stop_app(); }
+                      ))
+      )
   );
 }
 
