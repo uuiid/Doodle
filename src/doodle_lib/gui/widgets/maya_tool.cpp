@@ -245,7 +245,7 @@ bool maya_tool::render() {
           FSys::get_cache_path() / "maya_to_ue" / fmt::format("{}.json", core_set::get_set().get_uuid());
       auto l_updata_path = FSys::path{maya_tool_ns::update_dir};
       entt::handle l_msg{*g_reg(), g_reg()->create()};
-      l_msg.emplace<process_message>(i.filename());
+      l_msg.emplace<process_message>(i.filename().generic_string());
 
       l_maya->async_run_maya(
           l_msg, k_arg,
