@@ -160,7 +160,7 @@ class DOODLELIB_API maya_exe {
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
-    if (in_handle.all_of<process_message>())
+    if (!in_handle.all_of<process_message>())
       in_handle.emplace<process_message>(in_arg.file_path.filename().generic_string());
     auto l_arg      = in_arg;
     l_arg.maya_path = find_maya_path();
