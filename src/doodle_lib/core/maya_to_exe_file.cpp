@@ -45,10 +45,11 @@ struct out_file {
   std::int32_t shot;
   std::string shot_ab;
   FSys::path out_file_dir;
-  std::string main_map;
+  std::string original_map;
+  std::string render_map;
   std::string import_dir;
   std::string level_sequence;
-  std::string world;
+  std::string create_map;
   std::string movie_pipeline_config;
 
   std::vector<out_file_export> files;
@@ -60,11 +61,12 @@ struct out_file {
     j["shot"]                  = p.shot;
     j["shot_ab"]               = p.shot_ab;
     j["out_file_dir"]          = p.out_file_dir.generic_string();
-    j["main_map"]              = p.main_map;
+    j["original_map"]          = p.original_map;
+    j["render_map"]            = p.render_map;
     j["files"]                 = p.files;
     j["import_dir"]            = p.import_dir;
     j["level_sequence"]        = p.level_sequence;
-    j["world"]                 = p.world;
+    j["create_map"]            = p.create_map;
     j["movie_pipeline_config"] = p.movie_pipeline_config;
   }
 };
@@ -126,16 +128,20 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
         l_out_file.shot_ab
     );
     l_out_file.level_sequence = data_->render_sequence_;
-    data_->render_world_      = fmt::format(
+    data_->create_map_        = fmt::format(
         "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_LV", l_out_file.project, l_out_file.episode,
         l_out_file.shot, l_out_file.shot_ab
     );
-    l_out_file.world   = data_->render_world_;
-    data_->import_dir_ = fmt::format(
+    l_out_file.create_map = data_->create_map_;
+    data_->import_dir_    = fmt::format(
         "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_out_file.project, l_out_file.episode,
         l_out_file.shot, l_out_file.shot_ab, time_point_wrap{}.get_local_time()
     );
     l_out_file.import_dir = data_->import_dir_;
+
+    data_->render_map_ =
+        fmt::format("/Game/Shot/ep{0}/sc{1}{2}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
+    l_out_file.render_map = data_->render_map_;
   }
 
   l_out_file.files =
@@ -145,7 +151,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
             in_arg.out_file};
       }) |
       ranges::to<std::vector<maya_to_exe_file_ns::out_file_export>>();
-  l_out_file.main_map         = data_->render_map_;
+  l_out_file.original_map     = data_->original_map_;
   nlohmann::json const l_json = l_out_file;
   return FSys::write_tmp_file("render_ue", l_json.dump(), ".json");
 }
@@ -241,7 +247,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     auto l_is_se = h.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
     down_file(h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr(), l_is_se);
     if (l_is_se)
-      data_->render_map_ = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
+      data_->original_map_ = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 

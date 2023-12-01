@@ -38,9 +38,10 @@ class maya_to_exe_file {
     FSys::path render_project_file_{};
     std::string import_dir_{};  // 导入路径
 
-    std::string render_map_{};
+    std::string render_map_{};       // 渲染生成的主管卡(包括灯光, 场景等)
+    std::string original_map_{};     // 原始的主管卡
     std::string render_config_{};    // 渲染配置文件
-    std::string render_world_{};     // 渲染生成关卡
+    std::string create_map_{};       // 渲染生成关卡(只包含导入的文件)
     std::string render_sequence_{};  // 渲染序列文件
     FSys::path out_dir{};
     boost::asio::any_completion_handler<void(boost::system::error_code)> end_call_{};
