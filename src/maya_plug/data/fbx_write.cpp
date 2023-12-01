@@ -586,7 +586,8 @@ void fbx_node_mesh::build_mesh() {
     mesh->BuildMeshEdgeArray();
   }
 
-  {
+  [&]() {
+    std::size_t l_error_count{};
     // get uv set names
     MStringArray l_uv_set_names{};
     maya_chick(l_fn_mesh.getUVSetNames(l_uv_set_names));
@@ -612,12 +613,20 @@ void fbx_node_mesh::build_mesh() {
           if (l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i])) {
             l_layer->GetIndexArray().Add(l_uv_id);
           } else {
+            if (l_error_count > 1000) {
+              extra_data_.logger_->log(
+                  doodle::log_loc(), doodle::level::level_enum::err,
+                  "错误太多, 直接跳过 {} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]
+              );
+              return;
+            }
+            ++l_error_count;
             log_error(fmt::format("{} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]));
           }
         }
       }
     }
-  }
+  }();
 
   // normals
   {
