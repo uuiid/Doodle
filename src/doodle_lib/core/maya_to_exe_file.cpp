@@ -70,6 +70,12 @@ struct out_file {
 };
 }  // namespace maya_to_exe_file_ns
 
+void maya_to_exe_file::call_end(const boost::system::error_code &in_error_code) const {
+  if (data_->end_call_) {
+    boost::asio::post(std::bind(std::move(data_->end_call_), in_error_code));
+  }
+}
+
 FSys::path maya_to_exe_file::gen_render_config_file() const {
   auto l_maya_out_arg =
       nlohmann::json ::parse(data_->maya_out_data_).get<std::vector<maya_to_exe_file_ns::maya_out_arg>>();
@@ -154,7 +160,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件");
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    data_->end_call_(in_error_code);
+    call_end(in_error_code);
     return;
   }
   auto l_maya_out_arg =
@@ -164,7 +170,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件");
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    data_->end_call_(in_error_code);
+    call_end(in_error_code);
     return;
   }
 
@@ -211,7 +217,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
       })) {
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后 输出文件引用查找有误");
-    data_->end_call_(in_error_code);
+    call_end(in_error_code);
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
 
     return;
@@ -220,7 +226,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
         return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
       })) {
     data_->logger_->log(log_loc(), level::level_enum::err, "未查找到主项目文件");
-    data_->end_call_(in_error_code);
+    call_end(in_error_code);
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     return;
   }
@@ -239,9 +245,9 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
-  boost::asio::post(g_io_context(), [this]() { this->import_file(); });
+  boost::asio::post(g_io_context(), *this);
 }
-
+void maya_to_exe_file::operator()() const { import_file(); }
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
   if (!data_->logger_) {
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
@@ -251,7 +257,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   }
   if (in_error_code) {
     data_->logger_->log(log_loc(), level::level_enum::err, "maya_to_exe_file error:{}", in_error_code);
-    data_->end_call_(in_error_code);
+    call_end(in_error_code);
     return;
   }
   switch (data_->render_type_) {
@@ -347,7 +353,7 @@ void maya_to_exe_file::render(boost::system::error_code) const {
 void maya_to_exe_file::update_file(boost::system::error_code in_error_code) const {
   data_->logger_->log(log_loc(), level::level_enum::info, "排屏完成, 开始上传文件");
   if (update_dir_.empty()) {
-    data_->end_call_(in_error_code);
+    call_end(in_error_code);
     return;
   }
 
@@ -385,7 +391,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     data_->logger_->log(log_loc(), level::level_enum::err, "输出文件夹 {} 不存在", l_out_loc_dir);
     boost::system::error_code l_error_code{error_enum::file_not_exists};
     BOOST_ASIO_ERROR_LOCATION(l_error_code);
-    data_->end_call_(l_error_code);
+    call_end(l_error_code);
     return;
   }
 
@@ -407,7 +413,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     }
   }
 
-  data_->end_call_(in_error_code);
+  call_end(in_error_code);
 }
 
 }  // namespace doodle

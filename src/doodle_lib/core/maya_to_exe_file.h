@@ -47,6 +47,7 @@ class maya_to_exe_file {
   };
   std::shared_ptr<data_t> data_{};
 
+  void call_end(const boost::system::error_code& in_error_code) const;
   void down_file(const FSys::path& in_path, bool is_scene) const;
   void import_file() const;
   void render(boost::system::error_code in_error_code) const;
@@ -81,6 +82,7 @@ class maya_to_exe_file {
   virtual ~maya_to_exe_file() = default;
 
   void operator()(boost::system::error_code in_error_code) const;
+  void operator()() const;
 };
 
 }  // namespace doodle
