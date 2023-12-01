@@ -23,7 +23,7 @@ public:
 	virtual int32 Main(const FString& Params) override;
 private:
 	void OnCreateSequence();
-	void OnCreateWorld();
+	void OnCreateSequenceWorld();
 	void OnBuildSequence();
 	void OnSaveReanderConfig();
 
@@ -33,9 +33,12 @@ private:
 	TArray<UAssetImportTask*> ImportTasks;
 	FString SequencePath;
 	FString ImportPath;
-	FName MapName;
+
+	FName OriginalMapPath;
+	//FName RenderMapPath;
+	FName CreateMapPath;
+
 	FString MoviePipelineConfigPath;
-	FString WorldPackagePath;
 	UWorld* TheSequenceWorld;
 
 	FFrameNumber L_Start{1001};

@@ -37,6 +37,7 @@
 #include "LevelSequencePlayer.h"
 #include "Factories/WorldFactory.h"
 #include "MoviePipelineImageSequenceOutput.h"
+#include "MoviePipelineDeferredPasses.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -67,10 +68,13 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
         FJsonSerializer::Deserialize(JsonReader, JsonObject);
     }
     //--------------------
+    OriginalMapPath = FName(JsonObject->GetStringField(TEXT("original_map")));
+    //RenderMapPath = FName(JsonObject->GetStringField(TEXT("render_map")));
+    CreateMapPath = FName(JsonObject->GetStringField(TEXT("create_map")));
     OnCreateSequence();
     //--------------
     ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
-    OnCreateWorld();
+    OnCreateSequenceWorld();
     OnBuildSequence();
     //---------------
     UMovieSceneLevelVisibilityTrack* NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
@@ -78,8 +82,16 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     TRange<FFrameNumber> SectionRange = TheLevelSequence->GetMovieScene()->GetPlaybackRange();
     NewSection->SetRange(SectionRange);
     NewTrack->AddSection(*NewSection);
-    MapName = FName(JsonObject->GetStringField(TEXT("main_map")));
-    NewSection->SetLevelNames({ MapName });
+    //-----------------
+    TArray<FName> LevelNames;
+    LevelNames.Add(OriginalMapPath);
+    UWorld* TempLevel = LoadObject<UWorld>(nullptr, *OriginalMapPath.ToString());
+    for (ULevelStreaming* StreamingLevel : TempLevel->GetStreamingLevels())
+    {
+        LevelNames.Add(StreamingLevel->GetWorldAssetPackageFName());
+    }
+    LevelNames.Add(CreateMapPath);
+    NewSection->SetLevelNames(LevelNames);
     //NewSection->SetVisibility(ELevelVisibility::Visible);
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     EditorAssetSubsystem->SaveLoadedAsset(TheLevelSequence);
@@ -132,19 +144,19 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
     }
 }
 
-void UDoodleAutoAnimationCommandlet::OnCreateWorld() 
+void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
 {
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-    WorldPackagePath = JsonObject->GetStringField(TEXT("world"));
-    TheSequenceWorld = LoadObject<UWorld>(nullptr, *WorldPackagePath);
+    CreateMapPath = FName(JsonObject->GetStringField(TEXT("create_map")));
+    TheSequenceWorld = LoadObject<UWorld>(nullptr, *CreateMapPath.ToString());
     if (!TheSequenceWorld)
     {
         UWorldFactory* Factory = NewObject<UWorldFactory>();
-        UPackage* Pkg = CreatePackage(*WorldPackagePath);
+        UPackage* Pkg = CreatePackage(*CreateMapPath.ToString());
         Pkg->FullyLoad();
         Pkg->MarkPackageDirty();
-        const FString PackagePath = FPackageName::GetLongPackagePath(WorldPackagePath);
-        FString BaseFileName = FPaths::GetBaseFilename(WorldPackagePath);
+        const FString PackagePath = FPackageName::GetLongPackagePath(CreateMapPath.ToString());
+        FString BaseFileName = FPaths::GetBaseFilename(CreateMapPath.ToString());
         //---------------
         FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
         UObject* TempObject = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
@@ -327,12 +339,13 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
     UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
     OutputSetting->OutputDirectory.Path = DestinationPath;
     //----------------------
-    //UMoviePipelineImageSequenceOutputBase* FormatSetting = Cast<UMoviePipelineImageSequenceOutputBase>(Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutputBase::StaticClass()));
-    //if (FormatSetting->IsA(UMoviePipelineImageSequenceOutput_JPG::StaticClass()))
-    //{
-    //    Config->RemoveSetting(FormatSetting);
-    //}
-    //UMoviePipelineImageSequenceOutput_PNG* PngSetting = Cast<UMoviePipelineImageSequenceOutput_PNG>(Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()));
+    UMoviePipelineImageSequenceOutput_JPG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_JPG>();
+    if (FormatSetting)
+    {
+        Config->RemoveSetting(FormatSetting);
+    }
+    Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
+    Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
     //-------------------------Save
     MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
     FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
