@@ -19,6 +19,7 @@
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
 
+#include <doodle_lib/core/maya_to_exe_file.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include "boost/signals2/connection.hpp"
@@ -32,6 +33,13 @@
 namespace doodle::gui {
 
 namespace maya_tool_ns {
+
+#ifdef DNDEBUG
+constexpr auto update_dir{"//192.168.10.218/Doodletemp/auto_light/"};
+#else
+constexpr auto update_dir{"D:/doodle/cache/"};
+#endif
+
 enum class maya_type { ma, mb };
 class maya_file_type_gui : public gui_cache<maya_type> {
  public:
@@ -217,6 +225,48 @@ bool maya_tool::render() {
       });
     });
   }
+
+  if (imgui::Button("使用ue输出排屏")) {
+    auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
+    std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
+      auto k_arg      = maya_exe_ns::replace_file_arg{};
+      k_arg.file_path = i;
+      k_arg.file_list = ptr_attr->ref_attr.ref_attr() |
+                        ranges::views::transform(
+                            [](const maya_tool_ns::maya_reference_info& in_info) -> std::pair<FSys::path, FSys::path> {
+                              return {in_info.f_file_path_attr.data, in_info.to_file_path_attr.data};
+                            }
+                        ) |
+                        ranges::to_vector;
+      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
+      k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
+      k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
+      k_arg.out_path_file_ =
+          FSys::get_cache_path() / "maya_to_ue" / fmt::format("{}.json", core_set::get_set().get_uuid());
+      auto l_updata_path = FSys::path{maya_tool_ns::update_dir};
+      entt::handle l_msg{*g_reg(), g_reg()->create()};
+      l_msg.emplace<process_message>(i.filename());
+
+      l_maya->async_run_maya(
+          l_msg, k_arg,
+          boost::asio::bind_executor(
+              g_thread(),
+              maya_to_exe_file{l_msg, k_arg.out_path_file_, l_updata_path}.set_ue_call_fun(boost::asio::bind_executor(
+                  g_io_context(),
+                  [=](boost::system::error_code in_error_code) {
+                    if (in_error_code) {
+                      l_msg.get<process_message>().set_state(process_message::state::fail);
+                    } else {
+                      l_msg.get<process_message>().set_state(process_message::state::success);
+                    }
+                  }
+              ))
+          )
+
+      );
+    });
+  }
+
 #if defined DOODLE_MAYA_TOOL
   ImGui::SameLine();
   if (ImGui::Button("转换格式")) {
