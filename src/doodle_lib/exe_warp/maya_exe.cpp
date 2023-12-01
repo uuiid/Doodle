@@ -113,7 +113,8 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
       boost::system::error_code l_ec{error_enum::file_not_exists};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
       l_msg.message("没有找到maya文件");
-      call_attr(l_ec);
+      boost::asio::post(std::bind(std::move(call_attr), boost::system::error_code{}));
+      return;
     }
 
     auto l_path = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
@@ -137,8 +138,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
         l_msg.set_state(l_msg.fail);
         l_msg.message("进程超时，结束任务\n");
         child_attr.terminate();
-        in_code = error_enum::time_out;
-        call_attr(in_code);
       } else {
         DOODLE_LOG_ERROR(in_code);
       }
@@ -162,7 +161,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
               auto &&l_msg = mag_attr.get<process_message>();
               l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
               l_msg.message(fmt::format("退出代码 {}", in_exit));
-              call_attr(in_error_code);
+              boost::asio::post(std::bind(std::move(call_attr), in_error_code));
               next_run();
             },
         boost::process::windows::hide,
@@ -314,7 +313,7 @@ void maya_exe::queue_up(
   l_run->file_path_attr      = in_run_path;
   l_run->program_path        = p_i->run_path;
   l_run->maya_program_path   = find_maya_path();
-  l_run->call_attr = std::move(in_call_fun);
+  l_run->call_attr           = std::move(in_call_fun);
   notify_run();
 }
 maya_exe::~maya_exe() {
