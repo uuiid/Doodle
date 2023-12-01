@@ -33,8 +33,8 @@
 #include "MoviePipelinePIEExecutor.h"
 #include "MoviePipelineInProcessExecutor.h"
 #include "MoviePipelineUtils.h"
-#include "DoodleMoviePipelineExecutor.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "LevelSequencePlayer.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -278,6 +278,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     //------------
                     if (AnimSeq)
                     {
+                        AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+                        //------------------
                         AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ASkeletalMeshActor::StaticClass(), FVector::ZAxisVector);
                         ASkeletalMeshActor* L_Actor = CastChecked<ASkeletalMeshActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
                         L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
