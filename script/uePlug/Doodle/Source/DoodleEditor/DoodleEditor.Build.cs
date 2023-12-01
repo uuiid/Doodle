@@ -125,7 +125,9 @@ public class doodleEditor : ModuleRules
 				"Sockets",
 				"Networking",
 				"SequencerWidgets", // 曲线编辑器
-			}
+				//---------
+				"MovieRenderPipelineRenderPasses",
+            }
 		);
 
 
