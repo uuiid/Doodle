@@ -30,19 +30,32 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     std::lock_guard const _lock{data_->_mutex};
-
+    if (data_->p_log.empty() && data_->p_err.empty()) {
+      data_->p_state = process_message::state::run;
+      data_->p_time  = chrono::system_clock::now();
+    }
+    constexpr auto g_success = magic_enum::enum_name(process_message::state::success);
+    constexpr auto g_fail    = magic_enum::enum_name(process_message::state::fail);
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
       case spdlog::level::level_enum::debug:
       case spdlog::level::level_enum::info:
-        data_->p_log += fmt::to_string(formatted);
+        data_->p_log.append(formatted.data(), formatted.size());
         break;
       case spdlog::level::level_enum::warn:
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
+        data_->p_err.append(formatted.data(), formatted.size());
       case spdlog::level::level_enum::off:
-        data_->p_err += fmt::to_string(formatted);
+        data_->p_end      = chrono::system_clock::now();
+        data_->p_progress = {1, 1};
+        if (msg.payload == g_success) {
+          data_->p_state = process_message::state::success;
+        } else if (msg.payload == g_fail) {
+          data_->p_state = process_message::state::fail;
+        }
         break;
+
       case spdlog::level::level_enum::n_levels:
         break;
     }

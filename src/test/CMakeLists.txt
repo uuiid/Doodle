@@ -63,6 +63,7 @@ create_test_sourcelist(main_test
         core/error_enum.cpp
         core/folder_is_save.cpp
         core/auto_light.cpp
+        core/process_message.cpp
 )
 
 # add the executable
