@@ -34,6 +34,8 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       data_->p_state = process_message::state::run;
       data_->p_time  = chrono::system_clock::now();
     }
+    constexpr auto g_success = magic_enum::enum_name(process_message::state::success);
+    constexpr auto g_fail    = magic_enum::enum_name(process_message::state::fail);
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
       case spdlog::level::level_enum::debug:
@@ -45,6 +47,14 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::critical:
         data_->p_err.append(formatted.data(), formatted.size());
       case spdlog::level::level_enum::off:
+        data_->p_end      = chrono::system_clock::now();
+        data_->p_progress = {1, 1};
+        if (msg.payload == g_success) {
+          data_->p_state = process_message::state::success;
+        } else if (msg.payload == g_fail) {
+          data_->p_state = process_message::state::fail;
+        }
+        break;
 
       case spdlog::level::level_enum::n_levels:
         break;
