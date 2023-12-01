@@ -339,6 +339,9 @@ void maya_to_exe_file::import_file() const {
 void maya_to_exe_file::render(boost::system::error_code) const {
   data_->logger_->log(log_loc(), level::level_enum::info, "开始排屏");
   auto l_exe = g_ctx().get<ue_exe_ptr>();
+  if (FSys::exists(data_->out_dir)) {
+    FSys::remove_all(data_->out_dir);
+  }
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{fmt::format(
