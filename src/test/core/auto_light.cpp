@@ -56,6 +56,9 @@ class ue_exe_test : public doodle::ue_exe {
  private:
   void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
     doodle::log_info(fmt::format("ue_exe_test {}", in_command_line));
+    if (!doodle::FSys::exists("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89")) {
+      doodle::FSys::create_directories("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89");
+    }
     doodle::FSys::copy(
         "C:/Users/TD/Pictures/Screenshots", "D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89",
         doodle::FSys::copy_options::overwrite_existing
