@@ -268,7 +268,6 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       data_->render_type_ = render_type::update;
       break;
     case render_type::update:
-    case render_type::update_end:
       break;
   }
 }

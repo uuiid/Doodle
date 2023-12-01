@@ -28,7 +28,6 @@ class maya_to_exe_file {
     import_file,
     render,
     update,
-    update_end,
   };
 
   struct data_t {
