@@ -14,7 +14,7 @@ class maya_to_exe_file {
  private:
   // maya 输出结果文件内容
   FSys::path maya_out_file_{};
-  FSys::path update_dir_{};
+  FSys::path update_dir_{};  // 传入的上传路径, 我们会对其进行组合
   entt::handle msg_{};
   boost::asio::any_io_executor executor_{};
   static constexpr auto g_config        = "Config";
@@ -44,6 +44,8 @@ class maya_to_exe_file {
     std::string create_map_{};       // 渲染生成关卡(只包含导入的文件)
     std::string render_sequence_{};  // 渲染序列文件
     FSys::path out_dir{};
+    FSys::path update_dir_{};  // 真正的上传文件路径
+
     boost::asio::any_completion_handler<void(boost::system::error_code)> end_call_{};
   };
   std::shared_ptr<data_t> data_{};

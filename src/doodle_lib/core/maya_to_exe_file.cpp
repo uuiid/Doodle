@@ -114,7 +114,10 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
   l_out_file.out_file_dir = data_->render_project_ / g_saved / g_movie_renders /
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
-  data_->out_dir = l_out_file.out_file_dir;
+  data_->out_dir     = l_out_file.out_file_dir;
+
+  data_->update_dir_ = update_dir_ / l_out_file.project /
+                       fmt::format("ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
 
   // 渲染配置
   {
@@ -366,12 +369,12 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     return;
   }
 
-  if (!FSys::exists(update_dir_)) {
-    FSys::create_directories(update_dir_);
+  if (!FSys::exists(data_->update_dir_)) {
+    FSys::create_directories(data_->update_dir_);
   }
 
   auto l_loc_prj = data_->render_project_ / g_content;
-  auto l_rem_prj = update_dir_ / g_content;
+  auto l_rem_prj = data_->update_dir_ / g_content;
 
   // 复制内容文件夹
   for (auto &&l_file : FSys::recursive_directory_iterator{l_loc_prj}) {
@@ -404,7 +407,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     return;
   }
 
-  auto l_out_rem_dir = update_dir_ / g_saved / g_movie_renders / l_out_loc_dir.filename();
+  auto l_out_rem_dir = data_->update_dir_ / g_saved / g_movie_renders / l_out_loc_dir.filename();
   if (!FSys::exists(l_out_rem_dir)) FSys::create_directories(l_out_rem_dir);
   for (auto &&l_file : FSys::directory_iterator{l_out_loc_dir}) {
     auto l_rem_file = l_out_rem_dir / l_file.path().filename();
