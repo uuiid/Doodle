@@ -47,7 +47,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
     auto &l_mag = mag_attr.patch<process_message>();
 
     l_mag.set_state(l_mag.run);
-    logger_attr->log(log_loc(), level::info, "开始运行 ue_exe: {}", ue_path);
+    logger_attr->log(log_loc(), level::info, "开始运行 ue_exe: {} {}", ue_path, arg_attr);
     cancel_attr = l_mag.aborted_sig.connect([this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
