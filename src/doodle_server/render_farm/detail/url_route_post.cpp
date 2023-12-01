@@ -34,7 +34,7 @@ void render_job_type_post::operator()(
   }
 
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_h.emplace<process_message>();
+  l_h.emplace<process_message>("解析json, 开始渲染");
   try {
     auto l_json = nlohmann::json::parse(in_request.body());
     l_h.emplace<ue4_task>(l_h, l_json.get<ue4_task::arg_t>());

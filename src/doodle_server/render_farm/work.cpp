@@ -233,7 +233,7 @@ boost::system::error_code work::run_job(const entt::handle& in_handle, const nlo
   try {
     l_ue->server_id = in_json["id"].get<entt::entity>();
     auto l_h        = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<process_message>();
+    l_h.emplace<process_message>(fmt::format("运行job {}", l_h));
     l_h.emplace<render_ue4>(l_h, in_json["arg"].get<render_ue4::arg_t>()).run();
     l_ue->run_handle = l_h;
   } catch (const nlohmann::json::exception& e) {
