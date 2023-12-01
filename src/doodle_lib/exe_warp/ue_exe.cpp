@@ -13,6 +13,7 @@
 
 #include "boost/asio/read.hpp"
 #include "boost/asio/readable_pipe.hpp"
+#include "boost/locale/encoding.hpp"
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
 #include <boost/process/windows.hpp>
@@ -38,6 +39,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   FSys::path ue_path{};
   entt::handle mag_attr{};
   std::string arg_attr{};
+  logger_ptr logger_attr{};
   ue_exe *self_{};
   void run() {
     if (ue_path.empty() || !FSys::exists(ue_path)) throw_exception(doodle_error{"ue_exe path is empty or not exists"});
@@ -45,8 +47,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
     auto &l_mag = mag_attr.patch<process_message>();
 
     l_mag.set_state(l_mag.run);
-    l_mag.message(fmt::format("开始运行 ue_exe: {}\n", ue_path));
-    DOODLE_LOG_INFO("开始运行 ue_exe: {} {}", ue_path, arg_attr);
+    logger_attr->log(log_loc(), level::info, "开始运行 ue_exe: {}", ue_path);
     cancel_attr = l_mag.aborted_sig.connect([this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
@@ -64,7 +65,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               auto &&l_msg = mag_attr.get<process_message>();
               l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
-              l_msg.message(fmt::format("退出代码 {}", in_exit));
+              logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
               boost::asio::post(std::bind(std::move(call_attr), in_error_code));
               self_->notify_run();
             },
@@ -84,11 +85,11 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
             l_msg.progress_step({1, 300});
-            l_msg.message(l_ine + '\n', l_msg.info);
+            logger_attr->log(log_loc(), level::info, conv::to_utf<char>(l_ine, "GBK"));
             read_out();
           } else {
             out_attr.close();
-            DOODLE_LOG_ERROR(in_code.what());
+            default_logger_raw()->error(conv::to_utf<char>(in_code.what(), "GBK"));
           }
         }
     );
@@ -104,11 +105,11 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             std::getline(l_istream, l_line);
             /// @brief 此处在主线程调用
             l_msg.progress_step({1, 20000});
-            l_msg.message(l_line + '\n');
+            logger_attr->log(log_loc(), level::warn, conv::to_utf<char>(l_line, "GBK"));
             read_err();
           } else {
             err_attr.close();
-            DOODLE_LOG_ERROR(in_code.what());
+            default_logger_raw()->error(conv::to_utf<char>(in_code.what(), "GBK"));
           }
         }
     );
@@ -131,12 +132,13 @@ void ue_exe::notify_run() {
 
 void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun) {
   if (ue_path_.empty()) find_ue_exe();
-  auto l_run       = queue_list_.emplace(std::make_shared<run_ue>());
-  l_run->ue_path   = ue_path_;
-  l_run->mag_attr  = in_msg;
-  l_run->arg_attr  = in_command_line;
-  l_run->call_attr = std::move(in_call_fun);
-  l_run->self_     = this;
+  auto l_run         = queue_list_.emplace(std::make_shared<run_ue>());
+  l_run->ue_path     = ue_path_;
+  l_run->mag_attr    = in_msg;
+  l_run->arg_attr    = in_command_line;
+  l_run->call_attr   = std::move(in_call_fun);
+  l_run->self_       = this;
+  l_run->logger_attr = in_msg.patch<process_message>().logger();
   notify_run();
 }
 void ue_exe::find_ue_exe() {
