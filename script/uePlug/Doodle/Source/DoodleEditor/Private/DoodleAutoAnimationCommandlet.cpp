@@ -37,6 +37,7 @@
 #include "LevelSequencePlayer.h"
 #include "Factories/WorldFactory.h"
 #include "MoviePipelineImageSequenceOutput.h"
+#include "MoviePipelineDeferredPasses.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -79,7 +80,7 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     NewSection->SetRange(SectionRange);
     NewTrack->AddSection(*NewSection);
     MapName = FName(JsonObject->GetStringField(TEXT("main_map")));
-    NewSection->SetLevelNames({ MapName });
+    NewSection->SetLevelNames({ MapName,FName(WorldPackagePath) });
     //NewSection->SetVisibility(ELevelVisibility::Visible);
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     EditorAssetSubsystem->SaveLoadedAsset(TheLevelSequence);
@@ -327,12 +328,13 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
     UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
     OutputSetting->OutputDirectory.Path = DestinationPath;
     //----------------------
-    //UMoviePipelineImageSequenceOutputBase* FormatSetting = Cast<UMoviePipelineImageSequenceOutputBase>(Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutputBase::StaticClass()));
-    //if (FormatSetting->IsA(UMoviePipelineImageSequenceOutput_JPG::StaticClass()))
-    //{
-    //    Config->RemoveSetting(FormatSetting);
-    //}
-    //UMoviePipelineImageSequenceOutput_PNG* PngSetting = Cast<UMoviePipelineImageSequenceOutput_PNG>(Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()));
+    UMoviePipelineImageSequenceOutput_JPG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_JPG>();
+    if (FormatSetting)
+    {
+        Config->RemoveSetting(FormatSetting);
+    }
+    Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
+    Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
     //-------------------------Save
     MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
     FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
