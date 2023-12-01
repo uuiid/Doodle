@@ -352,6 +352,10 @@ void UDoodleFbxImport_1::ImportFile() {
           /// 这里无效代码, 防止崩溃
           TArray<UObject*> Ll{};
           L_Anim->GetPreloadDependencies(Ll);
+          if (L_Anim->IsDataModelValid()) {
+            L_Anim->ClearAllCachedCookedPlatformData();
+            L_Anim->BeginCacheDerivedDataForCurrentPlatform();
+          }
         }
         return true;
       });
@@ -367,6 +371,10 @@ void UDoodleFbxImport_1::ImportFile() {
           /// 这里无效代码, 防止崩溃
           TArray<UObject*> Ll{};
           L_Seq->GetPreloadDependencies(Ll);
+          if (L_Seq->IsDataModelValid()) {
+            L_Seq->ClearAllCachedCookedPlatformData();
+            L_Seq->BeginCacheDerivedDataForCurrentPlatform();
+          }
         }
       }
       if (SkinObj) {
