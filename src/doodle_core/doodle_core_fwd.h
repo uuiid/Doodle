@@ -42,8 +42,15 @@ namespace doodle {
 using entt::literals::operator""_hs;
 using logger_ptr = std::shared_ptr<spdlog::logger>;
 namespace level {
+using spdlog::level::critical;
+using spdlog::level::debug;
+using spdlog::level::err;
+using spdlog::level::info;
 using spdlog::level::level_enum;
-}
+using spdlog::level::off;
+using spdlog::level::trace;
+using spdlog::level::warn;
+}  // namespace level
 
 namespace details {
 class database_info;
