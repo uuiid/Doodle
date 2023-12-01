@@ -65,7 +65,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
               auto &&l_msg = mag_attr.get<process_message>();
               l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
               l_msg.message(fmt::format("退出代码 {}", in_exit));
-              call_attr(in_error_code);
+              boost::asio::post(std::bind(std::move(call_attr), in_error_code));
               self_->notify_run();
             },
         boost::process::windows::hide};
