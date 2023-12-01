@@ -23,7 +23,9 @@ public:
 	virtual int32 Main(const FString& Params) override;
 private:
 	void OnCreateSequence();
+	void OnCreateWorld();
 	void OnBuildSequence();
+	void OnSaveReanderConfig();
 
 	TSharedPtr<FJsonObject> JsonObject;
 	ULevelSequence* TheLevelSequence;
@@ -33,6 +35,8 @@ private:
 	FString ImportPath;
 	FName MapName;
 	FString MoviePipelineConfigPath;
+	FString WorldPackagePath;
+	UWorld* TheSequenceWorld;
 
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
