@@ -35,6 +35,8 @@
 #include "MoviePipelineUtils.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "LevelSequencePlayer.h"
+#include "Factories/WorldFactory.h"
+#include "MoviePipelineImageSequenceOutput.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -68,6 +70,7 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     OnCreateSequence();
     //--------------
     ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
+    OnCreateWorld();
     OnBuildSequence();
     //---------------
     UMovieSceneLevelVisibilityTrack* NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
@@ -80,27 +83,8 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     //NewSection->SetVisibility(ELevelVisibility::Visible);
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     EditorAssetSubsystem->SaveLoadedAsset(TheLevelSequence);
-    //--------------
-    DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
-    UMoviePipelineQueueSubsystem* Subsystem = GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>();
-    UMoviePipelineExecutorJob* NewJob = Subsystem->GetQueue()->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
-    UMoviePipelinePrimaryConfig* Config =  NewJob->GetConfiguration();
-    UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
-    OutputSetting->OutputDirectory.Path = DestinationPath;
-    //----------------------
-    MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
-    FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
     //-----------------
-    UPackage* NewPackage = CreatePackage(*MoviePipelineConfigPath);
-    NewPackage->MarkAsFullyLoaded();
-    //---------------------
-    UObject* DuplicateObject = StaticDuplicateObject(Config, NewPackage, FName(*MoviePipelineConfigPath), RF_NoFlags);
-    UMoviePipelinePrimaryConfig* NewConfig = Cast<UMoviePipelinePrimaryConfig>(DuplicateObject);
-    NewConfig->SetFlags(RF_Public | RF_Transactional | RF_Standalone);
-    NewConfig->MarkPackageDirty();
-    //--------------------------
-    FAssetRegistryModule::AssetCreated(NewConfig);
-    EditorAssetSubsystem->SaveLoadedAsset(NewConfig);
+    OnSaveReanderConfig();
     return 0;
 }
 
@@ -148,8 +132,34 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
     }
 }
 
+void UDoodleAutoAnimationCommandlet::OnCreateWorld() 
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    WorldPackagePath = JsonObject->GetStringField(TEXT("world"));
+    TheSequenceWorld = LoadObject<UWorld>(nullptr, *WorldPackagePath);
+    if (!TheSequenceWorld)
+    {
+        UWorldFactory* Factory = NewObject<UWorldFactory>();
+        UPackage* Pkg = CreatePackage(*WorldPackagePath);
+        Pkg->FullyLoad();
+        Pkg->MarkPackageDirty();
+        const FString PackagePath = FPackageName::GetLongPackagePath(WorldPackagePath);
+        FString BaseFileName = FPaths::GetBaseFilename(WorldPackagePath);
+        //---------------
+        FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+        UObject* TempObject = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
+        TheSequenceWorld = Cast<UWorld>(TempObject);
+        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+        AssetRegistryModule.Get().AssetCreated(TheSequenceWorld);
+        //------------------------
+        TheSequenceWorld->Modify();
+        EditorAssetSubsystem->SaveLoadedAsset(TheSequenceWorld);
+    }
+}
+
 void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 {
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
     TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("files"));
     for (TSharedPtr<FJsonValue> JsonFile : JsonFiles)
@@ -200,7 +210,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 //-------------------
                 FFBXInOutParameters InOutParams;
                 UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
-                MovieSceneToolHelpers::ReadyFBXForImport(ImportPath, L_ImportFBXSettings, InOutParams);
+                //MovieSceneToolHelpers::ReadyFBXForImport(Path, L_ImportFBXSettings, InOutParams);
                 L_ImportFBXSettings->bMatchByNameOnly = false;
                 L_ImportFBXSettings->bCreateCameras = false;
                 L_ImportFBXSettings->bReplaceTransformTrack = true;
@@ -239,7 +249,6 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 Task->bReplaceExisting = true;
                 Task->DestinationPath = ImportPath;
                 Task->bSave = true;
-                Task->DestinationName = FGuid::NewGuid().ToString(EGuidFormats::Digits);
                 Task->Options = K_FBX_F->ImportUI;
                 Task->Filename = Path;
                 Task->Factory = K_FBX_F;
@@ -266,8 +275,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     IAssetRegistry::Get()->GetAssetsByPath(FName(*ImportPath), OutAssetData, false);
                     for (FAssetData Asset : OutAssetData)
                     {
-                        UEditorAssetSubsystem* AssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-                        AssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
+                        EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
                         UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset());
                         if (Anim && Anim->GetSkeleton() == TmpSkeletalMesh->GetSkeleton())
                         {
@@ -280,12 +288,12 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     {
                         AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
                         //------------------
-                        AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ASkeletalMeshActor::StaticClass(), FVector::ZAxisVector);
-                        ASkeletalMeshActor* L_Actor = CastChecked<ASkeletalMeshActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
+                        ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
                         L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
                         L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
-
-                        const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddSpawnable(L_Actor->GetName(), *L_Actor);
+                        //---------------------
+                        const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
+                        TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor,TheSequenceWorld);
                         TheLevelSequence->GetMovieScene()->Modify();
                         //-----------------------
                         UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
@@ -298,13 +306,47 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
                         //AnimSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
                         //AnimSection->SetPreRollFrames(50);
-                        TempActor->Destroy();
+                        AnimSection->Modify();
                     }
                 }
             }
         }
         Task->RemoveFromRoot();
     }
+    EditorAssetSubsystem->SaveLoadedAssets({ TheLevelSequence,TheSequenceWorld });
+}
+
+void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
+    //------------
+    UMoviePipelineQueueSubsystem* Subsystem = GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>();
+    UMoviePipelineExecutorJob* NewJob = Subsystem->GetQueue()->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
+    UMoviePipelinePrimaryConfig* Config = NewJob->GetConfiguration();
+    UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
+    OutputSetting->OutputDirectory.Path = DestinationPath;
+    //----------------------
+    //UMoviePipelineImageSequenceOutputBase* FormatSetting = Cast<UMoviePipelineImageSequenceOutputBase>(Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutputBase::StaticClass()));
+    //if (FormatSetting->IsA(UMoviePipelineImageSequenceOutput_JPG::StaticClass()))
+    //{
+    //    Config->RemoveSetting(FormatSetting);
+    //}
+    //UMoviePipelineImageSequenceOutput_PNG* PngSetting = Cast<UMoviePipelineImageSequenceOutput_PNG>(Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()));
+    //-------------------------Save
+    MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
+    FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
+    //-----------------
+    UPackage* NewPackage = CreatePackage(*MoviePipelineConfigPath);
+    NewPackage->MarkAsFullyLoaded();
+    //---------------------
+    UObject* DuplicateObject = StaticDuplicateObject(Config, NewPackage, FName(*ConfigName), RF_NoFlags);
+    UMoviePipelinePrimaryConfig* NewConfig = Cast<UMoviePipelinePrimaryConfig>(DuplicateObject);
+    NewConfig->SetFlags(RF_Public | RF_Transactional | RF_Standalone);
+    NewConfig->MarkPackageDirty();
+    //--------------------------
+    FAssetRegistryModule::AssetCreated(NewConfig);
+    EditorAssetSubsystem->SaveLoadedAsset(NewConfig);
 }
 
 //"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=E:/动画自动导入/DBXY_EP360_SC001_AN/out.json
