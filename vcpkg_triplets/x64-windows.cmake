@@ -4,4 +4,5 @@ set(VCPKG_LIBRARY_LINKAGE dynamic)
 
 if (PORT MATCHES "imgui")
     set(VCPKG_CXX_FLAGS "-DUNICODE -D_UNICODE")
+    set(VCPKG_C_FLAGS "-D_UNICODE")
 endif ()
