@@ -50,7 +50,10 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
 }
 
 void file_translator::async_open_impl(const FSys::path& in_path) {
-  if (!in_path.empty() && !FSys::exists(in_path)) return;
+  if (!in_path.empty() && !FSys::exists(in_path)) {
+    default_logger_raw()->log(log_loc(), level::warn, "文件不存在 {}", in_path);
+    return;
+  }
 
   project_path = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
   {
