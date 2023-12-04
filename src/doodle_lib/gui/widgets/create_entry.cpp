@@ -75,10 +75,44 @@ void create_entry::switch_sources_file() {
       }))
     sources_file_type_ =
         args_->paths_.size() == 1 ? sources_file_type::project_open : sources_file_type::project_import;
-  else
+  else {
     sources_file_type_ = sources_file_type::other_files;
+    find_duplicate_file();
+  }
 }
+
+void create_entry::find_duplicate_file() {
+  auto l_view = g_reg()->view<assets_file, database>().each();
+  auto l_uuid_map =
+      l_view | ranges::views::transform([](const decltype(*l_view.begin()) &in_pair) -> std::pair<uuid, entt::entity> {
+        return {std::get<database &>(in_pair).uuid(), std::get<entt::entity>(in_pair)};
+      }) |
+      ranges::to<std::map>();
+  auto l_path_map = args_->paths_ |
+                    ranges::views::transform([](const FSys::path &in_path) -> std::pair<FSys::path, uuid> {
+                      return {in_path, FSys::software_flag_file(in_path)};
+                    }) |
+                    ranges::to<std::map>();
+  duplicate_paths_ = args_->paths_ | ranges::views::filter([&](const FSys::path &in_path) -> bool {
+                       auto l_uuid = l_path_map.at(in_path);
+                       return l_uuid_map.contains(l_uuid);
+                     }) |
+                     ranges::to_vector;
+  args_->paths_ = args_->paths_ | ranges::views::filter([&](const FSys::path &in_path) -> bool {
+                    auto l_uuid = l_path_map.at(in_path);
+                    return !l_uuid_map.contains(l_uuid);
+                  }) |
+                  ranges::to_vector;
+  duplicate_handles_ = duplicate_paths_ | ranges::views::transform([&](const FSys::path &in_path) -> entt::handle {
+                         return {*g_reg(), l_uuid_map.at(l_path_map.at(in_path))};
+                       }) |
+                       ranges::to_vector;
+}
+
 void create_entry::render_other_files() {
+  if (!duplicate_paths_.empty())
+    dear::Text(fmt::format("库中具有重复类(重复的将不进行添加):\n {}", fmt::join(duplicate_paths_, "\n")));
+
   ImGui::Text("添加文件类别:");
   for (auto &&i : g_reg()->ctx().get<project_config::base_config>().assets_list) {
     if (ImGui::Selectable(i.c_str())) {
@@ -96,28 +130,28 @@ void create_entry::render_other_files() {
       if (auto *l_f = g_windows_manage().find_windows<assets_filter_widget>()) {
         l_f->init();
       }
-      args_->fun_(
-          args_->paths_ | ranges::views::transform([=](const FSys::path &in_path) -> entt::handle {
-            auto l_ent = entt::handle{*g_reg(), g_reg()->create()};
-            //        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
-            /// \brief 这里使用 lexically_proximate 防止相对路径失败
-            //        auto l_path     = in_path.lexically_proximate(l_prj_path);
+      auto l_handle = args_->paths_ | ranges::views::transform([=, this](const FSys::path &in_path) -> entt::handle {
+                        auto l_ent = entt::handle{*g_reg(), g_reg()->create()};
+                        //        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
+                        /// \brief 这里使用 lexically_proximate 防止相对路径失败
+                        //        auto l_path     = in_path.lexically_proximate(l_prj_path);
 
-            season::analysis_static(l_ent, in_path);
-            episodes::analysis_static(l_ent, in_path);
-            shot::analysis_static(l_ent, in_path);
-            episodes::conjecture_season(l_ent);
+                        season::analysis_static(l_ent, in_path);
+                        episodes::analysis_static(l_ent, in_path);
+                        shot::analysis_static(l_ent, in_path);
+                        episodes::conjecture_season(l_ent);
 
-            if (FSys::exists(in_path)) {
-              l_ent.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
-            }
-            find_icon(l_ent, in_path);
-            l_ent.emplace<database>(FSys::software_flag_file(in_path));
-            l_ent.emplace<assets_file>(in_path).assets_attr(l_ass);
-            return l_ent;
-          }) |
-          ranges::to_vector
-      );
+                        if (FSys::exists(in_path)) {
+                          l_ent.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
+                        }
+                        find_icon(l_ent, in_path);
+                        l_ent.emplace<database>(FSys::software_flag_file(in_path));
+                        l_ent.emplace<assets_file>(in_path).assets_attr(l_ass);
+                        return l_ent;
+                      }) |
+                      ranges::to_vector;
+      l_handle |= ranges::actions::push_back(duplicate_handles_);
+      args_->fun_(l_handle);
       ImGui::CloseCurrentPopup();
     }
   }

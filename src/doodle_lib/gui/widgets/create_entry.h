@@ -34,6 +34,9 @@ class create_entry {
 
  private:
   std::shared_ptr<init_args> args_{};
+  /// 重复的路径
+  std::vector<FSys::path> duplicate_paths_{};
+  std::vector<entt::handle> duplicate_handles_{};
   enum class sources_file_type { project_open, project_import, other_files };
   sources_file_type sources_file_type_{sources_file_type::project_open};
 
@@ -43,6 +46,8 @@ class create_entry {
   void render_project_open_files();
   void render_project_import_files();
   void render_other_files();
+
+  void find_duplicate_file();
 
  public:
   explicit create_entry(const init_args& in_args) : args_(std::make_shared<init_args>(in_args)) {
