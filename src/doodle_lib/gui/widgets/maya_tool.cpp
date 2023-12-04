@@ -34,7 +34,7 @@ namespace doodle::gui {
 
 namespace maya_tool_ns {
 
-#ifdef DNDEBUG
+#ifdef NDEBUG
 constexpr auto update_dir{"//192.168.10.218/Doodletemp/auto_light/"};
 #else
 constexpr auto update_dir{"D:/doodle/cache/"};
