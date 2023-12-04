@@ -13,7 +13,6 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
-#include "doodle_app/gui/base/base_window.h"
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
@@ -21,7 +20,6 @@
 
 #include "assets_filter_widget.h"
 #include "entt/entity/fwd.hpp"
-#include "fmt/compile.h"
 #include "fmt/format.h"
 #include "imgui.h"
 #include "range/v3/view/transform.hpp"
