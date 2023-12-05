@@ -11,6 +11,7 @@
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/project.h"
 #include <doodle_core/database_task/sqlite_client.h>
+#include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_app/gui/base/base_window.h>
@@ -145,6 +146,8 @@ void create_entry::render_other_files() {
                         find_icon(l_ent, in_path);
                         l_ent.emplace<database>(FSys::software_flag_file(in_path));
                         l_ent.emplace<assets_file>(in_path).assets_attr(l_ass);
+
+                        ue_main_map::find_ue_project_file(l_ent);
                         return l_ent;
                       }) |
                       ranges::to_vector;
