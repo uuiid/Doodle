@@ -38,6 +38,8 @@
 #include "Factories/WorldFactory.h"
 #include "MoviePipelineImageSequenceOutput.h"
 #include "MoviePipelineDeferredPasses.h"
+#include "Engine/LevelStreamingDynamic.h"
+#include "EditorLevelUtils.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -69,13 +71,25 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     }
     //--------------------
     OriginalMapPath = FName(JsonObject->GetStringField(TEXT("original_map")));
-    //RenderMapPath = FName(JsonObject->GetStringField(TEXT("render_map")));
+    RenderMapPath = FName(JsonObject->GetStringField(TEXT("render_map")));
     CreateMapPath = FName(JsonObject->GetStringField(TEXT("create_map")));
+    //---------------------------
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    if (EditorAssetSubsystem->DoesAssetExist(RenderMapPath.ToString()))
+    {
+        EditorAssetSubsystem->DeleteAsset(RenderMapPath.ToString());
+    }
     OnCreateSequence();
     //--------------
     ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
     OnCreateSequenceWorld();
+    EditorAssetSubsystem->DuplicateAsset(OriginalMapPath.ToString(), RenderMapPath.ToString());
     OnBuildSequence();
+    //---------------------
+    UWorld* RenderLevel = LoadObject<UWorld>(nullptr, *RenderMapPath.ToString());
+    ULevelStreaming* TempStreamingLevel = NewObject<ULevelStreaming>(RenderLevel, ULevelStreamingDynamic::StaticClass(), NAME_None, RF_NoFlags, NULL);
+    TempStreamingLevel->SetWorldAsset(TheSequenceWorld);
+    RenderLevel->AddStreamingLevel(TempStreamingLevel);
     //---------------
     UMovieSceneLevelVisibilityTrack* NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
     UMovieSceneLevelVisibilitySection* NewSection = CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
@@ -84,17 +98,17 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     NewTrack->AddSection(*NewSection);
     //-----------------
     TArray<FName> LevelNames;
-    LevelNames.Add(OriginalMapPath);
-    UWorld* TempLevel = LoadObject<UWorld>(nullptr, *OriginalMapPath.ToString());
-    for (ULevelStreaming* StreamingLevel : TempLevel->GetStreamingLevels())
+    for (ULevelStreaming* StreamingLevel : RenderLevel->GetStreamingLevels())
     {
-        LevelNames.Add(StreamingLevel->GetWorldAssetPackageFName());
+        if (StreamingLevel && !LevelNames.Contains(StreamingLevel->GetWorldAssetPackageFName()))
+        {
+            LevelNames.Add(StreamingLevel->GetWorldAssetPackageFName());
+        }
     }
-    LevelNames.Add(CreateMapPath);
+    LevelNames.Add(RenderMapPath);
     NewSection->SetLevelNames(LevelNames);
     //NewSection->SetVisibility(ELevelVisibility::Visible);
-    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-    EditorAssetSubsystem->SaveLoadedAsset(TheLevelSequence);
+    EditorAssetSubsystem->SaveLoadedAssets({ TheLevelSequence,RenderLevel });
     //-----------------
     OnSaveReanderConfig();
     return 0;
@@ -166,6 +180,16 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
         //------------------------
         TheSequenceWorld->Modify();
         EditorAssetSubsystem->SaveLoadedAsset(TheSequenceWorld);
+    }
+    //--------------------
+    ULevel* Level = TheSequenceWorld->GetCurrentLevel();
+    for (int32 Index = 0; Index < Level->Actors.Num(); Index++)
+    {
+        AActor* Actor = Level->Actors[Index];
+        if (Actor != nullptr && Actor->IsA<ASkeletalMeshActor>())
+        {
+            Actor->Destroy();
+        }
     }
 }
 
@@ -333,9 +357,8 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
     //------------
-    UMoviePipelineQueueSubsystem* Subsystem = GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>();
-    UMoviePipelineExecutorJob* NewJob = Subsystem->GetQueue()->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
-    UMoviePipelinePrimaryConfig* Config = NewJob->GetConfiguration();
+    UMoviePipelinePrimaryConfig* Config = NewObject<UMoviePipelinePrimaryConfig>(GetTransientPackage());
+    Config->SetFlags(RF_Transactional);
     UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
     OutputSetting->OutputDirectory.Path = DestinationPath;
     //----------------------
