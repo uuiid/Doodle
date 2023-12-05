@@ -29,15 +29,16 @@ void ue_main_map_edit::test_is_ue_dir(const FSys::path &in_path) {
 void ue_main_map_edit::init(const entt::handle &in_handle) {
   if (render_id_ == in_handle) return;
 
+  if (in_handle.all_of<ue_main_map>()) {
+    u_project_str_ = in_handle.get<ue_main_map>().map_path_.generic_string();
+    return;
+  }
   is_ue_dir_ = false;
   if (in_handle.all_of<assets_file>()) {
     test_is_ue_dir(in_handle.get<assets_file>().path_attr());
   }
   if (is_ue_dir_) {
     in_handle.emplace_or_replace<ue_main_map>(u_project_path_);
-  }
-  if (in_handle.all_of<ue_main_map>()) {
-    u_project_str_ = in_handle.get<ue_main_map>().map_path_.generic_string();
   }
 
   render_id_ = in_handle;
