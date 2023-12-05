@@ -46,6 +46,8 @@ class maya_to_exe_file {
     FSys::path out_dir{};
     FSys::path update_dir_{};  // 真正的上传文件路径
 
+    std::vector<FSys::path> extra_update_dir_{};  // 额外添加的上传路径
+
     boost::asio::any_completion_handler<void(boost::system::error_code)> end_call_{};
   };
   std::shared_ptr<data_t> data_{};

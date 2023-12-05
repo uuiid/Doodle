@@ -86,7 +86,13 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
                    }) |
                    ranges::to_vector;
 
-  auto l_path = l_maya_out_arg[0].out_file.filename();
+  auto l_path              = l_maya_out_arg[0].out_file.filename();
+  data_->extra_update_dir_ = l_maya_out_arg |
+                             ranges::views::transform([](const maya_to_exe_file_ns::maya_out_arg &in_arg) {
+                               return in_arg.out_file.parent_path();
+                             }) |
+                             ranges::to_vector;
+  data_->extra_update_dir_ |= ranges::actions::unique;
 
   maya_to_exe_file_ns::out_file l_out_file{};
   {
@@ -427,6 +433,34 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
             log_loc(), level::level_enum::err, "复制文件 {} 失败 {}", l_file.path(),
             boost::diagnostic_information(error)
         );
+      }
+    }
+  }
+
+  // 复制额外的输出
+  for (auto &&l_dir : data_->extra_update_dir_) {
+    if (!FSys::exists(l_dir)) {
+      data_->logger_->log(log_loc(), level::level_enum::err, "额外输出文件夹 {} 不存在", l_dir);
+      boost::system::error_code l_error_code{error_enum::file_not_exists};
+      BOOST_ASIO_ERROR_LOCATION(l_error_code);
+      call_end(l_error_code);
+      return;
+    }
+    auto l_rem_dir = data_->update_dir_ / l_dir.filename();
+    if (!FSys::exists(l_rem_dir)) FSys::create_directories(l_rem_dir);
+    for (auto &&l_file : FSys::directory_iterator{l_dir}) {
+      auto l_rem_file = l_rem_dir / l_file.path().filename();
+      if (!FSys::exists(l_rem_file) || l_file.file_size() != FSys::file_size(l_rem_file) ||
+          l_file.last_write_time() != FSys::last_write_time(l_rem_file)) {
+        try {
+          FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
+          FSys::last_write_time(l_rem_file, l_file.last_write_time());
+        } catch (const FSys::filesystem_error &error) {
+          data_->logger_->log(
+              log_loc(), level::level_enum::err, "复制文件 {} 失败 {}", l_file.path(),
+              boost::diagnostic_information(error)
+          );
+        }
       }
     }
   }
