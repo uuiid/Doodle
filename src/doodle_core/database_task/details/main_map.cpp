@@ -18,7 +18,7 @@ void sql_com<doodle::ue_main_map>::insert(conn_ptr &in_ptr, const std::vector<en
 
   for (auto &l_h : in_id) {
     auto &l_ue             = l_h.get<ue_main_map>();
-    l_pre.params.map_path_ = l_ue.map_path_;
+    l_pre.params.map_path_ = l_ue.map_path_.generic_string();
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     l_conn(l_pre);
   }
@@ -36,7 +36,7 @@ void sql_com<doodle::ue_main_map>::update(conn_ptr &in_ptr, const std::map<std::
   );
   for (auto &[id, l_h] : in_id) {
     auto &l_ue             = l_h.get<ue_main_map>();
-    l_pre.params.map_path_ = l_ue.map_path_;
+    l_pre.params.map_path_ = l_ue.map_path_.generic_string();
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     l_pre.params.id        = id;
     l_conn(l_pre);

@@ -12,8 +12,9 @@
 namespace doodle::gui::render {
 
 class ue_main_map_edit {
-  gui_cache_name_id map_path_id{"主要地图路径"s};
-  std::string map_path_{};
+  gui_cache_name_id map_path_id{"主要项目路径"s};
+  std::string u_project_str_{};
+  FSys::path u_project_path_{};
 
   bool is_ue_dir_{false};
 
