@@ -13,7 +13,9 @@ namespace doodle::gui::render {
 
 void ue_main_map_edit::test_is_ue_dir(const FSys::path &in_path) {
   if (!FSys::exists(in_path)) return;
-  if (!FSys::is_directory(in_path)) return;
+  if (is_ue_dir_ || in_path.root_path() == in_path) return;
+  if (!FSys::is_directory(in_path)) return test_is_ue_dir(in_path.parent_path());
+
   for (auto &&l_file : FSys::directory_iterator(in_path)) {
     if (l_file.path().extension() == ".uproject") {
       is_ue_dir_      = true;
@@ -21,12 +23,13 @@ void ue_main_map_edit::test_is_ue_dir(const FSys::path &in_path) {
       return;
     }
   }
-  is_ue_dir_ = false;
+  return test_is_ue_dir(in_path.parent_path());
 }
 
 void ue_main_map_edit::init(const entt::handle &in_handle) {
   if (render_id_ == in_handle) return;
 
+  is_ue_dir_ = false;
   if (in_handle.all_of<assets_file>()) {
     test_is_ue_dir(in_handle.get<assets_file>().path_attr());
   }
