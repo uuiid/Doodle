@@ -52,7 +52,7 @@ class DOODLE_CORE_API image_to_movie_interface {
       exists(in.path_attr) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
     });
     !in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
-    in_handle.get_or_emplace<process_message>(in_handle.get<FSys::path>().filename().string()).message("开始准备任务");
+    in_handle.get_or_emplace<process_message>(in_handle.get<FSys::path>().filename().string());
     auto l_out_path = this->create_out_path(in_handle);
     return boost::asio::async_initiate<CompletionHandler, void()>(
         [this, in_vector, l_out_path = std::move(l_out_path), in_handle](auto &&in_completion_handler) {

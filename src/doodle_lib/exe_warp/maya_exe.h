@@ -129,7 +129,6 @@ class maya_process_base {
   virtual ~maya_process_base() = default;
   virtual void run()           = 0;
   virtual bool running()       = 0;
-  virtual void cancel()        = 0;
 };
 }  // namespace maya_exe_ns
 

@@ -1,10 +1,11 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-avoid-bind"
 //
 // Created by TD on 2021/12/25.
 //
 
 #include "maya_exe.h"
 
-#include "doodle_core/configure/config.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
@@ -13,7 +14,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
-#include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/thread_pool/process_message.h>
 
@@ -57,31 +57,11 @@
 // #include <boost/process/v2/src.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 namespace doodle {
-namespace {
-// 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
-constexpr const auto fatal_error_znch{
-    LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab] 中保存)"};
 
-// Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
-constexpr const auto fatal_error_en_us{
-    LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.m[ab])"};
-
-}  // namespace
 namespace maya_exe_ns {
-
-FSys::path find_maya_work(const FSys::path &in_file_path) {
-  if (FSys::exists(in_file_path.parent_path() / "workspace.mel")) {
-    return in_file_path.parent_path();
-  }
-  if (FSys::exists(in_file_path.parent_path().parent_path() / "workspace.mel")) {
-    return in_file_path.parent_path().parent_path();
-  }
-  return in_file_path.parent_path();
-}
 
 class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_ns::maya_process_base {
  public:
-  entt::handle mag_attr{};
   FSys::path file_path_attr{};
 
   nlohmann::json run_script_attr{};
@@ -93,6 +73,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
   boost::asio::streambuf out_strbuff_attr{};
   boost::asio::streambuf err_strbuff_attr{};
+  logger_ptr log_attr{};
 
   maya_exe::call_fun_type call_attr{};
 
@@ -107,39 +88,25 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   bool running() override { return child_attr.running(); }
 
   void run() override {
-    auto &&l_msg = mag_attr.get<process_message>();
-
     if (program_path.empty()) {
       boost::system::error_code l_ec{error_enum::file_not_exists};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
-      l_msg.message("没有找到maya文件");
-      boost::asio::post(std::bind(std::move(call_attr), boost::system::error_code{}));
+      log_attr->log(log_loc(), level::warn, "没有找到maya文件");
+      boost::asio::post(std::bind(std::move(call_attr), l_ec));
       return;
     }
 
     auto l_path = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
 
-    l_msg.set_state(l_msg.run);
-    l_msg.message(fmt::format("开始写入配置文件 {} \n", l_path), l_msg.warning);
-    cancel_attr = l_msg.aborted_sig.connect([this]() {
-      auto &&l_msg = mag_attr.get<process_message>();
-      l_msg.set_state(l_msg.fail);
-      l_msg.message("进程被主动结束\n");
-      child_attr.terminate();
-      static boost::system::error_code l_ec{error_enum::user_cancel};
-      BOOST_ASIO_ERROR_LOCATION(l_ec);
-      cancel();
-    });
+    log_attr->log(log_loc(), level::warn, "开始写入配置文件 {}", l_path);
 
     timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
     timer_attr.async_wait([this](boost::system::error_code in_code) {
       if (!in_code) {
-        auto &&l_msg = mag_attr.get<process_message>();
-        l_msg.set_state(l_msg.fail);
-        l_msg.message("进程超时，结束任务\n");
+        log_attr->log(log_loc(), level::warn, "进程超时，结束任务");
         child_attr.terminate();
       } else {
-        DOODLE_LOG_ERROR(in_code);
+        log_attr->log(log_loc(), level::warn, in_code);
       }
     });
 
@@ -158,9 +125,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               timer_attr.cancel();
-              auto &&l_msg = mag_attr.get<process_message>();
-              l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
-              l_msg.message(fmt::format("退出代码 {}", in_exit));
+              log_attr->log(log_loc(), level::warn, "进程结束 {}", in_exit);
               boost::asio::post(std::bind(std::move(call_attr), in_error_code));
               next_run();
             },
@@ -175,7 +140,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     boost::asio::async_read_until(
         out_attr, out_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
-          auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
             /// @brief 此处在主线程调用
@@ -183,12 +147,11 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
             auto l_str = conv::to_utf<char>(l_ine, "GBK");
-            l_msg.progress_step({1, 300});
-            l_msg.message(l_str + '\n', l_msg.info);
+            log_attr->log(log_loc(), level::info, l_ine);
             read_out();
           } else {
+            log_attr->log(log_loc(), level::warn, in_code);
             out_attr.close();
-            log_error(in_code.what());
           }
         }
     );
@@ -197,25 +160,24 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     boost::asio::async_read_until(
         err_attr, err_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
-          auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
             std::string l_line{};
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
             auto l_str = conv::to_utf<char>(l_line, "GBK");
-            l_msg.progress_step({1, 20000});
-            l_msg.message(l_str + '\n');
+            log_attr->log(log_loc(), level::info, l_line);
             read_err();
           } else {
             err_attr.close();
-            log_error(in_code.what());
+            log_attr->log(log_loc(), level::warn, in_code);
           }
         }
     );
   }
 
-  void cancel() override {
+  void cancel() {
+    log_attr->log(log_loc(), level::warn, "进程被主动结束");
     timer_attr.cancel();
     child_attr.terminate();
   }
@@ -307,19 +269,20 @@ void maya_exe::queue_up(
   auto l_run = std::dynamic_pointer_cast<maya_exe_ns::run_maya>(
       p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>(this))
   );
-  l_run->mag_attr            = in_msg;
   l_run->run_script_attr_key = in_key;
   l_run->run_script_attr     = in_string;
   l_run->file_path_attr      = in_run_path;
   l_run->program_path        = p_i->run_path;
   l_run->maya_program_path   = find_maya_path();
   l_run->call_attr           = std::move(in_call_fun);
+  l_run->log_attr            = in_msg.get<process_message>().logger();
+  l_run->cancel_attr = in_msg.get<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
+    if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) l_ptr->cancel();
+  });
   notify_run();
 }
-maya_exe::~maya_exe() {
-  for (auto &&l_i : p_i->run_attr) {
-    l_i->cancel();
-  }
-}
+maya_exe::~maya_exe() = default;
 
 }  // namespace doodle
+
+#pragma clang diagnostic pop
