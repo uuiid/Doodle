@@ -26,7 +26,8 @@ FSys::path find_u_pej(const FSys::path& in_path) {
 
 void ue_main_map::find_ue_project_file(const entt::handle_view<assets_file, ue_main_map>& in_handle_view) {
   auto& l_path = in_handle_view.get<assets_file>().path_attr();
-  auto l_upej  = find_u_pej(l_path);
+  if (l_path.empty() || l_path.extension() != ".umap") return;
+  auto l_upej = find_u_pej(l_path);
   if (!l_upej.empty()) in_handle_view.emplace_or_replace<ue_main_map>(l_upej);
 }
 }  // namespace doodle
