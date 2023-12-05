@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <doodle_core/core/file_sys.h>
+
 namespace doodle {
 class ue_main_map {
  public:
