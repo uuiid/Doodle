@@ -253,9 +253,10 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
       auto l_uproject      = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
       auto l_root          = l_uproject.parent_path() / g_content;
       auto l_original      = l_down_path.lexically_relative(l_root);
-      data_->original_map_ = fmt::format("/Game/{}", l_original.parent_path().generic_string(), l_original.filename());
+      data_->original_map_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+      l_down_path          = l_uproject.parent_path();
     }
-    down_file(h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr(), l_is_se);
+    down_file(l_down_path, l_is_se);
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 

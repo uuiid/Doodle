@@ -128,8 +128,7 @@ void test_fun2(boost::system::error_code in_code) {
   auto l_handle_ue2{entt::handle{*g_reg(), g_reg()->create()}};
   l_handle_ue2.emplace<database>();
   l_handle_ue2.emplace<assets_file>().path_attr(
-      "C:/sy/LianQiShiWanNian_8/6-moxing/BG/JD_05/BG027C/YuDaoZong_TingYuan/Content/YuDaoZong_TingYuan/Map/"
-      "YuDaoZong_TingYuan.umap"
+      R"(C:/sy/LianQiShiWanNian_8/6-moxing/BG/JD_05/BG027C/YuDaoZong_TingYuan/Content/YuDaoZong_TingYuan/Map/YuDaoZong_TingYuan.umap)"
   );
 
   l_handle_ue2.emplace<ue_main_map>(
