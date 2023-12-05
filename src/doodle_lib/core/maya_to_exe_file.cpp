@@ -247,10 +247,15 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   });
 
   for (auto &&h : l_refs) {
-    auto l_is_se = h.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
+    auto l_is_se     = h.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
+    auto l_down_path = h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr();
+    if (l_is_se) {
+      auto l_uproject      = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
+      auto l_root          = l_uproject.parent_path() / g_content;
+      auto l_original      = l_down_path.lexically_relative(l_root);
+      data_->original_map_ = fmt::format("/Game/{}", l_original.parent_path().generic_string(), l_original.filename());
+    }
     down_file(h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr(), l_is_se);
-    if (l_is_se)
-      data_->original_map_ = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
   }
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
