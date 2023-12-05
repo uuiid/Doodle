@@ -31,6 +31,7 @@ void ue_main_map_edit::init(const entt::handle &in_handle) {
 
   if (in_handle.all_of<ue_main_map>()) {
     u_project_str_ = in_handle.get<ue_main_map>().map_path_.generic_string();
+    render_id_     = in_handle;
     return;
   }
   is_ue_dir_ = false;
