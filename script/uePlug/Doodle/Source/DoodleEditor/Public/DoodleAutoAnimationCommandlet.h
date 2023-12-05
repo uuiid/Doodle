@@ -35,7 +35,7 @@ private:
 	FString ImportPath;
 
 	FName OriginalMapPath;
-	//FName RenderMapPath;
+	FName RenderMapPath;
 	FName CreateMapPath;
 
 	FString MoviePipelineConfigPath;
