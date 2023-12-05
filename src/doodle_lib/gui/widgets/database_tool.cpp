@@ -69,6 +69,7 @@ bool database_tool_t::render() {
     ImGui::TableSetupColumn("路径");
     ImGui::TableSetupColumn("名称");
     ImGui::TableSetupColumn("信息");
+    ImGui::TableHeadersRow();
     for (auto&& l_item : repeat_list_gui_) {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
