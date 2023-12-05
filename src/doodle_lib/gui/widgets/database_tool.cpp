@@ -50,7 +50,7 @@ void database_tool_t::list_repeat() {
           repeat_list_,
           [](const repeat_item& in_item) {
             return repeat_item_gui{
-                fmt::format("##{}", in_item.uuid_), in_item.path_.generic_string(), in_item.name_, in_item.info_};
+                fmt::format("{}", in_item.uuid_), in_item.path_.generic_string(), in_item.name_, in_item.info_};
           }
       ) |
       ranges::to_vector;
