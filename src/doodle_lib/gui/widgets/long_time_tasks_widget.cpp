@@ -60,7 +60,7 @@ bool long_time_tasks_widget::render() {
       ImGui::TableNextColumn();
 
       if (!msg.aborted_sig.empty()) {
-        if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_sig();
+        if (ImGui::SmallButton(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_sig();
       } else {
         switch (msg.get_state()) {
           case process_message::state::wait:
