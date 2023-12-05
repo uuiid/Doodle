@@ -5,7 +5,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 namespace doodle::gui {
 class DOODLELIB_API database_tool_t {
-  bool is_open{false};
+  bool is_open{true};
   // 列出重复的文件条目
   gui_cache_name_id list_repeat_id{"列出重复的文件条目"s};
   // 列出重复名称的文件条目
@@ -26,6 +26,7 @@ class DOODLELIB_API database_tool_t {
     std::string path_{};
     std::string name_{};
     std::string info_{};
+    gui_cache_name_id delete_id{"删除"s};
   };
 
   // 重复条目
@@ -36,6 +37,7 @@ class DOODLELIB_API database_tool_t {
  public:
   database_tool_t() = default;
 
+  constexpr static std::string_view name{gui::config::menu_w::database_tool};
   bool render();
 };
 }  // namespace doodle::gui

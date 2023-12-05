@@ -36,6 +36,14 @@ void database_tool_t::list_repeat() {
     }
     l_uuid_set.insert(l_item.uuid_);
   }
+  std::set<FSys::path> l_path_set{};
+  for (auto&& l_item : l_uuid_map) {
+    if (l_path_set.contains(l_item.path_)) {
+      l_item.info_ = "重复的路径"s;
+    }
+    l_path_set.insert(l_item.path_);
+  }
+  l_uuid_map |= ranges::actions::remove_if([](const repeat_item& in_item) { return in_item.info_.empty(); });
 
   l_uuid_map |= ranges::actions::stable_sort([](const repeat_item& in_l, const repeat_item& in_r) {
     return in_l.uuid_ < in_r.uuid_;
@@ -64,11 +72,12 @@ bool database_tool_t::render() {
   //  if (ImGui::Button(*list_repeat_name_id)) {
   //  }
 
-  if (auto l_table = dear::Table{*list_repeat_table_id, 4}; l_table) {
+  if (auto l_table = dear::Table{*list_repeat_table_id, 5, ImGuiTableFlags_::ImGuiTableFlags_Resizable}; l_table) {
     ImGui::TableSetupColumn("uuid");
     ImGui::TableSetupColumn("路径");
     ImGui::TableSetupColumn("名称");
     ImGui::TableSetupColumn("信息");
+    ImGui::TableSetupColumn("删除");
     ImGui::TableHeadersRow();
     for (auto&& l_item : repeat_list_gui_) {
       ImGui::TableNextRow();
@@ -80,6 +89,11 @@ bool database_tool_t::render() {
       dear::Text(l_item.name_);
       ImGui::TableNextColumn();
       dear::Text(l_item.info_);
+      ImGui::TableNextColumn();
+      if (ImGui::SmallButton(*l_item.delete_id)) {
+        g_reg()->destroy(repeat_list_[&l_item - repeat_list_gui_.data()].handle_);
+        boost::asio::post(g_io_context(), [this]() { list_repeat(); });
+      }
     }
   }
 

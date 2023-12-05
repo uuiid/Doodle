@@ -23,6 +23,7 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/create_video.h>
+#include <doodle_lib/gui/widgets/database_tool.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
@@ -80,6 +81,7 @@ void main_facet::load_windows() {
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<all_user_view_widget>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<render_monitor>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<database_tool_t>());
     //    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<upload_files>());
     g_windows_manage().create_windows_arg(
         windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
