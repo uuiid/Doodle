@@ -180,9 +180,14 @@ bool maya_tool::render() {
       if (ptr_attr->sim_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_sim_file;
       if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
-        if (in_code) DOODLE_LOG_ERROR(in_code);
-        DOODLE_LOG_ERROR("完成任务");
+      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
+      l_msg_handle.emplace<process_message>(in_path.filename().generic_string());
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [=](boost::system::error_code in_code) {
+        if (in_code) {
+          l_msg_handle.get<process_message>().set_state(process_message::state::fail);
+        } else {
+          l_msg_handle.get<process_message>().set_state(process_message::state::success);
+        }
       });
     });
   }
@@ -197,8 +202,14 @@ bool maya_tool::render() {
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
-        if (in_code) DOODLE_LOG_ERROR(in_code);
+      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
+      l_msg_handle.emplace<process_message>(i.filename().generic_string());
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [=](boost::system::error_code in_code) {
+        if (in_code) {
+          l_msg_handle.get<process_message>().set_state(process_message::state::fail);
+        } else {
+          l_msg_handle.get<process_message>().set_state(process_message::state::success);
+        }
       });
     });
   }
@@ -219,9 +230,14 @@ bool maya_tool::render() {
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
-        if (in_code) DOODLE_LOG_ERROR(in_code);
-        DOODLE_LOG_ERROR("完成任务");
+      auto l_msg_handle      = entt::handle{*g_reg(), g_reg()->create()};
+      l_msg_handle.emplace<process_message>(i.filename().generic_string());
+      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [=](boost::system::error_code in_code) {
+        if (in_code) {
+          l_msg_handle.get<process_message>().set_state(process_message::state::fail);
+        } else {
+          l_msg_handle.get<process_message>().set_state(process_message::state::success);
+        }
       });
     });
   }
