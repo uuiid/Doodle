@@ -42,6 +42,15 @@ class maya_exe_test : public doodle::maya_exe {
   ) override {
     auto l_path = in_string.get<doodle::maya_exe_ns::export_fbx_arg>().out_path_file_;
     doodle::FSys::ofstream{l_path} << l_data;
+
+    if (!doodle::FSys::exists("D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/")) {
+      doodle::FSys::create_directories("D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/");
+    }
+    doodle::FSys::copy(
+        "D:/test_files/test_ue_auto_main/LQ_ep092_sc089", "D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/",
+        doodle::FSys::copy_options::overwrite_existing
+    );
+
     //    in_call_fun(boost::system::error_code{});  // 通知完成
     //    boost::asio::get_associated_executor(in_call_fun) ;
     boost::asio::post(std::bind(std::move(in_call_fun), boost::system::error_code{}));
