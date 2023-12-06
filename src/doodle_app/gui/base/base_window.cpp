@@ -117,6 +117,7 @@ void windows_manage::tick() {
 
 windows_manage::windows_manage(facet::gui_facet* in_facet)
     : gui_facet_(in_facet), drop_manger_(in_facet ? in_facet->drop_manager() : nullptr) {
+  logger_ = g_logger_ctrl().make_log("gui_log");
   app_base::Get().on_stop.connect([this]() { close_all(); });
 }
 

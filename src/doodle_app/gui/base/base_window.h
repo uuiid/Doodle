@@ -77,6 +77,8 @@ class windows_manage {
   std::vector<std::shared_ptr<layout_info>> layout_list_{};
   std::string render_layout_name_{};
 
+  logger_ptr logger_;
+
   void gen_windows_list();
   class render_guard {
     windows_manage* ptr_;
@@ -128,6 +130,8 @@ class windows_manage {
   std::vector<std::tuple<std::string_view, bool>> get_layout_list();
 
   void show_windows();
+
+  [[nodiscard("")]] inline logger_ptr logger() const { return logger_; };
 };
 
 class windows_init_arg {

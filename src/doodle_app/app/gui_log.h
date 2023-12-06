@@ -3,3 +3,5 @@
 //
 
 #include <doodle_core/doodle_core_fwd.h>
+
+namespace doodle::gui {}
