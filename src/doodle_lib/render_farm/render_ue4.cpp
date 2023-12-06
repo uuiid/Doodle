@@ -14,7 +14,6 @@ namespace detail {
 
 void render_ue4::run() {
   auto&& l_msg = self_handle_.get_or_emplace<process_message>(FSys::path{arg_.ProjectPath}.filename().generic_string());
-  l_msg.message("开始下载ue4项目文件");
   auto& l_map = g_reg()->ctx().emplace<std::map<std::string, decltype(boost::asio::make_strand(g_thread()))>>();
 
   if (l_map.count(arg_.ProjectPath) == 0) {
@@ -115,11 +114,8 @@ std::string render_ue4::generate_command_line() const {
 void render_ue4::run_impl(bool in_r) {
   auto&& l_msg = self_handle_.get_or_emplace<process_message>(FSys::path{arg_.ProjectPath}.filename().generic_string());
   if (!in_r) {
-    l_msg.set_state(process_message::state::fail);
-    l_msg.message(fmt::format("project path not exist: {}", arg_.ProjectPath));
     return;
   }
-  l_msg.message(fmt::format("开始启动ue4项目文件 {}", arg_.ProjectPath));
   // 生成命令行
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
   child_ptr_ = g_ctx().get<ue_exe_ptr>()->create_child(
@@ -140,7 +136,6 @@ void render_ue4::do_read_log() {
           std::string l_line;
           std::getline(std::istream{&child_ptr->out_str}, l_line);
           auto& l_msg = self_handle_.get<process_message>();
-          l_msg.message(l_line + '\n');
           do_read_log();
         } else {
           child_ptr->out_attr.close();
@@ -158,7 +153,6 @@ void render_ue4::do_read_err() {
           std::string l_line;
           std::getline(std::istream{&child_ptr->err_str}, l_line);
           auto& l_msg = self_handle_.get<process_message>();
-          l_msg.message(l_line + '\n');
           do_read_err();
         } else {
           child_ptr->err_attr.close();
@@ -171,7 +165,6 @@ void render_ue4::do_read_err() {
 void render_ue4::set_meg() {
   auto l_prj  = FSys::path{arg_.ProjectPath};
   auto& l_msg = self_handle_.get_or_emplace<process_message>(l_prj.filename().generic_string());
-  l_msg.message(fmt::format("开始准备 {}", l_prj));
 }
 void render_ue4::end_run() {
   boost::asio::post(strand_, [this]() {
@@ -190,7 +183,6 @@ void render_ue4::end_run() {
       self_handle_.get<process_message>().set_state(
           l_r ? process_message::state::success : process_message::state::fail
       );
-      self_handle_.get<process_message>().message(l_r ? "done" : "fail");
       this->send_server_state();
     });
   });

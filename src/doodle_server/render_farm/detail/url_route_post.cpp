@@ -79,7 +79,6 @@ void get_log_type_post::operator()(
     return;
   }
   auto& l_msg = l_h.get<process_message>();
-  l_msg.message(in_request.body(), process_message::level::info);
 
   boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
   l_response.body() = {{"state", "ok"}, {"id", l_h.entity()}};
@@ -114,7 +113,6 @@ void get_err_type_post::operator()(
     return;
   }
   auto& l_msg = l_h.get<process_message>();
-  l_msg.message(in_request.body(), process_message::level::warning);
 
   boost::beast::http::response<detail::basic_json_body> l_response{boost::beast::http::status::ok, 11};
   l_response.body() = {{"state", "ok"}, {"id", l_h.entity()}};
