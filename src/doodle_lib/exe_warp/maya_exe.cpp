@@ -81,6 +81,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   boost::process::async_pipe err_attr{g_io_context()};
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
   boost::signals2::scoped_connection cancel_attr{};
+  bool is_cancel{};
 
   explicit run_maya(maya_exe *in_maya_exe) : maya_exe_ns::maya_process_base(in_maya_exe) {}
   ~run_maya() override = default;
@@ -88,6 +89,15 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   bool running() override { return child_attr.running(); }
 
   void run() override {
+    if (is_cancel) {
+      log_attr->log(log_loc(), level::err, "用户结束: {}", run_script_attr.dump());
+      boost::system::error_code l_ec{boost::asio::error::operation_aborted};
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      boost::asio::post(std::bind(std::move(call_attr), l_ec));
+      next_run();
+      return;
+    }
+
     if (program_path.empty()) {
       boost::system::error_code l_ec{error_enum::file_not_exists};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
@@ -180,6 +190,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     log_attr->log(log_loc(), level::warn, "进程被主动结束");
     timer_attr.cancel();
     child_attr.terminate();
+    is_cancel = true;
   }
 };
 

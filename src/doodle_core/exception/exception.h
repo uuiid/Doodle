@@ -36,8 +36,7 @@ enum error_t : std::int32_t {
   project_not_exist,
   // 超时
   time_out,
-  // 用户取消
-  user_cancel,
+
 };
 [[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(error_t e);
 }  // namespace error_enum
