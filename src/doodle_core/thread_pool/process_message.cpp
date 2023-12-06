@@ -37,11 +37,14 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::debug:
       case spdlog::level::level_enum::info:
         data_->p_log.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 1000};
         break;
       case spdlog::level::level_enum::warn:
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
         data_->p_err.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 1000};
+        break;
       case spdlog::level::level_enum::off:
         data_->p_end      = chrono::system_clock::now();
         data_->p_progress = {1, 1};
@@ -55,6 +58,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::n_levels:
         break;
     }
+    if (data_->p_progress > 1) --data_->p_progress;
   }
   void flush_() override {}
 };
