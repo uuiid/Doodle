@@ -160,7 +160,7 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
   auto l_old = std::make_shared<bool>();
   default_logger_raw()->log(log_loc(), level::warn, "导入数据 {}", in_path);
 
-  auto l_end_call = [this, l_old, l_logger]() {
+  auto l_end_call = [this, l_old]() {
     if (*l_old) {
       default_logger_raw()->log(log_loc(), level::warn, "{}, 旧版文件, 不导入", project_path);
       default_logger_raw()->log(log_loc(), level::off, fmt::to_string(process_message::fail));
