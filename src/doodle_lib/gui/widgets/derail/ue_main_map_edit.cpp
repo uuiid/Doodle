@@ -48,7 +48,6 @@ void ue_main_map_edit::init(const entt::handle &in_handle) {
 bool ue_main_map_edit::render(const entt::handle &in_handle_view) {
   init(in_handle_view);
   bool on_change = false;
-  if (!is_ue_dir_) return on_change;
 
   dear::Text(u_project_str_);
 
