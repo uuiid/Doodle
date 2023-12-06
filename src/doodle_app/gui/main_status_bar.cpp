@@ -155,8 +155,10 @@ bool main_status_bar::render() {
       ImGui::SameLine();
     }
 
-    std::lock_guard const _lock{p_i->p_sink_->mutex_};
-    dear::Text(p_i->p_sink_->show_str_);
+    {
+      std::lock_guard const _lock{p_i->p_sink_->mutex_};
+      dear::Text(p_i->p_sink_->show_str_);
+    }
   };
   return true;
 }
