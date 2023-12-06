@@ -131,6 +131,7 @@ class windows_manage {
 
   void show_windows();
 
+  /// \brief 用于在主线程中调用, 在窗口初始化时不可以向这个日志中打印
   [[nodiscard("")]] inline logger_ptr logger() const { return logger_; };
 };
 

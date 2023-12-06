@@ -10,6 +10,8 @@
 #include <boost/asio.hpp>
 
 #include <lib_warp/imgui_warp.h>
+#include <spdlog/sinks/base_sink.h>
+#include <spdlog/spdlog.h>
 
 /// \brief to https://github.com/ocornut/imgui/issues/1901
 namespace ImGui {
@@ -94,13 +96,42 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
 }  // namespace ImGui
 
 namespace doodle::gui {
+
+namespace {
+
+template <class Mutex>
+class main_status_bar_sink : public ::spdlog::sinks::base_sink<Mutex> {
+ public:
+  std::mutex mutex_{};
+  std::string show_str_{};
+
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    spdlog::memory_buf_t formatted;
+    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    std::lock_guard const _lock{mutex_};
+    show_str_ = fmt::to_string(formatted);
+  }
+  void flush_() override {}
+};
+
+}  // namespace
+
+using main_status_bar_sink_mt = main_status_bar_sink<std::mutex>;
 class main_status_bar::impl {
  public:
   std::shared_ptr<boost::asio::high_resolution_timer> timer{};
   bool call;
+  logger_ptr p_logger_;
+
+  std::shared_ptr<main_status_bar_sink_mt> p_sink_{std::make_shared<main_status_bar_sink_mt>()};
 };
 
-main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) { init(); }
+main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) {
+  init();
+
+  p_i->p_logger_ = g_windows_manage().logger();
+  p_i->p_logger_->sinks().emplace_back(p_i->p_sink_);
+}
 
 void main_status_bar::init() { p_i->timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
 
@@ -121,31 +152,8 @@ bool main_status_bar::render() {
       ImGui::SameLine();
     }
 
-    /// \brief 渲染进度条
-    if (g_reg()->ctx().contains<process_message>()) {
-      auto& l_msg = g_reg()->ctx().get<process_message>();
-      if (!p_i->call && (l_msg.is_success() || l_msg.is_fail())) {
-        p_i->call = true;
-        p_i->timer->expires_after(1s);
-        p_i->timer->async_wait([this](const boost::system::error_code& in_code) {
-          p_i->call = false;
-          if (in_code == boost::asio::error::operation_aborted) {
-            return;
-          }
-          if (g_reg()->ctx().contains<process_message>()) {
-            g_reg()->ctx().erase<process_message>();
-          }
-        });
-      }
-
-      dear::Text(l_msg.get_name());
-      ImGui::SameLine();
-      dear::Text(l_msg.message_back());
-      ImGui::ProgressBar(
-          boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f},
-          fmt::format("{:04f}%", l_msg.get_progress_f()).c_str()
-      );
-    }
+    std::lock_guard const _lock{p_i->p_sink_->mutex_};
+    dear::Text(p_i->p_sink_->show_str_);
   };
   return true;
 }
