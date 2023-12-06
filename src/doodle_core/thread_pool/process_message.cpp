@@ -2,11 +2,7 @@
 
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_fmt_rational.h>
-#include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/logger/logger.h>
-
-#include <boost/locale.hpp>
-#include <boost/numeric/conversion/cast.hpp>
 
 #include <magic_enum.hpp>
 #include <range/v3/all.hpp>
@@ -72,7 +68,7 @@ process_message::process_message(std::string in_name) : data_(std::make_shared<d
   data_->p_name    = std::move(in_name);
   data_->p_name_id = fmt::format("{}##{}", data_->p_name, fmt::ptr(this));
 
-  data_->p_logger  = g_logger_ctrl().make_log(in_name);
+  data_->p_logger  = g_logger_ctrl().make_log(data_->p_name);
   data_->p_logger->sinks().emplace_back(std::make_shared<process_message_sink_mt>(this->data_));
 }
 
@@ -136,7 +132,7 @@ const std::string& process_message::message_back() const { return data_->p_str_e
 
 const std::string& process_message::get_name_id() const { return data_->p_name_id; }
 void process_message::progress_clear() {
-  std::lock_guard _lock{data_->_mutex};
+  std::lock_guard const _lock{data_->_mutex};
   data_->p_progress = 0;
 }
 

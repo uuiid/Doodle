@@ -66,7 +66,7 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] inline bool is_wait() const { return get_state() == state::wait; }
   [[nodiscard]] inline bool is_success() const { return get_state() == state::success; }
   [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
-  logger_ptr logger() const;
+  [[nodiscard]] logger_ptr logger() const;
 
   boost::signals2::signal<void()> aborted_sig;
 
