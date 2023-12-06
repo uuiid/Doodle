@@ -111,7 +111,10 @@ class main_status_bar_sink : public ::spdlog::sinks::base_sink<Mutex> {
     std::lock_guard const _lock{mutex_};
     show_str_ = fmt::to_string(formatted);
   }
-  void flush_() override {}
+  void flush_() override {
+    std::lock_guard const _lock{mutex_};
+    show_str_.clear();
+  }
 };
 
 }  // namespace
