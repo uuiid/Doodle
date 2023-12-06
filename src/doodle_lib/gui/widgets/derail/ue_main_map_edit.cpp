@@ -12,7 +12,9 @@
 namespace doodle::gui::render {
 
 void ue_main_map_edit::test_is_ue_dir(const FSys::path &in_path) {
-  if (!FSys::exists(in_path)) return;
+  if (FSys::is_windows_remote_path(in_path)) return;
+  std::error_code l_ec{};
+  if (!FSys::exists(in_path, l_ec) || l_ec) return;
   if (is_ue_dir_ || in_path.root_path() == in_path) return;
   if (!FSys::is_directory(in_path)) return test_is_ue_dir(in_path.parent_path());
 

@@ -250,6 +250,10 @@ boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
   return l_uuid;
 };
 
+bool is_windows_remote_path(const FSys::path &in_file_path) {
+  return in_file_path.has_root_path() && in_file_path.root_path().generic_string().starts_with("//");
+}
+
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS
