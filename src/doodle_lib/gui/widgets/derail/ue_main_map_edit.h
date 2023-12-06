@@ -20,7 +20,6 @@ class ue_main_map_edit {
 
   entt::handle render_id_{};
   void init(const entt::handle& in_handle);
-  void test_is_ue_dir(const FSys::path& in_path);
 
  public:
   ue_main_map_edit() = default;
