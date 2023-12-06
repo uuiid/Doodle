@@ -91,10 +91,14 @@ void sql_com<doodle::file_association>::select(
                               .from(l_table)
                               .where(l_table.entity_id.is_not_null()))) {
     file_association l_i{};
-    if (!row.entity_maya_file.is_null()) l_i.maya_file = in_handle.at(row.entity_maya_file.value());
-    if (!row.entity_maya_rig_file.is_null()) l_i.maya_rig_file = in_handle.at(row.entity_maya_rig_file.value());
-    if (!row.entity_ue_file.is_null()) l_i.ue_file = in_handle.at(row.entity_ue_file.value());
-    if (!row.entity_ue_preset_file.is_null()) l_i.ue_preset_file = in_handle.at(row.entity_ue_preset_file.value());
+    if (!row.entity_maya_file.is_null() && in_handle.contains(row.entity_maya_file.value()))
+      l_i.maya_file = in_handle.at(row.entity_maya_file.value());
+    if (!row.entity_maya_rig_file.is_null() && in_handle.contains(row.entity_maya_rig_file.value()))
+      l_i.maya_rig_file = in_handle.at(row.entity_maya_rig_file.value());
+    if (!row.entity_ue_file.is_null() && in_handle.contains(row.entity_ue_file.value()))
+      l_i.ue_file = in_handle.at(row.entity_ue_file.value());
+    if (!row.entity_ue_preset_file.is_null() && in_handle.contains(row.entity_ue_preset_file.value()))
+      l_i.ue_preset_file = in_handle.at(row.entity_ue_preset_file.value());
 
     l_i.name  = row.name.value();
 
