@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "modernize-avoid-bind"
 //
 // Created by TD on 2021/12/25.
 //
@@ -295,5 +293,3 @@ void maya_exe::queue_up(
 maya_exe::~maya_exe() = default;
 
 }  // namespace doodle
-
-#pragma clang diagnostic pop

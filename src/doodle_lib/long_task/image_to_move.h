@@ -36,9 +36,7 @@ class DOODLELIB_API image_to_move : public image_to_movie_interface {
   image_to_move();
   virtual ~image_to_move();
 
-  virtual void create_move(
-      const FSys::path &in_out_path, process_message &in_msg, const std::vector<image_attr> &in_vector
-  ) override;
+  virtual void create_move(const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<image_attr> &in_vector) override;
 };
 }  // namespace detail
 

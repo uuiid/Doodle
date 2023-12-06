@@ -71,7 +71,7 @@ image_to_move::~image_to_move() = default;
 
 image_to_move::image_to_move() : p_i(std::make_unique<impl>()) {}
 void image_to_move::create_move(
-    const FSys::path &in_out_path, process_message &in_msg, const std::vector<image_to_move::image_attr> &in_vector
+    const FSys::path &in_out_path, logger_ptr in_logger, const std::vector<image_to_move::image_attr> &in_vector
 ) {
   /// \brief 这里排序组件
   auto l_vector = in_vector;
@@ -79,17 +79,15 @@ void image_to_move::create_move(
   std::sort(l_vector.begin(), l_vector.end());
   std::atomic_bool l_stop{};
   /// \brief 这里进行消息初始化
-  in_msg.set_state(in_msg.run);
-  boost::signals2::scoped_connection l_connection =
-      in_msg.aborted_sig.connect([l_s = std::addressof(l_stop)]() mutable {
-        if (!(*l_s)) {
-          *l_s = true;
-        }
-      });
+  //  boost::signals2::scoped_connection l_connection =
+  //      in_msg.aborted_sig.connect([l_s = std::addressof(l_stop)]() mutable {
+  //        if (!(*l_s)) {
+  //          *l_s = true;
+  //        }
+  //      });
 
-  in_msg.message(fmt::format("获得图片路径 {}", l_vector.front().path_attr.parent_path()));
-
-  in_msg.message(fmt::format("开始创建视频 {}", in_out_path));
+  in_logger->log(log_loc(), level::info, "开始创建视频 {}", in_out_path);
+  in_logger->log(log_loc(), level::info, "获得图片路径 {}", l_vector.front().path_attr.parent_path());
 
   const static cv::Size k_size{1920, 1080};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
@@ -98,20 +96,21 @@ void image_to_move::create_move(
   auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto &l_image : l_vector) {
     if (l_stop) {
-      in_msg.set_state(in_msg.fail);
-      auto k_str = fmt::format("合成视频被主动结束 合成视频文件将被主动删除\n");
-      in_msg.message(k_str, in_msg.warning);
+      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
+
+      auto k_str = fmt::format("合成视频被主动结束 合成视频文件将被主动删除");
+      in_logger->log(log_loc(), level::warn, k_str);
+
       try {
         remove(in_out_path);
       } catch (const FSys::filesystem_error &err) {
-        auto l_str = fmt::format("合成视频主动删除失败 {}\n", boost::diagnostic_information(err));
-        in_msg.message(l_str, in_msg.warning);
-        DOODLE_LOG_WARN(l_str);
+        in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
       }
       return;
     }
 
-    in_msg.message(fmt::format("开始读取图片 {}", l_image.path_attr));
+    in_logger->log(log_loc(), level::info, "开始读取图片 {}", l_image.path_attr);
+
     k_image = cv::imread(l_image.path_attr.generic_string());
     if (k_image.empty()) {
       DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.path_attr);
@@ -125,13 +124,12 @@ void image_to_move::create_move(
       }
       watermark_add_image(k_image, k_w);
     }
-    in_msg.progress_step(rational_int{1, k_size_len});
+    in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_image.path_attr);
     video << k_image;
   }
 
-  in_msg.set_state(in_msg.success);
-  auto k_str = fmt::format("成功完成任务\n");
-  in_msg.message(k_str, in_msg.warning);
+  in_logger->log(log_loc(), level::info, "成功完成任务");
+  in_logger->log(log_loc(), level::off, fmt::to_string(process_message::success));
 }
 FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   boost::ignore_unused(this);

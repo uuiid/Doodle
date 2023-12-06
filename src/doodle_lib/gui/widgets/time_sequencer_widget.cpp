@@ -522,17 +522,13 @@ void time_sequencer_widget::fliter_select() {
   }
 
   /// 显示一下进度条
-  auto& l_p = g_reg()->ctx().emplace<process_message>("开始计算数据");
-  l_p.set_state(l_p.run);
+  g_windows_manage().logger()->log(log_loc(), level::info, "开始计算数据");
 
   p_i->attendance_ptr->async_get_work_clock(
       l_user, l_begin, l_end,
       [=](const boost::system::error_code& in_code, const business::work_clock& in_clock) {
-        auto& l_p = g_reg()->ctx().get<process_message>();
-        l_p.message(fmt::format("完成用户 {} 时间获取", l_user.get<user>().get_name()));
-        l_p.progress_step(1);
+        g_windows_manage().logger()->log(log_loc(), level::info, "完成用户 {} 时间获取", l_user.get<user>().get_name());
         if (in_code) {
-          l_p.set_state(l_p.fail);
           g_windows_manage().create_windows_arg(windows_init_arg{}
                                                     .create<show_message>(fmt::format("{}", in_code.what()))
                                                     .set_title("显示消息")
@@ -540,7 +536,6 @@ void time_sequencer_widget::fliter_select() {
           return;
         }
 
-        l_p.set_state(l_p.success);
         l_user.get_or_emplace<business::work_clock>() = in_clock;
         p_i->work_clock_                              = in_clock;
         p_i->refresh_work_clock_();

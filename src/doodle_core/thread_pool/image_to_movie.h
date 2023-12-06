@@ -29,7 +29,7 @@ class DOODLE_CORE_API image_to_movie_interface {
   image_to_movie_interface();
   virtual ~image_to_movie_interface();
   virtual void create_move(
-      const FSys::path &in_out_path, process_message &in_msg, const std::vector<image_attr> &in_vector
+      const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<image_attr> &in_vector
   ) = 0;
 
   template <typename CompletionHandler>
@@ -52,13 +52,15 @@ class DOODLE_CORE_API image_to_movie_interface {
       exists(in.path_attr) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
     });
     !in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
-    in_handle.get_or_emplace<process_message>(in_handle.get<FSys::path>().filename().string());
+    if (in_handle.all_of<process_message>())
+      in_handle.emplace<process_message>(in_handle.get<FSys::path>().filename().string());
+    auto l_logger   = in_handle.get<process_message>().logger();
     auto l_out_path = this->create_out_path(in_handle);
     return boost::asio::async_initiate<CompletionHandler, void()>(
-        [this, in_vector, l_out_path = std::move(l_out_path), in_handle](auto &&in_completion_handler) {
+        [this, in_vector, l_out_path = std::move(l_out_path), in_handle, l_logger](auto &&in_completion_handler) {
           auto l_f = std::make_shared<l_call>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          boost::asio::post(g_thread(), [this, l_f, in_vector, l_out_path, in_handle]() {
-            this->create_move(l_out_path, in_handle.get<process_message>(), in_vector);
+          boost::asio::post(g_thread(), [this, l_f, in_vector, l_out_path, in_handle, l_logger]() {
+            this->create_move(l_out_path, l_logger, in_vector);
             boost::asio::post(g_io_context(), [l_f]() { (*l_f)(); });
           });
         },
