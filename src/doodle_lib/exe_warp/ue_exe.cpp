@@ -40,7 +40,17 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   std::string arg_attr{};
   logger_ptr logger_attr{};
   ue_exe *self_{};
+  bool is_cancel{};
   void run() {
+    if (is_cancel) {
+      logger_attr->log(log_loc(), level::err, "用户结束 ue_exe: {}", ue_path);
+      boost::system::error_code l_ec{boost::asio::error::operation_aborted};
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      boost::asio::post(std::bind(std::move(call_attr), l_ec));
+      self_->notify_run();
+      return;
+    }
+
     if (ue_path.empty() || !FSys::exists(ue_path)) throw_exception(doodle_error{"ue_exe path is empty or not exists"});
     logger_attr->log(log_loc(), level::info, "开始运行 ue_exe: {} {}", ue_path, arg_attr);
 
@@ -99,7 +109,10 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
     );
   }
 
-  void cancel() { child_attr.terminate(); }
+  void cancel() {
+    child_attr.terminate();
+    is_cancel = true;
+  }
 };
 
 void ue_exe::notify_run() {
