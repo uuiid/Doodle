@@ -84,37 +84,7 @@ void process_message::progress_step(const rational_int& in_rational_int) {
   data_->p_progress += in_rational_int;
   if (data_->p_progress > 1) --data_->p_progress;
 }
-void process_message::message(const std::string& in_string, const level& in_level_enum) {
-  auto l_msg{in_string};
 
-  static boost::locale::generator k_gen{};
-  //  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
-
-  static auto l_local{k_gen("zh_CN.UTF-8")};
-  if (ranges::all_of(l_msg, [&](const std::string::value_type& in_type) -> bool {
-        return std::isspace(in_type, l_local);
-      })) {
-    return;
-  }
-  //  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
-  //    return std::isspace(in_type, l_local);
-  //  });
-  spdlog::info(l_msg);
-  if (l_msg.back() != '\n') {
-    l_msg += '\n';
-  }
-
-  std::lock_guard l_lock{data_->_mutex};
-  switch (in_level_enum) {
-    case level::warning:
-      data_->p_err += l_msg;
-      data_->p_str_end = l_msg;
-      break;
-    default:
-      data_->p_log += l_msg;
-      break;
-  }
-}
 void process_message::set_state(state in_state) {
   std::lock_guard _lock{data_->_mutex};
   switch (in_state) {

@@ -49,7 +49,6 @@ class DOODLE_CORE_API process_message {
 
   void progress_step(const rational_int& in_rational_int);
   void progress_clear();
-  void message(const std::string& in_string, const level& in_level_enum = level::warning);
   [[nodiscard]] const std::string& message_back() const;
 
   void set_state(state in_state);
