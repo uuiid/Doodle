@@ -102,19 +102,14 @@ namespace {
 template <class Mutex>
 class main_status_bar_sink : public ::spdlog::sinks::base_sink<Mutex> {
  public:
-  std::mutex mutex_{};
-  std::string show_str_{};
+  boost::signals2::signal<void(std::string)> sig_{};
 
   void sink_it_(const spdlog::details::log_msg& msg) override {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-    std::lock_guard const _lock{mutex_};
-    show_str_ = fmt::to_string(formatted);
+    sig_(fmt::to_string(formatted));
   }
-  void flush_() override {
-    std::lock_guard const _lock{mutex_};
-    show_str_.clear();
-  }
+  void flush_() override { sig_(std::string{}); }
 };
 
 }  // namespace
@@ -123,16 +118,21 @@ using main_status_bar_sink_mt = main_status_bar_sink<std::mutex>;
 class main_status_bar::impl {
  public:
   std::shared_ptr<boost::asio::high_resolution_timer> timer{};
-  bool call;
   logger_ptr p_logger_;
 
   std::shared_ptr<main_status_bar_sink_mt> p_sink_{std::make_shared<main_status_bar_sink_mt>()};
+  boost::signals2::scoped_connection p_connection_{};
+  std::string show_str_{};
 };
 
 main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) {
   init();
 
-  p_i->p_logger_ = g_windows_manage().logger();
+  p_i->p_logger_     = g_windows_manage().logger();
+
+  p_i->p_connection_ = p_i->p_sink_->sig_.connect([this](const std::string& in_string) {
+    boost::asio::post(g_io_context(), [this, in_string]() { p_i->show_str_ = std::move(in_string); });
+  });
   p_i->p_logger_->sinks().emplace_back(p_i->p_sink_);
 }
 
@@ -155,24 +155,11 @@ bool main_status_bar::render() {
       ImGui::SameLine();
     }
 
-    {
-      std::lock_guard const _lock{p_i->p_sink_->mutex_};
-      dear::Text(p_i->p_sink_->show_str_);
-    }
+    dear::Text(p_i->show_str_);
   };
   return true;
 }
 
-main_status_bar::main_status_bar(const main_status_bar& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}
-main_status_bar::main_status_bar(main_status_bar&& in) noexcept { p_i = std::move(in.p_i); }
-main_status_bar& main_status_bar::operator=(const main_status_bar& in) noexcept {
-  *p_i = *p_i;
-  return *this;
-}
-main_status_bar& main_status_bar::operator=(main_status_bar&& in) noexcept {
-  p_i = std::move(in.p_i);
-  return *this;
-}
 
 main_status_bar::~main_status_bar() = default;
 }  // namespace doodle::gui
