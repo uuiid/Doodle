@@ -106,8 +106,8 @@ void sql_com<doodle::file_association>::select(
     } else {
       // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
-    in_reg->insert<file_association>(l_entts.begin(), l_entts.end(), l_img.begin());
   }
+  in_reg->insert<file_association>(l_entts.begin(), l_entts.end(), l_img.begin());
 }
 void sql_com<doodle::file_association>::destroy(doodle::conn_ptr &in_ptr, const std::vector<std::int64_t> &in_handle) {
   detail::sql_com_destroy<tables::file_association>(in_ptr, in_handle);
