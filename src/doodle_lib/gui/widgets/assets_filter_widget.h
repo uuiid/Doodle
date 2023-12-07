@@ -33,6 +33,7 @@ class DOODLELIB_API assets_filter_widget {
 
   void init();
   bool render();
+  void tree_refresh();
   const std::string& title() const;
 };
 

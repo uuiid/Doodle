@@ -11,6 +11,7 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/widgets/assets_filter_widget.h>
 
 #include <boost/operators.hpp>
 
@@ -69,7 +70,13 @@ void database_tool_t::list_repeat() {
       ranges::to_vector;
 }
 
-void database_tool_t::merge_repeat() { assets::merge_assets_tree(g_reg()); }
+void database_tool_t::merge_repeat() {
+  assets::merge_assets_tree(g_reg());
+
+  if (auto* l_w = g_windows_manage().find_windows<assets_filter_widget>(); l_w) {
+    l_w->tree_refresh();
+  }
+}
 
 bool database_tool_t::render() {
   if (ImGui::Button(*list_repeat_id)) {

@@ -305,6 +305,11 @@ bool assets_filter_widget::render() {
   return p_impl->open;
 }
 
+void assets_filter_widget::tree_refresh() {
+  p_impl->assets_tree_.init_tree();
+  p_impl->ass_tree_filter_list = p_impl->assets_tree_.get_filter_list_handles();
+}
+
 const std::string& assets_filter_widget::title() const { return p_impl->title_name_; }
 void assets_filter_widget::filter_list() {
   std::vector<entt::handle> list{};
