@@ -343,6 +343,9 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
                      return ranges::contains(l_list, in_data->handle_);
                    }) |
                    ranges::to_vector;
+
+      p_i->handle_list |=
+          ranges::actions::remove_if([l_list](const entt::handle& in_h) { return ranges::contains(l_list, in_h); });
       auto l_list_t = l_list;
       ranges::for_each(l_list_t, [](entt::handle& in_handle) {
         if (in_handle) in_handle.destroy();
