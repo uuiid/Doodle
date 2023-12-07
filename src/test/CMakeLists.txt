@@ -64,6 +64,7 @@ create_test_sourcelist(main_test
         core/folder_is_save.cpp
         core/auto_light.cpp
         core/process_message.cpp
+        core/merge_assets_tree.cpp
 )
 
 # add the executable
