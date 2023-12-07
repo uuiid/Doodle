@@ -17,7 +17,7 @@ FetchContent_Declare(
 FetchContent_Declare(
         fontawesome
         GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
-        GIT_TAG 6.x
+        GIT_TAG deeea78c52bfe00b6e251ffddccf5570d5fdb05e
 )
 
 FetchContent_Declare(
