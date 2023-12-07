@@ -7,4 +7,4 @@ echo -----------------build--------------------
 
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset vs2022
+--preset vc2022_build_main_exe
