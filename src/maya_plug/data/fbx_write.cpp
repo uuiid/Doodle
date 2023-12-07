@@ -389,7 +389,8 @@ void fbx_node_mesh::build_bind_post() {
             maya_chick(l_status);
           } else {
             throw_exception(doodle_error{
-                fmt::format("没有找到 bindpose 属性 {} 的值", conv::to_s(l_world_matrix_plug.partialName()))});
+                fmt::format("没有找到 bindpose 属性 {} 的值", conv::to_s(l_world_matrix_plug.partialName()))
+            });
           }
         }
 
@@ -840,7 +841,8 @@ void fbx_node_mesh::build_blend_shape() {
       bool l_is_skin{};
       for (MItDependencyGraph l_it_graph{
                l_output_geometry, MFn::kSkinClusterFilter, MItDependencyGraph::kDownstream,
-               MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, &l_status};
+               MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, &l_status
+           };
            !l_it_graph.isDone(); l_it_graph.next()) {
         maya_chick(l_status);
         if (l_it_graph.thisNode() == l_skin_obj) {
@@ -896,6 +898,19 @@ void fbx_node_mesh::build_blend_shape() {
       maya_chick(l_status);
       if (l_point_data.length() == 0) {
         continue;
+      }
+      {
+        // 检查全部接近0, 全部接近0就直接不导出
+        bool l_is_zero{true};
+        for (auto k = 0; k < l_point_data.length(); ++k) {
+          if (l_point_data[k].x < 0.0001 && l_point_data[k].y < 0.0001 && l_point_data[k].z < 0.0001) {
+            continue;
+          } else {
+            l_is_zero = false;
+            break;
+          }
+        }
+        if (l_is_zero) continue;
       }
 
       MFnComponentListData l_component_data{l_input_components_target_data_handle.data(), &l_status};
@@ -1214,7 +1229,8 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
 
 void fbx_write::write_end() {
   std::shared_ptr<FbxExporter> l_exporter{
-      FbxExporter::Create(scene_->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }};
+      FbxExporter::Create(scene_->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }
+  };
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_MATERIAL, true);
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_TEXTURE, true);
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_EMBEDDED, true);
