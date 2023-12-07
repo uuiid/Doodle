@@ -335,10 +335,6 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
         ranges::views::filter([](const impl::base_data& in_data) { return in_data.select && in_data.handle_; }) |
         ranges::views::transform([](const impl::base_data& in_data) -> entt::handle { return in_data.handle_; }) |
         ranges::to_vector | ranges::actions::push_back(in_) | ranges::actions::unique | ranges::to_vector;
-
-    ranges::for_each(l_list, [](entt::handle& in_handle) {
-      if (in_handle) in_handle.destroy();
-    });
     auto& l_sig = g_ctx().get<core_sig>();
     l_sig.select_handles({});
     l_sig.select_handle({});
@@ -347,6 +343,10 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
                      return ranges::contains(l_list, in_data->handle_);
                    }) |
                    ranges::to_vector;
+      auto l_list_t = l_list;
+      ranges::for_each(l_list_t, [](entt::handle& in_handle) {
+        if (in_handle) in_handle.destroy();
+      });
     });
   }
 }
