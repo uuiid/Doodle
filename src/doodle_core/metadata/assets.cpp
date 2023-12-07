@@ -30,6 +30,13 @@ void assets::add_child(const entt::handle& in_child) {
   in_child.patch<assets>().parent_ = l_this_handle;
   if (l_org_parent && l_org_parent.any_of<assets>()) l_org_parent.patch<assets>().child_.erase(in_child);
 }
+void assets::remove_child(const entt::handle& in_child) {
+  if (child_.contains(in_child)) {
+    child_.erase(in_child);
+  }
+}
+
+std::set<entt::handle> assets::get_child() const { return child_; }
 
 bool assets::operator<(const assets& in_rhs) const { return std::tie(p_path) < std::tie(in_rhs.p_path); }
 bool assets::operator!=(const assets& in_rhs) const { return in_rhs.p_path != p_path; }
@@ -72,7 +79,7 @@ tree_type_t build_tree(const registry_ptr& in_registry_ptr) {
 }
 
 // 先祖代合并, 再子代合并, 最后删除
-void clear(const tree_type_t::iterator& in_node, const std::map<entt::handle, entt::handle>& in_ass_map_ass_file) {
+bool clear(const tree_type_t::iterator& in_node, const std::map<entt::handle, entt::handle>& in_ass_map_ass_file) {
   std::map<std::string, std::vector<entt::handle>> l_name{};
   for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
     auto l_key = std::string{it->name};
@@ -98,35 +105,41 @@ void clear(const tree_type_t::iterator& in_node, const std::map<entt::handle, en
       }
     }
   }
-
-  for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
-    clear(in_node, in_ass_map_ass_file);
-  }
-  for (auto l_h : l_delete_handles) {
-    l_h.destroy();
+  if (l_delete_handles.empty()) {
+    for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
+      if (clear(it, in_ass_map_ass_file)) return true;
+    }
+    return false;
+  } else {
+    for (auto l_h : l_delete_handles) {
+      if (auto l_p = l_h.get<assets>().get_parent(); l_p) l_p.patch<assets>().remove_child(l_h);
+      l_h.destroy();
+    }
+    return true;
   }
 }
 }  // namespace
 
 void assets::merge_assets_tree(const registry_ptr& in_registry_ptr) {
-  auto l_tree          = build_tree(in_registry_ptr);
-
-  auto l_ass_file_view = in_registry_ptr->view<assets_file>().each();
-  auto l_ass_map_ass_file =
-      l_ass_file_view |
-      ranges::views::transform(
-          [&](const decltype(*l_ass_file_view.begin())& in_tup) -> std::pair<entt::handle, entt::handle> {
-            return {
-                std::get<assets_file&>(in_tup).assets_attr(),
-                entt::handle{*in_registry_ptr, std::get<entt::entity>(in_tup)}
-            };
-          }
-      ) |
-      ranges::to<std::map<entt::handle, entt::handle>>;
-
+  tree_type_t l_tree{};
+  std::map<entt::handle, entt::handle> l_ass_map_ass_file;
   // 开始合并分类
+  do {
+    l_tree               = build_tree(in_registry_ptr);
 
-  clear(l_tree.begin(), l_ass_map_ass_file);
+    auto l_ass_file_view = in_registry_ptr->view<assets_file>().each();
+    l_ass_map_ass_file =
+        l_ass_file_view |
+        ranges::views::transform(
+            [&](const decltype(*l_ass_file_view.begin())& in_tup) -> std::pair<entt::handle, entt::handle> {
+              return {
+                  std::get<assets_file&>(in_tup).assets_attr(),
+                  entt::handle{*in_registry_ptr, std::get<entt::entity>(in_tup)}
+              };
+            }
+        ) |
+        ranges::to<std::map<entt::handle, entt::handle>>;
+  } while (clear(l_tree.begin(), l_ass_map_ass_file));
 }
 
 DOODLE_REGISTER_BEGIN(assets) {
