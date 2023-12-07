@@ -53,11 +53,12 @@ bool open_project::render() {
       g_ctx().get<database_n::file_translator_ptr>()->async_open(main_project);
       open = false;
     }
-
-    ImGui::Text("传入的项目");
-    if (ImGui::Button(cmd_path_.generic_string().c_str(), ImVec2{-FLT_MIN, 0})) {
-      g_ctx().get<database_n::file_translator_ptr>()->async_open(cmd_path_);
-      open = false;
+    if (!cmd_path_.empty()) {
+      ImGui::Text("传入的项目");
+      if (ImGui::Button(cmd_path_.generic_string().c_str(), ImVec2{-FLT_MIN, 0})) {
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(cmd_path_);
+        open = false;
+      }
     }
 
     ImGui::Text("最近的项目");
