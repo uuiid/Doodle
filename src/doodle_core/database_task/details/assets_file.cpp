@@ -7,6 +7,8 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/metadata.h>
 
+#include <boost/asio.hpp>
+
 #include "wil/win32_helpers.h"
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
@@ -73,6 +75,7 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
           )
           .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id) && l_table.id == sqlpp::parameter(l_table.id))
   );
+  std::vector<std::pair<FSys::path, uuid>> l_path_uuid{};
   for (const auto& [id, l_h] : in_id) {
     auto& l_assets            = l_h.get<assets_file>();
     l_pre.params.id           = id;
@@ -95,12 +98,20 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
 
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     l_conn(l_pre);
-    try {
-      FSys::software_flag_file(l_assets.path_attr(), l_h.get<database>().uuid());
-    } catch (const wil::ResultException& e) {
-      log_error(fmt::format("创建软件标记文件失败 {}", e.what()));
-    }
+    l_path_uuid.emplace_back(l_assets.path_attr(), l_h.get<database>().uuid());
   }
+
+  boost::asio::post(g_thread(), [=]() {
+    for (auto [l_p, l_uuid] : l_path_uuid) {
+      try {
+        FSys::software_flag_file(l_p, l_uuid);
+      } catch (const wil::ResultException& e) {
+        default_logger_raw()->log(log_loc(), spdlog::level::warn, "创建软件标记文件失败 {}", e.what());
+      } catch (const FSys::filesystem_error& e) {
+        default_logger_raw()->log(log_loc(), spdlog::level::warn, "创建软件标记文件失败 {}", e.what());
+      }
+    }
+  });
 }
 void sql_com<doodle::assets_file>::select(
     conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
