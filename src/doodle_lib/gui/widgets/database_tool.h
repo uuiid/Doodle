@@ -34,6 +34,11 @@ class DOODLELIB_API database_tool_t {
   std::vector<repeat_item_gui> repeat_list_gui_{};
   gui_cache_name_id list_repeat_table_id{"重复条目列表"s};
 
+  // 合并重复的分类
+  gui_cache_name_id merge_repeat_id{"合并重复的分类"s};
+
+  void merge_repeat();
+
  public:
   database_tool_t() = default;
 

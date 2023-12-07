@@ -71,11 +71,10 @@ tree_type_t build_tree(const registry_ptr& in_registry_ptr) {
   return l_tree_;
 }
 
+// 先祖代合并, 再子代合并, 最后删除
 void clear(const tree_type_t::iterator& in_node, const std::map<entt::handle, entt::handle>& in_ass_map_ass_file) {
   std::map<std::string, std::vector<entt::handle>> l_name{};
   for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
-    clear(in_node, in_ass_map_ass_file);
-
     auto l_key = std::string{it->name};
     if (l_name.contains(l_key)) {
       l_name[l_key].emplace_back(it->handle);
@@ -89,12 +88,12 @@ void clear(const tree_type_t::iterator& in_node, const std::map<entt::handle, en
     if (i.second.size() > 1) {
       has_dou      = true;
       auto l_merge = i.second[0];
-      auto& l_ass  = l_merge.get<assets>();
+      auto& l_ass  = l_merge.patch<assets>();
       for (auto l_it = ++std::begin(i.second); l_it != std::end(i.second); ++l_it) {
         for (auto&& l_c : l_it->get<assets>().get_child()) {
           l_ass.add_child(l_c);
         }
-        if (in_ass_map_ass_file.contains(*l_it)) in_ass_map_ass_file.at(*l_it).get<assets_file>().assets_attr(*l_it);
+        if (in_ass_map_ass_file.contains(*l_it)) in_ass_map_ass_file.at(*l_it).patch<assets_file>().assets_attr(*l_it);
         l_delete_handles.emplace_back(*l_it);
       }
     }
@@ -102,6 +101,9 @@ void clear(const tree_type_t::iterator& in_node, const std::map<entt::handle, en
 
   for (auto it = tree_type_t::begin(in_node); it != tree_type_t::end(in_node); ++it) {
     clear(in_node, in_ass_map_ass_file);
+  }
+  for (auto l_h : l_delete_handles) {
+    l_h.destroy();
   }
 }
 }  // namespace

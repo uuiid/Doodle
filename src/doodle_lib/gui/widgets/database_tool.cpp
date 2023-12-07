@@ -4,17 +4,20 @@
 
 #include "database_tool.h"
 
+#include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/metadata.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include "doodle_lib_fwd.h"
+#include <doodle_lib/doodle_lib_fwd.h>
+
+#include <boost/operators.hpp>
 
 #include <entt/entt.hpp>
-namespace doodle::gui {
+#include <treehh/tree.hh>
 
-namespace {}
+namespace doodle::gui {
 
 void database_tool_t::list_repeat() {
   auto l_view = g_reg()->view<database, assets_file>().each();
@@ -25,7 +28,8 @@ void database_tool_t::list_repeat() {
           [](const decltype(*l_view.begin())& in_tuple) {
             return repeat_item{
                 std::get<database&>(in_tuple).uuid(), std::get<entt::entity>(in_tuple),
-                std::get<assets_file&>(in_tuple).path_attr(), std::get<assets_file&>(in_tuple).name_attr(), ""s};
+                std::get<assets_file&>(in_tuple).path_attr(), std::get<assets_file&>(in_tuple).name_attr(), ""s
+            };
           }
       ) |
       ranges::to_vector;
@@ -58,19 +62,23 @@ void database_tool_t::list_repeat() {
           repeat_list_,
           [](const repeat_item& in_item) {
             return repeat_item_gui{
-                fmt::format("{}", in_item.uuid_), in_item.path_.generic_string(), in_item.name_, in_item.info_};
+                fmt::format("{}", in_item.uuid_), in_item.path_.generic_string(), in_item.name_, in_item.info_
+            };
           }
       ) |
       ranges::to_vector;
 }
 
+void database_tool_t::merge_repeat() { assets::merge_assets_tree(g_reg()); }
+
 bool database_tool_t::render() {
   if (ImGui::Button(*list_repeat_id)) {
     list_repeat();
   }
-  //  ImGui::SameLine();
-  //  if (ImGui::Button(*list_repeat_name_id)) {
-  //  }
+  ImGui::SameLine();
+  if (ImGui::Button(*merge_repeat_id)) {
+    merge_repeat();
+  }
 
   if (auto l_table = dear::Table{*list_repeat_table_id, 5, ImGuiTableFlags_::ImGuiTableFlags_Resizable}; l_table) {
     ImGui::TableSetupColumn("uuid");
