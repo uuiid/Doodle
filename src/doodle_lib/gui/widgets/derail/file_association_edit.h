@@ -29,6 +29,8 @@ class file_association_edit_t {
   // 文件关联句柄
   entt::handle file_association_handle_{};
 
+  // 强制刷新
+  bool force_refresh_{};
   void init(const entt::handle& in_handle);
   void create_file_association();
   entt::handle create_file_association_handle(const entt::handle& in_handle = {});

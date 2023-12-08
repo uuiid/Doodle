@@ -10,7 +10,7 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 namespace doodle::gui::render {
 void file_association_edit_t::init(const entt::handle& in_handle) {
-  if (in_handle == render_id_) return;
+  if (!force_refresh_ && render_id_ == in_handle) return;
 
   if (in_handle.any_of<file_association_ref>() && in_handle.get<file_association_ref>()) {
     auto& l_path = in_handle.get<file_association_ref>().get<file_association>();
@@ -29,7 +29,8 @@ void file_association_edit_t::init(const entt::handle& in_handle) {
     ue_file_.clear();
     ue_preset_file_.clear();
   }
-  render_id_ = in_handle;
+  render_id_     = in_handle;
+  force_refresh_ = false;
 }
 
 entt::handle file_association_edit_t::get_drop_handle() {
@@ -85,7 +86,9 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
       if (l_file_association.ue_preset_file == render_id_) l_file_association.ue_preset_file = {};
     }
     render_id_.remove<file_association_ref>();
-    on_change = true;
+    on_change      = true;
+    force_refresh_ = true;
+    init(render_id_);
   }
 
   if (ImGui::Button("关联自身##1")) {
