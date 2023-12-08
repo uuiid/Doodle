@@ -84,6 +84,10 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
       if (l_file_association.maya_rig_file == render_id_) l_file_association.maya_rig_file = {};
       if (l_file_association.ue_file == render_id_) l_file_association.ue_file = {};
       if (l_file_association.ue_preset_file == render_id_) l_file_association.ue_preset_file = {};
+      if (!(l_file_association.maya_file || l_file_association.maya_rig_file || l_file_association.ue_file ||
+            l_file_association.ue_preset_file)) {
+        render_id_.get<file_association_ref>().destroy();
+      }
     }
     render_id_.remove<file_association_ref>();
     on_change      = true;

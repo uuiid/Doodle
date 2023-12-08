@@ -8,6 +8,7 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/details/load_save_impl.h>
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/metadata/project.h>
@@ -99,6 +100,10 @@ void file_translator::begin_save() {
         [this](const boost::system::error_code& in_error) {
           if (in_error) {
             log_info(fmt::format("定时器取消 {}", in_error.message()));
+            return;
+          }
+          if (g_ctx().get<program_info>().stop_attr()) {
+            default_logger_raw()->log(log_loc(), level::warn, "程序退出");
             return;
           }
           async_save_impl();
