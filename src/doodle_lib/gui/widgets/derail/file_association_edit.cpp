@@ -11,6 +11,10 @@
 namespace doodle::gui::render {
 void file_association_edit_t::init(const entt::handle& in_handle) {
   if (!force_refresh_ && render_id_ == in_handle) return;
+  maya_file_.clear();
+  maya_rig_file_.clear();
+  ue_file_.clear();
+  ue_preset_file_.clear();
 
   if (in_handle.any_of<file_association_ref>() && in_handle.get<file_association_ref>()) {
     auto& l_path = in_handle.get<file_association_ref>().get<file_association>();
@@ -24,10 +28,6 @@ void file_association_edit_t::init(const entt::handle& in_handle) {
       ue_preset_file_ = l_h.get<doodle::assets_file>().path_attr().generic_string();
   } else {
     name_ = "未建立任何联系";
-    maya_file_.clear();
-    maya_rig_file_.clear();
-    ue_file_.clear();
-    ue_preset_file_.clear();
   }
   render_id_     = in_handle;
   force_refresh_ = false;
