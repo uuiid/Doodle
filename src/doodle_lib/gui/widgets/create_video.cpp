@@ -186,7 +186,8 @@ bool create_video::render() {
     });
 
     p_i->out_video_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
-    p_i->out_video_h.emplace_or_replace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
+    if (!p_i->out_video_h.all_of<process_message>())
+      p_i->out_video_h.emplace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
   }
 
   dear::ListBox{"video_list"} && [this]() {
