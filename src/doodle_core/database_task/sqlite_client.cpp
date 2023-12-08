@@ -93,6 +93,10 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
 }
 
 void file_translator::begin_save() {
+  if (g_ctx().get<program_info>().stop_attr()) {
+    default_logger_raw()->log(log_loc(), level::warn, "程序退出");
+    return;
+  }
   if (timer_->expiry() <= std::chrono::steady_clock::now()) {
     timer_->expires_from_now(std::chrono::seconds(1));
     timer_->async_wait(boost::asio::bind_cancellation_slot(
@@ -100,10 +104,6 @@ void file_translator::begin_save() {
         [this](const boost::system::error_code& in_error) {
           if (in_error) {
             log_info(fmt::format("定时器取消 {}", in_error.message()));
-            return;
-          }
-          if (g_ctx().get<program_info>().stop_attr()) {
-            default_logger_raw()->log(log_loc(), level::warn, "程序退出");
             return;
           }
           async_save_impl();
