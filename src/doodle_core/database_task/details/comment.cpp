@@ -91,7 +91,7 @@ void sql_com<doodle::comment>::select(
       l_entts.emplace_back(in_handle.at(l_id));
       l_ids.emplace(l_id);
     } else {
-      spdlog::default_logger_raw()->error("实体 {} 不存在", l_id);
+      spdlog::default_logger_raw()->log(log_loc(), level::warn, "实体 {} 不存在", l_id);
     }
   }
   //  for (auto&& [l_entt, l_com] : ranges::views::zip(l_entts, l_comment)) {
