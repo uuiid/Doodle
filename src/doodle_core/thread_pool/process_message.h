@@ -68,9 +68,13 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
   [[nodiscard]] logger_ptr logger() const;
 
+  boost::asio::cancellation_signal cancel_sig;
   boost::signals2::signal<void()> aborted_sig;
 
-  inline void aborted() { aborted_sig(); }
+  inline void aborted() {
+    aborted_sig();
+    cancel_sig.emit(boost::asio::cancellation_type::all);
+  }
 };
 inline auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
 }  // namespace doodle
