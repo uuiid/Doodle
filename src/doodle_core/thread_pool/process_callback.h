@@ -3,4 +3,12 @@
 //
 
 #include <doodle_core_fwd.h>
-namespace doodle {}
+namespace doodle {
+
+///  这个类是对消息组件
+class process_callback {
+ public:
+  virtual ~process_callback() = default;
+};
+
+}  // namespace doodle
