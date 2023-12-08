@@ -33,6 +33,7 @@ class DOODLE_CORE_API process_message {
     state p_state;
     rational_int p_progress;
     std::mutex _mutex;
+    boost::asio::cancellation_signal cancel_sig;
 
     logger_ptr p_logger;
   };
@@ -68,12 +69,13 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
   [[nodiscard]] logger_ptr logger() const;
 
-  boost::asio::cancellation_signal cancel_sig;
   boost::signals2::signal<void()> aborted_sig;
+  inline auto get_cancel_slot() { return data_->cancel_sig.slot(); }
 
   inline void aborted() {
     aborted_sig();
-    cancel_sig.emit(boost::asio::cancellation_type::all);
+
+    data_->cancel_sig.emit(boost::asio::cancellation_type::all);
   }
 };
 inline auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
