@@ -88,7 +88,10 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
     render_id_.remove<file_association_ref>();
     on_change      = true;
     force_refresh_ = true;
-    init(render_id_);
+    boost::asio::post(g_io_context(), [this]() {
+      force_refresh_ = true;
+      init(render_id_);
+    });
   }
 
   if (ImGui::Button("关联自身##1")) {
