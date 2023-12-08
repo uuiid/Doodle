@@ -22,6 +22,9 @@ class file_association_edit_t {
   gui_cache_name_id maya_rig_file_id{"关联maya骨骼文件"};
   gui_cache_name_id ue_file_id{"关联ue文件"};
   gui_cache_name_id ue_preset_file_id{"关联ue预调文件"};
+
+  gui_cache_name_id clear_id{"清除关联所有"};
+
   entt::handle render_id_{};
   // 文件关联句柄
   entt::handle file_association_handle_{};

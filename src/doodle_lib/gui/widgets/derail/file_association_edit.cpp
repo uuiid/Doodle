@@ -73,6 +73,18 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
     on_change                                                                = true;
   }
 
+  if (ImGui::Button(*clear_id)) {
+    if (render_id_.any_of<file_association_ref>()) {
+      auto& l_file_association = render_id_.get<file_association_ref>().patch<file_association>();
+      if (l_file_association.maya_file == render_id_) l_file_association.maya_file = {};
+      if (l_file_association.maya_rig_file == render_id_) l_file_association.maya_rig_file = {};
+      if (l_file_association.ue_file == render_id_) l_file_association.ue_file = {};
+      if (l_file_association.ue_preset_file == render_id_) l_file_association.ue_preset_file = {};
+    }
+    render_id_.remove<file_association_ref>();
+    on_change = true;
+  }
+
   if (ImGui::Button("关联自身##1")) {
     entt::handle l_file_ref      = create_file_association_handle();
     auto& l_file_association     = l_file_ref.get_or_emplace<file_association>();
