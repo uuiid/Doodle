@@ -70,7 +70,8 @@ class ref_attr_gui {
   ref_attr_gui()  = default;
   ~ref_attr_gui() = default;
   gui_cache<std::vector<maya_tool_ns::maya_reference_info>> ref_attr{
-      "替换文件设置"s, std::vector<maya_tool_ns::maya_reference_info>{}};
+      "替换文件设置"s, std::vector<maya_tool_ns::maya_reference_info>{}
+  };
   gui_cache_name_id de_button_attr{"添加"};
 };
 
@@ -182,7 +183,7 @@ bool maya_tool::render() {
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(in_path.filename().generic_string());
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [=](boost::system::error_code in_code) {
+      l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code) {
         if (in_code) {
           l_msg_handle.get<process_message>().set_state(process_message::state::fail);
         } else {
@@ -204,7 +205,7 @@ bool maya_tool::render() {
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(i.filename().generic_string());
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [=](boost::system::error_code in_code) {
+      l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code) {
         if (in_code) {
           l_msg_handle.get<process_message>().set_state(process_message::state::fail);
         } else {
@@ -232,7 +233,7 @@ bool maya_tool::render() {
 
       auto l_msg_handle      = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(i.filename().generic_string());
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [=](boost::system::error_code in_code) {
+      l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code) {
         if (in_code) {
           l_msg_handle.get<process_message>().set_state(process_message::state::fail);
         } else {
