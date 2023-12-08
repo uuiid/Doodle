@@ -59,6 +59,9 @@ entt::handle file_association_edit_t::create_file_association_handle(const entt:
   if (!l_r.any_of<database>()) {
     l_r.emplace<database>();
   }
+  if (!l_r.any_of<file_association>()) {
+    l_r.emplace<file_association>();
+  }
   return l_r;
 }
 
@@ -69,8 +72,8 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
 
   dear::Text(tool_tip_);
   if (ImGui::InputText(*name_id_, &name_)) {
-    create_file_association_handle().get_or_emplace<file_association>().name = name_;
-    on_change                                                                = true;
+    create_file_association_handle().patch<file_association>().name = name_;
+    on_change                                                       = true;
   }
 
   if (ImGui::Button(*clear_id)) {
@@ -87,7 +90,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
 
   if (ImGui::Button("关联自身##1")) {
     entt::handle l_file_ref      = create_file_association_handle();
-    auto& l_file_association     = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association     = l_file_ref.patch<file_association>();
     l_file_association.maya_file = render_id_;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     maya_file_ = render_id_.get<doodle::assets_file>().path_attr().generic_string();
@@ -97,7 +100,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
   ImGui::InputText(*maya_file_id, &maya_file_, ImGuiInputTextFlags_ReadOnly);
   if (auto l_h = get_drop_handle()) {
     entt::handle l_file_ref      = create_file_association_handle(l_h);
-    auto& l_file_association     = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association     = l_file_ref.patch<file_association>();
     l_file_association.maya_file = l_h;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     l_h.emplace_or_replace<file_association_ref>(l_file_ref);
@@ -108,7 +111,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
   if (ImGui::Button("关联自身##2")) {
     entt::handle l_file_ref          = create_file_association_handle();
 
-    auto& l_file_association         = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association         = l_file_ref.patch<file_association>();
     l_file_association.maya_rig_file = render_id_;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     maya_rig_file_ = render_id_.get<doodle::assets_file>().path_attr().generic_string();
@@ -119,7 +122,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
   if (auto l_h = get_drop_handle()) {
     entt::handle l_file_ref          = create_file_association_handle(l_h);
 
-    auto& l_file_association         = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association         = l_file_ref.patch<file_association>();
     l_file_association.maya_rig_file = l_h;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     l_h.emplace_or_replace<file_association_ref>(l_file_ref);
@@ -129,7 +132,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
 
   if (ImGui::Button("关联自身##3")) {
     entt::handle l_file_ref    = create_file_association_handle();
-    auto& l_file_association   = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association   = l_file_ref.patch<file_association>();
     l_file_association.ue_file = render_id_;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     ue_file_  = render_id_.get<doodle::assets_file>().path_attr().generic_string();
@@ -139,7 +142,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
   ImGui::InputText(*ue_file_id, &ue_file_, ImGuiInputTextFlags_ReadOnly);
   if (auto l_h = get_drop_handle()) {
     entt::handle l_file_ref    = create_file_association_handle(l_h);
-    auto& l_file_association   = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association   = l_file_ref.patch<file_association>();
     l_file_association.ue_file = l_h;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     l_h.emplace_or_replace<file_association_ref>(l_file_ref);
@@ -149,7 +152,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
 
   if (ImGui::Button("关联自身##4")) {
     entt::handle l_file_ref           = create_file_association_handle();
-    auto& l_file_association          = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association          = l_file_ref.patch<file_association>();
     l_file_association.ue_preset_file = render_id_;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     ue_preset_file_ = render_id_.get<doodle::assets_file>().path_attr().generic_string();
@@ -159,7 +162,7 @@ bool file_association_edit_t::render(const entt::handle& in_handle_view) {
   ImGui::InputText(*ue_preset_file_id, &ue_preset_file_, ImGuiInputTextFlags_ReadOnly);
   if (auto l_h = get_drop_handle()) {
     entt::handle l_file_ref           = create_file_association_handle(l_h);
-    auto& l_file_association          = l_file_ref.get_or_emplace<file_association>();
+    auto& l_file_association          = l_file_ref.patch<file_association>();
     l_file_association.ue_preset_file = l_h;
     render_id_.emplace_or_replace<file_association_ref>(l_file_ref);
     l_h.emplace_or_replace<file_association_ref>(l_file_ref);
