@@ -121,7 +121,6 @@ class select::impl {
 
   std::vector<entt::entity> create_entt{};
   id_map_type id_map{};
-  process_message* process_message_{};
 // #define DOODLE_SQL_compatible_v2
 #if defined(DOODLE_SQL_compatible_v2)
 #pragma region "old compatible 兼容旧版函数"
@@ -151,8 +150,6 @@ class select::impl {
                   doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
                   doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon,
                   doodle::importance, doodle::redirection_path_info>(l_h, k_json);
-              process_message_->message("开始旧版本兼容转换"s);
-              process_message_->progress_step({1, l_size});
             }}
         );
         results.emplace_back(l_fun.share());
@@ -168,8 +165,6 @@ class select::impl {
                                                  ? l_h.get<doodle::project_config::base_config>()
                                                  : doodle::project_config::base_config{};
                                        }
-                                       process_message_->message("完成旧版本兼容转换"s);
-                                       process_message_->progress_clear();
                                      }});
       results.emplace_back(l_fun.share());
     }
@@ -197,7 +192,6 @@ class select::impl {
       auto l_fut = boost::asio::post(
           l_s, std::packaged_task<Type()>{[in_json = row.json_data.value(), in_id = l_id, l_size, this]() {
             auto l_json = nlohmann::json::parse(in_json);
-            process_message_->progress_step({1, l_size * 2});
             return l_json.template get<Type>();
           }}
       );
@@ -233,7 +227,6 @@ class select::impl {
           std::packaged_task<database()>{[in_json = row.uuid_data.value(), in_id = row.id, l_size, this]() -> database {
             database l_database{in_json};
             l_database.set_id(in_id);
-            process_message_->progress_step({1, l_size * 2});
             return l_database;
           }}
       );
@@ -280,7 +273,6 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
 }  // namespace
 
 bool select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect) {
-  p_i->process_message_ = g_reg()->ctx().find<process_message>();
   p_i->only_ctx         = false;
   p_i->project          = in_project_path;
 #if defined(DOODLE_SQL_compatible_v2)
@@ -315,7 +307,6 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
 }
 
 bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
-  p_i->process_message_ = g_reg()->ctx().find<process_message>();
   p_i->only_ctx         = false;
   p_i->project          = in_project_path;
 
