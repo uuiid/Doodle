@@ -134,7 +134,8 @@ class maya_process_base {
 
 class DOODLELIB_API maya_exe {
  public:
-  using call_fun_type = boost::asio::any_completion_handler<void(boost::system::error_code)>;
+  using call_fun_type   = boost::asio::any_completion_handler<void(boost::system::error_code)>;
+  using any_io_executor = boost::asio::any_io_executor;
 
  private:
   friend class maya_exe_ns::maya_process_base;
@@ -146,7 +147,7 @@ class DOODLELIB_API maya_exe {
  protected:
   virtual void queue_up(
       const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
-      call_fun_type in_call_fun, const FSys::path &in_run_path
+      call_fun_type in_call_fun, const any_io_executor &in_any_io_executor, const FSys::path &in_run_path
   );
 
  public:
@@ -166,10 +167,11 @@ class DOODLELIB_API maya_exe {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, l_arg, in_handle](auto &&in_completion_handler) {
           nlohmann::json l_json{};
-          l_json = l_arg;
+          l_json                             = l_arg;
+          boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_completion_handler);
           this->queue_up(
               in_handle, Arg_t::k_name, l_json, std::forward<decltype(in_completion_handler)>(in_completion_handler),
-              l_arg.file_path
+              l_exe, l_arg.file_path
           );
         },
         in_completion

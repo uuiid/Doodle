@@ -15,6 +15,8 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
+#include <boost/asio.hpp>
+
 constexpr auto l_data = R"([
 {
     "out_file": "D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/LQ_ep092_sc089_Ch426A_rig_wxc_1001-1013.fbx",
@@ -38,7 +40,7 @@ class maya_exe_test : public doodle::maya_exe {
  private:
   void queue_up(
       const entt::handle& in_msg, const std::string_view& in_key, const nlohmann::json& in_string,
-      call_fun_type in_call_fun, const std::filesystem::path& in_run_path
+      call_fun_type in_call_fun, const any_io_executor& in_any_io_executor, const std::filesystem::path& in_run_path
   ) override {
     auto l_path = in_string.get<doodle::maya_exe_ns::export_fbx_arg>().out_path_file_;
     doodle::FSys::ofstream{l_path} << l_data;
@@ -51,9 +53,7 @@ class maya_exe_test : public doodle::maya_exe {
         doodle::FSys::copy_options::overwrite_existing
     );
 
-    //    in_call_fun(boost::system::error_code{});  // 通知完成
-    //    boost::asio::get_associated_executor(in_call_fun) ;
-    boost::asio::post(std::bind(std::move(in_call_fun), boost::system::error_code{}));
+    boost::asio::post(in_any_io_executor, std::bind(std::move(in_call_fun), boost::system::error_code{}));
   }
 };
 
@@ -63,7 +63,10 @@ class ue_exe_test : public doodle::ue_exe {
   ~ue_exe_test() override = default;
 
  private:
-  void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
+  void queue_up(
+      const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun,
+      const any_io_executor& in_any_io_executor
+  ) override {
     doodle::log_info(fmt::format("ue_exe_test {}", in_command_line));
     if (!doodle::FSys::exists("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89")) {
       doodle::FSys::create_directories("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89");
@@ -72,7 +75,7 @@ class ue_exe_test : public doodle::ue_exe {
         "C:/Users/TD/Pictures/Screenshots", "D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89",
         doodle::FSys::copy_options::overwrite_existing
     );
-    boost::asio::post(std::bind(std::move(in_call_fun), boost::system::error_code{}));
+    boost::asio::post(in_any_io_executor, std::bind(std::move(in_call_fun), boost::system::error_code{}));
   }
 };
 

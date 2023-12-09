@@ -36,6 +36,7 @@ class ue_exe {
  public:
   struct arg_render_queue;
   struct arg_import_file;
+  using any_io_executor = boost::asio::any_io_executor;
 
  private:
   class run_ue;
@@ -52,7 +53,10 @@ class ue_exe {
 
  protected:
   using call_fun_type = boost::asio::any_completion_handler<void(boost::system::error_code)>;
-  virtual void queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun);
+  virtual void queue_up(
+      const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun,
+      const any_io_executor &in_any_io_executor
+  );
 
  public:
   struct arg_render_queue {
@@ -90,7 +94,8 @@ class ue_exe {
         ::boost::process::std_out = l_child->out_attr,
         ::boost::process::std_err = l_child->err_attr,
         ::boost::process::on_exit = in_completion,
-        ::boost::process::windows::hide};
+        ::boost::process::windows::hide
+    };
     child_weak_ptr_ = l_child;
     return l_child;
   };
@@ -107,9 +112,10 @@ class ue_exe {
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {
+          boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_completion_handler);
           this->queue_up(
               in_handle, l_arg,
-              std::move(call_fun_type{std::forward<decltype(in_completion_handler)>(in_completion_handler)})
+              std::move(call_fun_type{std::forward<decltype(in_completion_handler)>(in_completion_handler)}), l_exe
           );
         },
         in_completion

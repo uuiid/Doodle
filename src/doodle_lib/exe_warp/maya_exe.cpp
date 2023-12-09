@@ -79,6 +79,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   boost::process::async_pipe err_attr{g_io_context()};
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
   boost::signals2::scoped_connection cancel_attr{};
+  boost::asio::any_io_executor any_io_executor_;
   bool is_cancel{};
 
   explicit run_maya(maya_exe *in_maya_exe) : maya_exe_ns::maya_process_base(in_maya_exe) {}
@@ -91,7 +92,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
       log_attr->log(log_loc(), level::err, "用户结束: {}", run_script_attr.dump());
       boost::system::error_code l_ec{boost::asio::error::operation_aborted};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
-      boost::asio::post(std::bind(std::move(call_attr), l_ec));
+      boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), l_ec));
       next_run();
       return;
     }
@@ -100,7 +101,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
       boost::system::error_code l_ec{error_enum::file_not_exists};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
       log_attr->log(log_loc(), level::warn, "没有找到maya文件");
-      boost::asio::post(std::bind(std::move(call_attr), l_ec));
+      boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), l_ec));
       return;
     }
 
@@ -134,11 +135,12 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               timer_attr.cancel();
               log_attr->log(log_loc(), level::warn, "进程结束 {}", in_exit);
-              boost::asio::post(std::bind(std::move(call_attr), in_error_code));
+              boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), in_error_code));
               next_run();
             },
         boost::process::windows::hide,
-        l_eve};
+        l_eve
+    };
 
     read_out();
     read_err();
@@ -271,7 +273,7 @@ void maya_exe::notify_run() {
 }
 void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
-    call_fun_type in_call_fun, const FSys::path &in_run_path
+    call_fun_type in_call_fun, const any_io_executor &in_any_io_executor, const FSys::path &in_run_path
 ) {
   install_maya_exe();
 
@@ -285,6 +287,7 @@ void maya_exe::queue_up(
   l_run->maya_program_path   = find_maya_path();
   l_run->call_attr           = std::move(in_call_fun);
   l_run->log_attr            = in_msg.get<process_message>().logger();
+  l_run->any_io_executor_    = in_any_io_executor;
   l_run->cancel_attr = in_msg.get<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
     if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) l_ptr->cancel();
   });
