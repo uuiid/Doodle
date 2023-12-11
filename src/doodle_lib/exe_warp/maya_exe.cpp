@@ -109,7 +109,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
     log_attr->log(log_loc(), level::warn, "开始写入配置文件 {}", l_path);
 
-    timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
+    timer_attr.expires_after(chrono::seconds{core_set::get_set().timeout});
     timer_attr.async_wait([this](boost::system::error_code in_code) {
       if (!in_code) {
         log_attr->log(log_loc(), level::warn, "进程超时，结束任务");
