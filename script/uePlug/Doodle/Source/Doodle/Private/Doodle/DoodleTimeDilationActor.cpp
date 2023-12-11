@@ -1,5 +1,7 @@
 #include "Doodle/DoodleTimeDilationActor.h"
 
+#include "GameFramework/WorldSettings.h"
+
 ADoodleTimeDilation::ADoodleTimeDilation() { TimeDilation = 1.0f; }
 
 void ADoodleTimeDilation::BeginPlay() {
