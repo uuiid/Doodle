@@ -1,18 +1,18 @@
 #include "DoodleUI.h"
 
-#include "DoodleCopySpline.h"
-#include "DoodleDirectionalLightDome.h"
-#include "IPlacementModeModule.h"
-#include "DoodleMatrixLight.h"
-#include "fireLight.h"
-#include "DoodleSurroundMesh.h"
 #include "Doodle/AiArrayGeneration.h"
 #include "Doodle/AiArrayGenerationMove.h"
 #include "Doodle/AiArrayGenerationMoveSpline.h"
+#include "Doodle/DoodleTimeDilationActor.h"
 #include "DoodleAiSplineCrowd.h"
-
-#include "UnrealEdGlobals.h"
+#include "DoodleCopySpline.h"
+#include "DoodleDirectionalLightDome.h"
+#include "DoodleMatrixLight.h"
+#include "DoodleSurroundMesh.h"
 #include "Editor/UnrealEdEngine.h"
+#include "IPlacementModeModule.h"
+#include "UnrealEdGlobals.h"
+#include "fireLight.h"
 
 static const FName doodleTabName("doodleUI");
 #define LOCTEXT_NAMESPACE "FdoodleUIModule"
@@ -83,6 +83,9 @@ void FdoodleUIModule::StartupModule() {
       MakeShareable(new FPlaceableItem(
           nullptr, FAssetData{ADoodleAiArrayGenerationMoveSpline::StaticClass()}
       ))
+  );
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle, MakeShareable(new FPlaceableItem(nullptr, FAssetData{ADoodleTimeDilation::StaticClass()}))
   );
 }
 
