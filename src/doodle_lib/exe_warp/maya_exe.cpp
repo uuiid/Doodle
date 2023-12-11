@@ -156,7 +156,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
             auto l_str = conv::to_utf<char>(l_ine, "GBK");
-            log_attr->log(log_loc(), level::warn, l_str);
+            log_attr->log(log_loc(), level::info, l_str);
             read_out();
           } else {
             log_attr->log(log_loc(), level::warn, in_code);
