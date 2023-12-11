@@ -84,9 +84,10 @@ void export_fbx_facet::export_fbx() {
   l_out_arg.emplace_back(l_cam_path, FSys::path{});
 
   nlohmann::json l_json = l_out_arg;
-  if (!out_path_file_.empty())
+  if (!out_path_file_.empty()) {
+    if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
     FSys::ofstream{out_path_file_} << l_json.dump(4);
-  else
+  } else
     log_info(fmt::format("导出文件 {}", l_json.dump(4)));
 }
 
