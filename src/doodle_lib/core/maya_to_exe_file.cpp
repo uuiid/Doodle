@@ -157,7 +157,8 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
       l_maya_out_arg | ranges::views::transform([](const maya_to_exe_file_ns::maya_out_arg &in_arg) {
         return maya_to_exe_file_ns::out_file_export{
             in_arg.out_file.filename().generic_string().find("_camera_") != std::string::npos ? "cam" : "char",
-            in_arg.out_file};
+            in_arg.out_file
+        };
       }) |
       ranges::to<std::vector<maya_to_exe_file_ns::out_file_export>>();
   l_out_file.original_map     = data_->original_map_;
@@ -170,9 +171,9 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
   }
 
-  data_->logger_->log(log_loc(), level::level_enum::info, "开始处理 maya 输出文件");
+  data_->logger_->log(log_loc(), level::level_enum::info, "开始处理 maya 输出文件 {}", data_->maya_out_data_);
   if (data_->maya_out_data_.empty()) {
-    data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件");
+    data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件 {}", data_->maya_out_data_);
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     call_end(in_error_code);
@@ -352,7 +353,8 @@ void maya_to_exe_file::import_file() const {
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
-          fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->render_project_file_, l_path)},
+          fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->render_project_file_, l_path)
+      },
       boost::asio::bind_executor(g_io_context(), *this)
   );
 }
