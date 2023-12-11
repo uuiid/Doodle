@@ -150,7 +150,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     boost::asio::async_read_until(
         out_attr, out_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
-          timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
             /// @brief 此处在主线程调用
             std::string l_ine;
@@ -170,7 +169,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     boost::asio::async_read_until(
         err_attr, err_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
-          timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
             std::string l_line{};
             std::istream l_istream{&err_strbuff_attr};
