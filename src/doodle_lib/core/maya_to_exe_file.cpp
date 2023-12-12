@@ -263,14 +263,30 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
       data_->original_map_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
       l_down_path          = l_uproject.parent_path();
     }
-    boost::asio::post(l_strand, boost::asio::consign([=, this]() mutable { down_file(l_down_path, l_is_se); }, *this));
+    boost::asio::post(l_strand, std::bind(*this, l_down_path, l_is_se));
   }
 
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
   boost::asio::post(l_strand, boost::asio::bind_executor(g_io_context(), *this));
 }
-void maya_to_exe_file::operator()() const { import_file(); }
+void maya_to_exe_file::operator()() const {
+  switch (data_->render_type_) {
+    case render_type::down_file:
+      break;
+
+    case render_type::import_file:
+      import_file();
+      break;
+
+    case render_type::render:
+      break;
+    case render_type::update:
+      update_file({});
+      break;
+  }
+}
+void maya_to_exe_file::operator()(const FSys::path &in_path, bool is_scene) const { down_file(in_path, is_scene); }
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
   if (!data_->logger_) {
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
@@ -287,18 +303,16 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
   auto l_strand = g_ctx().get<copy_file_strand>().executor_;
   switch (data_->render_type_) {
     case render_type::down_file:
-      begin_render(in_error_code);  // 以及下载完成,进入导入文件过程
       data_->render_type_ = render_type::import_file;
+      begin_render(in_error_code);  // 以及下载完成,进入导入文件过程
       break;
     case render_type::import_file:
       render(in_error_code);  // 导入文件完成,进入排屏过程
       data_->render_type_ = render_type::render;
       break;
     case render_type::render:
-      boost::asio::post(
-          l_strand, boost::asio::consign([=, this]() mutable { update_file(in_error_code); }, *this)
-      );  // 排屏完成,进入上传文件过程
       data_->render_type_ = render_type::update;
+      boost::asio::post(l_strand, std::bind(*this, in_error_code));  // 排屏完成,进入上传文件过程
       break;
     case render_type::update:
       break;

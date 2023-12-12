@@ -92,6 +92,7 @@ class maya_to_exe_file {
 
   void operator()(boost::system::error_code in_error_code) const;
   void operator()() const;
+  void operator()(const FSys::path& in_path, bool is_scene) const;
 };
 
 }  // namespace doodle
