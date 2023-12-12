@@ -252,6 +252,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
            !in_l.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
   });
 
+  auto l_strand = g_ctx().get<copy_file_strand>().executor_;
   for (auto &&h : l_refs) {
     auto l_is_se     = h.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
     auto l_down_path = h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr();
@@ -262,11 +263,12 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
       data_->original_map_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
       l_down_path          = l_uproject.parent_path();
     }
-    down_file(l_down_path, l_is_se);
+    boost::asio::post(l_strand, [=, this]() mutable { down_file(l_down_path, l_is_se); });
   }
+
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 
-  boost::asio::post(g_io_context(), *this);
+  boost::asio::post(l_strand, boost::asio::bind_executor(g_io_context(), *this));
 }
 void maya_to_exe_file::operator()() const { import_file(); }
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
@@ -282,6 +284,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     call_end(in_error_code);
     return;
   }
+  auto l_strand = g_ctx().get<copy_file_strand>().executor_;
   switch (data_->render_type_) {
     case render_type::down_file:
       begin_render(in_error_code);  // 以及下载完成,进入导入文件过程
@@ -292,7 +295,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       data_->render_type_ = render_type::render;
       break;
     case render_type::render:
-      update_file(in_error_code);  // 排屏完成,进入上传文件过程
+      boost::asio::post(l_strand, [=, this]() mutable { update_file(in_error_code); });  // 排屏完成,进入上传文件过程
       data_->render_type_ = render_type::update;
       break;
     case render_type::update:

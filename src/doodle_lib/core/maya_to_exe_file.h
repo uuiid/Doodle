@@ -23,6 +23,10 @@ class maya_to_exe_file {
   static constexpr auto g_saved         = "Saved";
   static constexpr auto g_movie_renders = "MovieRenders";
 
+  struct copy_file_strand {
+    boost::asio::strand<boost::asio::thread_pool::executor_type> executor_{};
+  };
+
   enum class render_type {
     down_file,
     import_file,
@@ -68,14 +72,14 @@ class maya_to_exe_file {
     data_->maya_out_data_ = std::move(in_maya_out_data);
     update_dir_           = std::move(in_update_path);
     msg_                  = std::move(in_msg);
-    executor_             = boost::asio::make_strand(g_thread());
+    g_ctx().emplace<copy_file_strand>(boost::asio::make_strand(g_thread()));
   };
   explicit maya_to_exe_file(entt::handle in_msg, FSys::path in_maya_out_file, FSys::path in_update_path)
       : maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_t>()) {
     data_->logger_ = in_msg.get<process_message>().logger();
     msg_           = std::move(in_msg);
     update_dir_    = std::move(in_update_path);
-    executor_      = boost::asio::make_strand(g_thread());
+    g_ctx().emplace<copy_file_strand>(boost::asio::make_strand(g_thread()));
   };
   inline maya_to_exe_file& set_ue_call_fun(
       boost::asio::any_completion_handler<void(boost::system::error_code)> in_end_call_
