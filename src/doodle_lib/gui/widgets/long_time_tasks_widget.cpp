@@ -87,7 +87,7 @@ bool long_time_tasks_widget::render() {
         *out_text                       = l_leve_names_tmp[in_index].data();
         return true;
       },
-      nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>() - 2)
+      nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
   );
 
   dear::Text("主要日志"s);
