@@ -81,9 +81,9 @@ class maya_to_exe_file {
     update_dir_    = std::move(in_update_path);
     g_ctx().emplace<copy_file_strand>(boost::asio::make_strand(g_thread()));
   };
-  inline maya_to_exe_file& set_ue_call_fun(
-      boost::asio::any_completion_handler<void(boost::system::error_code)> in_end_call_
-  ) {
+  template <typename CompletionHandler>
+  inline maya_to_exe_file& set_ue_call_fun(CompletionHandler in_end_call_) {
+    executor_        = boost::asio::get_associated_executor(in_end_call_);
     data_->end_call_ = std::move(in_end_call_);
     return *this;
   }

@@ -74,7 +74,7 @@ struct out_file {
 
 void maya_to_exe_file::call_end(const boost::system::error_code &in_error_code) const {
   if (data_->end_call_) {
-    boost::asio::post(std::bind(std::move(data_->end_call_), in_error_code));
+    boost::asio::post(executor_, std::bind(std::move(data_->end_call_), in_error_code));
   }
 }
 
