@@ -275,6 +275,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
     in_error_code.assign(error_enum::component_missing_error, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    call_end(in_error_code);
     return;
   }
   if (in_error_code) {
