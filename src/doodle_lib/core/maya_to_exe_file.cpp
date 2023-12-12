@@ -170,9 +170,9 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     data_->maya_out_data_ = {std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
   }
 
-  data_->logger_->log(log_loc(), level::level_enum::info, "开始处理 maya 输出文件 {}", data_->maya_out_data_);
+  data_->logger_->log(log_loc(), level::warn, "开始处理 maya 输出文件 {}", data_->maya_out_data_);
   if (data_->maya_out_data_.empty()) {
-    data_->logger_->log(log_loc(), level::level_enum::err, "maya结束进程后未能成功输出文件 {}", data_->maya_out_data_);
+    data_->logger_->log(log_loc(), level::err, "maya结束进程后未能成功输出文件 {}", data_->maya_out_data_);
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     call_end(in_error_code);
@@ -306,6 +306,7 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
 void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const {
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
 
+  data_->logger_->log(log_loc(), level::level_enum::warn, "开始下载文件 {}", in_path);
   if (is_scene) {
     data_->render_project_ = g_root / in_path.stem();
     if (!FSys::exists(data_->render_project_)) FSys::create_directories(data_->render_project_);
@@ -313,6 +314,7 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
 
   auto l_loc_prj = data_->render_project_ / g_content;
   auto l_rem_prj = in_path / g_content;
+  data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_rem_prj, l_loc_prj);
 
   // 复制内容文件夹
   for (auto &&l_file : FSys::recursive_directory_iterator{l_rem_prj}) {
@@ -340,6 +342,8 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
   // 复制配置文件夹
   auto l_loc_config = data_->render_project_ / g_config;
   auto l_rem_config = in_path / g_config;
+  data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_rem_config, l_loc_config);
+
   FSys::copy(l_rem_config, l_loc_config, FSys::copy_options::overwrite_existing | FSys::copy_options::recursive);
   // 复制项目文件
   for (auto &&l_file : FSys::directory_iterator{in_path}) {
@@ -354,6 +358,8 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
 void maya_to_exe_file::import_file() const {
   auto l_exe  = g_ctx().get<ue_exe_ptr>();
   auto l_path = gen_render_config_file();
+  data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件 {}", data_->render_project_file_);
+
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{
@@ -364,7 +370,7 @@ void maya_to_exe_file::import_file() const {
 }
 
 void maya_to_exe_file::render(boost::system::error_code) const {
-  data_->logger_->log(log_loc(), level::level_enum::info, "开始排屏");
+  data_->logger_->log(log_loc(), level::warn, "开始排屏 {}", data_->out_dir);
   auto l_exe = g_ctx().get<ue_exe_ptr>();
   if (FSys::exists(data_->out_dir)) {
     FSys::remove_all(data_->out_dir);
@@ -381,7 +387,7 @@ void maya_to_exe_file::render(boost::system::error_code) const {
 }
 
 void maya_to_exe_file::update_file(boost::system::error_code in_error_code) const {
-  data_->logger_->log(log_loc(), level::level_enum::info, "排屏完成, 开始上传文件");
+  data_->logger_->log(log_loc(), level::warn, "排屏完成, 开始上传文件");
   if (update_dir_.empty()) {
     call_end(in_error_code);
     return;
@@ -393,6 +399,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
 
   auto l_loc_prj = data_->render_project_ / g_content;
   auto l_rem_prj = data_->update_dir_ / g_content;
+  data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_loc_prj, l_rem_prj);
 
   // 复制内容文件夹
   for (auto &&l_file : FSys::recursive_directory_iterator{l_loc_prj}) {
@@ -427,6 +434,9 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
   }
 
   auto l_out_rem_dir = data_->update_dir_ / g_saved / g_movie_renders / l_out_loc_dir.filename();
+
+  data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_out_loc_dir, l_out_rem_dir);
+
   if (!FSys::exists(l_out_rem_dir)) FSys::create_directories(l_out_rem_dir);
   for (auto &&l_file : FSys::directory_iterator{l_out_loc_dir}) {
     auto l_rem_file = l_out_rem_dir / l_file.path().filename();
@@ -445,6 +455,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
   }
 
   // 复制额外的输出
+  data_->logger_->log(log_loc(), level::level_enum::warn, "开始复制额外的输出文件");
   for (auto &&l_dir : data_->extra_update_dir_) {
     if (!FSys::exists(l_dir)) {
       data_->logger_->log(log_loc(), level::level_enum::err, "额外输出文件夹 {} 不存在", l_dir);
@@ -454,6 +465,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
       return;
     }
     auto l_rem_dir = data_->update_dir_ / l_dir.filename();
+    data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_dir, l_rem_dir);
     if (!FSys::exists(l_rem_dir)) FSys::create_directories(l_rem_dir);
     for (auto &&l_file : FSys::directory_iterator{l_dir}) {
       auto l_rem_file = l_rem_dir / l_file.path().filename();
