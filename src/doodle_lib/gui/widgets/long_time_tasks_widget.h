@@ -16,7 +16,7 @@ class DOODLELIB_API long_time_tasks_widget {
   entt::handle p_current_select;
   std::string title_name_;
   bool open{true};
-  level::level_enum index_{};
+  level::level_enum index_{level::warn};
 
  public:
   long_time_tasks_widget();
