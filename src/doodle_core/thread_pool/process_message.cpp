@@ -30,32 +30,40 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       data_->p_state = process_message::state::run;
       data_->p_time  = chrono::system_clock::now();
     }
-    constexpr auto g_success = magic_enum::enum_name(process_message::state::success);
-    constexpr auto g_fail    = magic_enum::enum_name(process_message::state::fail);
+    constexpr auto g_success               = magic_enum::enum_name(process_message::state::success);
+    constexpr auto g_fail                  = magic_enum::enum_name(process_message::state::fail);
+    constexpr std::size_t g_max_size       = 1024 * 1024 * 10;
+    constexpr std::size_t g_max_size_clear = 1024 * 1024 * 7;
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
         data_->trace_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 10000};
+        if (data_->trace_.size() > g_max_size) data_->trace_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::debug:
         data_->debug_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 1000};
+        if (data_->debug_.size() > g_max_size) data_->debug_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::info:
         data_->info_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 1000};
+        if (data_->info_.size() > g_max_size) data_->info_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::warn:
         data_->warn_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 100};
+        if (data_->warn_.size() > g_max_size) data_->warn_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::err:
         data_->err_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 10};
+        if (data_->err_.size() > g_max_size) data_->err_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::critical:
         data_->critical_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 10};
+        if (data_->critical_.size() > g_max_size) data_->critical_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::off:
         data_->p_end      = chrono::system_clock::now();
