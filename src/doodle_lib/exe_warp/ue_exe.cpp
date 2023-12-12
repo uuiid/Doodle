@@ -83,11 +83,11 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             std::string l_ine;
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
-            logger_attr->log(log_loc(), level::info, conv::to_utf<char>(l_ine, "GBK"));
+            logger_attr->log(log_loc(), level::debug, conv::to_utf<char>(l_ine, "GBK"));
             read_out();
           } else {
             out_attr.close();
-            default_logger_raw()->error(conv::to_utf<char>(in_code.what(), "GBK"));
+            logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_code.value());
           }
         }
     );
@@ -101,11 +101,11 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
             /// @brief 此处在主线程调用
-            logger_attr->log(log_loc(), level::warn, conv::to_utf<char>(l_line, "GBK"));
+            logger_attr->log(log_loc(), level::info, conv::to_utf<char>(l_line, "GBK"));
             read_err();
           } else {
             err_attr.close();
-            logger_attr->error(conv::to_utf<char>(in_code.what(), "GBK"));
+            logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_code.value());
           }
         }
     );
