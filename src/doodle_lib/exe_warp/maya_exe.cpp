@@ -134,7 +134,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               timer_attr.cancel();
-              log_attr->log(log_loc(), level::warn, "进程结束 {}", in_exit);
+              log_attr->log(log_loc(), level::err, "进程结束 {}", in_exit);
               boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), in_error_code));
               next_run();
             },

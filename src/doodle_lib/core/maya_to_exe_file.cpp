@@ -263,7 +263,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
       data_->original_map_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
       l_down_path          = l_uproject.parent_path();
     }
-    boost::asio::post(l_strand, [=, this]() mutable { down_file(l_down_path, l_is_se); });
+    boost::asio::post(l_strand, boost::asio::consign([=, this]() mutable { down_file(l_down_path, l_is_se); }, *this));
   }
 
   if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
@@ -295,7 +295,9 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       data_->render_type_ = render_type::render;
       break;
     case render_type::render:
-      boost::asio::post(l_strand, [=, this]() mutable { update_file(in_error_code); });  // 排屏完成,进入上传文件过程
+      boost::asio::post(
+          l_strand, boost::asio::consign([=, this]() mutable { update_file(in_error_code); }, *this)
+      );  // 排屏完成,进入上传文件过程
       data_->render_type_ = render_type::update;
       break;
     case render_type::update:
