@@ -270,22 +270,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
 
   boost::asio::post(l_strand, boost::asio::bind_executor(g_io_context(), *this));
 }
-void maya_to_exe_file::operator()() const {
-  switch (data_->render_type_) {
-    case render_type::down_file:
-      break;
-
-    case render_type::import_file:
-      import_file();
-      break;
-
-    case render_type::render:
-      break;
-    case render_type::update:
-      update_file({});
-      break;
-  }
-}
+void maya_to_exe_file::operator()() const { import_file(); }
 void maya_to_exe_file::operator()(const FSys::path &in_path, bool is_scene) const { down_file(in_path, is_scene); }
 void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
   if (!data_->logger_) {
@@ -300,7 +285,6 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
     call_end(in_error_code);
     return;
   }
-  auto l_strand = g_ctx().get<copy_file_strand>().executor_;
   switch (data_->render_type_) {
     case render_type::down_file:
       data_->render_type_ = render_type::import_file;
@@ -311,8 +295,8 @@ void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const
       data_->render_type_ = render_type::render;
       break;
     case render_type::render:
+      update_file(in_error_code);  // 排屏完成,进入上传文件过程
       data_->render_type_ = render_type::update;
-      boost::asio::post(l_strand, std::bind(*this, in_error_code));  // 排屏完成,进入上传文件过程
       break;
     case render_type::update:
       break;
@@ -391,6 +375,8 @@ void maya_to_exe_file::render(boost::system::error_code) const {
   if (FSys::exists(data_->out_dir)) {
     FSys::remove_all(data_->out_dir);
   }
+  auto l_strand = g_ctx().get<copy_file_strand>().executor_;
+
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{fmt::format(
@@ -398,7 +384,7 @@ void maya_to_exe_file::render(boost::system::error_code) const {
           data_->render_project_file_, data_->original_map_, data_->render_sequence_,
           FSys::path{data_->render_sequence_}.filename(), data_->render_config_, gen_render_config_file()
       )},
-      boost::asio::bind_executor(g_thread(), *this)
+      boost::asio::bind_executor(l_strand, *this)  // 这里进入单线程上传, 避免多线程上传导致的文件冲突(但是并非主线程)
   );
 }
 
