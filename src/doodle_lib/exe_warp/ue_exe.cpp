@@ -29,6 +29,7 @@ namespace doodle {
 class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
+  boost::process::async_pipe in_attr{g_io_context()};
 
   boost::asio::streambuf out_strbuff_attr{};
   boost::asio::streambuf err_strbuff_attr{};
@@ -63,12 +64,14 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
         //        boost::process::args = arg_attr,
         boost::process::cmd = fmt::format("{} {}", ue_path, arg_attr), boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
+        boost::process::std_in < in_attr,
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
               boost::asio::post(exe_attr, std::bind(std::move(call_attr), in_error_code));
               self_->notify_run();
-            }
+            },
+        boost::process::windows::hide,
     };
 
     read_out();
@@ -79,7 +82,6 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
         out_attr, out_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
           if (!in_code) {
-            /// @brief 此处在主线程调用
             std::string l_ine;
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
@@ -99,7 +101,6 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             std::string l_line{};
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
-            /// @brief 此处在主线程调用
             logger_attr->log(log_loc(), level::info, l_line);
             read_err();
           } else {

@@ -369,7 +369,7 @@ void maya_to_exe_file::render(boost::system::error_code) const {
   l_exe->async_run(
       msg_,
       ue_exe_ptr::element_type ::arg_render_queue{fmt::format(
-          R"({} {} -game -LevelSequence="{}.{}" -MoviePipelineConfig="{}" -windowed -log -StdOut -allowStdOutLogVerbosity -Unattended)",
+          R"({} {} -game -LevelSequence="{}.{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
           data_->render_project_file_, data_->original_map_, data_->render_sequence_,
           FSys::path{data_->render_sequence_}.filename(), data_->render_config_, gen_render_config_file()
       )},
