@@ -320,6 +320,7 @@ void maya_to_exe_file::down_file(const FSys::path &in_path, bool is_scene) const
       if (!FSys::exists(l_loc_file) || l_file.file_size() != FSys::file_size(l_loc_file) ||
           l_file.last_write_time() != FSys::last_write_time(l_loc_file)) {
         try {
+          if (FSys::exists(l_loc_file)) FSys::remove(l_loc_file);
           FSys::copy_file(l_file.path(), l_loc_file, FSys::copy_options::overwrite_existing);
           FSys::last_write_time(l_loc_file, l_file.last_write_time());
         } catch (const FSys::filesystem_error &error) {
@@ -399,6 +400,7 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
       if (!FSys::exists(l_rem_file) || l_file.file_size() != FSys::file_size(l_rem_file) ||
           l_file.last_write_time() != FSys::last_write_time(l_rem_file)) {
         try {
+          if (FSys::exists(l_rem_file)) FSys::remove(l_rem_file);
           FSys::copy_file(l_file.path(), l_rem_file, FSys::copy_options::overwrite_existing);
           FSys::last_write_time(l_rem_file, l_file.last_write_time());
         } catch (const FSys::filesystem_error &error) {
