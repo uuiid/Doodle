@@ -70,6 +70,21 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::n_levels:
         break;
     }
+    switch (msg.level) {
+      case spdlog::level::level_enum::trace:
+      case spdlog::level::level_enum::debug:
+      case spdlog::level::level_enum::info:
+        break;
+      case spdlog::level::level_enum::warn:
+      case spdlog::level::level_enum::err:
+      case spdlog::level::level_enum::critical:
+        data_->p_str_end.append(formatted.data(), formatted.size());
+        break;
+      case spdlog::level::level_enum::off:
+      case spdlog::level::level_enum::n_levels:
+        break;
+    }
+
     if (data_->p_progress > 1) --data_->p_progress;
   }
   void flush_() override {}
