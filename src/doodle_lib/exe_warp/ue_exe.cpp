@@ -29,7 +29,6 @@ namespace doodle {
 class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
-  boost::process::async_pipe in_attr{g_io_context()};
 
   boost::asio::streambuf out_strbuff_attr{};
   boost::asio::streambuf err_strbuff_attr{};
@@ -64,7 +63,6 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
         //        boost::process::args = arg_attr,
         boost::process::cmd = fmt::format("{} {}", ue_path, arg_attr), boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
-        boost::process::std_in < in_attr,
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
@@ -85,7 +83,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             std::string l_ine;
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
-            logger_attr->log(log_loc(), level::debug, l_ine);
+            logger_attr->log(log_loc(), level::info, l_ine);
             read_out();
           } else {
             logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
