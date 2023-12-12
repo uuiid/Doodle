@@ -78,7 +78,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::warn:
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
-        data_->p_str_end.append(formatted.data(), formatted.size());
+        data_->p_str_end = fmt::to_string(formatted);
         break;
       case spdlog::level::level_enum::off:
       case spdlog::level::level_enum::n_levels:
