@@ -122,8 +122,7 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
                             fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
   data_->out_dir     = l_out_file.out_file_dir;
 
-  data_->update_dir_ = update_dir_ / l_out_file.project /
-                       fmt::format("ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
+  data_->update_dir_ = update_dir_ / l_out_file.project / fmt::format("ep_{}", l_out_file.episode);
 
   // 渲染配置
   {
