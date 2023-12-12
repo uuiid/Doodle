@@ -23,7 +23,8 @@ bool long_time_tasks_widget::render() {
   static auto flags{
       ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
       ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | ImGuiTableFlags_::ImGuiTableFlags_BordersV |
-      ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
+      ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody
+  };
   dear::Table{"long_time_tasks_widget", 6, flags} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("进度");
@@ -79,6 +80,16 @@ bool long_time_tasks_widget::render() {
       }
     }
   };
+  ImGui::Combo(
+      "日志等级", reinterpret_cast<int*>(&index_),
+      [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
+        constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
+        *out_text                       = l_leve_names_tmp[in_index].data();
+        return true;
+      },
+      nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>())
+  );
+
   dear::Text("主要日志"s);
   dear::Child{"main_log", ImVec2{0, 266}, true} && [this]() {
     if (p_current_select && p_current_select.any_of<process_message>()) {
@@ -87,13 +98,6 @@ bool long_time_tasks_widget::render() {
     }
     // dear::TextWrapPos{0.0f} && [this]() {
     // };
-  };
-  dear::Text("全部信息"s);
-  dear::Child{"info_log", ImVec2{0, 266}, true} && [this]() {
-    if (p_current_select && p_current_select.any_of<process_message>()) {
-      auto msg_str = p_current_select.get<process_message>().log();
-      imgui::TextUnformatted(msg_str.data(), msg_str.data() + msg_str.size());
-    }
   };
   return open;
 }
