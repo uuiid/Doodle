@@ -81,6 +81,7 @@ void logger_ctrl::init_temp_log() {
 
   spdlog::flush_every(3s);
   spdlog::set_level(spdlog::level::trace);
+  spdlog::should_log(spdlog::level::trace);
 }
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, bool out_console) {
