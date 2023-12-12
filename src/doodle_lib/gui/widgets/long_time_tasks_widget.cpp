@@ -93,8 +93,7 @@ bool long_time_tasks_widget::render() {
   dear::Text("主要日志"s);
   if (dear::Child l_c{"main_log", ImVec2{0, 266}, true}; l_c) {
     if (p_current_select && p_current_select.any_of<process_message>()) {
-      std::string_view l_msg_str{};
-      auto l_lock = p_current_select.get<process_message>().get_lock();
+      process_message::log_msg_guard l_msg_str{};
       switch (index_) {
         case level::level_enum::trace:
           l_msg_str = p_current_select.get<process_message>().trace_log();
@@ -119,7 +118,7 @@ bool long_time_tasks_widget::render() {
         case level::level_enum::n_levels:
           break;
       }
-      imgui::TextUnformatted(l_msg_str.data(), l_msg_str.data() + l_msg_str.size());
+      imgui::TextUnformatted(l_msg_str.msg_.data(), l_msg_str.msg_.data() + l_msg_str.msg_.size());
     }
   }
 

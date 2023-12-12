@@ -51,6 +51,15 @@ class DOODLE_CORE_API process_message {
   friend class details::process_message_sink;
 
  public:
+  class log_msg_guard {
+    std::shared_ptr<std::lock_guard<std::mutex>> lock_;
+
+   public:
+    std::string_view msg_;
+    log_msg_guard() = default;
+    explicit log_msg_guard(std::shared_ptr<std::lock_guard<std::mutex>> in_lock, std::string_view in_msg)
+        : lock_(std::move(in_lock)), msg_(in_msg) {}
+  };
   explicit process_message(std::string in_name);
 
   [[nodiscard]] const std::string& get_name() const;
@@ -60,13 +69,12 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] const std::string& message_back() const;
 
   void set_state(state in_state);
-  [[nodiscard]] std::string_view trace_log() const;
-  [[nodiscard]] std::string_view debug_log() const;
-  [[nodiscard]] std::string_view info_log() const;
-  [[nodiscard]] std::string_view warn_log() const;
-  [[nodiscard]] std::string_view err_log() const;
-  [[nodiscard]] std::string_view critical_log() const;
-  std::lock_guard<std::mutex> get_lock() const;
+  [[nodiscard]] log_msg_guard trace_log() const;
+  [[nodiscard]] log_msg_guard debug_log() const;
+  [[nodiscard]] log_msg_guard info_log() const;
+  [[nodiscard]] log_msg_guard warn_log() const;
+  [[nodiscard]] log_msg_guard err_log() const;
+  [[nodiscard]] log_msg_guard critical_log() const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] inline std::double_t get_progress_f() const {
