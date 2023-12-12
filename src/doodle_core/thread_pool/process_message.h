@@ -27,6 +27,14 @@ class DOODLE_CORE_API process_message {
     chrono::sys_time_pos p_end;
     std::string p_err;
     std::string p_log;
+
+    std::string trace_;
+    std::string debug_;
+    std::string info_;
+    std::string warn_;
+    std::string err_;
+    std::string critical_;
+
     std::string p_str_end;
     std::string p_name;
     std::string p_name_id;
@@ -53,8 +61,12 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] const std::string& message_back() const;
 
   void set_state(state in_state);
-  [[nodiscard]] std::string_view err() const;
-  [[nodiscard]] std::string_view log() const;
+  [[nodiscard]] std::string_view trace_log() const;
+  [[nodiscard]] std::string_view debug_log() const;
+  [[nodiscard]] std::string_view info_log() const;
+  [[nodiscard]] std::string_view warn_log() const;
+  [[nodiscard]] std::string_view err_log() const;
+  [[nodiscard]] std::string_view critical_log() const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] inline std::double_t get_progress_f() const {

@@ -26,7 +26,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     std::lock_guard const _lock{data_->_mutex};
-    if (data_->p_log.empty() && data_->p_err.empty()) {
+    if (data_->info_.empty() && data_->warn_.empty()) {
       data_->p_state = process_message::state::run;
       data_->p_time  = chrono::system_clock::now();
     }
@@ -34,16 +34,28 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     constexpr auto g_fail    = magic_enum::enum_name(process_message::state::fail);
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
+        data_->trace_.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 10000};
+        break;
       case spdlog::level::level_enum::debug:
+        data_->debug_.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 1000};
+        break;
       case spdlog::level::level_enum::info:
-        data_->p_log.append(formatted.data(), formatted.size());
+        data_->info_.append(formatted.data(), formatted.size());
         data_->p_progress += {1, 1000};
         break;
       case spdlog::level::level_enum::warn:
+        data_->warn_.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 100};
+        break;
       case spdlog::level::level_enum::err:
+        data_->err_.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 10};
+        break;
       case spdlog::level::level_enum::critical:
-        data_->p_err.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 1000};
+        data_->critical_.append(formatted.data(), formatted.size());
+        data_->p_progress += {1, 10};
         break;
       case spdlog::level::level_enum::off:
         data_->p_end      = chrono::system_clock::now();
@@ -100,14 +112,30 @@ void process_message::set_state(state in_state) {
   }
   data_->p_state = in_state;
 }
-std::string_view process_message::err() const {
-  //  std::lock_guard _lock{_mutex};
-  return data_->p_err;
-}
 
-std::string_view process_message::log() const {
+std::string_view process_message::trace_log() const {
   //  std::lock_guard _lock{_mutex};
-  return data_->p_log;
+  return data_->trace_;
+}
+std::string_view process_message::debug_log() const {
+  //  std::lock_guard _lock{_mutex};
+  return data_->debug_;
+}
+std::string_view process_message::info_log() const {
+  //  std::lock_guard _lock{_mutex};
+  return data_->info_;
+}
+std::string_view process_message::warn_log() const {
+  //  std::lock_guard _lock{_mutex};
+  return data_->warn_;
+}
+std::string_view process_message::err_log() const {
+  //  std::lock_guard _lock{_mutex};
+  return data_->err_;
+}
+std::string_view process_message::critical_log() const {
+  //  std::lock_guard _lock{_mutex};
+  return data_->critical_;
 }
 
 rational_int process_message::get_progress() const {
