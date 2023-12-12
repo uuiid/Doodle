@@ -9,6 +9,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 
 #include "boost/asio/read.hpp"
@@ -67,8 +68,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
               logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
               boost::asio::post(exe_attr, std::bind(std::move(call_attr), in_error_code));
               self_->notify_run();
-            },
-        boost::process::windows::hide
+            }
     };
 
     read_out();
@@ -86,7 +86,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             logger_attr->log(log_loc(), level::debug, l_ine);
             read_out();
           } else {
-            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {}", ue_path, in_code.value());
+            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
           }
         }
     );
@@ -103,7 +103,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             logger_attr->log(log_loc(), level::info, l_line);
             read_err();
           } else {
-            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {}", ue_path, in_code.value());
+            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
           }
         }
     );
