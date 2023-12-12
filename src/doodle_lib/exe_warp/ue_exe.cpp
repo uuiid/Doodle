@@ -86,8 +86,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             logger_attr->log(log_loc(), level::debug, conv::to_utf<char>(l_ine, "GBK"));
             read_out();
           } else {
-            out_attr.close();
-            logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_code.value());
+            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {}", ue_path, in_code.value());
           }
         }
     );
@@ -104,8 +103,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             logger_attr->log(log_loc(), level::info, conv::to_utf<char>(l_line, "GBK"));
             read_err();
           } else {
-            err_attr.close();
-            logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_code.value());
+            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {}", ue_path, in_code.value());
           }
         }
     );
