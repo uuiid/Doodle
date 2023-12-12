@@ -91,14 +91,37 @@ bool long_time_tasks_widget::render() {
   );
 
   dear::Text("主要日志"s);
-  dear::Child{"main_log", ImVec2{0, 266}, true} && [this]() {
+  if (dear::Child l_c{"main_log", ImVec2{0, 266}, true}; l_c) {
     if (p_current_select && p_current_select.any_of<process_message>()) {
-      auto msg_str = p_current_select.get<process_message>().err();
-      imgui::TextUnformatted(msg_str.data(), msg_str.data() + msg_str.size());
+      std::string_view l_msg_str{};
+      switch (index_) {
+        case level::level_enum::trace:
+          l_msg_str = p_current_select.get<process_message>().trace_log();
+          break;
+        case level::level_enum::debug:
+          l_msg_str = p_current_select.get<process_message>().debug_log();
+          break;
+        case level::level_enum::info:
+          l_msg_str = p_current_select.get<process_message>().info_log();
+          break;
+        case level::level_enum::warn:
+          l_msg_str = p_current_select.get<process_message>().warn_log();
+          break;
+        case level::level_enum::err:
+          l_msg_str = p_current_select.get<process_message>().err_log();
+          break;
+        case level::level_enum::critical:
+          l_msg_str = p_current_select.get<process_message>().critical_log();
+          break;
+        case level::level_enum::off:
+          break;
+        case level::level_enum::n_levels:
+          break;
+      }
+      imgui::TextUnformatted(l_msg_str.data(), l_msg_str.data() + l_msg_str.size());
     }
-    // dear::TextWrapPos{0.0f} && [this]() {
-    // };
-  };
+  }
+
   return open;
 }
 const std::string& long_time_tasks_widget::title() const { return title_name_; }
