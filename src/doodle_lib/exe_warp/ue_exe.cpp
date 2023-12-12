@@ -87,6 +87,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             logger_attr->log(log_loc(), level::info, l_ine);
             read_out();
           } else {
+            out_attr.close();
             logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
           }
         }
@@ -103,6 +104,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             logger_attr->log(log_loc(), level::info, l_line);
             read_err();
           } else {
+            err_attr.close();
             logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
           }
         }
