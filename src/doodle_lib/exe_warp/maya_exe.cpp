@@ -159,7 +159,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             log_attr->log(log_loc(), level::info, l_str);
             read_out();
           } else {
-            log_attr->log(log_loc(), level::warn, in_code);
+            log_attr->log(log_loc(), level::err, in_code);
             out_attr.close();
           }
         }
@@ -178,7 +178,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             read_err();
           } else {
             err_attr.close();
-            log_attr->log(log_loc(), level::warn, in_code);
+            log_attr->log(log_loc(), level::err, in_code);
           }
         }
     );
