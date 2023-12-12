@@ -155,6 +155,7 @@ const process_message::state& process_message::get_state() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->p_state;
 }
+std::lock_guard<std::mutex> process_message::get_lock() const { return std::lock_guard{data_->_mutex}; }
 chrono::sys_time_pos::duration process_message::get_time() const {
   std::lock_guard _lock{data_->_mutex};
 

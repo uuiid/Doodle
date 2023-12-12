@@ -94,6 +94,7 @@ bool long_time_tasks_widget::render() {
   if (dear::Child l_c{"main_log", ImVec2{0, 266}, true}; l_c) {
     if (p_current_select && p_current_select.any_of<process_message>()) {
       std::string_view l_msg_str{};
+      auto l_lock = p_current_select.get<process_message>().get_lock();
       switch (index_) {
         case level::level_enum::trace:
           l_msg_str = p_current_select.get<process_message>().trace_log();

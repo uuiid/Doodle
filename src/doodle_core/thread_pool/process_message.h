@@ -66,6 +66,7 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] std::string_view warn_log() const;
   [[nodiscard]] std::string_view err_log() const;
   [[nodiscard]] std::string_view critical_log() const;
+  std::lock_guard<std::mutex> get_lock() const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] inline std::double_t get_progress_f() const {
