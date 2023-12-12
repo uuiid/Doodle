@@ -117,7 +117,7 @@ bool long_time_tasks_widget::render() {
         case level::level_enum::n_levels:
           break;
       }
-      imgui::TextUnformatted(log_.msg_.data(), log_.msg_.data() + log_.msg_.size());
+      imgui::TextUnformatted(log_.data(), log_.data() + log_.size());
     }
   }
 
