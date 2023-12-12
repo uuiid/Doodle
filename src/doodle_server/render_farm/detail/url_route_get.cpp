@@ -26,7 +26,8 @@ void get_root_type::operator()(
     const entt::handle& in_handle, const boost::beast::http::request<boost::beast::http::empty_body>& in_req
 ) const {
   boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, in_req.version()};
+      boost::beast::http::status::ok, in_req.version()
+  };
   l_response.body() = "hello world";
   l_response.keep_alive(in_handle.get<session::request_parser_empty_body>()->keep_alive());
   l_response.insert(boost::beast::http::field::content_type, "text/html");
@@ -49,8 +50,9 @@ void get_log_type_get::operator()(
   auto l_h = entt::handle{*g_reg(), num_to_enum<entt::entity>(*l_cap)};
   if (l_h && l_h.all_of<process_message>()) {
     boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, in_req.version()};
-    l_response.body() = l_h.get<process_message>().log();
+        boost::beast::http::status::ok, in_req.version()
+    };
+    l_response.body() = l_h.get<process_message>().info_log();
     l_response.keep_alive(in_req.keep_alive());
     l_response.insert(boost::beast::http::field::content_type, "text/html");
     l_response.prepare_payload();
@@ -78,8 +80,9 @@ void get_err_type_get::operator()(
 
   if (l_h && l_h.all_of<process_message>()) {
     boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, in_req.version()};
-    l_response.body() = l_h.get<process_message>().err();
+        boost::beast::http::status::ok, in_req.version()
+    };
+    l_response.body() = l_h.get<process_message>().err_log();
     l_response.keep_alive(in_req.keep_alive());
     l_response.insert(boost::beast::http::field::content_type, "text/html");
     l_response.prepare_payload();
@@ -120,7 +123,8 @@ struct render_job_tmp {
         id_(in_id),
         time_(fmt::format("{:%H:%M:%S}", entt::handle{*g_reg(), in_id}.get<process_message>().get_time())),
         repository_path_{
-            FSys::path{repository_path} / FSys::path{in_task.arg().ProjectPath}.stem() / in_task.arg().out_file_path} {}
+            FSys::path{repository_path} / FSys::path{in_task.arg().ProjectPath}.stem() / in_task.arg().out_file_path
+        } {}
   friend void to_json(nlohmann::json& j, const render_job_tmp& in_tmp) {
     j["id"]     = in_tmp.id_;
     j["name"]   = in_tmp.name_;
