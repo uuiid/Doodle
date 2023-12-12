@@ -69,12 +69,12 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] const std::string& message_back() const;
 
   void set_state(state in_state);
-  [[nodiscard]] log_msg_guard trace_log() const;
-  [[nodiscard]] log_msg_guard debug_log() const;
-  [[nodiscard]] log_msg_guard info_log() const;
-  [[nodiscard]] log_msg_guard warn_log() const;
-  [[nodiscard]] log_msg_guard err_log() const;
-  [[nodiscard]] log_msg_guard critical_log() const;
+  [[nodiscard]] std::string trace_log() const;
+  [[nodiscard]] std::string debug_log() const;
+  [[nodiscard]] std::string info_log() const;
+  [[nodiscard]] std::string warn_log() const;
+  [[nodiscard]] std::string err_log() const;
+  [[nodiscard]] std::string critical_log() const;
 
   [[nodiscard]] rational_int get_progress() const;
   [[nodiscard]] inline std::double_t get_progress_f() const {

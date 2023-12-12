@@ -130,23 +130,29 @@ void process_message::set_state(state in_state) {
   data_->p_state = in_state;
 }
 
-process_message::log_msg_guard process_message::trace_log() const {
-  return log_msg_guard{std::make_shared<std::lock_guard<std::mutex>>(data_->_mutex), data_->trace_};
+std::string process_message::trace_log() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->trace_;
 }
-process_message::log_msg_guard process_message::debug_log() const {
-  return log_msg_guard{std::make_shared<std::lock_guard<std::mutex>>(data_->_mutex), data_->debug_};
+std::string process_message::debug_log() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->debug_;
 }
-process_message::log_msg_guard process_message::info_log() const {
-  return log_msg_guard{std::make_shared<std::lock_guard<std::mutex>>(data_->_mutex), data_->info_};
+std::string process_message::info_log() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->info_;
 }
-process_message::log_msg_guard process_message::warn_log() const {
-  return log_msg_guard{std::make_shared<std::lock_guard<std::mutex>>(data_->_mutex), data_->warn_};
+std::string process_message::warn_log() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->warn_;
 }
-process_message::log_msg_guard process_message::err_log() const {
-  return log_msg_guard{std::make_shared<std::lock_guard<std::mutex>>(data_->_mutex), data_->err_};
+std::string process_message::err_log() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->err_;
 }
-process_message::log_msg_guard process_message::critical_log() const {
-  return log_msg_guard{std::make_shared<std::lock_guard<std::mutex>>(data_->_mutex), data_->critical_};
+std::string process_message::critical_log() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->critical_;
 }
 
 rational_int process_message::get_progress() const {
