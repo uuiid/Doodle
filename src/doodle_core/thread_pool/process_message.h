@@ -56,7 +56,6 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] const std::string& get_name() const;
   [[nodiscard]] const std::string& get_name_id() const;
 
-  void progress_step(const rational_int& in_rational_int);
   void progress_clear();
   [[nodiscard]] const std::string& message_back() const;
 

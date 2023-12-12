@@ -106,12 +106,6 @@ process_message::process_message(std::string in_name) : data_(std::make_shared<d
 const std::string& process_message::get_name() const { return data_->p_name; }
 logger_ptr process_message::logger() const { return data_->p_logger; }
 
-void process_message::progress_step(const rational_int& in_rational_int) {
-  std::lock_guard _lock{data_->_mutex};
-  data_->p_progress += in_rational_int;
-  if (data_->p_progress > 1) --data_->p_progress;
-}
-
 void process_message::set_state(state in_state) {
   std::lock_guard _lock{data_->_mutex};
   switch (in_state) {
@@ -129,40 +123,40 @@ void process_message::set_state(state in_state) {
 }
 
 std::string_view process_message::trace_log() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->trace_;
 }
 std::string_view process_message::debug_log() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->debug_;
 }
 std::string_view process_message::info_log() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->info_;
 }
 std::string_view process_message::warn_log() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->warn_;
 }
 std::string_view process_message::err_log() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->err_;
 }
 std::string_view process_message::critical_log() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->critical_;
 }
 
 rational_int process_message::get_progress() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->p_progress;
 }
 const process_message::state& process_message::get_state() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
   return data_->p_state;
 }
 chrono::sys_time_pos::duration process_message::get_time() const {
-  //  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock{data_->_mutex};
 
   switch (data_->p_state) {
     case state::wait:
@@ -175,7 +169,10 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   }
   return {};
 }
-const std::string& process_message::message_back() const { return data_->p_str_end; }
+const std::string& process_message::message_back() const {
+  std::lock_guard _lock{data_->_mutex};
+  return data_->p_str_end;
+}
 
 const std::string& process_message::get_name_id() const { return data_->p_name_id; }
 void process_message::progress_clear() {
