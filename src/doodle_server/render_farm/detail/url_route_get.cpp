@@ -52,7 +52,7 @@ void get_log_type_get::operator()(
     boost::beast::http::response<boost::beast::http::string_body> l_response{
         boost::beast::http::status::ok, in_req.version()
     };
-    l_response.body() = l_h.get<process_message>().info_log();
+    //    l_response.body() = l_h.get<process_message>().info_log();
     l_response.keep_alive(in_req.keep_alive());
     l_response.insert(boost::beast::http::field::content_type, "text/html");
     l_response.prepare_payload();
@@ -82,7 +82,7 @@ void get_err_type_get::operator()(
     boost::beast::http::response<boost::beast::http::string_body> l_response{
         boost::beast::http::status::ok, in_req.version()
     };
-    l_response.body() = l_h.get<process_message>().err_log();
+    //    l_response.body() = l_h.get<process_message>().err_log();
     l_response.keep_alive(in_req.keep_alive());
     l_response.insert(boost::beast::http::field::content_type, "text/html");
     l_response.prepare_payload();
