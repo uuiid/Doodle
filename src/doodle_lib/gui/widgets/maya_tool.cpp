@@ -14,7 +14,7 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/season.h>
-#include <doodle_core/metadata/shot.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
@@ -33,12 +33,6 @@
 namespace doodle::gui {
 
 namespace maya_tool_ns {
-
-#ifdef NDEBUG
-constexpr auto update_dir{"//192.168.10.218/Doodletemp/auto_light/"};
-#else
-constexpr auto update_dir{"D:/doodle/cache/"};
-#endif
 
 enum class maya_type { ma, mb };
 class maya_file_type_gui : public gui_cache<maya_type> {
@@ -255,7 +249,7 @@ bool maya_tool::render() {
 
       k_arg.out_path_file_ =
           FSys::get_cache_path() / "maya_to_ue" / fmt::format("{}.json", core_set::get_set().get_uuid());
-      auto l_updata_path = FSys::path{maya_tool_ns::update_dir};
+      auto l_updata_path = register_file_type::get_update_path();
       entt::handle l_msg{*g_reg(), g_reg()->create()};
       l_msg.emplace<process_message>(i.filename().generic_string());
 

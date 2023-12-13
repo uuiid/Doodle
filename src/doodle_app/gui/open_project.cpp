@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/database_task/sqlite_client.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/authorization.h>
@@ -16,11 +17,6 @@
 
 #include <fmt/chrono.h>
 namespace doodle::gui {
-#ifdef NDEBUG
-constexpr auto main_project{"//192.168.10.218/Doodletemp/db_file/doodle_main.doodle_db"};
-#else
-constexpr auto main_project{"E:/cache/doodle_main.doodle_db"};
-#endif
 
 constexpr auto updata_log{R"(本次更新:
 {0} 新增了启动界面,{1} 同时由于和退出弹窗有冲突,我们去除了退出弹窗
@@ -50,7 +46,7 @@ bool open_project::render() {
 
   if (auth_ptr_->is_expire()) {
     if (ImGui::Button("主项目", ImVec2{-FLT_MIN, 0})) {
-      g_ctx().get<database_n::file_translator_ptr>()->async_open(main_project);
+      g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
       open = false;
     }
     if (!cmd_path_.empty()) {
