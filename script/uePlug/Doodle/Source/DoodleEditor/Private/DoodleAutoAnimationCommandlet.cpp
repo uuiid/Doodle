@@ -333,6 +333,11 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     if (AnimSeq)
                     {
                         AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+                        if (AnimSeq->IsDataModelValid())
+                        {
+                            AnimSeq->ClearAllCachedCookedPlatformData();
+                            AnimSeq->BeginCacheDerivedDataForCurrentPlatform();
+                        }
                         //------------------
                         ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
                         L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
