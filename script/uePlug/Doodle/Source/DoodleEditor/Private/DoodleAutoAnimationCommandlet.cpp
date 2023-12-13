@@ -40,6 +40,13 @@
 #include "MoviePipelineDeferredPasses.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "EditorLevelUtils.h"
+#include "Doodle/Abc/DoodleAlembicImportFactory.h"
+///-------------
+#include "Doodle/Abc/DoodleAbcImportSettings.h"
+#include "GeometryCache.h"       //
+#include "GeometryCacheActor.h"
+#include "GeometryCacheComponent.h"
+#include "MovieSceneGeometryCacheTrack.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -214,6 +221,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
             {
                 AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
                 ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
+                CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
                 FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
                 //---------------
                 UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(CameraGuid);
@@ -267,7 +275,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 L_LevelSequenceActor->Destroy();
                 FbxImporter->ReleaseScene();
             }
-            else
+            else if(Type == TEXT("char"))
             {
                 UFbxFactory* K_FBX_F = NewObject<UFbxFactory>(UFbxFactory::StaticClass());
                 K_FBX_F->ImportUI = NewObject<UFbxImportUI>(K_FBX_F);
@@ -301,6 +309,38 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 K_FBX_F->SetAssetImportTask(Task);
                 ImportTasks.Add(Task);
             }
+            else if (Type == TEXT("abc"))
+            {
+                UDoodleAbcImportSettings* k_abc_stting = NewObject<UDoodleAbcImportSettings>(UDoodleAbcImportSettings::StaticClass());
+                k_abc_stting->ImportType = EDoodleAlembicImportType::GeometryCache;  // 导入为几何缓存
+                k_abc_stting->ConversionSettings.bFlipV = true;
+                k_abc_stting->ConversionSettings.Scale.X = 1.0;
+                k_abc_stting->ConversionSettings.Scale.Y = -1.0;
+                k_abc_stting->ConversionSettings.Scale.Z = 1.0;
+                k_abc_stting->ConversionSettings.Rotation.X = 90.0;
+                k_abc_stting->ConversionSettings.Rotation.Y = 0.0;
+                k_abc_stting->ConversionSettings.Rotation.Z = 0.0;
+                //----------------------------------
+                k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;       // 合并轨道
+                k_abc_stting->SamplingSettings.bSkipEmpty = true;       // 跳过空白帧
+                k_abc_stting->SamplingSettings.FrameStart = L_Start.Value;  // 开始帧
+                k_abc_stting->SamplingSettings.FrameEnd = L_End.Value;    // 结束帧
+                k_abc_stting->SamplingSettings.FrameSteps = 1;          // 帧步数
+                //----------------------
+                UDoodleAbcImportFactory* k_abc_f = NewObject<UDoodleAbcImportFactory>(UDoodleAbcImportFactory::StaticClass());
+                k_abc_f->ImportSettings = k_abc_stting;
+                UAssetImportTask* Task = NewObject<UAssetImportTask>();
+                Task->AddToRoot();
+                Task->bAutomated = true;
+                Task->bReplaceExisting = true;
+                Task->DestinationPath = ImportPath;
+                Task->bSave = true;
+                //Task->Options = K_FBX_F->ImportUI;
+                Task->Filename = Path;
+                Task->Factory = k_abc_f;
+                k_abc_f->SetAssetImportTask(Task);
+                ImportTasks.Add(Task);
+            }
         }
     }
     IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
@@ -312,10 +352,11 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
             TArray<UObject*> ImportedObjs = Task->GetObjects();
             if (ImportedObjs.Num() > 0)
             {
+                EditorAssetSubsystem->SaveLoadedAssets(ImportedObjs);
                 UObject* ImportedObject = ImportedObjs.Top();
-                USkeletalMesh* TmpSkeletalMesh = Cast<USkeletalMesh>(ImportedObject);
-                if (TmpSkeletalMesh)
+                if (ImportedObject->GetClass()->IsChildOf(USkeletalMesh::StaticClass()))
                 {
+                    USkeletalMesh* TmpSkeletalMesh = Cast<USkeletalMesh>(ImportedObject);
                     UAnimSequence* AnimSeq = nullptr;
                     TArray<FAssetData> OutAssetData;
                     IAssetRegistry::Get()->GetAssetsByPath(FName(*ImportPath), OutAssetData, false);
@@ -355,10 +396,33 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
                         int32_t StartTime = { 1000 };
                         UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
-                        //AnimSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
                         //AnimSection->SetPreRollFrames(50);
                         AnimSection->Modify();
+                        TheLevelSequence->Modify();
+                        TheSequenceWorld->Modify();
                     }
+                }
+                else if(ImportedObject->GetClass()->IsChildOf(UGeometryCache::StaticClass()))
+                {
+                    UGeometryCache* TempGeometryCache = Cast<UGeometryCache>(ImportedObject);
+                    //----------
+                    AGeometryCacheActor* L_Actor = TheSequenceWorld->SpawnActor<AGeometryCacheActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+                    L_Actor->SetActorLabel(TempGeometryCache->GetName());
+                    L_Actor->GetGeometryCacheComponent()->SetGeometryCache(TempGeometryCache);
+                    //---------------------------------
+                    const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
+                    TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
+                    //-----------------------------------
+                    UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
+                    UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+                    L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+                    //------------------------------
+                    UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
+                    UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(L_Start, L_Actor->GetGeometryCacheComponent());
+                    //AnimSection->SetPreRollFrames(50);
+                    L_Actor->Modify();
+                    TheLevelSequence->Modify();
+                    TheSequenceWorld->Modify();
                 }
             }
         }
