@@ -123,6 +123,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         WriteRegStr HKCU "SOFTWARE\Doodle\RenderFarm" "server_address" "192.168.20.7"
         WriteRegStr HKCU "SOFTWARE\Doodle\MainConfig" "main_project" "//192.168.10.218/Doodletemp/db_file/doodle_main.doodle_db"
         WriteRegStr HKCU "SOFTWARE\Doodle\MainConfig" "update_path" "//192.168.10.218/Doodletemp/auto_light"
+        WriteRegStr HKCU "SOFTWARE\Doodle\MainConfig" "install_dir" "$INSTDIR\bin"
         WriteRegStr HKCU "SOFTWARE\Classes\doodle.main" "" "doodle"
         WriteRegStr HKCU "SOFTWARE\Classes\doodle.main\DefaultIcon" "" "$INSTDIR\bin\DoodleExe.exe"
         WriteRegStr HKCU "SOFTWARE\Classes\doodle.main\shell\open\command" "" '"$INSTDIR\bin\DoodleExe.exe" "%1"'
