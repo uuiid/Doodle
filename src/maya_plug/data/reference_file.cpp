@@ -14,6 +14,7 @@
 #include <doodle_core/metadata/shot.h>
 
 #include <boost/lambda2.hpp>
+#include <boost/locale.hpp>
 
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_call_guard.h>
@@ -415,7 +416,7 @@ FSys::path reference_file::get_abs_path() const {
   if (k_ref.setObject(p_m_object)) {
     FSys::path l_path{};
     auto l_file_path = k_ref.fileName(false, false, false, &k_s);
-    l_path           = l_file_path.asWChar();
+    l_path           = boost::locale::conv::utf_to_utf<wchar_t>(l_file_path.asUTF8());
     DOODLE_MAYA_CHICK(k_s);
     return l_path;
   } else {
