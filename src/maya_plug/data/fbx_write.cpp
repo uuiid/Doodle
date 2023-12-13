@@ -319,14 +319,14 @@ void fbx_node_mesh::build_bind_post() {
   }
 
   if (std::find_if(
-          extra_data_.bind_pose_array_.begin(), extra_data_.bind_pose_array_.end(),
+          extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
           [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
-      ) != extra_data_.bind_pose_array_.end()) {
+      ) != extra_data_.bind_pose_array_->end()) {
     log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_bind_post_obj)));
     return;
   }
 
-  extra_data_.bind_pose_array_.append(l_bind_post_obj);
+  extra_data_.bind_pose_array_->append(l_bind_post_obj);
 
   auto l_member_list       = get_plug(l_bind_post_obj, "members");
   auto l_world_matrix_list = get_plug(l_bind_post_obj, "worldMatrix");
@@ -1374,10 +1374,11 @@ void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_init{};
   l_iter_init = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->extra_data_.tree_         = &tree_;
-      (*i)->extra_data_.material_map_ = &material_map_;
-      (*i)->extra_data_.bind_post     = &bind_post_;
-      (*i)->extra_data_.logger_       = logger_;
+      (*i)->extra_data_.tree_            = &tree_;
+      (*i)->extra_data_.material_map_    = &material_map_;
+      (*i)->extra_data_.bind_post        = &bind_post_;
+      (*i)->extra_data_.bind_pose_array_ = &bind_pose_array_;
+      (*i)->extra_data_.logger_          = logger_;
       l_iter_init(i);
     }
   };
