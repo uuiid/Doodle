@@ -373,7 +373,11 @@ void maya_to_exe_file::render(boost::system::error_code) const {
   data_->logger_->log(log_loc(), level::warn, "开始排屏 {}", data_->out_dir);
   auto l_exe = g_ctx().get<ue_exe_ptr>();
   if (FSys::exists(data_->out_dir)) {
-    FSys::remove_all(data_->out_dir);
+    try {
+      FSys::remove_all(data_->out_dir);
+    } catch (const FSys::filesystem_error &in_err) {
+      data_->logger_->log(log_loc(), level::err, "删除文件夹 {} 失败 {}", data_->out_dir, in_err.what());
+    }
   }
   auto l_strand = g_ctx().get<copy_file_strand>().executor_;
 
