@@ -413,7 +413,9 @@ FSys::path reference_file::get_abs_path() const {
   MStatus k_s{};
   MFnReference k_ref{};
   if (k_ref.setObject(p_m_object)) {
-    FSys::path l_path = d_str{k_ref.fileName(false, false, false, &k_s)}.str();
+    FSys::path l_path{};
+    auto l_file_path = k_ref.fileName(false, false, false, &k_s);
+    l_path           = l_file_path.asWChar();
     DOODLE_MAYA_CHICK(k_s);
     return l_path;
   } else {
@@ -495,7 +497,8 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
       auto l_obj = l_cloth->get_shape().node();
       for (MItDependencyGraph l_it{
                l_obj, MFn::kMesh, MItDependencyGraph::Direction::kDownstream,
-               MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
+               MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status
+           };
            !l_it.isDone(); l_it.next()) {
         auto l_current_path = get_dag_path(get_transform(l_it.currentItem(&l_status)));
         maya_chick(l_status);
