@@ -105,7 +105,8 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
     shot l_shot{};
     if (l_shot.analysis(l_path)) {
       l_out_file.shot = l_shot.p_shot;
-      if (l_shot.p_shot_enum != shot::shot_ab_enum::None) l_out_file.shot_ab = l_shot.p_shot_ab;
+      if (l_shot.p_shot_enum != shot::shot_ab_enum::None)
+        l_out_file.shot_ab = magic_enum::enum_name(l_shot.p_shot_enum);
     }
   }
 
