@@ -3,6 +3,7 @@
 //
 
 #include "register_file_type.h"
+
 #include <winreg/WinReg.hpp>
 
 namespace doodle {
@@ -17,6 +18,20 @@ void register_file_type::register_type() {
 std::optional<database::ref_data> register_file_type::get_ref_uuid() {
   winreg::RegKey l_key{HKEY_CURRENT_USER, L""};
   return std::optional<database::ref_data>();
+}
+
+FSys::path register_file_type::get_main_project() {
+  winreg::RegKey l_key{};
+  l_key.Open(HKEY_CURRENT_USER, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+  auto l_path = l_key.GetStringValue(LR"(main_project)");
+  return l_path;
+}
+
+FSys::path register_file_type::get_update_path() {
+  winreg::RegKey l_key{};
+  l_key.Open(HKEY_CURRENT_USER, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+  auto l_path = l_key.GetStringValue(LR"(update_path)");
+  return l_path;
 }
 
 }  // namespace doodle
