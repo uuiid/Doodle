@@ -115,6 +115,7 @@ if (BUILD_USD)
 endif ()
 
 set(CPACK_VERBATIM_VARIABLES TRUE)
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         [==[
         CreateShortCut "$DESKTOP\Doodle 6.lnk" "$INSTDIR\bin\DoodleExe.exe"
