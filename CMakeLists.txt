@@ -134,7 +134,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
         [==[
-        Delete "$DESKTOP\Doodle 6.lnk"
+        Delete "$DESKTOP\Doodle ${VERSION}.lnk"
         DeleteRegKey HKCU "SOFTWARE\Classes\.doodle_db\OpenWithProgids"
         DeleteRegKey HKCU "SOFTWARE\Classes\.doodle_db"
         DeleteRegKey HKCU "SOFTWARE\Classes\doodle.main\shell\open\command"
