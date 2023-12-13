@@ -61,6 +61,11 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 		FilePath = ParamsMap[Key];
 		//UE_LOG(LogTemp,Log, TEXT("%s"), *FilePath);
 	}
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("No params field in cmd arguments"));
+        return -1;
+    }
 	//--------------------
     FString JsonString;
     if (FFileHelper::LoadFileToString(JsonString, *FilePath))
@@ -239,18 +244,23 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 //---------------
                 ALevelSequenceActor* L_LevelSequenceActor{};
                 ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
-                //---------------------
-                UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-                FbxImporter->ImportFromFile(Path, FPaths::GetExtension(Path));
-                MovieSceneToolHelpers::ImportFBXCameraToExisting(FbxImporter, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, false, false);
-                //-------------------
+                L_LevelSequenceActor->InitializePlayer();
+                L_LevelSequencePlayer->Play();
+                //-----------------------
                 FFBXInOutParameters InOutParams;
                 UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
-                //MovieSceneToolHelpers::ReadyFBXForImport(Path, L_ImportFBXSettings, InOutParams);
                 L_ImportFBXSettings->bMatchByNameOnly = false;
+                L_ImportFBXSettings->bForceFrontXAxis = false;
+                L_ImportFBXSettings->bConvertSceneUnit = false;
                 L_ImportFBXSettings->bCreateCameras = false;
                 L_ImportFBXSettings->bReplaceTransformTrack = true;
                 L_ImportFBXSettings->bReduceKeys = false;
+                MovieSceneToolHelpers::ReadyFBXForImport(Path, L_ImportFBXSettings, InOutParams);
+                //---------------------
+                UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
+                FbxImporter->ImportFromFile(*Path, FPaths::GetExtension(Path));
+                MovieSceneToolHelpers::ImportFBXCameraToExisting(FbxImporter, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, false, false);
+                //---------------------
                 bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(GWorld, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, L_ImportFBXSettings, InOutParams);
                 //----------------
                 TempActor->Destroy();
