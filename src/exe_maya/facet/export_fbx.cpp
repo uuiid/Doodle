@@ -83,14 +83,13 @@ void export_fbx_facet::export_fbx() {
 
   l_out_arg.emplace_back(l_cam_path, FSys::path{});
 
+  nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
-    nlohmann::json l_json = l_out_arg;
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
     default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
     FSys::ofstream{out_path_file_} << l_json.dump(4);
-  }
-  //  else
-  //    log_info(fmt::format("导出文件 {}", l_json.dump(4)));
+  } else
+    log_info(fmt::format("导出文件 {}", l_json.dump(4)));
 }
 
 void export_fbx_facet::play_blast() {
