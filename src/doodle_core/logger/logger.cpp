@@ -115,12 +115,19 @@ logger_ctrl::~logger_ctrl() {
   spdlog::shutdown();
 }
 bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr, const std::string &in_name) {
-  auto l_logger = make_log(p_log_path, in_name);
+  auto l_default_logger = spdlog::default_logger_raw();
+  auto l_logger         = make_log(p_log_path, in_name);
   l_logger->sinks().emplace_back(in_ptr);
+
   auto l_name = spdlog::default_logger()->name();
   spdlog::set_default_logger(l_logger);
-  /// 刷新所有
-  spdlog::apply_all([](const std::shared_ptr<spdlog::logger> &in_ptr) { in_ptr->flush(); });
+  /// 刷新默认log
+  try {
+    l_default_logger->flush();
+  } catch (const spdlog::spdlog_ex &spdlog_ex) {
+    l_logger->log(log_loc(), spdlog::level::err, "刷新旧的日志失败 {}", boost::diagnostic_information(spdlog_ex));
+  }
+
   /// 去除旧的log
   try {
     spdlog::drop(l_name);
