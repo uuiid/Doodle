@@ -71,6 +71,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, c
   } catch (const spdlog::spdlog_ex &spdlog_ex) {
     std::cout << "日志初始化失败" << boost::diagnostic_information(spdlog_ex) << std::endl;
   }
+  l_logger->log(log_loc(), spdlog::level::debug, "初始化日志 {}", in_name);
 
   return l_logger;
 }
