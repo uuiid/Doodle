@@ -179,7 +179,7 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   }
   return {};
 }
-const std::string& process_message::message_back() const {
+std::string process_message::message_back() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->p_str_end;
 }
