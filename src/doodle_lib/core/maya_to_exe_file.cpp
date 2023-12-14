@@ -120,36 +120,36 @@ FSys::path maya_to_exe_file::gen_render_config_file() const {
   }
   l_out_file.project      = l_str.substr(0, l_str.find_first_of('_'));
   l_out_file.out_file_dir = data_->render_project_ / g_saved / g_movie_renders /
-                            fmt::format("Ep_{}_sc_{}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
+                            fmt::format("Ep_{:04}_sc_{:04}{}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
   data_->out_dir     = l_out_file.out_file_dir;
 
-  data_->update_dir_ = update_dir_ / l_out_file.project / fmt::format("ep_{}", l_out_file.episode);
+  data_->update_dir_ = update_dir_ / l_out_file.project / fmt::format("ep_{:04}", l_out_file.episode);
 
   // 渲染配置
   {
     data_->render_config_ = fmt::format(
-        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_Config", l_out_file.project, l_out_file.episode,
-        l_out_file.shot, l_out_file.shot_ab
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_Config", l_out_file.project,
+        l_out_file.episode, l_out_file.shot, l_out_file.shot_ab
     );
     l_out_file.movie_pipeline_config = data_->render_config_;
     data_->render_sequence_          = fmt::format(
-        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}", l_out_file.project, l_out_file.episode, l_out_file.shot,
-        l_out_file.shot_ab
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}", l_out_file.project, l_out_file.episode,
+        l_out_file.shot, l_out_file.shot_ab
     );
     l_out_file.level_sequence = data_->render_sequence_;
     data_->create_map_        = fmt::format(
-        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/{0}_EP{1}_SC{2}{3}_LV", l_out_file.project, l_out_file.episode,
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_LV", l_out_file.project, l_out_file.episode,
         l_out_file.shot, l_out_file.shot_ab
     );
     l_out_file.create_map = data_->create_map_;
     data_->import_dir_    = fmt::format(
-        "/Game/Shot/ep{1}/{0}{1}_sc{2}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_out_file.project, l_out_file.episode,
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_out_file.project, l_out_file.episode,
         l_out_file.shot, l_out_file.shot_ab, time_point_wrap{}.get_local_time()
     );
     l_out_file.import_dir = data_->import_dir_;
 
     data_->render_map_ =
-        fmt::format("/Game/Shot/ep{0}/sc{1}{2}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
+        fmt::format("/Game/Shot/ep{0:04}/sc{1:04}{2}", l_out_file.episode, l_out_file.shot, l_out_file.shot_ab);
     l_out_file.render_map = data_->render_map_;
   }
 
@@ -405,8 +405,10 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
   }
 
   auto l_loc_prj = data_->render_project_ / g_content;
-  auto l_rem_prj = data_->update_dir_ / g_content;
+  auto l_rem_prj = data_->update_dir_ / data_->render_project_.filename() / g_content;
   data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_loc_prj, l_rem_prj);
+
+  if (!FSys::exists(l_rem_prj)) FSys::create_directories(l_rem_prj);
 
   // 复制内容文件夹
   for (auto &&l_file : FSys::recursive_directory_iterator{l_loc_prj}) {
@@ -440,7 +442,9 @@ void maya_to_exe_file::update_file(boost::system::error_code in_error_code) cons
     return;
   }
 
-  auto l_out_rem_dir = data_->update_dir_ / g_saved / g_movie_renders / l_out_loc_dir.filename();
+  auto l_out_rem_dir =
+      data_->update_dir_ / data_->render_project_.filename() / g_saved / g_movie_renders / l_out_loc_dir.filename();
+  if (!FSys::exists(l_out_rem_dir)) FSys::create_directories(l_out_rem_dir);
 
   data_->logger_->log(log_loc(), level::level_enum::warn, "{} -> {}", l_out_loc_dir, l_out_rem_dir);
 
