@@ -47,6 +47,8 @@
 #include "GeometryCacheActor.h"
 #include "GeometryCacheComponent.h"
 #include "MovieSceneGeometryCacheTrack.h"
+#include "AbcImportSettings.h"
+#include "AlembicImportFactory.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -158,14 +160,18 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
     TArray<FMovieSceneBinding> Bindings = TheLevelSequence->GetMovieScene()->GetBindings();
     for (FMovieSceneBinding Bind : Bindings)
     {
-        if (!TheLevelSequence->GetMovieScene()->RemovePossessable(Bind.GetObjectGuid()))
+        if (!Bind.GetName().Contains(TEXT("Camera"))) 
         {
-            TheLevelSequence->GetMovieScene()->RemoveSpawnable(Bind.GetObjectGuid());
+            if (!TheLevelSequence->GetMovieScene()->RemovePossessable(Bind.GetObjectGuid()))
+            {
+                TheLevelSequence->GetMovieScene()->RemoveSpawnable(Bind.GetObjectGuid());
+            }
         }
     }
     TArray<UMovieSceneTrack*> Tracks = TheLevelSequence->GetMovieScene()->GetTracks();
     for (UMovieSceneTrack* Track : Tracks)
     {
+        FString Name = Track->GetClass()->GetName();
         TheLevelSequence->GetMovieScene()->RemoveTrack(*Track);
     }
 }
@@ -198,9 +204,10 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
     for (int32 Index = 0; Index < Level->Actors.Num(); Index++)
     {
         AActor* Actor = Level->Actors[Index];
-        if (Actor != nullptr && Actor->IsA<ASkeletalMeshActor>())
+        if (Actor != nullptr)
         {
-            Actor->Destroy();
+            if(Actor->IsA<ASkeletalMeshActor>()|| Actor->IsA<AGeometryCacheActor>())
+                Actor->Destroy();
         }
     }
 }
@@ -210,6 +217,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
     TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("files"));
+    TArray<UGeometryCache*> GeometryCaches;
     for (TSharedPtr<FJsonValue> JsonFile : JsonFiles)
     {
         TSharedPtr<FJsonObject> Obj = JsonFile->AsObject();
@@ -219,6 +227,18 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
             const FString Type = Obj->GetStringField(TEXT("type"));
             if (Type == TEXT("cam"))
             {
+                TArray<FMovieSceneBinding> Bindings = TheLevelSequence->GetMovieScene()->GetBindings();
+                for (FMovieSceneBinding Bind : Bindings)
+                {
+                    if (Bind.GetName().Contains(TEXT("Camera")))
+                    {
+                        if (!TheLevelSequence->GetMovieScene()->RemovePossessable(Bind.GetObjectGuid()))
+                        {
+                            TheLevelSequence->GetMovieScene()->RemoveSpawnable(Bind.GetObjectGuid());
+                        }
+                    }
+                }
+                //--------------------
                 AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
                 ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
                 CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
@@ -309,10 +329,24 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 K_FBX_F->SetAssetImportTask(Task);
                 ImportTasks.Add(Task);
             }
-            else if (Type == TEXT("abc"))
+            else if (Type == TEXT("geo"))
             {
-                UDoodleAbcImportSettings* k_abc_stting = NewObject<UDoodleAbcImportSettings>(UDoodleAbcImportSettings::StaticClass());
-                k_abc_stting->ImportType = EDoodleAlembicImportType::GeometryCache;  // 导入为几何缓存
+                UAssetImportTask* Task = NewObject<UAssetImportTask>();
+                Task->AddToRoot();
+                Task->bAutomated = true;
+                //L_Data->GroupName = TEXT("doodle import");
+                Task->Filename = Path;
+                FString AbcImportPath = FPaths::Combine(ImportPath, TEXT("Abc"));
+                Task->DestinationPath = AbcImportPath;
+                Task->bReplaceExisting = true;
+                Task->bSave = true;
+                //------------------------
+                UDoodleAbcImportFactory* k_abc_f = NewObject<UDoodleAbcImportFactory>(Task);
+                Task->Factory = k_abc_f;
+                UDoodleAbcImportSettings* k_abc_stting = NewObject<UDoodleAbcImportSettings>(Task);
+                k_abc_f->ImportSettings = k_abc_stting;
+                //--------------------
+                k_abc_stting->ImportType = EDoodleAlembicImportType::GeometryCache;
                 k_abc_stting->ConversionSettings.bFlipV = true;
                 k_abc_stting->ConversionSettings.Scale.X = 1.0;
                 k_abc_stting->ConversionSettings.Scale.Y = -1.0;
@@ -320,26 +354,15 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 k_abc_stting->ConversionSettings.Rotation.X = 90.0;
                 k_abc_stting->ConversionSettings.Rotation.Y = 0.0;
                 k_abc_stting->ConversionSettings.Rotation.Z = 0.0;
-                //----------------------------------
-                k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;       // 合并轨道
-                k_abc_stting->SamplingSettings.bSkipEmpty = true;       // 跳过空白帧
-                k_abc_stting->SamplingSettings.FrameStart = L_Start.Value;  // 开始帧
-                k_abc_stting->SamplingSettings.FrameEnd = L_End.Value;    // 结束帧
-                k_abc_stting->SamplingSettings.FrameSteps = 1;          // 帧步数
-                //----------------------
-                UDoodleAbcImportFactory* k_abc_f = NewObject<UDoodleAbcImportFactory>(UDoodleAbcImportFactory::StaticClass());
-                k_abc_f->ImportSettings = k_abc_stting;
-                UAssetImportTask* Task = NewObject<UAssetImportTask>();
-                Task->AddToRoot();
-                Task->bAutomated = true;
-                Task->bReplaceExisting = true;
-                Task->DestinationPath = ImportPath;
-                Task->bSave = true;
-                //Task->Options = K_FBX_F->ImportUI;
-                Task->Filename = Path;
-                Task->Factory = k_abc_f;
+                //--------------------------
+                k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;
+                k_abc_stting->SamplingSettings.bSkipEmpty = true;       //
+                k_abc_stting->SamplingSettings.FrameStart = L_Start.Value;  //
+                k_abc_stting->SamplingSettings.FrameEnd = L_End.Value;    // 
+                k_abc_stting->SamplingSettings.FrameSteps = 1;          //
+                //------------
                 k_abc_f->SetAssetImportTask(Task);
-                ImportTasks.Add(Task);
+                ImportTasksAbc.Add(Task);
             }
         }
     }
@@ -350,10 +373,9 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
         if (Task->IsAsyncImportComplete())
         {
             TArray<UObject*> ImportedObjs = Task->GetObjects();
-            if (ImportedObjs.Num() > 0)
+            if (!ImportedObjs.IsEmpty())
             {
-                EditorAssetSubsystem->SaveLoadedAssets(ImportedObjs);
-                UObject* ImportedObject = ImportedObjs.Top();
+                UObject* ImportedObject = ImportedObjs.Top();;
                 if (ImportedObject->GetClass()->IsChildOf(USkeletalMesh::StaticClass()))
                 {
                     USkeletalMesh* TmpSkeletalMesh = Cast<USkeletalMesh>(ImportedObject);
@@ -402,7 +424,21 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         TheSequenceWorld->Modify();
                     }
                 }
-                else if(ImportedObject->GetClass()->IsChildOf(UGeometryCache::StaticClass()))
+            }
+        }
+        Task->RemoveFromRoot();
+    }
+    AssetTools.Get().ImportAssetTasks(ImportTasksAbc); 
+    for (UAssetImportTask* Task : ImportTasksAbc)
+    {
+        if (Task->IsAsyncImportComplete())
+        {
+            TArray<UObject*> ImportedObjs = Task->GetObjects();
+            EditorAssetSubsystem->SaveLoadedAssets(ImportedObjs);
+            if (!ImportedObjs.IsEmpty())
+            {
+                UObject* ImportedObject = ImportedObjs.Top();;
+                if (ImportedObject->GetClass()->IsChildOf(UGeometryCache::StaticClass()))
                 {
                     UGeometryCache* TempGeometryCache = Cast<UGeometryCache>(ImportedObject);
                     //----------
@@ -464,5 +500,5 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
     EditorAssetSubsystem->SaveLoadedAsset(NewConfig);
 }
 
-//"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=E:/动画自动导入/DBXY_EP360_SC001_AN/out.json
-//UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run = DoodleAutoAnimation -Params = E:/动画自动导入/DBXY_EP360_SC001_AN/out.json
+//"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
+//UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run = DoodleAutoAnimation -Params = E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
