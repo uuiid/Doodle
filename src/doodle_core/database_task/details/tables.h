@@ -95,13 +95,14 @@ DOODLE_SQL_TABLE_IMP(file_association_ref, column::id, column::entity_id, column
 namespace column_file_association {
 DOODLE_SQL_COLUMN_IMP(entity_maya_file, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(entity_maya_rig_file, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(entity_maya_sim_file, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(entity_ue_file, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(entity_ue_preset_file, sqlpp::integer, detail::can_be_null);
 }  // namespace column_file_association
 DOODLE_SQL_TABLE_IMP(
     file_association, column::id, column::entity_id, column::name, column_file_association::entity_maya_file,
     column_file_association::entity_maya_rig_file, column_file_association::entity_ue_file,
-    column_file_association::entity_ue_preset_file
+    column_file_association::entity_ue_preset_file, column_file_association::entity_maya_sim_file
 );
 namespace column_tag {
 DOODLE_SQL_COLUMN_IMP(tag_id, sqlpp::integer, detail::can_be_null);

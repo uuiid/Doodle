@@ -13,17 +13,12 @@ class file_association {
   file_association()          = default;
   virtual ~file_association() = default;
 
-  entt::handle maya_file{};
-  entt::handle maya_rig_file{};
-  entt::handle ue_file{};
-  entt::handle ue_preset_file{};
+  entt::handle maya_file{};       /// maya文件
+  entt::handle maya_rig_file{};   /// maya绑定文件
+  entt::handle maya_sim_file{};   /// maya解算文件
+  entt::handle ue_file{};         /// ue文件
+  entt::handle ue_preset_file{};  /// ue预设文件
   std::string name{};
-  //  void set_maya_file(const entt::handle& in_maya_file);
-  //  void set_maya_rig_file(const entt::handle& in_maya_rig_file);
-  //  void set_ue_file(const entt::handle& in_ue_file);
-  //  [[nodiscard]] const entt::handle& get_maya_file() const;
-  //  [[nodiscard]] const entt::handle& get_maya_rig_file() const;
-  //  [[nodiscard]] const entt::handle& get_ue_file() const;
 };
 
 }  // namespace doodle
