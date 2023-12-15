@@ -22,6 +22,7 @@ target_sources(
         render_ue4_arg.h
         file_association.h
         main_map.h
+        maya_anim_file.h
 
 
         PRIVATE
@@ -47,6 +48,7 @@ target_sources(
         render_ue4_arg.cpp
         file_association.cpp
         main_map.cpp
+        maya_anim_file.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
