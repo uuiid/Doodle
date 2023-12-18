@@ -114,4 +114,23 @@ DOODLE_SQL_COLUMN_IMP(map_path_, sqlpp::text, detail::can_be_null);
 
 }
 DOODLE_SQL_TABLE_IMP(ue_main_map, column::id, column::entity_id, column_ue_main_map::map_path_);
+
+namespace column_maya_anim_file {
+DOODLE_SQL_COLUMN_IMP(begin_frame_, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(end_frame_, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(camera_path_, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(path_, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(ref_file_, sqlpp::integer, detail::can_be_null);
+
+}  // namespace column_maya_anim_file
+
+DOODLE_SQL_TABLE_IMP(
+    maya_anim_file, column::id, column::entity_id, column_maya_anim_file::begin_frame_,
+    column_maya_anim_file::end_frame_, column_maya_anim_file::camera_path_
+);
+DOODLE_SQL_TABLE_IMP(
+    maya_anim_file_ref_file, column::id, column::parent_id, column_maya_anim_file::path_,
+    column_maya_anim_file::ref_file_
+);
+
 }  // namespace doodle::database_n::tables
