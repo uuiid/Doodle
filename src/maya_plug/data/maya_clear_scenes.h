@@ -14,15 +14,6 @@ class maya_clear_scenes {
   bool multilateral_surface(MSelectionList& in_select);
   std::tuple<bool, MSelectionList> multilateral_surface_by_select(const MSelectionList& in_select);
   bool uv_set(MSelectionList& in_select);
-  /**
-   * @brief 开始帧1001
-   * @return
-   */
-  bool start_frame_chick();
-  /**
-   * @brief 检查相机和结束帧
-   */
-  bool end_frame_chick();
 
   bool err_1();  // (1)大纲
   bool err_2();  // (2)onModelChange3dc
