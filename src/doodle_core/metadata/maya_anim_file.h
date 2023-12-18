@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <doodle_core/doodle_core_fwd.h>
+
 #include <entt/entt.hpp>
 #include <vector>
 namespace doodle {
@@ -18,10 +20,10 @@ class maya_anim_file {
   std::int32_t begin_frame_{};
   /// 结束帧
   std::int32_t end_frame_{};
-  /// maya绑定文件, 特指人物
+  /// maya引用文件,  非特指场景
   std::vector<entt::handle> maya_rig_file_{};
-  /// 场景只有一个
-  entt::handle maya_scene_file_{};
+
+  FSys::path camera_path{};
 };
 
 }  // namespace doodle
