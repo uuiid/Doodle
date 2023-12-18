@@ -17,6 +17,26 @@ void sql_com<doodle::maya_anim_file>::create_table(conn_ptr& in_ptr) {
   create_table_parent_id<tables::maya_anim_file_ref_file>(in_ptr);
 }
 
+void sql_com<doodle::maya_anim_file>::install_sub(
+    conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
+) {
+  auto& l_conn = *in_ptr;
+  const tables::maya_anim_file_ref_file l_table{};
+  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
+      l_table.parent_id = sqlpp::parameter(l_table.parent_id), l_table.ref_file_ = sqlpp::parameter(l_table.ref_file_),
+      l_table.path_ = sqlpp::parameter(l_table.path_)
+  ));
+  for (auto&& l_h : in_handles) {
+    auto& l_maya_anim_file = l_h.get<maya_anim_file>();
+    l_pre.params.parent_id = in_map.at(l_h);
+    for (auto&& [l_ref, l_path] : l_maya_anim_file.maya_rig_file_) {
+      l_pre.params.ref_file_ = boost::numeric_cast<std::int64_t>(l_ref.get<database>().get_id());
+      l_pre.params.path_     = l_path.string();
+      l_conn(l_pre);
+    }
+  }
+}
+
 void sql_com<doodle::maya_anim_file>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
@@ -128,6 +148,7 @@ void sql_com<doodle::maya_anim_file>::select(
       }
     }
   }
+  in_reg->insert(l_entts.begin(), l_entts.end(), l_maya_anim_files.begin());
 }
 
 void sql_com<doodle::maya_anim_file>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
