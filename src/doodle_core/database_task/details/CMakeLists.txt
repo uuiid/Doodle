@@ -26,6 +26,7 @@ target_sources(doodle_core
         entt_handle_ref.h
         tag.h
         main_map.h
+        maya_anim_file.h
 
 
         PRIVATE
@@ -57,4 +58,5 @@ target_sources(doodle_core
         entt_handle_ref.cpp
         tag.cpp
         main_map.cpp
+        maya_anim_file.cpp
 )

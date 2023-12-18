@@ -96,6 +96,7 @@ using file_association_ref = entt::tag<"file_association_ref"_hs>;
 using database_info = details::database_info;
 using program_info  = details::program_info;
 using identifier    = details::identifier;
+class maya_anim_file;
 
 class convert;
 class doodle_error;
