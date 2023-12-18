@@ -1129,8 +1129,7 @@ fbx_write::fbx_write() {
 }
 
 void fbx_write::chick_export(
-    const std::vector<MDagPath>& in_vector, const doodle::logger_ptr& in_logger, const MTime& in_begin,
-    const MTime& in_end
+    const MSelectionList& in_vector, const doodle::logger_ptr& in_logger, const MTime& in_begin, const MTime& in_end
 ) {
   logger_          = in_logger;
 
@@ -1143,8 +1142,15 @@ void fbx_write::chick_export(
   anim_stack->LocalStop = l_fbx_end;
   MAnimControl::setCurrentTime(in_begin);
 
+  std::vector<MDagPath> l_objs{};
+  MDagPath l_path{};
+  for (MItSelectionList l_it{in_vector}; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getDagPath(l_path));
+    l_objs.emplace_back(l_path);
+  }
+
   init();
-  build_tree(in_vector);
+  build_tree(l_objs);
 
   try {
     build_data();

@@ -148,7 +148,7 @@ class fbx_write {
   void ascii_fbx(bool in_value = true);
 
   void chick_export(
-      const std::vector<MDagPath>& in_vector, const logger_ptr& in_logger, const MTime& in_begin, const MTime& in_end
+      const MSelectionList& in_vector, const logger_ptr& in_logger, const MTime& in_begin, const MTime& in_end
   );
 
   void write(
