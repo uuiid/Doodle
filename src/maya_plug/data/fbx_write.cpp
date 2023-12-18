@@ -314,7 +314,7 @@ void fbx_node_mesh::build_bind_post() {
   auto l_bind_post_obj = get_bind_post();
 
   if (l_bind_post_obj.isNull() || !l_bind_post_obj.hasFn(MFn::Type::kDagPose)) {
-    log_warn(extra_data_.logger_, fmt::format("{} 中, 未找到 bind pose 节点", dag_path));
+    extra_data_.logger_->log(log_loc(), level::err, "{} 中, 未找到 bind pose 节点", dag_path);
     return;
   }
 
@@ -375,11 +375,9 @@ void fbx_node_mesh::build_bind_post() {
           l_world_matrix = l_data.transformation(&l_status);
           maya_chick(l_status);
         } else {
-          log_error(
-              extra_data_.logger_, fmt::format(
-                                       "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
-                                       conv::to_s(l_world_matrix_plug.partialName())
-                                   )
+          extra_data_.logger_->log(
+              log_loc(), level::err, "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
+              l_world_matrix_plug.partialName()
           );
           auto l_post_plug = get_plug(l_node, "bindPose");
           MObject l_post_handle{};
@@ -404,11 +402,9 @@ void fbx_node_mesh::build_bind_post() {
           maya_chick(l_status);
         } else {
           l_tran_map.emplace(l_path, i);
-          log_error(
-              extra_data_.logger_, fmt::format(
-                                       "没有找到 节点{} bindpose 属性 {} 的值, 将在第二次中寻找", l_path,
-                                       conv::to_s(l_world_matrix_plug.partialName())
-                                   )
+          extra_data_.logger_->log(
+              log_loc(), level::err, "没有找到 节点{} bindpose 属性 {} 的值, 将在第二次中寻找", l_path,
+              l_world_matrix_plug.partialName()
           );
         }
       } else {
@@ -616,13 +612,18 @@ void fbx_node_mesh::build_mesh() {
           } else {
             if (l_error_count > 1000) {
               extra_data_.logger_->log(
-                  doodle::log_loc(), doodle::level::level_enum::err,
-                  "错误太多, 直接跳过 {} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]
+                  doodle::log_loc(), doodle::level::err,
+                  "错误太多, 直接跳过, 此处问题为模型网格体uv问题 {} getPolygonUVid error: {} {} {}", l_mesh, k, j,
+                  l_uv_set_names[i]
               );
               return;
             }
             ++l_error_count;
-            log_error(fmt::format("{} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]));
+            default_logger_raw()->log(
+                doodle::log_loc(), doodle::level::err,
+                "错误太多, 直接跳过, 此处问题为模型网格体uv问题 {} getPolygonUVid error: {} {} {}", l_mesh, k, j,
+                l_uv_set_names[i]
+            );
           }
         }
       }
@@ -736,8 +737,10 @@ void fbx_node_mesh::build_skin() {
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
     if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
-      log_info(
-          extra_data_.logger_, fmt::format("本次导出文件可能出错, 最好寻找绑定, 出错的骨骼 {}", l_joint->dag_path)
+      extra_data_.logger_->log(
+          log_loc(), level::err,
+          "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
+          l_joint->dag_path
       );
 
       auto l_node              = l_joint->dag_path.node();
@@ -1123,6 +1126,48 @@ fbx_write::fbx_write() {
   auto* anim_layer = FbxAnimLayer::Create(scene_, "anim_layer");
   anim_stack->AddMember(anim_layer);
   scene_->SetCurrentAnimationStack(anim_stack);
+}
+
+void fbx_write::chick_export(
+    const std::vector<MDagPath>& in_vector, const doodle::logger_ptr& in_logger, const MTime& in_begin,
+    const MTime& in_end
+) {
+  logger_          = in_logger;
+
+  auto* anim_stack = scene_->GetCurrentAnimationStack();
+  FbxTime l_fbx_begin{};
+  l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
+  anim_stack->LocalStart = l_fbx_begin;
+  FbxTime l_fbx_end{};
+  l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
+  anim_stack->LocalStop = l_fbx_end;
+  MAnimControl::setCurrentTime(in_begin);
+
+  init();
+  build_tree(in_vector);
+
+  try {
+    build_data();
+  } catch (const maya_error& in_error) {
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("测试导出文件出现严重错误 {}", l_str));
+    return;
+  } catch (const doodle_error& in_error) {
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("测试导出文件出现严重错误 {}", l_str));
+    return;
+  }
+  log_info(logger_, "开始导出动画");
+
+  if (export_anim_) {
+    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+      MAnimControl::setCurrentTime(l_time);
+      build_animation(l_time);
+    }
+  }
+  logger_->flush();
 }
 
 void fbx_write::write(
