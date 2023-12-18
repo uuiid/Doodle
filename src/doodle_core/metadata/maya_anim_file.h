@@ -16,12 +16,16 @@ namespace doodle {
 
 class maya_anim_file {
  public:
+  struct maya_ref_and_path {
+    FSys::path path{};
+    entt::handle ref{};
+  };
   /// 开始帧
   std::int32_t begin_frame_{};
   /// 结束帧
   std::int32_t end_frame_{};
   /// maya引用文件,  非特指场景
-  std::vector<entt::handle> maya_rig_file_{};
+  std::vector<maya_ref_and_path> maya_rig_file_{};
 
   FSys::path camera_path{};
 };
