@@ -11,6 +11,7 @@
 #include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
 #include <maya_plug/maya_comm/afterimage_comm.h>
+#include <maya_plug/maya_comm/chick_export_fbx.h>
 #include <maya_plug/maya_comm/clear_scene_comm.h>
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
@@ -183,9 +184,13 @@ MStatus initializePlugin(MObject obj) {
 
   /// 添加加载实体命令
   status = maya_reg->register_command<::doodle::maya_plug::add_entt>(k_plugin);
+  CHECK_MSTATUS(status);
   ///  添加自定义fbx导出
   status = maya_reg->register_command<::doodle::maya_plug::doodle_to_ue_fbx>(k_plugin);
-
+  CHECK_MSTATUS(status);
+  ///  添加检查fbx导出命令
+  status = maya_reg->register_command<::doodle::maya_plug::chick_export_fbx>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 等所有命令完成后加载工具架
   status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
 scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
