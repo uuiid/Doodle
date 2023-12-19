@@ -30,6 +30,7 @@
 #include <doodle_lib/gui/widgets/maya_tool.h>
 #include <doodle_lib/gui/widgets/project_edit.h>
 #include <doodle_lib/gui/widgets/render_monitor.h>
+#include <doodle_lib/gui/widgets/scan_assets.h>
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
@@ -82,6 +83,7 @@ void main_facet::load_windows() {
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<all_user_view_widget>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<render_monitor>());
     g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<database_tool_t>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<scan_assets_t>());
     //    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<upload_files>());
     g_windows_manage().create_windows_arg(
         windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
