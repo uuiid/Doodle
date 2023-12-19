@@ -145,11 +145,8 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
       break;
   }
   node->UpdatePivotsAndLimitsFromProperties();
-  if (extra_data_.bind_post->count(dag_path)) {
-    set_node_transform_matrix(extra_data_.bind_post->at(dag_path).form_matrix);
-  } else {
-    set_node_transform_matrix(l_transform.transformation());
-  }
+
+  set_node_transform_matrix(l_transform.transformation());
 }
 ///
 
@@ -736,6 +733,7 @@ void fbx_node_mesh::build_skin() {
     auto l_joint    = l_dag_tree_map[i];
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
+    fbxsdk::FbxAMatrix l_fbx_matrix{};
     if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
       extra_data_.logger_->log(
           log_loc(), level::err,
@@ -762,13 +760,14 @@ void fbx_node_mesh::build_skin() {
       auto l_world_matrix = l_data.matrix(&l_status).inverse();
       maya_chick(l_status);
 
-      fbxsdk::FbxAMatrix l_fbx_matrix{};
       for (auto i = 0; i < 4; ++i)
         for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
-      l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     } else {
-      l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
+      auto l_matrix = extra_data_.bind_post->at(l_joint->dag_path).world_matrix.asMatrix();
+      for (auto i = 0; i < 4; ++i)
+        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_matrix[i][j];
     }
+    l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
     if (!l_sk->AddCluster(l_cluster)) {
       log_error(fmt::format("add cluster error: {}", node->GetName()));
     }
