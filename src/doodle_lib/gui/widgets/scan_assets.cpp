@@ -5,6 +5,7 @@
 #include "scan_assets.h"
 
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/season.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
@@ -23,8 +24,8 @@ class scan_assets_config {
   // 扫瞄分类
 
   struct scan_category_t {
-    virtual std::vector<entt::handle> scan(const project_root_t& in_root) const                                    = 0;
-    virtual std::vector<entt::handle> check_path(const project_root_t& in_root, const entt::handle& in_path) const = 0;
+    virtual std::vector<entt::handle> scan(const project_root_t& in_root) const                              = 0;
+    virtual std::vector<entt::handle> check_path(const project_root_t& in_root, entt::handle& in_path) const = 0;
   };
   std::vector<scan_category_t> scan_categorys_;
   // 独步消遥            {"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥" },
@@ -52,9 +53,18 @@ class scan_assets_config {
   /// 路径规范
   /// `项目根目录/6-moxing/BG/JD(季数)_(集数开始)/BG(编号)/(场景名称)/Content/(场景名称)/Map/(场景名称)_(版本).umap`
   struct scene_scan_category_t : scan_category_t {
+    // 捕获数据
+    struct capture_data_t {
+      std::int32_t begin_episode_;
+      // 编号
+      std::string number_str_;
+      // 版本名称
+      std::string version_str_;
+    };
+
     std::vector<entt::handle> scan(const project_root_t& in_root) const override {
       const FSys::path l_scene_path = in_root.path_ / "6-moxing/BG";
-      const std::regex l_JD_regex{R"(JD(\d+)_\d+)"};
+      const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
       const std::regex l_BG_regex{R"(BG(\d+[a-zA-Z]\d*))"};
 
       if (!FSys::exists(l_scene_path)) {
@@ -67,10 +77,12 @@ class scan_assets_config {
         auto l_name_str = l_s.path().filename().generic_string();
         if (l_s.is_directory() && std::regex_match(l_name_str, l_match, l_JD_regex)) {  // 检查一级目录
           season l_season{std::stoi(l_match[1].str())};
+          capture_data_t l_capture_data{std::stoi(l_match[2].str()), ""};
           for (const auto& l_s2 : FSys::directory_iterator{l_s.path()}) {  // 迭代二级目录
             auto l_name2_str = l_s2.path().filename().generic_string();
             if (l_s2.is_directory() && std::regex_match(l_name2_str, l_match, l_BG_regex)) {  // 检查二级目录
-              for (auto&& l_s3 : FSys::directory_iterator{l_s2.path()}) {                     // 迭代三级目录
+              l_capture_data.number_str_ = l_match[1].str();
+              for (auto&& l_s3 : FSys::directory_iterator{l_s2.path()}) {  // 迭代三级目录
                 if (l_s3.is_directory()) {
                   auto l_dis_path = l_s3.path() / "Content" / l_s3.path().filename() / "Map";  // 确认目标路径
                   if (!FSys::exists(l_dis_path)) continue;
@@ -85,6 +97,10 @@ class scan_assets_config {
                         auto l_handle = entt::handle{*g_reg(), g_reg()->create()};
                         l_handle.emplace<season>(l_season);
                         l_handle.emplace<assets_file>(std::move(l_assets_file));
+                        auto l_capture_data_1         = l_capture_data;
+                        l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
+                        l_handle.emplace<capture_data_t>(l_capture_data);
+
                         l_out.push_back(l_handle);
                       }
                     }
@@ -102,16 +118,40 @@ class scan_assets_config {
     /// maya文件(同时也是rig文件):
     ///    项目根目录/6-moxing/BG/JD(季数)_(集数开始)/BG(编号)/Mod/(场景名称)_(版本)_Low.ma
 
-    std::vector<entt::handle> check_path(const project_root_t& in_root, const entt::handle& in_path) const override {
+    std::vector<entt::handle> check_path(const project_root_t& in_root, entt::handle& in_path) const override {
       const FSys::path l_scene_path = in_root.path_ / "6-moxing/BG";
 
       if (!in_path.any_of<season, assets_file>()) return {};
       if (!FSys::exists(l_scene_path)) return {};
 
-      auto& l_season = in_path.get<season>();
-      auto& l_assets = in_path.get<assets_file>();
+      auto& l_season  = in_path.get<season>();
+      auto& l_assets  = in_path.get<assets_file>();
+      auto& l_data    = in_path.get<capture_data_t>();
 
       // 检查rig文件
+      auto l_rig_path = l_scene_path / fmt::format("JD{:02}_{}", l_season.get_season(), l_data.begin_episode_) /
+                        fmt::format("BG{}", l_data.number_str_) / "Mod" /
+                        fmt::format("{}_{}_Low.ma", l_assets.name_attr(), l_data.version_str_);
+      if (!FSys::exists(l_rig_path)) {
+        in_path.destroy();
+        return {};
+      }
+
+      auto l_rig_assets_file = assets_file{l_rig_path, l_assets.name_attr(), 0};
+      auto l_rig_handle      = entt::handle{*g_reg(), g_reg()->create()};
+      l_rig_handle.emplace<season>(l_season);
+      l_rig_handle.emplace<assets_file>(std::move(l_rig_assets_file));
+
+      // 创建联系
+      file_association l_file_association{};
+      l_file_association.ue_file       = in_path;
+      l_file_association.maya_file     = l_rig_handle;
+      l_file_association.maya_rig_file = l_rig_handle;
+      auto l_file_association_handle   = entt::handle{*g_reg(), g_reg()->create()};
+      l_file_association_handle.emplace<file_association>(std::move(l_file_association));
+      l_rig_handle.emplace<file_association_ref>(l_file_association_handle);
+      in_path.emplace<file_association_ref>(l_file_association_handle);
+      return {l_rig_handle};
     }
   };
 
