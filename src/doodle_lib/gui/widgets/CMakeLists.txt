@@ -25,6 +25,7 @@ target_sources(doodle_lib
         upload_files.h
         render_monitor.h
         database_tool.h
+        scan_assets.h
 
         PRIVATE
         edit_widget.cpp
@@ -48,4 +49,5 @@ target_sources(doodle_lib
         upload_files.cpp
         render_monitor.cpp
         database_tool.cpp
+        scan_assets.cpp
         )
