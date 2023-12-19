@@ -767,7 +767,7 @@ void fbx_node_mesh::build_skin() {
       for (auto i = 0; i < 4; ++i)
         for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_matrix[i][j];
     }
-    l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
+    l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
       log_error(fmt::format("add cluster error: {}", node->GetName()));
     }
