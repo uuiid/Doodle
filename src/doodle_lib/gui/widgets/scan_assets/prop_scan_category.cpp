@@ -14,6 +14,7 @@ std::vector<entt::handle> prop_scan_category_t::scan(const project_root_t &in_ro
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 
   if (!FSys::exists(l_prop_path)) {
+    logger_->log(log_loc(), level::err, "路径不存在:{}", l_prop_path);
     return {};
   }
   std::vector<entt::handle> l_out;
@@ -61,6 +62,7 @@ std::vector<entt::handle> prop_scan_category_t::scan(const project_root_t &in_ro
                 l_handle.emplace<assets_file>(std::move(l_assets_file));
                 l_out.push_back(l_handle);
               }
+              logger_->log(log_loc(), level::info, "扫描到道具文件:{}", l_s3.path());
               l_handle.emplace_or_replace<capture_data_t>(l_capture_data_1);
             }
           }
@@ -90,7 +92,10 @@ std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t 
   if (!l_data.version_str_.empty()) l_maya_file += fmt::format("_{}", l_data.version_str_);
   l_maya_file += ".ma";
 
-  if (!FSys::exists(l_maya_file)) return l_out;
+  if (!FSys::exists(l_maya_file)) {
+    logger_->log(log_loc(), level::err, "路径不存在:{}", l_maya_file);
+    return l_out;
+  }
 
   auto l_uuid = FSys::software_flag_file(l_maya_file);
   // 创建对于句柄
@@ -133,8 +138,15 @@ std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t 
                  }) |
                  ranges::views::transform([](auto &&i) -> FSys::path { return i.path(); }) | ranges::to_vector;
 
-  if (l_files.empty()) return l_out;
+  if (l_files.empty()) {
+    logger_->log(
+        log_loc(), level::err, "rig文件夹中不存在:{} 符合 {}_***.ma 命名的文件 ", l_maya_rig_file_path,
+        l_maya_rig_file_name
+    );
+    return l_out;
+  }
   if (l_files.size() > 1) {
+    logger_->log(log_loc(), level::err, "rig文件数量大于1:{}", l_files);
     return l_out;
   }
   auto l_rig_file = l_files.front();

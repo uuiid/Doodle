@@ -16,6 +16,7 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
   const std::regex l_BG_regex{R"(BG(\d+[a-zA-Z]\d*))"};
 
   if (!FSys::exists(l_scene_path)) {
+    logger_->log(log_loc(), level::err, "路径不存在:{}", l_scene_path);
     return {};
   }
   std::vector<entt::handle> l_out;
@@ -55,6 +56,7 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
 
                       l_out.push_back(l_handle);
                     }
+                    logger_->log(log_loc(), level::info, "扫描到场景文件:{}", l_s4.path());
                     l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
                     l_handle.emplace_or_replace<capture_data_t>(l_capture_data_1);
                   }
@@ -85,6 +87,7 @@ std::vector<entt::handle> scene_scan_category_t::check_path(const project_root_t
                     fmt::format("BG{}", l_data.number_str_) / "Mod" /
                     fmt::format("{}_{}_Low.ma", l_assets.name_attr(), l_data.version_str_);
   if (!FSys::exists(l_rig_path)) {
+    logger_->log(log_loc(), level::err, "rig文件不存在:{}", l_rig_path);
     return {};
   }
 
