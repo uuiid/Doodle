@@ -42,20 +42,21 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
                       (l_stem.starts_with(l_s3.path().filename().generic_string()) &&
                        std::count(l_stem.begin(), l_stem.end(), '_') == 1)) {
                     auto l_uuid = FSys::software_flag_file(l_s4.path());
+                    entt::handle l_handle;
+                    auto l_capture_data_1 = l_capture_data;
                     if (uuid_map_entt_->contains(l_uuid)) {
-                      l_out.emplace_back(*g_reg(), uuid_map_entt_->at(l_uuid));
+                      l_handle = l_out.emplace_back(*g_reg(), uuid_map_entt_->at(l_uuid));
                     } else {
                       assets_file l_assets_file{l_s4.path(), l_s3.path().filename().generic_string(), 0};
 
-                      auto l_handle = entt::handle{*g_reg(), g_reg()->create()};
+                      l_handle = entt::handle{*g_reg(), g_reg()->create()};
                       l_handle.emplace<season>(l_season);
                       l_handle.emplace<assets_file>(std::move(l_assets_file));
-                      auto l_capture_data_1         = l_capture_data;
-                      l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
-                      l_handle.emplace<capture_data_t>(l_capture_data_1);
 
                       l_out.push_back(l_handle);
                     }
+                    l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
+                    l_handle.emplace_or_replace<capture_data_t>(l_capture_data_1);
                   }
                 }
               }
@@ -84,7 +85,6 @@ std::vector<entt::handle> scene_scan_category_t::check_path(const project_root_t
                     fmt::format("BG{}", l_data.number_str_) / "Mod" /
                     fmt::format("{}_{}_Low.ma", l_assets.name_attr(), l_data.version_str_);
   if (!FSys::exists(l_rig_path)) {
-    in_path.destroy();
     return {};
   }
 
