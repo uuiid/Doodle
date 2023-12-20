@@ -52,7 +52,7 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
                       l_handle.emplace<assets_file>(std::move(l_assets_file));
                       auto l_capture_data_1         = l_capture_data;
                       l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
-                      l_handle.emplace<capture_data_t>(l_capture_data);
+                      l_handle.emplace<capture_data_t>(l_capture_data_1);
 
                       l_out.push_back(l_handle);
                     }
