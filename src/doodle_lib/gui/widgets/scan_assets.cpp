@@ -24,10 +24,13 @@ class scan_assets_config {
   // 扫瞄分类
 
   struct scan_category_t {
+    scan_assets_config* config_;
     virtual std::vector<entt::handle> scan(const project_root_t& in_root) const                              = 0;
     virtual std::vector<entt::handle> check_path(const project_root_t& in_root, entt::handle& in_path) const = 0;
   };
-  std::vector<scan_category_t> scan_categorys_;
+  std::vector<std::unique_ptr<scan_category_t>> scan_categorys_;
+  std::map<uuid, entt::entity> assets_file_map_;
+
   // 独步消遥            {"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥" },
   // 人间最得意           {"//192.168.10.240/public/renjianzuideyi", "人间最得意" },
   // 无尽神域            {"//192.168.10.240/public/WuJinShenYu", "无尽神域" },
@@ -92,16 +95,21 @@ class scan_assets_config {
 
                       if (l_stem.starts_with(l_s3.path().filename().generic_string()) &&  // 检查文件名和文件格式
                           std::count(l_stem.begin(), l_stem.end(), '_') == 1) {
-                        assets_file l_assets_file{l_s3.path(), l_s3.path().filename().generic_string(), 0};
+                        auto l_uuid = FSys::software_flag_file(l_s4.path());
+                        if (config_->assets_file_map_.contains(l_uuid)) {
+                          l_out.emplace_back(*g_reg(), config_->assets_file_map_.at(l_uuid));
+                        } else {
+                          assets_file l_assets_file{l_s4.path(), l_s3.path().filename().generic_string(), 0};
 
-                        auto l_handle = entt::handle{*g_reg(), g_reg()->create()};
-                        l_handle.emplace<season>(l_season);
-                        l_handle.emplace<assets_file>(std::move(l_assets_file));
-                        auto l_capture_data_1         = l_capture_data;
-                        l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
-                        l_handle.emplace<capture_data_t>(l_capture_data);
+                          auto l_handle = entt::handle{*g_reg(), g_reg()->create()};
+                          l_handle.emplace<season>(l_season);
+                          l_handle.emplace<assets_file>(std::move(l_assets_file));
+                          auto l_capture_data_1         = l_capture_data;
+                          l_capture_data_1.version_str_ = l_stem.substr(l_stem.find('_') + 1);
+                          l_handle.emplace<capture_data_t>(l_capture_data);
 
-                        l_out.push_back(l_handle);
+                          l_out.push_back(l_handle);
+                        }
                       }
                     }
                   }
@@ -138,19 +146,34 @@ class scan_assets_config {
       }
 
       auto l_rig_assets_file = assets_file{l_rig_path, l_assets.name_attr(), 0};
-      auto l_rig_handle      = entt::handle{*g_reg(), g_reg()->create()};
-      l_rig_handle.emplace<season>(l_season);
-      l_rig_handle.emplace<assets_file>(std::move(l_rig_assets_file));
+      entt::handle l_rig_handle{};
+      entt::handle l_file_association_handle{};
+      auto l_uuid = FSys::software_flag_file(l_rig_path);
+      if (config_->assets_file_map_.contains(l_uuid)) {
+        l_rig_handle = entt::handle{*g_reg(), config_->assets_file_map_.at(l_uuid)};
+
+      } else {
+        l_rig_handle = entt::handle{*g_reg(), g_reg()->create()};
+        l_rig_handle.emplace<season>(l_season);
+        l_rig_handle.emplace<assets_file>(std::move(l_rig_assets_file));
+      }
+
+      if (in_path.any_of<file_association_ref>()) {
+        l_file_association_handle = in_path.get<file_association_ref>();
+      } else if (l_rig_handle.any_of<file_association_ref>()) {
+        l_file_association_handle = l_rig_handle.get<file_association_ref>();
+      } else {
+        l_file_association_handle = entt::handle{*g_reg(), g_reg()->create()};
+      }
 
       // 创建联系
       file_association l_file_association{};
       l_file_association.ue_file       = in_path;
       l_file_association.maya_file     = l_rig_handle;
       l_file_association.maya_rig_file = l_rig_handle;
-      auto l_file_association_handle   = entt::handle{*g_reg(), g_reg()->create()};
-      l_file_association_handle.emplace<file_association>(std::move(l_file_association));
-      l_rig_handle.emplace<file_association_ref>(l_file_association_handle);
-      in_path.emplace<file_association_ref>(l_file_association_handle);
+      l_file_association_handle.emplace_or_replace<file_association>(std::move(l_file_association));
+      l_rig_handle.emplace_or_replace<file_association_ref>(l_file_association_handle);
+      in_path.emplace_or_replace<file_association_ref>(l_file_association_handle);
       return {l_rig_handle};
     }
   };
