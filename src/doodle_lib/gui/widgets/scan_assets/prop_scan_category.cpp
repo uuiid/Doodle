@@ -146,7 +146,7 @@ std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t 
     return l_out;
   }
   if (l_files.size() > 1) {
-    logger_->log(log_loc(), level::err, "rig文件数量大于1:{}", l_files);
+    logger_->log(log_loc(), level::err, "符合rig 文件规则的文件数量大于1:{}", l_files);
     return l_out;
   }
   auto l_rig_file = l_files.front();
