@@ -599,9 +599,8 @@ void fbx_node_mesh::build_mesh() {
 
       auto l_face_count = l_fn_mesh.numPolygons();
       for (auto k = 0; k < l_face_count; ++k) {
-        MIntArray l_vert_list{};
         auto l_poly_len = l_fn_mesh.polygonVertexCount(k);
-        for (std::int32_t j = 0; j < l_vert_list.length(); ++j) {
+        for (std::int32_t j = 0; j < l_poly_len; ++j) {
           std::int32_t l_uv_id{};
           l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]);  // warning: 这个我们忽略返回值, 不去测试错误
           l_layer->GetIndexArray().Add(l_uv_id);
