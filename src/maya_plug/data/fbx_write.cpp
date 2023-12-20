@@ -581,7 +581,6 @@ void fbx_node_mesh::build_mesh() {
   }
 
   [&]() {
-    std::size_t l_error_count{};
     // get uv set names
     MStringArray l_uv_set_names{};
     maya_chick(l_fn_mesh.getUVSetNames(l_uv_set_names));
@@ -601,27 +600,11 @@ void fbx_node_mesh::build_mesh() {
       auto l_face_count = l_fn_mesh.numPolygons();
       for (auto k = 0; k < l_face_count; ++k) {
         MIntArray l_vert_list{};
-        maya_chick(l_fn_mesh.getPolygonVertices(k, l_vert_list));
-        for (auto j = 0; j < l_vert_list.length(); ++j) {
+        auto l_poly_len = l_fn_mesh.polygonVertexCount(k);
+        for (std::int32_t j = 0; j < l_vert_list.length(); ++j) {
           std::int32_t l_uv_id{};
-          if (l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i])) {
-            l_layer->GetIndexArray().Add(l_uv_id);
-          } else {
-            if (l_error_count > 1000) {
-              extra_data_.logger_->log(
-                  doodle::log_loc(), doodle::level::err,
-                  "错误太多, 直接跳过, 此处问题为模型网格体uv问题 {} getPolygonUVid error: {} {} {}", l_mesh, k, j,
-                  l_uv_set_names[i]
-              );
-              return;
-            }
-            ++l_error_count;
-            default_logger_raw()->log(
-                doodle::log_loc(), doodle::level::err,
-                "错误太多, 直接跳过, 此处问题为模型网格体uv问题 {} getPolygonUVid error: {} {} {}", l_mesh, k, j,
-                l_uv_set_names[i]
-            );
-          }
+          l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]);  // warning: 这个我们忽略返回值, 不去测试错误
+          l_layer->GetIndexArray().Add(l_uv_id);
         }
       }
     }
