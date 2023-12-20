@@ -24,7 +24,7 @@ class scan_assets_config {
   // 扫瞄分类
 
   struct scan_category_t {
-    scan_assets_config* config_;
+    std::map<uuid, entt::entity>* uuid_map_entt_;
     virtual std::vector<entt::handle> scan(const project_root_t& in_root) const                              = 0;
     virtual std::vector<entt::handle> check_path(const project_root_t& in_root, entt::handle& in_path) const = 0;
   };
@@ -96,8 +96,8 @@ class scan_assets_config {
                       if (l_stem.starts_with(l_s3.path().filename().generic_string()) &&  // 检查文件名和文件格式
                           std::count(l_stem.begin(), l_stem.end(), '_') == 1) {
                         auto l_uuid = FSys::software_flag_file(l_s4.path());
-                        if (config_->assets_file_map_.contains(l_uuid)) {
-                          l_out.emplace_back(*g_reg(), config_->assets_file_map_.at(l_uuid));
+                        if (uuid_map_entt_->contains(l_uuid)) {
+                          l_out.emplace_back(*g_reg(), uuid_map_entt_->at(l_uuid));
                         } else {
                           assets_file l_assets_file{l_s4.path(), l_s3.path().filename().generic_string(), 0};
 
@@ -149,8 +149,8 @@ class scan_assets_config {
       entt::handle l_rig_handle{};
       entt::handle l_file_association_handle{};
       auto l_uuid = FSys::software_flag_file(l_rig_path);
-      if (config_->assets_file_map_.contains(l_uuid)) {
-        l_rig_handle = entt::handle{*g_reg(), config_->assets_file_map_.at(l_uuid)};
+      if (uuid_map_entt_->contains(l_uuid)) {
+        l_rig_handle = entt::handle{*g_reg(), uuid_map_entt_->at(l_uuid)};
 
       } else {
         l_rig_handle = entt::handle{*g_reg(), g_reg()->create()};
