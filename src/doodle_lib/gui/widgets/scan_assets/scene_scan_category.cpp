@@ -16,7 +16,7 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
   const std::regex l_BG_regex{R"(BG(\d+[a-zA-Z]\d*))"};
 
   if (!FSys::exists(l_scene_path)) {
-    return std::vector<entt::handle>();
+    return {};
   }
   std::vector<entt::handle> l_out;
   std::smatch l_match{};
@@ -38,8 +38,9 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
                 if (l_s4.is_regular_file() && l_s4.path().extension() == ".umap") {  // 确认后缀名称
                   auto l_stem = l_s4.path().stem().generic_string();
 
-                  if (l_stem.starts_with(l_s3.path().filename().generic_string()) &&  // 检查文件名和文件格式
-                      std::count(l_stem.begin(), l_stem.end(), '_') == 1) {
+                  if (l_stem == l_s3.path().filename().generic_string() ||  // 检查文件名和文件格式
+                      (l_stem.starts_with(l_s3.path().filename().generic_string()) &&
+                       std::count(l_stem.begin(), l_stem.end(), '_') == 1)) {
                     auto l_uuid = FSys::software_flag_file(l_s4.path());
                     if (uuid_map_entt_->contains(l_uuid)) {
                       l_out.emplace_back(*g_reg(), uuid_map_entt_->at(l_uuid));
