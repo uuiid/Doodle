@@ -18,6 +18,7 @@ class scan_category_t {
     std::string name_;
   };
   std::map<uuid, entt::entity>* uuid_map_entt_;
+  logger_ptr logger_;
   scan_category_t() : uuid_map_entt_{nullptr} {}
   virtual ~scan_category_t()                                                                               = default;
   virtual std::vector<entt::handle> scan(const project_root_t& in_root) const                              = 0;
