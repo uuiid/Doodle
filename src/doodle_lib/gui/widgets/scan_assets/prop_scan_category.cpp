@@ -76,8 +76,10 @@ std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t 
   const FSys::path l_prop_path = in_root.path_ / "6-moxing/Prop";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 
+  std::vector<entt::handle> l_out;
+
   if (!FSys::exists(l_prop_path)) {
-    return {};
+    return l_out;
   }
 
   auto &l_season   = in_path.get<season>();
@@ -88,13 +90,36 @@ std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t 
   if (!l_data.version_str_.empty()) l_maya_file += fmt::format("_{}", l_data.version_str_);
   l_maya_file += ".ma";
 
-  if (!FSys::exists(l_maya_file)) return {};
+  if (!FSys::exists(l_maya_file)) return l_out;
 
+  auto l_uuid = FSys::software_flag_file(l_maya_file);
   // 创建对于句柄
-  auto l_maya_handle = entt::handle{*g_reg(), g_reg()->create()};
+  entt::handle l_maya_handle;
+  entt::handle l_file_association_handle{};  // 文件关联句柄
+  file_association l_file_association{};
+  if (uuid_map_entt_->contains(l_uuid)) {
+    l_maya_handle = entt::handle{*g_reg(), uuid_map_entt_->at(l_uuid)};
+  } else {
+    l_maya_handle = entt::handle{*g_reg(), g_reg()->create()};
+    l_maya_handle.emplace<assets_file>(l_maya_file, l_assets.name_attr(), 0);
+    l_maya_handle.emplace<season>(l_season);
+  }
+  // 检查文件关联
+  if (in_path.any_of<file_association_ref>()) {
+    l_file_association_handle = in_path.get<file_association_ref>();
+  } else if (l_maya_handle.any_of<file_association_ref>()) {
+    l_file_association_handle = l_maya_handle.get<file_association_ref>();
+  } else {
+    l_file_association_handle = entt::handle{*g_reg(), g_reg()->create()};
+    l_file_association_handle.emplace<file_association>();
+  }
 
-  l_maya_handle.emplace<season>(l_season);
-  l_maya_handle.emplace<assets_file>(l_maya_file, l_assets.name_attr(), 0);
+  l_file_association.ue_file   = in_path;
+  l_file_association.maya_file = l_maya_handle;
+  l_maya_handle.emplace_or_replace<file_association_ref>(l_file_association_handle);
+  in_path.emplace_or_replace<file_association_ref>(l_file_association_handle);
+
+  l_out.emplace_back(l_maya_handle);
 
   // 检查rig文件
   auto l_maya_rig_file_path =
@@ -107,11 +132,28 @@ std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t 
                    return i.path().filename().generic_string().starts_with(l_maya_rig_file_name);
                  }) |
                  ranges::views::transform([](auto &&i) -> FSys::path { return i.path(); }) | ranges::to_vector;
-  if (l_files.empty()) return {};
+
+  if (l_files.empty()) return l_out;
   if (l_files.size() > 1) {
-    return {};
+    return l_out;
   }
   auto l_rig_file = l_files.front();
+
+  // 创建maya rig对应句柄
+  entt::handle l_maya_rig_handle;
+  if (uuid_map_entt_->contains(l_uuid)) {
+    l_maya_rig_handle = entt::handle{*g_reg(), uuid_map_entt_->at(l_uuid)};
+  } else {
+    l_maya_rig_handle = entt::handle{*g_reg(), g_reg()->create()};
+    l_maya_rig_handle.emplace<assets_file>(l_rig_file, l_assets.name_attr(), 0);
+    l_maya_rig_handle.emplace<season>(l_season);
+  }
+  l_out.emplace_back(l_maya_rig_handle);
+  // 检查文件关联
+  l_file_association.maya_rig_file = l_maya_rig_handle;
+  l_maya_rig_handle.emplace_or_replace<file_association_ref>(l_file_association_handle);
+  l_file_association_handle.emplace_or_replace<file_association>(std::move(l_file_association));
+  return l_out;
 }
 
 }  // namespace doodle::gui::details
