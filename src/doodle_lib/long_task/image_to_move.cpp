@@ -32,8 +32,7 @@ void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark
   textSize.height += baseline;
   // center the text
   cv::Point textOrg(
-      (in_image.cols - textSize.width) * in_watermark.width_proportion_attr,
-      (in_image.rows + textSize.height) * in_watermark.height_proportion_attr
+      (in_image.cols) * in_watermark.width_proportion_attr, (in_image.rows) * in_watermark.height_proportion_attr
   );
 
   // draw the box
