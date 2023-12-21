@@ -49,7 +49,6 @@ class create_video::impl {
 
 create_video::create_video() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
-  p_i->out_video_h = entt::handle{*g_reg(), g_reg()->create()};
 }
 
 bool create_video::render() {
@@ -132,6 +131,7 @@ bool create_video::render() {
                   ranges::to_vector;
     if (!l_list.empty()) {
       boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
+      p_i->out_video_h = entt::handle{*g_reg(), g_reg()->create()};
       p_i->out_video_h.remove<episodes>();
       ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
         return episodes::analysis_static(p_i->out_video_h, in_cache.data);
