@@ -147,7 +147,7 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   else if (!l_out.has_extension()) {
     l_out /= fmt::format("{}.mp4", core_set::get_set().get_uuid());
   } else
-    l_out.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});
+    l_out.extension().replace_extension(".mp4");
 
   if (exists(l_out.parent_path())) create_directories(l_out.parent_path());
   in_handle.replace<out_file_path>(l_out);
