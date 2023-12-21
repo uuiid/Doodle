@@ -61,20 +61,18 @@ boost::system::error_code connect_video_t::connect_video(
   cv::Mat l_image{};
   for (auto &l_video : in_vector) {
     if (l_stop) {
-      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
-
-      auto k_str = fmt::format("连接视频被主动结束 合成视频文件将被主动删除");
-      in_logger->log(log_loc(), level::warn, k_str);
+      in_logger->log(log_loc(), level::warn, "连接视频被主动结束 合成视频文件将被主动删除");
 
       FSys::remove(in_out_path, l_ec);
       if (l_ec) {
         l_ec.assign(error_enum::file_exists, doodle_category::get());
         in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 , 无法删除文件 {} ", in_out_path);
         BOOST_ASIO_ASSERT(l_ec);
-        return l_ec;
+      } else {
+        l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
+        BOOST_ASIO_ASSERT(l_ec);
       }
-      l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
-      BOOST_ASIO_ASSERT(l_ec);
+      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
       return l_ec;
     }
 

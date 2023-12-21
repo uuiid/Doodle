@@ -90,6 +90,15 @@ void image_to_move::create_move(
   in_logger->log(log_loc(), level::info, "开始创建视频 {}", in_out_path);
   in_logger->log(log_loc(), level::info, "获得图片路径 {}", l_vector.front().path_attr.parent_path());
 
+  if (FSys::exists(in_out_path)) {
+    boost::system::error_code l_ec{};
+    FSys::remove(in_out_path, l_ec);
+    if (l_ec) {
+      in_logger->log(log_loc(), level::err, "合成视频主动删除失败 {} ", in_out_path);
+      return;
+    }
+  }
+
   const static cv::Size k_size{1920, 1080};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image = cv::Mat{};
@@ -97,16 +106,13 @@ void image_to_move::create_move(
   auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto &l_image : l_vector) {
     if (l_stop) {
-      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
-
-      auto k_str = fmt::format("合成视频被主动结束 合成视频文件将被主动删除");
-      in_logger->log(log_loc(), level::warn, k_str);
-
+      in_logger->log(log_loc(), level::err, "合成视频被主动结束 合成视频文件将被主动删除");
       try {
         remove(in_out_path);
       } catch (const FSys::filesystem_error &err) {
-        in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
+        in_logger->log(log_loc(), level::err, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
       }
+      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
       return;
     }
 
