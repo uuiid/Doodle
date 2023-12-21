@@ -31,6 +31,7 @@ private:
 	ULevelSequence* TheLevelSequence;
 	FString DestinationPath;
 	TArray<UAssetImportTask*> ImportTasks;
+	TArray<UAssetImportTask*> ImportTasksAbc;
 	FString SequencePath;
 	FString ImportPath;
 
