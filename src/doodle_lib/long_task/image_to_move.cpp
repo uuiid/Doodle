@@ -23,8 +23,7 @@ void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark
   double fontScale = 1;
   int thickness    = -1;
   int baseline     = 0;
-  int fontHeight   = 60;
-  int linestyle    = 8;
+  int fontHeight   = 30;
   cv::Ptr<cv::freetype::FreeType2> ft2{cv::freetype::createFreeType2()};
   ft2->loadFontData(std::string{doodle_config::font_default}, 0);
   auto textSize = ft2->getTextSize(in_watermark.text_attr, fontHeight, thickness, &baseline);
