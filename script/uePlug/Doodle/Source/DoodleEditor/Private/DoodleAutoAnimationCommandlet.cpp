@@ -398,6 +398,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
                         if (AnimSeq->IsDataModelValid())
                         {
+                            AnimSeq->CompressCommandletVersion = 0;
                             AnimSeq->ClearAllCachedCookedPlatformData();
                             AnimSeq->BeginCacheDerivedDataForCurrentPlatform();
                         }
