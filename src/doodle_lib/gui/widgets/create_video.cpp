@@ -87,17 +87,28 @@ bool create_video::render() {
       }
     }
   }
-  if (imgui::Button("清除")) {
-    p_i->image_to_video_list.clear();
+  if (ImGui::Button("清除")) {
+    boost::asio::post(g_io_context(), [this]() { p_i->image_to_video_list.clear(); });
   }
-  imgui::SameLine();
-  if (imgui::Button("创建视频")) {
+  ImGui::SameLine();
+  if (ImGui::Button("创建视频")) {
     ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
       g_reg()->ctx().get<image_to_move>()->async_create_move(
           in_cache.out_handle, in_cache.image_attr,
           [this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
             auto l_out_path = l_h.get<image_to_move ::element_type ::out_file_path>();
             p_i->video_list.emplace_back(l_out_path.path.generic_string(), l_out_path.path.generic_string());
+
+            p_i->image_to_video_list |= ranges::actions::remove_if([l_h](const impl::image_cache& in_cache) -> bool {
+              return in_cache.out_handle != l_h;
+            });
+
+            boost::asio::post(g_io_context(), [this, l_h]() {
+              p_i->image_to_video_list |= ranges::actions::remove_if([l_h](const impl::image_cache& in_cache) -> bool {
+                return in_cache.out_handle != l_h;
+              });
+            });
+
           }
       );
     });
@@ -121,23 +132,37 @@ bool create_video::render() {
     }
   }
 
-  if (imgui::Button("清除视频")) {
-    p_i->video_list.clear();
+  if (ImGui::Button("清除视频")) {
+    boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
   }
-  imgui::SameLine();
-  if (imgui::Button("连接视频")) {
+  ImGui::SameLine();
+  if (ImGui::Button("连接视频")) {
     auto l_list = p_i->video_list |
                   ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path { return in_cache.data; }) |
                   ranges::to_vector;
+    if (!l_list.empty()) {
+      p_i->out_video_h.remove<episodes>();
+      ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
+        return episodes::analysis_static(p_i->out_video_h, in_cache.data);
+      });
+      if (p_i->out_path.data.empty())
+        p_i->out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
+      else
+        p_i->out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(p_i->out_path.data);
+      if (!p_i->out_video_h.all_of<process_message>())
+        p_i->out_video_h.emplace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
 
-    p_i->out_video_h.remove<episodes>();
-    ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
-      return episodes::analysis_static(p_i->out_video_h, in_cache.data);
-    });
+      if (!g_ctx().contains<connect_video>())
+        g_ctx().emplace<connect_video>(std::make_shared<detail::connect_video_t>());
 
-    p_i->out_video_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
-    if (!p_i->out_video_h.all_of<process_message>())
-      p_i->out_video_h.emplace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
+      g_ctx().get<connect_video>()->async_connect_video(
+          p_i->out_video_h, l_list,
+          [this](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
+            default_logger_raw()->info("完成视频合成 {}", in_path);
+            boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
+          }
+      );
+    }
   }
 
   return p_i->open;
