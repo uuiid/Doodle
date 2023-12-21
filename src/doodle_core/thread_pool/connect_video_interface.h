@@ -24,6 +24,7 @@ class DOODLE_CORE_API connect_video_interface {
    * @return 创建完成的路径
    */
   virtual FSys::path create_out_path(const entt::handle &in_handle) = 0;
+  // 这个函数已经不在主线程了
   virtual void connect_video(
       const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<FSys::path> &in_vector
   ) = 0;
