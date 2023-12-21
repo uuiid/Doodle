@@ -94,7 +94,9 @@ bool create_video::render() {
           in_cache.out_handle, in_cache.image_attr,
           [this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
             auto l_out_path = l_h.get<image_to_move ::element_type ::out_file_path>();
-            if (ranges::count_if(p_i->video_list, boost::is_any_of(l_out_path.path.generic_string())) == 0)
+            if (ranges::count_if(p_i->video_list, [&](const gui_cache<std::string>& in_gui_cache) {
+                  return in_gui_cache.data == l_out_path.path.generic_string();
+                }) == 0)
               p_i->video_list.emplace_back(l_out_path.path.generic_string(), l_out_path.path.generic_string());
 
           }
