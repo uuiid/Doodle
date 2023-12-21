@@ -349,12 +349,10 @@ void UDoodleFbxImport_1::ImportFile() {
           L_Anim->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
               L_Anim, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
           );
-          /// 这里无效代码, 防止崩溃
-          TArray<UObject*> Ll{};
-          L_Anim->GetPreloadDependencies(Ll);
           if (L_Anim->IsDataModelValid()) {
+            L_Anim->CompressCommandletVersion = 0;
             L_Anim->ClearAllCachedCookedPlatformData();
-            L_Anim->BeginCacheDerivedDataForCurrentPlatform();
+            L_Anim->CacheDerivedDataForCurrentPlatform();
           }
         }
         return true;
@@ -368,12 +366,10 @@ void UDoodleFbxImport_1::ImportFile() {
           L_Seq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
               L_Seq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
           );
-          /// 这里无效代码, 防止崩溃
-          TArray<UObject*> Ll{};
-          L_Seq->GetPreloadDependencies(Ll);
           if (L_Seq->IsDataModelValid()) {
+            L_Seq->CompressCommandletVersion = 0;
             L_Seq->ClearAllCachedCookedPlatformData();
-            L_Seq->BeginCacheDerivedDataForCurrentPlatform();
+            L_Seq->CacheDerivedDataForCurrentPlatform();
           }
         }
       }
