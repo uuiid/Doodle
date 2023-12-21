@@ -95,6 +95,9 @@ bool create_video::render() {
     boost::asio::post(g_io_context(), [this]() { p_i->image_to_video_list.clear(); });
 
     ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
+      in_cache.out_handle.emplace<process_message>(
+          in_cache.out_handle.get<image_to_move ::element_type ::out_file_path>().path.filename().generic_string()
+      );
       g_reg()->ctx().get<image_to_move>()->async_create_move(
           in_cache.out_handle, in_cache.image_attr,
           [this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
@@ -165,7 +168,6 @@ bool create_video::render() {
 }
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_h.emplace<process_message>(in_path.filename().generic_string());
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
