@@ -92,6 +92,8 @@ bool create_video::render() {
   }
   ImGui::SameLine();
   if (ImGui::Button("创建视频")) {
+    boost::asio::post(g_io_context(), [this]() { p_i->image_to_video_list.clear(); });
+
     ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
       g_reg()->ctx().get<image_to_move>()->async_create_move(
           in_cache.out_handle, in_cache.image_attr,
@@ -101,12 +103,6 @@ bool create_video::render() {
 
             p_i->image_to_video_list |= ranges::actions::remove_if([l_h](const impl::image_cache& in_cache) -> bool {
               return in_cache.out_handle != l_h;
-            });
-
-            boost::asio::post(g_io_context(), [this, l_h]() {
-              p_i->image_to_video_list |= ranges::actions::remove_if([l_h](const impl::image_cache& in_cache) -> bool {
-                return in_cache.out_handle != l_h;
-              });
             });
 
           }
@@ -141,6 +137,7 @@ bool create_video::render() {
                   ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path { return in_cache.data; }) |
                   ranges::to_vector;
     if (!l_list.empty()) {
+      boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
       p_i->out_video_h.remove<episodes>();
       ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
         return episodes::analysis_static(p_i->out_video_h, in_cache.data);
@@ -159,7 +156,6 @@ bool create_video::render() {
           p_i->out_video_h, l_list,
           [this](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
             default_logger_raw()->info("完成视频合成 {}", in_path);
-            boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
           }
       );
     }
