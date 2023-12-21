@@ -47,7 +47,7 @@ class DOODLE_CORE_API connect_video_interface {
       exists(in) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
     });
     !in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
-    if (in_handle.all_of<process_message>())
+    if (!in_handle.all_of<process_message>())
       in_handle.emplace<process_message>(in_handle.get<out_file_path>().path.filename().string());
     auto l_logger   = in_handle.get<process_message>().logger();
     auto l_out_path = this->create_out_path(in_handle);
