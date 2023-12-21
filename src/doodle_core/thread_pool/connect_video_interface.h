@@ -42,13 +42,13 @@ class DOODLE_CORE_API connect_video_interface {
       const entt::handle &in_handle, const std::vector<FSys::path> &in_vector, CompletionHandler &&in_completion
   ) {
     using l_call = std::function<void()>;
-    in_handle.any_of<FSys::path>() ? void() : throw_exception(doodle_error{"缺失输出文件路径"});
+    in_handle.any_of<out_file_path>() ? void() : throw_exception(doodle_error{"缺失输出文件路径"});
     std::for_each(std::begin(in_vector), std::end(in_vector), [](const FSys::path &in) {
       exists(in) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
     });
     !in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
     if (in_handle.all_of<process_message>())
-      in_handle.emplace<process_message>(in_handle.get<FSys::path>().filename().string());
+      in_handle.emplace<process_message>(in_handle.get<out_file_path>().path.filename().string());
     auto l_logger   = in_handle.get<process_message>().logger();
     auto l_out_path = this->create_out_path(in_handle);
     return boost::asio::async_initiate<CompletionHandler, void(FSys::path, boost::system::error_code)>(
