@@ -123,10 +123,10 @@ std::vector<image_attr> image_attr::make_default_attr(
   const auto l_size = in_path_list.size();
   ranges::for_each(list, [&](image_attr &in_attribute) {
     in_attribute.watermarks_attr.emplace_back(
-        fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.8, 0.1, image_watermark::rgb_default
+        fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.75, 0.1, image_watermark::rgb_default
     );
     in_attribute.watermarks_attr.emplace_back(
-        fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::seconds>(chrono::system_clock::now())), 0.9, 0.1,
+        fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::seconds>(chrono::system_clock::now())), 0.8, 0.1,
         image_watermark::rgb_default
     );
   });
