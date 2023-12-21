@@ -47,8 +47,8 @@ boost::system::error_code connect_video_t::connect_video(
   if (FSys::exists(in_out_path)) {
     FSys::remove(in_out_path, l_ec);
     if (l_ec) {
-      in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
-      l_ec.assign(error_enum::file_exists, boost::system::generic_category());
+      l_ec.assign(error_enum::file_exists, doodle_category::get());
+      in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", in_out_path);
       BOOST_ASIO_ASSERT(l_ec);
       return l_ec;
     }
@@ -68,8 +68,8 @@ boost::system::error_code connect_video_t::connect_video(
 
       FSys::remove(in_out_path, l_ec);
       if (l_ec) {
-        in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
         l_ec.assign(error_enum::file_exists, doodle_category::get());
+        in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 , 无法删除文件 {} ", in_out_path);
         BOOST_ASIO_ASSERT(l_ec);
         return l_ec;
       }
@@ -100,6 +100,7 @@ boost::system::error_code connect_video_t::connect_video(
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
   in_logger->log(log_loc(), level::off, fmt::to_string(process_message::success));
+  return l_ec;
 }
 
 }  // namespace doodle::detail
