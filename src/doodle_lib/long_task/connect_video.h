@@ -30,8 +30,9 @@ class DOODLELIB_API connect_video_t : public connect_video_interface {
   connect_video_t()          = default;
   virtual ~connect_video_t() = default;
 
-  virtual void connect_video(const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<FSys::path> &in_vector)
-      override;
+  virtual boost::system::error_code connect_video(
+      const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<FSys::path> &in_vector
+  ) override;
 };
 
 }  // namespace doodle::detail

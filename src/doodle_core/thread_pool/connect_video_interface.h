@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <boost/asio.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
@@ -25,7 +26,7 @@ class DOODLE_CORE_API connect_video_interface {
    */
   virtual FSys::path create_out_path(const entt::handle &in_handle) = 0;
   // 这个函数已经不在主线程了
-  virtual void connect_video(
+  virtual boost::system::error_code connect_video(
       const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<FSys::path> &in_vector
   ) = 0;
 
@@ -50,12 +51,14 @@ class DOODLE_CORE_API connect_video_interface {
       in_handle.emplace<process_message>(in_handle.get<FSys::path>().filename().string());
     auto l_logger   = in_handle.get<process_message>().logger();
     auto l_out_path = this->create_out_path(in_handle);
-    return boost::asio::async_initiate<CompletionHandler, void()>(
+    return boost::asio::async_initiate<CompletionHandler, void(FSys::path, boost::system::error_code)>(
         [this, in_vector, l_out_path = std::move(l_out_path), in_handle, l_logger](auto &&in_completion_handler) {
-          auto l_f = std::make_shared<l_call>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
+          auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)> >(
+              std::forward<decltype(in_completion_handler)>(in_completion_handler)
+          );
           boost::asio::post(g_thread(), [this, l_f, in_vector, l_out_path, in_handle, l_logger]() {
-            this->connect_video(l_out_path, l_logger, in_vector);
-            boost::asio::post(*l_f);
+            auto l_err = this->connect_video(l_out_path, l_logger, in_vector);
+            boost::asio::post(boost::asio::prepend(std::move(*l_f), l_out_path, l_err));
           });
         },
         in_completion

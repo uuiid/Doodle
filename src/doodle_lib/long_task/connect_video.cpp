@@ -34,7 +34,7 @@ FSys::path connect_video_t::create_out_path(const entt::handle &in_handle) {
   return l_out;
 }
 
-void connect_video_t::connect_video(
+boost::system::error_code connect_video_t::connect_video(
     const FSys::path &in_out_path, doodle::logger_ptr in_logger, const std::vector<FSys::path> &in_vector
 ) {
   boost::ignore_unused(this);
@@ -42,6 +42,17 @@ void connect_video_t::connect_video(
   in_logger->log(log_loc(), level::info, "开始创建视频 {}", in_out_path);
   in_logger->log(log_loc(), level::info, "获得视屏路径 {}", in_vector);
   std::atomic_bool l_stop{};
+  boost::system::error_code l_ec{};
+
+  if (FSys::exists(in_out_path)) {
+    FSys::remove(in_out_path, l_ec);
+    if (l_ec) {
+      in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
+      l_ec.assign(error_enum::file_exists, boost::system::generic_category());
+      BOOST_ASIO_ASSERT(l_ec);
+      return l_ec;
+    }
+  }
 
   const static cv::Size k_size{1920, 1080};
   auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
@@ -55,12 +66,16 @@ void connect_video_t::connect_video(
       auto k_str = fmt::format("连接视频被主动结束 合成视频文件将被主动删除");
       in_logger->log(log_loc(), level::warn, k_str);
 
-      try {
-        remove(in_out_path);
-      } catch (const FSys::filesystem_error &err) {
+      FSys::remove(in_out_path, l_ec);
+      if (l_ec) {
         in_logger->log(log_loc(), level::warn, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
+        l_ec.assign(error_enum::file_exists, doodle_category::get());
+        BOOST_ASIO_ASSERT(l_ec);
+        return l_ec;
       }
-      return;
+      l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
+      BOOST_ASIO_ASSERT(l_ec);
+      return l_ec;
     }
 
     in_logger->log(log_loc(), level::info, "开始读取视屏 {}", l_video);
@@ -73,7 +88,7 @@ void connect_video_t::connect_video(
 
     while (l_video_cap.read(l_image)) {
       if (l_image.empty()) {
-        DOODLE_LOG_ERROR("{} 视屏读取失败 跳过", l_video);
+        in_logger->log(log_loc(), level::warn, "视屏读取失败 跳过 {}", l_video);
         continue;
       }
       if (l_image.cols != k_size.width || l_image.rows != k_size.height) cv::resize(l_image, l_image, k_size);
