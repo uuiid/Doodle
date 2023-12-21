@@ -10,6 +10,7 @@ target_sources(
         setting_windows.h
         asset_library_layout.h
         solving_fabric_layout.h
+        create_video_layout.h
 
         PRIVATE
         menu_bar.cpp
@@ -17,4 +18,5 @@ target_sources(
         setting_windows.cpp
         asset_library_layout.cpp
         solving_fabric_layout.cpp
+        create_video_layout.cpp
 )
