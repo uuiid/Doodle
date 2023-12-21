@@ -400,7 +400,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         {
                             AnimSeq->CompressCommandletVersion = 0;
                             AnimSeq->ClearAllCachedCookedPlatformData();
-                            AnimSeq->BeginCacheDerivedDataForCurrentPlatform();
+                            AnimSeq->CacheDerivedDataForCurrentPlatform();
                         }
                         //------------------
                         ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
