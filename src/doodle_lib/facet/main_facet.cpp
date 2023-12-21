@@ -16,6 +16,7 @@
 #include <doodle_app/gui/open_project.h>
 
 #include <doodle_lib/gui/asset_library_layout.h>
+#include <doodle_lib/gui/create_video_layout.h>
 #include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/menu_bar.h>
 #include <doodle_lib/gui/setting_windows.h>
@@ -55,6 +56,7 @@ void main_facet::load_windows() {
     g_windows_manage().register_layout(layout_init_arg{}.create<layout_window>());
     g_windows_manage().register_layout(layout_init_arg{}.create<asset_library_layout>());
     g_windows_manage().register_layout(layout_init_arg{}.create<solving_fabric_layout>());
+    g_windows_manage().register_layout(layout_init_arg{}.create<create_video_layout>());
     // g_windows_manage().switch_layout(
     //     core_set::get_set().layout_config.empty() ? layout_window::name : core_set::get_set().layout_config
     // );
