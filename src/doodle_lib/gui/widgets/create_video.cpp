@@ -37,7 +37,6 @@ class create_video::image_arg : public gui::gui_cache<std::string> {
 
 class create_video::impl {
  public:
-
   using image_cache = create_video::image_arg;
   using video_cache = gui::gui_cache<std::string>;
 
@@ -75,7 +74,7 @@ bool create_video::render() {
       }
       if (ranges::all_of(*l_list, [](const FSys::path& in_path) -> bool { return FSys::is_regular_file(in_path); })) {
         auto&& l_out = p_i->image_to_video_list.emplace_back(
-            create_image_to_move_handle(l_list->front()), *l_list, l_list->front().generic_string()
+            create_image_to_move_handle(l_list->front().parent_path()), *l_list, l_list->front().generic_string()
         );
       }
     }
@@ -164,9 +163,7 @@ entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
 
-  l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(
-      FSys::is_directory(in_path) ? in_path : in_path.parent_path()
-  );
+  l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(in_path.parent_path());
 
   return l_h;
 }
