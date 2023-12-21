@@ -96,6 +96,8 @@ using animation_id         = entt::tag<"animation"_hs>;
 // 解算id
 using simulation_id        = entt::tag<"simulation"_hs>;
 
+class connect_video_interface;
+
 }  // namespace detail
 
 using database_info = details::database_info;
@@ -126,6 +128,7 @@ using prop_id       = detail::prop_id;
 using rig_id        = detail::rig_id;
 using animation_id  = detail::animation_id;
 using simulation_id = detail::simulation_id;
+using connect_video = std::shared_ptr<detail::connect_video_interface>;
 
 using namespace std::literals;
 
