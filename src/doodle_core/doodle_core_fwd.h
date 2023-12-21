@@ -61,16 +61,7 @@ class logger_ctrl;
 namespace detail {
 template <typename>
 class one_file_base;
-template <typename>
-struct entt_id {
-  entt::entity id;
-  inline operator entt::entity() const { return id; }
-  inline operator bool() const { return id != entt::null; }
 
-  // to json
-  inline friend void to_json(nlohmann::json& j, const entt_id& p) { j = p.id; }
-  inline friend void from_json(const nlohmann::json& j, entt_id& p) { p.id = j.get<entt::entity>(); }
-};
 template <typename Id, typename Registry = entt::registry, typename... Scope>
 struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
   using base_type          = entt::basic_handle<Registry, Scope...>;
@@ -91,11 +82,26 @@ using ue_file_id           = entt::tag<"ue_file"_hs>;
 using maya_rig_file_id     = entt::tag<"maya_rig_file"_hs>;
 using ue_file_preset_id    = entt::tag<"ue_file_preset"_hs>;
 using file_association_ref = entt::tag<"file_association_ref"_hs>;
+
+// 场景id
+using scene_id             = entt::tag<"scene"_hs>;
+// 人物id
+using character_id         = entt::tag<"character"_hs>;
+// 道具id
+using prop_id              = entt::tag<"prop"_hs>;
+// rig id
+using rig_id               = entt::tag<"rig"_hs>;
+// 动画id
+using animation_id         = entt::tag<"animation"_hs>;
+// 解算id
+using simulation_id        = entt::tag<"simulation"_hs>;
+
 }  // namespace detail
 
 using database_info = details::database_info;
 using program_info  = details::program_info;
 using identifier    = details::identifier;
+class maya_anim_file;
 
 class convert;
 class doodle_error;
@@ -109,9 +115,18 @@ using maya_file            = detail::one_file_base<detail::maya_file_id>;
 using ue_file              = detail::one_file_base<detail::ue_file_id>;
 using maya_rig_file        = detail::one_file_base<detail::maya_rig_file_id>;
 using ue_file_preset       = detail::one_file_base<detail::ue_file_preset_id>;
+
 using file_association_ref = detail::entt_handle_ref<detail::file_association_ref>;
 using main_project         = entt::tag<"main_project"_hs>;
 class ue_main_map;
+
+using scene_id      = detail::scene_id;
+using character_id  = detail::character_id;
+using prop_id       = detail::prop_id;
+using rig_id        = detail::rig_id;
+using animation_id  = detail::animation_id;
+using simulation_id = detail::simulation_id;
+
 using namespace std::literals;
 
 class doodle_lib;

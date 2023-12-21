@@ -37,32 +37,32 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
         data_->trace_.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 10000};
+        if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10000};
         if (data_->trace_.size() > g_max_size) data_->trace_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::debug:
         data_->debug_.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 1000};
+        if (data_->p_state == process_message::state::run) data_->p_progress += {1, 1000};
         if (data_->debug_.size() > g_max_size) data_->debug_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::info:
         data_->info_.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 1000};
+        if (data_->p_state == process_message::state::run) data_->p_progress += {1, 1000};
         if (data_->info_.size() > g_max_size) data_->info_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::warn:
         data_->warn_.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 100};
+        if (data_->p_state == process_message::state::run) data_->p_progress += {1, 100};
         if (data_->warn_.size() > g_max_size) data_->warn_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::err:
         data_->err_.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 10};
+        if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10};
         if (data_->err_.size() > g_max_size) data_->err_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::critical:
         data_->critical_.append(formatted.data(), formatted.size());
-        data_->p_progress += {1, 10};
+        if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10};
         if (data_->critical_.size() > g_max_size) data_->critical_.erase(0, g_max_size_clear);
         break;
       case spdlog::level::level_enum::off:
@@ -86,7 +86,9 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::warn:
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
-        data_->p_str_end = fmt::to_string(formatted);
+        data_->p_str_end = fmt::to_string(msg.payload);
+        data_->p_str_end |= ranges::actions::remove_if([](char in_c) { return std::isspace(in_c); });
+        if (data_->p_str_end.size() > 70) data_->p_str_end.erase(70, std::string::npos);
         break;
       case spdlog::level::level_enum::off:
       case spdlog::level::level_enum::n_levels:
@@ -177,7 +179,7 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   }
   return {};
 }
-const std::string& process_message::message_back() const {
+std::string process_message::message_back() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->p_str_end;
 }

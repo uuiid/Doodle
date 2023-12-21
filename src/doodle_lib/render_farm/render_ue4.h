@@ -13,8 +13,6 @@
 namespace doodle::render_farm {
 namespace detail {
 
-using ue_server_id = doodle::detail::entt_id<entt::tag<"ue_server_id"_hs>>;
-
 class render_ue4 {
  public:
   using arg_t = ue4_arg;

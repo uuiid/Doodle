@@ -11,6 +11,7 @@
 #include <sqlpp11/data_types/time_point/data_type.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
+#include <string_view>
 
 namespace doodle::database_n::detail {
 

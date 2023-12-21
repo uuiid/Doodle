@@ -145,11 +145,8 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
       break;
   }
   node->UpdatePivotsAndLimitsFromProperties();
-  if (extra_data_.bind_post->count(dag_path)) {
-    set_node_transform_matrix(extra_data_.bind_post->at(dag_path).form_matrix);
-  } else {
-    set_node_transform_matrix(l_transform.transformation());
-  }
+
+  set_node_transform_matrix(l_transform.transformation());
 }
 ///
 
@@ -314,19 +311,19 @@ void fbx_node_mesh::build_bind_post() {
   auto l_bind_post_obj = get_bind_post();
 
   if (l_bind_post_obj.isNull() || !l_bind_post_obj.hasFn(MFn::Type::kDagPose)) {
-    log_warn(extra_data_.logger_, fmt::format("{} 中, 未找到 bind pose 节点", dag_path));
+    extra_data_.logger_->log(log_loc(), level::err, "{} 中, 未找到 bind pose 节点", dag_path);
     return;
   }
 
   if (std::find_if(
-          extra_data_.bind_pose_array_.begin(), extra_data_.bind_pose_array_.end(),
+          extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
           [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
-      ) != extra_data_.bind_pose_array_.end()) {
+      ) != extra_data_.bind_pose_array_->end()) {
     log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_bind_post_obj)));
     return;
   }
 
-  extra_data_.bind_pose_array_.append(l_bind_post_obj);
+  extra_data_.bind_pose_array_->append(l_bind_post_obj);
 
   auto l_member_list       = get_plug(l_bind_post_obj, "members");
   auto l_world_matrix_list = get_plug(l_bind_post_obj, "worldMatrix");
@@ -375,11 +372,9 @@ void fbx_node_mesh::build_bind_post() {
           l_world_matrix = l_data.transformation(&l_status);
           maya_chick(l_status);
         } else {
-          log_error(
-              extra_data_.logger_, fmt::format(
-                                       "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
-                                       conv::to_s(l_world_matrix_plug.partialName())
-                                   )
+          extra_data_.logger_->log(
+              log_loc(), level::err, "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
+              l_world_matrix_plug.partialName()
           );
           auto l_post_plug = get_plug(l_node, "bindPose");
           MObject l_post_handle{};
@@ -404,11 +399,9 @@ void fbx_node_mesh::build_bind_post() {
           maya_chick(l_status);
         } else {
           l_tran_map.emplace(l_path, i);
-          log_error(
-              extra_data_.logger_, fmt::format(
-                                       "没有找到 节点{} bindpose 属性 {} 的值, 将在第二次中寻找", l_path,
-                                       conv::to_s(l_world_matrix_plug.partialName())
-                                   )
+          extra_data_.logger_->log(
+              log_loc(), level::err, "没有找到 节点{} bindpose 属性 {} 的值, 将在第二次中寻找", l_path,
+              l_world_matrix_plug.partialName()
           );
         }
       } else {
@@ -588,7 +581,6 @@ void fbx_node_mesh::build_mesh() {
   }
 
   [&]() {
-    std::size_t l_error_count{};
     // get uv set names
     MStringArray l_uv_set_names{};
     maya_chick(l_fn_mesh.getUVSetNames(l_uv_set_names));
@@ -607,23 +599,11 @@ void fbx_node_mesh::build_mesh() {
 
       auto l_face_count = l_fn_mesh.numPolygons();
       for (auto k = 0; k < l_face_count; ++k) {
-        MIntArray l_vert_list{};
-        maya_chick(l_fn_mesh.getPolygonVertices(k, l_vert_list));
-        for (auto j = 0; j < l_vert_list.length(); ++j) {
+        auto l_poly_len = l_fn_mesh.polygonVertexCount(k);
+        for (std::int32_t j = 0; j < l_poly_len; ++j) {
           std::int32_t l_uv_id{};
-          if (l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i])) {
-            l_layer->GetIndexArray().Add(l_uv_id);
-          } else {
-            if (l_error_count > 1000) {
-              extra_data_.logger_->log(
-                  doodle::log_loc(), doodle::level::level_enum::err,
-                  "错误太多, 直接跳过 {} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]
-              );
-              return;
-            }
-            ++l_error_count;
-            log_error(fmt::format("{} getPolygonUVid error: {} {} {}", l_mesh, k, j, l_uv_set_names[i]));
-          }
+          l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]);  // warning: 这个我们忽略返回值, 不去测试错误
+          l_layer->GetIndexArray().Add(l_uv_id);
         }
       }
     }
@@ -735,9 +715,12 @@ void fbx_node_mesh::build_skin() {
     auto l_joint    = l_dag_tree_map[i];
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
+    fbxsdk::FbxAMatrix l_fbx_matrix{};
     if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
-      log_info(
-          extra_data_.logger_, fmt::format("本次导出文件可能出错, 最好寻找绑定, 出错的骨骼 {}", l_joint->dag_path)
+      extra_data_.logger_->log(
+          log_loc(), level::err,
+          "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
+          l_joint->dag_path
       );
 
       auto l_node              = l_joint->dag_path.node();
@@ -759,13 +742,14 @@ void fbx_node_mesh::build_skin() {
       auto l_world_matrix = l_data.matrix(&l_status).inverse();
       maya_chick(l_status);
 
-      fbxsdk::FbxAMatrix l_fbx_matrix{};
       for (auto i = 0; i < 4; ++i)
         for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
-      l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     } else {
-      l_cluster->SetTransformLinkMatrix(l_joint->node->EvaluateGlobalTransform());
+      auto l_matrix = extra_data_.bind_post->at(l_joint->dag_path).world_matrix.asMatrix();
+      for (auto i = 0; i < 4; ++i)
+        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_matrix[i][j];
     }
+    l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
       log_error(fmt::format("add cluster error: {}", node->GetName()));
     }
@@ -1125,6 +1109,54 @@ fbx_write::fbx_write() {
   scene_->SetCurrentAnimationStack(anim_stack);
 }
 
+void fbx_write::chick_export(
+    const MSelectionList& in_vector, const doodle::logger_ptr& in_logger, const MTime& in_begin, const MTime& in_end
+) {
+  logger_          = in_logger;
+
+  auto* anim_stack = scene_->GetCurrentAnimationStack();
+  FbxTime l_fbx_begin{};
+  l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
+  anim_stack->LocalStart = l_fbx_begin;
+  FbxTime l_fbx_end{};
+  l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
+  anim_stack->LocalStop = l_fbx_end;
+  MAnimControl::setCurrentTime(in_begin);
+
+  std::vector<MDagPath> l_objs{};
+  MDagPath l_path{};
+  for (MItSelectionList l_it{in_vector}; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getDagPath(l_path));
+    l_objs.emplace_back(l_path);
+  }
+
+  init();
+  build_tree(l_objs);
+
+  try {
+    build_data();
+  } catch (const maya_error& in_error) {
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("测试导出文件出现严重错误 {}", l_str));
+    return;
+  } catch (const doodle_error& in_error) {
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    log_error(logger_, fmt::format("测试导出文件出现严重错误 {}", l_str));
+    return;
+  }
+  log_info(logger_, "开始导出动画");
+
+  if (export_anim_) {
+    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+      MAnimControl::setCurrentTime(l_time);
+      build_animation(l_time);
+    }
+  }
+  logger_->flush();
+}
+
 void fbx_write::write(
     const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
 ) {
@@ -1374,10 +1406,11 @@ void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_init{};
   l_iter_init = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->extra_data_.tree_         = &tree_;
-      (*i)->extra_data_.material_map_ = &material_map_;
-      (*i)->extra_data_.bind_post     = &bind_post_;
-      (*i)->extra_data_.logger_       = logger_;
+      (*i)->extra_data_.tree_            = &tree_;
+      (*i)->extra_data_.material_map_    = &material_map_;
+      (*i)->extra_data_.bind_post        = &bind_post_;
+      (*i)->extra_data_.bind_pose_array_ = &bind_pose_array_;
+      (*i)->extra_data_.logger_          = logger_;
       l_iter_init(i);
     }
   };

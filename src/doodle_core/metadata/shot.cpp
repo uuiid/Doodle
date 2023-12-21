@@ -1,7 +1,9 @@
 #include "shot.h"
 
-#include <doodle_core/metadata/episodes.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/episodes.h>
+
+#include <boost/algorithm/string.hpp>
 namespace doodle {
 
 shot::shot()
@@ -49,13 +51,13 @@ bool shot::operator>=(const shot& rhs) const {
 }
 
 bool shot::analysis(const std::string& in_path) {
-  static std::regex reg{R"(sc_?(\d+)([a-z])?)", std::regex_constants::icase};
+  static std::regex reg{R"(sc_?(\d+)([a-zA-Z])?)", std::regex_constants::icase};
   std::smatch k_match{};
   const auto& k_r = std::regex_search(in_path, k_match, reg);
   if (k_r) {
     p_shot = std::stoi(k_match[1].str());
     if (k_match.size() > 2)
-      p_shot_enum = magic_enum::enum_cast<shot_ab_enum>(k_match[2].str())
+      p_shot_enum = magic_enum::enum_cast<shot_ab_enum>(boost::algorithm::to_upper_copy(k_match[2].str()))
                         .value_or(shot_ab_enum::None);
   }
   return k_r;

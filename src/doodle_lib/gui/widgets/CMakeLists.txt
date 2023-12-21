@@ -1,6 +1,7 @@
 add_subdirectory(assets_filter_widgets)
 add_subdirectory(time_sequencer_widgets)
 add_subdirectory(derail)
+add_subdirectory(scan_assets)
 target_sources(doodle_lib
 
         PUBLIC
@@ -25,6 +26,7 @@ target_sources(doodle_lib
         upload_files.h
         render_monitor.h
         database_tool.h
+        scan_assets.h
 
         PRIVATE
         edit_widget.cpp
@@ -48,4 +50,5 @@ target_sources(doodle_lib
         upload_files.cpp
         render_monitor.cpp
         database_tool.cpp
+        scan_assets.cpp
         )
