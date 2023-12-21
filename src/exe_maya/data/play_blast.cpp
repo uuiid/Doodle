@@ -150,8 +150,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     auto* l_tex_manager    = renderer->getTextureManager();
     auto* l_target_manager = renderer->getRenderTargetManager();
-    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTarget(MRenderTargetDescription{
-        k_play_blast_tex, 1920, 1080, 1, ::MHWRender::MRasterFormat ::kB8G8R8A8, 1, false})};
+    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTarget(
+        MRenderTargetDescription{k_play_blast_tex, 1920, 1080, 1, ::MHWRender::MRasterFormat ::kB8G8R8A8, 1, false}
+    )};
     target_ptr_t const l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
                              if (in_target) l_target_manager->releaseRenderTarget(in_target);
                            }};
@@ -184,9 +185,11 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
         l_texture_desc.fTextureType   = MHWRender::kImage2D;
         l_texture_desc.fEnvMapType    = MHWRender::MEnvironmentMapType::kEnvNone;
         tex_ptr_t const l_tex{
-            l_tex_manager->acquireTexture({}, l_texture_desc, l_target_data.get()), [=](MTexture* in_texture) {
+            l_tex_manager->acquireTexture({}, l_texture_desc, l_target_data.get()),
+            [=](MTexture* in_texture) {
               if (in_texture) l_tex_manager->releaseTexture(in_texture);
-            }};
+            }
+        };
         auto k_p = get_file_path(i);
 
         MString const k_path{d_str{k_p.generic_string()}};
@@ -236,7 +239,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   }
   auto k_msg = entt::handle{*g_reg(), g_reg()->create()};
   k_msg.emplace<process_message>("制作拍屏");
-  k_msg.emplace<FSys::path>(get_out_path());
+  k_msg.emplace<image_to_move::element_type::out_file_path>(get_out_path());
   k_msg.emplace<episodes>(p_eps);
   k_msg.emplace<shot>(p_shot);
 

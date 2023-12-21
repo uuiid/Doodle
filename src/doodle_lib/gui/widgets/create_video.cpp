@@ -95,7 +95,7 @@ bool create_video::render() {
       g_reg()->ctx().get<image_to_move>()->async_create_move(
           in_cache.out_handle, in_cache.image_attr,
           [this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
-            auto l_out_path = l_h.get<FSys::path>();
+            auto l_out_path = l_h.get<image_to_move ::element_type ::out_file_path>();
             p_i->video_list.emplace_back(l_out_path.generic_string(), l_out_path.generic_string());
           }
       );
@@ -148,9 +148,9 @@ entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
   if (p_i->out_path.data.empty())
-    l_h.emplace_or_replace<FSys::path>(in_path.parent_path());
+    l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(in_path.parent_path());
   else
-    l_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
+    l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(p_i->out_path.data);
   return l_h;
 }
 const std::string& create_video::title() const { return p_i->title_name_; }

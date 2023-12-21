@@ -26,6 +26,10 @@ class DOODLE_CORE_API image_to_movie_interface {
  public:
   using image_attr      = ::doodle::movie::image_attr;
   using image_watermark = ::doodle::movie::image_watermark;
+  struct out_file_path {
+    FSys::path path;
+  };
+
   image_to_movie_interface();
   virtual ~image_to_movie_interface();
   virtual void create_move(

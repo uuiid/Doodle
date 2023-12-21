@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(create) {
   FSys::path l_image_path{R"(D:\tmp\image_test_ep002_sc001)"};
   l_h.emplace<episodes>().analysis(l_image_path);
   l_h.emplace<shot>().analysis(l_image_path);
-  l_h.emplace<FSys::path>(l_image_path.parent_path());
+  l_h.emplace<image_to_move::element_type ::out_file_path>(l_image_path.parent_path());
 
   std::vector<FSys::path> l_files{FSys::list_files(l_image_path)};
   bool run_test{};

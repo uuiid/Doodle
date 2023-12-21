@@ -48,7 +48,8 @@ void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark
   ft2->putText(
       in_image, in_watermark.text_attr, textOrg, fontHeight,
       cv::Scalar{
-          in_watermark.rgba_attr[0], in_watermark.rgba_attr[1], in_watermark.rgba_attr[2], in_watermark.rgba_attr[3]},
+          in_watermark.rgba_attr[0], in_watermark.rgba_attr[1], in_watermark.rgba_attr[2], in_watermark.rgba_attr[3]
+      },
       thickness, cv::LineTypes::LINE_AA, true
   );
 }
@@ -135,7 +136,7 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   boost::ignore_unused(this);
 
   FSys::path l_out{};
-  l_out = in_handle.get<FSys::path>();
+  l_out = in_handle.get<out_file_path>().path;
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension() && in_handle.any_of<episodes, shot>())
@@ -149,7 +150,7 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
     l_out.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});
 
   if (exists(l_out.parent_path())) create_directories(l_out.parent_path());
-  in_handle.replace<FSys::path>(l_out);
+  in_handle.replace<out_file_path>(l_out);
   return l_out;
 }
 }  // namespace detail
