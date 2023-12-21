@@ -37,7 +37,6 @@ class create_video::image_arg : public gui::gui_cache<std::string> {
 
 class create_video::impl {
  public:
-  gui::gui_cache<std::string> out_path{"输出路径"s, ""s};
 
   using image_cache = create_video::image_arg;
   using video_cache = gui::gui_cache<std::string>;
@@ -55,13 +54,7 @@ create_video::create_video() : p_i(std::make_unique<impl>()) {
 }
 
 bool create_video::render() {
-  ImGui::Text("拖拽文件夹, 或者保留为空, 由系统自动判断输出路径");
-
-  if (ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)) {
-    ::ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
-      in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
-    });
-  };
+  ImGui::Text("拖拽文件夹, 或者图片列表, 由系统自动判断输出路径");
 
   if (auto l_l = dear::ListBox{"图片路径(拖拽导入)"}; l_l) {
     for (const auto& i : p_i->image_to_video_list) {
@@ -145,12 +138,11 @@ bool create_video::render() {
       ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
         return episodes::analysis_static(p_i->out_video_h, in_cache.data);
       });
-      if (p_i->out_path.data.empty())
-        p_i->out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
-      else
-        p_i->out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(p_i->out_path.data);
+      p_i->out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
       if (!p_i->out_video_h.all_of<process_message>())
-        p_i->out_video_h.emplace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
+        p_i->out_video_h.emplace<process_message>(
+            p_i->out_video_h.get<connect_video::element_type::out_file_path>().path.filename().generic_string()
+        );
 
       if (!g_ctx().contains<connect_video>())
         g_ctx().emplace<connect_video>(std::make_shared<detail::connect_video_t>());
@@ -171,10 +163,11 @@ entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
-  if (p_i->out_path.data.empty())
-    l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(in_path.parent_path());
-  else
-    l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(p_i->out_path.data);
+
+  l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(
+      FSys::is_directory(in_path) ? in_path : in_path.parent_path()
+  );
+
   return l_h;
 }
 const std::string& create_video::title() const { return p_i->title_name_; }
