@@ -62,6 +62,30 @@ bool create_video::render() {
     });
   };
 
+  if (auto l_l = dear::ListBox{"图片路径(拖拽导入)"}; l_l) {
+    for (const auto& i : p_i->image_to_video_list) {
+      dear::Selectable(*i.gui_name);
+    }
+  }
+  if (auto l_drag = dear::DragDropTarget{}) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
+        l_data && l_data->IsDelivery()) {
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+
+      for (auto&& l_file : *l_list) {
+        if (FSys::is_directory(l_file)) {
+          auto&& l_out = p_i->image_to_video_list.emplace_back(
+              create_image_to_move_handle(l_file), FSys::list_files(l_file), l_file.generic_string()
+          );
+        }
+      }
+      if (ranges::all_of(*l_list, [](const FSys::path& in_path) -> bool { return FSys::is_regular_file(in_path); })) {
+        auto&& l_out = p_i->image_to_video_list.emplace_back(
+            create_image_to_move_handle(l_list->front()), *l_list, l_list->front().generic_string()
+        );
+      }
+    }
+  }
   if (imgui::Button("清除")) {
     p_i->image_to_video_list.clear();
   }
@@ -78,25 +102,35 @@ bool create_video::render() {
     });
   }
 
-  dear::ListBox{"图片路径(拖拽导入)"} && [this]() {
-    for (const auto& i : p_i->image_to_video_list) {
+  dear::ListBox{"视屏路径(拖拽导入)"} && [this]() {
+    for (const auto& i : p_i->video_list) {
       dear::Selectable(*i.gui_name);
     }
   };
+  if (auto l_drag = dear::DragDropTarget{}) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
+        l_data && l_data->IsDelivery()) {
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
 
-  imgui::SameLine();
+      for (auto&& l_file : *l_list) {
+        if (FSys::is_regular_file(l_file) && l_file.extension() == ".mp4") {
+          p_i->video_list.emplace_back(l_file.filename().generic_string(), l_file.generic_string());
+        }
+      }
+    }
+  }
+
   if (imgui::Button("清除视频")) {
     p_i->video_list.clear();
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
-    auto l_list =
-        p_i->video_list |
-        ranges::views::transform([this](impl::video_cache& in_cache) -> FSys::path { return in_cache.data; }) |
-        ranges::to_vector;
+    auto l_list = p_i->video_list |
+                  ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path { return in_cache.data; }) |
+                  ranges::to_vector;
 
     p_i->out_video_h.remove<episodes>();
-    ranges::find_if(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
+    ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
       return episodes::analysis_static(p_i->out_video_h, in_cache.data);
     });
 
@@ -105,11 +139,6 @@ bool create_video::render() {
       p_i->out_video_h.emplace<process_message>(FSys::path{p_i->out_path.data}.filename().generic_string());
   }
 
-  dear::ListBox{"视屏路径(拖拽导入)"} && [this]() {
-    for (const auto& i : p_i->video_list) {
-      dear::Selectable(*i.gui_name);
-    }
-  };
   return p_i->open;
 }
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
@@ -118,7 +147,10 @@ entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
-  l_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
+  if (p_i->out_path.data.empty())
+    l_h.emplace_or_replace<FSys::path>(in_path.parent_path());
+  else
+    l_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
   return l_h;
 }
 const std::string& create_video::title() const { return p_i->title_name_; }
