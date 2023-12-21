@@ -149,6 +149,7 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
     l_out.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});
 
   if (exists(l_out.parent_path())) create_directories(l_out.parent_path());
+  in_handle.replace<FSys::path>(l_out);
   return l_out;
 }
 }  // namespace detail
