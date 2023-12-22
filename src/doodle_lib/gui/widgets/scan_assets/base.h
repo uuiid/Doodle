@@ -15,12 +15,13 @@ class scan_category_data_t;
 
 class scan_category_data_t {
  public:
+  virtual ~scan_category_data_t() = default;
   // uuid和文件路径的类
   struct uuid_path_t {
     uuid uuid_;
     FSys::path path_;
     // 文件修改时间
-    std::time_t last_write_time_;
+    FSys::file_time_type last_write_time_;
   };
   struct project_root_t {
     FSys::path path_;
@@ -56,8 +57,6 @@ class scan_category_t {
   scan_category_t() {}
   virtual ~scan_category_t()                                                            = default;
   virtual std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const = 0;
-  virtual std::vector<scan_category_data_ptr> check_path(const project_root_t& in_root, entt::handle& in_path)
-      const = 0;
 };
 
 }  // namespace doodle::gui::details
