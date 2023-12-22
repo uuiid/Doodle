@@ -167,6 +167,7 @@ bool create_video::render() {
   return p_i->open;
 }
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
+  boost::ignore_unused(this);
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
