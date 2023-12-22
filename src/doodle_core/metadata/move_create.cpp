@@ -107,7 +107,7 @@ std::vector<image_attr> image_attr::make_default_attr(
            l_attribute.path_attr = in_path;
            if (in_handle.any_of<episodes>())
              l_attribute.watermarks_attr.emplace_back(
-                 fmt::format("ep{:04}", in_handle.get<episodes>().p_episodes), 0.8, 0.1, image_watermark::rgb_default
+                 fmt::format("ep{:04}", in_handle.get<episodes>().p_episodes), 0.08, 0.1, image_watermark::rgb_default
              );
 
            if (in_handle.any_of<shot>())

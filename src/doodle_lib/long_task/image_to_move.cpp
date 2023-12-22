@@ -57,11 +57,7 @@ void watermark_add_image(cv::Mat &in_image, const std::vector<image_to_move::ima
 
     // draw the box
     cv::rectangle(
-        l_image,
-        textOrg +
-            cv::Point(
-                -l_baseline_map[l_watermark.height_proportion_attr], l_baseline_map[l_watermark.height_proportion_attr]
-            ),
+        l_image, textOrg + cv::Point(0, l_baseline_map[l_watermark.height_proportion_attr]),
         textOrg + cv::Point(textSize.width, -textSize.height), cv::Scalar(30, 31, 34, 75), -1
     );
 
