@@ -887,7 +887,8 @@ void fbx_node_mesh::build_blend_shape() {
         // 检查全部接近0, 全部接近0就直接不导出
         bool l_is_zero{true};
         for (auto k = 0; k < l_point_data.length(); ++k) {
-          if (l_point_data[k].x < 0.0001 && l_point_data[k].y < 0.0001 && l_point_data[k].z < 0.0001) {
+          if (std::abs(l_point_data[k].x) < 0.0001 && std::abs(l_point_data[k].y) < 0.0001 &&
+              std::abs(l_point_data[k].z) < 0.0001) {
             continue;
           } else {
             l_is_zero = false;
