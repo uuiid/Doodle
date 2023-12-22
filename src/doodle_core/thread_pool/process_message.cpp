@@ -25,8 +25,8 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
   void sink_it_(const spdlog::details::log_msg& msg) override {
     // 测试是否可以转换为进度
     rational_int l_progress{};
-    if (msg.payload.starts_with("progress")) {
-      std::string_view l_str = std::string_view{msg.payload.begin(), msg.payload.end()}.substr(8);
+    if (msg.payload.starts_with("progress") && msg.payload.size() > 8) {
+      std::string_view l_str = std::string_view{msg.payload.begin(), msg.payload.end()}.substr(9);
       auto l_pos             = l_str.find('/');
       if (l_pos != std::string::npos) {
         std::int32_t l_num{};
