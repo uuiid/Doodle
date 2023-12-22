@@ -30,8 +30,6 @@ class scan_category_data_t {
 
   // ue文件
   uuid_path_t ue_file_;
-  // maya文件
-  uuid_path_t maya_file_;
   // rig文件
   uuid_path_t rig_file_;
   // 解算文件
