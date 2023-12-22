@@ -107,20 +107,20 @@ std::vector<image_attr> image_attr::make_default_attr(
            l_attribute.path_attr = in_path;
            if (in_handle.any_of<episodes>())
              l_attribute.watermarks_attr.emplace_back(
-                 fmt::format("ep{:04}", in_handle.get<episodes>().p_episodes), 0.15, 0.1, image_watermark::rgb_default
+                 fmt::format("ep{:04}", in_handle.get<episodes>().p_episodes), 0.8, 0.1, image_watermark::rgb_default
              );
 
            if (in_handle.any_of<shot>())
              l_attribute.watermarks_attr.emplace_back(
-                 fmt::format("sc{:04}{}", in_handle.get<shot>().p_shot, in_handle.get<shot>().p_shot_enum), 0.1, 0.1,
+                 fmt::format("sc{:04}{}", in_handle.get<shot>().p_shot, in_handle.get<shot>().p_shot_enum), 0.15, 0.1,
                  image_watermark::rgb_default
              );
 
            l_attribute.watermarks_attr.emplace_back(
-               g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.2, 0.1, image_watermark::rgb_default
+               g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.22, 0.1, image_watermark::rgb_default
            );
            l_attribute.watermarks_attr.emplace_back(
-               core_set::get_set().organization_name, 0.25, 0.1, image_watermark::rgb_default
+               core_set::get_set().organization_name, 0.28, 0.1, image_watermark::rgb_default
            );
            return l_attribute;
          }) |
