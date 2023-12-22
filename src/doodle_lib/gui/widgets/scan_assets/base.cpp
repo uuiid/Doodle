@@ -42,7 +42,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
       l_rig_handle.emplace<season>(season_);
     }
     // 添加关联
-    l_file_handle.emplace<file_association>().rig_file = l_rig_handle;
+    l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
     l_rig_handle.emplace<file_association_ref>(l_file_handle);
   }
 }
