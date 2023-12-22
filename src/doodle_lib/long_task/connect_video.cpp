@@ -94,6 +94,7 @@ boost::system::error_code connect_video_t::connect_video(
       in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_video);
       video << l_image;
     }
+    in_logger->log(log_loc(), level::info, "progress 1/{}", k_size_len + k_size_len / 10);
   }
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
