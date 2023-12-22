@@ -18,22 +18,6 @@ namespace doodle {
 namespace detail {
 namespace {
 // 计算baseline大小
-std::int32_t get_baseline(
-    const cv::Ptr<cv::freetype::FreeType2> &in_ft2, const std::vector<std::string> &in_text, int in_fontHeight
-) {
-  auto l_baselines = in_text | ranges::views::transform([&](const std::string &in_string) -> std::int32_t {
-                       std::int32_t l_thickness = -1;
-                       std::int32_t l_baseline  = 0;
-                       in_ft2->getTextSize(in_string, in_fontHeight, l_thickness, &l_baseline);
-                       if (l_thickness > 0) l_baseline += l_thickness;
-                       return l_baseline;
-                     }) |
-                     ranges::to_vector;
-  l_baselines |= ranges::actions::sort;
-
-  return l_baselines.back();
-}
-
 void watermark_add_image(cv::Mat &in_image, const std::vector<image_to_move::image_watermark> &in_watermark) {
   auto l_string_s = in_watermark |
                     ranges::views::transform([](const image_to_move::image_watermark &in) { return in.text_attr; }) |
@@ -41,18 +25,30 @@ void watermark_add_image(cv::Mat &in_image, const std::vector<image_to_move::ima
   cv::Ptr<cv::freetype::FreeType2> const l_ft2{cv::freetype::createFreeType2()};
   l_ft2->loadFontData(std::string{doodle_config::font_default}, 0);
 
-  std::int32_t l_fontHeight          = 30;
-  auto l_baseline                    = get_baseline(l_ft2, l_string_s, l_fontHeight);
+  std::int32_t l_fontHeight = 30;
+
+  std::map<std::double_t, std::string> l_string_map{};
+  std::map<std::double_t, std::int32_t> l_baseline_map{};
+  for (auto &&l_watermark : in_watermark) {
+    l_string_map[l_watermark.height_proportion_attr] += l_watermark.text_attr;
+  }
 
   auto l_image                       = in_image;
   constexpr std::int32_t l_thickness = -1;
-  std::int32_t l_baseline_tmp        = 0;
+  for (auto &&[l_key, l_string] : l_string_map) {
+    std::int32_t l_baseline = 0;
 
+    auto textSize           = l_ft2->getTextSize(l_string, l_fontHeight, l_thickness, &l_baseline);
+    if (l_thickness > 0) l_baseline += l_thickness;
+    l_baseline_map[l_key] = l_baseline;
+  }
+
+  std::int32_t l_baseline_tmp = 0;
   for (auto &&l_watermark : in_watermark) {
     auto textSize = l_ft2->getTextSize(l_watermark.text_attr, l_fontHeight, l_thickness, &l_baseline_tmp);
 
-    textSize.width += l_baseline;
-    textSize.height += l_baseline;
+    textSize.width += l_baseline_map[l_watermark.height_proportion_attr];
+    textSize.height += l_baseline_map[l_watermark.height_proportion_attr];
     // center the text
     cv::Point textOrg(
         (in_image.cols) * l_watermark.width_proportion_attr, (in_image.rows) * l_watermark.height_proportion_attr
@@ -60,8 +56,12 @@ void watermark_add_image(cv::Mat &in_image, const std::vector<image_to_move::ima
 
     // draw the box
     cv::rectangle(
-        l_image, textOrg + cv::Point(-l_baseline, l_baseline), textOrg + cv::Point(textSize.width, -textSize.height),
-        cv::Scalar(30, 31, 34, 75), -1
+        l_image,
+        textOrg +
+            cv::Point(
+                -l_baseline_map[l_watermark.height_proportion_attr], l_baseline_map[l_watermark.height_proportion_attr]
+            ),
+        textOrg + cv::Point(textSize.width, -textSize.height), cv::Scalar(30, 31, 34, 75), -1
     );
 
     cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
