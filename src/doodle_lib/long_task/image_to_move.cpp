@@ -45,6 +45,7 @@ void watermark_add_image(cv::Mat &in_image, const std::vector<image_to_move::ima
 
   std::int32_t l_baseline_tmp = 0;
   for (auto &&l_watermark : in_watermark) {
+    if (l_watermark.text_attr.empty()) continue;
     auto textSize = l_ft2->getTextSize(l_watermark.text_attr, l_fontHeight, l_thickness, &l_baseline_tmp);
 
     textSize.width += l_baseline_map[l_watermark.height_proportion_attr];
