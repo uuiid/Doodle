@@ -42,14 +42,11 @@ class create_video::impl {
 
   std::vector<image_cache> image_to_video_list;
   std::vector<video_cache> video_list;
-  entt::handle out_video_h;
   std::string title_name_;
   bool open{true};
 };
 
-create_video::create_video() : p_i(std::make_unique<impl>()) {
-  p_i->title_name_ = std::string{name};
-}
+create_video::create_video() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
 
 bool create_video::render() {
   ImGui::Text("拖拽文件夹, 或者图片列表, 由系统自动判断输出路径");
@@ -91,14 +88,23 @@ bool create_video::render() {
       );
       g_reg()->ctx().get<image_to_move>()->async_create_move(
           in_cache.out_handle, in_cache.image_attr,
-          [this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
-            auto l_out_path = l_h.get<image_to_move ::element_type ::out_file_path>();
-            if (ranges::count_if(p_i->video_list, [&](const gui_cache<std::string>& in_gui_cache) {
-                  return in_gui_cache.data == l_out_path.path.generic_string();
-                }) == 0)
-              p_i->video_list.emplace_back(l_out_path.path.generic_string(), l_out_path.path.generic_string());
 
-          }
+          boost::asio::bind_executor(
+              g_io_context(),
+              [this, l_h = in_cache.out_handle](
+                  const FSys::path& in_path, const boost::system::error_code& in_error_code
+              ) {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
+                if (in_error_code) {
+                  l_h.get<process_message>().set_state(process_message::state::fail);
+                  return;
+                }
+                if (ranges::count_if(p_i->video_list, [&](const gui_cache<std::string>& in_gui_cache) {
+                      return in_gui_cache.data == in_path.generic_string();
+                    }) == 0)
+                  p_i->video_list.emplace_back(in_path.generic_string(), in_path.generic_string());
+
+              }
+          )
       );
     });
   }
@@ -131,25 +137,29 @@ bool create_video::render() {
                   ranges::to_vector;
     if (!l_list.empty()) {
       boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
-      p_i->out_video_h = entt::handle{*g_reg(), g_reg()->create()};
-      p_i->out_video_h.remove<episodes>();
-      ranges::any_of(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
-        return episodes::analysis_static(p_i->out_video_h, in_cache.data);
+      auto l_out_video_h = entt::handle{*g_reg(), g_reg()->create()};
+      l_out_video_h.remove<episodes>();
+      ranges::any_of(p_i->video_list, [l_out_video_h](impl::video_cache& in_cache) -> bool {
+        return episodes::analysis_static(l_out_video_h, in_cache.data);
       });
-      p_i->out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
-      if (!p_i->out_video_h.all_of<process_message>())
-        p_i->out_video_h.emplace<process_message>(
-            p_i->out_video_h.get<connect_video::element_type::out_file_path>().path.filename().generic_string()
+      l_out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
+      if (!l_out_video_h.all_of<process_message>())
+        l_out_video_h.emplace<process_message>(
+            l_out_video_h.get<connect_video::element_type::out_file_path>().path.filename().generic_string()
         );
 
       if (!g_ctx().contains<connect_video>())
         g_ctx().emplace<connect_video>(std::make_shared<detail::connect_video_t>());
 
       g_ctx().get<connect_video>()->async_connect_video(
-          p_i->out_video_h, l_list,
-          [this](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
-            default_logger_raw()->info("完成视频合成 {}", in_path);
-          }
+          l_out_video_h, l_list,
+          boost::asio::bind_executor(
+              g_io_context(),
+              [this, l_out_video_h](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
+                if (in_error_code) l_out_video_h.get<process_message>().set_state(process_message::state::fail);
+                default_logger_raw()->info("完成视频合成 {}", in_path);
+              }
+          )
       );
     }
   }

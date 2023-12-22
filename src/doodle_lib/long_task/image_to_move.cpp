@@ -90,7 +90,7 @@ class image_to_move::impl {
 image_to_move::~image_to_move() = default;
 
 image_to_move::image_to_move() : p_i(std::make_unique<impl>()) {}
-void image_to_move::create_move(
+boost::system::error_code image_to_move::create_move(
     const FSys::path &in_out_path, logger_ptr in_logger, const std::vector<image_to_move::image_attr> &in_vector
 ) {
   /// \brief 这里排序组件
@@ -98,6 +98,7 @@ void image_to_move::create_move(
   image_attr::extract_num(l_vector);
   std::sort(l_vector.begin(), l_vector.end());
   std::atomic_bool l_stop{};
+  boost::system::error_code l_ec{};
   // todo: 这里我们需要一个信号来停止
   //  boost::signals2::scoped_connection l_connection =
   //      in_msg.aborted_sig.connect([l_s = std::addressof(l_stop)]() mutable {
@@ -110,11 +111,10 @@ void image_to_move::create_move(
   in_logger->log(log_loc(), level::info, "获得图片路径 {}", l_vector.front().path_attr.parent_path());
 
   if (FSys::exists(in_out_path)) {
-    boost::system::error_code l_ec{};
     FSys::remove(in_out_path, l_ec);
     if (l_ec) {
       in_logger->log(log_loc(), level::err, "合成视频主动删除失败 {} ", in_out_path);
-      return;
+      return l_ec;
     }
   }
 
@@ -132,7 +132,9 @@ void image_to_move::create_move(
         in_logger->log(log_loc(), level::err, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
       }
       in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
-      return;
+      l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
+      BOOST_ASIO_ASSERT(l_ec);
+      return l_ec;
     }
 
     in_logger->log(log_loc(), level::info, "开始读取图片 {}", l_image.path_attr);
@@ -154,6 +156,7 @@ void image_to_move::create_move(
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
   in_logger->log(log_loc(), level::off, fmt::to_string(process_message::success));
+  return l_ec;
 }
 FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   boost::ignore_unused(this);
