@@ -77,12 +77,13 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
     else
       l_rig_file_name = fmt::format("{}_{}_rig_", l_ptr->name_, l_ptr->version_name_);
 
-    auto l_rig_files = ranges::make_subrange(FSys::directory_iterator{l_rig_path}, FSys::directory_iterator{}) |
-                       ranges::views::filter([&](auto &&i) -> bool {
-                         return i.path().filename().generic_string().starts_with(l_rig_file_name);
-                         ;
-                       }) |
-                       ranges::views::transform([](auto &&i) -> FSys::path { return i.path(); }) | ranges::to_vector;
+    auto l_rig_files =
+        ranges::make_subrange(FSys::directory_iterator{l_rig_path}, FSys::directory_iterator{}) |
+        ranges::views::filter([&](auto &&i) -> bool {
+          return i.path().filename().generic_string().starts_with(l_rig_file_name) && i.path().extension() == ".ma";
+          ;
+        }) |
+        ranges::views::transform([](auto &&i) -> FSys::path { return i.path(); }) | ranges::to_vector;
 
     if (l_rig_files.empty()) {
       logger_->log(log_loc(), level::err, "rig文件夹中不存在:{} 符合 {}_***.ma 命名的文件 ", l_rig_path, l_ptr->name_);
@@ -97,20 +98,20 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
     l_ptr->rig_file_.uuid_            = FSys::software_flag_file(l_rig_files.front());
     l_ptr->rig_file_.last_write_time_ = FSys::last_write_time(l_rig_files.front());
     // 检查maya文件
-
-    auto l_maya_path                  = l_ptr->JD_path_ / l_ptr->name_;
-    if (l_ptr->version_name_.empty())
-      l_maya_path /= fmt::format("{}.ma", l_ptr->name_);
-    else
-      l_maya_path /= fmt::format("{}_{}.ma", l_ptr->name_, l_ptr->version_name_);
-
-    if (!FSys::exists(l_maya_path)) {
-      logger_->log(log_loc(), level::err, "maya文件不存在:{}", l_maya_path);
-      continue;
-    }
-    l_ptr->maya_file_.path_            = l_maya_path;
-    l_ptr->maya_file_.uuid_            = FSys::software_flag_file(l_maya_path);
-    l_ptr->maya_file_.last_write_time_ = FSys::last_write_time(l_maya_path);
+    //
+    //    auto l_maya_path                  = l_ptr->JD_path_ / l_ptr->name_;
+    //    if (l_ptr->version_name_.empty())
+    //      l_maya_path /= fmt::format("{}.ma", l_ptr->name_);
+    //    else
+    //      l_maya_path /= fmt::format("{}_{}.ma", l_ptr->name_, l_ptr->version_name_);
+    //
+    //    if (!FSys::exists(l_maya_path)) {
+    //      logger_->log(log_loc(), level::err, "maya文件不存在:{}", l_maya_path);
+    //      continue;
+    //    }
+    //    l_ptr->maya_file_.path_            = l_maya_path;
+    //    l_ptr->maya_file_.uuid_            = FSys::software_flag_file(l_maya_path);
+    //    l_ptr->maya_file_.last_write_time_ = FSys::last_write_time(l_maya_path);
   }
 
   return l_out | ranges::views::transform([](auto &&i) -> scan_category_data_ptr { return i; }) | ranges::to_vector;
