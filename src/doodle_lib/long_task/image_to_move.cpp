@@ -152,7 +152,7 @@ boost::system::error_code image_to_move::create_move(
     }
     watermark_add_image(k_image, l_image.watermarks_attr);
     in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_image.path_attr);
-    in_logger->log(log_loc(), level::info, "progress {}/{}", l_num, k_size_len + k_size_len / 10);
+    in_logger->log(log_loc(), level::info, "progress {}/{}", ++l_num, k_size_len + k_size_len / 10);
     video << k_image;
   }
 
