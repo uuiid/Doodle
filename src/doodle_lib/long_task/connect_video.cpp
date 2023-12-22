@@ -83,7 +83,8 @@ boost::system::error_code connect_video_t::connect_video(
       in_logger->log(log_loc(), level::warn, "视屏读取失败 跳过 {}", l_video);
       continue;
     }
-
+    auto l_video_count = l_video_cap.get(cv::CAP_PROP_FRAME_COUNT);
+    in_logger->log(log_loc(), level::info, "开始将{}写入行视屏", l_video);
     while (l_video_cap.read(l_image)) {
       if (l_image.empty()) {
         in_logger->log(log_loc(), level::warn, "视屏读取失败 跳过 {}", l_video);
@@ -91,7 +92,7 @@ boost::system::error_code connect_video_t::connect_video(
       }
       if (l_image.cols != k_size.width || l_image.rows != k_size.height) cv::resize(l_image, l_image, k_size);
 
-      in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_video);
+      in_logger->log(log_loc(), level::info, "progress 1/{}", l_video_count);
       video << l_image;
     }
     in_logger->log(log_loc(), level::info, "progress 1/{}", k_size_len + k_size_len / 10);
