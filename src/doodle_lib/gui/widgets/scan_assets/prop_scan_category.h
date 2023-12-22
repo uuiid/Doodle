@@ -19,19 +19,16 @@ namespace doodle::gui::details {
  */
 class prop_scan_category_t : public scan_category_t {
  public:
-  struct capture_data_t {
+  class prop_scan_category_data_t : public scan_category_data_t {
+   public:
     std::int32_t begin_episode_;
-    // 道具名称
-    std::string name_str_;
-    // 版本名称
-    std::string version_str_;
+    FSys::path JD_path_;
   };
 
   prop_scan_category_t()           = default;
   ~prop_scan_category_t() override = default;
 
   std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const override;
-  std::vector<scan_category_data_ptr> check_path(const project_root_t& in_root, entt::handle& in_path) const override;
 };
 
 }  // namespace doodle::gui::details
