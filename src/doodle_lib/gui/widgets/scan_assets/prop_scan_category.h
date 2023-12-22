@@ -30,8 +30,8 @@ class prop_scan_category_t : public scan_category_t {
   prop_scan_category_t()           = default;
   ~prop_scan_category_t() override = default;
 
-  std::vector<entt::handle> scan(const project_root_t& in_root) const override;
-  std::vector<entt::handle> check_path(const project_root_t& in_root, entt::handle& in_path) const override;
+  std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const override;
+  std::vector<scan_category_data_ptr> check_path(const project_root_t& in_root, entt::handle& in_path) const override;
 };
 
 }  // namespace doodle::gui::details

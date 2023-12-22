@@ -10,7 +10,7 @@
 
 namespace doodle::gui::details {
 
-std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_root) const {
+std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_root_t& in_root) const {
   const FSys::path l_scene_path = in_root.path_ / "6-moxing/BG";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
   const std::regex l_BG_regex{R"(BG(\d+[a-zA-Z]\d*))"};
@@ -71,8 +71,9 @@ std::vector<entt::handle> scene_scan_category_t::scan(const project_root_t& in_r
   return l_out;
 }
 
-std::vector<entt::handle> scene_scan_category_t::check_path(const project_root_t& in_root, entt::handle& in_path)
-    const {
+std::vector<scan_category_data_ptr> scene_scan_category_t::check_path(
+    const project_root_t& in_root, entt::handle& in_path
+) const {
   const FSys::path l_scene_path = in_root.path_ / "6-moxing/BG";
 
   if (!in_path.any_of<season, assets_file>()) return {};

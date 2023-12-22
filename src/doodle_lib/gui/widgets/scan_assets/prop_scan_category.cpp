@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/season.h>
 namespace doodle::gui::details {
 
-std::vector<entt::handle> prop_scan_category_t::scan(const project_root_t &in_root) const {
+std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_root_t &in_root) const {
   const FSys::path l_prop_path = in_root.path_ / "6-moxing/Prop";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 
@@ -73,7 +73,9 @@ std::vector<entt::handle> prop_scan_category_t::scan(const project_root_t &in_ro
   return l_out;
 }
 
-std::vector<entt::handle> prop_scan_category_t::check_path(const project_root_t &in_root, entt::handle &in_path) const {
+std::vector<scan_category_data_ptr> prop_scan_category_t::check_path(
+    const project_root_t &in_root, entt::handle &in_path
+) const {
   // 检查maya文件
   const FSys::path l_prop_path = in_root.path_ / "6-moxing/Prop";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};

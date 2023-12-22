@@ -22,13 +22,13 @@ class scene_scan_category_t : public scan_category_t {
   scene_scan_category_t()           = default;
   ~scene_scan_category_t() override = default;
 
-  std::vector<entt::handle> scan(const project_root_t& in_root) const override;
+  std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const override;
   /// 检查对于的rig文件和maya文件, maya文件可以不存在, 但是rig文件必须存在
   ///
   /// maya文件(同时也是rig文件):
   ///    项目根目录/6-moxing/BG/JD(季数)_(集数开始)/BG(编号)/Mod/(场景名称)_(版本)_Low.ma
 
-  std::vector<entt::handle> check_path(const project_root_t& in_root, entt::handle& in_path) const override;
+  std::vector<scan_category_data_ptr> check_path(const project_root_t& in_root, entt::handle& in_path) const override;
 };
 
 }  // namespace doodle::gui::details
