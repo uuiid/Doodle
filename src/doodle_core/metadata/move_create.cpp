@@ -40,16 +40,15 @@ DOODLE_JSON_CPP(image_attr, path_attr, watermarks_attr, num_attr)
 namespace {
 class image_attr_auxiliary {
  public:
-  image_attr_auxiliary() = default;
-  explicit image_attr_auxiliary(image_attr in_image) : image(std::move(in_image)) { extract_num_list(); };
+  explicit image_attr_auxiliary(image_attr &in_image) : image(&in_image) { extract_num_list(); };
 
   std::vector<std::int32_t> num_list;
-  image_attr image;
+  image_attr *image;
   void extract_num_list() {
     static std::regex reg{R"(\d+)"};
     std::smatch k_match{};
 
-    auto k_name = image.path_attr.filename().generic_string();
+    auto k_name = image->path_attr.filename().generic_string();
 
     auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
 
@@ -67,7 +66,7 @@ image_attr::image_attr(FSys::path in_path) : path_attr(std::move(in_path)) {}
 void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
   auto l_list =
       in_image_list |
-      ranges::views::transform([](auto in_item) -> image_attr_auxiliary { return image_attr_auxiliary{in_item}; }) |
+      ranges::views::transform([](auto &&in_item) -> image_attr_auxiliary { return image_attr_auxiliary{in_item}; }) |
       ranges::to_vector;
   const auto k_size = l_list.front().num_list.size();
 
@@ -75,17 +74,24 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
       ? void()
       : throw_exception(doodle_error{"序列不匹配"s});
 
-  DOODLE_CHICK(l_list.size() >= 2, doodle_error{"单个文件, 无法搜索帧号"});
+  if (l_list.size() < 2) {
+    default_logger_raw()->log(log_loc(), level::warn, "传入的序列只有一个，无法进行比较");
+    return;
+  }
+
   auto &one   = l_list[0].num_list;
   auto &tow   = l_list[1].num_list;
   auto l_item = ranges::views::ints(std::size_t{0}, k_size) |
                 ranges::views::filter([&](const std::size_t &in_tuple) { return one[in_tuple] != tow[in_tuple]; }) |
                 ranges::to_vector;
 
-  DOODLE_CHICK(!l_item.empty(), doodle_error{"没有找到帧索引"});
+  if (l_item.empty()) {
+    default_logger_raw()->log(log_loc(), level::warn, "没有找到序列号");
+    return;
+  }
   auto l_index = l_item.front();
   ranges::for_each(l_list, [&](image_attr_auxiliary &in_attribute) {
-    in_attribute.image.num_attr = in_attribute.num_list[l_index];
+    in_attribute.image->num_attr = in_attribute.num_list[l_index];
   });
 }
 
