@@ -75,11 +75,11 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
         }) |
         ranges::to_vector;
     if (l_files.empty()) {
-      logger_->log(log_loc(), level::err, "rig文件不存在:{}", l_rig_path);
+      logger_->log(log_loc(), level::err, "rig文件不存在:{}/{}***.ma", l_rig_path, l_rig_name);
       continue;
     }
     if (l_files.size() > 1) {
-      logger_->log(log_loc(), level::err, "rig文件存在多个:{}", l_rig_path);
+      logger_->log(log_loc(), level::err, "rig文件存在多个:{}/{}***.ma", l_rig_path, l_rig_name);
       continue;
     }
     l_rig_path = l_files[0].path();
