@@ -23,6 +23,25 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
  private:
  protected:
   void sink_it_(const spdlog::details::log_msg& msg) override {
+    // 测试是否可以转换为进度
+    rational_int l_progress{};
+    if (msg.payload.starts_with("progress")) {
+      std::string_view l_str = std::string_view{msg.payload.begin(), msg.payload.end()}.substr(8);
+      auto l_pos             = l_str.find('/');
+      if (l_pos != std::string::npos) {
+        std::int32_t l_num{};
+        std::int32_t l_den{};
+        auto l_result  = std::from_chars(l_str.data(), l_str.data() + l_pos, l_num);
+        auto l_result2 = std::from_chars(l_str.data() + l_pos + 1, l_str.data() + l_str.size(), l_den);
+
+        if (l_den != 0 && l_result.ec == std::errc{} && l_result2.ec == std::errc{}) {
+          l_progress = {l_num, l_den};
+        }
+      }
+      return;
+    }
+
+    // 格式化
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     std::lock_guard const _lock{data_->_mutex};
@@ -95,6 +114,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
         break;
     }
 
+    data_->p_progress += l_progress;
     if (data_->p_progress > 1) --data_->p_progress;
   }
   void flush_() override {}
