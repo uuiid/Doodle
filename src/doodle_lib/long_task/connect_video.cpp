@@ -92,10 +92,9 @@ boost::system::error_code connect_video_t::connect_video(
       }
       if (l_image.cols != k_size.width || l_image.rows != k_size.height) cv::resize(l_image, l_image, k_size);
 
-      in_logger->log(log_loc(), level::info, "progress 1/{}", l_video_count);
+      in_logger->log(log_loc(), level::info, "progress 1/{}", l_video_count * k_size_len + k_size_len / 10);
       video << l_image;
     }
-    in_logger->log(log_loc(), level::info, "progress 1/{}", k_size_len + k_size_len / 10);
   }
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
