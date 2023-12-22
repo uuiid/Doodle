@@ -245,10 +245,14 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
   g_ctx().get<image_to_move>()->async_create_move(
       k_msg, l_handle_list,
-      [k_f, l_path = get_out_path(), l_w = boost::asio::make_work_guard(g_io_context())]() {
-        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
-        FSys::remove_all(k_f);
-      }
+      boost::asio::bind_executor(
+          g_io_context(),
+          [k_f, l_w = boost::asio::make_work_guard(g_io_context()
+                )](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
+            DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", in_path, k_f);
+            FSys::remove_all(k_f);
+          }
+      )
   );
   return k_s;
 }
