@@ -38,6 +38,8 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
           l_progress = {l_num, l_den};
         }
       }
+      std::lock_guard const _lock{data_->_mutex};
+      data_->p_progress += l_progress;
       return;
     }
 

@@ -122,7 +122,6 @@ boost::system::error_code image_to_move::create_move(
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image = cv::Mat{};
   const auto &k_size_len = l_vector.size();
-  std::int32_t l_num{0};
   auto l_gamma = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto &l_image : l_vector) {
     if (l_stop) {
@@ -152,7 +151,7 @@ boost::system::error_code image_to_move::create_move(
     }
     watermark_add_image(k_image, l_image.watermarks_attr);
     in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_image.path_attr);
-    in_logger->log(log_loc(), level::info, "progress {}/{}", ++l_num, k_size_len + k_size_len / 10);
+    in_logger->log(log_loc(), level::info, "progress 1/{}", k_size_len + k_size_len / 10);
     video << k_image;
   }
 
