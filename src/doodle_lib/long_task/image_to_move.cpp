@@ -17,39 +17,63 @@
 namespace doodle {
 namespace detail {
 namespace {
-void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark &in_watermark) {
-  auto l_image     = in_image;
-  int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-  double fontScale = 1;
-  int thickness    = -1;
-  int baseline     = 0;
-  int fontHeight   = 30;
-  cv::Ptr<cv::freetype::FreeType2> ft2{cv::freetype::createFreeType2()};
-  ft2->loadFontData(std::string{doodle_config::font_default}, 0);
-  auto textSize = ft2->getTextSize(in_watermark.text_attr, fontHeight, thickness, &baseline);
-  if (thickness > 0) baseline += thickness;
-  textSize.width += baseline;
-  textSize.height += baseline;
-  // center the text
-  cv::Point textOrg(
-      (in_image.cols) * in_watermark.width_proportion_attr, (in_image.rows) * in_watermark.height_proportion_attr
-  );
+// 计算baseline大小
+std::int32_t get_baseline(
+    const cv::Ptr<cv::freetype::FreeType2> &in_ft2, const std::vector<std::string> &in_text, int in_fontHeight
+) {
+  auto l_baselines = in_text | ranges::views::transform([&](const std::string &in_string) -> std::int32_t {
+                       std::int32_t l_thickness = -1;
+                       std::int32_t l_baseline  = 0;
+                       in_ft2->getTextSize(in_string, in_fontHeight, l_thickness, &l_baseline);
+                       if (l_thickness > 0) l_baseline += l_thickness;
+                       return l_baseline;
+                     }) |
+                     ranges::to_vector;
+  l_baselines |= ranges::actions::sort;
 
-  // draw the box
-  cv::rectangle(
-      l_image, textOrg + cv::Point(0, baseline), textOrg + cv::Point(textSize.width, -textSize.height),
-      cv::Scalar(0, 0, 0, 100), -1
-  );
+  return l_baselines.back();
+}
 
-  cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
-  // then put the text itself
-  ft2->putText(
-      in_image, in_watermark.text_attr, textOrg, fontHeight,
-      cv::Scalar{
-          in_watermark.rgba_attr[0], in_watermark.rgba_attr[1], in_watermark.rgba_attr[2], in_watermark.rgba_attr[3]
-      },
-      thickness, cv::LineTypes::LINE_AA, true
-  );
+void watermark_add_image(cv::Mat &in_image, const std::vector<image_to_move::image_watermark> &in_watermark) {
+  auto l_string_s = in_watermark |
+                    ranges::views::transform([](const image_to_move::image_watermark &in) { return in.text_attr; }) |
+                    ranges::to_vector;
+  cv::Ptr<cv::freetype::FreeType2> const l_ft2{cv::freetype::createFreeType2()};
+  l_ft2->loadFontData(std::string{doodle_config::font_default}, 0);
+
+  std::int32_t l_fontHeight          = 30;
+  auto l_baseline                    = get_baseline(l_ft2, l_string_s, l_fontHeight);
+
+  auto l_image                       = in_image;
+  constexpr std::int32_t l_thickness = -1;
+  std::int32_t l_baseline_tmp        = 0;
+
+  for (auto &&l_watermark : in_watermark) {
+    auto textSize = l_ft2->getTextSize(l_watermark.text_attr, l_fontHeight, l_thickness, &l_baseline_tmp);
+
+    textSize.width += l_baseline;
+    textSize.height += l_baseline;
+    // center the text
+    cv::Point textOrg(
+        (in_image.cols) * l_watermark.width_proportion_attr, (in_image.rows) * l_watermark.height_proportion_attr
+    );
+
+    // draw the box
+    cv::rectangle(
+        l_image, textOrg + cv::Point(-l_baseline, l_baseline), textOrg + cv::Point(textSize.width, -textSize.height),
+        cv::Scalar(30, 31, 34, 75), -1
+    );
+
+    cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
+    // then put the text itself
+    l_ft2->putText(
+        in_image, l_watermark.text_attr, textOrg, l_fontHeight,
+        cv::Scalar{
+            l_watermark.rgba_attr[0], l_watermark.rgba_attr[1], l_watermark.rgba_attr[2], l_watermark.rgba_attr[3]
+        },
+        l_thickness, cv::LineTypes::LINE_AA, true
+    );
+  }
 }
 
 auto create_gamma_LUT_table(const std::double_t &in_gamma) {
@@ -123,12 +147,10 @@ void image_to_move::create_move(
     }
     if (k_image.cols != k_size.width || k_image.rows != k_size.height) cv::resize(k_image, k_image, k_size);
 
-    for (auto &k_w : l_image.watermarks_attr) {
-      if (l_image.gamma_t) {
-        cv::LUT(k_image, l_gamma, k_image);
-      }
-      watermark_add_image(k_image, k_w);
+    if (l_image.gamma_t) {
+      cv::LUT(k_image, l_gamma, k_image);
     }
+    watermark_add_image(k_image, l_image.watermarks_attr);
     in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_image.path_attr);
     video << k_image;
   }
