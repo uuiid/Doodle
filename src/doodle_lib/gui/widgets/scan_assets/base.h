@@ -45,6 +45,11 @@ class scan_category_data_t {
   std::string version_name_;
   // 所属类别
   assets file_type_;
+
+  // 根据属性创建句柄
+  std::vector<entt::handle> create_handles(
+      const std::map<uuid, entt::handle>& in_handle_map, entt::registry& in_reg = *g_reg()
+  ) const;
 };
 using scan_category_data_ptr = std::shared_ptr<scan_category_data_t>;
 class scan_category_t {
