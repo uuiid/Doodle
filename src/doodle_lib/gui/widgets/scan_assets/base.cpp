@@ -45,6 +45,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
     l_rig_handle.emplace<file_association_ref>(l_file_handle);
   }
+  return l_out;
 }
 
 }  // namespace doodle::gui::details
