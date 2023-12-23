@@ -17,6 +17,7 @@ class scan_category_service_t {
       const scan_category_data_t::project_root_t& in_project_root,
       const std::shared_ptr<scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
   ) {
+    boost::ignore_unused(this);
     return boost::asio::async_initiate<
         CompletionHandler, void(std::vector<scan_category_data_ptr>, boost::system::error_code)>(
         [in_project_root, in_scan_category_ptr](auto&& in_completion_handler) {
