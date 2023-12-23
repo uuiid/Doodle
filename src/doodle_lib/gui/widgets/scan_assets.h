@@ -54,6 +54,8 @@ class DOODLELIB_API scan_assets_t {
   void init_scan_categories();
   void create_scan_categories();
 
+  void create_assets_table_data();
+
  public:
   scan_assets_t() : start_scan_id{"开始扫瞄资产"}, project_roots_{}, scan_categories_factory_vec_{} {
     init_scan_categories();

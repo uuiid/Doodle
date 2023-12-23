@@ -115,8 +115,10 @@ void scan_assets_t::init_scan_categories() {
           }
       }
   };
+  logger_data_ = std::make_shared<logger_data_t>();
   logger_ =
       std::make_shared<spdlog::logger>("scan_assets_t", std::make_shared<scan_assets_sink_t<std::mutex>>(logger_data_));
+  create_scan_categories();
 }
 
 void scan_assets_t::create_scan_categories() {
@@ -124,6 +126,22 @@ void scan_assets_t::create_scan_categories() {
   for (auto&& l_factory : scan_categories_factory_vec_) {
     if (!l_factory.has_) continue;
     scan_categories_.emplace_back(l_factory.factory_())->logger_ = logger_;
+  }
+}
+
+void scan_assets_t::create_assets_table_data() {
+  assets_table_data_.clear();
+  for (auto l_data : scam_data_vec_) {
+    if (!l_data) continue;
+    scan_gui_data_t l_gui_data{};
+    l_gui_data.name_          = l_data->name_;
+    l_gui_data.season_        = fmt::format("季度: {}", l_data->season_.p_int);
+    l_gui_data.version_name_  = l_data->version_name_;
+    l_gui_data.ue_path_       = l_data->ue_file_.path_.generic_string();
+    l_gui_data.maya_rig_path_ = l_data->rig_file_.path_.generic_string();
+    l_gui_data.project_root_  = fmt::format("{}: {}", l_data->project_root_.name_, l_data->project_root_.path_);
+    l_gui_data.info_          = "";
+    assets_table_data_.emplace_back(std::move(l_gui_data));
   }
 }
 
