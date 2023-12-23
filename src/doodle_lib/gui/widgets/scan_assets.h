@@ -14,6 +14,7 @@ class scan_assets_config;
 class DOODLELIB_API scan_assets_t {
   bool is_open{true};
 
+  logger_ptr logger_;
   struct project_root_gui_t : details::scan_category_t::project_root_t {
     bool has_;
   };
@@ -60,6 +61,13 @@ class DOODLELIB_API scan_assets_t {
 
   constexpr static std::string_view name{gui::config::menu_w::scan_assets};
   bool render();
+  struct logger_data_t {
+    std::mutex mutex_;
+    std::string data_;
+  };
+
+ private:
+  std::shared_ptr<logger_data_t> logger_data_;
 };
 
 }  // namespace doodle::gui

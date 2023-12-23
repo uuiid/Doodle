@@ -61,6 +61,28 @@ class scan_assets_config {
 
 }  // namespace details
 
+namespace {
+template <class Mutex>
+class scan_assets_sink_t : public spdlog::sinks::base_sink<Mutex> {
+  std::shared_ptr<scan_assets_t::logger_data_t> logger_data_;
+
+ public:
+  explicit scan_assets_sink_t(std::shared_ptr<scan_assets_t::logger_data_t> in_logger_data_)
+      : logger_data_{std::move(in_logger_data_)} {}
+
+ private:
+ protected:
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    // 格式化
+    spdlog::memory_buf_t formatted;
+    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    std::lock_guard const _lock{logger_data_->mutex_};
+    logger_data_->data_.append(formatted.data(), formatted.size());
+  }
+  void flush_() override{};
+};
+}  // namespace
+
 void scan_assets_t::init_scan_categories() {
   project_roots_ = {
       project_root_gui_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥", true},
@@ -93,13 +115,15 @@ void scan_assets_t::init_scan_categories() {
           }
       }
   };
+  logger_ =
+      std::make_shared<spdlog::logger>("scan_assets_t", std::make_shared<scan_assets_sink_t<std::mutex>>(logger_data_));
 }
 
 void scan_assets_t::create_scan_categories() {
   scan_categories_.clear();
   for (auto&& l_factory : scan_categories_factory_vec_) {
     if (!l_factory.has_) continue;
-    scan_categories_.emplace_back(l_factory.factory_());
+    scan_categories_.emplace_back(l_factory.factory_())->logger_ = logger_;
   }
 }
 
