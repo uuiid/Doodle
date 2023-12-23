@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_lib/gui/widgets/scan_assets/base.h>
+#include <doodle_lib/core/scan_assets/base.h>
 namespace doodle::gui::details {
 
 /**

@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_app/gui/base/ref_base.h>
 
-#include <doodle_lib/gui/widgets/scan_assets/base.h>
+#include <doodle_lib/core/scan_assets/base.h>
 
 namespace doodle::gui {
 namespace details {

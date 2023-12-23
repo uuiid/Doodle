@@ -4,7 +4,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/file_association.h>
 
-#include <doodle_lib/gui/widgets/scan_assets/base.h>
+#include <core/scan_assets/base.h>
 
 namespace doodle::gui::details {
 

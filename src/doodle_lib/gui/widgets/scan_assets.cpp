@@ -10,9 +10,9 @@
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <doodle_lib/gui/widgets/scan_assets/character_scan_category.h>
-#include <doodle_lib/gui/widgets/scan_assets/prop_scan_category.h>
-#include <doodle_lib/gui/widgets/scan_assets/scene_scan_category.h>
+#include <doodle_lib/core/scan_assets/character_scan_category.h>
+#include <doodle_lib/core/scan_assets/prop_scan_category.h>
+#include <doodle_lib/core/scan_assets/scene_scan_category.h>
 namespace doodle::gui {
 
 namespace details {
