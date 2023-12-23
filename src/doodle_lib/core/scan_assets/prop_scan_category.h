@@ -6,7 +6,7 @@
 
 #include <doodle_lib/core/scan_assets/base.h>
 
-namespace doodle::gui::details {
+namespace doodle::details {
 
 /**
  * 路径规范

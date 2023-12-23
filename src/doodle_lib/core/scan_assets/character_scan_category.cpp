@@ -3,7 +3,7 @@
 //
 
 #include "character_scan_category.h"
-namespace doodle::gui::details {
+namespace doodle::details {
 
 std::vector<scan_category_data_ptr> character_scan_category_t::scan(const project_root_t &in_root) const {
   const FSys::path l_character_path_root = in_root.path_ / "6-moxing/Ch";

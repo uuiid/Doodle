@@ -10,7 +10,7 @@
 #include <entt/entt.hpp>
 #include <map>
 
-namespace doodle::gui::details {
+namespace doodle::details {
 class scan_category_data_t;
 
 class scan_category_data_t {

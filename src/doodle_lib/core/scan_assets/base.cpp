@@ -6,7 +6,7 @@
 
 #include <core/scan_assets/base.h>
 
-namespace doodle::gui::details {
+namespace doodle::details {
 
 std::vector<entt::handle> scan_category_data_t::create_handles(
     const std::map<uuid, entt::handle>& in_handle_map, entt::registry& in_reg

@@ -8,7 +8,7 @@
 #include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/season.h>
 
-namespace doodle::gui::details {
+namespace doodle::details {
 
 std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_root_t& in_root) const {
   const FSys::path l_scene_path = in_root.path_ / "6-moxing/BG";

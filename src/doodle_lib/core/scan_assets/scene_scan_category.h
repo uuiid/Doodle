@@ -6,7 +6,7 @@
 
 #include <doodle_lib/core/scan_assets/base.h>
 
-namespace doodle::gui::details {
+namespace doodle::details {
 /// 路径规范
 ///    `项目根目录/6-moxing/BG/JD(季数)_(集数开始)/BG(编号)/(场景名称)/Content/(场景名称)/Map/(场景名称)_(版本).umap`
 /// 检查对于的rig文件和maya文件, maya文件可以不存在, 但是rig文件必须存在

@@ -8,28 +8,25 @@
 #include <doodle_lib/core/scan_assets/base.h>
 
 namespace doodle::gui {
-namespace details {
-class scan_assets_config;
-}
+
 class DOODLELIB_API scan_assets_t {
   bool is_open{true};
 
   logger_ptr logger_;
-  struct project_root_gui_t : details::scan_category_t::project_root_t {
+  struct project_root_gui_t : doodle::details::scan_category_t::project_root_t {
     bool has_;
   };
   // 工厂
   struct scan_categories_factory_t {
     gui_cache_name_id name_id_;
     bool has_;
-    std::function<std::shared_ptr<details::scan_category_t>()> factory_;
+    std::function<std::shared_ptr<doodle::details::scan_category_t>()> factory_;
   };
 
   // 开始扫瞄资产
   gui_cache_name_id start_scan_id;
-  std::shared_ptr<details::scan_assets_config> config_;
-  std::vector<details::scan_category_data_ptr> scam_data_vec_;
-  std::vector<std::shared_ptr<details::scan_category_t>> scan_categories_;
+  std::vector<doodle::details::scan_category_data_ptr> scam_data_vec_;
+  std::vector<std::shared_ptr<doodle::details::scan_category_t>> scan_categories_;
   std::array<project_root_gui_t, 9> project_roots_;
   std::array<scan_categories_factory_t, 3> scan_categories_factory_vec_;
 
