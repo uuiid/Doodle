@@ -32,7 +32,6 @@ class scan_category_service_t {
         in_completion
     );
   };
-}
 };
 
 }  // namespace doodle::details
