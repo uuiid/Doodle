@@ -20,7 +20,7 @@ class scan_category_service_t {
     boost::ignore_unused(this);
     return boost::asio::async_initiate<
         CompletionHandler, void(std::vector<scan_category_data_ptr>, boost::system::error_code)>(
-        [in_project_root, in_scan_category_ptr](auto&& in_completion_handler) {
+        [&in_project_root, &in_scan_category_ptr](auto&& in_completion_handler) {
           auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)> >(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
