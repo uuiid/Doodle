@@ -115,11 +115,11 @@ void scan_assets_t::start_scan() {
           l_root, l_data,
           boost::asio::bind_executor(
               g_io_context(),
-              [l_end_ptr,
+              [l_end_ptr, l_root = l_root.path_,
                this](std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec) {
                 *l_end_ptr = true;
                 if (in_ec) {
-                  logger_->log(log_loc(), level::err, "扫描资产失败:{}", in_ec.message());
+                  logger_->log(log_loc(), level::err, "扫描资产失败:{} {}", in_ec.message(), l_root);
                   return;
                 }
                 append_assets_table_data(in_vector);
