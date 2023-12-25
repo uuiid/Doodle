@@ -46,8 +46,15 @@ class DOODLELIB_API scan_assets_t {
   gui_cache_name_id assets_table_id_;
   std::vector<scan_gui_data_t> assets_table_data_;  // 资产表主要数据
   // 资产表头
-  std::array<std::string, 7> assets_table_header_{"名称",         "季数",       "版本名称", "ue路径",
-                                                  "maya rig路径", "项目根目录", "信息"};
+  std::array<std::tuple<std::string, std::float_t>, 7> assets_table_header_{
+      std::tuple<std::string, std::float_t>{"名称", 30.0f},
+      std::tuple<std::string, std::float_t>{"季数", 30.0f},
+      std::tuple<std::string, std::float_t>{"版本名称", 30.0f},
+      std::tuple<std::string, std::float_t>{"ue路径", 130.0f},
+      std::tuple<std::string, std::float_t>{"maya rig路径", 130.0f},
+      std::tuple<std::string, std::float_t>{"项目根目录", 30.0f},
+      std::tuple<std::string, std::float_t>{"信息", 30.0f}
+  };
 
   void start_scan();
   void init_scan_categories();

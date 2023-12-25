@@ -149,11 +149,12 @@ bool scan_assets_t::render() {
                 ImGuiTableFlags_::ImGuiTableFlags_ScrollY | ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
                     ImGuiTableFlags_::ImGuiTableFlags_RowBg | ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersV | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
-                    ImGuiTableFlags_::ImGuiTableFlags_Reorderable | ImGuiTableFlags_::ImGuiTableFlags_Hideable
+                    ImGuiTableFlags_::ImGuiTableFlags_Reorderable | ImGuiTableFlags_::ImGuiTableFlags_Hideable |
+                    ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit
             };
         l_table) {
-      for (auto&& l_header : assets_table_header_) {
-        ImGui::TableSetupColumn(l_header.c_str());
+      for (auto&& [l_header, l_] : assets_table_header_) {
+        ImGui::TableSetupColumn(l_header.c_str(), ImGuiTableColumnFlags_None, l_);
       }
       ImGui::TableHeadersRow();
 
