@@ -72,8 +72,8 @@ void scan_assets_t::init_scan_categories() {
       }
   };
   logger_data_ = std::make_shared<logger_data_t>();
-  logger_ =
-      std::make_shared<spdlog::logger>("scan_assets_t", std::make_shared<scan_assets_sink_t<std::mutex>>(logger_data_));
+  logger_      = g_logger_ctrl().make_log("scan_assets_t");
+  logger_->sinks().emplace_back(std::make_shared<scan_assets_sink_t<std::mutex>>(logger_data_));
   if (!g_ctx().contains<doodle::details::scan_category_service_t>())
     g_ctx().emplace<doodle::details::scan_category_service_t>();
 
@@ -116,8 +116,12 @@ void scan_assets_t::start_scan() {
           boost::asio::bind_executor(
               g_io_context(),
               [l_end_ptr,
-               this](std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code) {
+               this](std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec) {
                 *l_end_ptr = true;
+                if (in_ec) {
+                  logger_->log(log_loc(), level::err, "扫描资产失败:{}", in_ec.message());
+                  return;
+                }
                 append_assets_table_data(in_vector);
               }
           )
