@@ -35,13 +35,8 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
       case assets_type_enum::character:
         l_ue_handle.emplace<character_id>();
         break;
-      case assets_type_enum::rig:
-        l_ue_handle.emplace<rig_id>();
-        break;
-      case assets_type_enum::animation:
-        l_ue_handle.emplace<animation_id>();
-        break;
       default:
+        default_logger_raw()->log(log_loc(), level::err, "无法识别的类型:{}", magic_enum::enum_name(assets_type_));
         break;
     }
   }
@@ -63,6 +58,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_rig_handle = l_out.emplace_back(in_reg, in_reg.create());
     l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0);
     l_rig_handle.emplace<season>(season_);
+    l_rig_handle.emplace<rig_id>();
   }
   // 添加关联
   l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
