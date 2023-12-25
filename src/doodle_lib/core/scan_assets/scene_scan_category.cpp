@@ -52,6 +52,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
                     l_ptr->ue_file_.last_write_time_ = l_s4.last_write_time();
                     l_ptr->name_                     = l_s3.path().filename().generic_string();
                     l_ptr->BG_path_                  = l_s2.path();
+                    l_ptr->assets_type_              = scan_category_data_t::assets_type_enum::scene;
                     l_ptr->file_type_.set_path("场景");
                     if (auto l_pos = l_stem.find('_'); l_pos != std::string::npos)
                       l_ptr->version_name_ = l_stem.substr(l_stem.find('_') + 1);
@@ -87,4 +88,4 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
          ranges::to<std::vector>();
 }
 
-}  // namespace doodle::gui::details
+}  // namespace doodle::details

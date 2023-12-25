@@ -3,6 +3,7 @@
 //
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/file_association.h>
+#include <doodle_core/metadata/main_map.h>
 
 #include <core/scan_assets/base.h>
 
@@ -23,6 +24,26 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_ue_handle = l_out.emplace_back(in_reg, in_reg.create());
     l_ue_handle.emplace<assets_file>(ue_file_.path_, name_, 0);
     l_ue_handle.emplace<season>(season_);
+    ue_main_map::find_ue_project_file(l_ue_handle);
+    switch (assets_type_) {
+      case assets_type_enum::scene:
+        l_ue_handle.emplace<scene_id>();
+        break;
+      case assets_type_enum::prop:
+        l_ue_handle.emplace<prop_id>();
+        break;
+      case assets_type_enum::character:
+        l_ue_handle.emplace<character_id>();
+        break;
+      case assets_type_enum::rig:
+        l_ue_handle.emplace<rig_id>();
+        break;
+      case assets_type_enum::animation:
+        l_ue_handle.emplace<animation_id>();
+        break;
+      default:
+        break;
+    }
   }
   // 创建关联句柄
   entt::handle l_file_handle{};

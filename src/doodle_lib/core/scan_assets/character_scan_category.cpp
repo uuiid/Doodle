@@ -58,6 +58,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s4.path());
           l_ptr->ue_file_.last_write_time_ = l_s4.last_write_time();
           l_ptr->file_type_.set_path("角色");
+          l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
           logger_->log(log_loc(), level::info, "扫描到角色文件:{}", l_s4.path());
           l_out.emplace_back(l_ptr);
         }

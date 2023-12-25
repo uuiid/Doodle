@@ -15,6 +15,17 @@ class scan_category_data_t;
 
 class scan_category_data_t {
  public:
+  enum class assets_type_enum {
+    scene,
+    prop,
+    character,
+    rig,
+    animation,
+    fvx,
+    fcx,
+    other,
+  };
+
   virtual ~scan_category_data_t() = default;
   // uuid和文件路径的类
   struct uuid_path_t {
@@ -45,7 +56,8 @@ class scan_category_data_t {
   std::string version_name_;
   // 所属类别
   assets file_type_;
-
+  // 类型
+  assets_type_enum assets_type_;
   // 根据属性创建句柄
   std::vector<entt::handle> create_handles(
       const std::map<uuid, entt::handle>& in_handle_map, entt::registry& in_reg = *g_reg()
@@ -62,4 +74,4 @@ class scan_category_t {
   virtual std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const = 0;
 };
 
-}  // namespace doodle::gui::details
+}  // namespace doodle::details
