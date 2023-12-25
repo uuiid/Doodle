@@ -52,7 +52,7 @@ class scan_category_service_t {
             try {
               l_list = in_scan_category_ptr->scan(in_project_root);
             } catch (const FSys::filesystem_error& e) {
-              default_logger_raw()->log(log_loc(), level::err, e.what());
+              in_scan_category_ptr->logger_->log(log_loc(), level::err, e.what());
               l_err = e.code();
             }
             boost::asio::post(boost::asio::prepend(std::move(*l_f), l_list, l_err));
