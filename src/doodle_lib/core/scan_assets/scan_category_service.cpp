@@ -19,6 +19,7 @@ class scan_sink_t : public spdlog::sinks::base_sink<Mutex> {
     // 格式化
     std::lock_guard const _lock{logger_data_->mutex_};
     logger_data_->data_.append(msg.payload.data(), msg.payload.size());
+    logger_data_->data_.append("\n");
   }
   void flush_() override{};
 };

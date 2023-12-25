@@ -141,7 +141,7 @@ bool scan_assets_t::render() {
     ImGui::Text("正在扫描中...");
   }
 
-  if (auto l_child = dear::Child{"数据列表", ImVec2{0, -30}}; l_child) {
+  if (auto l_child = dear::Child{"数据列表", ImVec2{0, -60}}; l_child) {
     if (auto l_table = dear::Table{*assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size())};
         l_table) {
       for (auto&& l_header : assets_table_header_) {
