@@ -17,28 +17,6 @@
 
 namespace doodle::gui {
 
-namespace {
-template <class Mutex>
-class scan_assets_sink_t : public spdlog::sinks::base_sink<Mutex> {
-  std::shared_ptr<scan_assets_t::logger_data_t> logger_data_;
-
- public:
-  explicit scan_assets_sink_t(std::shared_ptr<scan_assets_t::logger_data_t> in_logger_data_)
-      : logger_data_{std::move(in_logger_data_)} {}
-
- private:
- protected:
-  void sink_it_(const spdlog::details::log_msg& msg) override {
-    // 格式化
-    spdlog::memory_buf_t formatted;
-    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-    std::lock_guard const _lock{logger_data_->mutex_};
-    logger_data_->data_.append(formatted.data(), formatted.size());
-  }
-  void flush_() override{};
-};
-}  // namespace
-
 void scan_assets_t::init_scan_categories() {
   project_roots_ = {
       project_root_gui_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥", true},
@@ -71,11 +49,10 @@ void scan_assets_t::init_scan_categories() {
           }
       }
   };
-  logger_data_ = std::make_shared<logger_data_t>();
-  logger_      = g_logger_ctrl().make_log("scan_assets_t");
-  logger_->sinks().emplace_back(std::make_shared<scan_assets_sink_t<std::mutex>>(logger_data_));
-  if (!g_ctx().contains<doodle::details::scan_category_service_t>())
-    g_ctx().emplace<doodle::details::scan_category_service_t>();
+
+  if (!g_ctx().contains<doodle::details::scan_category_service_t>()) {
+    logger_data_ = g_ctx().emplace<doodle::details::scan_category_service_t>().logger_data_;
+  }
 
   create_scan_categories();
 }
@@ -84,7 +61,7 @@ void scan_assets_t::create_scan_categories() {
   scan_categories_.clear();
   for (auto&& l_factory : scan_categories_factory_vec_) {
     if (!l_factory.has_) continue;
-    scan_categories_.emplace_back(l_factory.factory_())->logger_ = logger_;
+    scan_categories_.emplace_back(l_factory.factory_());
   }
 }
 
@@ -107,6 +84,7 @@ void scan_assets_t::start_scan() {
   scam_data_vec_.clear();
   assets_table_data_.clear();
   scan_categories_is_scan_.clear();
+  logger_data_->clear();
   for (auto&& l_root : project_roots_) {
     if (!l_root.has_) continue;
     for (auto&& l_data : scan_categories_) {
@@ -163,36 +141,47 @@ bool scan_assets_t::render() {
     ImGui::Text("正在扫描中...");
   }
 
-  if (auto l_table = dear::Table{*assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size())};
-      l_table) {
-    for (auto&& l_header : assets_table_header_) {
-      ImGui::TableSetupColumn(l_header.c_str());
-    }
-    ImGui::TableHeadersRow();
+  if (auto l_child = dear::Child{"数据列表", ImVec2{0, -30}}; l_child) {
+    if (auto l_table = dear::Table{*assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size())};
+        l_table) {
+      for (auto&& l_header : assets_table_header_) {
+        ImGui::TableSetupColumn(l_header.c_str());
+      }
+      ImGui::TableHeadersRow();
 
-    ImGuiListClipper clipper{};
-    clipper.Begin(boost::numeric_cast<std::int32_t>(assets_table_data_.size()));
-    while (clipper.Step()) {
-      for (auto l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
-        std::size_t l_index{boost::numeric_cast<std::size_t>(l_i)};
-        auto&& i = assets_table_data_[l_index];
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-        dear::Text(i.name_);
-        ImGui::TableNextColumn();
-        dear::Text(i.season_);
-        ImGui::TableNextColumn();
-        dear::Text(i.version_name_);
-        ImGui::TableNextColumn();
-        dear::Text(i.ue_path_);
-        ImGui::TableNextColumn();
-        dear::Text(i.maya_rig_path_);
-        ImGui::TableNextColumn();
-        dear::Text(i.project_root_);
-        ImGui::TableNextColumn();
-        dear::Text(i.info_);
+      ImGuiListClipper clipper{};
+      clipper.Begin(boost::numeric_cast<std::int32_t>(assets_table_data_.size()));
+      while (clipper.Step()) {
+        for (auto l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
+          std::size_t l_index{boost::numeric_cast<std::size_t>(l_i)};
+          auto&& i = assets_table_data_[l_index];
+          ImGui::TableNextRow();
+          ImGui::TableNextColumn();
+          dear::Text(i.name_);
+          ImGui::TableNextColumn();
+          dear::Text(i.season_);
+          ImGui::TableNextColumn();
+          dear::Text(i.version_name_);
+          ImGui::TableNextColumn();
+          dear::Text(i.ue_path_);
+          ImGui::TableNextColumn();
+          dear::Text(i.maya_rig_path_);
+          ImGui::TableNextColumn();
+          dear::Text(i.project_root_);
+          ImGui::TableNextColumn();
+          dear::Text(i.info_);
+        }
       }
     }
+  }
+
+  if (auto l_child = dear::Child{"日志", ImVec2{0, 0}}; l_child) {
+    {
+      std::lock_guard l_lock{logger_data_->mutex_};
+      log_str_ = logger_data_->data_;
+    }
+
+    ImGui::TextUnformatted(log_str_.c_str());
   }
 
   return is_open;

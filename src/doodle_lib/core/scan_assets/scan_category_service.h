@@ -13,7 +13,25 @@ namespace doodle::details {
 
 class scan_category_service_t {
  public:
-  scan_category_service_t()          = default;
+  struct logger_data_t {
+    std::mutex mutex_;
+    std::string data_;
+
+    void clear() {
+      std::lock_guard const _lock{mutex_};
+      data_.clear();
+    }
+  };
+
+ private:
+  using logger_data_ptr = std::shared_ptr<logger_data_t>;
+  logger_ptr logger_;
+  void init_logger_data();
+
+ public:
+  logger_data_ptr logger_data_;
+
+  scan_category_service_t() : logger_{} { init_logger_data(); }
   virtual ~scan_category_service_t() = default;
   template <typename CompletionHandler>
   auto async_scan_files(
@@ -21,6 +39,7 @@ class scan_category_service_t {
       const std::shared_ptr<scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
   ) {
     boost::ignore_unused(this);
+    in_scan_category_ptr->logger_ = logger_;
     return boost::asio::async_initiate<
         CompletionHandler, void(std::vector<scan_category_data_ptr>, boost::system::error_code)>(
         [&in_project_root, &in_scan_category_ptr](auto&& in_completion_handler) {

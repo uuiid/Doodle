@@ -6,6 +6,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/core/scan_assets/base.h>
+#include <doodle_lib/core/scan_assets/scan_category_service.h>
 
 namespace doodle::gui {
 
@@ -62,13 +63,10 @@ class DOODLELIB_API scan_assets_t {
 
   constexpr static std::string_view name{gui::config::menu_w::scan_assets};
   bool render();
-  struct logger_data_t {
-    std::mutex mutex_;
-    std::string data_;
-  };
 
  private:
-  std::shared_ptr<logger_data_t> logger_data_;
+  std::shared_ptr<doodle::details::scan_category_service_t::logger_data_t> logger_data_;
+  std::string log_str_;
 };
 
 }  // namespace doodle::gui
