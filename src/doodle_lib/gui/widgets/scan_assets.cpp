@@ -12,9 +12,10 @@
 
 #include <doodle_lib/core/scan_assets/character_scan_category.h>
 #include <doodle_lib/core/scan_assets/prop_scan_category.h>
+#include <doodle_lib/core/scan_assets/scan_category_service.h>
 #include <doodle_lib/core/scan_assets/scene_scan_category.h>
-namespace doodle::gui {
 
+namespace doodle::gui {
 
 namespace {
 template <class Mutex>
@@ -73,6 +74,9 @@ void scan_assets_t::init_scan_categories() {
   logger_data_ = std::make_shared<logger_data_t>();
   logger_ =
       std::make_shared<spdlog::logger>("scan_assets_t", std::make_shared<scan_assets_sink_t<std::mutex>>(logger_data_));
+  if (!g_ctx().contains<doodle::details::scan_category_service_t>())
+    g_ctx().emplace<doodle::details::scan_category_service_t>();
+
   create_scan_categories();
 }
 
@@ -84,9 +88,8 @@ void scan_assets_t::create_scan_categories() {
   }
 }
 
-void scan_assets_t::create_assets_table_data() {
-  assets_table_data_.clear();
-  for (auto l_data : scam_data_vec_) {
+void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::scan_category_data_ptr>& in_data) {
+  for (auto l_data : in_data) {
     if (!l_data) continue;
     scan_gui_data_t l_gui_data{};
     l_gui_data.name_          = l_data->name_;
@@ -102,10 +105,23 @@ void scan_assets_t::create_assets_table_data() {
 
 void scan_assets_t::start_scan() {
   scam_data_vec_.clear();
+  assets_table_data_.clear();
+  scan_categories_is_scan_.clear();
   for (auto&& l_root : project_roots_) {
     if (!l_root.has_) continue;
     for (auto&& l_data : scan_categories_) {
-      scam_data_vec_ |= ranges::actions::push_back(l_data->scan(l_root));
+      auto l_end_ptr = scan_categories_is_scan_.emplace_back(std::make_shared<std::atomic_bool>(false));
+      g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
+          l_root, l_data,
+          boost::asio::bind_executor(
+              g_io_context(),
+              [l_end_ptr,
+               this](std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code) {
+                *l_end_ptr = true;
+                append_assets_table_data(in_vector);
+              }
+          )
+      );
     }
   }
 }
@@ -132,10 +148,13 @@ bool scan_assets_t::render() {
   if (l_changed) {
     create_scan_categories();
   }
-
-  if (ImGui::Button(*start_scan_id)) {
-    start_scan();
-  }
+  if (scan_categories_is_scan_.empty() ||
+      std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](auto&& i) -> bool {
+        return *i;
+      }))
+    if (ImGui::Button(*start_scan_id)) {
+      start_scan();
+    }
 
   if (auto l_table = dear::Table{*assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size())};
       l_table) {

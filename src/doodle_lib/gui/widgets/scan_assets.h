@@ -29,6 +29,7 @@ class DOODLELIB_API scan_assets_t {
   std::vector<std::shared_ptr<doodle::details::scan_category_t>> scan_categories_;
   std::array<project_root_gui_t, 9> project_roots_;
   std::array<scan_categories_factory_t, 3> scan_categories_factory_vec_;
+  std::vector<std::shared_ptr<std::atomic_bool>> scan_categories_is_scan_;
 
   // 扫描后gui数据结构
   struct scan_gui_data_t {
@@ -52,6 +53,7 @@ class DOODLELIB_API scan_assets_t {
   void create_scan_categories();
 
   void create_assets_table_data();
+  void append_assets_table_data(const std::vector<doodle::details::scan_category_data_ptr>& in_data);
 
  public:
   scan_assets_t() : start_scan_id{"开始扫瞄资产"}, project_roots_{}, scan_categories_factory_vec_{} {
