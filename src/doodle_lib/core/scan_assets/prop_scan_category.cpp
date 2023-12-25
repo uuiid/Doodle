@@ -54,6 +54,7 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
               l_ptr->ue_file_.path_            = l_s3.path();
               l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
               l_ptr->ue_file_.last_write_time_ = l_s3.last_write_time();
+              l_ptr->file_type_.set_path("道具");
 
               if (l_stem.find('_') != std::string::npos) {
                 l_ptr->version_name_ = l_stem.substr(l_stem.find('_') + 1);
@@ -117,4 +118,4 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
   return l_out | ranges::views::transform([](auto &&i) -> scan_category_data_ptr { return i; }) | ranges::to_vector;
 }
 
-}  // namespace doodle::gui::details
+}  // namespace doodle::details
