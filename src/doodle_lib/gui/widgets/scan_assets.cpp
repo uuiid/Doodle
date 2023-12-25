@@ -155,10 +155,13 @@ bool scan_assets_t::render() {
   if (scan_categories_is_scan_.empty() ||
       std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](auto&& i) -> bool {
         return *i;
-      }))
+      })) {
     if (ImGui::Button(*start_scan_id)) {
       start_scan();
     }
+  } else {
+    ImGui::Text("正在扫描中...");
+  }
 
   if (auto l_table = dear::Table{*assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size())};
       l_table) {
