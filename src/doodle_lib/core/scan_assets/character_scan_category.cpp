@@ -98,4 +98,4 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
          ranges::to_vector;
 }
 
-}  // namespace doodle::gui::details
+}  // namespace doodle::details

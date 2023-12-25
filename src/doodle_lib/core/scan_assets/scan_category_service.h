@@ -3,8 +3,11 @@
 //
 
 #pragma once
+#include <doodle_core/doodle_core_fwd.h>
+
 #include <doodle_lib/core/scan_assets/base.h>
 
+#include <boost/asio.hpp>
 #include <boost/asio/prepend.hpp>
 namespace doodle::details {
 
@@ -24,9 +27,15 @@ class scan_category_service_t {
           auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)> >(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
-          boost::asio::post(g_thread(), [in_project_root, in_scan_category_ptr]() {
-            auto l_list = in_scan_category_ptr->scan(in_project_root);
+          boost::asio::post(g_thread(), [in_project_root, in_scan_category_ptr, l_f]() {
             boost::system::error_code l_err{};
+            std::vector<scan_category_data_ptr> l_list;
+            try {
+              l_list = in_scan_category_ptr->scan(in_project_root);
+            } catch (const FSys::filesystem_error& e) {
+              default_logger_raw()->log(log_loc(), level::err, e.what());
+              l_err = e.code();
+            }
             boost::asio::post(boost::asio::prepend(std::move(*l_f), l_list, l_err));
           });
         },
