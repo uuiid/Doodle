@@ -12,7 +12,10 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     const std::map<uuid, entt::handle>& in_handle_map, entt::registry& in_reg
 ) const {
   std::vector<entt::handle> l_out{};
+
+  if (rig_file_.path_.empty()) return l_out;
   if (ue_file_.path_.empty()) return l_out;
+
   entt::handle l_ue_handle{};
   if (in_handle_map.contains(ue_file_.uuid_)) {
     l_ue_handle = l_out.emplace_back(in_handle_map.at(ue_file_.uuid_));
@@ -32,20 +35,19 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_file_handle = l_ue_handle.get<file_association_ref>();
   }
   // 创建rig句柄
-  if (!rig_file_.path_.empty()) {
-    entt::handle l_rig_handle{};
-    if (in_handle_map.contains(rig_file_.uuid_)) {
-      l_rig_handle = l_out.emplace_back(in_handle_map.at(rig_file_.uuid_));
-    } else {
-      l_rig_handle = l_out.emplace_back(in_reg, in_reg.create());
-      l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0);
-      l_rig_handle.emplace<season>(season_);
-    }
-    // 添加关联
-    l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
-    l_rig_handle.emplace<file_association_ref>(l_file_handle);
+  entt::handle l_rig_handle{};
+  if (in_handle_map.contains(rig_file_.uuid_)) {
+    l_rig_handle = l_out.emplace_back(in_handle_map.at(rig_file_.uuid_));
+  } else {
+    l_rig_handle = l_out.emplace_back(in_reg, in_reg.create());
+    l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0);
+    l_rig_handle.emplace<season>(season_);
   }
+  // 添加关联
+  l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
+  l_rig_handle.emplace<file_association_ref>(l_file_handle);
+
   return l_out;
 }
 
-}  // namespace doodle::gui::details
+}  // namespace doodle::details
