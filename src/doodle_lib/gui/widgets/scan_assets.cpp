@@ -175,7 +175,7 @@ bool scan_assets_t::render() {
     }
   }
 
-  if (auto l_child = dear::Child{"日志", ImVec2{0, 0}}; l_child) {
+  if (auto l_child = dear::Child{"日志", ImVec2{0, 60}}; l_child) {
     {
       std::lock_guard l_lock{logger_data_->mutex_};
       log_str_ = logger_data_->data_;
