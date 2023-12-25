@@ -26,10 +26,10 @@ class scan_sink_t : public spdlog::sinks::base_sink<Mutex> {
 };
 }  // namespace
 void scan_category_service_t::init_logger_data() {
-  logger_data_  = std::make_shared<logger_data_t>();
-  auto l_sink   = std::make_shared<scan_sink_t<std::mutex>>(logger_data_);
-  auto l_logger = std::make_shared<spdlog::logger>("scan_category", l_sink);
-  l_logger->sinks().emplace_back(g_logger_ctrl().rotating_file_sink_);
+  logger_data_ = std::make_shared<logger_data_t>();
+  auto l_sink  = std::make_shared<scan_sink_t<std::mutex>>(logger_data_);
+  logger_      = std::make_shared<spdlog::logger>("scan_category", l_sink);
+  logger_->sinks().emplace_back(g_logger_ctrl().rotating_file_sink_);
 }
 
 }  // namespace doodle::details
