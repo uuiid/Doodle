@@ -69,13 +69,14 @@ void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::
   for (auto l_data : in_data) {
     if (!l_data) continue;
     scan_gui_data_t l_gui_data{};
-    l_gui_data.name_          = l_data->name_;
-    l_gui_data.season_        = fmt::format("季度: {}", l_data->season_.p_int);
-    l_gui_data.version_name_  = l_data->version_name_;
-    l_gui_data.ue_path_       = l_data->ue_file_.path_.generic_string();
-    l_gui_data.maya_rig_path_ = l_data->rig_file_.path_.generic_string();
-    l_gui_data.project_root_  = fmt::format("{}: {}", l_data->project_root_.name_, l_data->project_root_.path_);
-    l_gui_data.info_          = "";
+    l_gui_data.name_         = l_data->name_;
+    l_gui_data.season_       = fmt::format("季度: {}", l_data->season_.p_int);
+    l_gui_data.version_name_ = l_data->version_name_;
+    l_gui_data.ue_path_      = l_data->ue_file_.path_.lexically_proximate(l_data->project_root_.path_).generic_string();
+    l_gui_data.maya_rig_path_ =
+        l_data->rig_file_.path_.lexically_proximate(l_data->project_root_.path_).generic_string();
+    l_gui_data.project_root_ = l_data->project_root_.path_.generic_string();
+    l_gui_data.info_         = fmt::format("{}/{}", l_data->project_root_.name_, l_data->file_type_);
     assets_table_data_.emplace_back(std::move(l_gui_data));
   }
 }
@@ -142,7 +143,14 @@ bool scan_assets_t::render() {
   }
 
   if (auto l_child = dear::Child{"数据列表", ImVec2{0, -60}}; l_child) {
-    if (auto l_table = dear::Table{*assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size())};
+    if (auto l_table =
+            dear::Table{
+                *assets_table_id_, boost::numeric_cast<std::int32_t>(assets_table_header_.size()),
+                ImGuiTableFlags_::ImGuiTableFlags_ScrollY | ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
+                    ImGuiTableFlags_::ImGuiTableFlags_RowBg | ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
+                    ImGuiTableFlags_::ImGuiTableFlags_BordersV | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
+                    ImGuiTableFlags_::ImGuiTableFlags_Reorderable | ImGuiTableFlags_::ImGuiTableFlags_Hideable
+            };
         l_table) {
       for (auto&& l_header : assets_table_header_) {
         ImGui::TableSetupColumn(l_header.c_str());
