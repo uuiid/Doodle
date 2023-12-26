@@ -94,6 +94,7 @@
         "generate_token",
         "doodle_server",
         "doodle_client",
+        "doodle_auto_light",
         "Doxygen"
       ]
     },
@@ -137,6 +138,7 @@
         "generate_token",
         "doodle_server",
         "doodle_client",
+        "doodle_auto_light",
         "Doxygen"
       ]
     },
