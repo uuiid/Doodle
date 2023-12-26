@@ -9,12 +9,14 @@ target_sources(doodle_lib
         holidaycn_time.h
         erase_handle_component.h
         maya_to_exe_file.h
+        scan_win_service.h
 
         PRIVATE
         filesystem_extend.cpp
         image_loader.cpp
         holidaycn_time.cpp
         maya_to_exe_file.cpp
+        scan_win_service.cpp
 
 
 )
