@@ -16,7 +16,11 @@
 
 namespace doodle {
 void scan_win_service_t::start() {
-  timer_ = std::make_shared<timer_t>(g_io_context());
+  timer_  = std::make_shared<timer_t>(g_io_context());
+  signal_ = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+  signal_->async_wait(boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), [](auto&&...) {
+    g_io_context().stop();
+  }));
 
   project_roots_ = {
       details::scan_category_t::project_root_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥"},
