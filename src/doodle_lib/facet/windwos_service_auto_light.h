@@ -8,13 +8,14 @@
 namespace doodle {
 
 class windwos_service_auto_light_facet_t {
-  std::shared_ptr<sac>
+  std::shared_ptr<scan_win_service_t> scan_win_service_ptr_;
 
-      public : windwos_service_auto_light_facet_t() = default;
-  ~windwos_service_auto_light_facet_t()             = default;
+ public:
+  windwos_service_auto_light_facet_t()  = default;
+  ~windwos_service_auto_light_facet_t() = default;
 
   bool post();
-  void add_program_options(){};
+  void add_program_options();
 };
 
 }  // namespace doodle
