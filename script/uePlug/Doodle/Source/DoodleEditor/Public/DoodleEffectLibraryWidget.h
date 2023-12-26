@@ -107,7 +107,7 @@ private:
 	{
 		if (EventType == EMediaEvent::PlaybackResumed)
 		{
-			if (MediaBox->GetVisibility() == EVisibility::Hidden)
+			if (MediaBox.IsValid() && MediaBox->GetVisibility() == EVisibility::Hidden)
 				MediaBox->SetVisibility(EVisibility::Visible);
 		}
 		if (EventType == EMediaEvent::PlaybackEndReached)

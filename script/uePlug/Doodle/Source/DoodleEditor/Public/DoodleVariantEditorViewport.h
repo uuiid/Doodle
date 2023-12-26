@@ -7,7 +7,7 @@
 #include "AdvancedPreviewScene.h"
 #include "SCommonEditorViewportToolbarBase.h"
 #include "SkeletalRenderPublic.h"
-
+#include "GameFramework/WorldSettings.h"
 
 class DoodleVariantEditorViewport;
 
