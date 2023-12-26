@@ -55,7 +55,6 @@ void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
   if (ec) {
     return;
   }
-
   scan();
   //  add_handle();
 }
