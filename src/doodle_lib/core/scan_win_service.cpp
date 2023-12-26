@@ -96,6 +96,8 @@ void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_cate
       if (l_h.any_of<database>()) handle_map_.emplace(l_h.get<database>().uuid(), l_h);
     }
   }
+  // 开始启动下一次循环
+
   if (g_ctx().get<program_info>().stop_attr()) return;
   if (!std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](auto&& in_bool) {
         return in_bool;
