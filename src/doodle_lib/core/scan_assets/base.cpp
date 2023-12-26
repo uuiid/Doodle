@@ -19,7 +19,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
 
   entt::handle l_ue_handle{};
   if (in_handle_map.contains(ue_file_.uuid_)) {
-    l_ue_handle = l_out.emplace_back(in_handle_map.at(ue_file_.uuid_));
+    l_ue_handle = in_handle_map.at(ue_file_.uuid_);
   } else {
     l_ue_handle = l_out.emplace_back(in_reg, in_reg.create());
     l_ue_handle.emplace<assets_file>(ue_file_.path_, name_, 0);
@@ -43,7 +43,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
   // 创建关联句柄
   entt::handle l_file_handle{};
   if (!l_ue_handle.any_of<file_association_ref>()) {
-    l_file_handle                                     = entt::handle{in_reg, in_reg.create()};
+    l_file_handle                                     = l_out.emplace_back(entt::handle{in_reg, in_reg.create()});
     l_file_handle.emplace<file_association>().ue_file = l_ue_handle;
 
     l_ue_handle.emplace<file_association_ref>(l_file_handle);
@@ -53,7 +53,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
   // 创建rig句柄
   entt::handle l_rig_handle{};
   if (in_handle_map.contains(rig_file_.uuid_)) {
-    l_rig_handle = l_out.emplace_back(in_handle_map.at(rig_file_.uuid_));
+    l_rig_handle = in_handle_map.at(rig_file_.uuid_);
   } else {
     l_rig_handle = l_out.emplace_back(in_reg, in_reg.create());
     l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0);

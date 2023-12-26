@@ -58,7 +58,7 @@ class scan_category_data_t {
   assets file_type_;
   // 类型
   assets_type_enum assets_type_;
-  // 根据属性创建句柄
+  // 根据属性创建句柄, 返回值中只有新创建的句柄, 没有在数据表内的旧的
   std::vector<entt::handle> create_handles(
       const std::map<uuid, entt::handle>& in_handle_map, entt::registry& in_reg = *g_reg()
   ) const;
