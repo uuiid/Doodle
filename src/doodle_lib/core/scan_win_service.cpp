@@ -44,6 +44,9 @@ void install_scan_win_service() {
   // 添加服务说明
   SERVICE_DESCRIPTIONW l_service_description{};
   l_service_description.lpDescription = L"doodle 扫瞄服务器资产并进行确认后提交数据库工具";
+  THROW_IF_WIN32_BOOL_FALSE(
+      ::ChangeServiceConfig2W(l_service_handle.get(), SERVICE_CONFIG_DESCRIPTION, &l_service_description)
+  );
 }
 
 }  // namespace
