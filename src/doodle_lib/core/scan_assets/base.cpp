@@ -25,6 +25,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_ue_handle.emplace<assets_file>(ue_file_.path_, name_, 0);
     l_ue_handle.emplace<season>(season_);
     ue_main_map::find_ue_project_file(l_ue_handle);
+    l_ue_handle.emplace<database>(ue_file_.uuid_);
     switch (assets_type_) {
       case assets_type_enum::scene:
         l_ue_handle.emplace<scene_id>();
@@ -45,8 +46,8 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
   if (!l_ue_handle.any_of<file_association_ref>()) {
     l_file_handle                                     = l_out.emplace_back(entt::handle{in_reg, in_reg.create()});
     l_file_handle.emplace<file_association>().ue_file = l_ue_handle;
-
     l_ue_handle.emplace<file_association_ref>(l_file_handle);
+    l_file_handle.emplace<database>();
   } else {
     l_file_handle = l_ue_handle.get<file_association_ref>();
   }
@@ -59,6 +60,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0);
     l_rig_handle.emplace<season>(season_);
     l_rig_handle.emplace<rig_id>();
+    l_rig_handle.emplace<database>(rig_file_.uuid_);
   }
   // 添加关联
   l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
