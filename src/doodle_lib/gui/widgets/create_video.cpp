@@ -35,10 +35,21 @@ class create_video::image_arg : public gui::gui_cache<std::string> {
   std::vector<FSys::path> image_attr;
 };
 
+class video_gui_cache : boost::less_than_comparable<video_gui_cache> {
+ public:
+  explicit video_gui_cache(std::string in_name, std::string in_data, FSys::path in_path)
+      : gui_name_(std::move(in_name)), data_(std::move(in_data)), path_(std::move(in_path)){};
+  gui_cache_name_id gui_name_;
+  std::string data_;
+  FSys::path path_;
+
+  bool operator<(const video_gui_cache& in_r) const { return path_ < in_r.path_; }
+};
+
 class create_video::impl {
  public:
   using image_cache = create_video::image_arg;
-  using video_cache = gui::gui_cache<std::string>;
+  using video_cache = video_gui_cache;
 
   std::vector<image_cache> image_to_video_list;
   std::vector<video_cache> video_list;
@@ -50,7 +61,9 @@ create_video::create_video() : p_i(std::make_unique<impl>()) { p_i->title_name_ 
 
 bool create_video::render() {
   ImGui::Text("拖拽文件夹, 或者图片列表, 由系统自动判断输出路径");
-
+  constexpr auto l_sort_file_stem = [](const video_gui_cache& in_r, const video_gui_cache& in_l) -> bool {
+    return in_r.path_.stem().generic_string() < in_l.path_.stem().generic_string();
+  };
   if (auto l_l = dear::ListBox{"图片路径(拖拽导入)"}; l_l) {
     for (const auto& i : p_i->image_to_video_list) {
       dear::Selectable(*i.gui_name);
@@ -82,7 +95,7 @@ bool create_video::render() {
   if (ImGui::Button("创建视频")) {
     boost::asio::post(g_io_context(), [this]() { p_i->image_to_video_list.clear(); });
 
-    ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
+    ranges::for_each(p_i->image_to_video_list, [=, this](const impl::image_cache& in_cache) {
       in_cache.out_handle.emplace<process_message>(
           in_cache.out_handle.get<image_to_move ::element_type ::out_file_path>().path.filename().generic_string()
       );
@@ -91,17 +104,19 @@ bool create_video::render() {
 
           boost::asio::bind_executor(
               g_io_context(),
-              [this, l_h = in_cache.out_handle](
+              [this, l_h = in_cache.out_handle, l_sort_file_stem](
                   const FSys::path& in_path, const boost::system::error_code& in_error_code
               ) {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
                 if (in_error_code) {
                   l_h.get<process_message>().set_state(process_message::state::fail);
                   return;
                 }
-                if (ranges::count_if(p_i->video_list, [&](const gui_cache<std::string>& in_gui_cache) {
-                      return in_gui_cache.data == in_path.generic_string();
-                    }) == 0)
-                  p_i->video_list.emplace_back(in_path.generic_string(), in_path.generic_string());
+                if (ranges::count_if(p_i->video_list, [&](const video_gui_cache& in_gui_cache) {
+                      return in_gui_cache.path_ == in_path;
+                    }) == 0) {
+                  p_i->video_list.emplace_back(in_path.filename().generic_string(), in_path.generic_string(), in_path);
+                  p_i->video_list |= ranges::actions::sort(l_sort_file_stem);
+                }
 
               }
           )
@@ -111,17 +126,18 @@ bool create_video::render() {
 
   dear::ListBox{"视屏路径(拖拽导入)"} && [this]() {
     for (const auto& i : p_i->video_list) {
-      dear::Selectable(*i.gui_name);
+      dear::Selectable(*i.gui_name_);
     }
   };
   if (auto l_drag = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
         l_data && l_data->IsDelivery()) {
       auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
-
+      p_i->video_list.clear();
       for (auto&& l_file : *l_list) {
         if (FSys::is_regular_file(l_file) && l_file.extension() == ".mp4") {
-          p_i->video_list.emplace_back(l_file.filename().generic_string(), l_file.generic_string());
+          p_i->video_list.emplace_back(l_file.filename().generic_string(), l_file.generic_string(), l_file);
+          p_i->video_list |= ranges::actions::sort(l_sort_file_stem);
         }
       }
     }
@@ -133,14 +149,14 @@ bool create_video::render() {
   ImGui::SameLine();
   if (ImGui::Button("连接视频")) {
     auto l_list = p_i->video_list |
-                  ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path { return in_cache.data; }) |
+                  ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path { return in_cache.path_; }) |
                   ranges::to_vector;
     if (!l_list.empty()) {
       boost::asio::post(g_io_context(), [this]() { p_i->video_list.clear(); });
       auto l_out_video_h = entt::handle{*g_reg(), g_reg()->create()};
       l_out_video_h.remove<episodes>();
       ranges::any_of(p_i->video_list, [l_out_video_h](impl::video_cache& in_cache) -> bool {
-        return episodes::analysis_static(l_out_video_h, in_cache.data);
+        return episodes::analysis_static(l_out_video_h, in_cache.path_);
       });
       l_out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
       if (!l_out_video_h.all_of<process_message>())
