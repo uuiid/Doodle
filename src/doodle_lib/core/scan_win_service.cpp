@@ -68,16 +68,21 @@ void scan_win_service_t::scan() {
     for (auto&& l_data : scan_categories_) {
       g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
           l_root, l_data,
-          boost::asio::bind_executor(
-              g_io_context(),
-              [l_i = l_size++, l_root = l_root.path_,
-               this](std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec) {
-                scan_categories_is_scan_[l_i] = true;
-                if (in_ec) {
-                  default_logger_raw()->log(log_loc(), level::err, "扫描资产失败:{} {}", in_ec.message(), l_root);
-                }
-                add_handle(in_vector);
-              }
+          boost::asio::bind_cancellation_slot(
+              app_base::Get().on_cancel.slot(),
+              boost::asio::bind_executor(
+                  g_io_context(),
+                  [l_i = l_size++, l_root = l_root.path_, this](
+                      std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec
+                  ) {
+                    scan_categories_is_scan_[l_i] = true;
+                    if (in_ec) {
+                      default_logger_raw()->log(log_loc(), level::err, "扫描资产失败:{} {}", in_ec.message(), l_root);
+                      if (in_ec == boost::asio::error::operation_aborted) return;
+                    }
+                    add_handle(in_vector);
+                  }
+              )
           )
       );
     }
