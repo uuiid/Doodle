@@ -23,6 +23,7 @@
 #include "Widgets/Views/STableRow.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "Engine/SkinnedAssetCommon.h"
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 

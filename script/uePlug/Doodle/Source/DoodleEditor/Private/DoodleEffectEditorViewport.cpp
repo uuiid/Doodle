@@ -16,6 +16,7 @@
 #include "Rendering/SkeletalMeshLODRenderData.h"
 #include "GameFramework/WorldSettings.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 
 DoodleEffectEditorPreviewScene::DoodleEffectEditorPreviewScene()
  : FAdvancedPreviewScene(FAdvancedPreviewScene::ConstructionValues{}.SetCreatePhysicsScene(false).ShouldSimulatePhysics(false)) 
