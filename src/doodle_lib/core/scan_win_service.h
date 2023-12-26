@@ -4,4 +4,30 @@
 
 #pragma once
 
-namespace doodle {}
+#include <doodle_lib/core/scan_assets/base.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+
+#include <boost/asio.hpp>
+namespace doodle {
+class scan_win_service_t {
+  using timer_t     = boost::asio::steady_timer;
+  using timer_ptr_t = std::shared_ptr<timer_t>;
+
+  timer_ptr_t timer_;
+  std::vector<doodle::details::scan_category_data_ptr> scam_data_vec_;
+  std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
+  std::array<details::scan_category_t::project_root_t, 9> project_roots_;
+  std::vector<bool> scan_categories_is_scan_;
+  std::map<uuid, entt::handle> handle_map_;
+  void scan();
+  void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec);
+
+  void on_timer(const boost::system::error_code& ec);
+
+ public:
+  scan_win_service_t()  = default;
+  ~scan_win_service_t() = default;
+
+  void start();
+};
+}  // namespace doodle
