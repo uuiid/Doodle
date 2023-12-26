@@ -17,4 +17,5 @@ class FDoodleCommands : public TCommands<FDoodleCommands> {
 
  public:
   TSharedPtr<FUICommandInfo> OpenPluginWindow, DoodleImportFbxWindow, DoodleVariantWindow, DoodleOrganizeWindow;
+  TSharedPtr<FUICommandInfo> DoodleEffectLibraryWidget, DoodleEffectLibraryObjectWidget;
 };
