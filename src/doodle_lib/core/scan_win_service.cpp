@@ -50,6 +50,31 @@ void install_scan_win_service() {
   );
 }
 
+void uninstall_scan_win_service() {
+  wil::unique_schandle l_unique_sc_handle_manager{THROW_IF_NULL_ALLOC(
+      ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_LOCK)
+  )};  // 打开服务控制管理器数据库，返回一个句柄
+  wil::unique_schandle l_service_handle{THROW_IF_NULL_ALLOC(::OpenServiceW(
+      l_unique_sc_handle_manager.get(), L"doodle_scan_win_service", SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE
+  ))};
+
+  // 尝试停止服务
+  SERVICE_STATUS l_service_status{};
+  THROW_IF_WIN32_BOOL_FALSE(::ControlService(l_service_handle.get(), SERVICE_CONTROL_STOP, &l_service_status));
+  std::this_thread::sleep_for(chrono::seconds{1});
+  while (::QueryServiceStatus(l_service_handle.get(), &l_service_status)) {
+    if (l_service_status.dwCurrentState == SERVICE_STOP_PENDING) {
+      std::this_thread::sleep_for(chrono::seconds{1});
+    } else {
+      break;
+    }
+  }
+  if (l_service_status.dwCurrentState != SERVICE_STOPPED) {
+    default_logger_raw()->log(log_loc(), level::err, "停止服务失败");
+    THROW_LAST_ERROR();
+  }
+  THROW_IF_WIN32_BOOL_FALSE(::DeleteService(l_service_handle.get()));
+}
 }  // namespace
 
 void scan_win_service_t::start() {
