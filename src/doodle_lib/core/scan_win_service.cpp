@@ -75,7 +75,6 @@ void scan_win_service_t::scan() {
                 scan_categories_is_scan_[l_i] = true;
                 if (in_ec) {
                   default_logger_raw()->log(log_loc(), level::err, "扫描资产失败:{} {}", in_ec.message(), l_root);
-                  return;
                 }
                 add_handle(in_vector);
               }
