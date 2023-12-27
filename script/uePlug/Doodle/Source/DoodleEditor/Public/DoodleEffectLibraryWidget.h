@@ -41,6 +41,7 @@ public:
 	TSharedPtr<FSlateDynamicImageBrush> ShotBrush;
 	TSharedPtr<SBox> MediaBox;
 	//------------
+	FDelegateHandle OnMediaEventBinding;
 	TObjectPtr<UMediaPlayer> MediaPlayer;
 	TObjectPtr<UMediaTexture> MediaTexture;
 
@@ -51,7 +52,7 @@ public:
 		MediaPlayer = NewObject<UMediaPlayer>(GetTransientPackage(), NAME_None,RF_Transient);
 		MediaPlayer->AddToRoot();
 		MediaPlayer->SetLooping(true);
-		MediaPlayer->OnMediaEvent().AddRaw(this, &FEffectTreeItem::HandleMediaPlayerEvent);
+		OnMediaEventBinding = MediaPlayer->OnMediaEvent().AddRaw(this, &FEffectTreeItem::HandleMediaPlayerEvent);
 		//----------
 		MediaTexture = NewObject<UMediaTexture>(GetTransientPackage(), NAME_None, RF_Transient);
 		MediaTexture->AddToRoot();
@@ -62,8 +63,11 @@ public:
 
 	~FEffectTreeItem()
 	{
-		if(MediaPlayer)
+		if (MediaPlayer) 
+		{
+			MediaPlayer->OnMediaEvent().Remove(OnMediaEventBinding);
 			MediaPlayer->RemoveFromRoot();
+		}
 		if (MediaTexture)
 			MediaTexture->RemoveFromRoot();
 	}
