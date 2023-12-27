@@ -24,11 +24,14 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
     [map_dir]@{link = "C:\sy\WGXD"; source = "\\192.168.10.240\public\WGXD"; name = "万古邪帝_240" },
     [map_dir]@{link = "C:\sy\LongMaiWuShen"; source = "\\192.168.10.240\public\LongMaiWuShen"; name = "龙脉武神_240" },
-    [map_dir]@{ link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" }
+    [map_dir]@{ link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" },
 
     [map_dir]@{link = "C:\sy\WanYuFengShen_9"; source = "\\192.168.10.218\WanYuFengShen"; name = "万域封神_218" },
     [map_dir]@{link = "C:\sy\KuangShenMoZun_9"; source = "\\192.168.10.218\KuangShenMoZun"; name = "狂神魔尊_218" },
     [map_dir]@{link = "C:\sy\DuBuXiaoYao_8"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
+    [map_dir]@{link = "C:\sy\SSWH"; source = "\\192.168.10.240\public\SSWH"; name = "双生武魂_240" },
+    [map_dir]@{link = "C:\sy\WDSXTQL"; source = "\\192.168.10.240\public\WDSXTQL"; name = "我的师兄太强了_240" },
+    [map_dir]@{link = "C:\sy\ZMLCLWDSWD"; source = "\\192.168.10.240\public\ZMLCLWDSWD"; name = "宗门里除了我都是卧底_240" }
 )
 function Add-SyDir {
     $main_ini = @"
@@ -132,7 +135,7 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
         }
     }
 }
-
+Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.7.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.8.exe -requireAdmin
