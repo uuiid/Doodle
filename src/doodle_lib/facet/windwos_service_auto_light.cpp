@@ -69,6 +69,7 @@ void uninstall_scan_win_service() {
   }
   THROW_IF_WIN32_BOOL_FALSE(::DeleteService(l_service_handle.get()));
 }
+
 }  // namespace
 
 void windows_service_auto_light_facet_t::add_program_options() {}

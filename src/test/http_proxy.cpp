@@ -5,7 +5,6 @@
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <doodle_app/app/program_options.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/ue_exe.h>

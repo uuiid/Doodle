@@ -14,7 +14,6 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/gui_template/show_windows.h>
 
-#include <doodle_app/app/program_options.h>
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/lib_warp/icon_font_macro.h>
