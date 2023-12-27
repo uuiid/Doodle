@@ -4,4 +4,4 @@
 #include <doodle_lib/facet/windwos_service_auto_light.h>
 
 #include "main_macro.h"
-DOODLE_MAIN_IMPL(doodle::windwos_service_auto_light_facet_t)
+DOODLE_MAIN_IMPL(doodle::windows_service_auto_light_facet_t)
