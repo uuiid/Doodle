@@ -621,50 +621,53 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
     if (CurrentItem) 
     {
         FString DefaultPath = FPaths::ProjectContentDir();
-        //--------------------------------
-        FString ProjectContentDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
-        FString SourcePath = FPaths::GetPath(CurrentItem->JsonFile);
-        FString AbsoluteSrcDir = FPaths::ConvertRelativePathToFull(SourcePath);
-        //----------------
-        TArray<FString> FilesToCopy;
-        IFileManager::Get().FindFilesRecursive(FilesToCopy, *AbsoluteSrcDir, TEXT("*"), true, true);
-        ParallelFor(FilesToCopy.Num(), [&](int32 Index)
-        {
-            const FString& SourceFilePath = FilesToCopy[Index];
-            if (FPaths::GetExtension(SourceFilePath, true) != TEXT(".json")
-                && FPaths::GetExtension(SourceFilePath, true) != TEXT(".png")
-                && FPaths::GetExtension(SourceFilePath, true) != TEXT(".avi"))
-            {
-                FString DestFilePath = FPaths::Combine(ProjectContentDir / CurrentItem->Name.ToString(), SourceFilePath.RightChop(AbsoluteSrcDir.Len()));
-                IFileManager::Get().Copy(*DestFilePath, *SourceFilePath, true, true);
-            }
-        });
-        FString Info = FString::Format(TEXT("导入特效：{0}到项目内容目录"), { CurrentItem->Name.ToString() });
-        FNotificationInfo L_Info{ FText::FromString(Info) };
-        L_Info.FadeInDuration = 1.0f;  // 
-        L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
-        FSlateNotificationManager::Get().AddNotification(L_Info);
         //---------------
-        //bool bFolderSelected = false;
-        //IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
-        //if (DesktopPlatform)
-        //{
-        //    void* TopWindowHandle = FSlateApplication::Get().GetActiveTopLevelWindow().IsValid() ? FSlateApplication::Get().GetActiveTopLevelWindow()->GetNativeWindow()->GetOSWindowHandle() : nullptr;
-        //    FString FolderName;
-        //    bFolderSelected = DesktopPlatform->OpenDirectoryDialog(
-        //        TopWindowHandle,
-        //        TEXT("Message"),
-        //        DefaultPath,
-        //        FolderName
-        //    );
-        //    if (bFolderSelected)
-        //    {
-        //        ExportDirectory = FolderName;
-        //        ////----------------------
-        //        //FString RelativePath = ExportDirectory.RightChop(ProjectContentDir.Len());
-        //        //UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-        //          EditorAssetSubsystem->RenameDirectory(FPaths::Combine(TEXT("/Game"), CurrentItem->Name.ToString()), FPaths::Combine(TEXT("/Game") / RelativePath, CurrentItem->Name.ToString()))
-        //    }
-        //}
+        bool bFolderSelected = false;
+        IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+        if (DesktopPlatform)
+        {
+            void* TopWindowHandle = FSlateApplication::Get().GetActiveTopLevelWindow().IsValid() ? FSlateApplication::Get().GetActiveTopLevelWindow()->GetNativeWindow()->GetOSWindowHandle() : nullptr;
+            FString FolderName;
+            bFolderSelected = DesktopPlatform->OpenDirectoryDialog(
+                TopWindowHandle,
+                TEXT("Message"),
+                DefaultPath,
+                FolderName
+            );
+            if (bFolderSelected)
+            {
+                ExportDirectory = FolderName;
+                //--------------------------------
+                FString ProjectContentDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
+                FString SourcePath = FPaths::GetPath(CurrentItem->JsonFile);
+                FString AbsoluteSrcDir = FPaths::ConvertRelativePathToFull(SourcePath);
+                //----------------
+                TArray<FString> FilesToCopy;
+                IFileManager::Get().FindFilesRecursive(FilesToCopy, *AbsoluteSrcDir, TEXT("*"), true, true);
+                ParallelFor(FilesToCopy.Num(), [&](int32 Index)
+                {
+                    const FString& SourceFilePath = FilesToCopy[Index];
+                    if (FPaths::GetExtension(SourceFilePath, true) != TEXT(".json")
+                        && FPaths::GetExtension(SourceFilePath, true) != TEXT(".png")
+                        && FPaths::GetExtension(SourceFilePath, true) != TEXT(".avi"))
+                    {
+                        FString DestFilePath = FPaths::Combine(ProjectContentDir / CurrentItem->Name.ToString(), SourceFilePath.RightChop(AbsoluteSrcDir.Len()));
+                        IFileManager::Get().Copy(*DestFilePath, *SourceFilePath, true, true);
+                    }
+                });
+                //---------------------
+                FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+                AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
+                FString RelativePath = ExportDirectory.RightChop(ProjectContentDir.Len());
+                UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+                EditorAssetSubsystem->RenameDirectory(FPaths::Combine(TEXT("/Game"), CurrentItem->Name.ToString()), FPaths::Combine(TEXT("/Game") / RelativePath, CurrentItem->Name.ToString()));
+                //-----------------------
+                FString Info = FString::Format(TEXT("导入特效：{0}到项目:{1}完成"), { CurrentItem->Name.ToString(),FPaths::Combine(TEXT("/Game"), RelativePath) });
+                FNotificationInfo L_Info{ FText::FromString(Info) };
+                L_Info.FadeInDuration = 1.0f;  // 
+                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                FSlateNotificationManager::Get().AddNotification(L_Info);
+            }
+        }
     }
 }

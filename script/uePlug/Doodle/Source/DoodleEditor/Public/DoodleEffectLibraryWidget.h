@@ -168,7 +168,7 @@ private:
 	void OnPlayPreview(TSharedPtr<FEffectTreeItem> inSelectItem);
 	//---------------
 	void OnEffectExport();
-	//FString ExportDirectory;
+	FString ExportDirectory;
 	//----------
 	TSharedPtr<SAssetSearchBox> SearchBoxPtr;
 public:
