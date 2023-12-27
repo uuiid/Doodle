@@ -27,6 +27,11 @@ void FDoodleCommands::RegisterCommands() {
       DoodleOrganizeWindow, "Doodle Organize", "Open Organize Windows", EUserInterfaceActionType::Button,
       FInputGesture()
   );
+  //------
+  UI_COMMAND(
+      DoodleEffectLibraryWidget, "Doodle Effect", "Open Effect Library Windows", EUserInterfaceActionType::Button,
+      FInputGesture()
+  );
 }
 
 #undef LOCTEXT_NAMESPACE

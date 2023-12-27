@@ -29,6 +29,7 @@
 #include "LevelSequence.h"
 //----------------文件管理
 #include "DoodleOrganizeCompoundWidget.h"
+#include "DoodleEffectLibraryWidget.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -62,6 +63,12 @@ void FdoodleEditorModule::StartupModule() {
       FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name); }),
       FCanExecuteAction()
   );
+  //-----------------------
+  PluginCommands->MapAction(
+      FDoodleCommands::Get().DoodleEffectLibraryWidget, 
+      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryWidget::Name);}),
+      FCanExecuteAction()
+  );
 
   /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
@@ -80,6 +87,14 @@ void FdoodleEditorModule::StartupModule() {
   FGlobalTabmanager::Get() //文件管理
       ->RegisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name, FOnSpawnTab::CreateStatic(&UDoodleOrganizeCompoundWidget::OnSpawnAction))
       .SetDisplayName(FText::FromString(TEXT("文件分类整理")))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  //-----------
+  FGlobalTabmanager::Get()->RegisterNomadTabSpawner(UDoodleEffectLibraryWidget::Name, FOnSpawnTab::CreateStatic(&UDoodleEffectLibraryWidget::OnSpawnAction))
+      .SetDisplayName(FText::FromString(TEXT("特效资源库")))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  //-------------
+  FGlobalTabmanager::Get()->RegisterNomadTabSpawner(UDoodleEffectLibraryEditWidget::Name, FOnSpawnTab::CreateStatic(&UDoodleEffectLibraryEditWidget::OnSpawnAction))
+      .SetDisplayName(FText::FromString(TEXT("新建特效")))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   FContentBrowserModule &ContentBrowserModule =
@@ -169,6 +184,8 @@ void FdoodleEditorModule::ShutdownModule() {
   // zhanghang 变体相关 23/09/25
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DoodleVariantCompoundWidget::Name);
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleEffectLibraryWidget::Name);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleEffectLibraryEditWidget::Name);
 
   // 取消注册资产动作
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
@@ -229,6 +246,7 @@ void FdoodleEditorModule::RegisterMenus() {
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands);
       //Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleVariantWindow, PluginCommands);
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleOrganizeWindow, PluginCommands);
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleEffectLibraryWidget, PluginCommands);
     }
   }
 

@@ -127,6 +127,14 @@ public class doodleEditor : ModuleRules
 				"SequencerWidgets", // 曲线编辑器
 				//---------
 				"MovieRenderPipelineRenderPasses",
+                "EditorWidgets",
+                "Niagara",
+                "AVIWriter",
+                "MovieSceneCapture",
+                "MediaAssets",
+                "MediaPlayerEditor",
+				"Media",
+                "NiagaraEditor"
             }
 		);
 

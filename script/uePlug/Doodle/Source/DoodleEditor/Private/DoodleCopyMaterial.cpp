@@ -59,6 +59,7 @@
 
 //文件夹整理
 #include "DoodleOrganizeCompoundWidget.h"
+#include "DoodleEffectLibraryWidget.h"
 
 namespace {
 void print_test(USkeletalMesh* In_Obj) {
@@ -184,6 +185,23 @@ void DoodleCopyMat::Construct(const FArguments& Arg) {
           ]
           .ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类整理文件夹")); })
       ]
+//------------------------------
+      + SHorizontalBox::Slot()
+      .AutoWidth()
+      .HAlign(HAlign_Left)
+      .Padding(FMargin{ 1.f, 1.f })
+      [
+          SNew(SButton)
+          .OnClicked_Lambda([this]() -> FReply
+          {
+            FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryWidget::Name);
+            return FReply::Handled();
+          })
+          [
+              SNew(STextBlock).Text(FText::FromString(TEXT("特效资源库")))
+          ]
+          .ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类特效资源库")); })
+        ]
       ];
   /// clang-format on
 }

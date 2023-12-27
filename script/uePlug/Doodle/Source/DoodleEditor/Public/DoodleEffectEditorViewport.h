@@ -7,13 +7,13 @@
 #include "AdvancedPreviewScene.h"
 #include "SCommonEditorViewportToolbarBase.h"
 #include "SkeletalRenderPublic.h"
-#include "GameFramework/WorldSettings.h"
 
-class DoodleVariantEditorViewport;
 
-class DoodleVariantEditorPreviewScene : public FAdvancedPreviewScene {
+class DoodleEffectEditorViewport;
+
+class DoodleEffectEditorPreviewScene : public FAdvancedPreviewScene {
 public:
-	DoodleVariantEditorPreviewScene();
+	DoodleEffectEditorPreviewScene();
 	// FAdvancedPreviewScene 
 	virtual void Tick(float InDeltaTime) override;
 	void SetPreviewMeshComponent(UDebugSkelMeshComponent* InSkeletalMeshComponent);
@@ -22,9 +22,9 @@ private:
 	bool PreviewComponentSelectionOverride(const UPrimitiveComponent* InComponent) const;
 };
 
-class DoodleVariantEditorViewportClient : public FEditorViewportClient {
+class DoodleEffectEditorViewportClient : public FEditorViewportClient {
 public:
-	DoodleVariantEditorViewportClient(FAssetEditorModeManager* InAssetEditorModeManager, FPreviewScene* InPreviewScene, const TWeakPtr<SEditorViewport>& InEditorViewportWidget);
+	DoodleEffectEditorViewportClient(FAssetEditorModeManager* InAssetEditorModeManager, FPreviewScene* InPreviewScene, const TWeakPtr<SEditorViewport>& InEditorViewportWidget);
 
 	virtual void Draw(FViewport* InViewport, FCanvas* Canvas) override;
 
@@ -37,39 +37,35 @@ private:
 	void GetAllVertexIndicesUsedInSection(const FRawStaticIndexBuffer16or32Interface& IndexBuffer, const FSkelMeshRenderSection& SkelMeshSection, TArray<int32>& OutIndices);
 };
 
-class DoodleVariantEditorViewportToolBar : public SCommonEditorViewportToolbarBase {
+class DoodleEffectEditorViewportToolBar : public SCommonEditorViewportToolbarBase {
 public:
-	SLATE_BEGIN_ARGS(DoodleVariantEditorViewportToolBar) {}
+	SLATE_BEGIN_ARGS(DoodleEffectEditorViewportToolBar) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TSharedPtr<DoodleVariantEditorViewport> InRealViewport);
+	void Construct(const FArguments& InArgs, TSharedPtr<DoodleEffectEditorViewport> InRealViewport);
 };
 
 /**
  * 
  */
-class DOODLEEDITOR_API DoodleVariantEditorViewport : public SEditorViewport, public ICommonEditorViewportToolbarInfoProvider
+class DOODLEEDITOR_API DoodleEffectEditorViewport : public SEditorViewport, public ICommonEditorViewportToolbarInfoProvider
 {
 public:
-	DoodleVariantEditorViewport();
-	~DoodleVariantEditorViewport();
+	DoodleEffectEditorViewport();
+	~DoodleEffectEditorViewport();
 
 	void Construct(const FArguments& Arg);
-	void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh, TArray<FSkeletalMaterial> Variants);
-
-	ECheckBoxState IsIsolateMaterialEnabled(int32 MaterialIndex);
-	void OnMaterialIsolatedChanged(ECheckBoxState NewState, int32 MaterialIndex);
+	void SetViewportData(UObject* Particle);
 private:
-	TSharedPtr<DoodleVariantEditorViewportClient> ViewportClient;
+	TSharedPtr<DoodleEffectEditorViewportClient> ViewportClient;
 	TSharedPtr<FAssetEditorModeManager> AssetEditorModeManager;
-	TSharedPtr<DoodleVariantEditorPreviewScene> PreviewScene;
+	TSharedPtr<DoodleEffectEditorPreviewScene> PreviewScene;
 
 	TSharedRef<class SEditorViewport> GetViewportWidget() override;
 	TSharedPtr<FExtender> GetExtenders() const override;
 	void OnFloatingButtonClicked() override;
 
 	AActor* PreviewActor;
-	void HandleFocusCamera();
 
 protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
