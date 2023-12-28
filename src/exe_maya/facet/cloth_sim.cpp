@@ -42,21 +42,14 @@
 #include <maya/MGlobal.h>
 
 namespace doodle::maya_plug {
-const std::string& cloth_sim::name() const noexcept {
-  static const std::string name = "cloth_sim";
-  return name;
-}
-bool cloth_sim::post() {
+
+bool cloth_sim::post(const FSys::path& in_path) {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(app_base::Get().arg()(config).str());
-  if (l_str.empty()) {
-    return l_ret;
-  }
-  DOODLE_LOG_INFO("开始初始化配置文件 {}", l_str);
+  DOODLE_LOG_INFO("开始初始化配置文件 {}", in_path);
   maya_exe_ns::qcloth_arg l_arg{};
 
   try {
-    l_arg = nlohmann::json::parse(FSys::ifstream{l_str}).get<maya_exe_ns::qcloth_arg>();
+    l_arg = nlohmann::json::parse(FSys::ifstream{in_path}).get<maya_exe_ns::qcloth_arg>();
   } catch (const nlohmann::json::exception& e) {
     DOODLE_LOG_ERROR("解析配置失败 {}", e.what());
     return l_ret;

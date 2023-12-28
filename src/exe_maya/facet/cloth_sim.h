@@ -35,8 +35,7 @@ class cloth_sim final {
   cloth_sim()  = default;
   ~cloth_sim() = default;
 
-  [[nodiscard]] const std::string& name() const noexcept;
-  bool post();
+  bool post(const FSys::path& in_path);
 };
 
 }  // namespace doodle::maya_plug

@@ -101,22 +101,13 @@ void export_fbx_facet::play_blast() {
   l_p.play_blast_(anim_begin_time_, k_end_time);
 }
 
-const std::string& export_fbx_facet::name() const noexcept {
-  static const std::string name = "export_fbx_facet";
-  return name;
-}
-
-bool export_fbx_facet::post() {
+bool export_fbx_facet::post(const FSys::path& in_path) {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(app_base::Get().arg()(config).str());
-  if (l_str.empty()) {
-    return l_ret;
-  }
-  DOODLE_LOG_INFO("开始初始化配置文件 {}", l_str);
+  DOODLE_LOG_INFO("开始初始化配置文件 {}", in_path);
   maya_exe_ns::export_fbx_arg l_arg{};
 
   try {
-    l_arg = nlohmann::json::parse(FSys::ifstream{l_str}).get<maya_exe_ns::export_fbx_arg>();
+    l_arg = nlohmann::json::parse(FSys::ifstream{in_path}).get<maya_exe_ns::export_fbx_arg>();
   } catch (const nlohmann::json::exception& e) {
     DOODLE_LOG_ERROR("解析配置失败 {}", e.what());
     return l_ret;
@@ -161,6 +152,5 @@ bool export_fbx_facet::post() {
 
   return l_ret;
 }
-
 
 }  // namespace doodle::maya_plug

@@ -31,8 +31,7 @@ class export_fbx_facet final {
   export_fbx_facet()  = default;
   ~export_fbx_facet() = default;
 
-  [[nodiscard]] const std::string& name() const noexcept;
-  bool post();
+  bool post(const FSys::path& in_path);
 };
 
 }  // namespace doodle::maya_plug

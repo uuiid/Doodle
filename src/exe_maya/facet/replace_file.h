@@ -24,8 +24,7 @@ class replace_file_facet {
   replace_file_facet()  = default;
   ~replace_file_facet() = default;
 
-  [[nodiscard]] const std::string& name() const noexcept;
-  bool post();
+  bool post(const FSys::path& in_path);
 };
 
 }  // namespace doodle::maya_plug

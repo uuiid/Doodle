@@ -24,21 +24,14 @@
 
 #include <exe_maya/core/maya_lib_guard.h>
 namespace doodle::maya_plug {
-const std::string& replace_file_facet::name() const noexcept {
-  static const std::string name{"replace_file_facet"};
-  return name;
-}
-bool replace_file_facet::post() {
-  bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(app_base::Get().arg()(config).str());
-  if (l_str.empty()) {
-    return l_ret;
-  }
-  DOODLE_LOG_INFO("开始初始化配置文件 {}", l_str);
-  maya_exe_ns::replace_file_arg l_arg{};
 
+bool replace_file_facet::post(const FSys::path& in_path) {
+  bool l_ret = false;
+
+  DOODLE_LOG_INFO("开始初始化配置文件 {}", in_path);
+  maya_exe_ns::replace_file_arg l_arg{};
   try {
-    l_arg = nlohmann::json::parse(FSys::ifstream{l_str}).get<maya_exe_ns::replace_file_arg>();
+    l_arg = nlohmann::json::parse(FSys::ifstream{in_path}).get<maya_exe_ns::replace_file_arg>();
   } catch (const nlohmann::json::exception& e) {
     DOODLE_LOG_ERROR("解析配置失败 {}", e.what());
     return l_ret;
