@@ -43,11 +43,12 @@ boost::asio::cancellation_slot app_base::cancellation_signals::slot() {
 
 app_base* app_base::self = nullptr;
 
-app_base::app_base()
+app_base::app_base(int argc, const char* const argv[])
     : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format("doodle {}", version::build_info::get().version_str))
       ),
       stop_(false),
-      lib_ptr(std::make_shared<doodle_lib>()) {
+      lib_ptr(std::make_shared<doodle_lib>()),
+      arg_{argc, argv} {
   self                   = this;
   auto&& l_program_info  = g_ctx().emplace<program_info>();
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
@@ -70,11 +71,13 @@ app_base::~app_base() = default;
 
 app_base& app_base::Get() { return *self; }
 std::int32_t app_base::run() {
+  if (stop_) return 0;
   g_io_context().run();
   return 0;
 }
 
 std::int32_t app_base::poll_one() {
+  if (stop_) return 0;
   g_io_context().poll_one();
   return 0;
 }

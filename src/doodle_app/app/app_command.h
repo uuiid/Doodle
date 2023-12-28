@@ -13,6 +13,7 @@
 #include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/gui/main_proc_handle.h>
 
+#include <array>
 #include <tuple>
 
 namespace doodle {
@@ -23,32 +24,19 @@ namespace doodle {
 template <typename... Facet_>
 class app_command : public app_base {
  public:
-  app_command() : app_base() {
-    g_ctx().emplace<program_options>();
+  app_command() : app_base() { run_facet(); };
 
-    (add_facet<Facet_>(), ...);
-  };
-
-  app_command(int argc, const char* const argv[]) : app_command() {
-    for (auto&& val : facet_list) {
-      val->add_program_options();
-    }
-    g_ctx().get<program_options>().arg.parse(argc, argv);
-  }
+  app_command(int argc, const char* const argv[]) : app_command(argc, argv) { run_facet(); }
   virtual ~app_command() override = default;
 
-  static app_command& Get() { return *(dynamic_cast<app_command*>(self)); }
-  template <typename T>
-  auto add_facet() {
-    return static_cast<T*>(facet_list.emplace_back(std::in_place_type<T>).data());
-  };
+  void run_facet() {
+    std::array<bool, sizeof...(Facet_)> l_r{
+        Facet_{}(arg_, facets_)...,
+    };
+    stop_ = std::any_of(l_r.begin(), l_r.end(), [](bool i) { return i; });
+  }
 
  protected:
-  virtual void post_constructor() override {
-    facet_list |= ranges::actions::remove_if([](app_facet_interface& in) { return !in->post(); });
-  };
-
-  virtual void deconstruction() override { facet_list.clear(); }
 };
 
 template <typename... Facet_>

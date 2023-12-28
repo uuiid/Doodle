@@ -9,6 +9,7 @@
 
 #include <boost/signals2.hpp>
 
+#include <argh.h>
 #include <thread>
 
 namespace doodle {
@@ -36,11 +37,9 @@ class DOODLE_CORE_API app_base {
   doodle_lib_ptr lib_ptr;
 
   std::wstring p_title;
-  std::vector<app_facet_interface> facet_list{};
-  /**
-   * 此处更改为默认运行构面的名称
-   */
-  std::string default_run_facet_name{};
+  argh::parser arg_;
+  std::vector<std::shared_ptr<void>> facets_;
+
   /// @brief 在初始化中获取的id为主id(也是渲染线程id)
   std::thread::id run_id{std::this_thread::get_id()};
 
@@ -51,12 +50,13 @@ class DOODLE_CORE_API app_base {
    *
    */
 
-  virtual void post_constructor()    = 0;
-  virtual void deconstruction()      = 0;
+  virtual void post_constructor() = 0;
+  virtual void deconstruction()   = 0;
   std::atomic_bool stop_;
 
  public:
-  app_base();
+  explicit app_base(int argc, const char* const argv[]);
+  app_base() : app_base(0, nullptr) {}
   virtual ~app_base();
 
   /**
