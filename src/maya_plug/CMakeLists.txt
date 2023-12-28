@@ -23,8 +23,8 @@ add_subdirectory(maya_render maya_render_${Maya_Version})
 
 target_include_directories(doodle_maya_lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(doodle_maya_lib PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plugins
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plugins
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
 )
 target_link_libraries(doodle_maya_lib
         PRIVATE

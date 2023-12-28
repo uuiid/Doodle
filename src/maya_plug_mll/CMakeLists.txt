@@ -5,8 +5,8 @@ add_library(doodle_maya MODULE main.cpp)
 
 target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(doodle_maya PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plugins
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plugins
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
         )
 target_link_libraries(doodle_maya
         PRIVATE
@@ -45,14 +45,14 @@ add_custom_command(
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT maya_plug_com)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION maya/plugins)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION maya/plug-ins)
 include(InstallRequiredSystemLibraries)
 install(TARGETS doodle_maya
         RUNTIME_DEPENDENCIES
         DIRECTORIES ${MAYA_BASE_DIR}/bin
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
-        DESTINATION maya/plugins
+        DESTINATION maya/plug-ins
 )
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
