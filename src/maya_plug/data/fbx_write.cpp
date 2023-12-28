@@ -225,22 +225,16 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
   }
 
   {
-    auto l_rot_x = get_plug(dag_path.node(), "rotateX").asDouble(&l_status);
-    auto l_rot_y = get_plug(dag_path.node(), "rotateY").asDouble(&l_status);
-    auto l_rot_z = get_plug(dag_path.node(), "rotateZ").asDouble(&l_status);
-
-    MEulerRotation l_rot{l_rot_x, l_rot_y, l_rot_z};
-    l_rot = l_rot.boundIt().closestSolution(previous_frame_euler_rotation);
-    MAngle l_rot_angle{};
-    l_rot_angle.setUnit(MAngle::kRadians);
+    auto l_rot_x = get_plug(dag_path.node(), "rotateX").asMAngle(&l_status);
+    auto l_rot_y = get_plug(dag_path.node(), "rotateY").asMAngle(&l_status);
+    auto l_rot_z = get_plug(dag_path.node(), "rotateZ").asMAngle(&l_status);
     // rot x
     {
       auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
       l_anim_curve->KeyModifyBegin();
       auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
       maya_chick(l_status);
-      l_rot_angle.setValue(l_rot.x);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_angle.asDegrees());
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_x.asDegrees());
       l_anim_curve->KeyModifyEnd();
     }
 
@@ -250,8 +244,7 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
       l_anim_curve->KeyModifyBegin();
       auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
       maya_chick(l_status);
-      l_rot_angle.setValue(l_rot.y);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_angle.asDegrees());
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_y.asDegrees());
       l_anim_curve->KeyModifyEnd();
     }
 
@@ -261,8 +254,7 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
       l_anim_curve->KeyModifyBegin();
       auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
       maya_chick(l_status);
-      l_rot_angle.setValue(l_rot.z);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_angle.asDegrees());
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_z.asDegrees());
       l_anim_curve->KeyModifyEnd();
     }
   }
