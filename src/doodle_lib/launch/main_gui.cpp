@@ -9,6 +9,6 @@ bool main_gui_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
   auto l_gui_facet = std::make_shared<main_facet>();
   l_gui_facet->post();
   in_vector.emplace_back(l_gui_facet);
-  return true;
+  return false;
 }
 }  // namespace doodle::launch
