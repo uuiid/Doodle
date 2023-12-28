@@ -7,7 +7,7 @@
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
 
-#include <doodle_lib/facet/main_facet.h>
+#include <doodle_lib/launch/main_gui.h>
 
 #include "main_macro.h"
-DOODLE_MAIN_IMPL(doodle::main_facet)
+DOODLE_MAIN_IMPL(doodle::launch::main_gui_launcher_t)

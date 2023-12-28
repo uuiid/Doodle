@@ -55,6 +55,5 @@ class DOODLE_APP_API gui_facet {
   [[nodiscard]] const std::string& name() const noexcept;
   bool post();
   void deconstruction();
-  virtual void add_program_options(){};
 };
 }  // namespace doodle::facet
