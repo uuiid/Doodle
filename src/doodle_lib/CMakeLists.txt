@@ -45,6 +45,7 @@ add_subdirectory(render_farm)
 add_subdirectory(sqlite_orm)
 add_subdirectory(toolkit)
 add_subdirectory(gui)
+add_subdirectory(launch)
 add_subdirectory(distributed_computing)
 
 set_target_properties(doodle_lib
