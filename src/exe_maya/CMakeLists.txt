@@ -8,6 +8,7 @@ add_subdirectory(facet)
 add_subdirectory(cloth_sim)
 add_subdirectory(core)
 add_subdirectory(data)
+add_subdirectory(launch)
 
 set_target_properties(doodle_maya_exe
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
