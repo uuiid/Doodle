@@ -3,31 +3,9 @@
 //
 #include "doodle_core/logger/logger.h"
 
-#include <doodle_lib/facet/main_facet.h>
-
-#include <boost/exception/diagnostic_information.hpp>
-
-#include <exe_maya/facet/cloth_sim.h>
-#include <exe_maya/facet/export_fbx.h>
-#include <exe_maya/facet/replace_file.h>
+#include <exe_gui/main_macro.h>
+#include <exe_maya/launch/maya_exe.h>
 #include <iostream>
-
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-extern "C" int main(int argc, const char* const argv[]) try {
-  using main_app = doodle::app_command<
-      doodle::maya_plug::cloth_sim, doodle::maya_plug::export_fbx_facet, doodle::maya_plug::replace_file_facet>;
-  main_app app{argc, argv};
-  try {
-    return app.run();
-  } catch (const std::exception& err) {
-    DOODLE_LOG_WARN(boost::diagnostic_information(err));
-    return 1;
-  } catch (...) {
-    DOODLE_LOG_ERROR(boost::current_exception_diagnostic_information(true));
-    return 1;
-  }
-  return 0;
-} catch (...) {
-  std::cout << boost::current_exception_diagnostic_information(true) << std::endl;
-  return 1;
-}
+
+DOODLE_MAIN_IMPL(doodle::launch::maya_exe_launcher_t)
