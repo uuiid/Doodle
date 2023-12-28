@@ -79,7 +79,7 @@ void app_base::stop_app(bool in_stop) {
   on_cancel.emit();
   on_stop();
   g_ctx().emplace<program_info>().is_stop = true;
-  this->deconstruction();
+  facets_.clear();
   core_set_init{}.write_file();
 }
 

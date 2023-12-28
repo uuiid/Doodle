@@ -82,7 +82,7 @@ class app_command : public app_base {
  public:
   app_command() : app_base() { run_facet(); };
 
-  app_command(int argc, const char* const argv[]) : app_command(argc, argv) { run_facet(); }
+  app_command(int argc, const char* const argv[]) : app_base(argc, argv) { run_facet(); }
   virtual ~app_command() override = default;
 
   void run_facet() {
