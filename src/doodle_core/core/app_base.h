@@ -43,8 +43,6 @@ class DOODLE_CORE_API app_base {
   /// @brief 在初始化中获取的id为主id(也是渲染线程id)
   std::thread::id run_id{std::this_thread::get_id()};
 
-  void init();
-
   /**
    * @brief 这个会在第一个循环中加载
    *

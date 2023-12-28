@@ -52,21 +52,15 @@ app_base::app_base(int argc, const char* const argv[])
   self                   = this;
   auto&& l_program_info  = g_ctx().emplace<program_info>();
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
-  init();
-}
-
-void app_base::init() {
-  DOODLE_LOG_INFO("开始初始化基本配置");
-
+  default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   core_set_init k_init{};
-
-  DOODLE_LOG_INFO("寻找用户配置文件目录");
+  default_logger_raw()->log(log_loc(), level::warn, "寻找用户配置文件目录");
   k_init.config_to_user();
-  DOODLE_LOG_INFO("读取配置文件");
+  default_logger_raw()->log(log_loc(), level::warn, "读取配置文件");
   k_init.read_file();
-  DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());
-  boost::asio::post(g_io_context(), [this]() { this->post_constructor(); });
+  default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", core_set::get_set().program_location());
 }
+
 app_base::~app_base() = default;
 
 app_base& app_base::Get() { return *self; }
