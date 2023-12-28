@@ -3,4 +3,4 @@
 //
 #include "main_macro.h"
 #include <doodle_server/facet/server_facet.h>
-DOODLE_MAIN_IMPL(doodle::server_facet)
+DOODLE_MAIN_IMPL()
