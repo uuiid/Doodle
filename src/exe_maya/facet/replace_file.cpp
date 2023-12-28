@@ -30,7 +30,7 @@ const std::string& replace_file_facet::name() const noexcept {
 }
 bool replace_file_facet::post() {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(config).str());
+  auto l_str = FSys::from_quotation_marks(app_base::Get().arg()(config).str());
   if (l_str.empty()) {
     return l_ret;
   }
@@ -91,6 +91,5 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
   );
 }
 
-void replace_file_facet::add_program_options() { g_ctx().get<program_options>().arg.add_param(config); }
 
 }  // namespace doodle::maya_plug

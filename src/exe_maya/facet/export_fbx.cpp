@@ -5,10 +5,9 @@
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/database_task/sqlite_client.h"
 #include "doodle_core/logger/logger.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/doodle_core.h>
-
-#include <doodle_app/app/program_options.h>
 
 #include "doodle_lib/exe_warp/maya_exe.h"
 
@@ -109,7 +108,7 @@ const std::string& export_fbx_facet::name() const noexcept {
 
 bool export_fbx_facet::post() {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(config).str());
+  auto l_str = FSys::from_quotation_marks(app_base::Get().arg()(config).str());
   if (l_str.empty()) {
     return l_ret;
   }
@@ -163,6 +162,5 @@ bool export_fbx_facet::post() {
   return l_ret;
 }
 
-void export_fbx_facet::add_program_options() { g_ctx().get<program_options>().arg.add_param(config); }
 
 }  // namespace doodle::maya_plug

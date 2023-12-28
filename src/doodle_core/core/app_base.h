@@ -64,6 +64,8 @@ class DOODLE_CORE_API app_base {
   bool is_main_thread() const;
 
   virtual std::int32_t poll_one();
+  // get argh
+  const argh::parser& arg() const { return arg_; }
 
   boost::signals2::signal<void()> on_stop;
   cancellation_signals on_cancel;

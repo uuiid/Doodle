@@ -39,7 +39,6 @@ class cloud_drive_facet {
 
  public:
   bool post();
-  void add_program_options();
 };
 
 }  // namespace doodle

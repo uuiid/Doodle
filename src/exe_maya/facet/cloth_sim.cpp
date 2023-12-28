@@ -8,6 +8,7 @@
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/database_task/sqlite_client.h"
 #include "doodle_core/logger/logger.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/doodle_core.h>
 
@@ -47,7 +48,7 @@ const std::string& cloth_sim::name() const noexcept {
 }
 bool cloth_sim::post() {
   bool l_ret = false;
-  auto l_str = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(config).str());
+  auto l_str = FSys::from_quotation_marks(app_base::Get().arg()(config).str());
   if (l_str.empty()) {
     return l_ret;
   }
@@ -75,8 +76,9 @@ bool cloth_sim::post() {
 #if MAYA_API_VERSION >= 20190000
   MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)});
 #else
-  MGlobal::executeCommand(d_str{
-      fmt::format(R"(loadPlugin "qualoth_{}_x64")", fmt::to_string(MAYA_API_VERSION).substr(0, 4))});
+  MGlobal::executeCommand(
+      d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", fmt::to_string(MAYA_API_VERSION).substr(0, 4))}
+  );
 #endif
 
   maya_file_io::set_workspace(l_arg.file_path);
@@ -126,7 +128,5 @@ bool cloth_sim::post() {
 
   return l_ret;
 }
-
-void cloth_sim::add_program_options() { g_ctx().get<program_options>().arg.add_param(config); }
 
 };  // namespace doodle::maya_plug

@@ -31,7 +31,7 @@ open_project::open_project() : auth_ptr_(std::make_shared<authorization>()) {
   //  expire_time_str_  = fmt::vformat("还有 {:%d} 天到期", fmt::make_format_args(l_time));
   expire_time_str_  = fmt::format("还有 {} 天到期", l_time);
   next_time_.data = next_time_backup_ = core_set::get_set().next_time_;
-  cmd_path_                           = FSys::from_quotation_marks(g_ctx().get<program_options>().arg(1).str());
+  cmd_path_                           = FSys::from_quotation_marks(app_base::Get().arg()[1]);
 }
 
 bool open_project::render() {
@@ -83,7 +83,15 @@ bool open_project::render() {
     }
 
     if (next_time_backup_) {
-      g_ctx().get<program_options>().init_project();
+      if (auto l_path = FSys::from_quotation_marks(app_base::Get().arg()[1]);
+          !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
+          l_path.extension() == doodle_config::doodle_db_name.data()) {
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path);
+      } else if (l_path = core_set::get_set().project_root[0];
+                 !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
+                 l_path.extension() == doodle_config::doodle_db_name.data()) {
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path);
+      }
       open = false;
       ImGui::CloseCurrentPopup();
     }

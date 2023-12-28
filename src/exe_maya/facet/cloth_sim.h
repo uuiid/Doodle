@@ -37,7 +37,6 @@ class cloth_sim final {
 
   [[nodiscard]] const std::string& name() const noexcept;
   bool post();
-  void add_program_options();
 };
 
 }  // namespace doodle::maya_plug
