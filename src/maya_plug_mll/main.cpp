@@ -64,28 +64,34 @@ HWND find_windows() {
   return l_data.maya_wnd;
 }
 
-void open_windows() {
-  using maya_gui_app  = doodle::app_plug<maya_facet>;
-  using maya_null_app = doodle::app_command<>;
+class maya_gui_launcher_t {
+ public:
+  maya_gui_launcher_t()  = default;
+  ~maya_gui_launcher_t() = default;
 
-  switch (MGlobal::mayaState()) {
-    case MGlobal::MMayaState::kBaseUIMode:
-    case MGlobal::MMayaState::kInteractive: {
-      HWND win_id  = find_windows();
-      p_doodle_app = std::make_shared<maya_gui_app>();
-      g_ctx().get<program_info>().parent_windows_attr(win_id);
-      /// 在这里我们加载项目
-      g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
-      g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
-      break;
+  bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+    switch (MGlobal::mayaState()) {
+      case MGlobal::MMayaState::kBaseUIMode:
+      case MGlobal::MMayaState::kInteractive: {
+        HWND win_id = find_windows();
+        g_ctx().get<program_info>().parent_windows_attr(win_id);
+        auto l_gui_facet = std::make_shared<maya_facet>();
+        l_gui_facet->post();
+        in_vector.emplace_back(l_gui_facet);
+        /// 在这里我们加载项目
+        g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
+        g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
+        break;
+      }
+      case MGlobal::MMayaState::kBatch:
+      case MGlobal::MMayaState::kLibraryApp:
+      default:
+        break;
     }
-    case MGlobal::MMayaState::kBatch:
-    case MGlobal::MMayaState::kLibraryApp:
-    default: {
-      p_doodle_app = std::make_shared<maya_null_app>();
-    } break;
+    return false;
   }
-}
+};
+
 }  // namespace doodle::maya_plug
 
 MStatus initializePlugin(MObject obj) {
@@ -94,13 +100,15 @@ MStatus initializePlugin(MObject obj) {
    */
   MStatus status = MStatus::MStatusCode::kFailure;
   MFnPlugin k_plugin{
-      obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()};
+      obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()
+  };
 
-  maya_reg = std::make_shared<::doodle::maya_plug::maya_register>();
+  maya_reg           = std::make_shared<::doodle::maya_plug::maya_register>();
 
-  doodle::maya_plug::open_windows();
+  using maya_gui_app = doodle::app_plug<doodle::maya_plug::maya_gui_launcher_t>;
+  p_doodle_app       = std::make_shared<maya_gui_app>();
   // 注册命令
-  status = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
+  status             = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
   CHECK_MSTATUS(status);
 
   // 添加菜单项

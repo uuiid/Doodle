@@ -51,13 +51,6 @@ class TemplateAction : public MPxCommand {
 /**
  *
  */
-namespace doodle::maya_plug {
-class play_blast;
-
-
-void open_windows();
-
-}  // namespace doodle::maya_plug
 
 namespace fmt {
 /**
