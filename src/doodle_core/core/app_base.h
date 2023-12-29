@@ -88,10 +88,16 @@ class app_command : public app_base {
   virtual ~app_command() override = default;
 
   void run_facet() {
-    std::array<bool, sizeof...(Facet_)> l_r{
-        Facet_{}(arg_, facets_)...,
-    };
-    stop_ = std::any_of(l_r.begin(), l_r.end(), [](bool i) { return i; });
+    try {
+      std::array<bool, sizeof...(Facet_)> l_r{
+          Facet_{}(arg_, facets_)...,
+      };
+      stop_ = std::any_of(l_r.begin(), l_r.end(), [](bool i) { return i; });
+    } catch (...) {
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      default_logger_raw()->flush();
+      stop_ = true;
+    }
   }
 
  protected:
