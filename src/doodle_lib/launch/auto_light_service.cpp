@@ -73,12 +73,9 @@ void uninstall_scan_win_service() {
   THROW_IF_WIN32_BOOL_FALSE(::DeleteService(l_service_handle.get()));
 }
 
-void WINAPI service_ctrl_handler(DWORD dwCtrl);
-
 class auto_light_service_impl_t {
-  static auto_light_service_impl_t *g_this;
-
  public:
+  static auto_light_service_impl_t *g_this;
   auto_light_service_impl_t() { g_this = this; }
   ~auto_light_service_impl_t() = default;
 
@@ -106,44 +103,61 @@ class auto_light_service_impl_t {
 
   void start() {
     set_service_status(SERVICE_START_PENDING);
-
     thread_ = std::make_shared<std::thread>([]() { app_base::Get().run(); });
     set_service_status(SERVICE_RUNNING);
   }
+  void stop() {
+    set_service_status(SERVICE_STOP_PENDING);
+    app_base::Get().stop_app();
+    set_service_status(SERVICE_STOPPED);
+  }
+  void shutdown() {
+    set_service_status(SERVICE_STOP_PENDING);
+    app_base::Get().stop_app();
+    set_service_status(SERVICE_STOPPED);
+  }
 };
-
+DWORD WINAPI service_ctrl_handler(DWORD dwControl, DWORD dwEventType, LPVOID lpEventData, LPVOID lpContext) {
+  switch (dwControl) {
+    case SERVICE_CONTROL_STOP:
+      boost::asio::post(g_io_context(), [lpContext]() {
+        reinterpret_cast<auto_light_service_impl_t *>(lpContext)->stop();
+      });
+      return NO_ERROR;
+    case SERVICE_CONTROL_SHUTDOWN:
+      boost::asio::post(g_io_context(), [lpContext]() {
+        reinterpret_cast<auto_light_service_impl_t *>(lpContext)->shutdown();
+      });
+      return NO_ERROR;
+    case SERVICE_CONTROL_INTERROGATE:
+      return NO_ERROR;
+    default:
+      break;
+  }
+  return ERROR_CALL_NOT_IMPLEMENTED;
+}
 void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
-  auto_light_service_impl_t::GetThis().h_service_status_ =
-      THROW_IF_NULL_ALLOC(::RegisterServiceCtrlHandlerW(L"doodle_scan_win_service", service_ctrl_handler));
+  auto_light_service_impl_t::GetThis().h_service_status_ = THROW_IF_NULL_ALLOC(::RegisterServiceCtrlHandlerExW(
+      L"doodle_scan_win_service", service_ctrl_handler, auto_light_service_impl_t::g_this
+  ));
   // 启动服务
   auto_light_service_impl_t::GetThis().start();
   // 服务初始化
 }
-void WINAPI service_ctrl_handler(DWORD dwCtrl) {
-  switch (dwCtrl) {
-    case SERVICE_CONTROL_STOP:
-      app_base::Get().stop_app();
-      break;
-    case SERVICE_CONTROL_SHUTDOWN:
-      app_base::Get().stop_app();
-      break;
-    case SERVICE_CONTROL_INTERROGATE:
-      break;
-    default:
-      break;
-  }
-}
-
 }  // namespace
-void auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
+bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   if (in_arh[g_install]) {
     install_scan_win_service();
+    return true;
   }
   if (in_arh[g_uninstall]) {
     uninstall_scan_win_service();
+    return true;
   }
   if (in_arh[g_service]) {
-    in_vector.emplace_back(std::make_shared<auto_light_service_impl_t>());
+    auto l_auto_light_service_impl_ptr = std::make_shared<auto_light_service_impl_t>();
+    in_vector.emplace_back(l_auto_light_service_impl_ptr);
+
     ::SERVICE_TABLE_ENTRY l_service_table_entry[]{
         {L"doodle_scan_win_service", reinterpret_cast<::LPSERVICE_MAIN_FUNCTIONW>(service_main)}, {nullptr, nullptr}
     };
@@ -153,6 +167,7 @@ void auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
     //    }); g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
     //    in_vector.emplace_back(scan_win_service_ptr_);
   }
+  return true;
 }
 
 }  // namespace doodle::launch

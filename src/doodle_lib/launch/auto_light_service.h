@@ -12,6 +12,6 @@ class auto_light_service_t {
   auto_light_service_t()  = default;
   ~auto_light_service_t() = default;
 
-  void operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector);
+  bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector);
 };
 }  // namespace doodle::launch
