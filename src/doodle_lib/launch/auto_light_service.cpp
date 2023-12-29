@@ -20,6 +20,7 @@ static constexpr auto g_install{"install"};
 static constexpr auto g_uninstall{"uninstall"};
 static constexpr auto g_service{"service"};
 static constexpr auto g_run{"run"};
+static constexpr auto g_help{"help"};
 
 void install_scan_win_service() {
   DWORD l_size{};
@@ -78,7 +79,7 @@ void uninstall_scan_win_service() {
 
 class auto_light_service_impl_t {
  public:
-  static auto_light_service_impl_t *g_this;
+  inline static auto_light_service_impl_t *g_this;
   auto_light_service_impl_t() { g_this = this; }
   ~auto_light_service_impl_t() = default;
 
@@ -165,7 +166,8 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
     in_vector.emplace_back(l_auto_light_service_impl_ptr);
 
     ::SERVICE_TABLE_ENTRY l_service_table_entry[]{
-        {L"doodle_scan_win_service", reinterpret_cast<::LPSERVICE_MAIN_FUNCTIONW>(service_main)}, {nullptr, nullptr}
+        {const_cast<LPWSTR>(L"doodle_scan_win_service"), reinterpret_cast<::LPSERVICE_MAIN_FUNCTIONW>(service_main)},
+        {nullptr, nullptr}
     };
     THROW_IF_WIN32_BOOL_FALSE(::StartServiceCtrlDispatcherW(l_service_table_entry));
     //    auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
