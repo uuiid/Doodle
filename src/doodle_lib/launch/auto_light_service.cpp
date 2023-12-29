@@ -127,12 +127,16 @@ class auto_light_service_impl_t {
   }
   void pause() {
     set_service_status(SERVICE_PAUSE_PENDING);
-    ::SuspendThread(thread_->native_handle());
+    if (LOG_LAST_ERROR_IF(::SuspendThread(thread_->native_handle()) == static_cast<DWORD>(-1))) {
+      set_service_status(SERVICE_RUNNING);
+    }
     set_service_status(SERVICE_PAUSED);
   }
   void resume() {
     set_service_status(SERVICE_CONTINUE_PENDING);
-    ::ResumeThread(thread_->native_handle());
+    if (LOG_LAST_ERROR_IF(::ResumeThread(thread_->native_handle()) == static_cast<DWORD>(-1))) {
+      set_service_status(SERVICE_PAUSED);
+    }
     set_service_status(SERVICE_RUNNING);
   }
 };
