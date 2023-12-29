@@ -57,20 +57,24 @@ void uninstall_scan_win_service() {
       l_unique_sc_handle_manager.get(), L"doodle_scan_win_service", SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE
   ))};
 
-  // 尝试停止服务
+  // 查询服务状态
   SERVICE_STATUS l_service_status{};
-  THROW_IF_WIN32_BOOL_FALSE(::ControlService(l_service_handle.get(), SERVICE_CONTROL_STOP, &l_service_status));
-  std::this_thread::sleep_for(chrono::seconds{1});
-  while (::QueryServiceStatus(l_service_handle.get(), &l_service_status)) {
-    if (l_service_status.dwCurrentState == SERVICE_STOP_PENDING) {
-      std::this_thread::sleep_for(chrono::seconds{1});
-    } else {
-      break;
+  THROW_IF_WIN32_BOOL_FALSE(::QueryServiceStatus(l_service_handle.get(), &l_service_status));
+  if (l_service_status.dwCurrentState == SERVICE_RUNNING) {
+    // 尝试停止服务
+    THROW_IF_WIN32_BOOL_FALSE(::ControlService(l_service_handle.get(), SERVICE_CONTROL_STOP, &l_service_status));
+    std::this_thread::sleep_for(chrono::seconds{1});
+    while (::QueryServiceStatus(l_service_handle.get(), &l_service_status)) {
+      if (l_service_status.dwCurrentState == SERVICE_STOP_PENDING) {
+        std::this_thread::sleep_for(chrono::seconds{1});
+      } else {
+        break;
+      }
     }
-  }
-  if (l_service_status.dwCurrentState != SERVICE_STOPPED) {
-    default_logger_raw()->log(log_loc(), level::err, "停止服务失败");
-    THROW_LAST_ERROR();
+    if (l_service_status.dwCurrentState != SERVICE_STOPPED) {
+      default_logger_raw()->log(log_loc(), level::err, "停止服务失败");
+      THROW_LAST_ERROR();
+    }
   }
   THROW_IF_WIN32_BOOL_FALSE(::DeleteService(l_service_handle.get()));
 }
