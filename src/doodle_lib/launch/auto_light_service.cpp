@@ -19,6 +19,7 @@ namespace {
 static constexpr auto g_install{"install"};
 static constexpr auto g_uninstall{"uninstall"};
 static constexpr auto g_service{"service"};
+static constexpr auto g_run{"run"};
 
 void install_scan_win_service() {
   DWORD l_size{};
@@ -171,8 +172,14 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
     //    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start();
     //    }); g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
     //    in_vector.emplace_back(scan_win_service_ptr_);
+    return true;
   }
-  return true;
+  if (in_arh[g_run]) {
+    auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
+    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
+    g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
+    return false;
+  }
 }
 
 }  // namespace doodle::launch
