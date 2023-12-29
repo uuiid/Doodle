@@ -123,6 +123,16 @@ class auto_light_service_impl_t {
     app_base::Get().stop_app();
     set_service_status(SERVICE_STOPPED);
   }
+  void pause() {
+    set_service_status(SERVICE_PAUSE_PENDING);
+    ::SuspendThread(thread_->native_handle());
+    set_service_status(SERVICE_PAUSED);
+  }
+  void resume() {
+    set_service_status(SERVICE_CONTINUE_PENDING);
+    ::ResumeThread(thread_->native_handle());
+    set_service_status(SERVICE_RUNNING);
+  }
 };
 DWORD WINAPI service_ctrl_handler(DWORD dwControl, DWORD dwEventType, LPVOID lpEventData, LPVOID lpContext) {
   switch (dwControl) {
