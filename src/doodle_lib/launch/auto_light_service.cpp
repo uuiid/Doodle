@@ -8,6 +8,8 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
+#include <doodle_lib/core/scan_win_service.h>
+
 #include <wil/resource.h>
 #include <wil/result.h>
 #include <windows.h>
@@ -103,7 +105,10 @@ class auto_light_service_impl_t {
 
   void start() {
     set_service_status(SERVICE_START_PENDING);
-    thread_ = std::make_shared<std::thread>([]() { app_base::Get().run(); });
+    auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
+    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
+    g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
+    thread_ = std::make_shared<std::thread>([scan_win_service_ptr_]() { app_base::Get().run(); });
     set_service_status(SERVICE_RUNNING);
   }
   void stop() {
