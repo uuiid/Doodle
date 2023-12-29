@@ -23,10 +23,7 @@ static constexpr auto g_run{"run"};
 static constexpr auto g_help{"help"};
 
 void install_scan_win_service() {
-  DWORD l_size{};
-  l_size = ::GetModuleFileNameW(nullptr, nullptr, l_size);
-  THROW_LAST_ERROR_IF(::GetLastError() != ERROR_INSUFFICIENT_BUFFER);
-
+  DWORD l_size{MAX_PATH + 1};
   std::wstring l_path{};
   l_path.resize(l_size);
   THROW_LAST_ERROR_IF(::GetModuleFileNameW(nullptr, l_path.data(), l_size) != l_size);
