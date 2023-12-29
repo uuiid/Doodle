@@ -182,6 +182,7 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
     g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
     return false;
   }
+  return true;
 }
 
 }  // namespace doodle::launch
