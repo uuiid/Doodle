@@ -23,11 +23,18 @@ static constexpr auto g_run{"run"};
 static constexpr auto g_help{"help"};
 
 void install_scan_win_service() {
-  DWORD l_size{MAX_PATH + 1};
-  std::wstring l_path{};
-  l_path.resize(l_size);
-  THROW_LAST_ERROR_IF(::GetModuleFileNameW(nullptr, l_path.data(), l_size) == 0);
-  auto l_cmd = fmt::format(LR"("{}" --{})", l_path, conv::utf_to_utf<wchar_t>(g_service));
+  FSys::path l_exe_path{};
+  {
+    static constexpr DWORD l_size{MAX_PATH + 1};
+    WCHAR l_path[l_size]{};
+    const auto l_ret = ::GetModuleFileNameW(nullptr, l_path, l_size);
+    if (l_ret == 0) {
+      THROW_LAST_ERROR();
+    }
+    l_exe_path = l_path;
+  }
+  auto l_cmd = fmt::format(LR"("{}" --{})", l_exe_path.generic_wstring(), conv::utf_to_utf<wchar_t>(g_service));
+  default_logger_raw()->log(log_loc(), level::warn, "安装服务 {}", conv::utf_to_utf<char>(l_cmd));
 
   wil::unique_schandle l_unique_sc_handle_manager{THROW_LAST_ERROR_IF_NULL(
       ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_LOCK)
@@ -50,6 +57,7 @@ void install_scan_win_service() {
 }
 
 void uninstall_scan_win_service() {
+  default_logger_raw()->log(log_loc(), level::warn, "卸载服务 doodle_scan_win_service");
   wil::unique_schandle l_unique_sc_handle_manager{THROW_LAST_ERROR_IF_NULL(
       ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_LOCK)
   )};  // 打开服务控制管理器数据库，返回一个句柄
@@ -108,6 +116,9 @@ class auto_light_service_impl_t {
   }
 
   void start() {
+    default_logger_raw()->log(
+        log_loc(), level::warn, "开始正式初始化数据库 {} ", register_file_type::get_main_project()
+    );
     set_service_status(SERVICE_START_PENDING);
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
     g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
@@ -163,6 +174,7 @@ void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
   auto_light_service_impl_t::GetThis().h_service_status_ = THROW_LAST_ERROR_IF_NULL(::RegisterServiceCtrlHandlerExW(
       L"doodle_scan_win_service", service_ctrl_handler, auto_light_service_impl_t::g_this
   ));
+  default_logger_raw()->log(log_loc(), level::warn, "注册服务成功");
   if (auto_light_service_impl_t::GetThis().h_service_status_ == nullptr) {
     default_logger_raw()->log(log_loc(), level::err, "注册服务失败");
     return;
@@ -190,7 +202,7 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
   if (in_arh[g_service]) {
     auto l_auto_light_service_impl_ptr = std::make_shared<auto_light_service_impl_t>();
     in_vector.emplace_back(l_auto_light_service_impl_ptr);
-
+    default_logger_raw()->log(log_loc(), level::warn, "启动服务");
     ::SERVICE_TABLE_ENTRY l_service_table_entry[]{
         {const_cast<LPWSTR>(L"doodle_scan_win_service"), reinterpret_cast<::LPSERVICE_MAIN_FUNCTIONW>(service_main)},
         {nullptr, nullptr}
