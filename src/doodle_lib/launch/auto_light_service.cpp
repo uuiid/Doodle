@@ -60,7 +60,7 @@ void uninstall_scan_win_service() {
   // 查询服务状态
   SERVICE_STATUS l_service_status{};
   THROW_IF_WIN32_BOOL_FALSE(::QueryServiceStatus(l_service_handle.get(), &l_service_status));
-  if (l_service_status.dwCurrentState == SERVICE_RUNNING) {
+  if (l_service_status.dwCurrentState == SERVICE_RUNNING || l_service_status.dwCurrentState == SERVICE_PAUSED) {
     // 尝试停止服务
     THROW_IF_WIN32_BOOL_FALSE(::ControlService(l_service_handle.get(), SERVICE_CONTROL_STOP, &l_service_status));
     std::this_thread::sleep_for(chrono::seconds{1});
