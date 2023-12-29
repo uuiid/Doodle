@@ -26,14 +26,15 @@ void install_scan_win_service() {
   DWORD l_size{MAX_PATH + 1};
   std::wstring l_path{};
   l_path.resize(l_size);
-  THROW_LAST_ERROR_IF(::GetModuleFileNameW(nullptr, l_path.data(), l_size) != l_size);
+  THROW_LAST_ERROR_IF(::GetModuleFileNameW(nullptr, l_path.data(), l_size) == 0);
   auto l_cmd = fmt::format(LR"("{}" --{})", l_path, conv::utf_to_utf<wchar_t>(g_service));
 
-  wil::unique_schandle l_unique_sc_handle_manager{THROW_IF_NULL_ALLOC(
+  wil::unique_schandle l_unique_sc_handle_manager{THROW_LAST_ERROR_IF_NULL(
       ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_LOCK)
   )};  // 打开服务控制管理器数据库，返回一个句柄
+
   // 创建一个服务
-  wil::unique_schandle l_service_handle{THROW_IF_NULL_ALLOC(::CreateServiceW(
+  wil::unique_schandle l_service_handle{THROW_LAST_ERROR_IF_NULL(::CreateServiceW(
       l_unique_sc_handle_manager.get(), L"doodle_scan_win_service", L"doodle_scan_win_service", SERVICE_ALL_ACCESS,
       SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, l_cmd.c_str(), nullptr, nullptr, nullptr,
       nullptr, nullptr
@@ -49,10 +50,10 @@ void install_scan_win_service() {
 }
 
 void uninstall_scan_win_service() {
-  wil::unique_schandle l_unique_sc_handle_manager{THROW_IF_NULL_ALLOC(
+  wil::unique_schandle l_unique_sc_handle_manager{THROW_LAST_ERROR_IF_NULL(
       ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_LOCK)
   )};  // 打开服务控制管理器数据库，返回一个句柄
-  wil::unique_schandle l_service_handle{THROW_IF_NULL_ALLOC(::OpenServiceW(
+  wil::unique_schandle l_service_handle{THROW_LAST_ERROR_IF_NULL(::OpenServiceW(
       l_unique_sc_handle_manager.get(), L"doodle_scan_win_service", SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE
   ))};
 
@@ -151,9 +152,13 @@ DWORD WINAPI service_ctrl_handler(DWORD dwControl, DWORD dwEventType, LPVOID lpE
   return ERROR_CALL_NOT_IMPLEMENTED;
 }
 void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
-  auto_light_service_impl_t::GetThis().h_service_status_ = THROW_IF_NULL_ALLOC(::RegisterServiceCtrlHandlerExW(
+  auto_light_service_impl_t::GetThis().h_service_status_ = THROW_LAST_ERROR_IF_NULL(::RegisterServiceCtrlHandlerExW(
       L"doodle_scan_win_service", service_ctrl_handler, auto_light_service_impl_t::g_this
   ));
+  if (auto_light_service_impl_t::GetThis().h_service_status_ == nullptr) {
+    default_logger_raw()->log(log_loc(), level::err, "注册服务失败");
+    return;
+  }
   // 启动服务
   auto_light_service_impl_t::GetThis().start();
   // 服务初始化
@@ -161,11 +166,17 @@ void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
 }  // namespace
 bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   if (in_arh[g_install]) {
-    install_scan_win_service();
+    try {
+      install_scan_win_service();
+    }
+    CATCH_LOG();
     return true;
   }
   if (in_arh[g_uninstall]) {
-    uninstall_scan_win_service();
+    try {
+      uninstall_scan_win_service();
+    }
+    CATCH_LOG();
     return true;
   }
   if (in_arh[g_service]) {
