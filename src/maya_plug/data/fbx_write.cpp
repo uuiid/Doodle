@@ -1374,7 +1374,10 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
         auto l_tree_parent = ranges::find_if(std::begin(tree_), std::end(tree_), [&](fbx_node_ptr& in_value) -> bool {
           return in_value->dag_path == l_parent_path;
         });
-
+        if (l_tree_parent == std::end(tree_)) {
+          log_error(logger_, fmt::format("找不到父节点 {}, 此处可能是有错误的绑定", l_parent_path));
+          continue;
+        }
         auto l_parent_node = (*l_tree_parent)->node;
 
         fbx_tree_t ::iterator l_node_iter{};
