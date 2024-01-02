@@ -6,8 +6,9 @@
 #include <doodle_app/app/app_command.h>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-#define DOODLE_MAIN_IMPL(facet)                                                      \
-  extern "C" int main(int argc, const char* const argv[]) try {                      \
+
+#define DOODLE_MAIN_IMPL_(facet)                                                     \
+  try {                                                                              \
     using main_app = doodle::app_command<facet>;                                     \
     main_app app{argc, argv};                                                        \
     try {                                                                            \
@@ -24,3 +25,5 @@
     std::cout << boost::current_exception_diagnostic_information(true) << std::endl; \
     return 1;                                                                        \
   }
+#define DOODLE_MAIN_IMPL(facet) extern "C" int main(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(facet)
+#define DOODLE_WMAIN_IMPL(facet) extern "C" int _tmain(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(facet)
