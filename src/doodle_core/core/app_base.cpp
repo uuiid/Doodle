@@ -74,19 +74,25 @@ app_base::app_base(int argc, const char* const argv[])
 }
 
 namespace {
-std::shared_ptr<char[]> to_char(std::int32_t argc, const wchar_t* const argv[]) {
-  std::string l_result{};
-  for (std::int32_t i = 0; i < argc; ++i) {
-    l_result += boost::locale::conv::utf_to_utf<char>(argv[i]);
+struct comline_data {
+  explicit comline_data(std::int32_t argc, const wchar_t* const argv[]) {
+    for (std::int32_t i = 0; i < argc; ++i) {
+      arg_data.emplace_back(boost::locale::conv::utf_to_utf<char>(argv[i]));
+    }
+    p_buff = std::make_shared<char*[]>(argc);
+    for (std::int32_t i = 0; i < argc; ++i) {
+      p_buff[i] = arg_data[i].data();
+    }
+    argv_ = p_buff.get();
   }
-  std::shared_ptr<char[]> const p_buff{new char[l_result.size() + 1]};
-  std::copy(l_result.begin(), l_result.end(), p_buff.get());
-  return p_buff;
-}
+  std::vector<std::string> arg_data;
+  std::shared_ptr<char*[]> p_buff;
+  const char* const* argv_;
+};
+
 }  // namespace
 
-app_base::app_base(std::int32_t argc, const wchar_t* const argv[])
-    : app_base(argc, static_cast<const char* const[]>(to_char(argc, argv).get())) {}
+app_base::app_base(std::int32_t argc, const wchar_t* const argv[]) : app_base(argc, comline_data{argc, argv}.argv_) {}
 
 app_base::~app_base() = default;
 
