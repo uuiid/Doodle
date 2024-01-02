@@ -21,13 +21,12 @@ static constexpr auto g_uninstall{"uninstall"};
 static constexpr auto g_service{"service"};
 static constexpr auto g_run{"run"};
 static constexpr auto g_help{"help"};
-
+static constexpr auto g_path_length{32767};
 void install_scan_win_service() {
   FSys::path l_exe_path{};
   {
-    static constexpr DWORD l_size{MAX_PATH + 1};
-    WCHAR l_path[l_size]{};
-    const auto l_ret = ::GetModuleFileNameW(nullptr, l_path, l_size);
+    WCHAR l_path[g_path_length]{};
+    const auto l_ret = ::GetModuleFileNameW(nullptr, l_path, g_path_length);
     if (l_ret == 0) {
       THROW_LAST_ERROR();
     }
