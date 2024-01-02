@@ -1,5 +1,6 @@
 #include "core_set.h"
 
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/logger/logger.h>
@@ -8,8 +9,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 
-#include "configure/static_value.h"
 #include <ShlObj.h>
+#include <wil/result.h>
 
 namespace doodle {
 
@@ -17,11 +18,9 @@ FSys::path win::get_pwd() {
   /// 这里我们手动做一些工作
   /// 获取环境变量 FOLDERID_Documents
   PWSTR pManager;
-  SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager);
-  if (!pManager) throw_error(error_enum::null_string);
-
-  auto k_path = FSys::path{pManager};
-  CoTaskMemFree(pManager);
+  wil::unique_cotaskmem_string pManager_ptr{pManager};
+  LOG_HR(::SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager));
+  auto k_path = FSys::path{pManager_ptr.get()};
   return k_path;
 }
 
