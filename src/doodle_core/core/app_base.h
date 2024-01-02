@@ -76,6 +76,8 @@ class DOODLE_CORE_API app_base {
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
+
+  static void write_current_error_tmp_dir();
 };
 
 /**
