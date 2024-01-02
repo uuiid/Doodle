@@ -43,7 +43,9 @@ void install_scan_win_service() {
   wil::unique_schandle l_service_handle{THROW_LAST_ERROR_IF_NULL(::CreateServiceW(
       l_unique_sc_handle_manager.get(), L"doodle_scan_win_service", L"doodle_scan_win_service", SERVICE_ALL_ACCESS,
       SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, l_cmd.c_str(), nullptr, nullptr, nullptr,
-      nullptr, nullptr
+      L"NT AUTHORITY\\LocalService",
+      //      nullptr,  //
+      nullptr
   ))};
 
   // 添加服务说明
