@@ -43,8 +43,8 @@ void install_scan_win_service() {
   wil::unique_schandle l_service_handle{THROW_LAST_ERROR_IF_NULL(::CreateServiceW(
       l_unique_sc_handle_manager.get(), L"doodle_scan_win_service", L"doodle_scan_win_service", SERVICE_ALL_ACCESS,
       SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, l_cmd.c_str(), nullptr, nullptr, nullptr,
-      L"NT AUTHORITY\\LocalService",
-      //      nullptr,  //
+      //      L"NT AUTHORITY\\LocalService",
+      nullptr,  //
       nullptr
   ))};
 
@@ -213,6 +213,7 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
     //    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start();
     //    }); g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
     //    in_vector.emplace_back(scan_win_service_ptr_);
+    default_logger_raw()->log(log_loc(), level::warn, "服务退出");
     return true;
   }
   if (in_arh[g_run]) {
