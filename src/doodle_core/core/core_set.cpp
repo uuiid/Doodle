@@ -128,6 +128,7 @@ void core_set_init::read_file() {
   g_reg()->ctx().get<user::current_user>().uuid = p_set.user_id;
 }
 bool core_set_init::write_file() {
+  if (p_set.p_doc.empty()) return false;
   DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / doodle_config::config_name);
 
   FSys::ofstream l_ofstream{p_set.p_doc / doodle_config::config_name, std::ios::out | std::ios::binary};
