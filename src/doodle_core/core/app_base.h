@@ -53,7 +53,8 @@ class DOODLE_CORE_API app_base {
 
  public:
   explicit app_base(int argc, const char* const argv[]);
-  app_base() : app_base(0, nullptr) {}
+  explicit app_base(std::int32_t argc, const wchar_t* const argv[]);
+  app_base() : app_base(0, static_cast<const char* const[]>(nullptr)) {}
   virtual ~app_base();
 
   /**

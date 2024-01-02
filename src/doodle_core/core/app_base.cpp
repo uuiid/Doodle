@@ -73,6 +73,21 @@ app_base::app_base(int argc, const char* const argv[])
   default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", core_set::get_set().program_location());
 }
 
+namespace {
+std::shared_ptr<char[]> to_char(std::int32_t argc, const wchar_t* const argv[]) {
+  std::string l_result{};
+  for (std::int32_t i = 0; i < argc; ++i) {
+    l_result += boost::locale::conv::utf_to_utf<char>(argv[i]);
+  }
+  std::shared_ptr<char[]> const p_buff{new char[l_result.size() + 1]};
+  std::copy(l_result.begin(), l_result.end(), p_buff.get());
+  return p_buff;
+}
+}  // namespace
+
+app_base::app_base(std::int32_t argc, const wchar_t* const argv[])
+    : app_base(argc, static_cast<const char* const[]>(to_char(argc, argv).get())) {}
+
 app_base::~app_base() = default;
 
 app_base& app_base::Get() { return *self; }
