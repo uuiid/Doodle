@@ -17,9 +17,8 @@ namespace doodle {
 FSys::path win::get_pwd() {
   /// 这里我们手动做一些工作
   /// 获取环境变量 FOLDERID_Documents
-  PWSTR pManager;
-  wil::unique_cotaskmem_string pManager_ptr{pManager};
-  LOG_HR(::SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, &pManager));
+  wil::unique_cotaskmem_string pManager_ptr{};
+  LOG_IF_FAILED(::SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, pManager_ptr.put()));
   auto k_path = FSys::path{pManager_ptr.get()};
   return k_path;
 }
