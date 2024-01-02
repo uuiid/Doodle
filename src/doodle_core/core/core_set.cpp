@@ -19,6 +19,7 @@ FSys::path win::get_pwd() {
   /// 获取环境变量 FOLDERID_Documents
   wil::unique_cotaskmem_string pManager_ptr{};
   LOG_IF_FAILED(::SHGetKnownFolderPath(FOLDERID_Documents, NULL, nullptr, pManager_ptr.put()));
+  if (!pManager_ptr) return {};
   auto k_path = FSys::path{pManager_ptr.get()};
   return k_path;
 }
@@ -137,7 +138,9 @@ bool core_set_init::write_file() {
 }
 
 bool core_set_init::config_to_user() {
-  p_set.p_doc = win::get_pwd() / "doodle";
+  auto l_pwd = win::get_pwd();
+  if (l_pwd.empty()) return false;
+  p_set.p_doc = l_pwd / "doodle";
   if (!FSys::exists(p_set.p_doc)) {
     FSys::create_directories(p_set.p_doc);
   }
