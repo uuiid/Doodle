@@ -4,6 +4,8 @@
 
 #include "register_file_type.h"
 
+#include <doodle_core/logger/logger.h>
+
 #include <winreg/WinReg.hpp>
 
 namespace doodle {
@@ -21,10 +23,16 @@ std::optional<database::ref_data> register_file_type::get_ref_uuid() {
 }
 
 FSys::path register_file_type::get_main_project() {
-  winreg::RegKey l_key{};
-  l_key.Open(HKEY_CURRENT_USER, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
-  auto l_path = l_key.GetStringValue(LR"(main_project)");
-  return l_path;
+  try {
+    winreg::RegKey l_key{};
+    l_key.Open(HKEY_CURRENT_USER, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+    auto l_path = l_key.GetStringValue(LR"(main_project)");
+    return l_path;
+
+  } catch (const winreg::RegException& e) {
+    default_logger_raw()->log(log_loc(), level::warn, "读取主工程路径失败 {}", e.what());
+    return {};
+  }
 }
 
 FSys::path register_file_type::get_update_path() {
