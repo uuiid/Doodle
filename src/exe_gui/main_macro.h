@@ -5,6 +5,8 @@
 
 #include <doodle_app/app/app_command.h>
 
+#include <tchar.h>
+#include <windows.h>
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 
 #define DOODLE_MAIN_IMPL_(facet)                                                     \
@@ -26,4 +28,4 @@
     return 1;                                                                        \
   }
 #define DOODLE_MAIN_IMPL(facet) extern "C" int main(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(facet)
-#define DOODLE_WMAIN_IMPL(facet) extern "C" int _tmain(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(facet)
+#define DOODLE_WMAIN_IMPL(facet) extern "C" int _tmain(int argc, const TCHAR* const argv[]) DOODLE_MAIN_IMPL_(facet)
