@@ -119,8 +119,6 @@ set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         [==[
         CreateShortCut "$DESKTOP\Doodle ${VERSION}.lnk" "$INSTDIR\bin\DoodleExe.exe"
-        DeleteRegValue HKCU "SOFTWARE\Doodle\RenderFarm" "server_address"
-        DeleteRegKey HKCU "SOFTWARE\Doodle\RenderFarm"
         WriteRegStr HKCU "SOFTWARE\Doodle\RenderFarm" "server_address" "192.168.20.7"
 
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "main_project" "//192.168.10.218/Doodletemp/db_file/doodle_main.doodle_db"
