@@ -117,13 +117,19 @@ class auto_light_service_impl_t {
   }
 
   void start() {
-    default_logger_raw()->log(
-        log_loc(), level::warn, "开始正式初始化数据库 {} ", register_file_type::get_main_project()
-    );
+    auto l_main_prj = register_file_type::get_main_project();
+    default_logger_raw()->log(log_loc(), level::warn, "开始正式初始化数据库 {} ", l_main_prj);
+    if (l_main_prj.empty()) {
+      default_logger_raw()->log(log_loc(), level::err, "未找到主工程路径");
+      set_service_status(SERVICE_STOPPED);
+      return;
+    }
+
     set_service_status(SERVICE_START_PENDING);
+
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
     g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
-    g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
+    g_ctx().get<database_n::file_translator_ptr>()->async_open(l_main_prj);
     thread_ = std::make_shared<std::thread>([scan_win_service_ptr_]() { app_base::Get().run(); });
     set_service_status(SERVICE_RUNNING);
   }
