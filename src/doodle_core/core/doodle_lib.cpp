@@ -23,6 +23,7 @@
 #include <logger/logger.h>
 #include <memory>
 #include <utility>
+#include <wil/result.h>
 
 namespace doodle {
 
@@ -47,7 +48,15 @@ doodle_lib& doodle_lib::Get() { return *impl::self; }
 void doodle_lib::init() {
   /// @brief 初始化其他
   ptr->reg   = std::make_shared<entt::registry>();
-  ptr->p_log       = std::make_shared<logger_ctr_ptr::element_type>();
+  ptr->p_log = std::make_shared<logger_ctr_ptr::element_type>();
+  wil::SetResultLoggingCallback([](wil::FailureInfo const& failure) noexcept {
+    constexpr std::size_t sizeOfLogMessageWithNul = 2048;
+
+    wchar_t logMessage[sizeOfLogMessageWithNul];
+    if (SUCCEEDED(wil::GetFailureLogString(logMessage, sizeOfLogMessageWithNul, failure))) {
+      default_logger_raw()->log(level::warn, boost::locale::conv::utf_to_utf<char>(logMessage));
+    }
+  });
   ptr->ctx_p.emplace<detail::crash_reporting_thread>();
   ptr->ctx_p.emplace<database_info>();
   ptr->ctx_p.emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));

@@ -55,15 +55,6 @@ app_base::app_base(int argc, const char* const argv[])
   auto&& l_program_info  = g_ctx().emplace<program_info>();
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
 
-  wil::SetResultLoggingCallback([](wil::FailureInfo const& failure) noexcept {
-    constexpr std::size_t sizeOfLogMessageWithNul = 2048;
-
-    wchar_t logMessage[sizeOfLogMessageWithNul];
-    if (SUCCEEDED(wil::GetFailureLogString(logMessage, sizeOfLogMessageWithNul, failure))) {
-      default_logger_raw()->log(level::warn, boost::locale::conv::utf_to_utf<char>(logMessage));
-    }
-  });
-
   default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   core_set_init k_init{};
   default_logger_raw()->log(log_loc(), level::warn, "寻找用户配置文件目录");
