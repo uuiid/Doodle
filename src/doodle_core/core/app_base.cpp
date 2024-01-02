@@ -118,10 +118,10 @@ void app_base::stop_app(bool in_stop) {
 
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }
 void app_base::write_current_error_tmp_dir() {
-  auto l_tmp = FSys::temp_directory_path() / "doodle" / "error";
+  auto l_tmp = FSys::temp_directory_path() / "doodle" / "log";
   if (!FSys::exists(l_tmp)) FSys::create_directories(l_tmp);
-  auto l_path = l_tmp / fmt::format("error_{}.txt", boost::this_process::get_id());
+  auto l_path = l_tmp / fmt::format("doodle_error_{}.txt", boost::this_process::get_id());
   FSys::ofstream l_ofstream{l_path};
-  l_ofstream << boost::diagnostic_information(boost::current_exception()) << std::endl;
+  l_ofstream << boost::current_exception_diagnostic_information() << std::endl;
 }
 }  // namespace doodle
