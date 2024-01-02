@@ -37,7 +37,6 @@ set(DOODLE_INSTALL_IGNORE_ITEM
 macro(add_doodle_exe _name _src)
     add_executable(
             ${_name}
-            WIN32
             ${_src}
             ../DoodleExe.manifest
             ../icon.ico
@@ -51,8 +50,6 @@ macro(add_doodle_exe _name _src)
             doodle_lib
             doodle_server_lib
     )
-    # target_link_options(DoodleExe PUBLIC /MAP:test.txt)
-    target_link_options(${_name} PUBLIC /ENTRY:mainCRTStartup)
     install(TARGETS ${_name}
             RUNTIME_DEPENDENCIES
             PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
