@@ -130,7 +130,14 @@ class auto_light_service_impl_t {
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
     g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
     g_ctx().get<database_n::file_translator_ptr>()->async_open(l_main_prj);
-    thread_ = std::make_shared<std::thread>([scan_win_service_ptr_]() { app_base::Get().run(); });
+    thread_ = std::make_shared<std::thread>([scan_win_service_ptr_]() {
+      try {
+        app_base::Get().run();
+      } catch (...) {
+        default_logger_raw()->flush();
+        app_base::write_current_error_tmp_dir();
+      }
+    });
     set_service_status(SERVICE_RUNNING);
   }
   void stop() {
@@ -193,7 +200,7 @@ void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
 }  // namespace
 bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   default_logger_raw()->log(
-      log_loc(), level::warn, "开始解析命令行 pos_args: {} flags: {} params: {}", in_arh.pos_args(), in_arh.flags(),
+      log_loc(), level::info, "开始解析命令行 pos_args: {} flags: {} params: {}", in_arh.pos_args(), in_arh.flags(),
       in_arh.params()
   );
   if (in_arh[g_install]) {
