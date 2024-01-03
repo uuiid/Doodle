@@ -192,6 +192,10 @@ void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
 }
 }  // namespace
 bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
+  default_logger_raw()->log(
+      log_loc(), level::warn, "开始解析命令行 pos_args: {} flags: {} params: {}", in_arh.pos_args(), in_arh.flags(),
+      in_arh.params()
+  );
   if (in_arh[g_install]) {
     try {
       install_scan_win_service();
