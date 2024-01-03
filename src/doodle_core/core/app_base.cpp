@@ -83,7 +83,11 @@ app_base::~app_base() = default;
 app_base& app_base::Get() { return *self; }
 std::int32_t app_base::run() {
   if (stop_) return 0;
-  g_io_context().run();
+  try {
+    g_io_context().run();
+  } catch (...) {
+    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+  }
   return 0;
 }
 
