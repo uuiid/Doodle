@@ -257,7 +257,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
   for (auto &&h : l_refs) {
     auto l_is_se     = h.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
     auto l_down_path = h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr();
-    auto l_uproject  = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
+    auto l_uproject  = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().project_path_;
     l_down_path      = l_uproject.parent_path();
     if (l_is_se) {
       auto l_root          = l_uproject.parent_path() / g_content;

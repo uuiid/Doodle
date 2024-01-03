@@ -15,7 +15,7 @@ void ue_main_map_edit::init(const entt::handle &in_handle) {
   if (render_id_ == in_handle) return;
 
   if (in_handle.all_of<ue_main_map>()) {
-    u_project_str_ = in_handle.get<ue_main_map>().map_path_.generic_string();
+    u_project_str_ = in_handle.get<ue_main_map>().project_path_.generic_string();
   }
 
   render_id_ = in_handle;
