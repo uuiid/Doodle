@@ -249,6 +249,7 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
             }
         )
     );
+    in_vector.emplace_back(scan_win_service_ptr_);
     return false;
   }
   return true;
