@@ -139,10 +139,10 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_save) {
 BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   FSys::remove("D:/test.sqlite");
   doodle_lib l_lib{};
-  g_ctx().get<file_translator_ptr>()->async_open(FSys::path{});
+  g_ctx().get<file_translator_ptr>()->async_open(FSys::path{}, false, true, g_reg(), [](auto&&) {});
   create_test_database();
 
-  g_ctx().get<file_translator_ptr>()->async_open("D:/test.sqlite");
+  g_ctx().get<file_translator_ptr>()->async_open("D:/test.sqlite", false, true, g_reg(), [](auto&&) {});
   BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
   BOOST_TEST_CHECK(g_reg()->view<user>().size() == 1);
   BOOST_TEST_CHECK(g_reg()->view<shot>().size() == 1);
@@ -172,10 +172,14 @@ class null_facet {
 BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
   app_command<null_facet> l_App{};
 
-  g_ctx().get<file_translator_ptr>()->async_open("D:/test_file/test_db/10_texiao.doodle_db");
+  g_ctx().get<file_translator_ptr>()->async_open(
+      "D:/test_file/test_db/10_texiao.doodle_db", false, true, g_reg(), [](auto&&) {}
+  );
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
-  g_ctx().get<file_translator_ptr>()->async_open("D:/test_file/cloth_test/JG2.doodle_db");
+  g_ctx().get<file_translator_ptr>()->async_open(
+      "D:/test_file/cloth_test/JG2.doodle_db", false, true, g_reg(), [](auto&&) {}
+  );
 }

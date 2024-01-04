@@ -46,13 +46,15 @@ bool open_project::render() {
 
   if (auth_ptr_->is_expire()) {
     if (ImGui::Button("主项目", ImVec2{-FLT_MIN, 0})) {
-      g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
+      g_ctx().get<database_n::file_translator_ptr>()->async_open(
+          register_file_type::get_main_project(), false, false, g_reg(), [](auto&&) {}
+      );
       open = false;
     }
     if (!cmd_path_.empty()) {
       ImGui::Text("传入的项目");
       if (ImGui::Button(cmd_path_.generic_string().c_str(), ImVec2{-FLT_MIN, 0})) {
-        g_ctx().get<database_n::file_translator_ptr>()->async_open(cmd_path_);
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(cmd_path_, false, false, g_reg(), [](auto&&) {});
         open = false;
       }
     }
@@ -61,7 +63,7 @@ bool open_project::render() {
     for (auto&& l_p : core_set::get_set().project_root) {
       if (!l_p.empty()) {
         if (ImGui::Button(l_p.generic_string().c_str(), ImVec2{-FLT_MIN, 0})) {
-          g_ctx().get<database_n::file_translator_ptr>()->async_open(l_p);
+          g_ctx().get<database_n::file_translator_ptr>()->async_open(l_p, false, false, g_reg(), [](auto&&) {});
           open = false;
         }
       }
@@ -71,7 +73,7 @@ bool open_project::render() {
       g_windows_manage().create_windows_arg(
           windows_init_arg{}
               .create<file_dialog>(file_dialog::dialog_args{}.async_read([](const FSys::path& in) mutable {
-                g_ctx().get<database_n::file_translator_ptr>()->async_open(in);
+                g_ctx().get<database_n::file_translator_ptr>()->async_open(in, false, false, g_reg(), [](auto&&) {});
               }))
               .set_title("打开项目")
               .set_render_type<dear::Popup>()
@@ -86,11 +88,11 @@ bool open_project::render() {
       if (auto l_path = FSys::from_quotation_marks(app_base::Get().arg()[1]);
           !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
           l_path.extension() == doodle_config::doodle_db_name.data()) {
-        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path);
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path, false, false, g_reg(), [](auto&&) {});
       } else if (l_path = core_set::get_set().project_root[0];
                  !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
                  l_path.extension() == doodle_config::doodle_db_name.data()) {
-        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path);
+        g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path, false, false, g_reg(), [](auto&&) {});
       }
       open = false;
       ImGui::CloseCurrentPopup();

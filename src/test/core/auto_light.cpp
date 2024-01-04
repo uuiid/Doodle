@@ -171,7 +171,9 @@ void test_fun(boost::system::error_code in_code) {
   g_ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe_test>();
   //  g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
 
-  g_ctx().emplace<database_n::file_translator_ptr>()->set_only_open(true).async_open("E:/cache/doodle_main2.doodle_db");
+  g_ctx().emplace<database_n::file_translator_ptr>()->set_only_open(true).async_open(
+      "E:/cache/doodle_main2.doodle_db", , false, true, g_reg(), [](auto&&) {}
+  );
   next_time_run({0, 0, 1}, doodle::test_fun2);
 }
 }  // namespace doodle

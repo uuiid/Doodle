@@ -54,11 +54,6 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径
    */
-
-  inline auto async_open(const FSys::path& in_path) {
-    project_path = in_path.empty() ? FSys::path{memory_data} : in_path;
-    return boost::asio::post(g_io_context(), [this, in_path]() { async_open_impl(); });
-  };
   template <typename CompletionHandler>
   auto async_open(
       const FSys::path& in_path, bool in_only_ctx, bool in_only_open, const registry_ptr& in_registry_ptr,
@@ -78,7 +73,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
             boost::asio::post(boost::asio::prepend(std::move(*l_completion_handler), l_error));
           });
         },
-        std::forward<decltype(in_completion_handler)>(in_completion_handler), in_path, in_only_ctx, in_only_open
+        in_completion_handler, in_path, in_only_ctx, in_only_open
     );
   }
 

@@ -43,8 +43,7 @@ bool replace_file_facet::post(const FSys::path& in_path) {
   g_ctx().emplace<reference_file_factory>();
   l_ret = true;
 
-  g_ctx().get<database_n::file_translator_ptr>()->set_only_open(true);
-  g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_);
+  g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_, false, true, g_reg(), [](auto&&) {});
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
@@ -83,6 +82,5 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
       maya_plug::maya_file_io::work_path("replace_file") / maya_plug::maya_file_io::get_current_path().filename()
   );
 }
-
 
 }  // namespace doodle::maya_plug
