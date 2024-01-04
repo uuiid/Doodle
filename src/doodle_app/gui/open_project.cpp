@@ -86,12 +86,10 @@ bool open_project::render() {
 
     if (next_time_backup_) {
       if (auto l_path = FSys::from_quotation_marks(app_base::Get().arg()[1]);
-          !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
-          l_path.extension() == doodle_config::doodle_db_name.data()) {
+          !l_path.empty() && l_path.extension() == doodle_config::doodle_db_name.data()) {
         g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path, false, false, g_reg(), [](auto&&) {});
       } else if (l_path = core_set::get_set().project_root[0];
-                 !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
-                 l_path.extension() == doodle_config::doodle_db_name.data()) {
+                 !l_path.empty() && l_path.extension() == doodle_config::doodle_db_name.data()) {
         g_ctx().get<database_n::file_translator_ptr>()->async_open(l_path, false, false, g_reg(), [](auto&&) {});
       }
       open = false;

@@ -55,13 +55,18 @@ boost::system::error_code file_translator::async_open_impl() {
   if (project_path != memory_data && !FSys::exists(project_path, l_error_code)) {
     if (l_error_code) return l_error_code;
     default_logger_raw()->log(log_loc(), level::info, "文件不存在 {}", project_path);
-    return async_save_impl();
+    g_ctx().get<database_info>().path_ = project_path;
+    registry_attr->ctx().get<project>().set_path(project_path.parent_path());
+    g_ctx().get<core_sig>().project_begin_open(project_path);
+    l_error_code = async_save_impl();
+    g_ctx().get<core_sig>().project_end_open();
+
+    return l_error_code;
   }
 
   {
     g_ctx().get<database_info>().path_ = project_path;
     g_ctx().get<core_sig>().project_begin_open(project_path);
-    registry_attr = g_reg();
     registry_attr->clear();
   }
 
