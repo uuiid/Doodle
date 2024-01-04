@@ -50,14 +50,13 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   l_s.need_save                                         = true;
 }
 
-void file_translator::async_open_impl(const FSys::path& in_path) {
-  if (!in_path.empty() && !FSys::exists(in_path)) {
-    default_logger_raw()->log(log_loc(), level::warn, "文件不存在 {}", in_path);
+void file_translator::async_open_impl() {
+  if (project_path != memory_data && !FSys::exists(project_path)) {
+    default_logger_raw()->log(log_loc(), level::info, "文件不存在 {}", project_path);
     async_save_impl();
     return;
   }
 
-  project_path = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
   {
     g_ctx().get<database_info>().path_ = project_path;
     g_ctx().get<core_sig>().project_begin_open(project_path);
