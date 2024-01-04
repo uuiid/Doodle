@@ -50,11 +50,12 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   l_s.need_save                                         = true;
 }
 
-void file_translator::async_open_impl() {
-  if (project_path != memory_data && !FSys::exists(project_path)) {
+boost::system::error_code file_translator::async_open_impl() {
+  boost::system::error_code l_error_code{};
+  if (project_path != memory_data && !FSys::exists(project_path, l_error_code)) {
+    if (l_error_code) return l_error_code;
     default_logger_raw()->log(log_loc(), level::info, "文件不存在 {}", project_path);
-    async_save_impl();
-    return;
+    return async_save_impl();
   }
 
   {
@@ -121,7 +122,7 @@ void file_translator::begin_save() {
   }
 }
 
-void file_translator::async_save_impl() {
+boost::system::error_code file_translator::async_save_impl() {
   {
     if (!FSys::folder_is_save(project_path)) {
       log_warn(fmt::format("{} 权限不够, 不保存", project_path));

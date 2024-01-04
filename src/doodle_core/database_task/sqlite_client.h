@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <boost/asio/prepend.hpp>
+
 #include <any>
 #include <filesystem>
 #include <memory>
@@ -31,8 +33,8 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
  protected:
   FSys::path project_path;
 
-  virtual void async_open_impl();
-  virtual void async_save_impl();
+  virtual boost::system::error_code async_open_impl();
+  virtual boost::system::error_code async_save_impl();
   virtual void async_import_impl(const FSys::path& in_path);
 
  public:
@@ -71,10 +73,9 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
           auto l_completion_handler = std::make_shared<std::decay_t<decltype(in_completion_handler)>>(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
-          auto l_exe = boost::asio::get_associated_executor(*l_completion_handler);
-          boost::asio::post(g_io_context(), [this, l_completion_handler, l_exe]() {
-            async_open_impl();
-            //            boost::asio::post()
+          boost::asio::post(g_io_context(), [this, l_completion_handler]() {
+            auto l_error = async_open_impl();
+            boost::asio::post(boost::asio::prepend(std::move(*l_completion_handler), l_error));
           });
         },
         std::forward<decltype(in_completion_handler)>(in_completion_handler), in_path, in_only_ctx, in_only_open
