@@ -19,9 +19,14 @@ namespace doodle {
 void scan_win_service_t::start() {
   timer_  = std::make_shared<timer_t>(g_io_context());
   signal_ = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  signal_->async_wait(boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), [](auto&&...) {
-    g_io_context().stop();
-  }));
+  signal_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::Get().on_cancel.slot(),
+      [](boost::system::error_code in_error_code, int in_sig) {
+        default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
+
+        g_io_context().stop();
+      }
+  ));
 
   project_roots_ = {
       details::scan_category_t::project_root_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥"},
@@ -59,6 +64,7 @@ void scan_win_service_t::start() {
 
 void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
   if (ec) {
+    default_logger_raw()->log(log_loc(), level::info, "定时器取消 {}", ec.message());
     return;
   }
   scan();
