@@ -141,8 +141,8 @@ void main_status_bar::init() { p_i->timer = std::make_shared<boost::asio::high_r
 bool main_status_bar::render() {
   dear::MenuBar{} && [&]() {
     /// \brief 渲染信息
-    if (g_reg()->ctx().contains<status_info>()) {
-      auto l_s = g_reg()->ctx().get<status_info>();
+    if (g_ctx().contains<status_info>()) {
+      auto l_s = g_ctx().get<status_info>();
       if (l_s.need_save) {
         dear::Text("需要保存"s);
         ImGui::SameLine();

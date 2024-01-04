@@ -313,7 +313,7 @@ bool assets_file_widgets::render() {
     generate_lists(p_i->handle_list);
     switch_rander();
   }
-  g_reg()->ctx().get<status_info>().show_size = p_i->lists.size();
+  g_ctx().get<status_info>().show_size = p_i->lists.size();
 
   return p_i->open;
 }
@@ -389,7 +389,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
     auto& l_sig = g_ctx().get<core_sig>();
     l_sig.select_handles(l_handle_list);
     l_sig.select_handle(i.handle_);
-    g_reg()->ctx().get<status_info>().select_size = l_handle_list.size();
+    g_ctx().get<status_info>().select_size = l_handle_list.size();
   }
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {

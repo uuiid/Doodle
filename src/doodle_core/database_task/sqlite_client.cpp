@@ -45,7 +45,7 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   g_reg()->ctx().emplace<project_config::base_config>() = project_config::base_config::get_default();
   project_path                                          = in_path;
   save_all                                              = false;
-  auto& l_s                                             = registry_attr->ctx().emplace<status_info>();
+  auto& l_s                                             = g_ctx().emplace<status_info>();
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
@@ -53,6 +53,7 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
 void file_translator::async_open_impl(const FSys::path& in_path) {
   if (!in_path.empty() && !FSys::exists(in_path)) {
     default_logger_raw()->log(log_loc(), level::warn, "文件不存在 {}", in_path);
+    async_save_impl();
     return;
   }
 
@@ -106,6 +107,15 @@ void file_translator::begin_save() {
             log_info(fmt::format("定时器取消 {}", in_error.message()));
             return;
           }
+          if (project_path.empty()) {
+            return;
+          }
+
+          if (!std::any_cast<obs_all&>(obs).has_update()) {
+            begin_save();
+            return;
+          }
+
           async_save_impl();
         }
     ));
@@ -113,15 +123,6 @@ void file_translator::begin_save() {
 }
 
 void file_translator::async_save_impl() {
-  if (!std::any_cast<obs_all&>(obs).has_update()) {
-    begin_save();
-    return;
-  }
-
-  if (project_path.empty()) {
-    return;
-  }
-
   {
     if (!FSys::folder_is_save(project_path)) {
       log_warn(fmt::format("{} 权限不够, 不保存", project_path));
@@ -154,7 +155,7 @@ void file_translator::async_save_impl() {
     log_error(boost::diagnostic_information(in_error));
   }
 
-  g_reg()->ctx().get<status_info>().need_save = false;
+  g_ctx().get<status_info>().need_save = false;
   core_set::get_set().add_recent_project(project_path);
   begin_save();
 }

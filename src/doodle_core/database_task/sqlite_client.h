@@ -56,6 +56,22 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   inline auto async_open(const FSys::path& in_path) {
     return boost::asio::post(g_io_context(), [this, in_path]() { async_open_impl(in_path); });
   };
+  template <typename CompletionHandler>
+  auto async_open(
+      const FSys::path& in_path, bool in_only_ctx, bool in_only_open, const registry_ptr& in_registry_ptr,
+      CompletionHandler&& in_completion_handler
+  ) {
+    only_ctx      = in_only_ctx;
+    only_open     = in_only_open;
+    registry_attr = in_registry_ptr;
+    project_path  = in_path;
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
+        [](auto&& in_completion_handler, const FSys::path& in_path, bool in_only_ctx, bool in_only_open) {
+
+        },
+        std::forward<decltype(in_completion_handler)>(in_completion_handler), in_path, in_only_ctx, in_only_open
+    );
+  }
 
   /**
    * @brief 使用路径打开项目文件

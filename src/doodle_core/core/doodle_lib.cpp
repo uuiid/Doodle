@@ -60,6 +60,7 @@ void doodle_lib::init() {
   ptr->ctx_p.emplace<detail::crash_reporting_thread>();
   ptr->ctx_p.emplace<database_info>();
   ptr->ctx_p.emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));
+  ptr->ctx_p.emplace<status_info>();
 
   init_register::instance().reg_class();
 
@@ -74,7 +75,6 @@ void doodle_lib::init() {
   ptr->reg->ctx().emplace<user::current_user>();
   ptr->ctx_p.emplace<core_sig>();
 
-  ptr->reg->ctx().emplace<status_info>();
 }
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
