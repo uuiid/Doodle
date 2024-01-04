@@ -130,10 +130,13 @@ class auto_light_service_impl_t {
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
     g_ctx().get<database_n::file_translator_ptr>()->async_open(
         l_main_prj, false, false, g_reg(),
-        [scan_win_service_ptr_](const boost::system::error_code &in_code) {
-          if (in_code) return;
-          scan_win_service_ptr_->start();
-        }
+        boost::asio::bind_executor(
+            g_io_context(),
+            [scan_win_service_ptr_](const boost::system::error_code &in_code) {
+              if (in_code) return;
+              scan_win_service_ptr_->start();
+            }
+        )
     );
     thread_ = std::make_shared<std::thread>([scan_win_service_ptr_]() {
       try {
@@ -238,10 +241,13 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
     g_ctx().get<database_n::file_translator_ptr>()->async_open(
         register_file_type::get_main_project(), false, false, g_reg(),
-        [scan_win_service_ptr_](const boost::system::error_code &in_code) {
-          if (in_code) return;
-          scan_win_service_ptr_->start();
-        }
+        boost::asio::bind_executor(
+            g_io_context(),
+            [scan_win_service_ptr_](const boost::system::error_code &in_code) {
+              if (in_code) return;
+              scan_win_service_ptr_->start();
+            }
+        )
     );
     return false;
   }
