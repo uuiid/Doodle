@@ -91,6 +91,7 @@ boost::system::error_code file_translator::async_open_impl() {
   only_ctx = false;
 
   if (!only_open) begin_save();
+  return l_error_code;
 }
 
 void file_translator::begin_save() {
@@ -126,7 +127,7 @@ boost::system::error_code file_translator::async_save_impl() {
   {
     if (!FSys::folder_is_save(project_path)) {
       log_warn(fmt::format("{} 权限不够, 不保存", project_path));
-      return;
+      return {};
     }
     if (save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
     DOODLE_LOG_INFO("文件位置 {}", project_path);
@@ -137,7 +138,7 @@ boost::system::error_code file_translator::async_save_impl() {
     // 提前测试存在
     if (save_all && FSys::exists(project_path)) {
       log_error(fmt::format("{} 已经存在, 不保存", project_path));
-      return;
+      return {};
     }
     if (save_all) log_error(fmt::format("{} 转换旧版数据, 较慢", project_path));
   }
@@ -158,6 +159,7 @@ boost::system::error_code file_translator::async_save_impl() {
   g_ctx().get<status_info>().need_save = false;
   core_set::get_set().add_recent_project(project_path);
   begin_save();
+  return {};
 }
 
 void file_translator::async_import_impl(const FSys::path& in_path) {
