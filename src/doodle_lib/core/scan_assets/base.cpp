@@ -9,6 +9,20 @@
 
 namespace doodle::details {
 
+entt::handle scan_category_data_t::get_project_handle() {
+  auto l_proect_view = g_reg()->view<project>().each();
+  for (auto&& [e, l_p] : l_proect_view) {
+    if (l_p == project_root_) {
+      return entt::handle{*g_reg(), e};
+    }
+  }
+
+  entt::handle l_handle{*g_reg(), g_reg()->create()};
+  l_handle.emplace<project>(project_root_);
+  l_handle.emplace<database>();
+  return l_handle;
+}
+
 std::vector<entt::handle> scan_category_data_t::create_handles(
     const std::map<uuid, entt::handle>& in_handle_map, entt::registry& in_reg
 ) const {
@@ -26,6 +40,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_ue_handle.emplace<season>(season_);
     ue_main_map::find_ue_project_file(l_ue_handle);
     l_ue_handle.emplace<database>(ue_file_.uuid_);
+
     switch (assets_type_) {
       case assets_type_enum::scene:
         l_ue_handle.emplace<scene_id>();
@@ -44,7 +59,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
   // 创建关联句柄
   entt::handle l_file_handle{};
   if (!l_ue_handle.any_of<file_association_ref>()) {
-    l_file_handle                                     = l_out.emplace_back(entt::handle{in_reg, in_reg.create()});
+    l_file_handle = l_out.emplace_back(entt::handle{in_reg, in_reg.create()});
     l_file_handle.emplace<database>();
     l_file_handle.emplace<file_association>();
   } else {

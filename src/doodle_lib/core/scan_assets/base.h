@@ -15,6 +15,9 @@ namespace doodle::details {
 class scan_category_data_t;
 
 class scan_category_data_t {
+ private:
+  entt::handle get_project_handle();
+
  public:
   enum class assets_type_enum {
     scene,
