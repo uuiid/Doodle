@@ -80,7 +80,8 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
   if (!l_ue_handle.any_of<file_association_ref>()) {
     l_file_handle = l_out.emplace_back(entt::handle{in_reg, in_reg.create()});
     l_file_handle.emplace<database>();
-    l_file_handle.emplace<file_association>();
+    l_file_handle.emplace<file_association>().name =
+        version_name_.empty() ? name_ : fmt::format("{}_{}", name_, version_name_);
   } else {
     l_file_handle = l_ue_handle.get<file_association_ref>();
   }
