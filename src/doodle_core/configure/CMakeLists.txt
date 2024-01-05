@@ -3,5 +3,4 @@ target_sources(doodle_core
         config.h
         doodle_core_export.h
         static_value.h
-        sy_config.h
 )

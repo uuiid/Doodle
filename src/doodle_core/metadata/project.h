@@ -12,10 +12,13 @@ class base_config;
  */
 class DOODLE_CORE_API project {
  public:
+  // 项目名称
   std::string p_name;
+  // 项目路径
   FSys::path p_path;
-
+  // 项目全拼
   std::string p_en_str;
+  // 项目简拼
   std::string p_shor_str;
 
  private:
@@ -24,6 +27,11 @@ class DOODLE_CORE_API project {
  public:
   project();
   explicit project(FSys::path in_path, std::string in_name);
+  explicit project(std::string in_name, FSys::path in_path, std::string in_en_str, std::string in_shor_str)
+      : p_name(std::move(in_name)),
+        p_path(std::move(in_path)),
+        p_en_str(std::move(in_en_str)),
+        p_shor_str(std::move(in_shor_str)) {}
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& Name) noexcept;

@@ -1,8 +1,9 @@
 
 
 #include <doodle_core/configure/config.h>
-#include <string>
+
 #include <chrono>
+#include <string>
 namespace doodle::version {
 
 // clang-format off
