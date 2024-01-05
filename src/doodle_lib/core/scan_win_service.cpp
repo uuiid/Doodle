@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/app/app_command.h>
 
@@ -28,17 +29,7 @@ void scan_win_service_t::start() {
       }
   ));
 
-  project_roots_ = {
-      details::scan_category_t::project_root_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥"},
-      {"//192.168.10.240/public/renjianzuideyi", "人间最得意"},
-      {"//192.168.10.240/public/WuJinShenYu", "无尽神域"},
-      {"//192.168.10.240/public/WuDiJianHun", "无敌剑魂"},
-      {"//192.168.10.240/public/WanGuShenHua", "万古神话"},
-      {"//192.168.10.240/public/LianQiShiWanNian", "炼气十万年"},
-      {"//192.168.10.240/public/WGXD", "万古邪帝"},
-      {"//192.168.10.240/public/LongMaiWuShen", "龙脉武神"},
-      {"//192.168.10.218/WanYuFengShen", "万域封神"}
-  };
+  project_roots_   = register_file_type::get_project_list();
   scan_categories_ = {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
       std::make_shared<details::prop_scan_category_t>()

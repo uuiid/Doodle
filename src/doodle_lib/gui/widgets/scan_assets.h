@@ -28,7 +28,7 @@ class DOODLELIB_API scan_assets_t {
   gui_cache_name_id start_scan_id;
   std::vector<doodle::details::scan_category_data_ptr> scam_data_vec_;
   std::vector<std::shared_ptr<doodle::details::scan_category_t>> scan_categories_;
-  std::array<project_root_gui_t, 9> project_roots_;
+  std::vector<project_root_gui_t> project_roots_;
   std::array<scan_categories_factory_t, 3> scan_categories_factory_vec_;
   std::vector<std::shared_ptr<std::atomic_bool>> scan_categories_is_scan_;
 
