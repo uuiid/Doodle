@@ -40,6 +40,7 @@
 #include "NiagaraEmitter.h"
 #include "NiagaraEditor/Public/NiagaraParameterDefinitions.h"
 #include "NiagaraParameterCollection.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 const FName UDoodleEffectLibraryWidget::Name{ TEXT("DoodleEffectLibraryWidget") };
 

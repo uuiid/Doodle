@@ -29,6 +29,7 @@
 #include "NiagaraEditor/Public/NiagaraParameterDefinitions.h"
 #include "NiagaraParameterCollection.h"
 #include "Serialization/ArchiveReplaceObjectAndStructPropertyRef.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 const FName UDoodleEffectLibraryEditWidget::Name{ TEXT("DoodleEffectLibraryEditWidget") };
 
