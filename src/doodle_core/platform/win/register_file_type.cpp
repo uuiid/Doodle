@@ -49,7 +49,7 @@ std::vector<project> register_file_type::get_project_list() {
 
   constexpr auto l_root     = LR"(SOFTWARE\Doodle\MainConfig\ProjectList)";
   constexpr auto l_root_fmt = LR"(SOFTWARE\Doodle\MainConfig\ProjectList\{})";
-  l_key_root.Open(HKEY_LOCAL_MACHINE, l_root, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+  l_key_root.Open(HKEY_LOCAL_MACHINE, l_root, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY);
 
   std::vector<project> l_list{};
 

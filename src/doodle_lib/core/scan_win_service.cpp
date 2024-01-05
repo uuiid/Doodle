@@ -74,7 +74,7 @@ void scan_win_service_t::scan() {
               app_base::Get().on_cancel.slot(),
               boost::asio::bind_executor(
                   g_io_context(),
-                  [l_i = l_size++, l_root = l_root.path_, this](
+                  [l_i = l_size++, l_root = l_root.p_path, this](
                       std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec
                   ) {
                     scan_categories_is_scan_[l_i] = true;
