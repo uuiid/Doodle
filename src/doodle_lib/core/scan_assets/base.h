@@ -16,7 +16,9 @@ class scan_category_data_t;
 
 class scan_category_data_t {
  private:
-  entt::handle get_project_handle();
+  entt::handle get_project_handle() const;
+
+  entt::handle get_assets_handle() const;
 
  public:
   enum class assets_type_enum {

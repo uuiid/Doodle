@@ -9,9 +9,9 @@
 
 namespace doodle::details {
 
-entt::handle scan_category_data_t::get_project_handle() {
-  auto l_proect_view = g_reg()->view<project>().each();
-  for (auto&& [e, l_p] : l_proect_view) {
+entt::handle scan_category_data_t::get_project_handle() const {
+  auto l_proect_view = g_reg()->view<project, assets>().each();
+  for (auto&& [e, l_p, _] : l_proect_view) {
     if (l_p == project_root_) {
       return entt::handle{*g_reg(), e};
     }
@@ -19,7 +19,24 @@ entt::handle scan_category_data_t::get_project_handle() {
 
   entt::handle l_handle{*g_reg(), g_reg()->create()};
   l_handle.emplace<project>(project_root_);
+  l_handle.emplace<assets>(project_root_.p_name);
   l_handle.emplace<database>();
+  return l_handle;
+}
+
+entt::handle scan_category_data_t::get_assets_handle() const {
+  auto l_prj_handle = get_project_handle();
+
+  for (auto l_c : l_prj_handle.get<assets>().get_child()) {
+    if (l_c && l_c.all_of<assets>() && l_c.get<assets>().p_path == file_type_.p_path) return l_c;
+  }
+
+  entt::handle l_handle{*g_reg(), g_reg()->create()};
+
+  l_handle.emplace<assets>(file_type_.p_path);
+  l_handle.emplace<database>();
+
+  l_prj_handle.get<assets>().add_child(l_handle);
   return l_handle;
 }
 
@@ -30,13 +47,15 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
 
   if (rig_file_.path_.empty()) return l_out;
   if (ue_file_.path_.empty()) return l_out;
+  auto l_prj_handle = get_project_handle();
+  auto l_ass_handle = get_assets_handle();
 
   entt::handle l_ue_handle{};
   if (in_handle_map.contains(ue_file_.uuid_)) {
     l_ue_handle = in_handle_map.at(ue_file_.uuid_);
   } else {
     l_ue_handle = l_out.emplace_back(in_reg, in_reg.create());
-    l_ue_handle.emplace<assets_file>(ue_file_.path_, name_, 0);
+    l_ue_handle.emplace<assets_file>(ue_file_.path_, name_, 0).assets_attr(l_ass_handle);
     l_ue_handle.emplace<season>(season_);
     ue_main_map::find_ue_project_file(l_ue_handle);
     l_ue_handle.emplace<database>(ue_file_.uuid_);
@@ -75,7 +94,7 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_rig_handle = in_handle_map.at(rig_file_.uuid_);
   } else {
     l_rig_handle = l_out.emplace_back(in_reg, in_reg.create());
-    l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0);
+    l_rig_handle.emplace<assets_file>(rig_file_.path_, name_, 0).assets_attr(l_ass_handle);
     l_rig_handle.emplace<season>(season_);
     l_rig_handle.emplace<rig_id>();
     l_rig_handle.emplace<database>(rig_file_.uuid_);
