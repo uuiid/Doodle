@@ -86,7 +86,7 @@ TSharedPtr<FTypeItem> FTypeItem::AddChildren(FString L_Name)
 {
     TSharedPtr<FTypeItem> Item = MakeShareable(new FTypeItem());
     Item->Name = FName(L_Name);
-    Item->Parent = MakeShareable(this);
+    Item->Parent = SharedThis(this);
     Item->TreeIndex = TreeIndex + 1;
     Children.Add(Item);
     return Item;
@@ -110,12 +110,12 @@ void FTypeItem::ConvertToPath()
 {
     TArray<FString>  L_Types;
     L_Types.Insert(Name.ToString(), 0);
-    TSharedPtr<FTypeItem> TempParent = Parent;
-    while (TempParent)
+    TSharedPtr<FTypeItem> TempParent = Parent.Pin();
+    while (TempParent.IsValid())
     {
         if (TempParent->Name != FName(TEXT("Root")))
             L_Types.EmplaceAt(0, TempParent->Name.ToString());
-        TempParent = TempParent->Parent;
+        TempParent = TempParent->Parent.Pin();
     }
     TypePaths.Empty();
     for (FString L_Type : L_Types)
@@ -717,7 +717,7 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
     TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->FindExistingLiveTab(FTabId(Name));
     if (Tab)
     {
-        //Tab->RequestCloseTab();
+        Tab->RequestCloseTab();
     }
 }
 

@@ -11,7 +11,7 @@
 
 class FTypeItem;
 
-class FTypeItem
+class FTypeItem : public TSharedFromThis<FTypeItem>
 {
 public:
 	bool CanEdit;
@@ -19,7 +19,7 @@ public:
 	FName Name;
 	FString TypePaths;
 
-	TSharedPtr<FTypeItem> Parent;
+	TWeakPtr<FTypeItem> Parent;
 	TArray<TSharedPtr<FTypeItem>> Children;
 
 	FTypeItem();
