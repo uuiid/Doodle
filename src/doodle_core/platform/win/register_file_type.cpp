@@ -60,7 +60,7 @@ std::vector<project> register_file_type::get_project_list() {
     auto l_name   = conv::utf_to_utf<char>(l_key.GetStringValue({}));
     auto l_path   = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(path)"));
     auto l_en_str = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(en_str)"));
-    l_list.emplace_back(std::move(l_short), std::move(l_name), std::move(l_path), std::move(l_en_str));
+    l_list.emplace_back(std::move(l_name), std::move(l_path), std::move(l_en_str), std::move(l_short));
   }
   return l_list;
 }
