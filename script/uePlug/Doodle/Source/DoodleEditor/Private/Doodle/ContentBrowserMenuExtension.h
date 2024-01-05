@@ -14,4 +14,6 @@ class FContentBrowserMenuExtension {
 
   void BoildSkinLODS(USkeletalMesh* In_Skin_Mesh);
   TArray<FAssetData> Paths;
+  //---------
+  void OnImportToEffectLibrary();
 };

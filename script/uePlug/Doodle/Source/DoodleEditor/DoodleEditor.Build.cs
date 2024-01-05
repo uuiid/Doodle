@@ -134,7 +134,8 @@ public class doodleEditor : ModuleRules
                 "MediaAssets",
                 "MediaPlayerEditor",
 				"Media",
-                "NiagaraEditor"
+                "NiagaraEditor",
+                "ToolWidgets"
             }
 		);
 

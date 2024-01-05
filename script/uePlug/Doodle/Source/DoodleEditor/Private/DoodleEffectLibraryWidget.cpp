@@ -33,6 +33,13 @@
 #include "IDesktopPlatform.h"
 #include "DesktopPlatformModule.h"
 #include "AssetViewUtils.h"
+#include "Filters/SFilterBar.h"
+
+#include "Materials/MaterialInstance.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "NiagaraEmitter.h"
+#include "NiagaraEditor/Public/NiagaraParameterDefinitions.h"
+#include "NiagaraParameterCollection.h"
 
 const FName UDoodleEffectLibraryWidget::Name{ TEXT("DoodleEffectLibraryWidget") };
 
@@ -44,6 +51,7 @@ public:
     SLATE_END_ARGS()
     //--------------
 private:
+    TObjectPtr<UFileMediaSource> MediaSource;
     TObjectPtr<UMediaPlayer> MediaPlayer;
     TObjectPtr<UMediaTexture> MediaTexture;
 
@@ -66,6 +74,8 @@ public:
 
     SPlayPreviewDialog()
     {
+        MediaSource = NewObject<UFileMediaSource>(GetTransientPackage());
+        MediaSource->AddToRoot();
         MediaPlayer = NewObject<UMediaPlayer>(GetTransientPackage(), NAME_None, RF_Transient);
         MediaPlayer->AddToRoot();
         MediaPlayer->SetLooping(true);
@@ -73,12 +83,15 @@ public:
         MediaTexture = NewObject<UMediaTexture>(GetTransientPackage(), NAME_None, RF_Transient);
         MediaTexture->AddToRoot();
         MediaTexture->SetDefaultMediaPlayer(MediaPlayer.Get());
+        MediaTexture->AutoClear = true;
         MediaTexture->UpdateResource();
         MediaTexture->ClearColor = FLinearColor::Transparent;
     }
 
     ~SPlayPreviewDialog() 
     {
+        if (MediaSource)
+            MediaSource->RemoveFromRoot();
         if (MediaPlayer)
             MediaPlayer->RemoveFromRoot();
         if (MediaTexture)
@@ -87,138 +100,12 @@ public:
 
     void Show(FString PreviewFile)
     {
-        TObjectPtr<UFileMediaSource> TheMediaSource = NewObject<UFileMediaSource>(GetTransientPackage());
-        TheMediaSource->SetFilePath(PreviewFile);
+        MediaSource->SetFilePath(PreviewFile);
         MediaPlayer->SetDesiredPlayerName(TEXT("VlcMedia"));
-        if (MediaPlayer->CanPlaySource(TheMediaSource.Get()))
+        if (MediaPlayer->CanPlaySource(MediaSource.Get()))
         {
-            MediaPlayer->OpenSource(TheMediaSource.Get());
+            MediaPlayer->OpenSource(MediaSource.Get());
         }
-    }
-};
-
-class SCreateEffectDialog : public SCompoundWidget
-{
-public:
-    SLATE_BEGIN_ARGS(SCreateEffectDialog)
-        {}
-    SLATE_END_ARGS()
-    //--------------
-private:
-    TSharedPtr<SVerticalBox> Container;
-    TWeakPtr<SWindow> PickerWindow;
-public:
-    FAssetData TheAssetData;
-
-    void Construct(const FArguments& InArgs)
-    {
-        ChildSlot
-            [
-                SNew(SBorder)
-                    .BorderImage(FAppStyle::GetBrush("Menu.Background"))
-                    [
-                        SNew(SBox)
-                            .WidthOverride(600.0f)
-                            [
-                                SNew(SVerticalBox)
-                                    + SVerticalBox::Slot()
-                                    .FillHeight(1)
-                                    .Padding(0.0f, 10.0f, 0.0f, 0.0f)
-                                    [
-                                        SNew(SBorder)
-                                            .BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-                                            .Content()
-                                            [
-                                                SAssignNew(Container, SVerticalBox)
-                                            ]
-                                    ]
-                                    + SVerticalBox::Slot()
-                                    .AutoHeight()
-                                    .HAlign(HAlign_Right)
-                                    .VAlign(VAlign_Bottom)
-                                    .Padding(8)
-                                    [
-                                        SNew(SUniformGridPanel)
-                                            .SlotPadding(FAppStyle::GetMargin("StandardDialog.SlotPadding"))
-                                            .MinDesiredSlotWidth(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotWidth"))
-                                            .MinDesiredSlotHeight(FAppStyle::GetFloat("StandardDialog.MinDesiredSlotHeight"))
-                                            + SUniformGridPanel::Slot(0, 0)
-                                            [
-                                                SNew(SButton)
-                                                    .HAlign(HAlign_Center)
-                                                    .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
-                                                    .OnClicked_Lambda([this]()
-                                                    {
-                                                        if (PickerWindow.IsValid())
-                                                        {
-                                                            PickerWindow.Pin()->RequestDestroyWindow();
-                                                        }
-                                                        return FReply::Handled();
-                                                    })
-                                                    .Text(FText::FromString(TEXT("Ok")))
-                                            ]
-                                            + SUniformGridPanel::Slot(1, 0)
-                                            [
-                                                SNew(SButton)
-                                                    .HAlign(HAlign_Center)
-                                                    .ContentPadding(FAppStyle::GetMargin("StandardDialog.ContentPadding"))
-                                                    .OnClicked_Lambda([this]()
-                                                    {
-                                                        TheAssetData = nullptr;
-                                                        if (PickerWindow.IsValid())
-                                                        {
-                                                            PickerWindow.Pin()->RequestDestroyWindow();
-                                                        }
-                                                        return FReply::Handled();
-                                                    })
-                                                    .Text(FText::FromString(TEXT("Cancel")))
-                                            ]
-                                    ]
-                            ]
-                    ]
-            ];
-        //-----------------------------------------------------
-        FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
-        FAssetPickerConfig AssetPickerConfig;
-        AssetPickerConfig.Filter.ClassPaths.Add(FTopLevelAssetPath{ UParticleSystem::StaticClass()->GetPathName() });
-        AssetPickerConfig.Filter.ClassPaths.Add(FTopLevelAssetPath{ UNiagaraSystem::StaticClass()->GetPathName() });
-        AssetPickerConfig.OnAssetSelected = FOnAssetSelected::CreateLambda([this](const FAssetData& AssetData)
-        {
-            TheAssetData = AssetData;
-        });
-        AssetPickerConfig.OnShouldFilterAsset = FOnShouldFilterAsset::CreateLambda([](const FAssetData& AssetData) {return false;});
-        AssetPickerConfig.bAllowNullSelection = true;
-        AssetPickerConfig.InitialAssetViewType = EAssetViewType::Column;
-        AssetPickerConfig.InitialAssetSelection = TheAssetData;
-        //-------------------------
-        Container->ClearChildren();
-        Container->AddSlot()
-        .AutoHeight()
-        [
-            SNew(STextBlock)
-                .Text(FText::FromString(TEXT("目标特效:")))
-                .ShadowOffset(FVector2D(1.0f, 1.0f))
-        ];
-        Container->AddSlot()
-        [
-            ContentBrowserModule.Get()
-                .CreateAssetPicker(AssetPickerConfig)
-        ];
-    }
-
-    void Show()
-    {
-        TSharedRef<SWindow> Window = SNew(SWindow)
-            .Title(FText::FromString(TEXT("创建特效")))
-            .ClientSize(FVector2D{ 800,700 })
-            .SupportsMinimize(false)
-            .SupportsMaximize(false)
-            [
-                SharedThis(this)
-            ];
-        //--------------------------
-        PickerWindow = Window;
-        GEditor->EditorAddModalWindow(Window);
     }
 };
 
@@ -231,19 +118,66 @@ UDoodleEffectLibraryWidget::UDoodleEffectLibraryWidget()
         LibraryPath = TEXT("E:/EffectLibrary");
     }
     //---------------
-    AllTreeRootItems.Empty();
-    TreeRootItems.Empty();
+    AllTileRootItems.Empty();
+    TileRootItems.Empty();
     IFileManager::Get().IterateDirectory(*LibraryPath, [this](const TCHAR* PathName, bool bIsDir)
     {
         if (bIsDir)
         {
-            TSharedPtr<FEffectTreeItem> Item = CreateTreeItem(PathName);
-            Item->ReadJson();
-            AllTreeRootItems.Add(Item);
-            TreeRootItems.Add(Item);
+            TSharedPtr<FEffectTileItem> Item = CreateTileItem(PathName);
+            AllTileRootItems.Add(Item);
+            TileRootItems.Add(Item);
         }
         return true; // Continue
     });
+    //Type--------------------
+    RootChildren.Empty();
+    TSharedPtr<FTypeItem> RootItem = MakeShareable(new FTypeItem());
+    RootItem->Name = FName(TEXT("Root"));
+    RootChildren.Add(RootItem);
+    IFileManager::Get().IterateDirectory(*LibraryPath, [this](const TCHAR* PathName, bool bIsDir)
+    {
+        if (bIsDir)
+        {
+            TSharedPtr<FTypeItem> Parent = RootChildren.Top();
+            //--------------
+            TSharedPtr<FEffectTileItem> Item = MakeShareable(new FEffectTileItem());
+            Item->JsonFile = FPaths::Combine(PathName, TEXT("Data.json"));
+            Item->ReadJson();
+            int32 LayerIndex = 0;
+            while (LayerIndex < Item->EffectTypes.Num())
+            {
+                FString  LayerType = Item->EffectTypes[LayerIndex];
+                TSharedPtr<FTypeItem> LayerItem = Parent->GetChildren(LayerType);
+                if (LayerItem == nullptr)
+                {
+                    LayerItem = Parent->AddChildren(LayerType);
+                }
+                Parent = LayerItem;
+                LayerItem->ConvertToPath();
+                LayerIndex++;
+            }
+        }
+        return true;
+    });
+    //Tags------------------
+    AllEffectTags.Empty();
+    for (TSharedPtr<FEffectTileItem> Item : AllTileRootItems)
+    {
+        for (FString TempTag : Item->EffectTags)
+        {
+            if (TempTag.Len() > 0 && !AllEffectTags.Contains(TempTag))
+            {
+                AllEffectTags.Add(TempTag);
+            }
+        }
+    }
+    for (FString TempTag : AllEffectTags) 
+    {
+        TSharedPtr<FTagItem> TagItem = MakeShareable(new FTagItem());
+        TagItem->Name = TempTag;
+        TheEffectTags.Add(TagItem);
+    };
 }
 
 UDoodleEffectLibraryWidget::~UDoodleEffectLibraryWidget() 
@@ -254,60 +188,42 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
 {
     ChildSlot
         [
-            SNew(SVerticalBox)
-                + SVerticalBox::Slot()
-                .AutoHeight()
+            SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                .FillWidth(0.1)
                 [
-                    SNew(STextBlock)
-                        .Text(FText::FromString(TEXT("双击播放预览：")))
-                        .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
-                ]
-                + SVerticalBox::Slot()
-                .Padding(2)
-                .FillHeight(0.1)
-                [
-                    SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
-                        .AutoWidth()
+                    SNew(SVerticalBox)
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
                         [
-                            SNew(SComboButton)
-                                .ForegroundColor(FLinearColor::White)
-                                .ContentPadding(0)
-                                .ToolTipText(FText::FromString(TEXT("特效类别:")))
-                                .OnGetMenuContent(this, &UDoodleEffectLibraryWidget::MakeAddFilterMenu)
-                                .HasDownArrow(true)
-                                .ContentPadding(FMargin(1, 0))
-                                .AddMetaData<FTagMetaData>(FTagMetaData(TEXT("ExtContentBrowserFiltersCombo")))
-                                .Visibility(EVisibility::Visible)
-                                .ButtonContent()
-                                [
-                                    SNew(SHorizontalBox)
-
-                                        + SHorizontalBox::Slot()
-                                        .AutoWidth()
-                                        [
-                                            SNew(STextBlock)
-                                                .TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
-                                                .Font(FAppStyle::Get().GetFontStyle("FontAwesome.9"))
-                                                .Text(FText::FromString(FString(TEXT("\xf0b0"))) /*fa-filter*/)
-                                        ]
-
-                                        + SHorizontalBox::Slot()
-                                        .AutoWidth()
-                                        .Padding(2, 0, 0, 0)
-                                        [
-                                            SNew(STextBlock)
-                                                .TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
-                                                .Text_Lambda([this]()-> FText 
-                                                {
-                                                    return FText::FromString(this->EffectType);
-                                                })
-                                        ]
-                                ]
+                            SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("特效标签：")))
+                                .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
                         ]
-                        + SHorizontalBox::Slot()
-                        .Padding(10)
-                        .FillWidth(0.6f)
+                        + SVerticalBox::Slot()
+                        .Padding(2)
+                        [
+                            SAssignNew(EffectTagsViewPtr, SListView< TSharedPtr<FTagItem> >)
+                                .SelectionMode(ESelectionMode::None)
+                                .ItemHeight(40)
+                                .ListItemsSource(&TheEffectTags)
+                                .OnGenerateRow(this, &UDoodleEffectLibraryWidget::ListOnGenerateRow)
+                        ]
+                ]
+                + SHorizontalBox::Slot()
+                .FillWidth(0.8)
+                [
+                    SNew(SVerticalBox)
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("双击播放预览：")))
+                                .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                        ]
+                        + SVerticalBox::Slot()
+                        .Padding(2)
+                        .AutoHeight()
                         [
                             SAssignNew(SearchBoxPtr, SAssetSearchBox)
                                 .HintText(FText::FromString(TEXT("搜索特效名")))
@@ -316,65 +232,83 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                                 .AddMetaData<FTagMetaData>(FTagMetaData(TEXT("ExtContentBrowserSearchAssets")))
                                 .ShowSearchHistory(true)
                         ]
-                        +SHorizontalBox::Slot()
-                        .FillWidth(0.1f)
+                        + SVerticalBox::Slot()
+                        .Padding(2.0f)
                         [
-                            SNew(SButton)
-                                .Text(FText::FromString(TEXT("新建特效")))
-                                .OnClicked_Lambda([this]()
-                                {
-                                    OnCreateNewEffect();
-                                    return FReply::Handled();
-                                })
+                            SAssignNew(TileViewPtr, STileView<TSharedPtr<FEffectTileItem>>)
+                                .ListItemsSource(&TileRootItems)
+                                .ItemWidth(150)
+                                .ItemHeight(160)
+                                .SelectionMode(ESelectionMode::Single)
+                                .OnGenerateTile(this, &UDoodleEffectLibraryWidget::MakeTableRowWidgetTile)
+                                .OnSelectionChanged_Lambda([&](TSharedPtr<FEffectTileItem> inSelectItem, ESelectInfo::Type SelectType)
+                                    {
+                                        if (inSelectItem)
+                                        {
+                                            CurrentItem = inSelectItem;
+                                            TObjectPtr<UFileMediaSource> TheMediaSource = NewObject<UFileMediaSource>(GetTransientPackage());
+                                            TheMediaSource->SetFilePath(CurrentItem->PreviewFile);
+                                            CurrentItem->MediaPlayer->SetDesiredPlayerName(TEXT("VlcMedia"));
+                                            if (CurrentItem->MediaPlayer->CanPlaySource(TheMediaSource.Get()))
+                                            {
+                                                CurrentItem->MediaPlayer->OpenSource(TheMediaSource.Get());
+                                            }
+                                        }
+                                    })
+                                .OnContextMenuOpening_Lambda([this]()
+                                    {
+                                        FUIAction ActionCall(FExecuteAction::CreateRaw(this, &UDoodleEffectLibraryWidget::OnEffectExport), FCanExecuteAction());
+                                        FMenuBuilder MenuBuilder(true, false);
+                                        MenuBuilder.AddMenuSeparator();
+                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("导出")), FText::FromString(TEXT("导出到本地")),
+                                            FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Import")), ActionCall);
+                                        return MenuBuilder.MakeWidget();
+                                    })
+                                        .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FEffectTileItem> inSelectItem)
+                                            {
+                                                if (inSelectItem)
+                                                {
+                                                    CurrentItem = inSelectItem;
+                                                }
+                                                OnPlayPreview(inSelectItem);
+                                            })
+                        ]
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SNew(SDirectoryPicker)
+                                .Directory(LibraryPath)
+                                .OnDirectoryChanged(this, &UDoodleEffectLibraryWidget::OnDirectoryChanged)
                         ]
                 ]
-                + SVerticalBox::Slot()
-                .Padding(2.0f)
+                + SHorizontalBox::Slot()
+                .FillWidth(0.2)
                 [
-                    SAssignNew(TileViewPtr, STileView<TSharedPtr<FEffectTreeItem>>)
-                        .ListItemsSource(&TreeRootItems)
-                        .ItemWidth(150)
-                        .ItemHeight(150)
-                        .SelectionMode(ESelectionMode::Single)
-                        .OnGenerateTile(this, &UDoodleEffectLibraryWidget::MakeTableRowWidget)
-                        .OnSelectionChanged_Lambda([&](TSharedPtr<FEffectTreeItem> inSelectItem, ESelectInfo::Type SelectType)
-                        {
-                            if (inSelectItem)
-                            {
-                                CurrentItem = inSelectItem;
-                                TObjectPtr<UFileMediaSource> TheMediaSource = NewObject<UFileMediaSource>(GetTransientPackage());
-                                TheMediaSource->SetFilePath(CurrentItem->PreviewFile);
-                                CurrentItem->MediaPlayer->SetDesiredPlayerName(TEXT("VlcMedia"));
-                                if (CurrentItem->MediaPlayer->CanPlaySource(TheMediaSource.Get())) 
-                                {
-                                    CurrentItem->MediaPlayer->OpenSource(TheMediaSource.Get());
-                                }
-                            }
-                        })
-                        .OnContextMenuOpening_Lambda([this]()
-                        {
-                            FUIAction ActionCall(FExecuteAction::CreateRaw(this, &UDoodleEffectLibraryWidget::OnEffectExport), FCanExecuteAction());
-                            FMenuBuilder MenuBuilder(true, false);
-                            MenuBuilder.AddMenuSeparator();
-                            MenuBuilder.AddMenuEntry(FText::FromString(TEXT("导出")), FText::FromString(TEXT("导出到本地")),
-                                FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Import")), ActionCall);
-                            return MenuBuilder.MakeWidget();
-                        })
-                        .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FEffectTreeItem> inSelectItem)
-                        {
-                            if (inSelectItem)
-                            {
-                                CurrentItem = inSelectItem;
-                            }
-                            OnPlayPreview(inSelectItem);
-                        })
-                ]
-                +SVerticalBox::Slot()
-                .AutoHeight()
-                [
-                    SNew(SDirectoryPicker)
-                        .Directory(LibraryPath)
-                        .OnDirectoryChanged(this, &UDoodleEffectLibraryWidget::OnDirectoryChanged)
+                    SNew(SVerticalBox)
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("特效分类：")))
+                                .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                        ]
+                        + SVerticalBox::Slot()
+                        .Padding(2)
+                        [
+                            SAssignNew(TreeViewPtr, STreeView<TSharedPtr<FTypeItem>>)
+                                .TreeItemsSource(&RootChildren)
+                                .SelectionMode(ESelectionMode::Single)
+                                .OnGenerateRow(this, &UDoodleEffectLibraryWidget::MakeTableRowWidget)
+                                .OnGetChildren(this, &UDoodleEffectLibraryWidget::HandleGetChildrenForTree)
+                                .HighlightParentNodesForSelection(true)
+                                .OnSelectionChanged(this, &UDoodleEffectLibraryWidget::OnTypeSelectionChanged)
+                                .HeaderRow(
+                                    SNew(SHeaderRow)
+                                        + SHeaderRow::Column(FName(TEXT("Column1")))
+                                        .Visibility(EVisibility::Hidden)
+                                        .DefaultLabel(FText::FromString(TEXT("")))
+                                )
+                        ]
                 ]
         ];
 }
@@ -384,159 +318,56 @@ TSharedRef<SDockTab> UDoodleEffectLibraryWidget::OnSpawnAction(const FSpawnTabAr
     return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(UDoodleEffectLibraryWidget)];
 }
 
-TSharedRef<ITableRow> UDoodleEffectLibraryWidget::MakeTableRowWidget(TSharedPtr<FEffectTreeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> UDoodleEffectLibraryWidget::MakeTableRowWidgetTile(TSharedPtr<FEffectTileItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable)
 {
-    return SNew(STableRow<TSharedPtr<FEffectTreeItem>>, OwnerTable)
+    return SNew(STableRow<TSharedPtr<FEffectTileItem>>, OwnerTable)
         [
-            SNew(SBorder)
-                .ToolTip(SNew(SToolTip).Text
-                (
-                    FText::FromString(InTreeElement->DescText))
-                )
-                .Padding(2)
+            SNew(SVerticalBox)
+                + SVerticalBox::Slot()
+                .FillHeight(0.9)
                 [
-                    SNew(SOverlay)
-                        + SOverlay::Slot()
-                        .Padding(2)
+                    SNew(SBorder)
+                        .Padding(1)
                         [
-                            SNew(SImage)
-                                .Image(InTreeElement->ShotBrush.IsValid() ? InTreeElement->ShotBrush.Get() : nullptr)
-                        ]
-                        + SOverlay::Slot()
-                        [
-                            SNew(SVerticalBox)
-                                + SVerticalBox::Slot()
-                                .AutoHeight()
-                                .VAlign(VAlign_Bottom)
-                                .HAlign(HAlign_Left)
+                            SNew(SOverlay)
+                                .ToolTip(SNew(SToolTip).Text
+                                (
+                                    FText::FromString(InTreeElement->DescText))
+                                )
+                                + SOverlay::Slot()
+                                .Padding(2)
                                 [
-                                    SNew(STextBlock)
-                                        .Text(FText::FromName(InTreeElement->Name))
-                                        .Font(FStyleDefaults::GetFontInfo(10))
+                                    SNew(SImage)
+                                        .Image(InTreeElement->ShotBrush.IsValid() ? InTreeElement->ShotBrush.Get() : nullptr)
+                                ]
+                                + SOverlay::Slot()
+                                [
+                                    SAssignNew(InTreeElement->MediaBox, SBox)
+
+                                        .Visibility(EVisibility::Hidden)
+                                        [
+                                            SNew(SMediaImage, InTreeElement->MediaTexture)
+                                        ]
                                 ]
                         ]
-                        + SOverlay::Slot()
-                        [
-                            SAssignNew(InTreeElement->MediaBox, SBox)
-                                .Visibility(EVisibility::Hidden)
-                                [
-                                    SNew(SMediaImage, InTreeElement->MediaTexture)
-                                ]
-                        ]
+                ]
+                + SVerticalBox::Slot()
+                .HAlign(HAlign_Center)
+                .FillHeight(0.1)
+                [
+                    SNew(STextBlock)
+                        .Text(FText::FromName(InTreeElement->Name))
+                        .Font(FStyleDefaults::GetFontInfo(10))
                 ]
         ];
 }
 
-void UDoodleEffectLibraryWidget::OnCreateNewEffect()
-{
-    TSharedRef<SCreateEffectDialog> Dialog = SNew(SCreateEffectDialog);
-    Dialog->Show();
-    if (Dialog.Get().TheAssetData != nullptr)
-    {
-        SelectAssetData = Dialog.Get().TheAssetData;
-        //----------------------
-        TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryEditWidget::Name);
-        TSharedRef<UDoodleEffectLibraryEditWidget> Widget = StaticCastSharedRef<UDoodleEffectLibraryEditWidget>(Tab->GetContent());
-        Widget->LibraryPath = LibraryPath;
-        Widget->SelectObject = SelectAssetData.GetAsset();
-        FName EffectName;
-        if (Widget->SelectObject)
-        {
-            EffectName = SelectAssetData.AssetName;
-        }
-        else
-        {
-            EffectName = FName(TEXT("Effect"));
-        }
-        TArray<FName> FileNames;
-        IFileManager::Get().IterateDirectory(*LibraryPath, [&](const TCHAR* FilenameOrDirectory, bool bIsDirectory) -> bool
-        {
-            if (bIsDirectory)
-            {
-                FString FileName = FPaths::GetCleanFilename(FilenameOrDirectory);
-                FileNames.Add(FName(FileName));
-            }
-            return true;
-        });
-        while (FileNames.Contains(EffectName))
-        {
-            int Counter = EffectName.GetNumber();
-            EffectName.SetNumber(++Counter);
-        }
-        Widget->EffectName = EffectName.ToString();
-        Widget->EffectTypeValues.Empty();
-        for (TSharedPtr<FEffectTreeItem> Item : AllTreeRootItems)
-        {
-            if(Item->EffectType.Len()>0&& !Widget->EffectTypeValues.Contains(Item->EffectType))
-            {
-                Widget->EffectTypeValues.Add(Item->EffectType);
-            }
-        }
-        if (!Widget->EffectTypeValues.IsEmpty())
-            Widget->EffectType = Widget->EffectTypeValues.Top();
-        Widget->SetViewportDat();
-    }
-}
-
-TSharedRef<SWidget> UDoodleEffectLibraryWidget::MakeAddFilterMenu()
-{
-    FMenuBuilder MenuBuilder(true, nullptr, nullptr, true);
-    MenuBuilder.BeginSection(TEXT("SectionExtensionHook"));
-    {
-        TArray<FString> EffectTypeValues;
-        EffectTypeValues.Add(TEXT("全部"));
-        for (TSharedPtr<FEffectTreeItem> Item : AllTreeRootItems)
-        {
-            if (Item->EffectType.Len() > 0 && !EffectTypeValues.Contains(Item->EffectType))
-            {
-                EffectTypeValues.Add(Item->EffectType);
-            }
-        }
-        for (int32 i = 0; i < EffectTypeValues.Num(); i++)
-        {
-            MenuBuilder.AddMenuEntry(FText::FromString(EffectTypeValues[i]), TAttribute<FText>(), FSlateIcon(),
-            FUIAction(FExecuteAction::CreateLambda([this, EffectTypeValues, i]()
-            {
-                EffectType = EffectTypeValues[i];
-                TreeRootItems.Empty();
-                for (TSharedPtr<FEffectTreeItem> Item : AllTreeRootItems)
-                {
-                    if (EffectType == TEXT("全部")) 
-                        TreeRootItems.Add(Item);
-                    else
-                    {
-                        if (Item->EffectType == EffectType) 
-                        {
-                            TreeRootItems.Add(Item);
-                        }
-                    }
-                }
-                if (TileViewPtr.IsValid())
-                {
-                    TileViewPtr->RequestListRefresh();
-                }
-            }),
-            FCanExecuteAction()),
-            NAME_None,
-            EUserInterfaceActionType::Button);
-        }
-    }
-    MenuBuilder.EndSection(); 
-//--------------------
-    return
-        SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        [
-            MenuBuilder.MakeWidget()
-        ];
-}
-
-void UDoodleEffectLibraryWidget::OnPlayPreview(TSharedPtr<FEffectTreeItem> inSelectItem)
+void UDoodleEffectLibraryWidget::OnPlayPreview(TSharedPtr<FEffectTileItem> inSelectItem)
 {
     TSharedRef<SPlayPreviewDialog> Dialog = SNew(SPlayPreviewDialog);
     TSharedRef<SWindow> Window = SNew(SWindow)
         .Title(FText::FromString(TEXT("特效预览")))
-        .ClientSize(FVector2D{ 800,700 })
+        .ClientSize(FVector2D{ 1024,1024 })
         .SupportsMinimize(false)
         .SupportsMaximize(false);
     Window->SetContent(Dialog);
@@ -547,10 +378,9 @@ void UDoodleEffectLibraryWidget::OnPlayPreview(TSharedPtr<FEffectTreeItem> inSel
 void UDoodleEffectLibraryWidget::OnSaveNewEffect(FString EffectName)
 {
     FString PathName = FPaths::Combine(LibraryPath , EffectName);
-    TSharedPtr<FEffectTreeItem> Item = CreateTreeItem(PathName);
-    Item->ReadJson();
-    AllTreeRootItems.Add(Item);
-    TreeRootItems.Add(Item);
+    TSharedPtr<FEffectTileItem> Item = CreateTileItem(PathName);
+    AllTileRootItems.Add(Item);
+    TileRootItems.Add(Item);
     if (TileViewPtr.IsValid()) 
     {
         TileViewPtr->RequestListRefresh();
@@ -562,15 +392,15 @@ void UDoodleEffectLibraryWidget::OnDirectoryChanged(const FString& Directory)
     LibraryPath = Directory;
     GConfig->SetString(TEXT("DoodleEffectLibrary"), TEXT("EffectLibraryPath"), *LibraryPath, GEngineIni);
     //------------
-    AllTreeRootItems.Empty();
-    TreeRootItems.Empty();
+    AllTileRootItems.Empty();
+    TileRootItems.Empty();
     IFileManager::Get().IterateDirectory(*LibraryPath, [this](const TCHAR* PathName, bool bIsDir)
     {
         if (bIsDir)
         {
-            TSharedPtr<FEffectTreeItem> Item = CreateTreeItem(PathName);
-            AllTreeRootItems.Add(Item);
-            TreeRootItems.Add(Item);
+            TSharedPtr<FEffectTileItem> Item = CreateTileItem(PathName);
+            AllTileRootItems.Add(Item);
+            TileRootItems.Add(Item);
         }
         return true; // Continue
     });
@@ -580,39 +410,15 @@ void UDoodleEffectLibraryWidget::OnDirectoryChanged(const FString& Directory)
     }
 }
 
-void UDoodleEffectLibraryWidget::OnSearchBoxCommitted(const FText& InSearchText, ETextCommit::Type CommitInfo)
-{
-    if (CommitInfo == ETextCommit::OnCleared)
-    {
-        FilterText = TEXT("");
-    }
-    else if(CommitInfo == ETextCommit::OnEnter)
-    {
-        FilterText = InSearchText.ToString();
-        //---------------
-        TreeRootItems.Empty();
-        for (TSharedPtr<FEffectTreeItem> Item : AllTreeRootItems)
-        {
-            if (Item->Name.ToString().Contains(FilterText)) 
-            {
-                TreeRootItems.Add(Item);
-            }
-        }
-        if (TileViewPtr.IsValid()) 
-        {
-            TileViewPtr->RequestListRefresh();
-        }
-    }
-}
-
-TSharedPtr<FEffectTreeItem> UDoodleEffectLibraryWidget::CreateTreeItem(FString PathName)
+TSharedPtr<FEffectTileItem> UDoodleEffectLibraryWidget::CreateTileItem(FString PathName)
 {
     FString EffectName = FPaths::GetBaseFilename(PathName);
-    TSharedPtr<FEffectTreeItem> Item = MakeShareable(new FEffectTreeItem());
+    TSharedPtr<FEffectTileItem> Item = MakeShareable(new FEffectTileItem());
     Item->PreviewFile = FPaths::Combine(PathName, TEXT("Effect.avi"));
     Item->JsonFile = FPaths::Combine(PathName, TEXT("Data.json"));
     Item->Name = FName(EffectName);
     Item->SetThumbnail(FPaths::Combine(PathName, TEXT("Shot.png")));
+    Item->ReadJson();
     return Item;
 }
 
@@ -655,19 +461,206 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
                         IFileManager::Get().Copy(*DestFilePath, *SourceFilePath, true, true);
                     }
                 });
-                //---------------------
+                ////Move-----------------
                 FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
                 AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
                 FString RelativePath = ExportDirectory.RightChop(ProjectContentDir.Len());
                 UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-                EditorAssetSubsystem->RenameDirectory(FPaths::Combine(TEXT("/Game"), CurrentItem->Name.ToString()), FPaths::Combine(TEXT("/Game") / RelativePath, CurrentItem->Name.ToString()));
+                FString TargetPath = FPaths::Combine(TEXT("/Game") / RelativePath, CurrentItem->Name.ToString());
+                EditorAssetSubsystem->RenameDirectory(FPaths::Combine(TEXT("/Game"), CurrentItem->Name.ToString()), TargetPath);
                 //-----------------------
+                AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
+                OnSortAssetPath(FName(TargetPath));
                 FString Info = FString::Format(TEXT("导入特效：{0}到项目:{1}完成"), { CurrentItem->Name.ToString(),FPaths::Combine(TEXT("/Game"), RelativePath) });
                 FNotificationInfo L_Info{ FText::FromString(Info) };
                 L_Info.FadeInDuration = 1.0f;  // 
                 L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
                 FSlateNotificationManager::Get().AddNotification(L_Info);
             }
+        }
+    }
+}
+
+void UDoodleEffectLibraryWidget::OnSortAssetPath(FName AssetPath)
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    TArray<FAssetData> OutAssetData;
+    IAssetRegistry::Get()->GetAssetsByPath(AssetPath, OutAssetData, false);
+    for (FAssetData Asset : OutAssetData)
+    {
+        FString Path = Asset.PackagePath.ToString();
+        if (Asset.GetClass() == UStaticMesh::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("Mesh"));
+        if (Asset.GetClass()->IsChildOf<UTexture>())
+            Path = FPaths::Combine(Path, TEXT("Tex"));
+        if (Asset.GetClass()->IsChildOf(UMaterialInstance::StaticClass()))
+            Path = FPaths::Combine(Path, TEXT("Mat/MatInst"));
+        if (Asset.GetClass() == UMaterial::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("Mat/Mat"));
+        if (Asset.GetClass() == UMaterialParameterCollection::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("Mat/MatParSet"));
+        if (Asset.GetClass() == UMaterialFunction::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("Mat/MatFun"));
+        if (Asset.GetClass() == UNiagaraEmitter::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/Emitter"));
+        if (Asset.GetClass() == UNiagaraParameterDefinitions::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/ParameterDefinitions"));
+        if (Asset.GetClass() == UNiagaraParameterCollection::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/ParameterCollection"));
+        if (Asset.GetClass() == UNiagaraParameterCollectionInstance::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/ParameterCollectionIns"));
+        if (Asset.GetClass() == UNiagaraEffectType::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/EffectType"));
+        if (Asset.GetClass() == UNiagaraValidationRuleSet::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/ValidationRuleSet"));
+        if (Asset.GetClass() == UNiagaraScript::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("FX/Script"));
+        if (Asset.GetClass() == USkeletalMesh::StaticClass() || Asset.GetClass() == UAnimSequence::StaticClass()
+            || Asset.GetClass() == UPhysicsAsset::StaticClass() || Asset.GetClass() == USkeleton::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("SK"));
+        //--------------------
+        FName AssetName = Asset.AssetName;
+        while (EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
+        {
+            int Counter = AssetName.GetNumber();
+            AssetName.SetNumber(++Counter);
+        }
+        if (!EditorAssetSubsystem->RenameAsset(Asset.PackageName.ToString(), FPaths::Combine(Path, Asset.AssetName.ToString())))
+        {
+            FString Info = FString::Format(TEXT("移动文件{0}到{1}失败"), { Asset.PackageName.ToString(), FPaths::Combine(Path, Asset.AssetName.ToString()) });
+            UE_LOG(LogTemp, Warning, TEXT("Error: %s"), *Info);
+        }
+    }
+}
+
+TSharedRef<ITableRow> UDoodleEffectLibraryWidget::MakeTableRowWidget(TSharedPtr<FTypeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    return SNew(FTypeItemElement, OwnerTable, InTreeElement);
+}
+
+void UDoodleEffectLibraryWidget::HandleGetChildrenForTree(TSharedPtr<FTypeItem> InItem, TArray<TSharedPtr<FTypeItem>>& OutChildren)
+{
+    OutChildren.Append(InItem->Children);
+}
+
+TSharedRef<ITableRow> UDoodleEffectLibraryWidget::ListOnGenerateRow(TSharedPtr<FTagItem> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    return SNew(STableRow<TSharedPtr<FTagItem>>, OwnerTable)
+        [
+            SNew(SBorder)
+                .Padding(1,5)
+                //.BorderImage(FAppStyle::Get().GetBrush("FilterBar.FilterBackground"))
+                [
+                    SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .VAlign(VAlign_Center)
+                        .AutoWidth()
+                        [
+                            SNew(SImage)
+                                .Image(FAppStyle::Get().GetBrush("FilterBar.FilterImage"))
+                                .ColorAndOpacity_Lambda([InItem]()
+                                {
+                                    FLinearColor FilterColor = FLinearColor::Yellow;
+                                    return InItem->IsChecked ? FilterColor : FAppStyle::Get().GetSlateColor("Colors.Recessed");
+                                })
+                        ]
+                        + SHorizontalBox::Slot()
+                        .Padding(TAttribute<FMargin>(InItem->IsChecked ? FMargin(4, 2, 4, 0) : FMargin(4, 1, 4, 1)))
+                        .VAlign(VAlign_Center)
+                        [
+                            SAssignNew(ToggleButtonPtr, SFilterCheckBox)
+                                .Style(FAppStyle::Get(), "FilterBar.FilterButton")
+                                .IsChecked(InItem->IsChecked)
+                                .OnCheckStateChanged(this, &UDoodleEffectLibraryWidget::OnTageCheckStateChanged, InItem)
+                                .CheckBoxContentUsesAutoWidth(false)
+                                [
+                                    SNew(STextBlock)
+                                        .Text(FText::FromString(InItem->Name))
+                                        .IsEnabled_Lambda([InItem] {return InItem->IsChecked; })
+                                ]
+                        ]
+                ]
+        ];
+}
+
+void UDoodleEffectLibraryWidget::OnTageCheckStateChanged(ECheckBoxState NewState,TSharedPtr<FTagItem> P_Item)
+{
+    P_Item->IsChecked = NewState == ECheckBoxState::Checked;
+    FilterTags.Empty();
+    for (TSharedPtr<FTagItem> TagItem : TheEffectTags)
+    {
+        if(TagItem->IsChecked)
+            FilterTags.Add(TagItem->Name);
+    }
+    //--------------
+    OnFilterTileView();
+    if (TileViewPtr.IsValid())
+    {
+        TileViewPtr->RequestListRefresh();
+    }
+}
+
+void UDoodleEffectLibraryWidget::OnTypeSelectionChanged(TSharedPtr<FTypeItem> inSelectItem, ESelectInfo::Type SelectType)
+{
+    NowSelectTypeItem = inSelectItem;
+    //--------------
+    OnFilterTileView();
+    if (TileViewPtr.IsValid())
+    {
+        TileViewPtr->RequestListRefresh();
+    }
+}
+
+void UDoodleEffectLibraryWidget::OnFilterTileView() 
+{
+    TileRootItems.Empty();
+    for (TSharedPtr<FEffectTileItem> Item : AllTileRootItems)
+    {
+        bool IsFilter = true;
+        for (FString TagStr : FilterTags)
+        {
+            if (!Item->EffectTags.Contains(TagStr))
+            {
+                IsFilter = false;
+                break;
+            }
+        }
+        if (IsFilter)
+        {
+            if (NowSelectTypeItem && !NowSelectTypeItem->TypePaths.IsEmpty())
+            {
+                if (!Item->TypePaths.IsEmpty())
+                {
+                    if (Item->MatchFilter(NowSelectTypeItem->TypePaths))
+                    {
+                        if (Item->Name.ToString().Contains(FilterText))
+                        TileRootItems.Add(Item);
+                    }
+                }
+            }
+            else
+            {
+                if (Item->Name.ToString().Contains(FilterText))
+                TileRootItems.Add(Item);
+            }
+        }
+    }
+}
+
+void UDoodleEffectLibraryWidget::OnSearchBoxCommitted(const FText& InSearchText, ETextCommit::Type CommitInfo)
+{
+    if (CommitInfo == ETextCommit::OnCleared)
+    {
+        FilterText = TEXT("");
+    }
+    else if (CommitInfo == ETextCommit::OnEnter)
+    {
+        FilterText = InSearchText.ToString();
+        //---------------
+        OnFilterTileView();
+        if (TileViewPtr.IsValid())
+        {
+            TileViewPtr->RequestListRefresh();
         }
     }
 }

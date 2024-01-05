@@ -17,6 +17,9 @@
 // 生成骨骼lod
 #include "Animation/DebugSkelMeshComponent.h"
 #include "LODUtilities.h"
+//------------------------------
+#include "DoodleEffectLibraryEditWidget.h"
+#include "NiagaraSystem.h"
 
 #define LOCTEXT_NAMESPACE "DoodleGameEditor"
 FContentBrowserMenuExtension::FContentBrowserMenuExtension(const TArray<FAssetData>& InPaths)
@@ -48,6 +51,13 @@ void FContentBrowserMenuExtension::FillSubmenu(FMenuBuilder& MenuBuilder) {
       FText::FromString("Create LODS"),
       FSlateIcon(),
       FUIAction(FExecuteAction::CreateRaw(this, &FContentBrowserMenuExtension::OnRegenerateLODSClicked))
+  );
+//-------------------------
+  MenuBuilder.AddMenuEntry(
+      FText::FromString(TEXT("导入到特效库")),
+      FText::FromString(TEXT("导入到特效库")),
+      FSlateIcon(),
+      FUIAction(FExecuteAction::CreateRaw(this, &FContentBrowserMenuExtension::OnImportToEffectLibrary))
   );
 }
 void FContentBrowserMenuExtension::OnRegenerateLODSClicked() {
@@ -93,6 +103,22 @@ void FContentBrowserMenuExtension::BoildSkinLODS(USkeletalMesh* In_Skin_Mesh) {
     In_Skin_Mesh->PostEditChange();
     In_Skin_Mesh->MarkPackageDirty();
   }
+}
+
+void FContentBrowserMenuExtension::OnImportToEffectLibrary()
+{
+    if (Paths.Num() > 0) 
+    {
+        const FAssetData& SelectAssetData = Paths.Top();
+        if (SelectAssetData.GetAsset()->IsA<UParticleSystem>()|| SelectAssetData.GetAsset()->IsA<UNiagaraSystem>()
+            || SelectAssetData.GetAsset()->IsA<UBlueprint>())
+        {
+            //----------------------
+            TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryEditWidget::Name);
+            TSharedRef<UDoodleEffectLibraryEditWidget> Widget = StaticCastSharedRef<UDoodleEffectLibraryEditWidget>(Tab->GetContent());
+            Widget->SetAssetData(SelectAssetData);
+        }
+    }
 }
 
 #undef LOCTEXT_NAMESPACE

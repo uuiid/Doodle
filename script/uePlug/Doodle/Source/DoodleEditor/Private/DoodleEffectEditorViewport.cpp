@@ -17,6 +17,8 @@
 #include "GameFramework/WorldSettings.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+#include "Engine/SimpleConstructionScript.h"
 
 DoodleEffectEditorPreviewScene::DoodleEffectEditorPreviewScene()
  : FAdvancedPreviewScene(FAdvancedPreviewScene::ConstructionValues{}.SetCreatePhysicsScene(false).ShouldSimulatePhysics(false)) 
@@ -153,14 +155,10 @@ void DoodleEffectEditorViewportToolBar::Construct(const FArguments& InArgs, TSha
     SCommonEditorViewportToolbarBase::Construct(SCommonEditorViewportToolbarBase::FArguments(), InRealViewport);
 }
 //--------------------------
-DoodleEffectEditorViewport::DoodleEffectEditorViewport()
-{
-}
-
 DoodleEffectEditorViewport::~DoodleEffectEditorViewport()
 {
     if (PreviewActor)
-        PreviewActor->Destroy();
+        PreviewActor->RemoveFromRoot();
 }
 
 TSharedRef<class SEditorViewport> DoodleEffectEditorViewport::GetViewportWidget() { return SharedThis(this); }
@@ -180,38 +178,6 @@ void DoodleEffectEditorViewport::Construct(const FArguments& Arg) {
     SEditorViewport::Construct(SEditorViewport::FArguments());
 }
 
-void DoodleEffectEditorViewport::OnFocusViewportToSelection(){
-    if (!PreviewScene) return;
-
-    UDebugSkelMeshComponent* PreviewMeshComponent = PreviewScene->SkeletalMeshComponent;
-    //--------------------
-    FIntPoint ViewportSize(FIntPoint::ZeroValue);
-    if (ViewportClient->Viewport != nullptr)
-    {
-        ViewportSize = ViewportClient->Viewport->GetSizeXY();
-    }
-    //---------------
-    if (USkeletalMesh* const SkelMesh = PreviewMeshComponent->GetSkeletalMeshAsset())
-    {
-        if (PreviewMeshComponent->GetSelectedEditorSection() != INDEX_NONE)
-        {
-            const FBox SelectedSectionBounds = ViewportClient->ComputeBoundingBoxForSelectedEditorSection(PreviewMeshComponent);
-
-            if (SelectedSectionBounds.IsValid)
-            {
-                ViewportClient->FocusViewportOnBox(SelectedSectionBounds);
-            }
-            return;
-        }
-    }
-    FBoxSphereBounds Bounds = PreviewMeshComponent->CalcGameBounds(FTransform::Identity);
-    FSphere Sphere = Bounds.GetSphere();
-    //-------------------------
-    FBox Box(Sphere.Center - FVector(Sphere.W, 0.0f, 0.0f), Sphere.Center + FVector(Sphere.W, 0.0f, 0.0f));
-    //-------------------
-    ViewportClient->FocusViewportOnBox(Box, true);
-}
-
 TSharedRef<FEditorViewportClient> DoodleEffectEditorViewport::MakeEditorViewportClient() 
 {
     if (!PreviewScene)PreviewScene = MakeShared<DoodleEffectEditorPreviewScene>();
@@ -221,21 +187,6 @@ TSharedRef<FEditorViewportClient> DoodleEffectEditorViewport::MakeEditorViewport
     ViewportClient->SetViewLocation(EditorViewportDefs::DefaultPerspectiveViewLocation);
     ViewportClient->SetViewRotation(EditorViewportDefs::DefaultPerspectiveViewRotation);
     ViewportClient->EngineShowFlags.SetCompositeEditorPrimitives(true);
-    //--------------------------------------------
-    PreviewActor = ViewportClient->GetWorld()->SpawnActor<AActor>();
-    //---------------------------
-    UActorComponent* L_Component = PreviewActor->AddComponentByClass(UNiagaraComponent::StaticClass(), true, FTransform{}, true);
-    L_Component->RegisterComponent();
-    UNiagaraComponent* Component = CastChecked<UNiagaraComponent>(L_Component);
-    PreviewActor->SetRootComponent(Component);
-    PreviewScene->AddComponent(Component, FTransform::Identity);
-    //PreviewScene->SetPreviewMeshComponent(Component);
-    //------------------------------
-    UActorComponent* P_Component = PreviewActor->AddComponentByClass(UParticleSystemComponent::StaticClass(), true, FTransform{}, true);
-    P_Component->RegisterComponent();
-    UParticleSystemComponent* ParticleSystem = CastChecked<UParticleSystemComponent>(P_Component);
-    PreviewActor->SetRootComponent(ParticleSystem);
-    PreviewScene->AddComponent(ParticleSystem, FTransform::Identity);
     //-------------
     PreviewScene->SetFloorVisibility(false);
     PreviewScene->SetEnvironmentVisibility(false,false);
@@ -251,21 +202,52 @@ TSharedPtr<SWidget> DoodleEffectEditorViewport::MakeViewportToolbar()
     return SNew(DoodleEffectEditorViewportToolBar, SharedThis(this)).Cursor(EMouseCursor::Default);
 }
 
-void DoodleEffectEditorViewport::SetViewportData(UObject* Particle)
+void DoodleEffectEditorViewport::SetViewportData(TSharedPtr<UObject> ParticleObj)
 {
-    if (PreviewActor)
+    if (ParticleObj->GetClass() == UNiagaraSystem::StaticClass())
     {
-        if (Particle->IsA(UNiagaraSystem::StaticClass())) 
+        PreviewActor = MakeShareable(ViewportClient->GetWorld()->SpawnActor<AActor>());
+        PreviewActor->AddToRoot();
+        UActorComponent* L_Component = PreviewActor->AddComponentByClass(UNiagaraComponent::StaticClass(), true, FTransform{}, true);
+        L_Component->RegisterComponent();
+        UNiagaraComponent* Component = CastChecked<UNiagaraComponent>(L_Component);
+        PreviewActor->SetRootComponent(Component);
+        PreviewScene->AddComponent(Component, FTransform::Identity);
+        Component->SetAsset(Cast<UNiagaraSystem>(ParticleObj.Get()));
+    }
+    if (ParticleObj->GetClass() == UParticleSystem::StaticClass())
+    {
+        PreviewActor = MakeShareable(ViewportClient->GetWorld()->SpawnActor<AActor>());
+        PreviewActor->AddToRoot();
+        UActorComponent* P_Component = PreviewActor->AddComponentByClass(UParticleSystemComponent::StaticClass(), true, FTransform{}, true);
+        P_Component->RegisterComponent();
+        UParticleSystemComponent* PComponent = CastChecked<UParticleSystemComponent>(P_Component);
+        PreviewActor->SetRootComponent(PComponent);
+        PreviewScene->AddComponent(PComponent, FTransform::Identity);
+        PComponent->SetTemplate(Cast<UParticleSystem>(ParticleObj.Get()));
+        PComponent->InitializeSystem();
+        PComponent->ActivateSystem();
+    }
+    if (ParticleObj->GetClass() == UBlueprint::StaticClass())
+    {
+        UBlueprint* PreviewBlueprint = Cast<UBlueprint>(ParticleObj.Get());
+        if (PreviewBlueprint && PreviewBlueprint->GeneratedClass && PreviewBlueprint->GeneratedClass->IsChildOf(AActor::StaticClass()))
         {
-            UNiagaraComponent* Component = PreviewActor->GetComponentByClass<UNiagaraComponent>();
-            Component->SetAsset(Cast<UNiagaraSystem>(Particle));
-        }
-        if (Particle->IsA(UParticleSystem::StaticClass()))
-        {
-            UParticleSystemComponent* PComponent = PreviewActor->GetComponentByClass<UParticleSystemComponent>();
-            PComponent->SetTemplate(Cast<UParticleSystem>(Particle));
-            PComponent->InitializeSystem();
-            PComponent->ActivateSystem();
+            FVector SpawnLocation = FVector::ZeroVector;
+            FRotator SpawnRotation = FRotator::ZeroRotator;
+            FActorSpawnParameters SpawnInfo;
+            SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            SpawnInfo.bNoFail = true;
+            SpawnInfo.ObjectFlags = RF_Transient | RF_Transactional;
+            ///------------------------------
+            FMakeClassSpawnableOnScope TemporarilySpawnable(PreviewBlueprint->GeneratedClass);
+            PreviewActor = MakeShareable(PreviewScene->GetWorld()->SpawnActor(PreviewBlueprint->GeneratedClass, &SpawnLocation, &SpawnRotation, SpawnInfo));
+            PreviewActor->AddToRoot();
+            //---------------------
+            if (PreviewBlueprint->SimpleConstructionScript != nullptr)
+            {
+                PreviewBlueprint->SimpleConstructionScript->SetComponentEditorActorInstance(PreviewActor.Get());
+            }
         }
     }
 }
