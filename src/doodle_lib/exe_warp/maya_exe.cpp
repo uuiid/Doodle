@@ -199,8 +199,8 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
   void cancel() {
     log_attr->log(log_loc(), level::warn, "进程被主动结束");
-    timer_attr.cancel();
     child_attr.terminate();
+    timer_attr.cancel();
     is_cancel = true;
   }
 };
