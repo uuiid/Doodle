@@ -11,6 +11,7 @@ struct wait_op {
   using func_type = void (*)(wait_op *op);
 
   void complete() {
+    if (!handler_) return;
     auto handler = std::move(handler_);
     auto func    = func_;
     func(this);
@@ -18,8 +19,9 @@ struct wait_op {
     handler_ = nullptr;
   }
 
- protected:
   boost::system::error_code ec_{};
+
+ protected:
   func_type func_{};               // The function to be called when the operation completes.
   std::shared_ptr<void> handler_;  // The handler to be called when the operation completes.
 
