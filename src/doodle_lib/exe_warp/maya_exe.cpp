@@ -60,9 +60,7 @@ namespace maya_exe_ns {
 
 class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_ns::maya_process_base {
  public:
-  FSys::path file_path_attr{};
-
-  nlohmann::json run_script_attr{};
+  std::shared_ptr<maya_exe_ns::arg> run_script_attr{};
   std::string run_script_attr_key{};
   FSys::path program_path{};
   FSys::path maya_program_path{};
@@ -87,12 +85,23 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
   bool running() override { return child_attr.running(); }
 
+  std::vector<maya_exe_ns::maya_out_arg> get_out_arg() {
+    if (wait_op_->ec_) return {};
+    if (!FSys::exists(run_script_attr->out_path_file_)) return {};
+
+    std::ifstream l_file{run_script_attr->out_path_file_};
+    auto l_str  = std::string{std::istreambuf_iterator<char>(l_file), std::istreambuf_iterator<char>()};
+    auto l_json = nlohmann::json::parse(l_str);
+    return l_json.get<std::vector<maya_exe_ns::maya_out_arg>>();
+  }
+
   void run() override {
     if (is_cancel) {
-      log_attr->log(log_loc(), level::err, "用户结束: {}", run_script_attr.dump());
+      log_attr->log(log_loc(), level::err, "用户结束: {}", run_script_attr->to_json_str());
       boost::system::error_code l_ec{boost::asio::error::operation_aborted};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
-      boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), l_ec));
+      wait_op_->ec_ = l_ec;
+      wait_op_->complete();
       next_run();
       return;
     }
@@ -101,11 +110,12 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
       boost::system::error_code l_ec{error_enum::file_not_exists};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
       log_attr->log(log_loc(), level::warn, "没有找到maya文件");
-      boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), l_ec));
+      wait_op_->ec_ = l_ec;
+      wait_op_->complete();
       return;
     }
 
-    auto l_path = FSys::write_tmp_file("maya", run_script_attr.dump(), ".json");
+    auto l_path = FSys::write_tmp_file("maya", run_script_attr->to_json_str(), ".json");
 
     log_attr->log(log_loc(), level::warn, "开始写入配置文件 {}", l_path);
 
@@ -135,7 +145,10 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               timer_attr.cancel();
               log_attr->log(log_loc(), level::err, "进程结束 {}", in_exit);
-              boost::asio::post(any_io_executor_, std::bind(std::move(call_attr), in_error_code));
+              wait_op_->ec_ = in_error_code;
+              set_arg_fun_(get_out_arg());
+
+              wait_op_->complete();
               next_run();
             },
         boost::process::windows::hide,
@@ -270,8 +283,8 @@ void maya_exe::notify_run() {
   }
 }
 void maya_exe::queue_up(
-    const entt::handle &in_msg, const std::string_view &in_key, const nlohmann::json &in_string,
-    call_fun_type in_call_fun, const any_io_executor &in_any_io_executor, const FSys::path &in_run_path
+    const entt::handle &in_msg, const std::string_view &in_key, const std::shared_ptr<maya_exe_ns::arg> &in_arg,
+    call_fun_type in_call_fun, const std::function<void(std::vector<maya_exe_ns::maya_out_arg>)> &in_set_arg_fun
 ) {
   install_maya_exe();
 
@@ -279,13 +292,13 @@ void maya_exe::queue_up(
       p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>(this))
   );
   l_run->run_script_attr_key = in_key;
-  l_run->run_script_attr     = in_string;
-  l_run->file_path_attr      = in_run_path;
+  l_run->run_script_attr     = in_arg;
   l_run->program_path        = p_i->run_path;
   l_run->maya_program_path   = find_maya_path();
   l_run->call_attr           = std::move(in_call_fun);
   l_run->log_attr            = in_msg.get<process_message>().logger();
-  l_run->any_io_executor_    = in_any_io_executor;
+  l_run->set_arg_fun_        = in_set_arg_fun;
+  l_run->wait_op_            = in_call_fun;
   l_run->cancel_attr = in_msg.get<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
     if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) l_ptr->cancel();
   });
