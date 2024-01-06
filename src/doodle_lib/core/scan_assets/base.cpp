@@ -45,12 +45,15 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
   entt::handle l_file_handle{};
   if (!l_ue_handle.any_of<file_association_ref>()) {
     l_file_handle                                     = l_out.emplace_back(entt::handle{in_reg, in_reg.create()});
-    l_file_handle.emplace<file_association>().ue_file = l_ue_handle;
-    l_ue_handle.emplace<file_association_ref>(l_file_handle);
     l_file_handle.emplace<database>();
+    l_file_handle.emplace<file_association>();
   } else {
     l_file_handle = l_ue_handle.get<file_association_ref>();
   }
+
+  l_file_handle.patch<file_association>().ue_file = l_ue_handle;
+  l_ue_handle.emplace_or_replace<file_association_ref>(l_file_handle);
+
   // 创建rig句柄
   entt::handle l_rig_handle{};
   if (in_handle_map.contains(rig_file_.uuid_)) {
@@ -63,8 +66,8 @@ std::vector<entt::handle> scan_category_data_t::create_handles(
     l_rig_handle.emplace<database>(rig_file_.uuid_);
   }
   // 添加关联
-  l_file_handle.emplace<file_association>().maya_rig_file = l_rig_handle;
-  l_rig_handle.emplace<file_association_ref>(l_file_handle);
+  l_file_handle.patch<file_association>().maya_rig_file = l_rig_handle;
+  l_rig_handle.emplace_or_replace<file_association_ref>(l_file_handle);
 
   return l_out;
 }

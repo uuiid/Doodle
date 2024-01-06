@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/app/app_command.h>
 
@@ -19,21 +20,16 @@ namespace doodle {
 void scan_win_service_t::start() {
   timer_  = std::make_shared<timer_t>(g_io_context());
   signal_ = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  signal_->async_wait(boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), [](auto&&...) {
-    g_io_context().stop();
-  }));
+  signal_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::Get().on_cancel.slot(),
+      [](boost::system::error_code in_error_code, int in_sig) {
+        default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
 
-  project_roots_ = {
-      details::scan_category_t::project_root_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥"},
-      {"//192.168.10.240/public/renjianzuideyi", "人间最得意"},
-      {"//192.168.10.240/public/WuJinShenYu", "无尽神域"},
-      {"//192.168.10.240/public/WuDiJianHun", "无敌剑魂"},
-      {"//192.168.10.240/public/WanGuShenHua", "万古神话"},
-      {"//192.168.10.240/public/LianQiShiWanNian", "炼气十万年"},
-      {"//192.168.10.240/public/WGXD", "万古邪帝"},
-      {"//192.168.10.240/public/LongMaiWuShen", "龙脉武神"},
-      {"//192.168.10.218/WanYuFengShen", "万域封神"}
-  };
+        g_io_context().stop();
+      }
+  ));
+
+  project_roots_   = register_file_type::get_project_list();
   scan_categories_ = {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
       std::make_shared<details::prop_scan_category_t>()
@@ -59,6 +55,7 @@ void scan_win_service_t::start() {
 
 void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
   if (ec) {
+    default_logger_raw()->log(log_loc(), level::info, "定时器取消 {}", ec.message());
     return;
   }
   scan();
@@ -77,7 +74,7 @@ void scan_win_service_t::scan() {
               app_base::Get().on_cancel.slot(),
               boost::asio::bind_executor(
                   g_io_context(),
-                  [l_i = l_size++, l_root = l_root.path_, this](
+                  [l_i = l_size++, l_root = l_root.p_path, this](
                       std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec
                   ) {
                     scan_categories_is_scan_[l_i] = true;

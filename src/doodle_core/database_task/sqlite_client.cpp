@@ -45,22 +45,28 @@ void file_translator::new_file_scene(const FSys::path& in_path, const project& i
   g_reg()->ctx().emplace<project_config::base_config>() = project_config::base_config::get_default();
   project_path                                          = in_path;
   save_all                                              = false;
-  auto& l_s                                             = registry_attr->ctx().emplace<status_info>();
+  auto& l_s                                             = g_ctx().emplace<status_info>();
   l_s.message                                           = "创建新项目";
   l_s.need_save                                         = true;
 }
 
-void file_translator::async_open_impl(const FSys::path& in_path) {
-  if (!in_path.empty() && !FSys::exists(in_path)) {
-    default_logger_raw()->log(log_loc(), level::warn, "文件不存在 {}", in_path);
-    return;
+boost::system::error_code file_translator::async_open_impl() {
+  boost::system::error_code l_error_code{};
+  if (project_path != memory_data && !FSys::exists(project_path, l_error_code)) {
+    if (l_error_code) return l_error_code;
+    default_logger_raw()->log(log_loc(), level::info, "文件不存在 {}", project_path);
+    g_ctx().get<database_info>().path_ = project_path;
+    registry_attr->ctx().get<project>().set_path(project_path.parent_path());
+    g_ctx().get<core_sig>().project_begin_open(project_path);
+    l_error_code = async_save_impl();
+    g_ctx().get<core_sig>().project_end_open();
+
+    return l_error_code;
   }
 
-  project_path = in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
   {
     g_ctx().get<database_info>().path_ = project_path;
     g_ctx().get<core_sig>().project_begin_open(project_path);
-    registry_attr = g_reg();
     registry_attr->clear();
   }
 
@@ -90,6 +96,7 @@ void file_translator::async_open_impl(const FSys::path& in_path) {
   only_ctx = false;
 
   if (!only_open) begin_save();
+  return l_error_code;
 }
 
 void file_translator::begin_save() {
@@ -106,26 +113,26 @@ void file_translator::begin_save() {
             log_info(fmt::format("定时器取消 {}", in_error.message()));
             return;
           }
+          if (project_path.empty()) {
+            return;
+          }
+
+          if (!std::any_cast<obs_all&>(obs).has_update()) {
+            begin_save();
+            return;
+          }
+
           async_save_impl();
         }
     ));
   }
 }
 
-void file_translator::async_save_impl() {
-  if (!std::any_cast<obs_all&>(obs).has_update()) {
-    begin_save();
-    return;
-  }
-
-  if (project_path.empty()) {
-    return;
-  }
-
+boost::system::error_code file_translator::async_save_impl() {
   {
     if (!FSys::folder_is_save(project_path)) {
       log_warn(fmt::format("{} 权限不够, 不保存", project_path));
-      return;
+      return {};
     }
     if (save_all) project_path.replace_filename(fmt::format("{}_v2.doodle_db", project_path.stem().string()));
     DOODLE_LOG_INFO("文件位置 {}", project_path);
@@ -136,7 +143,7 @@ void file_translator::async_save_impl() {
     // 提前测试存在
     if (save_all && FSys::exists(project_path)) {
       log_error(fmt::format("{} 已经存在, 不保存", project_path));
-      return;
+      return {};
     }
     if (save_all) log_error(fmt::format("{} 转换旧版数据, 较慢", project_path));
   }
@@ -154,9 +161,10 @@ void file_translator::async_save_impl() {
     log_error(boost::diagnostic_information(in_error));
   }
 
-  g_reg()->ctx().get<status_info>().need_save = false;
+  g_ctx().get<status_info>().need_save = false;
   core_set::get_set().add_recent_project(project_path);
   begin_save();
+  return {};
 }
 
 void file_translator::async_import_impl(const FSys::path& in_path) {

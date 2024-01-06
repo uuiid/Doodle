@@ -5,6 +5,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/project.h>
+
 namespace doodle {
 
 class register_file_type {
@@ -19,6 +21,7 @@ class register_file_type {
 
   static FSys::path get_main_project();
   static FSys::path get_update_path();
+  static std::vector<project> get_project_list();
 };
 
 }  // namespace doodle

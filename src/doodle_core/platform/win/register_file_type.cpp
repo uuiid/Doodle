@@ -4,7 +4,9 @@
 
 #include "register_file_type.h"
 
+#include <doodle_core/lib_warp/boost_locale_warp.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/project.h>
 
 #include <winreg/WinReg.hpp>
 
@@ -40,6 +42,27 @@ FSys::path register_file_type::get_update_path() {
   l_key.Open(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
   auto l_path = l_key.GetStringValue(LR"(update_path)");
   return l_path;
+}
+
+std::vector<project> register_file_type::get_project_list() {
+  winreg::RegKey l_key_root{};
+
+  constexpr auto l_root     = LR"(SOFTWARE\Doodle\MainConfig\ProjectList)";
+  constexpr auto l_root_fmt = LR"(SOFTWARE\Doodle\MainConfig\ProjectList\{})";
+  l_key_root.Open(HKEY_LOCAL_MACHINE, l_root, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY);
+
+  std::vector<project> l_list{};
+
+  for (auto&& l_sub : l_key_root.EnumSubKeys()) {
+    winreg::RegKey l_key{};
+    l_key.Open(HKEY_LOCAL_MACHINE, fmt::format(l_root_fmt, l_sub.c_str()), KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+    auto l_short  = conv::utf_to_utf<char>(l_sub);
+    auto l_name   = conv::utf_to_utf<char>(l_key.GetStringValue({}));
+    auto l_path   = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(path)"));
+    auto l_en_str = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(en_str)"));
+    l_list.emplace_back(std::move(l_name), std::move(l_path), std::move(l_en_str), std::move(l_short));
+  }
+  return l_list;
 }
 
 }  // namespace doodle

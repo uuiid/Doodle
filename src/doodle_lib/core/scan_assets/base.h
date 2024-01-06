@@ -6,6 +6,7 @@
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/assets.h>
+#include <doodle_core/metadata/project.h>
 
 #include <entt/entt.hpp>
 #include <map>
@@ -34,10 +35,7 @@ class scan_category_data_t {
     // 文件修改时间
     FSys::file_time_type last_write_time_;
   };
-  struct project_root_t {
-    FSys::path path_;
-    std::string name_;
-  };
+  using project_root_t = project;
 
   // ue文件
   uuid_path_t ue_file_;

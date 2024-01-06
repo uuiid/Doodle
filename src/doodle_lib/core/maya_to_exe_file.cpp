@@ -239,7 +239,7 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     return;
   }
   if (!ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
-        return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
+        return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
       })) {
     data_->logger_->log(log_loc(), level::level_enum::err, "未查找到主项目文件");
     call_end(in_error_code);
@@ -247,22 +247,22 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
     return;
   }
 
-  // sort ue_main_map
+  // sort scene_id
   l_refs |= ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) {
-    return in_r.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>() &&
-           !in_l.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
+    return in_r.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>() &&
+           !in_l.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
   });
 
   auto l_strand = g_ctx().get<copy_file_strand>().executor_;
   for (auto &&h : l_refs) {
-    auto l_is_se     = h.get<file_association_ref>().get<file_association>().ue_file.all_of<ue_main_map>();
+    auto l_is_se     = h.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
     auto l_down_path = h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr();
+    auto l_uproject  = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().project_path_;
+    l_down_path      = l_uproject.parent_path();
     if (l_is_se) {
-      auto l_uproject      = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().map_path_;
       auto l_root          = l_uproject.parent_path() / g_content;
       auto l_original      = l_down_path.lexically_relative(l_root);
       data_->original_map_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-      l_down_path          = l_uproject.parent_path();
     }
     boost::asio::post(l_strand, std::bind(*this, l_down_path, l_is_se));
   }

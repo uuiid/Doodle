@@ -128,8 +128,16 @@ class auto_light_service_impl_t {
     set_service_status(SERVICE_START_PENDING);
 
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
-    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
-    g_ctx().get<database_n::file_translator_ptr>()->async_open(l_main_prj);
+    g_ctx().get<database_n::file_translator_ptr>()->async_open(
+        l_main_prj, false, false, g_reg(),
+        boost::asio::bind_executor(
+            g_io_context(),
+            [scan_win_service_ptr_](const boost::system::error_code &in_code) {
+              if (in_code) return;
+              scan_win_service_ptr_->start();
+            }
+        )
+    );
     thread_ = std::make_shared<std::thread>([scan_win_service_ptr_]() {
       try {
         app_base::Get().run();
@@ -226,17 +234,22 @@ bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<st
         {nullptr, nullptr}
     };
     THROW_IF_WIN32_BOOL_FALSE(::StartServiceCtrlDispatcherW(l_service_table_entry));
-    //    auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
-    //    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start();
-    //    }); g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
-    //    in_vector.emplace_back(scan_win_service_ptr_);
     default_logger_raw()->log(log_loc(), level::warn, "服务退出");
     return true;
   }
   if (in_arh[g_run]) {
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
-    g_ctx().get<core_sig>().project_end_open.connect([scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
-    g_ctx().get<database_n::file_translator_ptr>()->async_open(register_file_type::get_main_project());
+    g_ctx().get<database_n::file_translator_ptr>()->async_open(
+        register_file_type::get_main_project(), false, false, g_reg(),
+        boost::asio::bind_executor(
+            g_io_context(),
+            [scan_win_service_ptr_](const boost::system::error_code &in_code) {
+              if (in_code) return;
+              scan_win_service_ptr_->start();
+            }
+        )
+    );
+    in_vector.emplace_back(scan_win_service_ptr_);
     return false;
   }
   return true;

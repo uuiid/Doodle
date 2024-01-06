@@ -172,7 +172,7 @@ void create_entry::render_project_open_files() {
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
   if (ImGui::Button("打开")) {
     ImGui::CloseCurrentPopup();
-    g_ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path);
+    g_ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path, false, false, g_reg(), [](auto &&) {});
   }
   ImGui::SameLine();
 
@@ -207,7 +207,6 @@ void create_entry::render_project_import_files() {
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + l_text_size.x);
   if (ImGui::Button("导入(暂时无法使用)")) {
     ImGui::CloseCurrentPopup();
-    //    g_ctx().get<database_n::file_translator_ptr>()->async_open(l_prj_path );
   }
   ImGui::SameLine();
 

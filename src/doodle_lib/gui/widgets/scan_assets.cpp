@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/season.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
@@ -18,17 +19,17 @@
 namespace doodle::gui {
 
 void scan_assets_t::init_scan_categories() {
-  project_roots_ = {
-      project_root_gui_t{"//192.168.10.250/public/DuBuXiaoYao_3", "独步逍遥", true},
-      {"//192.168.10.240/public/renjianzuideyi", "人间最得意", true},
-      {"//192.168.10.240/public/WuJinShenYu", "无尽神域", true},
-      {"//192.168.10.240/public/WuDiJianHun", "无敌剑魂", true},
-      {"//192.168.10.240/public/WanGuShenHua", "万古神话", true},
-      {"//192.168.10.240/public/LianQiShiWanNian", "炼气十万年", true},
-      {"//192.168.10.240/public/WGXD", "万古邪帝", true},
-      {"//192.168.10.240/public/LongMaiWuShen", "龙脉武神", true},
-      {"//192.168.10.218/WanYuFengShen", "万域封神", true}
-  };
+  auto l_list    = register_file_type::get_project_list();
+  project_roots_ = l_list | ranges::views::transform([](const project& in_project) -> project_root_gui_t {
+                     project_root_gui_t l_root{};
+                     l_root.has_       = true;
+                     l_root.p_path     = std::move(in_project.p_path);
+                     l_root.p_name     = std::move(in_project.p_name);
+                     l_root.p_en_str   = std::move(in_project.p_en_str);
+                     l_root.p_shor_str = std::move(in_project.p_shor_str);
+                     return l_root;
+                   }) |
+                   ranges::to_vector;
   scan_categories_factory_vec_ = {
       scan_categories_factory_t{
           gui_cache_name_id{"扫描角色"}, true,
@@ -72,11 +73,11 @@ void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::
     l_gui_data.name_         = l_data->name_;
     l_gui_data.season_       = fmt::format("季度: {}", l_data->season_.p_int);
     l_gui_data.version_name_ = l_data->version_name_;
-    l_gui_data.ue_path_      = l_data->ue_file_.path_.lexically_proximate(l_data->project_root_.path_).generic_string();
+    l_gui_data.ue_path_ = l_data->ue_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
     l_gui_data.maya_rig_path_ =
-        l_data->rig_file_.path_.lexically_proximate(l_data->project_root_.path_).generic_string();
-    l_gui_data.project_root_ = l_data->project_root_.path_.generic_string();
-    l_gui_data.info_         = fmt::format("{}/{}", l_data->project_root_.name_, l_data->file_type_);
+        l_data->rig_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
+    l_gui_data.project_root_ = l_data->project_root_.p_path.generic_string();
+    l_gui_data.info_         = fmt::format("{}/{}", l_data->project_root_.p_name, l_data->file_type_);
     assets_table_data_.emplace_back(std::move(l_gui_data));
   }
 }
@@ -94,7 +95,7 @@ void scan_assets_t::start_scan() {
           l_root, l_data,
           boost::asio::bind_executor(
               g_io_context(),
-              [l_end_ptr, l_root = l_root.path_,
+              [l_end_ptr, l_root = l_root.p_path,
                this](std::vector<doodle::details::scan_category_data_ptr> in_vector, boost::system::error_code in_ec) {
                 *l_end_ptr = true;
                 if (in_ec) {
@@ -115,7 +116,7 @@ bool scan_assets_t::render() {
   if (auto l_table = dear::Table{"项目列表", 3}; l_table) {
     for (auto&& l_root : project_roots_) {
       ImGui::TableNextColumn();
-      if (ImGui::Checkbox(l_root.name_.c_str(), &l_root.has_)) {
+      if (ImGui::Checkbox(l_root.p_name.c_str(), &l_root.has_)) {
         l_changed = true;
       }
     }
