@@ -10,6 +10,14 @@ struct wait_op {
  public:
   using func_type = void (*)(wait_op *op);
 
+  void complete() {
+    auto handler = std::move(handler_);
+    auto func    = func_;
+    func(this);
+    func_    = nullptr;
+    handler_ = nullptr;
+  }
+
  protected:
   boost::system::error_code ec_{};
   func_type func_{};               // The function to be called when the operation completes.
