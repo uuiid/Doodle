@@ -9,9 +9,7 @@
 
 #include <boost/asio.hpp>
 namespace doodle {
-class down_auto_light_file {
-  entt::handle msg_{};
-  FSys::path maya_out_file_{};
+class down_auto_light_anim_file {
   template <typename Handler>
   struct wait_handle : detail::wait_op {
    public:
@@ -26,13 +24,30 @@ class down_auto_light_file {
       );
     }
   };
+  using set_path_t = std::function<void(FSys::path)>;
 
+  enum class status {
+    begin,
+    end,
+  };
+
+  struct data_impl_t {
+    status status_{status::begin};
+    logger_ptr logger_{};
+  };
+
+  entt::handle msg_{};
+  FSys::path maya_out_file_{};
   std::shared_ptr<detail::wait_op> wait_op_{};
+  set_path_t set_path_;
+  std::shared_ptr<data_impl_t> data_{};  // 用于存储数据
+
+  void init();
 
  public:
-  explicit down_auto_light_file(entt::handle in_msg, FSys::path in_maya_out_file)
-      : msg_(std::move(in_msg)), maya_out_file_(std::move(in_maya_out_file)){};
-  ~down_auto_light_file() = default;
+  explicit down_auto_light_anim_file(entt::handle in_msg, FSys::path in_maya_out_file)
+      : msg_(std::move(in_msg)), maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_impl_t>()){};
+  ~down_auto_light_anim_file() = default;
 
   template <typename CompletionHandler>
   auto async_down_end(CompletionHandler&& handler) {
@@ -40,9 +55,15 @@ class down_auto_light_file {
         [this](auto&& handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
+          set_path_ = [this](FSys::path in_path) {
+            std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_)->path_ =
+                std::move(in_path);
+          };
         },
         handler
     );
   }
+
+  void operator()(boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle
