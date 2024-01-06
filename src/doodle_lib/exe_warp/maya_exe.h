@@ -228,7 +228,8 @@ class DOODLELIB_API maya_exe {
     if (!FSys::exists(l_arg.out_path_file_.parent_path())) FSys::create_directories(l_arg.out_path_file_.parent_path());
     auto l_arg_ptr = std::make_shared<maya_exe_ns::arg>(std::move(l_arg));
 
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
+    return boost::asio::async_initiate<
+        CompletionHandler, void(boost::system::error_code, std::vector<maya_exe_ns::maya_out_arg>)>(
         [this, l_arg, in_handle, l_arg_ptr](auto &&in_completion_handler) {
           using wait_handle_t =
               maya_exe_ns::maya_process_base::wait_handle<std::decay_t<decltype(in_completion_handler)>>;
