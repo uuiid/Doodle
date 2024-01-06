@@ -17,6 +17,7 @@ target_sources(
         program_info.h
         global_function.h
         init_register_macro.h
+        wait_op.h
 
         PRIVATE
         core_set.cpp
@@ -30,4 +31,5 @@ target_sources(
         util.cpp
         app_facet.cpp
         program_info.cpp
+        wait_op.cpp
 )
