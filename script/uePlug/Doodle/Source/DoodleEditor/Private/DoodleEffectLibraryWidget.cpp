@@ -257,22 +257,22 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                                         }
                                     })
                                 .OnContextMenuOpening_Lambda([this]()
+                                {
+                                    FUIAction ActionCall(FExecuteAction::CreateRaw(this, &UDoodleEffectLibraryWidget::OnEffectExport), FCanExecuteAction());
+                                    FMenuBuilder MenuBuilder(true, false);
+                                    MenuBuilder.AddMenuSeparator();
+                                    MenuBuilder.AddMenuEntry(FText::FromString(TEXT("导出")), FText::FromString(TEXT("导出到本地")),
+                                        FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Import")), ActionCall);
+                                    return MenuBuilder.MakeWidget();
+                                })
+                                .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FEffectTileItem> inSelectItem)
+                                {
+                                    if (inSelectItem)
                                     {
-                                        FUIAction ActionCall(FExecuteAction::CreateRaw(this, &UDoodleEffectLibraryWidget::OnEffectExport), FCanExecuteAction());
-                                        FMenuBuilder MenuBuilder(true, false);
-                                        MenuBuilder.AddMenuSeparator();
-                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("导出")), FText::FromString(TEXT("导出到本地")),
-                                            FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Import")), ActionCall);
-                                        return MenuBuilder.MakeWidget();
-                                    })
-                                        .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FEffectTileItem> inSelectItem)
-                                            {
-                                                if (inSelectItem)
-                                                {
-                                                    CurrentItem = inSelectItem;
-                                                }
-                                                OnPlayPreview(inSelectItem);
-                                            })
+                                        CurrentItem = inSelectItem;
+                                    }
+                                    OnPlayPreview(inSelectItem);
+                                })
                         ]
                         + SVerticalBox::Slot()
                         .AutoHeight()
@@ -344,7 +344,6 @@ TSharedRef<ITableRow> UDoodleEffectLibraryWidget::MakeTableRowWidgetTile(TShared
                                 + SOverlay::Slot()
                                 [
                                     SAssignNew(InTreeElement->MediaBox, SBox)
-
                                         .Visibility(EVisibility::Hidden)
                                         [
                                             SNew(SMediaImage, InTreeElement->MediaTexture)
@@ -471,7 +470,7 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
                 EditorAssetSubsystem->RenameDirectory(FPaths::Combine(TEXT("/Game"), CurrentItem->Name.ToString()), TargetPath);
                 //-----------------------
                 AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
-                OnSortAssetPath(FName(TargetPath));
+                //OnSortAssetPath(FName(TargetPath));
                 FString Info = FString::Format(TEXT("导入特效：{0}到项目:{1}完成"), { CurrentItem->Name.ToString(),FPaths::Combine(TEXT("/Game"), RelativePath) });
                 FNotificationInfo L_Info{ FText::FromString(Info) };
                 L_Info.FadeInDuration = 1.0f;  // 

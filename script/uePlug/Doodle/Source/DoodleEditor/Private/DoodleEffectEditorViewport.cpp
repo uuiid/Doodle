@@ -202,11 +202,11 @@ TSharedPtr<SWidget> DoodleEffectEditorViewport::MakeViewportToolbar()
     return SNew(DoodleEffectEditorViewportToolBar, SharedThis(this)).Cursor(EMouseCursor::Default);
 }
 
-void DoodleEffectEditorViewport::SetViewportData(TSharedPtr<UObject> ParticleObj)
+void DoodleEffectEditorViewport::SetViewportData(TObjectPtr<UObject> ParticleObj)
 {
     if (ParticleObj->GetClass() == UNiagaraSystem::StaticClass())
     {
-        PreviewActor = MakeShareable(ViewportClient->GetWorld()->SpawnActor<AActor>());
+        PreviewActor = ViewportClient->GetWorld()->SpawnActor<AActor>();
         PreviewActor->AddToRoot();
         UActorComponent* L_Component = PreviewActor->AddComponentByClass(UNiagaraComponent::StaticClass(), true, FTransform{}, true);
         L_Component->RegisterComponent();
@@ -217,7 +217,7 @@ void DoodleEffectEditorViewport::SetViewportData(TSharedPtr<UObject> ParticleObj
     }
     if (ParticleObj->GetClass() == UParticleSystem::StaticClass())
     {
-        PreviewActor = MakeShareable(ViewportClient->GetWorld()->SpawnActor<AActor>());
+        PreviewActor = ViewportClient->GetWorld()->SpawnActor<AActor>();
         PreviewActor->AddToRoot();
         UActorComponent* P_Component = PreviewActor->AddComponentByClass(UParticleSystemComponent::StaticClass(), true, FTransform{}, true);
         P_Component->RegisterComponent();
@@ -241,7 +241,7 @@ void DoodleEffectEditorViewport::SetViewportData(TSharedPtr<UObject> ParticleObj
             SpawnInfo.ObjectFlags = RF_Transient | RF_Transactional;
             ///------------------------------
             FMakeClassSpawnableOnScope TemporarilySpawnable(PreviewBlueprint->GeneratedClass);
-            PreviewActor = MakeShareable(PreviewScene->GetWorld()->SpawnActor(PreviewBlueprint->GeneratedClass, &SpawnLocation, &SpawnRotation, SpawnInfo));
+            PreviewActor = PreviewScene->GetWorld()->SpawnActor(PreviewBlueprint->GeneratedClass, &SpawnLocation, &SpawnRotation, SpawnInfo);
             PreviewActor->AddToRoot();
             //---------------------
             if (PreviewBlueprint->SimpleConstructionScript != nullptr)

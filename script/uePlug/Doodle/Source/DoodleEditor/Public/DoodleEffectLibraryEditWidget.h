@@ -65,6 +65,7 @@ private:
 	//--------Capture
 	TSharedPtr<DoodleEffectEditorViewport> ViewEditorViewport;
 	void OnTakeThumbnail();
+	FDelegateHandle ScreenshotHandle;
 
 	TSharedPtr<SButton> StartCaptureButton;
 	TSharedPtr<STextBlock> CaptureText;
@@ -90,7 +91,7 @@ private:
 //------------------
 	TSharedRef<SWidget> OnGetMenuContent(TSharedPtr<FTagItem> InItem);
 public:
-	TSharedPtr<UObject> SelectObject;
+	TObjectPtr<UObject> SelectObject;
 
 	FString EffectName;
 	FString EffectType;//##

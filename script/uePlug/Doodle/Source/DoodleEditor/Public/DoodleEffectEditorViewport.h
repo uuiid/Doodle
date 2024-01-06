@@ -54,7 +54,7 @@ public:
 	~DoodleEffectEditorViewport();
 
 	void Construct(const FArguments& Arg);
-	void SetViewportData(TSharedPtr<UObject> ParticleObj);
+	void SetViewportData(TObjectPtr<UObject> ParticleObj);
 
 	FVector2D ComputeDesiredSize(float) const override { return FVector2D(768, 768); }
 private:
@@ -66,7 +66,7 @@ private:
 	TSharedPtr<FExtender> GetExtenders() const override;
 	void OnFloatingButtonClicked() override;
 
-	TSharedPtr<AActor> PreviewActor;
+	TObjectPtr<AActor> PreviewActor;
 
 protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;

@@ -30,6 +30,7 @@
 #include "NiagaraParameterCollection.h"
 #include "Serialization/ArchiveReplaceObjectAndStructPropertyRef.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "Kismet2/KismetEditorUtilities.h"
 
 const FName UDoodleEffectLibraryEditWidget::Name{ TEXT("DoodleEffectLibraryEditWidget") };
 
@@ -143,11 +144,14 @@ UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
 {
     if(SelectObject)
         SelectObject->RemoveFromRoot();
+    //--------
+    if (ScreenshotHandle.IsValid())
+        FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotHandle);
 }
 
 void UDoodleEffectLibraryEditWidget::SetAssetData(FAssetData Asset)
 {
-    SelectObject = MakeShareable(Asset.GetAsset());
+    SelectObject = Asset.GetAsset();
     SelectObject->AddToRoot();
     FName TempEffectName = Asset.AssetName;
     TArray<FName> FileNames;
@@ -555,7 +559,7 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
 void UDoodleEffectLibraryEditWidget::OnTakeThumbnail()
 {
     FString FilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Shot"));
-    FDelegateHandle ScreenshotHandle = FScreenshotRequest::OnScreenshotRequestProcessed().AddLambda([&, FilePath, ScreenshotHandle]()
+    ScreenshotHandle = FScreenshotRequest::OnScreenshotRequestProcessed().AddLambda([this, FilePath]()
     {
          PreviewThumbnail = FPaths::ConvertRelativePathToFull(FilePath)+TEXT(".png");
          FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotHandle);
@@ -677,12 +681,24 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
                 FArchiveReplaceObjectRef<UObject> ReplaceAr(TargetObj1, ReplacementMap, EArchiveReplaceObjectFlags::IgnoreOuterRef | EArchiveReplaceObjectFlags::IgnoreArchetypeRef);
             }
             TargetObj1->Modify();
+            //EditorAssetSubsystem->SaveLoadedAsset(TargetObj1);
+        }
+        //------------------------------
+        OnSortAssetPath(FName(FPaths::Combine(TEXT("/Game"), EffectName)));
+        for (TPair<UObject*, UObject*> TheObject : ObjectsMap) 
+        {
+            UObject* TargetObj1 = TheObject.Value;
+            UBlueprint* TargetObjBP = Cast<UBlueprint>(TargetObj1);
+            if (TargetObjBP) 
+            {
+                FCompilerResultsLog Results;
+                FKismetEditorUtilities::CompileBlueprint(TargetObjBP, EBlueprintCompileOptions::None, &Results);
+            }
+            TargetObj1->Modify();
             EditorAssetSubsystem->SaveLoadedAsset(TargetObj1);
         }
     }
     //AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
-    ////Sort--------------------
-    //OnSortAssetPath(FName(FPaths::Combine(TEXT("/Game"), EffectName)));
     //Preview------------------
     if (!PreviewFile.IsEmpty())
     {
