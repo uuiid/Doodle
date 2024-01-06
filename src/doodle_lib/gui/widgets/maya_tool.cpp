@@ -268,7 +268,7 @@ bool maya_tool::render() {
               g_thread(),
               maya_to_exe_file{l_msg, k_arg.out_path_file_, l_updata_path}.set_ue_call_fun(boost::asio::bind_executor(
                   g_io_context(),
-                  [=](boost::system::error_code in_error_code, std::vector<maya_exe_ns::maya_out_arg>) {
+                  [=](boost::system::error_code in_error_code) {
                     if (in_error_code) {
                       l_msg.get<process_message>().set_state(process_message::state::fail);
                     } else {

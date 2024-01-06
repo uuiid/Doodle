@@ -6,6 +6,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <doodle_lib/exe_warp/maya_exe.h>
+
 #include <boost/asio.hpp>
 
 namespace doodle {
@@ -90,6 +92,7 @@ class maya_to_exe_file {
 
   virtual ~maya_to_exe_file() = default;
 
+  void operator()(boost::system::error_code in_error_code, const std::vector<maya_exe_ns::maya_out_arg>&) const;
   void operator()(boost::system::error_code in_error_code) const;
   void operator()() const;
   void operator()(const FSys::path& in_path, bool is_scene) const;

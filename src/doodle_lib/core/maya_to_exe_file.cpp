@@ -273,7 +273,9 @@ void maya_to_exe_file::begin_render(boost::system::error_code in_error_code) con
 }
 void maya_to_exe_file::operator()() const { import_file(); }
 void maya_to_exe_file::operator()(const FSys::path &in_path, bool is_scene) const { down_file(in_path, is_scene); }
-void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {
+void maya_to_exe_file::operator()(boost::system::error_code in_error_code) const {}
+void maya_to_exe_file::
+operator()(boost::system::error_code in_error_code, const std::vector<maya_exe_ns::maya_out_arg> &) const {
   if (!data_->logger_) {
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
     in_error_code.assign(error_enum::component_missing_error, doodle_category::get());

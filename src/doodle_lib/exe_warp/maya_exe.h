@@ -226,7 +226,7 @@ class DOODLELIB_API maya_exe {
     l_arg.out_path_file_ = FSys::get_cache_path() / fmt::format("maya_out_{}", version::build_info::get().version_str) /
                            fmt::format("{}.json", core_set::get_set().get_uuid());
     if (!FSys::exists(l_arg.out_path_file_.parent_path())) FSys::create_directories(l_arg.out_path_file_.parent_path());
-    auto l_arg_ptr = std::make_shared<maya_exe_ns::arg>(std::move(l_arg));
+    auto l_arg_ptr = std::make_shared<Arg_t>(std::move(l_arg));
 
     return boost::asio::async_initiate<
         CompletionHandler, void(boost::system::error_code, std::vector<maya_exe_ns::maya_out_arg>)>(
