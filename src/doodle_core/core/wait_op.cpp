@@ -3,3 +3,4 @@
 //
 
 #include "wait_op.h"
+namespace doodle::detail {}
