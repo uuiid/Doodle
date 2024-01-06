@@ -11,6 +11,7 @@ target_sources(doodle_lib
         maya_to_exe_file.h
         scan_win_service.h
         down_auto_light_file.h
+        thread_copy_io.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -19,7 +20,7 @@ target_sources(doodle_lib
         maya_to_exe_file.cpp
         scan_win_service.cpp
         down_auto_light_file.cpp
-
+        thread_copy_io.cpp
 
 )
 add_subdirectory(scan_assets)
