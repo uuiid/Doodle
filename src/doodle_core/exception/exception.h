@@ -38,6 +38,8 @@ enum error_t : std::int32_t {
   time_out,
   // 文件存在
   file_exists,
+  // 文件夹存在
+  file_is_directory,
 
 };
 [[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(error_t e);
