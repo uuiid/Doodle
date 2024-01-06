@@ -117,6 +117,18 @@ class DOODLELIB_API clear_file_arg : public maya_exe_ns::arg {
     nlohmann_json_j["save_file_extension_attr"] = nlohmann_json_t.save_file_extension_attr;
   };
 };
+
+struct maya_out_arg {
+  // 输出文件
+  FSys::path out_file{};
+  // 引用文件
+  FSys::path ref_file{};
+  friend void from_json(const nlohmann::json &nlohmann_json_j, maya_out_arg &nlohmann_json_t) {
+    nlohmann_json_j["out_file"].get_to(nlohmann_json_t.out_file);
+    nlohmann_json_j["ref_file"].get_to(nlohmann_json_t.ref_file);
+  };
+};
+
 // 单独maya过程类基类
 class maya_process_base {
  protected:
@@ -162,8 +174,13 @@ class DOODLELIB_API maya_exe {
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
     if (!in_handle.all_of<process_message>())
       in_handle.emplace<process_message>(in_arg.file_path.filename().generic_string());
-    auto l_arg      = in_arg;
-    l_arg.maya_path = find_maya_path();
+    auto l_arg           = in_arg;
+    l_arg.maya_path      = find_maya_path();
+    l_arg.out_path_file_ = FSys::get_cache_path() /
+                           fmt::format("maya_to_ue_{}", version::build_info::get().version_str) /
+                           fmt::format("{}.json", core_set::get_set().get_uuid());
+    if (!FSys::exists(l_arg.out_path_file_.parent_path())) FSys::create_directories(l_arg.out_path_file_.parent_path());
+
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, l_arg, in_handle](auto &&in_completion_handler) {
           nlohmann::json l_json{};
