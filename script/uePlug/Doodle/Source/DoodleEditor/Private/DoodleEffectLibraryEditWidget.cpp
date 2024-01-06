@@ -28,22 +28,203 @@
 #include "NiagaraEmitter.h"
 #include "NiagaraEditor/Public/NiagaraParameterDefinitions.h"
 #include "NiagaraParameterCollection.h"
+#include "Serialization/ArchiveReplaceObjectAndStructPropertyRef.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "Kismet2/KismetEditorUtilities.h"
 
 const FName UDoodleEffectLibraryEditWidget::Name{ TEXT("DoodleEffectLibraryEditWidget") };
 
+void FTypeItemElement::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, const TSharedPtr<FTypeItem> InTreeElement)
+{
+    WeakTreeElement = InTreeElement;
+    FSuperRowType::FArguments SuperArgs = FSuperRowType::FArguments();
+    SMultiColumnTableRow::Construct(SuperArgs, InOwnerTable);
+}
 
+TSharedRef<SWidget> FTypeItemElement::GenerateWidgetForColumn(const FName& ColumnName)
+{
+    return SNew(SHorizontalBox)
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        [
+            SNew(SExpanderArrow, SharedThis(this))
+                .IndentAmount(16)
+                .ShouldDrawWires(true)
+        ]
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [
+            SNew(SImage)
+                .Image(FAppStyle::GetBrush("ContentBrowser.ColumnViewAssetIcon"))//
+        ]
+        + SHorizontalBox::Slot()
+        .VAlign(VAlign_Center)
+        [
+            SAssignNew(TheEditableText, SEditableText)
+                .MinDesiredWidth(300)
+                .IsEnabled(false)
+                .OnTextCommitted_Lambda([this](const FText& InText, const ETextCommit::Type InTextAction)
+                {
+                    if(WeakTreeElement)
+                    WeakTreeElement->Name = FName(InText.ToString());
+                    if(TheEditableText)
+                    TheEditableText->SetEnabled(false);
+                })
+                .Text(FText::FromName(WeakTreeElement?WeakTreeElement->Name:FName(TEXT(""))))
+                .Font(FStyleDefaults::GetFontInfo(12))
+        ];
+}
+
+FTypeItem::FTypeItem() 
+{
+    TreeIndex = 0;
+    CanEdit = false;
+    Name = FName(TEXT(""));
+}
+
+TSharedPtr<FTypeItem> FTypeItem::AddChildren(FString L_Name)
+{
+    TSharedPtr<FTypeItem> Item = MakeShareable(new FTypeItem());
+    Item->Name = FName(L_Name);
+    Item->Parent = SharedThis(this);
+    Item->TreeIndex = TreeIndex + 1;
+    Children.Add(Item);
+    return Item;
+}
+
+TSharedPtr<FTypeItem> FTypeItem::GetChildren(FString L_Name)
+{
+    TSharedPtr<FTypeItem> L_Item = nullptr;
+    for (TSharedPtr<FTypeItem> Item : Children)
+    {
+        if (Item->Name.IsEqual(FName(L_Name)))
+        {
+            L_Item = Item;
+            break;
+        }
+    }
+    return L_Item;
+}
+
+void FTypeItem::ConvertToPath()
+{
+    TArray<FString>  L_Types;
+    L_Types.Insert(Name.ToString(), 0);
+    TSharedPtr<FTypeItem> TempParent = Parent.Pin();
+    while (TempParent.IsValid())
+    {
+        if (TempParent->Name != FName(TEXT("Root")))
+            L_Types.EmplaceAt(0, TempParent->Name.ToString());
+        TempParent = TempParent->Parent.Pin();
+    }
+    TypePaths.Empty();
+    for (FString L_Type : L_Types)
+    {
+        TypePaths = TypePaths + TEXT("###") + L_Type;
+    }
+}
 
 UDoodleEffectLibraryEditWidget::UDoodleEffectLibraryEditWidget()
 {
+    if (!GConfig->GetString(TEXT("DoodleEffectLibrary"), TEXT("EffectLibraryPath"), LibraryPath, GEngineIni))
+    {
+        LibraryPath = TEXT("E:/EffectLibrary");
+    }
+    //--------------
     EffectName = TEXT("");
     DescText = TEXT("");
     PreviewThumbnail = TEXT("");
     PreviewFile = TEXT("");
-    //---------
+    DirectoryPath = TEXT("");
+    OutputFormat = TEXT("Effect");
 }
 
-void UDoodleEffectLibraryEditWidget::SetViewportDat()
+UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
 {
+    if(SelectObject)
+        SelectObject->RemoveFromRoot();
+    //--------
+    if (ScreenshotHandle.IsValid())
+        FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotHandle);
+}
+
+void UDoodleEffectLibraryEditWidget::SetAssetData(FAssetData Asset)
+{
+    SelectObject = Asset.GetAsset();
+    SelectObject->AddToRoot();
+    FName TempEffectName = Asset.AssetName;
+    TArray<FName> FileNames;
+    IFileManager::Get().IterateDirectory(*LibraryPath, [&](const TCHAR* FilenameOrDirectory, bool bIsDirectory) -> bool
+    {
+        if (bIsDirectory)
+        {
+            FString FileName = FPaths::GetCleanFilename(FilenameOrDirectory);
+            FileNames.Add(FName(FileName));
+        }
+        return true;
+    });
+    while (FileNames.Contains(TempEffectName))
+    {
+        int Counter = TempEffectName.GetNumber();
+        TempEffectName.SetNumber(++Counter);
+    }
+    EffectName = TempEffectName.ToString();
+    //Tag-------------------
+    AllEffectTags.Empty();
+    IFileManager::Get().IterateDirectory(*LibraryPath, [this](const TCHAR* PathName, bool bIsDir)
+    {
+        if (bIsDir)
+        {
+            TSharedPtr<FEffectTileItem> Item = MakeShareable(new FEffectTileItem());
+            Item->JsonFile = FPaths::Combine(PathName, TEXT("Data.json"));
+            Item->ReadJson();
+            for (FString TempTag : Item->EffectTags)
+            {
+                if (TempTag.Len() > 0 && !AllEffectTags.Contains(TempTag))
+                {
+                    AllEffectTags.Add(TempTag);
+                }
+            }
+        }
+        return true;
+    });
+    TSharedPtr<FTagItem> TagItem = MakeShareable(new FTagItem());
+    if (!AllEffectTags.IsEmpty())
+    {
+        TagItem->Name = AllEffectTags.Top();
+    }
+    EffectTags.Add(TagItem);
+    //Type---------------------
+    RootChildren.Empty();
+    TSharedPtr<FTypeItem> RootItem = MakeShareable(new FTypeItem());
+    RootItem->Name = FName(TEXT("Root"));
+    RootChildren.Add(RootItem);
+    IFileManager::Get().IterateDirectory(*LibraryPath, [this](const TCHAR* PathName, bool bIsDir)
+    {
+        if (bIsDir)
+        {
+            TSharedPtr<FTypeItem> Parent = RootChildren.Top();
+            //--------------
+            TSharedPtr<FEffectTileItem> Item = MakeShareable(new FEffectTileItem());
+            Item->JsonFile = FPaths::Combine(PathName, TEXT("Data.json"));
+            Item->ReadJson();
+            int32 LayerIndex = 0;
+            while (LayerIndex < Item->EffectTypes.Num())
+            {
+                FString  LayerType = Item->EffectTypes[LayerIndex];
+                TSharedPtr<FTypeItem> LayerItem = Parent->GetChildren(LayerType);
+                if (LayerItem == nullptr)
+                {
+                    LayerItem = Parent->AddChildren(LayerType);
+                }
+                Parent = LayerItem;
+                LayerIndex++;
+            }
+        }
+        return true;
+    });
+    //---------------------
     if (ViewEditorViewport->IsVisible())
     {
         ViewEditorViewport->SetViewportData(SelectObject);
@@ -56,170 +237,251 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
     [
         SNew(SHorizontalBox)
             +SHorizontalBox::Slot()
-            .FillWidth(1.5)
-            [
-                SAssignNew(ViewEditorViewport, DoodleEffectEditorViewport)
-            ]
-            + SHorizontalBox::Slot()
-            .FillWidth(0.5)
+            .AutoWidth()
             [
                 SNew(SVerticalBox)
                     + SVerticalBox::Slot()
                     .AutoHeight()
                     [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("略缩图：")))
-                            .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
-                    ]
-                    + SVerticalBox::Slot()
-                    .FillHeight(0.1)
-                    .Padding(2)
-                    [
-                        SAssignNew(StartCaptureButton, SButton)
-                            .Text(FText::FromString(TEXT("截取略缩图")))
-                            .OnClicked_Lambda([this]()
-                            {
-                                OnTakeThumbnail();
-                                return FReply::Handled();
-                            })
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString(TEXT("特效录屏：")))
-                            .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SAssignNew(CaptureText, STextBlock)
-                            .Text(FText::FromString(TEXT("")))
-                            .ColorAndOpacity(FSlateColor{ FLinearColor{1, 0, 0, 1} })
-                    ]
-                    +SVerticalBox::Slot()
-                    .FillHeight(0.1)
-                    .Padding(2)
-                    [
-                        SAssignNew(StartCaptureButton,SButton)
-                            .Text(FText::FromString(TEXT("录制")))
-                            .OnClicked_Lambda([this]()
-                            {
-                                OnStartCapture();
-                                return FReply::Handled();
-                            })
-                    ]
-                    + SVerticalBox::Slot()
-                    .FillHeight(0.1)
-                    .Padding(2)
-                    [
-                        SNew(SButton)
-                            .Text(FText::FromString(TEXT("停止录制")))
-                            .OnClicked_Lambda([this]()
-                            {
-                                OnStopCapture();
-                                return FReply::Handled();
-                            })
-                    ]
-                    + SVerticalBox::Slot()
-                    .FillHeight(0.1)
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("特效名：")))
-                            .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
-                    ]
-                    + SVerticalBox::Slot()
-                    .Padding(5)
-                    .FillHeight(0.1)
-                    [
-                        SNew(SEditableTextBox)
-                            .Text_Lambda([this]()-> FText
-                            {
-                                return FText::FromString(EffectName);
-                            })
-                            .OnTextChanged_Lambda([this](const FText& In_Text)
-                            {
-                                EffectName = In_Text.ToString();
-                            })
-                            .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
-                            {
-                                EffectName = In_Text.ToString();
-                            })
-                    ]
-                    + SVerticalBox::Slot()
-                    .AutoHeight()
-                    [
-                        SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("分类：")))
-                            .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
-                    ]
-                    + SVerticalBox::Slot()
-                    .Padding(5)
-                    .FillHeight(0.1)
-                    [
-                        SNew(SComboButton)
-                            .OnGetMenuContent(this, &UDoodleEffectLibraryEditWidget::OnGetMenuContent)
-                            .ContentPadding(FMargin(2.0f, 2.0f))
-                            .ButtonContent()
+                        SNew(SBorder)
+                            .BorderBackgroundColor(FColor::Yellow)
+                            .Padding(3)
                             [
-                                SNew(SEditableTextBox)
-                                    .Text_Lambda([this]() 
-                                    {
-                                        return FText::FromString(EffectType);
-                                    })
-                                    .OnTextChanged_Lambda([this](const FText& In_Text)
-                                    {
-                                        EffectType = In_Text.ToString();
-                                    })
-                                    .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
-                                    {
-                                        EffectType = In_Text.ToString();
-                                    })
+                                SAssignNew(ViewEditorViewport, DoodleEffectEditorViewport)
                             ]
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight()
                     [
                         SNew(STextBlock)
-                            .Text(FText::FromString(TEXT("描述：")))
+                            .Text(FText::FromString(TEXT("------------------------------")))
                             .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
                     ]
-                    + SVerticalBox::Slot()
-                    .FillHeight(0.8)
-                    .Padding(5)
+            ]
+            + SHorizontalBox::Slot()
+            [
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
                     [
-                        SNew(SMultiLineEditableTextBox)
-                            .AllowMultiLine(true)
-                            .AutoWrapText(true)
-                            .Text_Lambda([this]()-> FText
-                            {
-                                return FText::FromString(DescText);
-                            })
-                            .OnTextChanged_Lambda([this](const FText& In_Text)
-                            {
-                                DescText = In_Text.ToString();
-                            })
-                            .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
-                            {
-                                DescText = In_Text.ToString();
-                            })
+                        SNew(SVerticalBox)
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(STextBlock)
+                                    .Text(FText::FromString(TEXT("略缩图：")))
+                                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            .Padding(2)
+                            [
+                                SAssignNew(StartCaptureButton, SButton)
+                                    .Text(FText::FromString(TEXT("截取略缩图")))
+                                    .OnClicked_Lambda([this]()
+                                        {
+                                            OnTakeThumbnail();
+                                            return FReply::Handled();
+                                        })
+                            ]
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(STextBlock)
+                                    .Text(FText::FromString(TEXT("特效录屏：")))
+                                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                            ]
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SAssignNew(CaptureText, STextBlock)
+                                    .Text(FText::FromString(TEXT("")))
+                                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 0, 0, 1} })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            .Padding(2)
+                            [
+                                SAssignNew(StartCaptureButton, SButton)
+                                    .Text(FText::FromString(TEXT("录制")))
+                                    .OnClicked_Lambda([this]()
+                                        {
+                                            OnStartCapture();
+                                            return FReply::Handled();
+                                        })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            .Padding(2)
+                            [
+                                SNew(SButton)
+                                    .Text(FText::FromString(TEXT("停止录制")))
+                                    .OnClicked_Lambda([this]()
+                                    {
+                                        OnStopCapture();
+                                        return FReply::Handled();
+                                    })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(STextBlock)
+                                    .Text(FText::FromString(TEXT("特效名：")))
+                                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                            ]
+                            + SVerticalBox::Slot()
+                            .Padding(5)
+                            .FillHeight(0.1)
+                            [
+                                SNew(SEditableTextBox)
+                                    .Text_Lambda([this]()-> FText
+                                    {
+                                        return FText::FromString(EffectName);
+                                    })
+                                    .OnTextChanged_Lambda([this](const FText& In_Text)
+                                    {
+                                        EffectName = In_Text.ToString();
+                                    })
+                                    .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
+                                    {
+                                        EffectName = In_Text.ToString();
+                                    })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            .Padding(2)
+                            [
+                                SNew(SButton)
+                                    .Text(FText::FromString(TEXT("添加标签")))
+                                    .OnClicked_Lambda([this]() 
+                                    {
+                                        TSharedPtr<FTagItem> Item = MakeShareable(new FTagItem());
+                                        EffectTags.Add(Item);
+                                        EffectTagsViewPtr->RequestListRefresh();
+                                        return FReply::Handled();
+                                    })
+                            ]
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SAssignNew(EffectTagsViewPtr, SListView< TSharedPtr<FTagItem> >)
+                                    .ListItemsSource(&EffectTags)
+                                    .OnGenerateRow(this, &UDoodleEffectLibraryEditWidget::ListOnGenerateRow)
+                            ]
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(STextBlock)
+                                    .Text(FText::FromString(TEXT("描述：")))
+                                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.8)
+                            .Padding(5)
+                            [
+                                SNew(SMultiLineEditableTextBox)
+                                    .AllowMultiLine(true)
+                                    .AutoWrapText(true)
+                                    .Text_Lambda([this]()-> FText
+                                    {
+                                        return FText::FromString(DescText);
+                                    })
+                                    .OnTextChanged_Lambda([this](const FText& In_Text)
+                                    {
+                                        DescText = In_Text.ToString();
+                                    })
+                                    .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
+                                    {
+                                        DescText = In_Text.ToString();
+                                    })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            .Padding(2)
+                            [
+                                SNew(SButton)
+                                    .Text(FText::FromString(TEXT("保存并创建")))
+                                    .OnClicked_Lambda([this]()
+                                        {
+                                            OnSaveAndCreate();
+                                            return FReply::Handled();
+                                        })
+                            ]
+                            + SVerticalBox::Slot()
+                            .FillHeight(0.05)
                     ]
-                    + SVerticalBox::Slot()
-                    .FillHeight(0.1)
-                    .Padding(2)
+                    + SHorizontalBox::Slot()
                     [
-                        SNew(SButton)
-                            .Text(FText::FromString(TEXT("保存并创建")))
-                            .OnClicked_Lambda([this]()
-                            {
-                                OnSaveAndCreate();
-                                return FReply::Handled();
-                            })
+                        SNew(SVerticalBox)
+                            + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(STextBlock)
+                                    .Text(FText::FromString(TEXT("分类树：")))
+                                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                            ]
+                            + SVerticalBox::Slot()
+                            [
+                                SAssignNew(TreeViewPtr, STreeView<TSharedPtr<FTypeItem>>)
+                                    .TreeItemsSource(&RootChildren)
+                                    .SelectionMode(ESelectionMode::Single)
+                                    .OnGenerateRow(this, &UDoodleEffectLibraryEditWidget::MakeTableRowWidget)
+                                    .OnGetChildren(this, &UDoodleEffectLibraryEditWidget::HandleGetChildrenForTree)
+                                    .HighlightParentNodesForSelection(true)
+                                    .OnSelectionChanged_Lambda([this](TSharedPtr<FTypeItem> inSelectItem, ESelectInfo::Type SelectType)
+                                    {
+                                        NowSelectType = inSelectItem;
+                                    })
+                                    .OnContextMenuOpening_Lambda([this]()
+                                    {
+                                        FUIAction Action(FExecuteAction::CreateLambda([this]() 
+                                        {
+                                            if (NowSelectType)
+                                            {
+                                                TSharedPtr<FTypeItem> Item = MakeShareable(new FTypeItem());
+                                                TSharedPtr<FTypeItem> NewItem = NowSelectType->AddChildren(TEXT("New"));
+                                                NewItem->CanEdit = true;
+                                                if (TreeViewPtr)
+                                                {
+                                                    TreeViewPtr->RequestTreeRefresh();
+                                                    TreeViewPtr->SetItemExpansion(Item,true);
+                                                }
+                                            }
+                                        }), FCanExecuteAction());
+                                        FUIAction RenameAction(FExecuteAction::CreateLambda([this]()
+                                        {
+                                            if (NowSelectType &&NowSelectType->CanEdit)
+                                            {
+                                                TSharedPtr<ITableRow> TableRow = TreeViewPtr->WidgetFromItem(NowSelectType);
+                                                TSharedPtr <FTypeItemElement> Row = StaticCastSharedPtr<FTypeItemElement>(TableRow);
+                                                if (Row.IsValid())
+                                                {
+                                                    Row->TheEditableText->SetEnabled(true);
+                                                    Row->TheEditableText->SelectAllText();
+                                                }
+                                            }
+                                        }), FCanExecuteAction());
+                                        FMenuBuilder MenuBuilder(true, false);
+                                        MenuBuilder.AddMenuSeparator();
+                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("新建")), FText::FromString(TEXT("新建子分类")),
+                                            FSlateIcon(), Action);
+                                        if (NowSelectType->CanEdit) 
+                                        {
+                                            MenuBuilder.AddMenuSeparator();
+                                            MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名分类")),
+                                                FSlateIcon(), RenameAction);
+                                        }
+                                        return MenuBuilder.MakeWidget();
+                                    })
+                                    .HeaderRow(
+                                        SNew(SHeaderRow)
+                                        + SHeaderRow::Column(FName(TEXT("Column1")))
+                                        .Visibility(EVisibility::Hidden)
+                                        .DefaultLabel(FText::FromString(TEXT("")))
+                                    )
+                            ]
                     ]
-                    + SVerticalBox::Slot()
-                    .FillHeight(0.05)
             ]
     ];
 }
@@ -254,7 +516,7 @@ void UDoodleEffectLibraryEditWidget::OnStartCapture()
         //Capture->Settings.ZeroPadFrameNumbers = 4;
         Capture->Settings.bEnableTextureStreaming = true;
         Capture->Settings.bShowHUD = false;
-        Capture->Settings.Resolution = FCaptureResolution(1080,1080);
+        Capture->Settings.Resolution = FCaptureResolution(1024,1024);
         Capture->Settings.OutputFormat = OutputFormat;
         DirectoryPath = Capture->Settings.OutputDirectory.Path;
         MovieExtension = Capture->Settings.MovieExtension;
@@ -284,17 +546,20 @@ void UDoodleEffectLibraryEditWidget::OnCaptureFinished()
 
 void UDoodleEffectLibraryEditWidget::OnStopCapture()
 {
-    IsCapturing = false;
-    StartCaptureButton->SetEnabled(true);
-    CaptureText->SetText(FText::FromString(TEXT("")));
-    if(Capture)
-        Capture->Close();
+    if (IsCapturing) 
+    {
+        IsCapturing = false;
+        StartCaptureButton->SetEnabled(true);
+        CaptureText->SetText(FText::FromString(TEXT("")));
+        if (Capture)
+            Capture->Close();
+    }
 }
 
 void UDoodleEffectLibraryEditWidget::OnTakeThumbnail()
 {
     FString FilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Shot"));
-    FDelegateHandle ScreenshotHandle = FScreenshotRequest::OnScreenshotRequestProcessed().AddLambda([&, FilePath, ScreenshotHandle]()
+    ScreenshotHandle = FScreenshotRequest::OnScreenshotRequestProcessed().AddLambda([this, FilePath]()
     {
          PreviewThumbnail = FPaths::ConvertRelativePathToFull(FilePath)+TEXT(".png");
          FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotHandle);
@@ -320,16 +585,40 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return;
     }
-    if (EffectType.Len() <= 0)
+    if (EffectTags.IsEmpty())
     {
-        FText  DialogText = FText::FromString(TEXT("保存失败，分类不能为空。"));
+        FText  DialogText = FText::FromString(TEXT("保存失败，请添加标签"));
         FMessageDialog::Open(EAppMsgType::Ok, DialogText);
         return;
     }
+    for (TSharedPtr<FTagItem> L_Tag : EffectTags)
+    {
+        if (L_Tag->Name.Len() <= 0)
+        {
+            FText  DialogText = FText::FromString(TEXT("保存失败，标签名不能为空"));
+            FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+            return;
+        }
+    }
+    if (!NowSelectType|| NowSelectType->Name==FName(TEXT("Root")))
+    {
+        FText  DialogText = FText::FromString(TEXT("保存失败，请选择分类"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return;
+    }
+    //Type-----------------------
+    NowSelectType->ConvertToPath();
     //json--------------------
     TSharedPtr<FJsonObject> JsonData = MakeShareable(new FJsonObject);
     JsonData->SetStringField(TEXT("DescText"), DescText);
-    JsonData->SetStringField(TEXT("EffectType"), EffectType);
+    NowSelectType->ConvertToPath();
+    JsonData->SetStringField(TEXT("EffectType"), NowSelectType->TypePaths);
+    FString EffectTagStr = TEXT("");
+    for (TSharedPtr<FTagItem>& L_Tag : EffectTags)
+    {
+        EffectTagStr = TEXT("###") + L_Tag->Name;
+    }
+    JsonData->SetStringField("EffectTags", EffectTagStr);
     FString JsonText;
     TSharedRef< TJsonWriter< TCHAR, TPrettyJsonPrintPolicy<TCHAR> > > JsonWriter = TJsonWriterFactory< TCHAR, TPrettyJsonPrintPolicy<TCHAR> >::Create(&JsonText);
     if (FJsonSerializer::Serialize(JsonData.ToSharedRef(), JsonWriter))
@@ -343,25 +632,124 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
     UObject* TargetObj = nullptr;
     if (SelectObject)
     {
-        FString Path = FPaths::Combine(TEXT("/Game") / EffectName, SelectObject->GetName());
-        TargetObj = EditorAssetSubsystem->DuplicateLoadedAsset(SelectObject, Path);
-        if (TargetObj)
+        ObjectsMap.Empty();
+        AllDependens.Empty();
+        AllDependens.Add(SelectObject.Get());
+        OnGetAllDependencies(SelectObject.Get());
+        for (UObject* OldObj:AllDependens)
         {
-            EditorAssetSubsystem->SaveLoadedAsset(TargetObj);
-            OnReplaceDependencies(SelectObject, TargetObj);
+            FStringAssetReference AssetRef1(OldObj);
+            FName TargetPath = FName(FPaths::Combine(TEXT("/Game") / EffectName, AssetRef1.GetAssetName()));
+            while (EditorAssetSubsystem->DoesAssetExist(TargetPath.ToString()))
+            {
+                int Counter = TargetPath.GetNumber();
+                TargetPath.SetNumber(++Counter);
+            }
+            UObject* NewObj = EditorAssetSubsystem->DuplicateLoadedAsset(OldObj, TargetPath.ToString());
+            if(!ObjectsMap.Contains(OldObj))
+                ObjectsMap.Add(OldObj, NewObj);
+        }
+        for (TPair<UObject*, UObject*> TheObject:ObjectsMap)
+        {
+            TArray<FAssetDependency> Dependencys;
+            FName L_PackageName = FName(TheObject.Key->GetPackage()->GetName());
+            AssetRegistryModule.Get().GetDependencies(L_PackageName, Dependencys);
+            TMap<UObject*, UObject*> ReplacementMap;
+            for (FAssetDependency Dependency : Dependencys) 
+            {
+                UObject* O_Obj = LoadObject<UObject>(nullptr, *Dependency.AssetId.PackageName.ToString());
+                if (O_Obj) 
+                {
+                    UObject* N_Obj = ObjectsMap[O_Obj];
+                    ReplacementMap.Add(O_Obj, N_Obj);
+                }
+            }
+            UObject* TargetObj1 = TheObject.Value;
+            if (SelectObject.Get()->IsA(UBlueprint::StaticClass()))
+            {
+                UBlueprint* BPObject = Cast<UBlueprint>(TargetObj1);
+                if (BPObject)
+                {
+                    FArchiveReplaceObjectAndStructPropertyRef<UObject> ReplaceInBPClassObject_Ar(BPObject->GeneratedClass, ReplacementMap, EArchiveReplaceObjectFlags::IncludeClassGeneratedByRef);
+                    FArchiveReplaceObjectAndStructPropertyRef<UObject> ReplaceInBPClassDefaultObject_Ar(BPObject->GeneratedClass->ClassDefaultObject, ReplacementMap, EArchiveReplaceObjectFlags::IncludeClassGeneratedByRef);
+                    //---------
+                }
+                FArchiveReplaceObjectAndStructPropertyRef<UObject> ReplaceAr(TargetObj1, ReplacementMap, EArchiveReplaceObjectFlags::IncludeClassGeneratedByRef);
+            }
+            else
+            {
+                FArchiveReplaceObjectRef<UObject> ReplaceAr(TargetObj1, ReplacementMap, EArchiveReplaceObjectFlags::IgnoreOuterRef | EArchiveReplaceObjectFlags::IgnoreArchetypeRef);
+            }
+            TargetObj1->Modify();
+            //EditorAssetSubsystem->SaveLoadedAsset(TargetObj1);
+        }
+        //------------------------------
+        OnSortAssetPath(FName(FPaths::Combine(TEXT("/Game"), EffectName)));
+        for (TPair<UObject*, UObject*> TheObject : ObjectsMap) 
+        {
+            UObject* TargetObj1 = TheObject.Value;
+            UBlueprint* TargetObjBP = Cast<UBlueprint>(TargetObj1);
+            if (TargetObjBP) 
+            {
+                FCompilerResultsLog Results;
+                FKismetEditorUtilities::CompileBlueprint(TargetObjBP, EBlueprintCompileOptions::None, &Results);
+            }
+            TargetObj1->Modify();
+            EditorAssetSubsystem->SaveLoadedAsset(TargetObj1);
         }
     }
-    //Sort--------------------
+    //AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
+    //Preview------------------
+    if (!PreviewFile.IsEmpty())
+    {
+        FString FullTempEffectPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
+        FString File = FPaths::GetCleanFilename(PreviewFile);
+        IFileManager::Get().Move(*(FullTempEffectPath / File), *PreviewFile, true);
+    }
+    //Thumbnail-------------------
+    if (!PreviewThumbnail.IsEmpty())
+    {
+        FString FullTempEffectPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
+        FString File = FPaths::GetCleanFilename(PreviewThumbnail);
+        IFileManager::Get().Move(*(FullTempEffectPath / File), *PreviewThumbnail, true);
+    }
+    ////Copy----------------
+    AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    if (PlatformFile.CopyDirectoryTree(*FPaths::Combine(LibraryPath, EffectName),*FPaths::Combine(FPaths::ProjectContentDir(), EffectName),true))
+    {
+        IFileManager::Get().DeleteDirectory(*FPaths::Combine(FPaths::ProjectContentDir(), EffectName), false, true);
+        //PlatformFile.DeleteDirectoryRecursively(*FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
+    }
+    EditorAssetSubsystem->DeleteDirectory(*FPaths::Combine(TEXT("/Game"), EffectName));
+    //------
+    FString Info = FString::Format(TEXT("保存特效：{0}完成"), { EffectName });
+    FNotificationInfo L_Info{ FText::FromString(Info) };
+    L_Info.FadeInDuration = 1.0f;  // 
+    L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+    FSlateNotificationManager::Get().AddNotification(L_Info);
+    //Item-------------------------
+    //----------
+    TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->FindExistingLiveTab(FTabId(Name));
+    if (Tab)
+    {
+        Tab->RequestCloseTab();
+    }
+}
+
+void UDoodleEffectLibraryEditWidget::OnSortAssetPath(FName AssetPath)
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     TArray<FAssetData> OutAssetData;
-    IAssetRegistry::Get()->GetAssetsByPath(FName(*FPaths::Combine(TEXT("/Game"),EffectName)), OutAssetData, false);
+    IAssetRegistry::Get()->GetAssetsByPath(AssetPath, OutAssetData, false);
     for (FAssetData Asset : OutAssetData)
     {
-        FString Path= Asset.PackagePath.ToString();
+        FString Path = Asset.PackagePath.ToString();
         if (Asset.GetClass() == UStaticMesh::StaticClass())
-             Path = FPaths::Combine(Path, TEXT("Mesh"));
+            Path = FPaths::Combine(Path, TEXT("Mesh"));
         if (Asset.GetClass()->IsChildOf<UTexture>())
             Path = FPaths::Combine(Path, TEXT("Tex"));
-        if (Asset.GetClass()== UMaterialInstance::StaticClass())
+        if (Asset.GetClass()->IsChildOf(UMaterialInstance::StaticClass()))
             Path = FPaths::Combine(Path, TEXT("Mat/MatInst"));
         if (Asset.GetClass() == UMaterial::StaticClass())
             Path = FPaths::Combine(Path, TEXT("Mat/Mat"));
@@ -383,103 +771,118 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
             Path = FPaths::Combine(Path, TEXT("FX/ValidationRuleSet"));
         if (Asset.GetClass() == UNiagaraScript::StaticClass())
             Path = FPaths::Combine(Path, TEXT("FX/Script"));
-        AssetViewUtils::MoveAssets({ Asset.GetAsset() }, Path, Asset.PackagePath.ToString());
-    }
-    if (TargetObj) 
-    {
-        TargetObj->Modify();
-        EditorAssetSubsystem->SaveLoadedAsset(TargetObj);
-    }
-    //Preview------------------
-    if (!PreviewFile.IsEmpty())
-    {
-        FString FullTempEffectPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
-        FString File = FPaths::GetCleanFilename(PreviewFile);
-        IFileManager::Get().Move(*(FullTempEffectPath / File), *PreviewFile, true);
-    }
-    //Thumbnail-------------------
-    if (!PreviewThumbnail.IsEmpty())
-    {
-        FString FullTempEffectPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
-        FString File = FPaths::GetCleanFilename(PreviewThumbnail);
-        IFileManager::Get().Move(*(FullTempEffectPath / File), *PreviewThumbnail, true);
-    }
-    //Copy----------------
-    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-    if (PlatformFile.CopyDirectoryTree(*FPaths::Combine(LibraryPath, EffectName),*FPaths::Combine(FPaths::ProjectContentDir(), EffectName),true))
-    {
-        IFileManager::Get().DeleteDirectory(*FPaths::Combine(FPaths::ProjectContentDir(), EffectName), false, true);
-        //PlatformFile.DeleteDirectoryRecursively(*FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
-    }
-    EditorAssetSubsystem->DeleteDirectory(*FPaths::Combine(TEXT("/Game"), EffectName));
-    //------
-    FString Info = FString::Format(TEXT("保存特效：{0}完成"), { EffectName });
-    FNotificationInfo L_Info{ FText::FromString(Info) };
-    L_Info.FadeInDuration = 1.0f;  // 
-    L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
-    FSlateNotificationManager::Get().AddNotification(L_Info);
-    //Item-------------------------
-    TSharedPtr<SDockTab> LibraryTab = FGlobalTabmanager::Get()->FindExistingLiveTab(FTabId(UDoodleEffectLibraryWidget::Name));
-    if (LibraryTab.IsValid())
-    {
-        TSharedRef<UDoodleEffectLibraryWidget> Widget = StaticCastSharedRef<UDoodleEffectLibraryWidget>(LibraryTab->GetContent());
-        Widget->OnSaveNewEffect(EffectName);
-    }
-    //----------
-    TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->FindExistingLiveTab(FTabId(Name));
-    if (Tab.IsValid())
-    {
-        Tab->RequestCloseTab();
+        if (Asset.GetClass() == USkeletalMesh::StaticClass() || Asset.GetClass() == UAnimSequence::StaticClass()
+            || Asset.GetClass() == UPhysicsAsset::StaticClass() || Asset.GetClass() == USkeleton::StaticClass())
+            Path = FPaths::Combine(Path, TEXT("SK"));
+        //--------------------
+        FName AssetName = Asset.AssetName;
+        while (EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
+        {
+            int Counter = AssetName.GetNumber();
+            AssetName.SetNumber(++Counter);
+        }
+        if (!EditorAssetSubsystem->RenameAsset(Asset.PackageName.ToString(), FPaths::Combine(Path, Asset.AssetName.ToString())))
+        {
+            FString Info = FString::Format(TEXT("移动文件{0}到{1}失败"), { Asset.PackageName.ToString(), FPaths::Combine(Path, Asset.AssetName.ToString()) });
+            UE_LOG(LogTemp, Warning, TEXT("Error: %s"), *Info);
+        }
     }
 }
 
-void UDoodleEffectLibraryEditWidget::OnReplaceDependencies(UObject* SObject, UObject* TObject)
+void UDoodleEffectLibraryEditWidget::OnGetAllDependencies(UObject* SObject)
 {
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
     TArray<FAssetDependency> Dependencys;
-    FName PackageName = FName(SObject->GetPackage()->GetName());
+    FName L_PackageName = FName(SObject->GetPackage()->GetName());
     FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-    AssetRegistryModule.Get().GetDependencies(PackageName, Dependencys);
-    TMap<UObject*, UObject*> ReplacementMap;
+    AssetRegistryModule.Get().GetDependencies(L_PackageName, Dependencys);
     for (FAssetDependency Dependency : Dependencys)
     {
         UObject* OldObj = LoadObject<UObject>(nullptr, *Dependency.AssetId.PackageName.ToString());
         if (OldObj)
         {
-            //-----------------------
-            FString FolderPath = FPaths::Combine(TEXT("/Game"), EffectName);
-            FString FileName = FPaths::GetBaseFilename(Dependency.AssetId.PackageName.ToString(), true);
-            FName TargetPath = FName(FPaths::Combine(FolderPath, FileName));
-            while (EditorAssetSubsystem->DoesAssetExist(TargetPath.ToString())) 
+            if (!AllDependens.Contains(OldObj))
             {
-                int Counter = TargetPath.GetNumber();
-                TargetPath.SetNumber(++Counter);
-            }
-            UObject* NewObj = EditorAssetSubsystem->DuplicateLoadedAsset(OldObj, TargetPath.ToString());
-            EditorAssetSubsystem->SaveLoadedAsset(NewObj);
-            if (NewObj)
-            {
-                ReplacementMap.Add(OldObj, NewObj);
-                OnReplaceDependencies(OldObj, NewObj);
+                AllDependens.Add(OldObj);
+                OnGetAllDependencies(OldObj);
             }
         }
     }
-    FArchiveReplaceObjectRef<UObject> ReplaceAr(TObject, ReplacementMap, EArchiveReplaceObjectFlags::IgnoreOuterRef | EArchiveReplaceObjectFlags::IgnoreArchetypeRef);
-    TObject->Modify();
-    EditorAssetSubsystem->SaveLoadedAsset(TObject);
 }
 
-TSharedRef<SWidget> UDoodleEffectLibraryEditWidget::OnGetMenuContent()
+TSharedRef<SWidget> UDoodleEffectLibraryEditWidget::OnGetMenuContent(TSharedPtr<FTagItem> InItem)
 {
     FMenuBuilder MenuBuilder(true, NULL);
-    for (int32 i = 0; i < EffectTypeValues.Num(); i++)
+    for (int32 i = 0; i < AllEffectTags.Num(); i++)
     {
-        MenuBuilder.AddMenuEntry(FText::FromString(EffectTypeValues[i]), TAttribute<FText>(), FSlateIcon(), 
-            FUIAction(FExecuteAction::CreateLambda([this, i]()
+        MenuBuilder.AddMenuEntry(FText::FromString(AllEffectTags[i]), TAttribute<FText>(), FSlateIcon(), 
+            FUIAction(FExecuteAction::CreateLambda([this,i, InItem]()
             {
-                EffectType = EffectTypeValues[i];
+                InItem->Name = AllEffectTags[i];
             }))
         );
     }
     return MenuBuilder.MakeWidget();
+}
+
+TSharedRef<ITableRow> UDoodleEffectLibraryEditWidget::MakeTableRowWidget(TSharedPtr<FTypeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    return SNew(FTypeItemElement, OwnerTable, InTreeElement);
+}
+
+void UDoodleEffectLibraryEditWidget::HandleGetChildrenForTree(TSharedPtr<FTypeItem> InItem, TArray<TSharedPtr<FTypeItem>>& OutChildren)
+{
+    OutChildren.Append(InItem->Children);
+}
+
+TSharedRef<ITableRow> UDoodleEffectLibraryEditWidget::ListOnGenerateRow(TSharedPtr<FTagItem> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    return SNew(STableRow<TSharedPtr<FTagItem>>, OwnerTable)
+        [
+            SNew(SHorizontalBox)
+                +SHorizontalBox::Slot()
+                [
+                    SNew(SComboButton)
+                        .OnGetMenuContent(this, &UDoodleEffectLibraryEditWidget::OnGetMenuContent, InItem)
+                        .ContentPadding(FMargin(2.0f, 2.0f))
+                        .ButtonContent()
+                        [
+                            SNew(SEditableTextBox)
+                                .Text_Lambda([this, InItem]()
+                                    {
+                                        return FText::FromString(InItem->Name);
+                                    })
+                                .OnTextChanged_Lambda([this, InItem](const FText& In_Text)
+                                    {
+                                        InItem->Name = In_Text.ToString();
+                                    })
+                                        .OnTextCommitted_Lambda([this, InItem](const FText& In_Text, ETextCommit::Type)
+                                            {
+                                                InItem->Name = In_Text.ToString();
+                                            })
+                        ]
+                ]
+                +SHorizontalBox::Slot()
+                .AutoWidth()
+                [
+                    SNew(SButton)
+                        .Content()
+                        [
+                            SNew(SImage)
+                                .Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Delete").GetSmallIcon())
+                        ]
+                        .Text(FText::FromString(TEXT("删除")))
+                        .ToolTipText(FText::FromString(TEXT("删除分类")))
+                        .OnClicked_Lambda([this,InItem]()
+                        {
+                            if (EffectTags.Contains(InItem))
+                            {
+                                EffectTags.Remove(InItem);
+                                EffectTagsViewPtr->RequestListRefresh();
+                            }
+                            return FReply::Handled();
+                        })
+                ]
+            
+        ];
 }

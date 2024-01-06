@@ -51,11 +51,12 @@ public:
 class DOODLEEDITOR_API DoodleEffectEditorViewport : public SEditorViewport, public ICommonEditorViewportToolbarInfoProvider
 {
 public:
-	DoodleEffectEditorViewport();
 	~DoodleEffectEditorViewport();
 
 	void Construct(const FArguments& Arg);
-	void SetViewportData(UObject* Particle);
+	void SetViewportData(TObjectPtr<UObject> ParticleObj);
+
+	FVector2D ComputeDesiredSize(float) const override { return FVector2D(768, 768); }
 private:
 	TSharedPtr<DoodleEffectEditorViewportClient> ViewportClient;
 	TSharedPtr<FAssetEditorModeManager> AssetEditorModeManager;
@@ -65,11 +66,9 @@ private:
 	TSharedPtr<FExtender> GetExtenders() const override;
 	void OnFloatingButtonClicked() override;
 
-	AActor* PreviewActor;
+	TObjectPtr<AActor> PreviewActor;
 
 protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
 	virtual TSharedPtr<SWidget> MakeViewportToolbar() override;
-
-	void OnFocusViewportToSelection() override;
 };
