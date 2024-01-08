@@ -122,7 +122,7 @@ boost::system::error_code image_to_move::create_move(
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image = cv::Mat{};
   const auto &k_size_len = l_vector.size();
-  auto l_gamma = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
+  auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto &l_image : l_vector) {
     if (l_stop) {
       in_logger->log(log_loc(), level::err, "合成视频被主动结束 合成视频文件将被主动删除");
@@ -168,8 +168,9 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension() && in_handle.any_of<episodes, shot>())
     l_out /= fmt::format(
-        "{}_{}.mp4", in_handle.any_of<episodes>() ? fmt::to_string(in_handle.get<episodes>()) : "eps_none"s,
-        in_handle.any_of<shot>() ? fmt::to_string(in_handle.get<shot>()) : "sh_none"s
+        "{:04}_{:03}{}.mp4", in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
+        in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot : 0,
+        in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None,
     );
   else if (!l_out.has_extension()) {
     l_out /= fmt::format("{}.mp4", core_set::get_set().get_uuid());
