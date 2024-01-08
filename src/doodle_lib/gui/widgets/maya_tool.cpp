@@ -259,23 +259,24 @@ bool maya_tool::render() {
       entt::handle l_msg{*g_reg(), g_reg()->create()};
       l_msg.emplace<process_message>(i.filename().generic_string());
 
-      l_maya->async_run_maya(
-          l_msg, k_arg,
-          boost::asio::bind_executor(
-              g_thread(),
-              maya_to_exe_file{l_msg, k_arg.out_path_file_, l_updata_path}.set_ue_call_fun(boost::asio::bind_executor(
-                  g_io_context(),
-                  [=](boost::system::error_code in_error_code) {
-                    if (in_error_code) {
-                      l_msg.get<process_message>().set_state(process_message::state::fail);
-                    } else {
-                      l_msg.get<process_message>().set_state(process_message::state::success);
-                    }
-                  }
-              ))
-          )
-
-      );
+      //      l_maya->async_run_maya(
+      //          l_msg, k_arg,
+      //          boost::asio::bind_executor(
+      //              g_thread(),
+      //              maya_to_exe_file{l_msg, k_arg.out_path_file_,
+      //              l_updata_path}.set_ue_call_fun(boost::asio::bind_executor(
+      //                  g_io_context(),
+      //                  [=](boost::system::error_code in_error_code) {
+      //                    if (in_error_code) {
+      //                      l_msg.get<process_message>().set_state(process_message::state::fail);
+      //                    } else {
+      //                      l_msg.get<process_message>().set_state(process_message::state::success);
+      //                    }
+      //                  }
+      //              ))
+      //          )
+      //
+      //      );
     });
   }
 
