@@ -62,7 +62,17 @@ create_video::create_video() : p_i(std::make_unique<impl>()) { p_i->title_name_ 
 bool create_video::render() {
   ImGui::Text("拖拽文件夹, 或者图片列表, 由系统自动判断输出路径");
   constexpr auto l_sort_file_stem = [](const video_gui_cache& in_r, const video_gui_cache& in_l) -> bool {
-    return in_r.path_.stem().generic_string() < in_l.path_.stem().generic_string();
+    episodes l_eps_r{};
+    l_eps_r.analysis(in_r.path_);
+    shot l_shot_r{};
+    l_shot_r.analysis(in_r.path_);
+
+    episodes l_eps_l{};
+    l_eps_l.analysis(in_l.path_);
+    shot l_shot_l{};
+    l_shot_l.analysis(in_l.path_);
+
+    return std::tie(l_eps_r, l_shot_r) < std::tie(l_eps_l, l_shot_l);
   };
   if (auto l_l = dear::ListBox{"图片路径(拖拽导入)"}; l_l) {
     for (const auto& i : p_i->image_to_video_list) {
