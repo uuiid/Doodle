@@ -33,8 +33,8 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
                   ranges::to<std::unordered_map<uuid, entt::entity>>();
 
   auto l_refs =
-      data_->out_maya_arg_ |
-      ranges::views::transform([](const maya_exe_ns::maya_out_arg &in_arg) { return in_arg.ref_file; }) |
+      data_->out_maya_arg_.out_file_list |
+      ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) { return in_arg.ref_file; }) |
       ranges::views::filter([](const FSys::path &in_arg) { return FSys::exists(in_arg); }) |
       ranges::views::transform([&](const FSys::path &in_arg) -> entt::handle {
         auto l_uuid = FSys::software_flag_file(in_arg);
@@ -104,8 +104,9 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
 
       auto l_ass_map_file =
           h.get<file_association_ref>().get<file_association>().ue_file.get<assets_file>().path_attr();
-      auto l_original      = l_ass_map_file.lexically_relative(l_root);
-      data_->original_map_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+      auto l_original = l_ass_map_file.lexically_relative(l_root);
+      data_->down_info_.scene_file_ =
+          fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
     }
     if (!l_root_assets.all_of<project>()) {
       data_->logger_->log(log_loc(), level::err, "没有项目组件, 失败");
@@ -123,7 +124,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
       l_copy_path.emplace_back(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config);
       // 复制项目文件
       l_copy_path.emplace_back(l_uproject, l_local_path / l_uproject.filename());
-      data_->render_project_ = l_uproject;
+      data_->down_info_.render_project_ = l_uproject;
     }
   }
   g_ctx().get<thread_copy_io_service>().async_copy(
@@ -131,16 +132,18 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   );
 }
 void down_auto_light_anim_file::gen_render_config_file() const {
-  auto l_maya_out_arg = data_->out_maya_arg_ | ranges::views::filter([](const maya_exe_ns::maya_out_arg &in_arg) {
+  auto l_maya_out_arg = data_->out_maya_arg_.out_file_list |
+                        ranges::views::filter([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
                           return !in_arg.out_file.empty() && FSys::exists(in_arg.out_file);
                         }) |
                         ranges::to_vector;
 
-  auto l_path = l_maya_out_arg[0].out_file.filename();
-  data_->extra_update_dir_ =
-      l_maya_out_arg |
-      ranges::views::transform([](const maya_exe_ns::maya_out_arg &in_arg) { return in_arg.out_file.parent_path(); }) |
-      ranges::to_vector;
+  auto l_path              = l_maya_out_arg[0].out_file.filename();
+  data_->extra_update_dir_ = l_maya_out_arg |
+                             ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
+                               return in_arg.out_file.parent_path();
+                             }) |
+                             ranges::to_vector;
   data_->extra_update_dir_ |= ranges::actions::unique;
 
   import_and_render_ue::args l_args{};
@@ -156,7 +159,7 @@ void down_auto_light_anim_file::gen_render_config_file() const {
     }
   }
   l_args.import_data_.project_     = msg_.get<project>();
-  l_args.import_data_.out_file_dir = data_->render_project_.parent_path() / doodle_config::ue4_saved /
+  l_args.import_data_.out_file_dir = data_->down_info_.render_project_.parent_path() / doodle_config::ue4_saved /
                                      doodle_config::ue4_movie_renders /
                                      fmt::format(
                                          "Ep_{:04}_sc_{:04}{}", l_args.import_data_.episode.p_episodes,
@@ -195,18 +198,18 @@ void down_auto_light_anim_file::gen_render_config_file() const {
   }
 
   l_args.import_data_.files =
-      l_maya_out_arg | ranges::views::transform([](const maya_exe_ns::maya_out_arg &in_arg) {
+      l_maya_out_arg | ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
         return import_and_render_ue::import_files_t{
             in_arg.out_file.filename().generic_string().find("_camera_") != std::string::npos ? "cam" : "char",
             in_arg.out_file
         };
       }) |
       ranges::to_vector;
-  l_args.import_data_.original_map = data_->original_map_;
+  l_args.import_data_.original_map = data_->down_info_.scene_file_.generic_string();
 }
 
 void down_auto_light_anim_file::operator()(
-    boost::system::error_code in_error_code, const std::vector<maya_exe_ns::maya_out_arg> &in_vector
+    boost::system::error_code in_error_code, const maya_exe_ns::maya_out_arg &in_vector
 ) const {
   if (!data_->logger_) {
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
@@ -222,9 +225,21 @@ void down_auto_light_anim_file::operator()(
     wait_op_->complete();
     return;
   }
+  msg_.emplace<maya_exe_ns::maya_out_arg>(in_vector);
   data_->out_maya_arg_ = in_vector;
+  gen_render_config_file();
   analysis_out_file(in_error_code);
 }
-void down_auto_light_anim_file::operator()(boost::system::error_code in_error_code) const {}
+void down_auto_light_anim_file::operator()(boost::system::error_code in_error_code) const {
+  if (in_error_code) {
+    data_->logger_->log(log_loc(), level::level_enum::err, "maya_to_exe_file error:{}", in_error_code);
+    wait_op_->ec_ = in_error_code;
+    wait_op_->complete();
+    return;
+  }
+  set_info_(data_->down_info_);
+  wait_op_->ec_ = in_error_code;
+  wait_op_->complete();
+}
 
 }  // namespace doodle

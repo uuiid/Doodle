@@ -14,21 +14,28 @@
 #include <exe_warp/maya_exe.h>
 namespace doodle {
 class down_auto_light_anim_file {
+  struct down_info {
+   public:
+    FSys::path render_project_{};  // 渲染工程文件
+    // 场景文件
+    FSys::path scene_file_{};
+  };
+
   template <typename Handler>
   struct wait_handle : detail::wait_op {
    public:
     explicit wait_handle(Handler&& handler)
         : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
     ~wait_handle() = default;
-    FSys::path path_{};
+    down_info down_info_{};
     static void on_complete(wait_op* op) {
       auto l_self = static_cast<wait_handle*>(op);
-      boost::asio::post(
-          boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->path_)
-      );
+      boost::asio::post(boost::asio::prepend(
+          std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->down_info_
+      ));
     }
   };
-  using set_path_t = std::function<void(FSys::path)>;
+  using set_path_t = std::function<void(down_info)>;
 
   enum class status {
     begin,
@@ -38,17 +45,16 @@ class down_auto_light_anim_file {
   struct data_impl_t {
     status status_{status::begin};
     logger_ptr logger_{};
-    std::vector<maya_exe_ns::maya_out_arg> out_maya_arg_{};
+    maya_exe_ns::maya_out_arg out_maya_arg_{};
 
-    std::string original_map_;
-    FSys::path render_project_{};  // 渲染工程文件
+    down_info down_info_{};
 
     std::vector<FSys::path> extra_update_dir_{};  // 额外添加的上传路径
   };
 
   entt::handle msg_{};
   std::shared_ptr<detail::wait_op> wait_op_{};
-  set_path_t set_path_;
+  set_path_t set_info_;
   std::shared_ptr<data_impl_t> data_{};  // 用于存储数据
 
   void init();
@@ -68,17 +74,16 @@ class down_auto_light_anim_file {
         [this](auto&& handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
-          set_path_ = [this](FSys::path in_path) {
-            std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_)->path_ =
-                std::move(in_path);
+          set_info_ = [this](down_info in_info) {
+            std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_)->down_info_ =
+                std::move(in_info);
           };
         },
         handler
     );
   }
 
-  void operator()(boost::system::error_code in_error_code, const std::vector<maya_exe_ns::maya_out_arg>& in_vector)
-      const;
+  void operator()(boost::system::error_code in_error_code, const maya_exe_ns::maya_out_arg& in_vector) const;
   void operator()(boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle
