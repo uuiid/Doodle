@@ -50,6 +50,8 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
   [[nodiscard]] inline entt::handle get_parent() const { return parent_; }
   [[nodiscard]] std::set<entt::handle> get_child() const;
 
+  entt::handle get_root() const;
+
   void add_child(const entt::handle& in_child);
   void remove_child(const entt::handle& in_child);
 

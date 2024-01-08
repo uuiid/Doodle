@@ -38,6 +38,16 @@ void assets::remove_child(const entt::handle& in_child) {
 
 std::set<entt::handle> assets::get_child() const { return child_; }
 
+entt::handle assets::get_root() const {
+  auto l_this_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  auto l_parent      = parent_;
+  while (l_parent && l_parent.any_of<assets>()) {
+    l_this_handle = l_parent;
+    l_parent      = l_parent.get<assets>().parent_;
+  }
+  return l_this_handle;
+}
+
 bool assets::operator<(const assets& in_rhs) const { return std::tie(p_path) < std::tie(in_rhs.p_path); }
 bool assets::operator!=(const assets& in_rhs) const { return in_rhs.p_path != p_path; }
 
