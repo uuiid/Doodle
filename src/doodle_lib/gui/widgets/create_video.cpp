@@ -63,14 +63,14 @@ bool create_video::render() {
   ImGui::Text("拖拽文件夹, 或者图片列表, 由系统自动判断输出路径");
   constexpr auto l_sort_file_stem = [](const video_gui_cache& in_r, const video_gui_cache& in_l) -> bool {
     episodes l_eps_r{};
-    l_eps_r.analysis(in_r.path_);
+    l_eps_r.analysis(in_r.path_.stem());
     shot l_shot_r{};
-    l_shot_r.analysis(in_r.path_);
+    l_shot_r.analysis(in_r.path_.stem());
 
     episodes l_eps_l{};
-    l_eps_l.analysis(in_l.path_);
+    l_eps_l.analysis(in_l.path_.stem());
     shot l_shot_l{};
-    l_shot_l.analysis(in_l.path_);
+    l_shot_l.analysis(in_l.path_.stem());
 
     return std::tie(l_eps_r, l_shot_r) < std::tie(l_eps_l, l_shot_l);
   };
