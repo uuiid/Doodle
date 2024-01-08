@@ -16,6 +16,7 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_lib/core/thread_copy_io.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 namespace doodle {
 
 void down_auto_light_anim_file::init() {
