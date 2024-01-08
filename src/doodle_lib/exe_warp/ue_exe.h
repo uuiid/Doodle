@@ -5,6 +5,8 @@
 #pragma once
 #include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/shot.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/asio.hpp>
@@ -142,9 +144,8 @@ class import_and_render_ue {
     std::string project;
     std::int32_t begin_time;
     std::int32_t end_time;
-    std::int32_t episode;
-    std::int32_t shot;
-    std::string shot_ab;
+    episodes episode;
+    shot shot;
     FSys::path out_file_dir;
     std::string original_map;
     std::string render_map;
@@ -158,9 +159,9 @@ class import_and_render_ue {
       j["project"]               = p.project;
       j["begin_time"]            = p.begin_time;
       j["end_time"]              = p.end_time;
-      j["episode"]               = p.episode;
-      j["shot"]                  = p.shot;
-      j["shot_ab"]               = p.shot_ab;
+      j["episode"]               = p.episode.p_episodes;
+      j["shot"]                  = p.shot.p_shot;
+      j["shot_ab"]               = p.shot.p_shot_ab;
       j["out_file_dir"]          = p.out_file_dir.generic_string();
       j["original_map"]          = p.original_map;
       j["render_map"]            = p.render_map;

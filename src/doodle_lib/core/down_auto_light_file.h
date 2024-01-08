@@ -42,6 +42,10 @@ class down_auto_light_anim_file {
 
     std::string original_map_;
     FSys::path render_project_{};  // 渲染工程文件
+
+    std::vector<FSys::path> extra_update_dir_{};  // 额外添加的上传路径
+    FSys::path update_dir_{};                     // 上传文件路径
+    FSys::path out_dir;                           // 输出文件夹
   };
 
   entt::handle msg_{};
