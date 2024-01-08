@@ -37,13 +37,7 @@ class down_auto_light_anim_file {
   };
   using set_path_t = std::function<void(down_info)>;
 
-  enum class status {
-    begin,
-    end,
-  };
-
   struct data_impl_t {
-    status status_{status::begin};
     logger_ptr logger_{};
     maya_exe_ns::maya_out_arg out_maya_arg_{};
 
@@ -70,7 +64,7 @@ class down_auto_light_anim_file {
 
   template <typename CompletionHandler>
   auto async_down_end(CompletionHandler&& handler) {
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, FSys::path)>(
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, down_info)>(
         [this](auto&& handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
