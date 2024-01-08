@@ -178,9 +178,8 @@ bool maya_tool::render() {
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(in_path.filename().generic_string());
       l_maya->async_run_maya(
-          l_msg_handle, k_arg,
-          [=](boost::system::error_code in_code, std::vector<maya_exe_ns::maya_out_arg>) {
-            if (in_code) {
+          l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
+        if (in_code) {
               l_msg_handle.get<process_message>().set_state(process_message::state::fail);
             } else {
               l_msg_handle.get<process_message>().set_state(process_message::state::success);
@@ -203,9 +202,8 @@ bool maya_tool::render() {
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(i.filename().generic_string());
       l_maya->async_run_maya(
-          l_msg_handle, k_arg,
-          [=](boost::system::error_code in_code, std::vector<maya_exe_ns::maya_out_arg>) {
-            if (in_code) {
+          l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
+        if (in_code) {
               l_msg_handle.get<process_message>().set_state(process_message::state::fail);
             } else {
               l_msg_handle.get<process_message>().set_state(process_message::state::success);
@@ -234,9 +232,8 @@ bool maya_tool::render() {
       auto l_msg_handle      = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(i.filename().generic_string());
       l_maya->async_run_maya(
-          l_msg_handle, k_arg,
-          [=](boost::system::error_code in_code, std::vector<maya_exe_ns::maya_out_arg>) {
-            if (in_code) {
+          l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
+        if (in_code) {
               l_msg_handle.get<process_message>().set_state(process_message::state::fail);
             } else {
               l_msg_handle.get<process_message>().set_state(process_message::state::success);

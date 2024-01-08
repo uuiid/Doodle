@@ -147,13 +147,32 @@ class DOODLELIB_API clear_file_arg : public maya_exe_ns::arg {
 };
 
 struct maya_out_arg {
-  // 输出文件
-  FSys::path out_file{};
-  // 引用文件
-  FSys::path ref_file{};
+  struct out_file_t {
+    // 输出文件
+    FSys::path out_file{};
+    // 引用文件
+    FSys::path ref_file{};
+    friend void from_json(const nlohmann::json &nlohmann_json_j, out_file_t &nlohmann_json_t) {
+      nlohmann_json_j["out_file"].get_to(nlohmann_json_t.out_file);
+      nlohmann_json_j["ref_file"].get_to(nlohmann_json_t.ref_file);
+    };
+    friend void to_json(nlohmann::json &nlohmann_json_j, const out_file_t &nlohmann_json_t) {
+      nlohmann_json_j["out_file"] = nlohmann_json_t.out_file.generic_string();
+      nlohmann_json_j["ref_file"] = nlohmann_json_t.ref_file.generic_string();
+    };
+  };
+  std::uint32_t begin_time{};
+  std::uint32_t end_time{};
+  std::vector<out_file_t> out_file_list{};
   friend void from_json(const nlohmann::json &nlohmann_json_j, maya_out_arg &nlohmann_json_t) {
-    nlohmann_json_j["out_file"].get_to(nlohmann_json_t.out_file);
-    nlohmann_json_j["ref_file"].get_to(nlohmann_json_t.ref_file);
+    nlohmann_json_j["begin_time"].get_to(nlohmann_json_t.begin_time);
+    nlohmann_json_j["end_time"].get_to(nlohmann_json_t.end_time);
+    nlohmann_json_j["out_file_list"].get_to(nlohmann_json_t.out_file_list);
+  };
+  friend void to_json(nlohmann::json &nlohmann_json_j, const maya_out_arg &nlohmann_json_t) {
+    nlohmann_json_j["begin_time"]    = nlohmann_json_t.begin_time;
+    nlohmann_json_j["end_time"]      = nlohmann_json_t.end_time;
+    nlohmann_json_j["out_file_list"] = nlohmann_json_t.out_file_list;
   };
 };
 
@@ -168,7 +187,7 @@ class maya_process_base {
         : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(std::move(handler))) {}
     ~wait_handle() = default;
 
-    std::vector<maya_out_arg> out_arg_{};
+    maya_out_arg out_arg_{};
 
     static void on_complete(wait_op *op) {
       auto l_self = static_cast<wait_handle *>(op);
@@ -228,17 +247,16 @@ class DOODLELIB_API maya_exe {
     if (!FSys::exists(l_arg.out_path_file_.parent_path())) FSys::create_directories(l_arg.out_path_file_.parent_path());
     auto l_arg_ptr = std::make_shared<Arg_t>(std::move(l_arg));
 
-    return boost::asio::async_initiate<
-        CompletionHandler, void(boost::system::error_code, std::vector<maya_exe_ns::maya_out_arg>)>(
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, maya_exe_ns::maya_out_arg)>(
         [this, l_arg, in_handle, l_arg_ptr](auto &&in_completion_handler) {
           using wait_handle_t =
               maya_exe_ns::maya_process_base::wait_handle<std::decay_t<decltype(in_completion_handler)>>;
 
           auto l_ptr =
               std::make_shared<wait_handle_t>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          this->queue_up(in_handle, Arg_t::k_name, l_arg_ptr, l_ptr, [l_ptr](std::vector<maya_exe_ns::maya_out_arg>) {
+          this->queue_up(in_handle, Arg_t::k_name, l_arg_ptr, l_ptr, [l_ptr](maya_exe_ns::maya_out_arg in_arg_1) {
             auto l_dev      = std::dynamic_pointer_cast<wait_handle_t>(l_ptr);
-            l_dev->out_arg_ = std::move(l_dev->out_arg_);
+            l_dev->out_arg_ = std::move(in_arg_1);
           });
         },
         in_completion
