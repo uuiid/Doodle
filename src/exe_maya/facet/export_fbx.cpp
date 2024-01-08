@@ -60,19 +60,21 @@ void export_fbx_facet::create_ref_file() {
 }
 void export_fbx_facet::export_fbx() {
   export_file_fbx l_ex{};
-  std::vector<maya_out_arg> l_out_arg{};
+  maya_exe_ns::maya_out_arg l_out_arg{};
   auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
+  l_out_arg.begin_time  = anim_begin_time_.value();
+  l_out_arg.end_time    = MAnimControl::maxTime().value();
   for (auto&& i : ref_files_) {
     if (i.get<reference_file>().export_group_attr()) {
       i.emplace<generate_file_path_ptr>(l_gen);
       auto l_path = l_ex.export_anim(i);
       if (!l_path.empty()) {
-        l_out_arg.emplace_back(l_path, i.get<reference_file>().get_abs_path());
+        l_out_arg.out_file_list.emplace_back(l_path, i.get<reference_file>().get_abs_path());
       }
     } else {
       auto l_path = i.get<reference_file>().get_abs_path();
-      if (!l_path.empty()) l_out_arg.emplace_back(FSys::path{}, l_path);
+      if (!l_path.empty()) l_out_arg.out_file_list.emplace_back(FSys::path{}, l_path);
     }
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
@@ -80,7 +82,7 @@ void export_fbx_facet::export_fbx() {
   l_h.emplace<generate_file_path_ptr>(l_gen);
   auto l_cam_path = l_ex.export_cam(l_h);
 
-  l_out_arg.emplace_back(l_cam_path, FSys::path{});
+  l_out_arg.out_file_list.emplace_back(l_cam_path, FSys::path{});
 
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
