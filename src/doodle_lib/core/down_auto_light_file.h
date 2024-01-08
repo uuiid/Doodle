@@ -44,12 +44,9 @@ class down_auto_light_anim_file {
     FSys::path render_project_{};  // 渲染工程文件
 
     std::vector<FSys::path> extra_update_dir_{};  // 额外添加的上传路径
-    FSys::path update_dir_{};                     // 上传文件路径
-    FSys::path out_dir;                           // 输出文件夹
   };
 
   entt::handle msg_{};
-  FSys::path maya_out_file_{};
   std::shared_ptr<detail::wait_op> wait_op_{};
   set_path_t set_path_;
   std::shared_ptr<data_impl_t> data_{};  // 用于存储数据
@@ -61,8 +58,8 @@ class down_auto_light_anim_file {
   void gen_render_config_file() const;
 
  public:
-  explicit down_auto_light_anim_file(entt::handle in_msg, FSys::path in_maya_out_file)
-      : msg_(std::move(in_msg)), maya_out_file_(std::move(in_maya_out_file)), data_(std::make_shared<data_impl_t>()){};
+  explicit down_auto_light_anim_file(entt::handle in_msg)
+      : msg_(std::move(in_msg)), data_(std::make_shared<data_impl_t>()){};
   ~down_auto_light_anim_file() = default;
 
   template <typename CompletionHandler>

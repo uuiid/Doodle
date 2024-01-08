@@ -6,6 +6,7 @@
 #include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/thread_pool/process_message.h>
 
@@ -141,22 +142,24 @@ class import_and_render_ue {
     }
   };
   struct import_data_t {
-    std::string project;
+    project project_;
     std::int32_t begin_time;
     std::int32_t end_time;
     episodes episode;
     shot shot;
+
     FSys::path out_file_dir;
     std::string original_map;
-    std::string render_map;
     std::string import_dir;
-    std::string level_sequence;
     std::string create_map;
-    std::string movie_pipeline_config;
+
+    std::string render_map;             // 渲染关卡
+    std::string level_sequence;         // 渲染关卡序列
+    std::string movie_pipeline_config;  // 渲染配置
 
     std::vector<import_files_t> files;
     friend void to_json(nlohmann::json &j, const import_data_t &p) {
-      j["project"]               = p.project;
+      j["project"]               = p.project_.p_shor_str;
       j["begin_time"]            = p.begin_time;
       j["end_time"]              = p.end_time;
       j["episode"]               = p.episode.p_episodes;
@@ -177,10 +180,6 @@ class import_and_render_ue {
     FSys::path ue_project_path_{};
 
     import_data_t import_data_{};
-
-    std::string render_map_{};
-    std::string render_sequence_{};
-    std::string render_config_{};
   };
 };
 

@@ -123,6 +123,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
       l_copy_path.emplace_back(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config);
       // 复制项目文件
       l_copy_path.emplace_back(l_uproject, l_local_path / l_uproject.filename());
+      data_->render_project_ = l_uproject;
     }
   }
   g_ctx().get<thread_copy_io_service>().async_copy(
@@ -154,37 +155,35 @@ void down_auto_light_anim_file::gen_render_config_file() const {
       l_args.import_data_.end_time   = std::stoi(l_match[2].str());
     }
   }
-  l_args.import_data_.project      = msg_.get<project>().p_shor_str;
-  l_args.import_data_.out_file_dir = data_->render_project_ / doodle_config::ue4_saved /
+  l_args.import_data_.project_     = msg_.get<project>();
+  l_args.import_data_.out_file_dir = data_->render_project_.parent_path() / doodle_config::ue4_saved /
                                      doodle_config::ue4_movie_renders /
                                      fmt::format(
                                          "Ep_{:04}_sc_{:04}{}", l_args.import_data_.episode.p_episodes,
                                          l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
                                      );
-  data_->out_dir     = l_args.import_data_.out_file_dir;
-
-  data_->update_dir_ = msg_.get<project>().p_path / "03_Workflow" / doodle_config::ue4_shot /
-                       fmt::format("Ep{:04}", l_args.import_data_.episode.p_episodes);
 
   // 渲染配置
   {
-    l_args.render_config_ = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_Config", l_args.import_data_.project,
-        l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
+    l_args.import_data_.movie_pipeline_config = fmt::format(
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_Config",
+        l_args.import_data_.project_.p_shor_str, l_args.import_data_.episode.p_episodes,
+        l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
     );
-    l_args.import_data_.movie_pipeline_config = l_args.render_config_;
-    l_args.render_sequence_                   = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}", l_args.import_data_.project,
-        l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
-    );
-    l_args.import_data_.level_sequence = l_args.render_sequence_;
-    l_args.import_data_.create_map     = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_LV", l_args.import_data_.project,
+
+    l_args.import_data_.level_sequence = fmt::format(
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}", l_args.import_data_.project_.p_shor_str,
         l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
     );
 
+    l_args.import_data_.create_map = fmt::format(
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_LV",
+        l_args.import_data_.project_.p_shor_str, l_args.import_data_.episode.p_episodes,
+        l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
+    );
+
     l_args.import_data_.import_dir = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_args.import_data_.project,
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_args.import_data_.project_.p_shor_str,
         l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum,
         time_point_wrap{}.get_local_time()
     );
