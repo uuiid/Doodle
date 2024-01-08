@@ -85,14 +85,14 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
   bool running() override { return child_attr.running(); }
 
-  std::vector<maya_exe_ns::maya_out_arg> get_out_arg() {
+  maya_exe_ns::maya_out_arg get_out_arg() {
     if (wait_op_->ec_) return {};
     if (!FSys::exists(run_script_attr->out_path_file_)) return {};
 
     std::ifstream l_file{run_script_attr->out_path_file_};
     auto l_str  = std::string{std::istreambuf_iterator<char>(l_file), std::istreambuf_iterator<char>()};
     auto l_json = nlohmann::json::parse(l_str);
-    return l_json.get<std::vector<maya_exe_ns::maya_out_arg>>();
+    return l_json.get<maya_exe_ns::maya_out_arg>();
   }
 
   void run() override {
@@ -284,7 +284,7 @@ void maya_exe::notify_run() {
 }
 void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string_view &in_key, const std::shared_ptr<maya_exe_ns::arg> &in_arg,
-    call_fun_type in_call_fun, const std::function<void(std::vector<maya_exe_ns::maya_out_arg>)> &in_set_arg_fun
+    call_fun_type in_call_fun, const std::function<void(maya_exe_ns::maya_out_arg)> &in_set_arg_fun
 ) {
   install_maya_exe();
 

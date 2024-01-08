@@ -23,7 +23,6 @@ void down_auto_light_anim_file::init() {
   data_->logger_ = msg_.get<process_message>().logger();
 
   if (!g_ctx().contains<thread_copy_io_service>()) g_ctx().emplace<thread_copy_io_service>();
-  if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
 }
 
 void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_error_code) const {

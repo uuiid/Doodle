@@ -198,7 +198,7 @@ class maya_process_base {
   };
 
   void next_run();
-  std::function<void(std::vector<maya_out_arg>)> set_arg_fun_{};
+  std::function<void(maya_out_arg)> set_arg_fun_{};
   std::shared_ptr<detail::wait_op> wait_op_{};
   friend class maya_exe;
 
@@ -225,7 +225,7 @@ class DOODLELIB_API maya_exe {
  protected:
   virtual void queue_up(
       const entt::handle &in_msg, const std::string_view &in_key, const std::shared_ptr<maya_exe_ns::arg> &in_arg,
-      call_fun_type in_call_fun, const std::function<void(std::vector<maya_exe_ns::maya_out_arg>)> &in_set_arg_fun
+      call_fun_type in_call_fun, const std::function<void(maya_exe_ns::maya_out_arg)> &in_set_arg_fun
   );
 
  public:
