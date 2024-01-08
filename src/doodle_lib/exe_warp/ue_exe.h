@@ -100,8 +100,8 @@ class ue_exe {
     return l_child;
   };
 
-  template <typename CompletionHandler, typename Arg_t>
-  auto async_run(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
+  template <typename CompletionHandler>
+  auto async_run(const entt::handle &in_handle, const std::string &in_arg, CompletionHandler &&in_completion) {
     if (!in_handle.all_of<process_message>()) {
       boost::system::error_code l_ec{error_enum::component_missing_error};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
@@ -111,10 +111,10 @@ class ue_exe {
     }
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
-        [this, l_arg = in_arg.to_string(), in_handle](auto &&in_completion_handler) {
+        [this, in_arg, in_handle](auto &&in_completion_handler) {
           boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_completion_handler);
           this->queue_up(
-              in_handle, l_arg,
+              in_handle, in_arg,
               std::move(call_fun_type{std::forward<decltype(in_completion_handler)>(in_completion_handler)}), l_exe
           );
         },
