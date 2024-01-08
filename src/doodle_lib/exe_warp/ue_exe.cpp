@@ -170,4 +170,8 @@ std::string ue_exe::get_file_version(const FSys::path &in_path) {
   return fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>());
 }
 
+import_and_render_ue::import_and_render_ue() {
+  if (!g_ctx().contains<ue_exe>()) g_ctx().emplace<ue_exe>();
+}
+
 }  // namespace doodle

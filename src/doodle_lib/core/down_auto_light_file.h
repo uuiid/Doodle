@@ -7,7 +7,11 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <doodle_lib/exe_warp/ue_exe.h>
+
 #include <boost/asio.hpp>
+
+#include <exe_warp/maya_exe.h>
 namespace doodle {
 class down_auto_light_anim_file {
   template <typename Handler>
@@ -34,6 +38,10 @@ class down_auto_light_anim_file {
   struct data_impl_t {
     status status_{status::begin};
     logger_ptr logger_{};
+    std::vector<maya_exe_ns::maya_out_arg> out_maya_arg_{};
+
+    std::string original_map_;
+    FSys::path render_project_{};  // 渲染工程文件
   };
 
   entt::handle msg_{};
@@ -43,6 +51,10 @@ class down_auto_light_anim_file {
   std::shared_ptr<data_impl_t> data_{};  // 用于存储数据
 
   void init();
+
+  // 分析输出文件
+  void analysis_out_file(boost::system::error_code in_error_code) const;
+  void gen_render_config_file() const;
 
  public:
   explicit down_auto_light_anim_file(entt::handle in_msg, FSys::path in_maya_out_file)
@@ -64,6 +76,8 @@ class down_auto_light_anim_file {
     );
   }
 
+  void operator()(boost::system::error_code in_error_code, const std::vector<maya_exe_ns::maya_out_arg>& in_vector)
+      const;
   void operator()(boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle
