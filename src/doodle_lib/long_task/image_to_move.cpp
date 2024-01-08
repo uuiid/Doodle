@@ -170,7 +170,7 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
     l_out /= fmt::format(
         "{:04}_{:03}{}.mp4", in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
         in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot : 0,
-        in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None,
+        in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None
     );
   else if (!l_out.has_extension()) {
     l_out /= fmt::format("{}.mp4", core_set::get_set().get_uuid());
