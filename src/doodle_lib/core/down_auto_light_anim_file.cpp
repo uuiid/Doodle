@@ -2,7 +2,7 @@
 // Created by TD on 2024/1/5.
 //
 
-#include "down_auto_light_file.h"
+#include "down_auto_light_anim_file.h"
 
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>

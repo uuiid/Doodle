@@ -8,7 +8,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
 
-#include <doodle_lib/core/down_auto_light_file.h>
+#include <doodle_lib/core/down_auto_light_anim_file.h>
 
 namespace doodle {
 
