@@ -166,8 +166,9 @@ project_config::base_config project_config::base_config::get_default() {
       std::make_pair(R"(ep_\d+)"s, 5),
       std::make_pair(R"(sc_\d+)"s, 5),
       std::make_pair(R"(^[A-Z]+_)"s, 2),
-      std::make_pair(R"(_\d+_\d+)"s, 2)};
-  l_config.icon_extensions         = {".png", ".jpg", ".jpeg", ".tga", ".tif"};
+      std::make_pair(R"(_\d+_\d+)"s, 2)
+  };
+  l_config.icon_extensions         = {".png", ".jpg", ".jpeg", ".tif"};
   l_config.export_group            = "UE4";
   l_config.cloth_proxy_            = "_cloth_proxy";
   l_config.simple_module_proxy_    = "_proxy";
