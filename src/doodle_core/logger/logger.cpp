@@ -93,6 +93,8 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, 
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
+  l_logger->set_level(spdlog::level::trace);
+  l_logger->should_log(spdlog::level::trace);
   return l_logger;
 }
 logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(

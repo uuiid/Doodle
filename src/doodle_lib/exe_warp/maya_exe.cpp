@@ -72,8 +72,6 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
   boost::asio::streambuf err_strbuff_attr{};
   logger_ptr log_attr{};
 
-  maya_exe::call_fun_type call_attr{};
-
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
@@ -296,10 +294,9 @@ void maya_exe::queue_up(
   l_run->run_script_attr     = in_arg;
   l_run->program_path        = p_i->run_path;
   l_run->maya_program_path   = find_maya_path();
-  l_run->call_attr           = std::move(in_call_fun);
   l_run->log_attr            = in_msg.get<process_message>().logger();
   l_run->set_arg_fun_        = in_set_arg_fun;
-  l_run->wait_op_            = in_call_fun;
+  l_run->wait_op_            = std::move(in_call_fun);
   l_run->cancel_attr = in_msg.get<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
     if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) l_ptr->cancel();
   });
