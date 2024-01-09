@@ -144,6 +144,9 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
       data_->status_ = status::render;
     }
     case status::render: {
+      set_out_file_dir_(data_->import_data_.out_file_dir);
+      wait_op_->ec_ = in_error_code;
+      wait_op_->complete();
       break;
     }
   }
