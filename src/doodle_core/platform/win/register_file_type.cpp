@@ -65,4 +65,11 @@ std::vector<project> register_file_type::get_project_list() {
   return l_list;
 }
 
+FSys::path register_file_type::program_location() {
+  winreg::RegKey l_key{};
+  l_key.Open(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+  auto l_path = l_key.GetStringValue(LR"(install_dir)");
+  return l_path;
+}
+
 }  // namespace doodle
