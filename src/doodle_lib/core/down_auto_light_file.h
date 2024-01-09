@@ -7,12 +7,12 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
-
 #include <boost/asio.hpp>
 
 #include <exe_warp/maya_exe.h>
 namespace doodle {
 class down_auto_light_anim_file {
+ public:
   struct down_info {
    public:
     FSys::path render_project_{};  // 渲染工程文件
@@ -20,6 +20,7 @@ class down_auto_light_anim_file {
     FSys::path scene_file_{};
   };
 
+ private:
   template <typename Handler>
   struct wait_handle : detail::wait_op {
    public:

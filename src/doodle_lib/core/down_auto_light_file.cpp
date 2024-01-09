@@ -131,82 +131,6 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
       l_copy_path, FSys::copy_options::recursive, boost::asio::bind_executor(g_io_context(), *this)
   );
 }
-void down_auto_light_anim_file::gen_render_config_file() const {
-  auto l_maya_out_arg = data_->out_maya_arg_.out_file_list |
-                        ranges::views::filter([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
-                          return !in_arg.out_file.empty() && FSys::exists(in_arg.out_file);
-                        }) |
-                        ranges::to_vector;
-
-  auto l_path              = l_maya_out_arg[0].out_file.filename();
-  data_->extra_update_dir_ = l_maya_out_arg |
-                             ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
-                               return in_arg.out_file.parent_path();
-                             }) |
-                             ranges::to_vector;
-  data_->extra_update_dir_ |= ranges::actions::unique;
-
-  import_and_render_ue::args l_args{};
-  l_args.import_data_.episode = msg_.get<episodes>();
-  l_args.import_data_.shot    = msg_.get<shot>();
-
-  auto l_str                  = l_path.generic_string();
-  {
-    std::regex const l_regex{R"(_(\d+)-(\d+))"};
-    if (std::smatch l_match{}; std::regex_search(l_str, l_match, l_regex)) {
-      l_args.import_data_.begin_time = std::stoi(l_match[1].str());
-      l_args.import_data_.end_time   = std::stoi(l_match[2].str());
-    }
-  }
-  l_args.import_data_.project_     = msg_.get<project>();
-  l_args.import_data_.out_file_dir = data_->down_info_.render_project_.parent_path() / doodle_config::ue4_saved /
-                                     doodle_config::ue4_movie_renders /
-                                     fmt::format(
-                                         "Ep_{:04}_sc_{:04}{}", l_args.import_data_.episode.p_episodes,
-                                         l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
-                                     );
-
-  // 渲染配置
-  {
-    l_args.import_data_.movie_pipeline_config = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_Config",
-        l_args.import_data_.project_.p_shor_str, l_args.import_data_.episode.p_episodes,
-        l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
-    );
-
-    l_args.import_data_.level_sequence = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}", l_args.import_data_.project_.p_shor_str,
-        l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
-    );
-
-    l_args.import_data_.create_map = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_LV",
-        l_args.import_data_.project_.p_shor_str, l_args.import_data_.episode.p_episodes,
-        l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum
-    );
-
-    l_args.import_data_.import_dir = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", l_args.import_data_.project_.p_shor_str,
-        l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot, l_args.import_data_.shot.p_shot_enum,
-        time_point_wrap{}.get_local_time()
-    );
-
-    l_args.import_data_.render_map = fmt::format(
-        "/Game/Shot/ep{0:04}/sc{1:04}{2}", l_args.import_data_.episode.p_episodes, l_args.import_data_.shot.p_shot,
-        l_args.import_data_.shot.p_shot_enum
-    );
-  }
-
-  l_args.import_data_.files =
-      l_maya_out_arg | ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
-        return import_and_render_ue::import_files_t{
-            in_arg.out_file.filename().generic_string().find("_camera_") != std::string::npos ? "cam" : "char",
-            in_arg.out_file
-        };
-      }) |
-      ranges::to_vector;
-  l_args.import_data_.original_map = data_->down_info_.scene_file_.generic_string();
-}
 
 void down_auto_light_anim_file::operator()(
     boost::system::error_code in_error_code, const maya_exe_ns::maya_out_arg &in_vector
@@ -227,7 +151,6 @@ void down_auto_light_anim_file::operator()(
   }
   msg_.emplace<maya_exe_ns::maya_out_arg>(in_vector);
   data_->out_maya_arg_ = in_vector;
-  gen_render_config_file();
   analysis_out_file(in_error_code);
 }
 void down_auto_light_anim_file::operator()(boost::system::error_code in_error_code) const {
