@@ -7,6 +7,7 @@
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include "cryptopp/files.h"
 #include "cryptopp/hex.h"
@@ -54,7 +55,9 @@ void authorization::load_authorization_data(const std::string& in_data) {
         in_data, true,
         new CryptoPP::HexDecoder{new CryptoPP::AuthenticatedDecryptionFilter{
             l_decryption, new CryptoPP::StringSink{decryptedtext},
-            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size}}};
+            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size
+        }}
+    };
     //    l_file.Flush(true);
   } catch (const CryptoPP::Exception& error) {
     log_error(fmt::format("解析授权码错误 : {}", error.what()));
@@ -81,7 +84,9 @@ void authorization::load_authorization_data(std::istream& in_path) {
         in_path, true,
         new CryptoPP::HexDecoder{new CryptoPP::AuthenticatedDecryptionFilter{
             l_decryption, new CryptoPP::StringSink{decryptedtext},
-            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size}}};
+            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size
+        }}
+    };
     //    l_file.Flush(true);
   } catch (const CryptoPP::Exception& error) {
     log_error(fmt::format("解析授权码错误 : {}", error.what()));
@@ -98,7 +103,7 @@ authorization::authorization(const std::string& in_data) : p_i(std::make_unique<
 }
 
 authorization::authorization() : p_i(std::make_unique<impl>()) {
-  auto l_p  = core_set::get_set().program_location() / doodle_config::token_name.data();
+  auto l_p  = register_file_type::program_location() / doodle_config::token_name.data();
   auto l_p1 = core_set::get_set().get_doc() / doodle_config::token_name.data();
 
   if (FSys::exists(l_p) && FSys::exists(l_p1))
@@ -128,7 +133,8 @@ void authorization::generate_token(const FSys::path& in_path) {
   {
     FSys::ofstream l_f_s{
         in_path / FSys::path{doodle_config::token_name.data()},
-        std::ofstream::binary | std::ofstream::out | std::ofstream::trunc};
+        std::ofstream::binary | std::ofstream::out | std::ofstream::trunc
+    };
 
     CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
     aes_Encryption.SetKeyWithIV(
@@ -139,7 +145,9 @@ void authorization::generate_token(const FSys::path& in_path) {
         out_json.dump(), true,
         new CryptoPP::AuthenticatedEncryptionFilter{
             aes_Encryption, new CryptoPP::HexEncoder{new CryptoPP::FileSink{l_f_s}}, false,
-            doodle_config::cryptopp_tag_size}};
+            doodle_config::cryptopp_tag_size
+        }
+    };
   }
 }
 void authorization::save(const FSys::path& in_path) const {

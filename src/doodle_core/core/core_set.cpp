@@ -7,7 +7,6 @@
 #include <doodle_core/metadata/user.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/dll.hpp>
 
 #include <ShlObj.h>
 #include <wil/result.h>
@@ -68,9 +67,6 @@ core_set::core_set()
     set_root(FSys::path{p_buff.get()} / "Doodle");
   }
 
-  if (boost::dll::program_location().filename() == "DoodleExe.exe") {
-    program_location_attr = boost::dll::program_location().generic_string();
-  }
   user_id = get_uuid();
 }
 
@@ -90,8 +86,6 @@ FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
   if (!FSys::exists(path)) FSys::create_directories(path);
   return path;
 }
-
-FSys::path core_set::program_location() { return program_location_attr.parent_path(); }
 
 std::string core_set::get_uuid_str() { return boost::uuids::to_string(get_uuid()); }
 
@@ -159,7 +153,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
   j["user_id"]                  = p.user_id;
   j["user_name"]                = p.user_name;
-  j["program_location_attr"]    = p.program_location_attr;
   j["maya_version"]             = p.maya_version;
   j["layout_config"]            = p.layout_config;
   j["assets_file_widgets_size"] = p.assets_file_widgets_size;
@@ -188,9 +181,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("user_")) j.at("user_").get_to(p.user_name);
   if (j.contains("user_name")) j.at("user_name").get_to(p.user_name);
 
-  if (j.contains("program_location_attr") && p.program_location_attr.empty()) {
-    p.program_location_attr = j.at("program_location_attr").get<FSys::path>();
-  }
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
   if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
   if (j.contains("assets_file_widgets_size")) j.at("assets_file_widgets_size").get_to(p.assets_file_widgets_size);

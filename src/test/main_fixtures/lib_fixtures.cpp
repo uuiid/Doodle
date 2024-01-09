@@ -1,6 +1,7 @@
 #include "lib_fixtures.h"
 
 #include <doodle_core/platform/win/get_prot.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/read_until.hpp>
@@ -64,7 +65,7 @@ void run_subprocess::run(const std::string& in_run_fun) {
 
   using namespace std::literals;
   child = std::make_shared<boost::process::child>(
-      io, boost::process::exe = boost::dll::program_location(),
+      io, boost::process::exe = register_file_type::program_location(),
       boost::process::args = {"--log_level=message"s, "--color_output=true"s, fmt::format("--run_test={}", in_run_fun)},
       boost::process::std_out > *out_attr, boost::process::std_err > *err_attr, boost::process::env = l_env,
       boost::process::on_exit =

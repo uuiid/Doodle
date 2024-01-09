@@ -27,9 +27,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
  public:
   static core_set &get_set();
 
-  // 获得运行程序目录
-  FSys::path program_location();
-
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;

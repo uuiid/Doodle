@@ -1,4 +1,5 @@
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_lib/toolkit/toolkit.h>
 
@@ -17,7 +18,7 @@ void toolkit::installMayaPath() {
     mayadoc /= "modules";
     mayadoc /= "doodle";
 
-    auto sourePath = core_set::get_set().program_location().parent_path();
+    auto sourePath = register_file_type::program_location().parent_path();
     sourePath /= "maya";
 
     if (!FSys::exists(mayadoc)) {
@@ -52,7 +53,7 @@ void install_SideFX_Labs(const FSys::path &path) {
     FSys::create_directories(path);
   }
 
-  auto sourePath = core_set::get_set().program_location().parent_path() / "SideFX_Labs";
+  auto sourePath = register_file_type::program_location().parent_path() / "SideFX_Labs";
   DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
@@ -61,7 +62,7 @@ void toolkit::installUePath(const FSys::path &path) {
   try {
     /// \brief 安装我们自己的插件
     auto &set      = core_set::get_set();
-    auto sourePath = core_set::get_set().program_location().parent_path();
+    auto sourePath = register_file_type::program_location().parent_path();
     auto l_name{set.ue4_version};
     if (auto l_f = l_name.find('.'); l_f != std::string::npos) {
       l_name.erase(l_f, 1);
@@ -126,7 +127,7 @@ void toolkit::install_houdini_plug() {
     {
       auto l_doc = win::get_pwd();
       l_doc /= "houdini19.0/plus/doodle";
-      auto l_source = core_set::get_set().program_location().parent_path() / "houdini";
+      auto l_source = register_file_type::program_location().parent_path() / "houdini";
       if (FSys::exists(l_doc)) {
         FSys::remove_all(l_doc);
       } else {
@@ -138,7 +139,7 @@ void toolkit::install_houdini_plug() {
     {
       auto l_doc = win::get_pwd();
       l_doc /= "houdini19.0/packages/doodle_houdini.json";
-      auto l_source = core_set::get_set().program_location().parent_path() / "houdini" / "doodle_houdini.json";
+      auto l_source = register_file_type::program_location().parent_path() / "houdini" / "doodle_houdini.json";
       if (FSys::exists(l_doc)) {
         FSys::remove_all(l_doc);
       } else {

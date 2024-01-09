@@ -13,6 +13,7 @@
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/redirection_path_info.h>
+#include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <doodle_app/app/app_command.h>
@@ -133,7 +134,7 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     l_eve["MAYA_LOCATION"]            = maya_program_path.generic_string();
     l_eve["Path"] += (maya_program_path / "bin").generic_string();
     l_eve["Path"] += program_path.parent_path().generic_string();
-    l_eve["Path"] += core_set::get_set().program_location().generic_string();
+    l_eve["Path"] += register_file_type::program_location().generic_string();
     child_attr = boost::process::child{
         g_io_context(),
         boost::process::exe       = program_path.generic_string(),
@@ -256,7 +257,7 @@ void maya_exe::install_maya_exe() {
       );
     }
     if (!FSys::exists(p_i->run_path)) {
-      FSys::copy(core_set::get_set().program_location() / l_run_name, l_target_path / l_run_name);
+      FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
     }
   } catch (const winreg::RegException &in_err) {
     DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
