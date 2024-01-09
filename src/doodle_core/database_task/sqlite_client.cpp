@@ -58,7 +58,16 @@ boost::system::error_code file_translator::async_open_impl() {
     g_ctx().get<database_info>().path_ = project_path;
     registry_attr->ctx().get<project>().set_path(project_path.parent_path());
     g_ctx().get<core_sig>().project_begin_open(project_path);
-    l_error_code = async_save_impl();
+    auto& l_obs = std::any_cast<obs_all&>(obs);
+    l_obs.disconnect();
+    l_obs.clear();
+    g_reg()->clear();
+    l_obs.connect(registry_attr);
+    if (g_reg()->ctx().contains<project>()) g_reg()->ctx().erase<project>();
+    g_reg()->ctx().emplace<project>("tmp", project_path, "tmp", "tmp");
+    g_reg()->ctx().emplace<project_config::base_config>() = project_config::base_config::get_default();
+    save_all                                              = false;
+    l_error_code                                          = async_save_impl();
     g_ctx().get<core_sig>().project_end_open();
 
     return l_error_code;
