@@ -106,9 +106,9 @@ class import_and_render_ue {
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
           set_out_file_dir_ = [this](FSys::path in_path) {
             auto l_wait_op = std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_);
-          }
+          };
         },
-        wait_op_
+        handler
     );
   }
 
