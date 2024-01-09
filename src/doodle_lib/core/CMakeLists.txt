@@ -12,6 +12,7 @@ target_sources(doodle_lib
         scan_win_service.h
         down_auto_light_anim_file.h
         thread_copy_io.h
+        up_auto_light_file.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -21,6 +22,7 @@ target_sources(doodle_lib
         scan_win_service.cpp
         down_auto_light_anim_file.cpp
         thread_copy_io.cpp
+        up_auto_light_file.cpp
 
 )
 add_subdirectory(scan_assets)
