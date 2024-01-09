@@ -150,7 +150,6 @@ void down_auto_light_anim_file::operator()(
     wait_op_->complete();
     return;
   }
-  msg_.emplace<maya_exe_ns::maya_out_arg>(in_vector);
   data_->out_maya_arg_ = in_vector;
   analysis_out_file(in_error_code);
 }
