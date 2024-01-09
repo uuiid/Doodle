@@ -12,9 +12,7 @@ struct wait_op {
 
   void complete() {
     if (!handler_) return;
-    auto handler = std::move(handler_);
-    auto func    = func_;
-    func(this);
+    func_(this);
     func_    = nullptr;
     handler_ = nullptr;
   }
