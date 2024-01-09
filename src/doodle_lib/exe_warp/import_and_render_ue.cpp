@@ -106,6 +106,7 @@ void import_and_render_ue::operator()(
   }
 
   data_->down_info_ = in_down_info;
+  msg_.emplace<down_auto_light_anim_file::down_info>(in_down_info);
   data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件");
   g_ctx().get<ue_exe>().async_run(
       msg_,
