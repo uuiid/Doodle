@@ -15,7 +15,7 @@ class down_auto_light_anim_file {
  public:
   struct down_info {
    public:
-    FSys::path render_project_{};  // 渲染工程文件
+    FSys::path render_project_{};  // 渲染工程文件(.project)
     // 场景文件
     FSys::path scene_file_{};
   };

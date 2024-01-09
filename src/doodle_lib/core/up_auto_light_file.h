@@ -33,6 +33,7 @@ class up_auto_light_anim_file {
 
   struct data_impl_t {
     logger_ptr logger_{};
+    FSys::path out_file_path_{};
   };
 
   entt::handle msg_{};
@@ -64,5 +65,6 @@ class up_auto_light_anim_file {
   }
 
   void operator()(boost::system::error_code in_error_code, FSys::path in_gen_path) const;
+  void operator()(boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle

@@ -102,9 +102,15 @@ class import_and_render_ue {
     FSys::path path;
   };
 
+  /**
+   * @brief 异步结束的回调, 其中回调 path 为渲染输出路径, 格式是 .project 文件的父目录 / saved / movie_renders /
+   * EP_****_sc_****
+   * @tparam CompletionHandler  回调类型
+   * @param handler  回调函数
+   */
   template <typename CompletionHandler>
   auto async_end(CompletionHandler &&handler) {
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, FSys::path)>(
         [this](auto &&handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
