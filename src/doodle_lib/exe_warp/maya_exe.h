@@ -254,10 +254,14 @@ class DOODLELIB_API maya_exe {
 
           auto l_ptr =
               std::make_shared<wait_handle_t>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          this->queue_up(in_handle, Arg_t::k_name, l_arg_ptr, l_ptr, [l_ptr](maya_exe_ns::maya_out_arg in_arg_1) {
-            auto l_dev      = std::dynamic_pointer_cast<wait_handle_t>(l_ptr);
-            l_dev->out_arg_ = std::move(in_arg_1);
-          });
+          this->queue_up(
+              in_handle, Arg_t::k_name, l_arg_ptr, l_ptr,
+              [in_handle, l_ptr](maya_exe_ns::maya_out_arg in_arg_1) {
+                auto l_dev      = std::dynamic_pointer_cast<wait_handle_t>(l_ptr);
+                l_dev->out_arg_ = std::move(in_arg_1);
+                in_handle.emplace<maya_exe_ns::maya_out_arg>(in_arg_1);
+              }
+          );
         },
         in_completion
     );
