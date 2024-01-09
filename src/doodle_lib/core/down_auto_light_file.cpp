@@ -47,6 +47,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
         return entt::handle{};
       }) |
       ranges::to<std::vector<entt::handle>>();
+  l_refs |= ranges::actions::unique;
 
   if (!ranges::all_of(l_refs, [&](const entt::handle &in_handle) -> bool {
         if (!in_handle) {
