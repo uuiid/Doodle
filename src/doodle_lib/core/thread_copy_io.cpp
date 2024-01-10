@@ -22,9 +22,10 @@ boost::system::error_code thread_copy_io_service::copy_impl(
 ) const {
   boost::system::error_code l_ec{};
   try {
-    default_logger_raw()->log(log_loc(), spdlog::level::info, "复制文件 {} -> {}", from, to);
-    if (!FSys::is_directory(from)) {
+    default_logger_raw()->log(log_loc(), spdlog::level::info, "复制 {} -> {}", from, to);
+    if (FSys::is_regular_file(from)) {
       copy_file(from, to);
+      return l_ec;
     }
 
     if (in_options == FSys::copy_options::recursive) {
