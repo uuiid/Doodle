@@ -54,7 +54,7 @@ class ue_exe {
 
  protected:
   template <typename Handler>
-  class wait_handle : detail::wait_op {
+  class wait_handle : public detail::wait_op {
    public:
     explicit wait_handle(Handler &&handler)
         : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
@@ -122,12 +122,10 @@ class ue_exe {
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, in_arg, in_handle](auto &&in_completion_handler) {
-          this->queue_up(
-              in_handle, in_arg,
-              std::make_shared<wait_handle<std::decay_t<decltype(in_completion_handler)>>>(
-                  std::forward<decltype(in_completion_handler)>(in_completion_handler)
-              )
+          auto l_ptr = std::make_shared<wait_handle<std::decay_t<decltype(in_completion_handler)>>>(
+              std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
+          this->queue_up(in_handle, in_arg, l_ptr);
         },
         in_completion
     );
