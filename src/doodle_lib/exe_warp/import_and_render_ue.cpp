@@ -141,7 +141,7 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
           ),
           boost::asio::bind_executor(g_io_context(), std::move(*this))
       );
-    }
+    } break;
     case status::render: {
       set_out_file_dir_(data_->import_data_.out_file_dir);
       wait_op_->ec_ = in_error_code;
