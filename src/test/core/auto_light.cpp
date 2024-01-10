@@ -85,13 +85,11 @@ class ue_exe_test : public doodle::ue_exe {
  private:
   void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
     doodle::log_info(fmt::format("ue_exe_test {}", in_command_line));
-    if (!doodle::FSys::exists("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_0092_sc_0089")) {
-      doodle::FSys::create_directories("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_0092_sc_0089");
+    static std::filesystem::path l_path{"D:/doodle/cache/ue/TE/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_0092_sc_0089"};
+    if (!doodle::FSys::exists(l_path)) {
+      doodle::FSys::create_directories(l_path);
     }
-    doodle::FSys::copy(
-        "C:/Users/TD/Pictures/Screenshots", "D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_0092_sc_0089",
-        doodle::FSys::copy_options::overwrite_existing
-    );
+    doodle::FSys::copy("C:/Users/TD/Pictures/Screenshots", l_path, doodle::FSys::copy_options::overwrite_existing);
     in_call_fun->ec_ = boost::system::error_code{};
     in_call_fun->complete();
   }

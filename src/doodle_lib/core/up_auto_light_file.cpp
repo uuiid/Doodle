@@ -42,10 +42,10 @@ void up_auto_light_anim_file::operator()(boost::system::error_code in_error_code
   // 渲染工程文件
   l_up_file_list.emplace_back(l_scene / doodle_config::ue4_config, l_rem_path / doodle_config::ue4_config);
   l_up_file_list.emplace_back(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content);
-  l_up_file_list.emplace_back(l_u_project, l_rem_path.parent_path() / l_u_project.filename());
+  l_up_file_list.emplace_back(l_u_project, l_rem_path / l_u_project.filename());
   // maya输出文件
   for (const auto &l_maya : l_maya_out) {
-    l_up_file_list.emplace_back(l_maya, l_rem_path / l_maya.stem());
+    l_up_file_list.emplace_back(l_maya, l_rem_path.parent_path() / l_maya.stem());
   }
   // 开始正式上传
   g_ctx().get<thread_copy_io_service>().async_copy(
