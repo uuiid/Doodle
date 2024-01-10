@@ -22,7 +22,9 @@ class import_and_render_ue {
     FSys::path out_file_dir_{};
     static void on_complete(wait_op *op) {
       auto l_self = static_cast<wait_handle *>(op);
-      boost::asio::post(boost::asio::prepend(std::move(*static_cast<Handler *>(l_self->handler_.get())), l_self->ec_));
+      boost::asio::post(boost::asio::prepend(
+          std::move(*static_cast<Handler *>(l_self->handler_.get())), l_self->ec_, l_self->out_file_dir_
+      ));
     }
   };
 
