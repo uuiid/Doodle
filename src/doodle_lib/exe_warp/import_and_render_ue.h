@@ -98,7 +98,7 @@ class import_and_render_ue {
   explicit import_and_render_ue(entt::handle in_msg) : data_(std::make_shared<data_impl_t>()), msg_(in_msg) { init(); }
   ~import_and_render_ue() = default;
 
-  struct render_out_path {
+  struct render_out_path_t {
     FSys::path path;
   };
 
@@ -117,7 +117,7 @@ class import_and_render_ue {
           set_out_file_dir_ = [l_op = wait_op_, msg = msg_](FSys::path in_path) {
             auto l_wait_op           = std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(l_op);
             l_wait_op->out_file_dir_ = in_path;
-            msg.emplace<render_out_path>(in_path);
+            msg.emplace_or_replace<render_out_path_t>(in_path);
           };
         },
         handler
