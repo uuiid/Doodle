@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_core/core/global_function.h>
+#include <doodle_core/core/wait_op.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
@@ -52,11 +53,20 @@ class ue_exe {
   void find_ue_exe();
 
  protected:
-  using call_fun_type = boost::asio::any_completion_handler<void(boost::system::error_code)>;
-  virtual void queue_up(
-      const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun,
-      const any_io_executor &in_any_io_executor
-  );
+  template <typename Handler>
+  class wait_handle : detail::wait_op {
+   public:
+    explicit wait_handle(Handler &&handler)
+        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
+    ~wait_handle() = default;
+    static void on_complete(wait_op *op) {
+      auto l_self = static_cast<wait_handle *>(op);
+      boost::asio::post(boost::asio::prepend(std::move(*static_cast<Handler *>(l_self->handler_.get())), l_self->ec_));
+    }
+  };
+
+  using call_fun_type = std::shared_ptr<detail::wait_op>;
+  virtual void queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun);
 
  public:
   struct arg_render_queue {
@@ -112,10 +122,11 @@ class ue_exe {
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this, in_arg, in_handle](auto &&in_completion_handler) {
-          boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_completion_handler);
           this->queue_up(
               in_handle, in_arg,
-              std::move(call_fun_type{std::forward<decltype(in_completion_handler)>(in_completion_handler)}), l_exe
+              std::make_shared<wait_handle<std::decay_t<decltype(in_completion_handler)>>>(
+                  std::forward<decltype(in_completion_handler)>(in_completion_handler)
+              )
           );
         },
         in_completion

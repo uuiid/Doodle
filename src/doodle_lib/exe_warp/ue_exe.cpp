@@ -42,13 +42,14 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   logger_ptr logger_attr{};
   ue_exe *self_{};
   bool is_cancel{};
-  boost::asio::any_io_executor exe_attr{};
+
   void run() {
     if (is_cancel) {
       logger_attr->log(log_loc(), level::err, "用户结束 ue_exe: {}", ue_path);
       boost::system::error_code l_ec{boost::asio::error::operation_aborted};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
-      boost::asio::post(exe_attr, std::bind(std::move(call_attr), l_ec));
+      call_attr->ec_ = l_ec;
+      call_attr->complete();
       self_->notify_run();
       return;
     }
@@ -67,7 +68,9 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
-              boost::asio::post(exe_attr, std::bind(std::move(call_attr), in_error_code));
+
+              call_attr->ec_ = in_error_code;
+              call_attr->complete();
               self_->notify_run();
             },
         boost::process::windows::hide,
@@ -129,10 +132,7 @@ void ue_exe::notify_run() {
   }
 }
 
-void ue_exe::queue_up(
-    const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun,
-    const any_io_executor &in_any_io_executor
-) {
+void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun) {
   if (ue_path_.empty()) find_ue_exe();
   auto l_run         = queue_list_.emplace(std::make_shared<run_ue>());
   l_run->ue_path     = ue_path_;
@@ -140,7 +140,6 @@ void ue_exe::queue_up(
   l_run->call_attr   = std::move(in_call_fun);
   l_run->self_       = this;
   l_run->logger_attr = in_msg.patch<process_message>().logger();
-  l_run->exe_attr    = in_any_io_executor;
   l_run->cancel_attr =
       in_msg.patch<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
         if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) {
