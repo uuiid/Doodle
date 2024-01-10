@@ -146,7 +146,13 @@ void test_fun2(boost::system::error_code in_code) {
 
   auto l_handle_ue{entt::handle{*g_reg(), g_reg()->create()}};
   l_handle_ue.emplace<database>();
-  l_handle_ue.emplace<assets_file>().path_attr("C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/BuJiaBan_UE5");
+  l_handle_ue.emplace<assets_file>().path_attr(
+      "C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/BuJiaBan_UE5/Content/Character/BuJiaBan/Mesh/BuJiaBan.uasset"
+  );
+  l_handle_ue.emplace<ue_main_map>(
+      "C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/BuJiaBan_UE5/BuJiaBan_UE5.uproject"
+  );
+  l_handle_ue.emplace<character_id>();
   FSys::software_flag_file(l_handle_ue.get<assets_file>().path_attr(), l_handle_ue.get<database>().uuid());
   log_info(fmt::format("BuJiaBan_UE5 uuid {}", l_handle_ue.get<database>().uuid()));
 
@@ -163,6 +169,7 @@ void test_fun2(boost::system::error_code in_code) {
   l_handle_ue2.emplace<assets_file>().path_attr(
       R"(C:/sy/LianQiShiWanNian_8/6-moxing/BG/JD_05/BG027C/YuDaoZong_TingYuan/Content/YuDaoZong_TingYuan/Map/YuDaoZong_TingYuan.umap)"
   );
+  l_handle_ue2.emplace<scene_id>();
 
   l_handle_ue2.emplace<ue_main_map>(
       R"(C:/sy/LianQiShiWanNian_8/6-moxing/BG/JD_05/BG027C/YuDaoZong_TingYuan/YuDaoZong_TingYuan.uproject)"
@@ -190,7 +197,7 @@ void test_fun2(boost::system::error_code in_code) {
 
 void test_fun(boost::system::error_code in_code) {
   g_ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe_test>();
-  //  g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
+  g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
 
   g_ctx().emplace<database_n::file_translator_ptr>()->set_only_open(true).async_open(
       "E:/cache/doodle_main2.doodle_db", false, true, g_reg(), [](auto&&) {}

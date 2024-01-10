@@ -108,7 +108,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
         data_->p_str_end = fmt::to_string(msg.payload);
-        data_->p_str_end |= ranges::actions::remove_if([](char in_c) { return std::isspace(in_c); });
+        //        data_->p_str_end |= ranges::actions::remove_if([](char in_c) { return std::isspace(in_c); });
         if (data_->p_str_end.size() > 70) data_->p_str_end.erase(70, std::string::npos);
         break;
       case spdlog::level::level_enum::off:

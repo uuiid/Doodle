@@ -35,10 +35,14 @@ class thread_copy_io_service {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [this](auto&& handler, const FSys::path& from, const FSys::path& to, FSys::copy_options in_options) {
           auto l_handler = std::make_shared<std::decay_t<decltype(handler)>>(std::forward<decltype(handler)>(handler));
-          boost::asio::post(executor_, [this, l_handler, from, to, in_options]() {
-            auto l_ec = this->copy_impl(from, to, in_options);
-            boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
-          });
+          boost::asio::post(
+              executor_,
+              [this, l_handler, from, to, in_options,
+               l_gruad = boost::asio::make_work_guard(boost::asio::get_associated_executor(*l_handler))]() {
+                auto l_ec = this->copy_impl(from, to, in_options);
+                boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
+              }
+          );
         },
         handler, from, to, in_options
     );
@@ -54,17 +58,21 @@ class thread_copy_io_service {
             FSys::copy_options in_options
         ) {
           auto l_handler = std::make_shared<std::decay_t<decltype(handler)>>(std::forward<decltype(handler)>(handler));
-          boost::asio::post(executor_, [this, l_handler, from_and_to, in_options]() {
-            boost::system::error_code l_ec;
-            for (auto&& [from, to] : from_and_to) {
-              l_ec = this->copy_impl(from, to, in_options);
-              if (l_ec) {
+          boost::asio::post(
+              executor_,
+              [this, l_handler, from_and_to, in_options,
+               l_gruad = boost::asio::make_work_guard(boost::asio::get_associated_executor(*l_handler))]() {
+                boost::system::error_code l_ec;
+                for (auto&& [from, to] : from_and_to) {
+                  l_ec = this->copy_impl(from, to, in_options);
+                  if (l_ec) {
+                    boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
+                    return;
+                  }
+                }
                 boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
-                return;
               }
-            }
-            boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
-          });
+          );
         },
         handler, from_and_to, in_options
     );

@@ -96,7 +96,6 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
   for (auto &&h : l_refs) {
-    auto l_root_assets = h.get<assets_file>().assets_attr().get<assets>().get_root();
     auto l_is_se       = h.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
     auto l_uproject    = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().project_path_;
     auto l_down_path   = l_uproject.parent_path();
@@ -109,7 +108,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
       data_->down_info_.scene_file_ =
           fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
     }
-    if (!l_root_assets.all_of<project>()) {
+    if (!msg_.all_of<project>()) {
       data_->logger_->log(log_loc(), level::err, "没有项目组件, 失败");
       in_error_code.assign(error_enum::component_missing_error, doodle_category::get());
       BOOST_ASIO_ERROR_LOCATION(in_error_code);
@@ -117,7 +116,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
       wait_op_->complete();
       return;
     }
-    auto l_local_path = g_root / l_root_assets.get<project>().p_shor_str / l_down_path.filename();
+    auto l_local_path = g_root / msg_.get<project>().p_shor_str / l_down_path.filename();
     // 内容文件夹复制
     l_copy_path.emplace_back(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content);
     if (l_is_se) {

@@ -47,7 +47,7 @@ core_set::core_set()
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
       timeout(3600),
-      maya_version(2019),
+      maya_version(2020),
       assets_file_widgets_size(5),
       json_data(std::make_shared<nlohmann::json>()),
 #ifdef NDEBUG

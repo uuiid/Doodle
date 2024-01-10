@@ -59,7 +59,9 @@ class down_auto_light_anim_file {
 
  public:
   explicit down_auto_light_anim_file(entt::handle in_msg)
-      : msg_(std::move(in_msg)), data_(std::make_shared<data_impl_t>()){};
+      : msg_(std::move(in_msg)), data_(std::make_shared<data_impl_t>()) {
+    init();
+  };
   ~down_auto_light_anim_file() = default;
 
   template <typename CompletionHandler>
