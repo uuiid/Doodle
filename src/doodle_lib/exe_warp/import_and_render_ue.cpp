@@ -88,7 +88,7 @@ FSys::path import_and_render_ue::gen_import_config() const {
 }
 
 void import_and_render_ue::operator()(
-    boost::system::error_code in_error_code, down_auto_light_anim_file::down_info &in_down_info
+    boost::system::error_code in_error_code, down_auto_light_anim_file::down_info in_down_info
 ) const {
   if (!data_->logger_) {
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");

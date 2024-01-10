@@ -124,7 +124,7 @@ class import_and_render_ue {
     );
   }
 
-  void operator()(boost::system::error_code in_error_code, down_auto_light_anim_file::down_info &in_down_info) const;
+  void operator()(boost::system::error_code in_error_code, down_auto_light_anim_file::down_info in_down_info) const;
   void operator()(boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle

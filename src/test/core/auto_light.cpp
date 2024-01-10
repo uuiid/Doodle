@@ -10,8 +10,11 @@
 
 #include <doodle_app/app/app_command.h>
 
+#include <doodle_lib/core/down_auto_light_anim_file.h>
 #include <doodle_lib/core/maya_to_exe_file.h>
+#include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
@@ -39,12 +42,10 @@ class maya_exe_test : public doodle::maya_exe {
 
  private:
   void queue_up(
-      const entt::handle& in_msg, const std::string_view& in_key, const nlohmann::json& in_string,
-      call_fun_type in_call_fun, const any_io_executor& in_any_io_executor, const std::filesystem::path& in_run_path
+      const entt::handle& in_msg, const std::string_view& in_key,
+      const std::shared_ptr<doodle::maya_exe_ns::arg>& in_arg, call_fun_type in_call_fun,
+      const std::function<void(doodle::maya_exe_ns::maya_out_arg)>& in_set_arg_fun
   ) override {
-    auto l_path = in_string.get<doodle::maya_exe_ns::export_fbx_arg>().out_path_file_;
-    doodle::FSys::ofstream{l_path} << l_data;
-
     if (!doodle::FSys::exists("D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/")) {
       doodle::FSys::create_directories("D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/");
     }
@@ -53,7 +54,24 @@ class maya_exe_test : public doodle::maya_exe {
         doodle::FSys::copy_options::overwrite_existing
     );
 
-    boost::asio::post(in_any_io_executor, std::bind(std::move(in_call_fun), boost::system::error_code{}));
+    in_call_fun->ec_ = boost::system::error_code{};
+    doodle::maya_exe_ns::maya_out_arg l_arg{};
+    l_arg.begin_time = 1001;
+    l_arg.end_time   = 1013;
+    l_arg.out_file_list.emplace_back(
+        "D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/LQ_ep092_sc089_Ch426A_rig_wxc_1001-1013.fbx",
+        "C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/Rig/Ch426A_rig_wxc.ma"
+    );
+    l_arg.out_file_list.emplace_back(
+        "D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/LQ_ep092_sc089_camera_1001-1013.fbx", ""
+    );
+    l_arg.out_file_list.emplace_back(
+        "", "C:/sy/LianQiShiWanNian_8/6-moxing/BG/JD_05/BG027C/Mod/YuDaoZong_TingYuan_Low.ma"
+    );
+
+    in_set_arg_fun(l_arg);
+
+    in_call_fun->complete();
   }
 };
 
@@ -63,10 +81,7 @@ class ue_exe_test : public doodle::ue_exe {
   ~ue_exe_test() override = default;
 
  private:
-  void queue_up(
-      const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun,
-      const any_io_executor& in_any_io_executor
-  ) override {
+  void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
     doodle::log_info(fmt::format("ue_exe_test {}", in_command_line));
     if (!doodle::FSys::exists("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89")) {
       doodle::FSys::create_directories("D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89");
@@ -75,7 +90,8 @@ class ue_exe_test : public doodle::ue_exe {
         "C:/Users/TD/Pictures/Screenshots", "D:/doodle/cache/ue/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_92_sc_89",
         doodle::FSys::copy_options::overwrite_existing
     );
-    boost::asio::post(in_any_io_executor, std::bind(std::move(in_call_fun), boost::system::error_code{}));
+    in_call_fun->ec_ = boost::system::error_code{};
+    in_call_fun->complete();
   }
 };
 
@@ -94,25 +110,27 @@ void next_time_run(
 void test_fun3(boost::system::error_code in_code) {
   auto l_maya_exe = g_ctx().get<maya_exe_ptr>();
   auto k_arg      = maya_exe_ns::export_fbx_arg{};
-  const FSys::path l_out_path{"D:/test_files/test_ue_auto_main/test.json"};
   const FSys::path l_update_path{"D:/test_files/test_ue_auto_main/result"};
   const FSys::path l_file_path{"D:/test_files/test_ue_auto_main/LQ_ep092_sc089.ma"};
 
   k_arg.file_path        = l_file_path;
-  k_arg.out_path_file_   = l_out_path;
   k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
   k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
   auto l_ue_msg          = entt::handle{*g_reg(), g_reg()->create()};
   l_ue_msg.emplace<process_message>("测试");
-  l_maya_exe->async_run_maya(
-      l_ue_msg, k_arg,
-      boost::asio::bind_executor(
-          g_thread(), maya_to_exe_file{l_ue_msg, l_out_path, l_update_path}.set_ue_call_fun(boost::asio::bind_executor(
-                          g_io_context(), [l_guard = boost::asio::make_work_guard(g_io_context()
-                                           )](boost::system::error_code) { app_base::Get().stop_app(); }
-                      ))
-      )
+  l_ue_msg.emplace<episodes>(92);
+  l_ue_msg.emplace<shot>(89);
+  l_ue_msg.emplace<project>("测试", l_update_path, "test", "TE");
+
+  down_auto_light_anim_file l_down_anim_file{l_ue_msg};
+  import_and_render_ue l_import_and_render_ue{l_ue_msg};
+  up_auto_light_anim_file l_up_auto_light_file{l_ue_msg};
+  l_up_auto_light_file.async_end(boost::asio::bind_executor(g_io_context(), [](auto...) { app_base::Get().stop_app(); })
   );
+  l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
+  l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
+
+  l_maya_exe->async_run_maya(l_ue_msg, k_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));
 }
 
 void test_fun2(boost::system::error_code in_code) {
@@ -172,7 +190,7 @@ void test_fun(boost::system::error_code in_code) {
   //  g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
 
   g_ctx().emplace<database_n::file_translator_ptr>()->set_only_open(true).async_open(
-      "E:/cache/doodle_main2.doodle_db", , false, true, g_reg(), [](auto&&) {}
+      "E:/cache/doodle_main2.doodle_db", false, true, g_reg(), [](auto&&) {}
   );
   next_time_run({0, 0, 1}, doodle::test_fun2);
 }
