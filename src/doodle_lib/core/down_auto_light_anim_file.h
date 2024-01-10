@@ -25,7 +25,7 @@ class down_auto_light_anim_file {
   struct wait_handle : detail::wait_op {
    public:
     explicit wait_handle(Handler&& handler)
-        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
+        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(std::move(handler))) {}
     ~wait_handle() = default;
     down_info down_info_{};
     static void on_complete(wait_op* op) {

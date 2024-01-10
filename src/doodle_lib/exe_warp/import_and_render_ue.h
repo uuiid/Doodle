@@ -17,7 +17,7 @@ class import_and_render_ue {
   class wait_handle : public detail::wait_op {
    public:
     explicit wait_handle(Handler &&handler)
-        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
+        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(std::move(handler))) {}
     ~wait_handle() = default;
     FSys::path out_file_dir_{};
     static void on_complete(wait_op *op) {

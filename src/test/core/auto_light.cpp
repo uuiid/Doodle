@@ -127,8 +127,9 @@ void test_fun3(boost::system::error_code in_code) {
   down_auto_light_anim_file l_down_anim_file{l_ue_msg};
   import_and_render_ue l_import_and_render_ue{l_ue_msg};
   up_auto_light_anim_file l_up_auto_light_file{l_ue_msg};
-  l_up_auto_light_file.async_end(boost::asio::bind_executor(g_io_context(), [](auto...) { app_base::Get().stop_app(); })
-  );
+  l_up_auto_light_file.async_end(boost::asio::bind_executor(
+      g_io_context(), [](boost::system::error_code, std::filesystem::path) { app_base::Get().stop_app(); }
+  ));
   l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
   l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
 

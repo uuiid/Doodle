@@ -19,14 +19,14 @@ class up_auto_light_anim_file {
   struct wait_handle : detail::wait_op {
    public:
     explicit wait_handle(Handler&& handler)
-        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
+        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(std::move(handler))) {}
     ~wait_handle() = default;
     FSys::path up_info_{};
     static void on_complete(wait_op* op) {
       auto l_self = static_cast<wait_handle*>(op);
-      boost::asio::post(
+      boost::asio::post(std::move(
           boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->up_info_)
-      );
+      ));
     }
   };
   using set_path_t = std::function<void(FSys::path)>;
@@ -50,8 +50,8 @@ class up_auto_light_anim_file {
   ~up_auto_light_anim_file() = default;
 
   template <typename CompletionHandler>
-  auto async_end(CompletionHandler&& handler) {
-    return boost::asio::async_compose<CompletionHandler, void(boost::system::error_code, FSys::path)>(
+  auto async_end(CompletionHandler&& in_handler) {
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, FSys::path)>(
         [this](auto&& handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
@@ -60,7 +60,7 @@ class up_auto_light_anim_file {
             l_wait_op->up_info_ = in_path;
           };
         },
-        handler
+        in_handler
     );
   }
 
