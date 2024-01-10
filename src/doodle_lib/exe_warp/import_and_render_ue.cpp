@@ -131,6 +131,7 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
           data_->logger_->log(log_loc(), level::level_enum::err, "渲染删除上次输出错误 error:{}", err.what());
         }
       }
+      data_->status_ = status::render;
       g_ctx().get<ue_exe_ptr>()->async_run(
           msg_,
           fmt::format(
@@ -140,7 +141,6 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
           ),
           boost::asio::bind_executor(g_io_context(), std::move(*this))
       );
-      data_->status_ = status::render;
     }
     case status::render: {
       set_out_file_dir_(data_->import_data_.out_file_dir);
