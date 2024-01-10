@@ -107,7 +107,7 @@ void import_and_render_ue::operator()(
 
   data_->down_info_ = in_down_info;
   data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件");
-  g_ctx().get<ue_exe>().async_run(
+  g_ctx().get<ue_exe_ptr>()->async_run(
       msg_,
       fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->down_info_.render_project_, gen_import_config()),
       boost::asio::bind_executor(g_io_context(), std::move(*this))
@@ -131,7 +131,7 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
           data_->logger_->log(log_loc(), level::level_enum::err, "渲染删除上次输出错误 error:{}", err.what());
         }
       }
-      g_ctx().get<ue_exe>().async_run(
+      g_ctx().get<ue_exe_ptr>()->async_run(
           msg_,
           fmt::format(
               R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",

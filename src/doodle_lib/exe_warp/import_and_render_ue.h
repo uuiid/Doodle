@@ -114,10 +114,10 @@ class import_and_render_ue {
         [this](auto &&handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
-          set_out_file_dir_ = [this](FSys::path in_path) {
-            auto l_wait_op           = std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_);
+          set_out_file_dir_ = [l_op = wait_op_, msg = msg_](FSys::path in_path) {
+            auto l_wait_op           = std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(l_op);
             l_wait_op->out_file_dir_ = in_path;
-            msg_.emplace<render_out_path>(in_path);
+            msg.emplace<render_out_path>(in_path);
           };
         },
         handler

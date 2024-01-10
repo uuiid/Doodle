@@ -65,17 +65,17 @@ class down_auto_light_anim_file {
   ~down_auto_light_anim_file() = default;
 
   template <typename CompletionHandler>
-  auto async_down_end(CompletionHandler&& handler) {
+  auto async_down_end(CompletionHandler&& in_handler) {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, down_info)>(
         [this](auto&& handler) {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
-          set_info_ = [this](down_info in_info) {
-            std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_)->down_info_ = in_info;
-            msg_.emplace<down_info>(std::move(in_info));
+          set_info_ = [l_opt = wait_op_, msg = msg_](down_info in_info) {
+            std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(l_opt)->down_info_ = in_info;
+            msg.emplace<down_info>(std::move(in_info));
           };
         },
-        handler
+        in_handler
     );
   }
 
