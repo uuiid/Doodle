@@ -69,7 +69,7 @@ class down_auto_light_anim_file {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
           set_info_ = [this](down_info in_info) {
-            std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_)->down_info_ = in_info;
+            std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_)->down_info_ = in_info;
             msg_.emplace<down_info>(std::move(in_info));
           };
         },

@@ -5,8 +5,10 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/main_map.h>
+#include <doodle_core/metadata/shot.h>
 
 #include <doodle_app/app/app_command.h>
 
@@ -119,7 +121,7 @@ void test_fun3(boost::system::error_code in_code) {
   auto l_ue_msg          = entt::handle{*g_reg(), g_reg()->create()};
   l_ue_msg.emplace<process_message>("测试");
   l_ue_msg.emplace<episodes>(92);
-  l_ue_msg.emplace<shot>(89);
+  l_ue_msg.emplace<shot>(89, shot::shot_ab_enum::None);
   l_ue_msg.emplace<project>("测试", l_update_path, "test", "TE");
 
   down_auto_light_anim_file l_down_anim_file{l_ue_msg};

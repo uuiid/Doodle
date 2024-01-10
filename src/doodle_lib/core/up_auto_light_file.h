@@ -56,7 +56,7 @@ class up_auto_light_anim_file {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
           set_info_ = [this](FSys::path in_path) {
-            auto l_wait_op      = std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_);
+            auto l_wait_op      = std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_);
             l_wait_op->up_info_ = in_path;
           };
         },

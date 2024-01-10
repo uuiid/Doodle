@@ -14,7 +14,7 @@ namespace doodle {
 
 class import_and_render_ue {
   template <typename Handler>
-  class wait_handle : detail::wait_op {
+  class wait_handle : public detail::wait_op {
    public:
     explicit wait_handle(Handler &&handler)
         : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(handler)) {}
@@ -115,7 +115,7 @@ class import_and_render_ue {
           wait_op_ =
               std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
           set_out_file_dir_ = [this](FSys::path in_path) {
-            auto l_wait_op = std::dynamic_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_);
+            auto l_wait_op           = std::static_pointer_cast<wait_handle<std::decay_t<decltype(handler)>>>(wait_op_);
             l_wait_op->out_file_dir_ = in_path;
             msg_.emplace<render_out_path>(in_path);
           };
