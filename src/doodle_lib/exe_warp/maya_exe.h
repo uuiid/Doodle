@@ -259,7 +259,7 @@ class DOODLELIB_API maya_exe {
               [in_handle, l_ptr](maya_exe_ns::maya_out_arg in_arg_1) {
                 auto l_dev      = std::dynamic_pointer_cast<wait_handle_t>(l_ptr);
                 l_dev->out_arg_ = std::move(in_arg_1);
-                in_handle.emplace<maya_exe_ns::maya_out_arg>(in_arg_1);
+                in_handle.emplace<maya_exe_ns::maya_out_arg>(l_dev->out_arg_);
               }
           );
         },
