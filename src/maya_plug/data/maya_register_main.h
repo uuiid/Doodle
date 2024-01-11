@@ -15,6 +15,12 @@ class MFnPlugin;
 OPENMAYA_NAMESPACE_CLOSE
 
 namespace doodle::maya_plug {
+
+template <typename node_type>
+concept has_draw_classification = requires(node_type in_node_type) {
+  { in_node_type.drawDbClassification } -> std::same_as<MString>;
+};
+
 class maya_register {
   std::stack<std::function<MStatus(MFnPlugin&)>> maya_comm_call_back{};
 
@@ -46,6 +52,7 @@ class maya_register {
   }
 
   template <typename node_type, typename mfn_plugin_type>
+    requires has_draw_classification<node_type>
   MStatus register_node(mfn_plugin_type& in_) {
     auto l_s = in_.registerNode(
         node_type::node_name.data(), node_type::doodle_id, &node_type::creator, &node_type::initialize,
@@ -61,6 +68,25 @@ class maya_register {
     }
     return l_s;
   }
+
+  template <typename node_type, typename mfn_plugin_type>
+    requires(!has_draw_classification<node_type>)
+  MStatus register_node(mfn_plugin_type& in_) {
+    auto l_s = in_.registerNode(
+        node_type::node_name.data(), node_type::doodle_id, &node_type::creator, &node_type::initialize,
+        node_type::node_type, nullptr
+    );
+    CHECK_MSTATUS(l_s);
+    if (l_s) {
+      maya_comm_call_back.emplace([](auto& in_plugin) {
+        auto l_s = in_plugin.deregisterNode(node_type::doodle_id);
+        CHECK_MSTATUS(l_s);
+        return l_s;
+      });
+    }
+    return l_s;
+  }
+
   template <typename node_type, typename draw_type>
   MStatus register_draw_overrider() {
     auto l_s = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
