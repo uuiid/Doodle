@@ -16,6 +16,21 @@ class doodle_file_info : public MPxNode {
   static MStatus initialize();
 
   const static constexpr std::string_view node_name{"doodle_file_info"};
+
+ private:
+  // 引用文件
+  static MObject reference_file;
+  // 引用文件路径
+  static MObject reference_file_path;
+  // 引用文件命名空间
+  static MObject reference_file_namespace;
+
+  // 是否解算
+  static MObject is_solve;
+  // 碰撞物体
+  static MObject collision_objects;
+  // 风场
+  static MObject wind_fields;
 };
 
 }  // namespace doodle::maya_plug
