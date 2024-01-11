@@ -1,6 +1,5 @@
 target_sources(doodle_maya_lib
         PUBLIC
-        create_hud_node.h
         cloth_interface.h
         dem_bones_ex.h
         find_duplicate_poly.h
@@ -25,7 +24,6 @@ target_sources(doodle_maya_lib
         fbx_write.h
 
         PRIVATE
-        create_hud_node.cpp
         dem_bones_ex.cpp
         find_duplicate_poly.cpp
         maya_call_guard.cpp

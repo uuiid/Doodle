@@ -6,7 +6,6 @@
 
 #include <doodle_app/app/program_options.h>
 
-#include <maya_plug/data/create_hud_node.h>
 #include <maya_plug/data/maya_register_main.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/logger/maya_logger_info.h>
