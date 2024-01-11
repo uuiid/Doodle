@@ -27,6 +27,8 @@ MStatus doodle_file_info::initialize() {
     reference_file = l_msg_attr.create("reference_file", "ref", &l_status);
     maya_chick(l_status);
     l_msg_attr.setStorable(true);
+    l_msg_attr.setWritable(true);
+    l_msg_attr.setConnectable(true);
     addAttribute(reference_file);
   }
 
@@ -36,6 +38,8 @@ MStatus doodle_file_info::initialize() {
         l_typed_attr.create("reference_file_path", "ref_p", MFnData::kString, MObject::kNullObj, &l_status);
     maya_chick(l_status);
     l_typed_attr.setStorable(true);
+    l_typed_attr.setWritable(true);
+
     addAttribute(reference_file_path);
   }
 
@@ -45,6 +49,8 @@ MStatus doodle_file_info::initialize() {
         l_typed_attr.create("reference_file_namespace", "ref_np", MFnData::kString, MObject::kNullObj, &l_status);
     maya_chick(l_status);
     l_typed_attr.setStorable(true);
+    l_typed_attr.setWritable(true);
+
     addAttribute(reference_file_namespace);
   }
 
@@ -53,6 +59,8 @@ MStatus doodle_file_info::initialize() {
     is_solve = l_numeric_attr.create("is_solve", "is_solve", MFnNumericData::kBoolean, false, &l_status);
     maya_chick(l_status);
     l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+
     addAttribute(is_solve);
   }
   {
@@ -61,6 +69,10 @@ MStatus doodle_file_info::initialize() {
     maya_chick(l_status);
     l_msg_attr.setStorable(true);
     l_msg_attr.setArray(true);
+    l_msg_attr.setWritable(true);
+    l_msg_attr.setConnectable(true);
+    l_msg_attr.setDisconnectBehavior(MFnAttribute::DisconnectBehavior::kDelete);
+
     addAttribute(collision_objects);
   }
   {
@@ -69,6 +81,9 @@ MStatus doodle_file_info::initialize() {
     maya_chick(l_status);
     l_msg_attr.setStorable(true);
     l_msg_attr.setArray(true);
+    l_msg_attr.setWritable(true);
+    l_msg_attr.setConnectable(true);
+    l_msg_attr.setDisconnectBehavior(MFnAttribute::DisconnectBehavior::kDelete);
     addAttribute(wind_fields);
   }
 
