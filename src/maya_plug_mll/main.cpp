@@ -22,6 +22,7 @@
 #include <maya_plug/maya_comm/ref_file_export.h>
 #include <maya_plug/maya_comm/reference_comm.h>
 #include <maya_plug/maya_render/hud_render_node.h>
+#include <maya_plug/node/files_info.h>
 
 #include <maya/MFnPlugin.h>
 // #include <maya/MQtUtil.h>
@@ -162,6 +163,8 @@ MStatus initializePlugin(MObject obj) {
 
   /// 注册自定义hud节点
   status = maya_reg->register_node<doodle::maya_plug::doodle_info_node>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
   CHECK_MSTATUS(status);
 
   /// 注册自定义渲染覆盖显示hud
