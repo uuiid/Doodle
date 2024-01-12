@@ -79,7 +79,9 @@ bool file_info_edit::isUndoable() const { return true; }
 MStatus file_info_edit::delete_node() {
   MStatus l_status{};
   for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
-    if (l_it.thisNode().apiTypeStr() == doodle_file_info::node_name.data()) {
+    MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
+    maya_chick(l_status);
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       maya_chick(dg_modifier_.deleteNode(l_it.thisNode(&l_status)));
       maya_chick(l_status);
     }
@@ -90,7 +92,9 @@ MStatus file_info_edit::delete_node() {
 bool file_info_edit::has_node() const {
   MStatus l_status{};
   for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
-    if (l_it.thisNode().apiTypeStr() == doodle_file_info::node_name.data()) return true;
+    MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
+    maya_chick(l_status);
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) return true;
   }
   return false;
 }
