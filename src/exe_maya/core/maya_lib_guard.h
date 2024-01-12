@@ -11,6 +11,9 @@ class maya_lib_guard {
  public:
   explicit maya_lib_guard(const FSys::path& p_path);
   ~maya_lib_guard();
+
+ private:
+  void install_maya();
 };
 
 }  // namespace maya_plug

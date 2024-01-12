@@ -4,10 +4,6 @@
 
 #include "maya_exe.h"
 
-#include <doodle_core/platform/win/register_file_type.h>
-
-#include <boost/process.hpp>
-
 #include <exe_maya/facet/cloth_sim.h>
 #include <exe_maya/facet/export_fbx.h>
 #include <exe_maya/facet/replace_file.h>
@@ -46,19 +42,5 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
 
   return false;
 }
-void maya_exe_launcher_t::install_maya() {
-  static std::string const k_mod{R"(+ doodle 1.1 .
-MYMODULE_LOCATION:= .
-PATH+:= plug-ins
-PYTHONPATH+:= scripts
-)"};
-  auto l_maya_plug = register_file_type::program_location().parent_path() / "maya";
 
-  if (!FSys::exists(l_maya_plug / "doodle.mod")) {
-    FSys::ofstream k_file{l_maya_plug / "doodle.mod"};
-    k_file << k_mod;
-  }
-
-  boost::this_process::environment()["MAYA_MODULE_PATH"] += l_maya_plug.generic_string();
-}
 }  // namespace doodle::launch
