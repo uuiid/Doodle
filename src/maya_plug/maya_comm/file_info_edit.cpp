@@ -62,9 +62,13 @@ MStatus file_info_edit::todo() {
 
     maya_chick(dg_modifier_.connect(get_plug(l_it.thisNode(), "message"), get_plug(l_node, "reference_file")));
     MFnReference l_fn_ref{l_it.thisNode(), &l_status};
-    get_plug(l_node, "reference_file_path").setValue(l_fn_ref.fileName(false, false, false, &l_status));
+    dg_modifier_.newPlugValueString(
+        get_plug(l_node, "reference_file_path"), l_fn_ref.fileName(false, false, false, &l_status)
+    );
     maya_chick(l_status);
-    get_plug(l_node, "reference_file_namespace").setValue(l_fn_ref.associatedNamespace(false, &l_status));
+    dg_modifier_.newPlugValueString(
+        get_plug(l_node, "reference_file_namespace"), l_fn_ref.associatedNamespace(false, &l_status)
+    );
     maya_chick(l_status);
   }
 }
