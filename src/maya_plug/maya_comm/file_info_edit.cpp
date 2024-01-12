@@ -12,6 +12,8 @@
 #include <maya/MItDependencyNodes.h>
 
 namespace doodle::maya_plug {
+file_info_edit::file_info_edit()  = default;
+file_info_edit::~file_info_edit() = default;
 
 MSyntax file_info_edit_syntax() {
   MSyntax l_syntax{};
