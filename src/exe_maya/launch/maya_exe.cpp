@@ -4,6 +4,8 @@
 
 #include "maya_exe.h"
 
+#include <doodle_core/platform/win/register_file_type.h>
+
 #include <exe_maya/facet/cloth_sim.h>
 #include <exe_maya/facet/export_fbx.h>
 #include <exe_maya/facet/replace_file.h>
@@ -21,7 +23,6 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
   default_logger_raw()->log(log_loc(), level::warn, "读取配置文件");
   k_init.read_file();
   default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", register_file_type::program_location());
-  install_maya();
 
   if (auto l_str = in_arh(cloth_sim_config); l_str) {
     auto l_ptr = std::make_shared<doodle::maya_plug::cloth_sim>();
