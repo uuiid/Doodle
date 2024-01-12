@@ -99,7 +99,6 @@ private:
 	int32 PastedFrame;
 	FTimerHandle TickTimer;
 	void OnTickTimer();
-	TSharedPtr<FProcHandle> SharedProcHandle;
 	TSharedPtr<FNewProcessCapture1> CurrentCapture;
 	void OnCaptureFinished(bool result);
 	void OnStopCapture();

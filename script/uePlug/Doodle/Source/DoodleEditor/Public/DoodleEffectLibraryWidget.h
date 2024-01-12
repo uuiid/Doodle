@@ -274,7 +274,6 @@ private:
 	void OnPlayPreview(TSharedPtr<FEffectTileItem> inSelectItem);
 	//---------------
 	void OnEffectExport();
-	void OnSortAssetPath(FName AssetPath);
 	FString ExportDirectory;
 	//----------
 	TSharedPtr<SAssetSearchBox> SearchBoxPtr;

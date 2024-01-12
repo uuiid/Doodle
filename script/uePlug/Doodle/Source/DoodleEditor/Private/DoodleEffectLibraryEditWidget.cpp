@@ -649,7 +649,7 @@ void UDoodleEffectLibraryEditWidget::OnStartCapture()
         NotificationItem->SetCompletionState(SNotificationItem::CS_Pending);
         //-------------------------------------
         StartFrame = PastedFrame;
-        SharedProcHandle = nullptr;
+        CurrentCapture = nullptr;
     }
 }
 
@@ -793,12 +793,12 @@ void UDoodleEffectLibraryEditWidget::CreateLevelSequence()
 void UDoodleEffectLibraryEditWidget::OnTickTimer()
 {
     PastedFrame += 5;
-    if (SharedProcHandle.IsValid()) 
+    if (CurrentCapture.IsValid() && CurrentCapture->SharedProcHandle.IsValid())
     {
-        if (!FPlatformProcess::IsProcRunning(*SharedProcHandle))
+        if (!FPlatformProcess::IsProcRunning(*CurrentCapture->SharedProcHandle))
         {
             int32 RetCode = 0;
-            FPlatformProcess::GetProcReturnCode(*SharedProcHandle, &RetCode);
+            FPlatformProcess::GetProcReturnCode(*CurrentCapture->SharedProcHandle, &RetCode);
             if (RetCode == 0) 
             {
                 if (CurrentCapture.IsValid()) 
@@ -808,14 +808,32 @@ void UDoodleEffectLibraryEditWidget::OnTickTimer()
             }
             else
             {
-                FString Info = FString::Format(TEXT("RetCode: {0}"), { FString::FromInt(RetCode) });
+                IsCapturing = false;
+                CurrentCapture = nullptr;
+                //--------------
                 if (NotificationItem.IsValid())
-                NotificationItem->SetText(FText::FromString(Info));
+                {
+                    NotificationItem->SetCompletionState(SNotificationItem::CS_Fail);
+                    NotificationItem->SetText(FText::FromString(TEXT("渲染失败")));
+                    NotificationItem->ExpireAndFadeout();
+                    NotificationItem->SetExpireDuration(3);
+                    NotificationItem = nullptr;
+                }
+                if (RetCode == 1)
+                {
+                    FText DialogText = FText::FromString(TEXT("提示：渲染进程奔溃"));
+                    FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+                }
+                else
+                {
+                    FString Info = FString::Format(TEXT("渲染失败，返回码:"), { FString::FromInt(RetCode) });
+                    FText DialogText = FText::FromString(Info);
+                    FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+                }
             }
         }
         else
         {
-            //return FCaptureState(ECaptureStatus::Pending);
             if (NotificationItem.IsValid())
             NotificationItem->SetText(FText::FromString(TEXT("渲染中...")));
         }
@@ -827,7 +845,7 @@ void UDoodleEffectLibraryEditWidget::OnCaptureFinished(bool result)
     IsCapturing = false;
     if (NotificationItem.IsValid()) 
     {
-        SharedProcHandle = nullptr;
+        CurrentCapture = nullptr;
         NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
         NotificationItem->SetText(FText::FromString(TEXT("渲染完成")));
         NotificationItem->ExpireAndFadeout();
@@ -844,7 +862,7 @@ void UDoodleEffectLibraryEditWidget::OnCaptureFinished(bool result)
 
 void UDoodleEffectLibraryEditWidget::OnStopCapture()
 {
-    if (IsCapturing && !SharedProcHandle)
+    if (IsCapturing && !CurrentCapture)
     {
         if (NotificationItem.IsValid())
         {
@@ -873,7 +891,6 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
         CaptureSeq = NewObject<UAutomatedLevelSequenceCapture>(GetTransientPackage(), UAutomatedLevelSequenceCapture::StaticClass(), UMovieSceneCapture::MovieSceneCaptureUIName, RF_Transient);
         CaptureSeq->AddToRoot();
         CaptureSeq->LoadFromConfig();
-        //CaptureSeq->Initialize(SceneViewport);
         CaptureSeq->LevelSequenceAsset = LevelSequence;
         CaptureSeq->bUseSeparateProcess = true;
         CaptureSeq->Settings.bOverwriteExisting = true;
@@ -898,7 +915,6 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
         FString MapNameToLoad = WorldPackageName;
         CurrentCapture = MakeShared<FNewProcessCapture1>(CaptureSeq, WorldPackageName, OnCaptureFinishDelegate);
         CurrentCapture->Start();
-        SharedProcHandle = CurrentCapture->SharedProcHandle;
         //--------------------
     }
 }
