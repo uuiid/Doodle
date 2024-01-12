@@ -24,6 +24,8 @@ class doodle_file_info : public MPxNode {
   static MObject reference_file_path;
   // 引用文件命名空间
   static MObject reference_file_namespace;
+  // 是否导出
+  static MObject is_export;
 
   // 是否解算
   static MObject is_solve;

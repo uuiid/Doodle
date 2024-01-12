@@ -54,6 +54,16 @@ MStatus doodle_file_info::initialize() {
     addAttribute(reference_file_namespace);
   }
 
+  {
+    // 是否导出
+    MFnNumericAttribute l_numeric_attr{};
+    is_export = l_numeric_attr.create("is_export", "is_export", MFnNumericData::kBoolean, false, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(is_export);
+  }
+
   {  // 是否解算
     MFnNumericAttribute l_numeric_attr{};
     is_solve = l_numeric_attr.create("is_solve", "is_solve", MFnNumericData::kBoolean, false, &l_status);
