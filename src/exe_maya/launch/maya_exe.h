@@ -14,6 +14,9 @@ class maya_exe_launcher_t {
   ~maya_exe_launcher_t() = default;
 
   bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector);
+
+ private:
+  void install_maya();
 };
 
 }  // namespace doodle::launch

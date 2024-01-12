@@ -34,6 +34,7 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "MASH";)"));
   MGlobal::executeCommand(R"(loadPlugin "mtoa";)");
   MGlobal::executeCommand(R"(loadPlugin "Substance";)");
+  maya_chick(MGlobal::executeCommand(conv::to_ms(fmt::format(R"(loadPlugin "doodle_maya_{}";)", MAYA_APP_VERSION))));
 
   if (MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer()) {
     if (auto* l_f = renderer->getFragmentManager()) {
