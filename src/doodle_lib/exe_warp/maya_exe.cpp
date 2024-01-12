@@ -84,6 +84,20 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
 
   bool running() override { return child_attr.running(); }
 
+  void add_maya_module() {
+    static std::string const k_mod{R"(+ doodle 1.1 .
+MYMODULE_LOCATION:= .
+PATH+:= plug-ins
+PYTHONPATH+:= scripts
+)"};
+    auto l_maya_plug = register_file_type::program_location().parent_path() / "maya";
+
+    if (!FSys::exists(l_maya_plug / "doodle.mod")) {
+      FSys::ofstream k_file{l_maya_plug / "doodle.mod"};
+      k_file << k_mod;
+    }
+  }
+
   maya_exe_ns::maya_out_arg get_out_arg() {
     if (wait_op_->ec_) return {};
     if (!FSys::exists(run_script_attr->out_path_file_)) return {};
@@ -133,6 +147,9 @@ class run_maya : public std::enable_shared_from_this<run_maya>, public maya_exe_
     l_eve["Path"] += (maya_program_path / "bin").generic_string();
     l_eve["Path"] += program_path.parent_path().generic_string();
     l_eve["Path"] += register_file_type::program_location().generic_string();
+    auto l_maya_plug_path = register_file_type::program_location().parent_path() / "maya";
+    l_eve["MAYA_MODULE_PATH"] += l_maya_plug_path.generic_string();
+    add_maya_module();
     child_attr = boost::process::child{
         g_io_context(),
         boost::process::exe       = program_path.generic_string(),

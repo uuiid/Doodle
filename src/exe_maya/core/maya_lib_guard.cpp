@@ -39,12 +39,15 @@ PYTHONPATH+:= scripts
     k_file << k_mod;
   }
 
-  boost::this_process::environment()["MAYA_MODULE_PATH"] += l_maya_plug.generic_string();
+  //  boost::this_process::environment()["MAYA_MODULE_PATH"] += l_maya_plug.generic_string();
+
+  maya_chick(MGlobal::executeCommand(
+      conv::to_ms(fmt::format(R"(putenv "MAYA_MODULE_PATH" "{}";)", l_maya_plug.generic_string())), true
+  ));
 }
 maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
   MLibrary::initialize(true, "maya_doodle");
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
-  install_maya();
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "ik2Bsolver";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "renderSetup";)"));
@@ -59,6 +62,7 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
       log_loc(), level::info, "env MAYA_MODULE_PATH {}",
       boost::this_process::environment()["MAYA_MODULE_PATH"].to_string()
   );
+  maya_chick(MGlobal::executeCommand(R"(getenv "MAYA_MODULE_PATH";)", true));
   maya_chick(MGlobal::executeCommand(conv::to_ms(fmt::format(R"(loadPlugin "doodle_maya_{}";)", MAYA_APP_VERSION))));
 
   if (MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer()) {
