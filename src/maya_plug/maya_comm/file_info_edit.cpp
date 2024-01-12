@@ -53,13 +53,15 @@ MStatus file_info_edit::redoIt() {
     maya_chick(l_status);
   }
   for (MItDependencyNodes l_it{MFn::kReference, &l_status}; !l_it.isDone(); l_it.next()) {
+    MFnReference l_fn_ref{l_it.thisNode(), &l_status};
+    if (!l_fn_ref.isLoaded()) continue;
+
     MObject l_node = dg_modifier_.createNode(doodle_file_info::doodle_id, &l_status);
     maya_chick(l_status);
     MFnDependencyNode l_fn_node{l_node, &l_status};
     maya_chick(l_status);
 
     maya_chick(dg_modifier_.connect(get_plug(l_it.thisNode(), "message"), get_plug(l_node, "reference_file")));
-    MFnReference l_fn_ref{l_it.thisNode(), &l_status};
     dg_modifier_.newPlugValueString(
         get_plug(l_node, "reference_file_path"), l_fn_ref.fileName(false, false, false, &l_status)
     );
