@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,8 +6,34 @@
 #include "MovieSceneCapture.h"
 #include "DoodleMovieSceneCapture.h"
 #include "DoodleEffectLibraryWidget.h"
+#include "AutomatedLevelSequenceCapture.h"
+#include "MovieSceneCaptureDialogModule.h"
 
 class FTypeItem;
+
+struct FNewProcessCapture1 : FMovieSceneCaptureBase
+{
+	FNewProcessCapture1(UMovieSceneCapture* InCaptureObject, const FString& InMapNameToLoad, const TFunction<void(bool)>& InOnFinishedCallback)
+	{
+		CaptureObject = InCaptureObject;
+		MapNameToLoad = InMapNameToLoad;
+		OnFinishedCallback = InOnFinishedCallback;
+
+		SharedProcHandle = nullptr;
+	}
+	// FMovieSceneCaptureBase
+	virtual void Start() override;
+	virtual void Cancel() override;
+	virtual void OnCaptureStarted() override;
+	virtual FCaptureState GetCaptureState() const override;
+	// ~FMovieSceneCaptureBase
+
+	TSharedPtr<FProcHandle> SharedProcHandle;
+protected:
+	FString MapNameToLoad;
+public:
+	virtual void OnCaptureFinished(bool bSuccess) override;
+};
 
 class FTypeItem : public TSharedFromThis<FTypeItem>
 {
@@ -70,10 +94,24 @@ private:
 	TSharedPtr<SButton> StartCaptureButton;
 	TSharedPtr<STextBlock> CaptureText;
 	void OnStartCapture();
-	void OnCaptureFinished();
+	void CreateLevelSequence();
+	//-----------------
+	int32 PastedFrame;
+	FTimerHandle TickTimer;
+	void OnTickTimer();
+	TSharedPtr<FProcHandle> SharedProcHandle;
+	TSharedPtr<FNewProcessCapture1> CurrentCapture;
+	void OnCaptureFinished(bool result);
 	void OnStopCapture();
 	bool IsCapturing = false;
 	UDoodleMovieSceneCapture* Capture;
+	UAutomatedLevelSequenceCapture* CaptureSeq;
+	int32 StartFrame;
+	int32 EndFrame;
+	ULevelSequence* LevelSequence;
+	//UWorld* SequenceWorld;
+	UWorld* NewSequenceWorld;
+
 	FString MovieExtension = TEXT("");
 	TSharedPtr<SNotificationItem> NotificationItem;
 	//------------------
@@ -108,4 +146,5 @@ public:
 private:
 	TSharedRef<ITableRow> MakeTableRowWidget(TSharedPtr<FTypeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleGetChildrenForTree(TSharedPtr<FTypeItem> InItem, TArray<TSharedPtr<FTypeItem>>& OutChildren);
+	int32 MaxFrame;
 };
