@@ -17,6 +17,7 @@
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
 #include <maya_plug/maya_comm/doodle_to_ue_fbx.h>
+#include <maya_plug/maya_comm/file_info_edit.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
@@ -165,6 +166,9 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_node<doodle::maya_plug::doodle_info_node>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
+  CHECK_MSTATUS(status);
+  /// 添加文件编辑命令
+  status = maya_reg->register_command<::doodle::maya_plug::file_info_edit>(k_plugin);
   CHECK_MSTATUS(status);
 
   /// 注册自定义渲染覆盖显示hud
