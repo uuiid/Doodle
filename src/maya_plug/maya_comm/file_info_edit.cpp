@@ -42,9 +42,10 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
     l_status = todo();
   }
 
-  return l_status;
+  return redoIt();
 }
-MStatus file_info_edit::todo() {
+
+MStatus file_info_edit::redoIt() {
   MStatus l_status{};
   if (has_node() && !is_force) {
     displayError("has node, use -f to force");
@@ -70,8 +71,13 @@ MStatus file_info_edit::todo() {
         get_plug(l_node, "reference_file_namespace"), l_fn_ref.associatedNamespace(false, &l_status)
     );
     maya_chick(l_status);
+    maya_chick(dg_modifier_.doIt());
   }
+  return l_status;
 }
+MStatus file_info_edit::undoIt() { return dg_modifier_.undoIt(); }
+
+bool file_info_edit::isUndoable() const { return true; }
 
 MStatus file_info_edit::delete_node() {
   MStatus l_status{};

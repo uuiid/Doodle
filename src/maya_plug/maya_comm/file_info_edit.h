@@ -18,10 +18,12 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
  public:
   file_info_edit();
   ~file_info_edit() override;
-  MStatus doIt(const MArgList& in_list) override;
+  [[maybe_unused]] MStatus doIt(const MArgList& in_list) override;
+  [[maybe_unused]] MStatus undoIt() override;
+  [[maybe_unused]] MStatus redoIt() override;
+  [[maybe_unused]] [[nodiscard]] bool isUndoable() const override;
 
  private:
-  MStatus todo();
   MStatus delete_node();
   bool has_node() const;
 
