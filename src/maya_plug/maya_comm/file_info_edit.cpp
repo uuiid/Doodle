@@ -21,8 +21,7 @@ MSyntax file_info_edit_syntax() {
   //  l_syntax.addFlag("-is", "-is_solve", MSyntax::kBoolean);
   //  l_syntax.addFlag("-co", "-collision_objects", MSyntax::kString);
   //  l_syntax.addFlag("-wf", "-wind_fields", MSyntax::kString);
-  // 刷新
-  l_syntax.addFlag("-r", "-refresh", MSyntax::kNoArg);
+
   // 强制
   l_syntax.addFlag("-f", "-force", MSyntax::kNoArg);
 
@@ -36,10 +35,6 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
 
   if (l_arg_data.isFlagSet("-f")) {
     is_force = true;
-  }
-
-  if (l_arg_data.isFlagSet("-r")) {
-    l_status = todo();
   }
 
   return redoIt();
