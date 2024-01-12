@@ -13,7 +13,6 @@ class maya_lib_guard {
   ~maya_lib_guard();
 
  private:
-  void install_maya();
 };
 
 }  // namespace maya_plug
