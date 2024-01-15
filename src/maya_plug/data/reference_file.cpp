@@ -182,51 +182,35 @@ std::string reference_file::get_file_namespace() const {
 }
 
 MSelectionList reference_file::get_collision_model() const {
+  MFnDependencyNode l_file_info{};
+  MStatus l_status{};
+  maya_chick(l_file_info.setObject(file_info_node_));
+
+  auto l_plug_lists = l_file_info.findPlug(doodle_file_info::collision_objects, false, &l_status);
+  maya_chick(l_status);
+
+  const auto l_couts = l_plug_lists.evaluateNumElements(&l_status);
   MSelectionList l_list{};
-  for (const auto &str : collision_model) {
-    DOODLE_LOG_INFO("添加碰撞体: {}", str);
-    l_list.add(str.c_str(), true);
+
+  for (auto i = 0; i < l_couts; ++i) {
+    auto l_plug = l_plug_lists.elementByPhysicalIndex(i, &l_status);
+    maya_chick(l_status);
+    auto l_collision_message_plug = l_plug.source(&l_status);
+    maya_chick(l_status);
+
+    maya_chick(l_list.add(l_collision_message_plug.node()));
+    DOODLE_LOG_INFO("添加碰撞体: {}", get_node_full_name(l_collision_message_plug.node()));
   }
+
   return l_list;
 }
 
-void reference_file::set_collision_model(const MSelectionList &in_list) {
-  collision_model.clear();
-  collision_model_show_str.clear();
-  chick_mobject();
-  MStatus k_s{};
-  MDagPath l_path{};
-  MFnDagNode l_node{};
-  for (MItSelectionList l_it{in_list, MFn::Type::kMesh, &k_s}; !l_it.isDone(&k_s); l_it.next()) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = l_it.getDagPath(l_path);
-    DOODLE_MAYA_CHICK(k_s);
-    auto k_obj = l_path.transform(&k_s);
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = l_node.setObject(k_obj);
-    DOODLE_MAYA_CHICK(k_s);
-    collision_model_show_str.emplace_back(d_str{l_node.name(&k_s)});
-    DOODLE_MAYA_CHICK(k_s);
-
-    collision_model.emplace_back(d_str{l_node.fullPathName(&k_s)});
-    DOODLE_MAYA_CHICK(k_s);
-  }
-}
-
 std::string reference_file::get_namespace() const {
-  /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
-  return file_namespace;
+  auto l_n = get_file_namespace();
+  return l_n;
 }
 
 bool reference_file::replace_sim_assets_file() {
-  if (!use_sim) {
-    DOODLE_LOG_WARN("跳过不解算的文件 {}", path);
-    return false;
-  }
-
-  chick_mobject();
-
   DOODLE_CHICK(!this->p_m_object.isNull(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
@@ -247,58 +231,21 @@ bool reference_file::replace_sim_assets_file() {
   if (!FSys::exists(k_vfx_path)) return false;
 
   /// \brief 替换引用文件
-  {
-    path = k_vfx_path.generic_string();
-    maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
-        MSceneMessage::kBeforeLoadReferenceCheck,
-        [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self = reinterpret_cast<reference_file *>(clientData);
-          file.setRawFullName(d_str{self->path});
-          *retCode = FSys::exists(self->path);
-        },
-        this
-    )};
-
-    std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
-    DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
-  }
-  return true;
+  return replace_file(k_vfx_path);
 }
-
-bool reference_file::has_node(const MSelectionList &in_list) {
-  chick_mobject();
-  MStatus k_s{};
-  MObject k_node{};
-  for (MItSelectionList k_iter{in_list, MFn::Type::kDependencyNode, &k_s}; !k_iter.isDone(); k_iter.next()) {
-    k_s = k_iter.getDependNode(k_node);
-    DOODLE_MAYA_CHICK(k_s);
-
-    if (has_node(k_node)) return true;
-  }
-  return false;
-}
-
-bool reference_file::has_node(const MObject &in_node) const {
-  chick_mobject();
-  MStatus k_s{};
-  auto k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
-    if (k_objs[l_i] == in_node) return true;
-  }
-
-  return false;
-}
-
 bool reference_file::replace_file(const FSys::path &in_handle) {
-  DOODLE_CHICK(!p_m_object.isNull(), doodle_error{"没有引用文件, 无法替换"});
-  search_file_info = in_handle;
+  struct search_file_info_t {
+    FSys::path path;
+  };
+
+  search_file_info_t l_search_file_info{in_handle};
   MStatus k_s{};
   {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self  = reinterpret_cast<reference_file *>(clientData);
-          auto l_path = self->search_file_info;
+          auto *self  = reinterpret_cast<search_file_info_t *>(clientData);
+          auto l_path = self->path;
           if (FSys::exists(l_path)) {
             MStatus k_s{};
             DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, l_path);
@@ -309,26 +256,41 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
             *retCode = false;
           }
         },
-        this
+        &l_search_file_info
     )};
 
     std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
     DOODLE_MAYA_CHICK(k_s);
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
-  auto l_name   = in_handle.stem().generic_string();
-  auto l_name_d = l_name;
-  for (int l_i = 1; l_i < 1000 && MNamespace::namespaceExists(d_str{l_name_d}); ++l_i) {
-    l_name_d = fmt::format("{}{}", l_name, l_i);
-  }
-  DOODLE_LOG_INFO("确认名称空间 {}", l_name_d);
-
-  DOODLE_LOG_INFO("开始重命名名称空间 {} 到 {}", get_namespace(), l_name_d);
-  k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
-  DOODLE_MAYA_CHICK(k_s);
   if (!export_group_attr()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");
   return false;
 }
+
+bool reference_file::has_node(const MSelectionList &in_list) {
+  MStatus k_s{};
+  MObject k_node{};
+  auto k_objs = MNamespace::getNamespaceObjects(conv::to_ms(get_namespace()), false, &k_s);
+  for (MItSelectionList k_iter{in_list, MFn::Type::kDependencyNode, &k_s}; !k_iter.isDone(); k_iter.next()) {
+    k_s = k_iter.getDependNode(k_node);
+    DOODLE_MAYA_CHICK(k_s);
+
+    for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
+      if (k_objs[l_i] == k_node) return true;
+    }
+  }
+  return false;
+}
+
+bool reference_file::has_node(const MObject &in_node) const {
+  MStatus k_s{};
+  auto k_objs = MNamespace::getNamespaceObjects(d_str{get_namespace()}, false, &k_s);
+  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
+    if (k_objs[l_i] == in_node) return true;
+  }
+  return false;
+}
+
 FSys::path reference_file::get_path() const {
   MStatus k_s{};
   MFnReference k_ref{};
@@ -357,7 +319,7 @@ FSys::path reference_file::get_abs_path() const {
 MSelectionList reference_file::get_all_object() const {
   MStatus k_s{};
   MSelectionList l_select;
-  auto l_r = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+  auto l_r = MNamespace::getNamespaceObjects(conv::to_ms(get_namespace()), false, &k_s);
   DOODLE_MAYA_CHICK(k_s);
   for (std::uint32_t i = 0u; i < l_r.length(); ++i) {
     k_s = l_select.add(l_r[i], true);
@@ -366,7 +328,7 @@ MSelectionList reference_file::get_all_object() const {
   return l_select;
 }
 std::optional<MDagPath> reference_file::export_group_attr() const {
-  if (file_namespace.empty()) return {};
+  if (get_file_namespace().empty()) return {};
 
   MStatus k_s{};
 
@@ -411,7 +373,6 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
     return;
   }
 }
-const std::string &reference_file::get_field_string() const { return field_attr; }
 
 std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
   std::vector<MDagPath> l_export_path{};

@@ -102,7 +102,7 @@ class reference_file {
 
   void set_file_info_node(const MObject &in_file_info_node);
   [[nodiscard]] MSelectionList get_collision_model() const;
-  void set_collision_model(const MSelectionList &in_list);
+
   [[nodiscard]] std::string get_namespace() const;
 
   [[nodiscard]] bool has_node(const MSelectionList &in_list);
@@ -127,7 +127,6 @@ class reference_file {
   bool replace_file(const FSys::path &in_handle);
 
   std::optional<MDagPath> get_field_dag() const;
-  const std::string &get_field_string() const;
   void add_field_dag(const MSelectionList &in_list);
 
   enum class export_type : std::uint32_t {

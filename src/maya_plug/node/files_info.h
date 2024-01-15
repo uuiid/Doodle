@@ -9,6 +9,9 @@
 #include <maya/MPxNode.h>
 namespace doodle::maya_plug {
 class doodle_file_info : public MPxNode {
+  friend class reference_file;
+  friend class file_info_edit;
+
  public:
   static MTypeId doodle_id;
   const static constexpr auto node_type = MPxNode::Type::kDependNode;
