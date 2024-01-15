@@ -31,9 +31,143 @@
 #include "Serialization/ArchiveReplaceObjectAndStructPropertyRef.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "Kismet2/KismetEditorUtilities.h"
+#include "Async/Async.h"
+#include "CineCameraActor.h"
+#include "LevelSequenceEditorSubsystem.h"
+#include "LevelSequenceActor.h"
+#include "MovieSceneToolHelpers.h"
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "Sections/MovieSceneSpawnSection.h"
+#include "LevelEditorViewport.h"
+#include "SequencerTools.h"
+#include "SequencerTools.h"
+#include "Engine/WorldComposition.h"
+#include "UObject/SavePackage.h"
+#include "Factories/WorldFactory.h"
+#include "Sections/MovieSceneCameraCutSection.h"
+#include "Subsystems/EditorActorSubsystem.h"
+#include "TimerManager.h"
+#include "Engine/TextureCube.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Components/SkyLightComponent.h"
+#include "Engine/StaticMeshActor.h"
+#include "Engine/SkyLight.h"
+#include "AssetViewerSettings.h"
+#include "Editor/EditorPerProjectUserSettings.h"
+#include "CineCameraComponent.h"
+
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+#include "Engine/SimpleConstructionScript.h"
+#include "NiagaraActor.h"
+#include "Components/DirectionalLightComponent.h"
+#include "Engine/DirectionalLight.h"
+#include "JsonObjectConverter.h"
 
 const FName UDoodleEffectLibraryEditWidget::Name{ TEXT("DoodleEffectLibraryEditWidget") };
+const TCHAR* MovieCaptureSessionName = TEXT("Movie Scene Capture");
 
+void FNewProcessCapture1::Start()
+{
+    // Save out the capture manifest to json
+    FString Filename = FPaths::ProjectSavedDir() / TEXT("MovieSceneCapture/Manifest.json");
+
+    TSharedRef<FJsonObject> Object = MakeShareable(new FJsonObject);
+    if (FJsonObjectConverter::UStructToJsonObject(CaptureObject->GetClass(), CaptureObject, Object, 0, 0))
+    {
+        TSharedRef<FJsonObject> RootObject = MakeShareable(new FJsonObject);
+        RootObject->SetField(TEXT("Type"), MakeShareable(new FJsonValueString(CaptureObject->GetClass()->GetPathName())));
+        RootObject->SetField(TEXT("Data"), MakeShareable(new FJsonValueObject(Object)));
+
+        TSharedRef<FJsonObject> AdditionalJson = MakeShareable(new FJsonObject);
+        CaptureObject->SerializeJson(*AdditionalJson);
+        RootObject->SetField(TEXT("AdditionalData"), MakeShareable(new FJsonValueObject(AdditionalJson)));
+
+        FString Json;
+        TSharedRef<TJsonWriter<> > JsonWriter = TJsonWriterFactory<>::Create(&Json, 0);
+        if (FJsonSerializer::Serialize(RootObject, JsonWriter))
+        {
+            FFileHelper::SaveStringToFile(Json, *Filename);
+        }
+    }
+    else
+    {
+        return;
+    }
+
+    FString EditorCommandLine = FString::Printf(TEXT("%s -MovieSceneCaptureManifest=\"%s\" -game -NoLoadingScreen -ForceRes -Windowed"), *MapNameToLoad, *Filename);
+
+    // Spit out any additional, user-supplied command line args
+    if (!CaptureObject->AdditionalCommandLineArguments.IsEmpty())
+    {
+        EditorCommandLine.AppendChar(' ');
+        EditorCommandLine.Append(CaptureObject->AdditionalCommandLineArguments);
+    }
+
+    // Spit out any inherited command line args
+    if (!CaptureObject->InheritedCommandLineArguments.IsEmpty())
+    {
+        EditorCommandLine.AppendChar(' ');
+        EditorCommandLine.Append(CaptureObject->InheritedCommandLineArguments);
+    }
+
+    // Disable texture streaming if necessary
+    if (!CaptureObject->Settings.bEnableTextureStreaming)
+    {
+        EditorCommandLine.Append(TEXT(" -NoTextureStreaming"));
+    }
+
+    // Set the game resolution - we always want it windowed
+    EditorCommandLine += FString::Printf(TEXT(" -ResX=%d -ResY=%d -Windowed"), CaptureObject->Settings.Resolution.ResX, CaptureObject->Settings.Resolution.ResY);
+
+    // Ensure game session is correctly set up 
+    EditorCommandLine += FString::Printf(TEXT(" -messaging -SessionName=\"%s\""), MovieCaptureSessionName);
+
+    FString Params;
+    if (FPaths::IsProjectFilePathSet())
+    {
+        Params = FString::Printf(TEXT("\"%s\" %s %s"), *FPaths::GetProjectFilePath(), *EditorCommandLine, *FCommandLine::GetSubprocessCommandline());
+    }
+    else
+    {
+        Params = FString::Printf(TEXT("%s %s %s"), FApp::GetProjectName(), *EditorCommandLine, *FCommandLine::GetSubprocessCommandline());
+    }
+
+    FString GamePath = FPlatformProcess::GenerateApplicationPath(FApp::GetName(), FApp::GetBuildConfiguration());
+    FProcHandle ProcessHandle = FPlatformProcess::CreateProc(*GamePath, *Params, false, false, false, nullptr, 0, nullptr, nullptr);
+
+    if (ProcessHandle.IsValid())
+    {
+        if (CaptureObject->bCloseEditorWhenCaptureStarts)
+        {
+            FPlatformMisc::RequestExit(false);
+            return;
+        }
+
+        SharedProcHandle = MakeShareable(new FProcHandle(ProcessHandle));
+        //OnCaptureStarted();
+    }
+    else
+    {
+        OnCaptureFinished(false);
+    }
+}
+
+void FNewProcessCapture1::Cancel() {}
+
+void FNewProcessCapture1::OnCaptureStarted() {}
+
+FCaptureState FNewProcessCapture1::GetCaptureState() const { return FCaptureState(ECaptureStatus::Pending); }
+
+void FNewProcessCapture1::OnCaptureFinished(bool bSuccess)
+{
+    if (OnFinishedCallback)
+    {
+        OnFinishedCallback(bSuccess);
+    }
+}
+//--------------------
 void FTypeItemElement::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, const TSharedPtr<FTypeItem> InTreeElement)
 {
     WeakTreeElement = InTreeElement;
@@ -138,6 +272,7 @@ UDoodleEffectLibraryEditWidget::UDoodleEffectLibraryEditWidget()
     PreviewFile = TEXT("");
     DirectoryPath = TEXT("");
     OutputFormat = TEXT("Effect");
+    MaxFrame = 99999999;
 }
 
 UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
@@ -147,6 +282,12 @@ UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
     //--------
     if (ScreenshotHandle.IsValid())
         FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotHandle);
+    //------
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    if(NewSequenceWorld)
+        EditorAssetSubsystem->DeleteLoadedAsset(NewSequenceWorld);
+    if(LevelSequence)
+        EditorAssetSubsystem->DeleteLoadedAsset(LevelSequence);
 }
 
 void UDoodleEffectLibraryEditWidget::SetAssetData(FAssetData Asset)
@@ -229,6 +370,7 @@ void UDoodleEffectLibraryEditWidget::SetAssetData(FAssetData Asset)
     {
         ViewEditorViewport->SetViewportData(SelectObject);
     }
+    CreateLevelSequence();
 }
 
 void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
@@ -304,10 +446,10 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                                 SAssignNew(StartCaptureButton, SButton)
                                     .Text(FText::FromString(TEXT("录制")))
                                     .OnClicked_Lambda([this]()
-                                        {
-                                            OnStartCapture();
-                                            return FReply::Handled();
-                                        })
+                                    {
+                                        OnStartCapture();
+                                        return FReply::Handled();
+                                    })
                             ]
                             + SVerticalBox::Slot()
                             .FillHeight(0.1)
@@ -506,32 +648,206 @@ void UDoodleEffectLibraryEditWidget::OnStartCapture()
         NotificationItem = FSlateNotificationManager::Get().AddNotification(Info);
         NotificationItem->SetCompletionState(SNotificationItem::CS_Pending);
         //-------------------------------------
-        TSharedPtr<FSceneViewport> SceneViewport = ViewEditorViewport->GetSceneViewport();
-        Capture = NewObject<UDoodleMovieSceneCapture>(GetTransientPackage());
-        Capture->Initialize(SceneViewport);
-        Capture->Settings.bOverwriteExisting = true;
-        //Capture->Settings.bUseCustomFrameRate = true;
-        //Capture->Settings.CustomFrameRate = FFrameRate(25,1);
-        Capture->Settings.HandleFrames = 0;
-        //Capture->Settings.ZeroPadFrameNumbers = 4;
-        Capture->Settings.bEnableTextureStreaming = true;
-        Capture->Settings.bShowHUD = false;
-        Capture->Settings.Resolution = FCaptureResolution(1024,1024);
-        Capture->Settings.OutputFormat = OutputFormat;
-        DirectoryPath = Capture->Settings.OutputDirectory.Path;
-        MovieExtension = Capture->Settings.MovieExtension;
-        //---------------
-        Capture->OnCaptureFinished().AddRaw(this, &UDoodleEffectLibraryEditWidget::OnCaptureFinished);
-        Capture->StartCapture();
+        StartFrame = PastedFrame;
+        CurrentCapture = nullptr;
     }
 }
 
-void UDoodleEffectLibraryEditWidget::OnCaptureFinished()
+void UDoodleEffectLibraryEditWidget::CreateLevelSequence()
 {
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(SelectObject->GetPathName());
+    //World ---------------------
+    FString CreateMapPath = FPaths::Combine(AssetData.PackagePath.ToString(), TEXT("Wrold"));
+    if (EditorAssetSubsystem->DoesAssetExist(CreateMapPath)) 
+    {
+        EditorAssetSubsystem->DeleteAsset(CreateMapPath);
+    }
+    UWorldFactory* Factory = NewObject<UWorldFactory>();
+    UPackage* Pkg = CreatePackage(*CreateMapPath);
+    Pkg->MarkAsFullyLoaded();
+    const FString PackagePath = FPackageName::GetLongPackagePath(CreateMapPath);
+    FString BaseFileName = FPaths::GetBaseFilename(CreateMapPath);
+    //---------------
+    FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+    UObject* TempObject = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
+    NewSequenceWorld = Cast<UWorld>(TempObject);
+    AssetRegistryModule.Get().AssetCreated(NewSequenceWorld);
+    //Sky -----------------------
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    TObjectPtr<ADirectionalLight> DirectionalLight = NewSequenceWorld->SpawnActor<ADirectionalLight>(ADirectionalLight::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    DirectionalLight->SetBrightness(1);
+    DirectionalLight->GetLightComponent()->SetRelativeRotation(FRotator(-40.0f, -67.5f, 0.0f));
+    //---------------------
+    UStaticMesh* SkySphere = LoadObject<UStaticMesh>(NULL, TEXT("/Engine/EditorMeshes/AssetViewer/Sphere_inversenormals.Sphere_inversenormals"), NULL, LOAD_None, NULL);
+    AStaticMeshActor* SphereActor = NewSequenceWorld->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    SphereActor->SetActorScale3D(FVector(2000.0f, 2000.0f, 2000.0f));
+    TObjectPtr<UStaticMeshComponent> SkyComponent = SphereActor->GetComponentByClass<UStaticMeshComponent>();
+    SkyComponent->SetStaticMesh(SkySphere);
+    SkyComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    SkyComponent->CastShadow = false;
+    SkyComponent->bCastDynamicShadow = false;
+    UMaterial* SkyMaterial = LoadObject<UMaterial>(NULL, TEXT("/Engine/EditorMeshes/ColorCalibrator/M_GreyBall.M_GreyBall"), NULL, LOAD_None, NULL);
+    SkyComponent->SetMaterial(0, SkyMaterial);
+    //SkyLight ----------------
+    UTextureCube* CubemapMap = LoadObject<UTextureCube>(nullptr, TEXT("/Engine/EngineResources/GrayTextureCube.GrayTextureCube"));
+    ASkyLight* SkyLightActor = NewSequenceWorld->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    TObjectPtr<USkyLightComponent> SkyLight = SkyLightActor->GetComponentByClass<USkyLightComponent>();
+    SkyLight->SetCubemap(CubemapMap);
+    SkyLight->SourceType = ESkyLightSourceType::SLS_SpecifiedCubemap;
+    SkyLight->SetSourceCubemapAngle(60.f);
+    SkyLight->SkyDistanceThreshold = 1.f;
+    SkyLight->bLowerHemisphereIsBlack = false;
+    //Sequence -------------
+    FString FileName = TEXT("Sequence");
+    FString SequencePath = FPaths::Combine(AssetData.PackagePath.ToString(), FileName);
+    if (EditorAssetSubsystem->DoesAssetExist(SequencePath))
+    {
+        EditorAssetSubsystem->DeleteAsset(SequencePath);
+    }
+    UPackage* Package = CreatePackage(*SequencePath);
+    LevelSequence = NewObject<ULevelSequence>(Package, *FileName, RF_Public | RF_Standalone | RF_Transactional);
+    LevelSequence->Initialize();
+    IAssetRegistry::GetChecked().AssetCreated(LevelSequence);
+    Package->Modify();
+    //-------------------
+    const FFrameRate L_Rate{ 25, 1 };
+    LevelSequence->GetMovieScene()->SetDisplayRate(L_Rate);
+    LevelSequence->GetMovieScene()->SetTickResolutionDirectly(L_Rate);
+    //Partile Actor -----------
+    AActor* L_Actor = ViewEditorViewport->PreviewActor;
+    FGuid L_GUID;
+    if (SelectObject->GetClass() == UNiagaraSystem::StaticClass())
+    {
+        ANiagaraActor* NewActor = NewSequenceWorld->SpawnActorDeferred<ANiagaraActor>(ANiagaraActor::StaticClass(), FTransform::Identity, NULL, NULL, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+        UNiagaraSystem* System = CastChecked<UNiagaraSystem>(SelectObject.Get());
+        NewActor->GetNiagaraComponent()->SetAsset(System);
+        L_GUID = LevelSequence->GetMovieScene()->AddPossessable(NewActor->GetActorLabel(), NewActor->GetClass());
+        LevelSequence->BindPossessableObject(L_GUID, *NewActor, NewSequenceWorld);
+    }
+    if (SelectObject->GetClass() == UParticleSystem::StaticClass())
+    {
+        AEmitter* NewActor = NewSequenceWorld->SpawnActorDeferred<AEmitter>(AEmitter::StaticClass(), FTransform::Identity, NULL, NULL, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+        UParticleSystem* System = CastChecked<UParticleSystem>(SelectObject.Get());
+        UParticleSystemComponent* PComponent = NewActor->GetParticleSystemComponent();
+        PComponent->SetTemplate(Cast<UParticleSystem>(System));
+        PComponent->InitializeSystem();
+        PComponent->ActivateSystem();
+        L_GUID = LevelSequence->GetMovieScene()->AddPossessable(NewActor->GetActorLabel(), NewActor->GetClass());
+        LevelSequence->BindPossessableObject(L_GUID, *NewActor, NewSequenceWorld);
+    }
+    if (SelectObject->GetClass() == UBlueprint::StaticClass())
+    {
+        AActor* NewActor = NewSequenceWorld->SpawnActorDeferred<AActor>(L_Actor->GetClass(), L_Actor->GetTransform(), NULL, NULL, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+        const EditorUtilities::ECopyOptions::Type CopyOptions = (EditorUtilities::ECopyOptions::Type)(EditorUtilities::ECopyOptions::Default);
+        EditorUtilities::CopyActorProperties(L_Actor, NewActor, CopyOptions);
+        L_GUID = LevelSequence->GetMovieScene()->AddPossessable(NewActor->GetActorLabel(), NewActor->GetClass());
+        LevelSequence->BindPossessableObject(L_GUID, *NewActor, NewSequenceWorld);
+    }
+    ////--------------
+    UMovieSceneSpawnTrack* MovieSceneSpawnTrack = LevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
+    UMovieSceneSpawnSection* MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(MovieSceneSpawnTrack->CreateNewSection());
+    MovieSceneSpawnSection->SetRange(TRange<FFrameNumber>{0, MaxFrame});
+    MovieSceneSpawnTrack->AddSection(*MovieSceneSpawnSection);
+    //Camera ----------
+    UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+    AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
+    ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(LevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
+    TSharedPtr<FEditorViewportClient> ViewportClient = ViewEditorViewport->GetViewportClient();
+    CameraActor->SetActorLocationAndRotation(ViewportClient->GetViewLocation(), ViewportClient->GetViewRotation());
+    CameraActor->GetCineCameraComponent()->Filmback.SensorWidth = 25;
+    CameraActor->GetCineCameraComponent()->Filmback.SensorHeight = 25;
+    CameraActor->GetCineCameraComponent()->Filmback.RecalcSensorAspectRatio();
+    FGuid CameraGuid = LevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
+    UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = LevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(CameraGuid);
+    UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+    L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+    FFrameNumber L_Start{ 0 };
+    MovieSceneToolHelpers::CreateCameraCutSectionForCamera(LevelSequence->GetMovieScene(), CameraGuid, L_Start);
+    UMovieSceneTrack* CameraCutTrack = LevelSequence->GetMovieScene()->GetCameraCutTrack();
+    UMovieSceneCameraCutSection* CutSection = CastChecked<UMovieSceneCameraCutSection>(CameraCutTrack->GetAllSections().Top());
+    //------------------------
+    CutSection->SetCameraGuid(CameraGuid);
+    //---------
+    TempActor->Destroy();
+    NewSequenceWorld->RegisterAutoActivateCamera(CameraActor,0);
+    //------------------------
+    ALevelSequenceActor* LevelSequenceActor = nullptr;
+    ULevelSequencePlayer* LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(NewSequenceWorld, LevelSequence, FMovieSceneSequencePlaybackSettings{}, LevelSequenceActor);
+    LevelSequenceActor->InitializePlayer();
+    LevelSequencePlayer->Play();
+    //-------------------
+    NewSequenceWorld->Modify();
+    LevelSequence->Modify();
+    EditorAssetSubsystem->SaveLoadedAssets({ NewSequenceWorld ,LevelSequence });
+    //----------------------
+    UWorld* World = ViewEditorViewport->GetViewportClient()->GetWorld();
+    PastedFrame = 0;
+    FTimerDelegate TimerDelegate;
+    TimerDelegate.BindRaw(this, &UDoodleEffectLibraryEditWidget::OnTickTimer);
+    World->GetTimerManager().SetTimer(TickTimer, TimerDelegate, 0.2,true);
+}
+
+void UDoodleEffectLibraryEditWidget::OnTickTimer()
+{
+    PastedFrame += 5;
+    if (CurrentCapture.IsValid() && CurrentCapture->SharedProcHandle.IsValid())
+    {
+        if (!FPlatformProcess::IsProcRunning(*CurrentCapture->SharedProcHandle))
+        {
+            int32 RetCode = 0;
+            FPlatformProcess::GetProcReturnCode(*CurrentCapture->SharedProcHandle, &RetCode);
+            if (RetCode == 0) 
+            {
+                if (CurrentCapture.IsValid()) 
+                {
+                    CurrentCapture->OnCaptureFinished(true);
+                }
+            }
+            else
+            {
+                IsCapturing = false;
+                CurrentCapture = nullptr;
+                //--------------
+                if (NotificationItem.IsValid())
+                {
+                    NotificationItem->SetCompletionState(SNotificationItem::CS_Fail);
+                    NotificationItem->SetText(FText::FromString(TEXT("渲染失败")));
+                    NotificationItem->ExpireAndFadeout();
+                    NotificationItem->SetExpireDuration(3);
+                    NotificationItem = nullptr;
+                }
+                if (RetCode == 1)
+                {
+                    FText DialogText = FText::FromString(TEXT("提示：渲染进程奔溃"));
+                    FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+                }
+                else
+                {
+                    FString Info = FString::Format(TEXT("渲染失败，返回码:"), { FString::FromInt(RetCode) });
+                    FText DialogText = FText::FromString(Info);
+                    FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+                }
+            }
+        }
+        else
+        {
+            if (NotificationItem.IsValid())
+            NotificationItem->SetText(FText::FromString(TEXT("渲染中...")));
+        }
+    }
+}
+
+void UDoodleEffectLibraryEditWidget::OnCaptureFinished(bool result)
+{
+    IsCapturing = false;
     if (NotificationItem.IsValid()) 
     {
+        CurrentCapture = nullptr;
         NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
-        NotificationItem->SetText(FText::FromString(TEXT("录制完成")));
+        NotificationItem->SetText(FText::FromString(TEXT("渲染完成")));
         NotificationItem->ExpireAndFadeout();
         NotificationItem = nullptr;
     }
@@ -546,13 +862,60 @@ void UDoodleEffectLibraryEditWidget::OnCaptureFinished()
 
 void UDoodleEffectLibraryEditWidget::OnStopCapture()
 {
-    if (IsCapturing) 
+    if (IsCapturing && !CurrentCapture)
     {
-        IsCapturing = false;
+        if (NotificationItem.IsValid())
+        {
+            NotificationItem->SetText(FText::FromString(TEXT("等待渲染...")));
+        }
+        //---------------
         StartCaptureButton->SetEnabled(true);
         CaptureText->SetText(FText::FromString(TEXT("")));
-        if (Capture)
-            Capture->Close();
+        EndFrame = PastedFrame;
+        LevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{StartFrame, EndFrame}, true);
+        //Camera----------------
+        UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+        TSharedPtr<FEditorViewportClient> ViewportClient = ViewEditorViewport->GetViewportClient();
+        UMovieSceneTrack* CameraCutTrack = LevelSequence->GetMovieScene()->GetCameraCutTrack();
+        UMovieSceneCameraCutSection* CutSection = CastChecked<UMovieSceneCameraCutSection>(CameraCutTrack->GetAllSections().Top());
+        //----------------------
+        CutSection->SetRange(TRange<FFrameNumber>{0, EndFrame});
+        FMovieSceneObjectBindingID CameraID = CutSection->GetCameraBindingID();
+        FMovieSceneSpawnable* Spawnable = LevelSequence->GetMovieScene()->FindSpawnable(CameraID.GetGuid());
+        ACineCameraActor* CameraActor = Cast<ACineCameraActor>(Spawnable->GetObjectTemplate());
+        CameraActor->SetActorLocationAndRotation(ViewportClient->GetViewLocation(), ViewportClient->GetViewRotation());
+        CameraActor->GetCameraComponent()->SetFieldOfView(ViewportClient->ViewFOV);
+        LevelSequence->GetMovieScene()->Modify();
+        //-----------------------
+        TSharedPtr<FSceneViewport> SceneViewport = ViewEditorViewport->GetSceneViewport();
+        CaptureSeq = NewObject<UAutomatedLevelSequenceCapture>(GetTransientPackage(), UAutomatedLevelSequenceCapture::StaticClass(), UMovieSceneCapture::MovieSceneCaptureUIName, RF_Transient);
+        CaptureSeq->AddToRoot();
+        CaptureSeq->LoadFromConfig();
+        CaptureSeq->LevelSequenceAsset = LevelSequence;
+        CaptureSeq->bUseSeparateProcess = true;
+        CaptureSeq->Settings.bOverwriteExisting = true;
+        CaptureSeq->Settings.bEnableTextureStreaming = true;
+        CaptureSeq->Settings.bShowHUD = false;
+        CaptureSeq->Settings.bUseCustomFrameRate = true;
+        CaptureSeq->Settings.CustomFrameRate = FFrameRate(25, 1);
+        CaptureSeq->Settings.Resolution = FCaptureResolution(1024, 1024);
+        CaptureSeq->Settings.OutputFormat = OutputFormat;
+        FString TestName = CaptureSeq->Settings.GameModeOverride->GetPathName();
+        DirectoryPath = CaptureSeq->Settings.OutputDirectory.Path;
+        MovieExtension = CaptureSeq->Settings.MovieExtension;
+        auto OnCaptureFinishDelegate = [this](bool bSuccess)
+        {
+            OnCaptureFinished(bSuccess);
+        };
+        //------------------
+        UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+        EditorAssetSubsystem->SaveLoadedAssets({ LevelSequence,NewSequenceWorld });
+        //--------------------
+        const FString WorldPackageName = NewSequenceWorld->GetOutermost()->GetName();
+        FString MapNameToLoad = WorldPackageName;
+        CurrentCapture = MakeShared<FNewProcessCapture1>(CaptureSeq, WorldPackageName, OnCaptureFinishDelegate);
+        CurrentCapture->Start();
+        //--------------------
     }
 }
 
@@ -638,7 +1001,7 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
         OnGetAllDependencies(SelectObject.Get());
         for (UObject* OldObj:AllDependens)
         {
-            FStringAssetReference AssetRef1(OldObj);
+            FSoftObjectPath AssetRef1(OldObj);
             FName TargetPath = FName(FPaths::Combine(TEXT("/Game") / EffectName, AssetRef1.GetAssetName()));
             while (EditorAssetSubsystem->DoesAssetExist(TargetPath.ToString()))
             {

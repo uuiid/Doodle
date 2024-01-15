@@ -16,10 +16,6 @@ public:
 	DoodleEffectEditorPreviewScene();
 	// FAdvancedPreviewScene 
 	virtual void Tick(float InDeltaTime) override;
-	void SetPreviewMeshComponent(UDebugSkelMeshComponent* InSkeletalMeshComponent);
-	UDebugSkelMeshComponent* SkeletalMeshComponent;
-private:
-	bool PreviewComponentSelectionOverride(const UPrimitiveComponent* InComponent) const;
 };
 
 class DoodleEffectEditorViewportClient : public FEditorViewportClient {
@@ -29,12 +25,6 @@ public:
 	virtual void Draw(FViewport* InViewport, FCanvas* Canvas) override;
 
 	virtual void Tick(float DeltaSeconds) override;
-
-	FBox ComputeBoundingBoxForSelectedEditorSection(UDebugSkelMeshComponent* PreviewMeshComponent);
-private:
-	void TransformVertexPositionsToWorld(UDebugSkelMeshComponent* PreviewMeshComponent, TArray<FFinalSkinVertex>& LocalVertices);
-
-	void GetAllVertexIndicesUsedInSection(const FRawStaticIndexBuffer16or32Interface& IndexBuffer, const FSkelMeshRenderSection& SkelMeshSection, TArray<int32>& OutIndices);
 };
 
 class DoodleEffectEditorViewportToolBar : public SCommonEditorViewportToolbarBase {
@@ -57,6 +47,7 @@ public:
 	void SetViewportData(TObjectPtr<UObject> ParticleObj);
 
 	FVector2D ComputeDesiredSize(float) const override { return FVector2D(768, 768); }
+	TObjectPtr<AActor> PreviewActor;
 private:
 	TSharedPtr<DoodleEffectEditorViewportClient> ViewportClient;
 	TSharedPtr<FAssetEditorModeManager> AssetEditorModeManager;
@@ -65,9 +56,6 @@ private:
 	TSharedRef<class SEditorViewport> GetViewportWidget() override;
 	TSharedPtr<FExtender> GetExtenders() const override;
 	void OnFloatingButtonClicked() override;
-
-	TObjectPtr<AActor> PreviewActor;
-
 protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
 	virtual TSharedPtr<SWidget> MakeViewportToolbar() override;

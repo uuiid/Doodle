@@ -135,7 +135,8 @@ public class doodleEditor : ModuleRules
                 "MediaPlayerEditor",
 				"Media",
                 "NiagaraEditor",
-                "ToolWidgets"
+                "ToolWidgets",
+                "MovieSceneCaptureDialog"
             }
 		);
 

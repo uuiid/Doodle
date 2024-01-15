@@ -470,65 +470,12 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
                 EditorAssetSubsystem->RenameDirectory(FPaths::Combine(TEXT("/Game"), CurrentItem->Name.ToString()), TargetPath);
                 //-----------------------
                 AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
-                //OnSortAssetPath(FName(TargetPath));
                 FString Info = FString::Format(TEXT("导入特效：{0}到项目:{1}完成"), { CurrentItem->Name.ToString(),FPaths::Combine(TEXT("/Game"), RelativePath) });
                 FNotificationInfo L_Info{ FText::FromString(Info) };
                 L_Info.FadeInDuration = 1.0f;  // 
                 L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
                 FSlateNotificationManager::Get().AddNotification(L_Info);
             }
-        }
-    }
-}
-
-void UDoodleEffectLibraryWidget::OnSortAssetPath(FName AssetPath)
-{
-    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-    TArray<FAssetData> OutAssetData;
-    IAssetRegistry::Get()->GetAssetsByPath(AssetPath, OutAssetData, false);
-    for (FAssetData Asset : OutAssetData)
-    {
-        FString Path = Asset.PackagePath.ToString();
-        if (Asset.GetClass() == UStaticMesh::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("Mesh"));
-        if (Asset.GetClass()->IsChildOf<UTexture>())
-            Path = FPaths::Combine(Path, TEXT("Tex"));
-        if (Asset.GetClass()->IsChildOf(UMaterialInstance::StaticClass()))
-            Path = FPaths::Combine(Path, TEXT("Mat/MatInst"));
-        if (Asset.GetClass() == UMaterial::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("Mat/Mat"));
-        if (Asset.GetClass() == UMaterialParameterCollection::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("Mat/MatParSet"));
-        if (Asset.GetClass() == UMaterialFunction::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("Mat/MatFun"));
-        if (Asset.GetClass() == UNiagaraEmitter::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/Emitter"));
-        if (Asset.GetClass() == UNiagaraParameterDefinitions::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/ParameterDefinitions"));
-        if (Asset.GetClass() == UNiagaraParameterCollection::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/ParameterCollection"));
-        if (Asset.GetClass() == UNiagaraParameterCollectionInstance::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/ParameterCollectionIns"));
-        if (Asset.GetClass() == UNiagaraEffectType::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/EffectType"));
-        if (Asset.GetClass() == UNiagaraValidationRuleSet::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/ValidationRuleSet"));
-        if (Asset.GetClass() == UNiagaraScript::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("FX/Script"));
-        if (Asset.GetClass() == USkeletalMesh::StaticClass() || Asset.GetClass() == UAnimSequence::StaticClass()
-            || Asset.GetClass() == UPhysicsAsset::StaticClass() || Asset.GetClass() == USkeleton::StaticClass())
-            Path = FPaths::Combine(Path, TEXT("SK"));
-        //--------------------
-        FName AssetName = Asset.AssetName;
-        while (EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
-        {
-            int Counter = AssetName.GetNumber();
-            AssetName.SetNumber(++Counter);
-        }
-        if (!EditorAssetSubsystem->RenameAsset(Asset.PackageName.ToString(), FPaths::Combine(Path, Asset.AssetName.ToString())))
-        {
-            FString Info = FString::Format(TEXT("移动文件{0}到{1}失败"), { Asset.PackageName.ToString(), FPaths::Combine(Path, Asset.AssetName.ToString()) });
-            UE_LOG(LogTemp, Warning, TEXT("Error: %s"), *Info);
         }
     }
 }
