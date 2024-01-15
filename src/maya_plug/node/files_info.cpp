@@ -4,6 +4,7 @@
 
 #include "files_info.h"
 
+#include <maya/MFnDependencyNode.h>
 #include <maya/MFnMessageAttribute.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
@@ -18,7 +19,7 @@ MObject doodle_file_info::is_solve;
 MObject doodle_file_info::collision_objects;
 MObject doodle_file_info::wind_fields;
 
-void* doodle_file_info::creator() { return new doodle_file_info{}; }
+void *doodle_file_info::creator() { return new doodle_file_info{}; }
 MStatus doodle_file_info::initialize() {
   MStatus l_status{};
 
@@ -88,6 +89,18 @@ MStatus doodle_file_info::initialize() {
   }
 
   return MStatus::kSuccess;
+}
+MStatus doodle_file_info::connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc) {
+  if (plug == reference_file) {
+    MFnDependencyNode l_fn_node{thisMObject()};
+    MPlug l_plug = l_fn_node.findPlug(reference_file_path, true);
+    l_plug.setValue(MString{});
+    l_plug = l_fn_node.findPlug(reference_file_namespace, true);
+    l_plug.setValue(MString{});
+    l_plug = l_fn_node.findPlug(is_solve, true);
+    l_plug.setValue(false);
+  }
+  return MPxNode::connectionBroken(plug, otherPlug, asSrc);
 }
 
 }  // namespace doodle::maya_plug

@@ -15,6 +15,8 @@ class doodle_file_info : public MPxNode {
   static void* creator();
   static MStatus initialize();
 
+  MStatus connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc) override;
+
   const static constexpr std::string_view node_name{"doodle_file_info"};
 
  private:
