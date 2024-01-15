@@ -65,13 +65,8 @@ bool cloth_sim::post(const FSys::path& in_path) {
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
-#if MAYA_API_VERSION >= 20190000
-  MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)});
-#else
-  MGlobal::executeCommand(
-      d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", fmt::to_string(MAYA_API_VERSION).substr(0, 4))}
-  );
-#endif
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
+  maya_chick(MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)}));
 
   maya_file_io::set_workspace(l_arg.file_path);
 
