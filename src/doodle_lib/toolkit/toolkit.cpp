@@ -58,6 +58,18 @@ void install_SideFX_Labs(const FSys::path &path) {
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 
+void install_UnrealEngine5VLC(const FSys::path &path) {
+  if (FSys::exists(path)) {
+    FSys::remove_all(path);
+  } else {
+    FSys::create_directories(path);
+  }
+
+  auto sourePath = register_file_type::program_location().parent_path() / "UnrealEngine5VLC";
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
+  copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+}
+
 void toolkit::installUePath(const FSys::path &path) {
   try {
     /// \brief 安装我们自己的插件
@@ -80,6 +92,7 @@ void toolkit::installUePath(const FSys::path &path) {
     copy(sourePath, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
     /// \brief 安装houdini labs 插件
     install_SideFX_Labs(targetPath.parent_path() / "SideFX_Labs");
+    install_UnrealEngine5VLC(targetPath.parent_path() / "UnrealEngine5VLC");
   } catch (FSys::filesystem_error &error) {
     DOODLE_LOG_ERROR(boost::diagnostic_information(error));
     throw;
