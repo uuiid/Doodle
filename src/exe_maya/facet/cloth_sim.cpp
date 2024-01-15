@@ -66,7 +66,7 @@ bool cloth_sim::post(const FSys::path& in_path) {
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
-  maya_chick(MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)}));
+  (MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)}));
 
   maya_file_io::set_workspace(l_arg.file_path);
 
