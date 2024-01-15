@@ -113,7 +113,7 @@ class reference_file {
 
  public:
   /**
-   * @brief 引用maya obj 节点
+   * @brief 引用 maya obj 节点
    */
   MObject p_m_object;
 

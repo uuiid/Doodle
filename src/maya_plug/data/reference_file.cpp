@@ -22,6 +22,7 @@
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
+#include <maya_plug/node/files_info.h>
 
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
@@ -522,27 +523,26 @@ std::vector<entt::handle> reference_file_factory::create_ref(bool is_filter) con
   std::vector<entt::handle> l_ret{};
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
-  MStatus k_s;
-  auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
-  maya_chick(k_s);
 
-  constexpr static std::array<std::string_view, 2> g_not_find_ui{":UI", ":shared"};
-  for (int l_i = 0; l_i < k_names.length(); ++l_i) {
-    auto &&k_name = k_names[l_i];
-    if (std::find(g_not_find_ui.begin(), g_not_find_ui.end(), k_name.asUTF8()) != g_not_find_ui.end()) {
-      continue;
-    }
-    reference_file k_ref{};
-    if (k_ref.set_namespace(conv::to_s(k_name)) || !is_filter) {
-      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-      auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-      l_h.emplace<reference_file>(k_ref);
-      l_ret.emplace_back(l_h);
-    } else {
-      DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
+  MStatus l_status{};
+  for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
+    MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
+    maya_chick(l_status);
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
+      MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
+      if (l_name.length() != 0) {
+        reference_file k_ref{};
+        if (k_ref.set_namespace(conv::to_s(l_name))) {
+          DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
+          auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+          l_h.emplace<reference_file>(k_ref);
+          l_ret.emplace_back(l_h);
+        } else {
+          DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
+        }
+      }
     }
   }
-
   return l_ret;
 }
 std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list, bool is_filter) const {
