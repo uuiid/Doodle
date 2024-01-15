@@ -168,7 +168,7 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension() && in_handle.any_of<episodes, shot>())
     l_out /= fmt::format(
-        "{:04}_{:03}{}.mp4", in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
+        "EP{:04}_SC{:03}{}.mp4", in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
         in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot : 0,
         in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None
     );
