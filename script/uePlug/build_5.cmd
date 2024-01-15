@@ -9,3 +9,9 @@ robocopy %work_dir%%UE_VERSION%\Plugins\Doodle %work_dir%%UE_VERSION%\Plugins\Do
 
 rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\Doodle\Intermediate
 rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\Doodle\Source
+
+call %UE_5% BuildPlugin -Plugin=%work_dir%UnrealEngine5VLC\VlcMedia.uplugin -TargetPlatforms=Win64 -Package=%work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC -Rocket
+robocopy %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC_%l_time% /mir /ndl /np /njh /njs /ns /nc /nfl
+
+rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\Intermediate
+rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\Source
