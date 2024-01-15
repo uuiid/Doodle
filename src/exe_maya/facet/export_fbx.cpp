@@ -124,6 +124,7 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
   g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_, false, true, g_reg(), [](auto&&) {});
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
 
   maya_file_io::set_workspace(l_arg.file_path);
 
