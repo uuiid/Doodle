@@ -85,52 +85,22 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
 class reference_file {
  public:
  private:
-  std::string file_namespace;
+  std::string get_file_namespace() const;
 
-  FSys::path search_file_info;
-  /// @brief 添加风场字段
-  std::string field_attr;
-
-  void chick_mobject() const;
-
-  static std::string get_abc_exprt_arg();
-
-  /**
-   * @brief
-   * @warning 这个是一个兼容性函数， 小心使用,会被删除
-   * @param in_ref_uuid
-   */
-  void find_ref_node(const std::string &in_ref_uuid);
   void find_ref_node();
-
-  std::vector<MObject> ref_objs{};
-  /**
-   * @brief 这个路径是显示的路径,  带有后缀以区分相同路径的多个引用
-   */
-  std::string path;
 
   void set_path(const MObject &in_ref_node);
 
- public:
+  MObject file_info_node_;
   /**
-   * @brief 引用 maya obj 节点
+   * @brief 引用 maya obj 节点(可空)
    */
   MObject p_m_object;
 
-  /**
-   * @brief 引用文件是否解算
-   */
-  bool use_sim;
-  std::vector<std::string> collision_model;
-  std::vector<std::string> collision_model_show_str;
-
+ public:
   reference_file();
 
-  void init_show_name();
-  bool set_namespace(const std::string &in_namespace);
-  /// 获取引用标帜路径
-  const std::string &get_key_path() const;
-
+  void set_file_info_node(const MObject &in_file_info_node);
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] std::string get_namespace() const;
@@ -165,13 +135,6 @@ class reference_file {
     fbx = 2,
   };
 
-  class export_arg {
-   public:
-    export_type export_type_p{};
-    MTime &start_p;
-    MTime &end_p;
-  };
-
   /**
    * @brief 从配置文件中查找需要导出组名称对应的 maya 组 (名称空间为引用空间)
    * @return 导出配置文件中对应的组
@@ -185,29 +148,6 @@ class reference_file {
   MSelectionList get_all_object() const;
 
   std::vector<MDagPath> get_alll_cloth_obj() const;
-
- private:
-  friend void to_json(nlohmann::json &j, const reference_file &p) {
-    j["path"]            = p.path;
-    j["use_sim"]         = p.use_sim;
-    j["collision_model"] = p.collision_model;
-    j["file_namespace"]  = p.file_namespace;
-    j["field_attr"]      = p.field_attr;
-  }
-  friend void from_json(const nlohmann::json &j, reference_file &p) {
-    j.at("path").get_to(p.path);
-    j.at("use_sim").get_to(p.use_sim);
-    j.at("collision_model").get_to(p.collision_model);
-    if (j.contains("file_namespace")) j.at("file_namespace").get_to(p.file_namespace);
-    if (j.contains("field_attr")) j.at("field_attr").get_to(p.field_attr);
-
-    if (j.contains("ref_file_uuid")) {
-      std::string ref_file_uuid;
-      j.at("ref_file_uuid").get_to(ref_file_uuid);
-      p.find_ref_node(ref_file_uuid);
-    }
-    p.chick_mobject();
-  }
 };
 
 class reference_file_factory {
