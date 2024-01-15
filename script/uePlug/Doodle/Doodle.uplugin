@@ -79,9 +79,13 @@
 			"Name": "LevelSequenceEditor",
 			"Enabled": true
 		},
-		{
-			"Name": "MovieRenderPipeline",
-			"Enabled": true
-		}
+    {
+      "Name": "MovieRenderPipeline",
+      "Enabled": true
+    },
+    {
+      "Name": "MediaPlayerEditor",
+      "Enabled": true
+    }
 	]
 }
