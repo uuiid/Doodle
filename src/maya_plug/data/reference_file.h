@@ -108,6 +108,8 @@ class reference_file {
 
   [[nodiscard]] bool has_node(const MSelectionList &in_list);
   [[nodiscard]] bool has_node(const MObject &in_node) const;
+  inline MObject get_file_info_node() const { return file_info_node_; }
+
   /**
    * @brief 获取真正的路径名称
    * @return
