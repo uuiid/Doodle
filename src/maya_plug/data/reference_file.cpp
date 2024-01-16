@@ -406,7 +406,7 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
   return l_export_path;
 }
 
-std::vector<entt::handle> reference_file_factory::create_ref(bool is_filter) const {
+std::vector<entt::handle> reference_file_factory::create_ref() const {
   std::vector<entt::handle> l_ret{};
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
@@ -416,46 +416,39 @@ std::vector<entt::handle> reference_file_factory::create_ref(bool is_filter) con
     MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
     maya_chick(l_status);
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
+      reference_file k_ref{l_it.thisNode()};
       MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
-      if (l_name.length() != 0) {
-        reference_file k_ref{};
-        if (k_ref.set_namespace(conv::to_s(l_name))) {
-          DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-          auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-          l_h.emplace<reference_file>(k_ref);
-          l_ret.emplace_back(l_h);
-        } else {
-          DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
-        }
+      if (!k_ref.get_namespace().empty()) {
+        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", k_ref.get_path());
+        auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+        l_h.emplace<reference_file>(k_ref);
+        l_ret.emplace_back(l_h);
       }
     }
   }
   return l_ret;
 }
-std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list, bool is_filter) const {
+std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list) const {
   std::vector<entt::handle> l_ret{};
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
 
-  std::set<std::string> l_names{};
-  MItSelectionList l_it{in_list};
-  for (; !l_it.isDone(); l_it.next()) {
-    MDagPath l_path{};
-    l_it.getDagPath(l_path);
-    auto l_name = get_node_name(l_path);
-    l_names.emplace(m_namespace::get_namespace_from_name(l_name));
-  }
-  for (auto &&k_name : l_names) {
-    reference_file k_ref{};
-    if (k_ref.set_namespace(k_name)) {
-      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
-      auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-      l_h.emplace<reference_file>(k_ref);
-      l_ret.emplace_back(l_h);
-    } else {
-      DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
+  MStatus l_status{};
+  for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
+    MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
+    maya_chick(l_status);
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
+      reference_file l_ref{l_it.thisNode()};
+      MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
+      if (!l_ref.get_namespace().empty() && l_ref.has_node(in_list)) {
+        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", l_ref.get_path());
+        auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+        l_h.emplace<reference_file>(l_ref);
+        l_ret.emplace_back(l_h);
+      }
     }
   }
+
   return l_ret;
 }
 

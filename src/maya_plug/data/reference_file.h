@@ -154,8 +154,8 @@ class reference_file_factory {
   reference_file_factory()  = default;
   ~reference_file_factory() = default;
 
-  [[nodiscard]] std::vector<entt::handle> create_ref(bool is_filter = true) const;
-  [[nodiscard]] std::vector<entt::handle> create_ref(const MSelectionList &in_list, bool is_filter = true) const;
+  [[nodiscard]] std::vector<entt::handle> create_ref() const;
+  [[nodiscard]] std::vector<entt::handle> create_ref(const MSelectionList &in_list) const;
 };
 
 }  // namespace doodle::maya_plug
