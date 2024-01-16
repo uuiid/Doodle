@@ -33,6 +33,7 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   MStatus add_wind_field();
 
   MStatus set_node_attr();
+  MStatus override_node_attr();
 
   MDGModifier dg_modifier_{};
   // 强制
