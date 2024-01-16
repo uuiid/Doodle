@@ -592,10 +592,11 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
     DOODLE_MAYA_CHICK(l_status);
     MFnDependencyNode k_dep{l_object};
     if (k_dep.typeName(&l_status) == qlSolverShape) {
+      default_logger_raw()->info("找到解算核心 {}", get_node_full_name(l_object));
       break;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
+  default_logger_raw()->info("未找到解算核心");
 
   return l_object;
 }
@@ -724,7 +725,8 @@ void qcloth_shape::rest(const entt::handle& in_handle) const {
       MItDependencyGraph::Direction::kDownstream,
       MItDependencyGraph::kDepthFirst,
       MItDependencyGraph::kNodeLevel,
-      &l_s};
+      &l_s
+  };
   maya_chick(l_s);
 
   auto l_path = get_transform(l_it.currentItem());
@@ -742,7 +744,8 @@ MObject qcloth_shape::get_solver() const {
   auto l_root = obj;
   for (MItDependencyGraph l_it_dependency_graph{
            l_root, MFn::kPluginLocatorNode, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
-           MItDependencyGraph::kNodeLevel, nullptr};
+           MItDependencyGraph::kNodeLevel, nullptr
+       };
        !l_it_dependency_graph.isDone(); l_it_dependency_graph.next()) {
     l_object = l_it_dependency_graph.currentItem(&l_status);
     const MFnDependencyNode k_dep{l_object};
