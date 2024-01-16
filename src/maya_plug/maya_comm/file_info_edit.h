@@ -32,6 +32,8 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   MStatus add_collision();
   MStatus add_wind_field();
 
+  MStatus set_node_attr();
+
   MDGModifier dg_modifier_{};
   // 强制
   bool is_force{false};
@@ -41,6 +43,13 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
 
   using run_func_ptr = MStatus (file_info_edit::*)();
   run_func_ptr p_run_func{nullptr};
+
+  std::optional<std::int32_t> frame_samples;
+  std::optional<std::double_t> time_scale;
+  std::optional<std::double_t> length_scale;
+  std::optional<std::int32_t> max_cg_iteration;
+  std::optional<std::int32_t> cg_accuracy;
+  std::optional<std::array<std::double_t, 3>> gravity;
 };
 
 }  // namespace doodle::maya_plug

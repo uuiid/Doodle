@@ -33,7 +33,20 @@ MSyntax file_info_edit_syntax() {
   l_syntax.addFlag("-ac", "-add_collision", MSyntax::kSelectionItem);
   // 添加风场
   l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kSelectionItem);
+  // frame_samples
+  l_syntax.addFlag("-fs", "-frame_samples", MSyntax::kLong);
+  // time_scale
 
+  l_syntax.addFlag("-ts", "-time_scale", MSyntax::kDouble);
+  // length_scale
+  l_syntax.addFlag("-ls", "-length_scale", MSyntax::kDouble);
+  // max_cg_iteration
+  l_syntax.addFlag("-mci", "-max_cg_iteration", MSyntax::kLong);
+  // cg_accuracy
+  l_syntax.addFlag("-ca", "-cg_accuracy", MSyntax::kLong);
+  // gravity
+  l_syntax.addFlag("-g", "-gravity", MSyntax::kString);
+  l_syntax.setObjectType(MSyntax::kSelectionList);
   l_syntax.useSelectionAsDefault(true);
 
   return l_syntax;
@@ -65,6 +78,50 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
     p_run_func = &file_info_edit::add_collision;
   }
+  if (l_arg_data.isFlagSet("-fs")) {
+    std::int32_t l_frame_samples{};
+    l_arg_data.getFlagArgument("-fs", 0, l_frame_samples);
+    frame_samples = l_frame_samples;
+    p_run_func    = &file_info_edit::set_node_attr;
+  }
+  if (l_arg_data.isFlagSet("-ts")) {
+    std::double_t l_time_scale{};
+    l_arg_data.getFlagArgument("-ts", 0, l_time_scale);
+    time_scale = l_time_scale;
+    p_run_func = &file_info_edit::set_node_attr;
+  }
+  if (l_arg_data.isFlagSet("-ls")) {
+    std::double_t l_length_scale{};
+    l_arg_data.getFlagArgument("-ls", 0, l_length_scale);
+    length_scale = l_length_scale;
+    p_run_func   = &file_info_edit::set_node_attr;
+  }
+  if (l_arg_data.isFlagSet("-mci")) {
+    std::int32_t l_max_cg_iteration{};
+    l_arg_data.getFlagArgument("-mci", 0, l_max_cg_iteration);
+    max_cg_iteration = l_max_cg_iteration;
+    p_run_func       = &file_info_edit::set_node_attr;
+  }
+  if (l_arg_data.isFlagSet("-ca")) {
+    std::int32_t l_cg_accuracy{};
+    l_arg_data.getFlagArgument("-ca", 0, l_cg_accuracy);
+    cg_accuracy = l_cg_accuracy;
+    p_run_func  = &file_info_edit::set_node_attr;
+  }
+  if (l_arg_data.isFlagSet("-g")) {
+    MString l_gravity{};
+    l_arg_data.getFlagArgument("-g", 0, l_gravity);
+    std::array<std::double_t, 3> l_gravity_array{};
+    MStringArray l_str_array{};
+    l_gravity.split(' ', l_str_array);
+    if (l_str_array.length() != 3) return MStatus::kInvalidParameter;
+    for (auto i = 0; i < l_str_array.length(); ++i) {
+      l_gravity_array[i] = l_str_array[i].asDouble();
+    }
+    gravity    = l_gravity_array;
+    p_run_func = &file_info_edit::set_node_attr;
+  }
+
   return redoIt();
 }
 
@@ -164,6 +221,45 @@ MStatus file_info_edit::create_node() {
       maya_chick(dg_modifier_.doIt());
     }
   }
+  return l_status;
+}
+
+MStatus file_info_edit::set_node_attr() {
+  MStatus l_status{};
+  MFnDependencyNode l_fn_node{p_current_node, &l_status};
+  maya_chick(l_status);
+
+  if (frame_samples.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueInt(
+        l_fn_node.findPlug(doodle_file_info::frame_samples, false, &l_status), frame_samples.value()
+    ));
+  }
+  if (time_scale.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueDouble(
+        l_fn_node.findPlug(doodle_file_info::time_scale, false, &l_status), time_scale.value()
+    ));
+  }
+  if (length_scale.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueDouble(
+        l_fn_node.findPlug(doodle_file_info::length_scale, false, &l_status), length_scale.value()
+    ));
+  }
+  if (max_cg_iteration.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueInt(
+        l_fn_node.findPlug(doodle_file_info::max_cg_iteration, false, &l_status), max_cg_iteration.value()
+    ));
+  }
+  if (cg_accuracy.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueInt(
+        l_fn_node.findPlug(doodle_file_info::cg_accuracy, false, &l_status), cg_accuracy.value()
+    ));
+  }
+  if (gravity.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueDouble(get_plug(p_current_node, "gravityx"), gravity.value()[0]));
+    maya_chick(dg_modifier_.newPlugValueDouble(get_plug(p_current_node, "gravityy"), gravity.value()[1]));
+    maya_chick(dg_modifier_.newPlugValueDouble(get_plug(p_current_node, "gravityz"), gravity.value()[2]));
+  }
+  maya_chick(dg_modifier_.doIt());
   return l_status;
 }
 
