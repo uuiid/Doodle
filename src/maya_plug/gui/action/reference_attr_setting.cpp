@@ -196,6 +196,20 @@ void reference_attr_setting::add_wind_field() {
   l_gui_tree->wind_field_show_str = conv::to_s(l_str[0]);
 }
 
+void reference_attr_setting::get_collision() {
+  if (p_i->p_current_node.isNull()) return;
+  auto l_collision_objects_plug = get_plug(p_i->p_current_node, "collision_objects");
+
+  MSelectionList l_select{};
+  MStatus l_status{};
+  for (auto i = 0; i < l_collision_objects_plug.numConnectedElements(); ++i) {
+    auto l_connected_plug = l_collision_objects_plug.connectionByPhysicalIndex(i, &l_status);
+    maya_chick(l_status);
+    l_select.add(l_connected_plug.node());
+  }
+  MGlobal::setActiveSelectionList(l_select);
+}
+
 bool reference_attr_setting::render() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
