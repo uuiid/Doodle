@@ -19,6 +19,13 @@ MObject doodle_file_info::is_solve;
 MObject doodle_file_info::collision_objects;
 MObject doodle_file_info::wind_field;
 
+MObject doodle_file_info::frame_samples;
+MObject doodle_file_info::time_scale;
+MObject doodle_file_info::length_scale;
+MObject doodle_file_info::max_cg_iteration;
+MObject doodle_file_info::cg_accuracy;
+MObject doodle_file_info::gravity;
+
 void *doodle_file_info::creator() { return new doodle_file_info{}; }
 MStatus doodle_file_info::initialize() {
   MStatus l_status{};
@@ -85,6 +92,56 @@ MStatus doodle_file_info::initialize() {
     l_msg_attr.setConnectable(true);
     l_msg_attr.setDisconnectBehavior(MFnAttribute::DisconnectBehavior::kDelete);
     addAttribute(wind_field);
+  }
+  {  // frame_samples
+    MFnNumericAttribute l_numeric_attr{};
+    frame_samples = l_numeric_attr.create("frame_samples", "frame_samples", MFnNumericData::kInt, 6, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(frame_samples);
+  }
+  {  // time_scale
+    MFnNumericAttribute l_numeric_attr{};
+    time_scale = l_numeric_attr.create("time_scale", "time_scale", MFnNumericData::kDouble, 1.0, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(time_scale);
+  }
+  {  // length_scale
+    MFnNumericAttribute l_numeric_attr{};
+    length_scale = l_numeric_attr.create("length_scale", "length_scale", MFnNumericData::kDouble, 1.0, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(length_scale);
+  }
+  {  // max_cg_iteration
+    MFnNumericAttribute l_numeric_attr{};
+    max_cg_iteration =
+        l_numeric_attr.create("max_cg_iteration", "max_cg_iteration", MFnNumericData::kInt, 1000, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(max_cg_iteration);
+  }
+  {  // cg_accuracy
+    MFnNumericAttribute l_numeric_attr{};
+    cg_accuracy = l_numeric_attr.create("cg_accuracy", "cg_accuracy", MFnNumericData::kInt, 9, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(cg_accuracy);
+  }
+  {  // gravity
+    MFnNumericAttribute l_numeric_attr{};
+    gravity = l_numeric_attr.createPoint("gravity", "gravity", &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setDefault(0.0, -980.0, 0.0);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(gravity);
   }
 
   return MStatus::kSuccess;

@@ -37,6 +37,13 @@ class doodle_file_info : public MPxNode {
   static MObject collision_objects;
   // 风场
   static MObject wind_field;
+
+  static MObject frame_samples;
+  static MObject time_scale;
+  static MObject length_scale;
+  static MObject max_cg_iteration;
+  static MObject cg_accuracy;
+  static MObject gravity;
 };
 
 }  // namespace doodle::maya_plug
