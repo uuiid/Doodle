@@ -99,6 +99,7 @@ class reference_file {
 
  public:
   reference_file();
+  explicit reference_file(const MObject &in_ref_node);
 
   void set_file_info_node(const MObject &in_file_info_node);
   [[nodiscard]] MSelectionList get_collision_model() const;

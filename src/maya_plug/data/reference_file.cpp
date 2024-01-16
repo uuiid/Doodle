@@ -174,6 +174,7 @@ generate_fbx_file_path::~generate_fbx_file_path() = default;
 }  // namespace reference_file_ns
 
 reference_file::reference_file() = default;
+reference_file::reference_file(const MObject &in_ref_node) : file_info_node_(in_ref_node) {}
 
 void reference_file::set_file_info_node(const MObject &in_file_info_node) { file_info_node_ = in_file_info_node; }
 
