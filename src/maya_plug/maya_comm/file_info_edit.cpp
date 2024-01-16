@@ -147,17 +147,20 @@ MStatus file_info_edit::override_node_attr() {
     maya_chick(l_status);
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       reference_file l_ref_file{l_it.thisNode()};
-      auto l_node    = l_it.thisNode();
-      auto l_ql_core = qcloth_shape::get_ql_solver(l_ref_file.get_all_object());
-      set_attribute(l_ql_core, "simpleSubsampling", get_attribute<std::int32_t>(l_node, "simple_subsampling"));
-      set_attribute(l_ql_core, "frameSamples", get_attribute<std::int32_t>(l_node, "frame_samples"));
-      set_attribute(l_ql_core, "timeScale", get_attribute<std::double_t>(l_node, "time_scale"));
-      set_attribute(l_ql_core, "lengthScale", get_attribute<std::double_t>(l_node, "length_scale"));
-      set_attribute(l_ql_core, "maxCGIteration", get_attribute<std::int32_t>(l_node, "max_cg_iteration"));
-      set_attribute(l_ql_core, "cgAccuracy", get_attribute<std::int32_t>(l_node, "cg_accuracy"));
-      set_attribute(l_ql_core, "gravity0", get_attribute<std::double_t>(l_node, "gravityx"));
-      set_attribute(l_ql_core, "gravity1", get_attribute<std::double_t>(l_node, "gravityy"));
-      set_attribute(l_ql_core, "gravity2", get_attribute<std::double_t>(l_node, "gravityz"));
+      if (!l_ref_file.get_namespace().empty() && l_ref_file.export_group_attr()) {
+        auto l_node    = l_it.thisNode();
+        auto l_ql_core = qcloth_shape::get_ql_solver(l_ref_file.get_all_object());
+        if (l_ql_core.isNull()) continue;
+        set_attribute(l_ql_core, "simpleSubsampling", get_attribute<std::int32_t>(l_node, "simple_subsampling"));
+        set_attribute(l_ql_core, "frameSamples", get_attribute<std::int32_t>(l_node, "frame_samples"));
+        set_attribute(l_ql_core, "timeScale", get_attribute<std::double_t>(l_node, "time_scale"));
+        set_attribute(l_ql_core, "lengthScale", get_attribute<std::double_t>(l_node, "length_scale"));
+        set_attribute(l_ql_core, "maxCGIteration", get_attribute<std::int32_t>(l_node, "max_cg_iteration"));
+        set_attribute(l_ql_core, "cgAccuracy", get_attribute<std::int32_t>(l_node, "cg_accuracy"));
+        set_attribute(l_ql_core, "gravity0", get_attribute<std::double_t>(l_node, "gravityx"));
+        set_attribute(l_ql_core, "gravity1", get_attribute<std::double_t>(l_node, "gravityy"));
+        set_attribute(l_ql_core, "gravity2", get_attribute<std::double_t>(l_node, "gravityz"));
+      }
     }
   }
   return l_status;
