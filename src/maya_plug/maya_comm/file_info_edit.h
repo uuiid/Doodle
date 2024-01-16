@@ -7,6 +7,7 @@
 
 #include "maya/MApiNamespace.h"
 #include "maya/MDGModifier.h"
+#include <maya/MSelectionList.h>
 namespace doodle::maya_plug {
 
 namespace file_info_edit_ns {
@@ -27,9 +28,15 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   MStatus delete_node();
   bool has_node() const;
 
+  MStatus create_node();
+  MStatus add_collision();
+
   MDGModifier dg_modifier_{};
   // 强制
   bool is_force{false};
+
+  MObject p_current_node{};
+  MSelectionList p_selection_list{};
 };
 
 }  // namespace doodle::maya_plug
