@@ -76,7 +76,7 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   }
   if (l_arg_data.isFlagSet("-aw")) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
-    p_run_func = &file_info_edit::add_collision;
+    p_run_func = &file_info_edit::add_wind_field;
   }
   if (l_arg_data.isFlagSet("-fs")) {
     std::int32_t l_frame_samples{};
