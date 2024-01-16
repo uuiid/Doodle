@@ -43,6 +43,11 @@ class reference_attr_setting {
 
   bool get_file_info();
   void clear();
+  void save();
+  void add_collision();
+  void get_collision();
+  void add_wind_field();
+  void set_attr(const std::string& in_attr_name, const std::string& in_value);
 
  public:
   reference_attr_setting();
