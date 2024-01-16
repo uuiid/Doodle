@@ -127,7 +127,6 @@ class reference_file {
   bool replace_file(const FSys::path &in_handle);
 
   std::optional<MDagPath> get_field_dag() const;
-  void add_field_dag(const MSelectionList &in_list);
 
   enum class export_type : std::uint32_t {
     abc = 1,

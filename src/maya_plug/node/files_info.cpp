@@ -78,14 +78,13 @@ MStatus doodle_file_info::initialize() {
   }
   {
     MFnMessageAttribute l_msg_attr{};
-    wind_fields = l_msg_attr.create("wind_fields", "wind_fields", &l_status);
+    wind_field = l_msg_attr.create("wind_field", "wind_field", &l_status);
     maya_chick(l_status);
     l_msg_attr.setStorable(true);
-    l_msg_attr.setArray(true);
     l_msg_attr.setWritable(true);
     l_msg_attr.setConnectable(true);
     l_msg_attr.setDisconnectBehavior(MFnAttribute::DisconnectBehavior::kDelete);
-    addAttribute(wind_fields);
+    addAttribute(wind_field);
   }
 
   return MStatus::kSuccess;

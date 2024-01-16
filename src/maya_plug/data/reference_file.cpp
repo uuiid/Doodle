@@ -349,29 +349,26 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
 
 std::optional<MDagPath> reference_file::get_field_dag() const {
   MSelectionList l_select{};
-  auto l_status = l_select.add(d_str{field_attr}, false);
-  if (l_status == MStatus::kInvalidParameter) {
-    return {};
-  } else {
-    MDagPath l_obj{};
-    l_status = l_select.getDagPath(0, l_obj);
-    DOODLE_MAYA_CHICK(l_status);
-    return l_obj;
-  }
-}
-void reference_file::add_field_dag(const MSelectionList &in_list) {
+
+  MFnDependencyNode l_file_info{};
   MStatus l_status{};
-  MItSelectionList l_it{in_list, MFn::kField, &l_status};
-  DOODLE_MAYA_CHICK(l_status);
-  for (; !l_it.isDone(); l_it.next()) {
-    MDagPath l_path{};
+  maya_chick(l_file_info.setObject(file_info_node_));
 
-    l_status = l_it.getDagPath(l_path);
-    DOODLE_MAYA_CHICK(l_status);
-    field_attr = fmt::to_string(l_path);
+  auto l_plug = l_file_info.findPlug(doodle_file_info::wind_field, false, &l_status);
+  maya_chick(l_status);
 
-    return;
+  if (l_plug.isDestination(&l_status)) {
+    maya_chick(l_status);
+
+    auto l_node_plug = l_plug.source(&l_status);
+    maya_chick(l_status);
+
+    auto l_node = l_node_plug.node(&l_status);
+    maya_chick(l_status);
+    return get_dag_path(l_node);
   }
+
+  return {};
 }
 
 std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
