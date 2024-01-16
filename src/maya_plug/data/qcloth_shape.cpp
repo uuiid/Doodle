@@ -765,7 +765,10 @@ MDagPath qcloth_shape::get_shape() const {
 std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
 
 void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
-  sim_cover_attr::cover_qcloth_attr(in_handle);
+  auto l_str = fmt::format(
+      "doodle_file_info_edit -override -n {}", get_node_full_name(in_handle.get<reference_file>().get_file_info_node())
+  );
+  maya_chick(MGlobal::executeCommand(conv::to_ms(l_str)));
 }
 
 }  // namespace doodle::maya_plug
