@@ -51,6 +51,7 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   std::optional<std::int32_t> max_cg_iteration;
   std::optional<std::int32_t> cg_accuracy;
   std::optional<std::array<std::double_t, 3>> gravity;
+  std::optional<bool> is_solve;
 };
 
 }  // namespace doodle::maya_plug

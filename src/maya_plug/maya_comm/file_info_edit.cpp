@@ -37,8 +37,9 @@ MSyntax file_info_edit_syntax() {
   l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kSelectionItem);
   // frame_samples
   l_syntax.addFlag("-fs", "-frame_samples", MSyntax::kLong);
+  // is_solve
+  l_syntax.addFlag("-is", "-is_solve", MSyntax::kBoolean);
   // time_scale
-
   l_syntax.addFlag("-ts", "-time_scale", MSyntax::kDouble);
   // length_scale
   l_syntax.addFlag("-ls", "-length_scale", MSyntax::kDouble);
@@ -89,6 +90,13 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
     frame_samples = l_frame_samples;
     p_run_func    = &file_info_edit::set_node_attr;
   }
+  if (l_arg_data.isFlagSet("-is")) {
+    bool l_is_solve{};
+    l_arg_data.getFlagArgument("-is", 0, l_is_solve);
+    is_solve   = l_is_solve;
+    p_run_func = &file_info_edit::set_node_attr;
+  }
+
   if (l_arg_data.isFlagSet("-ts")) {
     std::double_t l_time_scale{};
     l_arg_data.getFlagArgument("-ts", 0, l_time_scale);
@@ -292,6 +300,11 @@ MStatus file_info_edit::set_node_attr() {
     maya_chick(dg_modifier_.newPlugValueDouble(get_plug(p_current_node, "gravityx"), gravity.value()[0]));
     maya_chick(dg_modifier_.newPlugValueDouble(get_plug(p_current_node, "gravityy"), gravity.value()[1]));
     maya_chick(dg_modifier_.newPlugValueDouble(get_plug(p_current_node, "gravityz"), gravity.value()[2]));
+  }
+  if (is_solve.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueBool(
+        l_fn_node.findPlug(doodle_file_info::is_solve, false, &l_status), is_solve.value()
+    ));
   }
   maya_chick(dg_modifier_.doIt());
   return l_status;
