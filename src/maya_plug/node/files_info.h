@@ -11,6 +11,7 @@ namespace doodle::maya_plug {
 class doodle_file_info : public MPxNode {
   friend class reference_file;
   friend class file_info_edit;
+  friend class reference_attr_setting;
 
  public:
   static MTypeId doodle_id;

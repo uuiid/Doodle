@@ -17,7 +17,7 @@ MObject doodle_file_info::reference_file_path;
 MObject doodle_file_info::reference_file_namespace;
 MObject doodle_file_info::is_solve;
 MObject doodle_file_info::collision_objects;
-MObject doodle_file_info::wind_fields;
+MObject doodle_file_info::wind_field;
 
 void *doodle_file_info::creator() { return new doodle_file_info{}; }
 MStatus doodle_file_info::initialize() {
