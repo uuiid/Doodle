@@ -42,8 +42,6 @@ class reference_attr_setting {
   std::unique_ptr<impl> p_i;
 
   bool get_file_info();
-  void clear();
-  void save();
   void add_collision();
   void get_collision();
   void add_wind_field();

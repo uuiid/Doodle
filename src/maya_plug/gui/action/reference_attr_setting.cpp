@@ -115,7 +115,31 @@ bool reference_attr_setting::get_file_info() {
   });
   // 刷新属性
   ranges::for_each(p_i->p_ref_nodes, [](gui_tree& in) {
+    in.use_sim            = get_attribute<bool>(in.ref_node_, "is_solve");
+    in.simple_subsampling = get_attribute<bool>(in.ref_node_, "simple_subsampling");
+    in.frame_samples      = get_attribute<std::int32_t>(in.ref_node_, "frame_samples");
+    in.time_scale         = get_attribute<std::float_t>(in.ref_node_, "time_scale");
+    in.length_scale       = get_attribute<std::float_t>(in.ref_node_, "length_scale");
+    in.max_cg_iteration   = get_attribute<std::int32_t>(in.ref_node_, "max_cg_iteration");
+    in.cg_accuracy        = get_attribute<std::int32_t>(in.ref_node_, "cg_accuracy");
+    auto l_plug           = get_plug(in.ref_node_, "gravity");
+    in.gravity.data       = {l_plug[0].asFloat(), l_plug[1].asFloat(), l_plug[2].asFloat()};
 
+    MStatus l_status{};
+    MFnDependencyNode l_fn_node{in.ref_node_};
+
+    auto l_collision_objects_plug = get_plug(in.ref_node_, "collision_objects");
+
+    for (auto i = 0; i < l_collision_objects_plug.numConnectedElements(); ++i) {
+      auto l_connected_plug = l_collision_objects_plug.connectionByPhysicalIndex(i, &l_status);
+      maya_chick(l_status);
+      in.collision_model_show_str.emplace_back(get_node_full_name(l_connected_plug.node()));
+    }
+
+    auto l_wind_field_plug = get_plug(in.ref_node_, "wind_field");
+    if (l_wind_field_plug.isConnected()) {
+      in.wind_field_show_str = get_node_full_name(l_wind_field_plug.node());
+    }
   });
   return true;
 }
@@ -174,9 +198,6 @@ void reference_attr_setting::add_wind_field() {
 
 bool reference_attr_setting::render() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  if (imgui::Button("保存")) {
-    save();
-  }
 
   if (auto l_c = dear::Child{"ref_file", ImVec2{0, viewport->WorkSize.y / 2}}; l_c) {
     if (imgui::Button("解析选中引用")) {
@@ -192,7 +213,9 @@ bool reference_attr_setting::render() {
         p_i->p_current_select_namespace = l_ref.name;
       }
       if (l_node) {
-        imgui::Checkbox(*l_ref.use_sim, &l_ref.use_sim);
+        if (imgui::Checkbox(*l_ref.use_sim, &l_ref.use_sim)) {
+          set_attr("is_solve", std::to_string(l_ref.use_sim.data));
+        }
         if (l_ref.use_sim) {
           if (imgui::Button("添加碰撞")) {
             add_collision();
