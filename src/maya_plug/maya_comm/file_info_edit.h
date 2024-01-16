@@ -30,6 +30,7 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
 
   MStatus create_node();
   MStatus add_collision();
+  MStatus add_wind_field();
 
   MDGModifier dg_modifier_{};
   // 强制
@@ -37,6 +38,9 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
 
   MObject p_current_node{};
   MSelectionList p_selection_list{};
+
+  using run_func_ptr = MStatus (file_info_edit::*)();
+  run_func_ptr p_run_func{nullptr};
 };
 
 }  // namespace doodle::maya_plug

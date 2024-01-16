@@ -31,6 +31,8 @@ MSyntax file_info_edit_syntax() {
   l_syntax.addFlag("-n", "-node", MSyntax::kString);
   // 添加碰撞
   l_syntax.addFlag("-ac", "-add_collision", MSyntax::kSelectionItem);
+  // 添加风场
+  l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kSelectionItem);
 
   l_syntax.useSelectionAsDefault(true);
 
@@ -43,7 +45,8 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   maya_chick(l_status);
 
   if (l_arg_data.isFlagSet("-f")) {
-    is_force = true;
+    is_force   = true;
+    p_run_func = &file_info_edit::create_node;
   }
   if (l_arg_data.isFlagSet("-n")) {
     MString l_node_name{};
@@ -56,17 +59,47 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   }
   if (l_arg_data.isFlagSet("-ac")) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
+    p_run_func = &file_info_edit::add_collision;
+  }
+  if (l_arg_data.isFlagSet("-aw")) {
+    maya_chick(l_arg_data.getObjects(p_selection_list));
+    p_run_func = &file_info_edit::add_collision;
   }
   return redoIt();
 }
 
 MStatus file_info_edit::redoIt() {
   MStatus l_status{};
-  if (p_selection_list.length() != 0) {
-    l_status = add_collision();
-  } else {
-    l_status = create_node();
+  l_status = (this->*p_run_func)();
+  return l_status;
+}
+
+MStatus file_info_edit::add_wind_field() {
+  MStatus l_status{};
+  MFnDependencyNode l_fn_node{p_current_node, &l_status};
+  maya_chick(l_status);
+
+  // 清除所有的连接
+  {
+    auto l_plug = l_fn_node.findPlug(doodle_file_info::wind_field, true);
+    if (l_plug.isConnected()) {
+      auto l_connected_plug = l_plug.source(&l_status);
+      maya_chick(l_status);
+      maya_chick(dg_modifier_.disconnect(l_connected_plug, l_plug));
+    }
   }
+  // 重新连接
+  for (MItSelectionList l_it{p_selection_list}; !l_it.isDone(); l_it.next()) {
+    MObject l_obj{};
+    l_it.getDependNode(l_obj);
+    MFnDependencyNode l_fn_node_2{l_obj, &l_status};
+    maya_chick(l_status);
+    if (l_fn_node_2.typeId() == MFn::kMesh) {
+      maya_chick(dg_modifier_.connect(get_plug(l_obj, "message"), get_plug(p_current_node, "wind_field")));
+    }
+    break;
+  }
+  maya_chick(dg_modifier_.doIt());
   return l_status;
 }
 
