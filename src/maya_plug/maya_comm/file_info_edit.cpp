@@ -70,6 +70,7 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
 
 MStatus file_info_edit::redoIt() {
   MStatus l_status{};
+  if (p_run_func == nullptr) return MStatus::kInvalidParameter;
   l_status = (this->*p_run_func)();
   return l_status;
 }
