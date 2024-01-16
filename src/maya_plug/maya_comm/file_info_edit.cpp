@@ -62,10 +62,6 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   MArgDatabase l_arg_data{syntax(), in_list, &l_status};
   maya_chick(l_status);
 
-  if (l_arg_data.isFlagSet("-f")) {
-    is_force   = true;
-    p_run_func = &file_info_edit::create_node;
-  }
   if (l_arg_data.isFlagSet("-n")) {
     MString l_node_name{};
     l_arg_data.getFlagArgument("-n", 0, l_node_name);
@@ -74,6 +70,10 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
     maya_chick(l_status);
     l_status = l_selection_list.getDependNode(0, p_current_node);
     maya_chick(l_status);
+  }
+  if (l_arg_data.isFlagSet("-f")) {
+    is_force   = true;
+    p_run_func = &file_info_edit::create_node;
   }
   if (l_arg_data.isFlagSet("-ac")) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
