@@ -57,8 +57,6 @@ class reference_attr_setting::impl {
   std::vector<gui_tree> p_ref_nodes;
   MObject p_current_node;
 
-  std::string p_current_select_namespace;
-
   ::doodle::gui::gui_cache<bool> simple_subsampling{"simple subsampling", true};
   ::doodle::gui::gui_cache<std::int32_t> frame_samples{"frame samples"s, 6};
   ::doodle::gui::gui_cache<std::float_t> time_scale{"time scale"s, 1.0f};
@@ -141,10 +139,10 @@ bool reference_attr_setting::get_file_info() {
   return true;
 }
 
-void reference_attr_setting::add_collision() {
-  if (p_i->p_current_node.isNull()) return;
+void reference_attr_setting::add_collision(const MObject& in_obj) {
+  if (in_obj.isNull()) return;
 
-  auto l_com = fmt::format("doodle_file_info_edit -add_collision -node {}", get_node_full_name(p_i->p_current_node));
+  auto l_com = fmt::format("doodle_file_info_edit -add_collision -node {}", get_node_full_name(in_obj));
   MGlobal::executeCommand(conv::to_ms(l_com), true, true);
 
   MStatus l_status{};
@@ -154,9 +152,8 @@ void reference_attr_setting::add_collision() {
   l_select.getSelectionStrings(l_str);
 
   // 寻找gui_tree
-  auto l_gui_tree = ranges::find_if(p_i->p_ref_nodes, [&](const gui_tree& in) -> bool {
-    return in.ref_node_ == p_i->p_current_node;
-  });
+  auto l_gui_tree =
+      ranges::find_if(p_i->p_ref_nodes, [&](const gui_tree& in) -> bool { return in.ref_node_ == in_obj; });
   if (l_gui_tree == p_i->p_ref_nodes.end()) return;
   // 设置碰撞gui数据
   l_gui_tree->collision_model_show_str.clear();
@@ -164,18 +161,19 @@ void reference_attr_setting::add_collision() {
     l_gui_tree->collision_model_show_str.emplace_back(conv::to_s(i));
   }
 }
-void reference_attr_setting::set_attr(const std::string& in_attr_name, const std::string& in_value) {
-  if (p_i->p_current_node.isNull()) return;
-  auto l_com = fmt::format(
-      "doodle_file_info_edit -node {} -{} {} ", get_node_full_name(p_i->p_current_node), in_attr_name, in_value
-  );
+void reference_attr_setting::set_attr(
+    const MObject& in_obj, const std::string& in_attr_name, const std::string& in_value
+) {
+  if (in_obj.isNull()) return;
+  auto l_com =
+      fmt::format("doodle_file_info_edit -node {} -{} {} ", get_node_full_name(in_obj), in_attr_name, in_value);
   MGlobal::executeCommand(conv::to_ms(l_com), true, true);
 }
 
-void reference_attr_setting::add_wind_field() {
-  if (p_i->p_current_node.isNull()) return;
+void reference_attr_setting::add_wind_field(const MObject& in_obj) {
+  if (in_obj.isNull()) return;
 
-  auto l_com = fmt::format("doodle_file_info_edit -add_wind_field -node {}", get_node_full_name(p_i->p_current_node));
+  auto l_com = fmt::format("doodle_file_info_edit -add_wind_field -node {}", get_node_full_name(in_obj));
   MGlobal::executeCommand(conv::to_ms(l_com), true, true);
 
   MStatus l_status{};
@@ -186,17 +184,16 @@ void reference_attr_setting::add_wind_field() {
 
   // 寻找gui_tree
 
-  auto l_gui_tree = ranges::find_if(p_i->p_ref_nodes, [&](const gui_tree& in) -> bool {
-    return in.ref_node_ == p_i->p_current_node;
-  });
+  auto l_gui_tree =
+      ranges::find_if(p_i->p_ref_nodes, [&](const gui_tree& in) -> bool { return in.ref_node_ == in_obj; });
   if (l_gui_tree == p_i->p_ref_nodes.end()) return;
   // 设置风场gui数据
   l_gui_tree->wind_field_show_str = conv::to_s(l_str[0]);
 }
 
-void reference_attr_setting::get_collision() {
-  if (p_i->p_current_node.isNull()) return;
-  auto l_collision_objects_plug = get_plug(p_i->p_current_node, "collision_objects");
+void reference_attr_setting::get_collision(const MObject& in_obj) {
+  if (in_obj.isNull()) return;
+  auto l_collision_objects_plug = get_plug(in_obj, "collision_objects");
 
   MSelectionList l_select{};
   MStatus l_status{};
@@ -220,24 +217,21 @@ bool reference_attr_setting::render() {
 
     for (auto&& l_ref : p_i->p_ref_nodes) {
       dear::TreeNode l_node{l_ref.name.c_str()};
-      if (ImGui::IsItemClicked() /*&& !ImGui::IsItemToggledOpen()*/) {
-        p_i->p_current_node             = l_ref.ref_node_;
-        p_i->p_current_select_namespace = l_ref.name;
-      }
+
       if (l_node) {
         if (imgui::Checkbox(*l_ref.use_sim, &l_ref.use_sim)) {
-          set_attr("is_solve", fmt::to_string(l_ref.use_sim.data));
+          set_attr(l_ref.ref_node_, "is_solve", fmt::to_string(l_ref.use_sim.data));
         }
         if (l_ref.use_sim.data) {
           if (imgui::Button("添加碰撞")) {
-            add_collision();
+            add_collision(l_ref.ref_node_);
           }
           ImGui::SameLine();
           if (imgui::Button("选择已添加")) {
-            get_collision();
+            get_collision(l_ref.ref_node_);
           }
           if (imgui::Button("设置布料风场")) {
-            add_wind_field();
+            add_wind_field(l_ref.ref_node_);
           }
 
           dear::Text("解算碰撞: "s);
@@ -245,26 +239,26 @@ bool reference_attr_setting::render() {
 
           dear::Text(fmt::format("链接风场: {}", l_ref.wind_field_show_str));
           if (ImGui::Checkbox(*l_ref.simple_subsampling, &l_ref.simple_subsampling)) {
-            set_attr("simple_subsampling", fmt::to_string(l_ref.simple_subsampling.data));
+            set_attr(l_ref.ref_node_, "simple_subsampling", fmt::to_string(l_ref.simple_subsampling.data));
           }
           if (ImGui::InputInt(*l_ref.frame_samples, &l_ref.frame_samples)) {
-            set_attr("frame_samples", fmt::to_string(l_ref.frame_samples.data));
+            set_attr(l_ref.ref_node_, "frame_samples", fmt::to_string(l_ref.frame_samples.data));
           }
           if (ImGui::InputFloat(*l_ref.time_scale, &l_ref.time_scale)) {
-            set_attr("time_scale", fmt::to_string(l_ref.time_scale.data));
+            set_attr(l_ref.ref_node_, "time_scale", fmt::to_string(l_ref.time_scale.data));
           }
           if (ImGui::InputFloat(*l_ref.length_scale, &l_ref.length_scale)) {
-            set_attr("length_scale", fmt::to_string(l_ref.length_scale.data));
+            set_attr(l_ref.ref_node_, "length_scale", fmt::to_string(l_ref.length_scale.data));
           }
           if (ImGui::InputInt(*l_ref.max_cg_iteration, &l_ref.max_cg_iteration)) {
-            set_attr("max_cg_iteration", fmt::to_string(l_ref.max_cg_iteration.data));
+            set_attr(l_ref.ref_node_, "max_cg_iteration", fmt::to_string(l_ref.max_cg_iteration.data));
           }
           if (ImGui::InputInt(*l_ref.cg_accuracy, &l_ref.cg_accuracy)) {
-            set_attr("cg_accuracy", fmt::to_string(l_ref.cg_accuracy.data));
+            set_attr(l_ref.ref_node_, "cg_accuracy", fmt::to_string(l_ref.cg_accuracy.data));
           }
           if (ImGui::InputFloat3(*l_ref.gravity, l_ref.gravity.data.data())) {
             set_attr(
-                "gravity",
+                l_ref.ref_node_, "gravity",
                 fmt::format(R"("{} {} {}")", l_ref.gravity.data[0], l_ref.gravity.data[1], l_ref.gravity.data[2])
             );
           }

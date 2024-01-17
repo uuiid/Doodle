@@ -8,6 +8,7 @@
 
 #include <maya_plug/configure/static_value.h>
 
+#include <maya/MObject.h>
 namespace doodle::maya_plug {
 class reference_file;
 
@@ -42,10 +43,10 @@ class reference_attr_setting {
   std::unique_ptr<impl> p_i;
 
   bool get_file_info();
-  void add_collision();
-  void get_collision();
-  void add_wind_field();
-  void set_attr(const std::string& in_attr_name, const std::string& in_value);
+  void add_collision(const MObject& in_obj);
+  void get_collision(const MObject& in_obj);
+  void add_wind_field(const MObject& in_obj);
+  void set_attr(const MObject& in_obj, const std::string& in_attr_name, const std::string& in_value);
 
  public:
   reference_attr_setting();
