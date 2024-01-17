@@ -13,6 +13,7 @@
 #include <maya/MFnReference.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItSelectionList.h>
+#include <maya/mocapserver.h>
 
 namespace doodle::maya_plug {
 file_info_edit::file_info_edit()  = default;
@@ -32,9 +33,9 @@ MSyntax file_info_edit_syntax() {
   // 节点
   l_syntax.addFlag("-n", "-node", MSyntax::kString);
   // 添加碰撞
-  l_syntax.addFlag("-ac", "-add_collision", MSyntax::kSelectionItem);
+  l_syntax.addFlag("-ac", "-add_collision", MSyntax::kNoArg);
   // 添加风场
-  l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kSelectionItem);
+  l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kNoArg);
   // is_solve
   l_syntax.addFlag("-is", "-is_solve", MSyntax::kBoolean);
   // simple_subsampling
@@ -187,57 +188,64 @@ MStatus file_info_edit::override_node_attr() {
 MStatus file_info_edit::add_wind_field() {
   MStatus l_status{};
   MFnDependencyNode l_fn_node{p_current_node, &l_status};
-  maya_chick(l_status);
+  DOODLE_MAYA_RETURN(l_status);
 
   // 清除所有的连接
   {
     auto l_plug = l_fn_node.findPlug(doodle_file_info::wind_field, true);
     if (l_plug.isConnected()) {
       auto l_connected_plug = l_plug.source(&l_status);
-      maya_chick(l_status);
-      maya_chick(dg_modifier_.disconnect(l_connected_plug, l_plug));
+      DOODLE_MAYA_RETURN(l_status);
+      DOODLE_MAYA_RETURN(dg_modifier_.disconnect(l_connected_plug, l_plug));
     }
   }
+  DOODLE_MAYA_RETURN(dg_modifier_.doIt());
+
   // 重新连接
   for (MItSelectionList l_it{p_selection_list}; !l_it.isDone(); l_it.next()) {
     MObject l_obj{};
     l_it.getDependNode(l_obj);
     MFnDependencyNode l_fn_node_2{l_obj, &l_status};
-    maya_chick(l_status);
-    if (l_fn_node_2.typeId() == MFn::kMesh) {
-      maya_chick(dg_modifier_.connect(get_plug(l_obj, "message"), get_plug(p_current_node, "wind_field")));
-    }
+    DOODLE_MAYA_RETURN(l_status);
+    DOODLE_MAYA_RETURN(dg_modifier_.connect(get_plug(l_obj, "message"), get_plug(p_current_node, "wind_field")));
+
     break;
   }
-  maya_chick(dg_modifier_.doIt());
+  DOODLE_MAYA_RETURN(dg_modifier_.doIt());
   return l_status;
 }
 
 MStatus file_info_edit::add_collision() {
   MStatus l_status{};
   MFnDependencyNode l_fn_node{p_current_node, &l_status};
-  maya_chick(l_status);
+  DOODLE_MAYA_RETURN(l_status);
 
   // 清除所有的连接
   {
     auto l_plug = l_fn_node.findPlug(doodle_file_info::collision_objects, true);
     for (auto i = 0; i < l_plug.numConnectedElements(); ++i) {
       auto l_connected_plug = l_plug.connectionByPhysicalIndex(i, &l_status);
-      maya_chick(l_status);
-      maya_chick(dg_modifier_.disconnect(l_connected_plug, l_plug));
+      DOODLE_MAYA_RETURN(l_status);
+      DOODLE_MAYA_RETURN(dg_modifier_.disconnect(l_connected_plug, l_plug));
     }
   }
+  DOODLE_MAYA_RETURN(dg_modifier_.doIt());
   // 重新连接
-  for (MItSelectionList l_it{p_selection_list}; !l_it.isDone(); l_it.next()) {
+  std::int32_t l_index{0};
+  auto l_plug = l_fn_node.findPlug(doodle_file_info::collision_objects, true, &l_status);
+  DOODLE_MAYA_RETURN(l_status);
+  for (MItSelectionList l_it{p_selection_list}; !l_it.isDone(); l_it.next(), ++l_index) {
     MObject l_obj{};
     l_it.getDependNode(l_obj);
     MFnDependencyNode l_fn_node_2{l_obj, &l_status};
     maya_chick(l_status);
-    if (l_fn_node_2.typeId() == MFn::kMesh) {
-      maya_chick(dg_modifier_.connect(get_plug(l_obj, "message"), get_plug(p_current_node, "collision_objects")));
+    if (l_fn_node_2.hasObj(MFn::kMesh)) {
+      auto l_p = l_plug.elementByLogicalIndex(l_index, &l_status);
+      DOODLE_MAYA_RETURN(l_status);
+      DOODLE_MAYA_RETURN(dg_modifier_.connect(get_plug(l_obj, "message"), l_p));
     }
   }
-  maya_chick(dg_modifier_.doIt());
+  DOODLE_MAYA_RETURN(dg_modifier_.doIt());
   return l_status;
 }
 

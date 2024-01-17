@@ -43,6 +43,13 @@ inline void maya_chick(const MStatus& in_status, ::boost::source_location const&
   if (!in_status) throw_exception(maya_error{make_error(in_status.statusCode()), fmt::to_string(in_status)}, in_loc);
 }
 
+#define DOODLE_MAYA_RETURN(in_status)                                        \
+  if (auto&& l_m_s = in_status; !l_m_s) {                                    \
+    l_m_s.pAPIerror(__FILE__, __LINE__);                                     \
+    default_logger_raw()->log(log_loc(), level::err, fmt::to_string(l_m_s)); \
+    return l_m_s;                                                            \
+  }
+
 }  // namespace doodle::maya_plug
 
 namespace boost::system {
