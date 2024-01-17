@@ -44,7 +44,7 @@ std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 namespace doodle::maya_plug {
 
 struct find_windows_call {
-  HWND maya_wnd{};
+  HWND maya_wnd{nullptr};
 };
 
 HWND find_windows() {
@@ -53,7 +53,7 @@ HWND find_windows() {
 
   ::EnumWindows(
       [](HWND hwnd, LPARAM lParam) -> BOOL {
-        if (boost::this_process::get_id() == ::GetWindowThreadProcessId(hwnd, nullptr)) {
+        if (::GetCurrentThreadId() == ::GetWindowThreadProcessId(hwnd, nullptr)) {
           auto* l_data     = reinterpret_cast<find_windows_call*>(lParam);
           l_data->maya_wnd = hwnd;
           return FALSE;
