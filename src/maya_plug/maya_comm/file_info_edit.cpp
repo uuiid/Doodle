@@ -35,10 +35,13 @@ MSyntax file_info_edit_syntax() {
   l_syntax.addFlag("-ac", "-add_collision", MSyntax::kSelectionItem);
   // 添加风场
   l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kSelectionItem);
-  // frame_samples
-  l_syntax.addFlag("-fs", "-frame_samples", MSyntax::kLong);
   // is_solve
   l_syntax.addFlag("-is", "-is_solve", MSyntax::kBoolean);
+  // simple_subsampling
+  l_syntax.addFlag("-ss", "-simple_subsampling", MSyntax::kBoolean);
+
+  // frame_samples
+  l_syntax.addFlag("-fs", "-frame_samples", MSyntax::kLong);
   // time_scale
   l_syntax.addFlag("-ts", "-time_scale", MSyntax::kDouble);
   // length_scale
@@ -84,6 +87,13 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
     p_run_func = &file_info_edit::add_wind_field;
   }
+  if (l_arg_data.isFlagSet("-ss")) {
+    bool l_simple_subsampling{};
+    l_arg_data.getFlagArgument("-ss", 0, l_simple_subsampling);
+    simple_subsampling = l_simple_subsampling;
+    p_run_func         = &file_info_edit::set_node_attr;
+  }
+
   if (l_arg_data.isFlagSet("-fs")) {
     std::int32_t l_frame_samples{};
     l_arg_data.getFlagArgument("-fs", 0, l_frame_samples);
@@ -270,7 +280,11 @@ MStatus file_info_edit::set_node_attr() {
   MStatus l_status{};
   MFnDependencyNode l_fn_node{p_current_node, &l_status};
   maya_chick(l_status);
-
+  if (simple_subsampling.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueBool(
+        l_fn_node.findPlug(doodle_file_info::simple_subsampling, false, &l_status), simple_subsampling.value()
+    ));
+  }
   if (frame_samples.has_value()) {
     maya_chick(dg_modifier_.newPlugValueInt(
         l_fn_node.findPlug(doodle_file_info::frame_samples, false, &l_status), frame_samples.value()

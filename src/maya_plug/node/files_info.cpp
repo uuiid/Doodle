@@ -19,6 +19,7 @@ MObject doodle_file_info::is_solve;
 MObject doodle_file_info::collision_objects;
 MObject doodle_file_info::wind_field;
 
+MObject doodle_file_info::simple_subsampling;
 MObject doodle_file_info::frame_samples;
 MObject doodle_file_info::time_scale;
 MObject doodle_file_info::length_scale;
@@ -93,6 +94,17 @@ MStatus doodle_file_info::initialize() {
     l_msg_attr.setDisconnectBehavior(MFnAttribute::DisconnectBehavior::kDelete);
     addAttribute(wind_field);
   }
+  // simple_subsampling
+  {
+    MFnNumericAttribute l_numeric_attr{};
+    simple_subsampling =
+        l_numeric_attr.create("simple_subsampling", "simple_subsampling", MFnNumericData::kBoolean, false, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(simple_subsampling);
+  }
+
   {  // frame_samples
     MFnNumericAttribute l_numeric_attr{};
     frame_samples = l_numeric_attr.create("frame_samples", "frame_samples", MFnNumericData::kInt, 6, &l_status);
