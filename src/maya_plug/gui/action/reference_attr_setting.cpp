@@ -128,12 +128,12 @@ bool reference_attr_setting::get_file_info() {
     for (auto i = 0; i < l_collision_objects_plug.numConnectedElements(); ++i) {
       auto l_connected_plug = l_collision_objects_plug.connectionByPhysicalIndex(i, &l_status);
       maya_chick(l_status);
-      in.collision_model_show_str.emplace_back(get_node_full_name(l_connected_plug.node()));
+      in.collision_model_show_str.emplace_back(get_node_full_name(l_connected_plug.source().node()));
     }
 
     auto l_wind_field_plug = get_plug(in.ref_node_, "wind_field");
     if (l_wind_field_plug.isConnected()) {
-      in.wind_field_show_str = get_node_full_name(l_wind_field_plug.node());
+      in.wind_field_show_str = get_node_full_name(l_wind_field_plug.source().node());
     }
   });
   return true;
