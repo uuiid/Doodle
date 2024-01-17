@@ -90,7 +90,7 @@ bool reference_attr_setting::get_file_info() {
   // 过滤有效
   p_i->p_ref_nodes |= ranges::actions::remove_if([&](const gui_tree& in) -> bool {
     reference_file l_ref{in.ref_node_};
-    return !l_ref.get_namespace().empty() && l_ref.export_group_attr();
+    return !l_ref.export_group_attr();
   });
 
   // 过滤选中
@@ -101,10 +101,7 @@ bool reference_attr_setting::get_file_info() {
     MObject l_obj{};
     p_i->p_ref_nodes |= ranges::actions::remove_if([&](gui_tree& in) -> bool {
       reference_file l_ref{in.ref_node_};
-      if (!l_ref.get_namespace().empty() && l_ref.has_node(l_selection_list)) {
-        return true;
-      }
-      return false;
+      return !l_ref.has_node(l_selection_list);
     });
   }
 
@@ -168,6 +165,7 @@ void reference_attr_setting::add_collision() {
   }
 }
 void reference_attr_setting::set_attr(const std::string& in_attr_name, const std::string& in_value) {
+  if (p_i->p_current_node.isNull()) return;
   auto l_com = fmt::format(
       "doodle_file_info_edit -node {} -{} {} ", get_node_full_name(p_i->p_current_node), in_attr_name, in_value
   );
@@ -220,7 +218,7 @@ bool reference_attr_setting::render() {
     MStatus k_s{};
     MSelectionList l_select{};
 
-    for (auto l_ref : p_i->p_ref_nodes) {
+    for (auto&& l_ref : p_i->p_ref_nodes) {
       dear::TreeNode l_node{l_ref.name.c_str()};
       if (ImGui::IsItemClicked() /*&& !ImGui::IsItemToggledOpen()*/) {
         p_i->p_current_node             = l_ref.ref_node_;
@@ -228,9 +226,9 @@ bool reference_attr_setting::render() {
       }
       if (l_node) {
         if (imgui::Checkbox(*l_ref.use_sim, &l_ref.use_sim)) {
-          set_attr("is_solve", std::to_string(l_ref.use_sim.data));
+          set_attr("is_solve", fmt::to_string(l_ref.use_sim.data));
         }
-        if (l_ref.use_sim) {
+        if (l_ref.use_sim.data) {
           if (imgui::Button("添加碰撞")) {
             add_collision();
           }
@@ -247,22 +245,22 @@ bool reference_attr_setting::render() {
 
           dear::Text(fmt::format("链接风场: {}", l_ref.wind_field_show_str));
           if (ImGui::Checkbox(*l_ref.simple_subsampling, &l_ref.simple_subsampling)) {
-            set_attr("simple_subsampling", std::to_string(l_ref.simple_subsampling.data));
+            set_attr("simple_subsampling", fmt::to_string(l_ref.simple_subsampling.data));
           }
           if (ImGui::InputInt(*l_ref.frame_samples, &l_ref.frame_samples)) {
-            set_attr("frame_samples", std::to_string(l_ref.frame_samples.data));
+            set_attr("frame_samples", fmt::to_string(l_ref.frame_samples.data));
           }
           if (ImGui::InputFloat(*l_ref.time_scale, &l_ref.time_scale)) {
-            set_attr("time_scale", std::to_string(l_ref.time_scale.data));
+            set_attr("time_scale", fmt::to_string(l_ref.time_scale.data));
           }
           if (ImGui::InputFloat(*l_ref.length_scale, &l_ref.length_scale)) {
-            set_attr("length_scale", std::to_string(l_ref.length_scale.data));
+            set_attr("length_scale", fmt::to_string(l_ref.length_scale.data));
           }
           if (ImGui::InputInt(*l_ref.max_cg_iteration, &l_ref.max_cg_iteration)) {
-            set_attr("max_cg_iteration", std::to_string(l_ref.max_cg_iteration.data));
+            set_attr("max_cg_iteration", fmt::to_string(l_ref.max_cg_iteration.data));
           }
           if (ImGui::InputInt(*l_ref.cg_accuracy, &l_ref.cg_accuracy)) {
-            set_attr("cg_accuracy", std::to_string(l_ref.cg_accuracy.data));
+            set_attr("cg_accuracy", fmt::to_string(l_ref.cg_accuracy.data));
           }
           if (ImGui::InputFloat3(*l_ref.gravity, l_ref.gravity.data.data())) {
             set_attr(

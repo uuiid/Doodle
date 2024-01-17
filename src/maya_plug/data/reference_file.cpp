@@ -269,6 +269,7 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
 }
 
 bool reference_file::has_node(const MSelectionList &in_list) {
+  if (get_namespace().empty()) return false;
   MStatus k_s{};
   MObject k_node{};
   auto k_objs = MNamespace::getNamespaceObjects(conv::to_ms(get_namespace()), false, &k_s);
