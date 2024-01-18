@@ -26,7 +26,7 @@
 #include <maya_plug/node/files_info.h>
 
 #include <maya/MFnPlugin.h>
-// #include <maya/MQtUtil.h>
+#include <maya/MQtUtil.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
 #include <stack>
@@ -50,20 +50,20 @@ struct find_windows_call {
 HWND find_windows() {
   find_windows_call l_data{};
   // THROW_IF_WIN32_BOOL_FALSE();
-
-  ::EnumWindows(
-      [](HWND hwnd, LPARAM lParam) -> BOOL {
-        if (::GetCurrentThreadId() == ::GetWindowThreadProcessId(hwnd, nullptr)) {
-          auto* l_data     = reinterpret_cast<find_windows_call*>(lParam);
-          l_data->maya_wnd = hwnd;
-          return FALSE;
-        } else {
-          return TRUE;
-        }
-      },
-      reinterpret_cast<LPARAM>(&l_data)
-  );
-  return l_data.maya_wnd;
+  return MQtUtil::nativeWindow(MQtUtil::mainWindow());
+  //  ::EnumWindows(
+  //      [](HWND hwnd, LPARAM lParam) -> BOOL {
+  //        if (::GetCurrentThreadId() == ::GetWindowThreadProcessId(hwnd, nullptr)) {
+  //          auto* l_data     = reinterpret_cast<find_windows_call*>(lParam);
+  //          l_data->maya_wnd = hwnd;
+  //          return FALSE;
+  //        } else {
+  //          return TRUE;
+  //        }
+  //      },
+  //      reinterpret_cast<LPARAM>(&l_data)
+  //  );
+  //  return l_data.maya_wnd;
 }
 
 class maya_gui_launcher_t {
