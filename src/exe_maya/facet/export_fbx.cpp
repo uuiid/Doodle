@@ -56,7 +56,7 @@ struct maya_out_arg {
 };
 void export_fbx_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
-  ref_files_ = g_ctx().get<reference_file_factory>().create_ref(false);
+  ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
 }
 void export_fbx_facet::export_fbx() {
   export_file_fbx l_ex{};
