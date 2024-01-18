@@ -17,7 +17,6 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
-#include <doodle_core/platform/win/register_file_type.h>
 
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
@@ -99,11 +98,28 @@ maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
 }
 
 void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
-  p_sim_path = in_path | ranges::views::filter([](const FSys::path& in_handle) -> bool {
-                 auto l_ex = in_handle.extension();
+  auto l_prj_view = g_reg()->view<assets, project>().each();
+
+  auto l_tmp      = in_path |
+               ranges::views::transform([](const FSys::path& in_handle) -> path_info_t { return {in_handle}; }) |
+               ranges::to_vector;
+  path_info_ = l_tmp | ranges::views::filter([](path_info_t& in_info) -> bool {
+                 auto l_ex = in_info.path_.extension();
                  return l_ex == ".ma" || l_ex == ".mb";
                }) |
+               ranges::views::filter([](path_info_t& in_info) -> bool {
+                 auto l_stem = in_info.path_.stem().generic_string();
+                 return in_info.episode_.analysis(l_stem) && in_info.shot_.analysis(l_stem);
+               }) |
                ranges::to_vector;
+  if (ranges::distance(l_prj_view) != 0) {
+    path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
+      auto l_stem = in_info.path_.stem().generic_string();
+      return ranges::none_of(l_prj_view, [&](const std::tuple<entt::entity, assets&, project&> in_tuple) {
+        return l_stem.starts_with(std::get<project&>(in_tuple).p_shor_str);
+      });
+    });
+  }
 }
 
 void maya_tool::init() {
@@ -112,16 +128,12 @@ void maya_tool::init() {
   });
   p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
 }
-entt::handle maya_tool::analysis_path(const FSys::path& in_path) {
+entt::handle maya_tool::analysis_path(const path_info_t& in_path) {
   entt::handle l_handle{*g_reg(), g_reg()->create()};
-  l_handle.emplace<process_message>(in_path.filename().generic_string());
-  l_handle.emplace<episodes>().analysis(in_path);
-  l_handle.emplace<shot>().analysis(in_path);
-  auto l_prj_view = g_reg()->view<assets, project>().each();
-  auto l_f_stem   = in_path.stem().generic_string();
-  for (auto&& [e, ass, prj] : l_prj_view) {
-    if (l_f_stem.starts_with(prj.p_shor_str)) l_handle.emplace<project>(prj);
-  }
+  l_handle.emplace<process_message>(in_path.path_.filename().generic_string());
+  l_handle.emplace<episodes>(in_path.episode_);
+  l_handle.emplace<shot>(in_path.shot_);
+  l_handle.emplace<project>(in_path.project_);
   return l_handle;
 }
 
@@ -136,8 +148,8 @@ bool maya_tool::render() {
     }
   }
   if (auto l_c = dear::Child{"##mt_file_list", ImVec2{-FLT_MIN, dear::ListBox::DefaultHeight()}}) {
-    for (const auto& f : p_sim_path) {
-      dear::Selectable(f.generic_string());
+    for (const auto& f : path_info_) {
+      dear::Selectable(f.path_.generic_string());
     }
   }
 
@@ -184,9 +196,9 @@ bool maya_tool::render() {
 
   if (imgui::Button("解算")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& in_path) {
+    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& in_path) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
-      k_arg.file_path        = in_path;
+      k_arg.file_path        = in_path.path_;
       k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
@@ -195,7 +207,7 @@ bool maya_tool::render() {
       if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
-      l_msg_handle.emplace<process_message>(in_path.filename().generic_string());
+      l_msg_handle.emplace<process_message>(in_path.path_.filename().generic_string());
       l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
         if (in_code) {
           l_msg_handle.get<process_message>().set_state(process_message::state::fail);
@@ -208,16 +220,16 @@ bool maya_tool::render() {
   ImGui::SameLine();
   if (imgui::Button("fbx导出")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
+    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
       auto k_arg             = maya_exe_ns::export_fbx_arg{};
-      k_arg.file_path        = i;
+      k_arg.file_path        = i.path_;
       k_arg.use_all_ref      = this->p_use_all_ref;
       k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
-      l_msg_handle.emplace<process_message>(i.filename().generic_string());
+      l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
         if (in_code) {
           l_msg_handle.get<process_message>().set_state(process_message::state::fail);
@@ -230,9 +242,9 @@ bool maya_tool::render() {
   ImGui::SameLine();
   if (imgui::Button("引用文件替换")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
+    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
       auto k_arg      = maya_exe_ns::replace_file_arg{};
-      k_arg.file_path = i;
+      k_arg.file_path = i.path_;
       k_arg.file_list = ptr_attr->ref_attr.ref_attr() |
                         ranges::views::transform(
                             [](const maya_tool_ns::maya_reference_info& in_info) -> std::pair<FSys::path, FSys::path> {
@@ -245,7 +257,7 @@ bool maya_tool::render() {
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
       auto l_msg_handle      = entt::handle{*g_reg(), g_reg()->create()};
-      l_msg_handle.emplace<process_message>(i.filename().generic_string());
+      l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
         if (in_code) {
           l_msg_handle.get<process_message>().set_state(process_message::state::fail);
@@ -258,9 +270,9 @@ bool maya_tool::render() {
 
   if (imgui::Button("使用ue输出排屏")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
+    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
       auto k_arg             = maya_exe_ns::export_fbx_arg{};
-      k_arg.file_path        = i;
+      k_arg.file_path        = i.path_;
       k_arg.use_all_ref      = this->p_use_all_ref;
       k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
@@ -284,9 +296,9 @@ bool maya_tool::render() {
   ImGui::SameLine();
   if (ImGui::Button("转换格式")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
-    std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
+    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](constpath_info_t& i) {
       auto k_arg                     = maya_exe_ns::clear_file_arg{};
-      k_arg.file_path                = i;
+      k_arg.file_path                = i.path_;
       k_arg.project_                 = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post                   = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time         = g_reg()->ctx().get<project_config::base_config>().export_anim_time;

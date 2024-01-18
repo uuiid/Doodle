@@ -18,7 +18,14 @@ namespace doodle::gui {
 class DOODLELIB_API maya_tool {
   FSys::path p_cloth_path{};
   std::string p_text{};
-  std::vector<FSys::path> p_sim_path{};
+
+  struct path_info_t {
+    FSys::path path_;
+    episodes episode_;
+    shot shot_;
+    project project_;
+  };
+  std::vector<path_info_t> path_info_{};
 
   bool p_use_all_ref{};
   bool p_upload_files{};
@@ -30,7 +37,7 @@ class DOODLELIB_API maya_tool {
 
   void set_path(const std::vector<FSys::path>& in_path);
 
-  entt::handle analysis_path(const FSys::path& in_path);
+  entt::handle analysis_path(const path_info_t& in_path);
 
  public:
   maya_tool();
