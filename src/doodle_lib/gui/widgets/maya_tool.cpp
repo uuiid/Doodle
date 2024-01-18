@@ -17,6 +17,7 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
@@ -98,7 +99,6 @@ maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
 }
 
 void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
-  auto l_prj_view = g_reg()->view<assets, project>().each();
 
   auto l_tmp      = in_path |
                ranges::views::transform([](const FSys::path& in_handle) -> path_info_t { return {in_handle}; }) |
@@ -112,6 +112,8 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
                  return in_info.episode_.analysis(l_stem) && in_info.shot_.analysis(l_stem);
                }) |
                ranges::to_vector;
+#ifdef DOODLE_USE_ENTT
+  auto l_prj_view = g_reg()->view<assets, project>().each();
   if (ranges::distance(l_prj_view) != 0) {
     path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
       auto l_stem = in_info.path_.stem().generic_string();
@@ -125,6 +127,19 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
       return true;
     });
   }
+#else
+  auto l_prj_list = register_file_type::get_project_list();
+  path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
+    auto l_stem = in_info.path_.stem().generic_string();
+    auto l_it =
+        ranges::find_if(l_prj_list, [&](const project& in_prj) { return l_stem.starts_with(in_prj.p_shor_str); });
+    if (l_it != l_prj_list.end()) {
+      in_info.project_ = *l_it;
+      return false;
+    }
+    return true;
+  });
+#endif
 }
 
 void maya_tool::init() {
