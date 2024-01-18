@@ -115,9 +115,14 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
   if (ranges::distance(l_prj_view) != 0) {
     path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
       auto l_stem = in_info.path_.stem().generic_string();
-      return ranges::none_of(l_prj_view, [&](const std::tuple<entt::entity, assets&, project&> in_tuple) {
+      auto l_it   = ranges::find_if(l_prj_view, [&](const std::tuple<entt::entity, assets&, project&> in_tuple) {
         return l_stem.starts_with(std::get<project&>(in_tuple).p_shor_str);
       });
+      if (l_it != l_prj_view.end()) {
+        in_info.project_ = std::get<project&>(*l_it);
+        return false;
+      }
+      return true;
     });
   }
 }
