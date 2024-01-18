@@ -176,10 +176,17 @@ generate_fbx_file_path::~generate_fbx_file_path() = default;
 reference_file::reference_file() = default;
 reference_file::reference_file(const MObject &in_ref_node) : file_info_node_(in_ref_node) {}
 
-void reference_file::set_file_info_node(const MObject &in_file_info_node) { file_info_node_ = in_file_info_node; }
-
 std::string reference_file::get_file_namespace() const {
   return conv::to_s(get_plug(file_info_node_, "reference_file_namespace").asString());
+}
+
+void reference_file::set_use_sim(bool in_use_sim) {
+  MStatus l_status{};
+  MFnDependencyNode l_file_info{};
+  maya_chick(l_file_info.setObject(file_info_node_));
+  auto l_plug = l_file_info.findPlug(doodle_file_info::is_solve, false, &l_status);
+  maya_chick(l_status);
+  maya_chick(l_plug.setBool(in_use_sim));
 }
 
 MSelectionList reference_file::get_collision_model() const {
@@ -418,7 +425,6 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     maya_chick(l_status);
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       reference_file k_ref{l_it.thisNode()};
-      MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
       if (!k_ref.get_namespace().empty()) {
         default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", k_ref.get_path());
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};

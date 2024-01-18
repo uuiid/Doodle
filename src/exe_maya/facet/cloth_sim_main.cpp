@@ -39,38 +39,28 @@ void cloth_sim::create_ref_file() {
 }
 void cloth_sim::replace_ref_file() {
   DOODLE_LOG_INFO("开始替换引用");
-  auto l_j_str = maya_file_io::get_channel_date();
-  nlohmann::json l_j{};
-  try {
-    l_j = nlohmann::json::parse(l_j_str);
-  } catch (const nlohmann::json::exception& error) {
-    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", boost::diagnostic_information(error));
-  }
 
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     auto&& l_ref = in_handle.get<reference_file>();
-    if (l_j.contains(l_ref.get_key_path())) {
-      DOODLE_LOG_INFO("加载元数据 {} l_ref.get_key_path()");
-      entt_tool::load_comm<reference_file, sim_cover_attr>(in_handle, l_j.at(l_ref.get_key_path()));
+    if (l_ref.export_group_attr()) {
+      l_ref.set_use_sim(true);
     } else {
-      l_ref.use_sim = true;
-    }
-    if (!l_ref.use_sim) {
-      DOODLE_LOG_INFO("引用文件{}不解算", l_ref.get_key_path());
-      in_handle.destroy();
+      DOODLE_LOG_INFO("引用文件{}不解算", l_ref.get_abs_path());
+      in_handle = {};
     }
   });
   ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
 
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     if (!in_handle.get<reference_file>().replace_sim_assets_file()) {
-      in_handle.destroy();
+      in_handle = {};
     }
   });
 
   ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
 }
 void cloth_sim::create_cloth() {
+  DOODLE_LOG_INFO("开始解锁节点 initialShadingGroup");
   maya_chick(MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"}));
   DOODLE_LOG_INFO("开始创建布料");
   cloth_factory_interface l_cf{};
