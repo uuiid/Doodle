@@ -16,41 +16,41 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "update_path" "//192.168.10.218/Doodletemp/auto_light"
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "install_dir" "$INSTDIR\bin"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\DB" "" "独步逍遥"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\DB" "path" "//192.168.10.250/public/DuBuXiaoYao_3"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\DB" "en_str" "DuBuXiaoYao"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DB" "" "独步逍遥"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DB" "path" "//192.168.10.250/public/DuBuXiaoYao_3"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DB" "en_str" "DuBuXiaoYao"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\DW" "" "万古邪帝"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\DW" "path" "//192.168.10.240/public/WGXD"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\DW" "en_str" "WanGuXieDi"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DW" "" "万古邪帝"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DW" "path" "//192.168.10.240/public/WGXD"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DW" "en_str" "WanGuXieDi"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\LM" "" "龙脉武神"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\LM" "path" "//192.168.10.240/public/LongMaiWuShen"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\LM" "en_str" "LongMaiWuShen"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\LM" "" "龙脉武神"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\LM" "path" "//192.168.10.240/public/LongMaiWuShen"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\LM" "en_str" "LongMaiWuShen"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\LQ" "" "炼气十万年"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\LQ" "path" "//192.168.10.240/public/LianQiShiWanNian"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\LQ" "en_str" "LianQiShiWanNian"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\LQ" "" "炼气十万年"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\LQ" "path" "//192.168.10.240/public/LianQiShiWanNian"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\LQ" "en_str" "LianQiShiWanNian"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\RJ" "" "人间最得意"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\RJ" "path" "//192.168.10.240/public/renjianzuideyi"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\RJ" "en_str" "RenJianZuiDeYi"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\RJ" "" "人间最得意"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\RJ" "path" "//192.168.10.240/public/renjianzuideyi"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\RJ" "en_str" "RenJianZuiDeYi"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WD" "" "无敌剑魂"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WD" "path" "//192.168.10.240/public/WuDiJianHun"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WD" "en_str" "WuDiJianHun"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WD" "" "无敌剑魂"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WD" "path" "//192.168.10.240/public/WuDiJianHun"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WD" "en_str" "WuDiJianHun"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WG" "" "万古神话"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WG" "path" "//192.168.10.240/public/WanGuShenHua"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WG" "en_str" "WanGuShenHua"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WG" "" "万古神话"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WG" "path" "//192.168.10.240/public/WanGuShenHua"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WG" "en_str" "WanGuShenHua"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WJ" "" "无尽神域"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WJ" "path" "//192.168.10.240/public/WuJinShenYu"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WJ" "en_str" "WuJinShenYu"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WJ" "" "无尽神域"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WJ" "path" "//192.168.10.240/public/WuJinShenYu"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WJ" "en_str" "WuJinShenYu"
 
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WY" "" "万域封神"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WY" "path" "//192.168.10.218/WanYuFengShen"
-        WriteRegStr HKLM "HKEY_LOCAL_MACHINE\SOFTWARE\Doodle\MainConfig\ProjectList\WY" "en_str" "WanYuFengShen"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WY" "" "万域封神"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WY" "path" "//192.168.10.218/WanYuFengShen"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\WY" "en_str" "WanYuFengShen"
 
         SetRegView 32
 
