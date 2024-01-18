@@ -7,7 +7,7 @@ target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(doodle_maya PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-        )
+)
 target_link_libraries(doodle_maya
         PRIVATE
         doodle_core
@@ -18,7 +18,9 @@ target_link_libraries(doodle_maya
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
-        )
+        Qt5::Core
+        Qt5::Widgets
+)
 target_compile_options(
         doodle_maya
         PRIVATE

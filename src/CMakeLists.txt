@@ -98,6 +98,10 @@ if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
 
     if (TARGET maya::maya_all)
+        set(MAYA_LOCATION ${MAYA_BASE_DIR})
+        set(IS_WINDOWS TRUE)
+        find_package(Maya_Qt MODULE COMPONENTS Core Gui Widgets REQUIRED)
+
         find_package(OpenMP REQUIRED)
         find_package(Alembic CONFIG REQUIRED)
         find_package(dem-bones CONFIG REQUIRED)
