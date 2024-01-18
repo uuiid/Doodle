@@ -27,11 +27,6 @@
 
 namespace doodle::maya_plug {
 
-namespace reference_attr {
-
-bool data::operator==(const data& in_rhs) const { return path == in_rhs.path; }
-bool data::operator!=(const data& in_rhs) const { return !(in_rhs == *this); }
-}  // namespace reference_attr
 
 struct gui_tree {
   std::string name;

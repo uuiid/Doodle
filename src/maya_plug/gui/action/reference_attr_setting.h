@@ -12,25 +12,6 @@
 namespace doodle::maya_plug {
 class reference_file;
 
-namespace reference_attr {
-class data {
- public:
-  std::string path;
-  bool use_sim;
-  bool operator==(const data& in_rhs) const;
-  bool operator!=(const data& in_rhs) const;
-  friend void to_json(nlohmann::json& j, const data& p) {
-    j["path"]    = p.path;
-    j["use_sim"] = p.use_sim;
-  }
-  friend void from_json(const nlohmann::json& j, data& p) {
-    p.path    = j.at("path");
-    p.use_sim = j.at("use_sim");
-  }
-};
-using data_ptr = std::shared_ptr<data>;
-}  // namespace reference_attr
-
 /**
  * @brief 引用文件标签命令
  *
