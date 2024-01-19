@@ -114,11 +114,6 @@ class reference_file {
    * @brief 获取真正的路径名称
    * @return
    */
-  [[nodiscard]] FSys::path get_path() const;
-  /**
-   * @brief 获取真正的路径名称
-   * @return
-   */
   [[nodiscard]] FSys::path get_abs_path() const;
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况

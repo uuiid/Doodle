@@ -41,6 +41,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
         log_info(fmt::format("maya_to_exe_file get uuid :{}", l_uuid));
 
         if (l_id_map.contains(l_uuid)) {
+          data_->logger_->log(log_loc(), level::level_enum::err, "找到了文件{}的引用", in_arg);
           return entt::handle{*g_reg(), l_id_map.at(l_uuid)};
         }
         data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 找不到引用, 继续输出将变为不正确排屏", in_arg);
@@ -79,7 +80,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   if (!ranges::any_of(l_refs, [&](const entt::handle &in_handle) {
         return in_handle.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
       })) {
-    data_->logger_->log(log_loc(), level::level_enum::err, "未查找到主项目文件");
+    data_->logger_->log(log_loc(), level::level_enum::err, "未查找到主项目文件, 既场景文件没有在库中提交");
     in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     wait_op_->ec_ = in_error_code;
@@ -96,9 +97,9 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
   for (auto &&h : l_refs) {
-    auto l_is_se       = h.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
-    auto l_uproject    = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().project_path_;
-    auto l_down_path   = l_uproject.parent_path();
+    auto l_is_se     = h.get<file_association_ref>().get<file_association>().ue_file.all_of<scene_id>();
+    auto l_uproject  = h.get<file_association_ref>().get<file_association>().ue_file.get<ue_main_map>().project_path_;
+    auto l_down_path = l_uproject.parent_path();
     if (l_is_se) {
       auto l_root = l_uproject.parent_path() / doodle_config::ue4_content;
 

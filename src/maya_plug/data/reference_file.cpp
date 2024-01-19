@@ -301,23 +301,12 @@ bool reference_file::has_node(const MObject &in_node) const {
   return false;
 }
 
-FSys::path reference_file::get_path() const {
-  MStatus k_s{};
-  MFnReference k_ref{};
-  if (k_ref.setObject(p_m_object)) {
-    FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
-    DOODLE_MAYA_CHICK(k_s);
-    return l_path;
-  } else {
-    return {};
-  }
-}
 FSys::path reference_file::get_abs_path() const {
   MStatus k_s{};
-  MFnReference k_ref{};
-  if (k_ref.setObject(p_m_object)) {
+  MFnDependencyNode l_file_info{};
+  if (l_file_info.setObject(file_info_node_)) {
     FSys::path l_path{};
-    auto l_file_path = k_ref.fileName(false, false, false, &k_s);
+    auto l_file_path = l_file_info.findPlug(doodle_file_info::reference_file_path, false, &k_s).asString(&k_s);
     l_path           = boost::locale::conv::utf_to_utf<wchar_t>(l_file_path.asUTF8());
     DOODLE_MAYA_CHICK(k_s);
     return l_path;
