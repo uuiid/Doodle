@@ -30,6 +30,7 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
     const auto l_prop_path = l_s.path() / fmt::format("JD{:02}_{}_UE", l_season.p_int, l_begin_episode) / "Content" /
                              "Prop";  // 生成目标路径
     if (!FSys::exists(l_prop_path)) continue;
+    if (!FSys::is_directory(l_prop_path)) continue;
     for (auto &&l_s2 : FSys::directory_iterator{l_prop_path}) {  // 迭代二级目录
       if (!l_s2.is_directory()) continue;
       const auto l_name_str = l_s2.path().filename().generic_string();
