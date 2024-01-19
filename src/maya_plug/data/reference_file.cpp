@@ -232,7 +232,7 @@ bool reference_file::replace_sim_assets_file() {
   }
 
   auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  FSys::path k_m_str{get_path()};
+  FSys::path k_m_str{get_abs_path()};
   DOODLE_MAYA_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
                     fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
@@ -419,7 +419,7 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       reference_file k_ref{l_it.thisNode()};
       if (!k_ref.get_namespace().empty()) {
-        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", k_ref.get_path());
+        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", k_ref.get_abs_path());
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<reference_file>(k_ref);
         l_ret.emplace_back(l_h);
@@ -441,7 +441,7 @@ std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionLis
       reference_file l_ref{l_it.thisNode()};
       MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
       if (!l_ref.get_namespace().empty() && l_ref.has_node(in_list)) {
-        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", l_ref.get_path());
+        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", l_ref.get_abs_path());
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<reference_file>(l_ref);
         l_ret.emplace_back(l_h);
