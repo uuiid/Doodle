@@ -48,7 +48,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           if (!FSys::is_regular_file(l_s4.path())) continue;
           auto l_ch_ue_asset_stem = l_s4.path().stem().generic_string();
           if (l_s4.path().extension() != ".uasset") continue;
-          if (!l_ch_ue_asset_stem.starts_with(l_Sk_ch_number_str)) continue;
+          if (!l_ch_ue_asset_stem != l_Sk_ch_number_str) continue;
 
           auto l_ptr                       = std::make_shared<character_scan_category_data_t>();
           l_ptr->project_root_             = in_root;
