@@ -31,7 +31,8 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
       auto l_ChNum_name = l_ChNum_path.filename().generic_string();
       if (!std::regex_match(l_ChNum_name, l_match, l_Ch_regex)) continue;
 
-      auto l_number_str = l_match[1].str();
+      auto l_number_str       = l_match[1].str();
+      auto l_Sk_ch_number_str = fmt::format("SK_Ch{}", l_number_str);
       for (auto &&l_s3 : FSys::directory_iterator{l_ChNum_path}) {  // 迭代Ue项目路径
         if (!FSys::is_directory(l_s3.path())) continue;
         auto l_ch_name_ue_path = l_s3.path();
@@ -47,22 +48,22 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           if (!FSys::is_regular_file(l_s4.path())) continue;
           auto l_ch_ue_asset_stem = l_s4.path().stem().generic_string();
           if (l_s4.path().extension() != ".uasset") continue;
-          if (!l_ch_ue_asset_stem.starts_with(l_ch_name)) continue;
+          if (!l_ch_ue_asset_stem.starts_with(l_Sk_ch_number_str)) continue;
 
           auto l_version_str = l_ch_ue_asset_stem.substr(l_ch_name.size());
           if (l_version_str.starts_with("_")) l_version_str = l_version_str.substr(1);
 
-          auto l_ptr           = std::make_shared<character_scan_category_data_t>();
-          l_ptr->project_root_ = in_root;
-          l_ptr->season_       = l_season;
-          l_ptr->name_         = l_ch_name;
-          l_ptr->Ch_path_      = l_ChNum_path;
-          if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
+          auto l_ptr                       = std::make_shared<character_scan_category_data_t>();
+          l_ptr->project_root_             = in_root;
+          l_ptr->season_                   = l_season;
+          l_ptr->name_                     = l_ch_name;
+          l_ptr->Ch_path_                  = l_ChNum_path;
           l_ptr->begin_episode_            = l_begin_episode;
           l_ptr->ue_file_.path_            = l_s4.path();
           l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s4.path());
           l_ptr->ue_file_.last_write_time_ = l_s4.last_write_time();
           l_ptr->number_str_               = l_number_str;
+          if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
           l_ptr->file_type_.set_path("角色");
           l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
           logger_->log(log_loc(), level::info, "扫描到角色文件:{}", l_s4.path());
