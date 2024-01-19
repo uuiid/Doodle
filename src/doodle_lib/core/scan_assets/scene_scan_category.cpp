@@ -40,9 +40,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
                 if (l_s4.is_regular_file() && l_s4.path().extension() == ".umap") {  // 确认后缀名称
                   auto l_stem = l_s4.path().stem().generic_string();
 
-                  if (l_stem == l_s3.path().filename().generic_string() ||  // 检查文件名和文件格式
-                      (l_stem.starts_with(l_s3.path().filename().generic_string()) &&
-                       std::count(l_stem.begin(), l_stem.end(), '_') == 1)) {
+                  if (l_stem.starts_with(l_s3.path().filename().generic_string())) {
                     auto l_ptr                       = std::make_shared<scene_scan_category_data_t>();
                     l_ptr->season_                   = l_season;
                     l_ptr->project_root_             = in_root;
@@ -50,9 +48,16 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
                     l_ptr->ue_file_.path_            = l_s4.path();
                     l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s4.path());
                     l_ptr->ue_file_.last_write_time_ = l_s4.last_write_time();
-                    l_ptr->name_                     = l_s3.path().filename().generic_string();
-                    l_ptr->BG_path_                  = l_s2.path();
-                    l_ptr->assets_type_              = scan_category_data_t::assets_type_enum::scene;
+
+                    auto l_version_str               = l_stem.substr(l_s3.path().filename().generic_string().size());
+                    if (l_version_str.starts_with("_")) {
+                      l_version_str = l_version_str.substr(1);
+                    }
+                    if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
+
+                    l_ptr->name_        = l_s3.path().filename().generic_string();
+                    l_ptr->BG_path_     = l_s2.path();
+                    l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::scene;
                     l_ptr->file_type_.set_path("场景");
                     if (auto l_pos = l_stem.find('_'); l_pos != std::string::npos)
                       l_ptr->version_name_ = l_stem.substr(l_stem.find('_') + 1);

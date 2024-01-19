@@ -45,14 +45,16 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           auto l_ch_ue_asset_stem = l_s4.path().stem().generic_string();
           if (l_s4.path().extension() != ".uasset") continue;
           if (!l_ch_ue_asset_stem.starts_with(l_ch_name)) continue;
-          if (ranges::count(l_ch_ue_asset_stem, '_') > 1) continue;
+
+          auto l_version_str = l_ch_ue_asset_stem.substr(l_ch_name.size());
+          if (l_version_str.starts_with("_")) l_version_str = l_version_str.substr(1);
+
           auto l_ptr           = std::make_shared<character_scan_category_data_t>();
           l_ptr->project_root_ = in_root;
           l_ptr->season_       = l_season;
           l_ptr->name_         = l_ch_name;
           l_ptr->Ch_path_      = l_ChNum_path;
-          if (auto l_pos = l_ch_ue_asset_stem.find('_'); l_pos != std::string::npos)
-            l_ptr->version_name_ = l_ch_ue_asset_stem.substr(l_pos + 1);
+          if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
           l_ptr->begin_episode_            = l_begin_episode;
           l_ptr->ue_file_.path_            = l_s4.path();
           l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s4.path());

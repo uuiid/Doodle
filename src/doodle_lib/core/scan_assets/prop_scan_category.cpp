@@ -41,15 +41,18 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
             if (l_s3.path().extension() != ".uasset") continue;
             auto l_stem = l_s3.path().stem().generic_string();
 
-            if (l_stem == l_name_str ||
-                (l_stem.starts_with(l_name_str) && std::count(l_stem.begin(), l_stem.end(), '_') == 1
-                )) {  // 检查文件名称和是否有不同的版本
+            if (l_stem.starts_with(l_name_str)) {  // 检查文件名称和是否有不同的版本
+              auto l_version_str = l_stem.substr(l_name_str.size());
+              if (l_version_str.starts_with("_")) {
+                l_version_str = l_version_str.substr(1);
+              }
 
-              auto l_ptr                       = std::make_shared<prop_scan_category_data_t>();
-              l_ptr->project_root_             = in_root;
-              l_ptr->season_                   = l_season;
-              l_ptr->begin_episode_            = l_begin_episode;
-              l_ptr->name_                     = l_name_str;
+              auto l_ptr            = std::make_shared<prop_scan_category_data_t>();
+              l_ptr->project_root_  = in_root;
+              l_ptr->season_        = l_season;
+              l_ptr->begin_episode_ = l_begin_episode;
+              l_ptr->name_          = l_name_str;
+              if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
               l_ptr->JD_path_                  = l_s.path();
               l_ptr->ue_file_.path_            = l_s3.path();
               l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
