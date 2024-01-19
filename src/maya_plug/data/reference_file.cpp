@@ -185,7 +185,7 @@ void reference_file::set_use_sim(bool in_use_sim) {
   MStatus l_status{};
   MFnDependencyNode l_file_info{};
   maya_chick(l_file_info.setObject(file_info_node_));
-  auto l_plug = l_file_info.findPlug(doodle_file_info::is_solve, false, &l_status);
+  auto l_plug = l_file_info.findPlug("is_solve", false, &l_status);
   maya_chick(l_status);
   maya_chick(l_plug.setBool(in_use_sim));
 }
@@ -195,7 +195,7 @@ MSelectionList reference_file::get_collision_model() const {
   MStatus l_status{};
   maya_chick(l_file_info.setObject(file_info_node_));
 
-  auto l_plug_lists = l_file_info.findPlug(doodle_file_info::collision_objects, false, &l_status);
+  auto l_plug_lists = l_file_info.findPlug("collision_objects", false, &l_status);
   maya_chick(l_status);
 
   const auto l_couts = l_plug_lists.evaluateNumElements(&l_status);
@@ -306,8 +306,12 @@ FSys::path reference_file::get_abs_path() const {
   MFnDependencyNode l_file_info{};
   if (l_file_info.setObject(file_info_node_)) {
     FSys::path l_path{};
-    auto l_file_path = l_file_info.findPlug(doodle_file_info::reference_file_path, false, &k_s).asString(&k_s);
-    l_path           = boost::locale::conv::utf_to_utf<wchar_t>(l_file_path.asUTF8());
+    auto l_file_path_plug = l_file_info.findPlug("reference_file_path", false, &k_s);
+    maya_chick(k_s);
+    auto l_file_path = l_file_path_plug.asString(&k_s);
+    maya_chick(k_s);
+    if (l_file_path.length() == 0) return {};
+    l_path = boost::locale::conv::utf_to_utf<wchar_t>(l_file_path.asUTF8());
     DOODLE_MAYA_CHICK(k_s);
     return l_path;
   } else {
