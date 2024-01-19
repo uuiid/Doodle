@@ -77,6 +77,8 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
       l_rig_file_name = fmt::format("{}_rig_", l_ptr->name_);
     else
       l_rig_file_name = fmt::format("{}_{}_rig_", l_ptr->name_, l_ptr->version_name_);
+    if (!FSys::exists(l_rig_path)) continue;
+    if (!FSys::is_directory(l_rig_path)) continue;
 
     auto l_rig_files =
         ranges::make_subrange(FSys::directory_iterator{l_rig_path}, FSys::directory_iterator{}) |

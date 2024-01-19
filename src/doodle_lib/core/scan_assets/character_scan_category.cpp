@@ -71,6 +71,8 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
   for (auto &&l_ptr : l_out) {
     auto l_rig_path = l_ptr->Ch_path_ / "Rig";
     auto l_rig_name = fmt::format("{}_rig_", l_ptr->name_);
+    if (!FSys::exists(l_rig_path)) continue;
+    if (!FSys::is_directory(l_rig_path)) continue;
 
     auto l_files =
         ranges::make_subrange(FSys::directory_iterator{l_rig_path}, FSys::directory_iterator{}) |
