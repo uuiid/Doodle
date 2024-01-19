@@ -54,7 +54,7 @@ void up_auto_light_anim_file::operator()(boost::system::error_code in_error_code
 }
 void up_auto_light_anim_file::operator()(boost::system::error_code in_error_code) const {
   if (in_error_code) {
-    data_->logger_->error("上传自动灯光文件失败:{}", in_error_code.message());
+    data_->logger_->log(log_loc(), level::err, "上传自动灯光文件失败:{}", in_error_code.message());
     wait_op_->ec_ = in_error_code;
     wait_op_->complete();
     return;

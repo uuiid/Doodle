@@ -99,8 +99,7 @@ maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
 }
 
 void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
-
-  auto l_tmp      = in_path |
+  auto l_tmp = in_path |
                ranges::views::transform([](const FSys::path& in_handle) -> path_info_t { return {in_handle}; }) |
                ranges::to_vector;
   path_info_ = l_tmp | ranges::views::filter([](path_info_t& in_info) -> bool {
@@ -302,9 +301,19 @@ bool maya_tool::render() {
       down_auto_light_anim_file l_down_anim_file{l_msg};
       import_and_render_ue l_import_and_render_ue{l_msg};
       up_auto_light_anim_file l_up_auto_light_file{l_msg};
-      l_up_auto_light_file.async_end(
-          boost::asio::bind_executor(g_io_context(), [](boost::system::error_code, std::filesystem::path) {})
-      );
+      l_up_auto_light_file.async_end(boost::asio::bind_executor(
+          g_io_context(),
+          [l_msg](boost::system::error_code in_error_code, std::filesystem::path in_path) {
+            if (in_error_code) {
+              l_msg.get<process_message>().set_state(process_message::state::fail);
+              return;
+            }
+            l_msg.get<process_message>().logger()->log(
+                log_loc(), level::level_enum::warn, "上传自动灯光文件成功  路径 {}", in_path
+            );
+            l_msg.get<process_message>().set_state(process_message::state::success);
+          }
+      ));
       l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
       l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
 
