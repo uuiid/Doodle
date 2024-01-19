@@ -22,49 +22,48 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
 
   for (const auto &l_s : FSys::directory_iterator{l_prop_path_root}) {  // 迭代一级目录
     const auto l_name_str_1 = l_s.path().filename().generic_string();
-    if (l_s.is_directory() && std::regex_match(l_name_str_1, l_match, l_JD_regex)) {  // 检查一级目录
-      season l_season{std::stoi(l_match[1].str())};
-      const auto l_begin_episode = std::stoi(l_match[2].str());  // 获取开始集数
+    if (!l_s.is_directory()) continue;
+    if (!std::regex_match(l_name_str_1, l_match, l_JD_regex)) continue;
 
-      const auto l_prop_path = l_s.path() / fmt::format("JD{:02}_{}_UE", l_season.p_int, l_begin_episode) / "Content" /
-                               "Prop";  // 生成目标路径
-      if (!FSys::exists(l_prop_path)) continue;
-      for (auto &&l_s2 : FSys::directory_iterator{l_prop_path}) {  // 迭代二级目录
-        if (l_s2.is_directory()) {
-          const auto l_name_str = l_s2.path().filename().generic_string();
+    season l_season{std::stoi(l_match[1].str())};
+    const auto l_begin_episode = std::stoi(l_match[2].str());  // 获取开始集数
+    const auto l_prop_path = l_s.path() / fmt::format("JD{:02}_{}_UE", l_season.p_int, l_begin_episode) / "Content" /
+                             "Prop";  // 生成目标路径
+    if (!FSys::exists(l_prop_path)) continue;
+    for (auto &&l_s2 : FSys::directory_iterator{l_prop_path}) {  // 迭代二级目录
+      if (!l_s2.is_directory()) continue;
+      const auto l_name_str = l_s2.path().filename().generic_string();
 
-          auto l_mesh_path      = l_s2.path() / "Mesh";  // 确认目标路径
-          if (!FSys::exists(l_mesh_path)) continue;
-          if (!FSys::is_directory(l_mesh_path)) continue;
+      auto l_mesh_path      = l_s2.path() / "Mesh";  // 确认目标路径
+      if (!FSys::exists(l_mesh_path)) continue;
+      if (!FSys::is_directory(l_mesh_path)) continue;
 
-          for (auto &&l_s3 : FSys::directory_iterator{l_mesh_path}) {
-            if (l_s3.path().extension() != ".uasset") continue;
-            auto l_stem = l_s3.path().stem().generic_string();
+      for (auto &&l_s3 : FSys::directory_iterator{l_mesh_path}) {
+        if (l_s3.path().extension() != ".uasset") continue;
+        auto l_stem = l_s3.path().stem().generic_string();
 
-            if (l_stem.starts_with(l_name_str)) {  // 检查文件名称和是否有不同的版本
-              auto l_version_str = l_stem.substr(l_name_str.size());
-              if (l_version_str.starts_with("_")) {
-                l_version_str = l_version_str.substr(1);
-              }
-
-              auto l_ptr            = std::make_shared<prop_scan_category_data_t>();
-              l_ptr->project_root_  = in_root;
-              l_ptr->season_        = l_season;
-              l_ptr->begin_episode_ = l_begin_episode;
-              l_ptr->name_          = l_name_str;
-              if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
-              l_ptr->JD_path_                  = l_s.path();
-              l_ptr->ue_file_.path_            = l_s3.path();
-              l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
-              l_ptr->ue_file_.last_write_time_ = l_s3.last_write_time();
-              l_ptr->assets_type_              = scan_category_data_t::assets_type_enum::prop;
-
-              l_ptr->file_type_.set_path("道具");
-
-              logger_->log(log_loc(), level::info, "扫描到道具文件:{}", l_s3.path());  // 输出日志
-              l_out.emplace_back(l_ptr);
-            }
+        if (l_stem.starts_with(l_name_str)) {  // 检查文件名称和是否有不同的版本
+          auto l_version_str = l_stem.substr(l_name_str.size());
+          if (l_version_str.starts_with("_")) {
+            l_version_str = l_version_str.substr(1);
           }
+
+          auto l_ptr            = std::make_shared<prop_scan_category_data_t>();
+          l_ptr->project_root_  = in_root;
+          l_ptr->season_        = l_season;
+          l_ptr->begin_episode_ = l_begin_episode;
+          l_ptr->name_          = l_name_str;
+          if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
+          l_ptr->JD_path_                  = l_s.path();
+          l_ptr->ue_file_.path_            = l_s3.path();
+          l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
+          l_ptr->ue_file_.last_write_time_ = l_s3.last_write_time();
+          l_ptr->assets_type_              = scan_category_data_t::assets_type_enum::prop;
+
+          l_ptr->file_type_.set_path("道具");
+
+          logger_->log(log_loc(), level::info, "扫描到道具文件:{}", l_s3.path());  // 输出日志
+          l_out.emplace_back(l_ptr);
         }
       }
     }
