@@ -48,7 +48,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           if (!FSys::is_regular_file(l_s4.path())) continue;
           auto l_ch_ue_asset_stem = l_s4.path().stem().generic_string();
           if (l_s4.path().extension() != ".uasset") continue;
-          if (!l_ch_ue_asset_stem != l_Sk_ch_number_str) continue;
+          if (l_ch_ue_asset_stem != l_Sk_ch_number_str) continue;
 
           auto l_ptr                       = std::make_shared<character_scan_category_data_t>();
           l_ptr->project_root_             = in_root;
@@ -76,30 +76,30 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
     if (!FSys::exists(l_rig_path)) continue;
     if (!FSys::is_directory(l_rig_path)) continue;
 
-    auto l_files =
-        ranges::make_subrange(FSys::directory_iterator{l_rig_path}, FSys::directory_iterator{}) |
-        ranges::views::filter([&l_rig_name](const auto &in_path) {
-          return in_path.path().stem().generic_string().starts_with(l_rig_name) && in_path.path().extension() == ".ma";
-        }) |
-        ranges::to_vector;
-    if (l_files.empty()) {
+    if ([&]() {
+          for (auto &&l_file : FSys::directory_iterator{l_rig_path}) {
+            auto l_file_stem = l_file.path().stem().generic_string();
+            if (l_file_stem.starts_with(l_rig_name) && l_file.path().extension() == ".ma") {
+              if (l_ptr->rig_file_.path_.empty())
+                l_ptr->rig_file_.path_ = l_file.path();
+              else {
+                logger_->log(log_loc(), level::err, "rig文件存在多个:{}/{}***.ma", l_rig_path, l_rig_name);
+                return true;
+              }
+            }
+          }
+          return false;
+        }())
+      continue;
+
+    if (l_ptr->rig_file_.path_.empty()) {
       logger_->log(log_loc(), level::err, "rig文件不存在:{}/{}***.ma", l_rig_path, l_rig_name);
       continue;
     }
-    if (l_files.size() > 1) {
-      logger_->log(log_loc(), level::err, "rig文件存在多个:{}/{}***.ma", l_rig_path, l_rig_name);
-      continue;
-    }
-    l_rig_path = l_files[0].path();
 
-    if (!FSys::exists(l_rig_path)) {
-      logger_->log(log_loc(), level::err, "rig文件不存在:{}", l_rig_path);
-      continue;
-    }
-    l_ptr->rig_file_.path_            = l_rig_path;
-    l_ptr->rig_file_.uuid_            = FSys::software_flag_file(l_rig_path);
-    l_ptr->rig_file_.last_write_time_ = FSys::last_write_time(l_rig_path);
-    logger_->log(log_loc(), level::info, "扫描到rig文件:{}", l_rig_path);
+    l_ptr->rig_file_.uuid_            = FSys::software_flag_file(l_ptr->rig_file_.path_);
+    l_ptr->rig_file_.last_write_time_ = FSys::last_write_time(l_ptr->rig_file_.path_);
+    logger_->log(log_loc(), level::info, "扫描到rig文件:{}", l_ptr->rig_file_.path_);
   }
 
   return l_out | ranges::views::transform([](const auto &in_ptr) -> scan_category_data_ptr { return in_ptr; }) |

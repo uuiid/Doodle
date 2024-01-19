@@ -81,26 +81,29 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
     if (!FSys::exists(l_rig_path)) continue;
     if (!FSys::is_directory(l_rig_path)) continue;
 
-    auto l_rig_files =
-        ranges::make_subrange(FSys::directory_iterator{l_rig_path}, FSys::directory_iterator{}) |
-        ranges::views::filter([&](auto &&i) -> bool {
-          return i.path().filename().generic_string().starts_with(l_rig_file_name) && i.path().extension() == ".ma";
-          ;
-        }) |
-        ranges::views::transform([](auto &&i) -> FSys::path { return i.path(); }) | ranges::to_vector;
+    if ([&]() {
+          for (auto &&l_file : FSys::directory_iterator{l_rig_path}) {
+            auto l_file_stem = l_file.path().stem().generic_string();
+            if (l_file_stem.starts_with(l_rig_file_name) && l_file.path().extension() == ".ma") {
+              if (l_ptr->rig_file_.path_.empty())
+                l_ptr->rig_file_.path_ = l_file.path();
+              else {
+                logger_->log(log_loc(), level::err, "rig文件存在多个:{}/{}***.ma", l_rig_path, l_rig_file_name);
+                return true;
+              }
+            }
+          }
+          return false;
+        }())
+      continue;
 
-    if (l_rig_files.empty()) {
-      logger_->log(log_loc(), level::err, "rig文件夹中不存在:{} 符合 {}_***.ma 命名的文件 ", l_rig_path, l_ptr->name_);
+    if (l_ptr->rig_file_.path_.empty()) {
+      logger_->log(log_loc(), level::err, "rig文件不存在:{}/{}***.ma", l_rig_path, l_rig_file_name);
       continue;
     }
-    if (l_rig_files.size() > 1) {
-      logger_->log(log_loc(), level::err, "符合rig 文件规则的文件数量大于1:{}", l_rig_files);
-      continue;
-    }
 
-    l_ptr->rig_file_.path_            = l_rig_files.front();
-    l_ptr->rig_file_.uuid_            = FSys::software_flag_file(l_rig_files.front());
-    l_ptr->rig_file_.last_write_time_ = FSys::last_write_time(l_rig_files.front());
+    l_ptr->rig_file_.uuid_            = FSys::software_flag_file(l_ptr->rig_file_.path_);
+    l_ptr->rig_file_.last_write_time_ = FSys::last_write_time(l_ptr->rig_file_.path_);
     // 检查maya文件
     //
     //    auto l_maya_path                  = l_ptr->JD_path_ / l_ptr->name_;
