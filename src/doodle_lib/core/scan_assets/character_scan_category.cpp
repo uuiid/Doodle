@@ -40,6 +40,9 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
         auto l_ch_name          = l_match[1].str();
         auto l_ch_ue_asset_path = l_ch_name_ue_path / "Content" / "Character" / l_ch_name / "Meshs";
 
+        if (!FSys::exists(l_ch_ue_asset_path)) continue;
+        if (!FSys::is_directory(l_ch_ue_asset_path)) continue;
+
         for (auto &&l_s4 : FSys::directory_iterator{l_ch_ue_asset_path}) {
           if (!FSys::is_regular_file(l_s4.path())) continue;
           auto l_ch_ue_asset_stem = l_s4.path().stem().generic_string();
