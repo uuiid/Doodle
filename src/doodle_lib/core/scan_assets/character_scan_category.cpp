@@ -9,7 +9,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
   const FSys::path l_character_path_root = in_root.p_path / "6-moxing/Ch";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
   const std::regex l_Ch_regex{R"(Ch(\d+[A-Z]))"};
-  std::regex l_Ue_regex{R"((\w)_UE\d)"};
+  std::regex l_Ue_regex{R"((\w+)_UE\d)"};
 
   if (!FSys::exists(l_character_path_root)) {
     logger_->log(log_loc(), level::err, "路径不存在:{}", l_character_path_root);
