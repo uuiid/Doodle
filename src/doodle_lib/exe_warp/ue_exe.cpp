@@ -43,6 +43,20 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   ue_exe *self_{};
   bool is_cancel{};
 
+  void fix_plugin() {
+    nlohmann::json l_json{};
+    {
+      FSys::ifstream l_ifstream{ue_path};
+      l_json          = nlohmann::json::parse(l_ifstream);
+      auto &&l_plugin = l_json["Plugins"];
+      l_plugin.clear();
+      auto &&l_plugin_list = l_plugin.emplace_back(nlohmann::json::object());
+      l_plugin["Name"]     = "Doodle";
+      l_plugin["Enabled"]  = true;
+    }
+    FSys::ofstream{ue_path} << l_json.dump();
+  }
+
   void run() {
     if (is_cancel) {
       logger_attr->log(log_loc(), level::err, "用户结束 ue_exe: {}", ue_path);
@@ -56,6 +70,8 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
 
     if (ue_path.empty() || !FSys::exists(ue_path)) throw_exception(doodle_error{"ue_exe path is empty or not exists"});
     logger_attr->log(log_loc(), level::info, "开始运行 ue_exe: {} {}", ue_path, arg_attr);
+
+    fix_plugin();
 
     ue_path    = ue_path.lexically_normal();
     child_attr = boost::process::child{
