@@ -116,7 +116,8 @@ UDoodleEffectLibraryWidget::UDoodleEffectLibraryWidget()
     FilterText = TEXT("");
     if (!GConfig->GetString(TEXT("DoodleEffectLibrary"), TEXT("EffectLibraryPath"), LibraryPath, GEngineIni)) 
     {
-        LibraryPath = TEXT("E:/EffectLibrary");
+        //LibraryPath = TEXT("E:/EffectLibrary");
+        LibraryPath = TEXT("");
     }
     //---------------
     AllTileRootItems.Empty();
@@ -277,9 +278,21 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                         + SVerticalBox::Slot()
                         .AutoHeight()
                         [
-                            SNew(SDirectoryPicker)
-                                .Directory(LibraryPath)
-                                .OnDirectoryChanged(this, &UDoodleEffectLibraryWidget::OnDirectoryChanged)
+                            SNew(SHorizontalBox)
+                                +SHorizontalBox::Slot()
+                                .VAlign(VAlign_Center)
+                                .AutoWidth()
+                                [
+                                    SNew(STextBlock)
+                                        .Text(FText::FromString(TEXT("特效库路径：")))
+                                        .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+                                ]
+                                + SHorizontalBox::Slot()
+                                [
+                                    SNew(SDirectoryPicker)
+                                        .Directory(LibraryPath)
+                                        .OnDirectoryChanged(this, &UDoodleEffectLibraryWidget::OnDirectoryChanged)
+                                ]
                         ]
                 ]
                 + SHorizontalBox::Slot()
