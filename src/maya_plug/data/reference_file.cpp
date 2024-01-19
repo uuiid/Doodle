@@ -177,7 +177,8 @@ reference_file::reference_file() = default;
 reference_file::reference_file(const MObject &in_ref_node) : file_info_node_(in_ref_node) {}
 
 std::string reference_file::get_file_namespace() const {
-  return conv::to_s(get_plug(file_info_node_, "reference_file_namespace").asString());
+  return file_info_node_.isNull() ? std::string{}
+                                  : conv::to_s(get_plug(file_info_node_, "reference_file_namespace").asString());
 }
 
 void reference_file::set_use_sim(bool in_use_sim) {

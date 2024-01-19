@@ -65,12 +65,12 @@ bool cloth_sim::post(const FSys::path& in_path) {
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
   (MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)}));
 
   maya_file_io::set_workspace(l_arg.file_path);
-
   maya_file_io::open_file(l_arg.file_path);
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
+
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
   t_post_time_     = MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()};
   DOODLE_LOG_INFO("tpost 开始时间 {}", t_post_time_);
