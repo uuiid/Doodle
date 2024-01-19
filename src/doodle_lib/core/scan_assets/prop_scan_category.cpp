@@ -61,10 +61,6 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
 
               l_ptr->file_type_.set_path("道具");
 
-              if (l_stem.find('_') != std::string::npos) {
-                l_ptr->version_name_ = l_stem.substr(l_stem.find('_') + 1);
-              }
-
               logger_->log(log_loc(), level::info, "扫描到道具文件:{}", l_s3.path());  // 输出日志
               l_out.emplace_back(l_ptr);
             }
