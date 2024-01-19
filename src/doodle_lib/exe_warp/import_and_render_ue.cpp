@@ -13,7 +13,7 @@
 namespace doodle {
 
 void import_and_render_ue::init() {
-  if (!g_ctx().contains<ue_exe>()) g_ctx().emplace<ue_exe>();
+  if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>(std::make_shared<ue_exe>());
   data_->logger_ = msg_.get<process_message>().logger();
 }
 FSys::path import_and_render_ue::gen_import_config() const {
