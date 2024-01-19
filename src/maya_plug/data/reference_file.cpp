@@ -311,6 +311,9 @@ FSys::path reference_file::get_abs_path() const {
     DOODLE_MAYA_CHICK(k_s);
     return l_path;
   } else {
+    default_logger_raw()->log(
+        log_loc(), spdlog::level::warn, "引用文件 {} 没有文件信息节点(引用节点空)", get_namespace()
+    );
     return {};
   }
 }
