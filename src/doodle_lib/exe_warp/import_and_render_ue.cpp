@@ -86,6 +86,15 @@ FSys::path import_and_render_ue::gen_import_config() const {
   FSys::ofstream{l_tmp_path} << l_json.dump();
   return l_tmp_path;
 }
+void import_and_render_ue::fix_project() const {
+  auto l_json     = nlohmann::json::parse(FSys::ifstream{data_->down_info_.render_project_});
+  auto &&l_plugin = l_json["Plugins"];
+  l_plugin.clear();
+  auto &&l_plugin_list = l_plugin.emplace_back(nlohmann::json::object());
+  l_plugin["Name"]     = "Doodle";
+  l_plugin["Enabled"]  = true;
+  FSys::ofstream{data_->down_info_.render_project_} << l_json.dump();
+}
 
 void import_and_render_ue::operator()(
     boost::system::error_code in_error_code, down_auto_light_anim_file::down_info in_down_info
@@ -107,6 +116,7 @@ void import_and_render_ue::operator()(
 
   data_->down_info_ = in_down_info;
   data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件");
+  fix_project();
   g_ctx().get<ue_exe_ptr>()->async_run(
       msg_,
       fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->down_info_.render_project_, gen_import_config()),
