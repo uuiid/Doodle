@@ -463,7 +463,7 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
                 //----------------
                 TArray<FString> FilesToCopy;
                 IFileManager::Get().FindFilesRecursive(FilesToCopy, *AbsoluteSrcDir, TEXT("*"), true, true);
-                ParallelFor(FilesToCopy.Num(), [&](int32 Index)
+                for (int Index = 0;Index<FilesToCopy.Num();Index++) 
                 {
                     const FString& SourceFilePath = FilesToCopy[Index];
                     if (FPaths::GetExtension(SourceFilePath, true) != TEXT(".json")
@@ -473,7 +473,7 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
                         FString DestFilePath = FPaths::Combine(ProjectContentDir / CurrentItem->Name.ToString(), SourceFilePath.RightChop(AbsoluteSrcDir.Len()));
                         IFileManager::Get().Copy(*DestFilePath, *SourceFilePath, true, true);
                     }
-                });
+                }
                 ////Move-----------------
                 FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
                 AssetRegistryModule.Get().ScanPathsSynchronous({ FPaths::ProjectContentDir() }, true);
