@@ -49,25 +49,30 @@ class import_and_render_ue {
     std::string create_map;
 
     FSys::path render_map;             // 渲染关卡
-    FSys::path level_sequence;         // 渲染关卡序列
-    FSys::path movie_pipeline_config;  // 渲染配置
+    FSys::path level_sequence;         // 渲染关卡序列(包的路径)
+    FSys::path movie_pipeline_config;  // 渲染配置(包的路径)
 
     std::vector<import_files_t> files;
     friend void to_json(nlohmann::json &j, const import_data_t &p) {
-      j["project"]               = p.project_.p_shor_str;
-      j["begin_time"]            = p.begin_time;
-      j["end_time"]              = p.end_time;
-      j["episode"]               = p.episode.p_episodes;
-      j["shot"]                  = p.shot.p_shot;
-      j["shot_ab"]               = p.shot.p_shot_ab;
-      j["out_file_dir"]          = p.out_file_dir.generic_string();
-      j["original_map"]          = p.original_map;
-      j["render_map"]            = p.render_map;
-      j["files"]                 = p.files;
-      j["import_dir"]            = p.import_dir;
-      j["level_sequence"]        = p.level_sequence;
-      j["create_map"]            = p.create_map;
-      j["movie_pipeline_config"] = p.movie_pipeline_config;
+      j["project"]      = p.project_.p_shor_str;
+      j["begin_time"]   = p.begin_time;
+      j["end_time"]     = p.end_time;
+      j["episode"]      = p.episode.p_episodes;
+      j["shot"]         = p.shot.p_shot;
+      j["shot_ab"]      = p.shot.p_shot_ab;
+      j["out_file_dir"] = p.out_file_dir.generic_string();
+      j["original_map"] = p.original_map;
+      j["render_map"]   = p.render_map;
+      j["files"]        = p.files;
+      j["import_dir"]   = p.import_dir;
+      j["create_map"]   = p.create_map;
+      auto l_path       = p.level_sequence;
+      l_path.replace_extension();
+      j["level_sequence"] = l_path;
+
+      auto l_path2        = p.movie_pipeline_config;
+      l_path2.replace_extension();
+      j["movie_pipeline_config"] = l_path2;
     }
   };
 
