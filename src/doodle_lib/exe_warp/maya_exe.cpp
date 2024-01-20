@@ -161,7 +161,15 @@ PYTHONPATH+:= scripts
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               timer_attr.cancel();
               log_attr->log(log_loc(), level::err, "进程结束 {}", in_exit);
-              wait_op_->ec_ = in_error_code;
+
+              if (in_exit != 0 && !in_error_code) {
+                boost::system::error_code l_ec{boost::system::errc::make_error_code(boost::system::errc::io_error)};
+                BOOST_ASIO_ERROR_LOCATION(l_ec);
+                wait_op_->ec_ = l_ec;
+              } else {
+                wait_op_->ec_ = in_error_code;
+              }
+
               set_arg_fun_(get_out_arg());
 
               wait_op_->complete();

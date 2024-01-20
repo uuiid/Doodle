@@ -69,7 +69,13 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               logger_attr->log(log_loc(), level::err, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
 
-              call_attr->ec_ = in_error_code;
+              if (in_exit != 0 && !in_error_code) {
+                boost::system::error_code l_ec{boost::system::errc::make_error_code(boost::system::errc::io_error)};
+                BOOST_ASIO_ERROR_LOCATION(l_ec);
+                call_attr->ec_ = l_ec;
+              } else {
+                call_attr->ec_ = in_error_code;
+              }
               call_attr->complete();
               self_->notify_run();
             },
