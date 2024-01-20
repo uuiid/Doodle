@@ -81,6 +81,7 @@ FSys::path import_and_render_ue::gen_import_config() const {
   data_->import_data_.original_map = data_->down_info_.scene_file_.generic_string();
 
   nlohmann::json l_json{};
+  l_json          = data_->import_data_;
   auto l_tmp_path = FSys::get_cache_path(FSys::path{"ue_import"} / version::build_info::get().version_str) /
                     (core_set::get_set().get_uuid_str() + ".json");
   FSys::ofstream{l_tmp_path} << l_json.dump();
