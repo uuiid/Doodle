@@ -11,6 +11,57 @@
 
 class FTypeItem;
 
+struct FInEditorCapture1 : FMovieSceneCaptureBase
+{
+	FInEditorCapture1(UMovieSceneCapture* InCaptureObject, const TFunction<void(bool)>& InOnFinishedCallback)
+	{
+		CapturingFromWorld = nullptr;
+		CaptureObject = InCaptureObject;
+		OnFinishedCallback = InOnFinishedCallback;
+	}
+
+	// FMovieSceneCaptureBase interface
+	virtual UWorld* GetWorld() const override
+	{
+		// Return a reference to the PIE world.
+		return CapturingFromWorld;
+	}
+	virtual void OnCaptureStarted() override;
+	virtual void Start() override;
+	virtual void Cancel() override;
+	virtual FCaptureState GetCaptureState() const override;
+	// ~FMovieSceneCaptureBase interface
+
+private:
+	/** Overrides the Level Editor Play settings to specifically disable some things (such as audio playback) */
+	void OverridePlaySettings(class ULevelEditorPlaySettings* PlayInEditorSettings);
+	/** Called when the PIE Viewport is created. */
+	void OnPIEViewportStarted();
+	/** Shuts down the capture setup , called when PIE is closed by the user or the sequence finishes playing. */
+	void Shutdown();
+	/** Called when the user closes the PIE instance window. */
+	void OnEndPIE(bool bIsSimulating);
+	/** Called when the Sequence finishes playing to the end. */
+	void OnLevelSequenceFinished();
+
+private:
+	UWorld* CapturingFromWorld;
+
+	bool bScreenMessagesWereEnabled;
+	float TransientPrimaryVolume;
+	int32 BackedUpStreamingPoolSize;
+	int32 BackedUpUseFixedPoolSize;
+	int32 BackedUpTextureStreaming;
+	TArray<uint8> BackedUpPlaySettings;
+
+	bool CachedPathTracingMode = false;
+	struct FEngineShowFlags* CachedEngineShowFlags = nullptr;
+	TSubclassOf<AGameModeBase> CachedGameMode;
+public:
+	FString MapName;
+	virtual void OnCaptureFinished(bool bSuccess) override;
+};
+
 struct FNewProcessCapture1 : FMovieSceneCaptureBase
 {
 	FNewProcessCapture1(UMovieSceneCapture* InCaptureObject, const FString& InMapNameToLoad, const TFunction<void(bool)>& InOnFinishedCallback)
@@ -99,7 +150,8 @@ private:
 	int32 PastedFrame;
 	FTimerHandle TickTimer;
 	void OnTickTimer();
-	TSharedPtr<FNewProcessCapture1> CurrentCapture;
+	//TSharedPtr<FNewProcessCapture1> CurrentCapture;
+	TSharedPtr<FInEditorCapture1> CurrentCapture;
 	void OnCaptureFinished(bool result);
 	void OnStopCapture();
 	bool IsCapturing = false;
@@ -146,4 +198,9 @@ private:
 	TSharedRef<ITableRow> MakeTableRowWidget(TSharedPtr<FTypeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable);
 	void HandleGetChildrenForTree(TSharedPtr<FTypeItem> InItem, TArray<TSharedPtr<FTypeItem>>& OutChildren);
 	int32 MaxFrame;
+	//--------------
+	TWeakPtr<class SWindow> WeakCustomWindow;
+	void OnResetEffect();
+public:
+	bool IsAutoReset;
 };

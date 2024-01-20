@@ -170,3 +170,36 @@ void DoodleEffectEditorViewport::SetViewportData(TObjectPtr<UObject> ParticleObj
         }
     }
 }
+
+void DoodleEffectEditorViewport::OnResetViewport()
+{
+    if (PreviewActor)
+    {
+        for (UActorComponent* Component : PreviewActor->GetComponents())
+        {
+            if (Component && Component->IsA(UNiagaraComponent::StaticClass()))
+            {
+                //Component->Activate(true);
+                UNiagaraComponent* NiagaraSystemComponent = Cast<UNiagaraComponent>(Component);
+                NiagaraSystemComponent->Activate(true);
+                NiagaraSystemComponent->ReregisterComponent();
+            }
+            if (Component && Component->IsA(UParticleSystemComponent::StaticClass()))
+            {
+                //Component->Activate(true);
+                UParticleSystemComponent* ParticleSystemComponent = Cast<UParticleSystemComponent>(Component);
+                //---------
+                ParticleSystemComponent->ResetParticles();
+                ParticleSystemComponent->SetManagingSignificance(true);
+                ParticleSystemComponent->ActivateSystem();
+                if (ParticleSystemComponent->Template)
+                {
+                    ParticleSystemComponent->Template->bShouldResetPeakCounts = true;
+                }
+                ParticleSystemComponent->bIsViewRelevanceDirty = true;
+                ParticleSystemComponent->CachedViewRelevanceFlags.Empty();
+                ParticleSystemComponent->ConditionalCacheViewRelevanceFlags();
+            }
+        }
+    }
+}

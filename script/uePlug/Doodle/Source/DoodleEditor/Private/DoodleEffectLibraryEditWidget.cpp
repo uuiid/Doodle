@@ -64,15 +64,230 @@
 #include "Components/DirectionalLightComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "JsonObjectConverter.h"
+#include "Serialization/ObjectWriter.h"
+#include "Serialization/ObjectReader.h"
 
 const FName UDoodleEffectLibraryEditWidget::Name{ TEXT("DoodleEffectLibraryEditWidget") };
 const TCHAR* MovieCaptureSessionName = TEXT("Movie Scene Capture");
 
+void FInEditorCapture1::Start()
+{
+    ULevelEditorPlaySettings* PlayInEditorSettings = GetMutableDefault<ULevelEditorPlaySettings>();
+    //-----------------
+    bScreenMessagesWereEnabled = GAreScreenMessagesEnabled;
+    GAreScreenMessagesEnabled = false;
+
+    if (!CaptureObject->Settings.bEnableTextureStreaming)
+    {
+        const int32 UndefinedTexturePoolSize = -1;
+        IConsoleVariable* CVarStreamingPoolSize = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Streaming.PoolSize"));
+        if (CVarStreamingPoolSize)
+        {
+            BackedUpStreamingPoolSize = CVarStreamingPoolSize->GetInt();
+            CVarStreamingPoolSize->Set(UndefinedTexturePoolSize, ECVF_SetByConsole);
+        }
+        //---------------------
+        IConsoleVariable* CVarUseFixedPoolSize = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Streaming.UseFixedPoolSize"));
+        if (CVarUseFixedPoolSize)
+        {
+            BackedUpUseFixedPoolSize = CVarUseFixedPoolSize->GetInt();
+            CVarUseFixedPoolSize->Set(0, ECVF_SetByConsole);
+        }
+        //--------------------
+        IConsoleVariable* CVarTextureStreaming = IConsoleManager::Get().FindConsoleVariable(TEXT("r.TextureStreaming"));
+        if (CVarTextureStreaming)
+        {
+            BackedUpTextureStreaming = CVarTextureStreaming->GetInt();
+            CVarTextureStreaming->Set(0, ECVF_SetByConsole);
+        }
+    }
+    //-------------------
+    FObjectWriter(PlayInEditorSettings, BackedUpPlaySettings);
+    OverridePlaySettings(PlayInEditorSettings);
+
+    CaptureObject->AddToRoot();
+    CaptureObject->OnCaptureFinished().AddRaw(this, &FInEditorCapture1::OnLevelSequenceFinished);
+
+    UGameViewportClient::OnViewportCreated().AddRaw(this, &FInEditorCapture1::OnPIEViewportStarted);
+    FEditorDelegates::EndPIE.AddRaw(this, &FInEditorCapture1::OnEndPIE);
+
+    FVector2D WindowSize = FVector2D(1024, 1024);
+    WindowSize = FVector2D(CaptureObject->Settings.Resolution.ResX, CaptureObject->Settings.Resolution.ResY);
+    TSharedRef<SWindow> CustomWindow = SNew(SWindow)
+        .ClientSize(WindowSize)
+        .Title(FText::FromString(TEXT("Movie Render - Preview")))
+        .AutoCenter(EAutoCenter::PrimaryWorkArea)
+        .UseOSWindowBorder(true)
+        .FocusWhenFirstShown(false)
+        .ActivationPolicy(EWindowActivationPolicy::Never)
+        .HasCloseButton(true)
+        .SupportsMaximize(false)
+        .SupportsMinimize(true)
+        .MaxWidth(CaptureObject->GetSettings().Resolution.ResX)
+        .MaxHeight(CaptureObject->GetSettings().Resolution.ResY)
+        .SizingRule(ESizingRule::FixedSize);
+    FSlateApplication::Get().AddWindow(CustomWindow);
+    //----------------
+    FRequestPlaySessionParams Params;
+    Params.EditorPlaySettings = PlayInEditorSettings;
+    Params.CustomPIEWindow = CustomWindow;
+    Params.GlobalMapOverride = MapName;
+    //-----------------
+    GEditor->RequestPlaySession(Params);
+}
+
+void FInEditorCapture1::Cancel()
+{
+    // If the user cancels through the UI then we request that the editor shut down the PIE instance.
+    // We capture the PIE shutdown request (which calls OnEndPIE) and further process it. This unifies
+    // closing PIE via the close button and the UI into one code path.
+    GEditor->RequestEndPlayMap();
+}
+
+void FInEditorCapture1::OverridePlaySettings(ULevelEditorPlaySettings* PlayInEditorSettings)
+{
+    const FMovieSceneCaptureSettings& Settings = CaptureObject->GetSettings();
+    PlayInEditorSettings->NewWindowWidth = Settings.Resolution.ResX;
+    PlayInEditorSettings->NewWindowHeight = Settings.Resolution.ResY;
+    PlayInEditorSettings->CenterNewWindow = false;
+    PlayInEditorSettings->NewWindowPosition = FIntPoint::NoneValue; // It will center PIE to the middle of the screen the first time it is run (until the user drag the window somewhere else)
+    PlayInEditorSettings->LastExecutedPlayModeType = EPlayModeType::PlayMode_InEditorFloating;
+
+    // Reset everything else
+    PlayInEditorSettings->GameGetsMouseControl = false;
+    PlayInEditorSettings->ShowMouseControlLabel = false;
+    PlayInEditorSettings->ViewportGetsHMDControl = false;
+    PlayInEditorSettings->ShouldMinimizeEditorOnVRPIE = true;
+    PlayInEditorSettings->EnableGameSound = false;
+    PlayInEditorSettings->bOnlyLoadVisibleLevelsInPIE = false;
+    PlayInEditorSettings->bPreferToStreamLevelsInPIE = false;
+    PlayInEditorSettings->PIEAlwaysOnTop = false;
+    PlayInEditorSettings->DisableStandaloneSound = false;
+    PlayInEditorSettings->AdditionalLaunchParameters = TEXT("");
+    PlayInEditorSettings->BuildGameBeforeLaunch = EPlayOnBuildMode::PlayOnBuild_Never;
+    PlayInEditorSettings->LaunchConfiguration = EPlayOnLaunchConfiguration::LaunchConfig_Default;
+    PlayInEditorSettings->PackFilesForLaunch = EPlayOnPakFileMode::NoPak;
+    PlayInEditorSettings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
+    PlayInEditorSettings->SetRunUnderOneProcess(true);
+    PlayInEditorSettings->bLaunchSeparateServer = false;
+    PlayInEditorSettings->SetPlayNumberOfClients(1);
+}
+
+void FInEditorCapture1::OnPIEViewportStarted()
+{
+    for (const FWorldContext& Context : GEngine->GetWorldContexts())
+    {
+        if (Context.WorldType == EWorldType::PIE)
+        {
+            FSlatePlayInEditorInfo* SlatePlayInEditorSession = GEditor->SlatePlayInEditorMap.Find(Context.ContextHandle);
+            if (SlatePlayInEditorSession)
+            {
+                CapturingFromWorld = Context.World();
+
+                TSharedPtr<SWindow> Window = SlatePlayInEditorSession->SlatePlayInEditorWindow.Pin();
+
+                const FMovieSceneCaptureSettings& Settings = CaptureObject->GetSettings();
+
+                SlatePlayInEditorSession->SlatePlayInEditorWindowViewport->SetViewportSize(Settings.Resolution.ResX, Settings.Resolution.ResY);
+                //--------------------
+                CachedEngineShowFlags = SlatePlayInEditorSession->SlatePlayInEditorWindowViewport->GetClient()->GetEngineShowFlags();
+                if (CachedEngineShowFlags && Settings.bUsePathTracer)
+                {
+                    CachedPathTracingMode = CachedEngineShowFlags->PathTracing;
+                    CachedEngineShowFlags->SetPathTracing(true);
+                }
+                CaptureObject->Initialize(SlatePlayInEditorSession->SlatePlayInEditorWindowViewport, Context.PIEInstance);
+                OnCaptureStarted();
+            }
+            return;
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Received PIE Creation callback but failed to find PIE World or missing FSlatePlayInEditorInfo for world."));
+}
+
+void FInEditorCapture1::Shutdown()
+{
+    FEditorDelegates::EndPIE.RemoveAll(this);
+    UGameViewportClient::OnViewportCreated().RemoveAll(this);
+    CaptureObject->OnCaptureFinished().RemoveAll(this);
+
+    GAreScreenMessagesEnabled = bScreenMessagesWereEnabled;
+
+    if (!CaptureObject->Settings.bEnableTextureStreaming)
+    {
+        IConsoleVariable* CVarStreamingPoolSize = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Streaming.PoolSize"));
+        if (CVarStreamingPoolSize)
+        {
+            CVarStreamingPoolSize->Set(BackedUpStreamingPoolSize, ECVF_SetByConsole);
+        }
+
+        IConsoleVariable* CVarUseFixedPoolSize = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Streaming.UseFixedPoolSize"));
+        if (CVarUseFixedPoolSize)
+        {
+            CVarUseFixedPoolSize->Set(BackedUpUseFixedPoolSize, ECVF_SetByConsole);
+        }
+
+        IConsoleVariable* CVarTextureStreaming = IConsoleManager::Get().FindConsoleVariable(TEXT("r.TextureStreaming"));
+        if (CVarTextureStreaming)
+        {
+            CVarTextureStreaming->Set(BackedUpTextureStreaming, ECVF_SetByConsole);
+        }
+    }
+
+    if (CachedEngineShowFlags)
+    {
+        CachedEngineShowFlags->SetPathTracing(CachedPathTracingMode);
+    }
+
+    FObjectReader(GetMutableDefault<ULevelEditorPlaySettings>(), BackedUpPlaySettings);
+
+    CaptureObject->Close();
+    CaptureObject->RemoveFromRoot();
+}
+
+void FInEditorCapture1::OnEndPIE(bool bIsSimulating)
+{
+    Shutdown();
+}
+
+void FInEditorCapture1::OnLevelSequenceFinished()
+{
+    Shutdown();
+    //-----------------
+    GEditor->RequestEndPlayMap();
+}
+
+void FInEditorCapture1::OnCaptureStarted()
+{
+    FString CapturePath = CaptureObject->ResolveFileFormat(CaptureObject->Settings.OutputDirectory.Path, FFrameMetrics());
+}
+
+FCaptureState FInEditorCapture1::GetCaptureState() const
+{
+    for (const FWorldContext& Context : GEngine->GetWorldContexts())
+    {
+        if (Context.WorldType == EWorldType::PIE)
+        {
+            return FCaptureState(ECaptureStatus::Pending);
+        }
+    }
+    return FCaptureState(ECaptureStatus::Success);
+}
+
+void FInEditorCapture1::OnCaptureFinished(bool bSuccess)
+{
+    if (OnFinishedCallback)
+    {
+        OnFinishedCallback(bSuccess);
+    }
+}
+//-------------------------------------------------------
 void FNewProcessCapture1::Start()
 {
     // Save out the capture manifest to json
     FString Filename = FPaths::ProjectSavedDir() / TEXT("MovieSceneCapture/Manifest.json");
-
+    //-----------
     TSharedRef<FJsonObject> Object = MakeShareable(new FJsonObject);
     if (FJsonObjectConverter::UStructToJsonObject(CaptureObject->GetClass(), CaptureObject, Object, 0, 0))
     {
@@ -263,7 +478,10 @@ UDoodleEffectLibraryEditWidget::UDoodleEffectLibraryEditWidget()
 {
     if (!GConfig->GetString(TEXT("DoodleEffectLibrary"), TEXT("EffectLibraryPath"), LibraryPath, GEngineIni))
     {
-        LibraryPath = TEXT("E:/EffectLibrary");
+        //LibraryPath = TEXT("E:/EffectLibrary");
+        //---------
+        FText  DialogText = FText::FromString(TEXT("没有特效库路径，请在预览界面添加"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
     }
     //--------------
     EffectName = TEXT("");
@@ -273,6 +491,7 @@ UDoodleEffectLibraryEditWidget::UDoodleEffectLibraryEditWidget()
     DirectoryPath = TEXT("");
     OutputFormat = TEXT("Effect");
     MaxFrame = 99999999;
+    IsAutoReset = true;
 }
 
 UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
@@ -407,6 +626,18 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                     [
                         SNew(SVerticalBox)
                             + SVerticalBox::Slot()
+                            .FillHeight(0.1)
+                            .Padding(2)
+                            [
+                                SNew(SButton)
+                                    .Text(FText::FromString(TEXT("重置特效")))
+                                    .OnClicked_Lambda([this]()
+                                    {
+                                        OnResetEffect();
+                                        return FReply::Handled();
+                                    })
+                            ]
+                            + SVerticalBox::Slot()
                             .AutoHeight()
                             [
                                 SNew(STextBlock)
@@ -440,6 +671,40 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                                     .ColorAndOpacity(FSlateColor{ FLinearColor{1, 0, 0, 1} })
                             ]
                             + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(SHorizontalBox)
+                                +SHorizontalBox::Slot()
+                                .AutoWidth()
+                                [
+                                    SNew(STextBlock)
+                                        .Text(FText::FromString(TEXT("录制时，自动重置粒子：")))
+                                ]
+                                + SHorizontalBox::Slot()
+                                .AutoWidth()
+                                [
+                                    SNew(SCheckBox)
+                                        .IsChecked_Lambda([=]() -> ECheckBoxState
+                                        {
+                                            if (IsAutoReset)
+                                                return ECheckBoxState::Checked;
+                                            else
+                                                return ECheckBoxState::Unchecked;
+                                        })
+                                        .OnCheckStateChanged_Lambda([=](ECheckBoxState NewAutoCloseState)
+                                        {
+                                            if (NewAutoCloseState == ECheckBoxState::Checked)
+                                            {
+                                                IsAutoReset = true;
+                                            }
+                                            else if (NewAutoCloseState == ECheckBoxState::Unchecked)
+                                            {
+                                                IsAutoReset = false;
+                                            }
+                                        })
+                                ]
+                            ]
+                            + SVerticalBox::Slot()
                             .FillHeight(0.1)
                             .Padding(2)
                             [
@@ -447,6 +712,10 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                                     .Text(FText::FromString(TEXT("录制")))
                                     .OnClicked_Lambda([this]()
                                     {
+                                        if (IsAutoReset) 
+                                        {
+                                            OnResetEffect();
+                                        }
                                         OnStartCapture();
                                         return FReply::Handled();
                                     })
@@ -545,10 +814,10 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                                 SNew(SButton)
                                     .Text(FText::FromString(TEXT("保存并创建")))
                                     .OnClicked_Lambda([this]()
-                                        {
-                                            OnSaveAndCreate();
-                                            return FReply::Handled();
-                                        })
+                                    {
+                                        OnSaveAndCreate();
+                                        return FReply::Handled();
+                                    })
                             ]
                             + SVerticalBox::Slot()
                             .FillHeight(0.05)
@@ -793,49 +1062,35 @@ void UDoodleEffectLibraryEditWidget::CreateLevelSequence()
 void UDoodleEffectLibraryEditWidget::OnTickTimer()
 {
     PastedFrame += 5;
-    if (CurrentCapture.IsValid() && CurrentCapture->SharedProcHandle.IsValid())
+    //----------------
+    if (CurrentCapture.IsValid()) 
     {
-        if (!FPlatformProcess::IsProcRunning(*CurrentCapture->SharedProcHandle))
-        {
-            int32 RetCode = 0;
-            FPlatformProcess::GetProcReturnCode(*CurrentCapture->SharedProcHandle, &RetCode);
-            if (RetCode == 0) 
-            {
-                if (CurrentCapture.IsValid()) 
-                {
-                    CurrentCapture->OnCaptureFinished(true);
-                }
-            }
-            else
-            {
-                IsCapturing = false;
-                CurrentCapture = nullptr;
-                //--------------
-                if (NotificationItem.IsValid())
-                {
-                    NotificationItem->SetCompletionState(SNotificationItem::CS_Fail);
-                    NotificationItem->SetText(FText::FromString(TEXT("渲染失败")));
-                    NotificationItem->ExpireAndFadeout();
-                    NotificationItem->SetExpireDuration(3);
-                    NotificationItem = nullptr;
-                }
-                if (RetCode == 1)
-                {
-                    FText DialogText = FText::FromString(TEXT("提示：渲染进程奔溃"));
-                    FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-                }
-                else
-                {
-                    FString Info = FString::Format(TEXT("渲染失败，返回码:"), { FString::FromInt(RetCode) });
-                    FText DialogText = FText::FromString(Info);
-                    FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-                }
-            }
-        }
-        else
+        FCaptureState StateThisFrame = CurrentCapture->GetCaptureState();
+        if (StateThisFrame.Status == ECaptureStatus::Pending)
         {
             if (NotificationItem.IsValid())
-            NotificationItem->SetText(FText::FromString(TEXT("渲染中...")));
+                NotificationItem->SetText(FText::FromString(TEXT("渲染中...")));
+        }
+        else if (StateThisFrame.Status == ECaptureStatus::Success)
+        {
+            if (CurrentCapture.IsValid())
+            {
+                CurrentCapture->OnCaptureFinished(true);
+            }
+        }
+        else if(StateThisFrame.Status == ECaptureStatus::Failure)
+        {
+            IsCapturing = false;
+            CurrentCapture = nullptr;
+            //--------------
+            if (NotificationItem.IsValid())
+            {
+                NotificationItem->SetCompletionState(SNotificationItem::CS_Fail);
+                NotificationItem->SetText(FText::FromString(TEXT("渲染失败")));
+                NotificationItem->ExpireAndFadeout();
+                NotificationItem->SetExpireDuration(3);
+                NotificationItem = nullptr;
+            }
         }
     }
 }
@@ -866,7 +1121,7 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
     {
         if (NotificationItem.IsValid())
         {
-            NotificationItem->SetText(FText::FromString(TEXT("等待渲染...")));
+            NotificationItem->SetText(FText::FromString(TEXT("准备渲染...")));
         }
         //---------------
         StartCaptureButton->SetEnabled(true);
@@ -913,9 +1168,12 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
         //--------------------
         const FString WorldPackageName = NewSequenceWorld->GetOutermost()->GetName();
         FString MapNameToLoad = WorldPackageName;
-        CurrentCapture = MakeShared<FNewProcessCapture1>(CaptureSeq, WorldPackageName, OnCaptureFinishDelegate);
-        CurrentCapture->Start();
+        //CurrentCapture = MakeShared<FNewProcessCapture1>(CaptureSeq, WorldPackageName, OnCaptureFinishDelegate);
+        //CurrentCapture->Start();
         //--------------------
+        CurrentCapture = MakeShared<FInEditorCapture1>(CaptureSeq, OnCaptureFinishDelegate);
+        CurrentCapture->MapName = MapNameToLoad;
+        CurrentCapture->Start();
     }
 }
 
@@ -1212,17 +1470,17 @@ TSharedRef<ITableRow> UDoodleEffectLibraryEditWidget::ListOnGenerateRow(TSharedP
                         [
                             SNew(SEditableTextBox)
                                 .Text_Lambda([this, InItem]()
-                                    {
-                                        return FText::FromString(InItem->Name);
-                                    })
+                                {
+                                    return FText::FromString(InItem->Name);
+                                })
                                 .OnTextChanged_Lambda([this, InItem](const FText& In_Text)
-                                    {
-                                        InItem->Name = In_Text.ToString();
-                                    })
-                                        .OnTextCommitted_Lambda([this, InItem](const FText& In_Text, ETextCommit::Type)
-                                            {
-                                                InItem->Name = In_Text.ToString();
-                                            })
+                                {
+                                    InItem->Name = In_Text.ToString();
+                                })
+                                .OnTextCommitted_Lambda([this, InItem](const FText& In_Text, ETextCommit::Type)
+                                {
+                                    InItem->Name = In_Text.ToString();
+                                })
                         ]
                 ]
                 +SHorizontalBox::Slot()
@@ -1248,4 +1506,12 @@ TSharedRef<ITableRow> UDoodleEffectLibraryEditWidget::ListOnGenerateRow(TSharedP
                 ]
             
         ];
+}
+
+void UDoodleEffectLibraryEditWidget::OnResetEffect()
+{
+    if (ViewEditorViewport->IsVisible())
+    {
+        ViewEditorViewport->OnResetViewport();
+    }
 }

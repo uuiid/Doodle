@@ -114,9 +114,18 @@ void FContentBrowserMenuExtension::OnImportToEffectLibrary()
             || SelectAssetData.GetAsset()->IsA<UBlueprint>())
         {
             //----------------------
-            TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryEditWidget::Name);
-            TSharedRef<UDoodleEffectLibraryEditWidget> Widget = StaticCastSharedRef<UDoodleEffectLibraryEditWidget>(Tab->GetContent());
-            Widget->SetAssetData(SelectAssetData);
+            FString LibraryPath;
+            if (GConfig->GetString(TEXT("DoodleEffectLibrary"), TEXT("EffectLibraryPath"), LibraryPath, GEngineIni)) 
+            {
+                TSharedPtr<SDockTab> Tab = FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryEditWidget::Name);
+                TSharedRef<UDoodleEffectLibraryEditWidget> Widget = StaticCastSharedRef<UDoodleEffectLibraryEditWidget>(Tab->GetContent());
+                Widget->SetAssetData(SelectAssetData);
+            }
+            else
+            {
+                FText  DialogText = FText::FromString(TEXT("没有特效库路径，请在预览界面添加"));
+                FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+            }
         }
     }
 }

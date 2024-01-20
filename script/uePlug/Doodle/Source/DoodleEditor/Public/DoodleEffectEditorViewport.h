@@ -45,6 +45,7 @@ public:
 
 	void Construct(const FArguments& Arg);
 	void SetViewportData(TObjectPtr<UObject> ParticleObj);
+	void OnResetViewport();
 
 	FVector2D ComputeDesiredSize(float) const override { return FVector2D(768, 768); }
 	TObjectPtr<AActor> PreviewActor;
