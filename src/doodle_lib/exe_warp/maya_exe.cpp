@@ -197,7 +197,7 @@ PYTHONPATH+:= scripts
             read_out();
           } else {
             out_attr.close();
-            if (in_code != boost::asio::error::eof) log_attr->log(log_loc(), level::err, in_code);
+            if (in_code != boost::asio::error::broken_pipe) log_attr->log(log_loc(), level::err, in_code);
           }
         }
     );
@@ -215,7 +215,7 @@ PYTHONPATH+:= scripts
             read_err();
           } else {
             err_attr.close();
-            if (in_code != boost::asio::error::eof) log_attr->log(log_loc(), level::err, in_code);
+            if (in_code != boost::asio::error::broken_pipe) log_attr->log(log_loc(), level::err, in_code);
           }
         }
     );

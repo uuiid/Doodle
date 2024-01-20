@@ -97,7 +97,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             read_out();
           } else {
             out_attr.close();
-            if (in_code != boost::asio::error::eof)
+            if (in_code != boost::asio::error::broken_pipe)
               logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
           }
         }
@@ -115,7 +115,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
             read_err();
           } else {
             err_attr.close();
-            if (in_code != boost::asio::error::eof)
+            if (in_code != boost::asio::error::broken_pipe)
               logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
           }
         }
