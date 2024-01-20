@@ -160,7 +160,7 @@ PYTHONPATH+:= scripts
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               timer_attr.cancel();
-              log_attr->log(log_loc(), level::err, "进程结束 {}", in_exit);
+              log_attr->log(log_loc(), level::info, "进程结束 {}", in_exit);
 
               if (in_exit != 0 && !in_error_code) {
                 boost::system::error_code l_ec{boost::system::errc::make_error_code(boost::system::errc::io_error)};
@@ -196,8 +196,8 @@ PYTHONPATH+:= scripts
             log_attr->log(log_loc(), level::info, l_str);
             read_out();
           } else {
-            log_attr->log(log_loc(), level::err, in_code);
             out_attr.close();
+            if (in_code != boost::asio::error::eof) log_attr->log(log_loc(), level::err, in_code);
           }
         }
     );
@@ -215,7 +215,7 @@ PYTHONPATH+:= scripts
             read_err();
           } else {
             err_attr.close();
-            log_attr->log(log_loc(), level::err, in_code);
+            if (in_code != boost::asio::error::eof) log_attr->log(log_loc(), level::err, in_code);
           }
         }
     );

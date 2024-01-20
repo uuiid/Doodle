@@ -41,7 +41,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
         log_info(fmt::format("maya_to_exe_file get uuid :{}", l_uuid));
 
         if (l_id_map.contains(l_uuid)) {
-          data_->logger_->log(log_loc(), level::level_enum::err, "找到了文件{}的引用", in_arg);
+          data_->logger_->log(log_loc(), level::level_enum::warn, "找到了文件{}的引用", in_arg);
           return entt::handle{*g_reg(), l_id_map.at(l_uuid)};
         }
         data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 找不到引用, 继续输出将变为不正确排屏", in_arg);
