@@ -107,7 +107,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
       p_log_path / fmt::format("{}_{}_{}.txt", in_name, boost::this_process::get_id(), core_set::get_set().get_uuid());
   std::vector<spdlog::sink_ptr> l_sinks{
       std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true),
-      std::make_shared<spdlog::sinks::rotating_file_sink_mt>(in_path.generic_string(), 1024 * 1024 * 1024, 100, true)
+      std::make_shared<spdlog::sinks::basic_file_sink_mt>(in_path.generic_string(), true)
   };
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
