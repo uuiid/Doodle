@@ -55,9 +55,8 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, c
   auto l_path = in_path / fmt::format("{}_{}.txt", in_name, boost::this_process::get_id());
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
-    rotating_file_sink_ =
-        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100);
-    l_logger = std::make_shared<spdlog::async_logger>(
+    rotating_file_sink_ = std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true);
+    l_logger            = std::make_shared<spdlog::async_logger>(
         in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
 #if !defined(NDEBUG)
@@ -86,9 +85,13 @@ void logger_ctrl::init_temp_log() {
 }
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, bool out_console) {
-  std::vector<spdlog::sink_ptr> l_sinks{rotating_file_sink_};
+  auto l_path =
+      p_log_path / fmt::format("{}_{}_{}.txt", in_name, boost::this_process::get_id(), core_set::get_set().get_uuid());
+
+  std::vector<spdlog::sink_ptr> l_sinks{};
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
+  l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
@@ -100,8 +103,10 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
     const FSys::path &in_path, const std::string &in_name, bool out_console
 ) {
+  auto l_path =
+      p_log_path / fmt::format("{}_{}_{}.txt", in_name, boost::this_process::get_id(), core_set::get_set().get_uuid());
   std::vector<spdlog::sink_ptr> l_sinks{
-      rotating_file_sink_,
+      std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true),
       std::make_shared<spdlog::sinks::rotating_file_sink_mt>(in_path.generic_string(), 1024 * 1024 * 1024, 100, true)
   };
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
