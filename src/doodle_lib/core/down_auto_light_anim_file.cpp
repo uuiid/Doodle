@@ -133,10 +133,10 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
     if (l_is_se) {
       // 配置文件夹复制
       l_copy_path.emplace_back(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config);
+      // 复制项目文件
       if (!FSys::exists(l_local_path / l_uproject.filename()))
-        // 复制项目文件
         l_copy_path.emplace_back(l_uproject, l_local_path / l_uproject.filename());
-      data_->down_info_.render_project_ = l_copy_path.back().second;
+      data_->down_info_.render_project_ = l_local_path / l_uproject.filename();
     }
   }
   g_ctx().get<thread_copy_io_service>().async_copy(
