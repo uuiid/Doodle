@@ -90,9 +90,9 @@ void import_and_render_ue::fix_project() const {
   auto l_json     = nlohmann::json::parse(FSys::ifstream{data_->down_info_.render_project_});
   auto &&l_plugin = l_json["Plugins"];
   l_plugin.clear();
-  auto &&l_plugin_list = l_plugin.emplace_back(nlohmann::json::object());
-  l_plugin["Name"]     = "Doodle";
-  l_plugin["Enabled"]  = true;
+  auto &&l_plugin_obj     = l_plugin.emplace_back(nlohmann::json::object());
+  l_plugin_obj["Name"]    = "Doodle";
+  l_plugin_obj["Enabled"] = true;
   FSys::ofstream{data_->down_info_.render_project_} << l_json.dump();
 }
 
