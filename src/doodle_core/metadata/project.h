@@ -1,6 +1,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <boost/lexical_cast.hpp>
 namespace doodle {
 namespace project_config {
 class base_config;
@@ -10,7 +11,7 @@ class base_config;
 /**
  * 项目信息类
  */
-class DOODLE_CORE_API project {
+class DOODLE_CORE_API project : boost::totally_ordered<project> {
  public:
   // 项目名称
   std::string p_name;
@@ -46,11 +47,7 @@ class DOODLE_CORE_API project {
   [[nodiscard]] std::string short_str() const;
 
   bool operator<(const project& in_rhs) const;
-  bool operator>(const project& in_rhs) const;
-  bool operator<=(const project& in_rhs) const;
-  bool operator>=(const project& in_rhs) const;
   bool operator==(const project& in_rhs) const;
-  bool operator!=(const project& in_rhs) const;
 
  private:
   friend void to_json(nlohmann::json& j, const project& p) {

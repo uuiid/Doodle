@@ -52,7 +52,21 @@ bool long_time_tasks_widget::render() {
       dear::Text(msg.message_back());
 
       imgui::TableNextColumn();
-      dear::Text(std::string{magic_enum::enum_name(msg.get_state())});
+      //      dear::Text(std::string{magic_enum::enum_name(msg.get_state())});
+      switch (msg.get_state()) {
+        case process_message::state::wait:
+          ImGui::Text("准备任务");
+          break;
+        case process_message::state::run:
+          ImGui::Text("正在运行");
+          break;
+        case process_message::state::fail:
+          ImGui::Text("错误结束");
+          break;
+        case process_message::state::success:
+          ImGui::Text("成功完成");
+          break;
+      }
 
       imgui::TableNextColumn();
       using namespace std::literals;
@@ -62,21 +76,6 @@ bool long_time_tasks_widget::render() {
 
       if (!msg.aborted_sig.empty()) {
         if (ImGui::SmallButton(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_sig();
-      } else {
-        switch (msg.get_state()) {
-          case process_message::state::wait:
-            ImGui::Text("准备开始任务");
-            break;
-          case process_message::state::run:
-            ImGui::Text("任务正在运行");
-            break;
-          case process_message::state::fail:
-            ImGui::Text("任务已结束");
-            break;
-          case process_message::state::success:
-            ImGui::Text("成功完成任务");
-            break;
-        }
       }
     }
   };

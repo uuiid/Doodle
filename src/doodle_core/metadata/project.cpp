@@ -42,13 +42,13 @@ std::string project::short_str() const { return p_shor_str; }
 std::string project::show_str() const { return this->p_name; }
 
 bool project::operator<(const project& in_rhs) const {
-  //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name, p_path) < std::tie(static_cast<const
-  //  doodle::metadata&>(in_rhs), in_rhs.p_name, in_rhs.p_path);
-  return std::tie(p_name, p_path) < std::tie(in_rhs.p_name, in_rhs.p_path);
+  return std::tie(p_name, p_en_str, p_shor_str, p_path) <
+         std::tie(in_rhs.p_name, in_rhs.p_en_str, in_rhs.p_shor_str, in_rhs.p_path);
 }
-bool project::operator>(const project& in_rhs) const { return in_rhs < *this; }
-bool project::operator<=(const project& in_rhs) const { return !(in_rhs < *this); }
-bool project::operator>=(const project& in_rhs) const { return !(*this < in_rhs); }
+bool project::operator==(const project& in_rhs) const {
+  return std::tie(p_name, p_en_str, p_shor_str, p_path) ==
+         std::tie(in_rhs.p_name, in_rhs.p_en_str, in_rhs.p_shor_str, in_rhs.p_path);
+}
 
 const std::string& project::get_name() const { return p_name; }
 
@@ -64,11 +64,6 @@ void project::init_name() {
   DOODLE_LOG_INFO(str);
   p_shor_str = boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
-bool project::operator==(const project& in_rhs) const {
-  return std::tie(p_name, p_en_str, p_shor_str, p_path) ==
-         std::tie(in_rhs.p_name, in_rhs.p_en_str, in_rhs.p_shor_str, in_rhs.p_path);
-}
-bool project::operator!=(const project& in_rhs) const { return !(in_rhs == *this); }
 
 FSys::path project::make_path(const FSys::path& in_path) const {
   auto path = p_path / in_path;
