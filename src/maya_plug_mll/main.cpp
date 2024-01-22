@@ -86,12 +86,10 @@ class maya_gui_launcher_t {
         g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
         auto l_gui_facet = std::make_shared<maya_facet>();
         in_vector.emplace_back(l_gui_facet);
-        // 这里延迟提交, 要不然窗口句柄找不到
-        boost::asio::post(g_io_context(), [l_gui_facet]() {
-          HWND win_id = find_windows();
-          g_ctx().get<program_info>().parent_windows_attr(win_id);
-          l_gui_facet->post();
-        });
+        HWND win_id = find_windows();
+        g_ctx().get<program_info>().parent_windows_attr(win_id);
+        l_gui_facet->post();
+
         /// 在这里我们加载项目
         g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
 
