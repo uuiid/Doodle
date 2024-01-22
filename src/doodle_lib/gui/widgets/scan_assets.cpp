@@ -80,6 +80,8 @@ void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::
     l_gui_data.info_         = fmt::format("{}/{}", l_data->project_root_.p_name, l_data->file_type_);
     assets_table_data_.emplace_back(std::move(l_gui_data));
   }
+  assets_table_data_ |=
+      ranges::actions::sort([](const auto& in_l, const auto& in_r) -> bool { return in_l.name_ < in_r.name_; });
 }
 
 void scan_assets_t::start_scan() {

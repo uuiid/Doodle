@@ -72,7 +72,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
   // 添加rig文件
   for (auto &&l_ptr : l_out) {
     auto l_rig_path = l_ptr->Ch_path_ / "Rig";
-    auto l_rig_name = fmt::format("Ch{}_rig_", l_ptr->number_str_);
+    auto l_rig_name = fmt::format("Ch{}_rig", l_ptr->number_str_);
     if (!FSys::exists(l_rig_path)) continue;
     if (!FSys::is_directory(l_rig_path)) continue;
 
