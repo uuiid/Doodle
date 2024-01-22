@@ -138,7 +138,7 @@ PYTHONPATH+:= scripts
         log_attr->log(log_loc(), level::warn, "进程超时，结束任务");
         child_attr.terminate();
       } else {
-        log_attr->log(log_loc(), level::warn, in_code);
+        if (in_code != boost::asio::error::operation_aborted) log_attr->log(log_loc(), level::warn, in_code);
       }
     });
 
