@@ -76,7 +76,8 @@ bool long_time_tasks_widget::render() {
 
       if (!msg.aborted_sig.empty()) {
         if (ImGui::SmallButton(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_sig();
-      }
+      } else
+        ImGui::Text("无");
     }
   };
   ImGui::Combo(
