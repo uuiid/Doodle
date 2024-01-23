@@ -189,6 +189,25 @@ void reference_file::set_use_sim(bool in_use_sim) {
   maya_chick(l_status);
   maya_chick(l_plug.setBool(in_use_sim));
 }
+void reference_file::load_file() {
+  MStatus l_status{};
+
+  MFnDependencyNode l_file_info{};
+  maya_chick(l_file_info.setObject(file_info_node_));
+  auto l_plug = l_file_info.findPlug("reference_file", false, &l_status);
+  maya_chick(l_status);
+  if (l_plug.isConnected()) {
+    auto l_node_plug = l_plug.source(&l_status);
+    maya_chick(l_status);
+    auto l_node = l_node_plug.node(&l_status);
+    maya_chick(l_status);
+
+    MFileIO::loadReferenceByNode(l_node, &l_status);
+    maya_chick(l_status);
+  } else {
+    default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
+  }
+}
 
 MSelectionList reference_file::get_collision_model() const {
   MFnDependencyNode l_file_info{};
