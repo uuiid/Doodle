@@ -2,7 +2,10 @@
 
 #include "GameFramework/WorldSettings.h"
 
-ADoodleTimeDilation::ADoodleTimeDilation() { TimeDilation = 1.0f; }
+ADoodleTimeDilation::ADoodleTimeDilation() {
+  PrimaryActorTick.bCanEverTick = true;
+  TimeDilation                  = 1.0f;
+}
 
 void ADoodleTimeDilation::BeginPlay() {
   GetWorld()->GetWorldSettings()->SetTimeDilation(TimeDilation);
@@ -10,6 +13,7 @@ void ADoodleTimeDilation::BeginPlay() {
   for (auto&& i : ExcludeObjects) {
     if (i) i->CustomTimeDilation = 1 / (TimeDilation ? TimeDilation : 1);
   }
+  Super::BeginPlay();
 }
 
 void ADoodleTimeDilation::Tick(float DeltaTime) {
