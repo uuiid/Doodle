@@ -1,5 +1,6 @@
 #include "Doodle/DoodleTimeDilationActor.h"
 
+#include "EngineUtils.h"
 #include "GameFramework/WorldSettings.h"
 
 ADoodleTimeDilation::ADoodleTimeDilation() {
@@ -8,7 +9,11 @@ ADoodleTimeDilation::ADoodleTimeDilation() {
 }
 
 void ADoodleTimeDilation::BeginPlay() {
-  GetWorld()->GetWorldSettings()->SetTimeDilation(TimeDilation);
+  // GetWorld()->GetWorldSettings()->SetTimeDilation(TimeDilation);
+
+  for (TActorIterator<AActor> L_ActorItr{GetWorld()}; L_ActorItr; ++L_ActorItr) {
+    L_ActorItr->CustomTimeDilation = TimeDilation;
+  }
 
   for (auto&& i : ExcludeObjects) {
     if (i) i->CustomTimeDilation = 1 / (TimeDilation ? TimeDilation : 1);
@@ -17,8 +22,10 @@ void ADoodleTimeDilation::BeginPlay() {
 }
 
 void ADoodleTimeDilation::Tick(float DeltaTime) {
-  GetWorld()->GetWorldSettings()->SetTimeDilation(TimeDilation);
-
+  // GetWorld()->GetWorldSettings()->SetTimeDilation(TimeDilation);
+  for (TActorIterator<AActor> L_ActorItr{GetWorld()}; L_ActorItr; ++L_ActorItr) {
+    L_ActorItr->CustomTimeDilation = TimeDilation;
+  }
   for (auto&& i : ExcludeObjects) {
     if (i) i->CustomTimeDilation = 1 / (TimeDilation ? TimeDilation : 1);
   }
