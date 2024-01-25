@@ -286,6 +286,10 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
     return false;
   }
+  if (!FSys::exists(in_handle)) {
+    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 不存在", in_handle);
+    return false;
+  }
 
   struct search_file_info_t {
     FSys::path path;
@@ -299,25 +303,19 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
           auto *self  = reinterpret_cast<search_file_info_t *>(clientData);
           auto l_path = self->path;
-          if (FSys::exists(l_path)) {
-            MStatus k_s{};
-            DOODLE_LOG_INFO("开始替换文件到 {}", l_path);
-            k_s = file.setRawFullName(conv::to_ms(l_path.generic_string()));
-            DOODLE_MAYA_CHICK(k_s);
-            *retCode = FSys::exists(l_path);
-          } else {
-            *retCode = false;
-          }
+          MStatus k_s{};
+          k_s = file.setRawFullName(conv::to_ms(self->path.generic_string()));
+          DOODLE_MAYA_CHICK(k_s);
+          *retCode = true;
         },
         &l_search_file_info
     )};
 
     std::string l_s = d_str{MFileIO::loadReferenceByNode(l_node, &k_s)};
     maya_chick(k_s);
-    DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
+    default_logger_raw()->log(log_loc(), level::info, "加载引用文件 {}", l_s);
   }
-  if (!export_group_attr()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");
-  return false;
+  return true;
 }
 
 bool reference_file::has_node(const MSelectionList &in_list) {
