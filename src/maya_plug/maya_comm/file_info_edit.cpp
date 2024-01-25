@@ -66,6 +66,7 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   MStatus l_status{};
   MArgDatabase l_arg_data{syntax(), in_list, &l_status};
   maya_chick(l_status);
+  p_run_func = &file_info_edit::create_node;
 
   if (l_arg_data.isFlagSet("-n")) {
     MString l_node_name{};
