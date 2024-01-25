@@ -301,7 +301,7 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
           auto l_path = self->path;
           if (FSys::exists(l_path)) {
             MStatus k_s{};
-            DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, l_path);
+            DOODLE_LOG_INFO("开始替换文件到 {}", l_path);
             k_s = file.setRawFullName(conv::to_ms(l_path.generic_string()));
             DOODLE_MAYA_CHICK(k_s);
             *retCode = FSys::exists(l_path);
