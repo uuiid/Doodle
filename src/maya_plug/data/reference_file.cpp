@@ -402,7 +402,7 @@ std::optional<MDagPath> reference_file::get_field_dag() const {
   MStatus l_status{};
   maya_chick(l_file_info.setObject(file_info_node_));
 
-  auto l_plug = l_file_info.findPlug(doodle_file_info::wind_field, false, &l_status);
+  auto l_plug = l_file_info.findPlug("wind_field", false, &l_status);
   maya_chick(l_status);
 
   if (l_plug.isDestination(&l_status)) {
