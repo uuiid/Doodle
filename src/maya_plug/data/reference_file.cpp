@@ -189,7 +189,8 @@ void reference_file::set_use_sim(bool in_use_sim) {
   maya_chick(l_status);
   maya_chick(l_plug.setBool(in_use_sim));
 }
-void reference_file::load_file() {
+
+MObject reference_file::get_ref_node() const {
   MStatus l_status{};
 
   MFnDependencyNode l_file_info{};
@@ -202,11 +203,23 @@ void reference_file::load_file() {
     auto l_node = l_node_plug.node(&l_status);
     maya_chick(l_status);
 
-    MFileIO::loadReferenceByNode(l_node, &l_status);
-    maya_chick(l_status);
+    return l_node;
   } else {
     default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
   }
+  return {};
+}
+
+void reference_file::load_file() {
+  MStatus l_status{};
+  auto l_node = get_ref_node();
+  if (l_node.isNull()) {
+    default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
+    return;
+  }
+  MString l_file_str = MFileIO::loadReferenceByNode(l_node, &l_status);
+  maya_chick(l_status);
+  default_logger_raw()->log(log_loc(), spdlog::level::info, "加载引用文件 {}", l_file_str);
 }
 
 MSelectionList reference_file::get_collision_model() const {
@@ -239,9 +252,15 @@ std::string reference_file::get_namespace() const {
 }
 
 bool reference_file::replace_sim_assets_file() {
-  DOODLE_CHICK(!this->p_m_object.isNull(), doodle_error{"缺失引用"});
-  MFnReference k_ref{p_m_object};
+  auto l_node = get_ref_node();
+  if (l_node.isNull()) {
+    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
+    return false;
+  }
+
   MStatus k_s{};
+  MFnReference k_ref{};
+  maya_chick(k_ref.setObject(l_node));
 
   /// \brief 检查各种必须属性
   if (!k_ref.isLoaded(&k_s)) {
@@ -262,6 +281,12 @@ bool reference_file::replace_sim_assets_file() {
   return replace_file(k_vfx_path);
 }
 bool reference_file::replace_file(const FSys::path &in_handle) {
+  auto l_node = get_ref_node();
+  if (l_node.isNull()) {
+    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
+    return false;
+  }
+
   struct search_file_info_t {
     FSys::path path;
   };
@@ -287,8 +312,8 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
         &l_search_file_info
     )};
 
-    std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
-    DOODLE_MAYA_CHICK(k_s);
+    std::string l_s = d_str{MFileIO::loadReferenceByNode(l_node, &k_s)};
+    maya_chick(k_s);
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
   if (!export_group_attr()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");

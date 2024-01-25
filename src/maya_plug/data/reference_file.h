@@ -87,15 +87,12 @@ class reference_file {
  private:
   std::string get_file_namespace() const;
 
-  void find_ref_node();
-
-  void set_path(const MObject &in_ref_node);
-
   MObject file_info_node_;
   /**
    * @brief 引用 maya obj 节点(可空)
    */
   MObject p_m_object;
+  MObject get_ref_node() const;
 
  public:
   reference_file();
