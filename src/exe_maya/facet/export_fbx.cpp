@@ -131,8 +131,17 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
 
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
   g_ctx().emplace<reference_file_factory>();
+
   DOODLE_LOG_INFO("开始导出fbx");
   auto l_s = boost::asio::make_strand(g_io_context());
+  DOODLE_LOG_INFO("保存文件maya文件");
+  boost::asio::post(
+      l_s,
+      [l_target =
+           maya_plug::maya_file_io::work_path(FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()) /
+           l_arg.file_path.filename()]() { maya_file_io::save_file(l_target); }
+  );
+
   boost::asio::post(l_s, [this]() {
     this->create_ref_file();
     this->export_fbx();
@@ -141,14 +150,6 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
     DOODLE_LOG_INFO("安排排屏");
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
-  DOODLE_LOG_INFO("复制文件maya文件");
-  boost::asio::post(
-      l_s,
-      [l_source = l_arg.file_path,
-       l_target =
-           maya_plug::maya_file_io::work_path(FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()) /
-           l_arg.file_path.filename()]() { maya_file_io::save_file(l_target); }
-  );
 
   return l_ret;
 }
