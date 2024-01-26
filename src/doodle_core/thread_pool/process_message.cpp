@@ -53,8 +53,8 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     }
     constexpr auto g_success               = magic_enum::enum_name(process_message::state::success);
     constexpr auto g_fail                  = magic_enum::enum_name(process_message::state::fail);
-    constexpr std::size_t g_max_size       = 1024 * 1024 * 10;
-    constexpr std::size_t g_max_size_clear = 1024 * 1024 * 7;
+    constexpr std::size_t g_max_size       = 1024 * 100;
+    constexpr std::size_t g_max_size_clear = 1024 * 77;
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
         data_->trace_.append(formatted.data(), formatted.size());
