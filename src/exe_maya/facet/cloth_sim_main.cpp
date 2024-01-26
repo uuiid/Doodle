@@ -53,6 +53,7 @@ void cloth_sim::replace_ref_file() {
 
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     if (!in_handle.get<reference_file>().replace_sim_assets_file()) {
+      in_handle.get<reference_file>().set_use_sim(false);
       in_handle = {};
     }
   });
