@@ -773,6 +773,11 @@ void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
     default_logger_raw()->warn("{} 没有找到解算核心", get_node_full_name(obj));
     return;
   }
+
+  if (!get_attribute<std::int32_t>(l_node, "sim_override")) {
+    default_logger_raw()->warn("{} 没有开启覆盖模式", get_node_full_name(obj));
+    return;
+  }
   set_attribute(l_ql_core, "simpleSubsampling", get_attribute<std::int32_t>(l_node, "simple_subsampling"));
   set_attribute(l_ql_core, "frameSamples", get_attribute<std::int32_t>(l_node, "frame_samples"));
   set_attribute(l_ql_core, "timeScale", get_attribute<std::double_t>(l_node, "time_scale"));

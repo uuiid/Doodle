@@ -19,6 +19,7 @@ MObject doodle_file_info::is_solve;
 MObject doodle_file_info::collision_objects;
 MObject doodle_file_info::wind_field;
 
+MObject doodle_file_info::sim_override;
 MObject doodle_file_info::simple_subsampling;
 MObject doodle_file_info::frame_samples;
 MObject doodle_file_info::time_scale;
@@ -94,6 +95,16 @@ MStatus doodle_file_info::initialize() {
     l_msg_attr.setDisconnectBehavior(MFnAttribute::DisconnectBehavior::kDelete);
     addAttribute(wind_field);
   }
+  // sim_override
+  {
+    MFnNumericAttribute l_numeric_attr{};
+    sim_override = l_numeric_attr.create("sim_override", "sim_override", MFnNumericData::kBoolean, false, &l_status);
+    maya_chick(l_status);
+    l_numeric_attr.setStorable(true);
+    l_numeric_attr.setWritable(true);
+    addAttribute(sim_override);
+  }
+
   // simple_subsampling
   {
     MFnNumericAttribute l_numeric_attr{};

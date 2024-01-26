@@ -38,6 +38,7 @@ class doodle_file_info : public MPxNode {
   // 风场
   static MObject wind_field;
 
+  static MObject sim_override;
   static MObject simple_subsampling;
   static MObject frame_samples;
   static MObject time_scale;

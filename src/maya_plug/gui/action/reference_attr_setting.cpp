@@ -27,7 +27,6 @@
 
 namespace doodle::maya_plug {
 
-
 struct gui_tree {
   std::string name;
   MObject ref_node_;
@@ -37,6 +36,8 @@ struct gui_tree {
   std::vector<std::string> collision_model_show_str;
   std::string wind_field_show_str;
 
+  // 解算属性复盖
+  gui::gui_cache<bool> sim_override{"解算属性复盖", false};
   gui::gui_cache<bool> simple_subsampling{"simple subsampling", true};
   gui::gui_cache<std::int32_t> frame_samples{"frame samples"s, 6};
   gui::gui_cache<std::float_t> time_scale{"time scale"s, 1.0f};
@@ -51,16 +52,6 @@ class reference_attr_setting::impl {
   bool open{true};
   std::vector<gui_tree> p_ref_nodes;
   MObject p_current_node;
-
-  ::doodle::gui::gui_cache<bool> simple_subsampling{"simple subsampling", true};
-  ::doodle::gui::gui_cache<std::int32_t> frame_samples{"frame samples"s, 6};
-  ::doodle::gui::gui_cache<std::float_t> time_scale{"time scale"s, 1.0f};
-  ::doodle::gui::gui_cache<std::float_t> length_scale{"length scale"s, 1.0f};
-  ::doodle::gui::gui_cache<std::int32_t> max_cg_iteration{"max CGIteration"s, 1000};
-  ::doodle::gui::gui_cache<std::int32_t> cg_accuracy{"cg accuracy"s, 9};
-  ::doodle::gui::gui_cache<std::array<std::float_t, 3>> gravity{
-      "gravity"s, std::array<std::float_t, 3>{0.0f, -980.0f, 0.0f}
-  };
 };
 
 reference_attr_setting::reference_attr_setting() : p_i(std::make_unique<impl>()) {
@@ -106,12 +97,14 @@ bool reference_attr_setting::get_file_info() {
   // 刷新属性
   ranges::for_each(p_i->p_ref_nodes, [](gui_tree& in) {
     in.use_sim            = get_attribute<bool>(in.ref_node_, "is_solve");
+    in.sim_override       = get_attribute<bool>(in.ref_node_, "sim_override");
     in.simple_subsampling = get_attribute<bool>(in.ref_node_, "simple_subsampling");
     in.frame_samples      = get_attribute<std::int32_t>(in.ref_node_, "frame_samples");
     in.time_scale         = get_attribute<std::float_t>(in.ref_node_, "time_scale");
     in.length_scale       = get_attribute<std::float_t>(in.ref_node_, "length_scale");
     in.max_cg_iteration   = get_attribute<std::int32_t>(in.ref_node_, "max_cg_iteration");
     in.cg_accuracy        = get_attribute<std::int32_t>(in.ref_node_, "cg_accuracy");
+
     auto l_plug           = get_plug(in.ref_node_, "gravity");
     in.gravity.data       = {l_plug[0].asFloat(), l_plug[1].asFloat(), l_plug[2].asFloat()};
 
@@ -213,51 +206,56 @@ bool reference_attr_setting::render() {
     for (auto&& l_ref : p_i->p_ref_nodes) {
       dear::TreeNode l_node{l_ref.name.c_str()};
 
-      if (l_node) {
-        if (imgui::Checkbox(*l_ref.use_sim, &l_ref.use_sim)) {
-          set_attr(l_ref.ref_node_, "is_solve", fmt::to_string(l_ref.use_sim.data));
-        }
-        if (l_ref.use_sim.data) {
-          if (imgui::Button("添加碰撞")) {
-            add_collision(l_ref.ref_node_);
-          }
-          ImGui::SameLine();
-          if (imgui::Button("选择已添加")) {
-            get_collision(l_ref.ref_node_);
-          }
-          if (imgui::Button("设置布料风场")) {
-            add_wind_field(l_ref.ref_node_);
-          }
+      if (!l_node) continue;
 
-          dear::Text("解算碰撞: "s);
-          for (const auto& k_f : l_ref.collision_model_show_str) dear::Text(k_f);
+      if (imgui::Checkbox(*l_ref.use_sim, &l_ref.use_sim)) {
+        set_attr(l_ref.ref_node_, "is_solve", fmt::to_string(l_ref.use_sim.data));
+      }
+      if (!l_ref.use_sim.data) continue;
 
-          dear::Text(fmt::format("链接风场: {}", l_ref.wind_field_show_str));
-          if (ImGui::Checkbox(*l_ref.simple_subsampling, &l_ref.simple_subsampling)) {
-            set_attr(l_ref.ref_node_, "simple_subsampling", fmt::to_string(l_ref.simple_subsampling.data));
-          }
-          if (ImGui::InputInt(*l_ref.frame_samples, &l_ref.frame_samples)) {
-            set_attr(l_ref.ref_node_, "frame_samples", fmt::to_string(l_ref.frame_samples.data));
-          }
-          if (ImGui::InputFloat(*l_ref.time_scale, &l_ref.time_scale)) {
-            set_attr(l_ref.ref_node_, "time_scale", fmt::to_string(l_ref.time_scale.data));
-          }
-          if (ImGui::InputFloat(*l_ref.length_scale, &l_ref.length_scale)) {
-            set_attr(l_ref.ref_node_, "length_scale", fmt::to_string(l_ref.length_scale.data));
-          }
-          if (ImGui::InputInt(*l_ref.max_cg_iteration, &l_ref.max_cg_iteration)) {
-            set_attr(l_ref.ref_node_, "max_cg_iteration", fmt::to_string(l_ref.max_cg_iteration.data));
-          }
-          if (ImGui::InputInt(*l_ref.cg_accuracy, &l_ref.cg_accuracy)) {
-            set_attr(l_ref.ref_node_, "cg_accuracy", fmt::to_string(l_ref.cg_accuracy.data));
-          }
-          if (ImGui::InputFloat3(*l_ref.gravity, l_ref.gravity.data.data())) {
-            set_attr(
-                l_ref.ref_node_, "gravity",
-                fmt::format(R"("{} {} {}")", l_ref.gravity.data[0], l_ref.gravity.data[1], l_ref.gravity.data[2])
-            );
-          }
-        }
+      if (imgui::Button("添加碰撞")) {
+        add_collision(l_ref.ref_node_);
+      }
+      ImGui::SameLine();
+      if (imgui::Button("选择已添加")) {
+        get_collision(l_ref.ref_node_);
+      }
+      if (imgui::Button("设置布料风场")) {
+        add_wind_field(l_ref.ref_node_);
+      }
+
+      dear::Text("解算碰撞: "s);
+      for (const auto& k_f : l_ref.collision_model_show_str) dear::Text(k_f);
+
+      dear::Text(fmt::format("链接风场: {}", l_ref.wind_field_show_str));
+      if (imgui::Checkbox(*l_ref.sim_override, &l_ref.sim_override)) {
+        set_attr(l_ref.ref_node_, "sim_override", fmt::to_string(l_ref.sim_override.data));
+      }
+      if (!l_ref.sim_override.data) continue;
+
+      if (ImGui::Checkbox(*l_ref.simple_subsampling, &l_ref.simple_subsampling)) {
+        set_attr(l_ref.ref_node_, "simple_subsampling", fmt::to_string(l_ref.simple_subsampling.data));
+      }
+      if (ImGui::InputInt(*l_ref.frame_samples, &l_ref.frame_samples)) {
+        set_attr(l_ref.ref_node_, "frame_samples", fmt::to_string(l_ref.frame_samples.data));
+      }
+      if (ImGui::InputFloat(*l_ref.time_scale, &l_ref.time_scale)) {
+        set_attr(l_ref.ref_node_, "time_scale", fmt::to_string(l_ref.time_scale.data));
+      }
+      if (ImGui::InputFloat(*l_ref.length_scale, &l_ref.length_scale)) {
+        set_attr(l_ref.ref_node_, "length_scale", fmt::to_string(l_ref.length_scale.data));
+      }
+      if (ImGui::InputInt(*l_ref.max_cg_iteration, &l_ref.max_cg_iteration)) {
+        set_attr(l_ref.ref_node_, "max_cg_iteration", fmt::to_string(l_ref.max_cg_iteration.data));
+      }
+      if (ImGui::InputInt(*l_ref.cg_accuracy, &l_ref.cg_accuracy)) {
+        set_attr(l_ref.ref_node_, "cg_accuracy", fmt::to_string(l_ref.cg_accuracy.data));
+      }
+      if (ImGui::InputFloat3(*l_ref.gravity, l_ref.gravity.data.data())) {
+        set_attr(
+            l_ref.ref_node_, "gravity",
+            fmt::format(R"("{} {} {}")", l_ref.gravity.data[0], l_ref.gravity.data[1], l_ref.gravity.data[2])
+        );
       }
     }
   }
