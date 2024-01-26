@@ -38,6 +38,9 @@ MSyntax file_info_edit_syntax() {
   l_syntax.addFlag("-aw", "-add_wind_field", MSyntax::kNoArg);
   // is_solve
   l_syntax.addFlag("-is", "-is_solve", MSyntax::kBoolean);
+  // sim_override
+  l_syntax.addFlag("-so", "-sim_override", MSyntax::kBoolean);
+
   // simple_subsampling
   l_syntax.addFlag("-ss", "-simple_subsampling", MSyntax::kBoolean);
 
@@ -88,6 +91,13 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   if (l_arg_data.isFlagSet("-aw")) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
     p_run_func = &file_info_edit::add_wind_field;
+  }
+
+  if (l_arg_data.isFlagSet("-so")) {
+    bool l_sim_override{};
+    l_arg_data.getFlagArgument("-so", 0, l_sim_override);
+    sim_override = l_sim_override;
+    p_run_func   = &file_info_edit::set_node_attr;
   }
   if (l_arg_data.isFlagSet("-ss")) {
     bool l_simple_subsampling{};
@@ -289,6 +299,12 @@ MStatus file_info_edit::set_node_attr() {
   MStatus l_status{};
   MFnDependencyNode l_fn_node{p_current_node, &l_status};
   maya_chick(l_status);
+  if (sim_override.has_value()) {
+    maya_chick(dg_modifier_.newPlugValueBool(
+        l_fn_node.findPlug(doodle_file_info::sim_override, false, &l_status), sim_override.value()
+    ));
+  }
+
   if (simple_subsampling.has_value()) {
     maya_chick(dg_modifier_.newPlugValueBool(
         l_fn_node.findPlug(doodle_file_info::simple_subsampling, false, &l_status), simple_subsampling.value()

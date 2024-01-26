@@ -45,6 +45,7 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   using run_func_ptr = MStatus (file_info_edit::*)();
   run_func_ptr p_run_func{nullptr};
 
+  std::optional<bool> sim_override;
   std::optional<bool> simple_subsampling;
   std::optional<std::int32_t> frame_samples;
   std::optional<std::double_t> time_scale;
