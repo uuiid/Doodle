@@ -88,10 +88,7 @@ class reference_file {
   std::string get_file_namespace() const;
 
   MObject file_info_node_;
-  /**
-   * @brief 引用 maya obj 节点(可空)
-   */
-  MObject p_m_object;
+
   MObject get_ref_node() const;
 
  public:

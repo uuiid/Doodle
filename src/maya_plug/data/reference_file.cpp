@@ -275,7 +275,10 @@ bool reference_file::replace_sim_assets_file() {
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
                     fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
   DOODLE_LOG_INFO("推测资产路径 {}", k_vfx_path);
-  if (!FSys::exists(k_vfx_path)) return false;
+  if (!FSys::exists(k_vfx_path)) {
+    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
+    return false;
+  }
 
   /// \brief 替换引用文件
   return replace_file(k_vfx_path);
