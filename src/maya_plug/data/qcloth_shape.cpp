@@ -765,10 +765,23 @@ MDagPath qcloth_shape::get_shape() const {
 std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
 
 void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
-  auto l_str = fmt::format(
-      "doodle_file_info_edit -override -n {}", get_node_full_name(in_handle.get<reference_file>().get_file_info_node())
-  );
-  maya_chick(MGlobal::executeCommand(conv::to_ms(l_str)));
+  reference_file l_file = in_handle.get<reference_file>();
+
+  auto l_node           = l_file.get_file_info_node();
+  auto l_ql_core        = get_ql_solver();
+  if (l_ql_core.isNull()) {
+    default_logger_raw()->warn("{} 没有找到解算核心", get_node_full_name(obj));
+    return;
+  }
+  set_attribute(l_ql_core, "simpleSubsampling", get_attribute<std::int32_t>(l_node, "simple_subsampling"));
+  set_attribute(l_ql_core, "frameSamples", get_attribute<std::int32_t>(l_node, "frame_samples"));
+  set_attribute(l_ql_core, "timeScale", get_attribute<std::double_t>(l_node, "time_scale"));
+  set_attribute(l_ql_core, "lengthScale", get_attribute<std::double_t>(l_node, "length_scale"));
+  set_attribute(l_ql_core, "maxCGIteration", get_attribute<std::int32_t>(l_node, "max_cg_iteration"));
+  set_attribute(l_ql_core, "cgAccuracy", get_attribute<std::int32_t>(l_node, "cg_accuracy"));
+  set_attribute(l_ql_core, "gravity0", get_attribute<std::double_t>(l_node, "gravityx"));
+  set_attribute(l_ql_core, "gravity1", get_attribute<std::double_t>(l_node, "gravityy"));
+  set_attribute(l_ql_core, "gravity2", get_attribute<std::double_t>(l_node, "gravityz"));
 }
 
 }  // namespace doodle::maya_plug
