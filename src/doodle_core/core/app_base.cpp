@@ -93,7 +93,11 @@ std::int32_t app_base::run() {
 
 std::int32_t app_base::poll_one() {
   if (stop_) return 0;
-  g_io_context().poll_one();
+  try {
+    g_io_context().poll_one();
+  } catch (...) {
+    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+  }
   return 0;
 }
 void app_base::stop_app(bool in_stop) {
