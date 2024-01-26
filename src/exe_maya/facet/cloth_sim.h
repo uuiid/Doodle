@@ -23,7 +23,10 @@ class cloth_sim final {
   void create_cloth();
   void set_cloth_attr();
 
+  /// 删除缓存后, 重新生成缓存, 并且保存文件
   void sim();
+  /// 有解算就使用, 没有解算就生成, 并且不保存文件
+  void touch_sim();
   void export_fbx();
   void export_abc();
   void play_blast();

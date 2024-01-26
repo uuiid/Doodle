@@ -104,7 +104,7 @@ void cloth_sim::sim() {
   ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
     auto l_c     = in_handle.get<cloth_interface>();
     auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->set_cache_folder(l_ref_h);  /// 设置缓存文件夹
+    l_c->set_cache_folder(l_ref_h, true);  /// 设置缓存文件夹
   });
 
   /// \brief 在这里我们保存引用
@@ -117,10 +117,36 @@ void cloth_sim::sim() {
   try {
     maya_file_io::save_file(k_save_file);
     DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
-
   } catch (const maya_error& error) {
     DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
   }
+  const MTime k_end_time = MAnimControl::maxTime();
+  for (auto&& i = t_post_time_; i < k_end_time; ++i) {
+    maya_chick(MAnimControl::setCurrentTime(i));
+    DOODLE_LOG_INFO("解算帧 {}", i);
+    ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
+      auto l_c = in_handle.get<cloth_interface>();
+      l_c->sim_cloth();
+    });
+  }
+}
+
+void cloth_sim::touch_sim() {
+  DOODLE_LOG_INFO("开始触摸解算");
+
+  std::map<std::string, entt::handle> l_ref_map{};
+  l_ref_map = ref_files_ |
+              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
+                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              }) |
+              ranges::to<decltype(l_ref_map)>;
+
+  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
+    auto l_c     = in_handle.get<cloth_interface>();
+    auto l_ref_h = l_ref_map[l_c->get_namespace()];
+    l_c->set_cache_folder(l_ref_h, false);  /// 设置缓存文件夹
+  });
+
   const MTime k_end_time = MAnimControl::maxTime();
   for (auto&& i = t_post_time_; i < k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));

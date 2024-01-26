@@ -497,7 +497,7 @@ void qcloth_shape::add_collider(const entt::handle& in_handle) {
   }
 }
 
-void qcloth_shape::set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const {
+void qcloth_shape::set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path, bool need_clear) const {
   std::string k_namespace = in_handle.get<reference_file>().get_namespace();
   std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
 
@@ -507,7 +507,7 @@ void qcloth_shape::set_cache_folder(const entt::handle& in_handle, const FSys::p
   l_string /= in_path;
   DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
   auto k_path = maya_file_io::work_path(l_string);
-  if (FSys::exists(k_path)) {
+  if (need_clear && FSys::exists(k_path)) {
     DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
     FSys::remove_all(k_path);
   }
