@@ -205,7 +205,7 @@ void cloth_sim::export_anim_file() {
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
   ranges::for_each(
       all_ref_files_ | ranges::views::filter([&](const entt::handle& in_handle) -> bool {
-        return ranges::find(ref_files_, in_handle) != ref_files_.end();
+        return ranges::find(ref_files_, in_handle) == ref_files_.end();
       }),
       [&](entt::handle& in_handle) {
         auto& l_ref = in_handle.get<reference_file>();
