@@ -44,8 +44,8 @@ void cloth_sim::replace_ref_file() {
   DOODLE_LOG_INFO("开始替换引用");
   ref_files_ = all_ref_files_ | ranges::views::filter([](const entt::handle& in_handle) -> bool {
                  auto&& l_ref = in_handle.get<reference_file>();
-                 if (l_ref.export_group_attr() && l_ref.get_use_sim() && l_ref.replace_sim_assets_file()) {
-                   return false;
+                 if (l_ref.export_group_attr() && l_ref.get_use_sim() && l_ref.has_sim_assets_file()) {
+                   return !l_ref.replace_sim_assets_file();
                  } else {
                    default_logger_raw()->log(log_loc(), level::info, "引用文件{}不解算", l_ref.get_abs_path());
                  }
