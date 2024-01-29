@@ -80,7 +80,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   for (auto&& i_ns : l_set_list) {
     for (auto l_h : l_cloth) {
       auto l_c = l_h.get<cloth_interface>();
-      if (l_c->get_namespace() == i_ns) l_c->set_cache_folder(l_ref_map[i_ns]);
+      if (l_c->get_namespace() == i_ns) l_c->set_cache_folder(l_ref_map[i_ns], true);
     }
   }
 
