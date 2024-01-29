@@ -66,7 +66,7 @@ MStatus doodle_file_info::initialize() {
 
   {  // 是否解算
     MFnNumericAttribute l_numeric_attr{};
-    is_solve = l_numeric_attr.create("is_solve", "is_solve", MFnNumericData::kBoolean, false, &l_status);
+    is_solve = l_numeric_attr.create("is_solve", "is_solve", MFnNumericData::kBoolean, true, &l_status);
     maya_chick(l_status);
     l_numeric_attr.setStorable(true);
     l_numeric_attr.setWritable(true);
