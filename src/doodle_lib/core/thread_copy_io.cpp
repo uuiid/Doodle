@@ -18,9 +18,10 @@ void thread_copy_io_service::copy_file(const FSys::path &from, const FSys::path 
 void thread_copy_io_service::copy_old_file(const FSys::path &from, const FSys::path &to) {
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
       FSys::last_write_time(from) != FSys::last_write_time(to)) {
-    if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
-    if (FSys::last_write_time(from) > FSys::last_write_time(to))
+    if (FSys::last_write_time(from) > FSys::last_write_time(to)) {
+      if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
       FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
+    }
   }
 }
 
