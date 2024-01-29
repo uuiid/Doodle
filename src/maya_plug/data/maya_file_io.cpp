@@ -87,9 +87,10 @@ void maya_file_io::set_workspace(const FSys::path& in_path) {
   }
 
   if (!FSys::exists(l_path / "workspace.mel")) {
-    std::string const l_s{
-        fmt::format(R"(workspace -baseWorkspace "default" -openWorkspace "{}")", in_path.parent_path().generic_string())
-    };
+    std::string const l_s{fmt::format(
+        R"(workspace -baseWorkspace "default" -openWorkspace "{}")",
+        l_path.filename() == "ma" ? l_path : in_path.parent_path()
+    )};
 
     maya_chick(MGlobal::executeCommand(d_str{l_s}));
     maya_chick(MGlobal::executeCommand(R"(workspace -saveWorkspace)"));
