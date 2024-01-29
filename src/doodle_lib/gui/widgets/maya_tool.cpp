@@ -290,6 +290,44 @@ bool maya_tool::render() {
   if (imgui::Button("使用ue输出排屏")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
+      auto k_arg             = maya_exe_ns::qcloth_arg{};
+      k_arg.file_path        = i.path_;
+      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
+      k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
+      k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
+
+      auto l_msg = analysis_path(i);
+      down_auto_light_anim_file l_down_anim_file{l_msg};
+      import_and_render_ue l_import_and_render_ue{l_msg};
+      up_auto_light_anim_file l_up_auto_light_file{l_msg};
+      l_up_auto_light_file.async_end(boost::asio::bind_executor(
+          g_io_context(),
+          [l_msg](boost::system::error_code in_error_code, std::filesystem::path in_path) {
+            if (in_error_code) {
+              l_msg.get<process_message>().set_state(process_message::state::fail);
+              return;
+            }
+            l_msg.get<process_message>().logger()->log(
+                log_loc(), level::level_enum::warn, "上传自动灯光文件成功  路径 {}", in_path
+            );
+            l_msg.get<process_message>().set_state(process_message::state::success);
+          }
+      ));
+      l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
+      l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
+
+      l_maya->async_run_maya(l_msg, k_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));
+    });
+  }
+  ImGui::SameLine();
+  if (imgui::Button("使用ue输出排屏(解算版)")) {
+    auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
+    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
       auto k_arg             = maya_exe_ns::export_fbx_arg{};
       k_arg.file_path        = i.path_;
       k_arg.use_all_ref      = this->p_use_all_ref;
