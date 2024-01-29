@@ -150,7 +150,7 @@ void cloth_sim::touch_sim() {
   const MTime k_end_time = MAnimControl::maxTime();
   for (auto&& i = t_post_time_; i <= k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
-    DOODLE_LOG_INFO("解算帧 {}", i);
+    DOODLE_LOG_INFO("测试解算帧 {}", i);
     ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
       auto l_c = in_handle.get<cloth_interface>();
       l_c->sim_cloth();
