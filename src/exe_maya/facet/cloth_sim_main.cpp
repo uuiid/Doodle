@@ -16,6 +16,7 @@
 #include "maya_plug/maya_plug_fwd.h"
 #include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
+#include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/ncloth_factory.h>
 #include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/reference_file.h>
@@ -216,6 +217,12 @@ void cloth_sim::export_anim_file() {
         }
       }
   );
+  // 导出相机
+  g_reg()->ctx().emplace<maya_camera>().conjecture();
+  auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+  l_h.emplace<generate_file_path_ptr>(l_gen);
+  auto l_cam_path = l_ex.export_cam(l_h);
+  out_and_ref_file_list_.emplace_back(l_cam_path, FSys::path{});
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");
