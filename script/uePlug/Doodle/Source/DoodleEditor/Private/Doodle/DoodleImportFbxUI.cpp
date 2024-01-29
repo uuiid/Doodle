@@ -106,6 +106,9 @@
 #include "Subsystems/EditorAssetSubsystem.h"
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
+#include "Tracks/MovieSceneLevelVisibilityTrack.h"
+#include "Sections/MovieSceneLevelVisibilitySection.h"
+
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 
@@ -424,7 +427,7 @@ void UDoodleFbxImport_1::AssembleScene() {
       L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
       UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
           L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-      UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
+      UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime+1, AnimSeq, -1);
       AnimSection->SetPreRollFrames(50);
       L_Actor->Modify();
       L_ShotLevel->Modify();
@@ -591,7 +594,23 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   FFrameNumber offset{50};
   L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
   L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
-  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End}, true);
+  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End+2}, true);
+  //-------Add Visibility Track
+  UMovieSceneLevelVisibilityTrack* NewTrack = L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
+  L_ShotSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack));
+  NewTrack = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
+  UMovieSceneLevelVisibilitySection* NewSection = CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
+  TRange<FFrameNumber> SectionRange = L_ShotSequence->GetMovieScene()->GetPlaybackRange();
+  NewSection->SetRange(SectionRange);
+  NewTrack->AddSection(*NewSection);
+  //-------Add Sub
+  UMovieSceneSubTrack* NewTrack1 = L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneSubTrack>();
+  L_ShotSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack1));
+  NewTrack1 = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
+  UMovieSceneSubSection* NewSection1 = CastChecked<UMovieSceneSubSection>(NewTrack1->CreateNewSection());
+  NewSection1->SetRange(SectionRange);
+  NewTrack1->AddSection(*NewSection);
+  //------------
   L_ShotSequence->Modify();
   ALevelSequenceActor* L_LevelSequenceActor{};
 
@@ -697,6 +716,27 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(
         GWorld, L_ShotSequence, L_LevelSequencePlayer, L_CamSequenceID, L_Map, L_ImportFBXSettings, InOutParams
     );
+    //----------------------
+    FMovieSceneBinding* CameraCutBind = L_ShotSequence->GetMovieScene()->FindBinding(L_CamGuid);
+    for (UMovieSceneTrack* Track : CameraCutBind->GetTracks())
+    {
+        for (UMovieSceneSection* Section : Track->GetAllSections())
+        {
+            Section->MoveSection(FFrameNumber(1));
+        }
+    }
+    FMovieSceneSpawnable* Spawn = L_ShotSequence->GetMovieScene()->FindSpawnable(L_CamGuid);
+    for (FGuid childGuid :Spawn->GetChildPossessables())
+    {
+        FMovieSceneBinding* Bind = L_ShotSequence->GetMovieScene()->FindBinding(childGuid);
+        for (UMovieSceneTrack* Track : Bind->GetTracks())
+        {
+            for (UMovieSceneSection* Section : Track->GetAllSections())
+            {
+                Section->MoveSection(FFrameNumber(1));
+            }
+        }
+    }
   }
   L_LevelSequenceActor->Destroy();
   if (!FSlateApplication::IsInitialized()) {
@@ -705,6 +745,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     // Tick the engine.
     GEngine->Tick(FApp::GetDeltaTime(), false);
   }
+
   UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
   // FText::FromString(ImportPathDir)));
   //    //UObject* object = AssetToolsModule.Get().CreateAsset(L_Name.ToString(), PackagePath, ULevel::StaticClass(),
@@ -840,7 +881,7 @@ void UDoodleAbcImport_1::AssembleScene() {
       UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
           L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
       UMovieSceneSection* AnimSection =
-          L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_Actor->GetGeometryCacheComponent());
+          L_MovieSceneGeoTrack->AddNewAnimation(StartTime+1, L_Actor->GetGeometryCacheComponent());
       AnimSection->SetPreRollFrames(50);
       L_Actor->Modify();
       L_ShotLevel->Modify();

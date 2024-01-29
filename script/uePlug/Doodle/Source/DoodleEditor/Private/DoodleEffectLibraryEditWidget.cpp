@@ -66,6 +66,8 @@
 #include "JsonObjectConverter.h"
 #include "Serialization/ObjectWriter.h"
 #include "Serialization/ObjectReader.h"
+#include "Protocols/ImageSequenceProtocol.h"
+#include "Protocols/VideoCaptureProtocol.h"
 
 const FName UDoodleEffectLibraryEditWidget::Name{ TEXT("DoodleEffectLibraryEditWidget") };
 const TCHAR* MovieCaptureSessionName = TEXT("Movie Scene Capture");
@@ -197,7 +199,8 @@ void FInEditorCapture1::OnPIEViewportStarted()
                     CachedEngineShowFlags->SetPathTracing(true);
                 }
                 CaptureObject->Initialize(SlatePlayInEditorSession->SlatePlayInEditorWindowViewport, Context.PIEInstance);
-                OnCaptureStarted();
+                //CaptureObject->ImageCaptureProtocolType = UImageSequenceProtocol::StaticClass();
+                //OnCaptureStarted();
             }
             return;
         }
@@ -258,10 +261,7 @@ void FInEditorCapture1::OnLevelSequenceFinished()
     GEditor->RequestEndPlayMap();
 }
 
-void FInEditorCapture1::OnCaptureStarted()
-{
-    FString CapturePath = CaptureObject->ResolveFileFormat(CaptureObject->Settings.OutputDirectory.Path, FFrameMetrics());
-}
+void FInEditorCapture1::OnCaptureStarted(){}
 
 FCaptureState FInEditorCapture1::GetCaptureState() const
 {
@@ -491,11 +491,13 @@ UDoodleEffectLibraryEditWidget::UDoodleEffectLibraryEditWidget()
     DirectoryPath = TEXT("");
     OutputFormat = TEXT("Effect");
     MaxFrame = 99999999;
-    IsAutoReset = true;
+    IsAutoReset = false;
 }
 
 UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
 {
+    if (CaptureSeq)
+        CaptureSeq->RemoveFromRoot();
     if(SelectObject)
         SelectObject->RemoveFromRoot();
     //--------
@@ -1155,8 +1157,11 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
         CaptureSeq->Settings.CustomFrameRate = FFrameRate(25, 1);
         CaptureSeq->Settings.Resolution = FCaptureResolution(1024, 1024);
         CaptureSeq->Settings.OutputFormat = OutputFormat;
+        CaptureSeq->ImageCaptureProtocolType = UVideoCaptureProtocol::StaticClass();
+
         FString TestName = CaptureSeq->Settings.GameModeOverride->GetPathName();
         DirectoryPath = CaptureSeq->Settings.OutputDirectory.Path;
+        //CaptureSeq->Settings.MovieExtension = TEXT(".png");
         MovieExtension = CaptureSeq->Settings.MovieExtension;
         auto OnCaptureFinishDelegate = [this](bool bSuccess)
         {
@@ -1512,6 +1517,7 @@ void UDoodleEffectLibraryEditWidget::OnResetEffect()
 {
     if (ViewEditorViewport->IsVisible())
     {
+        PastedFrame = 0;
         ViewEditorViewport->OnResetViewport();
     }
 }
