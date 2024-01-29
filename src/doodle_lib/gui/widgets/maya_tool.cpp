@@ -225,7 +225,8 @@ bool maya_tool::render() {
       if (ptr_attr->sim_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_sim_file;
       if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
+      k_arg.sim_path_list = list_sim_file(in_path.project_);
+      auto l_msg_handle   = entt::handle{*g_reg(), g_reg()->create()};
       l_msg_handle.emplace<process_message>(in_path.path_.filename().generic_string());
       l_maya->async_run_maya(l_msg_handle, k_arg, [=](boost::system::error_code in_code, maya_exe_ns::maya_out_arg) {
         if (in_code) {
@@ -290,18 +291,14 @@ bool maya_tool::render() {
   if (imgui::Button("使用ue输出排屏")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
-      auto k_arg             = maya_exe_ns::qcloth_arg{};
+      auto k_arg             = maya_exe_ns::export_fbx_arg{};
       k_arg.file_path        = i.path_;
-      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
-      k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
+      k_arg.use_all_ref      = this->p_use_all_ref;
+      k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-      k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
-      k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
-      k_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
-      k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      k_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
+      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
 
-      auto l_msg = analysis_path(i);
+      auto l_msg             = analysis_path(i);
       down_auto_light_anim_file l_down_anim_file{l_msg};
       import_and_render_ue l_import_and_render_ue{l_msg};
       up_auto_light_anim_file l_up_auto_light_file{l_msg};
@@ -328,14 +325,19 @@ bool maya_tool::render() {
   if (imgui::Button("使用ue输出排屏(解算版)")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
-      auto k_arg             = maya_exe_ns::export_fbx_arg{};
+      auto k_arg             = maya_exe_ns::qcloth_arg{};
       k_arg.file_path        = i.path_;
-      k_arg.use_all_ref      = this->p_use_all_ref;
-      k_arg.upload_file      = p_upload_files;
-      k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
+      k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
+      k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
+      k_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
+      k_arg.sim_path_list = list_sim_file(i.project_);
 
-      auto l_msg             = analysis_path(i);
+      auto l_msg          = analysis_path(i);
       down_auto_light_anim_file l_down_anim_file{l_msg};
       import_and_render_ue l_import_and_render_ue{l_msg};
       up_auto_light_anim_file l_up_auto_light_file{l_msg};
@@ -380,6 +382,19 @@ bool maya_tool::render() {
 #endif
   return open;
 }
+
+std::set<FSys::path> maya_tool::list_sim_file(const doodle::project& in_project) {
+  auto l_sim_path = in_project.p_path / "6-moxing" / "CFX";
+
+  std::set<FSys::path> l_ret{};
+  for (auto&& l_i : FSys::directory_iterator{l_sim_path}) {
+    if (l_i.is_regular_file() && l_i.path().extension() == ".ma") {
+      l_ret.insert(l_i.path());
+    }
+  }
+  return l_ret;
+};
+
 const std::string& maya_tool::title() const { return title_name_; }
 
 maya_tool::~maya_tool() = default;

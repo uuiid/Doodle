@@ -36,6 +36,7 @@ class cloth_sim final {
   std::vector<entt::handle> ref_files_{};
   std::vector<entt::handle> all_ref_files_{};
   std::vector<entt::handle> cloth_lists_{};
+  std::map<std::string, FSys::path> sim_file_map_{};
   std::map<entt::handle, std::vector<FSys::path>> out_and_ref_file_map_{};
   FSys::path camera_path_{};
   FSys::path out_path_file_;

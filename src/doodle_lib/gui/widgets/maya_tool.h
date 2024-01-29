@@ -38,6 +38,7 @@ class DOODLELIB_API maya_tool {
   void set_path(const std::vector<FSys::path>& in_path);
 
   entt::handle analysis_path(const path_info_t& in_path);
+  std::set<FSys::path> list_sim_file(const project& in_project);
 
  public:
   maya_tool();

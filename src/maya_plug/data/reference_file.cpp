@@ -97,8 +97,6 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
   return l_out_name;
 }
 
-
-
 generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in) : generate_file_path_base() {
   auto &l_cong           = in.ctx().get<project_config::base_config>();
   camera_suffix          = l_cong.maya_camera_suffix;
@@ -245,19 +243,17 @@ std::string reference_file::get_namespace() const {
   return l_n;
 }
 
-bool reference_file::has_sim_assets_file() const {
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
+bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) const {
   FSys::path k_m_str{get_abs_path()};
-  auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
-                    fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
-  if (!FSys::exists(k_vfx_path)) {
+  auto k_vfx_path = fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
+  if (!in_sim_file_map.contains(k_vfx_path)) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
     return false;
   }
   return true;
 }
 
-bool reference_file::replace_sim_assets_file() {
+bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) {
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
@@ -278,16 +274,15 @@ bool reference_file::replace_sim_assets_file() {
   auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   FSys::path k_m_str{get_abs_path()};
   DOODLE_MAYA_CHICK(k_s);
-  auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
-                    fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
+  auto k_vfx_path = fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
   DOODLE_LOG_INFO("推测资产路径 {}", k_vfx_path);
-  if (!FSys::exists(k_vfx_path)) {
+  if (!in_sim_file_map.contains(k_vfx_path)) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
     return false;
   }
 
   /// \brief 替换引用文件
-  return replace_file(k_vfx_path);
+  return replace_file(in_sim_file_map.at(k_vfx_path));
 }
 bool reference_file::replace_file(const FSys::path &in_handle) {
   auto l_node = get_ref_node();

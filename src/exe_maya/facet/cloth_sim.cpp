@@ -61,6 +61,11 @@ bool cloth_sim::post(const FSys::path& in_path) {
 
   l_ret          = true;
   out_path_file_ = l_arg.out_path_file_;
+  sim_file_map_  = l_arg.sim_path_list |
+                  ranges::views::transform([](const auto& in_path) -> std::pair<std::string, FSys::path> {
+                    return {in_path.filename().string(), in_path};
+                  }) |
+                  ranges::to<std::map<std::string, FSys::path>>;
 
   g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_, false, true, g_reg(), [](auto&&) {});
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
