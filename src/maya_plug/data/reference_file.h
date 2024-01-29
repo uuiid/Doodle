@@ -119,9 +119,7 @@ class reference_file {
    */
   bool replace_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map);
   bool has_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) const;
-  /**
-   * @brief 替换引用 需要组件 redirection_path_info_edit
-   */
+
   bool replace_file(const FSys::path &in_handle);
 
   std::optional<MDagPath> get_field_dag() const;
