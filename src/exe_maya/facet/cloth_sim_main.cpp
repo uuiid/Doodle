@@ -175,13 +175,15 @@ void cloth_sim::export_abc() {
     l_gen->set_fbx_path(false);
     auto l_sim_path = l_ex.export_sim(in_handle);
     for (auto&& i : l_sim_path) {
-      if (!i.empty()) out_and_ref_file_list_.emplace_back(i, in_handle.get<reference_file>().get_abs_path());
+      if (!i.empty()) {
+        out_and_ref_file_map_[in_handle].emplace_back(i);
+      }
     }
     if (l_ex.get_export_list().isEmpty()) return;
     l_gen->set_fbx_path(true);
     auto l_path = l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
     if (!l_path.empty()) {
-      out_and_ref_file_list_.emplace_back(l_path, in_handle.get<reference_file>().get_abs_path());
+      out_and_ref_file_map_[in_handle].emplace_back(l_path);
     }
   });
 }
@@ -214,7 +216,7 @@ void cloth_sim::export_anim_file() {
         in_handle.emplace<generate_file_path_ptr>(l_gen);
         auto l_path = l_ex.export_anim(in_handle);
         if (!l_path.empty()) {
-          out_and_ref_file_list_.emplace_back(l_path, in_handle.get<reference_file>().get_abs_path());
+          out_and_ref_file_map_[in_handle].emplace_back(l_path);
         }
       }
   );
@@ -222,8 +224,7 @@ void cloth_sim::export_anim_file() {
   g_reg()->ctx().emplace<maya_camera>().conjecture();
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
   l_h.emplace<generate_file_path_ptr>(l_gen);
-  auto l_cam_path = l_ex.export_cam(l_h);
-  out_and_ref_file_list_.emplace_back(l_cam_path, FSys::path{});
+  camera_path_ = l_ex.export_cam(l_h);
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");
@@ -231,9 +232,18 @@ void cloth_sim::write_config() {
   maya_exe_ns::maya_out_arg l_out_arg{};
   l_out_arg.begin_time = anim_begin_time_.value();
   l_out_arg.end_time   = MAnimControl::maxTime().value();
-  for (auto&& i : out_and_ref_file_list_) {
-    l_out_arg.out_file_list.emplace_back(i.first, i.second);
+
+  for (auto&& i : all_ref_files_) {
+    if (out_and_ref_file_map_.contains(i)) {
+      for (auto&& l_p : out_and_ref_file_map_[i]) {
+        l_out_arg.out_file_list.emplace_back(l_p, i.get<reference_file>().get_abs_path());
+      }
+    } else {
+      l_out_arg.out_file_list.emplace_back(FSys::path{}, i.get<reference_file>().get_abs_path());
+    }
   }
+  l_out_arg.out_file_list.emplace_back(camera_path_, FSys::path{});  // 导出相机
+
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
