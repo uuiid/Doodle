@@ -7,9 +7,7 @@
 #include <doodle_core/logger/logger.h>
 namespace doodle {
 
-void thread_copy_io_service::copy_file(const FSys::path &from, const FSys::path &to) const {
-  boost::ignore_unused(this);
-
+void thread_copy_io_service::copy_file(const FSys::path &from, const FSys::path &to) {
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
       FSys::last_write_time(from) != FSys::last_write_time(to)) {
     if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
@@ -17,14 +15,23 @@ void thread_copy_io_service::copy_file(const FSys::path &from, const FSys::path 
   }
 }
 
+void thread_copy_io_service::copy_old_file(const FSys::path &from, const FSys::path &to) {
+  if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
+      FSys::last_write_time(from) != FSys::last_write_time(to)) {
+    if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
+    if (FSys::last_write_time(from) > FSys::last_write_time(to))
+      FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
+  }
+}
+
 boost::system::error_code thread_copy_io_service::copy_impl(
-    const FSys::path &from, const FSys::path &to, FSys::copy_options in_options
+    const FSys::path &from, const FSys::path &to, FSys::copy_options in_options, copy_fun_ptr in_fun_ptr
 ) const {
   boost::system::error_code l_ec{};
   try {
     default_logger_raw()->log(log_loc(), spdlog::level::info, "复制 {} -> {}", from, to);
     if (FSys::is_regular_file(from)) {
-      copy_file(from, to);
+      in_fun_ptr(from, to);
       return l_ec;
     }
 
@@ -32,14 +39,14 @@ boost::system::error_code thread_copy_io_service::copy_impl(
       for (auto &&l_file : FSys::recursive_directory_iterator(from)) {
         auto l_to_file = to / l_file.path().lexically_proximate(from);
         if (l_file.is_regular_file()) {
-          copy_file(l_file.path(), l_to_file);
+          in_fun_ptr(l_file.path(), l_to_file);
         }
       }
     } else {
       for (auto &&l_file : FSys::directory_iterator(from)) {
         auto l_to_file = to / l_file.path().lexically_proximate(from);
         if (l_file.is_regular_file()) {
-          copy_file(l_file.path(), l_to_file);
+          in_fun_ptr(l_file.path(), l_to_file);
         }
       }
     }

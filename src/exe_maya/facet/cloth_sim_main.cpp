@@ -221,11 +221,9 @@ void cloth_sim::export_anim_file() {
       }
   );
   // 导出相机
-  auto l_gen_fbx            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
-  l_gen_fbx->begin_end_time = std::make_pair(anim_begin_time_, k_end_time);
   g_reg()->ctx().emplace<maya_camera>().conjecture();
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_h.emplace<generate_file_path_ptr>(l_gen_fbx);
+  l_h.emplace<generate_file_path_ptr>(l_gen);
   camera_path_ = l_ex.export_cam(l_h);
 }
 void cloth_sim::write_config() {
