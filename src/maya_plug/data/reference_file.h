@@ -41,20 +41,6 @@ class generate_file_path_base : boost::less_than_comparable<generate_file_path_b
   [[nodiscard("")]] bool operator<(const generate_file_path_base &in) const noexcept;
 };
 
-class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>, public generate_file_path_base {
- protected:
-  [[nodiscard("")]] FSys::path get_path() const override;
-  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
-  friend struct fmt::formatter<generate_file_path_base>;
-  bool export_fbx{};
-
- public:
-  explicit generate_abc_file_path(const entt::registry &in = *g_reg());
-  virtual ~generate_abc_file_path();
-
-  inline void set_fbx_path(bool is_export_fbx = true) { export_fbx = is_export_fbx; };
-};
-
 class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>, public generate_file_path_base {
   friend struct fmt::formatter<generate_fbx_file_path>;
 
@@ -72,6 +58,20 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
   void is_camera(bool in_is_camera);
 
   virtual ~generate_fbx_file_path();
+};
+
+class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>, public generate_fbx_file_path {
+ protected:
+  [[nodiscard("")]] FSys::path get_path() const override;
+  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
+  friend struct fmt::formatter<generate_file_path_base>;
+  bool export_fbx{};
+
+ public:
+  explicit generate_abc_file_path(const entt::registry &in = *g_reg());
+  virtual ~generate_abc_file_path();
+
+  inline void set_fbx_path(bool is_export_fbx = true) { export_fbx = is_export_fbx; };
 };
 
 }  // namespace reference_file_ns

@@ -97,41 +97,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
   return l_out_name;
 }
 
-generate_abc_file_path::generate_abc_file_path(const entt::registry &in) : generate_file_path_base() {
-  auto &l_cong           = in.ctx().get<project_config::base_config>();
 
-  extract_reference_name = l_cong.abc_export_extract_reference_name;
-  format_reference_name  = l_cong.abc_export_format_reference_name;
-  extract_scene_name     = l_cong.abc_export_extract_scene_name;
-  format_scene_name      = l_cong.abc_export_format_scene_name;
-  use_add_range          = l_cong.abc_export_add_frame_range;
-}
-
-FSys::path generate_abc_file_path::get_path() const {
-  auto k_path = maya_file_io::work_path(FSys::path{"abc"} / maya_file_io::get_current_path().stem());
-  if (!exists(k_path)) {
-    create_directories(k_path);
-  }
-  return k_path;
-}
-FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) const {
-  auto l_name = fmt::format(
-      "{}_{}", get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
-      get_extract_reference_name(in_ref_name)
-  );
-  if (add_external_string) l_name = fmt::format("{}_{}", l_name, *add_external_string);
-
-  if (use_add_range)
-    l_name = fmt::format(
-        "{}_{}-{}", l_name, begin_end_time.first.as(MTime::uiUnit()), begin_end_time.second.as(MTime::uiUnit())
-    );
-
-  l_name += export_fbx ? ".fbx" : ".abc";
-
-  return FSys::path{l_name};
-}
-
-generate_abc_file_path::~generate_abc_file_path() = default;
 
 generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in) : generate_file_path_base() {
   auto &l_cong           = in.ctx().get<project_config::base_config>();
@@ -167,6 +133,25 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
   l_path += ".fbx";
   return l_path;
 }
+
+generate_abc_file_path::generate_abc_file_path(const entt::registry &in) : generate_fbx_file_path() {}
+
+FSys::path generate_abc_file_path::get_path() const {
+  auto k_path = maya_file_io::work_path(FSys::path{"abc"} / maya_file_io::get_current_path().stem());
+  if (!exists(k_path)) {
+    create_directories(k_path);
+  }
+  return k_path;
+}
+FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) const {
+  auto l_path = generate_fbx_file_path::get_name(in_ref_name);
+
+  l_path.replace_extension(export_fbx ? ".fbx" : ".abc");
+
+  return l_path;
+}
+
+generate_abc_file_path::~generate_abc_file_path() = default;
 
 void generate_fbx_file_path::is_camera(bool in_is_camera) { is_camera_attr = in_is_camera; }
 generate_fbx_file_path::~generate_fbx_file_path() = default;
@@ -261,7 +246,7 @@ std::string reference_file::get_namespace() const {
 }
 
 bool reference_file::has_sim_assets_file() const {
-  auto &k_cfg     = g_reg()->ctx().get<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   FSys::path k_m_str{get_abs_path()};
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
                     fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
