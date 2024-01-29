@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/metadata.h>
 
 #include <boost/asio.hpp>
+#include <boost/locale.hpp>
 
 #include "wil/win32_helpers.h"
 #include <entt/entity/fwd.hpp>
@@ -129,6 +130,8 @@ void sql_com<doodle::assets_file>::select(
     break;
   }
 
+  static boost::locale::generator l_gen{};
+  auto l_utf8 = l_gen("zh_CN.UTF-8");
   {
     std::size_t l_index{};
     for (const auto& row : l_conn(sqlpp::select(
@@ -140,7 +143,7 @@ void sql_com<doodle::assets_file>::select(
                                       .order_by(l_table.id.asc()))) {
       assets_file l_a{};
       l_a.name_attr(row.name.value());
-      l_a.path_attr(row.path.value());
+      l_a.path_attr({row.path.value(), l_utf8});
       l_a.version_attr(row.version.value());
       if (!row.ref_id.is_null() && in_handle.contains(row.ref_id.value()))
         l_a.user_ref.handle_cache = in_handle.at(row.ref_id.value());
