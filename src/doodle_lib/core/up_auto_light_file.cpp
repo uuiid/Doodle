@@ -48,7 +48,7 @@ void up_auto_light_anim_file::operator()(boost::system::error_code in_error_code
     l_up_file_list.emplace_back(l_maya, l_rem_path.parent_path() / l_maya.stem());
   }
   // 开始正式上传
-  g_ctx().get<thread_copy_io_service>().async_copy(
+  g_ctx().get<thread_copy_io_service>().async_copy_old(
       l_up_file_list, FSys::copy_options::recursive, boost::asio::bind_executor(g_io_context(), std::move(*this))
   );
 }
