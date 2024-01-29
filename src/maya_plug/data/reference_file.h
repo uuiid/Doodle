@@ -118,6 +118,7 @@ class reference_file {
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
   bool replace_sim_assets_file();
+  bool has_sim_assets_file() const;
   /**
    * @brief 替换引用 需要组件 redirection_path_info_edit
    */

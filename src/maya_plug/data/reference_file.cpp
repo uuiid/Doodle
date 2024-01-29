@@ -260,6 +260,18 @@ std::string reference_file::get_namespace() const {
   return l_n;
 }
 
+bool reference_file::has_sim_assets_file() const {
+  auto &k_cfg     = g_reg()->ctx().get<project_config::base_config>();
+  FSys::path k_m_str{get_abs_path()};
+  auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
+                    fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
+  if (!FSys::exists(k_vfx_path)) {
+    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
+    return false;
+  }
+  return true;
+}
+
 bool reference_file::replace_sim_assets_file() {
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
