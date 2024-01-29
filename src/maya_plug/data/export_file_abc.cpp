@@ -129,12 +129,14 @@ void export_file_abc::export_abc(const MSelectionList& in_select, const FSys::pa
   }
 }
 
-void export_file_abc::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle) {
+std::vector<FSys::path> export_file_abc::export_sim(
+    const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle
+) {
   auto& l_arg = in_handle.get<generate_file_path_ptr>();
   auto& L_ref = in_handle.get<reference_file>();
   auto l_root = L_ref.export_group_attr();
   if (!l_root) {
-    return;
+    return {};
   }
   begin_time  = l_arg->begin_end_time.first;
   end_time    = l_arg->begin_end_time.second;
@@ -182,13 +184,16 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
   }
   DOODLE_LOG_INFO("导出划分完成 {}", fmt::join(export_map, " "));
   l_current_export_list.clear();
+  std::vector<FSys::path> l_path_ret{};
   for (auto&& [name, s_l] : export_map) {
     auto l_path = name(L_ref);
     l_current_export_list.merge(s_l);
-    if (!s_l.isEmpty())
+    if (!s_l.isEmpty()) {
       export_abc(s_l, l_path);
-    else
+      l_path_ret.emplace_back(l_path);
+    } else
       DOODLE_LOG_INFO("没有找到导出对象 {} ", l_path);
   }
+  return l_path_ret;
 }
 }  // namespace doodle::maya_plug

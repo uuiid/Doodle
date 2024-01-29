@@ -4,6 +4,8 @@
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/logger/logger.h"
 
+#include <doodle_lib/exe_warp/maya_exe.h>
+
 #include "boost/lambda2/lambda2.hpp"
 #include <boost/lambda2.hpp>
 
@@ -35,30 +37,20 @@ namespace doodle::maya_plug {
 
 void cloth_sim::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
-  ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
+  all_ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
 }
 void cloth_sim::replace_ref_file() {
   DOODLE_LOG_INFO("开始替换引用");
-
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    auto&& l_ref = in_handle.get<reference_file>();
-    if (l_ref.export_group_attr()) {
-      l_ref.set_use_sim(true);
-    } else {
-      DOODLE_LOG_INFO("引用文件{}不解算", l_ref.get_abs_path());
-      in_handle = {};
-    }
-  });
-  ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
-
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    if (!in_handle.get<reference_file>().replace_sim_assets_file()) {
-      in_handle.get<reference_file>().set_use_sim(false);
-      in_handle = {};
-    }
-  });
-
-  ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
+  ref_files_ = all_ref_files_ | ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                 auto&& l_ref = in_handle.get<reference_file>();
+                 if (l_ref.export_group_attr() && l_ref.get_use_sim() && l_ref.replace_sim_assets_file()) {
+                   return false;
+                 } else {
+                   default_logger_raw()->log(log_loc(), level::info, "引用文件{}不解算", l_ref.get_abs_path());
+                 }
+                 return true;
+               }) |
+               ranges::to<decltype(ref_files_)>;
 }
 void cloth_sim::create_cloth() {
   DOODLE_LOG_INFO("开始解锁节点 initialShadingGroup");
@@ -180,10 +172,16 @@ void cloth_sim::export_abc() {
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_gen->set_fbx_path(false);
-    l_ex.export_sim(in_handle);
+    auto l_sim_path = l_ex.export_sim(in_handle);
+    for (auto&& i : l_sim_path) {
+      if (!i.empty()) out_and_ref_file_list_.emplace_back(i, in_handle.get<reference_file>().get_abs_path());
+    }
     if (l_ex.get_export_list().isEmpty()) return;
     l_gen->set_fbx_path(true);
-    l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
+    auto l_path = l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
+    if (!l_path.empty()) {
+      out_and_ref_file_list_.emplace_back(l_path, in_handle.get<reference_file>().get_abs_path());
+    }
   });
 }
 
@@ -197,6 +195,44 @@ void cloth_sim::export_fbx() {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
   });
+}
+void cloth_sim::export_anim_file() {
+  DOODLE_LOG_INFO("开始导出动画文件");
+  export_file_fbx l_ex{};
+  auto l_gen             = std::make_shared<reference_file_ns::generate_fbx_file_path>();
+  const MTime k_end_time = MAnimControl::maxTime();
+  l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
+  ranges::for_each(
+      all_ref_files_ | ranges::views::filter([&](const entt::handle& in_handle) -> bool {
+        return ranges::find(ref_files_, in_handle) != ref_files_.end();
+      }),
+      [&](entt::handle& in_handle) {
+        auto& l_ref = in_handle.get<reference_file>();
+        if (!l_ref.is_loaded()) l_ref.load_file();
+        in_handle.emplace<generate_file_path_ptr>(l_gen);
+        auto l_path = l_ex.export_anim(in_handle);
+        if (!l_path.empty()) {
+          out_and_ref_file_list_.emplace_back(l_path, in_handle.get<reference_file>().get_abs_path());
+        }
+      }
+  );
+}
+void cloth_sim::write_config() {
+  default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");
+
+  maya_exe_ns::maya_out_arg l_out_arg{};
+  l_out_arg.begin_time = anim_begin_time_.value();
+  l_out_arg.end_time   = MAnimControl::maxTime().value();
+  for (auto&& i : out_and_ref_file_list_) {
+    l_out_arg.out_file_list.emplace_back(i.first, i.second);
+  }
+  nlohmann::json l_json = l_out_arg;
+  if (!out_path_file_.empty()) {
+    if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
+    default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
+    FSys::ofstream{out_path_file_} << l_json.dump(4);
+  } else
+    log_info(fmt::format("导出文件 {}", l_json.dump(4)));
 }
 
 }  // namespace doodle::maya_plug

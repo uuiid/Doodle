@@ -28,7 +28,7 @@ class export_file_abc {
 
  public:
   export_file_abc() = default;
-  void export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle);
+  std::vector<FSys::path> export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle);
   [[nodiscard]] inline MSelectionList get_export_list() const { return l_current_export_list; };
 };
 

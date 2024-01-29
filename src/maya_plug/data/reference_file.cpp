@@ -181,14 +181,9 @@ std::string reference_file::get_file_namespace() const {
                                   : conv::to_s(get_plug(file_info_node_, "reference_file_namespace").asString());
 }
 
-void reference_file::set_use_sim(bool in_use_sim) {
-  MStatus l_status{};
-  MFnDependencyNode l_file_info{};
-  maya_chick(l_file_info.setObject(file_info_node_));
-  auto l_plug = l_file_info.findPlug("is_solve", false, &l_status);
-  maya_chick(l_status);
-  maya_chick(l_plug.setBool(in_use_sim));
-}
+void reference_file::set_use_sim(bool in_use_sim) { set_attribute(file_info_node_, "is_solve", in_use_sim); }
+
+bool reference_file::get_use_sim() const { return get_attribute<bool>(file_info_node_, "is_solve"); }
 
 MObject reference_file::get_ref_node() const {
   MStatus l_status{};
@@ -208,6 +203,20 @@ MObject reference_file::get_ref_node() const {
     default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
   }
   return {};
+}
+
+bool reference_file::is_loaded() const {
+  MStatus l_status{};
+  auto l_node = get_ref_node();
+  if (l_node.isNull()) {
+    default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
+    return false;
+  }
+  MFnReference l_ref{};
+  maya_chick(l_ref.setObject(l_node));
+  auto l_ret = l_ref.isLoaded(&l_status);
+  maya_chick(l_status);
+  return l_ret;
 }
 
 void reference_file::load_file() {

@@ -103,8 +103,11 @@ class reference_file {
   [[nodiscard]] bool has_node(const MObject &in_node) const;
   inline MObject get_file_info_node() const { return file_info_node_; }
   void set_use_sim(bool in_use_sim);
-  // 加载引用对应的文件
+  bool get_use_sim() const;
+  /// 加载引用对应的文件
   void load_file();
+  /// 确认引用对应的文件
+  bool is_loaded() const;
 
   /**
    * @brief 获取真正的路径名称

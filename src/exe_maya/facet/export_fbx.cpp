@@ -45,15 +45,7 @@
 #include <maya/MGlobal.h>
 
 namespace doodle::maya_plug {
-struct maya_out_arg {
-  FSys::path out_file{};
-  // 引用文件
-  FSys::path ref_file{};
-  friend void to_json(nlohmann::json& j, const maya_out_arg& p) {
-    j["out_file"] = boost::locale::conv::utf_to_utf<char>(p.out_file.generic_wstring());
-    j["ref_file"] = boost::locale::conv::utf_to_utf<char>(p.ref_file.generic_wstring());
-  }
-};
+
 void export_fbx_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();

@@ -57,9 +57,10 @@ bool cloth_sim::post(const FSys::path& in_path) {
 
   if (l_arg.file_path.empty()) return l_ret;
 
-  lib_guard_ = std::make_shared<maya_lib_guard>(l_arg.maya_path);
+  lib_guard_     = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 
-  l_ret      = true;
+  l_ret          = true;
+  out_path_file_ = l_arg.out_path_file_;
 
   g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_, false, true, g_reg(), [](auto&&) {});
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
@@ -115,6 +116,11 @@ bool cloth_sim::post(const FSys::path& in_path) {
     DOODLE_LOG_INFO("安排导出abc");
     boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
   }
+  if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_anim_file).any()) {
+    DOODLE_LOG_INFO("安排导出动画文件");
+    boost::asio::post(l_s, [l_s, this]() { this->export_anim_file(); });
+  }
+  boost::asio::post(l_s, [l_s, this]() { this->write_config(); });
 
   return l_ret;
 }
