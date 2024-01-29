@@ -121,7 +121,7 @@ void cloth_sim::sim() {
     DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
   }
   const MTime k_end_time = MAnimControl::maxTime();
-  for (auto&& i = t_post_time_; i < k_end_time; ++i) {
+  for (auto&& i = t_post_time_; i <= k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
     DOODLE_LOG_INFO("解算帧 {}", i);
     ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
@@ -148,7 +148,7 @@ void cloth_sim::touch_sim() {
   });
 
   const MTime k_end_time = MAnimControl::maxTime();
-  for (auto&& i = t_post_time_; i < k_end_time; ++i) {
+  for (auto&& i = t_post_time_; i <= k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
     DOODLE_LOG_INFO("解算帧 {}", i);
     ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {

@@ -27,7 +27,9 @@ static constexpr std::bitset<8> k_sim_file{0b1 << 1};
 static constexpr std::bitset<8> k_export_abc_type{0b1 << 2};
 static constexpr std::bitset<8> k_export_fbx_type{0b1 << 3};
 static constexpr std::bitset<8> k_create_play_blast{0b1 << 4};
+static constexpr std::bitset<8> k_touch_sim_file{0b1 << 5};
 // 标准解算 00010111
+// 触摸解算 00110101
 // 标准导出fbx 00001000
 // static constexpr std::bitset<8> create_ref_file{0b1 << 0};
 

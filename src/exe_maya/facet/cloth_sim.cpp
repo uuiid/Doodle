@@ -99,7 +99,7 @@ bool cloth_sim::post(const FSys::path& in_path) {
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_sim_file).any()) {
     DOODLE_LOG_INFO("安排解算布料");
     boost::asio::post(l_s, [l_s, this]() { this->sim(); });
-  } else {
+  } else if ((l_arg.bitset_ & maya_exe_ns::flags::k_touch_sim_file).any()) {
     DOODLE_LOG_INFO("安排touch布料");
     boost::asio::post(l_s, [l_s, this]() { this->touch_sim(); });
   }
