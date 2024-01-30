@@ -106,6 +106,9 @@
 #include "Subsystems/EditorAssetSubsystem.h"
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
+#include "Tracks/MovieSceneLevelVisibilityTrack.h"
+#include "Sections/MovieSceneLevelVisibilitySection.h"
+
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 
@@ -591,7 +594,23 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   FFrameNumber offset{50};
   L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
   L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
-  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End}, true);
+  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End+1}, true);
+  //-------Add Visibility Track
+  UMovieSceneLevelVisibilityTrack* NewTrack = L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
+  L_ShotSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack));
+  NewTrack = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
+  UMovieSceneLevelVisibilitySection* NewSection = CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
+  TRange<FFrameNumber> SectionRange = L_ShotSequence->GetMovieScene()->GetPlaybackRange();
+  NewSection->SetRange(SectionRange);
+  NewTrack->AddSection(*NewSection);
+  //-------Add Sub
+  UMovieSceneSubTrack* NewTrack1 = L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneSubTrack>();
+  L_ShotSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack1));
+  NewTrack1 = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
+  UMovieSceneSubSection* NewSection1 = CastChecked<UMovieSceneSubSection>(NewTrack1->CreateNewSection());
+  NewSection1->SetRange(SectionRange);
+  NewTrack1->AddSection(*NewSection);
+  //------------
   L_ShotSequence->Modify();
   ALevelSequenceActor* L_LevelSequenceActor{};
 
@@ -705,6 +724,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     // Tick the engine.
     GEngine->Tick(FApp::GetDeltaTime(), false);
   }
+
   UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
   // FText::FromString(ImportPathDir)));
   //    //UObject* object = AssetToolsModule.Get().CreateAsset(L_Name.ToString(), PackagePath, ULevel::StaticClass(),
