@@ -4,6 +4,8 @@
 
 #include <doodle_core/core/file_sys.h>
 
+#include <maya_plug/maya_plug_fwd.h>
+
 #include "maya/MApiNamespace.h"
 #include <maya/MDagPath.h>
 #include <regex>
@@ -12,6 +14,7 @@ namespace doodle::maya_plug {
 namespace reference_file_ns {
 class generate_fbx_file_path;
 }
+
 class maya_camera {
   void chick() const;
 
@@ -44,7 +47,8 @@ class maya_camera {
    * @throw maya_error maya返回值错误
    */
   std::tuple<bool, FSys::path> export_file(
-      const MTime& in_start, const MTime& in_end, const reference_file_ns::generate_fbx_file_path& in_name
+      const MTime& in_start, const MTime& in_end,
+      const std::shared_ptr<reference_file_ns::generate_fbx_file_path>& in_name
   );
   /**
    * @brief 烘培动画关键帧

@@ -198,7 +198,7 @@ FSys::path export_file_fbx::export_cam(const entt::handle_view<generate_file_pat
   }
   auto&& [l_b, l_p] = g_reg()->ctx().get<maya_camera>().export_file(
       l_arg->begin_end_time.first, l_arg->begin_end_time.second,
-      *std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(l_arg)
+      std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(l_arg)
   );
   return l_p;
 }

@@ -41,7 +41,8 @@ void maya_camera::chick() const {
 }
 
 std::tuple<bool, FSys::path> maya_camera::export_file(
-    const MTime& in_start, const MTime& in_end, const reference_file_ns::generate_fbx_file_path& in_name
+    const MTime& in_start, const MTime& in_end,
+    const const std::shared_ptr<reference_file_ns::generate_fbx_file_path>& in_name
 ) {
   chick();
 
@@ -52,9 +53,8 @@ std::tuple<bool, FSys::path> maya_camera::export_file(
   k_s = MGlobal::setActiveSelectionList(k_select);
   DOODLE_MAYA_CHICK(k_s);
   /// \brief 开始创建路径并进行导出
-  auto l_name = in_name;
-  l_name.is_camera(true);
-  auto k_file_path = l_name({});
+  in_name->is_camera(true);
+  auto k_file_path = (*in_name)({});
   auto k_comm      = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
   k_s              = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
