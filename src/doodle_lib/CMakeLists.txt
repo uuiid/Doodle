@@ -2,8 +2,8 @@
 cmrc_add_resource_library(
         doodle_holidaycn
         WHENCE ${holidaycn_SOURCE_DIR}
-        ${holidaycn_SOURCE_DIR}/2022.json
         ${holidaycn_SOURCE_DIR}/2023.json
+        ${holidaycn_SOURCE_DIR}/2024.json
 )
 
 
