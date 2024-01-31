@@ -1,0 +1,9 @@
+target_sources(
+        doodle_server_lib
+        PUBLIC
+        server_facet.h
+        work_facet.h
+        PRIVATE
+        server_facet.cpp
+        work_facet.cpp
+)
