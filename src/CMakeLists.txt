@@ -106,6 +106,5 @@ add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
 
-add_subdirectory(install)
 
 add_subdirectory(test)
