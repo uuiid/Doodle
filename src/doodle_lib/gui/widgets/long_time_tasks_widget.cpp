@@ -5,7 +5,6 @@
 #include "long_time_tasks_widget.h"
 
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>

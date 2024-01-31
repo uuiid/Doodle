@@ -7,7 +7,6 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/metadata/user.h"
 #include <doodle_core/core/core_sig.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/project.h>
 

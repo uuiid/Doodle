@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/logger/crash_reporting_thread.h>

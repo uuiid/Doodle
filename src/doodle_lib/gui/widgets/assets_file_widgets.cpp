@@ -12,7 +12,6 @@
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/core/core_sig.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/status_info.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/metadata_cpp.h>

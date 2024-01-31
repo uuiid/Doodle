@@ -7,7 +7,6 @@
 
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/core/doodle_lib.h"
-#include "doodle_core/core/init_register.h"
 #include "doodle_core/doodle_core.h"
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"

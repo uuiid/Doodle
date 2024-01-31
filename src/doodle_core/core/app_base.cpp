@@ -7,7 +7,6 @@
 #include <doodle_core/core/app_facet.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/gui_template/show_windows.h>
