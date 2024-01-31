@@ -163,18 +163,11 @@ MStatus initializePlugin(MObject obj) {
   ));
   CHECK_MSTATUS(status);
 
-  /// 注册自定义hud节点
-  status = maya_reg->register_node<doodle::maya_plug::doodle_info_node>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
   CHECK_MSTATUS(status);
   /// 添加文件编辑命令
   status = maya_reg->register_command<::doodle::maya_plug::file_info_edit>(k_plugin);
-  CHECK_MSTATUS(status);
-
-  /// 注册自定义渲染覆盖显示hud
-  status = maya_reg->register_draw_overrider<
-      doodle::maya_plug::doodle_info_node, doodle::maya_plug::doodle_info_node_draw_override>();
   CHECK_MSTATUS(status);
 
   CHECK_MSTATUS(status);
