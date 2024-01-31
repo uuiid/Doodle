@@ -8,7 +8,6 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/file_sys.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/core/util.h>
 #include <doodle_core/database_task/sqlite_client.h>

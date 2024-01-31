@@ -12,7 +12,6 @@
 #include "doodle_core/metadata/season.h"
 #include "doodle_core/metadata/shot.h"
 #include "doodle_core/metadata/time_point_wrap.h"
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/metadata/file_one_path.h>
 #include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/metadata.h>

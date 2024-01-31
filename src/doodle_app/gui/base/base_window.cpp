@@ -5,7 +5,6 @@
 #include "base_window.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/core/init_register.h>
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/base/ref_base.h>

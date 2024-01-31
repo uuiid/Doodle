@@ -92,8 +92,6 @@
       "targets": [
         "DoodleExe",
         "generate_token",
-        "doodle_server",
-        "doodle_client",
         "doodle_auto_light",
         "Doxygen"
       ]
@@ -137,8 +135,6 @@
       "targets": [
         "DoodleExe",
         "generate_token",
-        "doodle_server",
-        "doodle_client",
         "doodle_auto_light",
         "Doxygen"
       ]

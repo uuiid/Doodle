@@ -8,7 +8,6 @@
 #include <boost/algorithm/string.hpp>
 
 #include "core/core_help_impl.h"
-#include "core/init_register.h"
 #include "entt/entity/entity.hpp"
 #include "entt/entity/fwd.hpp"
 #include <treehh/tree.hh>
@@ -152,13 +151,5 @@ void assets::merge_assets_tree(const registry_ptr& in_registry_ptr) {
   } while (clear(l_tree.begin(), l_ass_map_ass_file));
 }
 
-DOODLE_REGISTER_BEGIN(assets) {
-  entt::meta<assets>()
-      .ctor<>()
-      .ctor<std::string>()
-      .data<&assets::p_path>("p_path"_hs)
-      .func<&assets::set_path>("set_path"_hs)
-      .func<&assets::get_path>("get_path"_hs);
-}
 
 }  // namespace doodle

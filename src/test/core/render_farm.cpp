@@ -12,7 +12,6 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/episodes.h>
-#include <doodle_core/metadata/export_file_info.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata.h>

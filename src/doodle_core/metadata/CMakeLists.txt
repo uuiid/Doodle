@@ -5,7 +5,6 @@ target_sources(
         assets_file.h
         comment.h
         episodes.h
-        export_file_info.h
         image_icon.h
         importance.h
         metadata.h
@@ -30,7 +29,6 @@ target_sources(
         assets_file.cpp
         comment.cpp
         episodes.cpp
-        export_file_info.cpp
         image_icon.cpp
         importance.cpp
         metadata.cpp
