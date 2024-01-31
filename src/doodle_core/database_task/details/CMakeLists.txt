@@ -13,7 +13,6 @@ target_sources(doodle_core
         redirection_path_info.h
         assets.h
         comment.h
-        export_file_info.h
         image_icon.h
         assets_file.h
         time_point_info.h
@@ -45,7 +44,6 @@ target_sources(doodle_core
         redirection_path_info.cpp
         assets.cpp
         comment.cpp
-        export_file_info.cpp
         image_icon.cpp
         assets_file.cpp
         time_point_info.cpp

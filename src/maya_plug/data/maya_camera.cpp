@@ -5,7 +5,6 @@
 #include "maya_camera.h"
 
 #include <doodle_core/metadata/episodes.h>
-#include <doodle_core/metadata/export_file_info.h>
 #include <doodle_core/metadata/shot.h>
 
 #include <maya_plug/data/maya_file_io.h>
