@@ -102,9 +102,5 @@ if (DEFINED Maya_Version)
     endif ()
 endif ()
 
-add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
-
-
-
 add_subdirectory(test)
