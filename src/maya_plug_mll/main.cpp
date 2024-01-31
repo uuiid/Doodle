@@ -22,7 +22,6 @@
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
 #include <maya_plug/maya_comm/reference_comm.h>
-#include <maya_plug/maya_render/hud_render_node.h>
 #include <maya_plug/node/files_info.h>
 
 #include <maya/MFnPlugin.h>

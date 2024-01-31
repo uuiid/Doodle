@@ -19,7 +19,6 @@ add_subdirectory(gui gui_${Maya_Version})
 add_subdirectory(logger logger_${Maya_Version})
 add_subdirectory(main main_${Maya_Version})
 add_subdirectory(maya_comm maya_comm_${Maya_Version})
-add_subdirectory(maya_render maya_render_${Maya_Version})
 add_subdirectory(node node_${Maya_Version})
 
 target_include_directories(doodle_maya_lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
