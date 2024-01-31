@@ -4,11 +4,13 @@
 
 #include "render_ue4.h"
 
+#include <doodle_core/lib_warp/boost_fmt_error.h>
+
 #include <doodle_lib/exe_warp/ue_exe.h>
 
 #include <boost/asio.hpp>
 
-#include <doodle_server/render_farm/work.h>
+// #include <doodle_server/render_farm/work.h>
 namespace doodle::render_farm {
 namespace detail {
 
@@ -223,12 +225,12 @@ bool render_ue4::updata_file() {
 }
 
 void render_ue4::send_server_state() {
-  if (self_handle_ && g_ctx().contains<render_farm::work_ptr>()) {
-    DOODLE_LOG_INFO("开始沟通服务器");
-    g_ctx().get<render_farm::work_ptr>()->send_server_state();
-  } else {
-    DOODLE_LOG_ERROR("服务器不存在");
-  }
+  //  if (self_handle_ && g_ctx().contains<render_farm::work_ptr>()) {
+  //    DOODLE_LOG_INFO("开始沟通服务器");
+  //    g_ctx().get<render_farm::work_ptr>()->send_server_state();
+  //  } else {
+  //    DOODLE_LOG_ERROR("服务器不存在");
+  //  }
 }
 }  // namespace detail
 }  // namespace doodle::render_farm

@@ -61,8 +61,6 @@ void doodle_lib::init() {
   ptr->ctx_p.emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));
   ptr->ctx_p.emplace<status_info>();
 
-  init_register::instance().reg_class();
-
   // boost::locale::generator k_gen{};
   // k_gen.categories(
   //     boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
