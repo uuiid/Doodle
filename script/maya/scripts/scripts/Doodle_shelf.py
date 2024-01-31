@@ -94,6 +94,7 @@ class DlsShelf(shelfBase._shelf):
         deleteAttr.deleteShape().show()
 
     def exportAbc(self):
+        cmds.doodle_file_info_edit()
         cmds.ref_file_export()
 
     def set_cache(self):
