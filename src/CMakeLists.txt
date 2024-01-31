@@ -78,7 +78,6 @@ add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
 
 add_subdirectory(exe_gui)
-add_subdirectory(doodle_server)
 
 if (DEFINED Maya_Version)
     # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
