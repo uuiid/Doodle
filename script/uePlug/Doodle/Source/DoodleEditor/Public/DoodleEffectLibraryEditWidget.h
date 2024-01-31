@@ -4,7 +4,6 @@
 #include "UObject/NoExportTypes.h"
 #include "DoodleEffectEditorViewport.h"
 #include "MovieSceneCapture.h"
-#include "DoodleMovieSceneCapture.h"
 #include "DoodleEffectLibraryWidget.h"
 #include "AutomatedLevelSequenceCapture.h"
 #include "MovieSceneCaptureDialogModule.h"
@@ -155,7 +154,6 @@ private:
 	void OnCaptureFinished(bool result);
 	void OnStopCapture();
 	bool IsCapturing = false;
-	UDoodleMovieSceneCapture* Capture;
 	UAutomatedLevelSequenceCapture* CaptureSeq;
 	int32 StartFrame;
 	int32 EndFrame;

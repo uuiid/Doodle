@@ -12,7 +12,7 @@ class FTreeItem;
 
 DECLARE_DELEGATE_OneParam(FTreeItemParamDelegate, TSharedPtr<FTreeItem>);
 
-class FTreeItem 
+class FTreeItem : public TSharedFromThis<FTreeItem>
 {
 public:
 	FName Name{ TEXT("") };

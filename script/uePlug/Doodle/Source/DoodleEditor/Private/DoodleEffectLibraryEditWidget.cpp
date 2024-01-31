@@ -199,7 +199,7 @@ void FInEditorCapture1::OnPIEViewportStarted()
                     CachedEngineShowFlags->SetPathTracing(true);
                 }
                 CaptureObject->Initialize(SlatePlayInEditorSession->SlatePlayInEditorWindowViewport, Context.PIEInstance);
-                //CaptureObject->ImageCaptureProtocolType = UImageSequenceProtocol::StaticClass();
+                CaptureObject->ImageCaptureProtocolType = UVideoCaptureProtocol::StaticClass();
                 //OnCaptureStarted();
             }
             return;
@@ -1161,7 +1161,7 @@ void UDoodleEffectLibraryEditWidget::OnStopCapture()
 
         FString TestName = CaptureSeq->Settings.GameModeOverride->GetPathName();
         DirectoryPath = CaptureSeq->Settings.OutputDirectory.Path;
-        //CaptureSeq->Settings.MovieExtension = TEXT(".png");
+        CaptureSeq->Settings.MovieExtension = TEXT(".avi");
         MovieExtension = CaptureSeq->Settings.MovieExtension;
         auto OnCaptureFinishDelegate = [this](bool bSuccess)
         {
