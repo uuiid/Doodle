@@ -48,7 +48,6 @@ macro(add_doodle_exe _name _src)
     target_link_libraries(${_name}
             PUBLIC
             doodle_lib
-            doodle_server_lib
     )
     install(TARGETS ${_name}
             RUNTIME_DEPENDENCIES
