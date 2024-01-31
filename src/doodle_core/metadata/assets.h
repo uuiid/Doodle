@@ -23,8 +23,6 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
    *
    */
 
-  DOODLE_REGISTER_FRIEND();
-
   entt::handle parent_{};
   std::set<entt::handle> child_{};
 
