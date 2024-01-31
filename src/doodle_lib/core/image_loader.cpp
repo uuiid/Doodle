@@ -9,6 +9,7 @@
 // #include <opencv2/core/directx.hpp>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/project.h>
 
@@ -216,6 +217,11 @@ void image_loader_ns::image_loader_init::init() const {
 image_loader_ns::image_loader_init& image_loader_ns::image_loader_init::Get() {
   static image_loader_init s_init{};
   return s_init;
+}
+DOODLE_REGISTER_BEGIN(image_loader_ns::image_loader_init) {
+  entt::meta<image_loader_ns::image_loader_init>()
+      .type(entt::type_id<image_loader_ns::image_loader_init>().hash())
+      .func<&image_loader_ns::image_loader_init::init>("init"_hs);
 }
 
 }  // namespace doodle

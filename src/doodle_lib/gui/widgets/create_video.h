@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <doodle_core/core/init_register.h>
 
 #include <doodle_app/gui/base/base_window.h>
 

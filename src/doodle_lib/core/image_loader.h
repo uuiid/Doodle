@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <doodle_core/core/init_register.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 

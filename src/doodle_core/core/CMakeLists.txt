@@ -7,6 +7,7 @@ target_sources(
         doodle_lib.h
         template_util.h
         status_info.h
+        init_register.h
         file_sys.h
         chrono_.h
         app_base.h
@@ -15,6 +16,7 @@ target_sources(
         app_facet.h
         program_info.h
         global_function.h
+        init_register_macro.h
         wait_op.h
 
         PRIVATE
@@ -22,6 +24,7 @@ target_sources(
         core_sig.cpp
         doodle_lib.cpp
         status_info.cpp
+        init_register.cpp
         file_sys.cpp
         app_base.cpp
         core_sql.cpp
