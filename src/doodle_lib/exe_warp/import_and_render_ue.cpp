@@ -70,14 +70,21 @@ FSys::path import_and_render_ue::gen_import_config() const {
     );
   }
 
-  data_->import_data_.files =
-      l_maya_out_arg | ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
-        return import_and_render_ue::import_files_t{
-            in_arg.out_file.filename().generic_string().find("_camera_") != std::string::npos ? "cam" : "char",
-            in_arg.out_file
-        };
-      }) |
-      ranges::to_vector;
+  data_->import_data_.files = l_maya_out_arg |
+                              ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t &in_arg) {
+                                auto l_file_name_str = in_arg.out_file.filename().generic_string();
+                                auto l_ext           = in_arg.out_file.extension().generic_string();
+                                std::string l_type{};
+                                if (l_file_name_str.find("_camera_") != std::string::npos) {
+                                  l_type = "cam";
+                                } else if (l_ext == ".abc") {
+                                  l_type = "geo";
+                                } else if (l_ext == ".fbx") {
+                                  l_type = "char";
+                                }
+                                return import_and_render_ue::import_files_t{l_type, in_arg.out_file};
+                              }) |
+                              ranges::to_vector;
   data_->import_data_.original_map = data_->down_info_.scene_file_.generic_string();
 
   nlohmann::json l_json{};
