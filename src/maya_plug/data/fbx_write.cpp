@@ -1221,7 +1221,7 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
   anim_stack->LocalStart = l_fbx_begin;
   FbxTime l_fbx_end{};
-  l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
+  l_fbx_end.SetFrame(in_end.value() + 1, fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
   anim_stack->LocalStop = l_fbx_end;
 
   MAnimControl::setCurrentTime(find_begin_anim_time());
