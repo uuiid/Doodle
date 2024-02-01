@@ -53,7 +53,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           auto l_ptr                       = std::make_shared<character_scan_category_data_t>();
           l_ptr->project_root_             = in_root;
           l_ptr->season_                   = l_season;
-          l_ptr->name_                     = l_ch_name;
+          l_ptr->name_                     = fmt::format("Ch_{}", l_number_str);
           l_ptr->Ch_path_                  = l_ChNum_path;
           l_ptr->begin_episode_            = l_begin_episode;
           l_ptr->ue_file_.path_            = l_s4.path();
