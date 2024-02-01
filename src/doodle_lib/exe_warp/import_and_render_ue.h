@@ -44,29 +44,36 @@ class import_and_render_ue {
     shot shot;
 
     FSys::path out_file_dir;
-    std::string original_map;
     std::string import_dir;
-    std::string create_map;
 
-    FSys::path render_map;             // 渲染关卡
-    FSys::path level_sequence;         // 渲染关卡序列(包的路径)
+    std::string original_map;  // 地编提供的主场景路径, 我们需要抓取子场景
+
+    FSys::path render_map;             // 渲染关卡, 这个放置外面, 包含下面两个子关卡
+    std::string create_map;            // 创建的关卡(放置骨骼网格体)
+    FSys::path vfx_map;                // 特效关卡, 放特效
+    FSys::path level_sequence_import;  // 渲染关卡序列(包的路径), 包括下面的子关卡
+    FSys::path level_sequence_vfx;     // 额外的特效关卡序列(包的路径)
+
     FSys::path movie_pipeline_config;  // 渲染配置(包的路径)
 
     std::vector<import_files_t> files;
     friend void to_json(nlohmann::json &j, const import_data_t &p) {
-      j["project"]      = p.project_.p_shor_str;
-      j["begin_time"]   = p.begin_time;
-      j["end_time"]     = p.end_time;
-      j["episode"]      = p.episode.p_episodes;
-      j["shot"]         = p.shot.p_shot;
-      j["shot_ab"]      = p.shot.p_shot_ab;
-      j["out_file_dir"] = p.out_file_dir.generic_string();
-      j["original_map"] = p.original_map;
-      j["render_map"]   = p.render_map;
-      j["files"]        = p.files;
-      j["import_dir"]   = p.import_dir;
-      j["create_map"]   = p.create_map;
-      auto l_path       = p.level_sequence;
+      j["project"]            = p.project_.p_shor_str;
+      j["begin_time"]         = p.begin_time;
+      j["end_time"]           = p.end_time;
+      j["episode"]            = p.episode.p_episodes;
+      j["shot"]               = p.shot.p_shot;
+      j["shot_ab"]            = p.shot.p_shot_ab;
+      j["out_file_dir"]       = p.out_file_dir.generic_string();
+      j["original_map"]       = p.original_map;
+      j["render_map"]         = p.render_map;
+      j["files"]              = p.files;
+      j["import_dir"]         = p.import_dir;
+      j["create_map"]         = p.create_map;
+      j["vfx_map"]            = p.vfx_map;
+      j["level_sequence_vfx"] = p.level_sequence_vfx;
+
+      auto l_path             = p.level_sequence_import;
       l_path.replace_extension();
       j["level_sequence"] = l_path;
 

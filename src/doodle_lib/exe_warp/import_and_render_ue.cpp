@@ -46,20 +46,22 @@ FSys::path import_and_render_ue::gen_import_config() const {
     );
     data_->import_data_.movie_pipeline_config.replace_extension(data_->import_data_.movie_pipeline_config.stem());
 
-    data_->import_data_.level_sequence = fmt::format(
+    data_->import_data_.level_sequence_import = fmt::format(
         "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}", data_->import_data_.project_.p_shor_str,
         data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
     );
-    data_->import_data_.level_sequence.replace_extension(data_->import_data_.level_sequence.stem());
+    data_->import_data_.level_sequence_vfx = data_->import_data_.level_sequence_import.generic_string() + "_Vfx";
+    data_->import_data_.level_sequence_import.replace_extension(data_->import_data_.level_sequence_import.stem());
 
     data_->import_data_.create_map = fmt::format(
         "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_LV",
         data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
         data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
     );
+    data_->import_data_.vfx_map    = data_->import_data_.create_map + "_Vfx_LV";
 
     data_->import_data_.import_dir = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Fbx_Lig_{4:%m_%d_%H_%M}", data_->import_data_.project_.p_shor_str,
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Import_{4:%m_%d_%H_%M}", data_->import_data_.project_.p_shor_str,
         data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum,
         time_point_wrap{}.get_local_time()
     );
@@ -156,8 +158,8 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
           msg_,
           fmt::format(
               R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
-              data_->down_info_.render_project_, data_->import_data_.render_map, data_->import_data_.level_sequence,
-              data_->import_data_.movie_pipeline_config
+              data_->down_info_.render_project_, data_->import_data_.render_map,
+              data_->import_data_.level_sequence_import, data_->import_data_.movie_pipeline_config
           ),
           boost::asio::bind_executor(g_io_context(), std::move(*this))
       );
