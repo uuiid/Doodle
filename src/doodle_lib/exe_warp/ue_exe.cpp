@@ -57,8 +57,12 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
     if (ue_path.empty() || !FSys::exists(ue_path)) throw_exception(doodle_error{"ue_exe path is empty or not exists"});
     logger_attr->log(log_loc(), level::info, "开始运行 ue_exe: {} {}", ue_path, arg_attr);
 
-    ue_path    = ue_path.lexically_normal();
-    child_attr = boost::process::child{
+    ue_path                           = ue_path.lexically_normal();
+    boost::process::environment l_eve = boost::this_process::environment();
+    l_eve["UE-LocalDataCachePath"]    = "%GAMEDIR%DerivedDataCache";
+    l_eve["UE-SharedDataCachePath"]   = fmt::format("{}\\UE\\DerivedDataCache", core_set::get_set().depot_ip);
+
+    child_attr                        = boost::process::child{
         g_io_context(),
         //        boost::process::exe  = ue_path.generic_string(),
         //        boost::process::args = arg_attr,
@@ -79,7 +83,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
               call_attr->complete();
               self_->notify_run();
             },
-        boost::process::windows::hide,
+        boost::process::windows::hide, l_eve
     };
 
     read_out();

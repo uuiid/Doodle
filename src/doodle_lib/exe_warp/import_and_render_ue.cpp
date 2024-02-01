@@ -116,7 +116,7 @@ void import_and_render_ue::operator()(
   }
 
   data_->down_info_ = in_down_info;
-  data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件");
+  data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件 {} ", data_->down_info_.render_project_);
   fix_project();
   g_ctx().get<ue_exe_ptr>()->async_run(
       msg_,
@@ -132,9 +132,11 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
     wait_op_->complete();
     return;
   }
-  data_->logger_->log(log_loc(), level::level_enum::warn, "渲染开始, 输出目录 {}", data_->import_data_.out_file_dir);
   switch (data_->status_) {
     case status::import_file: {
+      data_->logger_->log(
+          log_loc(), level::level_enum::warn, "渲染开始, 输出目录 {}", data_->import_data_.out_file_dir
+      );
       if (FSys::exists(data_->import_data_.out_file_dir)) {
         try {
           FSys::remove_all(data_->import_data_.out_file_dir);
@@ -154,6 +156,9 @@ void import_and_render_ue::operator()(boost::system::error_code in_error_code) c
       );
     } break;
     case status::render: {
+      data_->logger_->log(
+          log_loc(), level::level_enum::warn, "完成渲染, 输出目录 {}", data_->import_data_.out_file_dir
+      );
       set_out_file_dir_(data_->import_data_.out_file_dir);
       wait_op_->ec_ = in_error_code;
       wait_op_->complete();
