@@ -43,6 +43,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
         l_ptr->begin_episode_ = l_begin_episode;
         l_ptr->name_          = l_s3.path().filename().generic_string();
         l_ptr->BG_path_       = l_s2.path();
+        l_ptr->base_path_     = l_s3.path();
         l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::scene;
         l_ptr->file_type_.set_path("场景");
         l_out.emplace_back(l_ptr);
@@ -65,6 +66,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
             l_ptr->begin_episode_ = l_begin_episode;
             l_ptr->name_          = l_s3.path().filename().generic_string();
             l_ptr->BG_path_       = l_s2.path();
+            l_ptr->base_path_     = l_s3.path();
             l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::scene;
             l_ptr->file_type_.set_path("场景");
             l_out.emplace_back(l_ptr);

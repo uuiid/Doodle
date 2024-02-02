@@ -49,6 +49,9 @@ class scan_category_data_t {
   // 解算文件
   uuid_path_t solve_file_;
 
+  // 这个是查找依据的根本路径, 必然不空, 可被打开
+  FSys::path base_path_;
+
   // 项目根目录
   project_root_t project_root_;
   // 季数

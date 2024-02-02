@@ -73,6 +73,9 @@ void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::
     l_gui_data.name_         = l_data->name_;
     l_gui_data.season_       = fmt::format("季度: {}", l_data->season_.p_int);
     l_gui_data.version_name_ = l_data->version_name_;
+    l_gui_data.base_path_    = l_data->base_path_;
+    l_gui_data.base_path_show =
+        gui_cache_name_id{l_data->base_path_.lexically_proximate(l_data->project_root_.p_path).generic_string()};
     if (l_data->ue_file_.path_.empty()) {
       l_gui_data.ue_path_       = "未找到路径";
       l_gui_data.ue_path_color_ = ImVec4{1.0f, 0.0f, 0.0f, 1.0f};
@@ -185,6 +188,10 @@ bool scan_assets_t::render() {
           dear::Text(i.season_);
           ImGui::TableNextColumn();
           dear::Text(i.version_name_);
+
+          ImGui::TableNextColumn();
+          if (dear::Selectable(*i.base_path_show)) FSys::open_explorer(i.base_path_);
+
           ImGui::TableNextColumn();
           if (i.ue_path_color_.x == 0.0f && i.ue_path_color_.y == 0.0f && i.ue_path_color_.z == 0.0f &&
               i.ue_path_color_.w == 0.0f) {

@@ -44,6 +44,9 @@ class DOODLELIB_API scan_assets_t {
     std::string maya_rig_path_;   // 对应的maya rig路径
     ImVec4 maya_rig_path_color_;  // 对应的maya rig路径颜色
 
+    gui_cache_name_id base_path_show;  // 基础路径
+    FSys::path base_path_;             // 基础路径
+
     std::string project_root_;  // 项目根目录 + 项目名称
     std::string info_;          // 信息
   };
@@ -51,10 +54,11 @@ class DOODLELIB_API scan_assets_t {
   gui_cache_name_id assets_table_id_;
   std::vector<scan_gui_data_t> assets_table_data_;  // 资产表主要数据
   // 资产表头
-  std::array<std::tuple<std::string, std::float_t>, 7> assets_table_header_{
+  std::array<std::tuple<std::string, std::float_t>, 8> assets_table_header_{
       std::tuple<std::string, std::float_t>{"名称", 30.0f},
       std::tuple<std::string, std::float_t>{"季数", 30.0f},
       std::tuple<std::string, std::float_t>{"版本名称", 30.0f},
+      std::tuple<std::string, std::float_t>{"基本路径", 30.0f},
       std::tuple<std::string, std::float_t>{"ue路径", 130.0f},
       std::tuple<std::string, std::float_t>{"maya rig路径", 130.0f},
       std::tuple<std::string, std::float_t>{"项目根目录", 30.0f},
