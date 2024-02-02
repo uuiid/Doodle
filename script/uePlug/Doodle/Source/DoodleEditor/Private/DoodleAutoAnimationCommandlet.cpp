@@ -93,6 +93,8 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     {
         EditorAssetSubsystem->DeleteAsset(RenderMapPath.ToString());
     }
+    OnCreateEffectSequenceWorld();
+    OnCreateEffectSequence();
     OnCreateSequence();
     //--------------
     ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
@@ -105,7 +107,12 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     TempStreamingLevel->SetWorldAsset(TheSequenceWorld);
     RenderLevel->AddStreamingLevel(TempStreamingLevel);
     //---------------
-    UMovieSceneLevelVisibilityTrack* NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
+    UMovieSceneLevelVisibilityTrack* NewTrack = TheLevelSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
+    if (NewTrack) 
+    {
+        TheLevelSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack));
+    }
+    NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
     UMovieSceneLevelVisibilitySection* NewSection = CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
     TRange<FFrameNumber> SectionRange = TheLevelSequence->GetMovieScene()->GetPlaybackRange();
     NewSection->SetRange(SectionRange);
@@ -120,12 +127,112 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
         }
     }
     LevelNames.Add(RenderMapPath);
+    //-------------
+    LevelNames.Add(EffectMapPath);
     NewSection->SetLevelNames(LevelNames);
+    //----------------------------------------
+    UMovieSceneSubTrack* NewTrack1 = TheLevelSequence->GetMovieScene()->FindTrack<UMovieSceneSubTrack>();
+    if (NewTrack1) 
+    {
+        TheLevelSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack1));
+    }
+    NewTrack1 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
+    FFrameNumber Duration = ConvertFrameTime(
+        TheLevelSequence->GetMovieScene()->GetPlaybackRange().Size<FFrameNumber>(),
+        TheLevelSequence->GetMovieScene()->GetTickResolution(),
+        TheLevelSequence->GetMovieScene()->GetTickResolution()).FloorToFrame();
+    UMovieSceneSubSection* NewSection1 = CastChecked<UMovieSceneSubSection>(NewTrack1->CreateNewSection());
+    NewSection1->SetSequence(EffectLevelSequence);
+    NewSection1->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+    NewTrack1->AddSection(*NewSection1);
+    //---------------------
+    TheLevelSequence->Modify();
     //NewSection->SetVisibility(ELevelVisibility::Visible);
     EditorAssetSubsystem->SaveLoadedAssets({ TheLevelSequence,RenderLevel });
     //-----------------
     OnSaveReanderConfig();
     return 0;
+}
+
+void UDoodleAutoAnimationCommandlet::OnCreateEffectSequence() 
+{
+    EffectSequencePath = JsonObject->GetStringField(TEXT("level_sequence_vfx"));
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+    FString AssetName = FPaths::GetBaseFilename(EffectSequencePath);
+    EffectLevelSequence = LoadObject<ULevelSequence>(nullptr, *(EffectSequencePath));
+    if (!EffectLevelSequence)
+    {
+        UPackage* Package = CreatePackage(*EffectSequencePath);
+        EffectLevelSequence = NewObject<ULevelSequence>(Package, *AssetName, RF_Public | RF_Standalone | RF_Transactional);
+        EffectLevelSequence->Initialize();
+        IAssetRegistry::GetChecked().AssetCreated(EffectLevelSequence);
+        Package->Modify();
+    }
+    //------------
+    const FFrameRate L_Rate{ 25, 1 };
+    FFrameNumber Offset{ 0 };
+    L_Start = FFrameNumber(JsonObject->GetIntegerField(TEXT("begin_time")));
+    L_End = FFrameNumber(JsonObject->GetIntegerField(TEXT("end_time")));
+    //--------------------------
+    EffectLevelSequence->GetMovieScene()->SetDisplayRate(L_Rate);
+    EffectLevelSequence->GetMovieScene()->SetTickResolutionDirectly(L_Rate);
+    //--------------------
+    EffectLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / L_Rate, (L_End + 30) / L_Rate);
+    EffectLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / L_Rate, (L_End + 30) / L_Rate);
+    EffectLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - Offset, L_End + 1}, true);
+    EffectLevelSequence->GetMovieScene()->Modify();
+    //----------------
+    TArray<FMovieSceneBinding> Bindings = EffectLevelSequence->GetMovieScene()->GetBindings();
+    for (FMovieSceneBinding Bind : Bindings)
+    {
+        if (!EffectLevelSequence->GetMovieScene()->RemovePossessable(Bind.GetObjectGuid()))
+        {
+            EffectLevelSequence->GetMovieScene()->RemoveSpawnable(Bind.GetObjectGuid());
+        }
+    }
+    TArray<UMovieSceneTrack*> Tracks = EffectLevelSequence->GetMovieScene()->GetTracks();
+    for (UMovieSceneTrack* Track : Tracks)
+    {
+        FString Name = Track->GetClass()->GetName();
+        EffectLevelSequence->GetMovieScene()->RemoveTrack(*Track);
+    }
+    EditorAssetSubsystem->SaveLoadedAsset(EffectLevelSequence);
+}
+
+void UDoodleAutoAnimationCommandlet::OnCreateEffectSequenceWorld() 
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    EffectMapPath = FName(JsonObject->GetStringField(TEXT("vfx_map")));
+    EffectSequenceWorld = LoadObject<UWorld>(nullptr, *EffectMapPath.ToString());
+    if (!EffectSequenceWorld)
+    {
+        UWorldFactory* Factory = NewObject<UWorldFactory>();
+        UPackage* Pkg = CreatePackage(*EffectMapPath.ToString());
+        Pkg->FullyLoad();
+        Pkg->MarkPackageDirty();
+        const FString PackagePath = FPackageName::GetLongPackagePath(EffectMapPath.ToString());
+        FString BaseFileName = FPaths::GetBaseFilename(EffectMapPath.ToString());
+        //---------------
+        FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+        UObject* TempObject = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
+        EffectSequenceWorld = Cast<UWorld>(TempObject);
+        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+        AssetRegistryModule.Get().AssetCreated(EffectSequenceWorld);
+        //------------------------
+        EffectSequenceWorld->Modify();
+        EditorAssetSubsystem->SaveLoadedAsset(EffectSequenceWorld);
+    }
+    //--------------------
+    ULevel* Level = EffectSequenceWorld->GetCurrentLevel();
+    for (int32 Index = 0; Index < Level->Actors.Num(); Index++)
+    {
+        AActor* Actor = Level->Actors[Index];
+        if (Actor != nullptr)
+        {
+            Actor->Destroy();
+        }
+    }
 }
 
 void UDoodleAutoAnimationCommandlet::OnCreateSequence()
@@ -417,7 +524,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         //---------------
                         L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
                         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-                        int32_t StartTime = { 1000 };
+                        int32_t StartTime = { 1001 };
                         UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
                         //AnimSection->SetPreRollFrames(50);
                         AnimSection->Modify();

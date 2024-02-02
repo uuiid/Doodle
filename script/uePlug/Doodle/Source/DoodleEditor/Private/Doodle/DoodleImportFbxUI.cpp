@@ -609,7 +609,7 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   NewTrack1 = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
   UMovieSceneSubSection* NewSection1 = CastChecked<UMovieSceneSubSection>(NewTrack1->CreateNewSection());
   NewSection1->SetRange(SectionRange);
-  NewTrack1->AddSection(*NewSection);
+  NewTrack1->AddSection(*NewSection1);
   //------------
   L_ShotSequence->Modify();
   ALevelSequenceActor* L_LevelSequenceActor{};

@@ -22,7 +22,9 @@ public:
 
 	virtual int32 Main(const FString& Params) override;
 private:
+	void OnCreateEffectSequence();
 	void OnCreateSequence();
+	void OnCreateEffectSequenceWorld();
 	void OnCreateSequenceWorld();
 	void OnBuildSequence();
 	void OnSaveReanderConfig();
@@ -44,4 +46,9 @@ private:
 
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
+	//-----------
+	FString EffectSequencePath;
+	FName EffectMapPath;
+	ULevelSequence* EffectLevelSequence;
+	UWorld* EffectSequenceWorld;
 };
