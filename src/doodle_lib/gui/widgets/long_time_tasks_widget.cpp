@@ -24,7 +24,7 @@ bool long_time_tasks_widget::render() {
       ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | ImGuiTableFlags_::ImGuiTableFlags_BordersV |
       ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody
   };
-  dear::Table{"long_time_tasks_widget", 6, flags} && [this]() {
+  dear::Table{"long_time_tasks_widget", 6, flags, ImVec2{0, -350}} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("进度");
     imgui::TableSetupColumn("消息");
