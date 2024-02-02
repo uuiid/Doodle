@@ -30,6 +30,8 @@ MSyntax file_info_edit_syntax() {
 
   // 强制
   l_syntax.addFlag("-f", "-force", MSyntax::kNoArg);
+  // 忽略引用加载数据
+  l_syntax.addFlag("-ir", "-ignore_ref", MSyntax::kNoArg);
   // 节点
   l_syntax.addFlag("-n", "-node", MSyntax::kString);
   // 添加碰撞
@@ -83,6 +85,10 @@ MStatus file_info_edit::doIt(const MArgList &in_list) {
   if (l_arg_data.isFlagSet("-f")) {
     is_force   = true;
     p_run_func = &file_info_edit::create_node;
+  }
+  if (l_arg_data.isFlagSet("-ir")) {
+    is_ignore_ref = true;
+    p_run_func    = &file_info_edit::create_node;
   }
   if (l_arg_data.isFlagSet("-ac")) {
     maya_chick(l_arg_data.getObjects(p_selection_list));
@@ -273,7 +279,7 @@ MStatus file_info_edit::create_node() {
     }
     for (MItDependencyNodes l_it{MFn::kReference, &l_status}; !l_it.isDone(); l_it.next()) {
       MFnReference l_fn_ref{l_it.thisNode(), &l_status};
-      if (!l_fn_ref.isLoaded()) continue;
+      if (!is_ignore_ref && !l_fn_ref.isLoaded()) continue;
 
       MObject l_node = dg_modifier_.createNode(doodle_file_info::doodle_id, &l_status);
       maya_chick(l_status);

@@ -38,6 +38,8 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   MDGModifier dg_modifier_{};
   // 强制
   bool is_force{false};
+  // 忽略引用加载数据
+  bool is_ignore_ref{false};
 
   MObject p_current_node{};
   MSelectionList p_selection_list{};

@@ -47,9 +47,7 @@ bool replace_file_facet::post(const FSys::path& in_path) {
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
-
-  DOODLE_LOG_INFO("开始替换引用");
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)"));
 
   auto l_s = boost::asio::make_strand(g_io_context());
   boost::asio::post(l_s, [this]() { this->create_ref_file(); });
@@ -65,6 +63,7 @@ void replace_file_facet::create_ref_file() {
   });
 }
 void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FSys::path>>& in_files) {
+  DOODLE_LOG_INFO("开始替换引用");
   for (auto&& l_pair : in_files) {
     auto l_ref_it = std::find_if(ref_files_.begin(), ref_files_.end(), [&l_pair](entt::handle& in_handle) -> bool {
       auto&& l_ref = in_handle.get<reference_file>();
