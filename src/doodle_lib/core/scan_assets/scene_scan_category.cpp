@@ -34,6 +34,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
       auto l_number_str = l_match[1].str();                                                        // 获取编号
       for (auto&& l_s3 : FSys::directory_iterator{l_s2.path()}) {                                  // 迭代三级目录
         if (!l_s3.is_directory()) continue;
+        if (!FSys::exists(l_s3.path() / "Content")) continue;
 
         // 直接创建, 有空的, 但是也要在这里创建
         auto l_ptr            = std::make_shared<scene_scan_category_data_t>();
