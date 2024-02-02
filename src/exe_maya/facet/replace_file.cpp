@@ -47,6 +47,7 @@ bool replace_file_facet::post(const FSys::path& in_path) {
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
 
   DOODLE_LOG_INFO("开始替换引用");
 
@@ -78,6 +79,7 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
   }
 
   DOODLE_LOG_INFO("替换完成");
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
   maya_file_io::save_file(
       maya_plug::maya_file_io::work_path("replace_file") / maya_plug::maya_file_io::get_current_path().filename()
   );
