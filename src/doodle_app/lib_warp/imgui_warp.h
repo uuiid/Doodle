@@ -18,8 +18,10 @@ using namespace ::ImGui;
 
 namespace dear {
 using namespace ::ImGui;
-static const ImVec2 Zero(0.0f, 0.0f);
-
+static constexpr ImVec2 Zero2{0.0f, 0.0f};
+static constexpr ImVec2 One2{1.0f, 1.0f};
+static constexpr ImVec4 Zero4{0.0f, 0.0f, 0.0f, 0.0f};
+static constexpr ImVec4 One4{1.0f, 1.0f, 1.0f, 1.0f};
 // scoped_effect is a helper that uses automatic object lifetime to control
 // the invocation of a callable after potentially calling additional code,
 // allowing for easy inline creation of scope guards.
@@ -87,9 +89,11 @@ struct Begin : public ScopeWrapper<Begin, true> {
 
 // Wrapper for ImGui::BeginChild ... EndChild, which will always call EndChild.
 struct Child : public ScopeWrapper<Child, true> {
-  explicit Child(const char* title, const ImVec2& size = Zero, bool border = false, ImGuiWindowFlags flags = 0) noexcept
+  explicit Child(
+      const char* title, const ImVec2& size = Zero2, bool border = false, ImGuiWindowFlags flags = 0
+  ) noexcept
       : ScopeWrapper(ImGui::BeginChild(title, size, border, flags)) {}
-  explicit Child(ImGuiID id, const ImVec2& size = Zero, bool border = false, ImGuiWindowFlags flags = 0) noexcept
+  explicit Child(ImGuiID id, const ImVec2& size = Zero2, bool border = false, ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(id, size, border, flags)) {}
   static void dtor() noexcept { ImGui::EndChild(); }
 };
@@ -116,7 +120,7 @@ struct Combo : public ScopeWrapper<Combo> {
 
 // Wrapper for ImGui::Begin...EndListBox.
 struct ListBox : public ScopeWrapper<ListBox> {
-  ListBox(const char* label, const ImVec2& size = Zero) noexcept : ScopeWrapper(ImGui::BeginListBox(label, size)) {}
+  ListBox(const char* label, const ImVec2& size = Zero2) noexcept : ScopeWrapper(ImGui::BeginListBox(label, size)) {}
   static void dtor() noexcept { ImGui::EndListBox(); }
 
   inline static std::float_t DefaultHeight() {
@@ -146,7 +150,7 @@ struct Menu : public ScopeWrapper<Menu> {
 // See also EditTableFlags.
 struct Table : public ScopeWrapper<Table> {
   Table(
-      const char* str_id, int column, ImGuiTableFlags flags = 0, const ImVec2& outer_size = Zero,
+      const char* str_id, int column, ImGuiTableFlags flags = 0, const ImVec2& outer_size = Zero2,
       float inner_width = 0.0f
   ) noexcept
       : ScopeWrapper(ImGui::BeginTable(str_id, column, flags, outer_size, inner_width)) {}
@@ -245,6 +249,11 @@ struct WithStyleVar : public ScopeWrapper<WithStyleVar> {
 };
 
 /// TODO: WithStyleColor
+struct WithStyleColor : public ScopeWrapper<WithStyleColor> {
+  WithStyleColor(ImGuiCol_ idx, const ImVec4& val) noexcept : ScopeWrapper(true) { ImGui::PushStyleColor(idx, val); }
+  WithStyleColor(ImGuiCol_ idx, ImU32 val = 0u) noexcept : ScopeWrapper(true) { ImGui::PushStyleColor(idx, val); }
+  static void dtor() noexcept { ImGui::PopStyleColor(); }
+};
 
 // Wrapper for BeginTooltip predicated on the previous item being hovered.
 struct ItemTooltip : public ScopeWrapper<ItemTooltip> {
@@ -288,23 +297,23 @@ static inline bool MenuItem(const std::string& text, bool* selected, bool enable
 
 // static inline bool Selectable(const char *text) noexcept { return ImGui::Selectable(text); }
 static inline bool Selectable(
-    const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+    const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero2
 ) noexcept {
   return ImGui::Selectable(label, selected, flags, size);
 }
 static inline bool Selectable(
-    const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+    const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero2
 ) noexcept {
   return ImGui::Selectable(label, p_selected, flags, size);
 }
 #ifndef DEAR_NO_STRING
 static inline bool Selectable(
-    const std::string& label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+    const std::string& label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero2
 ) noexcept {
   return ImGui::Selectable(label.c_str(), selected, flags, size);
 }
 static inline bool Selectable(
-    const std::string& label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+    const std::string& label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero2
 ) noexcept {
   return ImGui::Selectable(label.c_str(), p_selected, flags, size);
 }

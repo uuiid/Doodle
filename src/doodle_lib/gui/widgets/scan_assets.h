@@ -8,6 +8,7 @@
 #include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/core/scan_assets/scan_category_service.h>
 
+#include <imgui.h>
 namespace doodle::gui {
 
 class DOODLELIB_API scan_assets_t {
@@ -34,13 +35,17 @@ class DOODLELIB_API scan_assets_t {
 
   // 扫描后gui数据结构
   struct scan_gui_data_t {
-    std::string name_;           // 名称
-    std::string season_;         // 所属季数
-    std::string version_name_;   // 版本名称
-    std::string ue_path_;        // 主要的ue路径
-    std::string maya_rig_path_;  // 对应的maya rig路径
-    std::string project_root_;   // 项目根目录 + 项目名称
-    std::string info_;           // 信息
+    std::string name_;          // 名称
+    std::string season_;        // 所属季数
+    std::string version_name_;  // 版本名称
+    std::string ue_path_;       // 主要的ue路径
+    ImVec4 ue_path_color_;      // 主要的ue路径颜色
+
+    std::string maya_rig_path_;   // 对应的maya rig路径
+    ImVec4 maya_rig_path_color_;  // 对应的maya rig路径颜色
+
+    std::string project_root_;  // 项目根目录 + 项目名称
+    std::string info_;          // 信息
   };
   // 资产表
   gui_cache_name_id assets_table_id_;

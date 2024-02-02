@@ -73,9 +73,20 @@ void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::
     l_gui_data.name_         = l_data->name_;
     l_gui_data.season_       = fmt::format("季度: {}", l_data->season_.p_int);
     l_gui_data.version_name_ = l_data->version_name_;
-    l_gui_data.ue_path_ = l_data->ue_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
-    l_gui_data.maya_rig_path_ =
-        l_data->rig_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
+    if (l_data->ue_file_.path_.empty()) {
+      l_gui_data.ue_path_       = "未找到路径";
+      l_gui_data.ue_path_color_ = ImVec4{1.0f, 0.0f, 0.0f, 1.0f};
+    } else {
+      l_gui_data.ue_path_ = l_data->ue_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
+    }
+    if (l_data->rig_file_.path_.empty()) {
+      l_gui_data.maya_rig_path_       = "未找到路径";
+      l_gui_data.maya_rig_path_color_ = ImVec4{1.0f, 0.0f, 0.0f, 1.0f};
+    } else {
+      l_gui_data.maya_rig_path_ =
+          l_data->rig_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
+    }
+
     l_gui_data.project_root_ = l_data->project_root_.p_path.generic_string();
     l_gui_data.info_         = fmt::format("{}/{}", l_data->project_root_.p_name, l_data->file_type_);
     assets_table_data_.emplace_back(std::move(l_gui_data));
@@ -175,9 +186,20 @@ bool scan_assets_t::render() {
           ImGui::TableNextColumn();
           dear::Text(i.version_name_);
           ImGui::TableNextColumn();
-          dear::Text(i.ue_path_);
+          if (i.ue_path_color_.x == 0.0f && i.ue_path_color_.y == 0.0f && i.ue_path_color_.z == 0.0f &&
+              i.ue_path_color_.w == 0.0f) {
+            dear::Text(i.ue_path_);
+          } else {
+            if (dear::WithStyleColor l_color{ImGuiCol_Text, i.ue_path_color_}) dear::Text(i.ue_path_);
+          }
           ImGui::TableNextColumn();
-          dear::Text(i.maya_rig_path_);
+          if (i.maya_rig_path_color_.x == 0.0f && i.maya_rig_path_color_.y == 0.0f &&
+              i.maya_rig_path_color_.z == 0.0f && i.maya_rig_path_color_.w == 0.0f) {
+            dear::Text(i.maya_rig_path_);
+          } else {
+            if (dear::WithStyleColor l_color{ImGuiCol_Text, i.maya_rig_path_color_}) dear::Text(i.maya_rig_path_);
+          }
+
           ImGui::TableNextColumn();
           dear::Text(i.project_root_);
           ImGui::TableNextColumn();
