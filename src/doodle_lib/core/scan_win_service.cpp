@@ -5,6 +5,7 @@
 #include "scan_win_service.h"
 
 #include <doodle_core/core/program_info.h>
+#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
@@ -14,7 +15,6 @@
 #include <doodle_lib/core/scan_assets/prop_scan_category.h>
 #include <doodle_lib/core/scan_assets/scan_category_service.h>
 #include <doodle_lib/core/scan_assets/scene_scan_category.h>
-
 namespace doodle {
 
 void scan_win_service_t::start() {
@@ -28,7 +28,24 @@ void scan_win_service_t::start() {
         g_io_context().stop();
       }
   ));
+  open_project();
+}
 
+void scan_win_service_t::open_project() {
+  auto l_main_prj = register_file_type::get_main_project();
+  g_ctx().get<database_n::file_translator_ptr>()->async_open(
+      l_main_prj, false, false, g_reg(),
+      boost::asio::bind_executor(
+          g_io_context(),
+          [this](const boost::system::error_code& in_code) {
+            if (in_code) return;
+            end_open_project();
+          }
+      )
+  );
+}
+
+void scan_win_service_t::end_open_project() {
   project_roots_   = register_file_type::get_project_list();
   scan_categories_ = {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
@@ -47,10 +64,7 @@ void scan_win_service_t::start() {
                 }) |
                 ranges::to<std::map<uuid, entt::handle>>();
 
-  timer_->expires_after(std::chrono::seconds(1));
-  timer_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::Get().on_cancel.slot(), std::bind(&scan_win_service_t::on_timer, this, std::placeholders::_1)
-  ));
+  boost::asio::post(g_io_context(), [this]() { scan(); });
 }
 
 void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
@@ -58,7 +72,7 @@ void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
     default_logger_raw()->log(log_loc(), level::info, "定时器取消 {}", ec.message());
     return;
   }
-  scan();
+  open_project();
   //  add_handle();
 }
 

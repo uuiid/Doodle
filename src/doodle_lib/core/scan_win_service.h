@@ -26,6 +26,9 @@ class scan_win_service_t {
   std::map<uuid, entt::handle> handle_map_;
 
   void scan();
+  void open_project();
+
+  void end_open_project();
   void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec);
 
   void on_timer(const boost::system::error_code& ec);
