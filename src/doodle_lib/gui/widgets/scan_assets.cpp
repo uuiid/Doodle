@@ -22,7 +22,7 @@ void scan_assets_t::init_scan_categories() {
   auto l_list    = register_file_type::get_project_list();
   project_roots_ = l_list | ranges::views::transform([](const project& in_project) -> project_root_gui_t {
                      project_root_gui_t l_root{};
-                     l_root.has_       = true;
+                     l_root.has_       = false;
                      l_root.p_path     = std::move(in_project.p_path);
                      l_root.p_name     = std::move(in_project.p_name);
                      l_root.p_en_str   = std::move(in_project.p_en_str);
@@ -32,19 +32,19 @@ void scan_assets_t::init_scan_categories() {
                    ranges::to_vector;
   scan_categories_factory_vec_ = {
       scan_categories_factory_t{
-          gui_cache_name_id{"扫描角色"}, true,
+          gui_cache_name_id{"扫描角色"}, false,
           []() -> std::shared_ptr<doodle::details::scan_category_t> {
             return std::make_shared<doodle::details::character_scan_category_t>();
           }
       },
       scan_categories_factory_t{
-          gui_cache_name_id{"扫描场景"}, true,
+          gui_cache_name_id{"扫描场景"}, false,
           []() -> std::shared_ptr<doodle::details::scan_category_t> {
             return std::make_shared<doodle::details::scene_scan_category_t>();
           }
       },
       scan_categories_factory_t{
-          gui_cache_name_id{"扫描道具"}, true,
+          gui_cache_name_id{"扫描道具"}, false,
           []() -> std::shared_ptr<doodle::details::scan_category_t> {
             return std::make_shared<doodle::details::prop_scan_category_t>();
           }
