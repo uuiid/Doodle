@@ -13,6 +13,7 @@ target_sources(doodle_lib
         down_auto_light_anim_file.h
         thread_copy_io.h
         up_auto_light_file.h
+        auto_light_render_move.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -23,6 +24,7 @@ target_sources(doodle_lib
         down_auto_light_anim_file.cpp
         thread_copy_io.cpp
         up_auto_light_file.cpp
+        auto_light_render_move.cpp
 
 )
 add_subdirectory(scan_assets)
