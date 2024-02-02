@@ -33,6 +33,12 @@ void scan_win_service_t::start() {
 
 void scan_win_service_t::open_project() {
   auto l_main_prj = register_file_type::get_main_project();
+  default_logger_raw()->log(log_loc(), level::warn, "开始正式初始化数据库 {} ", l_main_prj);
+  if (l_main_prj.empty()) {
+    default_logger_raw()->log(log_loc(), level::err, "未找到主工程路径");
+    app_base::Get().stop_app();
+    return;
+  }
   g_ctx().get<database_n::file_translator_ptr>()->async_open(
       l_main_prj, false, false, g_reg(),
       boost::asio::bind_executor(

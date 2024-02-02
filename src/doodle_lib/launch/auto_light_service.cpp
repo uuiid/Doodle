@@ -98,6 +98,7 @@ class auto_light_service_impl_t {
 
   SERVICE_STATUS_HANDLE h_service_status_{};
   std::shared_ptr<std::thread> thread_;
+  boost::signals2::scoped_connection conn_;
 
   void set_service_status(DWORD dw_current_state, DWORD dw_win32_exit_code = NO_ERROR, DWORD dw_wait_hint = 0ul) {
     static DWORD dw_check_point = 1;
@@ -117,15 +118,8 @@ class auto_light_service_impl_t {
   }
 
   void start() {
-    auto l_main_prj = register_file_type::get_main_project();
-    default_logger_raw()->log(log_loc(), level::warn, "开始正式初始化数据库 {} ", l_main_prj);
-    if (l_main_prj.empty()) {
-      default_logger_raw()->log(log_loc(), level::err, "未找到主工程路径");
-      set_service_status(SERVICE_STOPPED);
-      return;
-    }
-
     set_service_status(SERVICE_START_PENDING);
+    conn_                      = app_base::Get().on_stop.connect([this]() { set_service_status(SERVICE_STOPPED); });
 
     auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
     scan_win_service_ptr_->start();
