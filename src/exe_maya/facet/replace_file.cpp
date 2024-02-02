@@ -47,7 +47,7 @@ bool replace_file_facet::post(const FSys::path& in_path) {
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)"));
+  MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)");
 
   auto l_s = boost::asio::make_strand(g_io_context());
   boost::asio::post(l_s, [this]() { this->create_ref_file(); });
