@@ -35,7 +35,18 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
       if (!l_s2.is_directory()) continue;
       const auto l_name_str = l_s2.path().filename().generic_string();
 
-      auto l_mesh_path      = l_s2.path() / "Mesh";  // 确认目标路径
+      // 直接创建, 有空的, 但是也要在这里创建
+      auto l_ptr            = std::make_shared<prop_scan_category_data_t>();
+      l_ptr->project_root_  = in_root;
+      l_ptr->season_        = l_season;
+      l_ptr->begin_episode_ = l_begin_episode;
+      l_ptr->name_          = l_name_str;
+      l_ptr->JD_path_       = l_s.path();
+      l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::prop;
+      l_ptr->file_type_.set_path("道具");
+      l_out.emplace_back(l_ptr);
+
+      auto l_mesh_path = l_s2.path() / "Mesh";  // 确认目标路径
       if (!FSys::exists(l_mesh_path)) continue;
       if (!FSys::is_directory(l_mesh_path)) continue;
 
@@ -49,22 +60,25 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
             l_version_str = l_version_str.substr(1);
           }
 
-          auto l_ptr            = std::make_shared<prop_scan_category_data_t>();
-          l_ptr->project_root_  = in_root;
-          l_ptr->season_        = l_season;
-          l_ptr->begin_episode_ = l_begin_episode;
-          l_ptr->name_          = l_name_str;
-          if (!l_version_str.empty()) l_ptr->version_name_ = l_version_str;
-          l_ptr->JD_path_                  = l_s.path();
+          // 不同版本的显示
+          if (!l_version_str.empty()) {
+            l_ptr                 = std::make_shared<prop_scan_category_data_t>();
+            l_ptr->project_root_  = in_root;
+            l_ptr->season_        = l_season;
+            l_ptr->begin_episode_ = l_begin_episode;
+            l_ptr->name_          = l_name_str;
+            l_ptr->JD_path_       = l_s.path();
+            l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::prop;
+            l_ptr->file_type_.set_path("道具");
+            l_out.emplace_back(l_ptr);
+            l_ptr->version_name_ = l_version_str;
+          }
+
           l_ptr->ue_file_.path_            = l_s3.path();
           l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
           l_ptr->ue_file_.last_write_time_ = l_s3.last_write_time();
-          l_ptr->assets_type_              = scan_category_data_t::assets_type_enum::prop;
-
-          l_ptr->file_type_.set_path("道具");
 
           logger_->log(log_loc(), level::info, "扫描到道具文件:{}", l_s3.path());  // 输出日志
-          l_out.emplace_back(l_ptr);
         }
       }
     }

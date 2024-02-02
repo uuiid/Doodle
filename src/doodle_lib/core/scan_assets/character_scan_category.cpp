@@ -41,6 +41,18 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
         auto l_ch_name          = l_match[1].str();
         auto l_ch_ue_asset_path = l_ch_name_ue_path / "Content" / "Character" / l_ch_name / "Meshs";
 
+        // 在这里就创建,有空的, 但是也要在这里创建
+        auto l_ptr              = std::make_shared<character_scan_category_data_t>();
+        l_ptr->project_root_    = in_root;
+        l_ptr->season_          = l_season;
+        l_ptr->name_            = fmt::format("Ch_{}", l_number_str);
+        l_ptr->Ch_path_         = l_ChNum_path;
+        l_ptr->begin_episode_   = l_begin_episode;
+        l_ptr->number_str_      = l_number_str;
+        l_ptr->file_type_.set_path("角色");
+        l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
+        l_out.emplace_back(l_ptr);
+
         if (!FSys::exists(l_ch_ue_asset_path)) continue;
         if (!FSys::is_directory(l_ch_ue_asset_path)) continue;
 
@@ -50,25 +62,15 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
           if (l_s4.path().extension() != ".uasset") continue;
           if (l_ch_ue_asset_stem != l_Sk_ch_number_str) continue;
 
-          auto l_ptr                       = std::make_shared<character_scan_category_data_t>();
-          l_ptr->project_root_             = in_root;
-          l_ptr->season_                   = l_season;
-          l_ptr->name_                     = fmt::format("Ch_{}", l_number_str);
-          l_ptr->Ch_path_                  = l_ChNum_path;
-          l_ptr->begin_episode_            = l_begin_episode;
           l_ptr->ue_file_.path_            = l_s4.path();
           l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s4.path());
           l_ptr->ue_file_.last_write_time_ = l_s4.last_write_time();
-          l_ptr->number_str_               = l_number_str;
-
-          l_ptr->file_type_.set_path("角色");
-          l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
           logger_->log(log_loc(), level::info, "扫描到角色文件:{}", l_s4.path());
-          l_out.emplace_back(l_ptr);
         }
       }
     }
   }
+
   // 添加rig文件
   for (auto &&l_ptr : l_out) {
     auto l_rig_path = l_ptr->Ch_path_ / "Rig";

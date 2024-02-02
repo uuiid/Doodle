@@ -45,7 +45,7 @@ void scan_win_service_t::start() {
                       std::get<database&>(in_entity).uuid(), entt::handle{*g_reg(), std::get<entt::entity>(in_entity)}
                   );
                 }) |
-                ranges::to<std::map<uuid, entt::handle> >();
+                ranges::to<std::map<uuid, entt::handle>>();
 
   timer_->expires_after(std::chrono::seconds(1));
   timer_->async_wait(boost::asio::bind_cancellation_slot(
@@ -91,7 +91,7 @@ void scan_win_service_t::scan() {
   }
 }
 void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec) {
-  for (auto l_data : in_data_vec) {
+  for (const auto& l_data : in_data_vec) {
     if (!l_data) continue;
     auto l_handle_vec = l_data->create_handles(handle_map_, *g_reg());
     for (auto&& l_h : l_handle_vec) {
