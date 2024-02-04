@@ -147,12 +147,12 @@ class ue_exe::run_ue_copy_file : public ue_exe::run_ue_base {
   void run() override {
     g_ctx().get<thread_copy_io_service>().async_copy_old(
         copy_path_attr, FSys::copy_options::recursive,
-        [this](boost::system::error_code in_error_code) {
+        [l_c = call_attr](boost::system::error_code in_error_code) {
           if (in_error_code) {
             BOOST_ASIO_ERROR_LOCATION(in_error_code);
           }
-          call_attr->ec_ = in_error_code;
-          call_attr->complete();
+          l_c->ec_ = in_error_code;
+          l_c->complete();
         }
     );
   }
