@@ -40,11 +40,15 @@ class ue_exe {
   using any_io_executor = boost::asio::any_io_executor;
 
  private:
+  class run_ue_base;
   class run_ue;
   friend class run_ue;
+
+  class run_ue_copy_file;
+  friend class run_ue_copy_file;
   FSys::path ue_path_;
-  std::stack<std::shared_ptr<run_ue>> queue_list_{};
-  std::shared_ptr<run_ue> run_process_{};
+  std::stack<std::shared_ptr<run_ue_base>> queue_list_{};
+  std::shared_ptr<run_ue_base> run_process_{};
   std::atomic_char16_t run_size_attr{};
   std::weak_ptr<detail::process_child> child_weak_ptr_{};
 
@@ -67,6 +71,10 @@ class ue_exe {
 
   using call_fun_type = std::shared_ptr<detail::wait_op>;
   virtual void queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun);
+  void queue_up(
+      const entt::handle &in_msg, const std::vector<std::pair<FSys::path, FSys::path>> &in_command_line,
+      call_fun_type in_call_fun
+  );
 
  public:
   struct arg_render_queue {
@@ -112,6 +120,29 @@ class ue_exe {
 
   template <typename CompletionHandler>
   auto async_run(const entt::handle &in_handle, const std::string &in_arg, CompletionHandler &&in_completion) {
+    if (!in_handle.all_of<process_message>()) {
+      boost::system::error_code l_ec{error_enum::component_missing_error};
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      default_logger_raw()->error("组件缺失 process_message");
+      in_completion(l_ec);
+      return;
+    }
+
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
+        [this, in_arg, in_handle](auto &&in_completion_handler) {
+          auto l_ptr = std::make_shared<wait_handle<std::decay_t<decltype(in_completion_handler)>>>(
+              std::forward<decltype(in_completion_handler)>(in_completion_handler)
+          );
+          this->queue_up(in_handle, in_arg, l_ptr);
+        },
+        in_completion
+    );
+  }
+  template <typename CompletionHandler>
+  auto async_copy_old_project(
+      const entt::handle &in_handle, const std::vector<std::pair<FSys::path, FSys::path>> &in_arg,
+      CompletionHandler &&in_completion
+  ) {
     if (!in_handle.all_of<process_message>()) {
       boost::system::error_code l_ec{error_enum::component_missing_error};
       BOOST_ASIO_ERROR_LOCATION(l_ec);

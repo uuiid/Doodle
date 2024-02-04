@@ -12,6 +12,8 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 
+#include <doodle_lib/core/thread_copy_io.h>
+
 #include "boost/asio/read.hpp"
 #include "boost/asio/readable_pipe.hpp"
 #include "boost/locale/encoding.hpp"
@@ -26,7 +28,14 @@
 #include <string>
 namespace doodle {
 
-class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
+class ue_exe::run_ue_base {
+ public:
+  virtual void run()        = 0;
+  virtual void cancel()     = 0;
+  virtual bool is_running() = 0;
+};
+
+class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, public run_ue_base {
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
 
@@ -43,7 +52,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
   ue_exe *self_{};
   bool is_cancel{};
 
-  void run() {
+  virtual void run() override {
     if (is_cancel) {
       logger_attr->log(log_loc(), level::err, "用户结束 ue_exe: {}", ue_path);
       boost::system::error_code l_ec{boost::asio::error::operation_aborted};
@@ -66,8 +75,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
         g_io_context(),
         //        boost::process::exe  = ue_path.generic_string(),
         //        boost::process::args = arg_attr,
-        boost::process::cmd = fmt::format("{} {}", ue_path, arg_attr),
-        boost::process::std_out > out_attr,
+        boost::process::cmd = fmt::format("{} {}", ue_path, arg_attr), boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
@@ -125,15 +133,35 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue> {
         }
     );
   }
-
-  void cancel() {
+  bool is_running() override { return child_attr.running(); }
+  virtual void cancel() override {
     child_attr.terminate();
     is_cancel = true;
   }
 };
 
+class ue_exe::run_ue_copy_file : public ue_exe::run_ue_base {
+ public:
+  std::vector<std::pair<FSys::path, FSys::path>> copy_path_attr{};
+  ue_exe::call_fun_type call_attr{};
+  void run() override {
+    g_ctx().get<thread_copy_io_service>().async_copy_old(
+        copy_path_attr, FSys::copy_options::recursive,
+        [this](boost::system::error_code in_error_code) {
+          if (in_error_code) {
+            BOOST_ASIO_ERROR_LOCATION(in_error_code);
+          }
+          call_attr->ec_ = in_error_code;
+          call_attr->complete();
+        }
+    );
+  }
+  void cancel() override {}
+  bool is_running() override { return *call_attr; }
+};
+
 void ue_exe::notify_run() {
-  if (run_process_ && !run_process_->child_attr.running()) run_process_.reset();
+  if (run_process_ && !run_process_->is_running()) run_process_.reset();
 
   if (!g_ctx().get<program_info>().stop_attr()) {
     if (!queue_list_.empty() && !run_process_) {
@@ -146,7 +174,7 @@ void ue_exe::notify_run() {
 
 void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun) {
   if (ue_path_.empty()) find_ue_exe();
-  auto l_run         = queue_list_.emplace(std::make_shared<run_ue>());
+  auto l_run         = std::make_shared<run_ue>();
   l_run->ue_path     = ue_path_;
   l_run->arg_attr    = in_command_line;
   l_run->call_attr   = std::move(in_call_fun);
@@ -158,8 +186,21 @@ void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_
           l_ptr->cancel();
         }
       });
+  queue_list_.emplace(l_run);
   notify_run();
 }
+
+void ue_exe::queue_up(
+    const entt::handle &in_msg, const std::vector<std::pair<FSys::path, FSys::path>> &in_command_line,
+    doodle::ue_exe::call_fun_type in_call_fun
+) {
+  auto l_run            = std::make_shared<run_ue_copy_file>();
+  l_run->copy_path_attr = in_command_line;
+  l_run->call_attr      = std::move(in_call_fun);
+  queue_list_.emplace(l_run);
+  notify_run();
+}
+
 void ue_exe::find_ue_exe() {
   auto l_ue_path = core_set::get_set().ue4_path;
   if (l_ue_path.empty()) throw_exception(doodle_error{"ue4 路径未设置"});
