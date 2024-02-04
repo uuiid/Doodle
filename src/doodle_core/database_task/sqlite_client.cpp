@@ -38,8 +38,8 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
   registry_ptr l_reg = std::make_shared<entt::registry>();
   if (!FSys::exists(in_path)) return l_reg;
   obs_all l_obs{};
-
-  auto l_con = l_reg->ctx().emplace<database_info>().get_connection_const();
+  l_reg->ctx().emplace<database_info>().path_ = in_path;
+  auto l_con                                  = l_reg->ctx().get<database_info>().get_connection_const();
   l_obs.open(l_reg, l_con);
   l_reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
   l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp");
