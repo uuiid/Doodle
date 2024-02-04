@@ -57,10 +57,6 @@ bool replace_file_facet::post(const FSys::path& in_path) {
 void replace_file_facet::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-  ref_files_ |= ranges::actions::remove_if([](entt::handle& in_handle) -> bool {
-    auto&& l_ref = in_handle.get<reference_file>();
-    return l_ref.export_group_attr().has_value();
-  });
 }
 void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FSys::path>>& in_files) {
   DOODLE_LOG_INFO("开始替换引用");
