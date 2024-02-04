@@ -20,7 +20,7 @@ class auto_light_render_video {
   struct wait_handle : detail::wait_op {
    public:
     explicit wait_handle(Handler&& handler)
-        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(std::video(handler))) {}
+        : detail::wait_op(&wait_handle::on_complete, std::make_shared<Handler>(std::move(handler))) {}
     ~wait_handle() = default;
     video_path_t video_path_{};
     static void on_complete(wait_op* op) {
@@ -43,8 +43,34 @@ class auto_light_render_video {
   set_path_t set_info_;
   std::shared_ptr<data_impl_t> data_{};  // 用于存储数据
 
+  void init();
+
  public:
-  auto_light_render_video()  = default;
+  explicit auto_light_render_video(entt::handle in_msg)
+      : msg_(std::move(in_msg)), data_(std::make_shared<data_impl_t>()) {
+    init();
+  };
   ~auto_light_render_video() = default;
+
+  template <typename CompletionHandler>
+  auto async_render_video(const entt::handle& in_handle, CompletionHandler&& in_handler) {
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, video_path_t)>(
+        [this](auto&& handler) {
+          auto l_op =
+              std::make_shared<wait_handle<std::decay_t<decltype(handler)>>>(std::forward<decltype(handler)>(handler));
+          wait_op_  = l_op;
+          set_info_ = [l_opt = l_op, msg = msg_](video_path_t in_info) {
+            l_opt->video_path_ = in_info;
+            msg.emplace<video_path_t>(std::move(in_info));
+          };
+        },
+        in_handler
+    );
+  }
+
+  /// 这个对接ue输出
+  void operator()(boost::system::error_code in_error_code, const FSys::path& in_vector) const;
+  /// 这个对接合成视屏回调
+  void operator()(const FSys::path& in_vector, boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle
