@@ -14,6 +14,7 @@
 #include <imgui_impl_win32.h>
 #include <shellapi.h>
 #include <tchar.h>
+#include <wil/com.h>
 #include <wil/result.h>
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -71,10 +72,13 @@ void d3d_device::CleanupDeviceD3D() {
 }
 
 void d3d_device::CreateRenderTarget() {
-  ID3D11Texture2D* pBackBuffer;
-  g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-  g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
-  pBackBuffer->Release();
+  wil::com_ptr_t<ID3D11Texture2D> l_back_buffer{};
+  g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(l_back_buffer.put()));
+  if (!l_back_buffer) {
+    default_logger_raw()->log(log_loc(), level::err, "渲染目标缓冲区对象指针为空");
+    return;
+  }
+  g_pd3dDevice->CreateRenderTargetView(l_back_buffer.get(), nullptr, &g_mainRenderTargetView);
 }
 
 void d3d_device::CleanupRenderTarget() {
@@ -127,7 +131,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
     case WM_NCCREATE: {
       auto* l_create_ptr = reinterpret_cast<::CREATESTRUCT*>(lParam);
-      auto l_err        = ::SetWindowLongPtr(hWnd, 0, reinterpret_cast<::LONG_PTR>(l_create_ptr->lpCreateParams));
+      auto l_err         = ::SetWindowLongPtr(hWnd, 0, reinterpret_cast<::LONG_PTR>(l_create_ptr->lpCreateParams));
       LOG_IF_WIN32_ERROR(l_err);
       //      RETURN_IF_WIN32_ERROR(l_err);
       return true;
