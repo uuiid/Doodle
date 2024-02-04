@@ -166,13 +166,21 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   l_out = in_handle.get<out_file_path>().path;
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
-  if (!l_out.has_extension() && in_handle.any_of<episodes, shot>())
-    l_out /= fmt::format(
-        "EP{:04}_SC{:03}{}.mp4", in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
-        in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot : 0,
-        in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None
-    );
-  else if (!l_out.has_extension()) {
+  if (!l_out.has_extension() && in_handle.any_of<episodes, shot>()) {
+    if (!in_handle.any_of<project>())
+      l_out /= fmt::format(
+          "EP{:04}_SC{:03}{}.mp4", in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
+          in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot : 0,
+          in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None
+      );
+    else
+      l_out /= fmt::format(
+          "{}_EP{:04}_SC{:03}{}.mp4", in_handle.get<project>().p_shor_str,
+          in_handle.any_of<episodes>() ? in_handle.get<episodes>().p_episodes : 0,
+          in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot : 0,
+          in_handle.any_of<shot>() ? in_handle.get<shot>().p_shot_enum : shot::shot_ab_enum::None
+      );
+  } else if (!l_out.has_extension()) {
     l_out /= fmt::format("{}.mp4", core_set::get_set().get_uuid());
   } else
     l_out.extension().replace_extension(".mp4");

@@ -33,8 +33,8 @@ FSys::path import_and_render_ue::gen_import_config() const {
   data_->import_data_.out_file_dir = data_->down_info_.render_project_.parent_path() / doodle_config::ue4_saved /
                                      doodle_config::ue4_movie_renders /
                                      fmt::format(
-                                         "Ep_{:04}_sc_{:04}{}", data_->import_data_.episode.p_episodes,
-                                         data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
+          "{}_Ep{:04}_sc{:04}{}", data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
+          data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
                                      );
 
   // 渲染配置

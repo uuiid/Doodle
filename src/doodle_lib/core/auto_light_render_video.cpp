@@ -27,6 +27,9 @@ void auto_light_render_video::operator()(boost::system::error_code in_error_code
     return;
   }
   data_->logger_->info("开始合成视屏 :{}", in_vector.generic_string());
+  // 输出路径直接是输入路径的父路径, 不包括文件名
+  auto l_out_path                                                            = in_vector.parent_path();
+  msg_.emplace_or_replace<image_to_move::element_type::out_file_path>().path = l_out_path;
   g_ctx().get<image_to_move>()->async_create_move(
       msg_, FSys::list_files(in_vector), boost::asio::bind_executor(g_io_context(), std::move(*this))
   );
