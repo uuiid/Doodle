@@ -22,6 +22,7 @@
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
 
+#include <doodle_lib/core/auto_light_render_video.h>
 #include <doodle_lib/core/down_auto_light_anim_file.h>
 #include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
@@ -300,6 +301,7 @@ bool maya_tool::render() {
       auto l_msg             = analysis_path(i);
       down_auto_light_anim_file l_down_anim_file{l_msg};
       import_and_render_ue l_import_and_render_ue{l_msg};
+      auto_light_render_video l_auto_light_render_video{l_msg};
       up_auto_light_anim_file l_up_auto_light_file{l_msg};
       l_up_auto_light_file.async_end(boost::asio::bind_executor(
           g_io_context(),
@@ -314,7 +316,9 @@ bool maya_tool::render() {
             l_msg.get<process_message>().set_state(process_message::state::success);
           }
       ));
-      l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
+      l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
+      l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_auto_light_render_video))
+      );
       l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
 
       l_maya->async_run_maya(l_msg, k_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));
@@ -339,7 +343,9 @@ bool maya_tool::render() {
       auto l_msg          = analysis_path(i);
       down_auto_light_anim_file l_down_anim_file{l_msg};
       import_and_render_ue l_import_and_render_ue{l_msg};
+      auto_light_render_video l_auto_light_render_video{l_msg};
       up_auto_light_anim_file l_up_auto_light_file{l_msg};
+
       l_up_auto_light_file.async_end(boost::asio::bind_executor(
           g_io_context(),
           [l_msg](boost::system::error_code in_error_code, std::filesystem::path in_path) {
@@ -353,7 +359,9 @@ bool maya_tool::render() {
             l_msg.get<process_message>().set_state(process_message::state::success);
           }
       ));
-      l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
+      l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
+      l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_auto_light_render_video))
+      );
       l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
 
       l_maya->async_run_maya(l_msg, k_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));

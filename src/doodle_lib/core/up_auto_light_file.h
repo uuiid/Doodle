@@ -8,6 +8,8 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <doodle_lib/core/auto_light_render_video.h>
+
 #include <boost/asio.hpp>
 namespace doodle {
 
@@ -65,6 +67,7 @@ class up_auto_light_anim_file {
   }
 
   void operator()(boost::system::error_code in_error_code, FSys::path in_gen_path) const;
+  void operator()(boost::system::error_code in_error_code, auto_light_render_video::video_path_t in_gen_path) const;
   void operator()(boost::system::error_code in_error_code) const;
 };
 }  // namespace doodle

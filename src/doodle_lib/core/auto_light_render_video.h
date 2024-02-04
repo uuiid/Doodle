@@ -53,7 +53,7 @@ class auto_light_render_video {
   ~auto_light_render_video() = default;
 
   template <typename CompletionHandler>
-  auto async_render_video(const entt::handle& in_handle, CompletionHandler&& in_handler) {
+  auto async_end(CompletionHandler&& in_handler) {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, video_path_t)>(
         [this](auto&& handler) {
           auto l_op =
