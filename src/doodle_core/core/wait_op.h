@@ -19,6 +19,8 @@ struct wait_op {
 
   boost::system::error_code ec_{};
 
+  operator bool() const { return static_cast<bool>(handler_) && static_cast<bool>(func_); }
+
  protected:
   func_type func_{};               // The function to be called when the operation completes.
   std::shared_ptr<void> handler_;  // The handler to be called when the operation completes.
