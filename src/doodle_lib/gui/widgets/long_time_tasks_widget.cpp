@@ -59,12 +59,14 @@ bool long_time_tasks_widget::render() {
         case process_message::state::run:
           ImGui::Text("正在运行");
           break;
-        case process_message::state::fail:
+        case process_message::state::fail: {
+          dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 0.0f, 0.0f, 1.0f}};
           ImGui::Text("错误结束");
-          break;
-        case process_message::state::success:
+        } break;
+        case process_message::state::success: {
+          dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{0.0f, 1.0f, 0.0f, 1.0f}};
           ImGui::Text("成功完成");
-          break;
+        } break;
       }
 
       imgui::TableNextColumn();
