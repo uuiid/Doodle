@@ -287,13 +287,24 @@ MStatus file_info_edit::create_node() {
       maya_chick(l_status);
 
       maya_chick(dg_modifier_.connect(get_plug(l_it.thisNode(), "message"), get_plug(l_node, "reference_file")));
-      dg_modifier_.newPlugValueString(
-          get_plug(l_node, "reference_file_path"), l_fn_ref.fileName(false, false, false, &l_status)
-      );
+
+      auto l_file_path = l_fn_ref.fileName(false, false, false, &l_status);
+      if (l_status != MStatus::kSuccess) {
+        default_logger_raw()->log(log_loc(), level::err, "无法获取基本的引用路径");
+        l_status = MStatus::kSuccess;
+        continue;
+      }
+
+      dg_modifier_.newPlugValueString(get_plug(l_node, "reference_file_path"), l_file_path);
       maya_chick(l_status);
-      dg_modifier_.newPlugValueString(
-          get_plug(l_node, "reference_file_namespace"), l_fn_ref.associatedNamespace(false, &l_status)
-      );
+
+      auto l_namespace = l_fn_ref.associatedNamespace(false, &l_status);
+      if (l_status != MStatus::kSuccess) {
+        default_logger_raw()->log(log_loc(), level::err, "无法获取基本的引用命名空间");
+        l_status = MStatus::kSuccess;
+        continue;
+      }
+      dg_modifier_.newPlugValueString(get_plug(l_node, "reference_file_namespace"), l_namespace);
       maya_chick(l_status);
       maya_chick(dg_modifier_.doIt());
     }
