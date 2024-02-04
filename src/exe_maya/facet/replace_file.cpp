@@ -67,7 +67,7 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
   for (auto&& l_pair : in_files) {
     auto l_ref_it = std::find_if(ref_files_.begin(), ref_files_.end(), [&l_pair](entt::handle& in_handle) -> bool {
       auto&& l_ref = in_handle.get<reference_file>();
-      return l_ref.get_namespace() == l_pair.first.stem();
+      return l_ref.get_abs_path().stem() == l_pair.first.stem();
     });
     if (l_ref_it == ref_files_.end()) {
       DOODLE_LOG_ERROR("未查找到替换规则 {}", l_pair.first.string());
