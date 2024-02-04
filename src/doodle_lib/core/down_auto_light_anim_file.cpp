@@ -4,6 +4,7 @@
 
 #include "down_auto_light_anim_file.h"
 
+#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/assets.h>
@@ -14,6 +15,7 @@
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_lib/core/thread_copy_io.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
@@ -27,9 +29,11 @@ void down_auto_light_anim_file::init() {
 }
 
 void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_error_code) const {
-  auto l_id_map_tmp = g_reg()->view<database, assets_file, file_association_ref>();
-  auto l_id_map     = l_id_map_tmp | ranges::views::transform([](const entt::entity &in_entity) {
-                    return std::make_pair(g_reg()->get<database>(in_entity).uuid(), in_entity);
+  auto l_tmp_reg    = database_n::file_translator::load_new_file(register_file_type::get_main_project());
+
+  auto l_id_map_tmp = l_tmp_reg->view<database, assets_file, file_association_ref>();
+  auto l_id_map     = l_id_map_tmp | ranges::views::transform([l_tmp_reg](const entt::entity &in_entity) {
+                    return std::make_pair(l_tmp_reg->get<database>(in_entity).uuid(), in_entity);
                   }) |
                   ranges::to<std::unordered_map<uuid, entt::entity>>();
 
@@ -43,7 +47,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
 
         if (l_id_map.contains(l_uuid)) {
           data_->logger_->log(log_loc(), level::level_enum::warn, "找到了文件{}的引用", in_arg);
-          return entt::handle{*g_reg(), l_id_map.at(l_uuid)};
+          return entt::handle{*l_tmp_reg, l_id_map.at(l_uuid)};
         }
         data_->logger_->log(
             log_loc(), level::level_enum::err, "文件 {} {}找不到引用, 继续输出将变为不正确排屏", in_arg, l_uuid
