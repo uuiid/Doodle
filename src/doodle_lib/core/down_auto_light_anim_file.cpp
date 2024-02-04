@@ -17,12 +17,13 @@
 
 #include <doodle_lib/core/thread_copy_io.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 namespace doodle {
 
 void down_auto_light_anim_file::init() {
   data_->logger_ = msg_.get<process_message>().logger();
 
-  if (!g_ctx().contains<thread_copy_io_service>()) g_ctx().emplace<thread_copy_io_service>();
+  if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>(std::make_shared<ue_exe>());
 }
 
 void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_error_code) const {
@@ -139,8 +140,8 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
       data_->down_info_.render_project_ = l_local_path / l_uproject.filename();
     }
   }
-  g_ctx().get<thread_copy_io_service>().async_copy(
-      l_copy_path, FSys::copy_options::recursive, boost::asio::bind_executor(g_io_context(), *this)
+  g_ctx().get<ue_exe_ptr>()->async_copy_old_project(
+      msg_, l_copy_path, boost::asio::bind_executor(g_io_context(), *this)
   );
 }
 
