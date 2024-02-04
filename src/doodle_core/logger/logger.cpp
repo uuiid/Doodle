@@ -80,6 +80,7 @@ void logger_ctrl::init_temp_log() {
   spdlog::set_default_logger(l_logger);
 
   spdlog::flush_every(3s);
+  spdlog::flush_on(spdlog::level::warn);
   spdlog::set_level(spdlog::level::trace);
   spdlog::should_log(spdlog::level::trace);
 }
