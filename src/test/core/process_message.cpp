@@ -9,7 +9,6 @@
 
 #include <doodle_app/app/app_command.h>
 
-#include <doodle_lib/core/maya_to_exe_file.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>

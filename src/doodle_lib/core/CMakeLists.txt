@@ -8,7 +8,6 @@ target_sources(doodle_lib
 
         holidaycn_time.h
         erase_handle_component.h
-        maya_to_exe_file.h
         scan_win_service.h
         down_auto_light_anim_file.h
         thread_copy_io.h
@@ -19,7 +18,6 @@ target_sources(doodle_lib
         filesystem_extend.cpp
         image_loader.cpp
         holidaycn_time.cpp
-        maya_to_exe_file.cpp
         scan_win_service.cpp
         down_auto_light_anim_file.cpp
         thread_copy_io.cpp

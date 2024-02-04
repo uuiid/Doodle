@@ -23,7 +23,6 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/core/down_auto_light_anim_file.h>
-#include <doodle_lib/core/maya_to_exe_file.h>
 #include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
