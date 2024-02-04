@@ -21,6 +21,7 @@
 #include <boost/process.hpp>
 #include <boost/process/windows.hpp>
 #include <boost/signals2.hpp>
+#include <boost/system.hpp>
 
 #include "fmt/core.h"
 #include <filesystem>
@@ -203,14 +204,18 @@ void ue_exe::queue_up(
   notify_run();
 }
 
-void ue_exe::find_ue_exe() {
+boost::system::error_code ue_exe::find_ue_exe() {
   auto l_ue_path = core_set::get_set().ue4_path;
-  if (l_ue_path.empty()) throw_exception(doodle_error{"ue4 路径未设置"});
+  if (l_ue_path.empty()) {
+    default_logger_raw()->log(log_loc(), level::err, "ue_exe path is empty");
+    return boost::system::error_code{boost::system::errc::no_such_file_or_directory, boost::system::system_category()};
+  }
   ue_path_ = l_ue_path / doodle_config::ue_path_obj;
 
   if (!FSys::exists(ue_path_)) {
-    throw_exception(doodle_error{"未找到 ue4 程序"});
+    return boost::system::error_code{boost::system::errc::no_such_file_or_directory, boost::system::system_category()};
   }
+  return {};
 }
 std::string ue_exe::get_file_version(const FSys::path &in_path) {
   auto l_version_path = in_path.parent_path() / "UnrealEditor.version";

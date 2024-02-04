@@ -54,7 +54,7 @@ class ue_exe {
 
   void notify_run();
 
-  void find_ue_exe();
+  boost::system::error_code find_ue_exe();
 
  protected:
   template <typename Handler>
@@ -126,6 +126,12 @@ class ue_exe {
       default_logger_raw()->error("组件缺失 process_message");
       in_completion(l_ec);
       return;
+    }
+    if (ue_path_.empty()) {
+      if (auto l_err = find_ue_exe(); l_err) {
+        in_completion(l_err);
+        return;
+      }
     }
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
