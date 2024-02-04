@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
+#include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
@@ -61,7 +62,7 @@ void scan_win_service_t::end_open_project() {
     g_ctx().emplace<details::scan_category_service_t>();
   }
   scan_categories_is_scan_.resize(scan_categories_.size() * project_roots_.size());
-  auto l_database_view = g_reg()->view<database>().each();
+  auto l_database_view = g_reg()->view<database, assets_file>().each();
 
   handle_map_          = l_database_view | ranges::views::transform([](auto&& in_entity) {
                   return std::make_pair(
@@ -69,6 +70,13 @@ void scan_win_service_t::end_open_project() {
                   );
                 }) |
                 ranges::to<std::map<uuid, entt::handle>>();
+  path_map_ =
+      l_database_view | ranges::views::transform([](auto&& in_entity) {
+        return std::make_pair(
+            std::get<assets_file&>(in_entity).path_attr(), entt::handle{*g_reg(), std::get<entt::entity>(in_entity)}
+        );
+      }) |
+      ranges::to<std::map<FSys::path, entt::handle>>();
 
   boost::asio::post(g_io_context(), [this]() { scan(); });
 }
@@ -116,6 +124,9 @@ void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_cate
     auto l_handle_vec = l_data->create_handles(handle_map_, *g_reg());
     for (auto&& l_h : l_handle_vec) {
       if (l_h.any_of<database>()) handle_map_.emplace(l_h.get<database>().uuid(), l_h);
+      if (l_h.any_of<assets_file>() && path_map_.contains(l_h.get<assets_file>().path_attr())) {
+        path_map_.at(l_h.get<assets_file>().path_attr()).destroy();
+      }
     }
   }
   // 开始启动下一次循环

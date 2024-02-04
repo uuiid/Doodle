@@ -24,6 +24,7 @@ class scan_win_service_t {
   std::vector<details::scan_category_t::project_root_t> project_roots_;
   std::vector<bool> scan_categories_is_scan_;
   std::map<uuid, entt::handle> handle_map_;
+  std::map<FSys::path, entt::handle> path_map_;
 
   void scan();
   void open_project();
