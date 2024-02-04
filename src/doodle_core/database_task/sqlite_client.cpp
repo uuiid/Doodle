@@ -34,6 +34,18 @@ file_translator::file_translator()
 file_translator::file_translator(registry_ptr in_registry)
     : registry_attr(in_registry), obs(obs_all{}), timer_(std::make_shared<timer_t>(g_io_context())) {}
 
+registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
+  registry_ptr l_reg = std::make_shared<entt::registry>();
+  if (!FSys::exists(in_path)) return l_reg;
+  obs_all l_obs{};
+
+  auto l_con = l_reg->ctx().emplace<database_info>().get_connection_const();
+  l_obs.open(l_reg, l_con);
+  l_reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
+  l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp");
+  return l_reg;
+}
+
 void file_translator::new_file_scene(const FSys::path& in_path, const project& in_project) {
   auto& l_obs = std::any_cast<obs_all&>(obs);
   l_obs.disconnect();

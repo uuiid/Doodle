@@ -50,6 +50,9 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
     only_open = in_only_open;
     return *this;
   }
+
+  static registry_ptr load_new_file(const FSys::path& in_path);
+
   /**
    * @brief 使用路径打开项目文件
    * @param in_path 传入的项目文件路径
