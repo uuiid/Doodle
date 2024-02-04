@@ -112,7 +112,11 @@ auto open_file_impl(const MString& in_str, MFileIO::ReferenceMode in_mod) {
 
 void maya_file_io::open_file(const FSys::path& in_file_path, MFileIO::ReferenceMode in_mode) {
   auto l_str = conv::to_ms(in_file_path.generic_string());
-  maya_chick(open_file_impl(l_str, in_mode));
+  try {
+    maya_chick(open_file_impl(l_str, in_mode));
+  } catch (const std::exception& e) {
+    default_logger_raw()->log(log_loc(), level::err, "打开文件失败, 无法保证输出正确:{} {}", e.what(), in_file_path);
+  }
 }
 
 }  // namespace doodle::maya_plug
