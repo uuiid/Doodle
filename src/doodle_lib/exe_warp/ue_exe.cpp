@@ -194,6 +194,8 @@ void ue_exe::queue_up(
     const entt::handle &in_msg, const std::vector<std::pair<FSys::path, FSys::path>> &in_command_line,
     doodle::ue_exe::call_fun_type in_call_fun
 ) {
+  if (!g_ctx().contains<thread_copy_io_service>()) g_ctx().emplace<thread_copy_io_service>();
+
   auto l_run            = std::make_shared<run_ue_copy_file>();
   l_run->copy_path_attr = in_command_line;
   l_run->call_attr      = std::move(in_call_fun);
