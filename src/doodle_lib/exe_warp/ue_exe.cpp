@@ -106,6 +106,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
             std::string l_ine;
             std::istream l_istream{&out_strbuff_attr};
             std::getline(l_istream, l_ine);
+            while (l_ine.back() == '\n') l_ine.pop_back();
             logger_attr->log(log_loc(), level::debug, l_ine);
             read_out();
           } else {
@@ -124,6 +125,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
             std::string l_line{};
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
+            while (l_line.back() == '\n') l_line.pop_back();
             logger_attr->log(log_loc(), level::info, l_line);
             read_err();
           } else {
