@@ -194,8 +194,8 @@ PYTHONPATH+:= scripts
             std::getline(l_istream, l_ine);
             auto l_str = conv::to_utf<char>(l_ine, "GBK");
             // clear \n
-            while (l_str.back() == '\n') l_str.pop_back();
-            log_attr->log(log_loc(), level::info, l_str);
+            while (!l_str.empty() && std::iscntrl(l_str.back(), core_set::get_set().utf8_locale)) l_str.pop_back();
+            if (!l_str.empty()) log_attr->log(log_loc(), level::info, l_str);
             read_out();
           } else {
             out_attr.close();
@@ -213,8 +213,9 @@ PYTHONPATH+:= scripts
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
             auto l_str = conv::to_utf<char>(l_line, "GBK");
-            while (l_str.back() == '\n') l_str.pop_back();
-            log_attr->log(log_loc(), level::debug, l_str);
+
+            while (!l_str.empty() && std::iscntrl(l_str.back(), core_set::get_set().utf8_locale)) l_str.pop_back();
+            if (!l_str.empty()) log_attr->log(log_loc(), level::debug, l_str);
             read_err();
           } else {
             err_attr.close();

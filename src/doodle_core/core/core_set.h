@@ -42,6 +42,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   std::uint16_t p_max_thread;
 
   std::array<FSys::path, 10> project_root;
+  std::locale utf8_locale;
   void add_recent_project(const FSys::path &in);
 
   // 部门

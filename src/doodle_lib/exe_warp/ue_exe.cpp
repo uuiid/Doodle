@@ -103,11 +103,11 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
         out_attr, out_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
           if (!in_code) {
-            std::string l_ine;
+            std::string l_line;
             std::istream l_istream{&out_strbuff_attr};
-            std::getline(l_istream, l_ine);
-            while (l_ine.back() == '\n') l_ine.pop_back();
-            logger_attr->log(log_loc(), level::debug, l_ine);
+            std::getline(l_istream, l_line);
+            while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
+            if (!l_line.empty()) logger_attr->log(log_loc(), level::debug, l_line);
             read_out();
           } else {
             out_attr.close();
@@ -125,8 +125,8 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
             std::string l_line{};
             std::istream l_istream{&err_strbuff_attr};
             std::getline(l_istream, l_line);
-            while (l_line.back() == '\n') l_line.pop_back();
-            logger_attr->log(log_loc(), level::info, l_line);
+            while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
+            if (!l_line.empty()) logger_attr->log(log_loc(), level::info, l_line);
             read_err();
           } else {
             err_attr.close();

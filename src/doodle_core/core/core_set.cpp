@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/user.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/locale.hpp>
 
 #include <ShlObj.h>
 #include <wil/result.h>
@@ -66,6 +67,7 @@ core_set::core_set()
   } else {
     set_root(FSys::path{p_buff.get()} / "Doodle");
   }
+  utf8_locale = boost::locale::generator().generate("zh_CN.UTF-8");
 
   user_id = get_uuid();
 }
