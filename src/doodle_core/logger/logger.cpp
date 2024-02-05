@@ -65,6 +65,7 @@ class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
   void rotate_();
 
   FSys::path base_filename_;
+  std::string file_stem_;
   std::size_t max_size_;
   std::size_t current_size_;
   std::ofstream file_helper_;
@@ -74,6 +75,7 @@ class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
 template <typename Mutex>
 rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t max_size)
     : base_filename_(std::move(in_path)),
+      file_stem_(base_filename_.stem().generic_string()),
       max_size_(std::clamp(max_size, 0ull, 200000ull)),
       current_size_(0),
       index_(0) {
@@ -107,12 +109,9 @@ void rotating_file_sink<Mutex>::flush_() {
 }
 template <typename Mutex>
 void rotating_file_sink<Mutex>::rotate_() {
-  file_helper_  = {};
-  auto l_target = base_filename_;
-  l_target.replace_extension();
-  l_target.replace_extension(fmt::format("{}.txt", ++index_));
-  if (FSys::exists(l_target)) FSys::remove(l_target);
-  FSys::rename(base_filename_, l_target);
+  file_helper_ = {};
+  //  auto l_target = base_filename_;
+  base_filename_.replace_filename(fmt::format("{}_{}.txt", file_stem_, ++index_));
   file_helper_.open(base_filename_, std::ios_base::app);
   current_size_ = 0;
 }
