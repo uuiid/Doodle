@@ -45,6 +45,80 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 };
 using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
+//
+// 我们自己的旋转日志, spd的那个有时候会无法重命名
+//
+template <typename Mutex>
+class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
+ public:
+  explicit rotating_file_sink(FSys::path in_path, std::size_t max_size);
+
+ protected:
+  void sink_it_(const spdlog::details::log_msg &msg) override;
+  void flush_() override;
+
+ private:
+  // Rotate files:
+  // log.txt -> log.1.txt
+  // log.1.txt -> log.2.txt
+  // log.2.txt -> log.3.txt
+  void rotate_();
+
+  FSys::path base_filename_;
+  std::size_t max_size_;
+  std::size_t current_size_;
+  std::ofstream file_helper_;
+  std::size_t index_;
+};
+
+template <typename Mutex>
+rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t max_size)
+    : base_filename_(std::move(in_path)),
+      max_size_(std::clamp(max_size, 0ull, 200000ull)),
+      current_size_(0),
+      index_(0) {
+  FSys::create_directories(base_filename_.parent_path());
+  if (FSys::exists(base_filename_)) current_size_ = FSys::file_size(base_filename_);
+  file_helper_.open(base_filename_, std::ios_base::app);
+}
+
+template <typename Mutex>
+void rotating_file_sink<Mutex>::sink_it_(const spdlog::details::log_msg &msg) {
+  spdlog::memory_buf_t formatted;
+  spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+  auto new_size = current_size_ + formatted.size();
+
+  // rotate if the new estimated file size exceeds max size.
+  // rotate only if the real size > 0 to better deal with full disk (see issue #2261).
+  // we only check the real size when new_size > max_size_ because it is relatively expensive.
+  if (new_size > max_size_) {
+    file_helper_.flush();
+    if (FSys::exists(base_filename_)) {
+      rotate_();
+      new_size = formatted.size();
+    }
+  }
+  file_helper_.write(formatted.data(), formatted.size());
+  current_size_ = new_size;
+}
+template <typename Mutex>
+void rotating_file_sink<Mutex>::flush_() {
+  file_helper_.flush();
+}
+template <typename Mutex>
+void rotating_file_sink<Mutex>::rotate_() {
+  file_helper_  = {};
+  auto l_target = base_filename_;
+  l_target.replace_extension();
+  l_target.replace_extension(fmt::format("{}.txt", ++index_));
+  if (FSys::exists(l_target)) FSys::remove(l_target);
+  FSys::rename(base_filename_, l_target);
+  file_helper_.open(base_filename_, std::ios_base::app);
+  current_size_ = 0;
+}
+
+using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
+
 logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
   spdlog::init_thread_pool(8192, 1);
   init_temp_log();
@@ -55,7 +129,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, c
   auto l_path = in_path / fmt::format("{}_{}.txt", in_name, boost::this_process::get_id());
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
-    rotating_file_sink_ = std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true);
+    rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 10ull);
     l_logger            = std::make_shared<spdlog::async_logger>(
         in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
@@ -93,6 +167,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, 
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
+  l_sinks.emplace_back(rotating_file_sink_);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
@@ -113,6 +188,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
   };
   if (in_path != l_path)
     l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(in_path.generic_string(), true));
+  l_sinks.emplace_back(rotating_file_sink_);
 
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
