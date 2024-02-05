@@ -71,6 +71,23 @@ void cloth_sim::create_cloth() {
   if (!l_cf) return;
 
   cloth_lists_ = l_cf->create_cloth();
+  std::map<std::string, entt::handle> l_ref_map{};
+  l_ref_map = ref_files_ |
+              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
+                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              }) |
+              ranges::to<decltype(l_ref_map)>;
+
+  cloth_lists_ |= ranges::actions::remove_if([&](const entt::handle& in_handle) -> bool {
+    auto l_c = in_handle.get<cloth_interface>();
+    if (l_ref_map.contains(l_c->get_namespace())) {
+      return false;
+    }
+    default_logger_raw()->log(
+        log_loc(), level::info, "布料未找到对应的引用文件, 无法导出, 不进行解算, 请查找对应的引用", l_c->get_namespace()
+    );
+    return true;
+  });
 }
 void cloth_sim::set_cloth_attr() {
   std::map<std::string, entt::handle> l_ref_map{};
