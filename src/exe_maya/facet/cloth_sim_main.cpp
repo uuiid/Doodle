@@ -21,6 +21,7 @@
 #include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sim_cover_attr.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
 
 #include "cloth_sim.h"
 #include "entt/entity/fwd.hpp"
@@ -84,7 +85,7 @@ void cloth_sim::create_cloth() {
       return false;
     }
     default_logger_raw()->log(
-        log_loc(), level::info, "布料未找到对应的引用文件, 无法导出, 不进行解算, 请查找对应的引用", l_c->get_namespace()
+        log_loc(), level::info, "布料{}未找到对应的引用文件, 无法导出, 不进行解算, 请查找对应的引用", l_c->get_shape()
     );
     return true;
   });
