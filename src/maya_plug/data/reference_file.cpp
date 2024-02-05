@@ -244,7 +244,11 @@ std::string reference_file::get_namespace() const {
 
 bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) const {
   FSys::path k_m_str{get_abs_path()};
-  auto k_vfx_path = fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
+  auto l_stem = k_m_str.stem().generic_string();
+  if (l_stem.ends_with("_cloth")) {
+    l_stem = l_stem.substr(0, l_stem.size() - 6);
+  }
+  auto k_vfx_path = fmt::format("{}_cloth{}", l_stem, k_m_str.extension().generic_string());
   if (!in_sim_file_map.contains(k_vfx_path)) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
     return false;
