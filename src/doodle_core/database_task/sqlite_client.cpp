@@ -104,6 +104,23 @@ boost::system::error_code file_translator::async_open_impl() {
   auto& l_obs  = std::any_cast<obs_all&>(obs);
   auto l_k_con = g_ctx().emplace<database_info>().get_connection_const();
   if (!l_select.is_old(project_path, l_k_con)) {
+    for (int l = 0; l < 10; ++l) {
+      try {
+        if (only_ctx) {
+          l_obs.open_ctx(registry_attr, l_k_con);
+          break;
+        } else {
+          l_obs.open(registry_attr, l_k_con);
+          break;
+        }
+      } catch (const sqlpp::exception& in_error) {
+        std::this_thread::sleep_for(std::chrono::microseconds{1});
+        default_logger_raw()->log(
+            log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", in_path, l, in_error.what()
+        );
+      }
+    }
+
     if (only_ctx) {
       l_obs.open_ctx(registry_attr, l_k_con);
     } else {
