@@ -45,6 +45,7 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
       l_obs.open(l_reg, l_con);
       break;
     } catch (const sqlpp::exception& in_error) {
+      l_reg->clear();
       std::this_thread::sleep_for(std::chrono::microseconds{1});
       default_logger_raw()->log(log_loc(), level::err, "打开文件 {} 失败 {}", in_path, in_error.what());
     }
@@ -114,6 +115,7 @@ boost::system::error_code file_translator::async_open_impl() {
           break;
         }
       } catch (const sqlpp::exception& in_error) {
+        registry_attr->clear();
         std::this_thread::sleep_for(std::chrono::microseconds{1});
         default_logger_raw()->log(
             log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", project_path, l, in_error.what()
