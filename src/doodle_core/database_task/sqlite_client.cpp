@@ -120,13 +120,6 @@ boost::system::error_code file_translator::async_open_impl() {
         );
       }
     }
-
-    if (only_ctx) {
-      l_obs.open_ctx(registry_attr, l_k_con);
-    } else {
-      l_obs.open(registry_attr, l_k_con);
-    }
-
   } else {
     l_obs.disconnect();
     l_select(*registry_attr, project_path, l_k_con);
