@@ -128,7 +128,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, c
   auto l_path = in_path / fmt::format("{}_{}.txt", in_name, boost::this_process::get_id());
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
-    rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 10ull);
+    rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 512ull);
     l_logger            = std::make_shared<spdlog::async_logger>(
         in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
