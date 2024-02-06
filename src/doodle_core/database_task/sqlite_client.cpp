@@ -116,7 +116,7 @@ boost::system::error_code file_translator::async_open_impl() {
       } catch (const sqlpp::exception& in_error) {
         std::this_thread::sleep_for(std::chrono::microseconds{1});
         default_logger_raw()->log(
-            log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", in_path, l, in_error.what()
+            log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", project_path, l, in_error.what()
         );
       }
     }
