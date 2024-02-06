@@ -51,7 +51,7 @@ using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 template <typename Mutex>
 class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
  public:
-  explicit rotating_file_sink(FSys::path in_path, std::size_t max_size);
+  explicit rotating_file_sink(FSys::path in_path, std::size_t max_size, std::size_t max_files = 10);
 
  protected:
   void sink_it_(const spdlog::details::log_msg &msg) override;
@@ -67,16 +67,18 @@ class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
   std::string file_stem_;
   FSys::path base_filename_;
   std::size_t max_size_;
+  std::size_t max_files_;
   std::size_t current_size_;
   std::ofstream file_helper_;
   std::size_t index_;
 };
 
 template <typename Mutex>
-rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t max_size)
+rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t max_size, std::size_t max_files /*= 10*/)
     : file_stem_(in_path.stem().generic_string()),
       base_filename_(std::move(in_path)),
       max_size_(std::clamp(max_size, 0ull, 200000ull)),
+      max_files_(std::clamp(max_files, 2ull, 200000ull)),
       current_size_(0),
       index_(0) {
   base_filename_.replace_filename(fmt::format("{}.{}.txt", file_stem_, index_));
@@ -115,6 +117,15 @@ void rotating_file_sink<Mutex>::rotate_() {
   base_filename_.replace_filename(fmt::format("{}.{}.txt", file_stem_, ++index_));
   file_helper_.open(base_filename_, std::ios_base::app | std::ios_base::out | std::ios_base::binary);
   current_size_ = 0;
+
+  // delete existing file
+  if (index_ > max_files_) {
+    for (std::size_t i = index_ - max_files_; i > 0; --i) {
+      auto l_target = base_filename_;
+      l_target.replace_filename(fmt::format("{}.{}.txt", file_stem_, i));
+      FSys::remove(l_target);
+    }
+  }
 }
 
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
