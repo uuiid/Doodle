@@ -39,9 +39,9 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return l_reg;
   obs_all l_obs{};
   l_reg->ctx().emplace<database_info>().path_ = in_path;
-  auto l_con                                  = l_reg->ctx().get<database_info>().get_connection_const();
   do {
     try {
+      auto l_con = l_reg->ctx().get<database_info>().get_connection_const();
       l_obs.open(l_reg, l_con);
       break;
     } catch (const sqlpp::exception& in_error) {
@@ -102,11 +102,11 @@ boost::system::error_code file_translator::async_open_impl() {
 
   save_all = false;
   database_n::select l_select{};
-  auto& l_obs  = std::any_cast<obs_all&>(obs);
-  auto l_k_con = g_ctx().emplace<database_info>().get_connection_const();
-  if (!l_select.is_old(project_path, l_k_con)) {
-    for (int l = 0; l < 10; ++l) {
-      try {
+  auto& l_obs = std::any_cast<obs_all&>(obs);
+  for (int l = 0; l < 10; ++l) {
+    try {
+      auto l_k_con = g_ctx().emplace<database_info>().get_connection_const();
+      if (!l_select.is_old(project_path, l_k_con)) {
         if (only_ctx) {
           l_obs.open_ctx(registry_attr, l_k_con);
           break;
@@ -114,21 +114,21 @@ boost::system::error_code file_translator::async_open_impl() {
           l_obs.open(registry_attr, l_k_con);
           break;
         }
-      } catch (const sqlpp::exception& in_error) {
-        registry_attr->clear();
-        std::this_thread::sleep_for(std::chrono::microseconds{1});
-        default_logger_raw()->log(
-            log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", project_path, l, in_error.what()
-        );
+      } else {
+        l_obs.disconnect();
+        l_select(*registry_attr, project_path, l_k_con);
+        l_select.patch();
+        save_all = true;
+        /// 先监听
+        l_obs.connect(registry_attr);
       }
+    } catch (const sqlpp::exception& in_error) {
+      registry_attr->clear();
+      std::this_thread::sleep_for(std::chrono::microseconds{1});
+      default_logger_raw()->log(
+          log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", project_path, l, in_error.what()
+      );
     }
-  } else {
-    l_obs.disconnect();
-    l_select(*registry_attr, project_path, l_k_con);
-    l_select.patch();
-    save_all = true;
-    /// 先监听
-    l_obs.connect(registry_attr);
   }
 
   registry_attr->ctx().get<project>().set_path(project_path.parent_path());
