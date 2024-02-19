@@ -76,6 +76,7 @@ cmrc_add_resource_library(
 add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
+add_subdirectory(doodle_server)
 
 add_subdirectory(exe_gui)
 
