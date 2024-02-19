@@ -1,0 +1,222 @@
+//
+// Created by td_main on 2023/8/3.
+//
+
+#pragma once
+#include "doodle_core/core/global_function.h"
+#include "doodle_core/lib_warp/boost_fmt_asio.h"
+#include "doodle_core/lib_warp/boost_fmt_error.h"
+#include "doodle_core/render_farm/basic_json_body.h"
+
+#include "boost/asio.hpp"
+#include "boost/beast.hpp"
+#include "boost/hana.hpp"
+#include "boost/lexical_cast.hpp"
+#include "boost/signals2.hpp"
+#include "boost/url.hpp"
+
+#include "doodle_server/doodle_server_fwd.h"
+#include "nlohmann/json.hpp"
+#include <memory>
+namespace doodle::render_farm {
+
+struct http_session_data {
+  explicit http_session_data(boost::asio::ip::tcp::socket in_socket)
+      : stream_(std::make_unique<boost::beast::tcp_stream>(std::move(in_socket))) {}
+  std::unique_ptr<boost::beast::tcp_stream> stream_;
+  boost::beast::flat_buffer buffer_;
+  boost::url url_;
+
+  inline boost::beast::tcp_stream& operator*() const { return *stream_; }
+  inline boost::beast::tcp_stream* operator->() const { return stream_.get(); }
+
+  // copy delete
+  http_session_data(const http_session_data&)                = delete;
+  http_session_data& operator=(const http_session_data&)     = delete;
+  // move
+  http_session_data(http_session_data&&) noexcept            = default;
+  http_session_data& operator=(http_session_data&&) noexcept = default;
+};
+/**
+ * @brief 会话类 用于处理客户端的请求  一个句柄对应一个客户端
+ */
+namespace session {
+template <typename MsgBody>
+struct async_read_body;
+
+template <typename MsgBody>
+struct async_read_body {
+  std::unique_ptr<boost::beast::http::request_parser<MsgBody>> request_parser_;
+
+  template <typename T>
+  explicit async_read_body(async_read_body<T>& in_request_parser_empty_body)
+    requires(std::is_same_v<T, boost::beast::http::empty_body>);
+
+  explicit async_read_body(const entt::handle& in_handle);
+  // copy delete
+  async_read_body(const async_read_body&)                = delete;
+  async_read_body& operator=(const async_read_body&)     = delete;
+  // move
+  async_read_body(async_read_body&&) noexcept            = default;
+  async_read_body& operator=(async_read_body&&) noexcept = default;
+
+  inline boost::beast::http::request_parser<MsgBody>& operator*() const { return *request_parser_; }
+  inline boost::beast::http::request_parser<MsgBody>* operator->() const { return request_parser_.get(); }
+};
+
+template <>
+struct async_read_body<boost::beast::http::empty_body> {
+  std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>> request_parser_;
+
+  async_read_body()
+      : request_parser_(std::make_unique<boost::beast::http::request_parser<boost::beast::http::empty_body>>()) {}
+  // copy delete
+  async_read_body(const async_read_body&)                = delete;
+  async_read_body& operator=(const async_read_body&)     = delete;
+  // move
+  async_read_body(async_read_body&&) noexcept            = default;
+  async_read_body& operator=(async_read_body&&) noexcept = default;
+
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& operator*() const {
+    return *request_parser_;
+  }
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>* operator->() const {
+    return request_parser_.get();
+  }
+};
+using request_parser_empty_body = async_read_body<boost::beast::http::empty_body>;
+struct capture_url {
+  std::map<std::string, std::string> capture_map_;
+  explicit capture_url(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
+
+  template <typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
+  std::optional<T> get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      return boost::lexical_cast<T>(capture_map_.at(in_str));
+    }
+    return {};
+  }
+  template <typename T, std::enable_if_t<!std::is_arithmetic_v<T>>* = nullptr>
+  std::optional<T> get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      return capture_map_.at(in_str);
+    }
+    return {};
+  }
+};
+
+struct do_read {
+  entt::handle handle_{};
+  explicit do_read(entt::handle in_handle) : handle_(std::move(in_handle)) {}
+  void run();
+  void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
+};
+
+template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
+struct do_read_msg_body : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>,
+                          boost::asio::coroutine {
+  entt::handle handle_{};
+  using async_read_body = session::async_read_body<MsgBody>;
+  using msg_t           = boost::beast::http::request<MsgBody>;
+  explicit do_read_msg_body(
+      entt::handle in_handle, CompletionHandler&& in_handler, const ExecutorType& in_executor_type_1
+  )
+      : boost::beast::async_base<
+            std::decay_t<CompletionHandler>,
+            ExecutorType>{std::forward<CompletionHandler>(in_handler), in_executor_type_1},
+        boost::asio::coroutine{},
+        handle_(std::move(in_handle)) {}
+  void run();
+  void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
+};
+
+struct do_close {
+  entt::handle handle_{};
+  boost::system::error_code ec{};
+  logger_ptr logger_;
+  explicit do_close(entt::handle in_handle) : handle_(std::move(in_handle)) {}
+
+  void run();
+
+  void operator()();
+};
+
+struct do_write {
+  entt::handle handle_;
+  bool keep_alive_{};
+  boost::beast::http::message_generator message_generator_;
+  explicit do_write(entt::handle in_handle, boost::beast::http::message_generator in_message_generator)
+      : handle_(std::move(in_handle)), message_generator_(std::move(in_message_generator)) {}
+
+  void run();
+  static void send_error_code(
+      entt::handle in_handle, boost::system::error_code ec,
+      boost::beast::http::status in_status = boost::beast::http::status::bad_request
+  );
+  void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
+};
+
+template <typename MsgBody>
+async_read_body<MsgBody>::async_read_body(const entt::handle& in_handle)
+    : request_parser_(std::make_unique<boost::beast::http::request_parser<MsgBody>>(
+          std::move(*in_handle.get<async_read_body<boost::beast::http::empty_body>>())
+      )) {}
+
+template <typename MsgBody>
+template <typename T>
+async_read_body<MsgBody>::async_read_body(async_read_body<T>& in_request_parser_empty_body)
+  requires(std::is_same_v<T, boost::beast::http::empty_body>)
+    : request_parser_(
+          std::make_unique<boost::beast::http::request_parser<MsgBody>>(std::move(*in_request_parser_empty_body))
+      ) {}
+template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
+void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::run() {
+  if (handle_ && handle_.all_of<http_session_data, request_parser_empty_body>()) {
+    auto&& [l_data, l_body] = handle_.get<http_session_data, request_parser_empty_body>();
+    l_data.stream_->expires_after(30s);
+
+    boost::beast::http::async_read(
+        *l_data, l_data.buffer_, *handle_.emplace_or_replace<async_read_body>(l_body), std::move(*this)
+    );
+  } else {
+    boost::beast::error_code ec{};
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
+    log_error(fmt::format("无效的句柄"));
+    this->complete(false, ec, handle_, msg_t{});
+  }
+}
+template <typename MsgBody, typename CompletionHandler, typename ExecutorType>
+void do_read_msg_body<MsgBody, CompletionHandler, ExecutorType>::operator()(
+    boost::system::error_code ec, std::size_t bytes_transferred
+) {
+  if (!handle_) {
+    BOOST_BEAST_ASSIGN_EC(ec, error_enum::invalid_handle);
+    log_error(fmt::format("无效的句柄"));
+    this->complete(false, ec, handle_, msg_t{});
+    return;
+  }
+  auto l_logger = handle_.get<socket_logger>().logger_;
+  if (ec) {
+    if (ec != boost::beast::http::error::end_of_stream) {
+      log_error(l_logger, fmt::format("on_write error: {} ", ec));
+    } else {
+      log_warn(l_logger, fmt::format("末端的流, 主动关闭 {} ", ec));
+      do_close{handle_}.run();
+    }
+    this->complete(false, ec, handle_, msg_t{});
+    return;
+  }
+
+  if (handle_.all_of<http_session_data, async_read_body>()) {
+    auto&& [l_data, l_body] = handle_.get<http_session_data, async_read_body>();
+    l_data.stream_->expires_after(30s);
+    this->complete(true, ec, handle_, l_body->release());
+    return;
+  }
+  BOOST_BEAST_ASSIGN_EC(ec, error_enum::component_missing_error);
+  log_error(l_logger, fmt::format("缺失必要组件, http_session_data, async_read_body"));
+  this->complete(false, ec, handle_, msg_t{});
+}
+}  // namespace session
+
+}  // namespace doodle::render_farm

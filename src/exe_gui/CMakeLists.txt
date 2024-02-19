@@ -56,7 +56,8 @@ macro(add_doodle_exe _name _src)
     )
     list(APPEND DOODLE_INSTALL_IGNORE_ITEM ${_name}.exe)
 endmacro()
-
+add_doodle_exe(doodle_server main_server.cpp)
+add_doodle_exe(doodle_client main_work.cpp)
 add_doodle_exe(doodle_auto_light service_auto_light.cpp)
 
 
