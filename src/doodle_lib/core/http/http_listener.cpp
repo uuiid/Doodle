@@ -16,6 +16,7 @@ void http_listener::run() {
 
   do_accept();
 }
+void http_listener::stop() {}
 void http_listener::do_accept() {
   acceptor_ptr_->async_accept(
       boost::asio::make_strand(io_context_),

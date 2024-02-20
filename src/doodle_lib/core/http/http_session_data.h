@@ -9,6 +9,7 @@
 #include <boost/url.hpp>
 namespace doodle::http {
 class http_session_data {
+ public:
   explicit http_session_data(boost::asio::ip::tcp::socket in_socket)
       : stream_(std::make_unique<boost::beast::tcp_stream>(std::move(in_socket))) {}
   std::unique_ptr<boost::beast::tcp_stream> stream_;
