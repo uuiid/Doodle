@@ -26,4 +26,5 @@ class http_session_data {
   http_session_data(http_session_data&&) noexcept            = default;
   http_session_data& operator=(http_session_data&&) noexcept = default;
 };
+
 }  // namespace doodle::http
