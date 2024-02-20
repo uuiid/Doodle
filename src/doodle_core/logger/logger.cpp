@@ -77,7 +77,7 @@ template <typename Mutex>
 rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t max_size, std::size_t max_files /*= 10*/)
     : file_stem_(in_path.stem().generic_string()),
       base_filename_(std::move(in_path)),
-      max_size_(std::clamp(max_size, 0ull, 200000ull)),
+      max_size_(std::clamp(max_size, 2ull, 1024ull * 1024ull * 1024ull * 1024ull)),
       max_files_(std::clamp(max_files, 2ull, 200000ull)),
       current_size_(0),
       index_(0) {
