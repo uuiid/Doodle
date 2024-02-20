@@ -28,7 +28,6 @@ class http_listener {
   ~http_listener() = default;
 
   void run();
-  void stop();
 
  private:
   void do_accept();
