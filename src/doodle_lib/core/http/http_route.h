@@ -7,30 +7,15 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
+class http_function;
+
+using http_function_ptr = std::shared_ptr<http_function>;
 class http_route {
  public:
   using action_type = std::function<void(const entt::handle&)>;
-  class capture_url {
-    std::vector<std::string> capture_vector_;
-    boost::dynamic_bitset<> capture_bitset_{};
-
-    void set_cap_bit();
-    std::tuple<bool, std::map<std::string, std::string>> match_url(boost::urls::segments_ref in_segments_ref) const;
-
-   public:
-    using action_type = std::function<void(const entt::handle&)>;
-
-    action_type action_;
-    explicit capture_url(std::vector<std::string> in_vector, action_type in_function)
-        : capture_vector_{std::move(in_vector)}, action_{std::move(in_function)} {
-      set_cap_bit();
-    };
-
-    http_route::action_type operator()(boost::urls::segments_ref in_segments_ref) const;
-  };
 
  private:
-  using map_actin_type = std::vector<capture_url>;
+  using map_actin_type = std::vector<http_function_ptr>;
   std::map<boost::beast::http::verb, map_actin_type> actions;
 
   template <typename type_t, typename = void>
@@ -46,7 +31,7 @@ class http_route {
     return l_vector;
   }
   // 注册路由
-  void reg(boost::beast::http::verb in_verb, std::vector<std::string> in_vector, capture_url::action_type in_function);
+  void reg(boost::beast::http::verb in_verb, std::vector<std::string> in_vector, http_function_ptr in_function);
 
  public:
   template <typename CompletionHandler>

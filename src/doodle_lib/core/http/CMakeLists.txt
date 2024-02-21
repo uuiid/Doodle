@@ -7,6 +7,8 @@ target_sources(
         http_websocket_data.h
         http_session.h
         http_route.h
+        http_function.h
+
 
         PRIVATE
         http_listener.cpp
@@ -15,4 +17,5 @@ target_sources(
         http_session_data.cpp
         http_websocket_data.cpp
         http_route.cpp
+        http_function.cpp
 )
