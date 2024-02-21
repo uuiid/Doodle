@@ -46,15 +46,26 @@ class http_function {
   const boost::beast::http::verb verb_;
   const std::vector<capture_data_t> capture_vector_;
 
-  std::map<std::string, std::string> match_url_;
-
  public:
+  struct capture_t {
+    std::map<std::string, std::string> capture_map;
+  };
+
   explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
       : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)) {}
-  virtual ~http_function() = default;
+  virtual ~http_function()                                = default;
+
+  // copy constructor
+  http_function(const http_function& in_other)            = default;
+  // move constructor
+  http_function(http_function&& in_other)                 = default;
+  // copy assignment
+  http_function& operator=(const http_function& in_other) = default;
+  // move assignment
+  http_function& operator=(http_function&& in_other)      = default;
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
-  bool set_match_url(boost::urls::segments_ref in_segments_ref);
+  std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
 
   virtual void operator()(const entt::handle& in_handle) const = 0;
 };

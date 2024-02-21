@@ -19,6 +19,8 @@ class http_route {
   // 注册路由
   http_route& reg(const http_function_ptr in_function);
   // 路由分发
-  http_function_ptr operator()(boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment) const;
+  http_function_ptr operator()(
+      boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const entt::handle& in_handle
+  ) const;
 };
 }  // namespace doodle::http
