@@ -27,4 +27,66 @@ class http_session_data {
   http_session_data& operator=(http_session_data&&) noexcept = default;
 };
 
+namespace session {
+template <typename MsgBody>
+struct async_read_body;
+
+template <typename MsgBody>
+struct async_read_body {
+  std::unique_ptr<boost::beast::http::request_parser<MsgBody>> request_parser_;
+
+  template <typename T>
+  explicit async_read_body(async_read_body<T>& in_request_parser_empty_body)
+    requires(std::is_same_v<T, boost::beast::http::empty_body>);
+
+  explicit async_read_body(const entt::handle& in_handle);
+  // copy delete
+  async_read_body(const async_read_body&)                = delete;
+  async_read_body& operator=(const async_read_body&)     = delete;
+  // move
+  async_read_body(async_read_body&&) noexcept            = default;
+  async_read_body& operator=(async_read_body&&) noexcept = default;
+
+  inline boost::beast::http::request_parser<MsgBody>& operator*() const { return *request_parser_; }
+  inline boost::beast::http::request_parser<MsgBody>* operator->() const { return request_parser_.get(); }
+};
+
+template <>
+struct async_read_body<boost::beast::http::empty_body> {
+  std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>> request_parser_;
+
+  async_read_body()
+      : request_parser_(std::make_unique<boost::beast::http::request_parser<boost::beast::http::empty_body>>()) {}
+  // copy delete
+  async_read_body(const async_read_body&)                = delete;
+  async_read_body& operator=(const async_read_body&)     = delete;
+  // move
+  async_read_body(async_read_body&&) noexcept            = default;
+  async_read_body& operator=(async_read_body&&) noexcept = default;
+
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& operator*() const {
+    return *request_parser_;
+  }
+  inline boost::beast::http::request_parser<boost::beast::http::empty_body>* operator->() const {
+    return request_parser_.get();
+  }
+};
+using request_parser_empty_body = async_read_body<boost::beast::http::empty_body>;
+
+template <typename MsgBody>
+async_read_body<MsgBody>::async_read_body(const entt::handle& in_handle)
+    : request_parser_(std::make_unique<boost::beast::http::request_parser<MsgBody>>(
+          std::move(*in_handle.get<async_read_body<boost::beast::http::empty_body>>())
+      )) {}
+
+template <typename MsgBody>
+template <typename T>
+async_read_body<MsgBody>::async_read_body(async_read_body<T>& in_request_parser_empty_body)
+  requires(std::is_same_v<T, boost::beast::http::empty_body>)
+    : request_parser_(
+          std::make_unique<boost::beast::http::request_parser<MsgBody>>(std::move(*in_request_parser_empty_body))
+      ) {}
+
+}  // namespace session
+
 }  // namespace doodle::http
