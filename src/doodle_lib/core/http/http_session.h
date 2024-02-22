@@ -16,7 +16,6 @@ class http_session {
 
   void run();
 
-  void do_close();
   void operator()(boost::system::error_code ec, std::size_t bytes_transferred);
 };
 

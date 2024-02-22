@@ -3,9 +3,11 @@
 //
 
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/core/wait_op.h>
 
 #include "boost/algorithm/string.hpp"
 #include "boost/dynamic_bitset.hpp"
+#include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
@@ -48,7 +50,24 @@ class http_function {
 
  public:
   struct capture_t {
-    std::map<std::string, std::string> capture_map;
+    std::map<std::string, std::string> capture_map_;
+    capture_t() = default;
+    explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
+
+    template <typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
+    std::optional<T> get(const std::string& in_str) const {
+      if (capture_map_.find(in_str) != capture_map_.end()) {
+        return boost::lexical_cast<T>(capture_map_.at(in_str));
+      }
+      return {};
+    }
+    template <typename T, std::enable_if_t<!std::is_arithmetic_v<T>>* = nullptr>
+    std::optional<T> get(const std::string& in_str) const {
+      if (capture_map_.find(in_str) != capture_map_.end()) {
+        return capture_map_.at(in_str);
+      }
+      return {};
+    }
   };
 
   explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
@@ -69,4 +88,20 @@ class http_function {
 
   virtual void operator()(const entt::handle& in_handle) const = 0;
 };
+template <typename MsgBody>
+class http_method_base : public http_function {
+ public:
+};
+
+class http_method_web_socket : public http_function {
+ protected:
+  virtual void operator_call(const entt::handle& in_handle) const = 0;
+  void upgrade_websocket(const entt::handle& in_handle) const;
+
+ public:
+  explicit http_method_web_socket(std::string in_url)
+      : http_function(boost::beast::http::verb::get, std::move(in_url)) {}
+  void operator()(const entt::handle& in_handle) const override;
+};
+
 }  // namespace doodle::http

@@ -9,12 +9,19 @@
 #include <boost/url.hpp>
 namespace doodle::http {
 class http_session_data {
+ private:
+  void do_read(boost::system::error_code ec, std::size_t bytes_transferred);
+
  public:
   explicit http_session_data(boost::asio::ip::tcp::socket in_socket)
-      : stream_(std::make_unique<boost::beast::tcp_stream>(std::move(in_socket))) {}
+      : stream_(std::make_unique<boost::beast::tcp_stream>(std::move(in_socket))),
+        buffer_{},
+        url_{},
+        request_parser_{} {}
   std::unique_ptr<boost::beast::tcp_stream> stream_;
   boost::beast::flat_buffer buffer_;
   boost::url url_;
+  std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>> request_parser_;
 
   inline boost::beast::tcp_stream& operator*() const { return *stream_; }
   inline boost::beast::tcp_stream* operator->() const { return stream_.get(); }
@@ -25,6 +32,13 @@ class http_session_data {
   // move
   http_session_data(http_session_data&&) noexcept            = default;
   http_session_data& operator=(http_session_data&&) noexcept = default;
+
+  void rend_head();
+
+  void do_close();
+
+  template <typename name>
+  auto send_error(boost::beast::http::status in_status, const std::string& in_reason);
 };
 
 namespace session {
@@ -40,6 +54,7 @@ struct async_read_body {
     requires(std::is_same_v<T, boost::beast::http::empty_body>);
 
   explicit async_read_body(const entt::handle& in_handle);
+
   // copy delete
   async_read_body(const async_read_body&)                = delete;
   async_read_body& operator=(const async_read_body&)     = delete;
