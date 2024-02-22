@@ -10,6 +10,7 @@ namespace doodle::http {
 
 http_route& http_route::reg(const doodle::http::http_function_ptr in_function) {
   actions[in_function->get_verb()].emplace_back(in_function);
+  return *this;
 }
 
 http_function_ptr http_route::operator()(

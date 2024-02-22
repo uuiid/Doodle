@@ -51,7 +51,7 @@ void http_session::do_read(boost::system::error_code ec) {
 
 err_tag:
   BOOST_BEAST_ASSIGN_EC(ec, error_enum::not_find_work_class);
-  do_write::send_error_code(handle_, ec, boost::beast::http::status::internal_server_error);
+  //  do_write::send_error_code(handle_, ec, boost::beast::http::status::internal_server_error);
 }
 
 void http_session::operator()(boost::system::error_code ec, std::size_t /*bytes_transferred*/) {
@@ -68,7 +68,7 @@ void http_session::operator()(boost::system::error_code ec, std::size_t /*bytes_
     } else {
       l_logger->log(log_loc(), level::warn, fmt::format("on_read error: {} ", ec));
     }
-    do_close();
+    //    do_close();
     return;
   }
 
