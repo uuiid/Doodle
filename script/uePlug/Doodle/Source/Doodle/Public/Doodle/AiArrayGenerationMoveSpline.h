@@ -46,8 +46,12 @@ class DOODLE_API ADoodleAiArrayGenerationMoveSpline : public AActor {
   UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "接收贴花")
   bool bReceivesDecals;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "上下偏移值")
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "生成点上下偏移值")
   float OffsetValue;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "网格体上下偏移值")
+  float OffsetValueMesh;
+
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "旋转偏移值")
   float SkinOffsetQuatValue;
 

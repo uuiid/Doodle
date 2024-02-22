@@ -137,7 +137,7 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
     L_Actor->GetCapsuleComponent()->SetCapsuleHalfHeight(L_Size);
 
     L_Sk_Com->SetRelativeLocationAndRotation(
-        {0.f, 0.f, -L_Size}, FQuat{FVector::ZAxisVector, FMath::DegreesToRadians(SkinOffsetQuatValue)}
+        {0.f, 0.f, -L_Size + OffsetValueMesh}, FQuat{FVector::ZAxisVector, FMath::DegreesToRadians(SkinOffsetQuatValue)}
     );
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
