@@ -25,6 +25,9 @@ class http_function {
       if (l_vector[i].front() == '{' && l_vector[i].back() == '}') {
         l_capture_vector[i].name       = l_vector[i].substr(1, l_vector[i].size() - 2);
         l_capture_vector[i].is_capture = true;
+      } else {
+        l_capture_vector[i].name       = l_vector[i];
+        l_capture_vector[i].is_capture = false;
       }
     }
     return l_capture_vector;
@@ -55,14 +58,18 @@ class http_function {
     }
   };
 
-  explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
-      : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)) {}
+  explicit http_function(
+      boost::beast::http::verb in_verb, std::string in_url, std::function<void(entt::handle)> in_callback
+  )
+      : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {}
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
 
   std::function<void(entt::handle)> callback_;
 };
+using http_function_ptr = std::shared_ptr<http_function>;
+
 namespace detail {
 
 class http_method_web_socket {
