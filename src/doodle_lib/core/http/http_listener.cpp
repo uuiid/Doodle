@@ -6,6 +6,7 @@
 
 #include <doodle_app/app/app_command.h>
 
+#include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/socket_logger.h>
 namespace doodle::http {
@@ -33,6 +34,7 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
   } else {
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<socket_logger>();
+    l_handle.emplace<http_route>(*route_ptr_);
     l_handle.emplace<http_session_data>(std::move(socket)).rend_head();
   }
   do_accept();
