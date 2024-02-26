@@ -13,5 +13,6 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
   l_listener->run();
+  return false;
 }
 }  // namespace doodle::launch

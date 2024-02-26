@@ -55,7 +55,6 @@ struct http_method_base : doodle::detail::wait_op {
  public:
   entt::handle handle_{};
 
- protected:
   explicit http_method_base(Handler&& handler)
       : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
   ~http_method_base() = default;
@@ -104,7 +103,7 @@ struct async_read_body {
           auto l_op                = std::make_shared<http_method_base_t>(std::forward<decltype(handler)>(handler));
           wait_op_                 = l_op;
           set_handle_fun_          = [](std::shared_ptr<doodle::detail::wait_op> in_wait_op, entt::handle in_handle) {
-            std::dynamic_pointer_cast<http_method_base_t>(in_wait_op)->handle_ = std::move(in_handle);
+            std::static_pointer_cast<http_method_base_t>(in_wait_op)->handle_ = std::move(in_handle);
           };
           rend_body();
         },
@@ -118,7 +117,7 @@ struct async_read_body {
     l_data.stream_->expires_after(30s);
     boost::beast::http::async_read(
         *l_data.stream_, l_data.buffer_, *request_parser_,
-        boost::beast::bind_front_handler(&async_read_body::do_read, &l_data)
+        boost::beast::bind_front_handler(&async_read_body::do_read, this)
     );
   }
   void do_read(boost::system::error_code ec, std::size_t bytes_transferred) {
