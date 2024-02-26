@@ -11,22 +11,26 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
-class http_function {
-  static inline std::vector<std::string> split_str(std::string& in_str) {
-    std::vector<std::string> l_vector{};
-    boost::split(l_vector, in_str, boost::is_any_of("/"));
-    return l_vector;
-  }
-  static inline boost::dynamic_bitset<> set_cap_bit(const std::vector<std::string>& in_vector) {
-    boost::dynamic_bitset<> l_bitset(in_vector.size());
-    for (size_t i = 0; i < in_vector.size(); ++i) {
-      if (in_vector[i].front() == '{' && in_vector[i].back() == '}') {
-        l_bitset.set(i);
-      }
-    }
-    return l_bitset;
-  }
+template <typename Handler>
+struct http_method_base : doodle::detail::wait_op {
+ public:
+  entt::handle handle_{};
 
+ protected:
+  explicit http_method_base(Handler&& handler)
+      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
+  ~http_method_base() = default;
+
+ private:
+  static void on_complete(wait_op* op) {
+    auto l_self = static_cast<http_method_base*>(op);
+    boost::asio::post(
+        boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->handle_)
+    );
+  }
+};
+
+class http_function {
   struct capture_data_t {
     std::string name;
     bool is_capture;
@@ -88,20 +92,29 @@ class http_function {
 
   virtual void operator()(const entt::handle& in_handle) const = 0;
 };
+namespace detail {
+
 template <typename MsgBody>
-class http_method_base : public http_function {
+class http_method_impl {
  public:
+  using request_parser_t = boost::beast::http::request_parser<MsgBody>;
+  entt::handle handle_{};
+  std::unique_ptr<request_parser_t> request_parser_{};
+  explicit http_method_impl(const entt::handle& in_handle);
+
+  inline request_parser_t& operator*() const { return *request_parser_; }
+  inline request_parser_t* operator->() const { return request_parser_.get(); }
 };
 
-class http_method_web_socket : public http_function {
+class http_method_web_socket {
  protected:
   virtual void operator_call(const entt::handle& in_handle) const = 0;
   void upgrade_websocket(const entt::handle& in_handle) const;
 
  public:
-  explicit http_method_web_socket(std::string in_url)
-      : http_function(boost::beast::http::verb::get, std::move(in_url)) {}
-  void operator()(const entt::handle& in_handle) const override;
+  explicit http_method_web_socket(std::string in_url);
+  void operator()(const entt::handle& in_handle) const;
 };
+}  // namespace detail
 
 }  // namespace doodle::http
