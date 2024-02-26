@@ -22,7 +22,7 @@ std::tuple<bool, http_function::capture_t> http_function::set_match_url(boost::u
   }
   return {true, capture_t{l_str}};
 }
-
+namespace detail {
 void http_method_web_socket::upgrade_websocket(const entt::handle& in_handle) const {
   if (in_handle && in_handle.any_of<http_session_data, session::request_parser_empty_body>()) {
   } else {
@@ -40,5 +40,5 @@ void http_method_web_socket::operator()(const entt::handle& in_handle) const {
     operator_call(in_handle);
   }
 }
-
+}  // namespace detail
 }  // namespace doodle::http

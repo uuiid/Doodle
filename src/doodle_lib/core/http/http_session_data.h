@@ -4,13 +4,19 @@
 
 #pragma once
 
+#include <doodle_lib/core/http/socket_logger.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
+
 namespace doodle::http {
 class http_session_data {
  private:
   void do_read(boost::system::error_code ec, std::size_t bytes_transferred);
+  void do_send(boost::system::error_code ec, std::size_t bytes_transferred);
+  std::uint32_t version_{};
+  bool keep_alive_{};
 
  public:
   explicit http_session_data(boost::asio::ip::tcp::socket in_socket)
@@ -36,24 +42,51 @@ class http_session_data {
   void rend_head();
 
   void do_close();
-
-  template <typename name>
-  auto send_error(boost::beast::http::status in_status, const std::string& in_reason);
+  void seed_error(boost::beast::http::status in_status, boost::system::error_code ec);
+  void seed(boost::beast::http::message_generator in_message_generator);
 };
 
 namespace session {
+
+template <typename Handler>
+struct http_method_base : doodle::detail::wait_op {
+ public:
+  entt::handle handle_{};
+
+ protected:
+  explicit http_method_base(Handler&& handler)
+      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
+  ~http_method_base() = default;
+
+ private:
+  static void on_complete(wait_op* op) {
+    auto l_self = static_cast<http_method_base*>(op);
+    boost::asio::post(
+        boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->handle_)
+    );
+  }
+};
+
 template <typename MsgBody>
 struct async_read_body;
 
 template <typename MsgBody>
 struct async_read_body {
-  std::unique_ptr<boost::beast::http::request_parser<MsgBody>> request_parser_;
+ public:
+  using set_handle_fun_t = void (*)(std::shared_ptr<doodle::detail::wait_op>, entt::handle);
 
-  template <typename T>
-  explicit async_read_body(async_read_body<T>& in_request_parser_empty_body)
-    requires(std::is_same_v<T, boost::beast::http::empty_body>);
+ private:
+  set_handle_fun_t set_handle_fun_{};
 
-  explicit async_read_body(const entt::handle& in_handle);
+ public:
+  using request_parser_t = boost::beast::http::request_parser<MsgBody>;
+  std::unique_ptr<request_parser_t> request_parser_;
+  std::shared_ptr<doodle::detail::wait_op> wait_op_{};
+
+  explicit async_read_body(const entt::handle& in_handle)
+      : request_parser_(std::make_unique<boost::beast::http::request_parser<MsgBody>>(
+            std::move(*in_handle.get<http_session_data>().request_parser_)
+        )){};
 
   // copy delete
   async_read_body(const async_read_body&)                = delete;
@@ -61,46 +94,42 @@ struct async_read_body {
   // move
   async_read_body(async_read_body&&) noexcept            = default;
   async_read_body& operator=(async_read_body&&) noexcept = default;
-
-  inline boost::beast::http::request_parser<MsgBody>& operator*() const { return *request_parser_; }
-  inline boost::beast::http::request_parser<MsgBody>* operator->() const { return request_parser_.get(); }
-};
-
-template <>
-struct async_read_body<boost::beast::http::empty_body> {
-  std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>> request_parser_;
-
-  async_read_body()
-      : request_parser_(std::make_unique<boost::beast::http::request_parser<boost::beast::http::empty_body>>()) {}
-  // copy delete
-  async_read_body(const async_read_body&)                = delete;
-  async_read_body& operator=(const async_read_body&)     = delete;
-  // move
-  async_read_body(async_read_body&&) noexcept            = default;
-  async_read_body& operator=(async_read_body&&) noexcept = default;
-
-  inline boost::beast::http::request_parser<boost::beast::http::empty_body>& operator*() const {
-    return *request_parser_;
+  template <typename CompletionHandler>
+  auto async_end(CompletionHandler&& in_handler) {
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, entt::handle)>(
+        [this](auto&& handler) {
+          using http_method_base_t = http_method_base<std::decay_t<decltype(handler)>>;
+          auto l_op                = std::make_shared<http_method_base_t>(std::forward<decltype(handler)>(handler));
+          wait_op_                 = l_op;
+          set_handle_fun_          = [](std::shared_ptr<doodle::detail::wait_op> in_wait_op, entt::handle in_handle) {
+            std::dynamic_pointer_cast<http_method_base_t>(in_wait_op)->handle_ = std::move(in_handle);
+          };
+        },
+        in_handler
+    );
   }
-  inline boost::beast::http::request_parser<boost::beast::http::empty_body>* operator->() const {
-    return request_parser_.get();
+
+  void rend_body() {
+    auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+    auto& l_data       = l_self_handle.get<http_session_data>();
+    l_data.stream_->expires_after(30s);
+    boost::beast::http::async_read(
+        *l_data.stream_, l_data.buffer_, *request_parser_,
+        boost::beast::bind_front_handler(&async_read_body::do_read, &l_data)
+    );
+  }
+  void do_read(boost::system::error_code ec, std::size_t bytes_transferred) {
+    auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+    auto l_logger      = l_self_handle.get<socket_logger>().logger_;
+    auto& l_data       = l_self_handle.get<http_session_data>();
+    set_handle_fun_(wait_op_, l_self_handle);
+    if (ec) {
+      l_logger->log(log_loc(), level::err, fmt::format("读取头部失败 {}", ec.message()));
+      wait_op_->ec_ = ec;
+    }
+    wait_op_->complete();
   }
 };
-using request_parser_empty_body = async_read_body<boost::beast::http::empty_body>;
-
-template <typename MsgBody>
-async_read_body<MsgBody>::async_read_body(const entt::handle& in_handle)
-    : request_parser_(std::make_unique<boost::beast::http::request_parser<MsgBody>>(
-          std::move(*in_handle.get<async_read_body<boost::beast::http::empty_body>>())
-      )) {}
-
-template <typename MsgBody>
-template <typename T>
-async_read_body<MsgBody>::async_read_body(async_read_body<T>& in_request_parser_empty_body)
-  requires(std::is_same_v<T, boost::beast::http::empty_body>)
-    : request_parser_(
-          std::make_unique<boost::beast::http::request_parser<MsgBody>>(std::move(*in_request_parser_empty_body))
-      ) {}
 
 }  // namespace session
 

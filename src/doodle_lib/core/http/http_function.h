@@ -11,25 +11,6 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
-template <typename Handler>
-struct http_method_base : doodle::detail::wait_op {
- public:
-  entt::handle handle_{};
-
- protected:
-  explicit http_method_base(Handler&& handler)
-      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
-  ~http_method_base() = default;
-
- private:
-  static void on_complete(wait_op* op) {
-    auto l_self = static_cast<http_method_base*>(op);
-    boost::asio::post(
-        boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->handle_)
-    );
-  }
-};
-
 class http_function {
   struct capture_data_t {
     std::string name;
@@ -76,21 +57,11 @@ class http_function {
 
   explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
       : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)) {}
-  virtual ~http_function()                                = default;
-
-  // copy constructor
-  http_function(const http_function& in_other)            = default;
-  // move constructor
-  http_function(http_function&& in_other)                 = default;
-  // copy assignment
-  http_function& operator=(const http_function& in_other) = default;
-  // move assignment
-  http_function& operator=(http_function&& in_other)      = default;
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
 
-  virtual void operator()(const entt::handle& in_handle) const = 0;
+  std::function<void(entt::handle)> callback_;
 };
 namespace detail {
 

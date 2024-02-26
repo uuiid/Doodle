@@ -15,19 +15,7 @@
 
 namespace doodle::http {
 
-void http_session::run() {
-  if (handle_ && handle_.any_of<http_session_data>()) {
-    auto& data = handle_.get<http_session_data>();
-    data->expires_after(30s);
-    boost::beast::http::async_read_header(
-        *data, data.buffer_, *handle_.emplace_or_replace<session::request_parser_empty_body>(), std::move(*this)
-    );
-  } else {
-    default_logger_raw()->log(
-        log_loc(), level::err, "http_session::run() handle_ is null or not has http_session_data"
-    );
-  }
-}
+void http_session::run() {}
 void http_session::do_read(boost::system::error_code ec) {
   auto& l_data  = handle_.get<http_session_data>();
   auto l_logger = handle_.get<socket_logger>().logger_;
