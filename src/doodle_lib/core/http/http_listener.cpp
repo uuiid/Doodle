@@ -33,7 +33,7 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
   } else {
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<socket_logger>();
-    l_handle.emplace<http_session_data>(std::move(socket));
+    l_handle.emplace<http_session_data>(std::move(socket)).rend_head();
   }
   do_accept();
 }

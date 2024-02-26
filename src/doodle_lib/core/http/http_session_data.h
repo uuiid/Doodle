@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <doodle_core/core/wait_op.h>
+
 #include <doodle_lib/core/http/socket_logger.h>
 
 #include <boost/asio.hpp>
@@ -104,6 +106,7 @@ struct async_read_body {
           set_handle_fun_          = [](std::shared_ptr<doodle::detail::wait_op> in_wait_op, entt::handle in_handle) {
             std::dynamic_pointer_cast<http_method_base_t>(in_wait_op)->handle_ = std::move(in_handle);
           };
+          rend_body();
         },
         in_handler
     );
