@@ -14,7 +14,6 @@ namespace doodle::launch {
 
 bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   using signal_t     = boost::asio::signal_set;
-  using signal_ptr_t = std::shared_ptr<signal_t>;
   auto l_signal_ptr  = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
   l_signal_ptr->async_wait([l_signal_ptr](boost::system::error_code ec, int signal) {
     if (ec) {
