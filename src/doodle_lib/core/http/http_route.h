@@ -1,7 +1,7 @@
 //
 // Created by TD on 2024/2/21.
 //
-
+#pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/dynamic_bitset.hpp>
