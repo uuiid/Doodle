@@ -22,6 +22,7 @@ target_sources(
         file_association.h
         main_map.h
         maya_anim_file.h
+        computer.h
 
 
         PRIVATE
@@ -47,6 +48,7 @@ target_sources(
         file_association.cpp
         main_map.cpp
         maya_anim_file.cpp
+        computer.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
