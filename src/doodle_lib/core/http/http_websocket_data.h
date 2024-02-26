@@ -16,6 +16,8 @@ class http_websocket_data {
 
   std::unique_ptr<websocket_stream> stream_;
   boost::beast::flat_buffer buffer_{};  // (Must persist between reads)
+
+  void run();
 };
 
 }  // namespace doodle::http

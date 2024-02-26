@@ -65,18 +65,6 @@ class http_function {
 };
 namespace detail {
 
-template <typename MsgBody>
-class http_method_impl {
- public:
-  using request_parser_t = boost::beast::http::request_parser<MsgBody>;
-  entt::handle handle_{};
-  std::unique_ptr<request_parser_t> request_parser_{};
-  explicit http_method_impl(const entt::handle& in_handle);
-
-  inline request_parser_t& operator*() const { return *request_parser_; }
-  inline request_parser_t* operator->() const { return request_parser_.get(); }
-};
-
 class http_method_web_socket {
  protected:
   virtual void operator_call(const entt::handle& in_handle) const = 0;

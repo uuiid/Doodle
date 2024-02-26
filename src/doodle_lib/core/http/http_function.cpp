@@ -42,7 +42,7 @@ void http_method_web_socket::upgrade_websocket(const entt::handle& in_handle) co
       return;
     }
     boost::beast::get_lowest_layer(*in_handle_1.get<http_session_data>().stream_).expires_never();
-    in_handle_1.emplace<http_websocket_data>(std::move(*in_handle_1.get<http_session_data>().stream_));
+    in_handle_1.emplace<http_websocket_data>(std::move(*in_handle_1.get<http_session_data>().stream_)).run();
     in_handle_1.erase<http_session_data>();
   });
 }

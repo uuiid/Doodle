@@ -3,3 +3,6 @@
 //
 
 #include "http_websocket_data.h"
+namespace doodle::http {
+void http_websocket_data::run() {}
+}  // namespace doodle::http
