@@ -51,16 +51,17 @@ class http_session_data {
 namespace session {
 
 template <typename Handler>
-struct http_method_base : doodle::detail::wait_op {
+struct http_method_base : doodle::detail::wait_op_lasting {
  public:
   entt::handle handle_{};
 
   explicit http_method_base(Handler&& handler)
-      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
+      : doodle::detail::wait_op_lasting(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){
+        };
   ~http_method_base() = default;
 
  private:
-  static void on_complete(wait_op* op) {
+  static void on_complete(wait_op_lasting* op) {
     auto l_self = static_cast<http_method_base*>(op);
     boost::asio::post(
         boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->handle_)
