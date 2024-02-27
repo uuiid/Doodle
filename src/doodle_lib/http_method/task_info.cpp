@@ -4,10 +4,47 @@
 
 #include "task_info.h"
 
+#include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/metadata/server_task_info.h>
+
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 namespace doodle::http {
-void task_info::post_task(boost::system::error_code in_error_code, entt::handle in_handle) {}
+void task_info::post_task(boost::system::error_code in_error_code, entt::handle in_handle) {
+  auto &session      = in_handle.get<http_session_data>();
+  auto &l_req        = in_handle.get<session::async_read_body<basic_json_body>>();
+
+  auto l_body        = l_req.request_parser_->get().body();
+  auto l_task_handle = entt::handle{*g_reg(), g_reg()->create()};
+  if (!l_body.contains("data")) {
+    BOOST_BEAST_ASSIGN_EC(in_error_code, error_enum::bad_json_string);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  l_task_handle.emplace<server_task_info>(l_body["data"]);
+  if (l_body.contains("source_computer")) {
+    l_task_handle.get<server_task_info>().source_computer_ = l_body["source_computer"];
+  }
+  if (l_body.contains("submitter")) {
+    l_task_handle.get<server_task_info>().submitter_ = l_body["submitter"];
+  }
+
+  if (l_body.contains("submit_time")) {
+    l_task_handle.get<server_task_info>().submit_time_ = l_body["submit_time"].get<chrono::sys_time_pos>();
+  }
+
+  nlohmann::json l_response_json{};
+  l_response_json["id"] = l_task_handle;
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, l_req.request_parser_->get().version()
+  };
+  l_response.keep_alive(l_req.request_parser_->get().keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.body() = l_response_json.dump();
+  l_response.prepare_payload();
+  session.seed(std::move(l_response));
+}
 
 void task_info::get_task(boost::system::error_code in_error_code, entt::handle in_handle) {}
 void task_info::list_task(boost::system::error_code in_error_code, entt::handle in_handle) {}

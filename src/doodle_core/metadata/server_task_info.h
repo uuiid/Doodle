@@ -15,5 +15,11 @@ class server_task_info {
   ~server_task_info() = default;
 
   nlohmann::json data_{};
+
+  std::string source_computer_{};
+  // 提交人
+  std::string submitter_{};
+  // 提交时间
+  chrono::sys_time_pos submit_time_{};
 };
 }  // namespace doodle
