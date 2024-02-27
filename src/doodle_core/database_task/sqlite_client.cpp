@@ -39,6 +39,7 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return l_reg;
   obs_all l_obs{};
   l_reg->ctx().emplace<database_info>().path_ = in_path;
+  std::int32_t l_count                        = 0;
   do {
     try {
       auto l_con = l_reg->ctx().get<database_info>().get_connection_const();
@@ -49,7 +50,12 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
       std::this_thread::sleep_for(std::chrono::microseconds{1});
       default_logger_raw()->log(log_loc(), level::err, "打开文件 {} 失败 {}", in_path, in_error.what());
     }
-  } while (true);
+    ++l_count;
+  } while (l_count < 100);
+  if (l_count >= 100) {
+    default_logger_raw()->log(log_loc(), level::err, "打开文件 {} 失败", in_path);
+    return l_reg;
+  }
   l_reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
   l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp");
   return l_reg;
