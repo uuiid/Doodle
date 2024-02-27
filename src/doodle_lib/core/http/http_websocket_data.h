@@ -7,6 +7,8 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
+
+#include <nlohmann/json.hpp>
 namespace doodle::http {
 class http_websocket_data {
  public:
@@ -29,6 +31,8 @@ class http_websocket_data {
   void do_destroy();
 
   void run_fun();
+  // 不一定有回复, 所以不需要回调
+  void seed(const nlohmann::json& in_json);
 };
 
 }  // namespace doodle::http

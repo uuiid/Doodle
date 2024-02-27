@@ -64,6 +64,10 @@ void http_websocket_data::run_fun() {
   }
   do_write();
 }
+void http_websocket_data::seed(const nlohmann::json& in_json) {
+  write_queue_.emplace(in_json.dump());
+  do_write();
+}
 
 void http_websocket_data::do_read() {
   auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
