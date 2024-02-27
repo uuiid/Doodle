@@ -3,6 +3,8 @@
 //
 
 #include "json_body.h"
+
+#include <doodle_core/exception/exception.h>
 namespace doodle::http {
 void basic_json_body::reader::init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec) {
   if (length) {

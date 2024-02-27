@@ -96,6 +96,7 @@ void http_session_data::do_close() {
 }
 
 namespace session {
+
 void http_method_web_socket::upgrade_websocket(const entt::handle& in_handle) const {
   auto& l_read = in_handle.emplace<session::async_read_body<boost::beast::http::string_body>>(in_handle);
   l_read.async_end([](const boost::system::error_code& ec, const entt::handle& in_handle_1) {

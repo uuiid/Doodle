@@ -145,12 +145,8 @@ class http_method_web_socket {
   void upgrade_websocket(const entt::handle& in_handle) const;
 
  public:
-  explicit http_method_web_socket(std::string in_url);
-  void operator()(const entt::handle& in_handle) const;
-
   template <typename CompletionHandler>
-  explicit http_method_web_socket(std::string in_url, CompletionHandler&& in_handler)
-      : http_method_web_socket(std::move(in_url)) {
+  explicit http_method_web_socket(CompletionHandler&& in_handler) {
     async_end(std::forward<CompletionHandler>(in_handler));
   }
 
@@ -168,6 +164,7 @@ class http_method_web_socket {
         in_handler
     );
   }
+  void operator()(const entt::handle& in_handle) const;
 };
 
 }  // namespace session
