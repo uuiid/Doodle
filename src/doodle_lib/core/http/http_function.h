@@ -1,7 +1,7 @@
 //
 // Created by TD on 2024/2/21.
 //
-
+#pragma once
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/wait_op.h>
 
@@ -69,7 +69,5 @@ class http_function {
   std::function<void(entt::handle)> callback_;
 };
 using http_function_ptr = std::shared_ptr<http_function>;
-
-
 
 }  // namespace doodle::http
