@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 namespace doodle {
+enum class computer_status { online, offline, busy, free, unknown };
 class computer {
  public:
   computer() = default;
@@ -13,6 +14,9 @@ class computer {
 
   std::string name_;
   std::string ip_;
+
+  computer_status server_status_ = computer_status::online;
+  computer_status client_status_ = computer_status::online;
 
  private:
   // to json

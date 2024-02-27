@@ -40,8 +40,12 @@ void http_websocket_data::run_fun() {
   if (read_queue_.empty()) return;
   auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger      = l_self_handle.get<socket_logger>().logger_;
-
-  auto l_json        = nlohmann::json::parse(read_queue_.front());
+  if (!nlohmann::json::accept(read_queue_.front())) {
+    l_logger->log(log_loc(), level::err, "json parse error: {}", read_queue_.front());
+    read_queue_.pop();
+    return;
+  }
+  auto l_json = nlohmann::json::parse(read_queue_.front());
   read_queue_.pop();
 
   if (l_json.contains("type") && l_json["type"] == "ping") {
@@ -50,8 +54,15 @@ void http_websocket_data::run_fun() {
       l_self_handle.get<doodle::computer>().name_ = l_json["name"];
     }
     write_queue_.emplace(l_json.dump());
-    do_write();
+  } else if (l_json.contains("type") && l_json["type"] == "set_state" && l_json.contains("state") && l_json["state"].is_string()) {
+    l_self_handle.get<doodle::computer>().client_status_ =
+        magic_enum::enum_cast<doodle::computer_status>(l_json["state"].get<std::string>())
+            .value_or(doodle::computer_status::unknown);
+
+  } else {
+    l_logger->log(log_loc(), level::err, "unknown type: {}", l_json.dump());
   }
+  do_write();
 }
 
 void http_websocket_data::do_read() {
