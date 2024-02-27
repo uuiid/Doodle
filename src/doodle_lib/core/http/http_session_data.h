@@ -189,9 +189,9 @@ class http_method_web_socket {
 
 template <typename MsgBody, typename CompletionHandler>
 auto make_http_reg_fun(CompletionHandler&& in_handler) {
-  return [in_handler = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) {
+  return [in_handler = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) mutable {
     auto& l_read = in_handle.emplace_or_replace<async_read_body<MsgBody>>(in_handle);
-    l_read.async_end(in_handler);
+    l_read.async_end(std::move(in_handler));
   };
 }
 template <bool has_websocket, typename CompletionHandler>
