@@ -17,8 +17,16 @@ class http_websocket_data {
   std::unique_ptr<websocket_stream> stream_;
   boost::beast::flat_buffer buffer_{};  // (Must persist between reads)
 
+  // read queue
+  std::queue<std::string> read_queue_;
+
+  // write queue
+  std::queue<std::string> write_queue_;
+
   void run();
   void do_read();
+  void do_write();
+  void do_destroy();
 };
 
 }  // namespace doodle::http

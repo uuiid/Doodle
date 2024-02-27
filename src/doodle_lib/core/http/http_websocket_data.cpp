@@ -32,5 +32,48 @@ void http_websocket_data::run() {
     do_read();
   });
 }
-void http_websocket_data::do_read() {}
+void http_websocket_data::do_read() {
+  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  auto l_logger      = l_self_handle.get<socket_logger>().logger_;
+
+  stream_->async_read(buffer_, [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
+    if (ec) {
+      l_logger->log(log_loc(), level::err, "async_read error: {}", ec);
+      if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
+        do_destroy();
+      }
+      return;
+    }
+    l_logger->log(log_loc(), level::info, "async_read success: {}", bytes_transferred);
+    read_queue_.emplace(boost::beast::buffers_to_string(buffer_.data()));
+    buffer_.consume(buffer_.size());
+    do_read();
+  });
+}
+void http_websocket_data::do_write() {
+  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  auto l_logger      = l_self_handle.get<socket_logger>().logger_;
+  if (write_queue_.empty()) return;
+  stream_->async_write(
+      boost::asio::buffer(write_queue_.front()),
+      [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
+        if (ec) {
+          l_logger->log(log_loc(), level::err, "async_write error: {}", ec);
+          if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
+            do_destroy();
+          }
+          return;
+        }
+        l_logger->log(log_loc(), level::info, "async_write success: {}", bytes_transferred);
+        write_queue_.pop();
+        do_write();
+      }
+  );
+}
+void http_websocket_data::do_destroy() {
+  boost::asio::post(g_io_context(), [l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)}] {
+    auto l = l_self_handle;
+    if (l) l.destroy();
+  });
+}
 }  // namespace doodle::http
