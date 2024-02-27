@@ -30,7 +30,7 @@ void http_websocket_data::run() {
       return;
     }
     do_read();
-  })
+  });
 }
 void http_websocket_data::do_read() {}
 }  // namespace doodle::http
