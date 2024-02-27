@@ -27,6 +27,8 @@ class http_websocket_data {
   void do_read();
   void do_write();
   void do_destroy();
+
+  void run_fun();
 };
 
 }  // namespace doodle::http
