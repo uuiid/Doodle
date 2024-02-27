@@ -4,11 +4,13 @@
 
 #include "computer.h"
 
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
+#include <doodle_lib/core/http/json_body.h>
 namespace doodle::http {
-void computer::list_computers(const entt::handle in_handle) {
+void computer::list_computers(boost::system::error_code in_error_code, const entt::handle in_handle) {
   std::vector<doodle::computer> l_computers{};
   for (auto &&[l_e, l_c] : g_reg()->view<doodle::computer>().each()) {
     l_computers.emplace_back(l_c);
@@ -25,12 +27,13 @@ void computer::list_computers(const entt::handle in_handle) {
   l_response.prepare_payload();
   in_handle.get<http_session_data>().seed(std::move(l_response));
 }
+
 void computer::reg(doodle::http::http_route &in_route) {
-  in_route
-      .reg(std::make_shared<http_function>(boost::beast::http::verb ::get, "v1/computer", [](entt::handle in_handle) {
-        boost::asio::post(
-            in_handle.get<http_session_data>().stream_->get_executor(), std::bind(&computer::list_computers, in_handle)
-        );
-      }));
+  in_route.reg(std::make_shared<http_function>(
+      boost::beast::http::verb ::get, "v1/computer",
+      session::http_method_web_socket{
+          "v1/computer", boost::asio::bind_executor(g_io_context(), &computer::list_computers)
+      }
+  ));
 }
 }  // namespace doodle::http

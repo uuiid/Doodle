@@ -70,17 +70,6 @@ class http_function {
 };
 using http_function_ptr = std::shared_ptr<http_function>;
 
-namespace detail {
 
-class http_method_web_socket {
- protected:
-  virtual void operator_call(const entt::handle& in_handle) const = 0;
-  void upgrade_websocket(const entt::handle& in_handle) const;
-
- public:
-  explicit http_method_web_socket(std::string in_url);
-  void operator()(const entt::handle& in_handle) const;
-};
-}  // namespace detail
 
 }  // namespace doodle::http

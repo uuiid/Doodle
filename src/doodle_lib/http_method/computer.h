@@ -13,7 +13,7 @@ class computer {
   ~computer() = default;
 
   // get 方法, 列出所有的注册计算机
-  static void list_computers(const entt::handle in_handle);
+  static void list_computers(boost::system::error_code in_error_code, const entt::handle in_handle);
 
   static void reg(http_route& in_route);
 };
