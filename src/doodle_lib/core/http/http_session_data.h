@@ -187,6 +187,21 @@ class http_method_web_socket {
   void operator()(const entt::handle& in_handle) const;
 };
 
+template <typename MsgBody, typename CompletionHandler>
+auto make_http_reg_fun(CompletionHandler&& in_handler) {
+  return [l_read = async_read_body<MsgBody>{}, in_handler = std::forward<CompletionHandler>(in_handler
+                                               )](const entt::handle& in_handle) { l_read.async_end(in_handler); };
+}
+template <bool has_websocket, typename CompletionHandler>
+auto make_http_reg_fun(CompletionHandler&& in_handler) {
+  if constexpr (has_websocket) {
+    return http_method_web_socket{std::forward<CompletionHandler>(in_handler)};
+  } else {
+    return [in_handler = std::forward<CompletionHandler>(in_handler)](const entt::handle& in_handle) {
+      boost::asio::post(boost::asio::prepend(std::move(in_handler), boost::system::error_code{}, in_handle));
+    };
+  }
+}
 }  // namespace session
 
 }  // namespace doodle::http
