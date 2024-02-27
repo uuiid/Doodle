@@ -23,4 +23,5 @@ class http_route {
       boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const entt::handle& in_handle
   ) const;
 };
+
 }  // namespace doodle::http
