@@ -99,7 +99,7 @@ void http_session_data::do_close() {
 namespace session {
 
 void http_method_web_socket::upgrade_websocket(const entt::handle& in_handle) const {
-  auto& l_read = in_handle.emplace<session::async_read_body<boost::beast::http::string_body>>(in_handle);
+  auto& l_read = in_handle.emplace_or_replace<session::async_read_body<boost::beast::http::string_body>>(in_handle);
   l_read.async_end([](const boost::system::error_code& ec, const entt::handle& in_handle_1) {
     auto l_logger = in_handle_1.get<socket_logger>().logger_;
     if (ec == boost::beast::http::error::end_of_stream) {
