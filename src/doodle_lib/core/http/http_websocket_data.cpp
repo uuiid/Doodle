@@ -3,6 +3,34 @@
 //
 
 #include "http_websocket_data.h"
+
+#include "doodle_core/lib_warp/boost_fmt_asio.h"
+#include "doodle_core/lib_warp/boost_fmt_error.h"
+
+#include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+
+#include "socket_logger.h"
 namespace doodle::http {
-void http_websocket_data::run() {}
+void http_websocket_data::run() {
+  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  auto l_logger      = l_self_handle.get<socket_logger>().logger_;
+  auto& l_data       = l_self_handle.get<session::async_read_body<boost::beast::http::string_body>>();
+  l_logger->log(
+      log_loc(), level::info, "开始处理请求 {} {}", l_data.request_parser_->get().body(),
+      l_data.request_parser_->get().target()
+  );
+  stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
+  stream_->set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
+    res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
+  }));
+  stream_->async_accept(l_data.request_parser_->get(), [l_logger, this](boost::system::error_code ec) {
+    if (ec) {
+      l_logger->log(log_loc(), level::err, "async_accept error: {}", ec);
+      return;
+    }
+    do_read();
+  })
+}
+void http_websocket_data::do_read() {}
 }  // namespace doodle::http

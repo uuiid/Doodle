@@ -18,6 +18,7 @@ class http_websocket_data {
   boost::beast::flat_buffer buffer_{};  // (Must persist between reads)
 
   void run();
+  void do_read();
 };
 
 }  // namespace doodle::http

@@ -25,6 +25,7 @@ void http_session_data::rend_head() {
 
 void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_transferred) {
   entt::handle l_self_handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  if (!l_self_handle) return;
   auto l_logger = l_self_handle.get<socket_logger>().logger_;
 
   if (ec) {
