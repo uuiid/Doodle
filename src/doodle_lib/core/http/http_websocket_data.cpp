@@ -38,10 +38,11 @@ void http_websocket_data::do_read() {
 
   stream_->async_read(buffer_, [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
     if (ec) {
-      l_logger->log(log_loc(), level::err, "async_read error: {}", ec);
       if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
         do_destroy();
+        return;
       }
+      l_logger->log(log_loc(), level::err, "async_read error: {}", ec);
       return;
     }
     l_logger->log(log_loc(), level::info, "async_read success: {}", bytes_transferred);
@@ -58,10 +59,11 @@ void http_websocket_data::do_write() {
       boost::asio::buffer(write_queue_.front()),
       [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
         if (ec) {
-          l_logger->log(log_loc(), level::err, "async_write error: {}", ec);
           if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
             do_destroy();
+            return;
           }
+          l_logger->log(log_loc(), level::err, "async_write error: {}", ec);
           return;
         }
         l_logger->log(log_loc(), level::info, "async_write success: {}", bytes_transferred);
