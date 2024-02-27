@@ -51,17 +51,16 @@ class http_session_data {
 namespace session {
 
 template <typename Handler>
-struct http_method_base : doodle::detail::wait_op_lasting {
+struct http_method_base : doodle::detail::wait_op {
  public:
   entt::handle handle_{};
 
   explicit http_method_base(Handler&& handler)
-      : doodle::detail::wait_op_lasting(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){
-        };
+      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
   ~http_method_base() = default;
 
  private:
-  static void on_complete(wait_op_lasting* op) {
+  static void on_complete(wait_op* op) {
     auto l_self = static_cast<http_method_base*>(op);
     boost::asio::post(
         boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->handle_)
@@ -136,11 +135,31 @@ struct async_read_body {
 
 class http_method_web_socket {
  public:
-  using set_handle_fun_t = void (*)(std::shared_ptr<doodle::detail::wait_op>, entt::handle);
+  template <typename Handler>
+  struct http_method_base_lasting : doodle::detail::wait_op_lasting {
+   public:
+    entt::handle handle_{};
+
+    explicit http_method_base_lasting(Handler&& handler)
+        : doodle::detail::wait_op_lasting(
+              &http_method_base_lasting::on_complete, std::make_shared<Handler>(std::move(handler))
+          ){};
+    ~http_method_base_lasting() = default;
+
+   private:
+    static void on_complete(wait_op_lasting* op) {
+      auto l_self = static_cast<http_method_base_lasting*>(op);
+      boost::asio::post(
+          boost::asio::prepend(std::move(*static_cast<Handler*>(l_self->handler_.get())), l_self->ec_, l_self->handle_)
+      );
+    }
+  };
+
+  using set_handle_fun_t = void (*)(std::shared_ptr<doodle::detail::wait_op_lasting>, entt::handle);
 
  private:
   set_handle_fun_t set_handle_fun_{};
-  std::shared_ptr<doodle::detail::wait_op> wait_op_{};
+  std::shared_ptr<doodle::detail::wait_op_lasting> wait_op_{};
 
  protected:
   void upgrade_websocket(const entt::handle& in_handle) const;
@@ -155,10 +174,10 @@ class http_method_web_socket {
   auto async_end(CompletionHandler&& in_handler) {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, entt::handle)>(
         [this](auto&& handler) {
-          using http_method_base_t = http_method_base<std::decay_t<decltype(handler)>>;
+          using http_method_base_t = http_method_base_lasting<std::decay_t<decltype(handler)>>;
           auto l_op                = std::make_shared<http_method_base_t>(std::forward<decltype(handler)>(handler));
           wait_op_                 = l_op;
-          set_handle_fun_          = [](std::shared_ptr<doodle::detail::wait_op> in_wait_op, entt::handle in_handle) {
+          set_handle_fun_ = [](std::shared_ptr<doodle::detail::wait_op_lasting> in_wait_op, entt::handle in_handle) {
             std::static_pointer_cast<http_method_base_t>(in_wait_op)->handle_ = std::move(in_handle);
           };
         },
