@@ -22,7 +22,7 @@ void http_websocket_data::run() {
       l_data.request_parser_->get().target()
   );
 
-  l_self_handle.emplace<doodle::computer>("", l_data.request_parser_->get().target());
+  l_self_handle.emplace<doodle::computer>("", std::string{l_data.request_parser_->get().target()});
   stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
   stream_->set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
     res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");

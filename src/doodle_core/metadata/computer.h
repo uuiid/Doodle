@@ -7,7 +7,8 @@
 namespace doodle {
 class computer {
  public:
-  computer()  = default;
+  computer() = default;
+  explicit computer(std::string in_name, std::string in_ip) : name_(std::move(in_name)), ip_(std::move(in_ip)) {}
   ~computer() = default;
 
   std::string name_;
