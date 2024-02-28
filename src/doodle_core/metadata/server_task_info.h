@@ -10,6 +10,12 @@
 #include <nlohmann/json.hpp>
 namespace doodle {
 
+/**
+ * 任务的状态,
+ * 提交 -> 分配 -> 接受 -> 完成/失败
+ * 提交 -> 分配 -> 拒绝
+ */
+
 enum class server_task_info_status {
   // 任务已经提交
   submitted,
@@ -46,6 +52,16 @@ class server_task_info {
   // 提交时间
   chrono::sys_time_pos submit_time_{};
 
+  // 运行任务的计算机名称
+  std::string run_computer_{};
+  // 运行任务的计算机ip
+  std::string run_computer_ip_{};
+
+  // 开始运行任务的时间
+  chrono::sys_time_pos run_time_{};
+  // 结束运行任务的时间
+  chrono::sys_time_pos end_time_{};
+
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
@@ -55,6 +71,10 @@ class server_task_info {
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
     j["submit_time"]     = fmt::to_string(p.submit_time_);
+    j["run_computer"]    = p.run_computer_;
+    j["run_computer_ip"] = p.run_computer_ip_;
+    j["run_time"]        = fmt::to_string(p.run_time_);
+    j["end_time"]        = fmt::to_string(p.end_time_);
   }
 };
 }  // namespace doodle

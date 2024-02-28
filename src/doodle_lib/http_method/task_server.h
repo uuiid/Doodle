@@ -2,7 +2,26 @@
 // Created by TD on 2024/2/28.
 //
 
-#ifndef DOODLE_TASK_SERVER_H
-#define DOODLE_TASK_SERVER_H
+#pragma once
 
-#endif  // DOODLE_TASK_SERVER_H
+#include <doodle_lib/doodle_lib_fwd.h>
+
+namespace doodle::http {
+
+class task_server {
+  using timer_t     = boost::asio::steady_timer;
+  using timer_t_ptr = std::shared_ptr<timer_t>;
+
+  timer_t_ptr timer_ptr_{};
+
+  // 分配任务
+  bool assign_task();
+
+ public:
+  task_server()  = default;
+  ~task_server() = default;
+
+  void run();
+};
+
+}  // namespace doodle::http

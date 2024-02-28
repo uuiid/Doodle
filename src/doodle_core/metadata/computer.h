@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 namespace doodle {
-enum class computer_status { online, offline, busy, free, unknown };
+enum class computer_status { online, busy, free, unknown };
 class computer {
  public:
   computer() = default;
