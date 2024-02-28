@@ -17,21 +17,7 @@ class http_function {
     bool is_capture;
   };
 
-  static inline std::vector<capture_data_t> set_cap_bit(std::string& in_str) {
-    std::vector<std::string> l_vector{};
-    boost::split(l_vector, in_str, boost::is_any_of("/"));
-    std::vector<capture_data_t> l_capture_vector{l_vector.size()};
-    for (size_t i = 0; i < l_vector.size(); ++i) {
-      if (l_vector[i].front() == '{' && l_vector[i].back() == '}') {
-        l_capture_vector[i].name       = l_vector[i].substr(1, l_vector[i].size() - 2);
-        l_capture_vector[i].is_capture = true;
-      } else {
-        l_capture_vector[i].name       = l_vector[i];
-        l_capture_vector[i].is_capture = false;
-      }
-    }
-    return l_capture_vector;
-  }
+  static std::vector<capture_data_t> set_cap_bit(std::string& in_str);
 
   const boost::beast::http::verb verb_;
   const std::vector<capture_data_t> capture_vector_;

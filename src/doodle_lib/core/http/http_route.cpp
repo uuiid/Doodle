@@ -34,7 +34,7 @@ http_function_ptr http_route::operator()(
       return i;
     }
   }
-  return nullptr;
+  return not_function;
 }
 
 }  // namespace doodle::http
