@@ -71,7 +71,24 @@ void task_info::get_task(boost::system::error_code in_error_code, entt::handle i
   l_response.prepare_payload();
   session.seed(std::move(l_response));
 }
-void task_info::list_task(boost::system::error_code in_error_code, entt::handle in_handle) {}
+void task_info::list_task(boost::system::error_code in_error_code, entt::handle in_handle) {
+  std::vector<entt::entity> l_tasks{};
+  nlohmann::json l_json{};
+  for (auto &&[l_e, l_c] : g_reg()->view<server_task_info>().each()) {
+    l_json.emplace_back(l_c);
+    l_json.back()["id"] = l_e;
+  }
+  auto &l_req = in_handle.get<http_session_data>().request_parser_->get();
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, l_req.version()
+  };
+  l_response.result(boost::beast::http::status::ok);
+  l_response.keep_alive(l_req.keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.body() = l_json.dump();
+  l_response.prepare_payload();
+  in_handle.get<http_session_data>().seed(std::move(l_response));
+}
 
 void task_info::reg(doodle::http::http_route &in_route) {
   in_route
