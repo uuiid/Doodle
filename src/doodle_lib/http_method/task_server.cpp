@@ -51,6 +51,8 @@ bool task_server::assign_task() {
       logger_ptr_->log(
           log_loc(), level::info, "分配任务 {}_{} 给 {}({})", l_task.name_, l_e, l_computer.name_, l_computer.ip_
       );
+      entt::handle l_computer_handle{*g_reg(), l_e2};
+      l_computer_handle.emplace_or_replace<task_ref>(entt::handle{*g_reg(), l_e});
     }
   }
   return has_task;

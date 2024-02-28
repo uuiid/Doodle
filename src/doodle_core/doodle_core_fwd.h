@@ -119,6 +119,8 @@ using maya_rig_file        = detail::one_file_base<detail::maya_rig_file_id>;
 using ue_file_preset       = detail::one_file_base<detail::ue_file_preset_id>;
 
 using file_association_ref = detail::entt_handle_ref<detail::file_association_ref>;
+using computer_ref         = detail::entt_handle_ref<entt::tag<"computer"_hs>>;
+using task_ref             = detail::entt_handle_ref<entt::tag<"task"_hs>>;
 using main_project         = entt::tag<"main_project"_hs>;
 class ue_main_map;
 
