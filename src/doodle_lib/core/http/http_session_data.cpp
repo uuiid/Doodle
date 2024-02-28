@@ -29,7 +29,7 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
   auto l_logger = l_self_handle.get<socket_logger>().logger_;
 
   if (ec) {
-    l_logger->log(log_loc(), level::err, fmt::format("读取头部失败 {}", ec.message()));
+    l_logger->log(log_loc(), level::err, "读取头部失败 {}", ec);
     do_close();
     return;
   }
@@ -37,14 +37,14 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
   keep_alive_ = request_parser_->keep_alive();
 
   url_        = boost::url{request_parser_->get().target()};
-  l_logger->log(log_loc(), level::info, fmt::format("开始解析 url {}", url_));
+  l_logger->log(log_loc(), level::info, "开始解析 url {}", url_);
   auto& l_rote = l_self_handle.get<http_route>();
   l_rote(request_parser_->get().method(), url_.segments(), l_self_handle)->callback_(l_self_handle);
 }
 void http_session_data::seed_error(boost::beast::http::status in_status, boost::system::error_code ec) {
   entt::handle l_self_handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger = l_self_handle.get<socket_logger>().logger_;
-  l_logger->log(log_loc(), level::err, fmt::format("发送错误码 {}", ec.message()));
+  l_logger->log(log_loc(), level::err, "发送错误码 {}", ec);
 
   boost::beast::http::response<boost::beast::http::string_body> l_response{in_status, version_};
   l_response.set(boost::beast::http::field::content_type, "plain/text");
@@ -63,7 +63,7 @@ void http_session_data::do_send(boost::system::error_code ec, std::size_t bytes_
   entt::handle l_self_handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger = l_self_handle.get<socket_logger>().logger_;
   if (ec) {
-    l_logger->log(log_loc(), level::err, fmt::format("发送错误码 {}", ec.message()));
+    l_logger->log(log_loc(), level::err, "发送错误码 {}", ec);
     do_close();
     return;
   }
@@ -79,7 +79,7 @@ void http_session_data::do_close() {
   boost::system::error_code l_error_code{};
   stream_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_error_code);
   if (l_error_code) {
-    default_logger_raw()->log(log_loc(), level::err, fmt::format("关闭 socket 失败 {}", l_error_code.message()));
+    default_logger_raw()->log(log_loc(), level::err, "关闭 socket 失败 {}", l_error_code);
   }
   entt::handle l_self_handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
 
