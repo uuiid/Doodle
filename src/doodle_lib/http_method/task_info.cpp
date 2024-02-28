@@ -9,6 +9,7 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/http_method/task_server.h>
 namespace doodle::http {
 void task_info::post_task(boost::system::error_code in_error_code, entt::handle in_handle) {
   auto &session      = in_handle.get<http_session_data>();
@@ -46,6 +47,10 @@ void task_info::post_task(boost::system::error_code in_error_code, entt::handle 
   l_response.body() = l_response_json.dump();
   l_response.prepare_payload();
   session.seed(std::move(l_response));
+  if (!g_ctx().contains<task_server>()) {
+    g_ctx().emplace<task_server>();
+  }
+  g_ctx().get<task_server>().run();
 }
 
 void task_info::get_task(boost::system::error_code in_error_code, entt::handle in_handle) {
