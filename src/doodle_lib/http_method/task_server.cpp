@@ -11,17 +11,16 @@
 
 #include <doodle_lib/core/http/http_websocket_data.h>
 namespace doodle::http {
+task_server::task_server()
+    : logger_ptr_(g_logger_ctrl().make_log("task_server")), timer_ptr_(std::make_shared<timer_t>(g_io_context())) {}
 
 void task_server::run() {
-  if (!timer_ptr_) {
-    timer_ptr_ = std::make_shared<timer_t>(g_io_context());
-  }
   if (!assign_task()) return;
 
   timer_ptr_->expires_after(std::chrono::seconds(1));
   timer_ptr_->async_wait([this](boost::system::error_code ec) {
     if (ec) {
-      default_logger_raw()->log(log_loc(), level::warn, "timer_ptr_ error: {}", ec);
+      logger_ptr_->log(log_loc(), level::warn, "timer_ptr_ error: {}", ec);
       return;
     }
     run();
@@ -49,6 +48,9 @@ bool task_server::assign_task() {
       l_json["id"]   = l_e;
       l_json["data"] = l_task.data_;
       l_websocket.write_queue_.emplace(l_json.dump());
+      logger_ptr_->log(
+          log_loc(), level::info, "分配任务 {}_{} 给 {}({})", l_task.name_, l_e, l_computer.name_, l_computer.ip_
+      );
     }
   }
   return has_task;

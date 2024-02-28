@@ -13,12 +13,13 @@ class task_server {
   using timer_t_ptr = std::shared_ptr<timer_t>;
 
   timer_t_ptr timer_ptr_{};
+  logger_ptr logger_ptr_{};
 
   // 分配任务
   bool assign_task();
 
  public:
-  task_server()  = default;
+  task_server();
   ~task_server() = default;
 
   void run();
