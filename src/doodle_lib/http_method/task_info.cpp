@@ -28,6 +28,10 @@ void task_info::post_task(boost::system::error_code in_error_code, entt::handle 
   if (l_body.contains("submitter") && l_body["submitter"].is_string()) {
     l_task_handle.get<server_task_info>().submitter_ = l_body["submitter"];
   }
+  // 任务名称
+  if (l_body.contains("name") && l_body["name"].is_string()) {
+    l_task_handle.get<server_task_info>().name_ = l_body["name"];
+  }
 
   l_task_handle.get<server_task_info>().submit_time_ = chrono::sys_time_pos ::clock ::now();
 
