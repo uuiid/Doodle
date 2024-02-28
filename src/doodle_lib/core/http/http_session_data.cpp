@@ -39,14 +39,7 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
   url_        = boost::url{request_parser_->get().target()};
   l_logger->log(log_loc(), level::info, fmt::format("开始解析 url {}", url_));
   auto& l_rote = l_self_handle.get<http_route>();
-  if (auto l_ptr = l_rote(request_parser_->get().method(), url_.segments(), l_self_handle); l_ptr)
-    l_ptr->callback_(l_self_handle);
-  else {
-    seed_error(
-        boost::beast::http::status::not_found,
-        boost::system::errc::make_error_code(boost::system::errc::no_such_file_or_directory)
-    );
-  }
+  l_rote(request_parser_->get().method(), url_.segments(), l_self_handle)->callback_(l_self_handle);
 }
 void http_session_data::seed_error(boost::beast::http::status in_status, boost::system::error_code ec) {
   entt::handle l_self_handle{*g_reg(), entt::to_entity(*g_reg(), *this)};

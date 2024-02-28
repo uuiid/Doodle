@@ -14,8 +14,10 @@ class http_route {
  private:
   using map_actin_type = std::vector<http_function_ptr>;
   std::map<boost::beast::http::verb, map_actin_type> actions;
+  http_function_ptr not_function;
 
  public:
+  http_route();
   // 注册路由
   http_route& reg(const http_function_ptr in_function);
   // 路由分发
