@@ -130,14 +130,17 @@ void rotating_file_sink<Mutex>::rotate_() {
 
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
 
-logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
+logger_ctrl::logger_ctrl()
+    : p_log_path(
+          FSys::temp_directory_path() / "doodle" / "log" / fmt::format("process_id_{}", boost::this_process::get_id())
+      ) {
   spdlog::init_thread_pool(8192, 1);
   init_temp_log();
 }
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, const std::string &in_name) {
   if (!FSys::exists(in_path)) FSys::create_directories(in_path);
-  auto l_path = in_path / fmt::format("{}_{}.txt", in_name, boost::this_process::get_id());
+  auto l_path = in_path / fmt::format("{}.txt", in_name, boost::this_process::get_id());
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
     rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 512ull);
@@ -161,7 +164,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, c
 }
 
 void logger_ctrl::init_temp_log() {
-  auto l_logger = make_log(p_log_path, {"doodle_lib"});
+  auto l_logger = make_log(p_log_path, "doodle_lib");
   spdlog::set_default_logger(l_logger);
 
   spdlog::flush_every(3s);
@@ -190,8 +193,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
     const FSys::path &in_path, const std::string &in_name, bool out_console
 ) {
-  auto l_path =
-      p_log_path / fmt::format("{}_{}_{}.txt", in_name, boost::this_process::get_id(), core_set::get_set().get_uuid());
+  auto l_path = p_log_path / fmt::format("{}_{}.txt", in_name, core_set::get_set().get_uuid());
 
   std::vector<spdlog::sink_ptr> l_sinks{
       std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true)

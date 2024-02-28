@@ -24,7 +24,7 @@ namespace details { /**
 class DOODLE_CORE_API logger_ctrl {
   FSys::path p_log_path;
   using file_sink_mt_ptr = std::shared_ptr<spdlog::sinks::sink>;
-  using async_logger_ptr          = std::shared_ptr<spdlog::async_logger>;
+  using async_logger_ptr = std::shared_ptr<spdlog::async_logger>;
 
  private:
   async_logger_ptr make_log(const FSys::path& in_path, const std::string& in_name);
@@ -33,12 +33,6 @@ class DOODLE_CORE_API logger_ctrl {
  public:
   logger_ctrl();
   virtual ~logger_ctrl();
-
-  enum log_type {
-    none   = 0,
-    guiexe = 1,
-    server = 2,
-  };
 
   file_sink_mt_ptr rotating_file_sink_{};
   async_logger_ptr make_log(const std::string& in_name, bool out_console = false);
