@@ -28,7 +28,7 @@ class server_task_info {
     j["data"]            = p.data_;
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
-    j["submit_time"]     = p.submit_time_;
+    j["submit_time"]     = fmt::to_string(p.submit_time_);
   }
 };
 }  // namespace doodle
