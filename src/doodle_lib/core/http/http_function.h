@@ -28,17 +28,27 @@ class http_function {
     capture_t() = default;
     explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
 
-    template <typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
+    template <typename T>
+      requires std::is_arithmetic_v<T>
     std::optional<T> get(const std::string& in_str) const {
       if (capture_map_.find(in_str) != capture_map_.end()) {
         return boost::lexical_cast<T>(capture_map_.at(in_str));
       }
       return {};
     }
-    template <typename T, std::enable_if_t<!std::is_arithmetic_v<T>>* = nullptr>
+    template <typename T>
+      requires std::is_same_v<T, std::string>
     std::optional<T> get(const std::string& in_str) const {
       if (capture_map_.find(in_str) != capture_map_.end()) {
         return capture_map_.at(in_str);
+      }
+      return {};
+    }
+    template <typename T>
+      requires std::is_same_v<T, entt::entity>
+    std::optional<T> get(const std::string& in_str) const {
+      if (capture_map_.find(in_str) != capture_map_.end()) {
+        return num_to_enum<entt::entity>(std::stoi(capture_map_.at(in_str)));
       }
       return {};
     }

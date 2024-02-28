@@ -44,7 +44,33 @@ void task_info::post_task(boost::system::error_code in_error_code, entt::handle 
   session.seed(std::move(l_response));
 }
 
-void task_info::get_task(boost::system::error_code in_error_code, entt::handle in_handle) {}
+void task_info::get_task(boost::system::error_code in_error_code, entt::handle in_handle) {
+  auto &session = in_handle.get<http_session_data>();
+  auto l_cap    = in_handle.get<http_function::capture_t>();
+  auto l_id     = l_cap.get<entt::entity>("id");
+  if (!l_id) {
+    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  auto l_entt = entt::handle{*g_reg(), *l_id};
+  if (!l_entt) {
+    in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+  }
+  nlohmann::json l_json = l_entt.get<server_task_info>();
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, session.request_parser_->get().version()
+  };
+  l_response.result(boost::beast::http::status::ok);
+  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.body() = l_json.dump();
+  l_response.prepare_payload();
+  session.seed(std::move(l_response));
+}
 void task_info::list_task(boost::system::error_code in_error_code, entt::handle in_handle) {}
 
 void task_info::reg(doodle::http::http_route &in_route) {

@@ -21,5 +21,14 @@ class server_task_info {
   std::string submitter_{};
   // 提交时间
   chrono::sys_time_pos submit_time_{};
+
+ private:
+  // to json
+  friend void to_json(nlohmann::json& j, const server_task_info& p) {
+    j["data"]            = p.data_;
+    j["source_computer"] = p.source_computer_;
+    j["submitter"]       = p.submitter_;
+    j["submit_time"]     = p.submit_time_;
+  }
 };
 }  // namespace doodle
