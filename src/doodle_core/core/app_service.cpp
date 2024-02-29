@@ -132,6 +132,8 @@ void app_service::uninstall_service(const std::wstring &in_service_name) {
 }
 
 std::int32_t app_service::run() {
+  if (stop_) return 0;
+
   default_logger_raw()->log(
       log_loc(), level::info, "开始解析命令行 pos_args: {} flags: {} params: {}", arg_.pos_args(), arg_.flags(),
       arg_.params()

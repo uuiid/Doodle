@@ -46,4 +46,33 @@ class app_service : public app_base {
   std::int32_t run() override;
   void stop_app(bool in_stop = true) override;
 };
+
+/**
+ * @brief 服务器基本的命令行类
+ */
+template <typename... Facet_>
+class app_service_t : public app_service {
+ public:
+  app_service_t() : app_service() { run_facet(); };
+
+  app_service_t(int argc, const char* const argv[]) : app_service(argc, argv) { run_facet(); }
+  explicit app_service_t(std::int32_t argc, const wchar_t* const argv[]) : app_service(argc, argv) { run_facet(); }
+  virtual ~app_service_t() override = default;
+
+  void run_facet() {
+    try {
+      std::array<bool, sizeof...(Facet_)> l_r{
+          Facet_{}(arg_, facets_)...,
+      };
+      stop_ = std::any_of(l_r.begin(), l_r.end(), [](bool i) { return i; });
+    } catch (...) {
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      default_logger_raw()->flush();
+      stop_ = true;
+    }
+  }
+
+ protected:
+};
+
 }  // namespace doodle
