@@ -72,7 +72,7 @@ class DOODLE_CORE_API app_base {
   boost::signals2::signal<void()> on_stop;
   cancellation_signals on_cancel;
 
-  void stop_app(bool in_stop = false);
+  virtual void stop_app(bool in_stop = false);
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
