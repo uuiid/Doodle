@@ -19,6 +19,7 @@ class app_service : public app_base {
   );
   void uninstall_service(const std::wstring& in_service_name);
 
+ public:
   std::wstring service_name_;
   std::wstring display_name_;
   std::wstring description_;

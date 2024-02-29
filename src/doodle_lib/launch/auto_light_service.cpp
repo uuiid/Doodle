@@ -4,7 +4,7 @@
 
 #include "auto_light_service.h"
 
-#include <doodle_core/core/app_base.h>
+#include <doodle_core/core/app_service.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
@@ -192,52 +192,15 @@ void WINAPI service_main(DWORD dwArgc, PWSTR *pszArgv) {
 }
 }  // namespace
 bool auto_light_service_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
-  default_logger_raw()->log(
-      log_loc(), level::info, "开始解析命令行 pos_args: {} flags: {} params: {}", in_arh.pos_args(), in_arh.flags(),
-      in_arh.params()
-  );
-  if (in_arh[g_install]) {
-    try {
-      install_scan_win_service();
-    }
-    CATCH_LOG();
-    return true;
-  }
-  if (in_arh[g_uninstall]) {
-    try {
-      uninstall_scan_win_service();
-    }
-    CATCH_LOG();
-    return true;
-  }
-  if (in_arh[g_service]) {
-    auto l_auto_light_service_impl_ptr = std::make_shared<auto_light_service_impl_t>();
-    in_vector.emplace_back(l_auto_light_service_impl_ptr);
-    default_logger_raw()->log(log_loc(), level::warn, "启动服务");
-    ::SERVICE_TABLE_ENTRY l_service_table_entry[]{
-        {const_cast<LPWSTR>(L"doodle_scan_win_service"), reinterpret_cast<::LPSERVICE_MAIN_FUNCTIONW>(service_main)},
-        {nullptr, nullptr}
-    };
-    THROW_IF_WIN32_BOOL_FALSE(::StartServiceCtrlDispatcherW(l_service_table_entry));
-    default_logger_raw()->log(log_loc(), level::warn, "服务退出");
-    return true;
-  }
-  if (in_arh[g_run]) {
-    auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
-    g_ctx().get<database_n::file_translator_ptr>()->async_open(
-        register_file_type::get_main_project(), false, false, g_reg(),
-        boost::asio::bind_executor(
-            g_io_context(),
-            [scan_win_service_ptr_](const boost::system::error_code &in_code) {
-              if (in_code) return;
-              scan_win_service_ptr_->start();
-            }
-        )
-    );
-    in_vector.emplace_back(scan_win_service_ptr_);
-    return false;
-  }
-  return true;
+  auto &l_app                = static_cast<app_service &>(app_base::Get());
+  l_app.service_name_        = L"doodle_scan_win_service";
+  l_app.display_name_        = L"doodle_scan_win_service";
+  l_app.description_         = L"扫瞄服务器资产并进行确认后提交数据库工具";
+  l_app.command_line_        = L"";
+
+  auto scan_win_service_ptr_ = std::make_shared<scan_win_service_t>();
+  in_vector.emplace_back(scan_win_service_ptr_);
+  boost::asio::post(g_io_context(), [scan_win_service_ptr_]() { scan_win_service_ptr_->start(); });
 }
 
 }  // namespace doodle::launch

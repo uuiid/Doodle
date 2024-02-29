@@ -75,7 +75,9 @@ void app_service::install_service(
     }
     l_exe_path = l_path;
   }
-  auto l_cmd = fmt::format(LR"("{}" {})", l_exe_path.generic_wstring(), in_command_line);
+  auto l_cmd = fmt::format(
+      LR"("{}" --{} {})", l_exe_path.generic_wstring(), conv::utf_to_utf<wchar_t>(g_service), in_command_line
+  );
   default_logger_raw()->log(log_loc(), level::warn, "安装服务 {}", conv::utf_to_utf<char>(l_cmd));
 
   wil::unique_schandle l_unique_sc_handle_manager{THROW_LAST_ERROR_IF_NULL(
