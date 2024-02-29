@@ -90,8 +90,12 @@ void http_websocket_data::run_fun() {
       if (l_task.status_ == server_task_info_status::completed || l_task.status_ == server_task_info_status::failed) {
         l_task.end_time_ = std::chrono::system_clock::now();
       }
-
       break;
+    }
+    case http_websocket_data_fun::logger: {
+      l_logger->log(log_loc(), level::info, "logger");
+      //      if (!l_json.contains("level") || !l_json.contains("msg")) break;
+      //      break;
     }
   };
 

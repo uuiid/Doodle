@@ -14,15 +14,14 @@ namespace doodle::http {
 enum class http_websocket_data_fun {
   ping,
   set_state,
-  set_task,
-};
+  set_task, logger };
 NLOHMANN_JSON_SERIALIZE_ENUM(
     http_websocket_data_fun,
     {
         {http_websocket_data_fun::ping, "ping"},
         {http_websocket_data_fun::set_state, "set_state"},
         {http_websocket_data_fun::set_task, "set_task"},
-    }
+                              {http_websocket_data_fun::logger, "logger"}}
 );
 
 class http_websocket_data {
