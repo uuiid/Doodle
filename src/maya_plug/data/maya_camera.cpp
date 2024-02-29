@@ -41,7 +41,7 @@ void maya_camera::chick() const {
 
 std::tuple<bool, FSys::path> maya_camera::export_file(
     const MTime& in_start, const MTime& in_end,
-    const const std::shared_ptr<reference_file_ns::generate_fbx_file_path>& in_name
+    const std::shared_ptr<reference_file_ns::generate_fbx_file_path>& in_name
 ) {
   chick();
 
