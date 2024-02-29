@@ -34,6 +34,19 @@ enum class server_task_info_status {
   unknown,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    server_task_info_status,
+    {
+        {server_task_info_status::submitted, "submitted"},
+        {server_task_info_status::assigned, "assigned"},
+        {server_task_info_status::accepted, "accepted"},
+        {server_task_info_status::rejected, "rejected"},
+        {server_task_info_status::completed, "completed"},
+        {server_task_info_status::canceled, "canceled"},
+        {server_task_info_status::failed, "failed"},
+        {server_task_info_status::unknown, "unknown"},
+    }
+);
 class server_task_info {
  public:
   server_task_info() = default;
@@ -67,7 +80,7 @@ class server_task_info {
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
     j["data"]            = p.data_;
-    j["status"]          = magic_enum::enum_name(p.status_);
+    j["status"]          = p.status_;
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
