@@ -147,9 +147,10 @@ class ue_exe::run_ue_copy_file : public ue_exe::run_ue_base {
  public:
   std::vector<std::pair<FSys::path, FSys::path>> copy_path_attr{};
   ue_exe::call_fun_type call_attr{};
+  logger_ptr logger_attr{};
   void run() override {
     g_ctx().get<thread_copy_io_service>().async_copy_old(
-        copy_path_attr, FSys::copy_options::recursive,
+        copy_path_attr, FSys::copy_options::recursive, logger_attr,
         [l_c = call_attr](boost::system::error_code in_error_code) {
           if (in_error_code) {
             BOOST_ASIO_ERROR_LOCATION(in_error_code);
@@ -202,6 +203,7 @@ void ue_exe::queue_up(
   auto l_run            = std::make_shared<run_ue_copy_file>();
   l_run->copy_path_attr = in_command_line;
   l_run->call_attr      = std::move(in_call_fun);
+  l_run->logger_attr    = in_msg.patch<process_message>().logger();
   queue_list_.emplace(l_run);
   notify_run();
 }

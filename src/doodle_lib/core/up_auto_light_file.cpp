@@ -50,7 +50,8 @@ void up_auto_light_anim_file::operator()(boost::system::error_code in_error_code
   }
   // 开始正式上传
   g_ctx().get<thread_copy_io_service>().async_copy_old(
-      l_up_file_list, FSys::copy_options::recursive, boost::asio::bind_executor(g_io_context(), std::move(*this))
+      l_up_file_list, FSys::copy_options::recursive, data_->logger_,
+      boost::asio::bind_executor(g_io_context(), std::move(*this))
   );
 }
 void up_auto_light_anim_file::operator()(
@@ -100,7 +101,8 @@ void up_auto_light_anim_file::operator()(
   );
   // 开始正式上传
   g_ctx().get<thread_copy_io_service>().async_copy_old(
-      l_up_file_list, FSys::copy_options::recursive, boost::asio::bind_executor(g_io_context(), std::move(*this))
+      l_up_file_list, FSys::copy_options::recursive, data_->logger_,
+      boost::asio::bind_executor(g_io_context(), std::move(*this))
   );
 }
 void up_auto_light_anim_file::operator()(boost::system::error_code in_error_code) const {
