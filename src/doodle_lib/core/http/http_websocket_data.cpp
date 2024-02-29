@@ -7,6 +7,7 @@
 #include "doodle_core/lib_warp/boost_fmt_asio.h"
 #include "doodle_core/lib_warp/boost_fmt_error.h"
 #include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -48,21 +49,52 @@ void http_websocket_data::run_fun() {
   }
   auto l_json = nlohmann::json::parse(read_queue_.front());
   read_queue_.pop();
-
-  if (l_json.contains("type") && l_json["type"] == "ping") {
-    l_logger->log(log_loc(), level::info, "ping");
-    if (l_json.contains("name")) {
-      l_self_handle.get<doodle::computer>().name_ = l_json["name"];
-    }
-    write_queue_.emplace(l_json.dump());
-  } else if (l_json.contains("type") && l_json["type"] == "set_state" && l_json.contains("state") && l_json["state"].is_string()) {
-    l_self_handle.get<doodle::computer>().client_status_ =
-        magic_enum::enum_cast<doodle::computer_status>(l_json["state"].get<std::string>())
-            .value_or(doodle::computer_status::unknown);
-
-  } else {
-    l_logger->log(log_loc(), level::err, "unknown type: {}", l_json.dump());
+  if (!l_json.contains("type")) {
+    l_logger->log(log_loc(), level::err, "json parse error: {}", l_json.dump());
+    return;
   }
+
+  switch (l_json["type"].get<http_websocket_data_fun>()) {
+    case http_websocket_data_fun::ping: {
+      l_logger->log(log_loc(), level::info, "ping");
+      if (l_json.contains("name")) {
+        l_self_handle.get<doodle::computer>().name_ = l_json["name"];
+      }
+      break;
+    }
+    case http_websocket_data_fun::set_state: {
+      l_logger->log(log_loc(), level::info, "set_state");
+      if (!l_json.contains("state") || !l_json["state"].is_string()) break;
+      l_self_handle.get<doodle::computer>().client_status_ =
+          magic_enum::enum_cast<doodle::computer_status>(l_json["state"].get<std::string>())
+              .value_or(doodle::computer_status::unknown);
+
+      break;
+    }
+    case http_websocket_data_fun::set_task: {
+      l_logger->log(log_loc(), level::info, "set_task");
+      if (!l_self_handle.any_of<task_ref>()) break;
+      entt::handle l_task_handle = l_self_handle.get<task_ref>();
+      if (!l_task_handle) {
+        l_logger->log(log_loc(), level::err, "task_ref is null");
+        break;
+      }
+      if (!l_task_handle.any_of<server_task_info>()) {
+        l_logger->log(log_loc(), level::err, "not has server_task_info component");
+        break;
+      }
+
+      auto& l_task   = l_task_handle.get<server_task_info>();
+      l_task.status_ = magic_enum::enum_cast<server_task_info_status>(l_json["status"].get<std::string>())
+                           .value_or(server_task_info_status::unknown);
+      if (l_task.status_ == server_task_info_status::completed || l_task.status_ == server_task_info_status::failed) {
+        l_task.end_time_ = std::chrono::system_clock::now();
+      }
+
+      break;
+    }
+  };
+
   do_write();
 }
 void http_websocket_data::seed(const nlohmann::json& in_json) {

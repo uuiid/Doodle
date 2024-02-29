@@ -31,6 +31,7 @@ enum class server_task_info_status {
   canceled,
   // 任务已经失败
   failed,
+  unknown,
 };
 
 class server_task_info {

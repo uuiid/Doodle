@@ -10,6 +10,21 @@
 
 #include <nlohmann/json.hpp>
 namespace doodle::http {
+
+enum class http_websocket_data_fun {
+  ping,
+  set_state,
+  set_task,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    http_websocket_data_fun,
+    {
+        {http_websocket_data_fun::ping, "ping"},
+        {http_websocket_data_fun::set_state, "set_state"},
+        {http_websocket_data_fun::set_task, "set_task"},
+    }
+);
+
 class http_websocket_data {
  public:
   using websocket_stream = boost::beast::websocket::stream<boost::beast::tcp_stream>;
