@@ -9,9 +9,9 @@
 #include <windows.h>
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 
-#define DOODLE_MAIN_IMPL_(facet)                                               \
+#define DOODLE_MAIN_IMPL_(app_class, facet)                                    \
   try {                                                                        \
-    using main_app = doodle::app_command<facet>;                               \
+    using main_app = doodle::app_class<facet>;                                 \
     main_app app{argc, argv};                                                  \
     try {                                                                      \
       return app.run();                                                        \
@@ -27,5 +27,9 @@
     doodle::app_command<facet>::write_current_error_tmp_dir();                 \
     return 1;                                                                  \
   }
-#define DOODLE_MAIN_IMPL(facet) extern "C" int main(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(facet)
-#define DOODLE_WMAIN_IMPL(facet) extern "C" int _tmain(int argc, const TCHAR* const argv[]) DOODLE_MAIN_IMPL_(facet)
+#define DOODLE_MAIN_IMPL(facet) \
+  extern "C" int main(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(app_command, facet)
+#define DOODLE_WMAIN_IMPL(facet) \
+  extern "C" int _tmain(int argc, const TCHAR* const argv[]) DOODLE_MAIN_IMPL_(app_command, facet)
+#define DOODLE_SERVICE_MAIN_IMPL(app_class, facet) \
+  extern "C" int main(int argc, const char* const argv[]) DOODLE_MAIN_IMPL_(app_class, facet)
