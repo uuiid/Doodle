@@ -12,7 +12,7 @@
 #include <wil/result.h>
 #include <windows.h>
 namespace doodle {
-
+app_service *app_service::g_this = nullptr;
 void app_service::set_service_status(DWORD dw_current_state, DWORD dw_win32_exit_code, DWORD dw_wait_hint) {
   static DWORD dw_check_point = 1;
   ::SERVICE_STATUS l_service_status{};
