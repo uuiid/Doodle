@@ -48,6 +48,7 @@ add_subdirectory(gui)
 add_subdirectory(launch)
 add_subdirectory(distributed_computing)
 add_subdirectory(http_method)
+add_subdirectory(http_client)
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
