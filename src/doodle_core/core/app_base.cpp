@@ -114,5 +114,6 @@ void app_base::write_current_error_tmp_dir() {
   auto l_path = l_tmp / fmt::format("doodle_error_{}.txt", boost::this_process::get_id());
   FSys::ofstream l_ofstream{l_path};
   l_ofstream << boost::current_exception_diagnostic_information() << std::endl;
+  default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
 }
 }  // namespace doodle
