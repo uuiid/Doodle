@@ -15,6 +15,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "main_project" "//192.168.10.218/Doodletemp/db_file/doodle_main.doodle_db"
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "update_path" "//192.168.10.218/Doodletemp/auto_light"
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "install_dir" "$INSTDIR\bin"
+        WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig" "server_address" "192.168.20.2"
 
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DB" "" "独步逍遥"
         WriteRegStr HKLM "SOFTWARE\Doodle\MainConfig\ProjectList\DB" "path" "//192.168.10.250/public/DuBuXiaoYao_3"

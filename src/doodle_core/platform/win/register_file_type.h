@@ -23,6 +23,9 @@ class register_file_type {
   static FSys::path get_update_path();
   static std::vector<project> get_project_list();
   static FSys::path program_location();
+
+  // 获取服务器地址
+  static std::string get_server_address();
 };
 
 }  // namespace doodle
