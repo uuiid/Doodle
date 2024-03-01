@@ -4,8 +4,10 @@
 
 #include "computer.h"
 
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/server_task_info.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
 #include "doodle_lib/core/http/http_websocket_data.h"
@@ -14,19 +16,12 @@ namespace doodle::http {
 void computer::websocket_route(const nlohmann::json &in_json, const entt::handle in_handle) {
   auto l_logger = in_handle.get<socket_logger>().logger_;
 
-  switch (l_json["type"].get<computer_websocket_fun>()) {
-    case computer_websocket_fun::ping: {
-      l_logger->log(log_loc(), level::info, "ping");
-      if (l_json.contains("name")) {
-        in_handle.get<doodle::computer>().name_ = l_json["name"];
-      }
-      break;
-    }
+  switch (in_json["type"].get<computer_websocket_fun>()) {
     case computer_websocket_fun::set_state: {
       l_logger->log(log_loc(), level::info, "set_state");
-      if (!l_json.contains("state") || !l_json["state"].is_string()) break;
+      if (!in_json.contains("state") || !in_json["state"].is_string()) break;
       in_handle.get<doodle::computer>().client_status_ =
-          magic_enum::enum_cast<doodle::computer_status>(l_json["state"].get<std::string>())
+          magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
               .value_or(doodle::computer_status::unknown);
 
       break;
@@ -45,7 +40,7 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
       }
 
       auto &l_task   = l_task_handle.get<server_task_info>();
-      l_task.status_ = magic_enum::enum_cast<server_task_info_status>(l_json["status"].get<std::string>())
+      l_task.status_ = magic_enum::enum_cast<server_task_info_status>(in_json["status"].get<std::string>())
                            .value_or(server_task_info_status::unknown);
       if (l_task.status_ == server_task_info_status::completed || l_task.status_ == server_task_info_status::failed) {
         l_task.end_time_ = std::chrono::system_clock::now();
@@ -54,7 +49,7 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
     }
     case computer_websocket_fun::logger: {
       l_logger->log(log_loc(), level::info, "logger");
-      //      if (!l_json.contains("level") || !l_json.contains("msg")) break;
+      //      if (!in_json.contains("level") || !l_json.contains("msg")) break;
       //      break;
     }
   };
