@@ -26,7 +26,7 @@ void scan_win_service_t::start() {
       [](boost::system::error_code in_error_code, int in_sig) {
         default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
 
-        g_io_context().stop();
+        app_base::Get().stop_app();
       }
   ));
   open_project();
