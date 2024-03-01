@@ -23,6 +23,9 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
       in_handle.get<doodle::computer>().client_status_ =
           magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
               .value_or(doodle::computer_status::unknown);
+      if (in_json.contains("host_name") && in_json["host_name"].is_string()) {
+        in_handle.get<doodle::computer>().name_ = in_json["host_name"].get<std::string>();
+      }
 
       break;
     }

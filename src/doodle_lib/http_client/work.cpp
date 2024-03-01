@@ -48,6 +48,7 @@ void http_work::do_connect() {
             std::bind(&http_work::read_task_info, this, std::placeholders::_1, std::placeholders::_2)
         );
         is_connect_ = true;
+        send_state();
       }
   );
 }
@@ -77,8 +78,11 @@ void http_work::send_state() {
   if (task_info_.task_info_.is_null()) {
     handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}});
   } else {
-    handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::busy}});
+    handle_.get<http_websocket_data>().seed(nlohmann::json{
+        {"type", "set_state"}, {"state", computer_status::busy}, {"host_name", boost::asio::ip::host_name()}
+    });
   }
+  do_wait();
 }
 void http_work::read_task_info(const nlohmann::json &in_json, const entt::handle &in_handle) {
   if (!in_json.contains("id")) {
