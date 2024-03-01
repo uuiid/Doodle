@@ -103,11 +103,11 @@ void task_info::reg(doodle::http::http_route &in_route) {
   in_route
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task",
-          session::make_http_reg_fun<false>(boost::asio::bind_executor(g_io_context(), &task_info::list_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::list_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task/{id}",
-          session::make_http_reg_fun<false>(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::post, "v1/task",
