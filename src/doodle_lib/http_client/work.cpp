@@ -88,5 +88,5 @@ void http_work::read_task_info(const nlohmann::json &in_json, const entt::handle
   send_state();
   run_task();
 }
-
+void http_work::run_task() {}
 }  // namespace doodle::http
