@@ -31,7 +31,10 @@ void computer::list_computers(boost::system::error_code in_error_code, const ent
 void computer::reg(doodle::http::http_route &in_route) {
   in_route.reg(std::make_shared<http_function>(
       boost::beast::http::verb ::get, "v1/computer",
-      session::http_method_web_socket{boost::asio::bind_executor(g_io_context(), &computer::list_computers)}
+      session::make_http_reg_fun(
+          boost::asio::bind_executor(g_io_context(), &computer::list_computers),
+          boost::asio::bind_executor(g_io_context(), &computer::list_computers)
+      )
   ));
 }
 }  // namespace doodle::http

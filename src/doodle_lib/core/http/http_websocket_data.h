@@ -4,40 +4,135 @@
 
 #pragma once
 
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/logger/logger.h>
+
+#include <doodle_lib/core/http/socket_logger.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
+#include <entt/entt.hpp>
 #include <nlohmann/json.hpp>
 namespace doodle::http {
 
-enum class http_websocket_data_fun {
-  ping,
-  set_state,
-  set_task, logger };
+enum class http_websocket_data_fun { ping, set_state, set_task, logger };
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    http_websocket_data_fun,
-    {
-        {http_websocket_data_fun::ping, "ping"},
-        {http_websocket_data_fun::set_state, "set_state"},
-        {http_websocket_data_fun::set_task, "set_task"},
+    http_websocket_data_fun, {{http_websocket_data_fun::ping, "ping"},
+                              {http_websocket_data_fun::set_state, "set_state"},
+                              {http_websocket_data_fun::set_task, "set_task"},
                               {http_websocket_data_fun::logger, "logger"}}
 );
 
 class http_websocket_data {
- public:
+ private:
+  using resolver_t       = boost::asio::ip::tcp::resolver;
+  using resolver_ptr     = std::unique_ptr<resolver_t>;
+  using result_t         = resolver_t::results_type;
   using websocket_stream = boost::beast::websocket::stream<boost::beast::tcp_stream>;
-  explicit http_websocket_data(boost::beast::tcp_stream in_stream)
-      : stream_(std::make_unique<websocket_stream>(std::move(in_stream))) {}
 
+  resolver_ptr resolver_;
+  result_t resolver_results_;
+
+ public:
   std::unique_ptr<websocket_stream> stream_;
   boost::beast::flat_buffer buffer_{};  // (Must persist between reads)
-
   // read queue
   std::queue<std::string> read_queue_;
 
   // write queue
   std::queue<std::string> write_queue_;
+
+ private:
+  template <typename CompletionHandler, typename ExecutorType>
+  struct connect_op : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>, boost::asio::coroutine {
+    http_websocket_data* ptr_;
+    std::string server_address_;
+    std::string url_path_;
+    explicit connect_op(
+        std::string in_server_address, std::uint16_t in_server_port_, std::string in_url_path,
+        http_websocket_data* in_handle, CompletionHandler&& in_handler, const ExecutorType& in_executor_type_1
+    )
+        : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>(
+              std::move(in_handler), in_executor_type_1
+          ),
+          boost::asio::coroutine{},
+          ptr_(std::move(in_handle)),
+          server_address_(std::move(in_server_address)),
+          url_path_(std::move(in_url_path)) {
+      ptr_->resolver_->async_resolve(server_address_, std::to_string(in_server_port_), std::move(*this));
+    }
+
+    ~connect_op()                                = default;
+    // move
+    connect_op(connect_op&&) noexcept            = default;
+    connect_op& operator=(connect_op&&) noexcept = default;
+    // copy
+    connect_op(const connect_op&)                = delete;
+    connect_op& operator=(const connect_op&)     = delete;
+    // on_resolve
+    void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type in_results) {
+      auto l_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *ptr_)};
+      auto l_logger = l_handle.get<socket_logger>().logger_;
+      if (ec) {
+        l_logger->log(log_loc(), level::err, "async_resolve error: {} ", ec);
+        this->complete(false, ec);
+        return;
+      }
+      ptr_->stream_ = std::make_unique<websocket_stream>(boost::asio::get_associated_executor(
+          ptr_->resolver_->get_executor(), boost::asio::make_strand(g_io_context())
+      ));
+      boost::beast::get_lowest_layer(*ptr_->stream_).async_connect(in_results, std::move(*this));
+    }
+    // on_connect
+    void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
+      auto l_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *ptr_)};
+      auto l_logger = l_handle.get<socket_logger>().logger_;
+      if (ec) {
+        l_logger->log(log_loc(), level::err, "async_connect error: {} ", ec);
+        this->complete(false, ec);
+        return;
+      }
+
+      boost::beast::get_lowest_layer(*ptr_->stream_).expires_never();
+      ptr_->stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client
+      ));
+      ptr_->stream_->set_option(
+          boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
+            req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
+          })
+      );
+      ptr_->stream_->async_handshake(server_address_, url_path_, std::move(*this));
+    }
+    // on_handshake
+    void operator()(boost::system::error_code ec) {
+      auto l_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *ptr_)};
+      auto l_logger = l_handle.get<socket_logger>().logger_;
+      if (ec) {
+        l_logger->log(log_loc(), level::err, "async_handshake error: {} ", ec);
+        this->complete(false, ec);
+        return;
+      }
+      ptr_->do_read();
+      this->complete(false, ec);
+    }
+  };
+
+ public:
+  explicit http_websocket_data(boost::beast::tcp_stream in_stream)
+      : stream_(std::make_unique<websocket_stream>(std::move(in_stream))) {}
+  http_websocket_data() = default;
+
+  template <typename CompletionHandler>
+  auto async_connect(
+      std::string server_address, std::string path, std::uint16_t server_port, CompletionHandler&& in_handler
+  ) {
+    resolver_ = std::make_unique<resolver_t>(
+        boost::asio::get_associated_executor(in_handler, boost::asio::make_strand(g_io_context()))
+    );
+  }
 
   void run();
   void do_read();
