@@ -27,8 +27,9 @@ class computer {
  private:
   // to json
   friend void to_json(nlohmann::json& j, const computer& p) {
-    j["name"] = p.name_;
-    j["ip"]   = p.ip_;
+    j["name"]   = p.name_;
+    j["ip"]     = p.ip_;
+    j["status"] = p.server_status_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, computer& p) {
