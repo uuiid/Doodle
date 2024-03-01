@@ -64,7 +64,6 @@ boost::system::error_code thread_copy_io_service::copy_impl(
         BOOST_ASIO_ERROR_LOCATION(l_ec);
         break;
       }
-
     } catch (const std::system_error &in_error) {
       in_logger->log(log_loc(), spdlog::level::err, in_error.what());
       l_ec = in_error.code();
