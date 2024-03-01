@@ -140,6 +140,9 @@ class http_websocket_data {
   void do_destroy();
 
   void run_fun();
+
+  boost::signals2::signal<void(const nlohmann::json&, const entt::handle&)> on_message;
+
   // 不一定有回复, 所以不需要回调
   void seed(const nlohmann::json& in_json);
 };

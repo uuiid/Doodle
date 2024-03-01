@@ -48,53 +48,7 @@ void http_websocket_data::run_fun() {
     l_logger->log(log_loc(), level::err, "json parse error: {}", l_json.dump());
     return;
   }
-
-  switch (l_json["type"].get<http_websocket_data_fun>()) {
-    case http_websocket_data_fun::ping: {
-      l_logger->log(log_loc(), level::info, "ping");
-      if (l_json.contains("name")) {
-        l_self_handle.get<doodle::computer>().name_ = l_json["name"];
-      }
-      break;
-    }
-    case http_websocket_data_fun::set_state: {
-      l_logger->log(log_loc(), level::info, "set_state");
-      if (!l_json.contains("state") || !l_json["state"].is_string()) break;
-      l_self_handle.get<doodle::computer>().client_status_ =
-          magic_enum::enum_cast<doodle::computer_status>(l_json["state"].get<std::string>())
-              .value_or(doodle::computer_status::unknown);
-
-      break;
-    }
-    case http_websocket_data_fun::set_task: {
-      l_logger->log(log_loc(), level::info, "set_task");
-      if (!l_self_handle.any_of<task_ref>()) break;
-      entt::handle l_task_handle = l_self_handle.get<task_ref>();
-      if (!l_task_handle) {
-        l_logger->log(log_loc(), level::err, "task_ref is null");
-        break;
-      }
-      if (!l_task_handle.any_of<server_task_info>()) {
-        l_logger->log(log_loc(), level::err, "not has server_task_info component");
-        break;
-      }
-
-      auto& l_task   = l_task_handle.get<server_task_info>();
-      l_task.status_ = magic_enum::enum_cast<server_task_info_status>(l_json["status"].get<std::string>())
-                           .value_or(server_task_info_status::unknown);
-      if (l_task.status_ == server_task_info_status::completed || l_task.status_ == server_task_info_status::failed) {
-        l_task.end_time_ = std::chrono::system_clock::now();
-      }
-      break;
-    }
-    case http_websocket_data_fun::logger: {
-      l_logger->log(log_loc(), level::info, "logger");
-      //      if (!l_json.contains("level") || !l_json.contains("msg")) break;
-      //      break;
-    }
-  };
-
-  do_write();
+  on_message(l_json, l_self_handle);
 }
 void http_websocket_data::seed(const nlohmann::json& in_json) {
   write_queue_.emplace(in_json.dump());
