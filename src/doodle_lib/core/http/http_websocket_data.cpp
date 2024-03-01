@@ -17,11 +17,8 @@ namespace doodle::http {
 void http_websocket_data::run() {
   auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger      = l_self_handle.get<socket_logger>().logger_;
-  auto& l_data       = l_self_handle.get<session::async_read_body<boost::beast::http::string_body>>();
-  l_logger->log(
-      log_loc(), level::info, "开始处理请求 {} {}", l_data.request_parser_->get().body(),
-      l_data.request_parser_->get().target()
-  );
+  auto& l_data       = l_self_handle.get<http_session_data>();
+  l_logger->log(log_loc(), level::info, "开始处理请求 {}", l_data.request_parser_->get().target());
 
   l_self_handle.emplace<doodle::computer>("", std::string{l_data.request_parser_->get().target()}).server_status_ =
       doodle::computer_status::free;

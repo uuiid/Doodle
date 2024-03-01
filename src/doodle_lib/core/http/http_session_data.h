@@ -203,33 +203,15 @@ auto make_http_reg_fun(CompletionHandler&& in_handler) {
   };
 }
 
-template <typename CompletionHandler1, typename CompletionHandlerWebSocket>
-auto make_http_reg_fun(CompletionHandler1&& in_handler1, CompletionHandlerWebSocket&& in_handler2) {
-  return [in_handler1 = std::forward<CompletionHandler1>(in_handler1),
-          in_handler2_ptr =
-              std::make_shared<CompletionHandlerWebSocket>(std::forward<CompletionHandlerWebSocket>(in_handler2)
-              )](const entt::handle& in_handle) {
+template <typename CompletionHandler, typename CompletionHandlerWebSocket>
+auto make_http_reg_fun(CompletionHandler&& in_handler1, CompletionHandlerWebSocket&& in_handler2) {
+  return [in_handler1 = std::forward<CompletionHandler>(in_handler1),
+          in_handler2 = std::forward<CompletionHandlerWebSocket>(in_handler2)](const entt::handle& in_handle) {
     if (boost::beast::websocket::is_upgrade(in_handle.get<http_session_data>().request_parser_->get())) {
-      auto& l_read = in_handle.emplace_or_replace<session::async_read_body<boost::beast::http::string_body>>(in_handle);
-      l_read.async_end([in_handler2_ptr](const boost::system::error_code& ec, const entt::handle& in_handle_1) {
-        auto l_logger = in_handle_1.get<socket_logger>().logger_;
-        if (ec == boost::beast::http::error::end_of_stream) {
-          in_handle_1.get<http_session_data>().do_close();
-          return;
-        }
-        if (ec) {
-          l_logger->log(log_loc(), level::err, "on_read error: {}", ec);
-          in_handle_1.get<http_session_data>().seed_error(
-              boost::beast::http::status::internal_server_error,
-              boost::system::errc::make_error_code(boost::system::errc::bad_message)
-          );
-          return;
-        }
-        boost::beast::get_lowest_layer(*in_handle_1.get<http_session_data>().stream_).expires_never();
-        in_handle_1.emplace<http_websocket_data>(std::move(*in_handle_1.get<http_session_data>().stream_)).run();
-        in_handle_1.erase<http_session_data>();
-        boost::asio::post(boost::asio::prepend(*in_handler2_ptr, ec, in_handle_1));
-      });
+      boost::beast::get_lowest_layer(*in_handle.get<http_session_data>().stream_).expires_never();
+      in_handle.emplace<http_websocket_data>(std::move(*in_handle.get<http_session_data>().stream_)).run();
+      in_handle.erase<http_session_data>();
+      boost::asio::post(boost::asio::prepend(*in_handler2, boost::system::error_code{}, in_handle));
     } else {
       boost::asio::post(boost::asio::prepend(in_handler1, boost::system::error_code{}, in_handle));
     }
