@@ -35,6 +35,8 @@ class http_work {
   logger_ptr logger_{};
   task_info_t task_info_{};
 
+  signal_set_ptr signal_set_{};
+
   bool is_connect_{false};
   void do_connect();
 

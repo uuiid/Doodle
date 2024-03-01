@@ -4,6 +4,7 @@
 
 #include "work.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
 
@@ -11,7 +12,20 @@
 #include <doodle_lib/http_method/computer.h>
 namespace doodle::http {
 void http_work::run(const std::string &in_server_address, std::uint16_t in_port) {
-  timer_ = std::make_shared<timer>(g_io_context());
+  timer_      = std::make_shared<timer>(g_io_context());
+  signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
+  signal_set_->async_wait([this](boost::system::error_code in_error_code, int in_signal) {
+    if (in_error_code) {
+      logger_->log(log_loc(), level::err, "signal_set error: {}", in_error_code);
+      return;
+    }
+    if (in_signal == SIGINT || in_signal == SIGTERM) {
+      if (handle_) {
+        handle_.get<http_websocket_data>().do_close();
+      }
+    }
+    app_base::Get().stop_app();
+  });
   do_connect();
 }
 void http_work::do_connect() {

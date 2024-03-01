@@ -96,6 +96,17 @@ void http_websocket_data::do_write() {
       }
   );
 }
+void http_websocket_data::do_close() {
+  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  auto l_logger      = l_self_handle.get<socket_logger>().logger_;
+  boost::system::error_code l_error_code{};
+  stream_->async_close(boost::beast::websocket::close_code::normal, [this, l_logger](boost::system::error_code ec) {
+    if (ec) {
+      l_logger->log(log_loc(), level::err, "async_close error: {}", ec);
+    }
+    do_destroy();
+  });
+}
 void http_websocket_data::do_destroy() {
   boost::asio::post(g_io_context(), [l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)}] {
     auto l = l_self_handle;

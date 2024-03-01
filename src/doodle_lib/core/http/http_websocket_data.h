@@ -158,6 +158,7 @@ class http_websocket_data {
 
   // 不一定有回复, 所以不需要回调
   void seed(const nlohmann::json& in_json);
+  void do_close();
 };
 
 }  // namespace doodle::http
