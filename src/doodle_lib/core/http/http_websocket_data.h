@@ -132,6 +132,19 @@ class http_websocket_data {
     resolver_ = std::make_unique<resolver_t>(
         boost::asio::get_associated_executor(in_handler, boost::asio::make_strand(g_io_context()))
     );
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
+        [](auto&& handler, auto* ptr, std::string server_address, std::uint16_t server_port, std::string path) {
+          connect_op{
+              server_address,
+              server_port,
+              path,
+              ptr,
+              std::forward<decltype(handler)>(handler),
+              boost::asio::get_associated_executor(handler, boost::asio::make_strand(g_io_context()))
+          };
+        },
+        in_handler, this, std::move(server_address), server_port, std::move(path)
+    );
   }
 
   void run();
