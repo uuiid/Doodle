@@ -104,7 +104,6 @@ void app_base::stop_app(bool in_stop) {
   on_stop();
   g_ctx().emplace<program_info>().is_stop = true;
   facets_.clear();
-  core_set_init{}.write_file();
 }
 
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }
