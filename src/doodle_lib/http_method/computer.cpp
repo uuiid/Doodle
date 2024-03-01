@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/computer.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
+#include "doodle_lib/core/http/http_websocket_data.h"
 #include <doodle_lib/core/http/json_body.h>
 namespace doodle::http {
 void computer::list_computers(boost::system::error_code in_error_code, const entt::handle in_handle) {
@@ -27,13 +28,21 @@ void computer::list_computers(boost::system::error_code in_error_code, const ent
   l_response.prepare_payload();
   in_handle.get<http_session_data>().seed(std::move(l_response));
 }
+void computer::reg_computer(boost::system::error_code in_error_code, const entt::handle in_handle) {
+  auto l_logger = in_handle.get<socket_logger>().logger_;
+  auto l_remote_endpoint =
+      boost::beast::get_lowest_layer(*in_handle.get<http_websocket_data>().stream_).socket().remote_endpoint();
+  l_logger->log(log_loc(), level::info, "注册计算机 {}", l_remote_endpoint.address().to_string());
+  in_handle.emplace<doodle::computer>("", l_remote_endpoint.address().to_string()).server_status_ =
+      doodle::computer_status::free;
+}
 
 void computer::reg(doodle::http::http_route &in_route) {
   in_route.reg(std::make_shared<http_function>(
       boost::beast::http::verb ::get, "v1/computer",
       session::make_http_reg_fun(
           boost::asio::bind_executor(g_io_context(), &computer::list_computers),
-          boost::asio::bind_executor(g_io_context(), &computer::list_computers)
+          boost::asio::bind_executor(g_io_context(), &computer::reg_computer)
       )
   ));
 }

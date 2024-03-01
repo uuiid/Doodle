@@ -20,8 +20,6 @@ void http_websocket_data::run() {
   auto& l_data       = l_self_handle.get<http_session_data>();
   l_logger->log(log_loc(), level::info, "开始处理请求 {}", l_data.request_parser_->get().target());
 
-  l_self_handle.emplace<doodle::computer>("", std::string{l_data.request_parser_->get().target()}).server_status_ =
-      doodle::computer_status::free;
   stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
   stream_->set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
     res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
