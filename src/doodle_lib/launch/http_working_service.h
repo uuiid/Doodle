@@ -6,7 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <argh.h>
-namespace doodle {
+namespace doodle::launch {
 class http_working_service_t {
  public:
   http_working_service_t()  = default;
