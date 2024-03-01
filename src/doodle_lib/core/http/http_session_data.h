@@ -211,7 +211,7 @@ auto make_http_reg_fun(CompletionHandler&& in_handler1, CompletionHandlerWebSock
       boost::beast::get_lowest_layer(*in_handle.get<http_session_data>().stream_).expires_never();
       in_handle.emplace<http_websocket_data>(std::move(*in_handle.get<http_session_data>().stream_)).run();
       in_handle.erase<http_session_data>();
-      boost::asio::post(boost::asio::prepend(*in_handler2, boost::system::error_code{}, in_handle));
+      boost::asio::post(boost::asio::prepend(in_handler2, boost::system::error_code{}, in_handle));
     } else {
       boost::asio::post(boost::asio::prepend(in_handler1, boost::system::error_code{}, in_handle));
     }
