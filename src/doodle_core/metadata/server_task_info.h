@@ -76,6 +76,12 @@ class server_task_info {
   // 结束运行任务的时间
   chrono::sys_time_pos end_time_{};
 
+  // 任务日志储存
+  FSys::path log_path_{};
+
+  std::string read_log(level::level_enum in_level) const;
+  void write_log(level::level_enum in_level, std::string_view in_msg) const;
+
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
