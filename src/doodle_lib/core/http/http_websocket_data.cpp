@@ -62,7 +62,6 @@ void http_websocket_data::do_read() {
   stream_->async_read(buffer_, [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
     if (ec) {
       if (ec != boost::beast::websocket::error::closed && ec != boost::asio::error::operation_aborted) {
-      } else {
         l_logger->log(log_loc(), level::err, "async_read error: {}", ec);
       }
       do_destroy();

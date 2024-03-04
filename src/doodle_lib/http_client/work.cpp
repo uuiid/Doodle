@@ -26,6 +26,9 @@ void http_work::run(const std::string &in_server_address, std::uint16_t in_port)
         handle_.get<http_websocket_data>().do_close();
       }
     }
+    for (int l = 0; l < 10; ++l) {
+      g_io_context().poll_one();
+    }
     app_base::Get().stop_app();
   });
   do_connect();
