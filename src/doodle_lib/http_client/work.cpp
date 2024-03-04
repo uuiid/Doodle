@@ -175,14 +175,38 @@ void http_work::end_task(boost::system::error_code in_error_code) {
 
 void http_work::run_auto_light_task() {
   logger_->log(log_loc(), level::info, "开始运行自动灯光任务");
-  auto l_arg             = maya_exe_ns::export_fbx_arg{};
+  auto l_arg = maya_exe_ns::export_fbx_arg{};
+
+  if (!task_info_.task_info_.contains("file_path") || !task_info_.task_info_["file_path"].is_string() ||
+      !task_info_.task_info_.contains("export_anim_time") || !task_info_.task_info_["export_anim_time"].is_number() ||
+      !task_info_.task_info_.contains("episodes") || !task_info_.task_info_["episodes"].is_number() ||
+      !task_info_.task_info_.contains("shot") || !task_info_.task_info_["shot"].is_number() ||
+      !task_info_.task_info_.contains("shot_enum") || !task_info_.task_info_["shot_enum"].is_string() ||
+      !task_info_.task_info_.contains("project_name") || !task_info_.task_info_["project_name"].is_string() ||
+      !task_info_.task_info_.contains("project_path") || !task_info_.task_info_["project_path"].is_string() ||
+      !task_info_.task_info_.contains("project_en_str") || !task_info_.task_info_["project_en_str"].is_string() ||
+      !task_info_.task_info_.contains("project_shor_str") || !task_info_.task_info_["project_shor_str"].is_string()) {
+    logger_->log(log_loc(), level::err, "任务参数错误");
+    end_task({ERROR_INVALID_PARAMETER, boost::system::system_category()});
+    return;
+  }
+
   l_arg.file_path        = task_info_.task_info_["file_path"].get<std::string>();
   l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
   entt::handle l_msg{*g_reg(), g_reg()->create()};
   l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
   l_msg.emplace<episodes>(task_info_.task_info_["episodes"].get<episodes>());
-  l_msg.emplace<shot>(task_info_.task_info_["shot"].get<shot>());
-  l_msg.emplace<project>(task_info_.task_info_["project"].get<project>());
+  l_msg.emplace<shot>(
+      task_info_.task_info_["shot"].get<std::int32_t>(),
+      magic_enum::enum_cast<shot::shot_ab_enum>(task_info_.task_info_["shot_enum"].get<std::string>())
+          .value_or(shot::shot_ab_enum::None)
+  );
+  l_msg.emplace<project>(
+      task_info_.task_info_["project_name"].get<std::string>(),
+      task_info_.task_info_["project_path"].get<std::string>(),
+      task_info_.task_info_["project_en_str"].get<std::string>(),
+      task_info_.task_info_["project_shor_str"].get<std::string>()
+  );
 
   down_auto_light_anim_file l_down_anim_file{l_msg};
   import_and_render_ue l_import_and_render_ue{l_msg};
