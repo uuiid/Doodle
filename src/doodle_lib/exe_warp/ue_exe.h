@@ -54,7 +54,7 @@ class ue_exe {
 
   void notify_run();
 
-  boost::system::error_code find_ue_exe();
+  boost::system::error_code find_ue_exe(const logger_ptr &in_logger);
 
  protected:
   template <typename Handler>
@@ -128,7 +128,7 @@ class ue_exe {
       return;
     }
     if (ue_path_.empty()) {
-      if (auto l_err = find_ue_exe(); l_err) {
+      if (auto l_err = find_ue_exe(in_handle.get<process_message>().logger()); l_err) {
         in_completion(l_err);
         return;
       }

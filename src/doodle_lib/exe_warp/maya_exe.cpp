@@ -261,7 +261,7 @@ FSys::path maya_exe::find_maya_path() const {
   return l_maya_path;
 }
 
-void maya_exe::install_maya_exe() {
+boost::system::error_code maya_exe::install_maya_exe(const logger_ptr &in_logger) {
   try {
     auto l_maya_path   = find_maya_path();
 
@@ -286,9 +286,13 @@ void maya_exe::install_maya_exe() {
     if (!FSys::exists(p_i->run_path)) {
       FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
     }
+
   } catch (const winreg::RegException &in_err) {
+    in_logger->log(log_loc(), level::err, "在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
+    return in_err.code();
     DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
   }
+  return {};
 }
 
 void maya_exe::notify_run() {
@@ -314,8 +318,6 @@ void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string_view &in_key, const std::shared_ptr<maya_exe_ns::arg> &in_arg,
     call_fun_type in_call_fun, const std::function<void(maya_exe_ns::maya_out_arg)> &in_set_arg_fun
 ) {
-  install_maya_exe();
-
   auto l_run = std::dynamic_pointer_cast<maya_exe_ns::run_maya>(
       p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>(this))
   );
@@ -329,6 +331,11 @@ void maya_exe::queue_up(
   l_run->cancel_attr = in_msg.get<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
     if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) l_ptr->cancel();
   });
+  if (auto l_ec = install_maya_exe(l_run->log_attr); l_ec) {
+    l_run->wait_op_->ec_ = l_ec;
+    l_run->wait_op_->complete();
+    return;
+  }
   notify_run();
 }
 maya_exe::~maya_exe() = default;

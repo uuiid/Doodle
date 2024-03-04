@@ -240,7 +240,7 @@ class DOODLELIB_API maya_exe {
   virtual ~maya_exe();
 
   [[nodiscard]] FSys::path find_maya_path() const;
-  void install_maya_exe();
+  boost::system::error_code install_maya_exe(const logger_ptr &in_logger);
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {

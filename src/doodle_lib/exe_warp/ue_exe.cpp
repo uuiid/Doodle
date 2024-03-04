@@ -208,10 +208,10 @@ void ue_exe::queue_up(
   notify_run();
 }
 
-boost::system::error_code ue_exe::find_ue_exe() {
+boost::system::error_code ue_exe::find_ue_exe(const logger_ptr &in_logger) {
   auto l_ue_path = core_set::get_set().ue4_path;
   if (l_ue_path.empty()) {
-    default_logger_raw()->log(log_loc(), level::err, "ue_exe path is empty");
+    in_logger->log(log_loc(), level::err, "ue_exe 路径为空, 无法启动UE");
     return boost::system::error_code{boost::system::errc::no_such_file_or_directory, boost::system::system_category()};
   }
   ue_path_ = l_ue_path / doodle_config::ue_path_obj;
