@@ -30,7 +30,18 @@ class ue_exe_m : public doodle::ue_exe {
  protected:
   void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
     DOODLE_LOG_INFO("{}", in_command_line);
-    in_call_fun(boost::system::error_code{});  // 通知完成
+    in_call_fun->ec_ = {};
+    in_call_fun->complete();  // 通知完成
+  }
+};
+
+class maya_exe_m : public doodle::ue_exe {
+ public:
+ protected:
+  void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
+    DOODLE_LOG_INFO("{}", in_command_line);
+    in_call_fun->ec_ = {};
+    in_call_fun->complete();  // 通知完成
   }
 };
 
