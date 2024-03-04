@@ -28,6 +28,9 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
       return;
     }
     default_logger_raw()->log(log_loc(), level::warn, "收到信号  {}", signal);
+    for (int l = 0; l < 10; ++l) {
+      g_io_context().poll_one();
+    }
     doodle::app_base::Get().stop_app();
   });
   in_vector.emplace_back(l_signal_ptr);

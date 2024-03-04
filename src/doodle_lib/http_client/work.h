@@ -35,8 +35,6 @@ class http_work {
   logger_ptr logger_{};
   task_info_t task_info_{};
 
-  signal_set_ptr signal_set_{};
-
   bool is_connect_{false};
   void do_connect();
 
@@ -53,5 +51,6 @@ class http_work {
   ~http_work() = default;
 
   void run(const std::string& in_server_address, std::uint16_t in_port = doodle_config::http_port);
+  void stop();
 };
 }  // namespace doodle::http
