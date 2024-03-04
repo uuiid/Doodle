@@ -43,7 +43,6 @@ bool replace_file_facet::post(const FSys::path& in_path) {
   g_ctx().emplace<reference_file_factory>();
   l_ret = true;
 
-  g_ctx().get<database_n::file_translator_ptr>()->async_open(l_arg.project_, false, true, g_reg(), [](auto&&) {});
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
