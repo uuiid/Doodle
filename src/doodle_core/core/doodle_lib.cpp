@@ -68,7 +68,7 @@ void doodle_lib::init() {
   // FSys::path::imbue(k_gen("zh_CN.UTF-8"));
 
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
-  ptr->reg->ctx().emplace<project_config::base_config>();
+  ptr->reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
   ptr->reg->ctx().emplace<user::current_user>();
   ptr->ctx_p.emplace<core_sig>();
 
