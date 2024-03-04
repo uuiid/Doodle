@@ -76,7 +76,9 @@ void http_work::send_state() {
     return;
   }
   if (task_info_.task_info_.is_null()) {
-    handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}});
+    handle_.get<http_websocket_data>().seed(nlohmann::json{
+        {"type", "set_state"}, {"state", computer_status::free}, {"host_name", boost::asio::ip::host_name()}
+    });
   } else {
     handle_.get<http_websocket_data>().seed(nlohmann::json{
         {"type", "set_state"}, {"state", computer_status::busy}, {"host_name", boost::asio::ip::host_name()}
