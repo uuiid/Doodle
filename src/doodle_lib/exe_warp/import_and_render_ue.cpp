@@ -24,18 +24,18 @@ FSys::path import_and_render_ue::gen_import_config() const {
                         }) |
                         ranges::to_vector;
 
-  data_->import_data_.episode      = msg_.get<episodes>();
-  data_->import_data_.shot         = msg_.get<shot>();
-  data_->import_data_.begin_time   = l_maya_out.begin_time;
-  data_->import_data_.end_time     = l_maya_out.end_time;
+  data_->import_data_.episode    = msg_.get<episodes>();
+  data_->import_data_.shot       = msg_.get<shot>();
+  data_->import_data_.begin_time = l_maya_out.begin_time;
+  data_->import_data_.end_time   = l_maya_out.end_time;
 
-  data_->import_data_.project_     = msg_.get<project>();
-  data_->import_data_.out_file_dir = data_->down_info_.render_project_.parent_path() / doodle_config::ue4_saved /
-                                     doodle_config::ue4_movie_renders /
-                                     fmt::format(
+  data_->import_data_.project_   = msg_.get<project>();
+  data_->import_data_.out_file_dir =
+      data_->down_info_.render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
+      fmt::format(
           "{}_Ep{:04}_sc{:04}{}", data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
           data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
-                                     );
+      );
 
   // 渲染配置
   {
@@ -105,6 +105,62 @@ void import_and_render_ue::fix_project() const {
   l_plugin_obj["Enabled"] = true;
   FSys::ofstream{data_->down_info_.render_project_} << l_json.dump();
 }
+void import_and_render_ue::fix_config() const {
+  auto l_file_path = data_->down_info_.render_project_.parent_path() / "Config" / "DefaultEngine.ini";
+
+  if (!FSys::exists(l_file_path)) {
+    FSys::ofstream{l_file_path} << R"(
+[/Script/Engine.RendererSettings]
+r.TextureStreaming=True
+r.GBufferFormat=3
+r.AllowStaticLighting=False
+r.Streaming.PoolSize=16384
+")";
+    return;
+  }
+
+  auto l_file = FSys::ifstream{l_file_path};
+  std::string l_str{std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
+  auto l_find_render_setting = l_str.find("[/Script/Engine.RendererSettings]");
+  if (l_find_render_setting == std::string::npos) {
+    l_str += R"([/Script/Engine.RendererSettings]
+r.TextureStreaming=True
+r.GBufferFormat=3
+r.AllowStaticLighting=False
+r.Streaming.PoolSize=16384
+)";
+    FSys::ofstream{l_file_path} << l_str;
+    return;
+  }
+  auto l_find_texture_streaming = l_str.find("r.TextureStreaming");
+  if (l_str.find("r.TextureStreaming") == std::string::npos) {
+    l_str.insert(l_find_render_setting + 1, "r.TextureStreaming=True\n");
+  } else {
+    l_str.replace(l_find_texture_streaming, l_str.find("\n", l_find_texture_streaming), "r.TextureStreaming=True");
+  }
+  auto l_find_g_buffer_format = l_str.find("r.GBufferFormat");
+  if (l_str.find("r.GBufferFormat") == std::string::npos) {
+    l_str.insert(l_find_render_setting + 1, "r.GBufferFormat=3\n");
+  } else {
+    l_str.replace(l_find_g_buffer_format, l_str.find("\n", l_find_g_buffer_format), "r.GBufferFormat=3");
+  }
+  auto l_find_allow_static_lighting = l_str.find("r.AllowStaticLighting");
+  if (l_str.find("r.AllowStaticLighting") == std::string::npos) {
+    l_str.insert(l_find_render_setting + 1, "r.AllowStaticLighting=False\n");
+  } else {
+    l_str.replace(
+        l_find_allow_static_lighting, l_str.find("\n", l_find_allow_static_lighting), "r.AllowStaticLighting=False"
+    );
+  }
+  auto l_find_streaming_pool_size = l_str.find("r.Streaming.PoolSize");
+  if (l_str.find("r.Streaming.PoolSize") == std::string::npos) {
+    l_str.insert(l_find_render_setting + 1, "r.Streaming.PoolSize=16384\n");
+  } else {
+    l_str.replace(
+        l_find_streaming_pool_size, l_str.find("\n", l_find_streaming_pool_size), "r.Streaming.PoolSize=16384"
+    );
+  }
+}
 
 void import_and_render_ue::operator()(
     boost::system::error_code in_error_code, down_auto_light_anim_file::down_info in_down_info
@@ -127,6 +183,7 @@ void import_and_render_ue::operator()(
   data_->down_info_ = in_down_info;
   data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件 {} ", data_->down_info_.render_project_);
   fix_project();
+  fix_config();
   g_ctx().get<ue_exe_ptr>()->async_run(
       msg_,
       fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->down_info_.render_project_, gen_import_config()),

@@ -107,6 +107,7 @@ class import_and_render_ue {
   std::function<void(FSys::path)> set_out_file_dir_{};
   void init();
   void fix_project() const;
+  void fix_config() const;
   FSys::path gen_import_config() const;
 
  public:
