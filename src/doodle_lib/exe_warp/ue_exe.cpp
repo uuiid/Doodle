@@ -53,6 +53,8 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
   ue_exe *self_{};
   bool is_cancel{};
 
+  boost::asio::high_resolution_timer timer_attr{g_io_context()};
+
   virtual void run() override {
     if (is_cancel) {
       logger_attr->log(log_loc(), level::err, "用户结束 ue_exe: {}", ue_path);
@@ -72,7 +74,17 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
     l_eve["UE-LocalDataCachePath"]    = "%GAMEDIR%DerivedDataCache";
     l_eve["UE-SharedDataCachePath"]   = fmt::format("{}\\UE\\DerivedDataCache", core_set::get_set().depot_ip);
 
-    child_attr                        = boost::process::child{
+    timer_attr.expires_after(chrono::seconds{core_set::get_set().timeout});
+    timer_attr.async_wait([this](boost::system::error_code in_code) {
+      if (!in_code) {
+        logger_attr->log(log_loc(), level::warn, "进程超时，结束任务");
+        child_attr.terminate();
+      } else {
+        if (in_code != boost::asio::error::operation_aborted) logger_attr->log(log_loc(), level::warn, in_code);
+      }
+    });
+
+    child_attr = boost::process::child{
         g_io_context(),
         //        boost::process::exe  = ue_path.generic_string(),
         //        boost::process::args = arg_attr,
