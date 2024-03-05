@@ -204,11 +204,12 @@ void test_fun() {
   test_fun2();
   boost::asio::post(g_io_context(), []() { test_fun3(); });
 }
-void reg_func(doodle::http::http_route& in_route) {
-  http::computer::reg(in_route);
-  http::task_info::reg(in_route);
-}
 class run_fun_main {
+  void reg_func(doodle::http::http_route& in_route) {
+    http::computer::reg(in_route);
+    http::task_info::reg(in_route);
+  }
+
  public:
   run_fun_main()  = default;
   ~run_fun_main() = default;
@@ -235,6 +236,7 @@ class run_fun_main {
 
     in_vector.emplace_back(http_client_service_ptr_);
     http_client_service_ptr_->run(register_file_type::get_server_address());
+    doodle::test_fun();
     return false;
   }
 };
@@ -242,9 +244,8 @@ class run_fun_main {
 }  // namespace doodle
 
 int core_auto_light_distributed(int argc, char* argv[]) {
-  using main_app = doodle::app_command<>;
+  using main_app = doodle::app_command<doodle::run_fun_main>;
   main_app l_app{argc, argv};
-  doodle::test_fun();
 
   return l_app.run();
 }
