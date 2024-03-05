@@ -104,7 +104,25 @@ void task_info::list_task(boost::system::error_code in_error_code, entt::handle 
   l_response.prepare_payload();
   in_handle.get<http_session_data>().seed(std::move(l_response));
 }
-
+void task_info::get_task_logger(boost::system::error_code in_error_code, entt::handle in_handle) {
+  auto &session = in_handle.get<http_session_data>();
+  auto l_cap    = in_handle.get<http_function::capture_t>();
+  auto l_id     = l_cap.get<entt::entity>("id");
+  if (!l_id) {
+    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  auto l_entt = entt::handle{*g_reg(), *l_id};
+  if (!l_entt || !l_entt.any_of<server_task_info>()) {
+    in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  auto l_log_path = l_entt.get<server_task_info>().log_path_;
+}
 void task_info::reg(doodle::http::http_route &in_route) {
   in_route
       .reg(std::make_shared<http_function>(

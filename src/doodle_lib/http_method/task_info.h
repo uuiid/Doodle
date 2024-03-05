@@ -38,6 +38,7 @@ class task_info {
   static void post_task(boost::system::error_code in_error_code, entt::handle in_handle);
   static void get_task(boost::system::error_code in_error_code, entt::handle in_handle);
   static void list_task(boost::system::error_code in_error_code, entt::handle in_handle);
+  static void get_task_logger(boost::system::error_code in_error_code, entt::handle in_handle);
 
   static void reg(http_route& in_route);
 };
