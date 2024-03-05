@@ -46,10 +46,10 @@ constexpr auto l_data2 = R"(
 {
     "source_computer": "test_com",
     "submitter": "测试机器人",
-    "name": "测试1",
+    "name": "测试{% mock 'increment' %}",
     "data": {
         "type": "auto_light_task",
-        "file_path": "",
+        "file_path": "D:/test_files/test_ue_auto_main/LQ_ep092_sc089.ma",
         "export_anim_time": 1001,
         "episodes": 92,
         "shot": 89,
