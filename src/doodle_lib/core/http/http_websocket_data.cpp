@@ -59,28 +59,41 @@ void http_websocket_data::do_read() {
   auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger      = l_self_handle.get<socket_logger>().logger_;
 
-  stream_->async_read(buffer_, [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
-    if (ec) {
-      if (ec != boost::beast::websocket::error::closed && ec != boost::asio::error::operation_aborted) {
-        l_logger->log(log_loc(), level::err, "async_read error: {}", ec);
+  if (is_reading_) return;
+
+  stream_->async_read(
+      buffer_,
+      [l_logger, this, l_g = std::make_shared<read_guard_t>(this)](
+          boost::system::error_code ec, std::size_t bytes_transferred
+      ) mutable {
+        l_g.reset();
+        if (ec) {
+          if (ec != boost::beast::websocket::error::closed && ec != boost::asio::error::operation_aborted) {
+            l_logger->log(log_loc(), level::err, "async_read error: {}", ec);
+          }
+          do_destroy();
+          return;
+        }
+        l_logger->log(log_loc(), level::info, "async_read success: {}", bytes_transferred);
+        read_queue_.emplace(boost::beast::buffers_to_string(buffer_.data()));
+        buffer_.consume(buffer_.size());
+        do_read();
+        run_fun();
       }
-      do_destroy();
-      return;
-    }
-    l_logger->log(log_loc(), level::info, "async_read success: {}", bytes_transferred);
-    read_queue_.emplace(boost::beast::buffers_to_string(buffer_.data()));
-    buffer_.consume(buffer_.size());
-    do_read();
-    run_fun();
-  });
+  );
 }
 void http_websocket_data::do_write() {
   auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger      = l_self_handle.get<socket_logger>().logger_;
   if (write_queue_.empty()) return;
+  if (is_writing_) return;
+
   stream_->async_write(
       boost::asio::buffer(write_queue_.front()),
-      [l_logger, this](boost::system::error_code ec, std::size_t bytes_transferred) {
+      [l_logger, this, l_g = std::make_shared<write_guard_t>(this)](
+          boost::system::error_code ec, std::size_t bytes_transferred
+      ) mutable {
+        l_g.reset();
         if (ec) {
           if (ec == boost::beast::websocket::error::closed || ec == boost::asio::error::operation_aborted) {
             do_destroy();

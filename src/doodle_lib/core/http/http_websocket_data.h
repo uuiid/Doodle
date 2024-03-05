@@ -41,9 +41,37 @@ class http_websocket_data {
   boost::beast::flat_buffer buffer_{};  // (Must persist between reads)
   // read queue
   std::queue<std::string> read_queue_;
+  bool is_reading_ = false;
 
   // write queue
   std::queue<std::string> write_queue_;
+  bool is_writing_ = false;
+
+  // 读写守卫
+  class read_guard_t {
+   public:
+    explicit read_guard_t(http_websocket_data* in_ptr) : ptr_(in_ptr) { ptr_->is_reading_ = true; }
+    ~read_guard_t() { ptr_->is_reading_ = false; }
+    read_guard_t(const read_guard_t&)                = delete;
+    read_guard_t& operator=(const read_guard_t&)     = delete;
+    read_guard_t(read_guard_t&&) noexcept            = default;
+    read_guard_t& operator=(read_guard_t&&) noexcept = default;
+
+   private:
+    http_websocket_data* ptr_;
+  };
+  class write_guard_t {
+   public:
+    explicit write_guard_t(http_websocket_data* in_ptr) : ptr_(in_ptr) { ptr_->is_writing_ = true; }
+    ~write_guard_t() { ptr_->is_writing_ = false; }
+    write_guard_t(const write_guard_t&)                = delete;
+    write_guard_t& operator=(const write_guard_t&)     = delete;
+    write_guard_t(write_guard_t&&) noexcept            = default;
+    write_guard_t& operator=(write_guard_t&&) noexcept = default;
+
+   private:
+    http_websocket_data* ptr_;
+  };
 
  private:
   template <typename CompletionHandler, typename ExecutorType>
