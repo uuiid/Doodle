@@ -113,9 +113,13 @@ void http_work::send_state() {
     return;
   }
   if (task_info_.task_info_.is_null()) {
-    handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}, {"host_name", host_name_}});
+    handle_.get<http_websocket_data>().seed(
+        nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}, {"host_name", host_name_}}
+    );
   } else {
-    handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::busy}, {"host_name", host_name_}});
+    handle_.get<http_websocket_data>().seed(
+        nlohmann::json{{"type", "set_state"}, {"state", computer_status::busy}, {"host_name", host_name_}}
+    );
   }
   do_wait();
 }
@@ -190,7 +194,14 @@ void http_work::run_auto_light_task() {
     return;
   }
 
-  l_arg.file_path        = task_info_.task_info_["file_path"].get<std::string>();
+  l_arg.file_path = task_info_.task_info_["file_path"].get<std::string>();
+
+  if (!FSys::exists(l_arg.file_path)) {
+    logger_->log(log_loc(), level::err, "文件不存在 {}", l_arg.file_path);
+    end_task({ERROR_FILE_NOT_FOUND, boost::system::system_category()});
+    return;
+  }
+
   l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
   entt::handle l_msg{*g_reg(), g_reg()->create()};
   l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
