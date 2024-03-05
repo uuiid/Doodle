@@ -36,7 +36,7 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
       return;
     }
     default_logger_raw()->log(log_loc(), level::warn, "收到信号  {}", signal);
-    doodle::app_base::Get().stop_app();
+    app_base::GetPtr()->stop_app();
   });
   in_vector.emplace_back(l_signal_ptr);
   default_logger_raw()->log(log_loc(), level::warn, "开始服务器");

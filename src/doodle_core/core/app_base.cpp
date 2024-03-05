@@ -80,10 +80,16 @@ app_base::app_base(std::int32_t argc, const wchar_t* const argv[]) : app_base(ar
 app_base::~app_base() = default;
 
 app_base& app_base::Get() { return *self; }
+app_base* app_base::GetPtr() { return self; }
 std::int32_t app_base::run() {
   if (stop_) return 0;
   try {
     g_io_context().run();
+  } catch (...) {
+    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+  }
+  try {
+    g_io_context().run_for(std::chrono::milliseconds(10));
   } catch (...) {
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
   }

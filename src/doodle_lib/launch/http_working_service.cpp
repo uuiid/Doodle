@@ -26,7 +26,7 @@ bool http_working_service_t::operator()(const argh::parser& in_arh, std::vector<
       default_logger_raw()->log(log_loc(), level::err, "signal_set error: {}", in_error_code);
       return;
     }
-    app_base::Get().stop_app();
+    app_base::GetPtr()->stop_app();
   });
 
   http_client_service_ptr_->run(register_file_type::get_server_address());
