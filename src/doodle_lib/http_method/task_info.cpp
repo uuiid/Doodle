@@ -64,10 +64,11 @@ void task_info::get_task(boost::system::error_code in_error_code, entt::handle i
     return;
   }
   auto l_entt = entt::handle{*g_reg(), *l_id};
-  if (!l_entt) {
+  if (!l_entt || !l_entt.any_of<server_task_info>()) {
     in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
   }
   nlohmann::json l_json = l_entt.get<server_task_info>();
   boost::beast::http::response<boost::beast::http::string_body> l_response{
