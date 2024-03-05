@@ -9,15 +9,21 @@
 #include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/shot.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/app/app_command.h>
 
 #include <doodle_lib/core/down_auto_light_anim_file.h>
+#include <doodle_lib/core/http/http_listener.h>
+#include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_client/work.h>
+#include <doodle_lib/http_method/computer.h>
+#include <doodle_lib/http_method/task_info.h>
 
 #include <boost/asio.hpp>
 
@@ -106,7 +112,7 @@ void next_time_run(
     l_fun(in_ec);
   });
 }
-void test_fun3(boost::system::error_code in_code) {
+void test_fun3() {
   auto l_maya_exe = g_ctx().get<maya_exe_ptr>();
   auto k_arg      = maya_exe_ns::export_fbx_arg{};
   const FSys::path l_update_path{"D:/test_files/test_ue_auto_main/result"};
@@ -133,7 +139,7 @@ void test_fun3(boost::system::error_code in_code) {
   l_maya_exe->async_run_maya(l_ue_msg, k_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));
 }
 
-void test_fun2(boost::system::error_code in_code) {
+void test_fun2() {
   auto l_handle{entt::handle{*g_reg(), g_reg()->create()}};
   l_handle.emplace<database>();
   l_handle.emplace<assets_file>().path_attr("C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/Rig/Ch426A_rig_wxc.ma"
@@ -189,24 +195,60 @@ void test_fun2(boost::system::error_code in_code) {
 
   l_handle2.emplace<file_association_ref>(l_handle4);
   l_handle_ue2.emplace<file_association_ref>(l_handle4);
-  doodle::test_fun3({});
 }
 
-void test_fun(boost::system::error_code in_code) {
+void test_fun() {
   g_ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe_test>();
   g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
 
-  g_ctx().emplace<database_n::file_translator_ptr>()->set_only_open(true).async_open(
-      "E:/cache/doodle_main2.doodle_db", false, true, g_reg(), [](auto&&) {}
-  );
-  next_time_run({0, 0, 1}, doodle::test_fun2);
+  test_fun2();
+  boost::asio::post(g_io_context(), []() { test_fun3(); });
 }
+void reg_func(doodle::http::http_route& in_route) {
+  http::computer::reg(in_route);
+  http::task_info::reg(in_route);
+}
+class run_fun_main {
+ public:
+  run_fun_main()  = default;
+  ~run_fun_main() = default;
+  bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+    using signal_t                = boost::asio::signal_set;
+    auto l_signal_ptr             = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+    auto http_client_service_ptr_ = std::make_shared<http::http_work>();
+
+    l_signal_ptr->async_wait([l_signal_ptr](boost::system::error_code ec, int signal) {
+      if (ec) {
+        default_logger_raw()->log(log_loc(), level::warn, "signal_set_ error: {}", ec);
+        return;
+      }
+      default_logger_raw()->log(log_loc(), level::warn, "收到信号  {}", signal);
+      doodle::app_base::Get().stop_app();
+
+      for (int l = 0; l < 10; ++l) {
+        g_io_context().poll_one();
+      }
+    });
+    in_vector.emplace_back(l_signal_ptr);
+    default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
+    auto l_rout_ptr = std::make_shared<http::http_route>();
+    reg_func(*l_rout_ptr);
+    auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
+    l_listener->run();
+    in_vector.emplace_back(l_listener);
+
+    in_vector.emplace_back(http_client_service_ptr_);
+    http_client_service_ptr_->run(register_file_type::get_server_address());
+    return false;
+  }
+};
+
 }  // namespace doodle
 
 int core_auto_light_distributed(int argc, char* argv[]) {
   using main_app = doodle::app_command<>;
   main_app l_app{argc, argv};
-  doodle::next_time_run({0, 0, 1}, doodle::test_fun);
+  doodle::test_fun();
 
   return l_app.run();
 }

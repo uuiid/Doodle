@@ -26,18 +26,10 @@ bool http_working_service_t::operator()(const argh::parser& in_arh, std::vector<
       default_logger_raw()->log(log_loc(), level::err, "signal_set error: {}", in_error_code);
       return;
     }
-    if (in_signal == SIGINT || in_signal == SIGTERM) {
-      http_client_service_ptr_->stop();
-    }
-    for (int l = 0; l < 10; ++l) {
-      g_io_context().poll_one();
-    }
     app_base::Get().stop_app();
   });
 
-  boost::asio::post(g_io_context(), [http_client_service_ptr_]() {
-    http_client_service_ptr_->run(register_file_type::get_server_address());
-  });
+  http_client_service_ptr_->run(register_file_type::get_server_address());
 
   return false;
 }
