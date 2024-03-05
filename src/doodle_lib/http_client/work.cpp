@@ -215,9 +215,18 @@ void http_work::run_auto_light_task() {
   import_and_render_ue l_import_and_render_ue{l_msg};
   auto_light_render_video l_auto_light_render_video{l_msg};
   up_auto_light_anim_file l_up_auto_light_file{l_msg};
-  l_up_auto_light_file.async_end(
-      boost::asio::bind_executor(g_io_context(), boost::beast::bind_front_handler(&http_work::end_task, this))
-  );
+  l_up_auto_light_file.async_end(boost::asio::bind_executor(
+      g_io_context(),
+      [this, l_msg](boost::system::error_code in_error_code, const FSys::path &in_path) {
+        auto l_logger = l_msg.get<process_message>().logger();
+        if (!in_error_code) l_logger->log(log_loc(), level::err, "任务输出 {}", in_path);
+        end_task(in_error_code);
+        l_logger->flush();
+        boost::asio::post(g_io_context(), [l_msg]() {
+          if (auto l_ = l_msg; l_) l_.destroy();
+        });
+      }
+  ));
   l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
   l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_auto_light_render_video)));
   l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
