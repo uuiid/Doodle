@@ -61,10 +61,10 @@ constexpr auto l_data2 = R"(
 }
 )";
 
-class maya_exe_test : public doodle::maya_exe {
+class maya_exe_test2 : public doodle::maya_exe {
  public:
-  maya_exe_test()           = default;
-  ~maya_exe_test() override = default;
+  maya_exe_test2()           = default;
+  ~maya_exe_test2() override = default;
 
  private:
   void queue_up(
@@ -101,14 +101,14 @@ class maya_exe_test : public doodle::maya_exe {
   }
 };
 
-class ue_exe_test : public doodle::ue_exe {
+class ue_exe_test2 : public doodle::ue_exe {
  public:
-  ue_exe_test()           = default;
-  ~ue_exe_test() override = default;
+  ue_exe_test2()           = default;
+  ~ue_exe_test2() override = default;
 
  private:
   void queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) override {
-    doodle::log_info(fmt::format("ue_exe_test {}", in_command_line));
+    doodle::log_info(fmt::format("ue_exe_test2 {}", in_command_line));
     static std::filesystem::path l_path{"D:/doodle/cache/ue/TE/YuDaoZong_TingYuan/Saved/MovieRenders/Ep_0092_sc_0089"};
     if (!doodle::FSys::exists(l_path)) {
       doodle::FSys::create_directories(l_path);
@@ -206,12 +206,7 @@ void test_fun2() {
   l_handle_ue2.emplace<file_association_ref>(l_handle4);
 }
 
-void test_fun() {
-  g_ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe_test>();
-  g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
 
-  test_fun2();
-}
 class run_fun_main {
   void reg_func(doodle::http::http_route& in_route) {
     http::computer::reg(in_route);
@@ -244,8 +239,14 @@ class run_fun_main {
 
     in_vector.emplace_back(http_client_service_ptr_);
     http_client_service_ptr_->run(register_file_type::get_server_address());
-    doodle::test_fun();
+
     std::locale::global(core_set::get_set().utf8_locale);
+
+    g_ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe_test2>();
+    g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test2>();
+
+    test_fun2();
+
     return false;
   }
 };
