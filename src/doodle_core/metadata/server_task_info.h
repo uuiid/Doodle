@@ -81,6 +81,7 @@ class server_task_info {
   FSys::ofstream log_file_out_{};
 
   std::string read_log(level::level_enum in_level) const;
+  FSys::path get_log_path(level::level_enum in_level) const;
   void write_log(level::level_enum in_level, std::string_view in_msg);
 
  private:
