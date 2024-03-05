@@ -160,6 +160,7 @@ r.Streaming.PoolSize=16384
         l_find_streaming_pool_size, l_str.find("\n", l_find_streaming_pool_size), "r.Streaming.PoolSize=16384"
     );
   }
+  FSys::ofstream{l_file_path} << l_str;
 }
 
 void import_and_render_ue::operator()(
