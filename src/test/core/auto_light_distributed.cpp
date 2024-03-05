@@ -245,6 +245,7 @@ class run_fun_main {
     in_vector.emplace_back(http_client_service_ptr_);
     http_client_service_ptr_->run(register_file_type::get_server_address());
     doodle::test_fun();
+    std::locale::global(core_set::get_set().utf8_locale);
     return false;
   }
 };
