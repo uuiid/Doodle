@@ -32,9 +32,14 @@ void task_info::post_task(boost::system::error_code in_error_code, entt::handle 
   // 任务名称
   if (l_body.contains("name") && l_body["name"].is_string()) {
     l_task_handle.get<server_task_info>().name_ = l_body["name"];
+  } else {
+    l_task_handle.get<server_task_info>().name_ = fmt::format("task_{}", l_task_handle);
   }
-
-  l_task_handle.get<server_task_info>().submit_time_ = chrono::sys_time_pos ::clock ::now();
+  auto &l_task_info        = l_task_handle.get<server_task_info>();
+  l_task_info.submit_time_ = chrono::sys_time_pos ::clock ::now();
+  l_task_info.log_path_    = fmt::format(
+      "task_log/{}_{}_{}_{}", l_task_info.name_, l_task_handle, l_task_info.source_computer_, l_task_info.submitter_
+  );
 
   nlohmann::json l_response_json{};
   l_response_json["id"] = l_task_handle;
