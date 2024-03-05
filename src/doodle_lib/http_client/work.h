@@ -60,6 +60,7 @@ class http_work {
 
   bool is_connect_{false};
   logger_sink_ptr seed_server_sink_{};
+  std::string host_name_{};
 
   friend class websocket_sink_mt;
 

@@ -58,6 +58,7 @@ void http_work::run(const std::string &in_server_address, std::uint16_t in_port)
       handle_.get<http_websocket_data>().do_close();
     }
   });
+  host_name_ = boost::asio::ip::host_name();
   do_connect();
 }
 void http_work::do_connect() {
@@ -112,13 +113,9 @@ void http_work::send_state() {
     return;
   }
   if (task_info_.task_info_.is_null()) {
-    handle_.get<http_websocket_data>().seed(nlohmann::json{
-        {"type", "set_state"}, {"state", computer_status::free}, {"host_name", boost::asio::ip::host_name()}
-    });
+    handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}, {"host_name", host_name_}});
   } else {
-    handle_.get<http_websocket_data>().seed(nlohmann::json{
-        {"type", "set_state"}, {"state", computer_status::busy}, {"host_name", boost::asio::ip::host_name()}
-    });
+    handle_.get<http_websocket_data>().seed(nlohmann::json{{"type", "set_state"}, {"state", computer_status::busy}, {"host_name", host_name_}});
   }
   do_wait();
 }
