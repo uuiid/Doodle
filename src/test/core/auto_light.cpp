@@ -106,7 +106,23 @@ void next_time_run(
     l_fun(in_ec);
   });
 }
+
+void test_fun4() {
+  auto l_ue_msg = entt::handle{*g_reg(), g_reg()->create()};
+  const FSys::path l_update_path{"D:/test_files/test_ue_auto_main/result"};
+  l_ue_msg.emplace<process_message>("测试");
+  l_ue_msg.emplace<episodes>(92);
+  l_ue_msg.emplace<shot>(89, shot::shot_ab_enum::None);
+  l_ue_msg.emplace<project>("测试", l_update_path, "test", "TE");
+  import_and_render_ue l_import_and_render_ue{l_ue_msg};
+  down_auto_light_anim_file::down_info l_down_info{};
+  l_down_info.render_project_ =
+      "C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/BuJiaBan_UE5/BuJiaBan_UE5.uproject";
+  l_import_and_render_ue({}, l_down_info);
+}
+
 void test_fun3(boost::system::error_code in_code) {
+  test_fun4();
   auto l_maya_exe = g_ctx().get<maya_exe_ptr>();
   auto k_arg      = maya_exe_ns::export_fbx_arg{};
   const FSys::path l_update_path{"D:/test_files/test_ue_auto_main/result"};
