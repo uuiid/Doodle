@@ -223,11 +223,7 @@ class run_fun_main {
         return;
       }
       default_logger_raw()->log(log_loc(), level::warn, "收到信号  {}", signal);
-      doodle::app_base::Get().stop_app();
-
-      for (int l = 0; l < 10; ++l) {
-        g_io_context().poll_one();
-      }
+      doodle::app_base::GetPtr()->stop_app();
     });
     in_vector.emplace_back(l_signal_ptr);
     default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
