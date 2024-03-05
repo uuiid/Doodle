@@ -190,13 +190,7 @@ void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_
         }
       });
   queue_list_.emplace(l_run);
-  if (ue_path_.empty()) {
-    if (auto l_ec = find_ue_exe(l_run->logger_attr); l_ec) {
-      l_run->call_attr->ec_ = l_ec;
-      l_run->call_attr->complete();
-      return;
-    }
-  }
+
   notify_run();
 }
 
