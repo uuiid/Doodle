@@ -53,7 +53,11 @@ void http_work::run(const std::string &in_server_address, std::uint16_t in_port)
   g_ctx().emplace<maya_exe_ptr>(std::make_shared<maya_exe>());
   g_ctx().emplace<ue_exe_ptr>(std::make_shared<ue_exe>());
   core_set_init{}.config_to_user();
-
+  app_base::Get().on_cancel.slot().assign([this](boost::asio::cancellation_type_t in_error_code) {
+    if (handle_ && handle_.any_of<http_websocket_data>()) {
+      handle_.get<http_websocket_data>().do_close();
+    }
+  });
   do_connect();
 }
 void http_work::do_connect() {
@@ -64,37 +68,43 @@ void http_work::do_connect() {
   }
   handle_.get<http_websocket_data>().async_connect(
       server_address_, "v1/computer", port_,
-      [this](boost::system::error_code in_error_code) {
-        if (in_error_code) {
-          logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
-          do_wait();
-          return;
-        }
-        handle_.get<http_websocket_data>().on_message.connect(
-            std::bind(&http_work::read_task_info, this, std::placeholders::_1, std::placeholders::_2)
-        );
-        is_connect_ = true;
-        send_state();
-      }
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(),
+          [this](boost::system::error_code in_error_code) {
+            if (in_error_code) {
+              logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
+              do_wait();
+              return;
+            }
+            handle_.get<http_websocket_data>().on_message.connect(
+                std::bind(&http_work::read_task_info, this, std::placeholders::_1, std::placeholders::_2)
+            );
+            is_connect_ = true;
+            send_state();
+          }
+      )
   );
 }
 void http_work::do_wait() {
   logger_->log(log_loc(), level::info, "开始等待下一次心跳");
   timer_->expires_after(std::chrono::seconds{2});
-  timer_->async_wait([this](boost::system::error_code in_error_code) {
-    if (in_error_code == boost::asio::error::operation_aborted) {
-      return;
-    }
-    if (in_error_code) {
-      logger_->log(log_loc(), level::err, "on_wait error: {}", in_error_code);
-      return;
-    }
-    if (!handle_ || !is_connect_) {
-      do_connect();
-      return;
-    }
-    send_state();
-  });
+  timer_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::Get().on_cancel.slot(),
+      [this](boost::system::error_code in_error_code) {
+        if (in_error_code == boost::asio::error::operation_aborted) {
+          return;
+        }
+        if (in_error_code) {
+          logger_->log(log_loc(), level::err, "on_wait error: {}", in_error_code);
+          return;
+        }
+        if (!handle_ || !is_connect_) {
+          do_connect();
+          return;
+        }
+        send_state();
+      }
+  ));
 }
 
 void http_work::send_state() {
@@ -122,14 +132,7 @@ void http_work::read_task_info(const nlohmann::json &in_json, const entt::handle
   send_state();
   run_task();
 }
-void http_work::stop() {
-  if (handle_) {
-    handle_.get<http_websocket_data>().do_close();
-  }
-  timer_->cancel();
-  logger_->log(log_loc(), level::info, "http_work stop");
-  logger_->flush();
-}
+
 void http_work::run_task() {
   if (task_info_.task_info_.is_null()) {
     return;

@@ -82,6 +82,5 @@ class http_work {
   ~http_work() = default;
 
   void run(const std::string& in_server_address, std::uint16_t in_port = doodle_config::http_port);
-  void stop();
 };
 }  // namespace doodle::http
