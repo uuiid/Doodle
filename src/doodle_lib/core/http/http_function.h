@@ -4,6 +4,7 @@
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/wait_op.h>
+#include <doodle_core/logger/logger.h>
 
 #include "boost/algorithm/string.hpp"
 #include "boost/dynamic_bitset.hpp"
@@ -48,7 +49,12 @@ class http_function {
       requires std::is_same_v<T, entt::entity>
     std::optional<T> get(const std::string& in_str) const {
       if (capture_map_.find(in_str) != capture_map_.end()) {
-        return num_to_enum<entt::entity>(std::stoi(capture_map_.at(in_str)));
+        try {
+          return num_to_enum<entt::entity>(std::stoi(capture_map_.at(in_str)));
+        } catch (const std::invalid_argument& e) {
+          default_logger_raw()->log(log_loc(), level::err, "get entt::entity error: {}", e.what());
+          return {};
+        }
       }
       return {};
     }
