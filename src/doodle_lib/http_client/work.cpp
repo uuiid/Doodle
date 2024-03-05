@@ -125,7 +125,7 @@ void http_work::read_task_info(const nlohmann::json &in_json, const entt::handle
     return;
   }
   task_info_.task_id_   = in_json["id"].get<std::int32_t>();
-  task_info_.task_info_ = in_json;
+  task_info_.task_info_ = in_json["data"];
   send_state();
   run_task();
 }
