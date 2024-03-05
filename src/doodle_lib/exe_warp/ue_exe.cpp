@@ -177,7 +177,6 @@ void ue_exe::notify_run() {
 }
 
 void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun) {
-  if (ue_path_.empty()) find_ue_exe();
   auto l_run         = std::make_shared<run_ue>();
   l_run->ue_path     = ue_path_;
   l_run->arg_attr    = in_command_line;
@@ -191,6 +190,13 @@ void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_
         }
       });
   queue_list_.emplace(l_run);
+  if (ue_path_.empty()) {
+    if (auto l_ec = find_ue_exe(l_run->logger_attr); l_ec) {
+      l_run->call_attr->ec_ = l_ec;
+      l_run->call_attr->complete();
+      return;
+    }
+  }
   notify_run();
 }
 
