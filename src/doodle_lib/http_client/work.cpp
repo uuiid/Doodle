@@ -204,7 +204,8 @@ void http_work::run_auto_light_task() {
 
   l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
   entt::handle l_msg{*g_reg(), g_reg()->create()};
-  l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
+  auto &l_process_message = l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
+  l_process_message.logger()->sinks().emplace_back(std::make_shared<websocket_sink_mt>(this));
   l_msg.emplace<episodes>(task_info_.task_info_["episodes"].get<std::int32_t>());
   l_msg.emplace<shot>(
       task_info_.task_info_["shot"].get<std::int32_t>(),
