@@ -102,16 +102,6 @@ class ue_exe_test : public doodle::ue_exe {
 
 namespace doodle {
 
-void next_time_run(
-    boost::asio::deadline_timer::duration_type in_time,
-    boost::asio::any_completion_handler<void(boost::system::error_code)> in_fun
-) {
-  auto l_time = std::make_shared<boost::asio::deadline_timer>(g_io_context());
-  l_time->expires_from_now(in_time);
-  l_time->async_wait([l_time, l_fun = std::move(in_fun)](const boost::system::error_code& in_ec) mutable {
-    l_fun(in_ec);
-  });
-}
 void test_fun3() {
   auto l_maya_exe = g_ctx().get<maya_exe_ptr>();
   auto k_arg      = maya_exe_ns::export_fbx_arg{};
@@ -202,7 +192,6 @@ void test_fun() {
   g_ctx().emplace<ue_exe_ptr>()   = std::make_shared<ue_exe_test>();
 
   test_fun2();
-  boost::asio::post(g_io_context(), []() { test_fun3(); });
 }
 class run_fun_main {
   void reg_func(doodle::http::http_route& in_route) {
