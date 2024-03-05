@@ -47,6 +47,7 @@ bool task_server::assign_task() {
 
       l_json["id"]   = l_e;
       l_json["data"] = l_task.data_;
+      l_json["type"] = "task";
       l_websocket.seed(l_json);
       logger_ptr_->log(
           log_loc(), level::info, "分配任务 {}_{} 给 {}({})", l_task.name_, l_e, l_computer.name_, l_computer.ip_
