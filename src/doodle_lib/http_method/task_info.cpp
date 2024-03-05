@@ -114,6 +114,21 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
+  auto l_evel_opt = l_cap.get<std::string>("level");
+  if (!l_evel_opt) {
+    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  auto l_level = magic_enum::enum_cast<level::level_enum>(*l_evel_opt);
+  if (!l_level) {
+    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+
   auto l_entt = entt::handle{*g_reg(), *l_id};
   if (!l_entt || !l_entt.any_of<server_task_info>()) {
     in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
@@ -121,7 +136,26 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_log_path = l_entt.get<server_task_info>().log_path_;
+  auto l_log_path = l_entt.get<server_task_info>().get_log_path(level::info);
+  if (!FSys::exists(l_log_path)) {
+    in_error_code.assign(ERROR_FILE_NOT_FOUND, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  boost::beast::http::response<boost::beast::http::file_body> l_response{
+      boost::beast::http::status::ok, session.request_parser_->get().version()
+  };
+  l_response.result(boost::beast::http::status::ok);
+  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "text/plain");
+  l_response.body().open(l_log_path.string().c_str(), boost::beast::file_mode::scan, in_error_code);
+  if (in_error_code) {
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  l_response.prepare_payload();
+  session.seed(std::move(l_response));
 }
 void task_info::reg(doodle::http::http_route &in_route) {
   in_route
@@ -132,6 +166,10 @@ void task_info::reg(doodle::http::http_route &in_route) {
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task/{id}",
           session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
+      ))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::get, "v1/task/{id}/log/{level}",
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task_logger))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::post, "v1/task",
