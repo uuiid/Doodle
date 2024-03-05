@@ -318,6 +318,12 @@ void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string_view &in_key, const std::shared_ptr<maya_exe_ns::arg> &in_arg,
     call_fun_type in_call_fun, const std::function<void(maya_exe_ns::maya_out_arg)> &in_set_arg_fun
 ) {
+  if (auto l_ec = install_maya_exe(in_msg.get<process_message>().logger()); l_ec) {
+    in_call_fun->ec_ = l_ec;
+    in_call_fun->complete();
+    notify_run();
+    return;
+  }
   auto l_run = std::dynamic_pointer_cast<maya_exe_ns::run_maya>(
       p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>(this))
   );
@@ -331,11 +337,6 @@ void maya_exe::queue_up(
   l_run->cancel_attr = in_msg.get<process_message>().aborted_sig.connect([l_run_weak_ptr = l_run->weak_from_this()]() {
     if (auto l_ptr = l_run_weak_ptr.lock(); l_ptr) l_ptr->cancel();
   });
-  if (auto l_ec = install_maya_exe(l_run->log_attr); l_ec) {
-    l_run->wait_op_->ec_ = l_ec;
-    l_run->wait_op_->complete();
-    return;
-  }
   notify_run();
 }
 maya_exe::~maya_exe() = default;
