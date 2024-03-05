@@ -42,6 +42,25 @@ constexpr auto l_data = R"([
 }
 ])";
 
+constexpr auto l_data2 = R"(
+{
+    "source_computer": "test_com",
+    "submitter": "测试机器人",
+    "name": "测试1",
+    "data": {
+        "type": "auto_light_task",
+        "file_path": "",
+        "export_anim_time": 1001,
+        "episodes": 92,
+        "shot": 89,
+        "project_name": "炼气十万年",
+        "project_path": "C:/sy/LianQiShiWanNian_8",
+        "project_en_str": "LianQiShiWanNian",
+        "project_shor_str": "LQ"
+    }
+}
+)";
+
 class maya_exe_test : public doodle::maya_exe {
  public:
   maya_exe_test()           = default;
