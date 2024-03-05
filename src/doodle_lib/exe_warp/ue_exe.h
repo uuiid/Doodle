@@ -98,7 +98,6 @@ class ue_exe {
 
   template <typename CompletionHandler, typename Arg_t>
   std::shared_ptr<detail::process_child> create_child(const Arg_t &in_arg, CompletionHandler &&in_completion) {
-    find_ue_exe();
     if (ue_path_.empty()) {
       throw_exception(doodle_error{"ue_exe path is empty or not exists"});
     }
