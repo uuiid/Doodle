@@ -184,7 +184,6 @@ void http_work::run_auto_light_task() {
       !task_info_.task_info_.contains("export_anim_time") || !task_info_.task_info_["export_anim_time"].is_number() ||
       !task_info_.task_info_.contains("episodes") || !task_info_.task_info_["episodes"].is_number() ||
       !task_info_.task_info_.contains("shot") || !task_info_.task_info_["shot"].is_number() ||
-      !task_info_.task_info_.contains("shot_enum") || !task_info_.task_info_["shot_enum"].is_string() ||
       !task_info_.task_info_.contains("project_name") || !task_info_.task_info_["project_name"].is_string() ||
       !task_info_.task_info_.contains("project_path") || !task_info_.task_info_["project_path"].is_string() ||
       !task_info_.task_info_.contains("project_en_str") || !task_info_.task_info_["project_en_str"].is_string() ||
@@ -201,8 +200,10 @@ void http_work::run_auto_light_task() {
   l_msg.emplace<episodes>(task_info_.task_info_["episodes"].get<episodes>());
   l_msg.emplace<shot>(
       task_info_.task_info_["shot"].get<std::int32_t>(),
-      magic_enum::enum_cast<shot::shot_ab_enum>(task_info_.task_info_["shot_enum"].get<std::string>())
-          .value_or(shot::shot_ab_enum::None)
+      task_info_.task_info_.contains("shot_enum")
+          ? magic_enum::enum_cast<shot::shot_ab_enum>(task_info_.task_info_["shot_enum"].get<std::string>())
+                .value_or(shot::shot_ab_enum::None)
+          : shot::shot_ab_enum::None
   );
   l_msg.emplace<project>(
       task_info_.task_info_["project_name"].get<std::string>(),
