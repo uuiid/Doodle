@@ -25,19 +25,9 @@ void render_monitor::init() {
 bool render_monitor::render() {
   std::call_once(p_i->once_flag_, [this]() { init(); });
 
-  {
-    ImGui::Text("渲染刷新");
-    ImGui ::SameLine();
-    if (p_i->progress_ < 1.0f) p_i->progress_ += (1.0f / (3.0f * 60.0f));
-
-    ImGui::ProgressBar(p_i->progress_, ImVec2{200.f, 0.0f});
-    if (!p_i->progress_message_.empty()) {
-      ImGui::SameLine();
-      dear::Text(p_i->progress_message_);
-      if (p_i->progress_ >= 1.0f) {
-        p_i->progress_ = 0.f;
-      }
-    }
+  if (!p_i->progress_message_.empty()) {
+    ImGui::SameLine();
+    dear::Text(p_i->progress_message_);
   }
   if (auto l_ = dear::CollapsingHeader{
           *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
@@ -120,7 +110,6 @@ void render_monitor::do_wait() {
       app_base::GetPtr()->on_cancel.slot(),
       [this, self = shared_from_this()](boost::system::error_code ec) {
         if (!open_) return;
-        p_i->progress_ = 0.f;
         if (ec) {
           log_info(p_i->logger_ptr_, fmt::format("{}", ec));
           return;
