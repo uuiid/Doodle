@@ -34,11 +34,13 @@ bool render_monitor::render() {
     }
   }
   if (auto l_ = dear::CollapsingHeader{
-          *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen}) {
-    if (auto l_table = dear::Table{*p_i->component_table_id_, 3}) {
+          *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+      }) {
+    if (auto l_table = dear::Table{*p_i->component_table_id_, 4}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
       ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 100.0f);
       ImGui::TableSetupColumn("名称");
+      ImGui::TableSetupColumn("ip");
       ImGui::TableSetupColumn("状态");
 
       ImGui::TableHeadersRow();
@@ -47,22 +49,32 @@ bool render_monitor::render() {
         ImGui::TableNextColumn();
         ImGui::Text(l_computer.id_.c_str());
         ImGui::TableNextColumn();
-        dear::Text(l_computer.computer_.name_);
+        dear::Text(l_computer.name_);
         ImGui::TableNextColumn();
-        dear::Text(l_computer.computer_.state_);
+        dear::Text(l_computer.ip_);
+        ImGui::TableNextColumn();
+        dear::Text(l_computer.status_);
       }
     }
   }
 
   if (auto l_ = dear::CollapsingHeader{
-          *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen}) {
-    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 4}) {
+          *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+      }) {
+    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 10}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
       ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 100.0f);
       ImGui::TableSetupColumn("名称");
       ImGui::TableSetupColumn("状态");
-      ImGui::TableSetupColumn("时间");
 
+      ImGui::TableSetupColumn("提交计算机");
+      ImGui::TableSetupColumn("提交者");
+      ImGui::TableSetupColumn("提交时间");
+
+      ImGui::TableSetupColumn("运行计算机");
+      ImGui::TableSetupColumn("运行计算机ip");
+      ImGui::TableSetupColumn("运行时间");
+      ImGui::TableSetupColumn("结束时间");
       ImGui::TableHeadersRow();
 
       for (auto& l_render_task : p_i->render_tasks_) {
@@ -73,14 +85,26 @@ bool render_monitor::render() {
                 ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns |
                     ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick
             )) {
-          FSys::open_explorer(l_render_task.task_.path_);
+          FSys::open_explorer(l_render_task.id_);
         }
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.task_.name_);
+        dear::Text(l_render_task.name_);
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.task_.state_);
+        dear::Text(l_render_task.status_);
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.task_.time_);
+        dear::Text(l_render_task.source_computer_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.submitter_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.submit_time_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.run_computer_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.run_computer_ip_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.run_time_);
+        ImGui::TableNextColumn();
+        dear::Text(l_render_task.end_time_);
       }
     }
   }

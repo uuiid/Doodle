@@ -17,6 +17,7 @@ target_sources(
         global_function.h
         wait_op.h
         app_service.h
+        http_client_core.h
 
         PRIVATE
         core_set.cpp
@@ -31,4 +32,5 @@ target_sources(
         program_info.cpp
         wait_op.cpp
         app_service.cpp
+        http_client_core.cpp
 )

@@ -13,7 +13,6 @@
 #include <boost/beast.hpp>
 
 #include <magic_enum.hpp>
-// #include <doodle_server/render_farm/detail/basic_json_body.h>
 
 namespace doodle::detail {
 

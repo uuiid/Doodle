@@ -2,11 +2,14 @@
 // Created by td_main on 2023/8/22.
 //
 #pragma once
+#include <doodle_core/http_server/>
+#include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/server_task_info.h>
+
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/render_farm/client.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -18,15 +21,24 @@ namespace gui {
 class render_monitor : public std::enable_shared_from_this<render_monitor> {
  private:
   struct computer_gui {
-    explicit computer_gui(client::computer in_computer)
-        : computer_(std::move(in_computer)), id_{fmt::to_string(computer_.id_)} {}
-    client::computer computer_{};
     std::string id_{};
+    std::string name_{};
+    std::string ip_{};
+    std::string status_{};
   };
   struct task_t_gui {
-    explicit task_t_gui(client::task_t in_task) : task_(std::move(in_task)), id_{fmt::to_string(task_.id_)} {}
-    client::task_t task_{};
     std::string id_{};
+    std::string name_{};
+    std::string status_{};
+
+    std::string source_computer_{};
+    std::string submitter_{};
+    std::string submit_time_{};
+
+    std::string run_computer_{};
+    std::string run_computer_ip_{};
+    std::string run_time_{};
+    std::string end_time_{};
   };
   using timer_t      = boost::asio::system_timer;
   using timer_ptr_t  = std::shared_ptr<timer_t>;
@@ -45,7 +57,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     std::string progress_message_{};
     std::vector<computer_gui> computers_{};
     std::vector<task_t_gui> render_tasks_{};
-    std::shared_ptr<client> client_ptr_{};
+
     strand_ptr_t strand_ptr_{};
     timer_ptr_t timer_ptr_{};
     std::once_flag once_flag_{};
