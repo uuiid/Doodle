@@ -20,13 +20,11 @@ namespace gui {
 class render_monitor : public std::enable_shared_from_this<render_monitor> {
  private:
   struct computer_gui {
-    std::string id_{};
     std::string name_{};
     std::string ip_{};
     std::string status_{};
   };
   struct task_t_gui {
-    std::string id_{};
     std::string name_{};
     std::string status_{};
 
@@ -71,6 +69,9 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
   void do_find_server_address();
 
   void get_remote_data();
+
+  static std::string conv_time(const nlohmann::json& in_json);
+  static std::string conv_state(const nlohmann::json& in_json);
 
  public:
   render_monitor() : p_i(std::make_unique<impl>()){};
