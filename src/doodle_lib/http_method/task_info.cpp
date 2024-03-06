@@ -115,19 +115,12 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_evel_opt = l_cap.get<std::string>("level");
-  if (!l_evel_opt) {
-    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
-  }
-  auto l_level = magic_enum::enum_cast<level::level_enum>(*l_evel_opt);
-  if (!l_level) {
-    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
+
+  level::level_enum l_level{level::err};
+  auto l_query = session.url_.query();
+  if (auto l_it = l_query.find("level"); l_it != l_query.npos) {
+    l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
+                  .value_or(level::info);
   }
 
   auto l_entt = entt::handle{*g_reg(), *l_id};
@@ -137,7 +130,7 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_log_path = l_entt.get<server_task_info>().get_log_path(*l_level);
+  auto l_log_path = l_entt.get<server_task_info>().get_log_path(l_level);
   if (!FSys::exists(l_log_path)) {
     in_error_code.assign(ERROR_FILE_NOT_FOUND, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
@@ -169,7 +162,7 @@ void task_info::reg(doodle::http::http_route &in_route) {
           session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "v1/task/{id}/log/{level}",
+          boost::beast::http::verb::get, "v1/task/{id}/log",
           session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task_logger))
       ))
       .reg(std::make_shared<http_function>(
