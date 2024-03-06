@@ -136,7 +136,7 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_log_path = l_entt.get<server_task_info>().get_log_path(level::info);
+  auto l_log_path = l_entt.get<server_task_info>().get_log_path(*l_level);
   if (!FSys::exists(l_log_path)) {
     in_error_code.assign(ERROR_FILE_NOT_FOUND, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
