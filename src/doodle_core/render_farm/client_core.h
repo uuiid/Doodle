@@ -254,19 +254,6 @@ class client_core : public std::enable_shared_from_this<client_core> {
   [[nodiscard]] inline logger_ptr& logger() { return ptr_->logger_; }
   [[nodiscard]] inline const logger_ptr& logger() const { return ptr_->logger_; }
 
-  template <typename ExecutorType, typename CompletionHandler>
-  auto async_connect(const ExecutorType& in_executor_type, CompletionHandler&& in_completion) {
-    using response_type_1 = boost::beast::http::response<boost::beast::http::empty_body>;
-    boost::beast::http::request<boost::beast::http::empty_body> l_request{
-        boost::beast::http::verb::get, "/v1/render_farm", 11};
-    l_request.keep_alive(true);
-    l_request.set(boost::beast::http::field::content_type, "application/json");
-    l_request.set(boost::beast::http::field::accept, "text/plain");
-    return async_read<response_type_1>(
-        in_executor_type, l_request, std::forward<decltype(in_completion)>(in_completion)
-    );
-  }
-
  private:
   void do_close();
 
