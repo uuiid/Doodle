@@ -16,10 +16,6 @@ FSys::path server_task_info::get_log_path(level::level_enum in_level) const {
   return core_set::get_set().get_cache_root(log_path_) / fmt::format("{}.log.txt", magic_enum::enum_name(in_level));
 }
 void server_task_info::write_log(level::level_enum in_level, std::string_view in_msg) {
-  if (!log_file_out_.is_open()) {
-    auto l_path = get_log_path(in_level);
-    log_file_out_.open(l_path, std::ios::app | std::ios::binary);
-  }
-  log_file_out_ << in_msg;
+  FSys::ofstream{get_log_path(in_level), std::ios::app | std::ios::binary} << in_msg;
 }
 }  // namespace doodle
