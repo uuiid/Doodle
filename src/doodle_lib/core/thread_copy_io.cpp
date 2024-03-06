@@ -14,12 +14,12 @@ void thread_copy_io_service::copy_file(const FSys::path &from, const FSys::path 
 
     auto l_to   = to;
     auto l_from = from;
-
+    static FSys::path l_path{R"(\\?\)"};
     if (l_to.make_preferred().native().size() > MAX_PATH) {
-      l_to = FSys::path{R"(\\?\)"} / l_to;
+      l_to = l_path / l_to;
     }
     if (l_from.make_preferred().native().size() > MAX_PATH) {
-      l_from = FSys::path{R"(\\?\)"} / l_from;
+      l_from = l_path / l_from;
     }
 
     FSys::copy_file(l_from, l_to, FSys::copy_options::overwrite_existing);
@@ -34,12 +34,12 @@ void thread_copy_io_service::copy_old_file(const FSys::path &from, const FSys::p
 
       auto l_to   = to;
       auto l_from = from;
-
+      static FSys::path l_path{R"(\\?\)"};
       if (l_to.make_preferred().native().size() > MAX_PATH) {
-        l_to = FSys::path{R"(\\?\)"} / l_to;
+        l_to = l_path / l_to;
       }
       if (l_from.make_preferred().native().size() > MAX_PATH) {
-        l_from = FSys::path{R"(\\?\)"} / l_from;
+        l_from = l_path / l_from;
       }
 
       FSys::copy_file(l_from, l_to, FSys::copy_options::overwrite_existing);
