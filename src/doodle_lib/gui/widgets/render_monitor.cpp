@@ -4,11 +4,13 @@
 
 #include "render_monitor.h"
 
+#include <doodle_core/core/http_client_core.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <winreg/WinReg.hpp>
+#include <doodle_lib/core/http/json_body.h>
 namespace doodle {
 namespace gui {
 void render_monitor::init() {
@@ -112,11 +114,8 @@ bool render_monitor::render() {
   return open_;
 }
 void render_monitor::do_find_server_address() {
-  winreg::RegKey l_key{};
-  l_key.Open(HKEY_CURRENT_USER, L"Software\\Doodle\\RenderFarm", KEY_READ);
-  auto l_server_address = conv::utf_to_utf<char>(l_key.GetStringValue(L"server_address"));
-  log_info(p_i->logger_ptr_, fmt::format("找到服务器 ip {}", l_server_address));
-  p_i->client_ptr_ = std::make_shared<client>(l_server_address);
+  p_i->http_client_core_ptr_ =
+      std::make_shared<http::detail::http_client_core>(register_file_type::get_server_address());
   do_wait();
 }
 
@@ -133,36 +132,52 @@ void render_monitor::do_wait() {
   });
 }
 void render_monitor::get_remote_data() {
-  p_i->client_ptr_->async_computer_list([this, self = shared_from_this()](
-                                            const boost::system::error_code& in_code,
-                                            const std::vector<client::computer>& in_vector
-                                        ) {
-    if (in_code) {
-      log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-      p_i->progress_message_ = fmt::format("{}", in_code);
-      return;
-    }
-    p_i->progress_message_.clear();
+  // get computers
+  boost::beast::http::request<boost::beast::http::empty_body> l_req_computer{
+      boost::beast::http::verb::get, "v1/computer", 11
+  };
+  l_req_computer.keep_alive(true);
+  l_req_computer.set(boost::beast::http::field::accept, "application/json");
 
-    p_i->computers_ = in_vector |
-                      ranges::views::transform([](const auto& in_computer) { return computer_gui{in_computer}; }) |
-                      ranges::to<std::vector<computer_gui>>();
-  });
-  p_i->client_ptr_->async_task_list([this, self = shared_from_this()](
-                                        const boost::system::error_code& in_code,
-                                        const std::vector<client::task_t>& in_vector
-                                    ) {
-    if (in_code) {
-      log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-      p_i->progress_message_ = fmt::format("{}", in_code);
-      do_wait();
-      return;
-    }
-    p_i->progress_message_.clear();
-    p_i->render_tasks_ = in_vector | ranges::views::transform([](const auto& in_task) { return task_t_gui{in_task}; }) |
-                         ranges::to<std::vector<task_t_gui>>();
-    do_wait();
-  });
+  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
+      l_req_computer, boost::asio::bind_executor(
+                          g_io_context(),
+                          [this, self = shared_from_this()](
+                              const boost::system::error_code& in_code,
+                              const boost::beast::http::response<http::basic_json_body>& in_vector
+                          ) {
+                            if (in_code) {
+                              log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
+                              p_i->progress_message_ = fmt::format("{}", in_code);
+                              return;
+                            }
+                            p_i->progress_message_.clear();
+                          }
+                      )
+  );
+  boost::beast::http::request<boost::beast::http::empty_body> l_req_task{boost::beast::http::verb::get, "v1/task", 11};
+  l_req_task.keep_alive(true);
+  l_req_task.set(boost::beast::http::field::accept, "application/json");
+
+  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
+      l_req_task, boost::asio::bind_executor(
+                      g_io_context(),
+                      [this, self = shared_from_this()](
+                          const boost::system::error_code& in_code,
+                          const boost::beast::http::response<http::basic_json_body>& in_vector
+                      ) {
+                        if (in_code) {
+                          log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
+                          p_i->progress_message_ = fmt::format("{}", in_code);
+                          do_wait();
+                          return;
+                        }
+                        p_i->progress_message_.clear();
+
+                        do_wait();
+                      }
+                  )
+  );
 }
 render_monitor::~render_monitor() = default;
 }  // namespace gui

@@ -2,7 +2,6 @@
 // Created by td_main on 2023/8/22.
 //
 #pragma once
-#include <doodle_core/http_server/>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
@@ -64,6 +63,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
 
     // logger
     logger_ptr logger_ptr_{};
+    std::shared_ptr<http::detail::http_client_core> http_client_core_ptr_{};
   };
   std::unique_ptr<impl> p_i;
 
