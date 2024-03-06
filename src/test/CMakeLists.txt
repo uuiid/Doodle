@@ -69,7 +69,7 @@ create_test_sourcelist(main_test
 )
 
 # add the executable
-add_executable(CommonCxxTests ${main_test})
+add_executable(CommonCxxTests ${main_test} ../DoodleExe.manifest)
 
 # remove the test driver source file
 set(TestsToRun ${main_test})

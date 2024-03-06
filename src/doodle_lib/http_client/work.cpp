@@ -29,17 +29,16 @@ class websocket_sink_mt : public spdlog::sinks::base_sink<std::mutex> {
  public:
   explicit websocket_sink_mt(http_work *in_work) : work_(in_work) {}
   void sink_it_(const spdlog::details::log_msg &msg) override {
-    if (!work_) return;
-    if (!work_->handle_) return;
-    if (!work_->handle_.any_of<http_websocket_data>()) return;
-    auto &l_websocket = work_->handle_.get<http_websocket_data>();
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-    l_websocket.seed(nlohmann::json{
-        {"type", "logger"},
-        {"level", msg.level},
-        {"task_id", work_->task_info_.task_id_},
-        {"msg", fmt::to_string(formatted)}
+    boost::asio::post(g_io_context(), [l_work = work_, level = msg.level, l_msg = fmt::to_string(formatted)]() {
+      if (!l_work) return;
+      if (!l_work->handle_) return;
+      if (!l_work->handle_.any_of<http_websocket_data>()) return;
+      auto &l_websocket = l_work->handle_.get<http_websocket_data>();
+      l_websocket.seed(
+          nlohmann::json{{"type", "logger"}, {"level", level}, {"task_id", l_work->task_info_.task_id_}, {"msg", l_msg}}
+      );
     });
   }
   void flush_() override {}
@@ -204,7 +203,8 @@ void http_work::run_auto_light_task() {
 
   l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
   entt::handle l_msg{*g_reg(), g_reg()->create()};
-  l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
+  auto &l_process_message = l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
+  l_process_message.logger()->sinks().emplace_back(std::make_shared<websocket_sink_mt>(this));
   l_msg.emplace<episodes>(task_info_.task_info_["episodes"].get<std::int32_t>());
   l_msg.emplace<shot>(
       task_info_.task_info_["shot"].get<std::int32_t>(),

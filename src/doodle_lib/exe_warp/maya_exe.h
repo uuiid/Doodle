@@ -239,15 +239,21 @@ class DOODLELIB_API maya_exe {
 
   virtual ~maya_exe();
 
-  [[nodiscard]] FSys::path find_maya_path() const;
+  [[nodiscard]] FSys::path find_maya_path(const logger_ptr &in_logger, boost::system::error_code &in_code) const;
   boost::system::error_code install_maya_exe(const logger_ptr &in_logger);
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
     if (!in_handle.all_of<process_message>())
       in_handle.emplace<process_message>(in_arg.file_path.filename().generic_string());
-    auto l_arg           = in_arg;
-    l_arg.maya_path      = find_maya_path();
+    auto l_arg = in_arg;
+    boost::system::error_code l_code{};
+    auto l_maya_path = find_maya_path(in_handle.get<process_message>().logger(), l_code);
+    if (l_code) {
+      in_completion(l_code, maya_exe_ns::maya_out_arg());
+      return;
+    }
+    l_arg.maya_path      = l_maya_path;
     l_arg.out_path_file_ = FSys::get_cache_path() / fmt::format("maya_out_{}", version::build_info::get().version_str) /
                            fmt::format("{}.json", core_set::get_set().get_uuid());
     if (!FSys::exists(l_arg.out_path_file_.parent_path())) FSys::create_directories(l_arg.out_path_file_.parent_path());

@@ -1,14 +1,9 @@
 //
-// Created by td_main on 2023/8/28.
+// Created by TD on 2024/3/6.
 //
-#include "client_core.h"
 
-#include <doodle_core/lib_warp/boost_fmt_asio.h>
-#include <doodle_core/lib_warp/boost_fmt_error.h>
-
-#include <boost/asio.hpp>
-
-namespace doodle::detail {
+#include "http_client_core.h"
+namespace doodle::http::detail {
 
 void client_core::make_ptr() {
   auto l_s        = boost::asio::make_strand(g_io_context());
@@ -30,7 +25,6 @@ void client_core::on_resolve(boost::system::error_code ec, boost::asio::ip::tcp:
   }
   ptr_->resolver_results_ = std::move(results);
 }
-client_core::~client_core() = default;
 void client_core::do_close() {
   boost::system::error_code ec;
   ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
@@ -45,4 +39,5 @@ void client_core::cancel() {
     DOODLE_LOG_INFO(ec);
   }
 }
-}  // namespace doodle::detail
+client_core::~client_core() = default;
+}  // namespace doodle::http::detail

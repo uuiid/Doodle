@@ -11,7 +11,6 @@ target_sources(test_main
         regex.cpp
         abc.cpp
         wenrt.cpp
-        render_farm.cpp
         run_process_v2.cpp
 )
 

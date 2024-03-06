@@ -19,7 +19,6 @@ target_sources(doodle_lib
         all_user_view_widget.h
         maya_tool.h
         create_video.h
-        work_hour_filling.h
         create_entry.h
         update_self.h
         upload_files.h
@@ -43,7 +42,6 @@ target_sources(doodle_lib
         all_user_view_widget.cpp
         maya_tool.cpp
         create_video.cpp
-        work_hour_filling.cpp
         create_entry.cpp
         update_self.cpp
         upload_files.cpp

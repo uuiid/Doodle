@@ -52,8 +52,18 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
     }
     case computer_websocket_fun::logger: {
       l_logger->log(log_loc(), level::info, "logger");
-      //      if (!in_json.contains("level") || !l_json.contains("msg")) break;
-      //      break;
+      if (!in_handle.any_of<task_ref>()) break;
+      entt::handle l_task_handle = in_handle.get<task_ref>();
+      if (!l_task_handle) {
+        l_logger->log(log_loc(), level::err, "task_ref is null");
+        break;
+      }
+      if (!l_task_handle.any_of<server_task_info>()) {
+        l_logger->log(log_loc(), level::err, "not has server_task_info component");
+        break;
+      }
+      auto &l_task = l_task_handle.get<server_task_info>();
+      l_task.write_log(in_json["level"].get<level::level_enum>(), in_json["msg"].get<std::string>());
     }
   };
 }

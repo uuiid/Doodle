@@ -126,11 +126,12 @@ bool setting_windows::render() {
   };
   ImGui::SameLine();
   if (ImGui::Button("测试寻找")) {
-    try {
-      p_i->maya_path = g_reg()->ctx().get<maya_exe_ptr>()->find_maya_path().generic_string();
-    } catch (const winreg::RegException& in_e) {
-      DOODLE_LOG_INFO("没有找到maya文件的运行程序 {}", in_e.what());
-      p_i->maya_path = fmt::format("没有找到maya文件的运行程序({})", in_e.what());
+    boost::system::error_code l_error_code{};
+    p_i->maya_path =
+        g_reg()->ctx().get<maya_exe_ptr>()->find_maya_path(spdlog::default_logger(), l_error_code).generic_string();
+    if (l_error_code) {
+      default_logger_raw()->log(spdlog::level::err, "没有找到maya文件的运行程序 {}", l_error_code.message());
+      p_i->maya_path = fmt::format("没有找到maya文件的运行程序({})", l_error_code.message());
     }
   }
   constexpr static auto g_text{"拖拽ue exe文件到此处"};

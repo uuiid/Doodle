@@ -55,7 +55,6 @@ constexpr const std::string_view subtitle_processing{"修改字幕"};
 constexpr const std::string_view time_edit{"时间编辑"};
 constexpr const std::string_view all_user_view_widget{"用户列表"};
 constexpr const std::string_view render_monitor{"渲染监控"};
-constexpr const std::string_view work_hour_filling{"工时填报"};
 constexpr const std::string_view database_tool{"库管理工具"};
 constexpr const std::string_view scan_assets{"扫瞄添加资产"};
 
