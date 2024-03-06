@@ -38,7 +38,8 @@ void task_info::post_task(boost::system::error_code in_error_code, entt::handle 
   auto &l_task_info        = l_task_handle.get<server_task_info>();
   l_task_info.submit_time_ = chrono::sys_time_pos ::clock ::now();
   l_task_info.log_path_    = fmt::format(
-      "task_log/{}_{}_{}_{}", l_task_info.name_, l_task_handle, l_task_info.source_computer_, l_task_info.submitter_
+      "task_log/{}_{}_{}_{}_{:%y_%m_%d_%H_%M_%S}", l_task_info.name_, l_task_handle, l_task_info.source_computer_,
+      l_task_info.submitter_, l_task_info.submit_time_
   );
 
   nlohmann::json l_response_json{};
