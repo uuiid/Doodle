@@ -63,7 +63,7 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
         break;
       }
       auto &l_task = l_task_handle.get<server_task_info>();
-      l_task.write_log(in_json.get<level::level_enum>(), in_json["msg"].get<std::string>());
+      l_task.write_log(in_json["level"].get<level::level_enum>(), in_json["msg"].get<std::string>());
     }
   };
 }
