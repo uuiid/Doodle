@@ -251,20 +251,27 @@ void maya_exe_ns::maya_process_base::next_run() {
 
 maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
 
-FSys::path maya_exe::find_maya_path() const {
+FSys::path maya_exe::find_maya_path(const logger_ptr &in_logger, boost::system::error_code &in_code) const {
   boost::ignore_unused(this);
-  auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
-  DOODLE_LOG_INFO("开始寻找在注册表中寻找maya");
-  winreg::RegKey l_key{};
-  l_key.Open(HKEY_LOCAL_MACHINE, l_key_str, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
-  auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
-  return l_maya_path;
+  try {
+    auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
+    DOODLE_LOG_INFO("开始寻找在注册表中寻找maya");
+    winreg::RegKey l_key{};
+    l_key.Open(HKEY_LOCAL_MACHINE, l_key_str, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+    auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
+
+    return l_maya_path;
+  } catch (const winreg::RegException &in_err) {
+    in_logger->log(log_loc(), level::err, "在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
+    in_code = in_err.code();
+  }
+  return {};
 }
 
 boost::system::error_code maya_exe::install_maya_exe(const logger_ptr &in_logger) {
+  boost::system::error_code l_ec{};
+  auto l_maya_path = find_maya_path(in_logger, l_ec);
   try {
-    auto l_maya_path   = find_maya_path();
-
     auto l_target_path = FSys::get_cache_path() / fmt::format("maya_{}", core_set::get_set().maya_version) /
                          version::build_info::get().version_str;
     const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
@@ -287,12 +294,11 @@ boost::system::error_code maya_exe::install_maya_exe(const logger_ptr &in_logger
       FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
     }
 
-  } catch (const winreg::RegException &in_err) {
-    in_logger->log(log_loc(), level::err, "在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
-    return in_err.code();
-    DOODLE_LOG_WARN("在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
+  } catch (const FSys::filesystem_error &in_err) {
+    in_logger->log(log_loc(), level::err, "复制文件失败: {}", boost::diagnostic_information(in_err));
+    l_ec = in_err.code();
   }
-  return {};
+  return l_ec;
 }
 
 void maya_exe::notify_run() {
@@ -324,13 +330,21 @@ void maya_exe::queue_up(
     notify_run();
     return;
   }
+  boost::system::error_code l_code{};
+  auto l_maya_path = find_maya_path(in_msg.get<process_message>().logger(), l_code);
+  if (l_code) {
+    in_call_fun->ec_ = l_code;
+    in_call_fun->complete();
+    notify_run();
+    return;
+  }
   auto l_run = std::dynamic_pointer_cast<maya_exe_ns::run_maya>(
       p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>(this))
   );
   l_run->run_script_attr_key = in_key;
   l_run->run_script_attr     = in_arg;
   l_run->program_path        = p_i->run_path;
-  l_run->maya_program_path   = find_maya_path();
+  l_run->maya_program_path   = l_maya_path;
   l_run->log_attr            = in_msg.get<process_message>().logger();
   l_run->set_arg_fun_        = in_set_arg_fun;
   l_run->wait_op_            = std::move(in_call_fun);
