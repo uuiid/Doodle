@@ -11,7 +11,18 @@ void thread_copy_io_service::copy_file(const FSys::path &from, const FSys::path 
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
       FSys::last_write_time(from) != FSys::last_write_time(to)) {
     if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
-    FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
+
+    auto l_to   = to;
+    auto l_from = from;
+
+    if (l_to.make_preferred().native().size() > MAX_PATH) {
+      l_to = FSys::path{R"(\\?\)"} / l_to;
+    }
+    if (l_from.make_preferred().native().size() > MAX_PATH) {
+      l_from = FSys::path{R"(\\?\)"} / l_from;
+    }
+
+    FSys::copy_file(l_from, l_to, FSys::copy_options::overwrite_existing);
   }
 }
 
@@ -20,7 +31,18 @@ void thread_copy_io_service::copy_old_file(const FSys::path &from, const FSys::p
       FSys::last_write_time(from) != FSys::last_write_time(to)) {
     if (!FSys::exists(to) || FSys::last_write_time(from) > FSys::last_write_time(to)) {
       if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
-      FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
+
+      auto l_to   = to;
+      auto l_from = from;
+
+      if (l_to.make_preferred().native().size() > MAX_PATH) {
+        l_to = FSys::path{R"(\\?\)"} / l_to;
+      }
+      if (l_from.make_preferred().native().size() > MAX_PATH) {
+        l_from = FSys::path{R"(\\?\)"} / l_from;
+      }
+
+      FSys::copy_file(l_from, l_to, FSys::copy_options::overwrite_existing);
     }
   }
 }
