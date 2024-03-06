@@ -120,7 +120,7 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
   auto l_query = session.url_.query();
   if (auto l_it = l_query.find("level"); l_it != l_query.npos) {
     l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
-                  .value_or(level::info);
+                  .value_or(level::err);
   }
 
   auto l_entt = entt::handle{*g_reg(), *l_id};
