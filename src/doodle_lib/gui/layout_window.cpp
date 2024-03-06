@@ -63,7 +63,6 @@ void layout_window::layout(ImGuiID in_id, const ImVec2 &in_size) {
   ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);       /// \brief 主窗口的停靠
   ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);             /// \brief 主窗口的停靠
   ImGui::DockBuilderDockWindow(menu_w::all_user_view_widget.data(), dock_id_main);  /// \brief 主窗口的停靠
-  ImGui::DockBuilderDockWindow(menu_w::work_hour_filling.data(), dock_id_main);     /// \brief 主窗口的停靠
   ImGui::DockBuilderFinish(in_id);
 }
 void layout_window::set_show() {

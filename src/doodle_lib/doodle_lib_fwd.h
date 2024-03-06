@@ -18,15 +18,6 @@ namespace FSys {
 DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 }
 
-namespace distributed_computing {
-class client;
-class server;
-
-using client_ptr = std::shared_ptr<client>;
-using server_ptr = std::shared_ptr<server>;
-
-}  // namespace distributed_computing
-
 namespace render_farm {
 namespace detail {
 struct basic_json_body;
@@ -35,9 +26,9 @@ class ue4_task;
 class render_ue4;
 
 }  // namespace detail
-using render_ue4          = detail::render_ue4;
-using render_ue4_ptr      = std::shared_ptr<render_ue4>;
-using http_route_ptr      = std::shared_ptr<detail::http_route>;
+using render_ue4     = detail::render_ue4;
+using render_ue4_ptr = std::shared_ptr<render_ue4>;
+using http_route_ptr = std::shared_ptr<detail::http_route>;
 
 }  // namespace render_farm
 
