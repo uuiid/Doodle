@@ -158,6 +158,7 @@ void render_monitor::get_remote_data() {
                                                   return;
                                                 }
                                                 auto l_json = in_res.body();
+                                                p_i->computers_.clear();
                                                 for (auto&& l_c : l_json) {
                                                   p_i->computers_.emplace_back(
                                                       l_c["name"].get<std::string>(), l_c["ip"].get<std::string>(),
@@ -194,6 +195,7 @@ void render_monitor::get_remote_data() {
                                   return;
                                 }
                                 auto l_json = in_res.body();
+                                p_i->render_tasks_.clear();
                                 for (auto&& l_c : l_json) {
                                   p_i->render_tasks_.emplace_back(
                                       l_c["name"].get<std::string>(), conv_state(l_c["status"]),
