@@ -41,8 +41,16 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
 
   struct next_t {
     virtual void run() = 0;
+    enum class run_state {
+      // 准备
+      prepare,
+      // 运行
+      run,
+      // 完成
+      complete,
+    };
 
-    bool is_run_{true};
+    run_state is_run_{run_state::prepare};
   };
 
   struct data_type {
@@ -115,7 +123,7 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
       }
     }
     void next() {
-      is_run_ = false;
+      is_run_ = run_state::complete;
       http_client_core_ptr_->next();
     }
 

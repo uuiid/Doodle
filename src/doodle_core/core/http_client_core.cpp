@@ -9,19 +9,31 @@ void http_client_core::make_ptr() {
   auto l_s        = boost::asio::make_strand(g_io_context());
   ptr_->socket_   = std::make_shared<socket_t>(l_s);
   ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
-  ptr_->logger_   = g_logger_ctrl().make_log(
-      fmt::format("{} {} {} {}", typeid(*this).name(), fmt::ptr(this), ptr_->server_ip_, ptr_->socket_->socket())
-  );
+  ptr_->logger_ =
+      g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", ptr_->server_ip_, ptr_->socket_->socket()));
 }
 void http_client_core::next() {
   if (ptr_->next_list_.empty()) {
     return;
   }
-  if (ptr_->next_list_.front()->is_run_) {
-    return;
+  switch (ptr_->next_list_.front()->is_run_) {
+    case next_t::run_state::prepare: {
+      ptr_->next_list_.front()->is_run_ = next_t::run_state::run;
+      ptr_->next_list_.front()->run();
+      break;
+    }
+    case next_t::run_state::run: {
+      break;
+    }
+    case next_t::run_state::complete: {
+      ptr_->next_list_.pop();
+      if (ptr_->next_list_.empty()) {
+        return;
+      }
+      ptr_->next_list_.front()->run();
+      return;
+    }
   }
-  ptr_->next_list_.pop();
-  ptr_->next_list_.front()->run();
 }
 
 void http_client_core::do_close() {
