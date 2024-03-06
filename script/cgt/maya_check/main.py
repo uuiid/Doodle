@@ -5,8 +5,8 @@ import traceback
 import json
 
 # 加载ct_plu库
-sys.path.insert(0, "D:/CgTeamWork_v7/bin/base/ct_plu/")
-sys.path.append("D:/CgTeamWork_v7/bin/base")
+sys.path.insert(0, "c:/CgTeamWork_v7/bin/base/ct_plu/")
+sys.path.append("c:/CgTeamWork_v7/bin/base")
 from cgtw2 import *
 import ct_plu
 from ct_plu.qt import *  # 导入QT的库
@@ -82,12 +82,15 @@ class widget_ui(QDialog):
         f_name = os.path.basename(self.file_path)
         f_name2,ext = os.path.splitext(f_name)
         a = ord(f_name2[-1])
-        if not (a in range(65,91) or a in range(97,123)):
-            QMessageBox.critical(self, "文件名错误", "结尾(镜头号)必须包含字母")
+        if not (a in range(65,91) or a in range(48,58)):
+            QMessageBox.critical(self, "文件名错误", "(镜头号)结尾必须为大写字母或数字")
             return False
         _js = self.js[-3:]
         _jth = self.jth[-3:]
-        zymc_file = self.p_code+"_EP"+_js + "_SC"+_jth + chr(a) + ".ma"
+        if a in range(65,91): #up
+            zymc_file = self.p_code+"_EP"+_js + "_SC"+_jth + chr(a) + ".ma"
+        else:
+            zymc_file = self.p_code+"_EP"+_js + "_SC"+_jth + ".ma"
         if not os.path.basename(self.file_path) == zymc_file:
             QMessageBox.critical(self, "文件名错误", "ma文件命名必须为%s" % zymc_file)
             return False
@@ -97,12 +100,15 @@ class widget_ui(QDialog):
         f_name = os.path.basename(self.file_path)
         f_name2,ext = os.path.splitext(f_name)
         a = ord(f_name2[-1])
-        if not (a in range(65,91) or a in range(97,123)):
-            QMessageBox.critical(self, "文件名错误", "结尾(镜头号)必须包含字母")
+        if not (a in range(65,91) or a in range(48,58)):
+            QMessageBox.critical(self, "文件名错误", "(镜头号)结尾必须为大写字母或数字")
             return False
         _js = self.js[-3:]
         _jth = self.jth[-3:]
-        zymc_file = self.p_code+"_EP"+_js + "_SC"+_jth +chr(a) +".ma"
+        if a in range(65,91): #up
+            zymc_file = self.p_code+"_EP"+_js + "_SC"+_jth + chr(a) + ".ma"
+        else:
+            zymc_file = self.p_code+"_EP"+_js + "_SC"+_jth + ".ma"
         if not os.path.basename(self.file_path) == zymc_file:
             QMessageBox.critical(self, "文件名错误", "ma文件命名必须为%s" % zymc_file)
             return False
@@ -155,7 +161,17 @@ class widget_ui(QDialog):
             if not field_sign in res:
                 QMessageBox.critical(self, "错误", "缺少%s字段" % field_sign)
                 return
-        res = t_tw.task.get_filter(t_database, module, field_sign_list, [], limit='5000', order_sign_list=[], start_num='')
+        self.start_num = 0
+        res = []
+        _limit = 5000
+        s_res = t_tw.task.get_filter(t_database, module, field_sign_list, [], limit=str(_limit), order_sign_list=[], start_num=str(self.start_num))
+        while len(s_res)>0:
+            res.extend(s_res)
+            if len(s_res) >= _limit:
+                self.start_num += len(s_res)
+                s_res = t_tw.task.get_filter(t_database, module, field_sign_list, [], limit=str(_limit), order_sign_list=[], start_num=str(self.start_num))
+            else:
+                s_res = []
         for r in res:
             if r['id'] == t_id_list[0]:
                 self.name = r['pipeline.abridge']
