@@ -41,16 +41,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
 
   struct next_t {
     virtual void run() = 0;
-    enum class run_state {
-      // 准备
-      prepare,
-      // 运行
-      run,
-      // 完成
-      complete,
-    };
-
-    run_state is_run_{run_state::prepare};
   };
 
   struct data_type {
@@ -60,10 +50,20 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
     resolver_ptr resolver_{};
     boost::asio::ip::tcp::resolver::results_type resolver_results_;
 
-    next_fun_weak_ptr_t next_;
     std::queue<std::shared_ptr<next_t>> next_list_;
   };
   std::shared_ptr<data_type> ptr_;
+
+  bool is_run_ = false;
+  // is_run 守卫
+  struct guard_is_run {
+    http_client_core& http_client_core_;
+    explicit guard_is_run(http_client_core& in_core) : http_client_core_(in_core) { http_client_core_.is_run_ = true; }
+    ~guard_is_run() {
+      http_client_core_.is_run_ = false;
+      http_client_core_.next();
+    }
+  };
 
   void make_ptr();
 
@@ -75,16 +75,15 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
 
  private:
   template <typename ExecutorType, typename CompletionHandler, typename ResponseType, typename RequestType>
-  struct connect_write_read_op : boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>,
-                                 boost::asio::coroutine,
-                                 next_t {
+  struct connect_write_read_op : next_t,
+                                 boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>,
+                                 boost::asio::coroutine {
     struct data_type2 {
       buffer_type buffer_;
       ResponseType response_;
       state state_ = state::start;
       RequestType request_;
 
-      next_fun_ptr_t next_;
       logger_ptr logger_;
       // 重试次数
       std::size_t retry_count_{};
@@ -93,19 +92,23 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
     socket_t& socket_;
     boost::asio::ip::tcp::resolver::results_type& results_;
     http_client_core* http_client_core_ptr_;
+    std::shared_ptr<guard_is_run> guard_is_run_ptr_;
+
     using base_type = boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>;
     explicit connect_write_read_op(
         http_client_core* in_ptr, RequestType&& in_req, CompletionHandler&& in_handler,
         const ExecutorType& in_executor_type_1
     )
-        : base_type(std::move(in_handler), in_executor_type_1),
+        : next_t(),
+          base_type(std::move(in_handler), in_executor_type_1),
+          boost::asio::coroutine(),
           ptr_(std::make_unique<data_type2>()),
           socket_(in_ptr->stream()),
           results_(in_ptr->ptr_->resolver_results_),
-          http_client_core_ptr_(in_ptr) {
+          http_client_core_ptr_(in_ptr),
+          guard_is_run_ptr_() {
       ptr_->request_ = std::move(in_req);
       ptr_->logger_  = in_ptr->ptr_->logger_;
-      ptr_->next_    = std::make_shared<next_fun_t>([]() {});
     }
     ~connect_write_read_op()                                       = default;
     // move
@@ -115,17 +118,16 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
     connect_write_read_op(const connect_write_read_op&)            = delete;
     connect_write_read_op& operator=(const connect_write_read_op&) = delete;
 
-    void run() {
+    void run() override {
+      guard_is_run_ptr_ = std::make_shared<guard_is_run>(*http_client_core_ptr_);
       if (socket_.socket().is_open()) {
         do_write();
       } else {
         do_resolve();
       }
     }
-    void next() {
-      is_run_ = run_state::complete;
-      http_client_core_ptr_->next();
-    }
+
+    void next() {}
 
     // async_write async_read 回调
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {

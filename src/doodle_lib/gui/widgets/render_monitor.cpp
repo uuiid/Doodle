@@ -4,6 +4,7 @@
 
 #include "render_monitor.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/http_client_core.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/platform/win/register_file_type.h>
@@ -18,7 +19,7 @@ void render_monitor::init() {
   p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
 
   p_i->progress_message_ = "正在查找服务器";
-  p_i->logger_ptr_ = g_logger_ctrl().make_log(fmt::format("{} {}", typeid(render_monitor).name(), fmt::ptr(this)));
+  p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
   do_find_server_address();
 }
 bool render_monitor::render() {
@@ -27,12 +28,15 @@ bool render_monitor::render() {
   {
     ImGui::Text("渲染刷新");
     ImGui ::SameLine();
-    p_i->progress_ += (1.0f / (3.0f * 60.0f));
+    if (p_i->progress_ < 1.0f) p_i->progress_ += (1.0f / (3.0f * 60.0f));
 
     ImGui::ProgressBar(p_i->progress_, ImVec2{200.f, 0.0f});
     if (!p_i->progress_message_.empty()) {
       ImGui::SameLine();
       dear::Text(p_i->progress_message_);
+      if (p_i->progress_ >= 1.0f) {
+        p_i->progress_ = 0.f;
+      }
     }
   }
   if (auto l_ = dear::CollapsingHeader{
@@ -121,15 +125,18 @@ void render_monitor::do_find_server_address() {
 
 void render_monitor::do_wait() {
   p_i->timer_ptr_->expires_after(doodle::chrono::seconds{3});
-  p_i->timer_ptr_->async_wait([this, self = shared_from_this()](boost::system::error_code ec) {
-    if (!open_) return;
-    p_i->progress_ = 0.f;
-    if (ec) {
-      log_info(p_i->logger_ptr_, fmt::format("{}", ec));
-      return;
-    }
-    get_remote_data();
-  });
+  p_i->timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::GetPtr()->on_cancel.slot(),
+      [this, self = shared_from_this()](boost::system::error_code ec) {
+        if (!open_) return;
+        p_i->progress_ = 0.f;
+        if (ec) {
+          log_info(p_i->logger_ptr_, fmt::format("{}", ec));
+          return;
+        }
+        get_remote_data();
+      }
+  ));
 }
 void render_monitor::get_remote_data() {
   // get computers

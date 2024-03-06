@@ -16,24 +16,9 @@ void http_client_core::next() {
   if (ptr_->next_list_.empty()) {
     return;
   }
-  switch (ptr_->next_list_.front()->is_run_) {
-    case next_t::run_state::prepare: {
-      ptr_->next_list_.front()->is_run_ = next_t::run_state::run;
-      ptr_->next_list_.front()->run();
-      break;
-    }
-    case next_t::run_state::run: {
-      break;
-    }
-    case next_t::run_state::complete: {
-      ptr_->next_list_.pop();
-      if (ptr_->next_list_.empty()) {
-        return;
-      }
-      ptr_->next_list_.front()->run();
-      return;
-    }
-  }
+  if (is_run_) return;
+  ptr_->next_list_.front()->run();
+  ptr_->next_list_.pop();
 }
 
 void http_client_core::do_close() {
