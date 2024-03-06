@@ -148,18 +148,20 @@ void render_monitor::get_remote_data() {
 
   p_i->http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
       l_req_computer, boost::asio::bind_executor(
-                          g_io_context(),
-                          [this, self = shared_from_this()](
-                              const boost::system::error_code& in_code,
-                              const boost::beast::http::response<http::basic_json_body>& in_vector
-                          ) {
-                            if (in_code) {
-                              log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-                              p_i->progress_message_ = fmt::format("{}", in_code);
-                              return;
-                            }
-                            p_i->progress_message_.clear();
-                          }
+                          g_io_context(), boost::asio::bind_cancellation_slot(
+                                              app_base::GetPtr()->on_cancel.slot(),
+                                              [this, self = shared_from_this()](
+                                                  const boost::system::error_code& in_code,
+                                                  const boost::beast::http::response<http::basic_json_body>& in_vector
+                                              ) {
+                                                if (in_code) {
+                                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
+                                                  p_i->progress_message_ = fmt::format("{}", in_code);
+                                                  return;
+                                                }
+                                                p_i->progress_message_.clear();
+                                              }
+                                          )
                       )
   );
   boost::beast::http::request<boost::beast::http::empty_body> l_req_task{boost::beast::http::verb::get, "v1/task", 11};
@@ -168,21 +170,22 @@ void render_monitor::get_remote_data() {
 
   p_i->http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
       l_req_task, boost::asio::bind_executor(
-                      g_io_context(),
-                      [this, self = shared_from_this()](
-                          const boost::system::error_code& in_code,
-                          const boost::beast::http::response<http::basic_json_body>& in_vector
-                      ) {
-                        if (in_code) {
-                          log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-                          p_i->progress_message_ = fmt::format("{}", in_code);
-                          do_wait();
-                          return;
-                        }
-                        p_i->progress_message_.clear();
-
-                        do_wait();
-                      }
+                      g_io_context(), boost::asio::bind_cancellation_slot(
+                                          app_base::GetPtr()->on_cancel.slot(),
+                                          [this, self = shared_from_this()](
+                                              const boost::system::error_code& in_code,
+                                              const boost::beast::http::response<http::basic_json_body>& in_vector
+                                          ) {
+                                            if (in_code) {
+                                              log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
+                                              p_i->progress_message_ = fmt::format("{}", in_code);
+                                              do_wait();
+                                              return;
+                                            }
+                                            p_i->progress_message_.clear();
+                                            do_wait();
+                                          }
+                                      )
                   )
   );
 }
