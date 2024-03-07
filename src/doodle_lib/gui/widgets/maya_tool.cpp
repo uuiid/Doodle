@@ -8,6 +8,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/http_client_core.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets.h>
@@ -17,6 +18,7 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include "doodle_app/lib_warp/imgui_warp.h"
@@ -24,6 +26,7 @@
 
 #include <doodle_lib/core/auto_light_render_video.h>
 #include <doodle_lib/core/down_auto_light_anim_file.h>
+#include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
@@ -288,7 +291,7 @@ bool maya_tool::render() {
     });
   }
 
-  if (imgui::Button("使用ue输出排屏")) {
+  if (imgui::Button("使用ue输出排屏(本机)")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
       auto k_arg             = maya_exe_ns::export_fbx_arg{};
@@ -325,7 +328,7 @@ bool maya_tool::render() {
     });
   }
   ImGui::SameLine();
-  if (imgui::Button("使用ue输出排屏(解算版)")) {
+  if (imgui::Button("使用ue输出排屏(本机)(解算版)")) {
     auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
     std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](const path_info_t& i) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
@@ -368,26 +371,100 @@ bool maya_tool::render() {
     });
   }
 
-#if defined DOODLE_MAYA_TOOL
-  ImGui::SameLine();
-  if (ImGui::Button("转换格式")) {
-    auto l_maya = g_reg()->ctx().get<maya_exe_ptr>();
-    std::for_each(path_info_.begin(), path_info_.end(), [this, l_maya](constpath_info_t& i) {
-      auto k_arg                     = maya_exe_ns::clear_file_arg{};
-      k_arg.file_path                = i.path_;
-      k_arg.project_                 = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
-      k_arg.t_post                   = g_reg()->ctx().get<project_config::base_config>().t_post;
-      k_arg.export_anim_time         = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-      k_arg.save_file_extension_attr = ptr_attr->save_maya_type_attr.show_id_attr;
+  if (imgui::Button("使用ue输出排屏(远程)")) {
+    make_http_client_core();
+    auto l_host_name = boost::asio::ip::host_name();
+    std::vector<nlohmann::json> l_task_list{};
+    for (auto&& l_info : path_info_) {
+      nlohmann::json l_json{};
+      l_json["source_computer"] = l_host_name;
+      l_json["submitter"]       = g_reg()->ctx().get<user::current_user>().user_name_attr();
+      l_json["name"]            = fmt::format("{}_解算", l_info.path_.filename());
+      l_json["data"]            = nlohmann::json{
+                     {"type", "auto_light_task"},
+                     {"file_path", l_info.path_.generic_string()},
+                     {"export_anim_time", g_reg()->ctx().get<project_config::base_config>().export_anim_time},
+                     {"episodes", l_info.episode_.p_episodes},
+                     {"shot", l_info.shot_.get_shot()},
+                     {"project_name", l_info.project_.p_name},
+                     {"project_path", l_info.project_.p_path.generic_string()},
+                     {"project_en_str", l_info.project_.p_en_str},
+                     {"project_shor_str", l_info.project_.p_shor_str}
+      };
 
-      l_maya->async_run_maya(entt::handle{*g_reg(), g_reg()->create()}, k_arg, [](boost::system::error_code in_code) {
-        if (in_code) DOODLE_LOG_ERROR(in_code);
-        DOODLE_LOG_ERROR("完成任务");
-      });
-    });
+      l_task_list.push_back(l_json);
+    }
+    post_http_task(l_task_list);
   }
-#endif
+  ImGui::SameLine();
+  if (imgui::Button("使用ue输出排屏(远程)(解算版)")) {
+    make_http_client_core();
+    auto l_host_name = boost::asio::ip::host_name();
+    std::vector<nlohmann::json> l_task_list{};
+    for (auto&& l_info : path_info_) {
+      nlohmann::json l_json{};
+      l_json["source_computer"] = l_host_name;
+      l_json["submitter"]       = g_reg()->ctx().get<user::current_user>().user_name_attr();
+      l_json["name"]            = fmt::format("{}_解算", l_info.path_.filename());
+      l_json["data"]            = nlohmann::json{
+                     {"type", "auto_light_task"},
+                     {"file_path", l_info.path_.generic_string()},
+                     {"export_anim_time", g_reg()->ctx().get<project_config::base_config>().export_anim_time},
+                     {"episodes", l_info.episode_.p_episodes},
+                     {"shot", l_info.shot_.get_shot()},
+                     {"project_name", l_info.project_.p_name},
+                     {"project_path", l_info.project_.p_path.generic_string()},
+                     {"project_en_str", l_info.project_.p_en_str},
+                     {"project_shor_str", l_info.project_.p_shor_str}
+      };
+      if (l_info.shot_.get_shot_ab_enum() != shot::shot_ab_enum::None) {
+        l_json["data"]["shot_enum"] = l_info.shot_.get_shot_ab();
+      }
+      if (ptr_attr->replace_ref_file_) {
+        l_json["data"]["replace_ref_file"] = true;
+      }
+      l_json["data"]["sim_path_list"] = list_sim_file(l_info.project_);
+
+      l_task_list.push_back(l_json);
+    }
+    post_http_task(l_task_list);
+  }
+
   return open;
+}
+void maya_tool::make_http_client_core() {
+  if (http_client_core_ptr_) return;
+  http_client_core_ptr_ = std::make_shared<http::detail::http_client_core>(register_file_type::get_server_address());
+}
+void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
+  for (auto&& l_jaon : in_task) {
+    boost::beast::http::request<boost::beast::http::string_body> l_request{
+        boost::beast::http::verb::post, "v1/task", 11
+    };
+    l_request.set(boost::beast::http::field::host, register_file_type::get_server_address());
+    l_request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    l_request.set(boost::beast::http::field::content_type, "application/json");
+    l_request.body() = l_jaon.dump();
+    l_request.prepare_payload();
+    http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
+        l_request,
+        [this](
+            boost::system::error_code in_error_code,
+            const boost::beast::http::response<http::basic_json_body>& in_response
+        ) {
+          if (in_error_code) {
+            default_logger_raw()->log(log_loc(), level::level_enum::err, "post_http_task error:{}", in_error_code);
+            return;
+          }
+          if (in_response.result() != boost::beast::http::status::ok) {
+            default_logger_raw()->log(
+                log_loc(), level::level_enum::info, "post_http_task {}", in_response.body().dump()
+            );
+            return;
+          }
+        }
+    );
+  }
 }
 
 std::set<FSys::path> maya_tool::list_sim_file(const doodle::project& in_project) {

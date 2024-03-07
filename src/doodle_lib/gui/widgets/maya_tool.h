@@ -4,7 +4,6 @@
 
 #pragma once
 
-
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/base/ref_base.h>
 
@@ -30,7 +29,7 @@ class DOODLELIB_API maya_tool {
   bool p_upload_files{};
   std::string title_name_{};
   bool open{true};
-
+  std::shared_ptr<http::detail::http_client_core> http_client_core_ptr_{};
   class impl;
   std::unique_ptr<impl> ptr_attr;
 
@@ -38,6 +37,9 @@ class DOODLELIB_API maya_tool {
 
   entt::handle analysis_path(const path_info_t& in_path);
   std::set<FSys::path> list_sim_file(const project& in_project);
+
+  void make_http_client_core();
+  void post_http_task(const std::vector<nlohmann::json>& in_task);
 
  public:
   maya_tool();
