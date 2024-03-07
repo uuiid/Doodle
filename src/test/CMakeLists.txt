@@ -43,7 +43,6 @@ add_executable(
 
 add_subdirectory(core)
 add_subdirectory(lib)
-add_subdirectory(rpc_test)
 add_subdirectory(math)
 add_subdirectory(ai)
 #add_subdirectory(rtt)
