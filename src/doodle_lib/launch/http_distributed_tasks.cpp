@@ -30,7 +30,7 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
   l_app.command_line_ = L"";
 
   auto l_signal_ptr   = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  l_signal_ptr->async_wait([l_signal_ptr](boost::system::error_code ec, int signal) {
+  l_signal_ptr->async_wait([](boost::system::error_code ec, int signal) {
     if (ec) {
       default_logger_raw()->log(log_loc(), level::warn, "signal_set_ error: {}", ec);
       return;
