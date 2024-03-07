@@ -22,6 +22,7 @@ void task_info::post_task(boost::system::error_code in_error_code, entt::handle 
     session.seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
+  l_task_handle.emplace<database>();
   l_task_handle.emplace<server_task_info>(l_body["data"]);
   if (l_body.contains("source_computer") && l_body["source_computer"].is_string()) {
     l_task_handle.get<server_task_info>().source_computer_ = l_body["source_computer"];
