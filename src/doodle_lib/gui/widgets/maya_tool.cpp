@@ -5,6 +5,7 @@
 #include "maya_tool.h"
 
 #include "doodle_core/configure/static_value.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -31,6 +32,7 @@
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/gui/widgets/render_monitor.h>
 
 #include "boost/signals2/connection.hpp"
 
@@ -435,6 +437,7 @@ bool maya_tool::render() {
 void maya_tool::make_http_client_core() {
   if (http_client_core_ptr_) return;
   http_client_core_ptr_ = std::make_shared<http::detail::http_client_core>(register_file_type::get_server_address());
+  g_windows_manage().open_windows(render_monitor::name);
 }
 void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
   for (auto&& l_jaon : in_task) {
@@ -447,22 +450,29 @@ void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
     l_request.body() = l_jaon.dump();
     l_request.prepare_payload();
     http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
-        l_request,
-        [this](
-            boost::system::error_code in_error_code,
-            const boost::beast::http::response<http::basic_json_body>& in_response
-        ) {
-          if (in_error_code) {
-            default_logger_raw()->log(log_loc(), level::level_enum::err, "post_http_task error:{}", in_error_code);
-            return;
-          }
-          if (in_response.result() != boost::beast::http::status::ok) {
-            default_logger_raw()->log(
-                log_loc(), level::level_enum::info, "post_http_task {}", in_response.body().dump()
-            );
-            return;
-          }
-        }
+        l_request, boost::asio::bind_cancellation_slot(
+                       app_base::GetPtr()->on_cancel.slot(),
+                       boost::asio::bind_executor(
+                           g_io_context(),
+                           [this](
+                               boost::system::error_code in_error_code,
+                               const boost::beast::http::response<http::basic_json_body>& in_response
+                           ) {
+                             if (in_error_code) {
+                               default_logger_raw()->log(
+                                   log_loc(), level::level_enum::err, "post_http_task error:{}", in_error_code
+                               );
+                               return;
+                             }
+                             if (in_response.result() != boost::beast::http::status::ok) {
+                               default_logger_raw()->log(
+                                   log_loc(), level::level_enum::info, "post_http_task {}", in_response.body().dump()
+                               );
+                               return;
+                             }
+                           }
+                       )
+                   )
     );
   }
 }
