@@ -178,7 +178,6 @@ void http_work::end_task(boost::system::error_code in_error_code) {
 
 void http_work::run_auto_light_task() {
   logger_->log(log_loc(), level::info, "开始运行自动灯光任务");
-  auto l_arg = maya_exe_ns::export_fbx_arg{};
 
   if (!task_info_.task_info_.contains("file_path") || !task_info_.task_info_["file_path"].is_string() ||
       !task_info_.task_info_.contains("export_anim_time") || !task_info_.task_info_["export_anim_time"].is_number() ||
@@ -193,17 +192,16 @@ void http_work::run_auto_light_task() {
     return;
   }
 
-  l_arg.file_path = task_info_.task_info_["file_path"].get<std::string>();
+  FSys::path l_file_path{task_info_.task_info_["file_path"].get<std::string>()};
 
-  if (!FSys::exists(l_arg.file_path)) {
-    logger_->log(log_loc(), level::err, "文件不存在 {}", l_arg.file_path);
+  if (!FSys::exists(l_file_path)) {
+    logger_->log(log_loc(), level::err, "文件不存在 {}", l_file_path);
     end_task({ERROR_FILE_NOT_FOUND, boost::system::system_category()});
     return;
   }
 
-  l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
   entt::handle l_msg{*g_reg(), g_reg()->create()};
-  auto &l_process_message = l_msg.emplace<process_message>(l_arg.file_path.filename().generic_string());
+  auto &l_process_message = l_msg.emplace<process_message>(l_file_path.file_path.filename().generic_string());
   l_process_message.logger()->sinks().emplace_back(std::make_shared<websocket_sink_mt>(this));
   l_msg.emplace<episodes>(task_info_.task_info_["episodes"].get<std::int32_t>());
   l_msg.emplace<shot>(
@@ -240,8 +238,29 @@ void http_work::run_auto_light_task() {
   l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_auto_light_render_video)));
   l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
 
-  g_ctx().get<maya_exe_ptr>()->async_run_maya(
-      l_msg, l_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file))
-  );
+  if (task_info_.task_info_.contains("sim_path_list")) {
+    auto l_arg             = maya_exe_ns::qcloth_arg{};
+    l_arg.file_path        = task_info_.task_info_["file_path"].get<std::string>();
+    l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
+    l_arg.sim_path_list    = task_info_.task_info_["sim_path_list"].get<std::set<FSys::path>>();
+    l_arg.bitset_          = maya_exe_ns::flags::k_export_abc_type | maya_exe_ns::flags::k_touch_sim_file |
+                    maya_exe_ns::flags::k_create_play_blast | maya_exe_ns::flags::k_export_anim_file;
+    if (task_info_.task_info_.contains("replace_ref_file") && task_info_.task_info_["replace_ref_file"].is_boolean() &&
+        task_info_.task_info_["replace_ref_file"].get<bool>()) {
+      l_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
+    }
+
+    g_ctx().get<maya_exe_ptr>()->async_run_maya(
+        l_msg, l_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file))
+    );
+  } else {
+    auto l_arg             = maya_exe_ns::export_fbx_arg{};
+    l_arg.file_path        = task_info_.task_info_["file_path"].get<std::string>();
+    l_arg.export_anim_time = task_info_.task_info_["export_anim_time"].get<std::int32_t>();
+
+    g_ctx().get<maya_exe_ptr>()->async_run_maya(
+        l_msg, l_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file))
+    );
+  }
 }
 }  // namespace doodle::http
