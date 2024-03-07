@@ -159,17 +159,8 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   }
 }
 
-class null_facet {
- public:
-  const std::string& name() const noexcept {
-    static std::string l_i{"null_facet"};
-    return l_i;
-  };
-  inline bool post() { return true; };
-  void add_program_options(){};
-};
 BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
-  app_command<null_facet> l_App{};
+  app_command<> l_App{};
 
   g_ctx().get<file_translator_ptr>()->async_open(
       "D:/test_file/test_db/10_texiao.doodle_db", false, true, g_reg(), [](auto&&) {}
