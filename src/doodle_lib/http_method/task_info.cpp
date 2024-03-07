@@ -151,6 +151,33 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, entt::h
   l_response.prepare_payload();
   session.seed(std::move(l_response));
 }
+void task_info::delete_task(boost::system::error_code in_error_code, entt::handle in_handle) {
+  auto &session = in_handle.get<http_session_data>();
+  auto l_cap    = in_handle.get<http_function::capture_t>();
+  auto l_id     = l_cap.get<entt::entity>("id");
+  if (!l_id) {
+    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  auto l_entt = entt::handle{*g_reg(), *l_id};
+  if (!l_entt || !l_entt.any_of<server_task_info>()) {
+    in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
+    BOOST_ASIO_ERROR_LOCATION(in_error_code);
+    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    return;
+  }
+  l_entt.destroy();
+  boost::beast::http::response<boost::beast::http::empty_body> l_response{
+      boost::beast::http::status::ok, session.request_parser_->get().version()
+  };
+  l_response.result(boost::beast::http::status::ok);
+  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.prepare_payload();
+  session.seed(std::move(l_response));
+}
 void task_info::reg(doodle::http::http_route &in_route) {
   in_route
       .reg(std::make_shared<http_function>(
@@ -168,7 +195,13 @@ void task_info::reg(doodle::http::http_route &in_route) {
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::post, "v1/task",
           session::make_http_reg_fun<basic_json_body>(boost::asio::bind_executor(g_io_context(), &task_info::post_task))
-      ));
+      ))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::delete_, "v1/task/{id}",
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::delete_task))
+      ))
+
+      ;
 }
 
 }  // namespace doodle::http
