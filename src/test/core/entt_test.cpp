@@ -120,6 +120,14 @@ BOOST_AUTO_TEST_CASE(save) {
 
   entt::snapshot l_snapshot{reg};
   archive_t l_archive{};
-  l_snapshot.get<std::int32_t>(l_archive).get<std::string>(l_archive);
+  BOOST_TEST_MESSAGE("开始保存enttity");
+  l_snapshot.get<entt::entity>(l_archive);
+  BOOST_TEST_MESSAGE("保存enttity结束,开始保存int32");
+  l_snapshot.get<std::int32_t>(l_archive);
+  BOOST_TEST_MESSAGE("保存int32结束,开始保存string");
+  l_snapshot.get<std::string>(l_archive);
+  BOOST_TEST_MESSAGE("保存string结束");
+  l_archive.print();
+
   l_archive.print();
 }
