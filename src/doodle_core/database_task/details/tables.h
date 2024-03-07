@@ -132,5 +132,24 @@ DOODLE_SQL_TABLE_IMP(
     maya_anim_file_ref_file, column::id, column::parent_id, column_maya_anim_file::path_,
     column_maya_anim_file::ref_file_
 );
-
+namespace column_server_task_info {
+DOODLE_SQL_COLUMN_IMP(data, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(status, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(name, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(source_computer, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(submitter, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(submit_time, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(run_computer, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(run_computer_ip, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(run_time, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(end_time, sqlpp::time_point, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(log_path, sqlpp::text, detail::can_be_null);
+}  // namespace column_server_task_info
+DOODLE_SQL_TABLE_IMP(
+    server_task_info, column::id, column::entity_id, column_server_task_info::data, column_server_task_info::status,
+    column_server_task_info::name, column_server_task_info::source_computer, column_server_task_info::submitter,
+    column_server_task_info::submit_time, column_server_task_info::run_computer,
+    column_server_task_info::run_computer_ip, column_server_task_info::run_time, column_server_task_info::end_time,
+    column_server_task_info::log_path
+);
 }  // namespace doodle::database_n::tables
