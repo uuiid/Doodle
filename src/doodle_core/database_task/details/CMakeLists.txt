@@ -26,6 +26,7 @@ target_sources(doodle_core
         tag.h
         main_map.h
         maya_anim_file.h
+        server_task_info.h
 
 
         PRIVATE
@@ -57,4 +58,5 @@ target_sources(doodle_core
         tag.cpp
         main_map.cpp
         maya_anim_file.cpp
+        server_task_info.cpp
 )
