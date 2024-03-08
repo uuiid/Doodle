@@ -4,7 +4,7 @@ vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO rikyoz/bit7z
         REF v${VERSION}
-        SHA512 daa1d5f051a2e07cbed07b81b1dcfa0cadc78a8cb12188e775d6d5f7a9344c40d0f02105c52c4079be58d9bcd6e4dd9c8a6fc01346a7d28824ab6a32e404db4e
+        SHA512 9550b91a6f1e4eed3de668449a0b2860fc1323423fc654e389e84fbe3e6e98231cf9e15b4192cc5916efb1c7615b6949bff02ba31172384766b6f54b92d7639d
         HEAD_REF master
         PATCHES
         0001-Fix-using-vcpkg-7z-package-and-install.patch

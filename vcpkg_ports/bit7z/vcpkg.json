@@ -1,6 +1,6 @@
 {
   "name": "bit7z",
-  "version": "4.0.0-rc",
+  "version": "4.0.5",
   "port-version": 1,
   "description": "A C++ static library offering a clean and simple interface to the 7-zip shared libraries",
   "homepage": "https://github.com/rikyoz/bit7z",

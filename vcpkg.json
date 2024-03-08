@@ -88,17 +88,7 @@
     },
     "dem-bones",
     "cppzmq",
-    "winreg",
-    {
-      "name": "bit7z",
-      "default-features": false,
-      "features": [
-        "auto-format",
-        "regex-matching",
-        "use-std-byte",
-        "auto-prefix-long-paths"
-      ]
-    }
+    "winreg"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
