@@ -3,15 +3,13 @@
 //
 
 #pragma once
+#include <sqlpp11/connection.h>
 // 添加数据库连接项
 namespace sqlpp {
-namespace mysql {
-class connection;
-struct connection_config;
-}  // namespace mysql
-
+template <typename ConnectionBase>
+class normal_connection;
 namespace sqlite3 {
-class connection;
-struct connection_config;
+class connection_base;
+using connection = normal_connection<sqlite3::connection_base>;
 }  // namespace sqlite3
 }  // namespace sqlpp

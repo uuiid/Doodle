@@ -261,11 +261,13 @@ void _select_ctx_(
 }
 template <typename... Type>
 void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
-  std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{
-      std::make_pair(entt::type_id<Type>().hash(), [&](entt::registry& in_reg, const std::string& in_str) {
+  std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{std::make_pair(
+      entt::type_id<Type>().hash(),
+      [&](entt::registry& in_reg, const std::string& in_str) {
         auto l_json                  = nlohmann::json::parse(in_str);
         in_reg.ctx().emplace<Type>() = std::move(l_json.get<Type>());
-      })...};
+      }
+  )...};
 
   _select_ctx_(in_reg, in_conn, l_fun);
 }
@@ -273,8 +275,8 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
 }  // namespace
 
 bool select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect) {
-  p_i->only_ctx         = false;
-  p_i->project          = in_project_path;
+  p_i->only_ctx = false;
+  p_i->project  = in_project_path;
 #if defined(DOODLE_SQL_compatible_v2)
   this->p_i->select_old(*p_i->local_reg, *in_connect);
   /// \brief 等待旧的任务完成
@@ -307,8 +309,8 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
 }
 
 bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
-  p_i->only_ctx         = false;
-  p_i->project          = in_project_path;
+  p_i->only_ctx = false;
+  p_i->project  = in_project_path;
 
   return detail::has_table(tables::com_entity{}, *in_connect);
 }
@@ -353,7 +355,6 @@ void patch_0001(const registry_ptr& in_ptr) {
         auto l_p_it = tree_type_t ::parent(l_it);
         l_p_it->second.get<assets>().add_child(l_it->second);
       }
-
     }
     if (auto l_h = entt::handle{*in_ptr, e}; l_h.any_of<assets_file>()) {
       l_h.patch<assets_file>().assets_attr(l_it->second);
@@ -361,11 +362,6 @@ void patch_0001(const registry_ptr& in_ptr) {
   }
 
   in_ptr->remove<assets>(l_remove.begin(), l_remove.end());
-  in_ptr->each([&in_ptr](auto entity) {
-    if (in_ptr->orphan(entity)) {
-      in_ptr->release(entity);
-    }
-  });
   //  BOOST_ASSERT(ranges::all_of(l_tree_map[0], [](auto&& in_) { return !in_.second.get<assets>().get_parent(); }));
   DOODLE_LOG_INFO("转换完成 {}", l_tree_map);
 }
