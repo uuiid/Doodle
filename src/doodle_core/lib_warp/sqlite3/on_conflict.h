@@ -24,12 +24,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
 
-#ifndef SQLPP_POSTGRESQL_NO_CONFLICT_H
-#define SQLPP_POSTGRESQL_NO_CONFLICT_H
+#include <doodle_core/lib_warp/sqlite3/on_conflict_do_nothing.h>
+#include <doodle_core/lib_warp/sqlite3/on_conflict_do_update.h>
 
-#include <sqlpp11/postgresql/on_conflict_do_nothing.h>
-#include <sqlpp11/postgresql/on_conflict_do_update.h>
+#include <sqlpp11/sqlite3/connection.h>
 #include <sqlpp11/statement.h>
 
 namespace sqlpp {
@@ -39,7 +39,7 @@ SQLPP_PORTABLE_STATIC_ASSERT(
     assert_on_conflict_action_t, "either do_nothing() or do_update(...) is required with on_conflict"
 );
 
-namespace postgresql {
+namespace sqlite3 {
 template <typename ConflictTarget>
 struct on_conflict_data_t {
   on_conflict_data_t(ConflictTarget column) : _column(column) {}
@@ -220,22 +220,16 @@ struct no_on_conflict_t {
 };
 
 template <typename ConflictTarget>
-postgresql::context_t& serialize(
-    const postgresql::on_conflict_data_t<ConflictTarget>&, postgresql::context_t& context
-) {
+sqlite3::context_t& serialize(const sqlite3::on_conflict_data_t<ConflictTarget>&, sqlite3::context_t& context) {
   context << " ON CONFLICT (";
-  context << name_of<ConflictTarget>::template char_ptr<postgresql::context_t>();
+  context << name_of<ConflictTarget>::template char_ptr<sqlite3::context_t>();
   context << ") ";
   return context;
 }
 
-inline postgresql::context_t& serialize(
-    const postgresql::on_conflict_data_t<no_data_t>&, postgresql::context_t& context
-) {
+inline sqlite3::context_t& serialize(const sqlite3::on_conflict_data_t<no_data_t>&, sqlite3::context_t& context) {
   context << " ON CONFLICT ";
   return context;
 }
-}  // namespace postgresql
+}  // namespace sqlite3
 }  // namespace sqlpp
-
-#endif

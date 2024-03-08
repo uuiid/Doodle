@@ -25,19 +25,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_ON_CONFLICT_DO_UPDATE_H
-#define SQLPP_POSTGRESQL_ON_CONFLICT_DO_UPDATE_H
-
+#pragma once
 #include <sqlpp11/detail/type_set.h>
 #include <sqlpp11/interpret_tuple.h>
 #include <sqlpp11/interpretable_list.h>
+#include <sqlpp11/sqlite3/connection.h>
 #include <sqlpp11/type_traits.h>
 #include <sqlpp11/where.h>
 
 namespace sqlpp {
 SQLPP_VALUE_TRAIT_GENERATOR(is_on_conflict_do_update)
 
-namespace postgresql {
+namespace sqlite3 {
 // Assignments data
 template <typename Database, typename ConflictTarget, typename... Assignments>
 struct on_conflict_do_update_data_t {
@@ -174,9 +173,9 @@ struct on_conflict_do_update_t {
 };
 
 template <typename Database, typename ConflictTarget, typename... Assignments>
-postgresql::context_t& serialize(
-    const postgresql::on_conflict_do_update_data_t<Database, ConflictTarget, Assignments...>& o,
-    postgresql::context_t& context
+sqlite3::context_t& serialize(
+    const sqlite3::on_conflict_do_update_data_t<Database, ConflictTarget, Assignments...>& o,
+    sqlite3::context_t& context
 ) {
   serialize(o._conflict_target, context);
   context << "DO UPDATE SET ";
@@ -185,16 +184,14 @@ postgresql::context_t& serialize(
 }
 
 template <typename Database, typename ConflictTarget, typename Expression, typename... Assignments>
-postgresql::context_t& serialize(
-    const postgresql::on_conflict_do_update_where_data_t<Database, ConflictTarget, Expression, Assignments...>& o,
-    postgresql::context_t& context
+sqlite3::context_t& serialize(
+    const sqlite3::on_conflict_do_update_where_data_t<Database, ConflictTarget, Expression, Assignments...>& o,
+    sqlite3::context_t& context
 ) {
   serialize(o._assignments, context);
   context << " WHERE ";
   serialize(o._expression, context);
   return context;
 }
-}  // namespace postgresql
+}  // namespace sqlite3
 }  // namespace sqlpp
-
-#endif

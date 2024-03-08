@@ -25,17 +25,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_RETURNING_H
-#define SQLPP_POSTGRESQL_RETURNING_H
+#pragma once
 
-#include <sqlpp11/postgresql/returning_column_list.h>
+#include <doodle_core/lib_warp/sqlite3  //returning_column_list.h>
+
 #include <sqlpp11/select_column_list.h>
 #include <sqlpp11/statement.h>
 
 namespace sqlpp {
 SQLPP_VALUE_TRAIT_GENERATOR(is_returning)
 
-namespace postgresql {
+namespace sqlite3 {
 struct return_name_t {};
 
 struct returning_t : public statement_name_t<return_name_t, tag::is_returning> {};
@@ -154,4 +154,3 @@ struct no_returning_t {
 }  // namespace postgresql
 }  // namespace sqlpp
 
-#endif

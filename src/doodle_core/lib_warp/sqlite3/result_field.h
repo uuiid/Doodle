@@ -24,8 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_BLOB_RESULT_FIELD_H
-#define SQLPP_POSTGRESQL_BLOB_RESULT_FIELD_H
+#pragma once
 
 #include <ostream>
 #include <sqlpp11/basic_expression_operators.h>
@@ -34,12 +33,10 @@
 #include <sqlpp11/field_spec.h>
 #include <sqlpp11/result_field.h>
 #include <sqlpp11/result_field_base.h>
+#include <sqlpp11/sqlite3/connection.h>
 #include <string>
 
 namespace sqlpp {
-namespace postgresql {
-class connection;
-}
 
 namespace detail {
 inline unsigned char unhex(unsigned char c) {
@@ -86,8 +83,8 @@ inline void hex_assign(std::vector<unsigned char>& value, const uint8_t* blob, s
 }  // namespace detail
 
 template <typename NameType, bool CanBeNull>
-struct result_field_t<postgresql::connection, field_spec_t<NameType, blob, CanBeNull>>
-    : public result_field_base<postgresql::connection, field_spec_t<NameType, blob, CanBeNull>> {
+struct result_field_t<sqlite3::connection, field_spec_t<NameType, blob, CanBeNull>>
+    : public result_field_base<sqlite3::connection, field_spec_t<NameType, blob, CanBeNull>> {
  private:
   const uint8_t* _blob{nullptr};  // Non-owning
 
@@ -106,4 +103,3 @@ struct result_field_t<postgresql::connection, field_spec_t<NameType, blob, CanBe
   }
 };
 }  // namespace sqlpp
-#endif

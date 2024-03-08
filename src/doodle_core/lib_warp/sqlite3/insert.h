@@ -24,18 +24,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_INSERT_H
-#define SQLPP_POSTGRESQL_INSERT_H
+#pragma once
+#include <doodle_core/lib_warp/sqlite3/on_conflict.h>
+#include <doodle_core/lib_warp/sqlite3/returning.h>
 
 #include <sqlpp11/insert.h>
-#include <sqlpp11/postgresql/on_conflict.h>
-#include <sqlpp11/postgresql/returning.h>
 
 namespace sqlpp {
-namespace postgresql {
+namespace sqlite3 {
 template <typename Database>
 using blank_insert_t =
-    statement_t<Database, insert_t, no_into_t, no_insert_value_list_t, no_on_conflict_t, no_returning_t>;
+    statement_t<Database, sqlpp::insert_t, no_into_t, no_insert_value_list_t, no_on_conflict_t, no_returning_t>;
 
 inline auto insert() -> blank_insert_t<void> { return {blank_insert_t<void>()}; }
 
@@ -57,5 +56,3 @@ constexpr auto dynamic_insert_into(const Database&, Table table) -> decltype(bla
 }
 }  // namespace postgresql
 }  // namespace sqlpp
-
-#endif

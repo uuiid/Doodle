@@ -24,14 +24,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_UPDATE_H
-#define SQLPP_POSTGRESQL_UPDATE_H
-
+#pragma once
 #include <sqlpp11/postgresql/returning.h>
 #include <sqlpp11/update.h>
 
 namespace sqlpp {
-namespace postgresql {
+namespace sqlite3 {
 template <typename Database>
 using blank_update_t =
     statement_t<Database, update_t, no_single_table_t, no_update_list_t, no_where_t<true>, no_returning_t>;
@@ -47,7 +45,5 @@ constexpr auto dynamic_update(const Database&, Table table)
   static_assert(std::is_base_of<connection, Database>::value, "Invalid database parameter");
   return {blank_update_t<Database>().single_table(table)};
 }
-}  // namespace postgresql
+}  // namespace sqlite3
 }  // namespace sqlpp
-
-#endif

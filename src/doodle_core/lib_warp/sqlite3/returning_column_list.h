@@ -25,8 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_RETURNING_COLUMN_LIST_H
-#define SQLPP_POSTGRESQL_RETURNING_COLUMN_LIST_H
+#pragma once
 
 #include <sqlpp11/data_types/no_value.h>
 #include <sqlpp11/detail/column_tuple_merge.h>
@@ -45,7 +44,7 @@
 namespace sqlpp {
 SQLPP_VALUE_TRAIT_GENERATOR(is_returning_column_list)
 
-namespace postgresql {
+namespace sqlite3 {
 namespace detail {
 template <typename... Columns>
 struct returning_traits {
@@ -86,9 +85,7 @@ struct dynamic_returning_column_list<void> {
 };
 
 template <typename Db>
-postgresql::context_t& serialize(
-    const postgresql::dynamic_returning_column_list<Db>& t, postgresql::context_t& context
-) {
+sqlite3::context_t& serialize(const sqlite3::dynamic_returning_column_list<Db>& t, sqlite3::context_t& context) {
   bool first{true};
   for (const auto& column : t._dynamic_columns) {
     if (first) {
@@ -103,9 +100,7 @@ postgresql::context_t& serialize(
   return context;
 }
 
-inline postgresql::context_t& serialize(
-    const postgresql::dynamic_returning_column_list<void>&, postgresql::context_t& context
-) {
+inline sqlite3::context_t& serialize(const sqlite3::dynamic_returning_column_list<void>&, sqlite3::context_t& context) {
   return context;
 }
 
@@ -400,8 +395,8 @@ struct no_returning_column_list_t {
 
 // Serialization
 template <typename Database, typename... Columns>
-postgresql::context_t& serialize(
-    const postgresql::returning_column_list_data_t<Database, Columns...>& t, postgresql::context_t& context
+sqlite3::context_t& serialize(
+    const sqlite3::returning_column_list_data_t<Database, Columns...>& t, sqlite3::context_t& context
 ) {
   context << " RETURNING ";
   interpret_tuple(t._columns, ',', context);
@@ -411,5 +406,3 @@ postgresql::context_t& serialize(
 }
 }  // namespace postgresql
 }  // namespace sqlpp
-
-#endif

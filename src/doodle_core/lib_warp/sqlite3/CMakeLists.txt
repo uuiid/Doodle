@@ -4,19 +4,10 @@ target_sources(
         on_conflict_do_update.h
         result_field.h
         returning.h
-        exception.h
-        bind_result.h
         insert.h
         serializer.h
-        visibility.h
         on_conflict_do_nothing.h
-        dynamic_libpq.h
-        postgresql.h
-        connection.h
-        result.h
-        connection_config.h
         update.h
         on_conflict.h
         returning_column_list.h
-        prepared_statement.h
 )

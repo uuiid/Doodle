@@ -25,17 +25,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SQLPP_POSTGRESQL_ON_CONFLICT_DO_NOTHING_H
-#define SQLPP_POSTGRESQL_ON_CONFLICT_DO_NOTHING_H
+#pragma once
 
 #include <sqlpp11/detail/type_vector.h>
 #include <sqlpp11/serialize.h>
+#include <sqlpp11/sqlite3/connection.h>
 #include <sqlpp11/type_traits.h>
 
 namespace sqlpp {
 SQLPP_VALUE_TRAIT_GENERATOR(is_on_conflict_do_nothing)
 
-namespace postgresql {
+namespace sqlite3 {
 // Forward declaration
 template <typename ConflictTarget>
 struct on_conflict_data_t;
@@ -95,14 +95,12 @@ struct on_conflict_do_nothing_t {
 };
 
 template <typename ConflictTarget>
-postgresql::context_t& serialize(
-    const postgresql::on_conflict_do_nothing_data_t<ConflictTarget>& o, postgresql::context_t& context
+sqlite3::context_t& serialize(
+    const sqlite3::on_conflict_do_nothing_data_t<ConflictTarget>& o, sqlite3::context_t& context
 ) {
   serialize(o._column, context);
   context << "DO NOTHING";
   return context;
 }
-}  // namespace postgresql
+}  // namespace sqlite3
 }  // namespace sqlpp
-
-#endif
