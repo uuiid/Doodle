@@ -89,6 +89,9 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
 
   virtual void new_file_scene(const FSys::path& in_path, const project& in_project);
   inline FSys::path get_project_path() const { return project_path; }
+
+  // 主动保存
+  inline void save() { async_save_impl(); }
 };
 
 }  // namespace doodle::database_n
