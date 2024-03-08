@@ -10,50 +10,58 @@
 #include <entt/entt.hpp>
 namespace doodle::snapshot {
 
+template <typename Component>
+class sql_save_load {
+ public:
+  void begin_save();
+  void begin_load();
+};
+
 class sqlite_snapshot {
-  //  std::tuple<std::deque<std::pair<entt::entity, Component>>...> tuple_{};
-  std::underlying_type_t<entt::entity> current_component_size_{};
-  entt::entity current_entity_{};
-  //  static constexpr auto hana_tup_ = boost::hana::make_tuple(boost::hana::type_c<Component>...);
-
   FSys::path data_path_{};
-
-  class base_data {
-   public:
-    virtual ~base_data()                              = default;
-
-    [[nodiscard]] virtual std::size_t size() const    = 0;
-    [[nodiscard]] virtual entt::entity entity() const = 0;
-  };
-  std::shared_ptr<base_data> current_data_{};
-  std::deque<std::shared_ptr<base_data>> data_deque_{};
-
-  template <typename Component>
-  class data_impl : base_data {
-   public:
-    using data_tuple        = std::tuple<entt::entity, Component>;
-    using data_tuple_vector = std::vector<data_tuple>;
-    using data_iter         = typename data_tuple_vector::iterator;
-    data_tuple_vector data_{};
-    mutable data_iter begin_{};
-    data_impl()          = default;
-    virtual ~data_impl() = default;
-
-    inline void next() { ++begin_; }
-
-   private:
-    [[nodiscard]] inline size_t size() const override {
-      return data_.size();
-      begin_ = data_.begin();
-    }
-    [[nodiscard]] inline entt::entity entity() const override { return std::get<0>(*begin_); }
-  };
+  entt::registry& registry_;
+  std::unique_ptr<entt::snapshot> snapshot_{};
+  std::unique_ptr<entt::snapshot_loader> loader_{};
 
  public:
-  explicit sqlite_snapshot(FSys::path in_data_path)
-      : data_path_(in_data_path.empty() ? FSys::path{":memory:"} : std::move(in_data_path)) {}
+  explicit sqlite_snapshot(FSys::path in_data_path, entt::registry& in_registry)
+      : data_path_(in_data_path.empty() ? FSys::path{":memory:"} : std::move(in_data_path)), registry_{in_registry} {}
 
   virtual ~sqlite_snapshot() = default;
+
+  template <typename Component>
+    requires std::is_same_v<Component, entt::entity>
+  void load() {
+    if (!loader_) {
+      loader_ = std::make_unique<entt::snapshot_loader>(registry_);
+    }
+    loader_->get<Component>(*this);
+  }
+  template <typename Component>
+    requires(!std::is_same_v<Component, entt::entity>)
+  void load() {
+    if (!loader_) {
+      loader_ = std::make_unique<entt::snapshot_loader>(registry_);
+    }
+    loader_->get<Component>(*this);
+  }
+  template <typename Component>
+    requires std::is_same_v<Component, entt::entity>
+  void save() {
+    if (!snapshot_) {
+      snapshot_ = std::make_unique<entt::snapshot>(registry_);
+    }
+
+    snapshot_->get<Component>(*this);
+  }
+  template <typename Component>
+    requires(!std::is_same_v<Component, entt::entity>)
+  void save() {
+    if (!snapshot_) {
+      snapshot_ = std::make_unique<entt::snapshot>(registry_);
+    }
+    snapshot_->get<Component>(*this);
+  }
 
   // 先是大小
   void operator()(std::underlying_type_t<entt::entity> in_underlying_type);
@@ -63,32 +71,16 @@ class sqlite_snapshot {
   void operator()(std::underlying_type_t<entt::entity>& in_underlying_type);
   void operator()(entt::entity& in_entity);
 
-  template <typename... Component>
-  void load(FSys::path in_data_path, entt::snapshot_loader& in_loader) {
-    (in_loader.get<Component>(*this), ...);
-  }
-
+  template <typename Component>
   void save(FSys::path in_data_path, const std::vector<std::int64_t>& in_delete_id);
 
   // 组件的加载和保存
   template <typename T>
   void operator()(const T& in_t) {
-    if (!current_data_) {
-      current_data_ = data_deque_.emplace_back(std::make_shared<data_impl<T>>());
-      std::dynamic_pointer_cast<data_impl<T>&>(current_data_).data_.reserve(current_component_size_);
-    }
 
-    if (current_data_) {
-      auto& l_data = std::dynamic_pointer_cast<data_impl<T>&>(current_data_);
-      l_data.data_.emplace_back(current_entity_, in_t);
-    }
   }
   template <typename T>
-  void operator()(T& in_t) {
-    auto l_data = std::dynamic_pointer_cast<data_impl<T>>(current_data_);
-    in_t        = std::get<1>(l_data->data_.front());
-    l_data->next();
-  }
+  void operator()(T& in_t) {}
 };
 
 }  // namespace doodle::snapshot
