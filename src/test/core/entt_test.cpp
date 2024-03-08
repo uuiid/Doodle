@@ -107,13 +107,16 @@ class archive_t {
 BOOST_AUTO_TEST_CASE(save) {
   entt::registry reg{};
 
+  std::vector<entt::entity> l_handles{};
   entt::handle l_h{reg, reg.create()};
   l_h.emplace<std::int32_t>(1);
   l_h.emplace<std::string>("test");
+  l_handles.emplace_back(l_h);
 
   l_h = entt::handle{reg, reg.create()};
   l_h.emplace<std::int32_t>(5);
   l_h.emplace<std::string>("test2");
+  l_handles.emplace_back(l_h);
 
   l_h = entt::handle{reg, reg.create()};
   l_h.emplace<std::string>("test3");
@@ -128,19 +131,35 @@ BOOST_AUTO_TEST_CASE(save) {
   l_h.emplace<std::string>("test2");
   l_h.destroy();
 
-  entt::snapshot l_snapshot{reg};
-  archive_t l_archive{};
-  BOOST_TEST_MESSAGE("开始保存enttity");
-  l_snapshot.get<entt::entity>(l_archive);
-  l_archive.print();
+  {
+    entt::snapshot l_snapshot{reg};
+    archive_t l_archive{};
+    BOOST_TEST_MESSAGE("开始保存enttity");
+    l_snapshot.get<entt::entity>(l_archive);
+    l_archive.print();
 
-  BOOST_TEST_MESSAGE("保存enttity结束,开始保存int32");
-  l_snapshot.get<std::int32_t>(l_archive);
-  l_archive.print();
+    BOOST_TEST_MESSAGE("保存enttity结束,开始保存int32");
+    l_snapshot.get<std::int32_t>(l_archive);
+    l_archive.print();
 
-  BOOST_TEST_MESSAGE("保存int32结束,开始保存string");
-  l_snapshot.get<std::string>(l_archive);
-  l_archive.print();
+    BOOST_TEST_MESSAGE("保存int32结束,开始保存string");
+    l_snapshot.get<std::string>(l_archive);
+    l_archive.print();
 
-  BOOST_TEST_MESSAGE("保存string结束");
+    BOOST_TEST_MESSAGE("保存string结束");
+  }
+
+  {
+    entt::snapshot l_snapshot{reg};
+    archive_t l_archive{};
+    BOOST_TEST_MESSAGE("开始保存int32");
+    l_snapshot.get<std::int32_t>(l_archive, l_handles.begin(), l_handles.end());
+    l_archive.print();
+
+    BOOST_TEST_MESSAGE("保存int32结束,开始保存string");
+    l_snapshot.get<std::string>(l_archive, l_handles.begin(), l_handles.end());
+    l_archive.print();
+
+    BOOST_TEST_MESSAGE("保存string结束");
+  }
 }
