@@ -125,7 +125,7 @@ r.Streaming.PoolSize=16384
   if (l_find_render_setting == std::string::npos) {
     l_str += R"([/Script/Engine.RendererSettings]
 r.TextureStreaming=True
-r.GBufferFormat=3
+r.GBufferFormat=1
 r.AllowStaticLighting=True
 r.Streaming.PoolSize=16384
 
@@ -144,10 +144,10 @@ r.Streaming.PoolSize=16384
   }
   auto l_find_g_buffer_format = l_str.find("r.GBufferFormat");
   if (l_str.find("r.GBufferFormat") == std::string::npos) {
-    l_str.insert(l_find_render_setting + 34, "r.GBufferFormat=3\n");
+    l_str.insert(l_find_render_setting + 34, "r.GBufferFormat=1\n");
   } else {
     l_str.replace(
-        l_find_g_buffer_format, l_str.find("\n", l_find_g_buffer_format) - l_find_g_buffer_format, "r.GBufferFormat=3"
+        l_find_g_buffer_format, l_str.find("\n", l_find_g_buffer_format) - l_find_g_buffer_format, "r.GBufferFormat=1"
     );
   }
   auto l_find_allow_static_lighting = l_str.find("r.AllowStaticLighting");
