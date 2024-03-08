@@ -10,4 +10,5 @@ target_sources(
         update.h
         on_conflict.h
         returning_column_list.h
+        excluded.h
 )

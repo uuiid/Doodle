@@ -25,7 +25,8 @@
  */
 
 #pragma once
-#include <sqlpp11/postgresql/returning.h>
+#include <doodle_core/lib_warp/sqlite3/returning.h>
+
 #include <sqlpp11/update.h>
 
 namespace sqlpp {

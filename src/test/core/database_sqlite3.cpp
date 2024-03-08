@@ -9,6 +9,7 @@
 #include "doodle_core/database_task/sqlite_client.h"
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/assets.h>
@@ -129,7 +130,10 @@ void create_test_database() {
 
 BOOST_AUTO_TEST_CASE(test_sqlite3_save) {
   doodle_lib l_lib{};
+  g_ctx().get<file_translator_ptr>()->new_file_scene(database_info::memory_data, project{});
   create_test_database();
+  g_ctx().emplace<program_info>();
+  g_ctx().get<file_translator_ptr>()->save();
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
