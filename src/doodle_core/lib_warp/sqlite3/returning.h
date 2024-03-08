@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <doodle_core/lib_warp/sqlite3  //returning_column_list.h>
+#include <doodle_core/lib_warp/sqlite3/returning_column_list.h>
 
 #include <sqlpp11/select_column_list.h>
 #include <sqlpp11/statement.h>
