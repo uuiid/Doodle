@@ -327,6 +327,7 @@ FReply UDoodleOrganizeCompoundWidget::GenerateFolders()
     {
         EditorAssetSubsystem->MakeDirectory(FolderPath);
     }
+    TArray<UObject*> SelectedObjs;
     for (FAssetData SelectedData : SelectedAsset)
     {
         if (SelectedData.GetClass()->IsChildOf<UFXSystemAsset>())
@@ -369,8 +370,12 @@ FReply UDoodleOrganizeCompoundWidget::GenerateFolders()
         {
             MakeDirectoryByType(FolderPath,SelectedData, TEXT("Other"));
         }
+        SelectedObjs.Add(SelectedData.GetAsset());
     }
     //--------------------------
+    EditorAssetSubsystem->SaveLoadedAssets(SelectedObjs);
+    //------------
+    FixupAllReferencers();
     return FReply::Handled();
 }
 
@@ -403,7 +408,7 @@ void UDoodleOrganizeCompoundWidget::MakeDirectoryByType(FString FolderPath,FAsse
             FSlateNotificationManager::Get().AddNotification(L_Info);
         }
     }
-    EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
+    //EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
 }
 
 FReply UDoodleOrganizeCompoundWidget::GetAllRepetitiveTexture()
