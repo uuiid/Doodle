@@ -1,5 +1,5 @@
 target_sources(
-        doodle_lib
+        doodle_core
         PUBLIC
         sqlite_snapshot.h
         PRIVATE

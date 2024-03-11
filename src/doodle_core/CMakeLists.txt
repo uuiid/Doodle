@@ -56,6 +56,7 @@ add_subdirectory(platform)
 add_subdirectory(thread_pool)
 add_subdirectory(details)
 add_subdirectory(time_tool)
+add_subdirectory(sqlite_orm)
 
 # 连接库
 target_link_libraries(

@@ -10,12 +10,6 @@
 #include <entt/entt.hpp>
 namespace doodle::snapshot {
 
-template <typename Component>
-class sql_save_load {
- public:
-  void begin_save();
-  void begin_load();
-};
 
 class sqlite_snapshot {
   FSys::path data_path_{};
