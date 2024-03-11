@@ -10,12 +10,15 @@
 #include <entt/entt.hpp>
 namespace doodle::snapshot {
 
-
 class sqlite_snapshot {
   FSys::path data_path_{};
   entt::registry& registry_;
   std::unique_ptr<entt::snapshot> snapshot_{};
   std::unique_ptr<entt::snapshot_loader> loader_{};
+  template <typename Registry>
+  friend class entt::basic_snapshot;
+  template <typename Registry>
+  friend class basic_snapshot_loader;
 
  public:
   explicit sqlite_snapshot(FSys::path in_data_path, entt::registry& in_registry)
@@ -25,38 +28,43 @@ class sqlite_snapshot {
 
   template <typename Component>
     requires std::is_same_v<Component, entt::entity>
-  void load() {
+  auto load() {
     if (!loader_) {
       loader_ = std::make_unique<entt::snapshot_loader>(registry_);
     }
     loader_->get<Component>(*this);
+    return *this;
   }
   template <typename Component>
     requires(!std::is_same_v<Component, entt::entity>)
-  void load() {
+  auto load() {
     if (!loader_) {
       loader_ = std::make_unique<entt::snapshot_loader>(registry_);
     }
     loader_->get<Component>(*this);
+    return *this;
   }
   template <typename Component>
     requires std::is_same_v<Component, entt::entity>
-  void save() {
+  auto save() {
     if (!snapshot_) {
       snapshot_ = std::make_unique<entt::snapshot>(registry_);
     }
 
     snapshot_->get<Component>(*this);
+    return *this;
   }
   template <typename Component>
     requires(!std::is_same_v<Component, entt::entity>)
-  void save() {
+  auto save() {
     if (!snapshot_) {
       snapshot_ = std::make_unique<entt::snapshot>(registry_);
     }
     snapshot_->get<Component>(*this);
+    return *this;
   }
 
+ private:
   // 先是大小
   void operator()(std::underlying_type_t<entt::entity> in_underlying_type);
   // 然后是实体和对应组件的循环
@@ -70,9 +78,7 @@ class sqlite_snapshot {
 
   // 组件的加载和保存
   template <typename T>
-  void operator()(const T& in_t) {
-
-  }
+  void operator()(const T& in_t) {}
   template <typename T>
   void operator()(T& in_t) {}
 };
