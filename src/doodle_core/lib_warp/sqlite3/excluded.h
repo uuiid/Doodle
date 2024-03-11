@@ -7,6 +7,7 @@
 #include <sqlpp11/data_types/parameter_value.h>
 #include <sqlpp11/detail/type_set.h>
 #include <sqlpp11/expression_operators.h>
+#include <sqlpp11/sqlite3/connection.h>
 #include <sqlpp11/type_traits.h>
 #include <sqlpp11/wrap_operand.h>
 namespace sqlpp::sqlite3 {
