@@ -11,4 +11,5 @@ target_sources(
         on_conflict.h
         returning_column_list.h
         excluded.h
+        sqlite3.h
 )
