@@ -2,6 +2,7 @@ target_sources(
         doodle_core
         PUBLIC
         sqlite_snapshot.h
+        sqlite_base.h
         PRIVATE
         sqlite_snapshot.cpp
 )
