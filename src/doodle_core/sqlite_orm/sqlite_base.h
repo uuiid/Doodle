@@ -265,8 +265,8 @@ struct sql_table_base {
  public:
   sql_table_base() = default;
   virtual void create_table(const doodle::conn_ptr& in_ptr) {
-    if (has_table(in_ptr)) return;
     const table_t l_tables{};
+    if (has_table(l_tables, *in_ptr)) return;
     in_ptr->execute(detail::create_table(l_tables).unique_column(l_tables.entity_identifier));
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_identifier));
