@@ -5,14 +5,4 @@
 #include "sqlite_snapshot.h"
 
 #include <doodle_core/sqlite_orm/sqlite_base.h>
-namespace doodle::snapshot {
-
-void sqlite_snapshot::operator()(std::underlying_type_t<entt::entity> in_underlying_type) {
-}
-void sqlite_snapshot::operator()(entt::entity in_entity) {}
-void sqlite_snapshot::operator()(std::underlying_type_t<entt::entity>& in_underlying_type) {
-
-}
-void sqlite_snapshot::operator()(entt::entity& in_entity) {}
-
-}  // namespace doodle::snapshot
+namespace doodle::snapshot {}  // namespace doodle::snapshot
