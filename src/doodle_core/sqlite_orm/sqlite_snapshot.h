@@ -20,7 +20,7 @@ class sqlite_snapshot {
     entt::meta_func begin_save_func;
     entt::meta_func save_func;
     entt::entity entity_{};
-    entt::meta_any any_data_;
+    entt::meta_any pre_sql_data_;
     bool is_entity_{false};
     conn_ptr conn_ptr_;
     explicit save_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
@@ -30,8 +30,8 @@ class sqlite_snapshot {
     auto save() {
       set_save_func<Component>();
       if (!begin_save_func) return *this;
-      is_entity_ = std::is_same_v<Component, entt::entity>;
-      any_data_  = begin_save_func.invoke({}, conn_ptr_);
+      is_entity_    = std::is_same_v<Component, entt::entity>;
+      pre_sql_data_ = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this);
       return *this;
     }
@@ -40,8 +40,8 @@ class sqlite_snapshot {
     auto save(It first, It last) {
       set_save_func<Component>();
       if (!begin_save_func) return *this;
-      is_entity_ = std::is_same_v<Component, entt::entity>;
-      any_data_  = begin_save_func.invoke({}, conn_ptr_);
+      is_entity_    = std::is_same_v<Component, entt::entity>;
+      pre_sql_data_ = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this, first, last);
       return *this;
     }
@@ -58,13 +58,13 @@ class sqlite_snapshot {
     // 然后是实体和对应组件的循环
     inline void operator()(entt::entity in_entity) {
       entity_ = in_entity;
-      if (is_entity_) save_func.invoke(in_entity, any_data_, entt::forward_as_meta(conn_ptr_));
+      if (is_entity_) save_func.invoke(in_entity, pre_sql_data_, entt::forward_as_meta(conn_ptr_));
     }
 
     // 组件的加载和保存
     template <typename T>
     void operator()(const T& in_t) {
-      save_func.invoke(in_t, entity_, any_data_, entt::forward_as_meta(conn_ptr_));
+      save_func.invoke(in_t, entity_, pre_sql_data_, entt::forward_as_meta(conn_ptr_));
     }
   };
 
@@ -73,7 +73,8 @@ class sqlite_snapshot {
     entt::meta_func begin_load_func;
     entt::meta_func load_func;
     entt::meta_func get_size_func;
-    entt::meta_any any_data_;
+    entt::meta_any result_sql_data_;
+
     conn_ptr conn_ptr_;
     explicit load_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
         : loader_{in_registry}, conn_ptr_{std::move(in_conn)} {}
@@ -85,7 +86,7 @@ class sqlite_snapshot {
     auto load() {
       set_load_func<Component>();
       if (!begin_load_func) return *this;
-      any_data_ = begin_load_func.invoke({});
+      result_sql_data_ = begin_load_func.invoke({});
       loader_.get<Component>(*this);
       return *this;
     }
@@ -99,14 +100,14 @@ class sqlite_snapshot {
     }
     // load
     inline void operator()(std::underlying_type_t<entt::entity>& in_underlying_type) {
-      in_underlying_type = get_size_func.invoke({}).cast<std::underlying_type_t<entt::entity>>();
+      in_underlying_type = get_size_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<std::underlying_type_t<entt::entity>>();
     }
     inline void operator()(entt::entity& in_entity) {
-      load_func.invoke(in_entity, any_data_, entt::forward_as_meta(conn_ptr_));
+      load_func.invoke(in_entity, result_sql_data_, entt::forward_as_meta(conn_ptr_));
     }
     template <typename T>
     void operator()(T& in_t) {
-      load_func.invoke(in_t, any_data_, entt::forward_as_meta(conn_ptr_));
+      load_func.invoke(in_t, result_sql_data_, entt::forward_as_meta(conn_ptr_));
     }
   };
 
