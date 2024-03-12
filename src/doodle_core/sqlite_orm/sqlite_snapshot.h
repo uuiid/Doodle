@@ -29,8 +29,9 @@ class sqlite_snapshot {
     template <typename Component>
     auto save() {
       set_save_func<Component>();
+      if (!begin_save_func) return *this;
       is_entity_ = std::is_same_v<Component, entt::entity>;
-      if (begin_save_func) any_data_ = begin_save_func.invoke({}, conn_ptr_);
+      any_data_  = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this);
       return *this;
     }
@@ -38,8 +39,9 @@ class sqlite_snapshot {
       requires(!std::is_same_v<Component, entt::entity>)
     auto save(It first, It last) {
       set_save_func<Component>();
+      if (!begin_save_func) return *this;
       is_entity_ = std::is_same_v<Component, entt::entity>;
-      if (begin_save_func) any_data_ = begin_save_func.invoke({}, conn_ptr_);
+      any_data_  = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this, first, last);
       return *this;
     }
@@ -82,7 +84,8 @@ class sqlite_snapshot {
     template <typename Component>
     auto load() {
       set_load_func<Component>();
-      if (begin_load_func) any_data_ = begin_load_func.invoke({});
+      if (!begin_load_func) return *this;
+      any_data_ = begin_load_func.invoke({});
       loader_.get<Component>(*this);
       return *this;
     }
