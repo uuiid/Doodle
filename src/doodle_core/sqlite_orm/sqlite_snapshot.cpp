@@ -7,13 +7,13 @@
 #include <doodle_core/sqlite_orm/sqlite_base.h>
 namespace doodle::snapshot {
 
-entt::meta_any begin_save_entt(entt::entity&, const conn_ptr& in_conn) {}
+entt::meta_any begin_save_entt(entt::entity&, const conn_ptr& in_conn) { return {}; }
 void save_entt(entt::entity&, entt::entity& in_entity, entt::meta_any& in_pre, const conn_ptr& in_conn) {}
 
-entt::meta_any begin_load_entt(entt::entity&, const conn_ptr& in_conn) {}
+entt::meta_any begin_load_entt(entt::entity&, const conn_ptr& in_conn) { return {}; }
 void load_entt(entt::entity&, entt::meta_any& in_pre, const conn_ptr& in_conn) {}
 
-std::underlying_type_t<entt::entity> get_size_entt(entt::entity&, const conn_ptr& in_conn) {}
+std::underlying_type_t<entt::entity> get_size_entt(entt::entity&, const conn_ptr& in_conn) { return {}; }
 
 void sqlite_snapshot::init_base_meta() {
   entt::meta<entt::entity>()
