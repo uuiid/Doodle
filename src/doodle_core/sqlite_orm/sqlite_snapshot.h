@@ -22,15 +22,15 @@ class sqlite_snapshot {
     entt::entity entity_{};
     entt::meta_any any_data_;
     bool is_entity_{false};
-    conn_ptr conn_ptr;
+    conn_ptr conn_ptr_;
     explicit save_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
-        : snapshot_{in_registry}, conn_ptr{std::move(in_conn)} {}
+        : snapshot_{in_registry}, conn_ptr_{std::move(in_conn)} {}
 
     template <typename Component>
     auto save() {
       set_save_func<Component>();
       is_entity_ = std::is_same_v<Component, entt::entity>;
-      if (begin_save_func) any_data_ = begin_save_func.invoke({}, conn_ptr);
+      if (begin_save_func) any_data_ = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this);
       return *this;
     }
@@ -39,7 +39,7 @@ class sqlite_snapshot {
     auto save(It first, It last) {
       set_save_func<Component>();
       is_entity_ = std::is_same_v<Component, entt::entity>;
-      if (begin_save_func) any_data_ = begin_save_func.invoke({}, conn_ptr);
+      if (begin_save_func) any_data_ = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this, first, last);
       return *this;
     }
@@ -56,15 +56,13 @@ class sqlite_snapshot {
     // 然后是实体和对应组件的循环
     inline void operator()(entt::entity in_entity) {
       entity_ = in_entity;
-      entt::meta_any l_any[2]{any_data_, entt::forward_as_meta(conn_ptr)};
-      if (is_entity_) save_func.invoke(in_entity, l_any, 2);
+      if (is_entity_) save_func.invoke(in_entity, any_data_, entt::forward_as_meta(conn_ptr_));
     }
 
     // 组件的加载和保存
     template <typename T>
     void operator()(const T& in_t) {
-      entt::meta_any l_any[3]{entity_, any_data_, entt::forward_as_meta(conn_ptr)};
-      save_func.invoke(in_t, l_any, 3);
+      save_func.invoke(in_t, entity_, any_data_, entt::forward_as_meta(conn_ptr_));
     }
   };
 
@@ -74,9 +72,9 @@ class sqlite_snapshot {
     entt::meta_func load_func;
     entt::meta_func get_size_func;
     entt::meta_any any_data_;
-    conn_ptr conn_ptr;
+    conn_ptr conn_ptr_;
     explicit load_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
-        : loader_{in_registry}, conn_ptr{std::move(in_conn)} {}
+        : loader_{in_registry}, conn_ptr_{std::move(in_conn)} {}
 
     template <typename Registry>
     friend class entt::basic_snapshot_loader;
@@ -101,37 +99,41 @@ class sqlite_snapshot {
       in_underlying_type = get_size_func.invoke({}).cast<std::underlying_type_t<entt::entity>>();
     }
     inline void operator()(entt::entity& in_entity) {
-      in_entity = load_func.invoke({}, any_data_).cast<entt::entity>();
+      load_func.invoke(in_entity, any_data_, entt::forward_as_meta(conn_ptr_));
     }
     template <typename T>
     void operator()(T& in_t) {
-      load_func.invoke(in_t, any_data_);
+      load_func.invoke(in_t, any_data_, entt::forward_as_meta(conn_ptr_));
     }
   };
 
   FSys::path data_path_{};
   entt::registry& registry_;
 
+  void init_base_meta();
+
  public:
   explicit sqlite_snapshot(FSys::path in_data_path, entt::registry& in_registry)
-      : data_path_(in_data_path.empty() ? FSys::path{":memory:"} : std::move(in_data_path)), registry_{in_registry} {}
+      : data_path_(in_data_path.empty() ? FSys::path{":memory:"} : std::move(in_data_path)), registry_{in_registry} {
+    init_base_meta();
+  }
 
   virtual ~sqlite_snapshot() = default;
-  template <typename Component...>
+  template <typename... Component>
   void save() {
     database_info l_info{};
     l_info.path_ = data_path_;
     save_snapshot_t l_save{registry_, l_info.get_connection()};
-    auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr);
+    auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
     (l_save.template save<Component>(), ...);
   }
 
-  template <typename Component...>
+  template <typename... Component>
   void load() {
     database_info l_info{};
     l_info.path_ = data_path_;
     load_snapshot_t l_load{registry_, l_info.get_connection_const()};
-    auto l_tx = sqlpp::start_transaction(*l_load.conn_ptr);
+    auto l_tx = sqlpp::start_transaction(*l_load.conn_ptr_);
     (l_load.template load<Component>(), ...);
   }
 };
