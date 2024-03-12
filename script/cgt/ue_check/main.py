@@ -38,7 +38,7 @@ class widget_ui(QDialog):
 
     def assert_mesh(self):
         u_dir = os.path.dirname(self.file_path)
-        con_path = os.path.join(u_dir+"/","Content/Prop/%s/Mesh" % self.zymc)
+        con_path = os.path.join(u_dir+"/","Content/Prop/%s/Meshs" % self.zymc)
         if not os.path.exists(con_path):
             QMessageBox.critical(self, "错误", "不存在%s文件夹" % con_path)
             return False
