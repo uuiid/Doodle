@@ -19,6 +19,9 @@ class sqlite_snapshot {
     entt::snapshot snapshot_;
     entt::meta_func begin_save_func;
     entt::meta_func save_func;
+    entt::meta_func destroy_func;
+    // 创建表
+    entt::meta_func create_table_func;
     entt::entity entity_{};
     entt::meta_any pre_sql_data_;
     bool is_entity_{false};
@@ -29,8 +32,10 @@ class sqlite_snapshot {
     template <typename Component>
     auto save() {
       set_save_func<Component>();
+      if (!create_table_func) return *this;
       if (!begin_save_func) return *this;
-      is_entity_    = std::is_same_v<Component, entt::entity>;
+      is_entity_ = std::is_same_v<Component, entt::entity>;
+      create_table_func.invoke({}, conn_ptr_);
       pre_sql_data_ = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this);
       return *this;
@@ -39,19 +44,30 @@ class sqlite_snapshot {
       requires(!std::is_same_v<Component, entt::entity>)
     auto save(It first, It last) {
       set_save_func<Component>();
+      if (!create_table_func) return *this;
       if (!begin_save_func) return *this;
-      is_entity_    = std::is_same_v<Component, entt::entity>;
+      is_entity_ = std::is_same_v<Component, entt::entity>;
+      create_table_func.invoke({}, conn_ptr_);
       pre_sql_data_ = begin_save_func.invoke({}, conn_ptr_);
       snapshot_.get<Component>(*this, first, last);
+      return *this;
+    }
+    template <typename Component, typename It>
+    auto destroy(It first, It last) {
+      std::vector<std::int64_t> l_vec{};
+      for (; first != last; ++first) l_vec.push_back(*first);
+      destroy_func.invoke({}, l_vec);
       return *this;
     }
 
    private:
     template <typename Component>
     void set_save_func() {
-      auto l_mate     = entt::resolve<Component>();
-      begin_save_func = l_mate.func("begin_save"_hs);
-      save_func       = l_mate.func("save"_hs);
+      auto l_mate       = entt::resolve<Component>();
+      begin_save_func   = l_mate.func("begin_save"_hs);
+      save_func         = l_mate.func("save"_hs);
+      destroy_func      = l_mate.func("destroy"_hs);
+      create_table_func = l_mate.func("create_table"_hs);
     }
 
     inline void operator()(std::underlying_type_t<entt::entity> in_underlying_type) {}
@@ -100,7 +116,8 @@ class sqlite_snapshot {
     }
     // load
     inline void operator()(std::underlying_type_t<entt::entity>& in_underlying_type) {
-      in_underlying_type = get_size_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<std::underlying_type_t<entt::entity>>();
+      in_underlying_type =
+          get_size_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<std::underlying_type_t<entt::entity>>();
     }
     inline void operator()(entt::entity& in_entity) {
       load_func.invoke(in_entity, result_sql_data_, entt::forward_as_meta(conn_ptr_));
@@ -140,6 +157,8 @@ class sqlite_snapshot {
     auto l_tx = sqlpp::start_transaction(*l_load.conn_ptr_);
     (l_load.template load<Component>(), ...);
   }
+
+  void destroy() {}
 };
 
 }  // namespace doodle::snapshot
