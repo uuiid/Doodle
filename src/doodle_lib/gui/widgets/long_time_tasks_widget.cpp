@@ -118,6 +118,8 @@ bool long_time_tasks_widget::render() {
         case level::level_enum::n_levels:
           break;
       }
+
+      dear::TextWrapPos l_wrap{};
       imgui::TextUnformatted(log_.data(), log_.data() + log_.size());
     }
   }

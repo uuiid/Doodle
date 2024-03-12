@@ -366,7 +366,7 @@ struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
 };
 
 struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
-  TextWrapPos(float wrap_pos_x) : ScopeWrapper<TextWrapPos, true>(true) { ImGui::PushTextWrapPos(wrap_pos_x); }
+  TextWrapPos(float wrap_pos_x = 0.0f) : ScopeWrapper<TextWrapPos, true>(true) { ImGui::PushTextWrapPos(wrap_pos_x); }
   static void dtor() noexcept { ImGui::PopTextWrapPos(); };
 };
 
