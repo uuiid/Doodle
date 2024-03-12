@@ -261,15 +261,16 @@ struct sql_table_base {
     const table_t l_tables{};
     return has_table(l_tables, *in_ptr);
   }
-  virtual void create_table(doodle::conn_ptr& in_ptr) {
+
+ public:
+  sql_table_base() = default;
+  virtual void create_table(const doodle::conn_ptr& in_ptr) {
+    if (has_table(in_ptr)) return;
     const table_t l_tables{};
     in_ptr->execute(detail::create_table(l_tables).unique_column(l_tables.entity_identifier));
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_identifier));
   };
-
- public:
-  sql_table_base() = default;
 };
 
 }  // namespace doodle::snapshot::detail
