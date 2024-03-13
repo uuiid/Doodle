@@ -142,7 +142,7 @@ class sqlite_snapshot {
     }
     inline void operator()(entt::entity& in_entity) {
       static entt::entity l_entity{};  // 这块 序列化要加一个实体, 保证正常
-      load_entt_func.invoke(l_entity, in_entity, result_sql_data_);
+      load_entt_func.invoke({}, entt::forward_as_meta(in_entity).as_ref(), result_sql_data_);
     }
     template <typename T>
     void operator()(T& in_t) {

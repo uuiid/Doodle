@@ -93,7 +93,6 @@ std::shared_ptr<void> begin_load(const conn_ptr& in_conn) {
 void load_entt(entt::entity& in_entity, std::shared_ptr<void>& in_pre) {
   auto l_pre = std::static_pointer_cast<pre_rus_t>(in_pre);
   in_entity  = num_to_enum<entt::entity>(l_pre->front().entity_identifier.value());
-  l_pre->pop_front();
 }
 bool has_table(const conn_ptr& in_conn) {
   database_tab::database_tab l_tab{};
