@@ -240,11 +240,6 @@ struct sql_table_base {
     return has_colume(*in_ptr, in_column);
   }
 
-  bool has_table(doodle::conn_ptr& in_ptr) {
-    const table_t l_tables{};
-    return has_table(l_tables, *in_ptr);
-  }
-
  public:
   sql_table_base() = default;
   virtual void create_table(const doodle::conn_ptr& in_ptr) {
@@ -254,6 +249,10 @@ struct sql_table_base {
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_identifier));
   };
+  bool has_table(const doodle::conn_ptr& in_ptr) {
+    const table_t l_tables{};
+    return has_table(l_tables, *in_ptr);
+  }
 };
 
 }  // namespace doodle::snapshot::detail
