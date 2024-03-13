@@ -20,8 +20,8 @@ namespace doodle::snapshot {
  * create_table:  void (const conn_ptr& in_conn)
  * begin_save:    std::shared_ptr<void> (const conn_ptr& in_conn)
  * save:          template <typename Component> void (const Component& in_com, entt::entity& in_entity,
- * std::shared_ptr<void>& in_pre, const conn_ptr& in_conn) destroy:       void (const std::vector<std::int64_t>&
- * in_vector, const conn_ptr& in_conn)
+ * std::shared_ptr<void>& in_pre, const conn_ptr& in_conn)
+ * destroy:       void (const std::vector<std::int64_t>&in_vector, const conn_ptr& in_conn)
  *
  * 加载需要的反射:
  *  key           | 签名

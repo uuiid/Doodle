@@ -15,8 +15,10 @@
 #include <optional>
 
 namespace doodle {
-
 class database;
+namespace snapshot {
+void load_com(database &in_entity, std::shared_ptr<void> &in_pre);
+}
 
 namespace database_ns {
 class DOODLE_CORE_API ref_data {
@@ -64,6 +66,7 @@ class DOODLE_CORE_API database : boost::totally_ordered<database>,
   template <typename>
   friend class database_n::impl_obs;
   friend class database_n::select;
+  friend void ::doodle::snapshot::load_com(database &in_entity, std::shared_ptr<void> &in_pre);
 
  private:
   mutable std::uint64_t p_id;

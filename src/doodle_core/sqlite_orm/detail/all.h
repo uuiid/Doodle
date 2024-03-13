@@ -3,4 +3,8 @@
 //
 
 #pragma once
-namespace doodle::sqlite_orm::detail {}
+namespace doodle::snapshot::detail {
+
+void reg_database();
+
+}

@@ -5,6 +5,7 @@
 #include "sqlite_snapshot.h"
 
 #include <doodle_core/lib_warp/sqlite3/sqlite3.h>
+#include <doodle_core/sqlite_orm/detail/all.h>
 #include <doodle_core/sqlite_orm/sqlite_base.h>
 
 #include <sqlpp11/ppgen.h>
@@ -66,7 +67,7 @@ std::underlying_type_t<entt::entity> get_size_entt(const conn_ptr& in_conn) {
 
   for (auto&& row :
        (*in_conn)(sqlpp::select(sqlpp::count(l_entity_tab.entity_identifier)).from(l_entity_tab).unconditionally())) {
-    return row.count;
+    return row.count.value();
   }
   return 0;
 }
@@ -92,6 +93,7 @@ struct init_meta {
         .func<&create_table>("create_table"_hs)
         .func<&has_entt_table>("has_table"_hs)
         .func<&destory_entt>("destroy"_hs);
+    detail::reg_database();
   }
 };
 }  // namespace
