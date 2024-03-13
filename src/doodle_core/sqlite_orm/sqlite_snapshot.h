@@ -121,7 +121,6 @@ class sqlite_snapshot {
       if (!has_table_func) return *this;
       if (!has_table_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<bool>()) return *this;
 
-      result_sql_data_ = begin_load_func.invoke({}, entt::forward_as_meta(conn_ptr_));
       loader_.get<Component>(*this);
       return *this;
     }
@@ -139,6 +138,7 @@ class sqlite_snapshot {
     inline void operator()(std::underlying_type_t<entt::entity>& in_underlying_type) {
       in_underlying_type =
           get_size_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<std::underlying_type_t<entt::entity>>();
+      result_sql_data_ = begin_load_func.invoke({}, entt::forward_as_meta(conn_ptr_));
     }
     inline void operator()(entt::entity& in_entity) {
       static entt::entity l_entity{};  // 这块 序列化要加一个实体, 保证正常

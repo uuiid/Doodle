@@ -93,7 +93,7 @@ struct init_meta {
         .func<&create_table>("create_table"_hs)
         .func<&has_entt_table>("has_table"_hs)
         .func<&destory_entt>("destroy"_hs);
-    detail::reg_database();
+    reg_database();
   }
 };
 }  // namespace

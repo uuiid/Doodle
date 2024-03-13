@@ -90,12 +90,16 @@ std::shared_ptr<void> begin_load(const conn_ptr& in_conn) {
   auto l_r = (*in_conn)(sqlpp::select(l_tabl.entity_identifier, l_tabl.uuid_data).from(l_tabl).unconditionally());
   return std::make_shared<decltype(l_r)>(std::move(l_r));
 }
-void load(entt::entity& in_entity, std::shared_ptr<void>& in_pre) {
+void load_entt(entt::entity& in_entity, std::shared_ptr<void>& in_pre) {
   auto l_pre = std::static_pointer_cast<pre_rus_t>(in_pre);
   in_entity  = num_to_enum<entt::entity>(l_pre->front().entity_identifier.value());
   l_pre->pop_front();
 }
-bool has_table(const conn_ptr& in_conn) {}
+bool has_table(const conn_ptr& in_conn) {
+  database_tab::database_tab l_tab{};
+  detail::sql_table_base<database_tab::database_tab> l_table{};
+  return l_table.has_table(in_conn);
+}
 
 }  // namespace
 void load_com(database& in_entity, std::shared_ptr<void>& in_pre) {
@@ -112,7 +116,7 @@ void reg_database() {
       .func<&destroy>("destroy"_hs)
       .func<&get_size>("get_size"_hs)
       .func<&begin_load>("begin_load"_hs)
-      .func<&load>("load"_hs)
+      .func<&load_entt>("load_entt"_hs)
       .func<&load_com>("load_com"_hs)
       .func<&has_table>("has_table"_hs);
 }

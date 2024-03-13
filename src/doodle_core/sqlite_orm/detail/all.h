@@ -3,7 +3,7 @@
 //
 
 #pragma once
-namespace doodle::snapshot::detail {
+namespace doodle::snapshot {
 
 void reg_database();
 
