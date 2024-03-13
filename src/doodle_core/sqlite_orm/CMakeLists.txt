@@ -6,3 +6,4 @@ target_sources(
         PRIVATE
         sqlite_snapshot.cpp
 )
+add_subdirectory(detail)
