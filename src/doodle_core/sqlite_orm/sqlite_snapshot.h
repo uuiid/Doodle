@@ -13,6 +13,25 @@
 #include <sqlpp11/sqlpp11.h>
 namespace doodle::snapshot {
 
+/**
+ * 使用反射序列化注册表中组件, 并且保存到sqlite中
+ * 保存需要的反射
+ * key           | 签名
+ * create_table:  void (const conn_ptr& in_conn)
+ * begin_save:    std::shared_ptr<void> (const conn_ptr& in_conn)
+ * save:          template <typename Component> void (const Component& in_com, entt::entity& in_entity,
+ * std::shared_ptr<void>& in_pre, const conn_ptr& in_conn) destroy:       void (const std::vector<std::int64_t>&
+ * in_vector, const conn_ptr& in_conn)
+ *
+ * 加载需要的反射:
+ *  key           | 签名
+ * get_size       std::underlying_type_t<entt::entity> (const conn_ptr& in_conn)
+ * begin_load     std::shared_ptr<void> (const conn_ptr& in_conn)
+ * load_entt      void (entt::entity& in_entity, std::shared_ptr<void>& in_pre)
+ * load_com       template <typename Component> void (Component& in_entity, std::shared_ptr<void>& in_pre)
+ * has_table      bool (const conn_ptr& in_conn)
+ *
+ */
 class sqlite_snapshot {
   struct save_snapshot_t {
     entt::snapshot snapshot_;
@@ -87,6 +106,7 @@ class sqlite_snapshot {
     entt::meta_func begin_load_func;
     entt::meta_func load_entt_func;
     entt::meta_func load_com_func;
+    entt::meta_func has_table_func;
     entt::meta_func get_size_func;
     entt::meta_any result_sql_data_;
 
@@ -94,14 +114,14 @@ class sqlite_snapshot {
     explicit load_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
         : loader_{in_registry}, conn_ptr_{std::move(in_conn)} {}
 
-    template <typename Registry>
-    friend class entt::basic_snapshot_loader;
-
     template <typename Component>
     load_snapshot_t& load() {
       set_load_func<Component>();
       if (!begin_load_func) return *this;
-      result_sql_data_ = begin_load_func.invoke({}, conn_ptr_);
+      if (!has_table_func) return *this;
+      if (!has_table_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<bool>()) return *this;
+
+      result_sql_data_ = begin_load_func.invoke({}, entt::forward_as_meta(conn_ptr_));
       loader_.get<Component>(*this);
       return *this;
     }
@@ -113,13 +133,17 @@ class sqlite_snapshot {
       begin_load_func = l_mate.func("begin_load"_hs);
       load_entt_func  = l_mate.func("load_entt"_hs);
       load_com_func   = l_mate.func("load_com"_hs);
+      has_table_func  = l_mate.func("has_table"_hs);
     }
     // load
     inline void operator()(std::underlying_type_t<entt::entity>& in_underlying_type) {
       in_underlying_type =
           get_size_func.invoke({}, entt::forward_as_meta(conn_ptr_)).cast<std::underlying_type_t<entt::entity>>();
     }
-    inline void operator()(entt::entity& in_entity) { load_entt_func.invoke({}, in_entity, result_sql_data_); }
+    inline void operator()(entt::entity& in_entity) {
+      static entt::entity l_entity{};  // 这块 序列化要加一个实体, 保证正常
+      load_entt_func.invoke(l_entity, in_entity, result_sql_data_);
+    }
     template <typename T>
     void operator()(T& in_t) {
       load_com_func.invoke(in_t, result_sql_data_);
@@ -130,6 +154,9 @@ class sqlite_snapshot {
   entt::registry& registry_;
 
   void init_base_meta();
+
+  using tx_t = decltype(sqlpp::start_transaction(*std::declval<conn_ptr>()));
+  std::shared_ptr<tx_t> tx_{};
 
  public:
   explicit sqlite_snapshot(FSys::path in_data_path, entt::registry& in_registry)
@@ -146,6 +173,19 @@ class sqlite_snapshot {
     auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
     (l_save.template save<Component>(), ...);
     l_tx.commit();
+  }
+  template <typename Component, typename It>
+    requires(!std::is_same_v<Component, entt::entity>)
+  sqlite_snapshot& save(It first, It last) {
+    database_info l_info{};
+    l_info.path_ = data_path_;
+    save_snapshot_t l_save{registry_, l_info.get_connection()};
+    tx_ = std::make_shared<tx_t>(sqlpp::start_transaction(*l_save.conn_ptr_));
+    l_save.save<Component>(first, last);
+    return *this;
+  }
+  void commit() {
+    if (tx_) tx_->commit();
   }
 
   template <typename... Component>

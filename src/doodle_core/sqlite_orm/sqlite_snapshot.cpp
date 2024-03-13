@@ -27,33 +27,41 @@ using entt_pie_sql_t = decltype(std::declval<sqlpp::sqlite3::connection>().prepa
         .do_nothing()
 ));
 
-void create_table(entt::entity&, const conn_ptr& in_conn) {
+void create_table(const conn_ptr& in_conn) {
   detail::sql_table_base<entity_tab::entity_tab> l_tab{};
   l_tab.create_table(in_conn);
 }
 
-entt::any begin_save_entt(entt::entity&, const conn_ptr& in_conn) {
+std::shared_ptr<void> begin_save_entt(const conn_ptr& in_conn) {
   entity_tab::entity_tab l_entity_tab{};
   auto l_pre =
       in_conn->prepare(sqlpp::sqlite3::insert_into(l_entity_tab)
                            .set(l_entity_tab.entity_identifier = sqlpp::parameter(l_entity_tab.entity_identifier))
                            .on_conflict(l_entity_tab.entity_identifier)
                            .do_nothing());
-  return std::move(l_pre);
+  return std::make_shared<decltype(l_pre)>(std::move(l_pre));
 }
-void save_entt(entt::entity&, entt::entity& in_entity, entt::any& in_pre, const conn_ptr& in_conn) {
-  auto& l_pre                    = entt::any_cast<entt_pie_sql_t&>(in_pre);
-  l_pre.params.entity_identifier = enum_to_num(in_entity);
-  (*in_conn)(l_pre);
+void save_entt(entt::entity&, entt::entity& in_entity, std::shared_ptr<void>& in_pre, const conn_ptr& in_conn) {
+  auto l_pre                      = std::static_pointer_cast<entt_pie_sql_t>(in_pre);
+  l_pre->params.entity_identifier = enum_to_num(in_entity);
+  (*in_conn)(*l_pre);
 }
 
-entt::any begin_load_entt(entt::entity&, const conn_ptr& in_conn) {
+std::shared_ptr<void> begin_load_entt(const conn_ptr& in_conn) {
   entity_tab::entity_tab l_entity_tab{};
-  return (*in_conn)(sqlpp::select(l_entity_tab.entity_identifier).from(l_entity_tab).unconditionally());
+  auto l_r = (*in_conn)(sqlpp::select(l_entity_tab.entity_identifier).from(l_entity_tab).unconditionally());
+  return std::make_shared<decltype(l_r)>(std::move(l_r));
 }
-void load_entt(entt::entity&, entt::any& in_pre, const conn_ptr& in_conn) {}
+void load_entt(entt::entity&, entt::entity& in_entity, std::shared_ptr<void>& in_pre) {
+  using pre_rus_t = decltype(std::declval<sqlpp::sqlite3::connection>()(
+      sqlpp::select(entity_tab::entity_tab{}.entity_identifier).from(entity_tab::entity_tab{}).unconditionally()
+  ));
+  auto l_pre      = std::static_pointer_cast<pre_rus_t>(in_pre);
+  in_entity       = num_to_enum<entt::entity>(l_pre->front().entity_identifier.value());
+  l_pre->pop_front();
+}
 
-std::underlying_type_t<entt::entity> get_size_entt(entt::entity&, const conn_ptr& in_conn) {
+std::underlying_type_t<entt::entity> get_size_entt(const conn_ptr& in_conn) {
   entity_tab::entity_tab l_entity_tab{};
 
   for (auto&& row :
@@ -63,8 +71,14 @@ std::underlying_type_t<entt::entity> get_size_entt(entt::entity&, const conn_ptr
   return 0;
 }
 
-void destory_entt(entt::entity&, const std::vector<std::int64_t>& in_vector, const conn_ptr& in_conn) {
+void destory_entt(const std::vector<std::int64_t>& in_vector, const conn_ptr& in_conn) {
   detail::sql_com_destroy<entity_tab::entity_tab>(in_conn, in_vector);
+}
+
+bool has_entt_table(const conn_ptr& in_conn) {
+  entity_tab::entity_tab l_entity_tab{};
+  detail::sql_table_base<entity_tab::entity_tab> l_tab{};
+  return l_tab.has_table(in_conn);
 }
 
 struct init_meta {
@@ -73,9 +87,10 @@ struct init_meta {
         .func<&begin_save_entt>("begin_save"_hs)
         .func<&save_entt>("save"_hs)
         .func<&begin_load_entt>("begin_load"_hs)
-        .func<&load_entt>("load"_hs)
+        .func<&load_entt>("load_entt"_hs)
         .func<&get_size_entt>("get_size"_hs)
         .func<&create_table>("create_table"_hs)
+        .func<&has_entt_table>("has_table"_hs)
         .func<&destory_entt>("destroy"_hs);
   }
 };
