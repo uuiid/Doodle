@@ -49,6 +49,8 @@
 #include "MovieSceneGeometryCacheTrack.h"
 #include "AbcImportSettings.h"
 #include "AlembicImportFactory.h"
+#include "Tracks/MovieScene3DTransformTrack.h"
+#include "Components/LightComponent.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
@@ -313,10 +315,18 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
         AActor* Actor = Level->Actors[Index];
         if (Actor != nullptr)
         {
-            if(Actor->IsA<ASkeletalMeshActor>()|| Actor->IsA<AGeometryCacheActor>())
+            if(Actor->IsA<ASkeletalMeshActor>()|| Actor->IsA<AGeometryCacheActor>()
+                || Actor->IsA<ADirectionalLight>())
                 Actor->Destroy();
         }
     }
+    //-----------------------
+    DirectionalLight1 = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
+    DirectionalLight1->SetBrightness(10.0f);
+    DirectionalLight1->GetLightComponent()->SetLightingChannels(false, true, false);
+    DirectionalLight2 = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
+    DirectionalLight2->SetBrightness(7.0f);
+    DirectionalLight2->GetLightComponent()->SetLightingChannels(false, true, false);
 }
 
 void UDoodleAutoAnimationCommandlet::OnBuildSequence()
@@ -401,6 +411,36 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                 TempActor->Destroy();
                 L_LevelSequenceActor->Destroy();
                 FbxImporter->ReleaseScene();
+                //----------------------------
+                Bindings = TheLevelSequence->GetMovieScene()->GetBindings();
+                for (FMovieSceneBinding Bind : Bindings)
+                {
+                    if (Bind.GetName() == CameraLabel)
+                    {
+                        UMovieScene3DTransformTrack* TransformTrack = TheLevelSequence->GetMovieScene()->FindTrack<UMovieScene3DTransformTrack>(Bind.GetObjectGuid());
+                        for (UMovieSceneSection* TheSections : TransformTrack->GetAllSections())
+                        {
+                            UMovieScene3DTransformSection* TransformSection = Cast<UMovieScene3DTransformSection>(TheSections);
+                            if (TransformSection)
+                            {
+                                FMovieSceneChannelProxy& SectionChannelProxy = TransformSection->GetChannelProxy();
+                                TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {
+                                    SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"),
+                                    SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"),
+                                    SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")
+                                };
+                                FMovieSceneDoubleChannel* ChannelX = DoubleChannels[0].Get();
+                                FMovieSceneDoubleChannel* ChannelY = DoubleChannels[1].Get();
+                                FMovieSceneDoubleChannel* ChannelZ = DoubleChannels[2].Get();
+                                ChannelX->Evaluate(1001, CameraRot.Roll);
+                                ChannelY->Evaluate(1001, CameraRot.Pitch);
+                                ChannelZ->Evaluate(1001, CameraRot.Yaw);
+                            }
+                        }
+                    }
+                }
+                DirectionalLight1->SetActorRotation(FRotator(CameraRot.Pitch, CameraRot.Yaw-40, CameraRot.Roll));
+                DirectionalLight2->SetActorRotation(FRotator(CameraRot.Pitch, CameraRot.Yaw+40, CameraRot.Roll));
             }
             else if(Type == TEXT("char"))
             {
@@ -513,21 +553,36 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
                         L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
                         L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
+                        L_Actor->GetSkeletalMeshComponent()->SetLightingChannels(false,true,false);
                         //---------------------
                         const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
                         TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor,TheSequenceWorld);
-                        TheLevelSequence->GetMovieScene()->Modify();
                         //-----------------------
                         UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
                         UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
                         L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
-                        //---------------
                         L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
                         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-                        int32_t StartTime = { 1001 };
-                        UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
-                        //AnimSection->SetPreRollFrames(50);
+                        UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
                         AnimSection->Modify();
+                        //--------------------------Clone------------------------
+                        ASkeletalMeshActor* L_Actor2 = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+                        L_Actor2->SetActorLabel(TmpSkeletalMesh->GetName()+TEXT("_SH"));
+                        L_Actor2->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
+                        L_Actor2->GetSkeletalMeshComponent()->SetLightingChannels(true, false, false);
+                        L_Actor2->GetSkeletalMeshComponent()->SetVisibility(false);
+                        L_Actor2->GetSkeletalMeshComponent()->SetCastHiddenShadow(true);
+                        const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
+                        TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
+                        UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
+                        UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
+                        L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
+                        L_MovieSceneSpawnSection2->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+                        UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID2);
+                        UMovieSceneSection* AnimSection2 = L_MovieSceneSkeletalAnim2->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
+                        AnimSection2->Modify();
+                        //----------------------
+                        TheLevelSequence->GetMovieScene()->Modify();
                         TheLevelSequence->Modify();
                         TheSequenceWorld->Modify();
                     }
@@ -553,6 +608,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     AGeometryCacheActor* L_Actor = TheSequenceWorld->SpawnActor<AGeometryCacheActor>(FVector::ZeroVector, FRotator::ZeroRotator);
                     L_Actor->SetActorLabel(TempGeometryCache->GetName());
                     L_Actor->GetGeometryCacheComponent()->SetGeometryCache(TempGeometryCache);
+                    L_Actor->GetGeometryCacheComponent()->SetLightingChannels(false, true, false);
                     //---------------------------------
                     const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
                     TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
@@ -563,8 +619,24 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     //------------------------------
                     UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
                     UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(L_Start, L_Actor->GetGeometryCacheComponent());
-                    //AnimSection->SetPreRollFrames(50);
                     L_Actor->Modify();
+                    //---------------------------Clone----------------------------
+                    AGeometryCacheActor* L_Actor2 = TheSequenceWorld->SpawnActor<AGeometryCacheActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+                    L_Actor2->SetActorLabel(TempGeometryCache->GetName()+TEXT("_SH"));
+                    L_Actor2->GetGeometryCacheComponent()->SetGeometryCache(TempGeometryCache);
+                    L_Actor2->GetGeometryCacheComponent()->SetLightingChannels(true, false, false);
+                    L_Actor2->GetGeometryCacheComponent()->SetVisibility(false);
+                    L_Actor2->GetGeometryCacheComponent()->SetCastHiddenShadow(true);
+                    const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
+                    TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
+                    UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
+                    UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
+                    L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
+                    UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID2);
+                    UMovieSceneSection* AnimSection2 = L_MovieSceneGeoTrack2->AddNewAnimation(L_Start, L_Actor2->GetGeometryCacheComponent());
+                    L_Actor2->Modify();
+                    //------------------------
+                    TheLevelSequence->GetMovieScene()->Modify();
                     TheLevelSequence->Modify();
                     TheSequenceWorld->Modify();
                 }
@@ -609,4 +681,4 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 }
 
 //"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
-//UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run = DoodleAutoAnimation -Params = E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
+//UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json

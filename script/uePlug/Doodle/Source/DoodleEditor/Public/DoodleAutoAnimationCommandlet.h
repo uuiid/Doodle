@@ -6,6 +6,7 @@
 #include "Commandlets/Commandlet.h"
 
 #include "LevelSequence.h"
+#include "Engine/DirectionalLight.h"
 
 #include "DoodleAutoAnimationCommandlet.generated.h"
 
@@ -51,4 +52,8 @@ private:
 	FName EffectMapPath;
 	ULevelSequence* EffectLevelSequence;
 	UWorld* EffectSequenceWorld;
+
+	ADirectionalLight* DirectionalLight1;
+	ADirectionalLight* DirectionalLight2;
+	FRotator CameraRot;
 };
