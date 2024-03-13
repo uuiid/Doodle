@@ -45,7 +45,7 @@ class widget_ui(QDialog):
         if len(self.bbsj)>0:
             zymc_file = self.zymc +"_"+self.bbsj+".uasset"
         else:
-            zymc_file = self.zymc + ".usset" 
+            zymc_file = self.zymc + ".uasset" 
         u_path = os.path.join(con_path+"/",zymc_file)
         if not os.path.exists(u_path):
             QMessageBox.critical(self, "错误", "不存在%s文件" % u_path)
@@ -66,7 +66,7 @@ class widget_ui(QDialog):
         if not os.path.exists(con_path):
             QMessageBox.critical(self, "错误", "不存在/%s文件夹" % con_path)
             return False
-        zymc_file = 'SK_Ch'+ self.bh + ".usset" 
+        zymc_file = 'SK_Ch'+ self.bh + ".uasset" 
         u_path = os.path.join(con_path+"/",zymc_file)
         if not os.path.exists(u_path):
             QMessageBox.critical(self, "错误", "不存在%s文件" % u_path)
