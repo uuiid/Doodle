@@ -182,4 +182,8 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
   create_test_database();
   snapshot::sqlite_snapshot l_snap{"D:/test.db", *g_reg()};
   l_snap.save<entt::entity>();
+
+  entt::registry l_reg{};
+  snapshot::sqlite_snapshot l_snap2{"D:/test.db", l_reg};
+  l_snap2.load<entt::entity>();
 }
