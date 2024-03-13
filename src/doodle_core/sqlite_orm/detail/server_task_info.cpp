@@ -180,10 +180,25 @@ void load_com(server_task_info& in_entity, std::shared_ptr<void>& in_pre) {
   in_entity.run_time_        = chrono::time_point_cast<chrono::system_clock::duration>(l_r->front().run_time.value());
   in_entity.end_time_        = chrono::time_point_cast<chrono::system_clock::duration>(l_r->front().end_time.value());
   in_entity.log_path_        = std::filesystem::path(l_r->front().log_path.value());
+  l_r->pop_front();
 }
 bool has_table(const conn_ptr& in_conn) {
   detail::sql_table_base<server_task_info_tab::server_task_info_tab> l_tab{};
   return l_tab.has_table(in_conn);
 }
 }  // namespace
+
+void reg_server_task_info() {
+  entt::meta<server_task_info>()
+      .func<&create_table>("create_table"_hs)
+      .func<&begin_save>("begin_save"_hs)
+      .func<&save>("save"_hs)
+      .func<&destroy>("destroy"_hs)
+      .func<&get_size>("get_size"_hs)
+      .func<&begin_load>("begin_load"_hs)
+      .func<&load_entt>("load_entt"_hs)
+      .func<&load_com>("load_com"_hs)
+      .func<&has_table>("has_table"_hs);
+}
+
 }  // namespace doodle::snapshot

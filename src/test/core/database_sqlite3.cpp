@@ -23,6 +23,7 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/season.h>
+#include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
@@ -125,6 +126,17 @@ void create_test_database() {
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::work_task_info>();
   }
+  for (int l = 0; l < 10; ++l)
+
+  {
+    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
+    l_h.emplace<doodle::database>();
+    auto& l_s            = l_h.emplace<doodle::server_task_info>(fmt::format("tset_{}", l));
+    l_s.name_            = fmt::format("name_{}", l);
+    l_s.source_computer_ = fmt::format("source_computer_{}", l);
+    l_s.submitter_       = fmt::format("submitter_{}", l);
+    l_s.run_computer_    = fmt::format("run_computer_{}", l);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(test_sqlite3_save) {
@@ -181,19 +193,28 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
   app_command<> l_App{};
   create_test_database();
   snapshot::sqlite_snapshot l_snap{"D:/test.db", *g_reg()};
-  l_snap.save<database>();
+  l_snap.save<database, server_task_info>();
   std::vector<std::pair<entt::entity, boost::uuids::uuid>> l_list{};
+  std::vector<std::pair<entt::entity, server_task_info>> l_list_s{};
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{} {}", e, i.uuid()));
     l_list.emplace_back(e, i.uuid());
   }
+  for (auto&& [e, i] : g_reg()->view<server_task_info>().each()) {
+    l_list_s.emplace_back(e, i);
+  }
   entt::registry l_reg{};
   snapshot::sqlite_snapshot l_snap2{"D:/test.db", l_reg};
-  l_snap2.load<database>();
+  l_snap2.load<database, server_task_info>();
   std::vector<std::pair<entt::entity, boost::uuids::uuid>> l_list2{};
+  std::vector<std::pair<entt::entity, server_task_info>> l_list_s2{};
   for (auto&& [e, i] : l_reg.view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{} {}", e, i.uuid()));
     l_list2.emplace_back(e, i.uuid());
   }
+  for (auto&& [e, i] : l_reg.view<server_task_info>().each()) {
+    l_list_s2.emplace_back(e, i);
+  }
   BOOST_TEST_CHECK(l_list == l_list2);
+  BOOST_TEST_CHECK(l_list_s == l_list_s2);
 }

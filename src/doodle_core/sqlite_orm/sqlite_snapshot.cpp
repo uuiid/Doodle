@@ -82,18 +82,23 @@ bool has_entt_table(const conn_ptr& in_conn) {
   return l_tab.has_table(in_conn);
 }
 
+void reg_entt() {
+  entt::meta<entt::entity>()
+      .func<&begin_save_entt>("begin_save"_hs)
+      .func<&save_entt>("save"_hs)
+      .func<&begin_load_entt>("begin_load"_hs)
+      .func<&load_entt>("load_entt"_hs)
+      .func<&get_size_entt>("get_size"_hs)
+      .func<&create_table>("create_table"_hs)
+      .func<&has_entt_table>("has_table"_hs)
+      .func<&destory_entt>("destroy"_hs);
+}
+
 struct init_meta {
   init_meta() {
-    entt::meta<entt::entity>()
-        .func<&begin_save_entt>("begin_save"_hs)
-        .func<&save_entt>("save"_hs)
-        .func<&begin_load_entt>("begin_load"_hs)
-        .func<&load_entt>("load_entt"_hs)
-        .func<&get_size_entt>("get_size"_hs)
-        .func<&create_table>("create_table"_hs)
-        .func<&has_entt_table>("has_table"_hs)
-        .func<&destory_entt>("destroy"_hs);
+    reg_entt();
     reg_database();
+    reg_server_task_info();
   }
 };
 }  // namespace
