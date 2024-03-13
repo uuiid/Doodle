@@ -19,7 +19,6 @@
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata.h>
-#include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
@@ -28,7 +27,7 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_task.h>
-#include <doodle_core/pin_yin/convert.h>
+#include <doodle_core/sqlite_orm/sqlite_snapshot.h>
 
 #include "doodle_app/app/app_command.h"
 
@@ -176,4 +175,11 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
   g_ctx().get<file_translator_ptr>()->async_open(
       "D:/test_file/cloth_test/JG2.doodle_db", false, true, g_reg(), [](auto&&) {}
   );
+}
+
+BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
+  app_command<> l_App{};
+  create_test_database();
+  snapshot::sqlite_snapshot l_snap{"D:/test.db", *g_reg()};
+  l_snap.save<entt::entity>();
 }
