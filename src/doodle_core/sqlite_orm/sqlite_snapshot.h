@@ -56,7 +56,7 @@ class sqlite_snapshot {
     auto destroy(It first, It last) {
       std::vector<std::int64_t> l_vec{};
       for (; first != last; ++first) l_vec.push_back(*first);
-      destroy_func.invoke({}, l_vec);
+      destroy_func.invoke({}, l_vec, conn_ptr_);
       return *this;
     }
 
@@ -102,7 +102,7 @@ class sqlite_snapshot {
     auto load() {
       set_load_func<Component>();
       if (!begin_load_func) return *this;
-      result_sql_data_ = begin_load_func.invoke({});
+      result_sql_data_ = begin_load_func.invoke({}, conn_ptr_);
       loader_.get<Component>(*this);
       return *this;
     }
@@ -158,7 +158,14 @@ class sqlite_snapshot {
     (l_load.template load<Component>(), ...);
   }
 
-  void destroy() {}
+  template <typename Component, typename It>
+  auto destroy(It first, It last) {
+    database_info l_info{};
+    l_info.path_ = data_path_;
+    save_snapshot_t l_save{registry_, l_info.get_connection()};
+    auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
+    l_save.destroy<Component>(first, last);
+  }
 };
 
 }  // namespace doodle::snapshot
