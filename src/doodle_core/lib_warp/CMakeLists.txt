@@ -23,3 +23,4 @@ target_sources(doodle_core
         entt_warp.cpp
 )
 add_subdirectory(detail)
+add_subdirectory(sqlite3)
