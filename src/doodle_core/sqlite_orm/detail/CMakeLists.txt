@@ -4,4 +4,5 @@ target_sources(
         all.h
         PRIVATE
         database.cpp
+        server_task_info.cpp
 )
