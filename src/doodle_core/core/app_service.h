@@ -25,6 +25,11 @@ class app_service : public app_base {
   std::wstring description_;
   std::wstring command_line_;
 
+  // 用户名
+  std::wstring user_name_;
+  // 密码
+  std::wstring password_;
+
  private:
   SERVICE_STATUS_HANDLE h_service_status_{};
   std::shared_ptr<std::thread> thread_;
