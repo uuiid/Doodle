@@ -34,8 +34,12 @@ void http_snapshot::run_impl() {
   auto& l_observer = std::any_cast<observer_t&>(observer_);
 
   if (!l_observer.has_data()) return;
-  snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
-  l_observer.save(l_snapshot);
+  try {
+    snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
+    l_observer.save(l_snapshot);
+  } catch (const sqlpp::exception& in_error) {
+    default_logger_raw()->log(log_loc(), level::err, "http_snapshot error: {}", in_error.what());
+  }
 }
 
 void http_snapshot::do_wait() {
@@ -52,5 +56,6 @@ void http_snapshot::do_wait() {
         run_impl();
       }
   ));
+  timer_->expires_from_now(300ms);
 }
 }  // namespace doodle::http
