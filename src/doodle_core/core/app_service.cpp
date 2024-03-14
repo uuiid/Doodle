@@ -143,6 +143,8 @@ std::int32_t app_service::run() {
       arg_.params()
   );
   if (arg_[g_install]) {
+    if (auto l_user = arg_(g_user); l_user) service_name_ = boost::locale::conv::utf_to_utf<wchar_t>(l_user.str());
+    if (auto l_pass = arg_(g_password)) display_name_ = boost::locale::conv::utf_to_utf<wchar_t>(l_pass.str());
     try {
       install_service(service_name_, display_name_, description_, command_line_);
     }

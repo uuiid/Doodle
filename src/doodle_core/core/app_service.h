@@ -13,6 +13,11 @@ class app_service : public app_base {
   static constexpr auto g_service{"service"};
   static constexpr auto g_run{"run"};
 
+  // 用户名
+  static constexpr auto g_user{"user"};
+  // 密码
+  static constexpr auto g_password{"password"};
+
   void install_service(
       const std::wstring& in_service_name, const std::wstring& in_display_name, const std::wstring& in_description,
       const std::wstring& in_command_line
