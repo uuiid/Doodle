@@ -70,7 +70,7 @@ class sqlite_snapshot {
       snapshot_.get<Component>(*this, first, last);
       return *this;
     }
-    template <typename Component, typename It>
+    template <typename It>
     save_snapshot_t& destroy(It first, It last) {
       std::vector<std::int64_t> l_vec{};
       for (; first != last; ++first) l_vec.push_back(*first);
@@ -196,13 +196,13 @@ class sqlite_snapshot {
     (l_load.template load<Component>(), ...);
   }
 
-  template <typename Component, typename It>
+  template <typename It>
   auto destroy(It first, It last) {
     database_info l_info{};
     l_info.path_ = data_path_;
     save_snapshot_t l_save{registry_, l_info.get_connection()};
     auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
-    l_save.destroy<Component>(first, last);
+    l_save.destroy(first, last);
     l_tx.commit();
   }
 };

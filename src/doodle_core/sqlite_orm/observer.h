@@ -26,7 +26,7 @@ class impl_obs {
 
   bool has_data() const { return !obs_update_.empty() || !obs_create_.empty() || !destroy_ids_.empty(); }
 
-  void connect(const entt::registry& in_registry_ptr) {
+  void connect(entt::registry& in_registry_ptr) {
     obs_update_.connect(in_registry_ptr, entt::collector.update<type_t>());
     obs_create_.connect(in_registry_ptr, entt::collector.group<type_t>());
     conn_ = in_registry_ptr.on_destroy<type_t>().connect<&impl_obs::on_destroy>(*this);
@@ -47,7 +47,7 @@ class impl_obs {
    *
    * @return 需要保存的数据, 需要删除的数据
    */
-  std::pair<std::vector<entt::entity>, std::vector<entt::entity>> get_data() const {
+  std::tuple<std::vector<entt::entity>, std::vector<std::int64_t>> get_data() const {
     std::vector<entt::entity> l_data{};
     for (const auto& entity : obs_update_) {
       l_data.push_back(entity);
@@ -58,48 +58,51 @@ class impl_obs {
     l_data |= ranges::actions::unique;
     auto l_destroy_ids = destroy_ids_;
     l_destroy_ids |= ranges::actions::unique;
+    auto l_destroy_ids_int = l_destroy_ids |
+                             ranges::views::transform([](const auto& in) -> std::int64_t { return enum_to_num(in); }) |
+                             ranges::to_vector;
 
-    return {std::move(l_data), l_destroy_ids};
+    return {std::move(l_data), l_destroy_ids_int};
   }
 
   void save(sqlite_snapshot& in_snapshot) {
-    auto& [l_data, l_des] = get_data();
+    auto&& [l_data, l_des] = get_data();
     in_snapshot.save<type_t>(l_data.begin(), l_data.end());
-    in_snapshot.destroy<type_t>(l_des.begin(), l_des.end());
+    in_snapshot.destroy(l_des.begin(), l_des.end());
   }
 };
 
 template <typename... Arg_Com>
 class observer_main {
-  using obs_tuple_t = std::tuple<impl_obs<Arg_Com>...>;
+  using obs_tuple_t = std::tuple<std::shared_ptr<impl_obs<Arg_Com>>...>;
   obs_tuple_t obs_tuple_{};
 
  public:
-  observer_main()                                = default;
-  observer_main(const observer_main&)            = delete;
-  observer_main(observer_main&&)                 = delete;
-  observer_main& operator=(const observer_main&) = delete;
-  observer_main& operator=(observer_main&&)      = delete;
+  observer_main() : obs_tuple_{std::make_shared<impl_obs<Arg_Com>>()...} {}
+  observer_main(const observer_main&)            = default;
+  observer_main(observer_main&&)                 = default;
+  observer_main& operator=(const observer_main&) = default;
+  observer_main& operator=(observer_main&&)      = default;
   ~observer_main()                               = default;
 
-  void connect(const entt::registry& in_registry) {
-    std::apply([&in_registry](auto&... obs) { (obs.connect(in_registry), ...); }, obs_tuple_);
+  void connect(entt::registry& in_registry) {
+    std::apply([&in_registry](auto&... obs) { (obs->connect(in_registry), ...); }, obs_tuple_);
   }
 
   void disconnect() {
-    std::apply([](auto&... obs) { (obs.disconnect(), ...); }, obs_tuple_);
+    std::apply([](auto&... obs) { (obs->disconnect(), ...); }, obs_tuple_);
   }
 
   void clear() {
-    std::apply([](auto&... obs) { (obs.clear(), ...); }, obs_tuple_);
+    std::apply([](auto&... obs) { (obs->clear(), ...); }, obs_tuple_);
   }
 
-  auto get_data() const {
-    return std::apply([](auto&... obs) { return std::make_tuple(obs.get_data()...); }, obs_tuple_);
+  bool has_data() const {
+    return std::apply([](auto&... obs) { return (obs->has_data() || ...); }, obs_tuple_);
   }
 
   void save(sqlite_snapshot& in_snapshot) {
-    std::apply([&in_snapshot](auto&... obs) { (obs.save(in_snapshot), ...); }, obs_tuple_);
+    std::apply([&in_snapshot](auto&... obs) { (obs->save(in_snapshot), ...); }, obs_tuple_);
     in_snapshot.commit();
     clear();
   }
