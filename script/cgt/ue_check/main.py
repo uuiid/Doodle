@@ -26,28 +26,36 @@ class widget_ui(QDialog):
         if not os.path.exists(con_path):
             QMessageBox.critical(self, "错误", "不存在%s文件夹" % con_path)
             return False
-        if len(self.bbsj)>0:
-            zymc_file = self.zymc +"_"+self.bbsj+".umap"
-        else:
-            zymc_file = self.zymc + ".umap" 
-        u_path = os.path.join(con_path+"/",zymc_file)
-        if not os.path.exists(u_path):
+        files = os.listdir(con_path)
+        isFit = False
+        for file in files:
+            if file == self.zymc + ".umap":
+                isFit = True
+            if file.startswith(self.zymc+"_") and file.endswith(".umap"):
+                isFit = True
+        if not isFit:
+            zymc_file = self.zymc +".umap"
+            u_path = os.path.join(con_path+"/",zymc_file)
             QMessageBox.critical(self, "错误", "不存在%s文件" % u_path)
             return False
         self.m_res = True
 
     def assert_mesh(self):
         u_dir = os.path.dirname(self.file_path)
-        con_path = os.path.join(u_dir+"/","Content/Prop/%s/Meshs" % self.zymc)
+        con_path = os.path.join(u_dir+"/","Content/Prop/%s/Mesh" % self.zymc)
         if not os.path.exists(con_path):
             QMessageBox.critical(self, "错误", "不存在%s文件夹" % con_path)
             return False
-        if len(self.bbsj)>0:
-            zymc_file = self.zymc +"_"+self.bbsj+".uasset"
-        else:
-            zymc_file = self.zymc + ".usset" 
-        u_path = os.path.join(con_path+"/",zymc_file)
-        if not os.path.exists(u_path):
+        files = os.listdir(con_path)
+        isFit = False
+        for file in files:
+            if file == self.zymc + ".uasset":
+                isFit = True
+            if file.startswith(self.zymc+"_") and file.endswith(".uasset"):
+                isFit = True
+        if not isFit:
+            zymc_file = self.zymc +".uasset"
+            u_path = os.path.join(con_path+"/",zymc_file)
             QMessageBox.critical(self, "错误", "不存在%s文件" % u_path)
             return False
         self.m_res = True
@@ -62,11 +70,11 @@ class widget_ui(QDialog):
             QMessageBox.critical(self, "错误", "uproject文件命名必须为%s" % _zymc)
             return False
         u_dir = os.path.dirname(self.file_path)
-        con_path = os.path.join(u_dir+"/","Content/Character/%s/Mesh/" % self.zymc)
+        con_path = os.path.join(u_dir+"/","Content/Character/%s/Meshs/" % self.zymc)
         if not os.path.exists(con_path):
             QMessageBox.critical(self, "错误", "不存在/%s文件夹" % con_path)
             return False
-        zymc_file = 'SK_Ch'+ self.bh + ".usset" 
+        zymc_file = 'SK_Ch'+ self.bh + ".uasset" 
         u_path = os.path.join(con_path+"/",zymc_file)
         if not os.path.exists(u_path):
             QMessageBox.critical(self, "错误", "不存在%s文件" % u_path)
@@ -107,7 +115,6 @@ class widget_ui(QDialog):
         t_tw = tw()
         self.zymc = ''
         self.bh=''
-        self.bbsj =''
         self.ue_major_version =''
         self.zzz = ''
         self.p_code = ''
@@ -143,7 +150,6 @@ class widget_ui(QDialog):
         for r in res:
             if r['id'] == t_id_list[0]:
                 self.name = r['pipeline.abridge']
-                self.bbsj = r['task.version_data']
                 self.zzz = r['task.artist']
                 self.p_code = r['eps.project_code']
                 self.js = r['eps.entity']
