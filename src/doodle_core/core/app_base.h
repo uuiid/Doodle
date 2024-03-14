@@ -43,12 +43,6 @@ class DOODLE_CORE_API app_base {
 
   /// @brief 在初始化中获取的id为主id(也是渲染线程id)
   std::thread::id run_id{std::this_thread::get_id()};
-
-  /**
-   * @brief 这个会在第一个循环中加载
-   *
-   */
-
   std::atomic_bool stop_;
 
  public:
@@ -79,6 +73,8 @@ class DOODLE_CORE_API app_base {
   static app_base* GetPtr();
 
   static void write_current_error_tmp_dir();
+
+  inline bool is_stop() const { return stop_; }
 };
 
 /**
