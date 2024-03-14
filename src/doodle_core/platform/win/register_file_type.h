@@ -26,6 +26,9 @@ class register_file_type {
 
   // 获取服务器地址
   static std::string get_server_address();
+
+  // 获取服务器快照保存位置
+  static FSys::path get_server_snapshot_path();
 };
 
 }  // namespace doodle

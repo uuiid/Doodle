@@ -77,4 +77,11 @@ std::string register_file_type::get_server_address() {
   auto l_path = l_key.GetStringValue(LR"(server_address)");
   return boost::locale::conv::utf_to_utf<char>(l_path);
 }
+
+FSys::path register_file_type::get_server_snapshot_path() {
+  winreg::RegKey l_key{};
+  l_key.Open(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+  auto l_path = l_key.GetStringValue(LR"(server_snapshot)");
+  return l_path;
+}
 }  // namespace doodle
