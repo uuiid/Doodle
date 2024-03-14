@@ -3,7 +3,9 @@ target_sources(
         PUBLIC
         sqlite_snapshot.h
         sqlite_base.h
+        observer.h
         PRIVATE
         sqlite_snapshot.cpp
+        observer.cpp
 )
 add_subdirectory(detail)
