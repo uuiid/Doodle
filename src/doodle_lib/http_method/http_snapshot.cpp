@@ -10,8 +10,10 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/platform/win/register_file_type.h>
+#include <doodle_core/sqlite_orm/observer.h>
 #include <doodle_core/sqlite_orm/sqlite_snapshot.h>
 namespace doodle::http {
+using observer_t = doodle::snapshot::observer_main<server_task_info>;
 void http_snapshot::run() {
   timer_      = std::make_shared<timer_type>(g_io_context(), std::chrono::seconds(1));
   auto l_path = register_file_type::get_server_snapshot_path();
@@ -23,7 +25,17 @@ void http_snapshot::run() {
   default_logger_raw()->log(log_loc(), level::info, "http_snapshot laod {} ", l_path);
   snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
   l_snapshot.load<server_task_info>();
+  observer_        = std::make_any<observer_t>();
+  auto& l_observer = std::any_cast<observer_t&>(observer_);
+  l_observer.connect(*g_reg());
   do_wait();
+}
+void http_snapshot::run_impl() {
+  auto& l_observer = std::any_cast<observer_t&>(observer_);
+
+  if (!l_observer.has_data()) return;
+  snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
+  l_observer.save(l_snapshot);
 }
 
 void http_snapshot::do_wait() {
@@ -41,5 +53,4 @@ void http_snapshot::do_wait() {
       }
   ));
 }
-void http_snapshot::run_impl() {}
 }  // namespace doodle::http

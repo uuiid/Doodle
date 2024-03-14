@@ -8,6 +8,7 @@ namespace doodle::http {
 class http_snapshot {
   using timer_type = boost::asio::steady_timer;
   std::shared_ptr<timer_type> timer_;
+  std::any observer_;
   void run_impl();
   void do_wait();
 
