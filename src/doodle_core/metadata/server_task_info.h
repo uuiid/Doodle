@@ -47,7 +47,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
         {server_task_info_status::unknown, "unknown"},
     }
 );
-class server_task_info {
+class server_task_info : boost::equality_comparable<server_task_info> {
  public:
   server_task_info() = default;
   explicit server_task_info(nlohmann::json in_data) : data_(std::move(in_data)) {}
@@ -82,6 +82,7 @@ class server_task_info {
   std::string read_log(level::level_enum in_level) const;
   FSys::path get_log_path(level::level_enum in_level) const;
   void write_log(level::level_enum in_level, std::string_view in_msg);
+  bool operator==(const server_task_info& in_rhs) const;
 
  private:
   // to json
