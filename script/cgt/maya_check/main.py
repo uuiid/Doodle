@@ -19,26 +19,32 @@ class widget_ui(QDialog):
         self.setWindowFlags(Qt.FramelessWindowHint)  # 无边框
 
     def assert_map(self):
-        if len(self.bbsj)>0:
-            zymc_file = self.zymc +"_"+self.bbsj+".ma"
-        else:
-            zymc_file = self.zymc + ".ma"
-        if not os.path.basename(self.file_path) == zymc_file:
-            QMessageBox.critical(self, "错误", "ma文件命名必须为%s" % zymc_file)
+        file = os.path.basename(self.file_path)
+        isFit = False
+        if file == self.zymc + "_Low.ma":
+            isFit = True
+        if file.startswith(self.zymc+"_") and file.endswith("_Low.ma"):
+            isFit = True
+        if not isFit:
+            QMessageBox.critical(self, "错误", "ma文件命名必须为:%s(_版本)_Low" % self.zymc)
             return False
         self.m_res = True
 
     def assert_mesh(self):
-        if len(self.bbsj)>0:
-            zymc_file = self.zymc +"_"+self.bbsj+".ma"
-        else:
-            zymc_file = self.zymc + ".ma"
-        if not os.path.basename(self.file_path) == zymc_file:
-            QMessageBox.critical(self, "错误", "ma文件命名必须为%s" % zymc_file)
+        file = os.path.basename(self.file_path)
+        isFit = False
+        if file == self.zymc + ".ma":
+            isFit = True
+        if file.startswith(self.zymc+"_") and file.endswith(".ma"):
+            isFit = True
+        if not isFit:
+            QMessageBox.critical(self, "错误", "ma文件命名必须为:%s(_版本)" % self.zymc)
             return False
         self.m_res = True
 
     def assert_mod(self):
+        if len(self.bh)<=0:
+            QMessageBox.critical(self, "错误", "编号不能为空")
         zymc_file = "Ch"+ self.bh +".ma"
         if not os.path.basename(self.file_path) == zymc_file:
             QMessageBox.critical(self, "错误", "ma文件命名必须为%s" % zymc_file)
@@ -60,22 +66,30 @@ class widget_ui(QDialog):
                 QMessageBox.critical(self, "命名错误", "格式为：Ch(编号)_rig_(制作人).ma")
                 return False
             zymc_file = "Ch"+ self.bh +"_rig_"+ _zzz +".ma"
+            if not os.path.basename(self.file_path) == zymc_file:
+                QMessageBox.critical(self, "命名错误", "ma文件命名必须为%s" % zymc_file)
+                return False
         if self.zclx == "Props":
             if len(f_name2.split("_"))<3:
-                QMessageBox.critical(self, "命名错误", "格式为：资源名称_(版本)_rig_(制作人).ma")
+                QMessageBox.critical(self, "命名错误", "格式为：资源名称(_版本)_rig_(制作人).ma")
                 return False
-            if len(self.bbsj)>0:
-                zymc_file = self.zymc+"_"+self.bbsj +"_rig_"+ _zzz +".ma"
-            else:
-                zymc_file = self.zymc +"_rig_"+ _zzz +".ma"
+            isFit = False
+            if f_name == self.zymc +"_rig_"+ _zzz +".ma":
+                isFit = True
+            if f_name.startswith(self.zymc+"_") and f_name.endswith("_rig_"+ _zzz +".ma"):
+                isFit = True
+            if not isFit:
+                QMessageBox.critical(self, "命名错误", "格式为：资源名称(_版本)_rig_(制作人).ma")
+                return False
         if self.zclx == "Scene":
-            if len(self.bbsj)>0:
-                zymc_file = self.zymc+"_"+self.bbsj +"_Low"+".ma"
-            else:
-                zymc_file = self.zymc +"_Low" +".ma"
-        if not os.path.basename(self.file_path) == zymc_file:
-            QMessageBox.critical(self, "错误", "ma文件命名必须为%s" % zymc_file)
-            return False
+            isFit = False
+            if f_name == self.zymc +"_Low" +".ma":
+                isFit = True
+            if f_name.startswith(self.zymc+"_") and f_name.endswith("_Low"+".ma"):
+                isFit = True
+            if not isFit:
+                QMessageBox.critical(self, "命名错误", "格式为：资源名称(_版本)_Low.ma")
+                return False
         self.m_res = True
 
     def assert_fbx(self):
@@ -139,7 +153,6 @@ class widget_ui(QDialog):
         t_tw = tw()
         self.zymc = ''
         self.bh=''
-        self.bbsj =''
         self.ue_major_version =''
         self.zzz = ''
         self.p_code = ''
@@ -175,7 +188,6 @@ class widget_ui(QDialog):
         for r in res:
             if r['id'] == t_id_list[0]:
                 self.name = r['pipeline.abridge']
-                self.bbsj = r['task.version_data']
                 self.zzz = r['task.artist']
                 self.p_code = r['eps.project_code']
                 self.js = r['eps.entity']
