@@ -84,15 +84,15 @@ void app_service::install_service(
       ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_LOCK)
   )};  // 打开服务控制管理器数据库，返回一个句柄
 
-  if (!service_name_.empty() && !service_name_.starts_with(L".\\")) {
-    service_name_ = L".\\" + service_name_;
+  if (!user_name_.empty() && !user_name_.starts_with(L".\\")) {
+    user_name_ = L".\\" + user_name_;
   }
 
   // 创建一个服务
   wil::unique_schandle l_service_handle{THROW_LAST_ERROR_IF_NULL(::CreateServiceW(
       l_unique_sc_handle_manager.get(), in_service_name.c_str(), in_display_name.c_str(), SERVICE_ALL_ACCESS,
       SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, l_cmd.c_str(), nullptr, nullptr, nullptr,
-      service_name_.c_str(), password_.c_str()
+      user_name_.c_str(), password_.c_str()
   ))};
 
   // 添加服务说明
