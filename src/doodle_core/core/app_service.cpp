@@ -191,7 +191,7 @@ std::int32_t app_service::run() {
 
 void app_service::stop_app(bool in_stop) {
   app_base::stop_app(in_stop);
-  if (thread_) thread_->join();
+  //  if (thread_) thread_->join();
 }
 
 void app_service::start_service() {
