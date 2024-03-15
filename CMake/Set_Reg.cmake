@@ -1,8 +1,6 @@
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
         [==[
         CreateShortCut "$DESKTOP\Doodle ${VERSION}.lnk" "$INSTDIR\bin\DoodleExe.exe"
-        WriteRegStr HKCU "SOFTWARE\Doodle\RenderFarm" "server_address" "192.168.20.7"
-
 
         WriteRegStr HKCU "SOFTWARE\Classes\doodle.main" "" "doodle"
         WriteRegStr HKCU "SOFTWARE\Classes\doodle.main\DefaultIcon" "" "$INSTDIR\bin\DoodleExe.exe"
@@ -68,7 +66,6 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
         DeleteRegKey HKCU "SOFTWARE\Classes\doodle.main"
 
         SetRegView 64
-        DeleteRegKey HKLM "SOFTWARE\Doodle\RenderFarm"
         DeleteRegKey HKLM "SOFTWARE\Doodle\MainConfig"
         DeleteRegKey HKLM "SOFTWARE\Doodle\MainConfig\ProjectList"
         SetRegView 32
