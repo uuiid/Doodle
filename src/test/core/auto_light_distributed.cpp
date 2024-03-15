@@ -28,7 +28,7 @@
 
 #include <boost/asio.hpp>
 
-constexpr auto l_data = R"([
+constexpr auto l_data  = R"([
 {
     "out_file": "D:/test_files/test_anim_11_20/fbx/LQ_ep092_sc089/LQ_ep092_sc089_Ch426A_rig_wxc_1001-1013.fbx",
     "ref_file": "C:/sy/LianQiShiWanNian_8/6-moxing/Ch/JDCh_05/Ch426A/Rig/Ch426A_rig_wxc.ma"
@@ -68,6 +68,8 @@ class maya_exe_test2 : public doodle::maya_exe {
   ~maya_exe_test2() override = default;
 
  private:
+  using timer_t = boost::asio::steady_timer;
+  std::shared_ptr<timer_t> p_timer;
   void queue_up(
       const entt::handle& in_msg, const std::string_view& in_key,
       const std::shared_ptr<doodle::maya_exe_ns::arg>& in_arg, call_fun_type in_call_fun,
@@ -97,8 +99,16 @@ class maya_exe_test2 : public doodle::maya_exe {
     );
 
     in_set_arg_fun(l_arg);
-
-    in_call_fun->complete();
+    if (!p_timer) p_timer = std::make_shared<timer_t>(doodle::g_io_context(), std::chrono::seconds(1));
+    p_timer->expires_after(std::chrono::seconds(10));
+    p_timer->async_wait([in_call_fun](const boost::system::error_code& in_error_code) {
+      if (in_error_code) {
+        doodle::log_info(fmt::format("timer error: {}", in_error_code));
+        return;
+      }
+      in_call_fun->ec_ = boost::system::error_code{};
+      in_call_fun->complete();
+    });
   }
 };
 
@@ -206,7 +216,6 @@ void test_fun2() {
   l_handle2.emplace<file_association_ref>(l_handle4);
   l_handle_ue2.emplace<file_association_ref>(l_handle4);
 }
-
 
 class run_fun_main {
   void reg_func(doodle::http::http_route& in_route) {
