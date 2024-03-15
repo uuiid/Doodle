@@ -18,7 +18,6 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
 
   switch (in_json["type"].get<computer_websocket_fun>()) {
     case computer_websocket_fun::set_state: {
-      l_logger->log(log_loc(), level::info, "set_state");
       if (!in_json.contains("state") || !in_json["state"].is_string()) break;
       in_handle.get<doodle::computer>().client_status_ =
           magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
@@ -30,7 +29,6 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
       break;
     }
     case computer_websocket_fun::set_task: {
-      l_logger->log(log_loc(), level::info, "set_task");
       if (!in_handle.any_of<task_ref>()) break;
       entt::handle l_task_handle = in_handle.get<task_ref>();
       if (!l_task_handle) {
@@ -48,10 +46,10 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
       if (l_task.status_ == server_task_info_status::completed || l_task.status_ == server_task_info_status::failed) {
         l_task.end_time_ = std::chrono::system_clock::now();
       }
+      in_handle.get<doodle::computer>().server_status_ = doodle::computer_status::free;
       break;
     }
     case computer_websocket_fun::logger: {
-      l_logger->log(log_loc(), level::info, "logger");
       if (!in_handle.any_of<task_ref>()) break;
       entt::handle l_task_handle = in_handle.get<task_ref>();
       if (!l_task_handle) {
