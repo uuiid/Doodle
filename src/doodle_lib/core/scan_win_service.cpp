@@ -42,12 +42,14 @@ void scan_win_service_t::open_project() {
   }
   g_ctx().get<database_n::file_translator_ptr>()->async_open(
       l_main_prj, false, false, g_reg(),
-      boost::asio::bind_executor(
-          g_io_context(),
-          [this](const boost::system::error_code& in_code) {
-            if (in_code) return;
-            end_open_project();
-          }
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::bind_executor(
+                                                g_io_context(),
+                                                [this](const boost::system::error_code& in_code) {
+                                                  if (in_code) return;
+                                                  end_open_project();
+                                                }
+                                            )
       )
   );
 }
@@ -77,7 +79,7 @@ void scan_win_service_t::end_open_project() {
         );
       }) |
       ranges::to<std::map<FSys::path, entt::handle>>();
-
+  if (app_base::GetPtr()->is_stop()) return;
   boost::asio::post(g_io_context(), [this]() { scan(); });
 }
 
@@ -86,6 +88,7 @@ void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
     default_logger_raw()->log(log_loc(), level::info, "定时器取消 {}", ec.message());
     return;
   }
+  if (app_base::GetPtr()->is_stop()) return;
   open_project();
   //  add_handle();
 }
@@ -130,7 +133,7 @@ void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_cate
     }
   }
   // 开始启动下一次循环
-
+  if (app_base::GetPtr()->is_stop()) return;
   if (g_ctx().get<program_info>().stop_attr()) return;
   if (!std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](auto&& in_bool) {
         return in_bool;
