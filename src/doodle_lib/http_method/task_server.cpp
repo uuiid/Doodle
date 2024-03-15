@@ -34,7 +34,7 @@ bool task_server::assign_task() {
     has_task = true;
 
     for (auto&& [l_e2, l_computer, l_websocket] : g_reg()->view<computer, http_websocket_data>().each()) {
-      if (l_computer.server_status_ != computer_status::free && l_computer.client_status_ != computer_status::free)
+      if (l_computer.server_status_ != computer_status::free || l_computer.client_status_ != computer_status::free)
         continue;
 
       l_computer.server_status_ = computer_status::busy;
