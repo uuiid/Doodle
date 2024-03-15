@@ -31,6 +31,8 @@ namespace doodle::snapshot {
  * load_com       template <typename Component> void (Component& in_entity, std::shared_ptr<void>& in_pre)
  * has_table      bool (const conn_ptr& in_conn)
  *
+ *
+ * 如果需要增量保存, 需要使用 class observer_main  类
  */
 class sqlite_snapshot {
   struct save_snapshot_t {
@@ -158,6 +160,8 @@ class sqlite_snapshot {
 
   using tx_t = decltype(sqlpp::start_transaction(*std::declval<conn_ptr>()));
   std::shared_ptr<tx_t> tx_{};
+  conn_ptr conn_ptr_{};
+  std::unique_ptr<save_snapshot_t> save_snapshot_{};
 
  public:
   explicit sqlite_snapshot(FSys::path in_data_path, entt::registry& in_registry)
@@ -174,19 +178,6 @@ class sqlite_snapshot {
     auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
     (l_save.template save<Component>(), ...);
     l_tx.commit();
-  }
-  template <typename Component, typename It>
-    requires(!std::is_same_v<Component, entt::entity>)
-  sqlite_snapshot& save(It first, It last) {
-    database_info l_info{};
-    l_info.path_ = data_path_;
-    save_snapshot_t l_save{registry_, l_info.get_connection()};
-    tx_ = std::make_shared<tx_t>(sqlpp::start_transaction(*l_save.conn_ptr_));
-    l_save.save<Component>(first, last);
-    return *this;
-  }
-  void commit() {
-    if (tx_) tx_->commit();
   }
 
   template <typename... Component>
@@ -205,6 +196,32 @@ class sqlite_snapshot {
     auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
     l_save.destroy(first, last);
     l_tx.commit();
+  }
+
+ private:
+  template <typename type_t>
+  friend class impl_obs;
+  template <typename... Arg_Com>
+  friend class observer_main;
+
+  template <typename Component, typename It>
+    requires(!std::is_same_v<Component, entt::entity>)
+  sqlite_snapshot& save(It first, It last) {
+    database_info l_info{};
+    l_info.path_ = data_path_;
+    save_snapshot_t l_save{registry_, l_info.get_connection()};
+    tx_ = std::make_shared<tx_t>(sqlpp::start_transaction(*l_save.conn_ptr_));
+    l_save.save<Component>(first, last);
+    return *this;
+  }
+  void start_tx() {
+    database_info l_info{};
+    l_info.path_   = data_path_;
+    save_snapshot_ = std::make_unique<save_snapshot_t>(registry_, l_info.get_connection());
+    tx_            = std::make_shared<tx_t>(sqlpp::start_transaction(*save_snapshot_->conn_ptr_));
+  }
+  void commit() {
+    if (tx_) tx_->commit();
   }
 };
 
