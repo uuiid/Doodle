@@ -59,7 +59,6 @@ void http_snapshot::do_wait() {
           default_logger_raw()->log(log_loc(), level::err, "timer error: {}", in_error_code);
           return;
         }
-        default_logger_raw()->log(log_loc(), level::info, "http_snapshot run");
         run_impl();
       }
   ));
