@@ -35,7 +35,10 @@ void http_snapshot::run() {
 void http_snapshot::run_impl() {
   auto& l_observer = std::any_cast<observer_t&>(observer_);
 
-  if (!l_observer.has_data()) return;
+  if (!l_observer.has_data()) {
+    do_wait();
+    return;
+  }
   try {
     snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
     l_observer.save(l_snapshot);
