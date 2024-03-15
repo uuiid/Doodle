@@ -23,8 +23,10 @@ void http_snapshot::run() {
   }
 
   default_logger_raw()->log(log_loc(), level::info, "http_snapshot laod {} ", l_path);
-  snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
-  l_snapshot.load<server_task_info>();
+  if (auto l_db_path = register_file_type::get_server_snapshot_path(); FSys::exists(l_db_path)) {
+    snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
+    l_snapshot.load<server_task_info>();
+  }
   observer_        = std::make_any<observer_t>();
   auto& l_observer = std::any_cast<observer_t&>(observer_);
   l_observer.connect(*g_reg());
