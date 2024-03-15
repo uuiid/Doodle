@@ -42,6 +42,7 @@ void http_snapshot::run_impl() {
   } catch (const sqlpp::exception& in_error) {
     default_logger_raw()->log(log_loc(), level::err, "http_snapshot error: {}", in_error.what());
   }
+  do_wait();
 }
 
 void http_snapshot::do_wait() {
