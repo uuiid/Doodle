@@ -14,6 +14,7 @@
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
+#include <doodle_lib/http_method/task_server.h>
 namespace doodle::launch {
 
 void reg_func(doodle::http::http_route &in_route) {
@@ -43,6 +44,10 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
   default_logger_raw()->log(log_loc(), level::warn, "启动侦听器");
   l_listener->run();
   in_vector.emplace_back(l_listener);
+  if (!g_ctx().contains<http::task_server>()) {
+    g_ctx().emplace<http::task_server>();
+  }
+  g_ctx().get<http::task_server>().run();
   return false;
 }
 }  // namespace doodle::launch
