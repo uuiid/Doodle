@@ -25,6 +25,7 @@
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
+#include <doodle_lib/http_method/task_server.h>
 
 #include <boost/asio.hpp>
 
@@ -255,6 +256,11 @@ class run_fun_main {
 
     in_vector.emplace_back(http_client_service_ptr_);
     http_client_service_ptr_->run(register_file_type::get_server_address());
+
+    if (!g_ctx().contains<http::task_server>()) {
+      g_ctx().emplace<http::task_server>();
+    }
+    g_ctx().get<http::task_server>().run();
 
     std::locale::global(core_set::get_set().utf8_locale);
 
