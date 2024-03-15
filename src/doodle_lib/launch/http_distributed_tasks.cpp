@@ -30,16 +30,6 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
   l_app.description_  = L"http 服务, 用于在一个线程中执行http任务";
   l_app.command_line_ = L"";
 
-  auto l_signal_ptr   = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  l_signal_ptr->async_wait([](boost::system::error_code ec, int signal) {
-    if (ec) {
-      default_logger_raw()->log(log_loc(), level::warn, "signal_set_ error: {}", ec);
-      return;
-    }
-    default_logger_raw()->log(log_loc(), level::warn, "收到信号  {}", signal);
-    app_base::GetPtr()->stop_app();
-  });
-  in_vector.emplace_back(l_signal_ptr);
   default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
 
   auto l_snapshot_ptr = std::make_shared<http::http_snapshot>();

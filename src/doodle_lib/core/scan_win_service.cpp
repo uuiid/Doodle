@@ -20,15 +20,6 @@ namespace doodle {
 
 void scan_win_service_t::start() {
   timer_  = std::make_shared<timer_t>(g_io_context());
-  signal_ = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  signal_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::Get().on_cancel.slot(),
-      [](boost::system::error_code in_error_code, int in_sig) {
-        default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
-
-        app_base::Get().stop_app();
-      }
-  ));
   open_project();
 }
 

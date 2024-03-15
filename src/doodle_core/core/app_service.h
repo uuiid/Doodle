@@ -6,12 +6,14 @@
 #include <doodle_core/core/app_base.h>
 namespace doodle {
 class app_service : public app_base {
+ public:
+  static constexpr auto g_run{"run"};
+
  protected:
   static constexpr auto g_path_length{32767};
   static constexpr auto g_install{"install"};
   static constexpr auto g_uninstall{"uninstall"};
   static constexpr auto g_service{"service"};
-  static constexpr auto g_run{"run"};
 
   // 用户名
   static constexpr auto g_user{"user"};

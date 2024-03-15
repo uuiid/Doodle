@@ -20,14 +20,6 @@ bool http_working_service_t::operator()(const argh::parser& in_arh, std::vector<
   l_app.command_line_           = L"";
   auto http_client_service_ptr_ = std::make_shared<http::http_work>();
   in_vector.emplace_back(http_client_service_ptr_);
-  auto l_signal_set_ = std::make_shared<signal_set>(g_io_context(), SIGINT, SIGTERM);
-  l_signal_set_->async_wait([http_client_service_ptr_](boost::system::error_code in_error_code, int in_signal) {
-    if (in_error_code) {
-      default_logger_raw()->log(log_loc(), level::err, "signal_set error: {}", in_error_code);
-      return;
-    }
-    app_base::GetPtr()->stop_app();
-  });
 
   http_client_service_ptr_->run(register_file_type::get_server_address());
 

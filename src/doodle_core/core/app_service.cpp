@@ -8,6 +8,8 @@
 #include <doodle_core/lib_warp/boost_locale_warp.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
+#include <boost/asio.hpp>
+
 #include <wil/resource.h>
 #include <wil/result.h>
 #include <windows.h>
@@ -170,6 +172,18 @@ std::int32_t app_service::run() {
     return 0;
   }
   if (arg_[g_run]) {
+    using signal_t = boost::asio::signal_set;
+
+    auto signal_   = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+    signal_->async_wait(boost::asio::bind_cancellation_slot(
+        app_base::Get().on_cancel.slot(),
+        [](boost::system::error_code in_error_code, int in_sig) {
+          default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
+          app_base::GetPtr()->stop_app();
+        }
+    ));
+    facets_.emplace_back(signal_);
+
     app_base::run();
   }
   return 0;
