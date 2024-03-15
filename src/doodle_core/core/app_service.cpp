@@ -182,26 +182,23 @@ void app_service::stop_app(bool in_stop) {
 
 void app_service::start_service() {
   set_service_status(SERVICE_START_PENDING);
-  thread_ = std::make_shared<std::thread>([this]() {
-    try {
-      g_io_context().run();
-    } catch (...) {
-      default_logger_raw()->flush();
-      write_current_error_tmp_dir();
-    }
-  });
+  thread_ = std::make_shared<std::thread>([this]() { this->run(); });
   set_service_status(SERVICE_RUNNING);
 }
 
 void app_service::stop_service() {
   set_service_status(SERVICE_STOP_PENDING);
-  stop_app();
-  set_service_status(SERVICE_STOPPED);
+  boost::asio::post(g_io_context(), [this]() {
+    stop_app();
+    set_service_status(SERVICE_STOPPED);
+  });
 }
 void app_service::shutdown_service() {
   set_service_status(SERVICE_STOP_PENDING);
-  stop_app();
-  set_service_status(SERVICE_STOPPED);
+  boost::asio::post(g_io_context(), [this]() {
+    stop_app();
+    set_service_status(SERVICE_STOPPED);
+  });
 }
 void app_service::pause_service() {
   set_service_status(SERVICE_PAUSE_PENDING);
