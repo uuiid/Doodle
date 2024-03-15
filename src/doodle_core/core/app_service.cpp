@@ -182,7 +182,20 @@ void app_service::stop_app(bool in_stop) {
 
 void app_service::start_service() {
   set_service_status(SERVICE_START_PENDING);
-  thread_ = std::make_shared<std::thread>([this]() { this->run(); });
+  thread_ = std::make_shared<std::thread>([this]() {
+    if (stop_) return 0;
+    try {
+      g_io_context().run();
+    } catch (...) {
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    }
+    try {
+      g_io_context().run_for(std::chrono::milliseconds(10));
+    } catch (...) {
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    }
+    return 0;
+  });
   set_service_status(SERVICE_RUNNING);
 }
 
