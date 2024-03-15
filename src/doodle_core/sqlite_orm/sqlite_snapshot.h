@@ -207,11 +207,7 @@ class sqlite_snapshot {
   template <typename Component, typename It>
     requires(!std::is_same_v<Component, entt::entity>)
   sqlite_snapshot& save(It first, It last) {
-    database_info l_info{};
-    l_info.path_ = data_path_;
-    save_snapshot_t l_save{registry_, l_info.get_connection()};
-    tx_ = std::make_shared<tx_t>(sqlpp::start_transaction(*l_save.conn_ptr_));
-    l_save.save<Component>(first, last);
+    save_snapshot_->save<Component>(first, last);
     return *this;
   }
   void start_tx() {

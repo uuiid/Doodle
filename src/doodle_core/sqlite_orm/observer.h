@@ -102,6 +102,7 @@ class observer_main {
   }
 
   void save(sqlite_snapshot& in_snapshot) {
+    in_snapshot.start_tx();
     std::apply([&in_snapshot](auto&... obs) { (obs->save(in_snapshot), ...); }, obs_tuple_);
     in_snapshot.commit();
     clear();
