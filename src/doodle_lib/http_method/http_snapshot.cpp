@@ -47,6 +47,7 @@ void http_snapshot::run_impl() {
 void http_snapshot::do_wait() {
   if (app_base::GetPtr()->is_stop()) return;
 
+  timer_->expires_after(300ms);
   timer_->async_wait(boost::asio::bind_cancellation_slot(
       app_base::GetPtr()->on_cancel.slot(),
       [this](const boost::system::error_code& in_error_code) {
@@ -58,6 +59,5 @@ void http_snapshot::do_wait() {
         run_impl();
       }
   ));
-  timer_->expires_from_now(300ms);
 }
 }  // namespace doodle::http
