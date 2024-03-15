@@ -23,6 +23,7 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/work.h>
 #include <doodle_lib/http_method/computer.h>
+#include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
 
 #include <boost/asio.hpp>
@@ -230,6 +231,12 @@ class run_fun_main {
       doodle::app_base::GetPtr()->stop_app();
     });
     in_vector.emplace_back(l_signal_ptr);
+
+    auto l_snapshot_ptr = std::make_shared<http::http_snapshot>();
+    in_vector.emplace_back(l_snapshot_ptr);
+    default_logger_raw()->log(log_loc(), level::warn, "开始加载快照");
+    l_snapshot_ptr->run();
+
     default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
     auto l_rout_ptr = std::make_shared<http::http_route>();
     reg_func(*l_rout_ptr);
