@@ -72,6 +72,7 @@ class sqlite_snapshot {
     }
     template <typename It>
     save_snapshot_t& destroy(It first, It last) {
+      if (!destroy_func) return *this;
       std::vector<std::int64_t> l_vec{};
       for (; first != last; ++first) l_vec.push_back(*first);
       destroy_func.invoke({}, l_vec, entt::forward_as_meta(conn_ptr_));
