@@ -40,7 +40,7 @@ void computer::websocket_route(const nlohmann::json &in_json, const entt::handle
         break;
       }
 
-      auto &l_task   = l_task_handle.get<server_task_info>();
+      auto &l_task   = l_task_handle.patch<server_task_info>();
       l_task.status_ = magic_enum::enum_cast<server_task_info_status>(in_json["status"].get<std::string>())
                            .value_or(server_task_info_status::unknown);
       if (l_task.status_ == server_task_info_status::completed || l_task.status_ == server_task_info_status::failed) {

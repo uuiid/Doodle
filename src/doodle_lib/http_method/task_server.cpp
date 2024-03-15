@@ -42,6 +42,7 @@ bool task_server::assign_task() {
       l_task.run_computer_      = l_computer.name_;
       l_task.run_time_          = std::chrono::system_clock::now();
       l_task.run_computer_ip_   = l_computer.ip_;
+      g_reg()->patch<server_task_info>(l_e);
 
       nlohmann::json l_json{};
 
