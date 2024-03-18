@@ -83,6 +83,9 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     // logger
     logger_ptr logger_ptr_{};
     std::shared_ptr<http::detail::http_client_core> http_client_core_ptr_{};
+
+    // 删除
+    gui_cache_name_id delete_button_id_{"删除"};
   };
   std::unique_ptr<impl> p_i;
 
@@ -93,6 +96,8 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
   void get_logger();
 
   void get_remote_data();
+
+  void delete_task(const std::int32_t in_id);
 
   static std::string conv_time(const nlohmann::json& in_json);
   static std::string conv_state(const nlohmann::json& in_json);

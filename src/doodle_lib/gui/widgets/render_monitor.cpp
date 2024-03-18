@@ -81,7 +81,7 @@ bool render_monitor::render() {
   if (auto l_ = dear::CollapsingHeader{
           *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
       }) {
-    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 10}) {
+    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 11}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
 
       ImGui::TableSetupColumn("id");
@@ -96,6 +96,7 @@ bool render_monitor::render() {
       ImGui::TableSetupColumn("运行计算机ip");
       ImGui::TableSetupColumn("运行时间");
       ImGui::TableSetupColumn("运行时间");
+      ImGui::TableSetupColumn("动作");
       ImGui::TableHeadersRow();
 
       for (auto& l_render_task : p_i->render_tasks_) {
@@ -130,6 +131,11 @@ bool render_monitor::render() {
         ImGui::TableNextColumn();
         l_render_task.update_duration();
         dear::Text(l_render_task.duration_);
+
+        ImGui::TableNextColumn();
+        if (ImGui::Button(*p_i->delete_button_id_)) {
+          delete_task(l_render_task.id_);
+        }
       }
     }
   }
@@ -341,6 +347,40 @@ void render_monitor::do_wait_logger() {
         get_logger();
       }
   ));
+}
+void render_monitor::delete_task(const std::int32_t in_id) {
+  boost::urls::url l_url{};
+  l_url.set_path(fmt::format("v1/task/{}/log", in_id));
+  // get logger
+  boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
+      boost::beast::http::verb::delete_, l_url.c_str(), 11
+  };
+  l_logger_get.keep_alive(true);
+
+  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::empty_body>>(
+      l_logger_get,
+      boost::asio::bind_executor(
+          g_io_context(), boost::asio::bind_cancellation_slot(
+                              app_base::GetPtr()->on_cancel.slot(),
+                              [this, self = shared_from_this()](
+                                  const boost::system::error_code& in_code,
+                                  const boost::beast::http::response<boost::beast::http::empty_body>& in_res
+                              ) {
+                                if (in_code) {
+                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
+                                  p_i->progress_message_ = fmt::format("{}", in_code);
+                                  return;
+                                }
+                                p_i->progress_message_.clear();
+
+                                if (in_res.result() != boost::beast::http::status::ok) {
+                                  p_i->logger_ptr_->error("错误{}", enum_to_num(in_res.result()));
+                                  return;
+                                }
+                              }
+                          )
+      )
+  );
 }
 
 render_monitor::~render_monitor() = default;
