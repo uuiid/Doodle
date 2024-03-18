@@ -195,7 +195,6 @@ class sqlite_snapshot {
     save_snapshot_t l_save{registry_, l_info.get_connection()};
     auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
     l_save.destroy(first, last);
-    l_tx.commit();
   }
 
  private:
