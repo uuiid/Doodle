@@ -17,6 +17,7 @@ namespace gui {
 void render_monitor::init() {
   p_i->strand_ptr_       = std::make_shared<strand_t>(boost::asio::make_strand(g_io_context()));
   p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
+  p_i->logger_timer_ptr_ = std::make_shared<timer_t>(*p_i->strand_ptr_);
 
   p_i->progress_message_ = "正在查找服务器";
   p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
@@ -59,6 +60,7 @@ bool render_monitor::render() {
     if (auto l_table = dear::Table{*p_i->render_task_table_id_, 9}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
 
+      ImGui::TableSetupColumn("id");
       ImGui::TableSetupColumn("名称");
       ImGui::TableSetupColumn("状态");
 
@@ -74,6 +76,15 @@ bool render_monitor::render() {
 
       for (auto& l_render_task : p_i->render_tasks_) {
         ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        // 设置选择任务
+        if (ImGui::Selectable(
+                l_render_task.id_str_.c_str(),
+                p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
+            )) {
+          p_i->current_select_logger_ = l_render_task.id_;
+        }
+
         ImGui::TableNextColumn();
         dear::Text(l_render_task.name_);
         ImGui::TableNextColumn();
@@ -95,9 +106,25 @@ bool render_monitor::render() {
       }
     }
   }
+  if (auto l_ = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
+    ImGui::Combo(
+        "日志等级", reinterpret_cast<int*>(&p_i->index_),
+        [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
+          constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
+          *out_text                       = l_leve_names_tmp[in_index].data();
+          return true;
+        },
+        this, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
+    );
+    if (dear::Child l_c{*p_i->logger_child_id_, ImVec2{0, 266}, true}; l_c) {
+      dear::TextWrapPos l_wrap{};
+      imgui::TextUnformatted(p_i->logger_data.data(), p_i->logger_data.data() + p_i->logger_data.size());
+    }
+  }
 
   return open_;
 }
+
 void render_monitor::do_find_server_address() {
   p_i->http_client_core_ptr_ =
       std::make_shared<http::detail::http_client_core>(register_file_type::get_server_address());
@@ -106,6 +133,9 @@ void render_monitor::do_find_server_address() {
 }
 
 void render_monitor::do_wait() {
+  if (!open_) return;
+  if (app_base::GetPtr()->is_stop()) return;
+
   p_i->timer_ptr_->expires_after(doodle::chrono::seconds{3});
   p_i->timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
       app_base::GetPtr()->on_cancel.slot(),
@@ -188,6 +218,7 @@ void render_monitor::get_remote_data() {
                                 p_i->render_tasks_.clear();
                                 for (auto&& l_c : l_json) {
                                   p_i->render_tasks_.emplace_back(
+                                      l_c["id"].get<std::int32_t>(), fmt::format("{}", l_c["id"].get<std::int32_t>()),
                                       l_c["name"].get<std::string>(), conv_state(l_c["status"]),
                                       l_c["source_computer"].get<std::string>(), l_c["submitter"].get<std::string>(),
                                       l_c["submit_time"].get<std::string>(), l_c["run_computer"].get<std::string>(),
@@ -224,6 +255,59 @@ std::string render_monitor::conv_state(const nlohmann::json& in_json) {
   std::string l_status_str = l_status_it != std::end(m) ? l_status_it->second : "未知状态"s;
   return l_status_str;
 }
+
+void render_monitor::get_logger() {
+  if (!p_i->current_select_logger_) return;
+  // get logger
+  boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
+      boost::beast::http::verb::get, fmt::format("v1/task/{}/log", *p_i->current_select_logger_), 11
+  };
+  l_logger_get.keep_alive(true);
+  l_logger_get.set(boost::beast::http::field::accept, "application/json");
+
+  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+      l_logger_get,
+      boost::asio::bind_executor(
+          g_io_context(), boost::asio::bind_cancellation_slot(
+                              app_base::GetPtr()->on_cancel.slot(),
+                              [this, self = shared_from_this()](
+                                  const boost::system::error_code& in_code,
+                                  const boost::beast::http::response<boost::beast::http::string_body>& in_res
+                              ) {
+                                if (in_code) {
+                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
+                                  p_i->progress_message_ = fmt::format("{}", in_code);
+                                  return;
+                                }
+                                p_i->progress_message_.clear();
+
+                                if (in_res.result() != boost::beast::http::status::ok) {
+                                  p_i->progress_message_ = fmt::format("错误 {}", enum_to_num(in_res.result()));
+                                  return;
+                                }
+                                p_i->logger_data = std::move(in_res.body());
+                              }
+                          )
+      )
+  );
+}
+void render_monitor::do_wait_logger() {
+  if (!open_) return;
+  if (app_base::GetPtr()->is_stop()) return;
+  p_i->logger_timer_ptr_->expires_after(doodle::chrono::seconds{3});
+  p_i->logger_timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::GetPtr()->on_cancel.slot(),
+      [this, self = shared_from_this()](boost::system::error_code ec) {
+        if (!open_) return;
+        if (ec) {
+          p_i->logger_ptr_->error("timer_ptr_ error: {}", ec);
+          return;
+        }
+        get_logger();
+      }
+  ));
+}
+
 render_monitor::~render_monitor() = default;
 }  // namespace gui
 }  // namespace doodle
