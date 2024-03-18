@@ -38,6 +38,16 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     std::string run_computer_ip_{};
     std::string run_time_{};
     std::string end_time_{};
+
+    chrono::sys_time_pos::clock::time_point start_time_point_{};
+    chrono::sys_time_pos::clock::time_point end_time_point_{};
+    // 计算持续时间
+    std::string duration_{};
+    // 从字符串解析时间
+    void parse_time();
+
+    // 计算持续时间
+    void update_duration();
   };
   using timer_t      = boost::asio::system_timer;
   using timer_ptr_t  = std::shared_ptr<timer_t>;

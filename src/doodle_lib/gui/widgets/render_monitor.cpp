@@ -14,8 +14,30 @@
 #include <doodle_lib/core/http/json_body.h>
 
 #include <boost/url.hpp>
+
 namespace doodle {
 namespace gui {
+void render_monitor::task_t_gui::parse_time() {
+  if (!run_time_.empty()) {
+    std::istringstream l_ss{run_time_};
+    l_ss >> chrono::parse("%Y-%m-%d %H:%M:%S", start_time_point_);
+  }
+  if (!end_time_.empty()) {
+    std::istringstream l_ss{end_time_};
+    l_ss >> chrono::parse("%Y-%m-%d %H:%M:%S", end_time_point_);
+  }
+}
+void render_monitor::task_t_gui::update_duration() {
+  if (start_time_point_.time_since_epoch().count() == 0) return;
+  if (end_time_point_.time_since_epoch().count() == 0) {
+    auto l_duration = decltype(start_time_point_)::clock::now() - start_time_point_;
+    duration_       = fmt::format("{:%H:%M:%S}", l_duration);
+    return;
+  }
+  auto l_duration = end_time_point_ - start_time_point_;
+  duration_       = fmt::format("{:%H:%M:%S}", l_duration);
+}
+
 void render_monitor::init() {
   p_i->strand_ptr_       = std::make_shared<strand_t>(boost::asio::make_strand(g_io_context()));
   p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
@@ -73,7 +95,7 @@ bool render_monitor::render() {
       ImGui::TableSetupColumn("运行计算机");
       ImGui::TableSetupColumn("运行计算机ip");
       ImGui::TableSetupColumn("运行时间");
-      ImGui::TableSetupColumn("结束时间");
+      ImGui::TableSetupColumn("运行时间");
       ImGui::TableHeadersRow();
 
       for (auto& l_render_task : p_i->render_tasks_) {
@@ -106,7 +128,8 @@ bool render_monitor::render() {
         ImGui::TableNextColumn();
         dear::Text(l_render_task.run_time_);
         ImGui::TableNextColumn();
-        dear::Text(l_render_task.end_time_);
+        l_render_task.update_duration();
+        dear::Text(l_render_task.duration_);
       }
     }
   }
@@ -221,7 +244,7 @@ void render_monitor::get_remote_data() {
                                 auto l_json = in_res.body();
                                 p_i->render_tasks_.clear();
                                 for (auto&& l_c : l_json) {
-                                  p_i->render_tasks_.emplace_back(
+                                  auto& l_task = p_i->render_tasks_.emplace_back(
                                       l_c["id"].get<std::int32_t>(), fmt::format("{}", l_c["id"].get<std::int32_t>()),
                                       l_c["name"].get<std::string>(), conv_state(l_c["status"]),
                                       l_c["source_computer"].get<std::string>(), l_c["submitter"].get<std::string>(),
@@ -229,6 +252,9 @@ void render_monitor::get_remote_data() {
                                       l_c["run_computer_ip"].get<std::string>(), conv_time(l_c["run_time"]),
                                       conv_time(l_c["end_time"])
                                   );
+
+                                  l_task.parse_time();
+                                  l_task.update_duration();
                                 }
 
                                 do_wait();
