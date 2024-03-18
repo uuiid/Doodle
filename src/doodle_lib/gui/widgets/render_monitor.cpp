@@ -12,6 +12,8 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/core/http/json_body.h>
+
+#include <boost/url.hpp>
 namespace doodle {
 namespace gui {
 void render_monitor::init() {
@@ -118,16 +120,6 @@ bool render_monitor::render() {
         }
       }
     }
-
-    ImGui::Combo(
-        "日志等级", reinterpret_cast<int*>(&p_i->index_),
-        [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
-          constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
-          *out_text                       = l_leve_names_tmp[in_index].data();
-          return true;
-        },
-        this, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
-    );
     if (dear::Child l_c{*p_i->logger_child_id_, ImVec2{0, 266}, true}; l_c) {
       dear::TextWrapPos l_wrap{};
       imgui::TextUnformatted(p_i->logger_data.data(), p_i->logger_data.data() + p_i->logger_data.size());
@@ -270,10 +262,12 @@ std::string render_monitor::conv_state(const nlohmann::json& in_json) {
 
 void render_monitor::get_logger() {
   if (!p_i->current_select_logger_) return;
+  boost::urls::url l_url{};
+  l_url.set_path(fmt::format("v1/task/{}/log", *p_i->current_select_logger_));
+  l_url.set_encoded_query(fmt::format("level={}", magic_enum::enum_name(p_i->index_)));
   // get logger
   boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
-      boost::beast::http::verb::get,
-      fmt::format("v1/task/{}/log?level={}", *p_i->current_select_logger_, magic_enum::enum_name(p_i->index_)), 11
+      boost::beast::http::verb::get, l_url.c_str(), 11
   };
   l_logger_get.keep_alive(true);
   l_logger_get.set(boost::beast::http::field::accept, "application/json");
@@ -290,12 +284,14 @@ void render_monitor::get_logger() {
                                 if (in_code) {
                                   log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
                                   p_i->progress_message_ = fmt::format("{}", in_code);
+                                  p_i->logger_data.clear();
                                   return;
                                 }
                                 p_i->progress_message_.clear();
 
                                 if (in_res.result() != boost::beast::http::status::ok) {
-                                  p_i->progress_message_ = fmt::format("错误 {}", enum_to_num(in_res.result()));
+                                  p_i->logger_ptr_->error("错误{}", enum_to_num(in_res.result()));
+                                  p_i->logger_data.clear();
                                   return;
                                 }
                                 p_i->logger_data = std::move(in_res.body());
