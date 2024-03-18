@@ -133,7 +133,7 @@ bool render_monitor::render() {
         dear::Text(l_render_task.duration_);
 
         ImGui::TableNextColumn();
-        if (ImGui::Button(*p_i->delete_button_id_)) {
+        if (ImGui::Button(l_render_task.delete_button_id_.c_str())) {
           delete_task(l_render_task.id_);
         }
       }
@@ -258,7 +258,7 @@ void render_monitor::get_remote_data() {
                                       l_c["run_computer_ip"].get<std::string>(), conv_time(l_c["run_time"]),
                                       conv_time(l_c["end_time"])
                                   );
-
+                                  l_task.delete_button_id_ = fmt::format("删除##{}", l_task.id_);
                                   l_task.parse_time();
                                   l_task.update_duration();
                                 }
@@ -357,14 +357,14 @@ void render_monitor::delete_task(const std::int32_t in_id) {
   };
   l_logger_get.keep_alive(true);
 
-  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::empty_body>>(
+  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
       l_logger_get,
       boost::asio::bind_executor(
           g_io_context(), boost::asio::bind_cancellation_slot(
                               app_base::GetPtr()->on_cancel.slot(),
                               [this, self = shared_from_this()](
                                   const boost::system::error_code& in_code,
-                                  const boost::beast::http::response<boost::beast::http::empty_body>& in_res
+                                  const boost::beast::http::response<boost::beast::http::string_body>& in_res
                               ) {
                                 if (in_code) {
                                   log_error(p_i->logger_ptr_, fmt::format("{}", in_code));

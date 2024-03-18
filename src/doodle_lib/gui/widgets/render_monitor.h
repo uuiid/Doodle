@@ -43,6 +43,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     chrono::sys_time_pos::clock::time_point end_time_point_{};
     // 计算持续时间
     std::string duration_{};
+    std::string delete_button_id_{};
     // 从字符串解析时间
     void parse_time();
 
@@ -83,9 +84,6 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     // logger
     logger_ptr logger_ptr_{};
     std::shared_ptr<http::detail::http_client_core> http_client_core_ptr_{};
-
-    // 删除
-    gui_cache_name_id delete_button_id_{"删除"};
   };
   std::unique_ptr<impl> p_i;
 
