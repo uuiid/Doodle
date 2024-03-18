@@ -57,7 +57,7 @@ bool render_monitor::render() {
   if (auto l_ = dear::CollapsingHeader{
           *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
       }) {
-    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 9}) {
+    if (auto l_table = dear::Table{*p_i->render_task_table_id_, 10}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
 
       ImGui::TableSetupColumn("id");
@@ -84,17 +84,18 @@ bool render_monitor::render() {
             )) {
           p_i->current_select_logger_ = l_render_task.id_;
         }
-
         ImGui::TableNextColumn();
         dear::Text(l_render_task.name_);
         ImGui::TableNextColumn();
         dear::Text(l_render_task.status_);
+
         ImGui::TableNextColumn();
         dear::Text(l_render_task.source_computer_);
         ImGui::TableNextColumn();
         dear::Text(l_render_task.submitter_);
         ImGui::TableNextColumn();
         dear::Text(l_render_task.submit_time_);
+
         ImGui::TableNextColumn();
         dear::Text(l_render_task.run_computer_);
         ImGui::TableNextColumn();
@@ -112,6 +113,8 @@ bool render_monitor::render() {
         [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
           constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
           *out_text                       = l_leve_names_tmp[in_index].data();
+          auto* l_this                    = static_cast<render_monitor*>(in_data);
+          l_this->do_wait_logger();
           return true;
         },
         this, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
