@@ -83,6 +83,7 @@ bool render_monitor::render() {
                 p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
             )) {
           p_i->current_select_logger_ = l_render_task.id_;
+          get_logger();
         }
         ImGui::TableNextColumn();
         dear::Text(l_render_task.name_);
@@ -108,13 +109,21 @@ bool render_monitor::render() {
     }
   }
   if (auto l_ = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
+    if (auto l_combo = dear::Combo{*p_i->logger_level_, p_i->logger_level_.data.c_str()}; l_combo) {
+      for (auto&& i : magic_enum::enum_names<level::level_enum>()) {
+        if (ImGui::Selectable(i.data(), p_i->index_ == magic_enum::enum_cast<level::level_enum>(i).value())) {
+          p_i->index_             = magic_enum::enum_cast<level::level_enum>(i).value();
+          p_i->logger_level_.data = i.data();
+          get_logger();
+        }
+      }
+    }
+
     ImGui::Combo(
         "日志等级", reinterpret_cast<int*>(&p_i->index_),
         [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
           constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
           *out_text                       = l_leve_names_tmp[in_index].data();
-          auto* l_this                    = static_cast<render_monitor*>(in_data);
-          l_this->do_wait_logger();
           return true;
         },
         this, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
@@ -263,7 +272,8 @@ void render_monitor::get_logger() {
   if (!p_i->current_select_logger_) return;
   // get logger
   boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
-      boost::beast::http::verb::get, fmt::format("v1/task/{}/log", *p_i->current_select_logger_), 11
+      boost::beast::http::verb::get,
+      fmt::format("v1/task/{}/log?level={}", *p_i->current_select_logger_, magic_enum::enum_name(p_i->index_)), 11
   };
   l_logger_get.keep_alive(true);
   l_logger_get.set(boost::beast::http::field::accept, "application/json");

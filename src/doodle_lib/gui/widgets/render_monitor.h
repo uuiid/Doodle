@@ -61,6 +61,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     gui_cache_name_id logger_collapsing_header_id_{"日志"};
     gui_cache_name_id logger_child_id_{"日志"s};
     level::level_enum index_{level::warn};
+    gui_cache<std::string> logger_level_{"日志等级", magic_enum::enum_name(level::err)};
     std::string logger_data{};
     std::optional<std::int32_t> current_select_logger_{};
     timer_ptr_t logger_timer_ptr_{};
