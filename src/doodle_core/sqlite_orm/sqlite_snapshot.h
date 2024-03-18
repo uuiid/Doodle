@@ -66,6 +66,7 @@ class sqlite_snapshot {
       set_save_func<Component>();
       if (!create_table_func) return *this;
       if (!begin_save_func) return *this;
+      if (first == last) return *this;
       is_entity_ = std::is_same_v<Component, entt::entity>;
       create_table_func.invoke({}, entt::forward_as_meta(conn_ptr_));
       pre_sql_data_ = begin_save_func.invoke({}, entt::forward_as_meta(conn_ptr_));
@@ -206,6 +207,7 @@ class sqlite_snapshot {
   template <typename Component, typename It>
     requires(!std::is_same_v<Component, entt::entity>)
   sqlite_snapshot& save(It first, It last) {
+    if (first == last) return *this;
     save_snapshot_->save<Component>(first, last);
     return *this;
   }
