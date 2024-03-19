@@ -74,7 +74,7 @@ void http_websocket_data::do_read() {
           do_destroy();
           return;
         }
-        l_logger->log(log_loc(), level::info, "async_read success: {}", bytes_transferred);
+        //        l_logger->log(log_loc(), level::info, "async_read success: {}", bytes_transferred);
         read_queue_.emplace(boost::beast::buffers_to_string(buffer_.data()));
         buffer_.consume(buffer_.size());
         do_read();
@@ -102,7 +102,7 @@ void http_websocket_data::do_write() {
           l_logger->log(log_loc(), level::err, "async_write error: {}", ec);
           return;
         }
-        l_logger->log(log_loc(), level::info, "async_write success: {}", bytes_transferred);
+        //        l_logger->log(log_loc(), level::info, "async_write success: {}", bytes_transferred);
         write_queue_.pop();
         do_write();
       }
