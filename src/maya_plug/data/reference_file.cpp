@@ -324,6 +324,19 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
   }
   return true;
 }
+void reference_file::rename_namespace(const std::string &in_name) {
+  MStatus k_s{};
+  auto l_name_d = in_name;
+  for (int l_i = 1; l_i < 1000 && MNamespace::namespaceExists(d_str{l_name_d}); ++l_i) {
+    l_name_d = fmt::format("{}{}", in_name, l_i);
+  }
+  default_logger_raw()->log(
+      log_loc(), level::info, "确认名称空间 {} 开始重命名名称空间到 {}", get_namespace(), l_name_d
+  );
+  k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
+  DOODLE_MAYA_CHICK(k_s);
+  doodle::maya_plug::set_attribute(file_info_node_, "reference_file_namespace", l_name_d);
+}
 
 bool reference_file::has_node(const MSelectionList &in_list) {
   if (get_namespace().empty()) return false;

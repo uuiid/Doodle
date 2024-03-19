@@ -121,7 +121,8 @@ class reference_file {
   bool has_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) const;
 
   bool replace_file(const FSys::path &in_handle);
-
+  // 重命名名称空间
+  void rename_namespace(const std::string &in_name);
   std::optional<MDagPath> get_field_dag() const;
 
   enum class export_type : std::uint32_t {
