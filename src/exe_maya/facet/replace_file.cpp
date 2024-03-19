@@ -70,6 +70,7 @@ void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FS
     }
     auto&& l_ref = l_ref_it->get<reference_file>();
     l_ref.replace_file(l_pair.second);
+    l_ref.rename_namespace(l_pair.second.stem().string());
   }
 
   DOODLE_LOG_INFO("替换完成");
