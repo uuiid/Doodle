@@ -56,7 +56,8 @@ boost::system::error_code thread_copy_io_service::copy_impl(
   for (int i = 0; i < 10; ++i) {
     try {
       in_logger->log(log_loc(), spdlog::level::info, "复制 {} -> {}", from, to);
-      if (FSys::is_regular_file(from) && !FSys::is_hidden(from)) {
+      if (FSys::is_regular_file(from) && !FSys::is_hidden(from) &&
+          from.extension() != doodle_config::doodle_flag_name) {
         in_fun_ptr(from, to);
         return l_ec;
       }
@@ -64,14 +65,16 @@ boost::system::error_code thread_copy_io_service::copy_impl(
       if (in_options == FSys::copy_options::recursive) {
         for (auto &&l_file : FSys::recursive_directory_iterator(from)) {
           auto l_to_file = to / l_file.path().lexically_proximate(from);
-          if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path())) {
+          if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path()) &&
+              l_file.path().extension() != doodle_config::doodle_flag_name) {
             in_fun_ptr(l_file.path(), l_to_file);
           }
         }
       } else {
         for (auto &&l_file : FSys::directory_iterator(from)) {
           auto l_to_file = to / l_file.path().lexically_proximate(from);
-          if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path())) {
+          if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path()) &&
+              l_file.path().extension() != doodle_config::doodle_flag_name) {
             in_fun_ptr(l_file.path(), l_to_file);
           }
         }
