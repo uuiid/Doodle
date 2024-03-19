@@ -104,6 +104,12 @@ void app_service::install_service(
   THROW_IF_WIN32_BOOL_FALSE(
       ::ChangeServiceConfig2W(l_service_handle.get(), SERVICE_CONFIG_DESCRIPTION, &l_service_description)
   );
+  // 添加服务重启
+  SERVICE_FAILURE_ACTIONS l_service_failure_actions{};
+  l_service_failure_actions.dwResetPeriod = 60;
+  THROW_IF_WIN32_BOOL_FALSE(
+      ::ChangeServiceConfig2W(l_service_handle.get(), SERVICE_CONFIG_FAILURE_ACTIONS, &l_service_failure_actions)
+  );
 }
 
 void app_service::uninstall_service(const std::wstring &in_service_name) {
