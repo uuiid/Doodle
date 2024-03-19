@@ -61,6 +61,7 @@ bool DOODLE_CORE_API is_windows_remote_path(const FSys::path& in_file_path);
 void DOODLE_CORE_API software_flag_file(const FSys::path& in_file_path, const boost::uuids::uuid& in_uuid);
 boost::uuids::uuid DOODLE_CORE_API software_flag_file(const FSys::path& in_file_path);
 
+bool DOODLE_CORE_API is_hidden(const FSys::path& in_file_path);
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS

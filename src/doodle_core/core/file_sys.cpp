@@ -62,7 +62,8 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
   const auto withUnixEpoch = asDuration + nt_to_unix_epoch;
   /// 最后我们强制转换为时间系统时间点
   return chrono::system_clock::time_point{
-      chrono::duration_cast<chrono::system_clock::duration>(chrono::floor<std::chrono::seconds>(withUnixEpoch))};
+      chrono::duration_cast<chrono::system_clock::duration>(chrono::floor<std::chrono::seconds>(withUnixEpoch))
+  };
 #elif defined(__linux__) && defined(__GNUC__)
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;
@@ -120,14 +121,14 @@ FSys::path write_tmp_file(
     const std::string &in_falg, const std::string &in_string, const std::string &in_extension,
     const std::optional<std::string> &in_file_name, std::int32_t in_model
 ) {
-  auto tmp_path = core_set::get_set().get_cache_root(fmt::format(
+  auto tmp_path   = core_set::get_set().get_cache_root(fmt::format(
       "{}/v{}{}{}", in_falg, version::build_info::get().version_major, version::build_info::get().version_minor,
       version::build_info::get().version_patch
   ));
-  auto k_tmp_path =
-      tmp_path / FSys::path{
-                     in_file_name ? (*in_file_name + in_extension)
-                                  : boost::uuids::to_string(core_set::get_set().get_uuid()) + in_extension};
+  auto k_tmp_path = tmp_path / FSys::path{
+                                   in_file_name ? (*in_file_name + in_extension)
+                                                : boost::uuids::to_string(core_set::get_set().get_uuid()) + in_extension
+                               };
   if (in_file_name && FSys::exists(k_tmp_path)) {
     return k_tmp_path;
   } else {
@@ -238,6 +239,15 @@ void software_flag_file(const FSys::path &in_file_path, const boost::uuids::uuid
   //    THROW_WIN32(::GetLastError());
   //  }
   //  THROW_IF_WIN32_BOOL_FALSE(::SetFileAttributesW(l_path.c_str(), l_file_attr | FILE_ATTRIBUTE_HIDDEN));
+}
+bool is_hidden(const FSys::path &in_file_path) {
+  if (!FSys::exists(in_file_path.parent_path())) return false;
+  auto l_file_info = ::GetFileAttributesW(in_file_path.c_str());
+  if (l_file_info == INVALID_FILE_ATTRIBUTES) {
+    std::error_code const l_error_code{static_cast<int>(::GetLastError()), std::system_category()};
+    throw std::filesystem::filesystem_error{fmt::format("GetFileAttributesW {}", in_file_path), l_error_code};
+  }
+  return (l_file_info & FILE_ATTRIBUTE_HIDDEN) == FILE_ATTRIBUTE_HIDDEN;
 }
 boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
   auto l_path = in_file_path;
