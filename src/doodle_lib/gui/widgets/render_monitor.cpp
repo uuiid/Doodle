@@ -350,7 +350,7 @@ void render_monitor::do_wait_logger() {
 }
 void render_monitor::delete_task(const std::int32_t in_id) {
   boost::urls::url l_url{};
-  l_url.set_path(fmt::format("v1/task/{}/log", in_id));
+  l_url.set_path(fmt::format("v1/task/{}", in_id));
   // get logger
   boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
       boost::beast::http::verb::delete_, l_url.c_str(), 11
