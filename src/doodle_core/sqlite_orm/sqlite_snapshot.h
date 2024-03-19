@@ -194,8 +194,9 @@ class sqlite_snapshot {
     database_info l_info{};
     l_info.path_ = data_path_;
     save_snapshot_t l_save{registry_, l_info.get_connection()};
-    auto l_tx = sqlpp::start_transaction(*l_save.conn_ptr_);
+    auto l_tx = tx_ ? tx_ : std::make_shared<tx_t>(sqlpp::start_transaction(*l_save.conn_ptr_));
     l_save.destroy(first, last);
+    if (!tx_) l_tx->commit();  // 如果是自己创建的事务, 需要自己提交
   }
 
  private:
