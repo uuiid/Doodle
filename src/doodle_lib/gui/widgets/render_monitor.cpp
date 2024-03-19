@@ -135,6 +135,7 @@ bool render_monitor::render() {
         ImGui::TableNextColumn();
         if (ImGui::Button(l_render_task.delete_button_id_.c_str())) {
           delete_task(l_render_task.id_);
+          get_remote_data();
         }
       }
     }
