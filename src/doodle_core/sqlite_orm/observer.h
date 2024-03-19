@@ -68,7 +68,7 @@ class impl_obs {
   void save(sqlite_snapshot& in_snapshot) {
     auto&& [l_data, l_des] = get_data();
     in_snapshot.save<type_t>(l_data.begin(), l_data.end());
-    in_snapshot.destroy(l_des.begin(), l_des.end());
+    in_snapshot.destroy<type_t>(l_des.begin(), l_des.end());
   }
 };
 

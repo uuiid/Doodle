@@ -73,11 +73,13 @@ class sqlite_snapshot {
       snapshot_.get<Component>(*this, first, last);
       return *this;
     }
-    template <typename It>
+    template <typename Component, typename It>
     save_snapshot_t& destroy(It first, It last) {
+      set_save_func<Component>();
       if (!destroy_func) return *this;
       std::vector<std::int64_t> l_vec{};
       for (; first != last; ++first) l_vec.push_back(*first);
+      if (l_vec.empty()) return *this;
       destroy_func.invoke({}, l_vec, entt::forward_as_meta(conn_ptr_));
       return *this;
     }
@@ -189,13 +191,13 @@ class sqlite_snapshot {
     (l_load.template load<Component>(), ...);
   }
 
-  template <typename It>
+  template <typename Component, typename It>
   auto destroy(It first, It last) {
     database_info l_info{};
     l_info.path_ = data_path_;
     save_snapshot_t l_save{registry_, l_info.get_connection()};
     auto l_tx = tx_ ? tx_ : std::make_shared<tx_t>(sqlpp::start_transaction(*l_save.conn_ptr_));
-    l_save.destroy(first, last);
+    l_save.destroy<Component>(first, last);
     if (!tx_) l_tx->commit();  // 如果是自己创建的事务, 需要自己提交
   }
 
