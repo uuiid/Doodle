@@ -381,7 +381,7 @@ bool maya_tool::render() {
       nlohmann::json l_json{};
       l_json["source_computer"] = l_host_name;
       l_json["submitter"]       = g_reg()->ctx().get<user::current_user>().user_name_attr();
-      l_json["name"]            = fmt::format("{}_解算", l_info.path_.filename());
+      l_json["name"]            = fmt::format("{}_动画", l_info.path_.filename());
       l_json["data"]            = nlohmann::json{
                      {"type", "auto_light_task"},
                      {"file_path", l_info.path_.generic_string()},
