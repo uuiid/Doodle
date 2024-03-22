@@ -78,13 +78,13 @@ std::string get_user_name() {
   DWORD l_size = 0;
   auto l_err   = ::GetUserNameW(nullptr, &l_size);
   if (l_err != ERROR_INSUFFICIENT_BUFFER) {
-    LOG_WIN32(l_err);
+    LOG_IF_WIN32_ERROR(l_err);
     return {"doodle"};
   }
   std::unique_ptr<wchar_t[]> l_user_name = std::make_unique<wchar_t[]>(l_size);
   l_err                                  = ::GetUserNameW(l_user_name.get(), &l_size);
   if (l_err != ERROR_SUCCESS) {
-    LOG_WIN32(l_err);
+    LOG_IF_WIN32_ERROR(l_err);
     return {"doodle"};
   }
   return boost::locale::conv::utf_to_utf<char>(l_user_name.get(), l_user_name.get() + l_size);
