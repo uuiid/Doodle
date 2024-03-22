@@ -37,7 +37,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 namespace doodle::launch {
 bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
-  g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "auto_light_process");
+  auto l_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
   core_set_init l_core_set_init{};
   l_core_set_init.config_to_user();
   l_core_set_init.read_file();
@@ -79,6 +80,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
 
   entt::handle l_msg{*g_reg(), g_reg()->create()};
   auto &l_process_message = l_msg.emplace<process_message>(l_file.filename().generic_string());
+  l_process_message.logger()->sinks().emplace_back(l_sink);
   l_msg.emplace<episodes>(l_episodes);
   l_msg.emplace<shot>(l_shot);
   l_msg.emplace<project>(l_project);

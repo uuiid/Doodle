@@ -142,9 +142,12 @@ PYTHONPATH+:= scripts
       }
     });
     // 不继承环境变量
-    //    boost::process::environment l_eve = boost::this_process::environment();
-    boost::process::environment l_eve{};
-    l_eve["MAYA_LOCATION"]            = maya_program_path.generic_string();
+    boost::process::environment l_eve = boost::this_process::environment();
+    //    boost::process::environment l_eve{};
+    //    l_eve.
+    if (l_eve.count("PYTHONHOME") > 0) l_eve.erase("PYTHONHOME");
+    if (l_eve.count("python") > 0) l_eve.erase("python");
+    l_eve["MAYA_LOCATION"] = maya_program_path.generic_string();
     l_eve["Path"] += (maya_program_path / "bin").generic_string();
     l_eve["Path"] += program_path.parent_path().generic_string();
     l_eve["Path"] += register_file_type::program_location().generic_string();
