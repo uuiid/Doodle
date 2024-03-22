@@ -40,6 +40,16 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   auto l_sink        = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
   using work_guard_t = decltype(boost::asio::make_work_guard(g_io_context()));
   auto l_work_guard  = std::make_shared<work_guard_t>(boost::asio::make_work_guard(g_io_context()));
+
+  using signal_t     = boost::asio::signal_set;
+  auto signal_       = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+  signal_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::Get().on_cancel.slot(),
+      [](boost::system::error_code in_error_code, int in_sig) {
+        default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
+        app_base::GetPtr()->stop_app();
+      }
+  ));
   g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
   core_set_init l_core_set_init{};
   l_core_set_init.config_to_user();
@@ -93,8 +103,8 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   up_auto_light_anim_file l_up_auto_light_file{l_msg};
   l_up_auto_light_file.async_end(boost::asio::bind_executor(
       g_io_context(),
-      [l_msg, l_weak = std::weak_ptr<work_guard_t>{l_work_guard
-              }](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
+      [l_msg, l_weak = std::weak_ptr<work_guard_t>{l_work_guard},
+       l_work_guard](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
         if (in_error_code) {
           l_msg.get<process_message>().set_state(process_message::state::fail);
           return;
@@ -124,7 +134,6 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
     default_logger_raw()->error("必须有参数");
     return true;
   }
-  in_vector.emplace_back(l_work_guard);
   return false;
 }
 }  // namespace doodle::launch
