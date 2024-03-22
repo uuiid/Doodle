@@ -8,6 +8,11 @@
 #include <argh.h>
 namespace doodle::launch {
 class auto_light_process_t {
+  static constexpr auto g_animation        = "animation";
+  static constexpr auto g_cfx              = "cfx";
+  static constexpr auto g_maya_file        = "maya_file";
+  static constexpr auto g_export_anim_time = "export_anim_time";
+
  public:
   auto_light_process_t()  = default;
   ~auto_light_process_t() = default;
