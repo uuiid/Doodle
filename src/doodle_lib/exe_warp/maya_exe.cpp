@@ -141,8 +141,9 @@ PYTHONPATH+:= scripts
         if (in_code != boost::asio::error::operation_aborted) log_attr->log(log_loc(), level::warn, in_code);
       }
     });
-
-    boost::process::environment l_eve = boost::this_process::environment();
+    // 不继承环境变量
+    //    boost::process::environment l_eve = boost::this_process::environment();
+    boost::process::environment l_eve{};
     l_eve["MAYA_LOCATION"]            = maya_program_path.generic_string();
     l_eve["Path"] += (maya_program_path / "bin").generic_string();
     l_eve["Path"] += program_path.parent_path().generic_string();
