@@ -34,8 +34,11 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/gui/widgets/render_monitor.h>
 
+#include <spdlog/sinks/stdout_color_sinks.h>
 namespace doodle::launch {
 bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
+  g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "auto_light_process");
+
   if (!in_arh(g_maya_file)) {
     default_logger_raw()->error("必须有maya文件");
     return true;
