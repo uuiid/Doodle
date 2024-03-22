@@ -38,7 +38,6 @@ class DOODLELIB_API maya_tool {
   entt::handle analysis_path(const path_info_t& in_path);
   std::set<FSys::path> list_sim_file(const project& in_project);
 
-  void make_http_client_core();
   void post_http_task(const std::vector<nlohmann::json>& in_task);
 
  public:

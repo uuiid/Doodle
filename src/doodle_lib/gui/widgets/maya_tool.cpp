@@ -454,7 +454,6 @@ bool maya_tool::render() {
 
   return open;
 }
-void maya_tool::make_http_client_core() {}
 void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
   boost::process::async_system(g_io_context(), [](boost::system::error_code, int) {}, "");
 }
