@@ -93,14 +93,15 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   up_auto_light_anim_file l_up_auto_light_file{l_msg};
   l_up_auto_light_file.async_end(boost::asio::bind_executor(
       g_io_context(),
-      [l_msg, l_work_guard](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
+      [l_msg, l_weak = std::weak_ptr<work_guard_t>{l_work_guard
+              }](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
         if (in_error_code) {
           l_msg.get<process_message>().set_state(process_message::state::fail);
           return;
         }
         default_logger_raw()->info("成功");
         l_msg.get<process_message>().set_state(process_message::state::success);
-        l_work_guard.reset();
+        if (auto l_ptr = l_weak.lock(); l_ptr) l_ptr.reset();
       }
   ));
   l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
