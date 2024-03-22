@@ -77,14 +77,15 @@ nlohmann::json create_cgru_json() {
 std::string get_user_name() {
   DWORD l_size = 0;
   auto l_err   = ::GetUserNameW(nullptr, &l_size);
-  if (l_err != ERROR_INSUFFICIENT_BUFFER) {
-    LOG_IF_WIN32_ERROR(l_err);
+  if (::GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    LOG_IF_WIN32_ERROR(::GetLastError());
     return {"doodle"};
   }
   std::unique_ptr<wchar_t[]> l_user_name = std::make_unique<wchar_t[]>(l_size);
   l_err                                  = ::GetUserNameW(l_user_name.get(), &l_size);
-  if (l_err != ERROR_SUCCESS) {
-    LOG_IF_WIN32_ERROR(l_err);
+
+  if (FALSE == l_err) {
+    LOG_IF_WIN32_ERROR(::GetLastError());
     return {"doodle"};
   }
   return boost::locale::conv::utf_to_utf<char>(l_user_name.get(), l_user_name.get() + l_size);
@@ -422,8 +423,17 @@ bool maya_tool::render() {
   }
 
   if (imgui::Button("使用ue输出排屏(远程)")) {
-    auto l_host_name = boost::asio::ip::host_name();
+    std::string l_host_name = boost::asio::ip::host_name();
+    l_host_name =
+        ranges::views::all(l_host_name) |
+        ranges::views::transform([](char in_c) { return std::tolower(in_c, core_set::get_set().utf8_locale); }) |
+        ranges::to<std::string>;
+
     auto l_user_name = get_user_name();
+    l_user_name =
+        ranges::views::all(l_user_name) |
+        ranges::views::transform([](char in_c) { return std::tolower(in_c, core_set::get_set().utf8_locale); }) |
+        ranges::to<std::string>;
     std::vector<nlohmann::json> l_task_list{};
     for (auto&& l_info : path_info_) {
       auto l_json                                       = create_cgru_json();
