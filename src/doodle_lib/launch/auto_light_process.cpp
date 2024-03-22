@@ -47,7 +47,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
     return true;
   }
   auto l_maya       = g_ctx().emplace<maya_exe_ptr>(std::make_shared<maya_exe>());
-  FSys::path l_file = in_arh(g_maya_file).str();
+  FSys::path l_file = FSys::from_quotation_marks(in_arh(g_maya_file).str());
   auto l_strm       = l_file.stem().generic_string();
   if (!FSys::exists(l_file)) {
     default_logger_raw()->error("文件不存在: {}", l_file.string());
