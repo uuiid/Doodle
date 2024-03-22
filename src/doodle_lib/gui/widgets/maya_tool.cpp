@@ -54,21 +54,21 @@ namespace {
 
 nlohmann::json create_cgru_json() {
   auto l_json                  = nlohmann::json{};
-  auto l_job_obj               = l_json["job"];
+  auto& l_job_obj              = l_json["job"];
   l_job_obj["name"]            = "test job";
   l_job_obj["user_name"]       = "doodle";
   l_job_obj["host_name"]       = "localhost";
   l_job_obj["priority"]        = 99;
-  auto l_blocks                = l_job_obj["blocks"];
-  auto l_block                 = l_blocks[0];
+  auto& l_blocks               = l_job_obj["blocks"];
+  auto& l_block                = l_blocks[0];
   l_block["flags"]             = 0;
   l_block["name"]              = "block of tasks";
   l_block["service"]           = "generic";
   l_block["capacity"]          = 1000;
   l_block["working_directory"] = "D:/doodle_exe/bin";
   l_block["parser"]            = "generic";
-  auto l_tasks                 = l_block["tasks"];
-  auto l_task                  = l_tasks[0];
+  auto& l_tasks                = l_block["tasks"];
+  auto& l_task                 = l_tasks[0];
   l_task["name"]               = "auto light";
   l_task["command"]            = "";
   return l_json;
