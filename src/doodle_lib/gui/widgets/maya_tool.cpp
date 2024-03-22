@@ -426,7 +426,7 @@ bool maya_tool::render() {
       l_json["job"]["user_name"]                        = l_user_name;
       l_json["job"]["host_name"]                        = l_host_name;
       l_json["job"]["blocks"][0]["tasks"][0]["command"] = fmt::format(
-          "D:/doodle_exe/bin/doodle_auto_light_process.exe animation --animation --maya_file=\"{}\"",
+          "D:/doodle_exe/bin/doodle_auto_light_process.exe --animation --maya_file=\"{}\"",
           l_info.path_.generic_string()
       );
       l_task_list.push_back(l_json);
