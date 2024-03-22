@@ -41,8 +41,51 @@
 #include <imgui.h>
 #include <utility>
 #include <vector>
+#include <wil/resource.h>
+#include <wil/result.h>
 
 namespace doodle::gui {
+
+namespace {
+
+nlohmann::json create_cgru_json() {
+  auto l_json                  = nlohmann::json{};
+  auto l_job_obj               = l_json["job"];
+  l_job_obj["name"]            = "test job";
+  l_job_obj["user_name"]       = "doodle";
+  l_job_obj["host_name"]       = "localhost";
+  l_job_obj["priority"]        = 99;
+  auto l_blocks                = l_job_obj["blocks"];
+  auto l_block                 = l_blocks[0];
+  l_block["flags"]             = 0;
+  l_block["name"]              = "block of tasks";
+  l_block["service"]           = "generic";
+  l_block["capacity"]          = 1000;
+  l_block["working_directory"] = "D:/doodle_exe/bin";
+  l_block["parser"]            = "generic";
+  auto l_tasks                 = l_block["tasks"];
+  auto l_task                  = l_tasks[0];
+  l_task["name"]               = "auto light";
+  l_task["command"]            = "";
+}
+
+std::string get_user_name() {
+  DWORD l_size = 0;
+  auto l_err   = ::GetUserNameW(nullptr, &l_size);
+  if (l_err != ERROR_INSUFFICIENT_BUFFER) {
+    LOG_WIN32(l_err);
+    return {"doodle"};
+  }
+  std::unique_ptr<wchar_t[]> l_user_name = std::make_unique<wchar_t[]>(l_size);
+  l_err                                  = ::GetUserNameW(l_user_name.get(), &l_size);
+  if (l_err != ERROR_SUCCESS) {
+    LOG_WIN32(l_err);
+    return {"doodle"};
+  }
+  return boost::locale::conv::utf_to_utf<char>(l_user_name.get(), l_user_name.get() + l_size);
+}
+
+}  // namespace
 
 namespace maya_tool_ns {
 
@@ -374,59 +417,36 @@ bool maya_tool::render() {
   }
 
   if (imgui::Button("使用ue输出排屏(远程)")) {
-    make_http_client_core();
     auto l_host_name = boost::asio::ip::host_name();
+    auto l_user_name = get_user_name();
     std::vector<nlohmann::json> l_task_list{};
     for (auto&& l_info : path_info_) {
-      nlohmann::json l_json{};
-      l_json["source_computer"] = l_host_name;
-      l_json["submitter"]       = g_reg()->ctx().get<user::current_user>().user_name_attr();
-      l_json["name"]            = fmt::format("{}_动画", l_info.path_.filename());
-      l_json["data"]            = nlohmann::json{
-                     {"type", "auto_light_task"},
-                     {"file_path", l_info.path_.generic_string()},
-                     {"export_anim_time", g_reg()->ctx().get<project_config::base_config>().export_anim_time},
-                     {"episodes", l_info.episode_.p_episodes},
-                     {"shot", l_info.shot_.get_shot()},
-                     {"project_name", l_info.project_.p_name},
-                     {"project_path", l_info.project_.p_path.generic_string()},
-                     {"project_en_str", l_info.project_.p_en_str},
-                     {"project_shor_str", l_info.project_.p_shor_str}
-      };
-
+      auto l_json                                       = create_cgru_json();
+      l_json["job"]["name"]                             = l_info.path_.stem().generic_string();
+      l_json["job"]["user_name"]                        = l_user_name;
+      l_json["job"]["host_name"]                        = l_host_name;
+      l_json["job"]["blocks"][0]["tasks"][0]["command"] = fmt::format(
+          "D:/doodle_exe/bin/doodle_auto_light_process.exe animation --animation --maya_file=\"{}\"",
+          l_info.path_.generic_string()
+      );
       l_task_list.push_back(l_json);
     }
     post_http_task(l_task_list);
   }
   ImGui::SameLine();
   if (imgui::Button("使用ue输出排屏(远程)(解算版)")) {
-    make_http_client_core();
     auto l_host_name = boost::asio::ip::host_name();
+    auto l_user_name = get_user_name();
     std::vector<nlohmann::json> l_task_list{};
     for (auto&& l_info : path_info_) {
-      nlohmann::json l_json{};
-      l_json["source_computer"] = l_host_name;
-      l_json["submitter"]       = g_reg()->ctx().get<user::current_user>().user_name_attr();
-      l_json["name"]            = fmt::format("{}_解算", l_info.path_.filename());
-      l_json["data"]            = nlohmann::json{
-                     {"type", "auto_light_task"},
-                     {"file_path", l_info.path_.generic_string()},
-                     {"export_anim_time", g_reg()->ctx().get<project_config::base_config>().export_anim_time},
-                     {"episodes", l_info.episode_.p_episodes},
-                     {"shot", l_info.shot_.get_shot()},
-                     {"project_name", l_info.project_.p_name},
-                     {"project_path", l_info.project_.p_path.generic_string()},
-                     {"project_en_str", l_info.project_.p_en_str},
-                     {"project_shor_str", l_info.project_.p_shor_str}
-      };
-      if (l_info.shot_.get_shot_ab_enum() != shot::shot_ab_enum::None) {
-        l_json["data"]["shot_enum"] = l_info.shot_.get_shot_ab();
-      }
-      if (ptr_attr->replace_ref_file_) {
-        l_json["data"]["replace_ref_file"] = true;
-      }
-      l_json["data"]["sim_path_list"] = list_sim_file(l_info.project_);
-
+      auto l_json                                       = create_cgru_json();
+      l_json["job"]["name"]                             = l_info.path_.stem().generic_string();
+      l_json["job"]["user_name"]                        = l_user_name;
+      l_json["job"]["host_name"]                        = l_host_name;
+      l_json["job"]["blocks"][0]["tasks"][0]["command"] = fmt::format(
+          "D:/doodle_exe/bin/doodle_auto_light_process.exe cfx --animation --maya_file=\"{}\"",
+          l_info.path_.generic_string()
+      );
       l_task_list.push_back(l_json);
     }
     post_http_task(l_task_list);
@@ -434,47 +454,9 @@ bool maya_tool::render() {
 
   return open;
 }
-void maya_tool::make_http_client_core() {
-  if (http_client_core_ptr_) return;
-  http_client_core_ptr_ = std::make_shared<http::detail::http_client_core>(register_file_type::get_server_address());
-  g_windows_manage().open_windows(render_monitor::name);
-}
+void maya_tool::make_http_client_core() {}
 void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
-  for (auto&& l_jaon : in_task) {
-    boost::beast::http::request<boost::beast::http::string_body> l_request{
-        boost::beast::http::verb::post, "v1/task", 11
-    };
-    l_request.set(boost::beast::http::field::host, register_file_type::get_server_address());
-    l_request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    l_request.set(boost::beast::http::field::content_type, "application/json");
-    l_request.body() = l_jaon.dump();
-    l_request.prepare_payload();
-    http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
-        l_request, boost::asio::bind_cancellation_slot(
-                       app_base::GetPtr()->on_cancel.slot(),
-                       boost::asio::bind_executor(
-                           g_io_context(),
-                           [this](
-                               boost::system::error_code in_error_code,
-                               const boost::beast::http::response<http::basic_json_body>& in_response
-                           ) {
-                             if (in_error_code) {
-                               default_logger_raw()->log(
-                                   log_loc(), level::level_enum::err, "post_http_task error:{}", in_error_code
-                               );
-                               return;
-                             }
-                             if (in_response.result() != boost::beast::http::status::ok) {
-                               default_logger_raw()->log(
-                                   log_loc(), level::level_enum::info, "post_http_task {}", in_response.body().dump()
-                               );
-                               return;
-                             }
-                           }
-                       )
-                   )
-    );
-  }
+  boost::process::async_system(g_io_context(), [](boost::system::error_code, int) {}, "");
 }
 
 std::set<FSys::path> maya_tool::list_sim_file(const doodle::project& in_project) {
