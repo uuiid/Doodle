@@ -37,7 +37,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 namespace doodle::launch {
 bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
-  auto l_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  auto l_sink        = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  using work_guard_t = decltype(boost::asio::make_work_guard(g_io_context()));
+  auto l_work_guard  = std::make_shared<work_guard_t>(boost::asio::make_work_guard(g_io_context()));
   g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
   core_set_init l_core_set_init{};
   l_core_set_init.config_to_user();
@@ -91,13 +93,14 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   up_auto_light_anim_file l_up_auto_light_file{l_msg};
   l_up_auto_light_file.async_end(boost::asio::bind_executor(
       g_io_context(),
-      [l_msg](boost::system::error_code in_error_code, std::filesystem::path in_path) {
+      [l_msg, l_work_guard](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
         if (in_error_code) {
           l_msg.get<process_message>().set_state(process_message::state::fail);
           return;
         }
         default_logger_raw()->info("成功");
         l_msg.get<process_message>().set_state(process_message::state::success);
+        l_work_guard.reset();
       }
   ));
   l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
@@ -120,7 +123,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
     default_logger_raw()->error("必须有参数");
     return true;
   }
-
+  in_vector.emplace_back(l_work_guard);
   return false;
 }
 }  // namespace doodle::launch
