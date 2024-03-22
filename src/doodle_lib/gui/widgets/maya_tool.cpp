@@ -71,6 +71,7 @@ nlohmann::json create_cgru_json() {
   auto l_task                  = l_tasks[0];
   l_task["name"]               = "auto light";
   l_task["command"]            = "";
+  return l_json;
 }
 
 std::string get_user_name() {

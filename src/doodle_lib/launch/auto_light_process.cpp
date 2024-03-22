@@ -50,6 +50,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
         app_base::GetPtr()->stop_app();
       }
   ));
+  in_vector.emplace_back(signal_);
   g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
   core_set_init l_core_set_init{};
   l_core_set_init.config_to_user();
