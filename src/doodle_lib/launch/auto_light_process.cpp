@@ -38,6 +38,9 @@
 namespace doodle::launch {
 bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   g_logger_ctrl().add_log_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>(), "auto_light_process");
+  core_set_init l_core_set_init{};
+  l_core_set_init.config_to_user();
+  l_core_set_init.read_file();
 
   if (!in_arh(g_maya_file)) {
     default_logger_raw()->error("必须有maya文件");
