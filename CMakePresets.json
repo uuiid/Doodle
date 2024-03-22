@@ -93,6 +93,7 @@
         "DoodleExe",
         "generate_token",
         "doodle_auto_light",
+        "doodle_auto_light_process",
         "Doxygen"
       ]
     },
@@ -138,6 +139,7 @@
         "doodle_server",
         "doodle_client",
         "doodle_auto_light",
+        "doodle_auto_light_process",
         "Doxygen"
       ]
     },
