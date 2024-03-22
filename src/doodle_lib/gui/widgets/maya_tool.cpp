@@ -88,6 +88,7 @@ std::string get_user_name() {
     LOG_IF_WIN32_ERROR(::GetLastError());
     return {"doodle"};
   }
+  l_size = l_size - 1;
   return boost::locale::conv::utf_to_utf<char>(l_user_name.get(), l_user_name.get() + l_size);
 }
 
