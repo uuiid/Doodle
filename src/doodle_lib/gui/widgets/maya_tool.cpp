@@ -469,6 +469,7 @@ bool maya_tool::render() {
   }
 
   if (ImGui::Button("打开监视器")) {
+    open_mir();
   }
   return open;
 }
