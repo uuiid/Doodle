@@ -16,7 +16,7 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/SideFX_Labs/
         PATTERN "*.pdb" EXCLUDE
         PATTERN "Source" EXCLUDE
         )
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/cgru
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/cgru/
         DESTINATION cgru
 )
 

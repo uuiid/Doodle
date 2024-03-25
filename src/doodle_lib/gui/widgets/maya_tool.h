@@ -39,6 +39,7 @@ class DOODLELIB_API maya_tool {
   std::set<FSys::path> list_sim_file(const project& in_project);
 
   void post_http_task(const std::vector<nlohmann::json>& in_task);
+  void open_mir();
 
  public:
   maya_tool();
