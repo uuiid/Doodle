@@ -43,13 +43,10 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
 
   using signal_t     = boost::asio::signal_set;
   auto signal_       = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  signal_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::Get().on_cancel.slot(),
-      [](boost::system::error_code in_error_code, int in_sig) {
-        default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
-        app_base::GetPtr()->stop_app();
-      }
-  ));
+  signal_->async_wait([](boost::system::error_code in_error_code, int in_sig) {
+    default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
+    app_base::GetPtr()->stop_app();
+  });
   in_vector.emplace_back(signal_);
   g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
   core_set_init l_core_set_init{};
