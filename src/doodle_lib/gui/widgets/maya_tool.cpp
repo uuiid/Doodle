@@ -476,9 +476,15 @@ void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
     auto l_json_path = FSys::write_tmp_file("cgru", i.dump(), ".json");
     boost::process::async_system(
         g_io_context(), [](boost::system::error_code, int) {}, boost::process::exe = l_cgru.generic_string(),
-        boost::process::args = fmt::format("json send {}", l_json_path.generic_string()), boost::process::windows::hide
+        boost::process::args = fmt::format("json send \"{}\"", l_json_path.generic_string()),
+        boost::process::windows::hide
     );
   }
+  auto l_afwatch =
+      register_file_type::program_location().parent_path() / "cgru" / "start" / "AFANASY" / "10.afwatch.cmd";
+  boost::process::async_system(
+      g_io_context(), [](boost::system::error_code, int) {}, boost::process::exe = l_afwatch.generic_string()
+  );
 }
 
 std::set<FSys::path> maya_tool::list_sim_file(const doodle::project& in_project) {
