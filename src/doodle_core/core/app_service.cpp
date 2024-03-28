@@ -195,8 +195,8 @@ std::int32_t app_service::run() {
   return 0;
 }
 
-void app_service::stop_app(bool in_stop) {
-  app_base::stop_app(in_stop);
+void app_service::stop_app(std::int32_t in_exit_code) {
+  app_base::stop_app(in_exit_code);
   //  if (thread_) thread_->join();
 }
 

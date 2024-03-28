@@ -45,11 +45,12 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   auto signal_       = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
   signal_->async_wait([](boost::system::error_code in_error_code, int in_sig) {
     if (in_error_code) {
-      default_logger_raw()->log(log_loc(), level::err, "信号错误: {}", in_error_code.message());
+      if (!app_base::GetPtr()->is_stop())
+        default_logger_raw()->log(log_loc(), level::err, "信号错误: {}", in_error_code.message());
       return;
     }
     default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
-    app_base::GetPtr()->stop_app();
+    app_base::GetPtr()->stop_app(1);
   });
   in_vector.emplace_back(signal_);
   g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
@@ -106,14 +107,15 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   l_up_auto_light_file.async_end(boost::asio::bind_executor(
       g_io_context(),
       [l_msg, l_work_guard](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
+        l_work_guard.reset();
         if (in_error_code) {
           l_msg.get<process_message>().set_state(process_message::state::fail);
+          app_base::GetPtr()->stop_app(in_error_code.value());
         } else {
           default_logger_raw()->info("成功");
           l_msg.get<process_message>().set_state(process_message::state::success);
+          app_base::GetPtr()->stop_app();
         }
-        l_work_guard.reset();
-        app_base::GetPtr()->stop_app();
       }
   ));
   l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));

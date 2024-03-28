@@ -86,14 +86,16 @@ std::int32_t app_base::run() {
   try {
     g_io_context().run();
   } catch (...) {
+    exit_code = 1;
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
   }
   try {
     g_io_context().run_for(std::chrono::milliseconds(10));
   } catch (...) {
+    exit_code = 1;
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
   }
-  return 0;
+  return exit_code;
 }
 
 std::int32_t app_base::poll_one() {
@@ -105,7 +107,8 @@ std::int32_t app_base::poll_one() {
   }
   return 0;
 }
-void app_base::stop_app(bool in_stop) {
+void app_base::stop_app(std::int32_t in_exit_code) {
+  exit_code = in_exit_code;
   on_cancel.emit();
   on_stop();
   g_ctx().emplace<program_info>().is_stop = true;

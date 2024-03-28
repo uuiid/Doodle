@@ -45,6 +45,8 @@ class DOODLE_CORE_API app_base {
   std::thread::id run_id{std::this_thread::get_id()};
   std::atomic_bool stop_;
 
+  std::int32_t exit_code{0};
+
  public:
   explicit app_base(int argc, const char* const argv[]);
   explicit app_base(std::int32_t argc, const wchar_t* const argv[]);
@@ -66,7 +68,7 @@ class DOODLE_CORE_API app_base {
   boost::signals2::signal<void()> on_stop;
   cancellation_signals on_cancel;
 
-  virtual void stop_app(bool in_stop = false);
+  virtual void stop_app(std::int32_t in_exit_code = 0);
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
