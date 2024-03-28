@@ -57,7 +57,7 @@ class app_service : public app_base {
   virtual ~app_service() override = default;
 
   std::int32_t run() override;
-  void stop_app(std::int32_t in_exit_code) override;
+  void stop_app(std::int32_t in_exit_code = 0) override;
 };
 
 /**
