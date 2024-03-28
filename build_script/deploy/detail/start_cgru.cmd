@@ -1,0 +1,1 @@
+start "test" "D:\doodle_exe\cgru\start.cmd"
