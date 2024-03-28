@@ -110,6 +110,7 @@ std::int32_t app_base::poll_one() {
 void app_base::stop_app(std::int32_t in_exit_code) {
   exit_code = in_exit_code;
   on_cancel.emit();
+  stop_ = true;
   on_stop();
   g_ctx().emplace<program_info>().is_stop = true;
   facets_.clear();
