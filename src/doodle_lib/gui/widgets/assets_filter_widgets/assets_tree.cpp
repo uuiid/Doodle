@@ -64,8 +64,32 @@ bool assets_tree::render() {
       current_select_handle = {};
       filter_list();
     }
+    if (auto l_popen_menu = dear::PopupContextItem{}) {
+      ImGui::InputText(*input_data.input, &input_data.node_name);
+      ImGui::SameLine();
+
+      if (ImGui::Button(*input_data.node_child)) {
+        auto l_root_it = tree_.begin();
+        if (auto it = ranges::find_if(
+                tree_type_t::begin(l_root_it), tree_type_t::end(l_root_it),
+                [&](const assets_tree_node &in) -> bool {
+                  //              DOODLE_LOG_INFO("检查节点 {}", in.name);
+                  return in.name.name == input_data.node_name;
+                }
+            );
+            it == l_root_it.end()) {
+          DOODLE_LOG_INFO("添加节点 {}", input_data.node_name);
+          entt::handle const l_h{*g_reg(), g_reg()->create()};
+          l_h.emplace<database>();
+          l_h.emplace<assets>(input_data.node_name);
+
+          tree_.append_child(l_root_it, assets_tree_node{input_data.node_name, l_h});
+          //      edit_data = true;
+          ImGui::CloseCurrentPopup();
+        }
+      }
+    }
     edit_data |= render_child(tree_.begin());
-    return edit_data;
   }
   return edit_data;
 }
@@ -75,7 +99,7 @@ void assets_tree::popen_menu(const tree_type_t::sibling_iterator &in) {
   ImGui::SameLine();
 
   if (ImGui::Button(*input_data.node)) {
-    auto l_parent = tree_type_t ::parent(in);
+    auto l_parent = tree_type_t::parent(in);
     if (auto it = ranges::find_if(
             tree_type_t::begin(l_parent), tree_type_t::end(l_parent),
             [&](const assets_tree_node &in) -> bool {
