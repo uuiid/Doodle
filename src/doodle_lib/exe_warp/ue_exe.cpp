@@ -57,10 +57,9 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
 
   boost::system::error_code chick_ue_plug() {
-    // ue_path = "D:\Program Files\Epic Games\UE_5.2\Engine\Binaries\Win64\UnrealEditor.exe"
     // l_doodle_path =D:\Program Files\Epic Games\UE_5.2\Engine\Plugins\Doodle\Doodle.uplugin
     logger_attr->log(log_loc(), level::info, "检查Doodle插件版本");
-    auto l_doodle_path = ue_path.parent_path().parent_path() / "Plugins" / "Doodle" / "Doodle.uplugin";
+    auto l_doodle_path = core_set::get_set().ue4_path / "Engine" / "Plugins" / "Doodle" / "Doodle.uplugin";
     std::string l_version{};
     if (FSys::exists(l_doodle_path)) {
       auto l_json = nlohmann::json::parse(FSys::ifstream{l_doodle_path});
