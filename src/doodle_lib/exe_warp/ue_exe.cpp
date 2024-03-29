@@ -13,6 +13,7 @@
 #include <doodle_core/logger/logger.h>
 
 #include <doodle_lib/core/thread_copy_io.h>
+#include <doodle_lib/toolkit/toolkit.h>
 
 #include "boost/asio/read.hpp"
 #include "boost/asio/readable_pipe.hpp"
@@ -55,12 +56,47 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
 
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
 
+  boost::system::error_code chick_ue_plug() {
+    // ue_path = "D:\Program Files\Epic Games\UE_5.2\Engine\Binaries\Win64\UnrealEditor.exe"
+    // l_doodle_path =D:\Program Files\Epic Games\UE_5.2\Engine\Plugins\Doodle\Doodle.uplugin
+    logger_attr->log(log_loc(), level::info, "检查Doodle插件版本");
+    auto l_doodle_path = ue_path.parent_path().parent_path() / "Plugins" / "Doodle" / "Doodle.uplugin";
+    std::string l_version{};
+    if (FSys::exists(l_doodle_path)) {
+      auto l_json = nlohmann::json::parse(FSys::ifstream{l_doodle_path});
+      if (l_json.contains("VersionName")) l_version = l_json["VersionName"].get<std::string>();
+    }
+    if (l_version != version::build_info::get().version_str) {
+      logger_attr->log(
+          log_loc(), level::warn, "Doodle 插件版本不匹配, 重新安装查插件版本 {} != {}", l_version,
+          version::build_info::get().version_str
+      );
+      try {
+        toolkit::installUePath(core_set::get_set().ue4_path / "Engine");
+      } catch (const FSys::filesystem_error &error) {
+        logger_attr->log(log_loc(), level::err, "安装插件失败 {}", error.what());
+        return error.code();
+      }
+    } else {
+      logger_attr->log(
+          log_loc(), level::info, "Doodle 插件版本匹配 {} == {}", l_version, version::build_info::get().version_str
+      );
+    }
+    return {};
+  }
+
   virtual void run() override {
     if (is_cancel) {
       logger_attr->log(log_loc(), level::err, "用户结束 ue_exe: {}", ue_path);
       boost::system::error_code l_ec{boost::asio::error::operation_aborted};
       BOOST_ASIO_ERROR_LOCATION(l_ec);
       call_attr->ec_ = l_ec;
+      call_attr->complete();
+      self_->notify_run();
+      return;
+    }
+    if (auto l_err = chick_ue_plug(); l_err) {
+      call_attr->ec_ = l_err;
       call_attr->complete();
       self_->notify_run();
       return;
