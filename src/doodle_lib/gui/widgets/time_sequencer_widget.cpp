@@ -195,7 +195,8 @@ class time_sequencer_widget::impl {
     }
 
     time_point_wrap l_time{time_point_wrap::time_point{
-        doodle::chrono::seconds{boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)}}};
+        doodle::chrono::seconds{boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)}
+    }};
     DOODLE_LOG_INFO("时间 {} 限制为 {} -> {}", l_time, l_min, l_max);
 
     auto l_value                 = std::max(l_min, std::min(l_time, l_max));
@@ -272,7 +273,8 @@ class time_sequencer_widget::impl {
   ImPlotRect get_view1_rect() {
     ImPlotRect l_r{
         time_list_x[index_begin_] - 360, time_list_x[index_view_end] + 360, time_list_y[index_begin_] - 1,
-        time_list_y[index_view_end] + 1};
+        time_list_y[index_view_end] + 1
+    };
     return l_r;
   }
   [[nodiscard]] ImPlotRect get_view2_rect() const {
@@ -282,7 +284,8 @@ class time_sequencer_widget::impl {
       l_list |= ranges::actions::sort;
       ImPlotRect l_r{
           std::double_t(index_begin_) - 1, std::double_t(index_view_end + 1), 0,
-          l_list.empty() ? std::double_t(8) : l_list.back()};
+          l_list.empty() ? std::double_t(8) : l_list.back()
+      };
       return l_r;
     }
     return ImPlotRect{};
@@ -298,6 +301,7 @@ class time_sequencer_widget::impl {
   }
 
   void save() {
+    if (time_list.empty()) return;
     decltype(time_list.front().time_point_) l_begin = time_list.front().time_point_.current_month_start();
     ranges::for_each(
         time_list | ranges::views::filter([](const point_cache& in) -> bool {
