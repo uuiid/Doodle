@@ -102,3 +102,4 @@ endif ()
 
 add_subdirectory(exe_authorization)
 add_subdirectory(test)
+add_subdirectory(usd)
