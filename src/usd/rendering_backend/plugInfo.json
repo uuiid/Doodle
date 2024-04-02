@@ -1,0 +1,22 @@
+{
+  "Plugins": [
+    {
+      "Info": {
+        "Types": {
+          "HdRendererPluginRegistry": {
+            "bases": [
+              "HdRendererPlugin"
+            ],
+            "displayName": "Doodle_UE",
+            "priority": 99
+          }
+        }
+      },
+      "LibraryPath": "@PLUG_INFO_LIBRARY_PATH@",
+      "Name": "Doodle_UE",
+      "ResourcePath": "@PLUG_INFO_RESOURCE_PATH@",
+      "Root": "@PLUG_INFO_ROOT@",
+      "Type": "library"
+    }
+  ]
+}
