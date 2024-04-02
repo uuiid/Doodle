@@ -4,4 +4,4 @@ add_library(
         usd_ue_rendering.h
 )
 add_subdirectory(src)
-target_link_libraries(usd_ue_rendering PRIVATE usd)
+target_link_libraries(usd_ue_rendering PRIVATE ${PXR_LIBRARIES})
