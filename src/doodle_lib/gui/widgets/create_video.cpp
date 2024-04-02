@@ -86,8 +86,15 @@ bool create_video::render() {
 
       for (auto&& l_file : *l_list) {
         if (FSys::is_directory(l_file)) {
+          std::vector<FSys::path> l_list_files;
+          for (auto&& l_p : FSys::recursive_directory_iterator(l_file)) {
+            if (FSys::is_regular_file(l_p) && (l_p.path().extension() == ".png" || l_p.path().extension() == ".jpg" ||
+                                               l_p.path().extension() == ".jpeg"))
+              l_list_files.push_back(l_p);
+          }
+
           auto&& l_out = p_i->image_to_video_list.emplace_back(
-              create_image_to_move_handle(l_file), FSys::list_files(l_file), l_file.generic_string()
+              create_image_to_move_handle(l_file), l_list_files, l_file.generic_string()
           );
         }
       }
