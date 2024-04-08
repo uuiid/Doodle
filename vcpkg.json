@@ -88,8 +88,7 @@
     },
     "dem-bones",
     "cppzmq",
-    "winreg",
-    "usd"
+    "winreg"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [

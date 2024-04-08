@@ -8,6 +8,20 @@
     ],
     "configurations": [
         {
+            "name": "Python 调试程序: 当前文件",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "E:/cache/Kitchen_set/Kitchen_set.usd"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/external/USD/debug/lib/python",
+                "PATH": "${workspaceFolder}/external/USD/debug/bin;${workspaceFolder}/external/USD/debug/lib;${env:PATH}"
+            },
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",

@@ -6,10 +6,10 @@
 #include "pxr/imaging/hd/rendererPlugin.h"
 #include "pxr/pxr.h"
 namespace doodle::usd {
-class HdStormRendererPlugin final : public pxr::HdRendererPlugin {
+class HdDoodleRendererPlugin final : public pxr::HdRendererPlugin {
  public:
-  HdStormRendererPlugin()          = default;
-  virtual ~HdStormRendererPlugin() = default;
+  HdDoodleRendererPlugin()          = default;
+  virtual ~HdDoodleRendererPlugin() = default;
 
   virtual pxr::HdRenderDelegate *CreateRenderDelegate() override;
   virtual pxr::HdRenderDelegate *CreateRenderDelegate(pxr::HdRenderSettingsMap const &settingsMap) override;
@@ -19,7 +19,7 @@ class HdStormRendererPlugin final : public pxr::HdRendererPlugin {
   virtual bool IsSupported(bool gpuEnabled = true) const override;
 
  private:
-  HdStormRendererPlugin(const HdStormRendererPlugin &)            = delete;
-  HdStormRendererPlugin &operator=(const HdStormRendererPlugin &) = delete;
+  HdDoodleRendererPlugin(const HdDoodleRendererPlugin &)            = delete;
+  HdDoodleRendererPlugin &operator=(const HdDoodleRendererPlugin &) = delete;
 };
 }  // namespace doodle::usd

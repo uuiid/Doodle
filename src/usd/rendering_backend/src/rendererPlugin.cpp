@@ -8,18 +8,18 @@
 #include "pxr/imaging/hdSt/renderDelegate.h"
 #include "pxr/pxr.h"
 namespace pxr {
-TF_REGISTRY_FUNCTION(pxr::TfType) { pxr::HdRendererPluginRegistry::Define<doodle::usd::HdStormRendererPlugin>(); }
+TF_REGISTRY_FUNCTION(TfType) { pxr::HdRendererPluginRegistry::Define<doodle::usd::HdDoodleRendererPlugin>(); }
 }  // namespace pxr
 namespace doodle::usd {
-pxr::HdRenderDelegate* HdStormRendererPlugin::CreateRenderDelegate() { return new pxr::HdStRenderDelegate(); }
+pxr::HdRenderDelegate* HdDoodleRendererPlugin::CreateRenderDelegate() { return new pxr::HdStRenderDelegate(); }
 
-pxr::HdRenderDelegate* HdStormRendererPlugin::CreateRenderDelegate(pxr::HdRenderSettingsMap const& settingsMap) {
+pxr::HdRenderDelegate* HdDoodleRendererPlugin::CreateRenderDelegate(pxr::HdRenderSettingsMap const& settingsMap) {
   return new pxr::HdStRenderDelegate(settingsMap);
 }
 
-void HdStormRendererPlugin::DeleteRenderDelegate(pxr::HdRenderDelegate* renderDelegate) { delete renderDelegate; }
+void HdDoodleRendererPlugin::DeleteRenderDelegate(pxr::HdRenderDelegate* renderDelegate) { delete renderDelegate; }
 
-bool HdStormRendererPlugin::IsSupported(bool gpuEnabled) const {
+bool HdDoodleRendererPlugin::IsSupported(bool gpuEnabled) const {
   return gpuEnabled ? pxr::HdStRenderDelegate::IsSupported() : false;
 }
 }  // namespace doodle::usd
