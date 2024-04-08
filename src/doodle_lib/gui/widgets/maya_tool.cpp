@@ -532,11 +532,11 @@ boost::process::environment create_cgru_env() {
     l_env["CGRU_VERSION"] = l_version;
   }
 
-  auto l_qt_conf = l_cgru / "afanasy" / "bin" / "qt.conf";
-  if (!FSys::exists(l_qt_conf)) {
-    FSys::ofstream l_qt_conf_stream{l_qt_conf};
-    l_qt_conf_stream << fmt::format("[Paths]\nPrefix = {}\n", (l_cgru / "dll").generic_string());
-  }
+  // auto l_qt_conf = l_cgru / "afanasy" / "bin" / "qt.conf";
+  // if (!FSys::exists(l_qt_conf)) {
+  //   FSys::ofstream l_qt_conf_stream{l_qt_conf};
+  //   l_qt_conf_stream << fmt::format("[Paths]\nPrefix = {}\n", (l_cgru / "dll").generic_string());
+  // }
   return l_env;
 }
 
