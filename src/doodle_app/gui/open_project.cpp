@@ -51,6 +51,11 @@ bool open_project::render() {
       );
       open = false;
     }
+    if (ImGui::Button("外包", ImVec2{-FLT_MIN, 0})) {
+      core_set::get_set().next_time_ = true;
+      core_set_init{}.write_file();
+      open = false;
+    }
     if (!cmd_path_.empty()) {
       ImGui::Text("传入的项目");
       if (ImGui::Button(cmd_path_.generic_string().c_str(), ImVec2{-FLT_MIN, 0})) {
