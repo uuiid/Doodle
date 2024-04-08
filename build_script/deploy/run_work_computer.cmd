@@ -15,4 +15,7 @@ PsExec.exe \\192.168.30.73  -u auto_light -p root -i cmd.exe /C "\\192.168.20.59
 @REM PsExec.exe \\192.168.20.188 -u auto_light         -i cmd.exe /C "\\192.168.20.59\doodle2\build_script\deploy\detail\work_computer_cmd.cmd %Doodle_Name%"
 PsExec.exe @work_coms.txt  -u auto_light -p root -i cmd /C "\\192.168.20.59\doodle2\build_script\deploy\detail\run_render.cmd"
 PsExec.exe @work_coms.txt  -u auto_light -p root -i cmd /C "\\192.168.20.59\doodle2\build_script\deploy\detail\copy_run.cmd"
+PsExec.exe @work_coms.txt  -u auto_light -p root -i cmd /C "\\192.168.20.59\doodle2\build_script\deploy\detail\install_cgru.cmd"
 PsExec.exe @work_coms.txt  -u auto_light -p root -i cmd /C "\\192.168.20.59\doodle2\build_script\deploy\detail\work_computer_cmd.cmd %Doodle_Name%"
+
+PsShutdown.exe @work_coms.txt  -u auto_light -p root -r
