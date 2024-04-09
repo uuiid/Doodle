@@ -509,19 +509,19 @@ boost::process::environment create_cgru_env() {
 
   auto l_cgru_version               = l_cgru / "version.txt";
 
-  // l_env["CGRU_LOCATION"]            = l_cgru.generic_string();
-  // l_env["Path"]                     = fmt::format(
-  //     "{};{};{};{};{}", l_cgru / "dll", l_cgru / "bin", l_cgru / "software_setup" / "bin", l_cgru / "python",
-  //     l_cgru / "afanasy/bin"
-  // );
-  // l_env["CGRU_PYTHON"]    = (l_cgru / "lib" / "python").generic_string();
-  // l_env["PYTHONHOME"]     = (l_cgru / "python").generic_string();
-  // l_env["PYTHONPATH"]     = fmt::format("{};{}", l_cgru / "lib" / "python", l_cgru / "afanasy/python");
-  // l_env["python"]         = (l_cgru / "python").generic_string();
-  // l_env["CGRU_PYTHONDIR"] = (l_cgru / "python").generic_string();
-  // l_env["CGRU_PYTHONEXE"] = "python";
-  // l_env["AF_ROOT"]        = (l_cgru / "afanasy").generic_string();
-  // l_env["AF_PYTHON"]      = (l_cgru / "afanasy" / "python").generic_string();
+  l_env["CGRU_LOCATION"]            = l_cgru.generic_string();
+  l_env["Path"]                     = fmt::format(
+      "{};{};{};{};{}", l_cgru / "dll", l_cgru / "bin", l_cgru / "software_setup" / "bin", l_cgru / "python",
+      l_cgru / "afanasy/bin"
+  );
+  l_env["CGRU_PYTHON"]    = (l_cgru / "lib" / "python").generic_string();
+  //  l_env["PYTHONHOME"]     = (l_cgru / "python").generic_string();
+  l_env["PYTHONPATH"]     = fmt::format("{};{}", l_cgru / "lib" / "python", l_cgru / "afanasy/python");
+  l_env["python"]         = (l_cgru / "python").generic_string();
+  l_env["CGRU_PYTHONDIR"] = (l_cgru / "python").generic_string();
+  l_env["CGRU_PYTHONEXE"] = "python";
+  l_env["AF_ROOT"]        = (l_cgru / "afanasy").generic_string();
+  l_env["AF_PYTHON"]      = (l_cgru / "afanasy" / "python").generic_string();
   l_env["AF_USERNAME"]    = l_user_name;
   l_env["AF_HOSTNAME"]    = l_host_name;
 
