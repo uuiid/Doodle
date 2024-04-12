@@ -67,7 +67,31 @@ void scan_assets_t::create_scan_categories() {
 }
 
 void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::scan_category_data_ptr>& in_data) {
-  for (auto l_data : in_data) {
+  auto l_list = in_data;
+  // 检查无基础版本的情况
+  std::string l_name_str{};
+  for (auto l_it = l_list.begin(); l_it != l_list.end();) {
+    l_name_str  = (*l_it)->name_;
+    auto l_next = l_it++;
+    while (l_next != l_list.end()) {
+      if ((*l_next)->name_ != l_name_str) break;
+
+      if ((*l_it)->ue_file_.path_.empty() && (*l_it)->ue_file_.path_.empty()) {
+        (*l_it)->ue_file_      = (*l_next)->ue_file_;
+        (*l_it)->version_name_ = (*l_next)->version_name_;
+        l_next                 = l_list.erase(l_next);
+        break;
+      }
+      if ((*l_next)->ue_file_.path_.empty() && (*l_next)->ue_file_.path_.empty()) {
+        l_next = l_list.erase(l_next);
+        break;
+      }
+      ++l_next;
+    }
+    l_it = l_next;
+  }
+
+  for (auto l_data : l_list) {
     if (!l_data) continue;
     scan_gui_data_t l_gui_data{};
     l_gui_data.name_         = l_data->name_;
