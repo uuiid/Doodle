@@ -62,6 +62,24 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+          "name": "Doodle_maya_debug_remove",
+          "type": "cppvsdbg",
+          "request": "launch",
+          "program": "${command:cmake.getLaunchTargetPath}",
+          "args": [],
+          "stopAtEntry": false,
+          "cwd": "${command:cmake.launchTargetDirectory}",
+          "environment": [
+            {
+              "name": "MAYA_MODULE_PATH",
+              "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
+            }
+          ],
+          "console": "internalConsole",
+          "visualizerFile": "${workspaceFolder}/stl.natvis",
+          "windows": {}
+        },
+      {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
