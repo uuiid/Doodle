@@ -16,17 +16,18 @@ void ADoodleTimeDilation::BeginPlay() {
   }
 
   for (auto&& i : ExcludeObjects) {
-    if (i) i->CustomTimeDilation = 1 / (TimeDilation ? TimeDilation : 1);
+    if (i) i->CustomTimeDilation = 1;
   }
   Super::BeginPlay();
 }
 
 void ADoodleTimeDilation::Tick(float DeltaTime) {
   // GetWorld()->GetWorldSettings()->SetTimeDilation(TimeDilation);
+  UE_LOG(LogTemp, Warning, TEXT("ADoodleTimeDilation::Tick %f"), TimeDilation);
   for (TActorIterator<AActor> L_ActorItr{GetWorld()}; L_ActorItr; ++L_ActorItr) {
     L_ActorItr->CustomTimeDilation = TimeDilation;
   }
   for (auto&& i : ExcludeObjects) {
-    if (i) i->CustomTimeDilation = 1 / (TimeDilation ? TimeDilation : 1);
+    if (i) i->CustomTimeDilation = 1;
   }
 }
