@@ -71,6 +71,7 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
           l_ptr->begin_episode_ = l_begin_episode;
           l_ptr->name_          = l_name_str;
           l_ptr->JD_path_       = l_s.path();
+          l_ptr->base_path_     = l_s2.path();
           l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::prop;
           l_ptr->file_type_.set_path("道具");
           l_out.emplace_back(l_ptr);
