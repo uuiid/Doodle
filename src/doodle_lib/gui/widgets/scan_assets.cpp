@@ -68,22 +68,31 @@ void scan_assets_t::create_scan_categories() {
 
 void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::scan_category_data_ptr>& in_data) {
   auto l_list = in_data;
+
+  std::ranges::sort(l_list, [](const auto& in_l, const auto& in_r) -> bool { return in_l->name_ < in_r->name_; });
   // 检查无基础版本的情况
   std::string l_name_str{};
   for (auto l_it = l_list.begin(); l_it != l_list.end();) {
     l_name_str  = (*l_it)->name_;
-    auto l_next = l_it++;
+    auto l_next = l_it;
+    ++l_next;
+
+    if (l_next == l_list.end()) break;
+
+    if ((*l_next)->name_ == l_name_str && (*l_it)->ue_file_.path_.empty() && (*l_it)->rig_file_.path_.empty() &&
+        (*l_it)->version_name_.empty()) {
+      default_logger_raw()->log(log_loc(), level::info, "删除无效数据:{}, 版本, UE, Rig都是空", (*l_it)->base_path_);
+      l_it   = l_list.erase(l_it);
+      l_next = l_it;
+      ++l_next;
+    }
     while (l_next != l_list.end()) {
       if ((*l_next)->name_ != l_name_str) break;
-
-      if ((*l_it)->ue_file_.path_.empty() && (*l_it)->ue_file_.path_.empty()) {
-        (*l_it)->ue_file_      = (*l_next)->ue_file_;
-        (*l_it)->version_name_ = (*l_next)->version_name_;
-        l_next                 = l_list.erase(l_next);
-        break;
-      }
-      if ((*l_next)->ue_file_.path_.empty() && (*l_next)->ue_file_.path_.empty()) {
+      if ((*l_next)->ue_file_.path_.empty() && (*l_next)->rig_file_.path_.empty() && (*l_next)->version_name_.empty()) {
         l_next = l_list.erase(l_next);
+        default_logger_raw()->log(
+            log_loc(), level::info, "删除无效数据:{}, 版本, UE, Rig都是空", (*l_next)->base_path_
+        );
         break;
       }
       ++l_next;
@@ -142,6 +151,9 @@ void scan_assets_t::start_scan() {
                   default_logger_raw()->log(log_loc(), level::err, "扫描资产失败:{} {}", in_ec.message(), l_root);
                   return;
                 }
+                default_logger_raw()->log(
+                    log_loc(), level::info, "扫描资产完成:{}, 共 {} 条", l_root, in_vector.size()
+                );
                 append_assets_table_data(in_vector);
               }
           )
