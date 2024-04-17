@@ -104,7 +104,7 @@ class DlsShelf(shelfBase._shelf):
         cmds.set_cloth_cache_path()
 
     def blendkeyframe(self):
-        Doodle_blend_keyframe.backeProcess()
+        scripts.Doodle_blend_keyframe.backeProcess()
 
     def export_doodle_fbx(self):
         l_files = cmds.fileDialog2(fileMode=0)
