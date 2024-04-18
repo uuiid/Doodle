@@ -52,4 +52,4 @@ $My_Str += "`n`n即将重启文件管理器"
 Write-Host $My_Str
 
 Start-Process explorer
-# ps2exe E:\Doodle\script\Cmd_tool\map_net_disk.ps1 E:\Doodle\script\Cmd_tool\run2.6.exe
+# ps2exe E:\Doodle\script\Cmd_tool\map_net_disk.ps1 E:\Doodle\script\Cmd_tool\run2.7.exe
