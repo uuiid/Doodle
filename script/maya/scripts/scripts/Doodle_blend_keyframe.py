@@ -179,8 +179,8 @@ class constraint_mg:
 
 #Operation process
 def backeProcess():
+    Circle_namespace = user_select().namespace
     arr_locator = [Locator() for i in range(0, 5)]
-    Circle_namespace=user_select().namespace
     arr_Circle = [maya_node(in_obj_name=Circle_namespace+':Main'),
                 maya_node(in_obj_name=Circle_namespace+':main_con'),
                 maya_node(in_obj_name=Circle_namespace+':RootX_M'),
