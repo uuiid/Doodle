@@ -34,6 +34,8 @@ std::string doodle_category::message(int ev) const {
       return "必要字符串为空"s;
     case error_enum::bad_json_string:
       return "json解析错误"s;
+    case error_enum::bad_url:
+      return "url错误"s;
     case error_enum::not_find_work_class:
       return "没有找到对应的work类"s;
     case error_enum::not_allow_multi_work:

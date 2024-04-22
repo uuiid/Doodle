@@ -29,6 +29,7 @@ enum error_t : std::int32_t {
 
   null_string,
   bad_json_string,
+  bad_url,
   not_find_work_class,
   // 不允许多个工作
   not_allow_multi_work,
