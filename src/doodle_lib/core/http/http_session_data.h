@@ -46,7 +46,7 @@ class http_session_data {
   void rend_head();
 
   void do_close();
-  void seed_error(boost::beast::http::status in_status, boost::system::error_code ec);
+  void seed_error(boost::beast::http::status in_status, boost::system::error_code ec, const std::string& in_str = "");
   void seed(boost::beast::http::message_generator in_message_generator);
 };
 
