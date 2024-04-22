@@ -8,6 +8,7 @@ target_sources(
         task_server.h
         save_http_data.h
         http_snapshot.h
+        file_exists.h
 
         PRIVATE
         computer.cpp
@@ -15,4 +16,5 @@ target_sources(
         task_server.cpp
         save_http_data.cpp
         http_snapshot.cpp
+        file_exists.cpp
 )
