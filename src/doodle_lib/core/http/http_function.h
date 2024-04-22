@@ -33,7 +33,12 @@ class http_function {
       requires std::is_arithmetic_v<T>
     std::optional<T> get(const std::string& in_str) const {
       if (capture_map_.find(in_str) != capture_map_.end()) {
-        return boost::lexical_cast<T>(capture_map_.at(in_str));
+        try {
+          return boost::lexical_cast<T>(capture_map_.at(in_str));
+        } catch (const boost::bad_lexical_cast& in_err) {
+          default_logger_raw()->log(log_loc(), level::err, "get arithmetic error: {}", in_err.what());
+          return {};
+        }
       }
       return {};
     }
