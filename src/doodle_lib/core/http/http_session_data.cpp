@@ -42,7 +42,7 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
   l_rote(request_parser_->get().method(), url_.segments(), l_self_handle)->callback_(l_self_handle);
 }
 void http_session_data::seed_error(
-    boost::beast::http::status in_status, boost::system::error_code ec, const std::string& in_str = ""
+    boost::beast::http::status in_status, boost::system::error_code ec, const std::string& in_str
 ) {
   entt::handle l_self_handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   auto l_logger = l_self_handle.get<socket_logger>().logger_;
