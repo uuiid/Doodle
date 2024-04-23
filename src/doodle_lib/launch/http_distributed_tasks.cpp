@@ -23,8 +23,6 @@ void reg_func(doodle::http::http_route &in_route) {
 }
 
 bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
-  using signal_t      = boost::asio::signal_set;
-
   auto &l_app         = static_cast<app_service &>(app_base::Get());
   l_app.service_name_ = L"doodle_http_service";
   l_app.display_name_ = L"doodle_http_service";
