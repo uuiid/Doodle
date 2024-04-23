@@ -6,6 +6,7 @@ target_sources(
         http_distributed_tasks.h
         http_working_service.h
         auto_light_process.h
+        file_exists_launch.h
 
         PRIVATE
         main_gui.cpp
@@ -13,4 +14,5 @@ target_sources(
         http_distributed_tasks.cpp
         http_working_service.cpp
         auto_light_process.cpp
+        file_exists_launch.cpp
 )
