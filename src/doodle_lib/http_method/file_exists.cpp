@@ -440,32 +440,125 @@ struct solve_file_check : public file_exists_check {
 }  // namespace
 
 void file_exists::file_exists_fun(boost::system::error_code in_error_code, const entt::handle in_handle) {
-  auto l_logger     = in_handle.get<socket_logger>().logger_;
-  auto l_cap        = in_handle.get<http_function::capture_t>();
-  auto &session     = in_handle.get<http_session_data>();
-  auto l_project    = l_cap.get<std::string>("project");
-  auto l_department = l_cap.get<std::string>("department");
-  auto l_task_type  = l_cap.get<std::string>("task_type");
-  auto l_season     = l_cap.get<std::int32_t>("season");
-  auto l_episodes   = l_cap.get<std::int32_t>("episodes");
-  auto l_shot       = l_cap.get<std::string>("shot");
-  auto l_number     = l_cap.get<std::string>("number");
-  auto l_name       = l_cap.get<std::string>("name");
-  auto l_UE_Version = l_cap.get<std::int32_t>("UE_Version");
-  if (!l_project || l_project->empty() || !l_department || l_department->empty() || !l_task_type ||
-      l_task_type->empty() || !l_season || !l_episodes) {
-    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失参数, 或者参数为空");
+  auto l_logger    = in_handle.get<socket_logger>().logger_;
+  auto l_cap       = in_handle.get<http_function::capture_t>();
+  auto &session    = in_handle.get<http_session_data>();
+  auto l_url_query = session.url_.query();
+
+  project l_project{};
+
+  if (auto l_it = l_url_query.find("project"); l_it != l_url_query.npos) {
+    auto l_project_str = l_url_query.substr(l_it + 8, l_url_query.find('&', l_it) - l_it - 8);
+    auto l_projects    = register_file_type::get_project_list();
+    if (auto l_it_prj = std::ranges::find_if(
+            l_projects, [&](const project &in_project) -> bool { return in_project.get_name() == l_project_str; }
+        );
+        l_it_prj == l_projects.end()) {
+      session.seed_error(boost::beast::http::status::not_found, error_enum::bad_url, "项目不存在");
+      return;
+    } else
+      l_project = *l_it_prj;
+  } else {
+    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失项目参数");
     return;
   }
-  auto l_dep = magic_enum::enum_cast<department_>(*l_department);
-  if (!l_dep) {
-    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "部门参数错误");
+
+  department_ l_department{};
+  if (auto l_it = l_url_query.find("department"); l_it != l_url_query.npos) {
+    auto l_department_str = l_url_query.substr(l_it + 11, l_url_query.find('&', l_it) - l_it - 11);
+    auto l_dep            = magic_enum::enum_cast<department_>(l_department_str);
+    if (!l_dep) {
+      session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "部门参数错误");
+      return;
+    }
+    l_department = *l_dep;
+  } else {
+    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失部门参数");
     return;
   }
-  auto l_task_t = magic_enum::enum_cast<task_type>(*l_task_type);
-  if (!l_task_t) {
-    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
+
+  task_type l_task_type{};
+  if (auto l_it = l_url_query.find("task_type"); l_it != l_url_query.npos) {
+    auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
+    auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
+    if (!l_task_t) {
+      session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
+      return;
+    }
+    l_task_type = *l_task_t;
+  } else {
+    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失任务类型参数");
     return;
+  }
+
+  std::int32_t l_season{};
+  std::int32_t l_episodes{};
+  std::string l_shot{};
+  std::string l_number{};
+  std::string l_name{};
+  std::int32_t l_UE_Version{5};
+  switch (l_department) {
+    case department_::角色模型: {
+      // UE_Version
+      if (auto l_it = l_url_query.find("UE_Version"); l_it != l_url_query.npos) {
+        l_UE_Version = std::stoi(l_url_query.substr(l_it + 11, l_url_query.find('&', l_it) - l_it - 11));
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失UE_Version参数");
+        return;
+      }
+    }
+    case department_::地编: {
+      if (auto l_it = l_url_query.find("season"); l_it != l_url_query.npos) {
+        l_season = std::stoi(l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7));
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失季度参数");
+        return;
+      }
+      // name
+      if (auto l_it = l_url_query.find("name"); l_it != l_url_query.npos) {
+        l_name = l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5);
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数");
+        return;
+      }
+
+      switch (l_task_type) {
+        case task_type::角色:
+        case task_type::道具: {
+          // number
+          if (auto l_it = l_url_query.find("number"); l_it != l_url_query.npos) {
+            l_number = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
+          } else {
+            session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数");
+            return;
+          }
+        }
+      }
+      break;
+    }
+
+    case department_::动画:
+    case department_::解算: {
+      // episodes
+      if (auto l_it = l_url_query.find("episodes"); l_it != l_url_query.npos) {
+        l_episodes = std::stoi(l_url_query.substr(l_it + 9, l_url_query.find('&', l_it) - l_it - 9));
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失集数参数");
+        return;
+      }
+      // shot
+      if (auto l_it = l_url_query.find("shot"); l_it != l_url_query.npos) {
+        l_shot = l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5);
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失shot参数");
+        return;
+      }
+      break;
+    }
+
+    default: {
+      return session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "部门不支持");
+    }
   }
 
   boost::beast::http::response<boost::beast::http::string_body> l_response{
@@ -473,57 +566,22 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
   };
   l_response.keep_alive(session.request_parser_->get().keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-
-  // 组合路径
-  // department enum 角色模型 动画 特效 剪辑 原画 分镜 地编 绑定 解算 灯光 编剧 制片
-  std::vector<FSys::path> l_path{};
   std::shared_ptr<file_exists_check> l_check{};
   {
-    auto l_projects = register_file_type::get_project_list();
-    project l_prj{};
-    if (auto l_it = std::ranges::find_if(
-            l_projects, [&](const project &in_project) -> bool { return in_project.get_name() == *l_project; }
-        );
-        l_it == l_projects.end()) {
-      session.seed_error(boost::beast::http::status::not_found, error_enum::bad_url, "项目不存在");
-      return;
-    } else
-      l_prj = *l_it;
-
-    auto l_season_begin = (*l_season - 1) * 20 + 1;
-    switch (*l_dep) {
+    auto l_season_begin = (l_season - 1) * 20 + 1;
+    switch (l_department) {
       case department_::角色模型: {
-        if (!l_number || l_number->empty() || !l_name || l_name->empty()) {
-          session.seed_error(
-              boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
-          );
-          return;
-        }
-
-        l_check = std::make_shared<role_model_check>(l_prj, *l_season, *l_episodes, *l_number, *l_name, *l_UE_Version);
+        l_check = std::make_shared<role_model_check>(l_project, l_season, l_episodes, l_number, l_name, l_UE_Version);
         break;
       }
       case department_::地编: {
-        switch (*l_task_t) {
+        switch (l_task_type) {
           case task_type::道具: {
-            if (!l_name || l_name->empty()) {
-              session.seed_error(
-                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数, 或者参数为空"
-              );
-              return;
-            }
-            l_check = std::make_shared<scene_prop_check>(l_prj, *l_season, *l_episodes, *l_name);
-
+            l_check = std::make_shared<scene_prop_check>(l_project, l_season, l_episodes, l_name);
             break;
           }
           case task_type::地编: {
-            if (!l_name || l_name->empty() || !l_number || l_number->empty()) {
-              session.seed_error(
-                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称或者编号参数, 或者参数为空"
-              );
-              return;
-            }
-            l_check = std::make_shared<scene_rig_check>(l_prj, *l_season, *l_episodes, *l_name, *l_number);
+            l_check = std::make_shared<scene_rig_check>(l_project, l_season, l_episodes, l_name, l_number);
             break;
           }
           case task_type::角色:
@@ -533,60 +591,29 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
         break;
       }
       case department_::绑定: {
-        switch (*l_task_t) {
+        switch (l_task_type) {
           case task_type::角色: {
-            if (!l_number || l_number->empty() || !l_name || l_name->empty()) {
-              session.seed_error(
-                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
-              );
-              return;
-            }
-            l_check = std::make_shared<role_rig_check>(l_prj, *l_season, *l_episodes, *l_number, *l_name);
+            l_check = std::make_shared<role_rig_check>(l_project, l_season, l_episodes, l_number, l_name);
             break;
           }
           case task_type::地编: {
-            if (!l_name || l_name->empty() || !l_number || l_number->empty()) {
-              session.seed_error(
-                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称或者编号参数, 或者参数为空"
-              );
-              return;
-            }
-            l_check = std::make_shared<ground_binding_check>(
-                l_prj, *l_season, *l_episodes, *l_number, *l_name, *l_UE_Version
-            );
+            l_check =
+                std::make_shared<ground_binding_check>(l_project, l_season, l_episodes, l_number, l_name, l_UE_Version);
             break;
           }
           case task_type::道具: {
-            if (!l_name || l_name->empty()) {
-              session.seed_error(
-                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数, 或者参数为空"
-              );
-              return;
-            }
-            l_check = std::make_shared<scene_prop_rig_check>(l_prj, *l_season, *l_episodes, *l_name);
+            l_check = std::make_shared<scene_prop_rig_check>(l_project, l_season, l_episodes, l_name);
             break;
           }
         }
         break;
       }
       case department_::动画: {
-        if (!l_shot || l_shot->empty()) {
-          session.seed_error(
-              boost::beast::http::status::bad_request, error_enum::bad_url, "缺失shot参数, 或者参数为空"
-          );
-          return;
-        }
-        l_check = std::make_shared<animation_file_check>(l_prj, *l_season, *l_episodes, *l_shot);
+        l_check = std::make_shared<animation_file_check>(l_project, l_season, l_episodes, l_shot);
         break;
       }
       case department_::解算: {
-        if (!l_number || l_number->empty()) {
-          session.seed_error(
-              boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
-          );
-          return;
-        }
-        l_check = std::make_shared<solve_asset_file_check>(l_prj, *l_number);
+        l_check = std::make_shared<solve_asset_file_check>(l_project, l_number);
         break;
       }
       case department_::原画:
