@@ -3,3 +3,623 @@
 //
 
 #include "file_exists.h"
+
+#include "doodle_core/platform/win/register_file_type.h"
+
+#include "doodle_lib/core/http/http_session_data.h"
+#include "doodle_lib/core/http/http_websocket_data.h"
+namespace doodle::http {
+
+namespace {
+enum class department_ {
+  角色模型,
+  动画,
+  特效,
+  剪辑,
+  原画,
+  分镜,
+  地编,
+  绑定,
+  解算,
+  灯光,
+  编剧,
+  制片,
+};
+
+enum class task_type {
+  道具,
+  地编,
+  角色,
+};
+
+struct file_exists_check {
+  virtual bool operator()(std::string &msg, std::int32_t &in_err_code) = 0;
+};
+
+// 角色模型检查
+struct role_model_check : public file_exists_check {
+  FSys::path ue_file_;
+  FSys::path maya_file_;
+  explicit role_model_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string &in_number, const std::string &in_name, const std::int32_t &in_UE_Version
+  ) {
+    auto l_season_begin = (in_season - 1) * 20 + 1;
+    auto l_base_path =
+        fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}/", in_project.get_path(), in_season, l_season_begin, in_number);
+    // UE 项目路径
+    ue_file_ = FSys::path(fmt::format("{}/{}_UE{}.uproject", l_base_path, in_name, in_UE_Version));
+    // UE 骨骼路径
+    maya_file_ =
+        FSys::path(fmt::format("{}/Content/Character/{}/Meshs/SK_Ch{}.uasset", l_base_path, in_name, in_number));
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(ue_file_)) {
+      msg         = fmt::format("UE文件不存在:{}", ue_file_);
+      in_err_code = 2;
+      return false;
+    }
+    if (!FSys::exists(maya_file_)) {
+      msg         = fmt::format("maya文件不存在:{}", maya_file_);
+      in_err_code = 3;
+      return false;
+    }
+    return true;
+  }
+};
+// 地编检查
+struct ground_binding_check : public file_exists_check {
+  FSys::path ue_path_;
+  FSys::path maya_path_;
+  std::string ue_file_reg_;
+  std::string maya_file_reg_;
+  explicit ground_binding_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string &in_number, const std::string &in_name, const std::int32_t &in_UE_Version
+  ) {
+    auto l_season_begin = (in_season - 1) * 20 + 1;
+    auto l_base_path =
+        fmt::format("{}/6-moxing/BG/JD{}_{}/BG_{}", in_project.get_path(), in_season, l_season_begin, in_number);
+    ue_path_       = FSys::path(fmt::format("{}/{}/Content/Map", l_base_path, in_name));
+    maya_path_     = FSys::path(fmt::format("{}/{}", l_base_path, in_name));
+    ue_file_reg_   = fmt::format("{}([a-zA-z_]+)?", in_name);
+    maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?_Low", in_name);
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(ue_path_)) {
+      msg         = fmt::format("UE路径不存在:{}", ue_path_);
+      in_err_code = 2;
+      return false;
+    }
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    std::vector<std::string> l_ue_files{};
+    for (auto &&l_path : FSys::directory_iterator{ue_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".umap" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(ue_file_reg_))) {
+        l_ue_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_ue_files.empty()) {
+      msg = fmt::format(
+          "UE文件不存在于路径{}中, 或者不符合 {} + 版本模式", ue_path_, ue_file_reg_.substr(0, ue_file_reg_.size() - 13)
+      );
+      in_err_code = 4;
+      return false;
+    }
+    std::vector<std::string> l_maya_files{};
+
+    for (auto &&l_path : FSys::directory_iterator{maya_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".ma" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(maya_file_reg_))) {
+        l_maya_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_maya_files.empty()) {
+      msg = fmt::format(
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _Low", maya_path_,
+          maya_file_reg_.substr(0, maya_file_reg_.size() - 17)
+      );
+      in_err_code = 5;
+      return false;
+    }
+    if (l_ue_files.size() != l_maya_files.size()) {
+      msg = fmt::format(
+          "UE文件数量和maya文件数量不一致, UE文件数量:{}, maya文件数量:{}", l_ue_files.size(), l_maya_files.size()
+      );
+      in_err_code = 6;
+      return false;
+    }
+    for (auto &&l_ue : l_ue_files) {
+      auto l_f_name = l_ue + "_Low";
+      if (std::ranges::find(l_maya_files, l_f_name) == l_maya_files.end()) {
+        msg         = fmt::format("UE文件{}没有对应的maya文件", l_ue);
+        in_err_code = 7;
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+// 场景道具判断
+struct scene_prop_check : public file_exists_check {
+  FSys::path ue_path_;
+  FSys::path maya_path_;
+  std::string ue_file_reg_;
+  std::string maya_file_reg_;
+  explicit scene_prop_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string &in_name
+  ) {
+    auto l_season_begin = (in_season - 1) * 20 + 1;
+    auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{}_{}", in_project.get_path(), in_season, l_season_begin);
+    ue_path_ =
+        FSys::path(fmt::format("{}/JD{}_{}_UE/Content/Prop/{}/Mesh", l_base_path, in_season, l_season_begin, in_name));
+    maya_path_     = FSys::path(fmt::format("{}/{}", l_base_path, in_name));
+    ue_file_reg_   = fmt::format("{}([a-zA-z_]+)?", in_name);
+    maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?", in_name);
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(ue_path_)) {
+      msg         = fmt::format("UE路径不存在:{}", ue_path_);
+      in_err_code = 2;
+      return false;
+    }
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    std::vector<std::string> l_ue_files{};
+    for (auto &&l_path : FSys::directory_iterator{ue_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".uasset" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(ue_file_reg_))) {
+        l_ue_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_ue_files.empty()) {
+      msg = fmt::format(
+          "UE文件不存在于路径{}中, 或者不符合 {} + 版本模式", ue_path_, ue_file_reg_.substr(0, ue_file_reg_.size() - 13)
+      );
+      in_err_code = 4;
+      return false;
+    }
+    std::vector<std::string> l_maya_files{};
+    for (auto &&l_path : FSys::directory_iterator{maya_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".ma" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(maya_file_reg_))) {
+        l_maya_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_maya_files.empty()) {
+      msg = fmt::format(
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式", maya_path_,
+          maya_file_reg_.substr(0, maya_file_reg_.size() - 13)
+      );
+      in_err_code = 5;
+      return false;
+    }
+    if (l_ue_files.size() != l_maya_files.size()) {
+      msg = fmt::format(
+          "UE文件数量和maya文件数量不一致, UE文件数量:{}, maya文件数量:{}", l_ue_files.size(), l_maya_files.size()
+      );
+      in_err_code = 6;
+      return false;
+    }
+    for (auto &&l_ue : l_ue_files) {
+      if (std::ranges::find(l_maya_files, l_ue) == l_maya_files.end()) {
+        msg         = fmt::format("UE文件{}没有对应的maya文件", l_ue);
+        in_err_code = 7;
+        return false;
+      }
+    }
+    return true;
+  }
+};
+// 角色rig检查
+struct role_rig_check : public file_exists_check {
+  FSys::path maya_path_;
+  std::string maya_file_reg_;
+  explicit role_rig_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string &in_number, const std::string &in_name
+  ) {
+    auto l_season_begin = (in_season - 1) * 20 + 1;
+    auto l_base_path =
+        fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
+    maya_path_     = FSys::path(fmt::format("{}/Rig/Ch{}_rig", l_base_path, in_name));
+    maya_file_reg_ = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    std::vector<std::string> l_maya_files{};
+    for (auto &&l_path : FSys::directory_iterator{maya_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".ma" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(maya_file_reg_))) {
+        l_maya_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_maya_files.empty()) {
+      msg = fmt::format(
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _rig", maya_path_,
+          maya_file_reg_.substr(0, maya_file_reg_.size() - 9)
+      );
+      in_err_code = 5;
+      return false;
+    }
+    if (l_maya_files.size() > 2) {
+      msg         = fmt::format("maya文件数量大于2, 请检查文件数量");
+      in_err_code = 6;
+      return false;
+    }
+    return true;
+  }
+};
+
+// 场景rig检查
+struct scene_rig_check : public file_exists_check {
+  FSys::path maya_path_;
+  std::string maya_file_reg_;
+  explicit scene_rig_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string &in_name, const std::string &in_number
+  ) {
+    auto l_season_begin = (in_season - 1) * 20 + 1;
+    auto l_base_path =
+        fmt::format("{}/6-moxing/BG/JD{}_{}/BG_{}", in_project.get_path(), in_season, l_season_begin, in_number);
+    maya_path_     = FSys::path(fmt::format("{}/Mod/{}", l_base_path, in_name));
+    maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?_Low", in_name);
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    std::vector<std::string> l_maya_files{};
+    for (auto &&l_path : FSys::directory_iterator{maya_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".ma" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(maya_file_reg_))) {
+        l_maya_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_maya_files.empty()) {
+      msg = fmt::format(
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _Low", maya_path_,
+          maya_file_reg_.substr(0, maya_file_reg_.size() - 17)
+      );
+      in_err_code = 5;
+      return false;
+    }
+    return true;
+  }
+};
+
+// 场景道具rig检查
+struct scene_prop_rig_check : public file_exists_check {
+  FSys::path maya_path_;
+  std::string maya_file_reg_;
+  explicit scene_prop_rig_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string &in_name
+  ) {
+    auto l_season_begin = (in_season - 1) * 20 + 1;
+    auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{}_{}", in_project.get_path(), in_season, l_season_begin);
+
+    maya_path_          = FSys::path(fmt::format("{}/{}/Rig", l_base_path, in_name));
+    maya_file_reg_      = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    std::vector<std::string> l_maya_files{};
+    for (auto &&l_path : FSys::directory_iterator{maya_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".ma" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(maya_file_reg_))) {
+        l_maya_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_maya_files.empty()) {
+      msg = fmt::format(
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _rig", maya_path_,
+          maya_file_reg_.substr(0, maya_file_reg_.size() - 9)
+      );
+      in_err_code = 5;
+      return false;
+    }
+    if (l_maya_files.size() > 2) {
+      msg         = fmt::format("maya文件数量大于2, 请检查文件数量");
+      in_err_code = 6;
+      return false;
+    }
+    return true;
+  }
+};
+
+// 动画文件检查
+struct animation_file_check : public file_exists_check {
+  FSys::path maya_path_;
+  explicit animation_file_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string in_shot
+  ) {
+    maya_path_ = fmt::format(
+        "{}/03_Workflow/Shots/EP{:03}/ma/{}_EP{:03}_SC{}.ma", in_project.get_path(), in_episodes,
+        in_project.short_str(), in_episodes, in_shot
+    );
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    return true;
+  }
+};
+
+// 解算资产文件检查
+struct solve_asset_file_check : public file_exists_check {
+  FSys::path maya_path_;
+  std::string maya_file_reg_;
+  explicit solve_asset_file_check(const project &in_project, const std::string &in_number) {
+    maya_path_     = fmt::format("{}/6-moxing/CFX/", in_project.get_path());
+    maya_file_reg_ = fmt::format("Ch{}_rig([_a-zA-Z]+)?_cloth", in_number);
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    std::vector<std::string> l_maya_files{};
+    for (auto &&l_path : FSys::directory_iterator{maya_path_}) {
+      if (l_path.is_regular_file() && l_path.path().extension() == ".ma" &&
+          std::regex_match(l_path.path().stem().generic_string(), std::regex(maya_file_reg_))) {
+        l_maya_files.emplace_back(l_path.path().stem().generic_string());
+      }
+    }
+    if (l_maya_files.empty()) {
+      msg = fmt::format(
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _cloth", maya_path_,
+          maya_file_reg_.substr(0, maya_file_reg_.size() - 6)
+      );
+      in_err_code = 5;
+      return false;
+    }
+    if (l_maya_files.size() > 2) {
+      msg         = fmt::format("maya文件数量大于2, 请检查文件数量");
+      in_err_code = 6;
+      return false;
+    }
+    return true;
+  }
+};
+// 解算文件检查
+struct solve_file_check : public file_exists_check {
+  FSys::path maya_path_;
+  explicit solve_file_check(
+      const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
+      const std::string in_shot
+  ) {
+    maya_path_ = fmt::format(
+        "{}/03_Workflow/Shots/EP{:03}JS/ma/{}_EP{:03}_SC{}.ma", in_project.get_path(), in_episodes,
+        in_project.short_str(), in_episodes, in_shot
+    );
+  };
+
+  bool operator()(std::string &msg, std::int32_t &in_err_code) override {
+    if (!FSys::exists(maya_path_)) {
+      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      in_err_code = 3;
+      return false;
+    }
+    return true;
+  }
+};
+
+}  // namespace
+
+void file_exists::file_exists_fun(boost::system::error_code in_error_code, const entt::handle in_handle) {
+  auto l_logger     = in_handle.get<socket_logger>().logger_;
+  auto l_cap        = in_handle.get<http_function::capture_t>();
+  auto &session     = in_handle.get<http_session_data>();
+  auto l_project    = l_cap.get<std::string>("project");
+  auto l_department = l_cap.get<std::string>("department");
+  auto l_task_type  = l_cap.get<std::string>("task_type");
+  auto l_season     = l_cap.get<std::int32_t>("season");
+  auto l_episodes   = l_cap.get<std::int32_t>("episodes");
+  auto l_shot       = l_cap.get<std::string>("shot");
+  auto l_number     = l_cap.get<std::string>("number");
+  auto l_name       = l_cap.get<std::string>("name");
+  auto l_UE_Version = l_cap.get<std::int32_t>("UE_Version");
+  if (!l_project || l_project->empty() || !l_department || l_department->empty() || !l_task_type ||
+      l_task_type->empty() || !l_season || !l_episodes) {
+    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失参数, 或者参数为空");
+    return;
+  }
+  auto l_dep = magic_enum::enum_cast<department_>(*l_department);
+  if (!l_dep) {
+    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "部门参数错误");
+    return;
+  }
+  auto l_task_t = magic_enum::enum_cast<task_type>(*l_task_type);
+  if (!l_task_t) {
+    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
+    return;
+  }
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, session.request_parser_->get().version()
+  };
+  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+
+  // 组合路径
+  // department enum 角色模型 动画 特效 剪辑 原画 分镜 地编 绑定 解算 灯光 编剧 制片
+  std::vector<FSys::path> l_path{};
+  std::shared_ptr<file_exists_check> l_check{};
+  {
+    auto l_projects = register_file_type::get_project_list();
+    project l_prj{};
+    if (auto l_it = std::ranges::find_if(
+            l_projects, [&](const project &in_project) -> bool { return in_project.get_name() == *l_project; }
+        );
+        l_it == l_projects.end()) {
+      session.seed_error(boost::beast::http::status::not_found, error_enum::bad_url, "项目不存在");
+      return;
+    } else
+      l_prj = *l_it;
+
+    auto l_season_begin = (*l_season - 1) * 20 + 1;
+    switch (*l_dep) {
+      case department_::角色模型: {
+        if (!l_number || l_number->empty() || !l_name || l_name->empty()) {
+          session.seed_error(
+              boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
+          );
+          return;
+        }
+
+        l_check = std::make_shared<role_model_check>(l_prj, *l_season, *l_episodes, *l_number, *l_name, *l_UE_Version);
+        break;
+      }
+      case department_::地编: {
+        switch (*l_task_t) {
+          case task_type::道具: {
+            if (!l_name || l_name->empty()) {
+              session.seed_error(
+                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数, 或者参数为空"
+              );
+              return;
+            }
+            l_check = std::make_shared<scene_prop_check>(l_prj, *l_season, *l_episodes, *l_name);
+
+            break;
+          }
+          case task_type::地编: {
+            if (!l_name || l_name->empty() || !l_number || l_number->empty()) {
+              session.seed_error(
+                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称或者编号参数, 或者参数为空"
+              );
+              return;
+            }
+            l_check = std::make_shared<scene_rig_check>(l_prj, *l_season, *l_episodes, *l_name, *l_number);
+            break;
+          }
+          case task_type::角色:
+          default:
+            break;
+        }
+        break;
+      }
+      case department_::绑定: {
+        switch (*l_dep) {
+          case department_::角色模型: {
+            if (!l_number || l_number->empty() || !l_name || l_name->empty()) {
+              session.seed_error(
+                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
+              );
+              return;
+            }
+            l_check = std::make_shared<role_rig_check>(l_prj, *l_season, *l_episodes, *l_number, *l_name);
+            break;
+          }
+          case department_::地编: {
+            switch (*l_task_t) {
+              case task_type::地编: {
+                if (!l_name || l_name->empty() || !l_number || l_number->empty()) {
+                  session.seed_error(
+                      boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称或者编号参数, 或者参数为空"
+                  );
+                  return;
+                }
+                l_check = std::make_shared<ground_binding_check>(
+                    l_prj, *l_season, *l_episodes, *l_number, *l_name, *l_UE_Version
+                );
+                break;
+              }
+              case task_type::道具: {
+                if (!l_name || l_name->empty()) {
+                  session.seed_error(
+                      boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数, 或者参数为空"
+                  );
+                  return;
+                }
+                l_check = std::make_shared<scene_prop_rig_check>(l_prj, *l_season, *l_episodes, *l_name);
+                break;
+              }
+            }
+          }
+        }
+        break;
+      }
+      case department_::动画: {
+        if (!l_shot || l_shot->empty()) {
+          session.seed_error(
+              boost::beast::http::status::bad_request, error_enum::bad_url, "缺失shot参数, 或者参数为空"
+          );
+          return;
+        }
+        l_check = std::make_shared<animation_file_check>(l_prj, *l_season, *l_episodes, *l_shot);
+        break;
+      }
+      case department_::解算: {
+        if (!l_number || l_number->empty()) {
+          session.seed_error(
+              boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
+          );
+          return;
+        }
+        l_check = std::make_shared<solve_asset_file_check>(l_prj, *l_number);
+        break;
+      }
+      case department_::原画:
+      case department_::剪辑:
+      case department_::分镜:
+      case department_::编剧:
+      case department_::灯光:
+      case department_::制片:
+      case department_::特效:
+      default: {
+        l_response.body() = R"({"result": "false", "error_code": 1, "msg":"部门不支持"})";
+        return session.seed(std::move(l_response));
+      }
+    }
+  }
+  std::string l_msg{};
+  std::int32_t l_err_code{};
+  if (!(*l_check)(l_msg, l_err_code)) {
+    l_response.body() = fmt::format(R"({{"result": "false", "error_code": {}, "msg":"{}"}})", l_err_code, l_msg);
+  } else {
+    l_response.body() = R"({"result": "true", "error_code": 0, "msg":"文件存在"})";
+  }
+  session.seed(std::move(l_response));
+}
+
+void file_exists::reg(doodle::http::http_route &in_route) {
+  in_route.reg(std::make_shared<http_function>(
+      boost::beast::http::verb::get, "api/file_exists",
+      session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &file_exists::file_exists_fun))
+  ));
+}
+}  // namespace doodle::http
