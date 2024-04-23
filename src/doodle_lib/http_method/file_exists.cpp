@@ -533,8 +533,8 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
         break;
       }
       case department_::绑定: {
-        switch (*l_dep) {
-          case department_::角色模型: {
+        switch (*l_task_t) {
+          case task_type::角色: {
             if (!l_number || l_number->empty() || !l_name || l_name->empty()) {
               session.seed_error(
                   boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数, 或者参数为空"
@@ -544,31 +544,27 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             l_check = std::make_shared<role_rig_check>(l_prj, *l_season, *l_episodes, *l_number, *l_name);
             break;
           }
-          case department_::地编: {
-            switch (*l_task_t) {
-              case task_type::地编: {
-                if (!l_name || l_name->empty() || !l_number || l_number->empty()) {
-                  session.seed_error(
-                      boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称或者编号参数, 或者参数为空"
-                  );
-                  return;
-                }
-                l_check = std::make_shared<ground_binding_check>(
-                    l_prj, *l_season, *l_episodes, *l_number, *l_name, *l_UE_Version
-                );
-                break;
-              }
-              case task_type::道具: {
-                if (!l_name || l_name->empty()) {
-                  session.seed_error(
-                      boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数, 或者参数为空"
-                  );
-                  return;
-                }
-                l_check = std::make_shared<scene_prop_rig_check>(l_prj, *l_season, *l_episodes, *l_name);
-                break;
-              }
+          case task_type::地编: {
+            if (!l_name || l_name->empty() || !l_number || l_number->empty()) {
+              session.seed_error(
+                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称或者编号参数, 或者参数为空"
+              );
+              return;
             }
+            l_check = std::make_shared<ground_binding_check>(
+                l_prj, *l_season, *l_episodes, *l_number, *l_name, *l_UE_Version
+            );
+            break;
+          }
+          case task_type::道具: {
+            if (!l_name || l_name->empty()) {
+              session.seed_error(
+                  boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数, 或者参数为空"
+              );
+              return;
+            }
+            l_check = std::make_shared<scene_prop_rig_check>(l_prj, *l_season, *l_episodes, *l_name);
+            break;
           }
         }
         break;
