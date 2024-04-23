@@ -46,7 +46,7 @@ struct role_model_check : public file_exists_check {
   ) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}/", in_project.get_path(), in_season, l_season_begin, in_number);
+        fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
     // UE 项目路径
     ue_file_ = FSys::path(fmt::format("{}/{}_UE{}.uproject", l_base_path, in_name, in_UE_Version));
     // UE 骨骼路径
