@@ -19,4 +19,3 @@ class file_exists_launch_t {
 };
 
 }  // namespace doodle::launch
-}
