@@ -454,7 +454,9 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             l_projects, [&](const project &in_project) -> bool { return in_project.get_name() == l_project_str; }
         );
         l_it_prj == l_projects.end()) {
-      session.seed_error(boost::beast::http::status::not_found, error_enum::bad_url, "项目不存在");
+      session.seed_error(
+          boost::beast::http::status::not_found, error_enum::bad_url, fmt::format("项目不存在 {}", l_project_str)
+      );
       return;
     } else
       l_project = *l_it_prj;
@@ -501,15 +503,18 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
     case department_::角色模型: {
       // UE_Version
       if (auto l_it = l_url_query.find("UE_Version"); l_it != l_url_query.npos) {
-        l_UE_Version = std::stoi(l_url_query.substr(l_it + 11, l_url_query.find('&', l_it) - l_it - 11));
-      } else {
-        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失UE_Version参数");
-        return;
+        if (auto l_end = l_url_query.find('&', l_it); l_end != l_url_query.npos)
+          l_UE_Version = std::stoi(l_url_query.substr(l_it + 11, l_end - l_it - 11));
       }
     }
     case department_::地编: {
       if (auto l_it = l_url_query.find("season"); l_it != l_url_query.npos) {
-        l_season = std::stoi(l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7));
+        auto l_season_str = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
+        if (l_season_str.empty()) {
+          session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "季度参数错误");
+          return;
+        }
+        l_season = std::stoi(l_season_str);
       } else {
         session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失季度参数");
         return;
@@ -541,7 +546,12 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
     case department_::解算: {
       // episodes
       if (auto l_it = l_url_query.find("episodes"); l_it != l_url_query.npos) {
-        l_episodes = std::stoi(l_url_query.substr(l_it + 9, l_url_query.find('&', l_it) - l_it - 9));
+        auto l_ep_str = l_url_query.substr(l_it + 9, l_url_query.find('&', l_it) - l_it - 9);
+        if (l_ep_str.empty()) {
+          session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "集数参数错误");
+          return;
+        }
+        l_episodes = std::stoi(l_ep_str);
       } else {
         session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失集数参数");
         return;
@@ -631,11 +641,16 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
   }
   std::string l_msg{};
   std::int32_t l_err_code{};
-  if (!(*l_check)(l_msg, l_err_code)) {
-    l_response.body() = fmt::format(R"({{"result": "false", "error_code": {}, "msg":"{}"}})", l_err_code, l_msg);
-  } else {
-    l_response.body() = R"({"result": "true", "error_code": 0, "msg":"文件存在"})";
+  try {
+    if (!(*l_check)(l_msg, l_err_code)) {
+      l_response.body() = fmt::format(R"({{"result": "false", "error_code": {}, "msg":"{}"}})", l_err_code, l_msg);
+    } else {
+      l_response.body() = R"({"result": "true", "error_code": 0, "msg":"文件存在"})";
+    }
+  } catch (const FSys::filesystem_error &in_error) {
+    l_response.body() = fmt::format(R"({{"result": "false", "error_code": 10, "msg":"{}"}})", in_error.what());
   }
+
   session.seed(std::move(l_response));
 }
 
