@@ -440,10 +440,9 @@ struct solve_file_check : public file_exists_check {
 
 }  // namespace
 
-void file_exists::file_exists_fun(boost::system::error_code in_error_code, const entt::handle in_handle) {
-  auto l_logger    = in_handle.get<socket_logger>().logger_;
-  auto l_cap       = in_handle.get<http_function::capture_t>();
-  auto &session    = in_handle.get<http_session_data>();
+void file_exists::file_exists_fun(boost::system::error_code in_error_code, const http_session_data_ptr &in_handle) {
+  auto l_logger    = in_handle->logger_;
+  auto &session    = *in_handle;
   auto l_url_query = session.url_.query();
 
   project l_project{};

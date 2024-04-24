@@ -176,29 +176,30 @@ void task_info::delete_task(boost::system::error_code in_error_code, entt::handl
   session.seed(std::move(l_response));
 }
 void task_info::reg(doodle::http::http_route &in_route) {
-  in_route
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "v1/task",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::list_task))
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "v1/task/{id}",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "v1/task/{id}/log",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task_logger))
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "v1/task",
-          session::make_http_reg_fun<basic_json_body>(boost::asio::bind_executor(g_io_context(), &task_info::post_task))
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::delete_, "v1/task/{id}",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::delete_task))
-      ))
-
-      ;
+  //  in_route
+  //      .reg(std::make_shared<http_function>(
+  //          boost::beast::http::verb::get, "v1/task",
+  //          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::list_task))
+  //      ))
+  //      .reg(std::make_shared<http_function>(
+  //          boost::beast::http::verb::get, "v1/task/{id}",
+  //          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
+  //      ))
+  //      .reg(std::make_shared<http_function>(
+  //          boost::beast::http::verb::get, "v1/task/{id}/log",
+  //          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task_logger))
+  //      ))
+  //      .reg(std::make_shared<http_function>(
+  //          boost::beast::http::verb::post, "v1/task",
+  //          session::make_http_reg_fun<basic_json_body>(boost::asio::bind_executor(g_io_context(),
+  //          &task_info::post_task))
+  //      ))
+  //      .reg(std::make_shared<http_function>(
+  //          boost::beast::http::verb::delete_, "v1/task/{id}",
+  //          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::delete_task))
+  //      ))
+  //
+  //      ;
 }
 
 }  // namespace doodle::http

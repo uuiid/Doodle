@@ -93,12 +93,12 @@ void computer::reg_computer(boost::system::error_code in_error_code, const entt:
 }
 
 void computer::reg(doodle::http::http_route &in_route) {
-  in_route.reg(std::make_shared<http_function>(
-      boost::beast::http::verb ::get, "v1/computer",
-      session::make_http_reg_fun(
-          boost::asio::bind_executor(g_io_context(), &computer::list_computers),
-          boost::asio::bind_executor(g_io_context(), &computer::reg_computer)
-      )
-  ));
+  //  in_route.reg(std::make_shared<http_function>(
+  //      boost::beast::http::verb ::get, "v1/computer",
+  //      session::make_http_reg_fun(
+  //          boost::asio::bind_executor(g_io_context(), &computer::list_computers),
+  //          boost::asio::bind_executor(g_io_context(), &computer::reg_computer)
+  //      )
+  //  ));
 }
 }  // namespace doodle::http

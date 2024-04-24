@@ -8,8 +8,10 @@
 #include <boost/url.hpp>
 namespace doodle::http {
 class http_function;
-
+class http_session_data;
+using http_session_data_ptr = std::shared_ptr<http_session_data>;
 using http_function_ptr = std::shared_ptr<http_function>;
+
 class http_route {
  private:
   using map_actin_type = std::vector<http_function_ptr>;
@@ -22,7 +24,7 @@ class http_route {
   http_route& reg(const http_function_ptr in_function);
   // 路由分发
   http_function_ptr operator()(
-      boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const entt::handle& in_handle
+      boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const http_session_data_ptr& in_handle
   ) const;
 };
 

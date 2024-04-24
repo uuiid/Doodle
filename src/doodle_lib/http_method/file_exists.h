@@ -11,7 +11,7 @@ class file_exists {
   file_exists()  = default;
   ~file_exists() = default;
 
-  static void file_exists_fun(boost::system::error_code in_error_code, const entt::handle in_handle);
+  static void file_exists_fun(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle);
 
   static void reg(http_route& in_route);
 };

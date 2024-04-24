@@ -32,10 +32,7 @@ void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp
     }
     default_logger_raw()->log(log_loc(), level::err, "on_accept error: {}", ec.message());
   } else {
-    entt::handle l_handle{*g_reg(), g_reg()->create()};
-    l_handle.emplace<socket_logger>();
-    l_handle.emplace<http_route>(*route_ptr_);
-    l_handle.emplace<http_session_data>(std::move(socket)).rend_head();
+    std::make_shared<http_session_data>(std::move(socket), route_ptr_)->rend_head();
   }
   do_accept();
 }

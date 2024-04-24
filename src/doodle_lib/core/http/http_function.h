@@ -12,6 +12,8 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
+class http_session_data;
+using http_session_data_ptr = std::shared_ptr<http_session_data>;
 
 struct capture_t {
   std::map<std::string, std::string> capture_map_;
@@ -69,14 +71,15 @@ class http_function {
   using capture_t = capture_t;
 
   explicit http_function(
-      boost::beast::http::verb in_verb, std::string in_url, std::function<void(entt::handle)> in_callback
+      boost::beast::http::verb in_verb, std::string in_url,
+      std::function<void(const http_session_data_ptr&)> in_callback
   )
       : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {}
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
 
-  std::function<void(entt::handle)> callback_;
+  std::function<void(const http_session_data_ptr&)> callback_;
 };
 using http_function_ptr = std::shared_ptr<http_function>;
 
