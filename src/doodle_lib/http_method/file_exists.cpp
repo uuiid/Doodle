@@ -650,7 +650,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
   } catch (const FSys::filesystem_error &in_error) {
     l_response.body() = fmt::format(R"({{"result": "false", "error_code": 10, "msg":"{}"}})", in_error.what());
   }
-
+  l_response.prepare_payload();
   session.seed(std::move(l_response));
 }
 
