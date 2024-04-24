@@ -48,10 +48,11 @@ struct role_model_check : public file_exists_check {
     auto l_base_path =
         fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
     // UE 项目路径
-    ue_file_ = FSys::path(fmt::format("{}/{}_UE{}.uproject", l_base_path, in_name, in_UE_Version));
+    ue_file_   = FSys::path(fmt::format("{0}/{1}_UE{2}/{1}_UE{2}.uproject", l_base_path, in_name, in_UE_Version));
     // UE 骨骼路径
-    maya_file_ =
-        FSys::path(fmt::format("{}/Content/Character/{}/Meshs/SK_Ch{}.uasset", l_base_path, in_name, in_number));
+    maya_file_ = FSys::path(fmt::format(
+        "{0}/{1}_UE{2}/Content/Character/{1}/Meshs/SK_Ch{3}.uasset", l_base_path, in_name, in_UE_Version, in_number
+    ));
   };
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
@@ -80,9 +81,9 @@ struct ground_binding_check : public file_exists_check {
   ) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/BG/JD{}_{}/BG_{}", in_project.get_path(), in_season, l_season_begin, in_number);
-    ue_path_       = FSys::path(fmt::format("{}/{}/Content/Map", l_base_path, in_name));
-    maya_path_     = FSys::path(fmt::format("{}/{}", l_base_path, in_name));
+        fmt::format("{}/6-moxing/BG/JD{}_{}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
+    ue_path_       = FSys::path(fmt::format("{0}/{1}/Content/{1}/Map", l_base_path, in_name));
+    maya_path_     = FSys::path(fmt::format("{}/Mod", l_base_path));
     ue_file_reg_   = fmt::format("{}([a-zA-z_]+)?", in_name);
     maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?_Low", in_name);
   };
@@ -234,8 +235,8 @@ struct role_rig_check : public file_exists_check {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
         fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
-    maya_path_     = FSys::path(fmt::format("{}/Rig/Ch{}_rig", l_base_path, in_name));
-    maya_file_reg_ = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
+    maya_path_     = FSys::path(fmt::format("{}/Rig", l_base_path));
+    maya_file_reg_ = fmt::format("Ch{}_rig([_a-zA-Z]+)?", in_number);
   };
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
@@ -278,8 +279,8 @@ struct scene_rig_check : public file_exists_check {
   ) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/BG/JD{}_{}/BG_{}", in_project.get_path(), in_season, l_season_begin, in_number);
-    maya_path_     = FSys::path(fmt::format("{}/Mod/{}", l_base_path, in_name));
+        fmt::format("{}/6-moxing/BG/JD{}_{}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
+    maya_path_     = FSys::path(fmt::format("{}/Mod", l_base_path));
     maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?_Low", in_name);
   };
 
@@ -480,19 +481,6 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
   }
 
   task_type l_task_type{};
-  if (auto l_it = l_url_query.find("task_type"); l_it != l_url_query.npos) {
-    auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
-    auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
-    if (!l_task_t) {
-      session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
-      return;
-    }
-    l_task_type = *l_task_t;
-  } else {
-    session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失任务类型参数");
-    return;
-  }
-
   std::int32_t l_season{};
   std::int32_t l_episodes{};
   std::string l_shot{};
@@ -500,6 +488,20 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
   std::string l_name{};
   std::int32_t l_UE_Version{5};
   switch (l_department) {
+    case department_::绑定: {
+      if (auto l_it = l_url_query.find("task_type"); l_it != l_url_query.npos) {
+        auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
+        auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
+        if (!l_task_t) {
+          session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
+          return;
+        }
+        l_task_type = *l_task_t;
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失任务类型参数");
+        return;
+      }
+    }
     case department_::角色模型: {
       // UE_Version
       if (auto l_it = l_url_query.find("UE_Version"); l_it != l_url_query.npos) {
@@ -526,19 +528,14 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
         session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失名称参数");
         return;
       }
-
-      switch (l_task_type) {
-        case task_type::角色:
-        case task_type::道具: {
-          // number
-          if (auto l_it = l_url_query.find("number"); l_it != l_url_query.npos) {
-            l_number = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
-          } else {
-            session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数");
-            return;
-          }
-        }
+      // number
+      if (auto l_it = l_url_query.find("number"); l_it != l_url_query.npos) {
+        l_number = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失编号参数");
+        return;
       }
+
       break;
     }
 
@@ -591,7 +588,8 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             break;
           }
           case task_type::地编: {
-            l_check = std::make_shared<scene_rig_check>(l_project, l_season, l_episodes, l_name, l_number);
+            l_check =
+                std::make_shared<ground_binding_check>(l_project, l_season, l_episodes, l_number, l_name, l_UE_Version);
             break;
           }
           case task_type::角色:
@@ -607,8 +605,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             break;
           }
           case task_type::地编: {
-            l_check =
-                std::make_shared<ground_binding_check>(l_project, l_season, l_episodes, l_number, l_name, l_UE_Version);
+            l_check = std::make_shared<scene_rig_check>(l_project, l_season, l_episodes, l_name, l_number);
             break;
           }
           case task_type::道具: {
@@ -623,8 +620,8 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
         break;
       }
       case department_::解算: {
-        l_check = std::make_shared<solve_asset_file_check>(l_project, l_number);
-        break;
+        //        l_check = std::make_shared<solve_asset_file_check>(l_project, l_number);
+        //        break;
       }
       case department_::原画:
       case department_::剪辑:
