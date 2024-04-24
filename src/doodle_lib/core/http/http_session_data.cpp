@@ -32,6 +32,12 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
     do_close();
     return;
   }
+  if (!request_parser_->is_header_done()) {
+    l_logger->log(log_loc(), level::err, "读取头部不完整");
+    do_close();
+    return;
+  }
+
   version_    = request_parser_->get().version();
   keep_alive_ = request_parser_->keep_alive();
 
