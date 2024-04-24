@@ -12,6 +12,48 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
+
+struct capture_t {
+  std::map<std::string, std::string> capture_map_;
+  capture_t() = default;
+  explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
+
+  template <typename T>
+    requires std::is_arithmetic_v<T>
+  std::optional<T> get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      try {
+        return boost::lexical_cast<T>(capture_map_.at(in_str));
+      } catch (const boost::bad_lexical_cast& in_err) {
+        default_logger_raw()->log(log_loc(), level::err, "get arithmetic error: {}", in_err.what());
+        return {};
+      }
+    }
+    return {};
+  }
+  template <typename T>
+    requires std::is_same_v<T, std::string>
+  std::optional<T> get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      return capture_map_.at(in_str);
+    }
+    return {};
+  }
+  template <typename T>
+    requires std::is_same_v<T, entt::entity>
+  std::optional<T> get(const std::string& in_str) const {
+    if (capture_map_.find(in_str) != capture_map_.end()) {
+      try {
+        return num_to_enum<entt::entity>(std::stoi(capture_map_.at(in_str)));
+      } catch (const std::invalid_argument& e) {
+        default_logger_raw()->log(log_loc(), level::err, "get entt::entity error: {}", e.what());
+        return {};
+      }
+    }
+    return {};
+  }
+};
+
 class http_function {
   struct capture_data_t {
     std::string name;
@@ -24,46 +66,7 @@ class http_function {
   const std::vector<capture_data_t> capture_vector_;
 
  public:
-  struct capture_t {
-    std::map<std::string, std::string> capture_map_;
-    capture_t() = default;
-    explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
-
-    template <typename T>
-      requires std::is_arithmetic_v<T>
-    std::optional<T> get(const std::string& in_str) const {
-      if (capture_map_.find(in_str) != capture_map_.end()) {
-        try {
-          return boost::lexical_cast<T>(capture_map_.at(in_str));
-        } catch (const boost::bad_lexical_cast& in_err) {
-          default_logger_raw()->log(log_loc(), level::err, "get arithmetic error: {}", in_err.what());
-          return {};
-        }
-      }
-      return {};
-    }
-    template <typename T>
-      requires std::is_same_v<T, std::string>
-    std::optional<T> get(const std::string& in_str) const {
-      if (capture_map_.find(in_str) != capture_map_.end()) {
-        return capture_map_.at(in_str);
-      }
-      return {};
-    }
-    template <typename T>
-      requires std::is_same_v<T, entt::entity>
-    std::optional<T> get(const std::string& in_str) const {
-      if (capture_map_.find(in_str) != capture_map_.end()) {
-        try {
-          return num_to_enum<entt::entity>(std::stoi(capture_map_.at(in_str)));
-        } catch (const std::invalid_argument& e) {
-          default_logger_raw()->log(log_loc(), level::err, "get entt::entity error: {}", e.what());
-          return {};
-        }
-      }
-      return {};
-    }
-  };
+  using capture_t = capture_t;
 
   explicit http_function(
       boost::beast::http::verb in_verb, std::string in_url, std::function<void(entt::handle)> in_callback

@@ -17,6 +17,7 @@ namespace doodle::http {
 void http_session_data::rend_head() {
   stream_->expires_after(30s);
   request_parser_ = std::make_unique<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
+  buffer_.clear();
   boost::beast::http::async_read_header(
       *stream_, buffer_, *request_parser_, boost::beast::bind_front_handler(&http_session_data::do_read, this)
   );
@@ -64,6 +65,11 @@ void http_session_data::seed_error(
   seed(std::move(l_response));
 }
 void http_session_data::seed(boost::beast::http::message_generator in_message_generator) {
+  entt::handle l_self_handle{*g_reg(), entt::to_entity(g_reg()->storage<http_session_data>(), *this)};
+  if (l_self_handle) {
+    auto l_logger = l_self_handle.get<socket_logger>().logger_;
+    l_logger->log(log_loc(), level::err, "写入 {}", url_);
+  }
   boost::beast::async_write(
       *stream_, std::move(in_message_generator), boost::beast::bind_front_handler(&http_session_data::do_send, this)
   );
@@ -80,17 +86,24 @@ void http_session_data::do_send(boost::system::error_code ec, std::size_t bytes_
     do_close();
     return;
   }
-  buffer_.clear();
+  if (!stream_) {
+    l_logger->log(log_loc(), level::err, "发送错误码 stream 为空");
+    do_close();
+    return;
+  }
   stream_->expires_after(30s);
   rend_head();
 }
 void http_session_data::do_close() {
   boost::system::error_code l_error_code{};
-  stream_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_error_code);
-  if (l_error_code) {
-    default_logger_raw()->log(log_loc(), level::err, "关闭 socket 失败 {}", l_error_code);
-  }
   entt::handle l_self_handle{*g_reg(), entt::to_entity(g_reg()->storage<http_session_data>(), *this)};
+  auto l_logger = l_self_handle ? l_self_handle.get<socket_logger>().logger_.get() : default_logger_raw();
+  if (stream_) {
+    stream_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_error_code);
+    if (l_error_code) {
+      l_logger->log(log_loc(), level::err, "关闭 socket 失败 {}", l_error_code);
+    }
+  }
   if (l_self_handle) {
     l_self_handle.destroy();
   }

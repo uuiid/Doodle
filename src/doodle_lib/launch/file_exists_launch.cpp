@@ -14,7 +14,9 @@
 #include <doodle_lib/http_method/file_exists.h>
 
 namespace doodle::launch {
+namespace {
 void reg_func(doodle::http::http_route &in_route) { http::file_exists::reg(in_route); }
+}  // namespace
 bool file_exists_launch_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   auto &l_app         = static_cast<app_service &>(app_base::Get());
   l_app.service_name_ = L"doodle_http_file_exists";
