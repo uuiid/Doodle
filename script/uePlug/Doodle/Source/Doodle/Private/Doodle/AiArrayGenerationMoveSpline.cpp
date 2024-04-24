@@ -113,14 +113,20 @@ void ADoodleAiArrayGenerationMoveSpline::BeginPlay() {
 
   MoveActors.Empty(Points.Num());
   for (auto&& i : Points) {
-    auto L_Loc = i.GetLocation();
-    // L_Loc.Z += 70;
+    auto L_Loc                                         = i.GetLocation();
+
+    L_ActorSpawnParameters.CustomPreSpawnInitalization = [this, L_Loc](AActor* InActor) {
+      ADoodleAiCrowd* L_DoodleAiCrowd = Cast<ADoodleAiCrowd>(InActor);
+      if (!L_DoodleAiCrowd) return;
+      UDoodleAiMoveToComponent* L_Com = Cast<ADoodleAiCrowd>(InActor)->GetDoodleMoveToComponent();
+      if (L_Com) {
+        L_Com->RandomRadius = RandomRadius_Move;
+      }
+    };
+
     ADoodleAiSplineCrowd* L_Actor =
         GetWorld()->SpawnActor<ADoodleAiSplineCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
-    UDoodleAiMoveToComponent* L_Com = L_Actor->GetDoodleMoveToComponent();
-    if (L_Com) {
-      L_Com->RandomRadius = RandomRadius_Move;
-    }
+
     auto L_tran = i;
     L_tran.SetScale3D(FVector::OneVector);
     L_tran.SetRotation(GetActorQuat());

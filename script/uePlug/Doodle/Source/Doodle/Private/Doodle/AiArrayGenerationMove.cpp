@@ -1,17 +1,16 @@
 #include "Doodle/AiArrayGenerationMove.h"
 
 #include "AI/NavigationSystemBase.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/SkeletalMeshActor.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
+#include "Doodle/DoodleEigenHelper.h"
+#include "DoodleAiCrowd.h"
+#include "DoodleAiMoveToComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "Kismet/KismetSystemLibrary.h"
 #include "NavigationSystem.h"
-#include "Components/InstancedStaticMeshComponent.h"
-#include "Animation/SkeletalMeshActor.h"
-#include "Animation/AnimSingleNodeInstance.h"
-#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
-#include "Doodle/DoodleEigenHelper.h"
-#include "DoodleAiMoveToComponent.h"
-
-#include "DoodleAiCrowd.h"
 
 ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   PrimaryActorTick.bCanEverTick = true;
@@ -37,7 +36,9 @@ ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   SceneComponentTarget->SetupAttachment(RootComponent);
   SceneComponentTarget->SetRelativeLocation(FVector{200.0, 0.0, 0.0});
 
-  static ConstructorHelpers::FObjectFinder<UStaticMesh> CraneBaseMesh(TEXT("/ControlRig/Controls/ControlRig_Sphere_3mm.ControlRig_Sphere_3mm"));
+  static ConstructorHelpers::FObjectFinder<UStaticMesh> CraneBaseMesh(
+      TEXT("/ControlRig/Controls/ControlRig_Sphere_3mm.ControlRig_Sphere_3mm")
+  );
 
   Target = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
   Target->SetupAttachment(SceneComponentTarget);
@@ -48,11 +49,14 @@ ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   Target->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
   Target->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
   Target->SetCanEverAffectNavigation(false);
-  Target->bHiddenInGame                = true;
-  Target->CastShadow                   = false;
+  Target->bHiddenInGame = true;
+  Target->CastShadow    = false;
 
-  Preview_InstancedStaticMeshComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>("InstancedStaticMeshComponent");
-  static ConstructorHelpers::FObjectFinder<UStaticMesh> Preview_InstancedStaticMeshComponent_Mesh(TEXT("/Niagara/DefaultAssets/S_Gnomon.S_Gnomon"));
+  Preview_InstancedStaticMeshComponent =
+      CreateDefaultSubobject<UInstancedStaticMeshComponent>("InstancedStaticMeshComponent");
+  static ConstructorHelpers::FObjectFinder<UStaticMesh> Preview_InstancedStaticMeshComponent_Mesh(
+      TEXT("/Niagara/DefaultAssets/S_Gnomon.S_Gnomon")
+  );
   Preview_Mesh = Preview_InstancedStaticMeshComponent_Mesh.Object;
   Preview_InstancedStaticMeshComponent->SetStaticMesh(Preview_InstancedStaticMeshComponent_Mesh.Object);
 #if WITH_EDITOR
@@ -67,22 +71,19 @@ ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   MaxAcceleration                                     = 300.0f;
 }
 
-void ADoodleAiArrayGenerationMove::Tick(float DeltaTime) {
-  Super::Tick(DeltaTime);
-}
+void ADoodleAiArrayGenerationMove::Tick(float DeltaTime) { Super::Tick(DeltaTime); }
 
 void ADoodleAiArrayGenerationMove::PostActorCreated() {
   Super::PostActorCreated();
-  UMaterial* L_CraneBaseMaterial       = LoadObject<UMaterial>(this, TEXT("/ControlRig/Controls/ControlRigGizmoMaterial.ControlRigGizmoMaterial"));
+  UMaterial* L_CraneBaseMaterial =
+      LoadObject<UMaterial>(this, TEXT("/ControlRig/Controls/ControlRigGizmoMaterial.ControlRigGizmoMaterial"));
   UMaterialInstanceDynamic* L_Material = UMaterialInstanceDynamic::Create(L_CraneBaseMaterial, this);
   L_Material->SetVectorParameterValue(TEXT("Color"), FColor::Red);
   Target->SetMaterial(0, L_Material);
   // GenPoint();
 }
 
-bool ADoodleAiArrayGenerationMove::ShouldTickIfViewportsOnly() const {
-  return true;
-}
+bool ADoodleAiArrayGenerationMove::ShouldTickIfViewportsOnly() const { return true; }
 
 void ADoodleAiArrayGenerationMove::BeginPlay() {
   if (AnimAssets.IsEmpty() || SkinAssets.IsEmpty()) return;
@@ -98,20 +99,27 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
     }
   }
   FActorSpawnParameters L_ActorSpawnParameters{};
-  L_ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+  L_ActorSpawnParameters.SpawnCollisionHandlingOverride =
+      ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
   for (auto&& i : Points) {
-    auto L_Loc = i.GetLocation();
+    auto L_Loc                                         = i.GetLocation();
     // L_Loc.Z += 70;
+
+    L_ActorSpawnParameters.CustomPreSpawnInitalization = [this, L_Loc](AActor* InActor) {
+      ADoodleAiCrowd* L_DoodleAiCrowd = Cast<ADoodleAiCrowd>(InActor);
+      if (!L_DoodleAiCrowd) return;
+      UDoodleAiMoveToComponent* L_Com = Cast<ADoodleAiCrowd>(InActor)->GetDoodleMoveToComponent();
+      if (L_Com) {
+        // DrawDebugLine(GetWorld(), SceneComponentTarget->GetComponentTransform().GetLocation(), L_Loc, FColor::Red,
+        // false, 10.f);
+        L_Com->Direction    = SceneComponentTarget->GetComponentTransform().GetLocation() - L_Loc;
+        L_Com->RandomRadius = RandomRadius_Move;
+      }
+    };
 
     ADoodleAiCrowd* L_Actor =
         GetWorld()->SpawnActor<ADoodleAiCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
-    UDoodleAiMoveToComponent* L_Com = L_Actor->GetDoodleMoveToComponent();
-    if (L_Com) {
-      //DrawDebugLine(GetWorld(), SceneComponentTarget->GetComponentTransform().GetLocation(), L_Loc, FColor::Red, false, 10.f);
-      L_Com->Direction = SceneComponentTarget->GetComponentTransform().GetLocation() - L_Loc;
-      L_Com->RandomRadius = RandomRadius_Move;
-    }
-    // L_Actor->SetActorTransform(i);
+
     TObjectPtr L_Skin = SkinAssets[RandomStream_Skin.RandRange(0, L_Max_Skin)];
     auto L_Array      = L_Map.Find(L_Skin->GetSkeleton());
     if (!L_Array) continue;
@@ -126,12 +134,13 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
     // L_Sk_Com->LightingChannels = LightingChannels;
     L_Sk_Com->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
 
-    UCharacterMovementComponent* CharacterMovementComponent = Cast<UCharacterMovementComponent>(L_Actor->GetMovementComponent());
+    UCharacterMovementComponent* CharacterMovementComponent =
+        Cast<UCharacterMovementComponent>(L_Actor->GetMovementComponent());
     if (CharacterMovementComponent) {
-      CharacterMovementComponent->MaxAcceleration              = MaxAcceleration;
-      CharacterMovementComponent->MaxWalkSpeed                 = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
-      CharacterMovementComponent->GroundFriction               = 0.2f;
-      CharacterMovementComponent->RotationRate                 = {0.0f, 180.0f, 0.0f};
+      CharacterMovementComponent->MaxAcceleration = MaxAcceleration;
+      CharacterMovementComponent->MaxWalkSpeed    = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
+      CharacterMovementComponent->GroundFriction  = 0.2f;
+      CharacterMovementComponent->RotationRate    = {0.0f, 180.0f, 0.0f};
       CharacterMovementComponent->bOrientRotationToMovement    = true;
       CharacterMovementComponent->bUseRVOAvoidance             = true;
       CharacterMovementComponent->AvoidanceConsiderationRadius = 100.0f;
@@ -145,8 +154,7 @@ void ADoodleAiArrayGenerationMove::GenPoint() {
   if (!NavSys) {
     return;
   }
-  if (NavSys->MainNavData == nullptr)
-    return;
+  if (NavSys->MainNavData == nullptr) return;
   // RandomStream.Initialize();
   // RandomStream.RandRange(0, 10);
   Points.Empty(Row * Column);
@@ -216,7 +224,10 @@ FQuat ADoodleAiArrayGenerationMove::GetRandomOrient(const FVector& In_Origin, co
 
   FQuat G_R{FVector::UpVector, -0.5 * Pi};
 
-  G_R *= FQuat{FVector::UpVector, (((double)RandomStream_Orient.RandRange(RandomOrient.X * 100, RandomOrient.Y * 100)) / 100) * Pi};
+  G_R *= FQuat{
+      FVector::UpVector,
+      (((double)RandomStream_Orient.RandRange(RandomOrient.X * 100, RandomOrient.Y * 100)) / 100) * Pi
+  };
 
   return G_R * L_Loc.ToOrientationQuat();
 }
@@ -240,5 +251,7 @@ void ADoodleAiArrayGenerationMove::OnConstruction(const FTransform& Transform) {
   // if (SplineComponent->bSplineHasBeenEdited)
   GenPoint();
 
-  Preview_InstancedStaticMeshComponent->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
+  Preview_InstancedStaticMeshComponent->SetLightingChannels(
+      LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2
+  );
 }
