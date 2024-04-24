@@ -35,6 +35,9 @@ class DOODLE_CORE_API logger_ctrl {
   virtual ~logger_ctrl();
 
   file_sink_mt_ptr rotating_file_sink_{};
+#if !defined(NDEBUG)
+  std::shared_ptr<spdlog::sinks::sink> debug_sink_{};
+#endif
   async_logger_ptr make_log(const std::string& in_name, bool out_console = false);
   async_logger_ptr make_log(const FSys::path& in_path, const std::string& in_name, bool out_console);
   async_logger_ptr make_log_file(const FSys::path& in_path, const std::string& in_name, bool out_console = false);

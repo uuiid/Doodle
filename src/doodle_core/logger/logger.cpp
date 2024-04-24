@@ -45,6 +45,11 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 };
 using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
+#if !defined(NDEBUG)
+#define DOODLE_ADD_DEBUG_SINK(logger) logger->sinks().push_back(debug_sink_);
+#else
+#define DOODLE_ADD_DEBUG_SINK(logger)
+#endif
 //
 // 我们自己的旋转日志, spd的那个有时候会无法重命名
 //
@@ -147,12 +152,11 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path &in_path, c
     l_logger            = std::make_shared<spdlog::async_logger>(
         in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
+
 #if !defined(NDEBUG)
-    auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
-    l_logger->sinks().push_back(l_k_debug);
-    // auto l_stdout_sink_mt = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-    // l_logger->sinks().push_back(l_stdout_sink_mt);
+    debug_sink_ = std::make_shared<msvc_doodle_sink_mt>();
 #endif
+    DOODLE_ADD_DEBUG_SINK(l_logger);
     spdlog::register_logger(l_logger);
 
   } catch (const spdlog::spdlog_ex &spdlog_ex) {
@@ -187,6 +191,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, 
   );
   l_logger->set_level(spdlog::level::trace);
   l_logger->should_log(spdlog::level::trace);
+  DOODLE_ADD_DEBUG_SINK(l_logger);
   return l_logger;
 }
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(
@@ -205,6 +210,8 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(
   );
   l_logger->set_level(spdlog::level::trace);
   l_logger->should_log(spdlog::level::trace);
+  DOODLE_ADD_DEBUG_SINK(l_logger);
+
   return l_logger;
 }
 
@@ -227,6 +234,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
+  DOODLE_ADD_DEBUG_SINK(l_logger);
   return l_logger;
 }
 
