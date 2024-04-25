@@ -653,7 +653,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
 void file_exists::reg(doodle::http::http_route &in_route) {
   in_route.reg(std::make_shared<http_function>(
       boost::beast::http::verb::get, "api/file_exists",
-      session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &file_exists::file_exists_fun))
+      session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &file_exists::file_exists_fun))
   ));
 }
 }  // namespace doodle::http
