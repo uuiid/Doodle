@@ -59,8 +59,6 @@ void http_session_data::seed_error(
   seed(std::move(l_response));
 }
 void http_session_data::seed(boost::beast::http::message_generator in_message_generator) {
-  entt::handle l_self_handle{*g_reg(), entt::to_entity(g_reg()->storage<http_session_data>(), *this)};
-
   logger_->log(log_loc(), level::err, "写入 {}", url_);
   boost::beast::async_write(
       *stream_, std::move(in_message_generator),
@@ -93,11 +91,6 @@ void http_session_data::do_close() {
       logger_->log(log_loc(), level::err, "关闭 socket 失败 {}", l_error_code);
     }
   }
-
-  //  boost::asio::post(g_io_context(), [l_self_handle] {
-  //    auto l_h = l_self_handle;
-  //    l_h.destroy();
-  //  });
 }
 
 namespace session {
