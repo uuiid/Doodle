@@ -650,10 +650,30 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
   session.seed(std::move(l_response));
 }
 
+void file_exists_fun_options(boost::system::error_code in_error_code, const http_session_data_ptr &in_handle) {
+  auto &session = *in_handle;
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, session.request_parser_->get().version()
+  };
+  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.set(boost::beast::http::field::allow, "GET, OPTIONS");
+  l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_response.set(boost::beast::http::field::access_control_allow_methods, "GET, OPTIONS");
+  l_response.set(boost::beast::http::field::access_control_allow_headers, "Content-Type");
+  l_response.prepare_payload();
+  session.seed(std::move(l_response));
+}
+
 void file_exists::reg(doodle::http::http_route &in_route) {
-  in_route.reg(std::make_shared<http_function>(
-      boost::beast::http::verb::get, "api/file_exists",
-      session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &file_exists::file_exists_fun))
-  ));
+  in_route
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::get, "api/file_exists",
+          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &file_exists::file_exists_fun))
+      ))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::options, "api/file_exists",
+          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &file_exists_fun_options))
+      ));
 }
 }  // namespace doodle::http
