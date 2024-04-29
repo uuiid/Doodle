@@ -53,6 +53,7 @@ void http_session_data::seed_error(
   boost::beast::http::response<boost::beast::http::string_body> l_response{in_status, version_};
   l_response.set(boost::beast::http::field::content_type, "plain/text");
   l_response.set(boost::beast::http::field::accept, "application/json");
+  l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
   l_response.keep_alive(keep_alive_);
   l_response.body() = ec.message() + in_str;
   l_response.prepare_payload();
