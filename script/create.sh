@@ -169,6 +169,10 @@ server {
         proxy_pass http://localhost:5001;
     }
 
+    location /api/file_exists{
+        proxy_pass http://192.168.20.2:50021;
+    }
+
     location / {
         autoindex on;
         root  /opt/kitsu/dist;
