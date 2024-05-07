@@ -5,12 +5,6 @@ include(ExternalProject)
 include(FetchContent)
 
 FetchContent_Declare(
-        fontawesome
-        GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
-        GIT_TAG deeea78c52bfe00b6e251ffddccf5570d5fdb05e
-)
-
-FetchContent_Declare(
         doxygenAwesomeCss
         GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
         GIT_TAG main
@@ -22,7 +16,7 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-FetchContent_MakeAvailable(fontawesome doxygenAwesomeCss holidaycn)
+FetchContent_MakeAvailable(doxygenAwesomeCss holidaycn)
 
 # =====================文档过程===============================
 # 添加文档生成
