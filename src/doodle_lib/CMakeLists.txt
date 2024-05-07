@@ -81,7 +81,6 @@ target_link_libraries(doodle_lib
         dxgi.lib
         #        Microsoft::DirectXTK
         implot::implot
-        DoodleLibResourceFont
         Eigen3::Eigen
         doodle_holidaycn
         Alembic::Alembic # abc文件读写

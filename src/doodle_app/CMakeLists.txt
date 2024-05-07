@@ -36,7 +36,6 @@ target_link_libraries(
         PRIVATE
         d3d11.lib
         dxgi.lib
-        DoodleLibResourceFont
         implot::implot
         ${OPENSSL_LIBRARIES}
 )

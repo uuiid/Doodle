@@ -16,7 +16,6 @@
 
 #include "doodle_app/gui/base/ref_base.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
-#include <doodle_app/lib_warp/icon_font_macro.h>
 
 #include <doodle_lib/gui/widgets/derail/user_edit.h>
 
@@ -244,7 +243,8 @@ bool assets_filter_widget::render() {
     } else {
       p_impl->filter_list[0] = {
           file_path_filter{p_impl->path_filter.path},
-          gui_cache_name_id{fmt::format("路径过滤:{} " ICON_FA_XMARK, p_impl->path_filter.path)}};
+          gui_cache_name_id{fmt::format("路径过滤:{} ", p_impl->path_filter.path)}
+      };
     }
     filter_list();
   }
@@ -252,34 +252,34 @@ bool assets_filter_widget::render() {
     if (p_impl->season_filter.render()) {
       p_impl->filter_list[1] = {
           filter<season>{p_impl->season_filter.season},
-          gui_cache_name_id{fmt::format("季数:{} " ICON_FA_XMARK, p_impl->season_filter.season)}};
+          gui_cache_name_id{fmt::format("季数:{} ", p_impl->season_filter.season)}
+      };
       filter_list();
     }
     if (p_impl->episode_filter.render()) {
       p_impl->filter_list[2] = {
           filter<episodes>{p_impl->episode_filter.episode},
-          gui_cache_name_id{fmt::format("集数:{} " ICON_FA_XMARK, p_impl->episode_filter.episode)}};
+          gui_cache_name_id{fmt::format("集数:{} ", p_impl->episode_filter.episode)}
+      };
       filter_list();
     }
     if (p_impl->shot_filter.render()) {
       p_impl->filter_list[3] = {
-          filter<shot>{p_impl->shot_filter.shot_},
-          gui_cache_name_id{fmt::format("镜头:{} " ICON_FA_XMARK, p_impl->shot_filter.shot_)}};
+          filter<shot>{p_impl->shot_filter.shot_}, gui_cache_name_id{fmt::format("镜头:{} ", p_impl->shot_filter.shot_)}
+      };
       filter_list();
     }
     if (p_impl->time_filter.render()) {
       p_impl->filter_list[4] = {
           filter<time_point_wrap>{p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap},
-          gui_cache_name_id{fmt::format(
-              "时间:{}-{} " ICON_FA_XMARK, p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap
-          )}};
+          gui_cache_name_id{fmt::format("时间:{}-{} ", p_impl->time_filter.begin_time_wrap, p_impl->time_filter.end_time_wrap)}};
       filter_list();
     }
     if (p_impl->user_filter.render()) {
       p_impl->filter_list[5] = {
           user_filter{p_impl->user_filter.select_user_handle},
           gui_cache_name_id{fmt::format(
-              "用户:{}(id {}) " ICON_FA_XMARK,
+              "用户:{}(id {}) ",
               p_impl->user_filter.select_user_handle ? p_impl->user_filter.select_user_handle.get<user>() : user{},
               (p_impl->user_filter.select_user_handle && p_impl->user_filter.select_user_handle.any_of<database>())
                   ? p_impl->user_filter.select_user_handle.get<database>().get_id()

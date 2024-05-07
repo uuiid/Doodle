@@ -307,7 +307,7 @@ bool assets_file_widgets::render() {
     };
   }
 
-  if (ImGui::Button(ICON_FA_ATOM)) {
+  if (ImGui::Button("📂")) {
     p_i->render_icon = !p_i->render_icon;
     generate_lists(p_i->handle_list);
     switch_rander();

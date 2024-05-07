@@ -21,7 +21,6 @@
 #include <boost/signals2/connection.hpp>
 
 #include "gui/widgets/time_sequencer_widgets/time_rules_render.h"
-#include <IconsFontAwesome6.h>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -204,21 +203,21 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
  public:
   std::string show_str{};
   business::rules::time_point_info data{};
-  gui_cache_name_id edit_buiion{ICON_FA_PEN_TO_SQUARE};
+  gui_cache_name_id edit_buiion{"编辑"};
   gui_cache_name_id fulfil{"完成"};
-  gui_cache_name_id delete_buttton{ICON_FA_TRASH};
+  gui_cache_name_id delete_buttton{"删除"};
   bool use_edit{};
 
   using friend_type = ::doodle::business::rules::point_type;
-  gui_cache<bool> is_work{ICON_FA_SQUARE_CHECK "工作" ICON_FA_SQUARE_FULL "休息", false};
+  gui_cache<bool> is_work{"工作or休息", false};
   time_warp_gui_data begin_time{};
   time_warp_gui_data end_time{};
   gui_cache<std::string> info{};
 
   gui_cache_name_id gui_name{};
 
-  gui_cache_name_id up_self{ICON_FA_CHEVRON_UP};
-  gui_cache_name_id dwn_self{ICON_FA_CHEVRON_DOWN};
+  gui_cache_name_id up_self{"⬆️"};
+  gui_cache_name_id dwn_self{"⬇️"};
 
   bool render() {
     bool modify_guard_{};
@@ -259,8 +258,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
     if (modify_guard_) {
       auto l_f = get();
       show_str = fmt::format(
-          "{}: {:%F %H:%M} {:%F %H:%M} {}", l_f.is_extra_work ? ICON_FA_BRIEFCASE "工作" : ICON_FA_BED "休息",
-          l_f.first.get_local_time(), l_f.second.get_local_time(), l_f.info
+          "{}: {:%F %H:%M} {:%F %H:%M} {}", l_f.is_extra_work ? "工作" : "休息", l_f.first.get_local_time(), l_f.second.get_local_time(), l_f.info
       );
     }
 
@@ -269,8 +267,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
 
   void set(const friend_type& in_type) {
     show_str = fmt::format(
-        "{}: {:%F %H:%M} {:%F %H:%M} {}", in_type.is_extra_work ? ICON_FA_BRIEFCASE "工作" : ICON_FA_BED "休息",
-        in_type.first.get_local_time(), in_type.second.get_local_time(), in_type.info
+        "{}: {:%F %H:%M} {:%F %H:%M} {}", in_type.is_extra_work ? "工作" : "休息", in_type.first.get_local_time(), in_type.second.get_local_time(), in_type.info
     );
     is_work    = in_type.is_extra_work;
     begin_time = time_warp_gui_data{in_type.first};
@@ -461,6 +458,7 @@ bool time_rules_render::render() {
       if (ImGui::Button(*l_r.dwn_self)) {
         boost::asio::post(g_io_context(), [this, in]() {
           auto l_dwn = std::clamp(in + 1, 0ull, p_i->extra_work_attr.size());
+          if (l_dwn == p_i->extra_work_attr.size()) return;
 
           if (l_dwn != in) {
             std::swap(p_i->extra_work_attr[in], p_i->extra_work_attr[l_dwn]);

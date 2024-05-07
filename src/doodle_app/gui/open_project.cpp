@@ -10,9 +10,7 @@
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/authorization.h>
-#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/gui/open_file_dialog.h>
-#include <doodle_app/lib_warp/icon_font_macro.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <fmt/chrono.h>
@@ -40,7 +38,7 @@ bool open_project::render() {
     auth_ptr_->load_authorization_data(auth_code_);
     expire_time_str_ = fmt::format("还有 {} 天到期", chrono::floor<chrono::days>(auth_ptr_->get_expire_time()));
   }
-  static auto l_str = fmt::format(updata_log, ICON_FA_SQUARE_CHECK, ICON_FA_TRIANGLE_EXCLAMATION);
+  static auto l_str = fmt::format(updata_log, "*", "!!!");
   ImGui::TextUnformatted(l_str.c_str());
   ImGui::Dummy(ImVec2{30, 30});
 

@@ -15,7 +15,6 @@
 
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/get_input_dialog.h>
-#include <doodle_app/lib_warp/icon_font_macro.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_app/platform/win/windows_proc.h>
 
@@ -32,6 +31,7 @@
 #include <gui/main_menu_bar.h>
 #include <gui/main_proc_handle.h>
 #include <gui/main_status_bar.h>
+#include <imgui_freetype.h>
 #include <implot.h>
 #include <implot_internal.h>
 
@@ -237,17 +237,23 @@ void gui_facet::init_windows() {
     io.Fonts->AddFontFromFileTTF(
         doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull()
     );
-    auto l_font                         = cmrc::DoodleLibResourceFont::get_filesystem().open(FONT_ICON_FILE_NAME_FAS);
-    static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    ImFontConfig icons_config;
-    icons_config.MergeMode            = true;
-    icons_config.PixelSnapH           = true;
-    icons_config.FontDataOwnedByAtlas = false;
-    // io.Fonts->AddFontFromFileTTF(FONT_ICON_F
-    // ILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
-    io.Fonts->AddFontFromMemoryTTF(
-        (void*)l_font.begin(), boost::numeric_cast<std::int32_t>(l_font.size()), 16.0f, &icons_config, icons_ranges
-    );
+    // 加载emj字体
+    static ImWchar ranges[] = {0x1, 0x1FFFF, 0};
+    static ImFontConfig cfg;
+    cfg.OversampleH = cfg.OversampleV = 1;
+    cfg.MergeMode                     = true;
+    cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_LoadColor;
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\seguiemj.ttf", 16.0f, &cfg, ranges);
+    //    auto l_font                         =
+    //    cmrc::DoodleLibResourceFont::get_filesystem().open(FONT_ICON_FILE_NAME_FAS); static const ImWchar
+    //    icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0}; ImFontConfig icons_config; icons_config.MergeMode            =
+    //    true; icons_config.PixelSnapH           = true; icons_config.FontDataOwnedByAtlas = false;
+    //    // io.Fonts->AddFontFromFileTTF(FONT_ICON_F
+    //    // ILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
+    //    io.Fonts->AddFontFromMemoryTTF(
+    //        (void*)l_font.begin(), boost::numeric_cast<std::int32_t>(l_font.size()), 16.0f, &icons_config,
+    //        icons_ranges
+    //    );
   }
 
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});

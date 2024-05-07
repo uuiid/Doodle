@@ -17,18 +17,12 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-        IconFontCppHeaders
-        GIT_REPOSITORY https://github.com/juliettef/IconFontCppHeaders.git
-        GIT_TAG main
-)
-
-FetchContent_Declare(
         holidaycn
         GIT_REPOSITORY https://github.com/NateScarlet/holiday-cn.git
         GIT_TAG master
 )
 
-FetchContent_MakeAvailable(fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
+FetchContent_MakeAvailable(fontawesome doxygenAwesomeCss holidaycn)
 
 # =====================文档过程===============================
 # 添加文档生成
@@ -66,13 +60,6 @@ doxygen_add_docs(Doxygen
         maya_plug_mll
 )
 
-cmrc_add_resource_library(
-        DoodleLibResourceFont
-        WHENCE ${fontawesome_SOURCE_DIR}/webfonts
-        ${fontawesome_SOURCE_DIR}/webfonts/fa-brands-400.ttf
-        ${fontawesome_SOURCE_DIR}/webfonts/fa-regular-400.ttf
-        ${fontawesome_SOURCE_DIR}/webfonts/fa-solid-900.ttf
-)
 add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
