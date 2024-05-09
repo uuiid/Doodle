@@ -170,7 +170,7 @@ server {
     }
 
     location /api/file_exists{
-        proxy_pass http://192.168.20.2:50021;
+        proxy_pass http://192.168.20.181:50021;
     }
 
     location / {
@@ -247,3 +247,23 @@ sudo systemctl status zou-events
 sudo systemctl status zou-jobs
 sudo systemctl status nginx
 sudo systemctl status meilisearch
+
+
+
+
+export http_proxy="socks5://192.168.40.53:10810/"&&export https_proxy="socks5://192.168.40.53:10810/"
+
+
+export http_proxy="http://192.168.40.53:10810/"&&export https_proxy="http://192.168.40.53:10810/"
+
+sudo git clone --branch file_check_vite https://github.com/uuiid/kitsu.git
+cd /opt/test
+curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+curl -sL https://deb.nodesource.com/setup_20.x -o /tmp/nodesource_setup.sh
+sudo bash /tmp/nodesource_setup.sh
+
+sudo apt-get install nodejs -y
+sudo apt install nodejs -y
+
+sudo cp -TRv dist /opt/kitsu/dist
