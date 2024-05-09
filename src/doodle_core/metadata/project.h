@@ -21,6 +21,8 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
   std::string p_en_str;
   // 项目简拼
   std::string p_shor_str;
+  // 项目本机路径
+  FSys::path p_local_path;
 
  private:
   void init_name();
@@ -28,11 +30,14 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
  public:
   project();
   explicit project(FSys::path in_path, std::string in_name);
-  explicit project(std::string in_name, FSys::path in_path, std::string in_en_str, std::string in_shor_str)
+  explicit project(
+      std::string in_name, FSys::path in_path, std::string in_en_str, std::string in_shor_str, FSys::path in_local_path
+  )
       : p_name(std::move(in_name)),
         p_path(std::move(in_path)),
         p_en_str(std::move(in_en_str)),
-        p_shor_str(std::move(in_shor_str)) {}
+        p_shor_str(std::move(in_shor_str)),
+        p_local_path(std::move(in_local_path)) {}
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& Name) noexcept;

@@ -12,7 +12,7 @@
 
 namespace doodle {
 
-project::project() : p_name("none"), p_path("C:/"), p_en_str(), p_shor_str() {}
+project::project() : p_name("none"), p_path("C:/") {}
 
 project::project(FSys::path in_path, std::string in_name) : project() {
   p_name = std::move(in_name);
