@@ -215,7 +215,7 @@ void http_work::run_auto_light_task() {
       task_info_.task_info_["project_name"].get<std::string>(),
       task_info_.task_info_["project_path"].get<std::string>(),
       task_info_.task_info_["project_en_str"].get<std::string>(),
-      task_info_.task_info_["project_shor_str"].get<std::string>()
+      task_info_.task_info_["project_shor_str"].get<std::string>(), ""
   );
 
   down_auto_light_anim_file l_down_anim_file{l_msg};

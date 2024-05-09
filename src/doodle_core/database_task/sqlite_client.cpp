@@ -57,7 +57,7 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
     return l_reg;
   }
   l_reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
-  l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp");
+  l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp", "");
   return l_reg;
 }
 
@@ -91,7 +91,7 @@ boost::system::error_code file_translator::async_open_impl() {
     g_reg()->clear();
     l_obs.connect(registry_attr);
     if (g_reg()->ctx().contains<project>()) g_reg()->ctx().erase<project>();
-    g_reg()->ctx().emplace<project>("tmp", project_path, "tmp", "tmp");
+    g_reg()->ctx().emplace<project>("tmp", project_path, "tmp", "tmp", "");
     g_reg()->ctx().emplace<project_config::base_config>() = project_config::base_config::get_default();
     save_all                                              = false;
     l_error_code                                          = async_save_impl();

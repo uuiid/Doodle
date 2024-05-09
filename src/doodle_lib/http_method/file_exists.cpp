@@ -33,7 +33,12 @@ enum class task_type {
 };
 
 struct file_exists_check {
+  project project_;
+  explicit file_exists_check(const project &in_project) : project_(in_project){};
   virtual bool operator()(std::string &msg, std::int32_t &in_err_code) = 0;
+  FSys::path conv_loc_path(const FSys::path &in_path) const {
+    return project_.p_local_path / in_path.lexically_relative(project_.p_path);
+  }
 };
 
 // 角色模型检查
@@ -43,7 +48,8 @@ struct role_model_check : public file_exists_check {
   explicit role_model_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string &in_number, const std::string &in_name, const std::int32_t &in_UE_Version
-  ) {
+  )
+      : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
         fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
@@ -57,12 +63,12 @@ struct role_model_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(ue_file_)) {
-      msg         = fmt::format("UE文件不存在:{}", ue_file_);
+      msg         = fmt::format("UE文件不存在:{}", conv_loc_path(ue_file_));
       in_err_code = 2;
       return false;
     }
     if (!FSys::exists(maya_file_)) {
-      msg         = fmt::format("maya文件不存在:{}", maya_file_);
+      msg         = fmt::format("maya文件不存在:{}", conv_loc_path(maya_file_));
       in_err_code = 3;
       return false;
     }
@@ -78,7 +84,8 @@ struct ground_binding_check : public file_exists_check {
   explicit ground_binding_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string &in_number, const std::string &in_name, const std::int32_t &in_UE_Version
-  ) {
+  )
+      : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
         fmt::format("{}/6-moxing/BG/JD{}_{}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
@@ -90,12 +97,12 @@ struct ground_binding_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(ue_path_)) {
-      msg         = fmt::format("UE路径不存在:{}", ue_path_);
+      msg         = fmt::format("UE路径不存在:{}", conv_loc_path(ue_path_));
       in_err_code = 2;
       return false;
     }
     if (!FSys::exists(maya_path_)) {
-      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      msg         = fmt::format("maya路径不存在:{}", conv_loc_path(maya_path_));
       in_err_code = 3;
       return false;
     }
@@ -108,7 +115,8 @@ struct ground_binding_check : public file_exists_check {
     }
     if (l_ue_files.empty()) {
       msg = fmt::format(
-          "UE文件不存在于路径{}中, 或者不符合 {} + 版本模式", ue_path_, ue_file_reg_.substr(0, ue_file_reg_.size() - 13)
+          "UE文件不存在于路径{}中, 或者不符合 {} + 版本模式", conv_loc_path(ue_path_),
+          ue_file_reg_.substr(0, ue_file_reg_.size() - 13)
       );
       in_err_code = 4;
       return false;
@@ -123,7 +131,7 @@ struct ground_binding_check : public file_exists_check {
     }
     if (l_maya_files.empty()) {
       msg = fmt::format(
-          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _Low", maya_path_,
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _Low", conv_loc_path(maya_path_),
           maya_file_reg_.substr(0, maya_file_reg_.size() - 17)
       );
       in_err_code = 5;
@@ -139,7 +147,7 @@ struct ground_binding_check : public file_exists_check {
     for (auto &&l_ue : l_ue_files) {
       auto l_f_name = l_ue + "_Low";
       if (std::ranges::find(l_maya_files, l_f_name) == l_maya_files.end()) {
-        msg         = fmt::format("UE文件{}没有对应的maya文件", l_ue);
+        msg         = fmt::format("UE文件{}没有对应的maya文件", conv_loc_path(l_ue));
         in_err_code = 7;
         return false;
       }
@@ -157,7 +165,8 @@ struct scene_prop_check : public file_exists_check {
   explicit scene_prop_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string &in_name
-  ) {
+  )
+      : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{}_{}", in_project.get_path(), in_season, l_season_begin);
     ue_path_ =
@@ -169,12 +178,12 @@ struct scene_prop_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(ue_path_)) {
-      msg         = fmt::format("UE路径不存在:{}", ue_path_);
+      msg         = fmt::format("UE路径不存在:{}", conv_loc_path(ue_path_));
       in_err_code = 2;
       return false;
     }
     if (!FSys::exists(maya_path_)) {
-      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      msg         = fmt::format("maya路径不存在:{}", conv_loc_path(maya_path_));
       in_err_code = 3;
       return false;
     }
@@ -187,7 +196,8 @@ struct scene_prop_check : public file_exists_check {
     }
     if (l_ue_files.empty()) {
       msg = fmt::format(
-          "UE文件不存在于路径{}中, 或者不符合 {} + 版本模式", ue_path_, ue_file_reg_.substr(0, ue_file_reg_.size() - 13)
+          "UE文件不存在于路径{}中, 或者不符合 {} + 版本模式", conv_loc_path(ue_path_),
+          ue_file_reg_.substr(0, ue_file_reg_.size() - 13)
       );
       in_err_code = 4;
       return false;
@@ -201,7 +211,7 @@ struct scene_prop_check : public file_exists_check {
     }
     if (l_maya_files.empty()) {
       msg = fmt::format(
-          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式", maya_path_,
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式", conv_loc_path(maya_path_),
           maya_file_reg_.substr(0, maya_file_reg_.size() - 13)
       );
       in_err_code = 5;
@@ -216,7 +226,7 @@ struct scene_prop_check : public file_exists_check {
     }
     for (auto &&l_ue : l_ue_files) {
       if (std::ranges::find(l_maya_files, l_ue) == l_maya_files.end()) {
-        msg         = fmt::format("UE文件{}没有对应的maya文件", l_ue);
+        msg         = fmt::format("UE文件{}没有对应的maya文件", conv_loc_path(l_ue));
         in_err_code = 7;
         return false;
       }
@@ -231,7 +241,8 @@ struct role_rig_check : public file_exists_check {
   explicit role_rig_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string &in_number, const std::string &in_name
-  ) {
+  )
+      : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
         fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
@@ -254,7 +265,7 @@ struct role_rig_check : public file_exists_check {
     }
     if (l_maya_files.empty()) {
       msg = fmt::format(
-          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _rig", maya_path_,
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _rig", conv_loc_path(maya_path_),
           maya_file_reg_.substr(0, maya_file_reg_.size() - 9)
       );
       in_err_code = 5;
@@ -276,7 +287,8 @@ struct scene_rig_check : public file_exists_check {
   explicit scene_rig_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string &in_name, const std::string &in_number
-  ) {
+  )
+      : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
         fmt::format("{}/6-moxing/BG/JD{}_{}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
@@ -286,7 +298,7 @@ struct scene_rig_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(maya_path_)) {
-      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      msg         = fmt::format("maya路径不存在:{}", conv_loc_path(maya_path_));
       in_err_code = 3;
       return false;
     }
@@ -299,7 +311,7 @@ struct scene_rig_check : public file_exists_check {
     }
     if (l_maya_files.empty()) {
       msg = fmt::format(
-          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _Low", maya_path_,
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _Low", conv_loc_path(maya_path_),
           maya_file_reg_.substr(0, maya_file_reg_.size() - 17)
       );
       in_err_code = 5;
@@ -316,7 +328,8 @@ struct scene_prop_rig_check : public file_exists_check {
   explicit scene_prop_rig_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string &in_name
-  ) {
+  )
+      : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{}_{}", in_project.get_path(), in_season, l_season_begin);
 
@@ -326,7 +339,7 @@ struct scene_prop_rig_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(maya_path_)) {
-      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      msg         = fmt::format("maya路径不存在:{}", conv_loc_path(maya_path_));
       in_err_code = 3;
       return false;
     }
@@ -339,7 +352,7 @@ struct scene_prop_rig_check : public file_exists_check {
     }
     if (l_maya_files.empty()) {
       msg = fmt::format(
-          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _rig", maya_path_,
+          "maya文件不存在于路径{}中, 或者不符合 {} + 版本模式 + _rig", conv_loc_path(maya_path_),
           maya_file_reg_.substr(0, maya_file_reg_.size() - 9)
       );
       in_err_code = 5;
@@ -360,7 +373,8 @@ struct animation_file_check : public file_exists_check {
   explicit animation_file_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string in_shot
-  ) {
+  )
+      : file_exists_check(in_project) {
     maya_path_ = fmt::format(
         "{}/03_Workflow/Shots/EP{:03}/ma/{}_EP{:03}_SC{}.ma", in_project.get_path(), in_episodes,
         in_project.short_str(), in_episodes, in_shot
@@ -369,7 +383,7 @@ struct animation_file_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(maya_path_)) {
-      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      msg         = fmt::format("maya路径不存在:{}", conv_loc_path(maya_path_));
       in_err_code = 3;
       return false;
     }
@@ -381,7 +395,8 @@ struct animation_file_check : public file_exists_check {
 struct solve_asset_file_check : public file_exists_check {
   FSys::path maya_path_;
   std::string maya_file_reg_;
-  explicit solve_asset_file_check(const project &in_project, const std::string &in_number) {
+  explicit solve_asset_file_check(const project &in_project, const std::string &in_number)
+      : file_exists_check(in_project) {
     maya_path_     = fmt::format("{}/6-moxing/CFX/", in_project.get_path());
     maya_file_reg_ = fmt::format("Ch{}_rig([_a-zA-Z]+)?_cloth", in_number);
   };
@@ -421,7 +436,8 @@ struct solve_file_check : public file_exists_check {
   explicit solve_file_check(
       const project &in_project, const std::int32_t &in_season, const std::int32_t &in_episodes,
       const std::string in_shot
-  ) {
+  )
+      : file_exists_check(in_project) {
     maya_path_ = fmt::format(
         "{}/03_Workflow/Shots/EP{:03}JS/ma/{}_EP{:03}_SC{}.ma", in_project.get_path(), in_episodes,
         in_project.short_str(), in_episodes, in_shot
@@ -430,7 +446,7 @@ struct solve_file_check : public file_exists_check {
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
     if (!FSys::exists(maya_path_)) {
-      msg         = fmt::format("maya路径不存在:{}", maya_path_);
+      msg         = fmt::format("maya路径不存在:{}", conv_loc_path(maya_path_));
       in_err_code = 3;
       return false;
     }

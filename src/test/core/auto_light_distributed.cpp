@@ -146,7 +146,7 @@ void test_fun3() {
   l_ue_msg.emplace<process_message>("测试");
   l_ue_msg.emplace<episodes>(92);
   l_ue_msg.emplace<shot>(89, shot::shot_ab_enum::None);
-  l_ue_msg.emplace<project>("测试", l_update_path, "test", "TE");
+  l_ue_msg.emplace<project>("测试", l_update_path, "test", "TE", "");
 
   down_auto_light_anim_file l_down_anim_file{l_ue_msg};
   import_and_render_ue l_import_and_render_ue{l_ue_msg};
