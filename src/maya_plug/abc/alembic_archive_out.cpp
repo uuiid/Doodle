@@ -251,23 +251,23 @@ MBoundingBox get_bound_box(const MDagPath& in_path) {
 }
 }  // namespace archive_out_ns
 
-void archive_out::wirte_transform(dag_path_out_data& in_path) {
+void archive_out::wirte_transform(dag_path_out_data& in_path, const o_xform_ptr& in_parent_xform) {
   MStatus l_s{};
-  MDagPath l_parent_path{in_path.dag_path_};
-  l_parent_path.pop();
-  MFnTransform l_fn_transform{l_parent_path, &l_s};
+  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
+  default_logger_raw()->log(log_loc(), level::level_enum::info, "开始写入变换 {}", l_name);
+  MFnTransform l_fn_transform{in_path.dag_path_, &l_s};
   maya_plug::maya_chick(l_s);
 
-  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(l_parent_path));
-  in_path.o_xform_ptr_ =
-      std::make_shared<Alembic::AbcGeom::OXform>(o_archive_->getTop(), l_name, transform_time_index_);
+  in_path.o_xform_ptr_ = std::make_shared<Alembic::AbcGeom::OXform>(
+      in_parent_xform ? in_parent_xform->getSchema().getObject() : o_archive_->getTop(), l_name, transform_time_index_
+  );
 
   auto& l_xform = in_path.o_xform_ptr_->getSchema();
   Alembic::AbcGeom::XformSample l_sample{};
 
   {
     Alembic::AbcGeom::XformOp l_op{Alembic::AbcGeom::kTranslateOperation, Alembic::AbcGeom::kTranslateHint};
-    const auto l_translate = l_fn_transform.getTranslation(MSpace::Space::kWorld);
+    const auto l_translate = l_fn_transform.getTranslation(MSpace::Space::kTransform);
     l_op.setTranslate({l_translate.x, l_translate.y, l_translate.z});
     l_sample.addOp(l_op);
   }
@@ -328,12 +328,12 @@ void archive_out::wirte_transform(dag_path_out_data& in_path) {
 }
 
 void archive_out::wirte_mesh(dag_path_out_data& in_path) {
-  in_path.dag_path_.extendToShape();
-  MFnMesh l_mesh{in_path.dag_path_};
-  DOODLE_LOG_INFO("开始写入网格体 {}", maya_plug::get_node_name(in_path.dag_path_));
-  wirte_transform(in_path);
+  MDagPath l_path = in_path.dag_path_;
+  l_path.extendToShape();
+  MFnMesh l_mesh{l_path};
+  DOODLE_LOG_INFO("开始写入网格体 {}", maya_plug::get_node_name(l_path));
 
-  auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
+  auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(l_path));
 
   // 这里是布料, 不使用细分网格
   in_path.o_mesh_ptr_ = std::make_shared<Alembic::AbcGeom::OPolyMesh>(
@@ -361,8 +361,8 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{l_p, l_f, l_pc, l_uv_s, l_normal_s};
   l_ploy_schema.set(l_poly_samp);
   // write face set
-  for (auto&& l_obj : maya_plug::get_shading_engines(in_path.dag_path_)) {
-    auto [l_name, l_list] = archive_out_ns::get_face_set(l_obj, in_path.dag_path_);
+  for (auto&& l_obj : maya_plug::get_shading_engines(l_path)) {
+    auto [l_name, l_list] = archive_out_ns::get_face_set(l_obj, l_path);
     if (l_name.empty()) continue;
     Alembic::AbcGeom::OFaceSet l_face_set =
         l_ploy_schema.hasFaceSet(l_name) ? l_ploy_schema.getFaceSet(l_name) : l_ploy_schema.createFaceSet(l_name);
@@ -398,12 +398,13 @@ void archive_out::wirte_frame(const dag_path_out_data& in_path) {
 void archive_out::write_box() {
   MFnDagNode l_node{};
   MBoundingBox l_box_main{};
-  for (auto&& i : dag_path_out_data_) {
+  for (auto&& i : root_) {
     l_box_main.expand(archive_out_ns::get_bound_box(i.dag_path_));
   }
   Alembic::Abc::Box3d l_box3d{
       {l_box_main.min().x, l_box_main.min().y, l_box_main.min().z},
-      {l_box_main.max().x, l_box_main.max().y, l_box_main.max().z}};
+      {l_box_main.max().x, l_box_main.max().y, l_box_main.max().z}
+  };
   o_box3d_property_ptr_->set(l_box3d);
 }
 
@@ -459,28 +460,65 @@ void archive_out::open(const std::vector<MDagPath>& in_out_path) {
     throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
   }
 
-  dag_path_out_data_ = in_out_path | ranges::views::filter([](const MDagPath& in_dag) -> bool {
-                         //  maya_plug::get_shape(in_dag.node()).hasFn(MFn::kMesh)
-                         //! in_dag.hasFn(MFn::kMesh)
-                         return !maya_plug::is_intermediate(in_dag) && in_dag.hasFn(MFn::kMesh)
-                             /* || !maya_plug::is_renderable(in_dag) */;
-                       }) |
-                       ranges::views::transform([](const MDagPath& in_dag) -> dag_path_out_data {
-                         return {in_dag, {}, {}};
-                       }) |
-                       ranges::to_vector;
+  auto l_dag_path_out_data_ = in_out_path | ranges::views::filter([](const MDagPath& in_dag) -> bool {
+                                //  maya_plug::get_shape(in_dag.node()).hasFn(MFn::kMesh)
+                                //! in_dag.hasFn(MFn::kMesh)
+                                return !maya_plug::is_intermediate(in_dag) && in_dag.hasFn(MFn::kMesh)
+                                    /* || !maya_plug::is_renderable(in_dag) */;
+                              }) |
+                              ranges::views::transform([](const MDagPath& in_dag) -> dag_path_out_data {
+                                return {in_dag, {}, {}, maya_plug::get_node_name(in_dag), {}};
+                              }) |
+                              ranges::to_vector;
+
+  root_ = {dag_path_out_data{}};
+  for (auto&& i : l_dag_path_out_data_) {
+    auto l_begin = root_.begin();
+    for (std::int32_t j = i.dag_path_.length() - 1; j >= 0; --j) {
+      MDagPath l_sub_path{i.dag_path_};
+      l_sub_path.pop(j);
+
+      if (auto l_tree_it = ranges::find_if(
+              std::begin(l_begin), std::end(l_begin),
+              [&](const dag_path_out_data& in_value) { return in_value.dag_path_ == l_sub_path; }
+          );
+          l_tree_it != std::end(l_begin)) {
+        l_begin = l_tree_it;
+      } else {
+        if (l_sub_path.hasFn(MFn::kTransform))
+          l_begin =
+              root_.append_child(l_begin, dag_path_out_data{l_sub_path, {}, {}, maya_plug::get_node_name(l_sub_path)});
+      }
+    }
+    l_begin->write_mesh_ = true;
+  }
 }
 
 void archive_out::write() {
+  static std::function<void(tree<dag_path_out_data>::iterator)> l_iter_write{};
+  l_iter_write = [&](tree<dag_path_out_data>::iterator in_iter) {
+    for (auto&& i = in_iter.begin(); i != in_iter.end(); ++i) {
+      wirte_transform(*i, in_iter->o_xform_ptr_);
+      if (i->write_mesh_) {
+        wirte_mesh(*i);
+      }
+      l_iter_write(i);
+    }
+  };
+  static std::function<void(tree<dag_path_out_data>::iterator)> l_iter_write_frame{};
+  l_iter_write_frame = [&](tree<dag_path_out_data>::iterator in_iter) {
+    for (auto&& i = in_iter.begin(); i != in_iter.end(); ++i) {
+      if (i->write_mesh_) wirte_frame(*i);
+      l_iter_write_frame(i);
+    }
+  };
+
   if (!init_) {
-    ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) {
-      if (!in_dag.dag_path_.isValid()) throw_exception(doodle_error{"dag path is invalid"});
-      wirte_mesh(in_dag);
-    });
+    l_iter_write(root_.begin());
     write_box();
     init_ = true;
   } else {
-    ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_frame(in_dag); });
+    l_iter_write_frame(root_.begin());
     write_box();
   }
 }

@@ -15,9 +15,9 @@
 #include <maya/MDagPath.h>
 #include <maya/MTime.h>
 #include <memory>
+#include <treehh/tree.hh>
 #include <utility>
 #include <vector>
-
 namespace doodle::alembic {
 
 class archive_out {
@@ -33,6 +33,8 @@ class archive_out {
     MDagPath dag_path_{};
     o_xform_ptr o_xform_ptr_{};
     o_mesh_ptr o_mesh_ptr_{};
+    std::string name_{};
+    bool write_mesh_{};
   };
   std::string m_name{};
   MTime begin_time{};
@@ -46,13 +48,14 @@ class archive_out {
   std::int32_t shape_time_index_{};
   std::int32_t transform_time_index_{};
   o_box3d_property_ptr o_box3d_property_ptr_{};
-  std::vector<dag_path_out_data> dag_path_out_data_{};
   bool init_{};
+
+  tree<dag_path_out_data> root_{};
   void open(const std::vector<MDagPath>& in_out_path);
 
   static std::tuple<std::uint16_t, std::uint16_t, std::uint16_t> get_rot_order();
 
-  void wirte_transform(dag_path_out_data& in_path);
+  void wirte_transform(dag_path_out_data& in_path, const o_xform_ptr& in_parent_xform);
   void wirte_mesh(dag_path_out_data& in_path);
   void write_box();
   void wirte_frame(const dag_path_out_data& in_path);

@@ -13,6 +13,7 @@ target_sources(doodle_maya_lib
         doodle_to_ue_fbx.h
         chick_export_fbx.h
         file_info_edit.h
+        export_abc_file.h
 
         PRIVATE
         open_doodle_main.cpp
@@ -28,4 +29,5 @@ target_sources(doodle_maya_lib
         doodle_to_ue_fbx.cpp
         chick_export_fbx.cpp
         file_info_edit.cpp
+        export_abc_file.cpp
 )
