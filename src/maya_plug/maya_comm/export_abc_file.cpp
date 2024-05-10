@@ -17,7 +17,7 @@
 namespace doodle::maya_plug {
 MSyntax export_abc_file_syntax() {
   MSyntax syntax;
-  syntax.addFlag("-f", "-file", MSyntax::kString);
+  syntax.addFlag("-f", "-file_path", MSyntax::kString);
   syntax.addFlag("-s", "-start", MSyntax::kLong);
   syntax.addFlag("-e", "-end", MSyntax::kLong);
   syntax.setObjectType(MSyntax::kSelectionList);

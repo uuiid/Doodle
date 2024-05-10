@@ -83,6 +83,7 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("blend", icon="icons/blend.png",
                       command=self.blendkeyframe)
         self.addButon("chick_export_fbx", command=self.chick_export_fbx)
+        self.addButon("ex abc", command=self.export_doodle_abc)
         self.addButon("test", command=self.export_doodle_fbx)
 
     def polyremesh(self):
@@ -110,6 +111,11 @@ class DlsShelf(shelfBase._shelf):
         l_files = cmds.fileDialog2(fileMode=0)
         if l_files:
             cmds.doodle_to_ue_fbx(file_path=l_files[0])
+
+    def export_doodle_abc(self):
+        l_files = cmds.fileDialog2(fileMode=0)
+        if l_files:
+            cmds.doodle_export_abc_file(file_path=l_files[0])
 
     def chick_export_fbx(self):
         cmds.doodle_chick_export_fbx()
