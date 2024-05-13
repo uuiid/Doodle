@@ -108,6 +108,14 @@ Environment="PREVIEW_FOLDER=/opt/zou/previews"
 Environment="TMP_DIR=/opt/zou/tmp"
 Environment="INDEXER_KEY=masterkey"
 Environment="ENABLE_JOB_QUEUE=True"
+
+Environment="MAIL_SERVER=smtp.163.com"
+Environment="MAIL_USERNAME=19975298467@163.com"
+Environment="MAIL_PASSWORD=WIGOMKIGPOKFJKEB"
+Environment="MAIL_USE_TLS=True"
+Environment="MAIL_DEFAULT_SENDER=19975298467@163.com"
+Environment="DOMAIN_NAME=192.168.40.182"
+
 ExecStart=/opt/zou/env/bin/gunicorn  -c /etc/zou/gunicorn.conf -b 127.0.0.1:5000 zou.app:app
 
 [Install]
@@ -249,14 +257,15 @@ sudo systemctl status nginx
 sudo systemctl status meilisearch
 
 
-
+更新界面
 
 export http_proxy="socks5://192.168.40.53:10810/"&&export https_proxy="socks5://192.168.40.53:10810/"
-
-
 export http_proxy="http://192.168.40.53:10810/"&&export https_proxy="http://192.168.40.53:10810/"
 
 sudo git clone --branch file_check_vite https://github.com/uuiid/kitsu.git
+git fetch origin file_check_vite
+git checkout origin/file_check_vite
+
 cd /opt/test
 curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
@@ -267,3 +276,9 @@ sudo apt-get install nodejs -y
 sudo apt install nodejs -y
 
 sudo cp -TRv dist /opt/kitsu/dist
+
+
+更新核心
+sudo /opt/zou/env/bin/python -m pip install --upgrade zou
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou upgrade-db
+sudo systemctl restart zou&&sudo systemctl restart zou-events
