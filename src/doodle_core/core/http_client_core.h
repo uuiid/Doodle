@@ -127,8 +127,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
       }
     }
 
-    void next() {}
-
     // async_write async_read 回调
     void operator()(boost::system::error_code ec, std::size_t bytes_transferred) {
       boost::ignore_unused(bytes_transferred);
@@ -137,7 +135,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
         if (ptr_->retry_count_ > 3) {
           this->complete(false, ec, ptr_->response_);
-          next();
           return;
         }
         log_info(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
@@ -147,7 +144,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
       if (ec) {
         log_info(ptr_->logger_, fmt::format("{}", ec));
         this->complete(false, ec, ptr_->response_);
-        next();
         return;
       }
 
@@ -158,7 +154,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
         }
         case state::read: {
           this->complete(false, ec, ptr_->response_);
-          next();
           break;
         }
         default: {
@@ -175,7 +170,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
           ec == boost::beast::errc::connection_refused || ec == boost::beast::errc::connection_aborted) {
         if (ptr_->retry_count_ > 3) {
           this->complete(false, ec, ptr_->response_);
-          next();
           return;
         }
         log_info(ptr_->logger_, fmt::format("开始第{}次重试 出现错误 {}", ptr_->retry_count_, ec));
@@ -186,7 +180,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
       if (ec) {
         log_info(ptr_->logger_, fmt::format("{}", ec));
         this->complete(false, ec, ptr_->response_);
-        next();
         return;
       }
 
@@ -200,7 +193,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
       if (ec) {
         log_info(ptr_->logger_, fmt::format("{}", ec));
         this->complete(false, ec, ptr_->response_);
-        next();
         return;
       }
       http_client_core_ptr_->ptr_->resolver_results_ = std::move(results);
