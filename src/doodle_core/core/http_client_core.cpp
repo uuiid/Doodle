@@ -25,14 +25,14 @@ void http_client_core::do_close() {
   boost::system::error_code ec;
   ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
   if (ec) {
-    DOODLE_LOG_INFO(ec);
+    ptr_->logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
   }
 }
 void http_client_core::cancel() {
   boost::system::error_code ec;
   ptr_->socket_->socket().cancel(ec);
   if (ec) {
-    DOODLE_LOG_INFO(ec);
+    ptr_->logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
   }
 }
 http_client_core::~http_client_core() = default;
