@@ -15,7 +15,7 @@
 #include <magic_enum.hpp>
 namespace doodle::http::detail {
 
-template <typename SetResponseOperator>
+template <typename>
 class http_client_core;
 
 namespace http_client_core_ns {
@@ -42,7 +42,7 @@ class set_response_header_operator_base {
   }
 };
 template <typename SetResponseOperator>
-class http_client_core : public std::enable_shared_from_this<http_client_core> {
+class http_client_core : public std::enable_shared_from_this<http_client_core<SetResponseOperator>> {
  public:
   using socket_t                          = boost::beast::tcp_stream;
   using socket_ptr                        = std::shared_ptr<socket_t>;
@@ -269,7 +269,7 @@ class http_client_core : public std::enable_shared_from_this<http_client_core> {
   explicit http_client_core(
       std::string in_server_ip, std::string in_server_port_ = std::to_string(doodle_config::http_port)
   )
-      : ptr_(std::make_shared<data_type>()), set_response_header_operator_(this) {
+      : ptr_(std::make_shared<data_type>()), set_response_header_operator_() {
     ptr_->server_ip_   = std::move(in_server_ip);
     ptr_->server_port_ = std::move(in_server_port_);
 

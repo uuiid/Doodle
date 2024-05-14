@@ -53,7 +53,7 @@ using spdlog::level::warn;
 }  // namespace level
 
 namespace http::detail {
-class http_client_core;
+// class http_client_core;
 }
 namespace details {
 class database_info;
