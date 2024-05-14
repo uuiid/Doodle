@@ -15,7 +15,7 @@
 #include <magic_enum.hpp>
 namespace doodle::http::detail {
 
-template <typename>
+template <typename, typename>
 class http_client_core;
 
 namespace http_client_core_ns {
@@ -28,10 +28,10 @@ enum state {
 };
 inline auto format_as(state f) { return magic_enum::enum_name(f); }
 }  // namespace http_client_core_ns
-class set_response_header_operator_base {
+class response_header_operator_base {
  public:
-  set_response_header_operator_base() {}
-  ~set_response_header_operator_base() = default;
+  response_header_operator_base() {}
+  ~response_header_operator_base() = default;
   template <typename T, typename ResponeType>
   void operator()(T* in_http_client_core, ResponeType& in_req) {
     in_req.set(
@@ -41,15 +41,25 @@ class set_response_header_operator_base {
     in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   }
 };
-template <typename SetResponseOperator>
-class http_client_core : public std::enable_shared_from_this<http_client_core<SetResponseOperator>> {
+
+class request_header_operator_base {
  public:
-  using socket_t                          = boost::beast::tcp_stream;
-  using socket_ptr                        = std::shared_ptr<socket_t>;
-  using resolver_t                        = boost::asio::ip::tcp::resolver;
-  using resolver_ptr                      = std::shared_ptr<resolver_t>;
-  using buffer_type                       = boost::beast::flat_buffer;
-  using set_response_header_operator_type = SetResponseOperator;
+  request_header_operator_base() {}
+  ~request_header_operator_base() = default;
+  template <typename T, typename ResponeType>
+  void operator()(T* in_http_client_core, ResponeType& in_req) {}
+};
+
+template <typename RequestOperator, typename ResponseOperator>
+class http_client_core : public std::enable_shared_from_this<http_client_core<RequestOperator, ResponseOperator>> {
+ public:
+  using socket_t                      = boost::beast::tcp_stream;
+  using socket_ptr                    = std::shared_ptr<socket_t>;
+  using resolver_t                    = boost::asio::ip::tcp::resolver;
+  using resolver_ptr                  = std::shared_ptr<resolver_t>;
+  using buffer_type                   = boost::beast::flat_buffer;
+  using response_header_operator_type = ResponseOperator;
+  using request_header_operator_type  = RequestOperator;
 
  private:
   using next_fun_t          = std::function<void()>;
@@ -73,7 +83,8 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
   std::shared_ptr<data_type> ptr_;
 
   bool is_run_ = false;
-  set_response_header_operator_type set_response_header_operator_;
+  request_header_operator_type request_header_operator_;
+  response_header_operator_type response_header_operator_;
 
   // is_run 守卫
   struct guard_is_run {
@@ -168,6 +179,7 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
           break;
         }
         case state::read: {
+          http_client_core_ptr_->response_header_operator_(http_client_core_ptr_, ptr_->response_);
           this->complete(false, ec, ptr_->response_);
           break;
         }
@@ -247,7 +259,7 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
  public:
   template <typename ResponseType, typename RequestType, typename CompletionHandler>
   auto async_read(RequestType& in_type, CompletionHandler&& in_completion) {
-    set_response_header_operator_(this, in_type);
+    request_header_operator_(this, in_type);
     using execution_type = decltype(boost::asio::get_associated_executor(in_completion, g_io_context().get_executor()));
     using connect_op     = connect_write_read_op<execution_type, CompletionHandler, ResponseType, RequestType>;
     this->stream().expires_after(30s);
@@ -266,11 +278,13 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
   }
 
  public:
-  http_client_core() : ptr_(std::make_shared<data_type>()), set_response_header_operator_() { make_ptr(); }
+  http_client_core() : ptr_(std::make_shared<data_type>()), request_header_operator_(), response_header_operator_() {
+    make_ptr();
+  }
   explicit http_client_core(
       std::string in_server_ip, std::string in_server_port_ = std::to_string(doodle_config::http_port)
   )
-      : ptr_(std::make_shared<data_type>()), set_response_header_operator_() {
+      : ptr_(std::make_shared<data_type>()), request_header_operator_(), response_header_operator_() {
     ptr_->server_ip_   = std::move(in_server_ip);
     ptr_->server_port_ = std::move(in_server_port_);
 
@@ -297,12 +311,15 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
   [[nodiscard]] inline const std::string& server_port() const { return ptr_->server_port_; }
   inline void server_port(std::string in_server_port) { ptr_->server_port_ = std::move(in_server_port); }
   // response_header_operator
-  [[nodiscard]] inline set_response_header_operator_type& response_header_operator() { return set_response_header_operator_; }
-  [[nodiscard]] inline const set_response_header_operator_type& response_header_operator() const {
-    return set_response_header_operator_;
+  [[nodiscard]] inline response_header_operator_type& response_header_operator() { return response_header_operator_; }
+  [[nodiscard]] inline const response_header_operator_type& response_header_operator() const {
+    return response_header_operator_;
   }
-
-
+  // request_header_operator
+  [[nodiscard]] inline request_header_operator_type& request_header_operator() { return request_header_operator_; }
+  [[nodiscard]] inline const request_header_operator_type& request_header_operator() const {
+    return request_header_operator_;
+  }
 
   inline socket_t::socket_type& socket() { return ptr_->socket_->socket(); }
   inline socket_t& stream() { return *ptr_->socket_; }
@@ -340,5 +357,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
 }  // namespace doodle::http::detail
 
 namespace doodle::http {
-using http_client_core = detail::http_client_core<detail::set_response_header_operator_base>;
+using http_client_core =
+    detail::http_client_core<detail::request_header_operator_base, detail::response_header_operator_base>;
 }
