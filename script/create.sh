@@ -116,6 +116,8 @@ Environment="MAIL_USE_TLS=True"
 Environment="MAIL_DEFAULT_SENDER=19975298467@163.com"
 Environment="DOMAIN_NAME=192.168.40.182"
 
+Environment="USER_LIMIT=400"
+
 ExecStart=/opt/zou/env/bin/gunicorn  -c /etc/zou/gunicorn.conf -b 127.0.0.1:5000 zou.app:app
 
 [Install]
@@ -282,3 +284,10 @@ sudo cp -TRv dist /opt/kitsu/dist
 sudo /opt/zou/env/bin/python -m pip install --upgrade zou
 DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou upgrade-db
 sudo systemctl restart zou&&sudo systemctl restart zou-events
+
+打开pg控制
+sudo nano /etc/postgresql/14/main/postgresql.conf
+sudo ufw allow 5432
+sudo nano /etc/postgresql/14/main/pg_hba.conf
+host    all             all             192.168.40.53/32         md5
+sudo service postgresql restart
