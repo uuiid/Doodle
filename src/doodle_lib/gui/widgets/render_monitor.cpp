@@ -160,9 +160,8 @@ bool render_monitor::render() {
 }
 
 void render_monitor::do_find_server_address() {
-  p_i->http_client_core_ptr_ =
-      std::make_shared<http::detail::http_client_core>(register_file_type::get_server_address());
-  p_i->progress_message_ = "正在查找服务器数据...";
+  p_i->http_client_core_ptr_ = std::make_shared<http::http_client_core>(register_file_type::get_server_address());
+  p_i->progress_message_     = "正在查找服务器数据...";
   get_remote_data();
 }
 
