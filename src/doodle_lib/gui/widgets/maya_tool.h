@@ -29,7 +29,6 @@ class DOODLELIB_API maya_tool {
   bool p_upload_files{};
   std::string title_name_{};
   bool open{true};
-  std::shared_ptr<http::detail::http_client_core> http_client_core_ptr_{};
   class impl;
   std::unique_ptr<impl> ptr_attr;
 
