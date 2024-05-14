@@ -146,7 +146,7 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
             .AutoHeight()
             [
                 SNew(STextBlock)
-                    .Text(FText::FromString(TEXT("重复贴图：")))
+                    .Text(FText::FromString(TEXT("部门：地编-----------------------------------------------------")))
                     .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
             ]
             + SVerticalBox::Slot()
@@ -176,49 +176,49 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                     .OnGetChildren(this, &UDoodleOrganizeCompoundWidget::HandleGetChildrenForTree)
                     .HighlightParentNodesForSelection(true)
                     .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FTreeItem> inSelectItem)
-                        {
-                            TArray<UObject*> Objects;
-                            Objects.Add(inSelectItem->Asset.GetAsset());
-                            FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-                            ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
-                        })
+                    {
+                        TArray<UObject*> Objects;
+                        Objects.Add(inSelectItem->Asset.GetAsset());
+                        FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+                        ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
+                    })
                     .OnSelectionChanged_Lambda([&](TSharedPtr<FTreeItem> inSelectItem, ESelectInfo::Type SelectType)
+                    {
+                        NowSelectItem = inSelectItem;
+                    })
+                    .OnContextMenuOpening_Lambda([this]()
+                    {
+                        if (NowSelectItem && NowSelectItem->Path.Len() > 0)
                         {
-                            NowSelectItem = inSelectItem;
-                        })
-                            .OnContextMenuOpening_Lambda([this]()
-                                {
-                                    if (NowSelectItem && NowSelectItem->Path.Len() > 0)
-                                    {
-                                        FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &UDoodleOrganizeCompoundWidget::OnRenameTexture), FCanExecuteAction());
-                                        FMenuBuilder MenuBuilder(true, false);
-                                        MenuBuilder.AddMenuSeparator();
-                                        MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名贴图")),
-                                            FSlateIcon(), ActionDelete);
-                                        return MenuBuilder.MakeWidget();
-                                    }
-                                    return SNullWidget::NullWidget;
-                                })
-                            .HeaderRow
-                            (
-                                SNew(SHeaderRow)
+                            FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &UDoodleOrganizeCompoundWidget::OnRenameTexture), FCanExecuteAction());
+                            FMenuBuilder MenuBuilder(true, false);
+                            MenuBuilder.AddMenuSeparator();
+                            MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名贴图")),
+                                FSlateIcon(), ActionDelete);
+                            return MenuBuilder.MakeWidget();
+                        }
+                        return SNullWidget::NullWidget;
+                    })
+                    .HeaderRow
+                    (
+                        SNew(SHeaderRow)
 
-                                + SHeaderRow::Column(FName(TEXT("Column1")))
-                                .DefaultLabel(FText::FromString(TEXT("贴图路径")))
-                                //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
-                                .FillWidth(0.8f)
+                        + SHeaderRow::Column(FName(TEXT("Column1")))
+                        .DefaultLabel(FText::FromString(TEXT("贴图路径")))
+                        //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
+                        .FillWidth(0.8f)
 
-                                + SHeaderRow::Column(FName(TEXT("Column2")))
-                                //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
-                                .FixedWidth(90.0f)
-                                .VAlignHeader(VAlign_Center)
-                                .HeaderContent()
-                                [
-                                    SNew(STextBlock)
-                                        .Text(FText::FromString(TEXT("")))
-                                        .ToolTipText(FText::FromString(TEXT("TotalMilisecondsIncTooltip")))
-                                ]
-                            )
+                        + SHeaderRow::Column(FName(TEXT("Column2")))
+                        //.OnSort(FOnSortModeChanged::CreateSP(this, &SControlRigProfilingView::OnSortColumnHeader))
+                        .FixedWidth(90.0f)
+                        .VAlignHeader(VAlign_Center)
+                        .HeaderContent()
+                        [
+                            SNew(STextBlock)
+                                .Text(FText::FromString(TEXT("")))
+                                .ToolTipText(FText::FromString(TEXT("TotalMilisecondsIncTooltip")))
+                        ]
+                    )
             ]
             + SVerticalBox::Slot()
             .AutoHeight()
@@ -294,6 +294,90 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                         SNew(SButton)
                             .Text(FText::FromString(TEXT("重置所有贴图大小（2的幂次方）")))
                             .OnClicked(this, &UDoodleOrganizeCompoundWidget::OnResizeTextureSize)
+                    ]
+            ]
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            [
+                SNew(STextBlock)
+                    .Text(FText::FromString(TEXT("部门：角色模型-----------------------------------------------------")))
+                    .ColorAndOpacity(FSlateColor{ FLinearColor{1, 1, 0, 1} })
+            ]
+            + SVerticalBox::Slot()
+            .FillHeight(0.1)
+            [
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .FillWidth(1.0f)
+                    [
+                        SNew(STextBlock)
+                            .Text(FText::FromString(TEXT("角色名称（拼音）:"+ ModeFolderName)))
+                    ]
+                    + SHorizontalBox::Slot()
+                    .FillWidth(4.0f)
+                    [
+                        SNew(SEditableTextBox)
+                            .Text_Lambda([this]()-> FText
+                            {
+                                GConfig->GetString(TEXT("DoodleOrganize"), TEXT("ModeFolderName"), ModeFolderName, GEngineIni);
+                                return FText::FromString(ModeFolderName);
+                            })
+                            .OnTextChanged_Lambda([this](const FText& In_Text)
+                            {
+                                ModeFolderName = In_Text.ToString();
+                            })
+                            .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
+                            {
+                                ModeFolderName = In_Text.ToString();
+                                GConfig->SetString(TEXT("DoodleOrganize"), TEXT("ModeFolderName"), *ModeFolderName, GEngineIni);
+                            })
+                    ]
+                    + SHorizontalBox::Slot()
+                    .FillWidth(2.0f)
+                    [
+                        SNew(SButton)
+                            .Text(FText::FromString(TEXT("整理所有资源")))
+                            .OnClicked(this, &UDoodleOrganizeCompoundWidget::GenerateModeFolders)
+                    ]
+            ]
+            + SVerticalBox::Slot()
+            .FillHeight(0.1)
+            .Padding(5.0f)
+            [
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    .FillWidth(1.0f)
+                    [
+                        SNew(SButton)
+                            .Text(FText::FromString(TEXT("去除文件_后缀")))
+                            .OnClicked(this, &UDoodleOrganizeCompoundWidget::RemoveSuffix)
+                    ]
+                    + SHorizontalBox::Slot()
+                    .FillWidth(4.0f)
+                    [
+                        SNew(SEditableTextBox)
+                            .Text_Lambda([this]()-> FText
+                            {
+                                GConfig->GetString(TEXT("DoodleOrganize"), TEXT("TheSuffix"), TheSuffix, GEngineIni);
+                                return FText::FromString(TheSuffix);
+                            })
+                            .OnTextChanged_Lambda([this](const FText& In_Text)
+                            {
+                                TheSuffix = In_Text.ToString();
+                            })
+                            .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type)
+                            {
+                                TheSuffix = In_Text.ToString();
+                                GConfig->SetString(TEXT("DoodleOrganize"), TEXT("TheSuffix"), *TheSuffix, GEngineIni);
+                            })
+                    ]
+                    + SHorizontalBox::Slot()
+                    .FillWidth(2.0f)
+                    [
+                        SNew(SButton)
+                            .Text(FText::FromString(TEXT("添加文件_后缀")))
+                            .OnClicked(this, &UDoodleOrganizeCompoundWidget::AddSuffix)
                     ]
             ]
     ];
@@ -757,4 +841,181 @@ void UDoodleOrganizeCompoundWidget::DeleteAllEmptyDirectory()
     {
         DeleteAllEmptyDirectory();
     }
+}
+
+FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
+{
+    //FContentBrowserModule& ContentModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+    //-------------
+    if (ModeFolderName.TrimEnd().IsEmpty())
+    {
+        FText  DialogText = FText::FromString(TEXT("角色拼音名称不能为空。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+    FString ContentPath = TEXT("/Game/");
+    FString FolderPath = FPaths::Combine(ContentPath, TEXT("Character/") + ModeFolderName.TrimEnd());
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
+    {
+        EditorAssetSubsystem->MakeDirectory(FolderPath);
+    }
+    FARFilter LFilter{};
+    LFilter.bRecursivePaths = true;
+    LFilter.bRecursiveClasses = true;
+    LFilter.PackagePaths.Add(FName{ GamePath });
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    TArray<FAssetData> AllAsset;
+    AssetRegistryModule.Get().GetAssets(LFilter, AllAsset);
+    TArray<UObject*> SelectedObjs;
+    for (FAssetData SelectedData : AllAsset)
+    {
+        if (SelectedData.GetClass()->IsChildOf<UStaticMesh>()
+            || SelectedData.GetClass()->IsChildOf<USkeletalMesh>()
+            || SelectedData.GetClass()->IsChildOf<UPhysicsAsset>()
+            || SelectedData.GetClass()->IsChildOf<UAnimationAsset>()
+            || SelectedData.GetClass()->IsChildOf<USkeleton>())
+        {
+            MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Meshs"));
+        }
+        else if (SelectedData.GetClass()->IsChildOf<UTexture>())
+        {
+            MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Texture"));
+        }
+        else if (SelectedData.GetClass()->IsChildOf<UMaterialInstance>())
+        {
+            MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Material"));
+        }
+        else if (SelectedData.GetClass() == UMaterial::StaticClass())
+        {
+            MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Material/Mu01"));
+        }
+        else if (SelectedData.GetClass() == UMaterialParameterCollection::StaticClass()
+            || SelectedData.GetClass() == UMaterialFunction::StaticClass()
+            || SelectedData.GetClass()->IsChildOf<UBlueprint>())
+        {
+            MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Material/Mate01"));
+        }
+        else
+        {
+            MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Other"));
+        }
+        SelectedObjs.Add(SelectedData.GetAsset());
+    }
+    //--------------------------
+    EditorAssetSubsystem->SaveLoadedAssets(SelectedObjs);
+    //------------
+    FixupAllReferencers();
+    return FReply::Handled();
+}
+
+void UDoodleOrganizeCompoundWidget::MakeDirectoryByTypeMode(FString FolderPath, FAssetData SelectedData, FString DirectoryName)
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    FString Path = FPaths::Combine(FolderPath, DirectoryName);
+    if (!EditorAssetSubsystem->DoesDirectoryExist(Path))
+    {
+        EditorAssetSubsystem->MakeDirectory(Path);
+    }
+    FName AssetName = SelectedData.AssetName;
+    if (!EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
+    {
+        AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+    }
+    else
+    {
+        while (EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
+        {
+            int Counter = AssetName.GetNumber();
+            AssetName.SetNumber(++Counter);
+        }
+        FString targetPath = FPaths::Combine(Path, AssetName.ToString());
+        if (EditorAssetSubsystem->RenameAsset(SelectedData.PackageName.ToString(), targetPath))
+        {
+            FString Info = FString::Format(TEXT("文件重命名为:{0}"), { FPaths::Combine(SelectedData.PackagePath.ToString(), AssetName.ToString()) });
+            FNotificationInfo L_Info{ FText::FromString(Info) };
+            L_Info.FadeInDuration = 2.0f;  // 
+            L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+            FSlateNotificationManager::Get().AddNotification(L_Info);
+        }
+    }
+    //EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
+}
+
+FReply UDoodleOrganizeCompoundWidget::RemoveSuffix()
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    FContentBrowserModule& ContentModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+    TArray<FAssetData> SelectedAsset;
+    ContentModule.Get().GetSelectedAssets(SelectedAsset);
+    if (SelectedAsset.Num() <= 0)
+    {
+        FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个文件。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+    //----------------------
+    for (FAssetData SelectedData : SelectedAsset) 
+    {
+        FString StrName = SelectedData.AssetName.ToString();
+        int32 SepIdx = INDEX_NONE;
+        if (StrName.FindLastChar(TEXT('_'), SepIdx))
+        {
+            FString Str = StrName.LeftChop(StrName.Len()-SepIdx);
+            FString targetPath = FPaths::Combine(SelectedData.PackagePath.ToString(), Str);
+            if (EditorAssetSubsystem->RenameAsset(SelectedData.PackageName.ToString(), targetPath))
+            {
+                FString Info = FString::Format(TEXT("文件重命名为:{0}"), { FPaths::Combine(SelectedData.PackagePath.ToString(), Str) });
+                FNotificationInfo L_Info{ FText::FromString(Info) };
+                L_Info.FadeInDuration = 2.0f;  // 
+                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                FSlateNotificationManager::Get().AddNotification(L_Info);
+            }
+            else 
+            {
+                FString Info = FString::Format(TEXT("重命名文件:{0}失败,该命名已存在"), { FPaths::Combine(SelectedData.PackagePath.ToString(), Str) });
+                FNotificationInfo L_Info{ FText::FromString(Info) };
+                L_Info.FadeInDuration = 2.0f;  // 
+                L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Error"));
+                FSlateNotificationManager::Get().AddNotification(L_Info);
+            }
+            EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
+        }
+    }
+    return FReply::Handled();
+}
+
+FReply UDoodleOrganizeCompoundWidget::AddSuffix()
+{
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    FContentBrowserModule& ContentModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+    TArray<FAssetData> SelectedAsset;
+    ContentModule.Get().GetSelectedAssets(SelectedAsset);
+    if (SelectedAsset.Num() <= 0)
+    {
+        FText  DialogText = FText::FromString(TEXT("请先在内容浏览器中，选择一个文件。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+    if (TheSuffix.TrimEnd().IsEmpty())
+    {
+        FText  DialogText = FText::FromString(TEXT("请填先写后缀。"));
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+        return FReply::Handled();
+    }
+    //----------------------
+    for (FAssetData SelectedData : SelectedAsset)
+    {
+        FString StrName = SelectedData.AssetName.ToString() + TEXT("_") + TheSuffix;
+        FString targetPath = FPaths::Combine(SelectedData.PackagePath.ToString(), StrName);
+        if (EditorAssetSubsystem->RenameAsset(SelectedData.PackageName.ToString(), targetPath))
+        {
+            FString Info = FString::Format(TEXT("文件重命名为:{0}"), { FPaths::Combine(SelectedData.PackagePath.ToString(), targetPath) });
+            FNotificationInfo L_Info{ FText::FromString(Info) };
+            L_Info.FadeInDuration = 2.0f;  // 
+            L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+            FSlateNotificationManager::Get().AddNotification(L_Info);
+        }
+    }
+    return FReply::Handled();
 }

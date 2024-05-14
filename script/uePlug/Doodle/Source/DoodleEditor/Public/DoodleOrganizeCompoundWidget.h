@@ -87,4 +87,11 @@ private:
 	void FixupAllReferencers();
 	void OnRenameTexture();
 	TSharedPtr<FTreeItem> NowSelectItem;
+	//------------------
+	FString ModeFolderName{""};
+	FReply GenerateModeFolders();
+	void MakeDirectoryByTypeMode(FString FolderPath, FAssetData SelectedData, FString DirectoryName);
+	FString TheSuffix{ "" };
+	FReply RemoveSuffix();
+	FReply AddSuffix();
 };
