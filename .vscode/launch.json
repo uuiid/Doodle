@@ -112,6 +112,7 @@
             "args": [
                 "--log_level=message",
                 "--color_output=true",
+                "--detect_memory_leaks=0",
                 "--run_test=${input:test_}"
             ],
             "stopAtEntry": false,
@@ -159,7 +160,8 @@
             "description": "test分类",
             "options": [
                 "rpc_server/base",
-                "rpc_server/list_users"
+                "rpc_server/list_users",
+                "kitsu_login"
             ],
             "default": "rpc_server/base"
         }

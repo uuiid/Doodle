@@ -98,6 +98,15 @@
       ]
     },
     {
+      "name": "test",
+      "description": "构建boost测试",
+      "displayName": "测试",
+      "inherits": "debug",
+      "targets": [
+        "test_main"
+      ]
+    },
+    {
       "name": "doxygen",
       "description": "doc",
       "displayName": "生成日志",
