@@ -43,6 +43,7 @@ add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(math)
 add_subdirectory(ai)
+add_subdirectory(kitsu)
 #add_subdirectory(rtt)
 # 这一项要放在最后
 

@@ -266,6 +266,7 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
   }
 
  public:
+  http_client_core() : ptr_(std::make_shared<data_type>()), set_response_header_operator_() { make_ptr(); }
   explicit http_client_core(
       std::string in_server_ip, std::string in_server_port_ = std::to_string(doodle_config::http_port)
   )
@@ -295,6 +296,13 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Se
   [[nodiscard]] inline std::string& server_port() { return ptr_->server_port_; }
   [[nodiscard]] inline const std::string& server_port() const { return ptr_->server_port_; }
   inline void server_port(std::string in_server_port) { ptr_->server_port_ = std::move(in_server_port); }
+  // response_header_operator
+  [[nodiscard]] inline set_response_header_operator_type& response_header_operator() { return set_response_header_operator_; }
+  [[nodiscard]] inline const set_response_header_operator_type& response_header_operator() const {
+    return set_response_header_operator_;
+  }
+
+
 
   inline socket_t::socket_type& socket() { return ptr_->socket_->socket(); }
   inline socket_t& stream() { return *ptr_->socket_; }
