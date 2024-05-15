@@ -5,27 +5,54 @@
 #include <doodle_lib/core/http/json_body.h>
 
 namespace doodle::kitsu {
+class kitsu_client;
 
-class kitsu_response_header_operator {
+class kitsu_request_header_operator {
  public:
-  std::string access_token_{};
-  std::string refresh_token_{};
+  kitsu_client* kitsu_client_ptr_{};
   template <typename T, typename ResponeType>
   void operator()(T* in_http_client_core, ResponeType& in_req) {
     in_req.set(boost::beast::http::field::accept, "application/json");
     in_req.set(boost::beast::http::field::content_type, "application/json");
     in_req.set(boost::beast::http::field::host, boost::asio::ip::host_name());
-    in_req.set(boost::beast::http::field::authorization, "Bearer " + access_token_);
+    in_req.set(boost::beast::http::field::authorization, "Bearer " + kitsu_client_ptr_->access_token_);
+    if(!kitsu_client_ptr_->session_cookie_.empty()) {
+      in_req.set(boost::beast::http::field::cookie, kitsu_client_ptr_->session_cookie_);
+    }
     in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     in_req.keep_alive(true);
     in_req.prepare_payload();
   }
 };
 
+class kitsu_response_header_operator {
+ public:
+  kitsu_client* kitsu_client_ptr_{};
+  template <typename T, typename ResponeType>
+  void operator()(T* in_http_client_core, ResponeType& in_req) {
+    auto l_set_cookie = in_req[boost::beast::http::field::set_cookie];
+    if (!l_set_cookie.empty()) {
+      std::vector<std::string> l_cookie;
+      boost::split(l_cookie, l_set_cookie, boost::is_any_of(";"));
+      for (auto& l_item : l_cookie) {
+        if (l_item.starts_with("session=")) {
+          kitsu_client_ptr_->session_cookie_ = l_item;
+        }
+      }
+    }
+  }
+};
+
 class kitsu_client {
-  using http_client_core     = doodle::http::detail::http_client_core<kitsu_response_header_operator>;
+  using http_client_core =
+      doodle::http::detail::http_client_core<kitsu_request_header_operator, kitsu_response_header_operator>;
   using http_client_core_ptr = std::shared_ptr<http_client_core>;
   http_client_core_ptr http_client_core_ptr_{};
+  friend class kitsu_request_header_operator;
+  friend class kitsu_response_header_operator;
+  std::string access_token_{};
+  std::string refresh_token_{};
+  std::string session_cookie_{};
 
  public:
   kitsu_client(std::string in_ip, std::string in_port)
@@ -48,6 +75,7 @@ class kitsu_client {
                      l_com(ec, nlohmann::json{});
                      return;
                    }
+                   res[boost::beast::http::field::content_type];
                    if (res.result() != boost::beast::http::status::ok) {
                      http_client_core_ptr_->logger()->log(
                          log_loc(), level::err, "login failed: {}", magic_enum::enum_integer(res.result())
@@ -58,8 +86,7 @@ class kitsu_client {
                    auto l_json = res.body();
                    if (l_json["login"].get<bool>()) {
                      http_client_core_ptr_->logger()->info("login success");
-                     http_client_core_ptr_->response_header_operator().access_token_ =
-                         l_json["access_token"].get<std::string>();
+                     http_client_core_ptr_->access_token_ = l_json["access_token"].get<std::string>();
                    }
                    l_com(ec, std::move(l_json));
                  }
