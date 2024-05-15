@@ -15,7 +15,7 @@
 #include "socket_logger.h"
 namespace doodle::http {
 void http_websocket_data::run(const http_session_data_ptr& in_data) {
-  logger_ = in_data->logger_;
+  logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}", "socket", SOCKET(in_data->stream_->socket().native_handle())));
   logger_->log(log_loc(), level::info, "开始处理请求 {}", in_data->request_parser_->get().target());
 
   stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
@@ -36,7 +36,6 @@ void http_websocket_data::run(const http_session_data_ptr& in_data) {
 
 void http_websocket_data::run_fun() {
   if (read_queue_.empty()) return;
-  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   if (!nlohmann::json::accept(read_queue_.front())) {
     logger_->log(log_loc(), level::err, "json parse error: {}", read_queue_.front());
     read_queue_.pop();
@@ -48,7 +47,7 @@ void http_websocket_data::run_fun() {
     logger_->log(log_loc(), level::err, "json parse error: {}", l_json.dump());
     return;
   }
-  on_message(l_json, l_self_handle);
+  on_message(l_json, shared_from_this());
 }
 void http_websocket_data::seed(const nlohmann::json& in_json) {
   write_queue_.emplace(in_json.dump());
@@ -56,10 +55,7 @@ void http_websocket_data::seed(const nlohmann::json& in_json) {
 }
 
 void http_websocket_data::do_read() {
-  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
-
   if (is_reading_) return;
-
   stream_->async_read(
       buffer_,
       [this, l_g = std::make_shared<read_guard_t>(this),
@@ -81,7 +77,6 @@ void http_websocket_data::do_read() {
   );
 }
 void http_websocket_data::do_write() {
-  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   if (write_queue_.empty()) return;
   if (is_writing_) return;
 
@@ -104,7 +99,6 @@ void http_websocket_data::do_write() {
   );
 }
 void http_websocket_data::do_close() {
-  auto l_self_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
   boost::system::error_code l_error_code{};
   stream_->async_close(
       boost::beast::websocket::close_code::normal,

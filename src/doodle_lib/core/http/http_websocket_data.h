@@ -185,7 +185,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
 
   void run_fun();
 
-  boost::signals2::signal<void(const nlohmann::json&, const entt::handle&)> on_message;
+  boost::signals2::signal<void(const nlohmann::json&, const std::shared_ptr<http_websocket_data>&)> on_message;
 
   // 不一定有回复, 所以不需要回调
   void seed(const nlohmann::json& in_json);
