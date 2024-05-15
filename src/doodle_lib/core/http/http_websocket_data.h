@@ -25,8 +25,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                               {http_websocket_data_fun::set_task, "set_task"},
                               {http_websocket_data_fun::logger, "logger"}}
 );
-
-class http_websocket_data {
+class http_session_data;
+using http_session_data_ptr = std::shared_ptr<http_session_data>;
+class http_websocket_data : public std::enable_shared_from_this<http_websocket_data> {
  private:
   using resolver_t       = boost::asio::ip::tcp::resolver;
   using resolver_ptr     = std::unique_ptr<resolver_t>;
@@ -46,6 +47,9 @@ class http_websocket_data {
   // write queue
   std::queue<std::string> write_queue_;
   bool is_writing_ = false;
+
+  // logger
+  logger_ptr logger_{};
 
   // 读写守卫
   class read_guard_t {
@@ -175,10 +179,9 @@ class http_websocket_data {
     );
   }
 
-  void run();
+  void run(const http_session_data_ptr& in_data);
   void do_read();
   void do_write();
-  void do_destroy();
 
   void run_fun();
 
