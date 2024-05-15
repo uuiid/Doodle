@@ -51,6 +51,10 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
   // logger
   logger_ptr logger_{};
 
+  // user data
+  std::shared_ptr<void> user_data_;
+
+
   // 读写守卫
   class read_guard_t {
    public:
