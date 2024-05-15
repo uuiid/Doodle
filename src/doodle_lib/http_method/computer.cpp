@@ -16,7 +16,7 @@
 namespace doodle::http {
 void computer::websocket_route(const nlohmann::json &in_json, const http_websocket_data_ptr &in_handle) {
   auto l_logger   = in_handle->logger_;
-  auto l_computer = std::dynamic_pointer_cast<computer_reg_data>(in_handle->user_data_);
+  auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
 
   switch (in_json["type"].get<computer_websocket_fun>()) {
     case computer_websocket_fun::set_state: {
@@ -75,9 +75,9 @@ void computer::reg_computer(boost::system::error_code in_error_code, const http_
   auto l_logger          = in_web_socket->logger_;
   auto l_remote_endpoint = boost::beast::get_lowest_layer(*in_web_socket->stream_).socket().remote_endpoint();
   l_logger->log(log_loc(), level::info, "注册计算机 {}", l_remote_endpoint.address().to_string());
-  auto l_computer = std::make_shared<computer_reg_data>(
+  auto l_computer                           = std::make_shared<computer_reg_data>(doodle::computer{
       fmt::format("计算机 {}", l_remote_endpoint.address().to_string()), l_remote_endpoint.address().to_string()
-  );
+  });
   l_computer->computer_data_.client_status_ = doodle::computer_status::free;
   in_web_socket->user_data_                 = l_computer;
   in_web_socket->on_message.connect(&computer::websocket_route);

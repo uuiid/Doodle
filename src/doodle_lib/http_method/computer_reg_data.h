@@ -9,7 +9,7 @@ namespace doodle::http {
 class computer_reg_data {
  public:
   computer_reg_data() = default;
-  explicit computer_reg_data(const computer& in_data) : computer_data_(in_data) {}
+  explicit computer_reg_data(const doodle::computer& in_data) : computer_data_(in_data) {}
   ~computer_reg_data() = default;
 
   doodle::computer computer_data_;
