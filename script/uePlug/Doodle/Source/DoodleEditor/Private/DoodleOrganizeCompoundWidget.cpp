@@ -939,7 +939,7 @@ void UDoodleOrganizeCompoundWidget::MakeDirectoryByTypeMode(FString FolderPath, 
             FSlateNotificationManager::Get().AddNotification(L_Info);
         }
     }
-    //EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
+    EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
 }
 
 FReply UDoodleOrganizeCompoundWidget::RemoveSuffix()
@@ -1015,6 +1015,7 @@ FReply UDoodleOrganizeCompoundWidget::AddSuffix()
             L_Info.FadeInDuration = 2.0f;  // 
             L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
             FSlateNotificationManager::Get().AddNotification(L_Info);
+            EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
         }
     }
     return FReply::Handled();
