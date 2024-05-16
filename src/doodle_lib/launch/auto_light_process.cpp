@@ -34,7 +34,28 @@
 #include <doodle_lib/gui/widgets/render_monitor.h>
 
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <wil/result.h>
 namespace doodle::launch {
+
+// 映射网络驱动器
+bool map_network_drive(const std::string &in_drive, const std::string &in_path) {
+  auto l_drive = conv::utf_to_utf<wchar_t>(in_drive);
+  auto l_path  = conv::utf_to_utf<wchar_t>(in_path);
+
+  NETRESOURCEW l_net_resource{};  // 网络资源
+  l_net_resource.dwType       = RESOURCETYPE_DISK;
+  l_net_resource.lpLocalName  = l_drive.data();
+  l_net_resource.lpRemoteName = l_path.data();
+
+  auto l_ret                  = WNetAddConnection2W(&l_net_resource, nullptr, nullptr, CONNECT_TEMPORARY);
+  if (l_ret != NO_ERROR) {
+    LOG_LAST_ERROR();
+    default_logger_raw()->error("映射网络驱动器失败: {}", l_ret);
+    return false;
+  }
+  return true;
+}
+
 bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
   auto l_sink        = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
   using work_guard_t = decltype(boost::asio::make_work_guard(g_io_context()));
@@ -56,6 +77,21 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   core_set_init l_core_set_init{};
   l_core_set_init.config_to_user();
   l_core_set_init.read_file();
+
+  // 开始映射网络驱动器
+  std::vector<std::pair<std::string, std::string>> l_drive_list{
+      {"V:", R"(\\192.168.10.250\public\DuBuXiaoYao_3)"},
+      {"R:", R"(\\192.168.10.240\public\WanGuShenHua)"},
+      {"U:", R"(\\192.168.10.218\WanYuFengShen)"}
+  };
+  for (auto &l_drive : l_drive_list) {
+    if (!FSys::exists(l_drive.first))
+      if (!map_network_drive(l_drive.first, l_drive.second)) return true;
+  }
+
+  if (in_arh[g_only_map_drive]) {
+    return true;
+  }
 
   if (!in_arh(g_maya_file)) {
     default_logger_raw()->error("必须有maya文件");
