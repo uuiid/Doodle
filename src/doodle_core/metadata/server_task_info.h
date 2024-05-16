@@ -51,6 +51,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  public:
   server_task_info() = default;
   explicit server_task_info(nlohmann::json in_data) : data_(std::move(in_data)) {}
+  explicit server_task_info(boost::uuids::uuid in_uuid, nlohmann::json in_json_data)
+      : id_(std::move(in_uuid)), data_(std::move(in_json_data)) {}
   ~server_task_info() = default;
 
   // 唯一id
@@ -97,6 +99,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
+    j["id"]              = p.id_;
     j["data"]            = p.data_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;

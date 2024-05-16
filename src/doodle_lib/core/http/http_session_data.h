@@ -51,6 +51,12 @@ class http_session_data : public std::enable_shared_from_this<http_session_data>
   inline boost::beast::tcp_stream& operator*() const { return *stream_; }
   inline boost::beast::tcp_stream* operator->() const { return stream_.get(); }
 
+  // get msg body parser
+  template <typename MsgBody>
+  auto get_msg_body_parser() const {
+    return std::static_pointer_cast<session::async_read_body<MsgBody>>(request_body_parser_);
+  }
+
   // copy delete
   http_session_data(const http_session_data&)                = delete;
   http_session_data& operator=(const http_session_data&)     = delete;
