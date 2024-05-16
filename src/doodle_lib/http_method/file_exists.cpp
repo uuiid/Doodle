@@ -168,9 +168,10 @@ struct scene_prop_check : public file_exists_check {
   )
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
-    auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{:01}_{:01}", in_project.get_path(), in_season, l_season_begin);
-    ue_path_ =
-        FSys::path(fmt::format("{}/JD{:01}_{:01}_UE/Content/Prop/{}/Mesh", l_base_path, in_season, l_season_begin, in_name));
+    auto l_base_path = fmt::format("{}/6-moxing/Prop/JD{:01}_{:01}", in_project.get_path(), in_season, l_season_begin);
+    ue_path_         = FSys::path(
+        fmt::format("{}/JD{:01}_{:01}_UE/Content/Prop/{}/Mesh", l_base_path, in_season, l_season_begin, in_name)
+    );
     maya_path_     = FSys::path(fmt::format("{}/{}", l_base_path, in_name));
     ue_file_reg_   = fmt::format("{}([a-zA-z_]+)?", in_name);
     maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?", in_name);
@@ -331,10 +332,10 @@ struct scene_prop_rig_check : public file_exists_check {
   )
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
-    auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{:01}_{:01}", in_project.get_path(), in_season, l_season_begin);
+    auto l_base_path = fmt::format("{}/6-moxing/Prop/JD{:01}_{:01}", in_project.get_path(), in_season, l_season_begin);
 
-    maya_path_          = FSys::path(fmt::format("{}/{}/Rig", l_base_path, in_name));
-    maya_file_reg_      = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
+    maya_path_       = FSys::path(fmt::format("{}/{}/Rig", l_base_path, in_name));
+    maya_file_reg_   = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
   };
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
@@ -525,6 +526,18 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
       }
     }
     case department_::地编: {
+      if (auto l_it = l_url_query.find("task_type"); l_it != l_url_query.npos) {
+        auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
+        auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
+        if (!l_task_t) {
+          session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
+          return;
+        }
+        l_task_type = *l_task_t;
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失任务类型参数");
+        return;
+      }
       if (auto l_it = l_url_query.find("season"); l_it != l_url_query.npos) {
         auto l_season_str = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
         if (l_season_str.empty()) {
