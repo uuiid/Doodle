@@ -28,7 +28,8 @@ enum class department_ {
 
 enum class task_type {
   道具,
-  地编,
+  场景,
+  特效,
   角色,
 };
 
@@ -615,7 +616,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             l_check = std::make_shared<scene_prop_check>(l_project, l_season, l_episodes, l_name);
             break;
           }
-          case task_type::地编: {
+          case task_type::场景: {
             l_check =
                 std::make_shared<ground_binding_check>(l_project, l_season, l_episodes, l_number, l_name, l_UE_Version);
             break;
@@ -632,7 +633,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             l_check = std::make_shared<role_rig_check>(l_project, l_season, l_episodes, l_number, l_name);
             break;
           }
-          case task_type::地编: {
+          case task_type::场景: {
             l_check = std::make_shared<scene_rig_check>(l_project, l_season, l_episodes, l_name, l_number);
             break;
           }
