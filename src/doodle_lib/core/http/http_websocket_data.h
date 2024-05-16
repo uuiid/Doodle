@@ -215,9 +215,15 @@ class http_websocket_data_manager {
     data_list_.erase(in_data);
   }
 
-  std::set<std::weak_ptr<http_websocket_data>> get_list() {
+  std::vector<std::shared_ptr<http_websocket_data>> get_list() {
     std::shared_lock lock(mutex_);
-    return data_list_;
+    std::vector<std::shared_ptr<http_websocket_data>> l_data_list_;
+    for (auto&& l_data : data_list_) {
+      if (auto l_data_ = l_data.lock(); l_data_) {
+        l_data_list_.emplace_back(l_data_);
+      }
+    }
+    return l_data_list_;
   }
 };
 http_websocket_data_manager& g_websocket_data_manager();

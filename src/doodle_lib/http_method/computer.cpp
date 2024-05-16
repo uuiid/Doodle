@@ -56,9 +56,12 @@ void computer::websocket_route(const nlohmann::json &in_json, const http_websock
 }
 void computer::list_computers(boost::system::error_code in_error_code, const http_session_data_ptr &in_handle) {
   std::vector<doodle::computer> l_computers{};
-  for (auto &&[l_e, l_c] : g_reg()->view<doodle::computer>().each()) {
-    l_computers.emplace_back(l_c);
+  for (auto &&l_web_ : g_websocket_data_manager().get_list()) {
+    if (auto l_computer = std::static_pointer_cast<computer_reg_data>(l_web_->user_data_); l_computer) {
+      l_computers.emplace_back(l_computer->computer_data_);
+    }
   }
+
   nlohmann::json l_json = l_computers;
   auto &l_req           = in_handle->request_parser_->get();
   boost::beast::http::response<boost::beast::http::string_body> l_response{
