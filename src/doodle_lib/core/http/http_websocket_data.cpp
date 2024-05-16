@@ -22,6 +22,7 @@ void http_websocket_data::run(const http_session_data_ptr& in_data) {
   stream_->set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
     res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   }));
+  g_websocket_data_manager().push_back(shared_from_this());
   stream_->async_accept(
       in_data->request_parser_->get(),
       [this, l_self = shared_from_this()](boost::system::error_code ec) {
@@ -106,8 +107,14 @@ void http_websocket_data::do_close() {
         if (ec) {
           logger_->log(log_loc(), level::err, "async_close error: {}", ec);
         }
+        g_websocket_data_manager().erase(shared_from_this());
       }
   );
+}
+
+http_websocket_data_manager& g_websocket_data_manager(){
+  static http_websocket_data_manager l_manager{};
+  return l_manager;
 }
 
 }  // namespace doodle::http
