@@ -7,7 +7,9 @@
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include <boost/process.hpp>
 namespace doodle::http {
+class http_websocket_data;
 /**
  * @brief http_work  主要是接受任务, 并开始执行任务的类
  *
@@ -43,24 +45,33 @@ class http_work {
   using signal_set_ptr  = std::shared_ptr<signal_set>;
   using logger_sink_ptr = std::shared_ptr<spdlog::sinks::sink>;
 
-  struct task_info_t {
-    std::int32_t task_id_{};
-    nlohmann::json task_info_{};  // 任务信息
-  };
-
   // 自动连接定时器
   timer_ptr timer_{};
 
   entt::handle handle_{};
+  std::shared_ptr<http_websocket_data> websocket_data_{};
+
   std::string server_address_{};
   std::uint16_t port_{};
 
   logger_ptr logger_{};
-  task_info_t task_info_{};
+  std::string task_id_{};
+  // 命令行
+  std::string command_line_{};
 
   bool is_connect_{false};
   logger_sink_ptr seed_server_sink_{};
   std::string host_name_{};
+  // 子进程
+  boost::process::child child_{};
+  boost::asio::streambuf out_strbuff_attr{};
+  boost::asio::streambuf err_strbuff_attr{};
+  std::shared_ptr<boost::process::async_pipe> out_pipe_{};
+  std::shared_ptr<boost::process::async_pipe> err_pipe_{};
+
+  // async read out
+  void do_read_out();
+  void do_read_err();
 
   friend class websocket_sink_mt;
 
@@ -70,13 +81,11 @@ class http_work {
 
   void send_state();
 
-  void read_task_info(const nlohmann::json& in_json, const entt::handle& in_handle);
+  void read_task_info(const nlohmann::json& in_json, const std::shared_ptr<http_websocket_data>& in_handle);
 
   void run_task();
 
   void end_task(boost::system::error_code in_error_code);
-
-  void run_auto_light_task();
 
  public:
   http_work()  = default;
