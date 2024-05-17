@@ -19,6 +19,7 @@ class database_info;
 class program_info;
 class identifier;
 class logger_ctrl;
+class database_pool_info;
 }  // namespace details
 
 using registry_ptr = std::shared_ptr<entt::registry>;
@@ -28,4 +29,5 @@ DOODLE_CORE_API registry_ptr &g_reg();
 DOODLE_CORE_API registry_ptr &g_reg();
 DOODLE_CORE_API details::logger_ctrl &g_logger_ctrl();
 DOODLE_CORE_API details::database_info &g_db();
+DOODLE_CORE_API details::database_pool_info &g_pool_db();
 }  // namespace doodle

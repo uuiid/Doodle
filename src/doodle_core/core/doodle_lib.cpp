@@ -88,4 +88,9 @@ details::database_info& g_db() {
   return db;
 }
 
+details::database_pool_info& g_pool_db() {
+  static details::database_pool_info db{};
+  return db;
+}
+
 }  // namespace doodle

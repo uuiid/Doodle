@@ -170,6 +170,7 @@ struct sql_ctx;
 }  // namespace database_n
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
+using pooled_connection = sqlpp::sqlite3::pooled_connection;
 
 namespace json_rpc {
 class server;
