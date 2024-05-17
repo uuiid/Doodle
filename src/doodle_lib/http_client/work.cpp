@@ -8,7 +8,7 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
-
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_lib/core/auto_light_render_video.h>
 #include <doodle_lib/core/down_auto_light_anim_file.h>
 #include <doodle_lib/core/http/http_websocket_data.h>
@@ -114,11 +114,11 @@ void http_work::run_task() {
       boost::process::on_exit =
           [this](int exit_code, const std::error_code &ec) {
             if (ec) {
-              logger_->log(log_loc(), level::err, "run_task error: {}", ec);
+              logger_->log(log_loc(), level::err, "run task error: {}", ec.message());
               end_task(ec);
               return;
             }
-            logger_->log(log_loc(), level::info, "run_task success: {}", exit_code);
+            logger_->log(log_loc(), level::info, "run task success: {}", exit_code);
             end_task(ec);
           },
       boost::process::windows::hide
