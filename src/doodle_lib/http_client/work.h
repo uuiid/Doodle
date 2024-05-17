@@ -48,7 +48,6 @@ class http_work {
   // 自动连接定时器
   timer_ptr timer_{};
 
-  entt::handle handle_{};
   std::shared_ptr<http_websocket_data> websocket_data_{};
 
   std::string server_address_{};
@@ -60,7 +59,6 @@ class http_work {
   std::string command_line_{};
 
   bool is_connect_{false};
-  logger_sink_ptr seed_server_sink_{};
   std::string host_name_{};
   // 子进程
   boost::process::child child_{};
