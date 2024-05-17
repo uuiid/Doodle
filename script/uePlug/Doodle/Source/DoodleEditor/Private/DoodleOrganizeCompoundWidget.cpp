@@ -903,9 +903,9 @@ FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
         SelectedObjs.Add(SelectedData.GetAsset());
     }
     //--------------------------
-    FixupAllReferencers();
     EditorAssetSubsystem->SaveLoadedAssets(SelectedObjs);
-    //--------------------------
+    //------------
+    FixupAllReferencers();
     return FReply::Handled();
 }
 
@@ -939,6 +939,7 @@ void UDoodleOrganizeCompoundWidget::MakeDirectoryByTypeMode(FString FolderPath, 
             FSlateNotificationManager::Get().AddNotification(L_Info);
         }
     }
+    EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
 }
 
 FReply UDoodleOrganizeCompoundWidget::RemoveSuffix()
