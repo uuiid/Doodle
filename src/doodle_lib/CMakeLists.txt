@@ -79,12 +79,16 @@ target_link_libraries(doodle_lib
         PRIVATE
         d3d11.lib
         dxgi.lib
+        netapi32.lib # NetUserGetLocalGroups
+        Mpr.lib
         #        Microsoft::DirectXTK
         implot::implot
         Eigen3::Eigen
         doodle_holidaycn
         Alembic::Alembic # abc文件读写
         xlnt::xlnt #表格库
+
+
 )
 
 target_compile_definitions(doodle_lib

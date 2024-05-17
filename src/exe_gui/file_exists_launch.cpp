@@ -7,4 +7,4 @@
 
 #include "main_macro.h"
 
-DOODLE_SERVICE_MAIN_IMPL(app_service_t, doodle::launch::file_exists_launch_t);
+DOODLE_MAIN_IMPL(doodle::launch::file_exists_launch_t);

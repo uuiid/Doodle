@@ -76,9 +76,9 @@ void http_work::do_connect() {
               do_wait();
               return;
             }
-            handle_.get<http_websocket_data>().on_message.connect(
-                std::bind(&http_work::read_task_info, this, std::placeholders::_1, std::placeholders::_2)
-            );
+            // handle_.get<http_websocket_data>().on_message.connect(
+            //     std::bind(&http_work::read_task_info, this, std::placeholders::_1, std::placeholders::_2)
+            // );
             is_connect_ = true;
             send_state();
           }

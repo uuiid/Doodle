@@ -28,7 +28,8 @@ enum class department_ {
 
 enum class task_type {
   道具,
-  地编,
+  场景,
+  特效,
   角色,
 };
 
@@ -52,7 +53,7 @@ struct role_model_check : public file_exists_check {
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
+        fmt::format("{}/6-moxing/Ch/JD{:02}_{:02}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
     // UE 项目路径
     ue_file_   = FSys::path(fmt::format("{0}/{1}_UE{2}/{1}_UE{2}.uproject", l_base_path, in_name, in_UE_Version));
     // UE 骨骼路径
@@ -88,7 +89,7 @@ struct ground_binding_check : public file_exists_check {
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/BG/JD{}_{}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
+        fmt::format("{}/6-moxing/BG/JD{:02}_{:02}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
     ue_path_       = FSys::path(fmt::format("{0}/{1}/Content/{1}/Map", l_base_path, in_name));
     maya_path_     = FSys::path(fmt::format("{}/Mod", l_base_path));
     ue_file_reg_   = fmt::format("{}([a-zA-z_]+)?", in_name);
@@ -168,9 +169,10 @@ struct scene_prop_check : public file_exists_check {
   )
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
-    auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{}_{}", in_project.get_path(), in_season, l_season_begin);
-    ue_path_ =
-        FSys::path(fmt::format("{}/JD{}_{}_UE/Content/Prop/{}/Mesh", l_base_path, in_season, l_season_begin, in_name));
+    auto l_base_path = fmt::format("{}/6-moxing/Prop/JD{:02}_{:02}", in_project.get_path(), in_season, l_season_begin);
+    ue_path_         = FSys::path(
+        fmt::format("{}/JD{:02}_{:02}_UE/Content/Prop/{}/Mesh", l_base_path, in_season, l_season_begin, in_name)
+    );
     maya_path_     = FSys::path(fmt::format("{}/{}", l_base_path, in_name));
     ue_file_reg_   = fmt::format("{}([a-zA-z_]+)?", in_name);
     maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?", in_name);
@@ -245,7 +247,7 @@ struct role_rig_check : public file_exists_check {
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/Ch/JD{}_{}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
+        fmt::format("{}/6-moxing/Ch/JD{:02}_{:02}/Ch{}", in_project.get_path(), in_season, l_season_begin, in_number);
     maya_path_     = FSys::path(fmt::format("{}/Rig", l_base_path));
     maya_file_reg_ = fmt::format("Ch{}_rig([_a-zA-Z]+)?", in_number);
   };
@@ -291,7 +293,7 @@ struct scene_rig_check : public file_exists_check {
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
     auto l_base_path =
-        fmt::format("{}/6-moxing/BG/JD{}_{}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
+        fmt::format("{}/6-moxing/BG/JD{:02}_{:02}/BG{}", in_project.get_path(), in_season, l_season_begin, in_number);
     maya_path_     = FSys::path(fmt::format("{}/Mod", l_base_path));
     maya_file_reg_ = fmt::format("{}([a-zA-z_]+)?_Low", in_name);
   };
@@ -331,10 +333,10 @@ struct scene_prop_rig_check : public file_exists_check {
   )
       : file_exists_check(in_project) {
     auto l_season_begin = (in_season - 1) * 20 + 1;
-    auto l_base_path    = fmt::format("{}/6-moxing/Prop/JD{}_{}", in_project.get_path(), in_season, l_season_begin);
+    auto l_base_path = fmt::format("{}/6-moxing/Prop/JD{:02}_{:02}", in_project.get_path(), in_season, l_season_begin);
 
-    maya_path_          = FSys::path(fmt::format("{}/{}/Rig", l_base_path, in_name));
-    maya_file_reg_      = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
+    maya_path_       = FSys::path(fmt::format("{}/{}/Rig", l_base_path, in_name));
+    maya_file_reg_   = fmt::format("{}_rig([_a-zA-Z]+)?", in_name);
   };
 
   bool operator()(std::string &msg, std::int32_t &in_err_code) override {
@@ -525,6 +527,18 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
       }
     }
     case department_::地编: {
+      if (auto l_it = l_url_query.find("task_type"); l_it != l_url_query.npos) {
+        auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
+        auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
+        if (!l_task_t) {
+          session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "任务类型参数错误");
+          return;
+        }
+        l_task_type = *l_task_t;
+      } else {
+        session.seed_error(boost::beast::http::status::bad_request, error_enum::bad_url, "缺失任务类型参数");
+        return;
+      }
       if (auto l_it = l_url_query.find("season"); l_it != l_url_query.npos) {
         auto l_season_str = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
         if (l_season_str.empty()) {
@@ -602,7 +616,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             l_check = std::make_shared<scene_prop_check>(l_project, l_season, l_episodes, l_name);
             break;
           }
-          case task_type::地编: {
+          case task_type::场景: {
             l_check =
                 std::make_shared<ground_binding_check>(l_project, l_season, l_episodes, l_number, l_name, l_UE_Version);
             break;
@@ -619,7 +633,7 @@ void file_exists::file_exists_fun(boost::system::error_code in_error_code, const
             l_check = std::make_shared<role_rig_check>(l_project, l_season, l_episodes, l_number, l_name);
             break;
           }
-          case task_type::地编: {
+          case task_type::场景: {
             l_check = std::make_shared<scene_rig_check>(l_project, l_season, l_episodes, l_name, l_number);
             break;
           }

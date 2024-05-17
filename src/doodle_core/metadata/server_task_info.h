@@ -51,7 +51,12 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  public:
   server_task_info() = default;
   explicit server_task_info(nlohmann::json in_data) : data_(std::move(in_data)) {}
+  explicit server_task_info(boost::uuids::uuid in_uuid, nlohmann::json in_json_data)
+      : id_(std::move(in_uuid)), data_(std::move(in_json_data)) {}
   ~server_task_info() = default;
+
+  // 唯一id
+  boost::uuids::uuid id_{};
 
   nlohmann::json data_{};
   // 任务的状态
@@ -84,9 +89,17 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   void write_log(level::level_enum in_level, std::string_view in_msg);
   bool operator==(const server_task_info& in_rhs) const;
 
+  void install_db(const conn_ptr& in_comm) const;
+  void delete_db(const conn_ptr& in_comm) const;
+  void update_db(const conn_ptr& in_comm) const;
+  void select_db(const conn_ptr& in_comm);
+
+  static std::vector<server_task_info> select_all(const conn_ptr& in_comm);
+
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
+    j["id"]              = p.id_;
     j["data"]            = p.data_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;

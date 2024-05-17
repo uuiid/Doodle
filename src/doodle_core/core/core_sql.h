@@ -23,6 +23,29 @@ class DOODLE_CORE_API database_info {
   [[nodiscard]] conn_ptr get_connection_const() const;
 };
 
+class DOODLE_CORE_API database_pool_info {
+  void create_pool(const std::string& in_path);
+  std::shared_ptr<sqlpp::sqlite3::connection_pool> pool_;
+  FSys::path path_;
+
+ public:
+  static constexpr std::string_view memory_data{":memory:"};
+
+  database_pool_info() : database_pool_info(memory_data){};
+  explicit database_pool_info(FSys::path in_path) : path_(std::move(in_path)) {
+    create_pool(in_path.generic_string());
+  };
+
+  // path
+  inline void set_path(const FSys::path& in_path) {
+    path_ = in_path;
+    create_pool(in_path.generic_string());
+  }
+  [[nodiscard]] inline const FSys::path& get_path() const { return path_; }
+
+  [[nodiscard]] pooled_connection get_connection() const;
+};
+
 }  // namespace details
 
 }  // namespace doodle

@@ -36,5 +36,17 @@ conn_ptr database_info::get_connection_const() const {
   l_config.path_to_database = path_.generic_string();
   return std::make_unique<sqlpp::sqlite3::connection>(l_config);
 }
+void database_pool_info::create_pool(const std::string& in_path) {
+  auto l_config              = std::make_shared<sqlpp::sqlite3::connection_config>();
+  l_config->path_to_database = in_path;
+  if (!FSys::exists(in_path))
+    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+  else
+    l_config->flags = SQLITE_OPEN_READWRITE;
+  pool_ = std::make_shared<sqlpp::sqlite3::connection_pool>(l_config, 10);
+}
+
+pooled_connection database_pool_info::get_connection() const { return pool_->get(); }
+
 }  // namespace details
 }  // namespace doodle

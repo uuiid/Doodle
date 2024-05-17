@@ -9,8 +9,10 @@
 namespace doodle::http {
 class http_function;
 class http_session_data;
-using http_session_data_ptr = std::shared_ptr<http_session_data>;
-using http_function_ptr = std::shared_ptr<http_function>;
+class http_websocket_data;
+using http_session_data_ptr   = std::shared_ptr<http_session_data>;
+using http_function_ptr       = std::shared_ptr<http_function>;
+using http_websocket_data_ptr = std::shared_ptr<http_websocket_data>;
 
 class http_route {
  private:

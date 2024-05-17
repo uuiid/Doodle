@@ -51,6 +51,9 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
   // logger
   logger_ptr logger_{};
 
+  // user data
+  std::shared_ptr<void> user_data_;
+
   // 读写守卫
   class read_guard_t {
    public:
@@ -185,11 +188,44 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
 
   void run_fun();
 
-  boost::signals2::signal<void(const nlohmann::json&, const entt::handle&)> on_message;
+  boost::signals2::signal<void(const nlohmann::json&, const std::shared_ptr<http_websocket_data>&)> on_message;
 
   // 不一定有回复, 所以不需要回调
   void seed(const nlohmann::json& in_json);
   void do_close();
 };
+
+class http_websocket_data_manager {
+  // 共享锁
+  std::shared_mutex mutex_;
+  // 数据
+  std::set<std::weak_ptr<http_websocket_data>> data_list_;
+
+ public:
+  http_websocket_data_manager()  = default;
+  ~http_websocket_data_manager() = default;
+
+  inline void push_back(const std::shared_ptr<http_websocket_data>& in_data) {
+    std::unique_lock lock(mutex_);
+    data_list_.emplace(in_data);
+  }
+
+  inline void erase(const std::shared_ptr<http_websocket_data>& in_data) {
+    std::unique_lock lock(mutex_);
+    data_list_.erase(in_data);
+  }
+
+  std::vector<std::shared_ptr<http_websocket_data>> get_list() {
+    std::shared_lock lock(mutex_);
+    std::vector<std::shared_ptr<http_websocket_data>> l_data_list_;
+    for (auto&& l_data : data_list_) {
+      if (auto l_data_ = l_data.lock(); l_data_) {
+        l_data_list_.emplace_back(l_data_);
+      }
+    }
+    return l_data_list_;
+  }
+};
+http_websocket_data_manager& g_websocket_data_manager();
 
 }  // namespace doodle::http

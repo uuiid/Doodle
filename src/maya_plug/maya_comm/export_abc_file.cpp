@@ -6,6 +6,7 @@
 
 #include <maya_plug/abc/alembic_archive_out.h>
 #include <maya_plug/data/dagpath_cmp.h>
+#include <maya_plug/fmt/fmt_warp.h>
 
 #include "maya/MAnimControl.h"
 #include "maya/MArgDatabase.h"
@@ -14,6 +15,7 @@
 #include "maya/MItSelectionList.h"
 #include "maya/MSelectionList.h"
 #include "maya/MSyntax.h"
+
 namespace doodle::maya_plug {
 MSyntax export_abc_file_syntax() {
   MSyntax syntax;
@@ -30,8 +32,12 @@ MStatus export_abc_file::doIt(const MArgList &in_arg) {
   maya_chick(status);
   MSelectionList list{};
   maya_chick(arg_data.getObjects(list));
-  auto begin_time = arg_data.isFlagSet("-s") ? arg_data.flagArgumentInt("-s", 0) : MAnimControl::minTime().value();
-  auto end_time   = arg_data.isFlagSet("-e") ? arg_data.flagArgumentInt("-e", 0) : MAnimControl::maxTime().value();
+  auto begin_time = arg_data.isFlagSet("-s")
+                        ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-s", 0)), MTime::uiUnit()}
+                        : MAnimControl::minTime();
+  auto end_time   = arg_data.isFlagSet("-e")
+                        ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-e", 0)), MTime::uiUnit()}
+                        : MAnimControl::maxTime();
   auto file_name  = arg_data.isFlagSet("-f") ? FSys::path{conv::to_s(arg_data.flagArgumentString("-f", 0))}
                                              : FSys::get_cache_path() / "default.abc";
 

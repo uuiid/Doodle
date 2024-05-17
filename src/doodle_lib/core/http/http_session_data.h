@@ -51,6 +51,12 @@ class http_session_data : public std::enable_shared_from_this<http_session_data>
   inline boost::beast::tcp_stream& operator*() const { return *stream_; }
   inline boost::beast::tcp_stream* operator->() const { return stream_.get(); }
 
+  // get msg body parser
+  template <typename MsgBody>
+  auto get_msg_body_parser() const {
+    return std::static_pointer_cast<session::async_read_body<MsgBody>>(request_body_parser_);
+  }
+
   // copy delete
   http_session_data(const http_session_data&)                = delete;
   http_session_data& operator=(const http_session_data&)     = delete;
@@ -168,7 +174,7 @@ auto make_http_reg_fun(CompletionHandler&& in_handler1, CompletionHandlerWebSock
           in_handler2 = std::forward<CompletionHandlerWebSocket>(in_handler2)](const http_session_data_ptr& in_handle) {
     if (boost::beast::websocket::is_upgrade(in_handle->request_parser_->get())) {
       boost::beast::get_lowest_layer(*in_handle->stream_).expires_never();
-      auto l_web_socket = std::make_shared<http_websocket_data>(std::move(in_handle->stream_));
+      auto l_web_socket = std::make_shared<http_websocket_data>(std::move(*in_handle->stream_));
       l_web_socket->run(in_handle);
       boost::asio::post(boost::asio::prepend(in_handler2, boost::system::error_code{}, l_web_socket));
     } else {

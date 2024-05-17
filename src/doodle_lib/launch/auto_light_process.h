@@ -12,6 +12,7 @@ class auto_light_process_t {
   static constexpr auto g_cfx              = "cfx";
   static constexpr auto g_maya_file        = "maya_file";
   static constexpr auto g_export_anim_time = "export_anim_time";
+  static constexpr auto g_only_map_drive   = "only_map_drive";
 
  public:
   auto_light_process_t()  = default;
