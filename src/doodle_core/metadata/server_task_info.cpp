@@ -41,9 +41,10 @@ DOODLE_SQL_TABLE_IMP(
 );
 }  // namespace
 
-void server_task_info::install_db(const conn_ptr& in_conn) const {
+void server_task_info::install_db(pooled_connection& in_conn) const {
   server_task_info_tab l_tab{};
-  auto l_pre = in_conn->prepare(
+
+  auto l_pre = in_conn.prepare(
       sqlpp::sqlite3::insert_into(l_tab)
           .set(
               l_tab.data = sqlpp::parameter(l_tab.data), l_tab.status = sqlpp::parameter(l_tab.status),
@@ -82,32 +83,32 @@ void server_task_info::install_db(const conn_ptr& in_conn) const {
   l_pre.params.run_time        = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(run_time_);
   l_pre.params.end_time        = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(end_time_);
   l_pre.params.log_path        = log_path_.generic_string();
-  (*in_conn)(l_pre);
+  in_conn(l_pre);
 }
 
-void server_task_info::delete_db(const conn_ptr& in_comm) const {
+void server_task_info::delete_db(pooled_connection& in_comm) const {
   server_task_info_tab l_tab{};
-  auto l_pre        = in_comm->prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  auto l_pre        = in_comm.prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   l_pre.params.uuid = {id_.begin(), id_.end()};
-  (*in_comm)(l_pre);
+  in_comm(l_pre);
 }
-void server_task_info::update_db(const conn_ptr& in_comm) const {
+void server_task_info::update_db(pooled_connection& in_comm) const {
   server_task_info_tab l_tab{};
   auto l_pre =
-      in_comm->prepare(sqlpp::update(l_tab)
-                           .set(
-                               l_tab.data = sqlpp::parameter(l_tab.data), l_tab.status = sqlpp::parameter(l_tab.status),
-                               l_tab.name            = sqlpp::parameter(l_tab.name),
-                               l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
-                               l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
-                               l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
-                               l_tab.run_computer    = sqlpp::parameter(l_tab.run_computer),
-                               l_tab.run_computer_ip = sqlpp::parameter(l_tab.run_computer_ip),
-                               l_tab.run_time        = sqlpp::parameter(l_tab.run_time),
-                               l_tab.end_time        = sqlpp::parameter(l_tab.end_time),
-                               l_tab.log_path        = sqlpp::parameter(l_tab.log_path)
-                           )
-                           .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+      in_comm.prepare(sqlpp::update(l_tab)
+                          .set(
+                              l_tab.data = sqlpp::parameter(l_tab.data), l_tab.status = sqlpp::parameter(l_tab.status),
+                              l_tab.name            = sqlpp::parameter(l_tab.name),
+                              l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
+                              l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
+                              l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
+                              l_tab.run_computer    = sqlpp::parameter(l_tab.run_computer),
+                              l_tab.run_computer_ip = sqlpp::parameter(l_tab.run_computer_ip),
+                              l_tab.run_time        = sqlpp::parameter(l_tab.run_time),
+                              l_tab.end_time        = sqlpp::parameter(l_tab.end_time),
+                              l_tab.log_path        = sqlpp::parameter(l_tab.log_path)
+                          )
+                          .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   l_pre.params.data            = data_.dump();
   l_pre.params.status          = magic_enum::enum_name(status_);
   l_pre.params.name            = name_;
@@ -119,15 +120,15 @@ void server_task_info::update_db(const conn_ptr& in_comm) const {
   l_pre.params.run_time        = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(run_time_);
   l_pre.params.end_time        = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(end_time_);
   l_pre.params.log_path        = log_path_.generic_string();
-  (*in_comm)(l_pre);
+  in_comm(l_pre);
 }
-void server_task_info::select_db(const conn_ptr& in_comm) {
+bool server_task_info::select_db(pooled_connection& in_comm) {
   server_task_info_tab l_tab{};
   auto l_pre =
-      in_comm->prepare(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
+      in_comm.prepare(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
       );
   l_pre.params.uuid = {id_.begin(), id_.end()};
-  for (auto&& l_row : (*in_comm)(l_pre)) {
+  for (auto&& l_row : in_comm(l_pre)) {
     status_ =
         magic_enum::enum_cast<server_task_info_status>(l_row.status.value()).value_or(server_task_info_status::unknown);
     name_            = l_row.name.value();
@@ -139,13 +140,15 @@ void server_task_info::select_db(const conn_ptr& in_comm) {
     run_time_        = chrono::time_point_cast<chrono::sys_time_pos::clock::duration>(l_row.run_time.value());
     end_time_        = chrono::time_point_cast<chrono::sys_time_pos::clock::duration>(l_row.end_time.value());
     log_path_        = l_row.log_path.value();
+    return true;
   }
+  return false;
 }
 
-std::vector<server_task_info> server_task_info::select_all(const conn_ptr& in_comm) {
+std::vector<server_task_info> server_task_info::select_all(pooled_connection& in_comm) {
   server_task_info_tab l_tab{};
   std::vector<server_task_info> l_res{};
-  for (auto&& l_row : (*in_comm)(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
+  for (auto&& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     server_task_info l_info{};
     std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
     l_info.data_ = nlohmann::json::parse(l_row.data.value());

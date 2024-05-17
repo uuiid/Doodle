@@ -38,8 +38,10 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   l_task_handle.submit_time_ = chrono::sys_time_pos::clock::now();
   l_task_handle.log_path_    = fmt::format("task_log/{}", core_set::get_set().get_uuid());
 
-  l_task_handle.install_db(g_db().get_connection());
-
+  {
+    auto l_conn = g_pool_db().get_connection();
+    l_task_handle.install_db(l_conn);
+  }
   nlohmann::json l_response_json{};
   l_response_json["id"] = l_task_handle;
 
@@ -59,123 +61,116 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
 }
 
 void task_info::get_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
-  auto &session = in_handle.get<http_session_data>();
-  auto l_cap    = in_handle.get<http_function::capture_t>();
-  auto l_id     = l_cap.get<entt::entity>("id");
+  auto l_id = in_data->capture_->get<std::string>("id");
   if (!l_id) {
     in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_entt = entt::handle{*g_reg(), *l_id};
-  if (!l_entt || !l_entt.any_of<server_task_info>()) {
+
+  server_task_info l_task_handle{boost::lexical_cast<uuid>(*l_id)};
+  bool is_db = false;
+  {
+    auto l_conn = g_pool_db().get_connection();
+    is_db       = l_task_handle.select_db(l_conn);
+  }
+  if (!is_db) {
     in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  nlohmann::json l_json = l_entt.get<server_task_info>();
+
+  nlohmann::json l_json = l_task_handle;
   boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, session.request_parser_->get().version()
+      boost::beast::http::status::ok, in_data->request_parser_->get().version()
   };
   l_response.result(boost::beast::http::status::ok);
-  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.keep_alive(in_data->request_parser_->get().keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
   l_response.body() = l_json.dump();
   l_response.prepare_payload();
-  session.seed(std::move(l_response));
+  in_data->seed(std::move(l_response));
 }
 void task_info::list_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
-  std::vector<entt::entity> l_tasks{};
-  nlohmann::json l_json{};
-  for (auto &&[l_e, l_c] : g_reg()->view<server_task_info>().each()) {
-    l_json.emplace_back(l_c);
-    l_json.back()["id"] = l_e;
+  std::vector<server_task_info> l_tasks{};
+  {
+    auto l_conn = g_pool_db().get_connection();
+    l_tasks     = server_task_info::select_all(l_conn);
   }
-  auto &l_req = in_handle.get<http_session_data>().request_parser_->get();
+  auto &l_req = in_data->request_parser_->get();
   boost::beast::http::response<boost::beast::http::string_body> l_response{
       boost::beast::http::status::ok, l_req.version()
   };
   l_response.result(boost::beast::http::status::ok);
   l_response.keep_alive(l_req.keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_json.dump();
+  l_response.body() = nlohmann::json{l_tasks}.dump();
   l_response.prepare_payload();
-  in_handle.get<http_session_data>().seed(std::move(l_response));
+  in_data->seed(std::move(l_response));
 }
 void task_info::get_task_logger(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
-  auto &session = in_handle.get<http_session_data>();
-  auto l_cap    = in_handle.get<http_function::capture_t>();
-  auto l_id     = l_cap.get<entt::entity>("id");
+  auto l_cap = in_data->capture_;
+  auto l_id  = l_cap->get<std::string>("id");
   if (!l_id) {
     in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
 
+  server_task_info l_task_handle{boost::lexical_cast<uuid>(*l_id)};
+
   level::level_enum l_level{level::err};
-  auto l_query = session.url_.query();
+  auto l_query = in_data->url_.query();
   if (auto l_it = l_query.find("level"); l_it != l_query.npos) {
     l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
                   .value_or(level::err);
   }
-
-  auto l_entt = entt::handle{*g_reg(), *l_id};
-  if (!l_entt || !l_entt.any_of<server_task_info>()) {
-    in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
-  }
-  auto l_log_path = l_entt.get<server_task_info>().get_log_path(l_level);
+  auto l_log_path = l_task_handle.get_log_path(l_level);
   if (!FSys::exists(l_log_path)) {
     in_error_code.assign(ERROR_FILE_NOT_FOUND, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
   boost::beast::http::response<boost::beast::http::file_body> l_response{
-      boost::beast::http::status::ok, session.request_parser_->get().version()
+      boost::beast::http::status::ok, in_data->request_parser_->get().version()
   };
   l_response.result(boost::beast::http::status::ok);
-  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.keep_alive(in_data->request_parser_->get().keep_alive());
   l_response.set(boost::beast::http::field::content_type, "text/plain");
   l_response.body().open(l_log_path.string().c_str(), boost::beast::file_mode::scan, in_error_code);
   if (in_error_code) {
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
   l_response.prepare_payload();
-  session.seed(std::move(l_response));
+  in_data->seed(std::move(l_response));
 }
 void task_info::delete_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
-  auto &session = in_handle.get<http_session_data>();
-  auto l_cap    = in_handle.get<http_function::capture_t>();
-  auto l_id     = l_cap.get<entt::entity>("id");
+  auto l_id = in_data->capture_->get<std::string>("id");
   if (!l_id) {
     in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
+    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_entt = entt::handle{*g_reg(), *l_id};
-  if (!l_entt || !l_entt.any_of<server_task_info>()) {
-    in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    session.seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
+  server_task_info l_task_handle{boost::lexical_cast<uuid>(*l_id)};
+  bool is_db = false;
+  {
+    auto l_conn = g_pool_db().get_connection();
+    l_task_handle.delete_db(l_conn);
   }
-  l_entt.destroy();
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
-      boost::beast::http::status::ok, session.request_parser_->get().version()
+      boost::beast::http::status::ok, in_data->request_parser_->get().version()
   };
   l_response.result(boost::beast::http::status::ok);
-  l_response.keep_alive(session.request_parser_->get().keep_alive());
+  l_response.keep_alive(in_data->request_parser_->get().keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
   l_response.prepare_payload();
-  session.seed(std::move(l_response));
+  in_data->seed(std::move(l_response));
 }
 void task_info::reg(doodle::http::http_route &in_route) {
   in_route
