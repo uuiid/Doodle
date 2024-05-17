@@ -35,11 +35,11 @@ class task_info {
   task_info()  = default;
   ~task_info() = default;
 
-  static void post_task(boost::system::error_code in_error_code, entt::handle in_handle);
-  static void get_task(boost::system::error_code in_error_code, entt::handle in_handle);
-  static void list_task(boost::system::error_code in_error_code, entt::handle in_handle);
-  static void delete_task(boost::system::error_code in_error_code, entt::handle in_handle);
-  static void get_task_logger(boost::system::error_code in_error_code, entt::handle in_handle);
+  static void post_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
+  static void get_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
+  static void list_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
+  static void delete_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
+  static void get_task_logger(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
 
   static void reg(http_route& in_route);
 };

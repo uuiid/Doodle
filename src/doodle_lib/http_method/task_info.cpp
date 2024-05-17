@@ -4,6 +4,7 @@
 
 #include "task_info.h"
 
+#include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/server_task_info.h>
 
@@ -31,11 +32,13 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   if (l_body.contains("name") && l_body["name"].is_string()) {
     l_task_handle.name_ = l_body["name"];
   } else {
-    l_task_handle.name_ = fmt::format("task_{}", l_task_handle.data_);
+    l_task_handle.name_ = fmt::format("task_{}", l_task_handle.id_);
   }
- 
+
   l_task_handle.submit_time_ = chrono::sys_time_pos::clock::now();
   l_task_handle.log_path_    = fmt::format("task_log/{}", core_set::get_set().get_uuid());
+
+  l_task_handle.install_db(g_db().get_connection());
 
   nlohmann::json l_response_json{};
   l_response_json["id"] = l_task_handle;
