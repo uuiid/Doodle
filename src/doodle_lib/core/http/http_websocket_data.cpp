@@ -15,7 +15,8 @@
 #include "socket_logger.h"
 namespace doodle::http {
 void http_websocket_data::run(const http_session_data_ptr& in_data) {
-  logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}", "socket", SOCKET(in_data->stream_->socket().native_handle())));
+  logger_ =
+      g_logger_ctrl().make_log(fmt::format("{}_{}", "socket", SOCKET(in_data->stream_->socket().native_handle())));
   logger_->log(log_loc(), level::info, "开始处理请求 {}", in_data->request_parser_->get().target());
 
   stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
@@ -107,12 +108,34 @@ void http_websocket_data::do_close() {
         if (ec) {
           logger_->log(log_loc(), level::err, "async_close error: {}", ec);
         }
-        g_websocket_data_manager().erase(shared_from_this());
       }
   );
 }
 
-http_websocket_data_manager& g_websocket_data_manager(){
+void http_websocket_data_manager::push_back(const std::shared_ptr<http_websocket_data>& in_data) {
+  std::unique_lock lock(mutex_);
+  if(auto l_it = std::find_if(data_list_.begin(), data_list_.end(), [](const auto& in_data) { return in_data.expired(); });
+     l_it != data_list_.end()) {
+    *l_it = in_data;
+  } else {
+    data_list_.emplace_back(in_data);
+  }
+}
+
+std::vector<std::shared_ptr<http_websocket_data>> http_websocket_data_manager::get_list() {
+  {
+    std::shared_lock lock(mutex_);
+    std::vector<std::shared_ptr<http_websocket_data>> l_data_list_;
+    for (auto&& l_data : data_list_) {
+      if (auto l_data_ = l_data.lock(); l_data_) {
+        l_data_list_.emplace_back(l_data_);
+      }
+    }
+    return l_data_list_;
+  }
+}
+
+http_websocket_data_manager& g_websocket_data_manager() {
   static http_websocket_data_manager l_manager{};
   return l_manager;
 }

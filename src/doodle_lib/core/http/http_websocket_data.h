@@ -199,32 +199,15 @@ class http_websocket_data_manager {
   // 共享锁
   std::shared_mutex mutex_;
   // 数据
-  std::set<std::weak_ptr<http_websocket_data>> data_list_;
+  std::vector<std::weak_ptr<http_websocket_data>> data_list_;
 
  public:
   http_websocket_data_manager()  = default;
   ~http_websocket_data_manager() = default;
 
-  inline void push_back(const std::shared_ptr<http_websocket_data>& in_data) {
-    std::unique_lock lock(mutex_);
-    data_list_.emplace(in_data);
-  }
+  void push_back(const std::shared_ptr<http_websocket_data>& in_data);
 
-  inline void erase(const std::shared_ptr<http_websocket_data>& in_data) {
-    std::unique_lock lock(mutex_);
-    data_list_.erase(in_data);
-  }
-
-  std::vector<std::shared_ptr<http_websocket_data>> get_list() {
-    std::shared_lock lock(mutex_);
-    std::vector<std::shared_ptr<http_websocket_data>> l_data_list_;
-    for (auto&& l_data : data_list_) {
-      if (auto l_data_ = l_data.lock(); l_data_) {
-        l_data_list_.emplace_back(l_data_);
-      }
-    }
-    return l_data_list_;
-  }
+  std::vector<std::shared_ptr<http_websocket_data>> get_list();
 };
 http_websocket_data_manager& g_websocket_data_manager();
 

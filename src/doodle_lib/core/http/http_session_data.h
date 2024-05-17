@@ -53,10 +53,7 @@ class http_session_data : public std::enable_shared_from_this<http_session_data>
 
   // get msg body parser
   template <typename MsgBody>
-  auto get_msg_body_parser() const {
-    return std::static_pointer_cast<session::async_read_body<MsgBody>>(request_body_parser_);
-  }
-
+  auto get_msg_body_parser() const;
   // copy delete
   http_session_data(const http_session_data&)                = delete;
   http_session_data& operator=(const http_session_data&)     = delete;
@@ -110,7 +107,7 @@ struct async_read_body {
 
   explicit async_read_body(const http_session_data_ptr& in_handle)
       : request_parser_(
-            std::make_unique<boost::beast::http::request_parser<MsgBody>>(std::move(in_handle->request_parser_))
+            std::make_unique<boost::beast::http::request_parser<MsgBody>>(std::move(*in_handle->request_parser_))
         ),
         handle_(*in_handle){};
 
@@ -183,5 +180,9 @@ auto make_http_reg_fun(CompletionHandler&& in_handler1, CompletionHandlerWebSock
   };
 }
 }  // namespace session
+template <typename MsgBody>
+auto http_session_data::get_msg_body_parser() const {
+  return std::static_pointer_cast<session::async_read_body<MsgBody>>(request_body_parser_);
+}
 
 }  // namespace doodle::http

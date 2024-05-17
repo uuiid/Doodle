@@ -2,9 +2,10 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <sqlpp11/sqlite3/sqlite3.h>
+#include <sqlpp11/sqlpp11.h>
 #include <string_view>
 #include <utility>
-
 namespace doodle {
 
 namespace details {

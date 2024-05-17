@@ -11,6 +11,9 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_method/task_server.h>
+
+#include <sqlpp11/sqlite3/sqlite3.h>
+#include <sqlpp11/sqlpp11.h>
 namespace doodle::http {
 void task_info::post_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
   auto l_req  = in_data->get_msg_body_parser<basic_json_body>()->request_parser_->get();
