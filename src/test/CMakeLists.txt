@@ -55,13 +55,11 @@ add_subdirectory(main_fixtures)
 create_test_sourcelist(main_test
         CommonCxxTests.cxx
         core/abc.cpp
-        core/submit_ue_task.cpp
         core/run_ue.cpp
         core/sod_log.cpp
         core/error_enum.cpp
         core/folder_is_save.cpp
         core/auto_light.cpp
-        core/auto_light_distributed.cpp
         core/process_message.cpp
         core/merge_assets_tree.cpp
 )

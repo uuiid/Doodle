@@ -10,8 +10,8 @@ target_sources(test_main
         entt_test.cpp
         regex.cpp
         abc.cpp
-        wenrt.cpp
         run_process_v2.cpp
+        auto_light_distributed.cpp
 )
 
 target_link_libraries(
