@@ -902,10 +902,10 @@ FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
         }
         SelectedObjs.Add(SelectedData.GetAsset());
     }
-    //--------------------------
-    EditorAssetSubsystem->SaveLoadedAssets(SelectedObjs);
     //------------
     FixupAllReferencers();
+    //--------------------------
+    EditorAssetSubsystem->SaveLoadedAssets(SelectedObjs);
     return FReply::Handled();
 }
 
