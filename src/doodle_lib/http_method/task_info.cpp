@@ -57,6 +57,7 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 
+  g_ctx().get<task_server>().add_task(l_task_handle);
   g_ctx().get<task_server>().run();
 }
 
@@ -171,28 +172,29 @@ void task_info::delete_task(boost::system::error_code in_error_code, const http_
   l_response.set(boost::beast::http::field::content_type, "application/json");
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
+  g_ctx().get<task_server>().erase_task(l_task_handle.id_);
 }
 void task_info::reg(doodle::http::http_route &in_route) {
   in_route
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::list_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::list_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task/{id}",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::get_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task/{id}/log",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::get_task_logger))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task_logger))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::post, "v1/task",
-          session::make_http_reg_fun<basic_json_body>(boost::asio::bind_executor(g_thread(), &task_info::post_task))
+          session::make_http_reg_fun<basic_json_body>(boost::asio::bind_executor(g_io_context(), &task_info::post_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::delete_, "v1/task/{id}",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::delete_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::delete_task))
       ))
 
       ;

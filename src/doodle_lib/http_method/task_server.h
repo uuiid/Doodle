@@ -30,14 +30,15 @@ class task_server {
 
   void begin_assign_task();
 
+  std::map<boost::uuids::uuid, std::shared_ptr<doodle::server_task_info>> task_map_{};  // 任务列表
  public:
   task_server();
   ~task_server() = default;
 
   // 此处可进行多线程调用
   void run();
-
-  std::map<boost::uuids::uuid, std::shared_ptr<doodle::server_task_info>> task_map_{};  // 任务列表
+  void add_task(doodle::server_task_info in_task);
+  void erase_task(const boost::uuids::uuid& in_id);
 };
 
 }  // namespace doodle::http

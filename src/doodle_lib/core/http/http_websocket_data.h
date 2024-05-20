@@ -160,6 +160,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
       : stream_(std::make_unique<websocket_stream>(std::move(in_stream))) {}
   http_websocket_data() = default;
 
+  // 作为客户端, 不需要注册
   template <typename CompletionHandler>
   auto async_connect(
       std::string server_address, std::string path, std::uint16_t server_port, CompletionHandler&& in_handler
@@ -182,6 +183,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
     );
   }
 
+  // 此处作为服务端, 会自动进行注册
   void run(const http_session_data_ptr& in_data);
   void do_read();
   void do_write();

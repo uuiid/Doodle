@@ -32,6 +32,16 @@ void task_server::begin_assign_task() {
     }
   });
 }
+void task_server::add_task(doodle::server_task_info in_task) {
+  boost::asio::post(g_io_context(), [this, in_task = std::move(in_task)] {
+    task_map_[in_task.id_] = std::make_shared<doodle::server_task_info>(std::move(in_task));
+  });
+}
+void task_server::erase_task(const boost::uuids::uuid& in_id) {
+  boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] {
+    task_map_.erase(in_id);
+  });
+}
 
 bool task_server::assign_task() {
   bool has_task    = false;
@@ -70,8 +80,6 @@ bool task_server::assign_task() {
       }
     }
   }
-
-  
 
   return has_task;
 }
