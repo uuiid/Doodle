@@ -78,3 +78,5 @@ CMakeUserPresets.json
 **/PluginMenu/Intermediate/*
 *.modules
 .run
+
+/vcpkg/
