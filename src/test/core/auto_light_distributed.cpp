@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   g_pool_db().set_path("D:/test_files/test_db/test.db");
   {
     auto l_db_conn = g_pool_db().get_connection();
-    server_task_info::create_table(l_db_conn);
+    g_ctx().emplace<http::task_server>().init(l_db_conn);
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
@@ -49,7 +49,6 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   // 开始运行服务器
   auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
   l_listener->run();
-  g_ctx().emplace<http::task_server>();
   g_ctx().get<http::task_server>().run();
   try {
     g_io_context().run();
