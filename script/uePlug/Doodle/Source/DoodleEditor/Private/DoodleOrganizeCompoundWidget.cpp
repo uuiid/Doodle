@@ -867,7 +867,6 @@ FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
     FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
     TArray<FAssetData> AllAsset;
     AssetRegistryModule.Get().GetAssets(LFilter, AllAsset);
-    TArray<UObject*> SelectedObjs;
     for (FAssetData SelectedData : AllAsset)
     {
         if (SelectedData.GetClass()->IsChildOf<UStaticMesh>()
@@ -899,13 +898,11 @@ FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
         else
         {
             MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Other"));
-        }
-        SelectedObjs.Add(SelectedData.GetAsset());
+        } 
     }
     //------------
     FixupAllReferencers();
     //--------------------------
-    EditorAssetSubsystem->SaveLoadedAssets(SelectedObjs);
     return FReply::Handled();
 }
 
@@ -918,9 +915,12 @@ void UDoodleOrganizeCompoundWidget::MakeDirectoryByTypeMode(FString FolderPath, 
         EditorAssetSubsystem->MakeDirectory(Path);
     }
     FName AssetName = SelectedData.AssetName;
+    UObject* theObject = SelectedData.GetAsset();
+    FString PackagePath = SelectedData.PackagePath.ToString();
     if (!EditorAssetSubsystem->DoesAssetExist(FPaths::Combine(Path, AssetName.ToString())))
     {
-        AssetViewUtils::MoveAssets({ SelectedData.GetAsset() }, Path, SelectedData.PackagePath.ToString());
+        AssetViewUtils::MoveAssets({ theObject }, Path, PackagePath);
+        theObject->Modify();
     }
     else
     {
@@ -930,16 +930,17 @@ void UDoodleOrganizeCompoundWidget::MakeDirectoryByTypeMode(FString FolderPath, 
             AssetName.SetNumber(++Counter);
         }
         FString targetPath = FPaths::Combine(Path, AssetName.ToString());
-        if (EditorAssetSubsystem->RenameAsset(SelectedData.PackageName.ToString(), targetPath))
+        if (EditorAssetSubsystem->RenameLoadedAsset(theObject, targetPath))
         {
-            FString Info = FString::Format(TEXT("文件重命名为:{0}"), { FPaths::Combine(SelectedData.PackagePath.ToString(), AssetName.ToString()) });
+            theObject->Modify();
+            FString Info = FString::Format(TEXT("文件重命名为:{0}"), { FPaths::Combine(PackagePath, AssetName.ToString()) });
             FNotificationInfo L_Info{ FText::FromString(Info) };
             L_Info.FadeInDuration = 2.0f;  // 
             L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
             FSlateNotificationManager::Get().AddNotification(L_Info);
         }
     }
-    EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
+    EditorAssetSubsystem->SaveLoadedAsset(theObject);
 }
 
 FReply UDoodleOrganizeCompoundWidget::RemoveSuffix()
