@@ -95,6 +95,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   bool select_db(pooled_connection& in_comm);
 
   static std::vector<server_task_info> select_all(pooled_connection& in_comm);
+  static void create_table(pooled_connection& in_comm);
 
  private:
   // to json

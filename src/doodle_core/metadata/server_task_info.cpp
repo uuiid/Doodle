@@ -168,6 +168,26 @@ std::vector<server_task_info> server_task_info::select_all(pooled_connection& in
   return l_res;
 }
 
+void server_task_info::create_table(pooled_connection& in_comm) {
+  in_comm.execute(R"(
+CREATE TABLE IF NOT EXISTS server_task_info_tab (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid            BLOB NOT NULL UNIQUE,
+    data            TEXT ,
+    status          TEXT ,
+    name            TEXT ,
+    source_computer TEXT ,
+    submitter       TEXT ,
+    submit_time     TIMESTAMP ,
+    run_computer    TEXT ,
+    run_computer_ip TEXT ,
+    run_time        TIMESTAMP ,
+    end_time        TIMESTAMP ,
+    log_path        TEXT 
+    )
+  )");
+}
+
 std::string server_task_info::read_log(level::level_enum in_level) const {
   auto l_path = get_log_path(in_level);
   if (!FSys::exists(l_path)) return "";
