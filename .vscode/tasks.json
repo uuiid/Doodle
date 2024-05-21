@@ -33,13 +33,13 @@
     {
       "label": "install and html",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/install.cmd&&${workspaceFolder}/build_script/build/updata_html.cmd",
+      "command": "${workspaceFolder}/build_script/build/install.cmd;${workspaceFolder}/build_script/build/updata_html.cmd",
       "problemMatcher": []
     },
     {
-      "label": "build 5.2 plug",
+      "label": "build 5.2 plug and install",
       "type": "shell",
-      "command": "${workspaceFolder}/script/uePlug/build_5.cmd",
+      "command": "${workspaceFolder}/script/uePlug/build_5.cmd;${workspaceFolder}/build_script/build/install.cmd;${workspaceFolder}/build_script/build/updata_html.cmd",
       "problemMatcher": []
     }
   ],
