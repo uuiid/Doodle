@@ -100,7 +100,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
-    j["id"]              = p.id_;
+    j["id"]              = fmt::to_string(p.id_);
     j["data"]            = p.data_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;
