@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/main_map.h>
+#include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
@@ -35,15 +36,25 @@
 using namespace doodle;
 
 BOOST_AUTO_TEST_CASE(auto_light) {
-  doodle_lib l_doodle_lib{};
+  app_base l_app_base{};
+  g_pool_db().set_path("D:/test_files/test_db/test.db");
+  {
+    auto l_db_conn = g_pool_db().get_connection();
+    server_task_info::create_table(l_db_conn);
+  }
+
   auto l_rout_ptr = std::make_shared<http::http_route>();
   http::computer::reg(*l_rout_ptr);
   http::task_info::reg(*l_rout_ptr);
   // 开始运行服务器
   auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
   l_listener->run();
-  g_pool_db().set_path("D:/test_files/test_db/test.db");
   g_ctx().emplace<http::task_server>();
   g_ctx().get<http::task_server>().run();
+  try {
+    g_io_context().run();
 
+  } catch (const std::exception& e) {
+    BOOST_TEST_MESSAGE(e.what());
+  }
 }
