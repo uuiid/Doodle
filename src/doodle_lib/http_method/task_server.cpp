@@ -15,6 +15,15 @@ namespace doodle::http {
 task_server::task_server()
     : logger_ptr_(g_logger_ctrl().make_log("task_server")), timer_ptr_(std::make_shared<timer_t>(g_io_context())) {}
 
+void task_server::init(pooled_connection& in_conn) {
+  server_task_info::create_table(in_conn);
+  auto l_task_list = server_task_info::select_all(in_conn);
+  for (auto&& l_task : l_task_list) {
+    task_map_[l_task.id_] = std::make_shared<doodle::server_task_info>(std::move(l_task));
+  }
+  clear_task();
+}
+
 void task_server::run() {
   boost::asio::post(g_io_context(), [this] {
     if (is_running_) return;
@@ -30,6 +39,7 @@ void task_server::begin_assign_task() {
       return;
     }
     if (assign_task()) {
+      clear_task();
       run();
     }
   });
@@ -42,7 +52,15 @@ void task_server::add_task(doodle::server_task_info in_task) {
 void task_server::erase_task(const boost::uuids::uuid& in_id) {
   boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] { task_map_.erase(in_id); });
 }
-
+void task_server::clear_task() {
+  for (auto it = task_map_.begin(); it != task_map_.end();) {
+    if (it->second->status_ == server_task_info_status::completed) {
+      it = task_map_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
 bool task_server::assign_task() {
   auto l_computers = g_websocket_data_manager().get_list();
   for (auto&& [id_, l_task] : task_map_) {
@@ -61,7 +79,7 @@ bool task_server::assign_task() {
         l_task->run_computer_ip_                       = l_computer_data->computer_data_.ip_;
         {
           auto l_db = g_pool_db().get_connection();
-          l_task->install_db(l_db);
+          l_task->update_db(l_db);
         }
         nlohmann::json l_json{};
 

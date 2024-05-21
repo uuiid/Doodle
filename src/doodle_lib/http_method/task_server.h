@@ -29,6 +29,8 @@ class task_server {
   };
 
   void begin_assign_task();
+  // 此处清理已经完成的任务, 没有指定调用线程
+  void clear_task();
 
   std::map<boost::uuids::uuid, std::shared_ptr<doodle::server_task_info>> task_map_{};  // 任务列表
  public:
@@ -39,6 +41,9 @@ class task_server {
   void run();
   void add_task(doodle::server_task_info in_task);
   void erase_task(const boost::uuids::uuid& in_id);
+
+  // 初始化必须在主线程调用, 并且必须初始化数据库
+  void init(pooled_connection& in_conn);
 };
 
 }  // namespace doodle::http
