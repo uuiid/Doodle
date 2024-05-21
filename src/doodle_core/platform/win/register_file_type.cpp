@@ -85,6 +85,7 @@ std::vector<project> register_file_type::get_project_list() {
         "无尽神域", R"(//192.168.10.240/public/WuJinShenYu)", "WuJinShenYu", "WJ", R"(C:\sy\WuJinShenYu_8)"
     );
     l_list.emplace_back("万域封神", R"(//192.168.10.218/WanYuFengShen)", "WanYuFengShen", "WY", "U:/");
+    l_list.emplace_back("双生武魂", R"(/192.168.10.240/public/SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)");
   }
   return l_list;
 }
