@@ -65,9 +65,9 @@ bool task_server::assign_task() {
         }
         nlohmann::json l_json{};
 
-        l_json["id"]   = id_;
-        l_json["data"] = l_task->data_;
-        l_json["type"] = "task";
+        l_json["id"]      = id_;
+        l_json["exe"]     = l_task->exe_;
+        l_json["command"] = l_task->command_;
         l_computer->seed(l_json);
         logger_ptr_->log(
             log_loc(), level::info, "分配任务 {}_{} 给 {}({})", l_task->name_, id_,
