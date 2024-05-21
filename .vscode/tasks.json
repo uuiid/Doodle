@@ -18,13 +18,6 @@
       "problemMatcher": []
     },
     {
-      "label": "cmake clear",
-      "type": "shell",
-      "command": "${workspaceFolder}/src/cmd_debug/build_debug_venv.cmd",
-      "args": [],
-      "problemMatcher": []
-    },
-    {
       "label": "install",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/install.cmd",
