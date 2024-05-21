@@ -2,7 +2,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 
 data = {'result': 'this is a test'}
-host = ('192.168.20.59', 50021)
+host = ('192.168.40.53', 50021)
 
 
 class Resquest(BaseHTTPRequestHandler):

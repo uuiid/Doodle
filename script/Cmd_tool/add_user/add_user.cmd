@@ -1,1 +1,1 @@
-cmdkey /add:192.168.20.59 /user:test_admin /pass:test
+cmdkey /add:192.168.40.53 /user:test_admin /pass:test

@@ -22,7 +22,6 @@ void sql_com<doodle::server_task_info>::insert(doodle::conn_ptr &in_ptr, const s
   for (auto &l_h : in_id) {
     auto &l_server_task_info     = l_h.get<server_task_info>();
     l_pre.params.entity_id       = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    l_pre.params.data            = l_server_task_info.data_.dump();
     l_pre.params.status          = enum_to_num(l_server_task_info.status_);
     l_pre.params.name            = l_server_task_info.name_;
     l_pre.params.source_computer = l_server_task_info.source_computer_;
@@ -65,7 +64,6 @@ void sql_com<doodle::server_task_info>::update(
 
   for (auto &[id, l_h] : in_id) {
     auto &l_server_task_info     = l_h.get<server_task_info>();
-    l_pre.params.data            = l_server_task_info.data_.dump();
     l_pre.params.status          = enum_to_num(l_server_task_info.status_);
     l_pre.params.name            = l_server_task_info.name_;
     l_pre.params.source_computer = l_server_task_info.source_computer_;
@@ -109,8 +107,6 @@ void sql_com<doodle::server_task_info>::select(
                               .from(l_tabl)
                               .where(l_tabl.entity_id.is_not_null()))) {
     server_task_info l_u{};
-    l_u.data_            = nlohmann::json::parse(row.data.value());
-    l_u.status_          = num_to_enum<server_task_info_status>(row.status.value());
     l_u.name_            = row.name.value();
     l_u.source_computer_ = row.source_computer.value();
     l_u.submitter_       = row.submitter.value();

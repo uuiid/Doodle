@@ -63,12 +63,12 @@ void run_server() {
   //  render_farm::detail::reg_server_websocket{}();
   //
   //  auto l_w = g_ctx().emplace<render_farm::work_ptr>(std::make_shared<render_farm::work>());
-  //  l_w->run("192.168.20.59"s);
+  //  l_w->run("192.168.40.53"s);
   //  app_base::Get().on_stop.connect([=]() {
   //    g_ctx().get<doodle::http_listener>().stop();
   //    g_ctx().get<render_farm::work_ptr>()->stop();
   //  });
-  //    g_reg()->ctx().emplace<client>("192.168.20.59").run();
+  //    g_reg()->ctx().emplace<client>("192.168.40.53").run();
 }
 
 void stop_work() {
