@@ -16,8 +16,10 @@ task_server::task_server()
     : logger_ptr_(g_logger_ctrl().make_log("task_server")), timer_ptr_(std::make_shared<timer_t>(g_io_context())) {}
 
 void task_server::run() {
-  if (is_running_) return;
-  boost::asio::post(g_io_context(), [this] { begin_assign_task(); });
+  boost::asio::post(g_io_context(), [this] {
+    if (is_running_) return;
+    begin_assign_task();
+  });
 }
 
 void task_server::begin_assign_task() {
@@ -38,13 +40,10 @@ void task_server::add_task(doodle::server_task_info in_task) {
   });
 }
 void task_server::erase_task(const boost::uuids::uuid& in_id) {
-  boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] {
-    task_map_.erase(in_id);
-  });
+  boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] { task_map_.erase(in_id); });
 }
 
 bool task_server::assign_task() {
-  bool has_task    = false;
   auto l_computers = g_websocket_data_manager().get_list();
   for (auto&& [id_, l_task] : task_map_) {
     if (l_task->status_ != server_task_info_status::submitted) continue;
@@ -75,13 +74,14 @@ bool task_server::assign_task() {
             l_computer_data->computer_data_.name_, l_computer_data->computer_data_.ip_
         );
         l_computer_data->task_info_ = l_task;
-        has_task                    = true;
         break;
       }
     }
   }
 
-  return has_task;
+  return std::any_of(task_map_.begin(), task_map_.end(), [](const auto& in_pair) {
+    return in_pair.second->status_ == server_task_info_status::submitted;
+  });
 }
 
 }  // namespace doodle::http
