@@ -19,12 +19,15 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   auto l_req  = in_data->get_msg_body_parser<basic_json_body>()->request_parser_->get();
   auto l_body = l_req.body();
 
-  if (!l_body.contains("data")) {
+  if (!l_body.contains("command") || !l_body["command"].is_string() || l_body["command"].empty() ||
+      l_body.contains("exe") || !l_body["exe"].is_string() || l_body["exe"].empty()) {
     BOOST_BEAST_ASSIGN_EC(in_error_code, error_enum::bad_json_string);
     in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  server_task_info l_task_handle{core_set::get_set().get_uuid(), l_body["data"]};
+  server_task_info l_task_handle{
+      core_set::get_set().get_uuid(), l_body["exe"].get<std::string>(), l_body["command"].get<std::string>()
+  };
   if (l_body.contains("source_computer") && l_body["source_computer"].is_string()) {
     l_task_handle.source_computer_ = l_body["source_computer"];
   }

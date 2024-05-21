@@ -51,14 +51,16 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  public:
   server_task_info() = default;
   explicit server_task_info(boost::uuids::uuid in_uuid) : id_(std::move(in_uuid)) {}
-  explicit server_task_info(boost::uuids::uuid in_uuid, nlohmann::json in_json_data)
-      : id_(std::move(in_uuid)), data_(std::move(in_json_data)) {}
+  explicit server_task_info(boost::uuids::uuid in_uuid, std::string in_exe, std::string in_command)
+      : id_(std::move(in_uuid)), exe_(std::move(in_exe)), command_(std::move(in_command)) {}
   ~server_task_info() = default;
 
   // 唯一id
   boost::uuids::uuid id_{};
-
-  nlohmann::json data_{};
+  // 执行程序
+  std::string exe_{};
+  // 任务命令
+  std::string command_{};
   // 任务的状态
   server_task_info_status status_{server_task_info_status::submitted};
   // 任务名称
@@ -101,7 +103,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
     j["id"]              = fmt::to_string(p.id_);
-    j["data"]            = p.data_;
+    j["exe"]             = p.exe_;
+    j["command"]         = p.command_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;

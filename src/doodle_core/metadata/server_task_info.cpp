@@ -23,7 +23,8 @@ namespace doodle {
 namespace {
 DOODLE_SQL_COLUMN_IMP(id, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(uuid, sqlpp::blob, database_n::detail::can_be_null);
-DOODLE_SQL_COLUMN_IMP(data, sqlpp::text, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(exe, sqlpp::text, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(command, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(status, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(name, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(source_computer, sqlpp::text, database_n::detail::can_be_null);
@@ -36,7 +37,7 @@ DOODLE_SQL_COLUMN_IMP(end_time, sqlpp::time_point, database_n::detail::can_be_nu
 DOODLE_SQL_COLUMN_IMP(log_path, sqlpp::text, database_n::detail::can_be_null);
 
 DOODLE_SQL_TABLE_IMP(
-    server_task_info_tab, id, uuid, data, status, name, source_computer, submitter, submit_time, run_computer,
+    server_task_info_tab, id, uuid, exe, command, status, name, source_computer, submitter, submit_time, run_computer,
     run_computer_ip, run_time, end_time, log_path
 );
 }  // namespace
@@ -47,8 +48,9 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
   auto l_pre = in_conn.prepare(
       sqlpp::sqlite3::insert_into(l_tab)
           .set(
-              l_tab.data = sqlpp::parameter(l_tab.data), l_tab.status = sqlpp::parameter(l_tab.status),
-              l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.name = sqlpp::parameter(l_tab.name),
+              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.command = sqlpp::parameter(l_tab.command),
+              l_tab.status = sqlpp::parameter(l_tab.status), l_tab.uuid = sqlpp::parameter(l_tab.uuid),
+              l_tab.name            = sqlpp::parameter(l_tab.name),
               l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
               l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
               l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
@@ -59,8 +61,8 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
           )
           .on_conflict(l_tab.uuid)
           .do_update(
-              l_tab.data = sqlpp::sqlite3::excluded(l_tab.data), l_tab.status = sqlpp::sqlite3::excluded(l_tab.status),
-              l_tab.name            = sqlpp::sqlite3::excluded(l_tab.name),
+              l_tab.exe = sqlpp::sqlite3::excluded(l_tab.exe), l_tab.command = sqlpp::sqlite3::excluded(l_tab.command),
+              l_tab.status = sqlpp::sqlite3::excluded(l_tab.status), l_tab.name = sqlpp::sqlite3::excluded(l_tab.name),
               l_tab.source_computer = sqlpp::sqlite3::excluded(l_tab.source_computer),
               l_tab.submitter       = sqlpp::sqlite3::excluded(l_tab.submitter),
               l_tab.submit_time     = sqlpp::sqlite3::excluded(l_tab.submit_time),
@@ -72,7 +74,8 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
           )
   );
   l_pre.params.uuid            = {id_.begin(), id_.end()};
-  l_pre.params.data            = data_.dump();
+  l_pre.params.exe             = exe_;
+  l_pre.params.command         = command_;
   l_pre.params.status          = magic_enum::enum_name(status_);
   l_pre.params.name            = name_;
   l_pre.params.source_computer = source_computer_;
@@ -97,8 +100,8 @@ void server_task_info::update_db(pooled_connection& in_comm) const {
   auto l_pre =
       in_comm.prepare(sqlpp::update(l_tab)
                           .set(
-                              l_tab.data = sqlpp::parameter(l_tab.data), l_tab.status = sqlpp::parameter(l_tab.status),
-                              l_tab.name            = sqlpp::parameter(l_tab.name),
+                              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.command = sqlpp::parameter(l_tab.command),
+                              l_tab.status = sqlpp::parameter(l_tab.status), l_tab.name = sqlpp::parameter(l_tab.name),
                               l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
                               l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
                               l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
@@ -109,7 +112,8 @@ void server_task_info::update_db(pooled_connection& in_comm) const {
                               l_tab.log_path        = sqlpp::parameter(l_tab.log_path)
                           )
                           .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
-  l_pre.params.data            = data_.dump();
+  l_pre.params.exe             = exe_;
+  l_pre.params.command         = command_;
   l_pre.params.status          = magic_enum::enum_name(status_);
   l_pre.params.name            = name_;
   l_pre.params.source_computer = source_computer_;
@@ -151,7 +155,8 @@ std::vector<server_task_info> server_task_info::select_all(pooled_connection& in
   for (auto&& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     server_task_info l_info{};
     std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
-    l_info.data_ = nlohmann::json::parse(l_row.data.value());
+    l_info.exe_     = l_row.exe.value();
+    l_info.command_ = l_row.command.value();
     l_info.status_ =
         magic_enum::enum_cast<server_task_info_status>(l_row.status.value()).value_or(server_task_info_status::unknown);
     l_info.name_            = l_row.name.value();
@@ -173,7 +178,8 @@ void server_task_info::create_table(pooled_connection& in_comm) {
 CREATE TABLE IF NOT EXISTS server_task_info_tab (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid            BLOB NOT NULL UNIQUE,
-    data            TEXT ,
+    exe             TEXT ,
+    command         TEXT ,
     status          TEXT ,
     name            TEXT ,
     source_computer TEXT ,
@@ -202,11 +208,11 @@ void server_task_info::write_log(level::level_enum in_level, std::string_view in
 }
 bool server_task_info::operator==(const doodle::server_task_info& in_rhs) const {
   return std::tie(
-             data_, status_, name_, source_computer_, submitter_, submit_time_, run_computer_, run_computer_ip_,
-             run_time_, end_time_, log_path_
+             exe_, command_, status_, name_, source_computer_, submitter_, submit_time_, run_computer_,
+             run_computer_ip_, run_time_, end_time_, log_path_
          ) ==
          std::tie(
-             in_rhs.data_, in_rhs.status_, in_rhs.name_, in_rhs.source_computer_, in_rhs.submitter_,
+             in_rhs.exe_, command_, in_rhs.status_, in_rhs.name_, in_rhs.source_computer_, in_rhs.submitter_,
              in_rhs.submit_time_, in_rhs.run_computer_, in_rhs.run_computer_ip_, in_rhs.run_time_, in_rhs.end_time_,
              in_rhs.log_path_
          );
