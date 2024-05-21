@@ -86,6 +86,9 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 任务日志储存
   FSys::path log_path_{};
 
+  // 引用其他info 的id
+  boost::uuids::uuid ref_id_{};
+
   std::string read_log(level::level_enum in_level) const;
   FSys::path get_log_path(level::level_enum in_level) const;
   void write_log(level::level_enum in_level, std::string_view in_msg);
@@ -114,6 +117,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["run_computer_ip"] = p.run_computer_ip_;
     j["run_time"]        = fmt::to_string(p.run_time_);
     j["end_time"]        = fmt::to_string(p.end_time_);
+    j["ref_id"]          = fmt::to_string(p.ref_id_);
   }
 };
 }  // namespace doodle
