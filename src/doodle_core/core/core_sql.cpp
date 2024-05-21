@@ -37,9 +37,16 @@ conn_ptr database_info::get_connection_const() const {
   return std::make_unique<sqlpp::sqlite3::connection>(l_config);
 }
 void database_pool_info::create_pool(const std::string& in_path) {
+  FSys::path l_path = in_path;
+  if(!FSys::exists(l_path.parent_path()))
+    FSys::create_directories(l_path.parent_path());
+  
+  if (in_path.empty())
+    l_path = memory_data;
+
   auto l_config              = std::make_shared<sqlpp::sqlite3::connection_config>();
-  l_config->path_to_database = in_path;
-  if (!FSys::exists(in_path))
+  l_config->path_to_database = l_path.generic_string();
+  if (!FSys::exists(l_path))
     l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
   else
     l_config->flags = SQLITE_OPEN_READWRITE;
