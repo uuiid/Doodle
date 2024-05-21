@@ -48,14 +48,13 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
     auto l_conn = g_pool_db().get_connection();
     l_task_handle.install_db(l_conn);
   }
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
+  boost::beast::http::response<http::basic_json_body> l_response{
       boost::beast::http::status::ok, l_req.version()
   };
 
-  nlohmann::json l_json = l_task_handle;
   l_response.keep_alive(l_req.keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_json.dump();
+  l_response.body() = l_task_handle;
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 
@@ -86,13 +85,13 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
   }
 
   nlohmann::json l_json = l_task_handle;
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
+  boost::beast::http::response<http::basic_json_body> l_response{
       boost::beast::http::status::ok, in_data->request_parser_->get().version()
   };
   l_response.result(boost::beast::http::status::ok);
   l_response.keep_alive(in_data->request_parser_->get().keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_json.dump();
+  l_response.body() = l_task_handle;
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 }
@@ -103,13 +102,14 @@ void task_info::list_task(boost::system::error_code in_error_code, const http_se
     l_tasks     = server_task_info::select_all(l_conn);
   }
   auto &l_req = in_data->request_parser_->get();
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
+  boost::beast::http::response<http::basic_json_body> l_response{
       boost::beast::http::status::ok, l_req.version()
   };
+  
   l_response.result(boost::beast::http::status::ok);
   l_response.keep_alive(l_req.keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = nlohmann::json{l_tasks}.dump();
+  l_response.body() = l_tasks;
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 }
