@@ -19,8 +19,8 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   auto l_req  = in_data->get_msg_body_parser<basic_json_body>()->request_parser_->get();
   auto l_body = l_req.body();
 
-  if (!l_body.contains("command") || !l_body["command"].is_string() || l_body["command"].empty() ||
-      l_body.contains("exe") || !l_body["exe"].is_string() || l_body["exe"].empty()) {
+  if (!l_body.contains("command") || !l_body["command"].is_string() || !l_body.contains("exe") ||
+      !l_body["exe"].is_string()) {
     BOOST_BEAST_ASSIGN_EC(in_error_code, error_enum::bad_json_string);
     in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
@@ -48,15 +48,14 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
     auto l_conn = g_pool_db().get_connection();
     l_task_handle.install_db(l_conn);
   }
-  nlohmann::json l_response_json{};
-  l_response_json["id"] = l_task_handle;
-
   boost::beast::http::response<boost::beast::http::string_body> l_response{
       boost::beast::http::status::ok, l_req.version()
   };
+
+  nlohmann::json l_json = l_task_handle;
   l_response.keep_alive(l_req.keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_response_json.dump();
+  l_response.body() = l_json.dump();
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 
