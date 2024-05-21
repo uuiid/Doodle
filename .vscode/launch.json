@@ -62,24 +62,6 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
-          "name": "Doodle_maya_debug_remove",
-          "type": "cppvsdbg",
-          "request": "launch",
-          "program": "${command:cmake.getLaunchTargetPath}",
-          "args": [],
-          "stopAtEntry": false,
-          "cwd": "${command:cmake.launchTargetDirectory}",
-          "environment": [
-            {
-              "name": "MAYA_MODULE_PATH",
-              "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
-            }
-          ],
-          "console": "internalConsole",
-          "visualizerFile": "${workspaceFolder}/stl.natvis",
-          "windows": {}
-        },
-      {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
@@ -119,20 +101,6 @@
             "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
-            "name": "Doodle_debug_command",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${command:cmake.launchTargetPath}",
-            "args": [
-                "${input:arg_input}"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${command:cmake.getLaunchTargetDirectory}",
-            "environment": [],
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
     ],
     "inputs": [
@@ -159,12 +127,12 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
+                "auto_light",
                 "rpc_server/base",
                 "rpc_server/list_users",
                 "kitsu_login",
                 "kitsu_get_task"
-            ],
-            "default": "rpc_server/base"
+            ]
         }
     ],
     "compounds": [
