@@ -51,7 +51,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  public:
   server_task_info() = default;
   explicit server_task_info(boost::uuids::uuid in_uuid) : id_(std::move(in_uuid)) {}
-  explicit server_task_info(boost::uuids::uuid in_uuid, std::string in_exe, std::string in_command)
+  explicit server_task_info(boost::uuids::uuid in_uuid, std::string in_exe, std::vector<std::string> in_command)
       : id_(std::move(in_uuid)), exe_(std::move(in_exe)), command_(std::move(in_command)) {}
   ~server_task_info() = default;
 
@@ -60,7 +60,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 执行程序
   std::string exe_{};
   // 任务命令
-  std::string command_{};
+  std::vector<std::string> command_{};
   // 任务的状态
   server_task_info_status status_{server_task_info_status::submitted};
   // 任务名称

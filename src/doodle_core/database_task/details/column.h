@@ -192,22 +192,24 @@ create_table_t<table_t> create_table(const table_t& /*in_table*/) {
     using _traits = decltype(tag<type>());                                                            \
   }
 
-#define DOODLE_SQL_TABLE_IMP(table_name, ...)                                                                          \
-  struct table_name : sqlpp::table_t<table_name, __VA_ARGS__> {                                                        \
-    struct _alias_t {                                                                                                  \
-      static constexpr const char _literal[] = #table_name;                                                            \
-      using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;                  \
-      template <typename T>                                                                                            \
-      struct _member_t {                                                                                               \
-        T table_name;                                                                                                  \
-        T& operator()() { return table_name; }                                                                         \
-        const T& operator()() const { return table_name; }                                                             \
-      };                                                                                                               \
-    };                                                                                                                 \
-  };                                                                                                                   \
-  static_assert(                                                                                                       \
-      std::is_same_v<std::tuple_element<0, decltype(sqlpp::all_of(table_name{}))>::type::_spec_t, tables::column::id>, \
-      "ID is the primary key and must be placed first"                                                                 \
+#define DOODLE_SQL_TABLE_IMP(table_name, ...)                                                         \
+  struct table_name : sqlpp::table_t<table_name, __VA_ARGS__> {                                       \
+    struct _alias_t {                                                                                 \
+      static constexpr const char _literal[] = #table_name;                                           \
+      using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>; \
+      template <typename T>                                                                           \
+      struct _member_t {                                                                              \
+        T table_name;                                                                                 \
+        T& operator()() { return table_name; }                                                        \
+        const T& operator()() const { return table_name; }                                            \
+      };                                                                                              \
+    };                                                                                                \
+  };                                                                                                  \
+  static_assert(                                                                                      \
+      std::is_same_v<                                                                                 \
+          std::tuple_element<0, decltype(sqlpp::all_of(table_name{}))>::type::_spec_t,                \
+          ::doodle::database_n::tables::column::id>,                                                  \
+      "ID is the primary key and must be placed first"                                                \
   )
 namespace doodle::database_n::tables {
 namespace column {
@@ -279,3 +281,7 @@ DOODLE_SQL_COLUMN_IMP(assets_ref_id, sqlpp::integer, detail::can_be_null);
 
 }  // namespace column
 }  // namespace doodle::database_n::tables
+
+namespace doodle{
+  namespace tables = database_n::tables;
+}

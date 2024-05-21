@@ -9,7 +9,6 @@
 #include <doodle_core/database_task/details/column.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/sqlite3/sqlite3.h>
-#include <doodle_core/sqlite_orm/sqlite_base.h>
 
 #include <boost/preprocessor.hpp>
 
@@ -21,10 +20,8 @@
 namespace doodle {
 
 namespace {
-DOODLE_SQL_COLUMN_IMP(id, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(uuid, sqlpp::blob, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(exe, sqlpp::text, database_n::detail::can_be_null);
-DOODLE_SQL_COLUMN_IMP(command, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(status, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(name, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(source_computer, sqlpp::text, database_n::detail::can_be_null);
@@ -38,9 +35,15 @@ DOODLE_SQL_COLUMN_IMP(log_path, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(ref_id, sqlpp::blob, database_n::detail::can_be_null);
 
 DOODLE_SQL_TABLE_IMP(
-    server_task_info_tab, id, uuid, exe, command, status, name, source_computer, submitter, submit_time, run_computer,
+    server_task_info_tab, tables::column::id, uuid, exe, status, name, source_computer, submitter, submit_time, run_computer,
     run_computer_ip, run_time, end_time, log_path, ref_id
 );
+ 
+DOODLE_SQL_COLUMN_IMP(command_task_id, sqlpp::integer, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(command_index, sqlpp::integer, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(command_value, sqlpp::text, database_n::detail::can_be_null);
+
+DOODLE_SQL_TABLE_IMP(command_tab, tables::column::id, command_task_id, command_index, command_value);
 }  // namespace
 
 void server_task_info::install_db(pooled_connection& in_conn) const {
@@ -49,9 +52,8 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
   auto l_pre = in_conn.prepare(
       sqlpp::sqlite3::insert_into(l_tab)
           .set(
-              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.command = sqlpp::parameter(l_tab.command),
-              l_tab.status = sqlpp::parameter(l_tab.status), l_tab.uuid = sqlpp::parameter(l_tab.uuid),
-              l_tab.name            = sqlpp::parameter(l_tab.name),
+              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.status = sqlpp::parameter(l_tab.status),
+              l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.name = sqlpp::parameter(l_tab.name),
               l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
               l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
               l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
@@ -62,8 +64,8 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
           )
           .on_conflict(l_tab.uuid)
           .do_update(
-              l_tab.exe = sqlpp::sqlite3::excluded(l_tab.exe), l_tab.command = sqlpp::sqlite3::excluded(l_tab.command),
-              l_tab.status = sqlpp::sqlite3::excluded(l_tab.status), l_tab.name = sqlpp::sqlite3::excluded(l_tab.name),
+              l_tab.exe = sqlpp::sqlite3::excluded(l_tab.exe), l_tab.status = sqlpp::sqlite3::excluded(l_tab.status),
+              l_tab.name            = sqlpp::sqlite3::excluded(l_tab.name),
               l_tab.source_computer = sqlpp::sqlite3::excluded(l_tab.source_computer),
               l_tab.submitter       = sqlpp::sqlite3::excluded(l_tab.submitter),
               l_tab.submit_time     = sqlpp::sqlite3::excluded(l_tab.submit_time),
@@ -77,7 +79,6 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
   );
   l_pre.params.uuid            = {id_.begin(), id_.end()};
   l_pre.params.exe             = exe_;
-  l_pre.params.command         = command_;
   l_pre.params.status          = magic_enum::enum_name(status_);
   l_pre.params.name            = name_;
   l_pre.params.source_computer = source_computer_;
@@ -89,7 +90,22 @@ void server_task_info::install_db(pooled_connection& in_conn) const {
   l_pre.params.end_time        = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(end_time_);
   l_pre.params.log_path        = log_path_.generic_string();
   l_pre.params.ref_id          = {ref_id_.begin(), ref_id_.end()};
-  in_conn(l_pre);
+  auto l_id                    = in_conn(l_pre);
+
+  command_tab l_command_tab{};
+  auto l_pre_com =
+      in_conn.prepare(sqlpp::sqlite3::insert_into(l_command_tab)
+                          .set(
+                              l_command_tab.command_task_id = sqlpp::parameter(l_command_tab.command_task_id),
+                              l_command_tab.command_index   = sqlpp::parameter(l_command_tab.command_index),
+                              l_command_tab.command_value   = sqlpp::parameter(l_command_tab.command_value)
+                          ));
+  for (auto i = 0; i < command_.size(); ++i) {
+    l_pre_com.params.command_task_id = l_id;
+    l_pre_com.params.command_index   = i;
+    l_pre_com.params.command_value   = command_[i];
+    in_conn(l_pre_com);
+  }
 }
 
 void server_task_info::delete_db(pooled_connection& in_comm) const {
@@ -103,8 +119,8 @@ void server_task_info::update_db(pooled_connection& in_comm) const {
   auto l_pre = in_comm.prepare(
       sqlpp::update(l_tab)
           .set(
-              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.command = sqlpp::parameter(l_tab.command),
-              l_tab.status = sqlpp::parameter(l_tab.status), l_tab.name = sqlpp::parameter(l_tab.name),
+              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.status = sqlpp::parameter(l_tab.status),
+              l_tab.name            = sqlpp::parameter(l_tab.name),
               l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
               l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
               l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
@@ -116,7 +132,6 @@ void server_task_info::update_db(pooled_connection& in_comm) const {
           .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
   l_pre.params.exe             = exe_;
-  l_pre.params.command         = command_;
   l_pre.params.status          = magic_enum::enum_name(status_);
   l_pre.params.name            = name_;
   l_pre.params.source_computer = source_computer_;
@@ -136,6 +151,8 @@ bool server_task_info::select_db(pooled_connection& in_comm) {
       in_comm.prepare(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
       );
   l_pre.params.uuid = {id_.begin(), id_.end()};
+  std::int64_t l_id{};
+  bool l_res = false;
   for (auto&& l_row : in_comm(l_pre)) {
     status_ =
         magic_enum::enum_cast<server_task_info_status>(l_row.status.value()).value_or(server_task_info_status::unknown);
@@ -149,19 +166,30 @@ bool server_task_info::select_db(pooled_connection& in_comm) {
     end_time_        = chrono::time_point_cast<chrono::sys_time_pos::clock::duration>(l_row.end_time.value());
     log_path_        = l_row.log_path.value();
     std::copy_n(l_row.ref_id.value().begin(), ref_id_.size(), ref_id_.begin());
-    return true;
+    l_id  = l_row.id.value();
+    l_res = true;
   }
-  return false;
+
+  if (!l_res) return false;
+  command_tab l_command_tab{};
+  auto l_pre_com = in_comm.prepare(sqlpp::select(sqlpp::all_of(l_command_tab))
+                                       .from(l_command_tab)
+                                       .where(l_command_tab.command_task_id == l_id)
+                                       .order_by(l_command_tab.command_index.asc()));
+  for (auto&& l_row : in_comm(l_pre_com)) {
+    command_.emplace_back(l_row.command_value.value());
+  }
+  return l_res;
 }
 
 std::vector<server_task_info> server_task_info::select_all(pooled_connection& in_comm) {
   server_task_info_tab l_tab{};
   std::vector<server_task_info> l_res{};
+  std::vector<std::int64_t> l_ids{};
   for (auto&& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     server_task_info l_info{};
     std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
-    l_info.exe_     = l_row.exe.value();
-    l_info.command_ = l_row.command.value();
+    l_info.exe_ = l_row.exe.value();
     l_info.status_ =
         magic_enum::enum_cast<server_task_info_status>(l_row.status.value()).value_or(server_task_info_status::unknown);
     l_info.name_            = l_row.name.value();
@@ -175,7 +203,24 @@ std::vector<server_task_info> server_task_info::select_all(pooled_connection& in
     l_info.log_path_        = l_row.log_path.value();
     std::copy_n(l_row.ref_id.value().begin(), l_info.ref_id_.size(), l_info.ref_id_.begin());
     l_res.emplace_back(std::move(l_info));
+    l_ids.emplace_back(l_row.id.value());
   }
+
+  command_tab l_command_tab{};
+  auto l_pre_com =
+      in_comm.prepare(sqlpp::select(sqlpp::all_of(l_command_tab))
+                          .from(l_command_tab)
+                          .order_by(l_command_tab.command_index.asc())
+                          .where(l_command_tab.command_task_id == sqlpp::parameter(l_command_tab.command_task_id)));
+  for (auto&& l_id : l_ids) {
+    std::vector<std::string> l_command{};
+    l_pre_com.params.command_task_id = l_id;
+    for (auto&& l_row : in_comm(l_pre_com)) {
+      l_command.emplace_back(l_row.command_value.value());
+    }
+    l_res[std::distance(l_ids.begin(), std::find(l_ids.begin(), l_ids.end(), l_id))].command_ = std::move(l_command);
+  }
+
   return l_res;
 }
 
@@ -185,7 +230,6 @@ CREATE TABLE IF NOT EXISTS server_task_info_tab (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid            BLOB NOT NULL UNIQUE,
     exe             TEXT ,
-    command         TEXT ,
     status          TEXT ,
     name            TEXT ,
     source_computer TEXT ,
@@ -197,6 +241,15 @@ CREATE TABLE IF NOT EXISTS server_task_info_tab (
     end_time        TIMESTAMP ,
     log_path        TEXT ,
     ref_id          BLOB
+    )
+  )");
+  in_comm.execute(R"(
+CREATE TABLE IF NOT EXISTS command_tab (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    command_task_id  INTEGER ,
+    command_index    INTEGER ,
+    command_value    TEXT ,
+    FOREIGN KEY (command_task_id) REFERENCES server_task_info_tab(id) ON DELETE CASCADE ON UPDATE CASCADE
     )
   )");
 }

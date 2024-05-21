@@ -98,7 +98,8 @@ void http_work::read_task_info(const nlohmann::json &in_json, const std::shared_
     return;
   }
   task_id_      = in_json["id"].get<std::string>();
-  command_line_ = in_json["command_line"].get<std::string>();
+  command_line_ = in_json["command"].get<std::vector<std::string>>();
+  exe_          = in_json["exe"].get<std::string>();
   send_state();
   run_task();
 }
@@ -106,9 +107,11 @@ void http_work::read_task_info(const nlohmann::json &in_json, const std::shared_
 void http_work::run_task() {
   out_pipe_ = std::make_shared<boost::process::async_pipe>(g_io_context());
   err_pipe_ = std::make_shared<boost::process::async_pipe>(g_io_context());
+  auto l_run_exe = boost::process::search_path(exe_);
   child_    = boost::process::child{
       g_io_context(),
-      boost::process::cmd = command_line_,
+      boost::process::exe = l_run_exe,
+      boost::process::args = command_line_,
       boost::process::std_out > *out_pipe_,
       boost::process::std_err > *err_pipe_,
       boost::process::on_exit =

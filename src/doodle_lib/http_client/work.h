@@ -55,8 +55,10 @@ class http_work {
 
   logger_ptr logger_{};
   std::string task_id_{};
+  // 执行程序
+  std::string exe_{};
   // 命令行
-  std::string command_line_{};
+  std::vector<std::string> command_line_{};
 
   bool is_connect_{false};
   std::string host_name_{};
