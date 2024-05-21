@@ -173,7 +173,16 @@
 			"xtree": "cpp",
 			"xutility": "cpp",
 			"*.tcc": "cpp",
-			"string_view": "cpp"
+			"string_view": "cpp",
+			"barrier": "cpp",
+			"cuchar": "cpp",
+			"expected": "cpp",
+			"latch": "cpp",
+			"semaphore": "cpp",
+			"spanstream": "cpp",
+			"stacktrace": "cpp",
+			"stdfloat": "cpp",
+			"syncstream": "cpp"
 		}
 	},
 	"tasks": {
