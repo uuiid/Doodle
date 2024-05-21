@@ -34,7 +34,7 @@ class DOODLE_CORE_API database_pool_info {
 
   database_pool_info() : database_pool_info(memory_data){};
   explicit database_pool_info(FSys::path in_path) : path_(std::move(in_path)) {
-    create_pool(in_path.generic_string());
+    create_pool(path_.generic_string());
   };
 
   // path

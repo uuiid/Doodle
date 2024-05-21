@@ -38,7 +38,7 @@ conn_ptr database_info::get_connection_const() const {
 }
 void database_pool_info::create_pool(const std::string& in_path) {
   FSys::path l_path = in_path;
-  if(!FSys::exists(l_path.parent_path()))
+  if(!FSys::exists(l_path.parent_path()) && in_path != memory_data)
     FSys::create_directories(l_path.parent_path());
   
   if (in_path.empty())
