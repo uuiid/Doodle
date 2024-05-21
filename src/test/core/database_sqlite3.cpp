@@ -131,7 +131,7 @@ void create_test_database() {
   {
     auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
-    auto& l_s            = l_h.emplace<doodle::server_task_info>(fmt::format("tset_{}", l));
+    auto& l_s            = l_h.emplace<doodle::server_task_info>();
     l_s.name_            = fmt::format("name_{}", l);
     l_s.source_computer_ = fmt::format("source_computer_{}", l);
     l_s.submitter_       = fmt::format("submitter_{}", l);
