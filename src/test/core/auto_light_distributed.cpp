@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(auto_light_and_works) {
   http::computer::reg(*l_rout_ptr);
   http::task_info::reg(*l_rout_ptr);
   // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
+  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr, 50022);
   l_listener->run();
   g_ctx().get<http::task_server>().run();
 

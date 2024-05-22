@@ -127,6 +127,7 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
+                "auto_light_and_works",
                 "auto_light",
                 "rpc_server/base",
                 "rpc_server/list_users",
