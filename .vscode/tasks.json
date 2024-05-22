@@ -24,6 +24,12 @@
       "problemMatcher": []
     },
     {
+      "label": "build_all",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/build_all.cmd",
+      "problemMatcher": []
+    },
+    {
       "label": "install",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/install.cmd;${workspaceFolder}/build_script/build/updata_html.cmd",
