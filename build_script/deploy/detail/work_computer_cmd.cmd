@@ -12,6 +12,6 @@ IF EXIST %UE_CMD_PATH% (
     copy \\192.168.40.53\doodle2\build_script\deploy\detail\doodle_config_v2 %USERPROFILE%\Documents\doodle\doodle_config_v2
 )
 
-
+@REM rmdir /Q /S D:\doodle
 @REM net start doodle_http_client_service
 
