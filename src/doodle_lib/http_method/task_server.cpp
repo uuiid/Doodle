@@ -38,10 +38,12 @@ void task_server::begin_assign_task() {
       logger_ptr_->log(log_loc(), level::warn, "timer_ptr_ error: {}", ec);
       return;
     }
-    auto l_nex_run = assign_task();
+    assign_task();
     confirm_task();
     clear_task();
-    if (l_nex_run) {
+    if (std::any_of(task_map_.begin(), task_map_.end(), [](const auto& in_pair) {
+          return in_pair.second->status_ == server_task_info_status::submitted;
+        })) {
       run();
     }
   });
@@ -90,7 +92,7 @@ void task_server::confirm_task() {
   }
 }
 
-bool task_server::assign_task() {
+void task_server::assign_task() {
   auto l_computers = g_websocket_data_manager().get_list();
   for (auto&& [id_, l_task] : task_map_) {
     if (l_task->status_ != server_task_info_status::submitted) continue;
@@ -126,10 +128,6 @@ bool task_server::assign_task() {
       }
     }
   }
-
-  return std::any_of(task_map_.begin(), task_map_.end(), [](const auto& in_pair) {
-    return in_pair.second->status_ == server_task_info_status::submitted;
-  });
 }
 
 }  // namespace doodle::http

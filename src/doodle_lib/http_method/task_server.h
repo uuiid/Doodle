@@ -17,8 +17,6 @@ class task_server {
   timer_t_ptr timer_ptr_{};
   logger_ptr logger_ptr_{};
 
-  // 分配任务
-  bool assign_task();
 
   bool is_running_ = false;
   // 运行守卫
@@ -29,6 +27,8 @@ class task_server {
   };
 
   void begin_assign_task();
+  // 分配任务
+  void assign_task();
   // 此处清理已经完成的任务, 没有指定调用线程
   void clear_task();
   // 确认计算机正在运行的任务, 清除已分配, 但是计算机掉线的任务

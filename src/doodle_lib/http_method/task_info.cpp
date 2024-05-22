@@ -42,7 +42,7 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   }
 
   l_task_handle.submit_time_ = chrono::sys_time_pos::clock::now();
-  l_task_handle.log_path_    = fmt::format("task_log/{}", core_set::get_set().get_uuid());
+  l_task_handle.log_path_    = fmt::format("task_log/{}", l_task_handle.id_);
 
   {
     auto l_conn = g_pool_db().get_connection();
