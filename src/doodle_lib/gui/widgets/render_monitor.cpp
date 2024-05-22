@@ -281,7 +281,6 @@ std::string render_monitor::conv_state(const nlohmann::json& in_json) {
   if (!in_json.is_string()) return {};
   static const std::pair<server_task_info_status, std::string> m[] = {
       {server_task_info_status::submitted, "任务已经提交"},   {server_task_info_status::assigned, "任务已经分配"},
-      {server_task_info_status::accepted, "任务已经被接受"},  {server_task_info_status::rejected, "任务已经被拒绝"},
       {server_task_info_status::completed, "任务已经被完成"}, {server_task_info_status::canceled, "任务已经被取消"},
       {server_task_info_status::failed, "任务已经失败"},      {server_task_info_status::unknown, "未知状态"},
   };

@@ -21,10 +21,6 @@ enum class server_task_info_status {
   submitted,
   // 任务已经分配
   assigned,
-  // 任务已经被接受
-  accepted,
-  // 任务已经被拒绝
-  rejected,
   // 任务已经被完成
   completed,
   // 任务已经被取消
@@ -39,8 +35,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {
         {server_task_info_status::submitted, "submitted"},
         {server_task_info_status::assigned, "assigned"},
-        {server_task_info_status::accepted, "accepted"},
-        {server_task_info_status::rejected, "rejected"},
         {server_task_info_status::completed, "completed"},
         {server_task_info_status::canceled, "canceled"},
         {server_task_info_status::failed, "failed"},

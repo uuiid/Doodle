@@ -31,6 +31,8 @@ class task_server {
   void begin_assign_task();
   // 此处清理已经完成的任务, 没有指定调用线程
   void clear_task();
+  // 确认计算机正在运行的任务, 清除已分配, 但是计算机掉线的任务
+  void confirm_task();
 
   std::map<boost::uuids::uuid, std::shared_ptr<doodle::server_task_info>> task_map_{};  // 任务列表
  public:

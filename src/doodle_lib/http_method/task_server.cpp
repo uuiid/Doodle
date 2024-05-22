@@ -38,8 +38,10 @@ void task_server::begin_assign_task() {
       logger_ptr_->log(log_loc(), level::warn, "timer_ptr_ error: {}", ec);
       return;
     }
-    if (assign_task()) {
-      clear_task();
+    auto l_nex_run = assign_task();
+    confirm_task();
+    clear_task();
+    if (l_nex_run) {
       run();
     }
   });
@@ -61,6 +63,33 @@ void task_server::clear_task() {
     }
   }
 }
+
+void task_server::confirm_task() {
+  auto l_computers = g_websocket_data_manager().get_list();
+  for (auto&& [id_, l_task] : task_map_) {
+    if (l_task->status_ != server_task_info_status::assigned) continue;
+    if (auto l_computer = std::find_if(
+            l_computers.begin(), l_computers.end(),
+            [l_task](const auto& in_computer) {
+              if (auto l_computer_data = std::static_pointer_cast<computer_reg_data>(in_computer->user_data_);
+                  l_computer_data) {
+                return l_computer_data->task_info_ == l_task;
+              }
+              return false;
+            }
+        );
+        l_computer == l_computers.end()) {
+      l_task->status_ = server_task_info_status::submitted;
+      l_task->run_computer_.clear();
+      l_task->run_time_ = std::chrono::system_clock::time_point{};
+      {
+        auto l_db = g_pool_db().get_connection();
+        l_task->update_db(l_db);
+      }
+    }
+  }
+}
+
 bool task_server::assign_task() {
   auto l_computers = g_websocket_data_manager().get_list();
   for (auto&& [id_, l_task] : task_map_) {
