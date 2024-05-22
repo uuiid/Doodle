@@ -18,13 +18,13 @@
       "problemMatcher": []
     },
     {
-      "label": "install",
+      "label": "run_work_computer",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/install.cmd",
+      "command": "${workspaceFolder}/build_script/deploy/run_work_computer.cmd",
       "problemMatcher": []
     },
     {
-      "label": "install and html",
+      "label": "install",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/install.cmd;${workspaceFolder}/build_script/build/updata_html.cmd",
       "problemMatcher": []
