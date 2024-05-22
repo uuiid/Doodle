@@ -77,9 +77,9 @@ function Add-SymLink {
         
         try {
 
-            $test_file_path = $item.source + "\test.run_txt"
+            # $test_file_path = $item.source + "\test.run_txt"
             Get-Childitem -Path $item.source -ErrorAction Stop
-            New-Item -Path $test_file_path -ItemType File -Force -ErrorAction Stop
+            # New-Item -Path $test_file_path -ItemType File -Force -ErrorAction Stop
             # Remove-Item -Path $test_file_path -ErrorAction Stop
             if (Test-Path $item.source) {
                 if (Test-Path $item.link) {
