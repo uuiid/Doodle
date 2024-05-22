@@ -18,12 +18,13 @@
 #include <nlohmann/json.hpp>
 namespace doodle::http {
 
-enum class http_websocket_data_fun { ping, set_state, set_task, logger };
+enum class http_websocket_data_fun { ping, set_state, set_task, logger, run_task };
 NLOHMANN_JSON_SERIALIZE_ENUM(
     http_websocket_data_fun, {{http_websocket_data_fun::ping, "ping"},
                               {http_websocket_data_fun::set_state, "set_state"},
                               {http_websocket_data_fun::set_task, "set_task"},
-                              {http_websocket_data_fun::logger, "logger"}}
+                              {http_websocket_data_fun::logger, "logger"},
+                              {http_websocket_data_fun::run_task, "run_task"}}
 );
 class http_session_data;
 using http_session_data_ptr = std::shared_ptr<http_session_data>;

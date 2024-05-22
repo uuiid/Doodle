@@ -59,7 +59,7 @@ void http_work::do_connect() {
   );
 }
 void http_work::do_wait() {
-  logger_->log(log_loc(), level::info, "开始等待下一次心跳");
+  // logger_->log(log_loc(), level::info, "开始等待下一次心跳");
   timer_->expires_after(std::chrono::seconds{2});
   timer_->async_wait(boost::asio::bind_cancellation_slot(
       app_base::Get().on_cancel.slot(),
@@ -144,7 +144,7 @@ void http_work::do_read_out() {
             std::string l_line{};
             std::getline(l_stream, l_line);
             websocket_data_->seed(
-                nlohmann::json{{"type", "logger"}, {"level", "out"}, {"task_id", task_id_}, {"msg", l_line}}
+                nlohmann::json{{"type", "logger"}, {"level", level::info}, {"task_id", task_id_}, {"msg", l_line}}
             );
             do_read_out();
           }
@@ -165,7 +165,7 @@ void http_work::do_read_err() {
             std::string l_line;
             std::getline(l_stream, l_line);
             websocket_data_->seed(
-                nlohmann::json{{"type", "logger"}, {"level", "err"}, {"task_id", task_id_}, {"msg", l_line}}
+                nlohmann::json{{"type", "logger"}, {"level", level::err}, {"task_id", task_id_}, {"msg", l_line}}
             );
             do_read_err();
           }

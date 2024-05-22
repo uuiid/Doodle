@@ -131,6 +131,7 @@ void server_task_info::update_db(pooled_connection& in_comm) const {
           )
           .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
+  l_pre.params.uuid            = {id_.begin(), id_.end()};
   l_pre.params.exe             = exe_;
   l_pre.params.status          = magic_enum::enum_name(status_);
   l_pre.params.name            = name_;

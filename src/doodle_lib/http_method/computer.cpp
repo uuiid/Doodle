@@ -41,6 +41,10 @@ void computer::websocket_route(const nlohmann::json &in_json, const http_websock
       if (l_task->status_ == server_task_info_status::completed || l_task->status_ == server_task_info_status::failed) {
         l_task->end_time_ = std::chrono::system_clock::now();
       }
+      {
+        auto l_conn = g_pool_db().get_connection();
+        l_task->update_db(l_conn);
+      }
       l_computer->computer_data_.server_status_ = doodle::computer_status::free;
       break;
     }
@@ -81,7 +85,7 @@ void computer::reg_computer(boost::system::error_code in_error_code, const http_
   auto l_computer                           = std::make_shared<computer_reg_data>(doodle::computer{
       fmt::format("计算机 {}", l_remote_endpoint.address().to_string()), l_remote_endpoint.address().to_string()
   });
-  l_computer->computer_data_.client_status_ = doodle::computer_status::free;
+  l_computer->computer_data_.server_status_ = doodle::computer_status::free;
   in_web_socket->user_data_                 = l_computer;
   in_web_socket->on_message.connect(&computer::websocket_route);
 }

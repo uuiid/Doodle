@@ -83,7 +83,8 @@ bool task_server::assign_task() {
         }
         nlohmann::json l_json{};
 
-        l_json["id"]      = id_;
+        l_json["type"]    = http_websocket_data_fun::run_task;
+        l_json["id"]      = fmt::to_string(id_);
         l_json["exe"]     = l_task->exe_;
         l_json["command"] = l_task->command_;
         l_computer->seed(l_json);
