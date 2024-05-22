@@ -98,7 +98,7 @@ FSys::path register_file_type::program_location() {
     l_path = l_key.GetStringValue(LR"(install_dir)");
   } catch (const winreg::RegException& e) {
     default_logger_raw()->log(log_loc(), level::warn, "读取程序路径失败 {}, 返回dll路径", e.what());
-    l_path = boost::dll::program_location();
+    l_path = boost::dll::program_location().parent_path();
     // std::wstring l_path_str{MAX_PATH, L'\0'};
     // auto l_r = GetModuleFileNameW(nullptr, l_path_str.data(), MAX_PATH);
     // if (l_r) {

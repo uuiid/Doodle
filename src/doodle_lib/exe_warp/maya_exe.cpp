@@ -299,7 +299,7 @@ boost::system::error_code maya_exe::install_maya_exe(const logger_ptr &in_logger
     }
     auto l_program_path = register_file_type::program_location();
     for (auto && l_it : FSys::directory_iterator(l_program_path)) {
-      if (l_it.is_regular_file() && l_it.path().extension() == ".lib") {
+      if (l_it.is_regular_file() && l_it.path().extension() == ".dll") {
         FSys::copy(l_it, l_target_path / l_it.path().filename(), FSys::copy_options::overwrite_existing);
       }
     }
