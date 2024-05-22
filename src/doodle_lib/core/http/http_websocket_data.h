@@ -109,22 +109,18 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
     connect_op& operator=(const connect_op&)     = delete;
     // on_resolve
     void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type in_results) {
-      auto l_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *ptr_)};
-      auto l_logger = l_handle.get<socket_logger>().logger_;
+      auto l_logger = ptr_->logger_;
+
       if (ec) {
         l_logger->log(log_loc(), level::err, "async_resolve error: {} ", ec);
         this->complete(false, ec);
         return;
       }
-      ptr_->stream_ = std::make_unique<websocket_stream>(boost::asio::get_associated_executor(
-          ptr_->resolver_->get_executor(), boost::asio::make_strand(g_io_context())
-      ));
       boost::beast::get_lowest_layer(*ptr_->stream_).async_connect(in_results, std::move(*this));
     }
     // on_connect
     void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
-      auto l_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *ptr_)};
-      auto l_logger = l_handle.get<socket_logger>().logger_;
+      auto l_logger = ptr_->logger_;
       if (ec) {
         l_logger->log(log_loc(), level::err, "async_connect error: {} ", ec);
         this->complete(false, ec);
@@ -143,8 +139,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
     }
     // on_handshake
     void operator()(boost::system::error_code ec) {
-      auto l_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *ptr_)};
-      auto l_logger = l_handle.get<socket_logger>().logger_;
+      auto l_logger = ptr_->logger_;
       if (ec) {
         l_logger->log(log_loc(), level::err, "async_handshake error: {} ", ec);
         this->complete(false, ec);
@@ -167,6 +162,12 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
   ) {
     resolver_ = std::make_unique<resolver_t>(
         boost::asio::get_associated_executor(in_handler, boost::asio::make_strand(g_io_context()))
+    );
+    stream_ = std::make_unique<websocket_stream>(
+        boost::asio::get_associated_executor(resolver_->get_executor(), boost::asio::make_strand(g_io_context()))
+    );
+    logger_ = g_logger_ctrl().make_log(
+        fmt::format("http_client {}", SOCKET(boost::beast::get_lowest_layer(*stream_).socket().native_handle()))
     );
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [](auto&& handler, auto* ptr, std::string server_address, std::uint16_t server_port, std::string path) {
