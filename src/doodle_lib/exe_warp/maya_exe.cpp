@@ -150,7 +150,7 @@ PYTHONPATH+:= scripts
     l_eve["MAYA_LOCATION"] = maya_program_path.generic_string();
     l_eve["Path"] += (maya_program_path / "bin").generic_string();
     l_eve["Path"] += program_path.parent_path().generic_string();
-    l_eve["Path"] += register_file_type::program_location().generic_string();
+    // l_eve["Path"] += register_file_type::program_location().generic_string();
     auto l_maya_plug_path = register_file_type::program_location().parent_path() / "maya";
     l_eve["MAYA_MODULE_PATH"] += l_maya_plug_path.generic_string();
     add_maya_module();
@@ -297,7 +297,12 @@ boost::system::error_code maya_exe::install_maya_exe(const logger_ptr &in_logger
     if (!FSys::exists(p_i->run_path)) {
       FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
     }
-
+    auto l_program_path = register_file_type::program_location();
+    for (auto && l_it : FSys::directory_iterator(l_target_path)) {
+      if (l_it.is_regular_file() && l_it.path().extension() == ".lib") {
+        FSys::copy(l_it, l_target_path / l_it.path().filename(), FSys::copy_options::overwrite_existing);
+      }
+    }
   } catch (const FSys::filesystem_error &in_err) {
     in_logger->log(log_loc(), level::err, "复制文件失败: {}", boost::diagnostic_information(in_err));
     l_ec = in_err.code();
