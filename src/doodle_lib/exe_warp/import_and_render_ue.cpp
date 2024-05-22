@@ -113,8 +113,6 @@ void import_and_render_ue::fix_config() const {
 [/Script/Engine.RendererSettings]
 r.TextureStreaming=True
 r.GBufferFormat=3
-r.AllowStaticLighting=True
-r.Streaming.PoolSize=16384
 ")";
     return;
   }
@@ -126,8 +124,6 @@ r.Streaming.PoolSize=16384
     l_str += R"([/Script/Engine.RendererSettings]
 r.TextureStreaming=True
 r.GBufferFormat=1
-r.AllowStaticLighting=True
-r.Streaming.PoolSize=16384
 
 )";
     FSys::ofstream{l_file_path} << l_str;
@@ -150,24 +146,24 @@ r.Streaming.PoolSize=16384
         l_find_g_buffer_format, l_str.find("\n", l_find_g_buffer_format) - l_find_g_buffer_format, "r.GBufferFormat=1"
     );
   }
-  auto l_find_allow_static_lighting = l_str.find("r.AllowStaticLighting");
-  if (l_str.find("r.AllowStaticLighting") == std::string::npos) {
-    l_str.insert(l_find_render_setting + 34, "r.AllowStaticLighting=True\n");
-  } else {
-    l_str.replace(
-        l_find_allow_static_lighting, l_str.find("\n", l_find_allow_static_lighting) - l_find_allow_static_lighting,
-        "r.AllowStaticLighting=True"
-    );
-  }
-  auto l_find_streaming_pool_size = l_str.find("r.Streaming.PoolSize");
-  if (l_str.find("r.Streaming.PoolSize") == std::string::npos) {
-    l_str.insert(l_find_render_setting + 34, "r.Streaming.PoolSize=16384\n");
-  } else {
-    l_str.replace(
-        l_find_streaming_pool_size, l_str.find("\n", l_find_streaming_pool_size) - l_find_streaming_pool_size,
-        "r.Streaming.PoolSize=16384"
-    );
-  }
+  // auto l_find_allow_static_lighting = l_str.find("r.AllowStaticLighting");
+  // if (l_str.find("r.AllowStaticLighting") == std::string::npos) {
+  //   l_str.insert(l_find_render_setting + 34, "r.AllowStaticLighting=True\n");
+  // } else {
+  //   l_str.replace(
+  //       l_find_allow_static_lighting, l_str.find("\n", l_find_allow_static_lighting) - l_find_allow_static_lighting,
+  //       "r.AllowStaticLighting=True"
+  //   );
+  // }
+  // auto l_find_streaming_pool_size = l_str.find("r.Streaming.PoolSize");
+  // if (l_str.find("r.Streaming.PoolSize") == std::string::npos) {
+  //   l_str.insert(l_find_render_setting + 34, "r.Streaming.PoolSize=16384\n");
+  // } else {
+  //   l_str.replace(
+  //       l_find_streaming_pool_size, l_str.find("\n", l_find_streaming_pool_size) - l_find_streaming_pool_size,
+  //       "r.Streaming.PoolSize=16384"
+  //   );
+  // }
   FSys::ofstream{l_file_path} << l_str;
 }
 
