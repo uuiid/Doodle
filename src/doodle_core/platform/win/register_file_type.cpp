@@ -98,25 +98,26 @@ FSys::path register_file_type::program_location() {
     l_path = l_key.GetStringValue(LR"(install_dir)");
   } catch (const winreg::RegException& e) {
     default_logger_raw()->log(log_loc(), level::warn, "读取程序路径失败 {}, 返回dll路径", e.what());
-    std::wstring l_path_str{MAX_PATH, L'\0'};
-    auto l_r = GetModuleFileNameW(nullptr, l_path_str.data(), MAX_PATH);
-    if (l_r) {
-      l_path = FSys::path{conv::utf_to_utf<char>(l_path_str)};
-      l_path = l_path.parent_path();
-    } else {
-      auto l_ec = GetLastError();
-      for (auto i = 2; i < 1025 && l_ec == ERROR_INSUFFICIENT_BUFFER; i *= 2) {
-        l_path_str.resize(MAX_PATH * i);
-        l_r = GetModuleFileNameW(nullptr, l_path_str.data(), MAX_PATH * i);
-        if (l_r) {
-          l_path_str.resize(l_r);
-          l_path = FSys::path{conv::utf_to_utf<char>(l_path_str)};
-          l_path = l_path.parent_path();
-          break;
-        }
-        l_ec = GetLastError();
-      }
-    }
+    l_path = boost::dll::program_location();
+    // std::wstring l_path_str{MAX_PATH, L'\0'};
+    // auto l_r = GetModuleFileNameW(nullptr, l_path_str.data(), MAX_PATH);
+    // if (l_r) {
+    //   l_path = FSys::path{conv::utf_to_utf<char>(l_path_str)};
+    //   l_path = l_path.parent_path();
+    // } else {
+    //   auto l_ec = GetLastError();
+    //   for (auto i = 2; i < 1025 && l_ec == ERROR_INSUFFICIENT_BUFFER; i *= 2) {
+    //     l_path_str.resize(MAX_PATH * i);
+    //     l_r = GetModuleFileNameW(nullptr, l_path_str.data(), MAX_PATH * i);
+    //     if (l_r) {
+    //       l_path_str.resize(l_r);
+    //       l_path = FSys::path{conv::utf_to_utf<char>(l_path_str)};
+    //       l_path = l_path.parent_path();
+    //       break;
+    //     }
+    //     l_ec = GetLastError();
+    //   }
+    // }
   }
   return l_path;
 }
