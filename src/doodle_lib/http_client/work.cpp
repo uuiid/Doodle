@@ -25,58 +25,64 @@
 namespace doodle::http {
 
 class http_work::websocket_run_task_fun {
-  std::string task_id_{};
-  // 执行程序
-  std::string exe_{};
-  // 命令行
-  std::vector<std::string> command_line_{};
+  struct impl {
+    std::string task_id_{};
+    // 执行程序
+    std::string exe_{};
+    // 命令行
+    std::vector<std::string> command_line_{};
 
-  // 子进程
-  boost::process::child child_{};
-  boost::asio::streambuf out_strbuff_attr{};
-  boost::asio::streambuf err_strbuff_attr{};
-  std::shared_ptr<boost::process::async_pipe> out_pipe_{};
-  std::shared_ptr<boost::process::async_pipe> err_pipe_{};
+    // 子进程
+    boost::process::child child_{};
+    boost::asio::streambuf out_strbuff_attr{};
+    boost::asio::streambuf err_strbuff_attr{};
+    std::shared_ptr<boost::process::async_pipe> out_pipe_{};
+    std::shared_ptr<boost::process::async_pipe> err_pipe_{};
+    http_work *http_work_;
+    boost::asio::any_io_executor executor_;
+  };
+  std::shared_ptr<impl> impl_{};
 
  public:
-  http_work *http_work_;
-  boost::asio::any_io_executor executor_;
   static constexpr std::string_view name{"run_task"};
 
-  explicit websocket_run_task_fun(http_work *in_http_work)
-      : http_work_(in_http_work), executor_(g_io_context().get_executor()) {}
-  boost::asio::any_io_executor get_executor() const { return executor_; }
+  explicit websocket_run_task_fun(http_work *in_http_work) : impl_{std::make_shared<impl>()} {
+    impl_->http_work_ = in_http_work;
+    impl_->executor_  = g_io_context().get_executor();
+  }
+  boost::asio::any_io_executor get_executor() const { return impl_->executor_; }
 
   void operator()(const std::shared_ptr<http_websocket_data> &in_handle, const nlohmann::json &in_json) {
     if (!in_json.contains("id")) {
-      http_work_->logger_->log(log_loc(), level::err, "json parse error: {}", in_json.dump());
+      impl_->http_work_->logger_->log(log_loc(), level::err, "json parse error: {}", in_json.dump());
       return;
     }
-    task_id_      = in_json["id"].get<std::string>();
-    command_line_ = in_json["command"].get<std::vector<std::string>>();
-    exe_          = in_json["exe"].get<std::string>();
+    impl_->task_id_      = in_json["id"].get<std::string>();
+    impl_->command_line_ = in_json["command"].get<std::vector<std::string>>();
+    impl_->exe_          = in_json["exe"].get<std::string>();
+    impl_->http_work_->send_state(computer_status::busy);
     run_task();
   }
 
   void run_task() {
-    out_pipe_      = std::make_shared<boost::process::async_pipe>(g_io_context());
-    err_pipe_      = std::make_shared<boost::process::async_pipe>(g_io_context());
-    auto l_run_exe = boost::process::search_path(exe_);
-    child_         = boost::process::child{
+    impl_->out_pipe_ = std::make_shared<boost::process::async_pipe>(g_io_context());
+    impl_->err_pipe_ = std::make_shared<boost::process::async_pipe>(g_io_context());
+    auto l_run_exe   = boost::process::search_path(impl_->exe_);
+    impl_->child_    = boost::process::child{
         g_io_context(),
         boost::process::exe  = l_run_exe,
-        boost::process::args = command_line_,
-        boost::process::std_out > *out_pipe_,
-        boost::process::std_err > *err_pipe_,
+        boost::process::args = impl_->command_line_,
+        boost::process::std_out > *impl_->out_pipe_,
+        boost::process::std_err > *impl_->err_pipe_,
         boost::process::on_exit =
             [this](int exit_code, const std::error_code &ec) {
               if (ec) {
-                http_work_->logger_->log(log_loc(), level::err, "run task error: {}", ec.message());
-                http_work_->end_task(ec);
+                impl_->http_work_->logger_->log(log_loc(), level::err, "run task error: {}", ec.message());
+                impl_->http_work_->end_task(ec);
                 return;
               }
-              http_work_->logger_->log(log_loc(), level::info, "run task success: {}", exit_code);
-              http_work_->end_task(ec);
+              impl_->http_work_->logger_->log(log_loc(), level::info, "run task success: {}", exit_code);
+              impl_->http_work_->end_task(ec);
             },
         boost::process::windows::hide
     };
@@ -87,20 +93,20 @@ class http_work::websocket_run_task_fun {
   // async read out
   void do_read_out() {
     boost::asio::async_read_until(
-        *out_pipe_, out_strbuff_attr, "\n",
+        *impl_->out_pipe_, impl_->out_strbuff_attr, "\n",
         boost::asio::bind_cancellation_slot(
             app_base::Get().on_cancel.slot(),
             [this](boost::system::error_code in_error_code, std::size_t in_size) {
               if (in_error_code) {
-                http_work_->logger_->log(log_loc(), level::err, "do_read_out error: {}", in_error_code);
+                impl_->http_work_->logger_->log(log_loc(), level::err, "do_read_out error: {}", in_error_code);
                 return;
               }
-              std::istream l_stream(&out_strbuff_attr);
+              std::istream l_stream(&impl_->out_strbuff_attr);
               std::string l_line{};
               std::getline(l_stream, l_line);
-              http_work_->websocket_data_->seed(
-                  nlohmann::json{{"type", "logger"}, {"level", level::info}, {"task_id", task_id_}, {"msg", l_line}}
-              );
+              impl_->http_work_->websocket_data_->seed(nlohmann::json{
+                  {"type", "logger"}, {"level", level::info}, {"task_id", impl_->task_id_}, {"msg", l_line}
+              });
               do_read_out();
             }
         )
@@ -108,20 +114,20 @@ class http_work::websocket_run_task_fun {
   }
   void do_read_err() {
     boost::asio::async_read_until(
-        *err_pipe_, out_strbuff_attr, "\n",
+        *impl_->err_pipe_, impl_->out_strbuff_attr, "\n",
         boost::asio::bind_cancellation_slot(
             app_base::Get().on_cancel.slot(),
             [this](boost::system::error_code in_error_code, std::size_t in_size) {
               if (in_error_code) {
-                http_work_->logger_->log(log_loc(), level::err, "do_read_out error: {}", in_error_code);
+                impl_->http_work_->logger_->log(log_loc(), level::err, "do_read_out error: {}", in_error_code);
                 return;
               }
-              std::istream l_stream(&out_strbuff_attr);
+              std::istream l_stream(&impl_->out_strbuff_attr);
               std::string l_line;
               std::getline(l_stream, l_line);
-              http_work_->websocket_data_->seed(
-                  nlohmann::json{{"type", "logger"}, {"level", level::err}, {"task_id", task_id_}, {"msg", l_line}}
-              );
+              impl_->http_work_->websocket_data_->seed(nlohmann::json{
+                  {"type", "logger"}, {"level", level::err}, {"task_id", impl_->task_id_}, {"msg", l_line}
+              });
               do_read_err();
             }
         )
@@ -160,7 +166,7 @@ void http_work::do_connect() {
               return;
             }
             is_connect_ = true;
-            send_state();
+            send_state(computer_status::free);
           }
       )
   );
