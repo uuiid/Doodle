@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   http::computer::reg(*l_rout_ptr);
   http::task_info::reg(*l_rout_ptr);
   // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
+  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr, 50023);
   l_listener->run();
   g_ctx().get<http::task_server>().run();
   try {
@@ -69,14 +69,14 @@ BOOST_AUTO_TEST_CASE(auto_light_and_works) {
   http::computer::reg(*l_rout_ptr);
   http::task_info::reg(*l_rout_ptr);
   // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr, 50022);
+  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr, 50023);
   l_listener->run();
   g_ctx().get<http::task_server>().run();
 
   std::vector<std::shared_ptr<http::http_work>> l_works{};
   for (int i = 0; i < 10; ++i) {
     auto l_work = std::make_shared<http::http_work>();
-    l_work->run("127.0.0.1", 50022);
+    l_work->run("127.0.0.1", 50023);
     l_works.emplace_back(std::move(l_work));
   }
 
