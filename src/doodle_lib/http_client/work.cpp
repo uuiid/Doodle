@@ -178,11 +178,7 @@ void http_work::do_wait() {
           logger_->log(log_loc(), level::err, "on_wait error: {}", in_error_code);
           return;
         }
-        if (!is_connect_) {
-          do_connect();
-          return;
-        }
-        if(!websocket_data_->stream_->is_open()) {
+        if (!is_connect_ || !websocket_data_->stream_->is_open()) {
           do_connect();
           return;
         }
