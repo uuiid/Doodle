@@ -17,10 +17,7 @@ class computer {
   computer()  = default;
   ~computer() = default;
 
-  // websocket 方法路由
-  static void websocket_route(const nlohmann::json& in_json, const http_websocket_data_ptr& in_handle);
-
-  // get 方法, 列出所有的注册计算机
+   // get 方法, 列出所有的注册计算机
   static void list_computers(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle);
   // websocket 方法, 注册计算机
   static void reg_computer(boost::system::error_code in_error_code, const http_websocket_data_ptr& in_handle);

@@ -8,56 +8,84 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/server_task_info.h>
 
-#include "doodle_lib/core/http/http_session_data.h"
-#include "doodle_lib/core/http/http_websocket_data.h"
+#include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/core/http/http_websocket_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 
 namespace doodle::http {
-void computer::websocket_route(const nlohmann::json &in_json, const http_websocket_data_ptr &in_handle) {
-  auto l_logger   = in_handle->logger_;
-  auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
 
-  switch (in_json["type"].get<computer_websocket_fun>()) {
-    case computer_websocket_fun::set_state: {
-      if (!in_json.contains("state") || !in_json["state"].is_string()) break;
-      l_computer->computer_data_.client_status_ =
-          magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
-              .value_or(doodle::computer_status::unknown);
+class web_set_tate_fun {
+ public:
+  web_set_tate_fun() : executor_{g_io_context().get_executor()} {}
+  boost::asio::any_io_executor executor_;
+  boost::asio::any_io_executor get_executor() const { return executor_; }
 
-      if (in_json.contains("host_name") && in_json["host_name"].is_string()) {
-        l_computer->computer_data_.name_ = in_json["host_name"].get<std::string>();
-      }
-      break;
+  static constexpr std::string_view name{"set_state"};
+
+  void operator()(const http_websocket_data_ptr &in_handle, const nlohmann::json &in_json) {
+    auto l_logger   = in_handle->logger_;
+    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+
+    if (!in_json.contains("state") || !in_json["state"].is_string()) return;
+    l_computer->computer_data_.client_status_ =
+        magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
+            .value_or(doodle::computer_status::unknown);
+
+    if (in_json.contains("host_name") && in_json["host_name"].is_string()) {
+      l_computer->computer_data_.name_ = in_json["host_name"].get<std::string>();
     }
-    case computer_websocket_fun::set_task: {
-      if (!l_computer->task_info_) {
-        l_logger->log(log_loc(), level::err, "task_info is null");
-        break;
-      }
-      auto l_task     = l_computer->task_info_;
-      l_task->status_ = magic_enum::enum_cast<server_task_info_status>(in_json["status"].get<std::string>())
-                            .value_or(server_task_info_status::unknown);
-      if (l_task->status_ == server_task_info_status::completed || l_task->status_ == server_task_info_status::failed) {
-        l_task->end_time_ = std::chrono::system_clock::now();
-      }
-      {
-        auto l_conn = g_pool_db().get_connection();
-        l_task->update_db(l_conn);
-      }
-      l_computer->computer_data_.server_status_ = doodle::computer_status::free;
-      break;
+  }
+};
+class web_logger_fun {
+ public:
+  web_logger_fun() : executor_{g_io_context().get_executor()} {}
+  boost::asio::any_io_executor executor_;
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+
+  static constexpr std::string_view name{"logger"};
+  void operator()(const http_websocket_data_ptr &in_handle, const nlohmann::json &in_json) {
+    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+    auto l_logger   = in_handle->logger_;
+
+    if (!l_computer->task_info_) {
+      l_logger->log(log_loc(), level::err, "task_info is null");
+      return;
     }
-    case computer_websocket_fun::logger: {
-      if (!l_computer->task_info_) {
-        l_logger->log(log_loc(), level::err, "task_info is null");
-        break;
-      }
-      auto l_task = l_computer->task_info_;
-      l_task->write_log(in_json["level"].get<level::level_enum>(), in_json["msg"].get<std::string>());
+    auto l_task = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
+    l_task->write_log(in_json["level"].get<level::level_enum>(), in_json["msg"].get<std::string>());
+  }
+};
+class web_set_task_fun {
+ public:
+  web_set_task_fun() : executor_{g_io_context().get_executor()} {}
+  boost::asio::any_io_executor executor_;
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+
+  static constexpr std::string_view name{"set_task"};
+  void operator()(const http_websocket_data_ptr &in_handle, const nlohmann::json &in_json) {
+    auto l_logger   = in_handle->logger_;
+    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+
+    if (!l_computer->task_info_) {
+      l_logger->log(log_loc(), level::err, "task_info is null");
+      return;
     }
-  };
-}
+    auto l_task     = l_computer->task_info_;
+    l_task->status_ = magic_enum::enum_cast<server_task_info_status>(in_json["status"].get<std::string>())
+                          .value_or(server_task_info_status::unknown);
+    if (l_task->status_ == server_task_info_status::completed || l_task->status_ == server_task_info_status::failed) {
+      l_task->end_time_ = std::chrono::system_clock::now();
+    }
+    {
+      auto l_conn = g_pool_db().get_connection();
+      l_task->update_db(l_conn);
+    }
+    l_computer->computer_data_.server_status_ = doodle::computer_status::free;
+  }
+};
+
 void computer::list_computers(boost::system::error_code in_error_code, const http_session_data_ptr &in_handle) {
   std::vector<doodle::computer> l_computers{};
   for (auto &&l_web_ : g_websocket_data_manager().get_list()) {
@@ -87,7 +115,10 @@ void computer::reg_computer(boost::system::error_code in_error_code, const http_
   });
   l_computer->computer_data_.server_status_ = doodle::computer_status::free;
   in_web_socket->user_data_                 = l_computer;
-  in_web_socket->on_message.connect(&computer::websocket_route);
+
+  auto l_web_route                          = std::make_shared<class websocket_route>();
+  l_web_route->reg(web_set_tate_fun{}).reg(web_logger_fun{}).reg(web_set_task_fun{});
+  in_web_socket->route_ptr_ = l_web_route;
 }
 
 void computer::reg(doodle::http::http_route &in_route) {
