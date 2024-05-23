@@ -11,7 +11,7 @@
 #include <doodle_lib/core/http/socket_logger.h>
 namespace doodle::http {
 void http_listener::run() {
-  auto acceptor_ptr = std::make_shared<acceptor_type>(io_context_, end_point_);
+  auto acceptor_ptr = std::make_shared<acceptor_type>(executor_, end_point_);
   acceptor_ptr->listen(boost::asio::socket_base::max_listen_connections);
   acceptor_ptr_ = std::move(acceptor_ptr);
 
@@ -19,7 +19,7 @@ void http_listener::run() {
 }
 void http_listener::do_accept() {
   acceptor_ptr_->async_accept(
-      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(executor_),
       boost::asio::bind_cancellation_slot(
           app_base::Get().on_cancel.slot(), boost::beast::bind_front_handler(&http_listener::on_accept, this)
       )
