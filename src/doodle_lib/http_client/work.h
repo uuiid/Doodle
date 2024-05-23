@@ -44,7 +44,7 @@ class http_work {
   using signal_set      = boost::asio::signal_set;
   using signal_set_ptr  = std::shared_ptr<signal_set>;
   using logger_sink_ptr = std::shared_ptr<spdlog::sinks::sink>;
-
+  class websocket_run_task_fun;
   // 自动连接定时器
   timer_ptr timer_{};
 
