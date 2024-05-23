@@ -47,10 +47,12 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   http::computer::reg(*l_rout_ptr);
   http::task_info::reg(*l_rout_ptr);
   // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr, 50023);
+  auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, 50023);
   l_listener->run();
   g_ctx().get<http::task_server>().run();
   try {
+    // 工作守卫
+    auto l_work_guard = boost::asio::make_work_guard(g_io_context());
     g_io_context().run();
   } catch (const std::exception& e) {
     BOOST_TEST_MESSAGE(e.what());
