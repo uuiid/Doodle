@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/computer.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
