@@ -2,6 +2,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <boost/asio/prepend.hpp>
+
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 #include <string_view>
@@ -47,7 +49,7 @@ class DOODLE_CORE_API database_pool_info {
   // async_install_db
   template <typename T, typename CompletionHandler>
   [[nodiscard]] auto async_install_db(T in_args, CompletionHandler&& in_handler) {
-    boost::asio::post(g_io_context(), [in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
+    boost::asio::post(g_io_context(), [this, in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
       auto l_conn = get_connection();
       boost::system::error_code l_ec{};
       try {
@@ -61,7 +63,7 @@ class DOODLE_CORE_API database_pool_info {
   // async_update_db
   template <typename T, typename CompletionHandler>
   [[nodiscard]] auto async_update_db(T in_args, CompletionHandler&& in_handler) {
-    boost::asio::post(g_io_context(), [in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
+    boost::asio::post(g_io_context(), [this, in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
       auto l_conn = get_connection();
       boost::system::error_code l_ec{};
       try {
@@ -75,8 +77,8 @@ class DOODLE_CORE_API database_pool_info {
   // async_select_db
   template <typename T, typename CompletionHandler>
   [[nodiscard]] auto async_select_db(T in_args, CompletionHandler&& in_handler) {
-    boost::asio::post(g_io_context(), [in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
-      auto l_conn = get_connection_const();
+    boost::asio::post(g_io_context(), [this, in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
+      auto l_conn = get_connection();
       boost::system::error_code l_ec{};
       try {
         in_args->select_db(l_conn);
@@ -89,7 +91,7 @@ class DOODLE_CORE_API database_pool_info {
   // async_delete_db
   template <typename T, typename CompletionHandler>
   [[nodiscard]] auto async_delete_db(T in_args, CompletionHandler&& in_handler) {
-    boost::asio::post(g_io_context(), [in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
+    boost::asio::post(g_io_context(), [this, in_args, in_handler = std::forward<CompletionHandler>(in_handler)]() {
       auto l_conn = get_connection();
       boost::system::error_code l_ec{};
       try {
@@ -102,13 +104,13 @@ class DOODLE_CORE_API database_pool_info {
   }
   // async_select_all
   template <typename T, typename CompletionHandler>
-  [[nodiscard]] auto async_select_all( CompletionHandler&& in_handler) {
-    boost::asio::post(g_io_context(), [ in_handler = std::forward<CompletionHandler>(in_handler)]() {
-      auto l_conn = get_connection_const();
+  [[nodiscard]] auto async_select_all(CompletionHandler&& in_handler) {
+    boost::asio::post(g_io_context(), [this, in_handler = std::forward<CompletionHandler>(in_handler)]() {
+      auto l_conn = get_connection();
       boost::system::error_code l_ec{};
       std::vector<T> l_args{};
       try {
-       l_args = T::select_all(l_conn);
+        l_args = T::select_all(l_conn);
       } catch (const sqlpp::exception& e) {
         l_ec = error_enum::sqlite3_save_error;
       }
