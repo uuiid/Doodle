@@ -38,18 +38,16 @@ conn_ptr database_info::get_connection_const() const {
 }
 void database_pool_info::create_pool(const std::string& in_path) {
   FSys::path l_path = in_path;
-  if(!FSys::exists(l_path.parent_path()) && in_path != memory_data)
-    FSys::create_directories(l_path.parent_path());
-  
-  if (in_path.empty())
-    l_path = memory_data;
+  if (!FSys::exists(l_path.parent_path()) && in_path != memory_data) FSys::create_directories(l_path.parent_path());
+
+  if (in_path.empty()) l_path = memory_data;
 
   auto l_config              = std::make_shared<sqlpp::sqlite3::connection_config>();
   l_config->path_to_database = l_path.generic_string();
   if (!FSys::exists(l_path))
-    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
   else
-    l_config->flags = SQLITE_OPEN_READWRITE;
+    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX;
   pool_ = std::make_shared<sqlpp::sqlite3::connection_pool>(l_config, 10);
 }
 
