@@ -17,6 +17,8 @@
 #include <entt/entt.hpp>
 #include <nlohmann/json.hpp>
 namespace doodle::http {
+class websocket_route;
+using websocket_route_ptr = std::shared_ptr<websocket_route>;
 
 enum class http_websocket_data_fun { ping, set_state, set_task, logger, run_task };
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -191,8 +193,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
   void do_write();
 
   void run_fun();
-
-  boost::signals2::signal<void(const nlohmann::json&, const std::shared_ptr<http_websocket_data>&)> on_message;
+  websocket_route_ptr route_ptr_;
 
   // 不一定有回复, 所以不需要回调
   void seed(const nlohmann::json& in_json);

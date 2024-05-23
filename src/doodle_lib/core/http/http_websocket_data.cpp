@@ -10,6 +10,7 @@
 #include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include "socket_logger.h"
@@ -49,7 +50,8 @@ void http_websocket_data::run_fun() {
     logger_->log(log_loc(), level::err, "json parse error: {}", l_json.dump());
     return;
   }
-  on_message(l_json, shared_from_this());
+  auto l_fun = (*route_ptr_)(l_json["type"].get<std::string>());
+  (*l_fun)(shared_from_this(), l_json);
 }
 void http_websocket_data::seed(const nlohmann::json& in_json) {
   write_queue_.emplace(in_json.dump());
@@ -114,8 +116,9 @@ void http_websocket_data::do_close() {
 
 void http_websocket_data_manager::push_back(const std::shared_ptr<http_websocket_data>& in_data) {
   std::unique_lock lock(mutex_);
-  if(auto l_it = std::find_if(data_list_.begin(), data_list_.end(), [](const auto& in_data) { return in_data.expired(); });
-     l_it != data_list_.end()) {
+  if (auto l_it =
+          std::find_if(data_list_.begin(), data_list_.end(), [](const auto& in_data) { return in_data.expired(); });
+      l_it != data_list_.end()) {
     *l_it = in_data;
   } else {
     data_list_.emplace_back(in_data);
