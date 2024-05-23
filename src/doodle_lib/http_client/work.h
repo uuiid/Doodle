@@ -17,21 +17,6 @@ class http_websocket_data;
  *
  */
 
-enum class run_task_type {
-  maya_exe,         // 运行maya任务, 这个不会转发到 maya.exe, 会转发给 我们自己编译的exe中
-  UE_exe,           // 运行UE任务, 这个会直接转发到 UE-cmd.exe 中
-  auto_light_task,  // 这个是组合任务, 会自动执行一些任务
-};
-
-NLOHMANN_JSON_SERIALIZE_ENUM(
-    run_task_type,
-    {
-        {run_task_type::maya_exe, "maya_exe"},
-        {run_task_type::UE_exe, "UE_exe"},
-        {run_task_type::auto_light_task, "auto_light_task"},
-    }
-)
-
 class http_work {
   //  using client_core     = doodle::detail::client_core;
   //  using client_core_ptr = std::shared_ptr<client_core>;
@@ -79,11 +64,7 @@ class http_work {
 
   void do_wait();
 
-  void send_state();
-
-  void read_task_info(const nlohmann::json& in_json, const std::shared_ptr<http_websocket_data>& in_handle);
-
-  void run_task();
+  void send_state(computer_status in_status);
 
   void end_task(boost::system::error_code in_error_code);
 

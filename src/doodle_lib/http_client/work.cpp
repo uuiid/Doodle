@@ -187,16 +187,8 @@ void http_work::do_wait() {
   ));
 }
 
-void http_work::send_state() {
-  if (task_id_.empty()) {
-    websocket_data_->seed(
-        nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}, {"host_name", host_name_}}
-    );
-  } else {
-    websocket_data_->seed(
-        nlohmann::json{{"type", "set_state"}, {"state", computer_status::busy}, {"host_name", host_name_}}
-    );
-  }
+void http_work::send_state(computer_status in_status) {
+  websocket_data_->seed(nlohmann::json{{"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}});
   do_wait();
 }
 
@@ -210,8 +202,7 @@ void http_work::end_task(boost::system::error_code in_error_code) {
       {"type", computer_websocket_fun::set_task},
       {"status", in_error_code ? server_task_info_status::failed : server_task_info_status::completed}
   });
-  task_id_ = {};
-  send_state();
+  send_state(computer_status::free);
 }
 
 }  // namespace doodle::http
