@@ -53,6 +53,11 @@ void task_server::add_task(doodle::server_task_info in_task) {
     task_map_[in_task.id_] = std::make_shared<doodle::server_task_info>(std::move(in_task));
   });
 }
+void task_server::add_task(const std::shared_ptr<doodle::server_task_info>& in_task_list) {
+  boost::asio::post(g_io_context(), [this, in_task_list = in_task_list] {
+    task_map_[in_task_list->id_] = std::move(in_task_list);
+  });
+}
 void task_server::erase_task(const boost::uuids::uuid& in_id) {
   boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] { task_map_.erase(in_id); });
 }

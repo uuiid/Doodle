@@ -42,6 +42,7 @@ class task_server {
   // 此处可进行多线程调用
   void run();
   void add_task(doodle::server_task_info in_task);
+  void add_task(const std::shared_ptr<doodle::server_task_info>& in_task_list);
   void erase_task(const boost::uuids::uuid& in_id);
 
   // 初始化必须在主线程调用, 并且必须初始化数据库
