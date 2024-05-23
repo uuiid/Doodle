@@ -4,6 +4,8 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+
+#include <boost/asio/prepend.hpp>
 namespace doodle::http {
 class http_websocket_data;
 using http_websocket_data_ptr = std::shared_ptr<http_websocket_data>;
@@ -29,13 +31,14 @@ class websocket_route {
   template <typename T>
   websocket_route& reg(T&& in_fun) {
     return reg(
-        T::name, std::make_shared<std::function<void(const http_websocket_data_ptr&, const nlohmann::json&)>>(
-                     [l_fun_ptr = std::make_shared<T>(std::move(in_fun)
-                      )](const http_websocket_data_ptr& in_ptr, const nlohmann::json& in_data) {
-                       auto l_data = in_data;
-                       boost::asio::post(boost::asio::prepend(*l_fun_ptr, in_ptr, std::move(l_data)));
-                     }
-                 )
+        std::string{T::name},
+        std::make_shared<std::function<void(const http_websocket_data_ptr&, const nlohmann::json&)>>(
+            [l_fun_ptr = std::make_shared<T>(std::move(in_fun)
+             )](const http_websocket_data_ptr& in_ptr, const nlohmann::json& in_data) {
+              auto l_data = in_data;
+              boost::asio::post(boost::asio::prepend(*l_fun_ptr, in_ptr, std::move(l_data)));
+            }
+        )
     );
   }
 
