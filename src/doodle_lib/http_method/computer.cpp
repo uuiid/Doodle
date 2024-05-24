@@ -19,6 +19,7 @@ namespace doodle::http {
 class web_set_tate_fun {
  public:
   web_set_tate_fun() : executor_{g_io_context().get_executor()} {}
+  using executor_type = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
   boost::asio::any_io_executor get_executor() const { return executor_; }
 
@@ -41,6 +42,7 @@ class web_set_tate_fun {
 class web_logger_fun {
  public:
   web_logger_fun() : executor_{g_io_context().get_executor()} {}
+  using executor_type = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
   boost::asio::any_io_executor get_executor() const { return executor_; }
 
@@ -60,6 +62,7 @@ class web_logger_fun {
 class web_set_task_fun {
  public:
   web_set_task_fun() : executor_{g_io_context().get_executor()} {}
+  using executor_type = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
   boost::asio::any_io_executor get_executor() const { return executor_; }
 
