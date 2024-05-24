@@ -122,7 +122,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
       boost::beast::get_lowest_layer(*ptr_->stream_).async_connect(in_results, std::move(*this));
     }
     // on_connect
-    void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
+    void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type in_results) {
       auto l_logger = ptr_->logger_;
       if (ec) {
         l_logger->log(log_loc(), level::err, "async_connect error: {} ", ec);
@@ -138,7 +138,8 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
             req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
           })
       );
-      ptr_->stream_->async_handshake(server_address_, url_path_, std::move(*this));
+      auto l_address = fmt::format("{}:{}", server_address_, in_results.port());
+      ptr_->stream_->async_handshake(l_address, url_path_, std::move(*this));
     }
     // on_handshake
     void operator()(boost::system::error_code ec) {
