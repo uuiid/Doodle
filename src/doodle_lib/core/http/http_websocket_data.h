@@ -157,21 +157,26 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
   explicit http_websocket_data(boost::beast::tcp_stream in_stream)
       : stream_(std::make_unique<websocket_stream>(std::move(in_stream))) {}
   http_websocket_data() = default;
-
+  // @warning: 此处传入的句柄不可以连接取消槽, 否则会导致悬挂, 原因未知(详细:在一个进程中创建多个客户端, 并连接取消槽, 会导致悬挂)
+  // @todo: 优化取消槽的使用
   // 作为客户端, 不需要注册
   template <typename CompletionHandler>
   auto async_connect(
       std::string server_address, std::string path, std::uint16_t server_port, CompletionHandler&& in_handler
   ) {
-    resolver_ = std::make_unique<resolver_t>(
-        boost::asio::get_associated_executor(in_handler, boost::asio::make_strand(g_io_context()))
-    );
-    stream_ = std::make_unique<websocket_stream>(
-        boost::asio::get_associated_executor(resolver_->get_executor(), boost::asio::make_strand(g_io_context()))
-    );
-    logger_ = g_logger_ctrl().make_log(
-        fmt::format("http_client {}", SOCKET(boost::beast::get_lowest_layer(*stream_).socket().native_handle()))
-    );
+    if (!resolver_)
+      resolver_ = std::make_unique<resolver_t>(
+          boost::asio::get_associated_executor(in_handler, boost::asio::make_strand(g_io_context()))
+      );
+    if (!stream_)
+      stream_ = std::make_unique<websocket_stream>(
+          boost::asio::get_associated_executor(resolver_->get_executor(), boost::asio::make_strand(g_io_context()))
+      );
+    if (!logger_)
+      // logger_ = g_logger_ctrl().make_log(
+      //     fmt::format("http_client {}", SOCKET(boost::beast::get_lowest_layer(*stream_).socket().native_handle()))
+      // );
+      logger_ = g_logger_ctrl().make_log(fmt::format("http_client {}", core_set::get_set().get_uuid()));
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
         [](auto&& handler, auto* ptr, std::string server_address, std::uint16_t server_port, std::string path) {
           connect_op{
@@ -179,7 +184,7 @@ class http_websocket_data : public std::enable_shared_from_this<http_websocket_d
               server_port,
               path,
               ptr,
-              std::forward<decltype(handler)>(handler),
+              std::move(handler),
               boost::asio::get_associated_executor(handler, boost::asio::make_strand(g_io_context()))
           };
         },

@@ -59,6 +59,23 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(auto_light_only_works) {
+  app_base l_app_base{};
+  std::vector<std::shared_ptr<http::http_work>> l_works{};
+  for (int i = 0; i < 15; ++i) {
+    auto l_work = std::make_shared<http::http_work>();
+    l_work->run("127.0.0.1", 50023);
+    l_works.emplace_back(std::move(l_work));
+  }
+  try {
+    // 工作守卫
+    auto l_work_guard = boost::asio::make_work_guard(g_io_context());
+    g_io_context().run();
+  } catch (const std::exception& e) {
+    BOOST_TEST_MESSAGE(e.what());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(auto_light_and_works) {
   app_base l_app_base{};
   g_pool_db().set_path("D:/test_files/test_db/test.db");
@@ -83,6 +100,8 @@ BOOST_AUTO_TEST_CASE(auto_light_and_works) {
   }
 
   try {
+    // 工作守卫
+    auto l_work_guard = boost::asio::make_work_guard(g_io_context());
     g_io_context().run();
   } catch (const std::exception& e) {
     BOOST_TEST_MESSAGE(e.what());

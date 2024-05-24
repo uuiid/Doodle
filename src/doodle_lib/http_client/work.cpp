@@ -155,20 +155,21 @@ void http_work::run(const std::string &in_server_address, std::uint16_t in_port)
   do_connect();
 }
 void http_work::do_connect() {
+  // 这里不可以使用取消槽, 否则会导致悬挂
   websocket_data_->async_connect(
       server_address_, "v1/computer", port_,
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(),
-          [this](boost::system::error_code in_error_code) {
-            if (in_error_code) {
-              logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
-              do_wait();
-              return;
-            }
-            is_connect_ = true;
-            send_state(computer_status::free);
-          }
-      )
+      // boost::asio::bind_cancellation_slot(
+      // app_base::Get().on_cancel.slot(),
+      [this](boost::system::error_code in_error_code) {
+        if (in_error_code) {
+          logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
+          do_wait();
+          return;
+        }
+        is_connect_ = true;
+        send_state(computer_status::free);
+      }
+      // )
   );
 }
 void http_work::do_wait() {
