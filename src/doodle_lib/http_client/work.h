@@ -31,6 +31,7 @@ class http_work {
   using signal_set_ptr  = std::shared_ptr<signal_set>;
   using logger_sink_ptr = std::shared_ptr<spdlog::sinks::sink>;
   class websocket_run_task_fun;
+  class websocket_run_task_fun_launch;
   // 自动连接定时器
   timer_ptr timer_{};
 
