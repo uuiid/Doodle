@@ -71,7 +71,8 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
   server_task_info l_task_handle{};
   bool is_db = false;
   {
-    for (auto &&[e, l_ptr] : g_reg()->view<server_task_info>().each()) {
+    auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
+    for (auto &&[e, l_ptr] : l_view.each()) {
       if (l_ptr.id_ == l_task_handle.id_) {
         l_task_handle = l_ptr;
         is_db         = true;
@@ -101,7 +102,8 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
 void task_info::list_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
   std::vector<server_task_info> l_tasks{};
   {
-    for (auto &&[e, l_ptr] : g_reg()->view<server_task_info>().each()) {
+    auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
+    for (auto &&[e, l_ptr] : l_view.each()) {
       l_tasks.emplace_back(l_ptr);
     }
   }
@@ -133,8 +135,8 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, const h
     l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
                   .value_or(level::err);
   }
-
-  for (auto &&[e, l_ptr] : g_reg()->view<server_task_info>().each()) {
+  auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
+  for (auto &&[e, l_ptr] : l_view.each()) {
     if (l_ptr.id_ == l_task_handle.id_) {
       l_task_handle = l_ptr;
       break;
@@ -194,15 +196,15 @@ void task_info::reg(doodle::http::http_route &in_route) {
   in_route
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::list_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::list_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task/{id}",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::get_task))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "v1/task/{id}/log",
-          session::make_http_reg_fun(boost::asio::bind_executor(g_io_context(), &task_info::get_task_logger))
+          session::make_http_reg_fun(boost::asio::bind_executor(g_thread(), &task_info::get_task_logger))
       ))
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::post, "v1/task",
