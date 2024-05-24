@@ -65,6 +65,12 @@ class http_work::websocket_run_task_fun {
   }
 
   void run_task() {
+    if (impl_->out_pipe_) {
+      impl_->out_pipe_->cancel();
+    }
+    if (impl_->err_pipe_) {
+      impl_->err_pipe_->cancel();
+    }
     impl_->out_pipe_ = std::make_shared<boost::process::async_pipe>(g_io_context());
     impl_->err_pipe_ = std::make_shared<boost::process::async_pipe>(g_io_context());
     auto l_run_exe   = boost::process::search_path(impl_->exe_);
@@ -90,6 +96,26 @@ class http_work::websocket_run_task_fun {
     do_read_err();
   }
 
+  level::level_enum log_level(const std::string &in_msg, level::level_enum in_def) const {
+    level::level_enum l_level = in_def;
+    if (in_msg.size() > 2 && in_msg.front() == '[') {
+      if (in_msg[1] == 'i') {
+        l_level = level::info;
+      } else if (in_msg[1] == 'w') {
+        l_level = level::warn;
+      } else if (in_msg[1] == 'e') {
+        l_level = level::err;
+      } else if (in_msg[1] == 'c') {
+        l_level = level::critical;
+      } else if (in_msg[1] == 't') {
+        l_level = level::trace;
+      } else if (in_msg[1] == 'd') {
+        l_level = level::debug;
+      }
+    }
+    return l_level;
+  }
+
   // async read out
   void do_read_out() {
     boost::asio::async_read_until(
@@ -104,8 +130,9 @@ class http_work::websocket_run_task_fun {
               std::istream l_stream(&impl_->out_strbuff_attr);
               std::string l_line{};
               std::getline(l_stream, l_line);
+              auto l_level = log_level(l_line, level::info);
               impl_->http_work_->websocket_data_->seed(nlohmann::json{
-                  {"type", "logger"}, {"level", level::info}, {"task_id", impl_->task_id_}, {"msg", l_line}
+                  {"type", "logger"}, {"level", l_level}, {"task_id", impl_->task_id_}, {"msg", l_line}
               });
               do_read_out();
             }
@@ -125,8 +152,9 @@ class http_work::websocket_run_task_fun {
               std::istream l_stream(&impl_->out_strbuff_attr);
               std::string l_line;
               std::getline(l_stream, l_line);
+              auto l_level = log_level(l_line, level::err);
               impl_->http_work_->websocket_data_->seed(nlohmann::json{
-                  {"type", "logger"}, {"level", level::err}, {"task_id", impl_->task_id_}, {"msg", l_line}
+                  {"type", "logger"}, {"level", l_level}, {"task_id", impl_->task_id_}, {"msg", l_line}
               });
               do_read_err();
             }
