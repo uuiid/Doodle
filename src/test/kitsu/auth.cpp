@@ -39,13 +39,13 @@ BOOST_AUTO_TEST_CASE(authenticated) {
 BOOST_AUTO_TEST_CASE(get_task) {
   doodle_lib l_lib{};
   auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");
-  l_c->longin("957714080@qq.com", "8jO6sJm5EYAZSuZ7wy3P", [l_c](boost::system::error_code ec, nlohmann::json in_json) {
+  l_c->authenticated(std::string{g_token}, [l_c](boost::system::error_code ec, nlohmann::json in_json) {
     BOOST_TEST(!ec);
     BOOST_TEST_MESSAGE(in_json.dump());
-    BOOST_TEST(in_json["login"].get<bool>());
 
-    l_c->get_task("e5ece525-3e5b-4c71-be85-32e32d336e4e", [](boost::system::error_code ec, nlohmann::json in_json) {
+    l_c->get_task("cde5305c-678c-4a3d-8baf-79cddfc9e9c3", [](boost::system::error_code ec, nlohmann::json in_json) {
       BOOST_TEST(!ec);
+      default_logger_raw()->log(log_loc(), level::info, in_json.dump());
       BOOST_TEST_MESSAGE(in_json.dump());
     });
   });
