@@ -132,8 +132,9 @@
                 "auto_light/server_and_works",
                 "rpc_server/base",
                 "rpc_server/list_users",
-                "kitsu_login",
-                "kitsu_get_task"
+                "kitsu/login",
+                "kitsu/authenticated",
+                "kitsu/get_task"
             ]
         }
     ],
