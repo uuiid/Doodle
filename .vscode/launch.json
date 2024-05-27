@@ -127,9 +127,9 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
-                "auto_light_only_works",
-                "auto_light_and_works",
-                "auto_light",
+                "auto_light/only_server",
+                "auto_light/only_works",
+                "auto_light/server_and_works",
                 "rpc_server/base",
                 "rpc_server/list_users",
                 "kitsu_login",

@@ -27,6 +27,7 @@
 #include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/task_server.h>
+#include <doodle_lib/http_method/task_sqlite_server.h>
 
 #include <boost/asio.hpp>
 #include <boost/log/trivial.hpp>
@@ -34,13 +35,14 @@
 #include <boost/test/unit_test_suite.hpp>
 
 using namespace doodle;
-
-BOOST_AUTO_TEST_CASE(auto_light) {
+BOOST_AUTO_TEST_SUITE(auto_light)
+BOOST_AUTO_TEST_CASE(only_server) {
   app_base l_app_base{};
   g_pool_db().set_path("D:/test_files/test_db/test.db");
   {
     auto l_db_conn = g_pool_db().get_connection();
     g_ctx().emplace<http::task_server>().init(l_db_conn);
+    g_ctx().emplace<http::task_sqlite_server>().init(l_db_conn);
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
@@ -50,6 +52,8 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, 50023);
   l_listener->run();
   g_ctx().get<http::task_server>().run();
+  g_ctx().get<http::task_sqlite_server>().run();
+
   try {
     // 工作守卫
     auto l_work_guard = boost::asio::make_work_guard(g_io_context());
@@ -59,7 +63,7 @@ BOOST_AUTO_TEST_CASE(auto_light) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(auto_light_only_works) {
+BOOST_AUTO_TEST_CASE(only_works) {
   app_base l_app_base{};
   std::vector<std::shared_ptr<http::http_work>> l_works{};
   for (int i = 0; i < 15; ++i) {
@@ -76,12 +80,13 @@ BOOST_AUTO_TEST_CASE(auto_light_only_works) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(auto_light_and_works) {
+BOOST_AUTO_TEST_CASE(server_and_works) {
   app_base l_app_base{};
   g_pool_db().set_path("D:/test_files/test_db/test.db");
   {
     auto l_db_conn = g_pool_db().get_connection();
     g_ctx().emplace<http::task_server>().init(l_db_conn);
+    g_ctx().emplace<http::task_sqlite_server>().init(l_db_conn);
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
@@ -91,6 +96,7 @@ BOOST_AUTO_TEST_CASE(auto_light_and_works) {
   auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, 50023);
   l_listener->run();
   g_ctx().get<http::task_server>().run();
+  g_ctx().get<http::task_sqlite_server>().run();
 
   std::vector<std::shared_ptr<http::http_work>> l_works{};
   for (int i = 0; i < 15; ++i) {
@@ -107,3 +113,5 @@ BOOST_AUTO_TEST_CASE(auto_light_and_works) {
     BOOST_TEST_MESSAGE(e.what());
   }
 }
+
+BOOST_AUTO_TEST_SUITE_END()
