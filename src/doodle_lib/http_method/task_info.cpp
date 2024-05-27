@@ -60,7 +60,7 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 
-  g_ctx().get<task_server>().add_task(l_task_handle);
+  g_ctx().get<task_server>().add_task(l_e);
   g_ctx().get<task_server>().run();
 }
 
@@ -117,13 +117,26 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
   in_data->seed(std::move(l_response));
 }
 void task_info::list_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
+  auto l_url_query   = in_data->url_.query();
+  std::size_t l_page = 0;
+  if (auto l_it = l_url_query.find("page"); l_it != l_url_query.npos) {
+    l_page = std::stoul(l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5));
+  }
+  std::size_t l_page_size = 100;
+  if (auto l_it = l_url_query.find("page_size"); l_it != l_url_query.npos) {
+    l_page_size = std::stoul(l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10));
+  }
+
   std::vector<server_task_info> l_tasks{};
   {
-    auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
-    for (auto &&[e, l_ptr] : l_view.each()) {
-      l_tasks.emplace_back(l_ptr);
+    auto l_view             = std::as_const(*g_reg()).view<const server_task_info>();
+    std::size_t l_view_size = l_view.size();
+    auto l_view_end         = l_view.begin() + std::clamp((l_page + 1) * l_page_size, 0ull, l_view_size);
+    for (auto it = l_view.begin() + std::clamp(l_page * l_page_size, 0ull, l_view_size); it != l_view_end; ++it) {
+      auto e = *it;
+      l_tasks.emplace_back(l_view.get<server_task_info>(e));
     }
-  }
+   }
   auto &l_req = in_data->request_parser_->get();
 
   nlohmann::json l_tasks_json{};
@@ -205,7 +218,7 @@ void task_info::delete_task(boost::system::error_code in_error_code, const http_
     in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-    boost::uuids::uuid l_uuid{};
+  boost::uuids::uuid l_uuid{};
   {
     std::istringstream l_stream{*l_id};
     l_stream >> l_uuid;
