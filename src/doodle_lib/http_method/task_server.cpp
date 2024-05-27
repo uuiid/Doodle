@@ -64,8 +64,8 @@ void task_server::erase_task(const boost::uuids::uuid& in_id) {
 void task_server::clear_task() {
   for (auto it = task_map_.begin(); it != task_map_.end();) {
     if (it->second->status_ == server_task_info_status::completed) {
-      it = task_map_.erase(it);
       task_entity_map_.erase(it->first);
+      it = task_map_.erase(it);
     } else {
       ++it;
     }
