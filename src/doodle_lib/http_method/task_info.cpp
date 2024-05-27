@@ -48,10 +48,15 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
   auto l_e                   = entt::handle{*g_reg(), g_reg()->create()};
   l_e.emplace<server_task_info>(l_task_handle);
 
-  boost::beast::http::response<http::basic_json_body> l_response{boost::beast::http::status::ok, l_req.version()};
+  nlohmann::json l_task_handle_json{};
+  l_task_handle_json = l_task_handle;
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, l_req.version()
+  };
   l_response.keep_alive(l_req.keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_task_handle;
+  l_response.body() = l_task_handle_json.dump();
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 
@@ -67,7 +72,18 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
     in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_uuid = boost::lexical_cast<uuid>(*l_id);
+  boost::uuids::uuid l_uuid{};
+  {
+    std::istringstream l_stream{*l_id};
+    l_stream >> l_uuid;
+    if (l_stream.fail()) {
+      in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+      BOOST_ASIO_ERROR_LOCATION(in_error_code);
+      in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
+      return;
+    }
+  }
+
   server_task_info l_task_handle{};
   bool is_db = false;
   {
@@ -80,7 +96,7 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
       }
     }
   }
- 
+
   if (!is_db) {
     in_error_code.assign(ERROR_CONTROL_ID_NOT_FOUND, boost::system::system_category());
     BOOST_ASIO_ERROR_LOCATION(in_error_code);
@@ -88,14 +104,15 @@ void task_info::get_task(boost::system::error_code in_error_code, const http_ses
     return;
   }
 
-  nlohmann::json l_json = l_task_handle;
-  boost::beast::http::response<http::basic_json_body> l_response{
+  nlohmann::json l_json{};
+  l_json = l_task_handle;
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
       boost::beast::http::status::ok, in_data->request_parser_->get().version()
   };
   l_response.result(boost::beast::http::status::ok);
   l_response.keep_alive(in_data->request_parser_->get().keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_task_handle;
+  l_response.body() = l_json.dump();
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 }
@@ -108,12 +125,17 @@ void task_info::list_task(boost::system::error_code in_error_code, const http_se
     }
   }
   auto &l_req = in_data->request_parser_->get();
-  boost::beast::http::response<http::basic_json_body> l_response{boost::beast::http::status::ok, l_req.version()};
 
+  nlohmann::json l_tasks_json{};
+  l_tasks_json = l_tasks;
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, l_req.version()
+  };
   l_response.result(boost::beast::http::status::ok);
   l_response.keep_alive(l_req.keep_alive());
   l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_tasks;
+  l_response.body() = l_tasks_json.dump();
   l_response.prepare_payload();
   in_data->seed(std::move(l_response));
 }
@@ -127,7 +149,19 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, const h
     return;
   }
 
-  server_task_info l_task_handle{boost::lexical_cast<uuid>(*l_id)};
+  boost::uuids::uuid l_uuid{};
+  {
+    std::istringstream l_stream{*l_id};
+    l_stream >> l_uuid;
+    if (l_stream.fail()) {
+      in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+      BOOST_ASIO_ERROR_LOCATION(in_error_code);
+      in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
+      return;
+    }
+  }
+
+  server_task_info l_task_handle{l_uuid};
 
   level::level_enum l_level{level::err};
   auto l_query = in_data->url_.query();
@@ -171,7 +205,17 @@ void task_info::delete_task(boost::system::error_code in_error_code, const http_
     in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
     return;
   }
-  auto l_uuid = boost::lexical_cast<uuid>(*l_id);
+    boost::uuids::uuid l_uuid{};
+  {
+    std::istringstream l_stream{*l_id};
+    l_stream >> l_uuid;
+    if (l_stream.fail()) {
+      in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
+      BOOST_ASIO_ERROR_LOCATION(in_error_code);
+      in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
+      return;
+    }
+  }
 
   {
     for (auto &&[e, l_ptr] : g_reg()->view<server_task_info>().each()) {
