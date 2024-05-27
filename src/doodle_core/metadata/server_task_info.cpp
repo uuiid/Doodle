@@ -35,10 +35,10 @@ DOODLE_SQL_COLUMN_IMP(log_path, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(ref_id, sqlpp::blob, database_n::detail::can_be_null);
 
 DOODLE_SQL_TABLE_IMP(
-    server_task_info_tab, tables::column::id, uuid, exe, status, name, source_computer, submitter, submit_time, run_computer,
-    run_computer_ip, run_time, end_time, log_path, ref_id
+    server_task_info_tab, tables::column::id, uuid, exe, status, name, source_computer, submitter, submit_time,
+    run_computer, run_computer_ip, run_time, end_time, log_path, ref_id
 );
- 
+
 DOODLE_SQL_COLUMN_IMP(command_task_id, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(command_index, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(command_value, sqlpp::text, database_n::detail::can_be_null);
@@ -223,6 +223,135 @@ std::vector<server_task_info> server_task_info::select_all(pooled_connection& in
   }
 
   return l_res;
+}
+
+std::vector<bool> server_task_info::filter_exist(
+    pooled_connection& in_comm, const std::vector<server_task_info>& in_task
+) {
+  server_task_info_tab l_tab{};
+  std::vector<bool> l_res{};
+  auto l_pre = in_comm.prepare(
+      sqlpp::select(sqlpp::count(l_tab.id)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
+  );
+  for (auto i = 0; i < in_task.size(); ++i) {
+    l_pre.params.uuid = {in_task[i].id_.begin(), in_task[i].id_.end()};
+    for (auto&& l_row : in_comm(l_pre)) {
+      l_res.emplace_back(l_row.count.value() > 0);
+    }
+  }
+  return l_res;
+}
+
+void server_task_info::insert(pooled_connection& in_comm, const std::vector<server_task_info>& in_task) {
+  server_task_info_tab l_tab{};
+  auto l_pre = in_comm.prepare(
+      sqlpp::sqlite3::insert_into(l_tab)
+          .set(
+              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.status = sqlpp::parameter(l_tab.status),
+              l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.name = sqlpp::parameter(l_tab.name),
+              l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
+              l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
+              l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
+              l_tab.run_computer    = sqlpp::parameter(l_tab.run_computer),
+              l_tab.run_computer_ip = sqlpp::parameter(l_tab.run_computer_ip),
+              l_tab.run_time = sqlpp::parameter(l_tab.run_time), l_tab.end_time = sqlpp::parameter(l_tab.end_time),
+              l_tab.log_path = sqlpp::parameter(l_tab.log_path), l_tab.ref_id = sqlpp::parameter(l_tab.ref_id)
+          )
+          .on_conflict(l_tab.uuid)
+          .do_update(
+              l_tab.exe = sqlpp::sqlite3::excluded(l_tab.exe), l_tab.status = sqlpp::sqlite3::excluded(l_tab.status),
+              l_tab.name            = sqlpp::sqlite3::excluded(l_tab.name),
+              l_tab.source_computer = sqlpp::sqlite3::excluded(l_tab.source_computer),
+              l_tab.submitter       = sqlpp::sqlite3::excluded(l_tab.submitter),
+              l_tab.submit_time     = sqlpp::sqlite3::excluded(l_tab.submit_time),
+              l_tab.run_computer    = sqlpp::sqlite3::excluded(l_tab.run_computer),
+              l_tab.run_computer_ip = sqlpp::sqlite3::excluded(l_tab.run_computer_ip),
+              l_tab.run_time        = sqlpp::sqlite3::excluded(l_tab.run_time),
+              l_tab.end_time        = sqlpp::sqlite3::excluded(l_tab.end_time),
+              l_tab.log_path        = sqlpp::sqlite3::excluded(l_tab.log_path),
+              l_tab.ref_id          = sqlpp::sqlite3::excluded(l_tab.ref_id)
+          )
+  );
+  std::vector<std::int64_t> l_ids{};
+  for (auto&& l_task : in_task) {
+    l_pre.params.uuid            = {l_task.id_.begin(), l_task.id_.end()};
+    l_pre.params.exe             = l_task.exe_;
+    l_pre.params.status          = magic_enum::enum_name(l_task.status_);
+    l_pre.params.name            = l_task.name_;
+    l_pre.params.source_computer = l_task.source_computer_;
+    l_pre.params.submitter       = l_task.submitter_;
+    l_pre.params.submit_time =
+        chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.submit_time_);
+    l_pre.params.run_computer    = l_task.run_computer_;
+    l_pre.params.run_computer_ip = l_task.run_computer_ip_;
+    l_pre.params.run_time = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.run_time_);
+    l_pre.params.end_time = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.end_time_);
+    l_pre.params.log_path = l_task.log_path_.generic_string();
+    l_pre.params.ref_id   = {l_task.ref_id_.begin(), l_task.ref_id_.end()};
+    l_ids.emplace_back(in_comm(l_pre));
+  }
+
+  command_tab l_command_tab{};
+  auto l_pre_com =
+      in_comm.prepare(sqlpp::sqlite3::insert_into(l_command_tab)
+                          .set(
+                              l_command_tab.command_task_id = sqlpp::parameter(l_command_tab.command_task_id),
+                              l_command_tab.command_index   = sqlpp::parameter(l_command_tab.command_index),
+                              l_command_tab.command_value   = sqlpp::parameter(l_command_tab.command_value)
+                          ));
+  for (auto i = 0; i < in_task.size(); ++i) {
+    for (auto j = 0; j < in_task[i].command_.size(); ++j) {
+      l_pre_com.params.command_task_id = l_ids[i];
+      l_pre_com.params.command_index   = j;
+      l_pre_com.params.command_value   = in_task[i].command_[j];
+      in_comm(l_pre_com);
+    }
+  }
+}
+
+void server_task_info::update(pooled_connection& in_comm, const std::vector<server_task_info>& in_task) {
+  server_task_info_tab l_tab{};
+  auto l_pre = in_comm.prepare(
+      sqlpp::update(l_tab)
+          .set(
+              l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.status = sqlpp::parameter(l_tab.status),
+              l_tab.name            = sqlpp::parameter(l_tab.name),
+              l_tab.source_computer = sqlpp::parameter(l_tab.source_computer),
+              l_tab.submitter       = sqlpp::parameter(l_tab.submitter),
+              l_tab.submit_time     = sqlpp::parameter(l_tab.submit_time),
+              l_tab.run_computer    = sqlpp::parameter(l_tab.run_computer),
+              l_tab.run_computer_ip = sqlpp::parameter(l_tab.run_computer_ip),
+              l_tab.run_time = sqlpp::parameter(l_tab.run_time), l_tab.end_time = sqlpp::parameter(l_tab.end_time),
+              l_tab.log_path = sqlpp::parameter(l_tab.log_path), l_tab.ref_id = sqlpp::parameter(l_tab.ref_id)
+          )
+          .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
+  );
+  for (auto&& l_task : in_task) {
+    l_pre.params.uuid            = {l_task.id_.begin(), l_task.id_.end()};
+    l_pre.params.exe             = l_task.exe_;
+    l_pre.params.status          = magic_enum::enum_name(l_task.status_);
+    l_pre.params.name            = l_task.name_;
+    l_pre.params.source_computer = l_task.source_computer_;
+    l_pre.params.submitter       = l_task.submitter_;
+    l_pre.params.submit_time =
+        chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.submit_time_);
+    l_pre.params.run_computer    = l_task.run_computer_;
+    l_pre.params.run_computer_ip = l_task.run_computer_ip_;
+    l_pre.params.run_time = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.run_time_);
+    l_pre.params.end_time = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.end_time_);
+    l_pre.params.log_path = l_task.log_path_.generic_string();
+    l_pre.params.ref_id   = {l_task.ref_id_.begin(), l_task.ref_id_.end()};
+    in_comm(l_pre);
+  }
+}
+
+void server_task_info::delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
+  server_task_info_tab l_tab{};
+  auto l_pre = in_comm.prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  for (auto&& l_id : in_ids) {
+    l_pre.params.uuid = {l_id.begin(), l_id.end()};
+    in_comm(l_pre);
+  }
 }
 
 void server_task_info::create_table(pooled_connection& in_comm) {

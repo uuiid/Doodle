@@ -96,6 +96,14 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   static std::vector<server_task_info> select_all(pooled_connection& in_comm);
   static void create_table(pooled_connection& in_comm);
 
+  // 过滤已经存在的任务
+  static std::vector<bool> filter_exist(
+      pooled_connection& in_comm, const std::vector<server_task_info>& in_task
+  );
+  static void insert(pooled_connection& in_comm, const std::vector<server_task_info>& in_task);
+  static void update(pooled_connection& in_comm, const std::vector<server_task_info>& in_task);
+  static void delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids);
+
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
