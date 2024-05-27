@@ -35,7 +35,7 @@ class kitsu_client {
   std::string session_cookie_{};
 
  public:
-  kitsu_client(std::string in_ip, std::string in_port)
+  explicit kitsu_client(std::string in_ip, std::string in_port)
       : http_client_core_ptr_(std::make_shared<http_client_core>(std::move(in_ip), std::move(in_port))) {
     http_client_core_ptr_->request_header_operator().kitsu_client_ptr_  = this;
     http_client_core_ptr_->response_header_operator().kitsu_client_ptr_ = this;
@@ -76,6 +76,47 @@ class kitsu_client {
              )
     );
   }
+  template <typename CompletionHandler>
+  auto authenticated(std::string in_token, CompletionHandler&& in_completion) {
+    boost::beast::http::request<boost::beast::http::string_body> req{
+        boost::beast::http::verb::get, "/api/auth/authenticated", 11
+    };
+    access_token_ = in_token;
+
+    http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+        req,
+        boost::asio::bind_executor(
+            g_io_context().get_executor(),
+            [l_com = std::move(in_completion),
+             this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
+              if (ec) {
+                http_client_core_ptr_->logger()->log(log_loc(), level::err, "authenticated failed: {}", ec.message());
+                l_com(ec, nlohmann::json{});
+                return;
+              }
+
+              if (res.result() != boost::beast::http::status::ok) {
+                http_client_core_ptr_->logger()->log(
+                    log_loc(), level::err, "authenticated failed: {}", magic_enum::enum_integer(res.result())
+                );
+                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+                l_com(ec, nlohmann::json{});
+                return;
+              }
+
+              auto l_json_str = res.body();
+              if(!nlohmann::json::accept(l_json_str)) {
+                http_client_core_ptr_->logger()->log(log_loc(), level::err, "authenticated failed: {}", l_json_str);
+                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+                l_com(ec, nlohmann::json{});
+                return;
+              }
+              auto l_json = nlohmann::json::parse(l_json_str);
+              l_com(ec, std::move(l_json));
+            }
+        )
+    );
+  }
 
   template <typename CompletionHandler>
   void get_task(std::string in_uuid, CompletionHandler&& in_completio) {
@@ -83,27 +124,36 @@ class kitsu_client {
         boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_uuid), 11
     };
     http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-        req, boost::asio::bind_executor(
-                 g_io_context().get_executor(),
-                 [l_com = std::move(in_completio),
-                  this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
-                   if (ec) {
-                     http_client_core_ptr_->logger()->log(log_loc(), level::err, "get task failed: {}", ec.message());
-                     l_com(ec, nlohmann::json{});
-                     return;
-                   }
+        req,
+        boost::asio::bind_executor(
+            g_io_context().get_executor(),
+            [l_com = std::move(in_completio),
+             this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
+              if (ec) {
+                http_client_core_ptr_->logger()->log(log_loc(), level::err, "get task failed: {}", ec.message());
+                l_com(ec, nlohmann::json{});
+                return;
+              }
 
-                   if (res.result() != boost::beast::http::status::ok) {
-                     http_client_core_ptr_->logger()->log(
-                         log_loc(), level::err, "get task failed: {}", magic_enum::enum_integer(res.result())
-                     );
-                     l_com(ec, nlohmann::json{});
-                     return;
-                   }
-                   auto l_json = nlohmann::json::parse(res.body());
-                   l_com(ec, l_json);
-                 }
-             )
+              if (res.result() != boost::beast::http::status::ok) {
+                http_client_core_ptr_->logger()->log(
+                    log_loc(), level::err, "get task failed: {}", magic_enum::enum_integer(res.result())
+                );
+                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+                l_com(ec, nlohmann::json{});
+                return;
+              }
+
+              if(!nlohmann::json::accept(res.body())) {
+                http_client_core_ptr_->logger()->log(log_loc(), level::err, "get task failed: {}", res.body());
+                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+                l_com(ec, nlohmann::json{});
+                return;
+              }
+              auto l_json = nlohmann::json::parse(res.body());
+              l_com(ec, l_json);
+            }
+        )
     );
   }
 };

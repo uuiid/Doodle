@@ -67,7 +67,7 @@ After=network.target
 User=meilisearch
 Group=meilisearch
 WorkingDirectory=/opt/meilisearch
-ExecStart=/usr/bin/meilisearch --master-key="masterkey"
+ExecStart=/usr/bin/meilisearch --master-key="QrcnaU9ZXCDJYjrt"
 
 [Install]
 WantedBy=multi-user.target
@@ -106,7 +106,7 @@ Environment="SECRET_KEY=22T0iwSHK7qkhdI6"
 Environment="PATH=/opt/zou/env/bin:/usr/bin"
 Environment="PREVIEW_FOLDER=/opt/zou/previews"
 Environment="TMP_DIR=/opt/zou/tmp"
-Environment="INDEXER_KEY=masterkey"
+Environment="INDEXER_KEY=QrcnaU9ZXCDJYjrt"
 Environment="ENABLE_JOB_QUEUE=True"
 
 Environment="MAIL_SERVER=smtp.163.com"
@@ -258,6 +258,8 @@ sudo systemctl status zou-jobs
 sudo systemctl status nginx
 sudo systemctl status meilisearch
 
+
+sudo systemctl restart meilisearch
 
 更新界面
 
