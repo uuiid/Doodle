@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(only_server) {
   g_pool_db().set_path("D:/test_files/test_db/test.db");
   {
     auto l_db_conn = g_pool_db().get_connection();
-    g_ctx().emplace<http::task_server>().init(l_db_conn);
     g_ctx().emplace<http::task_sqlite_server>().init(l_db_conn);
+    g_ctx().emplace<http::task_server>().init();
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(server_and_works) {
   g_pool_db().set_path("D:/test_files/test_db/test.db");
   {
     auto l_db_conn = g_pool_db().get_connection();
-    g_ctx().emplace<http::task_server>().init(l_db_conn);
     g_ctx().emplace<http::task_sqlite_server>().init(l_db_conn);
+    g_ctx().emplace<http::task_server>().init();
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();

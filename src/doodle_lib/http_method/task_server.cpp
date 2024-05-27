@@ -15,11 +15,10 @@ namespace doodle::http {
 task_server::task_server()
     : logger_ptr_(g_logger_ctrl().make_log("task_server")), timer_ptr_(std::make_shared<timer_t>(g_io_context())) {}
 
-void task_server::init(pooled_connection& in_conn) {
-  server_task_info::create_table(in_conn);
-  auto l_task_list = server_task_info::select_all(in_conn);
-  for (auto&& l_task : l_task_list) {
-    task_map_[l_task.id_] = std::make_shared<doodle::server_task_info>(std::move(l_task));
+void task_server::init() {
+  for (auto&& [e, l_task] : g_reg()->view<doodle::server_task_info>().each()) {
+    task_entity_map_[l_task.id_] = e;
+    task_map_[l_task.id_]        = std::make_shared<doodle::server_task_info>(l_task);
   }
   clear_task();
 }
@@ -48,23 +47,25 @@ void task_server::begin_assign_task() {
     }
   });
 }
-void task_server::add_task(doodle::server_task_info in_task) {
-  boost::asio::post(g_io_context(), [this, in_task = std::move(in_task)] {
-    task_map_[in_task.id_] = std::make_shared<doodle::server_task_info>(std::move(in_task));
-  });
-}
-void task_server::add_task(const std::shared_ptr<doodle::server_task_info>& in_task_list) {
-  boost::asio::post(g_io_context(), [this, in_task_list = in_task_list] {
-    task_map_[in_task_list->id_] = std::move(in_task_list);
+void task_server::add_task(entt::entity in_entity) {
+  boost::asio::post(g_io_context(), [this, in_entity] {
+    auto l_task                  = g_reg()->get<doodle::server_task_info>(in_entity);
+    task_entity_map_[l_task.id_] = in_entity;
+    task_map_[l_task.id_]        = std::make_shared<doodle::server_task_info>(l_task);
   });
 }
 void task_server::erase_task(const boost::uuids::uuid& in_id) {
-  boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] { task_map_.erase(in_id); });
+  boost::asio::post(g_io_context(), [this, in_id = std::move(in_id)] {
+    task_map_.erase(in_id);
+    task_entity_map_.erase(in_id);
+  });
 }
+
 void task_server::clear_task() {
   for (auto it = task_map_.begin(); it != task_map_.end();) {
     if (it->second->status_ == server_task_info_status::completed) {
       it = task_map_.erase(it);
+      task_entity_map_.erase(it->first);
     } else {
       ++it;
     }
@@ -90,8 +91,9 @@ void task_server::confirm_task() {
       l_task->run_computer_.clear();
       l_task->run_time_ = std::chrono::system_clock::time_point{};
       {
-        auto l_db = g_pool_db().get_connection();
-        l_task->update_db(l_db);
+        g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_], [l_task](doodle::server_task_info& in_task) {
+          in_task = *l_task;
+        });
       }
     }
   }
@@ -114,8 +116,9 @@ void task_server::assign_task() {
         l_task->run_time_                              = std::chrono::system_clock::now();
         l_task->run_computer_ip_                       = l_computer_data->computer_data_.ip_;
         {
-          auto l_db = g_pool_db().get_connection();
-          l_task->update_db(l_db);
+          g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_], [l_task](doodle::server_task_info& in_task) {
+            in_task = *l_task;
+          });
         }
         nlohmann::json l_json{};
 
@@ -129,6 +132,7 @@ void task_server::assign_task() {
             l_computer_data->computer_data_.name_, l_computer_data->computer_data_.ip_
         );
         l_computer_data->task_info_ = l_task;
+        l_computer_data->task_info_entity_ = task_entity_map_[id_];
         break;
       }
     }

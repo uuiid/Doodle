@@ -82,8 +82,9 @@ class web_set_task_fun {
       l_task->end_time_ = std::chrono::system_clock::now();
     }
     {
-      auto l_conn = g_pool_db().get_connection();
-      l_task->update_db(l_conn);
+      g_reg()->patch<doodle::server_task_info>(
+          l_computer->task_info_entity_, [l_task](doodle::server_task_info &in_task) { in_task = *l_task; }
+      );
     }
     l_computer->computer_data_.server_status_ = doodle::computer_status::free;
   }

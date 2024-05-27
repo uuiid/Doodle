@@ -35,18 +35,18 @@ class task_server {
   void confirm_task();
 
   std::map<boost::uuids::uuid, std::shared_ptr<doodle::server_task_info>> task_map_{};  // 任务列表
+  std::map<boost::uuids::uuid, entt::entity> task_entity_map_{};                        // 任务实体列表
  public:
   task_server();
   ~task_server() = default;
 
   // 此处可进行多线程调用
   void run();
-  void add_task(doodle::server_task_info in_task);
-  void add_task(const std::shared_ptr<doodle::server_task_info>& in_task_list);
+  void add_task(entt::entity in_entity);
   void erase_task(const boost::uuids::uuid& in_id);
 
-  // 初始化必须在主线程调用, 并且必须初始化数据库
-  void init(pooled_connection& in_conn);
+  // 初始化必须在主线程调用 
+  void init();
 };
 
 }  // namespace doodle::http

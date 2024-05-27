@@ -40,6 +40,7 @@ class task_sqlite_server_fun {
 };
 
 void task_sqlite_server::init(pooled_connection& in_conn) {
+  server_task_info::create_table(in_conn);
   auto l_tasks = server_task_info::select_all(in_conn);
 
   std::vector<entt::entity> l_entities{l_tasks.size()};

@@ -14,5 +14,6 @@ class computer_reg_data {
 
   doodle::computer computer_data_;
   std::shared_ptr<doodle::server_task_info> task_info_;
+  entt::entity task_info_entity_{};
 };
 }  // namespace doodle::http

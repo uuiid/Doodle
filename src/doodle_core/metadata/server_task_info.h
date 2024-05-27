@@ -87,12 +87,12 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   FSys::path get_log_path(level::level_enum in_level) const;
   void write_log(level::level_enum in_level, std::string_view in_msg);
   bool operator==(const server_task_info& in_rhs) const;
-
+private:
   void install_db(pooled_connection& in_comm) const;
   void delete_db(pooled_connection& in_comm) const;
   void update_db(pooled_connection& in_comm) const;
   bool select_db(pooled_connection& in_comm);
-
+  public:
   static std::vector<server_task_info> select_all(pooled_connection& in_comm);
   static void create_table(pooled_connection& in_comm);
 
