@@ -196,12 +196,6 @@
 				"problemMatcher": []
 			},
 			{
-				"label": "发布版本(受限1)",
-				"type": "shell",
-				"command": "${workspaceFolder}\\build_script\\build\\build_exe_limited_1.cmd;",
-				"problemMatcher": []
-			},
-			{
 				"label": "运行boost测试",
 				"type": "shell",
 				"command": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
@@ -220,14 +214,13 @@
 				"type": "pickString",
 				"description": "test分类",
 				"options": [
-						"rpc_server/base",
-						"rpc_server/list_users",
-						"kitsu_login",
-						"kitsu_get_task"
+					"rpc_server/base",
+					"rpc_server/list_users",
+					"kitsu_login",
+					"kitsu_get_task"
 				],
 				"default": "rpc_server/base"
 			}
 		]
 	},
-
 }
