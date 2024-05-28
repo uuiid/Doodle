@@ -44,6 +44,85 @@
 
 const FName UDoodleEffectLibraryWidget::Name{ TEXT("DoodleEffectLibraryWidget") };
 
+void FTypeItemElement1::Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, const TSharedPtr<FTypeItem> InTreeElement)
+{
+    WeakTreeElement = InTreeElement;
+    FSuperRowType::FArguments SuperArgs = FSuperRowType::FArguments();
+    SMultiColumnTableRow::Construct(SuperArgs, InOwnerTable);
+}
+
+TSharedRef<SWidget> FTypeItemElement1::GenerateWidgetForColumn(const FName& ColumnName)
+{
+    return SNew(SHorizontalBox)
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        [
+            SNew(SExpanderArrow, SharedThis(this))
+                .IndentAmount(16)
+                .ShouldDrawWires(true)
+        ]
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [
+            SNew(SImage)
+                .Image(FAppStyle::GetBrush("ContentBrowser.ColumnViewAssetIcon"))//
+        ]
+        + SHorizontalBox::Slot()
+        .VAlign(VAlign_Center)
+        [
+            SAssignNew(TheEditableText, SEditableText)
+                .MinDesiredWidth(300)
+                .IsEnabled(false)
+                .OnTextCommitted_Lambda([this](const FText& InText, const ETextCommit::Type InTextAction)
+                {
+                    if (TheEditableText)
+                        TheEditableText->SetEnabled(false);
+                    if (WeakTreeElement && InText.ToString().Len() > 0 && !WeakTreeElement->Name.IsEqual(FName(InText.ToString())))
+                    {
+                        FString PreTreeList = TEXT("###");
+                        TSharedPtr<FTypeItem> Parent = WeakTreeElement->Parent.Pin();
+                        while (Parent != nullptr && !Parent->Name.IsEqual(FName(TEXT("Root"))))
+                        {
+                            PreTreeList = TEXT("###") + Parent->Name.ToString() + PreTreeList;
+                            Parent = Parent->Parent.Pin();
+                        }
+                        FString LibraryPath = TEXT("");
+                        GConfig->GetString(TEXT("DoodleEffectLibrary"), TEXT("EffectLibraryPath"), LibraryPath, GEngineIni);
+                        IFileManager::Get().IterateDirectory(*LibraryPath, [this, PreTreeList, InText](const TCHAR* PathName, bool bIsDir)
+                            {
+                                if (bIsDir)
+                                {
+                                    FString JsonFile = FPaths::Combine(PathName, TEXT("Data.json"));
+                                    FString JsonString;
+                                    if (FFileHelper::LoadFileToString(JsonString, *JsonFile))
+                                    {
+                                        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonString);
+                                        TSharedPtr<FJsonObject> JsonObject;
+                                        FJsonSerializer::Deserialize(JsonReader, JsonObject);
+                                        ///------------
+                                        FString TypePaths = JsonObject->GetStringField(TEXT("EffectType"));
+                                        if (TypePaths.StartsWith(PreTreeList + WeakTreeElement->Name.ToString()))
+                                        {
+                                            TypePaths = TypePaths.Replace(*(PreTreeList + WeakTreeElement->Name.ToString()), *(PreTreeList + InText.ToString()));
+                                            JsonObject->SetStringField(TEXT("EffectType"), TypePaths);
+                                            TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&JsonString);
+                                            FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter);
+                                            FFileHelper::SaveStringToFile(JsonString, *JsonFile);
+                                        }
+                                    }
+                                }
+                                return true;
+                            });
+                        //--------------
+                        WeakTreeElement->Name = FName(InText.ToString());
+                    }
+                })
+                .Text(FText::FromName(WeakTreeElement ? WeakTreeElement->Name : FName(TEXT(""))))
+                        .Font(FStyleDefaults::GetFontInfo(12))
+        ];
+}
+
 class SPlayPreviewDialog : public SCompoundWidget
 {
 public:
@@ -316,6 +395,24 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                                 .OnGetChildren(this, &UDoodleEffectLibraryWidget::HandleGetChildrenForTree)
                                 .HighlightParentNodesForSelection(true)
                                 .OnSelectionChanged(this, &UDoodleEffectLibraryWidget::OnTypeSelectionChanged)
+                                .OnContextMenuOpening_Lambda([this]()
+                                {
+                                    FUIAction RenameAction(FExecuteAction::CreateLambda([this]()
+                                    {
+                                        TSharedPtr<ITableRow> TableRow = TreeViewPtr->WidgetFromItem(NowSelectTypeItem);
+                                        TSharedPtr <FTypeItemElement1> Row = StaticCastSharedPtr<FTypeItemElement1>(TableRow);
+                                        if (Row.IsValid()&&!Row->TheEditableText->GetText().ToString().Equals("Root"))
+                                        {
+                                            Row->TheEditableText->SetEnabled(true);
+                                            Row->TheEditableText->SelectAllText();
+                                        }
+                                    }), FCanExecuteAction());
+                                    FMenuBuilder MenuBuilder(true, false);
+                                    MenuBuilder.AddMenuSeparator();
+                                    MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名分类")),
+                                        FSlateIcon(), RenameAction);
+                                    return MenuBuilder.MakeWidget();
+                                })
                                 .HeaderRow(
                                     SNew(SHeaderRow)
                                         + SHeaderRow::Column(FName(TEXT("Column1")))
@@ -495,7 +592,7 @@ void UDoodleEffectLibraryWidget::OnEffectExport()
 
 TSharedRef<ITableRow> UDoodleEffectLibraryWidget::MakeTableRowWidget(TSharedPtr<FTypeItem> InTreeElement, const TSharedRef<STableViewBase>& OwnerTable)
 {
-    return SNew(FTypeItemElement, OwnerTable, InTreeElement);
+    return SNew(FTypeItemElement1, OwnerTable, InTreeElement);
 }
 
 void UDoodleEffectLibraryWidget::HandleGetChildrenForTree(TSharedPtr<FTypeItem> InItem, TArray<TSharedPtr<FTypeItem>>& OutChildren)

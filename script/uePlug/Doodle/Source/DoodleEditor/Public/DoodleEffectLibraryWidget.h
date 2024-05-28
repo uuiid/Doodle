@@ -31,7 +31,6 @@
 #include "DoodleEffectLibraryEditWidget.h"
 #include "Filters/SBasicFilterBar.h"
 
-class FTypeItemElement;
 class FTypeItem;
 class FTagItem;
 
@@ -162,6 +161,18 @@ private:
 			//	MediaBox->SetVisibility(EVisibility::Hidden);
 		}
 	}
+};
+
+class FTypeItemElement1 : public SMultiColumnTableRow<TSharedPtr<FTypeItem>>
+{
+	SLATE_BEGIN_ARGS(FTypeItemElement1) {}
+	SLATE_END_ARGS()
+public:
+	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, const TSharedPtr<FTypeItem> InTreeElement);
+	virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override;
+	TSharedPtr<SEditableText> TheEditableText;
+private:
+	TSharedPtr<FTypeItem> WeakTreeElement;
 };
 
 /** A class for check boxes in the filter list. If you double click a filter checkbox, you will enable it and disable all others */

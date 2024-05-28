@@ -1347,7 +1347,9 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
         IFileManager::Get().DeleteDirectory(*FPaths::Combine(FPaths::ProjectContentDir(), EffectName), false, true);
         //PlatformFile.DeleteDirectoryRecursively(*FPaths::Combine(FPaths::ProjectContentDir(), EffectName));
     }
-    EditorAssetSubsystem->DeleteDirectory(*FPaths::Combine(TEXT("/Game"), EffectName));
+    FString ThePath = FPaths::Combine(TEXT("/Game"), EffectName);
+    if (EditorAssetSubsystem->DoesDirectoryExist(ThePath))
+        EditorAssetSubsystem->DeleteDirectory(ThePath);
     //------
     FString Info = FString::Format(TEXT("保存特效：{0}完成"), { EffectName });
     FNotificationInfo L_Info{ FText::FromString(Info) };
