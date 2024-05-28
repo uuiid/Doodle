@@ -902,6 +902,11 @@ FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
     }
     //------------
     FixupAllReferencers();
+    AssetRegistryModule.Get().GetAssets(LFilter, AllAsset);
+    for (FAssetData SelectedData : AllAsset) 
+    {
+        EditorAssetSubsystem->SaveLoadedAsset(SelectedData.GetAsset());
+    }
     //--------------------------
     return FReply::Handled();
 }
