@@ -7,7 +7,7 @@
 namespace doodle::dingding {
 
 class client {
-  using http_client_core     = doodle::http::http_client_core;
+  using http_client_core     = doodle::http::https_client_core;
   using http_client_core_ptr = std::shared_ptr<http_client_core>;
 
   using timer_t              = boost::asio::steady_timer;
