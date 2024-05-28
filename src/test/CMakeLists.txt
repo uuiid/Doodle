@@ -47,7 +47,7 @@ add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(math)
 add_subdirectory(ai)
-add_subdirectory(kitsu)
+add_subdirectory(http_client)
 add_subdirectory(fbx_abc)
 
 
