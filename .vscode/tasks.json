@@ -24,6 +24,12 @@
       "problemMatcher": []
     },
     {
+      "label": "build 5.2 plug",
+      "type": "shell",
+      "command": "${workspaceFolder}/script/uePlug/build_5.cmd",
+      "problemMatcher": []
+    },
+    {
       "label": "build_all",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/build_all.cmd",
