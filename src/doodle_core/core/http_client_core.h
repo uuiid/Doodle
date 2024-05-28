@@ -133,7 +133,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
     };
     std::unique_ptr<data_type2> ptr_;
     socket_t& socket_;
-    boost::asio::ip::tcp::resolver::results_type& results_;
     http_client_core* http_client_core_ptr_;
     std::shared_ptr<guard_is_run> guard_is_run_ptr_;
 
@@ -146,7 +145,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
           boost::asio::coroutine(),
           ptr_(std::make_unique<data_type2>()),
           socket_(in_ptr->stream()),
-          results_(in_ptr->ptr_->resolver_results_),
           http_client_core_ptr_(in_ptr),
           guard_is_run_ptr_() {
       ptr_->request_ = std::move(in_req);
@@ -159,15 +157,6 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
     // copy
     connect_write_read_op(const connect_write_read_op&)            = delete;
     connect_write_read_op& operator=(const connect_write_read_op&) = delete;
-
-    // void run() override {
-    //   guard_is_run_ptr_ = std::make_shared<guard_is_run>(*http_client_core_ptr_);
-    //   if (socket_.socket().is_open()) {
-    //     do_write();
-    //   } else {
-    //     do_resolve();
-    //   }
-    // }
 
     void operator()() {
       guard_is_run_ptr_ = std::make_shared<guard_is_run>(*http_client_core_ptr_);
@@ -239,8 +228,23 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
       ptr_->state_       = state::connect;
       ptr_->retry_count_ = 0;
       log_info(ptr_->logger_, fmt::format("{}", ec));
+      if constexpr (use_ssl) {
+        http_client_core_ptr_->ptr_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(*this));
+      } else {
+        do_write();
+      }
+    }
+
+    // async_handshake 回调
+    void operator()(boost::system::error_code ec) {
+      if (ec) {
+        log_info(ptr_->logger_, fmt::format("{}", ec));
+        this->complete(false, ec, ptr_->response_);
+        return;
+      }
       do_write();
     }
+
     // async_resolve 回调
     void operator()(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) {
       if (ec) {
@@ -271,7 +275,7 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
-      boost::asio::async_connect(socket_.socket(), results_, std::move(*this));
+      boost::asio::async_connect(socket_.socket(), http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
     }
     void do_resolve() {
       ptr_->state_ = state::start;
@@ -346,8 +350,14 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
     return request_header_operator_;
   }
 
-  inline socket_t::socket_type& socket() { return ptr_->socket_->socket(); }
-  inline socket_t& stream() { return *ptr_->socket_; }
+  inline socket_t::socket_type& socket() { return stream().socket(); }
+  inline socket_t& stream() {
+    if constexpr (use_ssl) {
+      return *ptr_->socket_;
+    } else {
+      return boost::beast::lowest_layer_type(*ptr_->socket_);
+    }
+  }
   inline resolver_t& resolver() { return *ptr_->resolver_; }
   // logger
   [[nodiscard]] inline logger_ptr& logger() { return ptr_->logger_; }
