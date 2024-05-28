@@ -109,7 +109,7 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
     l_eve["UE-LocalDataCachePath"]    = "%GAMEDIR%DerivedDataCache";
     l_eve["UE-SharedDataCachePath"]   = fmt::format("{}\\UE\\DerivedDataCache", core_set::get_set().depot_ip);
 
-    timer_attr.expires_after(chrono::seconds{core_set::get_set().timeout});
+    timer_attr.expires_after(chrono::seconds{core_set::get_set().timeout * 5});
     timer_attr.async_wait([this](boost::system::error_code in_code) {
       if (!in_code) {
         logger_attr->log(log_loc(), level::warn, "进程超时，结束任务");
