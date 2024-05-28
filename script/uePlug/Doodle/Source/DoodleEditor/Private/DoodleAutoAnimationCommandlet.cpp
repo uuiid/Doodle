@@ -101,6 +101,11 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
     //--------------
     ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
     OnCreateSequenceWorld();
+    if (!EditorAssetSubsystem->DoesAssetExist(OriginalMapPath.ToString()))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Original Map Asset File Not Found!"));
+        return -1;
+    }
     EditorAssetSubsystem->DuplicateAsset(OriginalMapPath.ToString(), RenderMapPath.ToString());
     OnBuildSequence();
     //---------------------
