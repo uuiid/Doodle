@@ -11,7 +11,7 @@ target_sources(test_main
         regex.cpp
         abc.cpp
         run_process_v2.cpp
-        auto_light_distributed.cpp
+        auto_light.cpp
 )
 
 target_link_libraries(
