@@ -19,7 +19,6 @@
 
 #include <chrono>
 #include <fmt/core.h>
-#include <main_fixtures/lib_fixtures.h>
 
 using namespace doodle;
 

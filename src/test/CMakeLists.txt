@@ -30,7 +30,7 @@ macro(doodle_link_test)
             ${PROJECT_SOURCE_DIR}/src/test
     )
     target_compile_options(${ARGV0} PRIVATE
-            $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+            $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
             $<$<CXX_COMPILER_ID:MSVC>:/MP>)
 endmacro()
 
@@ -38,18 +38,18 @@ add_executable(
         test_main
         EXCLUDE_FROM_ALL
 )
-
+target_sources(
+        test_main
+        PRIVATE
+        test_main.cpp
+)
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(math)
 add_subdirectory(ai)
 add_subdirectory(kitsu)
-#add_subdirectory(rtt)
-# 这一项要放在最后
-
 add_subdirectory(fbx_abc)
 
-add_subdirectory(main_fixtures)
 
 # create the testing file and list of tests
 create_test_sourcelist(main_test
@@ -99,8 +99,4 @@ target_compile_options(CommonCxxTests PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 
-add_executable(
-        http_server
-        http_server.cpp
-)
-doodle_link_test(http_server)
+ 

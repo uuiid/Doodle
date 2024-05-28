@@ -10,8 +10,6 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
-#include <main_fixtures/lib_fixtures.h>
-
 // #include <doodle_core/metadata/bvh/detail/row.h>
 
 // #include <boost/spirit/include/classic.hpp>

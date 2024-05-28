@@ -15,7 +15,6 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
-#include <main_fixtures/lib_fixtures.h>
 #include <ostream>
 
 Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {

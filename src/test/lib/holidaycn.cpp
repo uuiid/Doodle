@@ -10,7 +10,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
-#include <main_fixtures/lib_fixtures.h>
 
 using namespace doodle;
 // namespace opencv_player_ns {
@@ -193,7 +192,8 @@ using namespace doodle;
 // using player = msm::back::state_machine<player_>;
 //
 // }  // namespace opencv_player_ns
-BOOST_FIXTURE_TEST_CASE(test_holidaycn, lib_fixtures) {
+BOOST_AUTO_TEST_CASE(test_holidaycn) {
+  doodle_lib l_lib{};
   business::work_clock work_clock{};
   auto l_rule = business::rules::get_default();
   holidaycn_time l_time{l_rule.work_pair_p};

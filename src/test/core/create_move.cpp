@@ -14,7 +14,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <crtdbg.h>
-#include <main_fixtures/lib_fixtures.h>
 #include <stdlib.h>
 
 using namespace doodle;

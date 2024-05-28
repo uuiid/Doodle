@@ -4,7 +4,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
-#include <main_fixtures/lib_fixtures.h>
 
 BOOST_AUTO_TEST_CASE(test_boost_log) {
   // BOOST_WINAPI_VERSION_WIN6;
