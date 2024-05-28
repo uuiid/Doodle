@@ -3,7 +3,7 @@
     "assets_file_widgets_size": 5,
     "depot_ip": "\\\\192.168.10.218\\Doodletemp",
     "layout_config": "",
-    "max_thread": 26,
+    "max_thread": 3,
     "maya_force_resolve_link": false,
     "maya_replace_save_dialog": false,
     "maya_version": 2020,
