@@ -167,6 +167,7 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                     ]
             ]
             + SVerticalBox::Slot()
+            .FillHeight(1.2f)
             .Padding(2.0f)
             [
                 SAssignNew(TreeView, STreeView<TSharedPtr<FTreeItem>>)
@@ -265,7 +266,6 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                             .OnClicked(this, &UDoodleOrganizeCompoundWidget::GenerateFolders)
                     ]
             ]
-          
             + SVerticalBox::Slot()
             .FillHeight(0.1)
             .Padding(2)
@@ -379,6 +379,81 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                             .Text(FText::FromString(TEXT("添加文件_后缀")))
                             .OnClicked(this, &UDoodleOrganizeCompoundWidget::AddSuffix)
                     ]
+            ]
+            + SVerticalBox::Slot()
+            .FillHeight(0.8)
+            .Padding(2)
+            [
+                SAssignNew(ListViewMode, SListView<TSharedPtr<FListItem>>)
+                    .ListItemsSource(&ListItemsSourceMode)
+                    .SelectionMode(ESelectionMode::Single)
+                    .OnGenerateRow(this, &UDoodleOrganizeCompoundWidget::MakeTableRowWidgetList)
+                    .OnSelectionChanged_Lambda([&](TSharedPtr<FListItem> inSelectItem, ESelectInfo::Type SelectType)
+                    {
+                        //NowSelectItem = inSelectItem;
+                    })
+                    .OnContextMenuOpening_Lambda([this]()
+                    {
+                        return SNullWidget::NullWidget;
+                    })
+                    .HeaderRow
+                    (
+                        SNew(SHeaderRow)
+                        + SHeaderRow::Column(TEXT("Number")).DefaultLabel(FText::FromString(TEXT("文件路径")))
+                    )
+                    .OnMouseButtonDoubleClick_Lambda([&](TSharedPtr<FListItem> inSelectItem)
+                    {
+                        TArray<UObject*> Objects;
+                        Objects.Add(inSelectItem->Asset.GetAsset());
+                        FContentBrowserModule& ContentBrowserModle = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+                        ContentBrowserModle.Get().SyncBrowserToAssets(Objects);
+                    })
+            ]
+            + SVerticalBox::Slot()
+            .FillHeight(0.1)
+            .Padding(2)
+            [
+                SNew(SButton)
+                    .Text(FText::FromString(TEXT("查找路径过长资源(>256)")))
+                    .OnClicked_Lambda([this]()
+                    {
+                        TArray<FAssetData> AllAssets;
+                        ListItemsSourceMode.Empty();
+                        FARFilter LFilter{};
+                        LFilter.bRecursivePaths = true;
+                        LFilter.bRecursiveClasses = true;
+                        LFilter.PackagePaths.Add(FName{ TEXT("/Game") });
+                        //LFilter.ClassPaths.Add(UTexture::StaticClass()->GetClassPathName());
+                        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+                        AssetRegistryModule.Get().GetAssets(LFilter, AllAssets);
+                        for (FAssetData Asset : AllAssets)
+                        { 
+                            FString Path = Asset.PackageName.ToString();
+                            FString ProjectContentDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
+                            FString DestinationPath = FPaths::Combine(ProjectContentDir, Path.Replace(TEXT("/Game/"), TEXT("")));
+                            if (Asset.GetAsset()->IsA<UWorld>()) 
+                            {
+                                DestinationPath += TEXT(".umap");
+                            }
+                            else
+                            {
+                                DestinationPath += TEXT(".uasset");
+                            }
+                            if (DestinationPath.Len() >= 256) 
+                            {
+                                TSharedPtr<FListItem> Item = MakeShareable(new FListItem());
+                                Item->Asset = Asset;
+                                Item->Path = DestinationPath;
+                                ListItemsSourceMode.Add(Item);
+                            }
+                        }
+                        ListViewMode->RequestListRefresh();
+                        FNotificationInfo L_Info{ FText::FromString(TEXT("查找完成")) };
+                        L_Info.FadeInDuration = 2.0f;  // 
+                        L_Info.Image = FCoreStyle::Get().GetBrush(TEXT("MessageLog.Note"));
+                        FSlateNotificationManager::Get().AddNotification(L_Info);
+                        return FReply::Handled();
+                    })
             ]
     ];
 }
@@ -1025,4 +1100,33 @@ FReply UDoodleOrganizeCompoundWidget::AddSuffix()
         }
     }
     return FReply::Handled();
+}
+
+//------------------------
+TSharedRef<ITableRow> UDoodleOrganizeCompoundWidget::MakeTableRowWidgetList(TSharedPtr<FListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    return SNew(STableRow<TSharedPtr<FListItem>>, OwnerTable)
+    .Content()
+    [
+        SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+            .MaxWidth(18)
+            .FillWidth(1.0)
+            .HAlign(HAlign_Left)
+            .VAlign(VAlign_Center)
+            .Padding(FMargin(0.f, 0.f, 3.f, 0.f))
+            [
+                SNew(SImage)
+                    .Image(FAppStyle::GetBrush("ContentBrowser.ColumnViewAssetIcon"))
+            ]
+            + SHorizontalBox::Slot()
+            .AutoWidth()
+            .HAlign(HAlign_Left)
+            .VAlign(VAlign_Center)
+            .Padding(FMargin(0.f, 0.f, 0.f, 0.f))
+            [
+                SNew(STextBlock)
+                    .Text(FText::FromString(InItem->Path))
+            ]
+    ];
 }

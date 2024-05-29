@@ -26,6 +26,13 @@ public:
 	FTreeItemParamDelegate OnClickedEvent;
 };
 
+class FListItem : public TSharedFromThis<FListItem>
+{
+public:
+	FString Path{ TEXT("") };
+	FAssetData Asset;
+};
+
 class STextureTreeItem : public SMultiColumnTableRow<TSharedPtr<FTreeItem>>
 {
 	SLATE_BEGIN_ARGS(STextureTreeItem) 
@@ -94,4 +101,7 @@ private:
 	FString TheSuffix{ "" };
 	FReply RemoveSuffix();
 	FReply AddSuffix();
+	TSharedPtr<SListView<TSharedPtr<FListItem>>> ListViewMode;
+	TArray<TSharedPtr<FListItem>> ListItemsSourceMode;
+	TSharedRef<ITableRow> MakeTableRowWidgetList(TSharedPtr<FListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 };
