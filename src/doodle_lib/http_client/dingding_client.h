@@ -92,13 +92,17 @@ class client {
         [l_com = std::move(in_completion),
          this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
           if (ec) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "get_user_by_mobile failed: {}", ec.message());
+            http_client_core_ptr_old_->logger()->log(
+                log_loc(), level::err, "get_user_by_mobile failed: {}", ec.message()
+            );
             l_com(ec, nlohmann::json{});
             return;
           }
 
           if (res.result() != boost::beast::http::status::ok) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "get_user_by_mobile failed: {}", res.body());
+            http_client_core_ptr_old_->logger()->log(
+                log_loc(), level::err, "get_user_by_mobile failed: {}", res.body()
+            );
             ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
             l_com(ec, nlohmann::json{});
             return;
@@ -106,7 +110,9 @@ class client {
 
           auto l_json_str = res.body();
           if (!nlohmann::json::accept(l_json_str)) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "get_user_by_mobile failed: {}", l_json_str);
+            http_client_core_ptr_old_->logger()->log(
+                log_loc(), level::err, "get_user_by_mobile failed: {}", l_json_str
+            );
             ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
             l_com(ec, nlohmann::json{});
             return;
@@ -120,19 +126,20 @@ class client {
       const std::string& in_user_id, const time_point_wrap& in_work_date, CompletionHandler&& in_completion
   ) {
     boost::beast::http::request<boost::beast::http::string_body> req{
-        boost::beast::http::verb::post, fmt::format("/attendance/updatedata?access_token={}", access_token_), 11
+        boost::beast::http::verb::post, fmt::format("/topapi/attendance/getupdatedata?access_token={}", access_token_),
+        11
     };
     req.body() = nlohmann::json{
         {"userid", in_user_id}, {"work_date", fmt::format("{:%Y-%m-%d}", in_work_date.get_local_time())}
     }.dump();
     req.set(boost::beast::http::field::content_type, "application/json");
 
-    http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+    http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
         req,
         [l_com = std::move(in_completion),
          this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
           if (ec) {
-            http_client_core_ptr_->logger()->log(
+            http_client_core_ptr_old_->logger()->log(
                 log_loc(), level::err, "get_attendance_updatedata failed: {}", ec.message()
             );
             l_com(ec, nlohmann::json{});
@@ -140,7 +147,7 @@ class client {
           }
 
           if (res.result() != boost::beast::http::status::ok) {
-            http_client_core_ptr_->logger()->log(
+            http_client_core_ptr_old_->logger()->log(
                 log_loc(), level::err, "get_attendance_updatedata failed: {}", res.body()
             );
             ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
@@ -150,7 +157,7 @@ class client {
 
           auto l_json_str = res.body();
           if (!nlohmann::json::accept(l_json_str)) {
-            http_client_core_ptr_->logger()->log(
+            http_client_core_ptr_old_->logger()->log(
                 log_loc(), level::err, "get_attendance_updatedata failed: {}", l_json_str
             );
             ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);

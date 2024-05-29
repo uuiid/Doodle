@@ -129,6 +129,7 @@
             "options": [
                 "dingding/access_token",
                 "dingding/get_user_by_mobile",
+                "dingding/get_attendance_updatedata",
                 "auto_light/only_server",
                 "auto_light/only_works",
                 "auto_light/server_and_works",
