@@ -269,6 +269,7 @@ private:
 	FString EffectType;
 	FString FilterText;
 	void OnSearchBoxCommitted(const FText& InSearchText, ETextCommit::Type CommitInfo);
+	void OnSearchBoxChanged(const FText& SearchText);
 
 	void OnCreateNewEffect();
 	

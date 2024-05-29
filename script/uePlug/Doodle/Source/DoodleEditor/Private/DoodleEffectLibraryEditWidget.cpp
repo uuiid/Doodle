@@ -496,8 +496,11 @@ UDoodleEffectLibraryEditWidget::UDoodleEffectLibraryEditWidget()
 
 UDoodleEffectLibraryEditWidget::~UDoodleEffectLibraryEditWidget()
 {
-    if (CaptureSeq)
-        CaptureSeq->RemoveFromRoot();
+    if (CaptureSeq) 
+    {
+        //CaptureSeq->RemoveFromRoot();
+        CaptureSeq = nullptr;
+    }
     if(SelectObject)
         SelectObject->RemoveFromRoot();
     //--------
@@ -1242,7 +1245,7 @@ void UDoodleEffectLibraryEditWidget::OnSaveAndCreate()
     FString EffectTagStr = TEXT("");
     for (TSharedPtr<FTagItem>& L_Tag : EffectTags)
     {
-        EffectTagStr = TEXT("###") + L_Tag->Name;
+        EffectTagStr = TEXT("###") + L_Tag->Name + EffectTagStr;
     }
     JsonData->SetStringField("EffectTags", EffectTagStr);
     FString JsonText;

@@ -309,6 +309,7 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                             SAssignNew(SearchBoxPtr, SAssetSearchBox)
                                 .HintText(FText::FromString(TEXT("搜索特效名")))
                                 .OnTextCommitted(this, &UDoodleEffectLibraryWidget::OnSearchBoxCommitted)
+                                .OnTextChanged(this, &UDoodleEffectLibraryWidget::OnSearchBoxChanged)
                                 .DelayChangeNotificationsWhileTyping(true)
                                 .AddMetaData<FTagMetaData>(FTagMetaData(TEXT("ExtContentBrowserSearchAssets")))
                                 .ShowSearchHistory(true)
@@ -323,23 +324,63 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                                 .SelectionMode(ESelectionMode::Single)
                                 .OnGenerateTile(this, &UDoodleEffectLibraryWidget::MakeTableRowWidgetTile)
                                 .OnSelectionChanged_Lambda([&](TSharedPtr<FEffectTileItem> inSelectItem, ESelectInfo::Type SelectType)
+                                {
+                                    if (inSelectItem)
                                     {
-                                        if (inSelectItem)
+                                        CurrentItem = inSelectItem;
+                                        TObjectPtr<UFileMediaSource> TheMediaSource = NewObject<UFileMediaSource>(GetTransientPackage());
+                                        TheMediaSource->SetFilePath(CurrentItem->PreviewFile);
+                                        CurrentItem->MediaPlayer->SetDesiredPlayerName(TEXT("VlcMedia"));
+                                        if (CurrentItem->MediaPlayer->CanPlaySource(TheMediaSource.Get()))
                                         {
-                                            CurrentItem = inSelectItem;
-                                            TObjectPtr<UFileMediaSource> TheMediaSource = NewObject<UFileMediaSource>(GetTransientPackage());
-                                            TheMediaSource->SetFilePath(CurrentItem->PreviewFile);
-                                            CurrentItem->MediaPlayer->SetDesiredPlayerName(TEXT("VlcMedia"));
-                                            if (CurrentItem->MediaPlayer->CanPlaySource(TheMediaSource.Get()))
-                                            {
-                                                CurrentItem->MediaPlayer->OpenSource(TheMediaSource.Get());
-                                            }
+                                            CurrentItem->MediaPlayer->OpenSource(TheMediaSource.Get());
                                         }
-                                    })
+                                    }
+                                })
                                 .OnContextMenuOpening_Lambda([this]()
                                 {
                                     FUIAction ActionCall(FExecuteAction::CreateRaw(this, &UDoodleEffectLibraryWidget::OnEffectExport), FCanExecuteAction());
                                     FMenuBuilder MenuBuilder(true, false);
+                                    //--------------------------
+                                    if (CurrentItem) 
+                                    {
+                                        MenuBuilder.BeginSection("EffectTags", FText::FromString(TEXT("特效标签")));
+                                        MenuBuilder.AddMenuSeparator();
+                                        for (int i=0;i<CurrentItem->EffectTags.Num();i++)
+                                        {
+                                            FString Tag = CurrentItem->EffectTags[i];
+                                            MenuBuilder.AddEditableText(FText::FromString(CurrentItem->EffectTags[i]), FText::FromString(TEXT("修改标签")), FSlateIcon(),
+                                                FText::FromString(Tag),
+                                                FOnTextCommitted::CreateLambda([this,i](const FText& CommittedText, ETextCommit::Type TextCommitType)
+                                                {
+                                                    FString Tag = CurrentItem->EffectTags[i];
+                                                    if(CommittedText.ToString().Len()>0&& !CommittedText.ToString().Equals(Tag))
+                                                    {
+                                                        CurrentItem->EffectTags[i]= CommittedText.ToString();
+                                                        FString JsonString;
+                                                        if (FFileHelper::LoadFileToString(JsonString, *CurrentItem->JsonFile))
+                                                        {
+                                                            TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonString);
+                                                            TSharedPtr<FJsonObject> JsonObject;
+                                                            FJsonSerializer::Deserialize(JsonReader, JsonObject);
+                                                            //-------------------------
+                                                            FString EffectTagStr = TEXT("");
+                                                            for (FString L_Tag : CurrentItem->EffectTags)
+                                                            {
+                                                                EffectTagStr = TEXT("###") + L_Tag+ EffectTagStr;
+                                                            }
+                                                            JsonObject->SetStringField(TEXT("EffectTags"), EffectTagStr);
+                                                            TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&JsonString);
+                                                            FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter);
+                                                            FFileHelper::SaveStringToFile(JsonString, *CurrentItem->JsonFile);
+                                                        }
+                                                    }
+                                                })
+                                            );
+                                        }
+                                        MenuBuilder.EndSection();
+                                    }
+                                    //-----------------------
                                     MenuBuilder.AddMenuSeparator();
                                     MenuBuilder.AddMenuEntry(FText::FromString(TEXT("导出")), FText::FromString(TEXT("导出到本地")),
                                         FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Import")), ActionCall);
@@ -719,5 +760,16 @@ void UDoodleEffectLibraryWidget::OnSearchBoxCommitted(const FText& InSearchText,
         {
             TileViewPtr->RequestListRefresh();
         }
+    }
+}
+
+void UDoodleEffectLibraryWidget::OnSearchBoxChanged(const FText& SearchText)
+{
+    FilterText = SearchText.ToString();
+    //---------------
+    OnFilterTileView();
+    if (TileViewPtr.IsValid())
+    {
+        TileViewPtr->RequestListRefresh();
     }
 }
