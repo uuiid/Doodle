@@ -9,7 +9,8 @@ using namespace doodle;
 BOOST_AUTO_TEST_SUITE(dingding)
 BOOST_AUTO_TEST_CASE(access_token) {
   doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::dingding::client>("https://api.dingtalk.com/", "443");
+  boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
+  auto l_c = std::make_shared<doodle::dingding::client>(l_ctx, "https://api.dingtalk.com/", "443");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

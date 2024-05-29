@@ -54,7 +54,8 @@ class request_header_operator_base {
 };
 
 template <typename RequestOperator, typename ResponseOperator, bool use_ssl = false>
-class http_client_core : public std::enable_shared_from_this<http_client_core<RequestOperator, ResponseOperator>> {
+class http_client_core
+    : public std::enable_shared_from_this<http_client_core<RequestOperator, ResponseOperator, use_ssl>> {
  public:
   using socket_t                      = boost::beast::tcp_stream;
   using socket_ptr                    = std::shared_ptr<socket_t>;
@@ -88,6 +89,8 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
 
   template <>
   struct data_type<true> {
+    explicit data_type(boost::asio::ssl::context& in_ctx) : ssl_ctx_(in_ctx) {}
+    boost::asio::ssl::context& ssl_ctx_;
     std::string server_ip_;
     std::string server_port_;
     ssl_socket_ptr socket_{};
@@ -319,6 +322,18 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
 
     make_ptr();
   }
+
+  explicit http_client_core(
+      boost::asio::ssl::context& in_ctx, std::string in_server_ip,
+      std::string in_server_port_ = std::to_string(doodle_config::http_port)
+  )
+      : ptr_(std::make_shared<data_type<use_ssl>>(in_ctx)), request_header_operator_(), response_header_operator_() {
+    ptr_->server_ip_   = std::move(in_server_ip);
+    ptr_->server_port_ = std::move(in_server_port_);
+
+    make_ptr();
+  }
+
   ~http_client_core() = default;
 
   // cancel
@@ -353,9 +368,9 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
   inline socket_t::socket_type& socket() { return stream().socket(); }
   inline socket_t& stream() {
     if constexpr (use_ssl) {
-      return *ptr_->socket_;
+      return boost::beast::get_lowest_layer(*ptr_->socket_);
     } else {
-      return boost::beast::lowest_layer_type(*ptr_->socket_);
+      return *ptr_->socket_;
     }
   }
   inline resolver_t& resolver() { return *ptr_->resolver_; }
@@ -374,12 +389,11 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
 
   inline void make_ptr() {
     auto l_s        = boost::asio::make_strand(g_io_context());
-    ptr_->socket_   = std::make_shared<socket_t>(l_s);
     ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
-    ptr_->logger_ =
-        g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", ptr_->server_ip_, ptr_->socket_->socket())
-        );
+
     if constexpr (use_ssl) {
+      ptr_->socket_ = std::make_shared<ssl_socket_t>(l_s, ptr_->ssl_ctx_);
+
       boost::beast::ssl_stream<boost::beast::tcp_stream>& l_ssl_stream = *ptr_->socket_;
       l_ssl_stream.set_verify_mode(boost::asio::ssl::verify_none);
 
@@ -389,7 +403,10 @@ class http_client_core : public std::enable_shared_from_this<http_client_core<Re
         boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
         default_logger_raw()->log(log_loc(), level::err, "SSL_set_tlsext_host_name: {}", ec.message());
       }
+    } else {
+      ptr_->socket_ = std::make_shared<socket_t>(l_s);
     }
+    ptr_->logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", ptr_->server_ip_, socket()));
   }
   inline void next() {
     if (ptr_->next_list_.empty()) {

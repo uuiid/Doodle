@@ -7,13 +7,13 @@
 namespace doodle::dingding {
 
 class client {
-  using http_client_core     = doodle::http::https_client_core;
-  using http_client_core_ptr = std::shared_ptr<http_client_core>;
+  using https_client_core     = doodle::http::https_client_core;
+  using https_client_core_ptr = std::shared_ptr<https_client_core>;
 
-  using timer_t              = boost::asio::steady_timer;
-  using timer_ptr_t          = std::shared_ptr<timer_t>;
+  using timer_t               = boost::asio::steady_timer;
+  using timer_ptr_t           = std::shared_ptr<timer_t>;
 
-  http_client_core_ptr http_client_core_ptr_{};
+  https_client_core_ptr http_client_core_ptr_{};
   timer_ptr_t timer_ptr_{};
 
   std::string access_token_;
@@ -24,8 +24,8 @@ class client {
   void begin_refresh_token(chrono::seconds in_seconds = chrono::seconds(7200));
 
  public:
-  explicit client(std::string in_ip, std::string in_port)
-      : http_client_core_ptr_(std::make_shared<http_client_core>(std::move(in_ip), std::move(in_port))){};
+  explicit client(boost::asio::ssl::context& in_ctx, std::string in_ip, std::string in_port)
+      : http_client_core_ptr_(std::make_shared<https_client_core>(in_ctx, std::move(in_ip), std::move(in_port))){};
   ~client() = default;
 
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2分钟刷新一次
