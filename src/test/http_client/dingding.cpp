@@ -73,6 +73,7 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
       BOOST_TEST(!ec);
       default_logger_raw()->info("json: {}", json.dump());
       BOOST_TEST(json.contains("result"));
+      BOOST_TEST(json["result"].contains("approve_list"));
     });
   });
   g_io_context().run();
