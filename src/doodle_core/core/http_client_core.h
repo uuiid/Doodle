@@ -36,21 +36,21 @@ class response_header_operator_base {
   response_header_operator_base() {}
   ~response_header_operator_base() = default;
   template <typename T, typename ResponeType>
-  void operator()(T* in_http_client_core, ResponeType& in_req) {
-    in_req.set(
-        boost::beast::http::field::host,
-        fmt::format("{}:{}", in_http_client_core->server_ip(), in_http_client_core->server_port())
-    );
-    in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  }
+  void operator()(T* in_http_client_core, ResponeType& in_req) {}
 };
 
 class request_header_operator_base {
  public:
   request_header_operator_base() {}
   ~request_header_operator_base() = default;
-  template <typename T, typename ResponeType>
-  void operator()(T* in_http_client_core, ResponeType& in_req) {}
+  template <typename T, typename RequestType>
+  void operator()(T* in_http_client_core, RequestType& in_req) {
+    in_req.set(
+        boost::beast::http::field::host,
+        fmt::format("{}:{}", in_http_client_core->server_ip(), in_http_client_core->server_port())
+    );
+    in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  }
 };
 
 template <typename RequestOperator, typename ResponseOperator, bool use_ssl = false>
@@ -263,15 +263,16 @@ class http_client_core
       socket_.expires_after(30s);
       ptr_->state_ = state::write;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
-      //      auto l_req = ptr_->request_;
-      //      boost::beast::async_write(socket_, message_generator_type{std::move(l_req)}, std::move(*this));
-      boost::beast::http::async_write(socket_, ptr_->request_, std::move(*this));
+      ;
+      boost::beast::http::async_write(*http_client_core_ptr_->ptr_->socket_, ptr_->request_, std::move(*this));
     }
     void do_read() {
       socket_.expires_after(30s);
       ptr_->state_ = state::read;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
-      boost::beast::http::async_read(socket_, ptr_->buffer_, ptr_->response_, std::move(*this));
+      boost::beast::http::async_read(
+          *http_client_core_ptr_->ptr_->socket_, ptr_->buffer_, ptr_->response_, std::move(*this)
+      );
     }
     void do_connect() {
       socket_.expires_after(30s);
@@ -293,8 +294,12 @@ class http_client_core
   template <typename ResponseType, typename RequestType, typename CompletionHandler>
   auto async_read(RequestType& in_type, CompletionHandler&& in_completion) {
     request_header_operator_(this, in_type);
-    using execution_type = decltype(boost::asio::get_associated_executor(in_completion, g_io_context().get_executor()));
-    using connect_op     = connect_write_read_op<execution_type, CompletionHandler, ResponseType, RequestType>;
+    in_type.prepare_payload();
+    // std::ostringstream l_oss;
+    // l_oss << in_type;
+    // default_logger_raw()->log(log_loc(), level::info, l_oss.str());
+    auto l_exe       = boost::asio::get_associated_executor(in_completion, g_io_context().get_executor());
+    using connect_op = connect_write_read_op<decltype(l_exe), CompletionHandler, ResponseType, RequestType>;
     this->stream().expires_after(30s);
     log_info(ptr_->logger_, fmt::format("{} {}", in_type.target(), fmt::ptr(std::addressof(in_completion))));
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
@@ -304,7 +309,7 @@ class http_client_core
           });
           in_client_ptr->next();
         },
-        in_completion, this, boost::asio::get_associated_executor(in_completion, g_io_context().get_executor()), in_type
+        in_completion, this, l_exe, in_type
     );
   }
 
@@ -337,7 +342,7 @@ class http_client_core
   ~http_client_core() = default;
 
   // cancel
-  inline void cancel() {
+  void cancel() {
     boost::system::error_code ec;
     ptr_->socket_->socket().cancel(ec);
     if (ec) {
@@ -346,40 +351,38 @@ class http_client_core
   }
 
   // server_ip
-  [[nodiscard]] inline std::string& server_ip() { return ptr_->server_ip_; }
-  [[nodiscard]] inline const std::string& server_ip() const { return ptr_->server_ip_; }
-  inline void server_ip(std::string in_server_ip) { ptr_->server_ip_ = std::move(in_server_ip); }
+  [[nodiscard]] std::string& server_ip() { return ptr_->server_ip_; }
+  [[nodiscard]] const std::string& server_ip() const { return ptr_->server_ip_; }
+  void server_ip(std::string in_server_ip) { ptr_->server_ip_ = std::move(in_server_ip); }
 
   // server_port
-  [[nodiscard]] inline std::string& server_port() { return ptr_->server_port_; }
-  [[nodiscard]] inline const std::string& server_port() const { return ptr_->server_port_; }
-  inline void server_port(std::string in_server_port) { ptr_->server_port_ = std::move(in_server_port); }
+  [[nodiscard]] std::string& server_port() { return ptr_->server_port_; }
+  [[nodiscard]] const std::string& server_port() const { return ptr_->server_port_; }
+  void server_port(std::string in_server_port) { ptr_->server_port_ = std::move(in_server_port); }
   // response_header_operator
-  [[nodiscard]] inline response_header_operator_type& response_header_operator() { return response_header_operator_; }
-  [[nodiscard]] inline const response_header_operator_type& response_header_operator() const {
+  [[nodiscard]] response_header_operator_type& response_header_operator() { return response_header_operator_; }
+  [[nodiscard]] const response_header_operator_type& response_header_operator() const {
     return response_header_operator_;
   }
   // request_header_operator
-  [[nodiscard]] inline request_header_operator_type& request_header_operator() { return request_header_operator_; }
-  [[nodiscard]] inline const request_header_operator_type& request_header_operator() const {
-    return request_header_operator_;
-  }
+  [[nodiscard]] request_header_operator_type& request_header_operator() { return request_header_operator_; }
+  [[nodiscard]] const request_header_operator_type& request_header_operator() const { return request_header_operator_; }
 
-  inline socket_t::socket_type& socket() { return stream().socket(); }
-  inline socket_t& stream() {
+  socket_t::socket_type& socket() { return stream().socket(); }
+  socket_t& stream() {
     if constexpr (use_ssl) {
       return boost::beast::get_lowest_layer(*ptr_->socket_);
     } else {
       return *ptr_->socket_;
     }
   }
-  inline resolver_t& resolver() { return *ptr_->resolver_; }
+  resolver_t& resolver() { return *ptr_->resolver_; }
   // logger
-  [[nodiscard]] inline logger_ptr& logger() { return ptr_->logger_; }
-  [[nodiscard]] inline const logger_ptr& logger() const { return ptr_->logger_; }
+  [[nodiscard]] logger_ptr& logger() { return ptr_->logger_; }
+  [[nodiscard]] const logger_ptr& logger() const { return ptr_->logger_; }
 
  private:
-  inline void do_close() {
+  void do_close() {
     boost::system::error_code ec;
     ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec) {
@@ -387,17 +390,16 @@ class http_client_core
     }
   }
 
-  inline void make_ptr() {
+  void make_ptr() {
     auto l_s        = boost::asio::make_strand(g_io_context());
     ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
+    boost::urls::url l_url{ptr_->server_ip_};
 
     if constexpr (use_ssl) {
       ptr_->socket_ = std::make_shared<ssl_socket_t>(l_s, ptr_->ssl_ctx_);
 
       boost::beast::ssl_stream<boost::beast::tcp_stream>& l_ssl_stream = *ptr_->socket_;
       l_ssl_stream.set_verify_mode(boost::asio::ssl::verify_none);
-
-      boost::urls::url l_url{ptr_->server_ip_};
 
       if (!SSL_set_tlsext_host_name(l_ssl_stream.native_handle(), l_url.host().data())) {
         boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
@@ -406,9 +408,10 @@ class http_client_core
     } else {
       ptr_->socket_ = std::make_shared<socket_t>(l_s);
     }
-    ptr_->logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", ptr_->server_ip_, socket()));
+    ptr_->server_ip_ = l_url.host();
+    ptr_->logger_    = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", l_url.host(), socket()));
   }
-  inline void next() {
+  void next() {
     if (ptr_->next_list_.empty()) {
       return;
     }
