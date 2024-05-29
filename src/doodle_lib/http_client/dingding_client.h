@@ -28,9 +28,11 @@ class client {
       : http_client_core_ptr_(std::make_shared<https_client_core>(in_ctx, std::move(in_ip), std::move(in_port))){};
   ~client() = default;
 
-  // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2分钟刷新一次
+  // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   template <typename CompletionHandler>
-  void access_token(std::string in_app_key, std::string in_app_secret, CompletionHandler&& in_completion) {
+  void access_token(
+      std::string in_app_key, std::string in_app_secret, bool in_auto_expire, CompletionHandler&& in_completion
+  ) {
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::post, "/v1.0/oauth2/accessToken", 11
     };
@@ -44,7 +46,7 @@ class client {
     }
     http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
         req,
-        [l_com = std::move(in_completion),
+        [l_com = std::move(in_completion), in_auto_expire,
          this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
           if (ec) {
             http_client_core_ptr_->logger()->log(log_loc(), level::err, "access_token failed: {}", ec.message());
@@ -67,7 +69,7 @@ class client {
             return;
           }
           auto l_json = nlohmann::json::parse(l_json_str);
-          begin_refresh_token(chrono::seconds(l_json["expireIn"].get<int>()));
+          if (in_auto_expire) begin_refresh_token(chrono::seconds(l_json["expireIn"].get<int>()));
 
           l_com(ec, nlohmann::json::parse(l_json_str));
         }
