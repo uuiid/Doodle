@@ -24,7 +24,7 @@ target_sources(
         maya_anim_file.h
         computer.h
         server_task_info.h
-
+        attendance.h
 
         PRIVATE
         assets.cpp
@@ -51,6 +51,7 @@ target_sources(
         maya_anim_file.cpp
         computer.cpp
         server_task_info.cpp
+        attendance.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
