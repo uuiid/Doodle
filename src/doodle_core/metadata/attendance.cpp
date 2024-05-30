@@ -45,6 +45,7 @@ std::vector<attendance> attendance::select_all(
     l_tmp.user_ref_id_ = in_map_id.at(l_get_user.at(l_row.user_ref_id.value()));
     l_ret.emplace_back(std::move(l_tmp));
   }
+  return l_ret;
 }
 void attendance::create_table(pooled_connection& in_comm) {
   // 外键 user_ref_id-> (user) id
