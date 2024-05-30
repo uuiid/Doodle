@@ -87,19 +87,13 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   FSys::path get_log_path(level::level_enum in_level) const;
   void write_log(level::level_enum in_level, std::string_view in_msg);
   bool operator==(const server_task_info& in_rhs) const;
-private:
-  void install_db(pooled_connection& in_comm) const;
-  void delete_db(pooled_connection& in_comm) const;
-  void update_db(pooled_connection& in_comm) const;
-  bool select_db(pooled_connection& in_comm);
+
   public:
   static std::vector<server_task_info> select_all(pooled_connection& in_comm);
   static void create_table(pooled_connection& in_comm);
 
   // 过滤已经存在的任务
-  static std::vector<bool> filter_exist(
-      pooled_connection& in_comm, const std::vector<server_task_info>& in_task
-  );
+  static std::vector<bool> filter_exist(pooled_connection& in_comm, const std::vector<server_task_info>& in_task);
   static void insert(pooled_connection& in_comm, const std::vector<server_task_info>& in_task);
   static void update(pooled_connection& in_comm, const std::vector<server_task_info>& in_task);
   static void delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids);

@@ -33,6 +33,12 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend struct database_n::sql_com;
 
  public:
+  boost::uuids::uuid id_;
+  // 手机号
+  std::string mobile_;
+  // 钉钉id
+  std::string dingding_id_;
+
   user();
 
   power_enum power{power_enum::none};
@@ -74,6 +80,18 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
 
     explicit operator bool() const;
   };
+
+
+ public:
+  static std::vector<user> select_all(pooled_connection& in_comm);
+  static void create_table(pooled_connection& in_comm);
+
+  // 过滤已经存在的任务
+  static std::vector<bool> filter_exist(pooled_connection& in_comm, const std::vector<user>& in_task);
+  static void insert(pooled_connection& in_comm, const std::vector<user>& in_task);
+  static void update(pooled_connection& in_comm, const std::vector<user>& in_task);
+  static void delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids);
+
 
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
