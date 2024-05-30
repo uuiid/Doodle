@@ -9,6 +9,7 @@ target_sources(
         http_snapshot.h
         file_exists.h
         task_sqlite_server.h
+        computing_time.h
 
         PRIVATE
         computer.cpp
@@ -17,4 +18,5 @@ target_sources(
         http_snapshot.cpp
         file_exists.cpp
         task_sqlite_server.cpp
+        computing_time.cpp
 )
