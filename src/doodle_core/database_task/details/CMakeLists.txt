@@ -2,7 +2,6 @@ target_sources(doodle_core
         PUBLIC
         macro.h
         user.h
-        work_task.h
         tool.h
         database.h
         episodes.h
@@ -35,7 +34,6 @@ target_sources(doodle_core
         drop_if.h
         tables.h
         user.cpp
-        work_task.cpp
         database.cpp
         episodes.cpp
         season.cpp

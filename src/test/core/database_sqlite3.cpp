@@ -27,7 +27,6 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/metadata/work_task.h>
 #include <doodle_core/sqlite_orm/sqlite_snapshot.h>
 
 #include "doodle_app/app/app_command.h"

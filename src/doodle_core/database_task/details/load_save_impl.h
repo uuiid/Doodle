@@ -34,14 +34,12 @@
 #include <doodle_core/database_task/details/time_point_wrap.h>
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/details/user.h>
-#include <doodle_core/database_task/details/work_task.h>
 #include <doodle_core/database_task/select.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include "boost/asio/any_io_executor.hpp"

@@ -16,7 +16,6 @@ target_sources(
         redirection_path_info.h
         move_create.h
         rules.h
-        work_task.h
         file_one_path.h
         render_ue4_arg.h
         file_association.h
@@ -43,7 +42,6 @@ target_sources(
         redirection_path_info.cpp
         move_create.cpp
         rules.cpp
-        work_task.cpp
         file_one_path.cpp
         render_ue4_arg.cpp
         file_association.cpp
