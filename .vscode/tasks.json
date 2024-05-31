@@ -50,7 +50,7 @@
     {
       "label": "运行boost测试",
       "type": "shell",
-      "command": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
+      "command": "${command:cmake.getLaunchTargetPath}",
       "args": [
         "--run_test=${input:test_}",
         "--color_output=true",
@@ -84,12 +84,12 @@
       "type": "pickString",
       "description": "test分类",
       "options": [
+        "tset_time/time_warp_fmt_test",
         "rpc_server/base",
         "rpc_server/list_users",
         "kitsu_login",
         "kitsu_get_task"
-      ],
-      "default": "rpc_server/base"
+      ]
     }
   ]
 }

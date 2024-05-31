@@ -151,9 +151,9 @@ class DOODLE_CORE_API work_clock2 {
    * @brief 获取当前点所在时间段段的备注
    * @param in_min 开始时间
    * @param in_max 结束时间
-   * @return 可选段备注
+   * @return 时间段和相应的备注
    */
-  std::optional<std::string> get_time_info(const time_type& in_min, const time_type& in_max) const;
+  std::vector<std::tuple<time_type,time_type,std::string>> get_time_info(const time_type& in_min, const time_type& in_max) const;
   /**
    * 这个是添加额外的信息, 并不会加入到计算时间中, 只会添加一个额外的辅助信息时间
    * @param in_time

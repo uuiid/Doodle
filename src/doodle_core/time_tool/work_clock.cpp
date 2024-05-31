@@ -211,20 +211,20 @@ std::string work_clock2::debug_print() const {
   //
   //  return fmt::format("{}", interval_map_time_);
 }
-std::optional<std::string> work_clock2::get_time_info(const time_type& in_min, const time_type& in_max) const {
+std::vector<std::tuple<work_clock2::time_type, work_clock2::time_type, std::string>> work_clock2::get_time_info(
+    const time_type& in_min, const time_type& in_max
+) const {
   auto l_d = discrete_interval_time::closed(in_min, in_max);
-  // auto l_item                          = interval_map_time_ & l_d;
-  std::string l_r{};
+  std::vector<std::tuple<time_type, time_type, std::string>> l_r{};
   for (auto&& i : interval_map_time_) {
     auto l_t1 = i.first & l_d;
     if (!boost::icl::is_empty(l_t1))
-      l_r += fmt::format(
-          R"("{:%Y-%m-%d %H:%M} 到 {:%Y-%m-%d %H:%M}  信息 {}")", (++boost::icl::lower(i.first)),
-          boost::icl::upper(i.first), fmt::join(i.second, " ")
-      );
+      l_r.emplace_back(std::make_tuple(
+          (++boost::icl::lower(i.first)), boost::icl::upper(i.first), fmt::to_string(fmt::join(i.second, " "))
+      ));
   }
 
-  return l_r.empty() ? std::optional<std::string>{} : std::optional{l_r};
+  return l_r;
 }
 
 work_clock2& work_clock2::operator+=(const std::tuple<time_type, time_type>& in_time) {
