@@ -37,7 +37,10 @@ std::vector<work_xlsx_task_info> work_xlsx_task_info::select_all(
   for (auto&& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     work_xlsx_task_info l_info{};
     std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
-    l_info.year_month_ = chrono::year_month{chrono::year{l_row.year_c.value()}, chrono::month{l_row.month_c.value()}};
+    l_info.year_month_ = chrono::year_month{
+        chrono::year{boost::numeric_cast<std::int32_t>(l_row.year_c.value())},
+        chrono::month{boost::numeric_cast<std::uint32_t>(l_row.month_c.value())}
+    };
     l_info.start_time_ = l_row.start_time.value();
     l_info.end_time_   = l_row.end_time.value();
     l_info.duration_   = chrono::system_clock::duration{l_row.duration.value()};
