@@ -16,6 +16,30 @@
 namespace doodle {
 class time_point_wrap;
 
+template <typename TimePoint_T>
+auto parse_8601(const std::string& in_str, boost::system::error_code& ec) {
+  TimePoint_T l_time_point;
+  std::istringstream l_stream{in_str};
+  if (in_str.back() == 'Z') {
+    l_stream >> std::chrono::parse("%FT%TZ", l_time_point);
+  } else {
+    l_stream >> std::chrono::parse("%FT%T%Ez", l_time_point);
+  }
+  if (!l_stream) {
+    ec = boost::system::error_code{ERROR_CLUSTER_INVALID_STRING_FORMAT, boost::system::system_category()};
+  }
+  return l_time_point;
+}
+template <typename TimePoint_T>
+auto parse_8601(const std::string& in_str) {
+  boost::system::error_code l_ec;
+  auto l_time_point = parse_8601<TimePoint_T>(in_str, l_ec);
+  if (l_ec) {
+    throw std::runtime_error(l_ec.message());
+  }
+  return l_time_point;
+}
+
 namespace chrono_ns {
 using namespace std::chrono;
 namespace detail {
@@ -25,13 +49,15 @@ minutes get_local_bias();
 template <typename Duration_T>
 time_point<chrono::local_t, Duration_T> to_local_point(const time_point<system_clock, Duration_T>& in) {
   return time_point<chrono::local_t, Duration_T>{
-      std::chrono::round<Duration_T>(in - detail::get_local_bias()).time_since_epoch()};
+      std::chrono::round<Duration_T>(in - detail::get_local_bias()).time_since_epoch()
+  };
 }
 
 template <typename Duration_T>
 time_point<system_clock, Duration_T> to_sys_point(const time_point<chrono::local_t, Duration_T>& in) {
   return time_point<system_clock, Duration_T>{
-      std::chrono::round<Duration_T>(in + detail::get_local_bias()).time_since_epoch()};
+      std::chrono::round<Duration_T>(in + detail::get_local_bias()).time_since_epoch()
+  };
 }
 }  // namespace chrono_ns
 
