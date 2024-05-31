@@ -19,10 +19,7 @@ DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data);
 DOODLE_SQL_TABLE_IMP(com_entity, column::id, column::entity_id, column::com_hash, column::json_data);
 
 DOODLE_SQL_TABLE_IMP(usertab, column::id, column::entity_id, column::user_name, column::permission_group);
-DOODLE_SQL_TABLE_IMP(
-    work_task_info, column::id, column::entity_id, column::ref_id, column::task_name, column::region, column::abstract,
-    column::time_point
-);
+ 
 DOODLE_SQL_TABLE_IMP(episodes, column::id, column::entity_id, column::eps);
 DOODLE_SQL_TABLE_IMP(shot, column::id, column::entity_id, column::shot_int, column::shot_ab);
 DOODLE_SQL_TABLE_IMP(redirection_path_info, column::id, column::entity_id, column::redirection_file_name);

@@ -51,21 +51,6 @@ create table if not exists usertab
 
 create index if not exists usertab_id_index on usertab (id);
 
-CREATE TABLE IF NOT EXISTS work_task_info
-(
-    id         integer
-        primary key,
-    entity_id  integer,
-
-    user_id    text,
-    task_name  text,
-    region     text,
-    abstract   text,
-    time_point datetime,
-    foreign key (entity_id) references entity (id) on delete cascade on update cascade
-);
-create index if not exists work_task_info_index on work_task_info (id);
-create index if not exists work_task_info_index2 on work_task_info (entity_id);
 
 CREATE TABLE IF NOT EXISTS episodes
 (

@@ -40,20 +40,7 @@
 #include <sqlpp11/sqlpp11.h>
 using namespace doodle;
 using namespace doodle::database_n;
-BOOST_AUTO_TEST_CASE(test_sqlite3_create_table) {
-  doodle_lib l_lib{};
-  auto l_sql_conn = g_ctx().emplace<database_info>().get_connection();
-  tables::work_task_info l_tables;
-  //  l_sql_conn->execute(detail::create_table(l_tables)
-  //                          .foreign_column(l_tables.entity_id, tables::entity{}.id)
-  //                          .unique_column(l_tables.entity_id)
-  //                          .end());
-  //  l_sql_conn->execute(detail::create_index(l_tables.entity_id));
-  //  l_sql_conn->execute(detail::create_index(l_tables.id));
-  //  (*l_sql_conn)(sqlpp::select(sqlpp::all_of(l_tables)).from(l_tables).unconditionally());
-  //
-  //  (*l_sql_conn)(sqlpp::sqlite3::drop_if_exists_table(l_tables));
-}
+ 
 
 void create_test_database() {
   {
@@ -120,11 +107,6 @@ void create_test_database() {
     auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
     l_h.emplace<doodle::user>("test_user");
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::work_task_info>();
   }
   for (int l = 0; l < 10; ++l)
 

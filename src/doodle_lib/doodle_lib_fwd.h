@@ -49,7 +49,6 @@ class assets_file;
 class time_point_wrap;
 class comment;
 class season;
-class work_task_info;
 
 class core_sig;
 class opencv_read_player;

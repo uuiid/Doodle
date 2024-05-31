@@ -359,7 +359,7 @@ using obs_all = obs_main<
     std::tuple<
         doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap,
         doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, doodle::business::rules,
-        doodle::user, doodle::work_task_info, doodle::project, doodle::project_config::base_config,
+        doodle::user, doodle::project, doodle::project_config::base_config,
         doodle::file_association, file_association_ref, main_project, ue_main_map, maya_anim_file, scene_id,
         character_id, prop_id, rig_id, animation_id, simulation_id>>;
 }  // namespace doodle::database_n

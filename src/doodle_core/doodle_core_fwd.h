@@ -113,7 +113,6 @@ class doodle_error;
 class user_ref;
 class user;
 class project;
-class work_task_info;
 class comment;
 class assets;
 using maya_file            = detail::one_file_base<detail::maya_file_id>;
