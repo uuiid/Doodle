@@ -52,7 +52,7 @@ target_sources(
         computer.cpp
         server_task_info.cpp
         attendance.cpp
-        work_xlsx_task_info.h
+        work_xlsx_task_info.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
