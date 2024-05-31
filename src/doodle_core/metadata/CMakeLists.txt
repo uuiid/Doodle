@@ -1,5 +1,6 @@
 target_sources(
         doodle_core
+        
         PUBLIC
         assets.h
         assets_file.h
@@ -24,6 +25,7 @@ target_sources(
         computer.h
         server_task_info.h
         attendance.h
+        work_xlsx_task_info.h
 
         PRIVATE
         assets.cpp
@@ -50,6 +52,7 @@ target_sources(
         computer.cpp
         server_task_info.cpp
         attendance.cpp
+        work_xlsx_task_info.h
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
