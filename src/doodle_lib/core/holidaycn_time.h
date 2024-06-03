@@ -44,7 +44,7 @@ class holidaycn_time2 {
 
  private:
   std::vector<std::tuple<chrono::sys_days, chrono::sys_days, std::string>> holidaycn_list_rest;
-  std::vector<std::tuple<chrono::sys_days, chrono::sys_days, std::string>> holidaycn_list_work;
+  std::vector<std::tuple<chrono::sys_time_pos, chrono::sys_time_pos, std::string>> holidaycn_list_work;
 
   void load_year(chrono::year in_year);
   time_duration_vector work_time{};
@@ -53,7 +53,7 @@ class holidaycn_time2 {
   class info {
    public:
     std::string name;
-    chrono::local_days date;
+    chrono::sys_days date;
     bool is_odd_day;
 
     friend void to_json(nlohmann::json &in_j, const info &in_p);
