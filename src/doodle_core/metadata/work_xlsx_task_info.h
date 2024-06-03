@@ -7,7 +7,6 @@ class work_xlsx_task_info {
   work_xlsx_task_info()  = default;
   ~work_xlsx_task_info() = default;
   boost::uuids::uuid id_;
-  chrono::year_month year_month_;
   chrono::sys_time_pos start_time_;
   chrono::sys_time_pos end_time_;
   chrono::system_clock::duration duration_;

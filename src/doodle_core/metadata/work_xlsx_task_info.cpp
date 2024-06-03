@@ -25,8 +25,8 @@ DOODLE_SQL_COLUMN_IMP(index_col, sqlpp::integer, database_n::detail::can_be_null
 
 DOODLE_SQL_TABLE_IMP(work_xlsx_task_info_block_tab, tables::column::id, uuid, year_c, month_c, duration, user_ref_id);
 DOODLE_SQL_TABLE_IMP(
-    work_xlsx_task_info_block_sub_tab, tables::column::id, uuid, start_time, end_time, year_c, month_c, duration,
-    kitsu_task_ref_id, parent_id, index_col
+    work_xlsx_task_info_block_sub_tab, tables::column::id, uuid, start_time, end_time, duration, kitsu_task_ref_id,
+    parent_id, index_col
 );
 
 }  // namespace
@@ -65,10 +65,6 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
     for (auto&& l_row : in_comm(l_pre)) {
       work_xlsx_task_info l_info{};
       std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
-      l_info.year_month_ = chrono::year_month{
-          chrono::year{boost::numeric_cast<std::int32_t>(l_row.year_c.value())},
-          chrono::month{boost::numeric_cast<std::uint32_t>(l_row.month_c.value())}
-      };
       l_info.start_time_ = l_row.start_time.value();
       l_info.end_time_   = l_row.end_time.value();
       l_info.duration_   = chrono::system_clock::duration{l_row.duration.value()};
@@ -102,8 +98,6 @@ void work_xlsx_task_info_block::create_table(pooled_connection& in_comm) {
       uuid              BLOB       NOT NULL UNIQUE,
       start_time        TIMESTAMP,
       end_time          TIMESTAMP,
-      year_c            INTEGER,
-      month_c           INTEGER,
       duration          INTEGER,
       kitsu_task_ref_id BLOB,
       parent_id         INTEGER     REFERENCES work_xlsx_task_info_block_tab(id) ON DELETE CASCADE,
@@ -161,8 +155,7 @@ void work_xlsx_task_info_block::insert(
   work_xlsx_task_info_block_sub_tab l_sub_tab{};
   auto l_pre_sub = in_comm.prepare(sqlpp::insert_into(l_sub_tab).set(
       l_sub_tab.uuid = sqlpp::parameter(l_sub_tab.uuid), l_sub_tab.start_time = sqlpp::parameter(l_sub_tab.start_time),
-      l_sub_tab.end_time = sqlpp::parameter(l_sub_tab.end_time), l_sub_tab.year_c = sqlpp::parameter(l_sub_tab.year_c),
-      l_sub_tab.month_c           = sqlpp::parameter(l_sub_tab.month_c),
+      l_sub_tab.end_time          = sqlpp::parameter(l_sub_tab.end_time),
       l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
       l_sub_tab.kitsu_task_ref_id = sqlpp::parameter(l_sub_tab.kitsu_task_ref_id),
       l_sub_tab.parent_id         = sqlpp::parameter(l_sub_tab.parent_id),
@@ -173,8 +166,7 @@ void work_xlsx_task_info_block::insert(
       l_pre_sub.params.uuid       = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};
       l_pre_sub.params.start_time = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].start_time_);
       l_pre_sub.params.end_time   = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].end_time_);
-      l_pre_sub.params.year_c     = std::int32_t(in_task[i].task_info_[j].year_month_.year());
-      l_pre_sub.params.month_c    = std::uint32_t(in_task[i].task_info_[j].year_month_.month());
+
       l_pre_sub.params.duration   = in_task[i].task_info_[j].duration_.count();
       l_pre_sub.params.kitsu_task_ref_id = {
           in_task[i].task_info_[j].kitsu_task_ref_id_.begin(), in_task[i].task_info_[j].kitsu_task_ref_id_.end()
@@ -224,8 +216,6 @@ void work_xlsx_task_info_block::update(
                               l_sub_tab.uuid              = sqlpp::parameter(l_sub_tab.uuid),
                               l_sub_tab.start_time        = sqlpp::parameter(l_sub_tab.start_time),
                               l_sub_tab.end_time          = sqlpp::parameter(l_sub_tab.end_time),
-                              l_sub_tab.year_c            = sqlpp::parameter(l_sub_tab.year_c),
-                              l_sub_tab.month_c           = sqlpp::parameter(l_sub_tab.month_c),
                               l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
                               l_sub_tab.kitsu_task_ref_id = sqlpp::parameter(l_sub_tab.kitsu_task_ref_id),
                               l_sub_tab.parent_id         = sqlpp::parameter(l_sub_tab.parent_id),
@@ -235,8 +225,6 @@ void work_xlsx_task_info_block::update(
                           .do_update(
                               l_sub_tab.start_time        = sqlpp::sqlite3::excluded(l_sub_tab.start_time),
                               l_sub_tab.end_time          = sqlpp::sqlite3::excluded(l_sub_tab.end_time),
-                              l_sub_tab.year_c            = sqlpp::sqlite3::excluded(l_sub_tab.year_c),
-                              l_sub_tab.month_c           = sqlpp::sqlite3::excluded(l_sub_tab.month_c),
                               l_sub_tab.duration          = sqlpp::sqlite3::excluded(l_sub_tab.duration),
                               l_sub_tab.kitsu_task_ref_id = sqlpp::sqlite3::excluded(l_sub_tab.kitsu_task_ref_id),
                               l_sub_tab.parent_id         = sqlpp::sqlite3::excluded(l_sub_tab.parent_id),
@@ -247,8 +235,6 @@ void work_xlsx_task_info_block::update(
       l_pre_sub.params.uuid       = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};
       l_pre_sub.params.start_time = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].start_time_);
       l_pre_sub.params.end_time   = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].end_time_);
-      l_pre_sub.params.year_c     = std::int32_t(in_task[i].task_info_[j].year_month_.year());
-      l_pre_sub.params.month_c    = std::uint32_t(in_task[i].task_info_[j].year_month_.month());
       l_pre_sub.params.duration   = in_task[i].task_info_[j].duration_.count();
       l_pre_sub.params.kitsu_task_ref_id = {
           in_task[i].task_info_[j].kitsu_task_ref_id_.begin(), in_task[i].task_info_[j].kitsu_task_ref_id_.end()
