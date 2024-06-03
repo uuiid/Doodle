@@ -35,7 +35,7 @@ struct computing_time_post_req_data {
     std::istringstream l_year_month_stream(j.at("year_month").get<std::string>());
     l_year_month_stream >> chrono::parse("%Y-%m", p.year_month_);
     if (!l_year_month_stream) {
-      throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", j.at("year_month"));
+      throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
     }
     p.user_id = j.at("user_id").get<boost::uuids::uuid>();
     p.data    = j.at("data").get<std::vector<task_data>>();
@@ -60,12 +60,12 @@ struct computing_time_post_res_data {
 };
 
 class computing_time {
- public:
   user user_;
   entt::entity user_entity_;
   business::rules rules_;
   business::work_clock2 time_clock_{};
   http_session_data_ptr session_data_;
+  work_xlsx_task_info_block block_;
 
   std::shared_ptr<computing_time_post_req_data> data_;
 
@@ -140,17 +140,24 @@ class computing_time {
                               l_all_works.count() * (l_woeks1[i] / l_works_accumulate)
                           )}
         );
+        auto l_info          = time_clock_.get_time_info(l_begin_time, l_end);
+        std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
+
         l_block.task_info_.emplace_back(work_xlsx_task_info{
             .id_                = core_set::get_set().get_uuid(),
             .start_time_        = l_begin_time,
             .end_time_          = l_end,
             .duration_          = l_end - l_begin_time,
+            .remark_            = l_remark,
             .kitsu_task_ref_id_ = data_->data[i].task_id
         });
+        l_begin_time = l_end;
       }
     }
+    block_ = l_block;
   }
 
+ public:
   void run() {
     rules_ = business::rules::get_default();
     run_find_user();
@@ -160,6 +167,19 @@ class computing_time {
       feach_mobile();
     }
     create_time_clock();
+    computing_time_run();
+    nlohmann::json l_json;
+    l_json      = block_.task_info_;
+
+    auto& l_req = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.body() = l_json.dump();
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.prepare_payload();
+    session_data_->seed(std::move(l_response));
   }
 };
 
