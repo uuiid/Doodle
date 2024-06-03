@@ -17,11 +17,12 @@ DOODLE_SQL_COLUMN_IMP(year_c, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(month_c, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(duration, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(kitsu_task_ref_id, sqlpp::blob, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(sort_id_, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(user_ref_id, sqlpp::integer, database_n::detail::can_be_null);
 
 DOODLE_SQL_TABLE_IMP(
     work_xlsx_task_info_tab, tables::column::id, uuid, start_time, end_time, year_c, month_c, duration,
-    kitsu_task_ref_id, user_ref_id
+    kitsu_task_ref_id, sort_id_, user_ref_id
 );
 }  // namespace
 
@@ -44,6 +45,7 @@ std::vector<work_xlsx_task_info> work_xlsx_task_info::select_all(
     l_info.start_time_ = l_row.start_time.value();
     l_info.end_time_   = l_row.end_time.value();
     l_info.duration_   = chrono::system_clock::duration{l_row.duration.value()};
+    l_info.sort_id_    = l_row.sort_id_.value();
     if (!l_row.kitsu_task_ref_id.is_null())
       std::copy_n(
           l_row.kitsu_task_ref_id.value().begin(), l_info.kitsu_task_ref_id_.size(), l_info.kitsu_task_ref_id_.begin()
@@ -65,6 +67,7 @@ void work_xlsx_task_info::create_table(pooled_connection& in_comm) {
       month_c           INTEGER,
       duration          INTEGER,
       kitsu_task_ref_id BLOB,
+      sort_id_          INTEGER,
       user_ref_id       INTEGER     REFERENCES user_tab(id) ON DELETE CASCADE
     );
   )");
@@ -106,7 +109,7 @@ void work_xlsx_task_info::insert(
       l_tab.end_time = sqlpp::parameter(l_tab.end_time), l_tab.year_c = sqlpp::parameter(l_tab.year_c),
       l_tab.month_c = sqlpp::parameter(l_tab.month_c), l_tab.duration = sqlpp::parameter(l_tab.duration),
       l_tab.kitsu_task_ref_id = sqlpp::parameter(l_tab.kitsu_task_ref_id),
-      l_tab.user_ref_id       = sqlpp::parameter(l_tab.user_ref_id)
+      l_tab.sort_id_ = sqlpp::parameter(l_tab.sort_id_), l_tab.user_ref_id = sqlpp::parameter(l_tab.user_ref_id)
   ));
   for (const auto& l_info : in_task) {
     l_pre.params.uuid              = {l_info.id_.begin(), l_info.id_.end()};
@@ -115,6 +118,7 @@ void work_xlsx_task_info::insert(
     l_pre.params.year_c            = std::int32_t(l_info.year_month_.year());
     l_pre.params.month_c           = std::uint32_t(l_info.year_month_.month());
     l_pre.params.duration          = l_info.duration_.count();
+    l_pre.params.sort_id_          = l_info.sort_id_;
     l_pre.params.kitsu_task_ref_id = {l_info.kitsu_task_ref_id_.begin(), l_info.kitsu_task_ref_id_.end()};
     l_pre.params.user_ref_id       = l_user_uuid_maps.at(in_map_id.at(l_info.user_refs_));
     in_comm(l_pre);
@@ -127,7 +131,7 @@ void work_xlsx_task_info::update(pooled_connection& in_comm, const std::vector<w
           .set(
               l_tab.start_time = sqlpp::parameter(l_tab.start_time), l_tab.end_time = sqlpp::parameter(l_tab.end_time),
               l_tab.year_c = sqlpp::parameter(l_tab.year_c), l_tab.month_c = sqlpp::parameter(l_tab.month_c),
-              l_tab.duration          = sqlpp::parameter(l_tab.duration),
+              l_tab.duration = sqlpp::parameter(l_tab.duration), l_tab.sort_id_ = sqlpp::parameter(l_tab.sort_id_),
               l_tab.kitsu_task_ref_id = sqlpp::parameter(l_tab.kitsu_task_ref_id)
           )
           .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
@@ -140,6 +144,7 @@ void work_xlsx_task_info::update(pooled_connection& in_comm, const std::vector<w
     l_pre.params.duration          = l_info.duration_.count();
     l_pre.params.kitsu_task_ref_id = {l_info.kitsu_task_ref_id_.begin(), l_info.kitsu_task_ref_id_.end()};
     l_pre.params.uuid              = {l_info.id_.begin(), l_info.id_.end()};
+    l_pre.params.sort_id_          = l_info.sort_id_;
     in_comm(l_pre);
   }
 }

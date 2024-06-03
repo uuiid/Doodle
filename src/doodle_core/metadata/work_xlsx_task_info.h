@@ -10,15 +10,15 @@ class work_xlsx_task_info {
   ~work_xlsx_task_info() = default;
   boost::uuids::uuid id_;
   chrono::year_month year_month_;
-
   chrono::sys_time_pos start_time_;
   chrono::sys_time_pos end_time_;
   chrono::system_clock::duration duration_;
   
   entt::entity user_refs_;
+  std::size_t sort_id_{};
 
   boost::uuids::uuid kitsu_task_ref_id_;
-
+  // 传入user的uuid 和 实体对应数据
   static std::vector<work_xlsx_task_info> select_all(
       pooled_connection& in_comm, const std::map<boost::uuids::uuid, entt::entity>& in_map_id
   );
