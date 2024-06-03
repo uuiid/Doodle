@@ -32,5 +32,9 @@ class attendance {
   );
   static void update(pooled_connection& in_comm, const std::vector<attendance>& in_task);
   static void delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids);
+
+  // to_json
+  friend void to_json(nlohmann::json& j, const attendance& p);
+  // friend void from_json(const nlohmann::json& j, attendance& p);
 };
 }  // namespace doodle

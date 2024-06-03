@@ -144,4 +144,22 @@ void attendance::delete_by_ids(pooled_connection& in_comm, const std::vector<boo
     in_comm(l_pre);
   }
 }
+
+void to_json(nlohmann::json& j, const attendance& p) {
+  j["id"]          = fmt::to_string(p.id_);
+  j["start_time"]  = fmt::format("%FT%TZ", p.start_time_.get_sys_time());
+  j["end_time"]    = fmt::format("%FT%TZ", p.end_time_.get_sys_time());
+  j["remark"]      = p.remark_;
+  j["type"]        = static_cast<std::uint32_t>(p.type_);
+  
+}
+// void from_json(const nlohmann::json& j, attendance& p) {
+//   p.id_          = j.at("id").get<boost::uuids::uuid>();
+//   p.start_time_  = j.at("start_time").get<chrono::zoned_time<chrono::microseconds>>();
+//   p.end_time_    = j.at("end_time").get<chrono::zoned_time<chrono::microseconds>>();
+//   p.remark_      = j.at("remark").get<std::string>();
+//   p.type_        = static_cast<attendance_type_enum>(j.at("type").get<std::uint32_t>());
+//   p.user_ref_id_ = j.at("user_ref_id").get<entt::entity>();
+// }
+
 }  // namespace doodle
