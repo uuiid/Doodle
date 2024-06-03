@@ -181,5 +181,6 @@ class session_manager;
 
 namespace business {
 class work_clock;
+class work_clock2;
 }
 };  // namespace doodle
