@@ -18,6 +18,9 @@ DOODLE_SQL_COLUMN_IMP(month_c, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(duration, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(kitsu_task_ref_id, sqlpp::blob, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(sort_id_, sqlpp::integer, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(remark, sqlpp::text, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(user_remark, sqlpp::text, database_n::detail::can_be_null);
+
 DOODLE_SQL_COLUMN_IMP(user_ref_id, sqlpp::integer, database_n::detail::can_be_null);
 
 DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, database_n::detail::can_be_null);
@@ -26,7 +29,7 @@ DOODLE_SQL_COLUMN_IMP(index_col, sqlpp::integer, database_n::detail::can_be_null
 DOODLE_SQL_TABLE_IMP(work_xlsx_task_info_block_tab, tables::column::id, uuid, year_c, month_c, duration, user_ref_id);
 DOODLE_SQL_TABLE_IMP(
     work_xlsx_task_info_block_sub_tab, tables::column::id, uuid, start_time, end_time, duration, kitsu_task_ref_id,
-    parent_id, index_col
+    parent_id, index_col, remark, user_remark
 );
 
 }  // namespace
@@ -65,9 +68,11 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
     for (auto&& l_row : in_comm(l_pre)) {
       work_xlsx_task_info l_info{};
       std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
-      l_info.start_time_ = l_row.start_time.value();
-      l_info.end_time_   = l_row.end_time.value();
-      l_info.duration_   = chrono::system_clock::duration{l_row.duration.value()};
+      l_info.start_time_  = l_row.start_time.value();
+      l_info.end_time_    = l_row.end_time.value();
+      l_info.duration_    = chrono::system_clock::duration{l_row.duration.value()};
+      l_info.remark_      = l_row.remark.value();
+      l_info.user_remark_ = l_row.user_remark.value();
       if (!l_row.kitsu_task_ref_id.is_null())
         std::copy_n(
             l_row.kitsu_task_ref_id.value().begin(), l_info.kitsu_task_ref_id_.size(), l_info.kitsu_task_ref_id_.begin()
@@ -101,7 +106,9 @@ void work_xlsx_task_info_block::create_table(pooled_connection& in_comm) {
       duration          INTEGER,
       kitsu_task_ref_id BLOB,
       parent_id         INTEGER     REFERENCES work_xlsx_task_info_block_tab(id) ON DELETE CASCADE,
-      index_col         INTEGER
+      index_col         INTEGER,
+      remark            TEXT,
+      user_remark       TEXT
     );
   )");
   in_comm.execute(R"(
@@ -159,7 +166,9 @@ void work_xlsx_task_info_block::insert(
       l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
       l_sub_tab.kitsu_task_ref_id = sqlpp::parameter(l_sub_tab.kitsu_task_ref_id),
       l_sub_tab.parent_id         = sqlpp::parameter(l_sub_tab.parent_id),
-      l_sub_tab.index_col         = sqlpp::parameter(l_sub_tab.index_col)
+      l_sub_tab.index_col         = sqlpp::parameter(l_sub_tab.index_col),
+      l_sub_tab.remark            = sqlpp::parameter(l_sub_tab.remark),
+      l_sub_tab.user_remark       = sqlpp::parameter(l_sub_tab.user_remark)
   ));
   for (std::size_t i = 0; i < in_task.size(); ++i) {
     for (std::size_t j = 0; j < in_task[i].task_info_.size(); ++j) {
@@ -171,8 +180,11 @@ void work_xlsx_task_info_block::insert(
       l_pre_sub.params.kitsu_task_ref_id = {
           in_task[i].task_info_[j].kitsu_task_ref_id_.begin(), in_task[i].task_info_[j].kitsu_task_ref_id_.end()
       };
-      l_pre_sub.params.parent_id = l_ids[i];
-      l_pre_sub.params.index_col = j;
+      l_pre_sub.params.parent_id   = l_ids[i];
+      l_pre_sub.params.index_col   = j;
+      l_pre_sub.params.remark      = in_task[i].task_info_[j].remark_;
+      l_pre_sub.params.user_remark = in_task[i].task_info_[j].user_remark_;
+
       in_comm(l_pre_sub);
     }
   }
@@ -219,7 +231,9 @@ void work_xlsx_task_info_block::update(
                               l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
                               l_sub_tab.kitsu_task_ref_id = sqlpp::parameter(l_sub_tab.kitsu_task_ref_id),
                               l_sub_tab.parent_id         = sqlpp::parameter(l_sub_tab.parent_id),
-                              l_sub_tab.index_col         = sqlpp::parameter(l_sub_tab.index_col)
+                              l_sub_tab.index_col         = sqlpp::parameter(l_sub_tab.index_col),
+                              l_sub_tab.remark            = sqlpp::parameter(l_sub_tab.remark),
+                              l_sub_tab.user_remark       = sqlpp::parameter(l_sub_tab.user_remark)
                           )
                           .on_conflict(l_sub_tab.uuid)
                           .do_update(
@@ -228,7 +242,9 @@ void work_xlsx_task_info_block::update(
                               l_sub_tab.duration          = sqlpp::sqlite3::excluded(l_sub_tab.duration),
                               l_sub_tab.kitsu_task_ref_id = sqlpp::sqlite3::excluded(l_sub_tab.kitsu_task_ref_id),
                               l_sub_tab.parent_id         = sqlpp::sqlite3::excluded(l_sub_tab.parent_id),
-                              l_sub_tab.index_col         = sqlpp::sqlite3::excluded(l_sub_tab.index_col)
+                              l_sub_tab.index_col         = sqlpp::sqlite3::excluded(l_sub_tab.index_col),
+                              l_sub_tab.remark            = sqlpp::sqlite3::excluded(l_sub_tab.remark),
+                              l_sub_tab.user_remark       = sqlpp::sqlite3::excluded(l_sub_tab.user_remark)
                           ));
   for (std::size_t i = 0; i < in_task.size(); ++i) {
     for (std::size_t j = 0; j < in_task[i].task_info_.size(); ++j) {
@@ -241,6 +257,8 @@ void work_xlsx_task_info_block::update(
       };
       l_pre_sub.params.parent_id = l_ids[i];
       l_pre_sub.params.index_col = j;
+      l_pre_sub.params.remark    = in_task[i].task_info_[j].remark_;
+      l_pre_sub.params.user_remark = in_task[i].task_info_[j].user_remark_;
       in_comm(l_pre_sub);
     }
   }
