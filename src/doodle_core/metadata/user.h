@@ -33,6 +33,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend struct database_n::sql_com;
 
  public:
+  // 对应 kitsu 中的 user
   boost::uuids::uuid id_;
   // 手机号
   std::string mobile_;
