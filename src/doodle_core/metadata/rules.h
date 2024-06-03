@@ -69,6 +69,8 @@ class DOODLE_CORE_API rules {
   [[nodiscard("")]] const work_day_type& work_weekdays() const;
   [[nodiscard("")]] work_day_type& work_weekdays();
 
+  bool is_work_day(const chrono::weekday& in_week_day) const;
+
  private:
   friend struct ::fmt::formatter<::doodle::business::rules>;
   [[nodiscard]] std::string fmt_str() const;

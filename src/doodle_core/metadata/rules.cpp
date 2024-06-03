@@ -49,7 +49,7 @@ void from_json(const nlohmann::json& j, rules& p) {
 rules::rules() = default;
 void rules::work_weekdays(const rules::work_day_type& in_work_weekdays) { work_weekdays_p = in_work_weekdays; }
 const rules::work_day_type& rules::work_weekdays() const { return work_weekdays_p; }
-
+bool rules::is_work_day(const chrono::weekday& in_time) const { return work_weekdays_p[in_time.c_encoding()]; }
 const rules& rules::get_default() {
   static rules l_rules{};
   static std::once_flag l_f1;
