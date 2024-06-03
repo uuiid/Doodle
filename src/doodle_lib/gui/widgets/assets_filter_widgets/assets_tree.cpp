@@ -30,7 +30,8 @@
 namespace doodle::gui {
 
 constexpr const static ImGuiTreeNodeFlags assets_tree_node_base_flags{
-    ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth};
+    ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth
+};
 
 bool assets_tree::assets_tree_node::operator<(const doodle::gui::assets_tree::assets_tree_node &rhs) const {
   return name < rhs.name;
@@ -89,6 +90,17 @@ bool assets_tree::render() {
         }
       }
     }
+
+    if (auto l_drag_drop = dear::DragDropTarget{}) {
+      if (const auto *l_drop_it = ImGui::AcceptDragDropPayload(doodle_config::drop_ass_tree_node.data()); l_drop_it) {
+        auto *l_drop_it_ptr = reinterpret_cast<tree_type_t::iterator *>(l_drop_it->Data);
+        boost::asio::post(g_io_context(), [this, l_it_child = *l_drop_it_ptr, l_it_p = tree_.begin()]() {
+          move_node_(l_it_child, l_it_p);
+          DOODLE_LOG_INFO("添加子项目 {}", l_it_child->name.name);
+        });
+      }
+    }
+
     edit_data |= render_child(tree_.begin());
   }
   return edit_data;
@@ -255,11 +267,17 @@ void assets_tree::move_node_(
     const tree<assets_tree::assets_tree_node>::iterator &in_node,
     const tree<assets_tree::assets_tree_node>::iterator &in_parent
 ) {
-  auto l_it = tree_.append_child(in_parent);
-  tree_.move_ontop(l_it, in_node);
+  if (!in_node->handle) return;
+
+  if (!(tree_.begin() == in_parent && tree_.depth(in_node) == 1)) {
+    auto l_it = tree_.append_child(in_parent);
+    tree_.move_ontop(l_it, in_node);
+  }
   if (in_parent->handle && in_parent->handle.all_of<assets>()) {
     auto &l_ass = in_parent->handle.get<assets>();
     l_ass.add_child(in_node->handle);
+  } else {
+    in_node->handle.patch<assets>().set_parent({});
   }
 }
 }  // namespace doodle::gui

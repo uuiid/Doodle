@@ -51,6 +51,7 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
 
   void add_child(const entt::handle& in_child);
   void remove_child(const entt::handle& in_child);
+  void set_parent(const entt::handle& in_parent);
 
   bool operator<(const assets& in_rhs) const;
   bool operator!=(const assets& in_rhs) const;

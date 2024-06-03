@@ -34,6 +34,19 @@ void assets::remove_child(const entt::handle& in_child) {
     child_.erase(in_child);
   }
 }
+void assets::set_parent(const entt::handle& in_parent) {
+  auto l_this_handle = entt::handle{*g_reg(), entt::to_entity(*g_reg(), *this)};
+  auto l_old_parent  = parent_;
+
+  if (in_parent && in_parent.any_of<assets>()) {
+    if (l_old_parent && l_old_parent.any_of<assets>()) l_old_parent.patch<assets>().remove_child(l_this_handle);
+    parent_ = in_parent;
+    in_parent.patch<assets>().child_.insert(l_this_handle);
+  } else {
+    parent_ = entt::handle{};
+    if (l_old_parent && l_old_parent.any_of<assets>()) l_old_parent.patch<assets>().remove_child(l_this_handle);
+  }
+}
 
 std::set<entt::handle> assets::get_child() const { return child_; }
 
@@ -150,6 +163,5 @@ void assets::merge_assets_tree(const registry_ptr& in_registry_ptr) {
         ranges::to<std::map<entt::handle, entt::handle>>;
   } while (clear(l_tree.begin(), l_ass_map_ass_file));
 }
-
 
 }  // namespace doodle
