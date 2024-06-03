@@ -54,4 +54,38 @@ void holidaycn_time::set_clock(business::work_clock &in_work_clock) const {
   for (const auto &item : holidaycn_list_work) in_work_clock += item;
   for (const auto &item : holidaycn_list_rest) in_work_clock -= item;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void holidaycn_time2::load_year(chrono::year in_year) {
+  const auto l_file_name = fmt::format("{}.json", (std::int32_t)in_year);
+  if (!cmrc::doodle_holidaycn::get_filesystem().exists(l_file_name)) return;
+
+  auto l_file = cmrc::doodle_holidaycn::get_filesystem().open(l_file_name);
+
+  auto l_json = nlohmann::json::parse(std::string_view{l_file.begin(), l_file.size()});
+  for (const auto &i : l_json.at("days").get<std::vector<holidaycn_time::info>>()) {
+    if (i.is_odd_day)
+      holidaycn_list_rest.emplace_back(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name);
+    else
+      for (auto &&[beg, end] : work_time) {
+        holidaycn_list_work.emplace_back(time_point_wrap{i.date} + beg, time_point_wrap{i.date} + end, i.name);
+      }
+  };
+}
+
+holidaycn_time2::holidaycn_time2(time_duration_vector in_work_time) : work_time(std::move(in_work_time)) {
+  auto l_y = time_point_wrap{}.compose();
+
+  load_year(chrono::year{l_y.year});
+  load_year(chrono::year{l_y.year + 1});
+  load_year(chrono::year{l_y.year - 1});
+}
+
+holidaycn_time2::~holidaycn_time2() = default;
+void holidaycn_time2::set_clock(business::work_clock2 &in_work_clock) const {
+  for (const auto &item : holidaycn_list_work) in_work_clock += item;
+  for (const auto &item : holidaycn_list_rest) in_work_clock -= item;
+}
+
 }  // namespace doodle
