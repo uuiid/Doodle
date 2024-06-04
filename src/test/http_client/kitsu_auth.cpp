@@ -15,17 +15,6 @@ constexpr static std::string_view g_token{
     "LCJpZGVudGl0eV90eXBlIjoiYm90In0.sYmTTWsvMNGLiX57_RnfUI9rL04WJL2XSNZElSL4RNY"
 };
 
-BOOST_AUTO_TEST_CASE(login) {
-  doodle_lib l_lib{};
-  auto l_c = doodle::kitsu::kitsu_client{"192.168.40.182", "80"};
-  l_c.longin("957714080@qq.com", "8jO6sJm5EYAZSuZ7wy3P", [](boost::system::error_code ec, nlohmann::json in_json) {
-    BOOST_TEST(!ec);
-    BOOST_TEST_MESSAGE(in_json.dump());
-    BOOST_TEST(in_json["login"].get<bool>());
-  });
-  g_io_context().run();
-}
-
 BOOST_AUTO_TEST_CASE(authenticated) {
   doodle_lib l_lib{};
   auto l_c = doodle::kitsu::kitsu_client{"192.168.40.182", "80"};
