@@ -123,10 +123,12 @@ xlsx_line::xlsx_line(
   if (auto l_ass_h = in_handle.get<assets_file>().assets_attr()) {
     auto l_p = l_ass_h;
     //    k_ass_path = l_p ? l_p.get<assets>().p_path : ""s;
-    while (l_p) {
+    std::size_t l_count{};
+    while (l_p && l_count < 100) {
       k_ass_path = fmt::vformat(
           k_ass_path.empty() ? "{}{}" : "{}/{}", fmt::make_format_args(l_p.get<assets>().p_path, k_ass_path)
       );
+      ++l_count;
       if (auto l_pp = l_p.get<assets>().get_parent()) {
         l_p = l_pp;
       } else {
@@ -235,7 +237,8 @@ class xlsx_table_gui {
                  using time_rational = boost::rational<std::uint64_t>;
                  time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
                  return xlsx_line_statistics_gui{
-                     in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))};
+                     in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))
+                 };
                }
            ) |
            ranges::to_vector;
@@ -265,7 +268,8 @@ class xlsx_table_gui {
                    in_line.comment_info_,
                    in_line.file_path_,
                    in_line.name_attr_,
-                   in_line.cutoff_attr_};
+                   in_line.cutoff_attr_
+               };
              }) |
              ranges::to_vector;
     }
@@ -276,7 +280,8 @@ class xlsx_table_gui {
                    using time_rational = boost::rational<std::uint64_t>;
                    time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
                    return xlsx_line_statistics_gui{
-                       in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))};
+                       in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))
+                   };
                  }
              ) |
              ranges::to_vector;
@@ -477,7 +482,8 @@ void xlsx_export_widgets::generate_table() {
             p_i->use_first_as_project_name(),
             p_i->season_fmt_str(),
             p_i->episodes_fmt_str(),
-            p_i->shot_fmt_str()};
+            p_i->shot_fmt_str()
+        };
       }) |
       ranges::to_vector
   );
