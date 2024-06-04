@@ -1,4 +1,4 @@
-add_subdirectory(get)
+add_subdirectory(sqlite)
 
 target_sources(
         doodle_lib
