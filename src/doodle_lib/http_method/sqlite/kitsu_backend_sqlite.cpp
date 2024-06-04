@@ -17,7 +17,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
   struct sqlite_save_data {
     std::vector<T> save_list_{};
     std::vector<boost::uuids::uuid> destroy_list_{};
-    std::map<entt::entity, boost::uuids::uuid> map_id_{}; // 用于关联
+    std::map<entt::entity, boost::uuids::uuid> map_id_{};  // 用于关联
 
     void operator()(pooled_connection& in_db) const {
       auto l_indexs = T::filter_exist(in_db, save_list_);
@@ -30,7 +30,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
           l_insert_list.emplace_back(save_list_[i]);
         }
       }
-      T::insert(in_db, l_insert_list);
+      T::insert(in_db, l_insert_list, map_id_);
       T::update(in_db, l_update_list);
       T::delete_by_ids(in_db, destroy_list_);
     }
@@ -50,8 +50,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
   struct sqlite_save_data<user> {
     std::vector<user> save_list_{};
     std::vector<boost::uuids::uuid> destroy_list_{};
-    std::map<entt::entity, boost::uuids::uuid> self_map_id_{}; // 用于关联
-
+    std::map<entt::entity, boost::uuids::uuid> self_map_id_{};  // 用于关联
 
     void operator()(pooled_connection& in_db) const {
       auto l_indexs = user::filter_exist(in_db, save_list_);
