@@ -9,7 +9,7 @@ class work_xlsx_task_info {
   boost::uuids::uuid id_;
   chrono::sys_time_pos start_time_;
   chrono::sys_time_pos end_time_;
-  chrono::system_clock::duration duration_;
+  chrono::microseconds duration_;
   std::string remark_;
   std::string user_remark_;
 

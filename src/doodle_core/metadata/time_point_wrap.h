@@ -20,11 +20,11 @@ template <typename TimePoint_T>
 auto parse_8601(const std::string& in_str, boost::system::error_code& ec) {
   TimePoint_T l_time_point;
   std::istringstream l_stream{in_str};
-  if (in_str.back() == 'Z') {
-    l_stream >> std::chrono::parse("%FT%TZ", l_time_point);
-  } else {
-    l_stream >> std::chrono::parse("%FT%T%Ez", l_time_point);
-  }
+  l_stream >> std::chrono::parse("%FT%T", l_time_point);
+  // if (in_str.back() == 'Z') {
+  // } else {
+  //   l_stream >> std::chrono::parse("%FT%T%Ez", l_time_point);
+  // }
   if (!l_stream) {
     ec = boost::system::error_code{ERROR_CLUSTER_INVALID_STRING_FORMAT, boost::system::system_category()};
   }

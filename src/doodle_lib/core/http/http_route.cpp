@@ -27,7 +27,7 @@ http_function_ptr http_route::operator()(
     boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const http_session_data_ptr& in_handle
 ) const {
   auto l_iter = actions.find(in_verb);
-  if (l_iter == actions.end()) return nullptr;
+  if (l_iter == actions.end()) return not_function;
   for (const auto& i : l_iter->second) {
     if (auto&& [l_m, l_cat] = i->set_match_url(in_segment); l_m) {
       in_handle->capture_ = std::make_shared<capture_t>(std::move(l_cat));

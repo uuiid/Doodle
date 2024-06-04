@@ -22,9 +22,11 @@ struct computing_time_post_req_data {
     std::chrono::system_clock::time_point end_time;
     // form json
     friend void from_json(const nlohmann::json& j, task_data& p) {
-      p.task_id    = j.at("task_id").get<boost::uuids::uuid>();
-      p.start_time = parse_8601<std::chrono::system_clock::time_point>(j.at("start_time").get<std::string>());
-      p.end_time   = parse_8601<std::chrono::system_clock::time_point>(j.at("end_time").get<std::string>());
+      p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
+      auto l_start_time = parse_8601<std::chrono::system_clock::time_point>(j.at("start_date").get<std::string>());
+      auto l_end_time   = parse_8601<std::chrono::system_clock::time_point>(j.at("end_date").get<std::string>());
+      p.start_time      = std::max(l_start_time, l_end_time);
+      p.end_time        = std::min(l_start_time, l_end_time);
     }
   };
   chrono::year_month year_month_;
@@ -37,25 +39,8 @@ struct computing_time_post_req_data {
     if (!l_year_month_stream) {
       throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
     }
-    p.user_id = j.at("user_id").get<boost::uuids::uuid>();
+    p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
     p.data    = j.at("data").get<std::vector<task_data>>();
-  }
-};
-struct computing_time_post_res_data {
-  boost::uuids::uuid id_;
-  boost::uuids::uuid task_id_;
-  chrono::system_clock::time_point start_time_;
-  chrono::system_clock::time_point end_time_;
-  chrono::system_clock::duration duration_;
-  std::string remark_;
-  // to json
-  friend void to_json(nlohmann::json& j, const computing_time_post_res_data& p) {
-    j["id"]         = p.id_;
-    j["task_id"]    = p.task_id_;
-    j["start_time"] = fmt::format("{:%FT%TZ}", p.start_time_);
-    j["end_time"]   = fmt::format("{:%FT%TZ}", p.end_time_);
-    j["duration"]   = p.duration_.count();
-    j["remark"]     = p.remark_;
   }
 };
 
@@ -87,7 +72,7 @@ class computing_time {
 
   void create_time_clock() {
     chrono::sys_days l_begin_time{chrono::sys_days{data_->year_month_ / chrono::day{1}}},
-        l_end_time{chrono::sys_days{data_->year_month_ / chrono::last}};
+        l_end_time{chrono::sys_days{data_->year_month_ / chrono::last} + chrono::days{3}};
 
     for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
       // 加入工作日规定时间
@@ -147,7 +132,7 @@ class computing_time {
             .id_                = core_set::get_set().get_uuid(),
             .start_time_        = l_begin_time,
             .end_time_          = l_end,
-            .duration_          = l_end - l_begin_time,
+            .duration_          = chrono::duration_cast<chrono::microseconds>(l_end - l_begin_time),
             .remark_            = l_remark,
             .kitsu_task_ref_id_ = data_->data[i].task_id
         });
@@ -188,7 +173,7 @@ class computing_time {
 
 class computing_time_post {
  public:
-  computing_time_post()  = default;
+  computing_time_post() : executor_(g_io_context().get_executor()) {}
   ~computing_time_post() = default;
   using executor_type    = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
@@ -204,7 +189,7 @@ class computing_time_post {
     auto l_str = l_req->request_parser_->get().body();
     if (!nlohmann::json::accept(l_str)) {
       l_logger->log(log_loc(), level::err, "json parse error: {}", l_str);
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::system_category()};
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "不是json字符串");
       return;
     }
@@ -215,12 +200,12 @@ class computing_time_post {
       l_data = l_json.get<computing_time_post_req_data>();
     } catch (const nlohmann::json::exception& e) {
       l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::system_category()};
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     } catch (const std::exception& e) {
       l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::system_category()};
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     }
