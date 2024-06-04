@@ -4,6 +4,7 @@
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 
@@ -24,6 +25,9 @@ BOOST_AUTO_TEST_CASE(computing_time) {
     auto l_db_conn = g_pool_db().get_connection();
     l_save.init(l_db_conn);
   }
+  auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
+      std::make_shared<kitsu::kitsu_client>("192.168.40.182", "80")
+  );
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
   http::reg_computing_time(*l_rout_ptr);
