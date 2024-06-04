@@ -51,7 +51,7 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
         chrono::year{boost::numeric_cast<std::int32_t>(l_row.year_c.value())},
         chrono::month{boost::numeric_cast<std::uint32_t>(l_row.month_c.value())}
     };
-    l_info.duration_ = chrono::system_clock::duration{l_row.duration.value()};
+    l_info.duration_ = chrono::microseconds{l_row.duration.value()};
     if (!l_user_id_maps.contains(l_row.user_ref_id.value())) continue;
     l_info.user_refs_ = in_map_id.at(l_user_id_maps.at(l_row.user_ref_id.value()));
     l_ret.emplace_back(std::move(l_info));
@@ -70,7 +70,7 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
       std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
       l_info.start_time_  = l_row.start_time.value();
       l_info.end_time_    = l_row.end_time.value();
-      l_info.duration_    = chrono::system_clock::duration{l_row.duration.value()};
+      l_info.duration_    = chrono::microseconds{l_row.duration.value()};
       l_info.remark_      = l_row.remark.value();
       l_info.user_remark_ = l_row.user_remark.value();
       if (!l_row.kitsu_task_ref_id.is_null())
