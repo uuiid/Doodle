@@ -127,6 +127,7 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
+                "xlsx_table/computing_time",
                 "dingding/access_token",
                 "dingding/get_user_by_mobile",
                 "dingding/get_attendance_updatedata",
