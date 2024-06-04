@@ -46,28 +46,48 @@ struct computing_time_post_req_data {
 
 class computing_time {
   user user_;
-  entt::entity user_entity_;
+  entt::entity user_entity_{entt::null};
+
+  work_xlsx_task_info_block block_;
+  entt::entity block_entity_{entt::null};
+
   business::rules rules_;
   business::work_clock2 time_clock_{};
   http_session_data_ptr session_data_;
-  work_xlsx_task_info_block block_;
 
   std::shared_ptr<computing_time_post_req_data> data_;
 
-  void run_find_user() {
+  void find_user() {
     auto l_logger = session_data_->logger_;
     auto l_user   = std::as_const(*g_reg()).view<const user>();
     for (auto&& [e, l_u] : l_user.each()) {
       if (l_u.id_ == data_->user_id) {
-        user_ = l_u;
-        return;
+        user_        = l_u;
+        user_entity_ = e;
+        break;
       }
+    }
+    if (user_.id_ == boost::uuids::nil_uuid()) {
+      user_.id_ = data_->user_id;
+      feach_mobile();
     }
   }
   void feach_mobile() {
     // 创建用户
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<user>(user_);
+    user_entity_ = l_handle.entity();
+  }
+
+  void find_block() {
+    auto l_block = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
+    for (auto&& [e, l_b] : l_block.each()) {
+      if (l_b.year_month_ == data_->year_month_ && l_b.user_refs_ == user_entity_) {
+        block_        = l_b;
+        block_entity_ = e;
+        break;
+      }
+    }
   }
 
   void create_time_clock() {
@@ -100,7 +120,7 @@ class computing_time {
     );
 
     work_xlsx_task_info_block l_block{
-        .id_         = core_set::get_set().get_uuid(),
+        .id_         = block_.id_.is_nil() ? core_set::get_set().get_uuid() : block_.id_,
         // .task_info_  = std::vector<work_xlsx_task_info>{},
         .year_month_ = data_->year_month_,
         .user_refs_  = user_entity_,
@@ -140,6 +160,13 @@ class computing_time {
       }
     }
     block_ = l_block;
+
+    if (block_entity_ == entt::null) {
+      block_entity_ = g_reg()->create();
+      g_reg()->emplace<work_xlsx_task_info_block>(block_entity_, block_);
+    } else {
+      g_reg()->replace<work_xlsx_task_info_block>(block_entity_, block_);
+    }
   }
 
  public:
@@ -148,12 +175,9 @@ class computing_time {
     session_data_ = in_session_data;
 
     rules_        = business::rules::get_default();
-    run_find_user();
+    find_user();
+    find_block();
 
-    if (user_.id_ == boost::uuids::nil_uuid()) {
-      user_.id_ = data_->user_id;
-      feach_mobile();
-    }
     create_time_clock();
     computing_time_run();
     nlohmann::json l_json;
@@ -210,8 +234,8 @@ class computing_time_post {
       return;
     }
 
-    computing_time l_computing_time{};
-    l_computing_time.run(l_data, in_handle);
+    auto l_computing_time = std::make_shared<computing_time>();
+    l_computing_time->run(l_data, in_handle);
   }
 };
 void reg_computing_time(http_route& in_route) {
