@@ -41,47 +41,17 @@ class kitsu_client {
     http_client_core_ptr_->response_header_operator().kitsu_client_ptr_ = this;
   }
   ~kitsu_client() = default;
-
-  template <typename CompletionHandler>
-  void longin(std::string in_user, std::string in_password, CompletionHandler&& in_completion) {
-    boost::beast::http::request<boost::beast::http::string_body> req{
-        boost::beast::http::verb::post, "/api/auth/login", 11
-    };
-    req.body() = nlohmann::json{{"email", in_user}, {"password", in_password}}.dump();
-    http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
-        req, boost::asio::bind_executor(
-                 g_io_context().get_executor(),
-                 [l_com = std::move(in_completion),
-                  this](boost::system::error_code ec, boost::beast::http::response<http::basic_json_body> res) {
-                   if (ec) {
-                     http_client_core_ptr_->logger()->log(log_loc(), level::err, "login failed: {}", ec.message());
-                     l_com(ec, nlohmann::json{});
-                     return;
-                   }
-
-                   if (res.result() != boost::beast::http::status::ok) {
-                     http_client_core_ptr_->logger()->log(
-                         log_loc(), level::err, "login failed: {}", magic_enum::enum_integer(res.result())
-                     );
-                     l_com(ec, nlohmann::json{});
-                     return;
-                   }
-                   auto l_json = res.body();
-                   if (l_json["login"].get<bool>()) {
-                     http_client_core_ptr_->logger()->info("login success");
-                     access_token_ = l_json["access_token"].get<std::string>();
-                   }
-                   l_com(ec, std::move(l_json));
-                 }
-             )
-    );
-  }
+ 
   template <typename CompletionHandler>
   auto authenticated(std::string in_token, CompletionHandler&& in_completion) {
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::get, "/api/auth/authenticated", 11
     };
     access_token_ = in_token;
+
+    boost::asio::async_initiate<void(boost::system::error_code, nlohmann::json)>(
+      
+    );
 
     http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
         req,
@@ -105,7 +75,7 @@ class kitsu_client {
               }
 
               auto l_json_str = res.body();
-              if(!nlohmann::json::accept(l_json_str)) {
+              if (!nlohmann::json::accept(l_json_str)) {
                 http_client_core_ptr_->logger()->log(log_loc(), level::err, "authenticated failed: {}", l_json_str);
                 ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
                 l_com(ec, nlohmann::json{});
@@ -144,7 +114,7 @@ class kitsu_client {
                 return;
               }
 
-              if(!nlohmann::json::accept(res.body())) {
+              if (!nlohmann::json::accept(res.body())) {
                 http_client_core_ptr_->logger()->log(log_loc(), level::err, "get task failed: {}", res.body());
                 ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
                 l_com(ec, nlohmann::json{});
