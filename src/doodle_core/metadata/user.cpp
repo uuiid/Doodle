@@ -133,6 +133,18 @@ std::vector<user> user::select_all(pooled_connection& in_comm) {
   }
   return l_r;
 }
+
+std::map<std::int64_t, boost::uuids::uuid> user::select_all_map_id(pooled_connection& in_comm) {
+  user_tab l_tab{};
+  std::map<std::int64_t, boost::uuids::uuid> l_r{};
+  for (const auto& l_row : in_comm(sqlpp::select(l_tab.id, l_tab.uuid).from(l_tab).unconditionally())) {
+    boost::uuids::uuid l_uuid{};
+    std::copy_n(l_row.uuid.value().begin(), l_uuid.size(), l_uuid.begin());
+    l_r.emplace(l_row.id.value(), l_uuid);
+  }
+  return l_r;
+}
+
 void user::create_table(pooled_connection& in_comm) {
   in_comm.execute(R"(
     CREATE TABLE IF NOT EXISTS user_tab (
