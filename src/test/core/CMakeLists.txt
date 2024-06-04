@@ -12,6 +12,7 @@ target_sources(test_main
         abc.cpp
         run_process_v2.cpp
         auto_light.cpp
+        xlsx_table.cpp
 )
 
 target_link_libraries(
