@@ -101,7 +101,7 @@ void sql_com<doodle::assets>::select(
     if (in_handle.find(l_id) != in_handle.end()) {
       l_assets.emplace_back(std::move(l_s));
       l_entts.emplace_back(in_handle.at(l_id));
-      if (auto l_p_id = row.parent_id.value(); !row.parent_id.is_null() && in_handle.find(l_p_id) != in_handle.end()) {
+      if (auto l_p_id = row.parent_id.value(); !row.parent_id.is_null() && in_handle.contains(l_p_id)) {
         l_ass_parent.emplace(in_handle.at(l_id), in_handle.at(l_p_id));
       }
       // DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
