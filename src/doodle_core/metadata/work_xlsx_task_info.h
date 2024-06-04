@@ -14,6 +14,10 @@ class work_xlsx_task_info {
   std::string user_remark_;
 
   boost::uuids::uuid kitsu_task_ref_id_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const work_xlsx_task_info& p);
+
 };
 
 class work_xlsx_task_info_block {
