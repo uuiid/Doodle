@@ -158,8 +158,11 @@ class computing_time {
   }
 
  public:
-  void run() {
-    rules_ = business::rules::get_default();
+  void run(computing_time_post_req_data& in_data, const http_session_data_ptr& in_session_data) {
+    data_         = std::make_shared<computing_time_post_req_data>(std::move(in_data));
+    session_data_ = in_session_data;
+
+    rules_        = business::rules::get_default();
     run_find_user();
 
     if (user_.id_ == boost::uuids::nil_uuid()) {
@@ -221,6 +224,9 @@ class computing_time_post {
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     }
+
+    computing_time l_computing_time{};
+    l_computing_time.run(l_data, in_handle);
   }
 };
 void reg_computing_time(http_route& in_route) {
