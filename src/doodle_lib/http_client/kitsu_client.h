@@ -41,7 +41,9 @@ class kitsu_client {
     http_client_core_ptr_->response_header_operator().kitsu_client_ptr_ = this;
   }
   ~kitsu_client() = default;
- 
+
+ inline void set_access_token(std::string in_token) { access_token_ = std::move(in_token); }
+
   template <typename CompletionHandler>
   auto authenticated(std::string in_token, CompletionHandler&& in_completion) {
     boost::beast::http::request<boost::beast::http::string_body> req{
@@ -49,9 +51,9 @@ class kitsu_client {
     };
     access_token_ = in_token;
 
-    boost::asio::async_initiate<void(boost::system::error_code, nlohmann::json)>(
-      
-    );
+    // boost::asio::async_initiate<void(boost::system::error_code, nlohmann::json)>(
+
+    // );
 
     http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
         req,
@@ -67,7 +69,8 @@ class kitsu_client {
 
               if (res.result() != boost::beast::http::status::ok) {
                 http_client_core_ptr_->logger()->log(
-                    log_loc(), level::err, "authenticated failed: {}", magic_enum::enum_integer(res.result())
+                    log_loc(), level::err, "authenticated failed: {} {}", magic_enum::enum_integer(res.result()),
+                    res.body()
                 );
                 ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
                 l_com(ec, nlohmann::json{});
@@ -131,7 +134,7 @@ template <typename T, typename ResponeType>
 void kitsu_request_header_operator::operator()(T* in_http_client_core, ResponeType& in_req) {
   in_req.set(boost::beast::http::field::accept, "application/json");
   in_req.set(boost::beast::http::field::content_type, "application/json");
-  in_req.set(boost::beast::http::field::host, boost::asio::ip::host_name());
+  in_req.set(boost::beast::http::field::host, kitsu_client_ptr_->http_client_core_ptr_->server_ip());
   in_req.set(boost::beast::http::field::authorization, "Bearer " + kitsu_client_ptr_->access_token_);
   if (!kitsu_client_ptr_->session_cookie_.empty()) {
     in_req.set(boost::beast::http::field::cookie, kitsu_client_ptr_->session_cookie_ + ";");
