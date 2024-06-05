@@ -60,11 +60,14 @@ BOOST_AUTO_TEST_CASE(get_user) {
   doodle_lib l_lib{};
   auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");
   l_c->set_access_token(std::string{g_token});
-  l_c->get_user("69a8d093-dcab-4890-8f9d-c51ef065d03b", [](boost::system::error_code ec, nlohmann::json in_json) {
-    BOOST_TEST(!ec);
-    default_logger_raw()->log(log_loc(), level::info, in_json.dump());
-    BOOST_TEST_MESSAGE(in_json.dump());
-  });
+  l_c->get_user(
+      boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b"),
+      [](boost::system::error_code ec, nlohmann::json in_json) {
+        BOOST_TEST(!ec);
+        default_logger_raw()->log(log_loc(), level::info, in_json.dump());
+        BOOST_TEST_MESSAGE(in_json.dump());
+      }
+  );
 
   g_io_context().run();
 }
