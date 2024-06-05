@@ -10,9 +10,9 @@ using namespace doodle;
 BOOST_AUTO_TEST_SUITE(kitsu)
 constexpr static std::string_view g_token{
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-    "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNjc5NDgzNywianRpIjoiMzkxNTFiNjEtNzJkZC00MGE3LTk3MmMtMGJhYWIzMmUwMzY4IiwidHlwZSI6Im"
-    "FjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNjc5NDgzNywiZXhwIjoxNzY0NjMzNjAw"
-    "LCJpZGVudGl0eV90eXBlIjoiYm90In0.sYmTTWsvMNGLiX57_RnfUI9rL04WJL2XSNZElSL4RNY"
+    "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlwZSI6Im"
+    "FjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjoxNzY0NjMzNjAw"
+    "LCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684"
 };
 
 BOOST_AUTO_TEST_CASE(authenticated) {
@@ -38,6 +38,20 @@ BOOST_AUTO_TEST_CASE(get_task) {
       BOOST_TEST_MESSAGE(in_json.dump());
     });
   });
+  g_io_context().run();
+}
+
+// 直接获取task
+BOOST_AUTO_TEST_CASE(get_task_directly) {
+  doodle_lib l_lib{};
+  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");
+  l_c->set_access_token(std::string{g_token});
+  l_c->get_task("cde5305c-678c-4a3d-8baf-79cddfc9e9c3", [](boost::system::error_code ec, nlohmann::json in_json) {
+    BOOST_TEST(!ec);
+    default_logger_raw()->log(log_loc(), level::info, in_json.dump());
+    BOOST_TEST_MESSAGE(in_json.dump());
+  });
+ 
   g_io_context().run();
 }
 
