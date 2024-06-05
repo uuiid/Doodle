@@ -219,6 +219,8 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
     } else {
       g_reg()->replace<work_xlsx_task_info_block>(block_entity_, block_);
     }
+    
+    g_reg()->patch<user>(user_entity_).task_block_[data_->year_month_] = block_entity_;
   }
 
   void run_2() {
