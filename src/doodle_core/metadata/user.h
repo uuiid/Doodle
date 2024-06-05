@@ -40,6 +40,9 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   // 钉钉id
   std::string dingding_id_;
 
+  // 引用的task
+  std::map<chrono::year_month, entt::entity> task_block_;
+
   user();
 
   power_enum power{power_enum::none};
