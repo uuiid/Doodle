@@ -76,6 +76,10 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
               g_io_context(), boost::beast::bind_front_handler(&computing_time::do_feach_mobile, shared_from_this())
           )
       );
+    } else {
+      boost::asio::post(boost::asio::bind_executor(
+          g_io_context(), boost::beast::bind_front_handler(&computing_time::run_2, shared_from_this())
+      ));
     }
   }
   void do_feach_mobile(boost::system::error_code ec, nlohmann::json l_json) {
