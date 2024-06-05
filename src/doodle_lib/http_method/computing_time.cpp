@@ -67,7 +67,7 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
         break;
       }
     }
-    if (user_.id_ == boost::uuids::nil_uuid()) {
+    if (user_.id_ == boost::uuids::nil_uuid() || user_.mobile_.empty()) {
       user_.id_           = data_->user_id;
       auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
       l_kitsu_client->get_user(
