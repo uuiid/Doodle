@@ -6,6 +6,7 @@
 #include "doodle_lib/core/http/http_session_data.h"
 #include "doodle_lib/core/http/http_websocket_data.h"
 
+#include <boost/rational.hpp>
 //
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
@@ -56,8 +57,14 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   business::rules rules_;
   business::work_clock2 time_clock_{};
   http_session_data_ptr session_data_;
-
+  // post 使用
   std::shared_ptr<computing_time_post_req_data> data_;
+
+  // patch 使用
+
+  boost::uuids::uuid user_id_{}, task_id_{};
+  chrono::year_month year_month_{};
+  chrono::microseconds duration_{};
 
   void find_user() {
     auto l_logger = session_data_->logger_;
@@ -214,9 +221,6 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       }
     }
     block_ = l_block;
-    boost::asio::post(
-        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
-    );
   }
 
   void create_block() {
@@ -234,6 +238,9 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     find_block();
     create_time_clock();
     computing_time_run();
+    boost::asio::post(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
+    );
     nlohmann::json l_json;
     l_json      = block_.task_info_;
 
@@ -248,12 +255,114 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     session_data_->seed(std::move(l_response));
   }
 
+  ///////////////////////////////////////
+  void find_data() {
+    auto l_logger = session_data_->logger_;
+    auto l_user   = std::as_const(*g_reg()).view<const user>();
+    for (auto&& [e, l_u] : l_user.each()) {
+      if (l_u.id_ == user_id_) {
+        user_        = l_u;
+        user_entity_ = e;
+        break;
+      }
+    }
+    if (user_entity_ == entt::null) {
+      l_logger->log(log_loc(), level::err, "user {} not found", user_id_);
+      session_data_->seed_error(
+          boost::beast::http::status::not_found, boost::system::errc::make_error_code(boost::system::errc::no_link),
+          fmt::format("user {} not found", user_id_)
+      );
+      return;
+    }
+
+    if (user_.task_block_.contains(year_month_))
+      block_ = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(user_.task_block_.at(year_month_));
+    else {
+      auto l_year_month_str =
+          fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()});
+
+      l_logger->log(log_loc(), level::err, "user {} year_month {} not found", user_id_, l_year_month_str);
+      session_data_->seed_error(
+          boost::beast::http::status::not_found, boost::system::errc::make_error_code(boost::system::errc::no_link),
+          fmt::format("user {} year_month {} not found", user_id_, l_year_month_str)
+      );
+      return;
+    }
+  }
+
+  void patch_time() {
+    auto l_logger  = session_data_->logger_;
+    auto l_block   = block_;
+
+    auto l_task_it = std::find_if(l_block.task_info_.begin(), l_block.task_info_.end(), [this](const auto& l_task) {
+      return l_task.kitsu_task_ref_id_ == task_id_;
+    });
+    if (l_task_it == l_block.task_info_.end()) {
+      l_logger->log(log_loc(), level::err, "task {} not found", task_id_);
+      session_data_->seed_error(
+          boost::beast::http::status::not_found, boost::system::errc::make_error_code(boost::system::errc::no_link),
+          fmt::format("task {} not found", task_id_)
+      );
+      return;
+    }
+    using rational_int = boost::rational<std::uint64_t>;
+    rational_int l_duration_int{
+        (l_task_it->duration_ - duration_).count(), boost::numeric_cast<std::uint64_t>(l_block.task_info_.size() - 1)
+    };
+    // 调整差值
+    l_task_it->duration_ = duration_;
+    for (auto&& l_task : l_block.task_info_) {
+      if (l_task.kitsu_task_ref_id_ != task_id_) {
+        l_task.duration_ += chrono::microseconds{boost::rational_cast<std::int64_t>(l_duration_int)};
+      }
+    }
+
+    // 计算时间开始结束
+    chrono::sys_time_pos l_begin_time{chrono::sys_days{data_->year_month_ / chrono::day{1}}};
+    for (auto i = 0; i < l_block.task_info_.size(); ++i) {
+      auto l_end                        = time_clock_.next_time(l_begin_time, l_block.task_info_[i].duration_);
+      l_block.task_info_[i].start_time_ = l_begin_time;
+      l_block.task_info_[i].end_time_   = l_end;
+      l_begin_time                      = l_end;
+    }
+
+    nlohmann::json l_json;
+    l_json      = l_block.task_info_;
+
+    auto& l_req = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.body() = l_json.dump();
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.prepare_payload();
+    session_data_->seed(std::move(l_response));
+  }
+
  public:
-  void run_post(computing_time_post_req_data& in_data, const http_session_data_ptr& in_session_data) {
-    data_         = std::make_shared<computing_time_post_req_data>(std::move(in_data));
-    session_data_ = in_session_data;
-    rules_        = business::rules::get_default();
+  explicit computing_time_post_impl(http_session_data_ptr in_session_data)
+      : session_data_(std::move(in_session_data)) {}
+
+  void run_post(computing_time_post_req_data& in_data) {
+    data_  = std::make_shared<computing_time_post_req_data>(std::move(in_data));
+    rules_ = business::rules::get_default();
     find_user();
+  }
+
+  void run_patch(
+      boost::uuids::uuid in_user_id, boost::uuids::uuid in_task_id, chrono::year_month in_year_month,
+      chrono::microseconds in_duration
+  ) {
+    user_id_    = in_user_id;
+    task_id_    = in_task_id;
+    year_month_ = in_year_month;
+    duration_   = in_duration;
+
+    rules_      = business::rules::get_default();
+    find_data();
+    create_time_clock();
+    patch_time();
   }
 };
 
@@ -300,8 +409,8 @@ class computing_time_post {
       return;
     }
 
-    auto l_computing_time = std::make_shared<computing_time_post_impl>();
-    l_computing_time->run_post(l_data, in_handle);
+    auto l_computing_time = std::make_shared<computing_time_post_impl>(in_handle);
+    l_computing_time->run_post(l_data);
   }
 };
 
@@ -392,17 +501,27 @@ class computing_time_patch {
     auto l_task_id_str    = in_handle->capture_->get("task_id");
     boost::uuids::uuid l_user_id{}, l_task_id{};
     chrono::year_month l_year_month{};
+    chrono::microseconds l_duration{};
     try {
       l_task_id = boost::lexical_cast<boost::uuids::uuid>(l_task_id_str);
       l_user_id = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
       std::istringstream l_year_month_stream{l_year_month_str};
       l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
+      l_duration = l_json["duration"].get<chrono::microseconds>();
+    } catch (const nlohmann::json::exception& e) {
+      l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
     } catch (const std::exception& e) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     }
+
+    auto l_computing_time = std::make_shared<computing_time_post_impl>(in_handle);
+    l_computing_time->run_patch(l_user_id, l_task_id, l_year_month, l_duration);
   }
 };
 
