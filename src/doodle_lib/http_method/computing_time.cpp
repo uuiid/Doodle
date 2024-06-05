@@ -40,7 +40,7 @@ struct computing_time_post_req_data {
     //   throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
     // }
     // p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
-    p.data    = j.at("data").get<std::vector<task_data>>();
+    p.data = j.at("data").get<std::vector<task_data>>();
   }
 };
 
@@ -310,17 +310,17 @@ class computing_time_get {
       in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
       return;
     }
-    auto& l_req  = in_handle->request_parser_->get();
-    auto l_url   = in_handle->url_;
+    auto& l_req           = in_handle->request_parser_->get();
+    auto l_user_str       = in_handle->capture_->get<std::string>("user_id");
+    auto l_year_month_str = in_handle->capture_->get<std::string>("year_month");
 
-    auto l_param = l_url.params();
-    if (!l_param.contains("user_id")) {
+    if (!l_user_str) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", "user_id is empty");
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "user_id is empty");
       return;
     }
-    if (!l_param.contains("year_month")) {
+    if (!l_year_month_str) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", "year_month is empty");
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "year_month is empty");
@@ -330,8 +330,8 @@ class computing_time_get {
     boost::uuids::uuid l_user_id{};
     chrono::year_month l_year_month{};
     try {
-      l_user_id = boost::lexical_cast<boost::uuids::uuid>((*l_param.find("user_id")).value);
-      std::istringstream l_year_month_stream((*l_param.find("year_month")).value);
+      l_user_id = boost::lexical_cast<boost::uuids::uuid>(*l_user_str);
+      std::istringstream l_year_month_stream{*l_year_month_str};
       l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
     } catch (const std::exception& e) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
