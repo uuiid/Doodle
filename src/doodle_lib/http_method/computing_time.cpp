@@ -44,7 +44,7 @@ struct computing_time_post_req_data {
   }
 };
 
-class computing_time {
+class computing_time : public std::enable_shared_from_this<computing_time> {
   user user_;
   entt::entity user_entity_{entt::null};
 
@@ -68,15 +68,37 @@ class computing_time {
       }
     }
     if (user_.id_ == boost::uuids::nil_uuid()) {
-      user_.id_ = data_->user_id;
-      feach_mobile();
+      user_.id_           = data_->user_id;
+      auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
+      l_kitsu_client->get_user(
+          user_.id_, boost::beast::bind_front_handler(&computing_time::do_feach_mobile, shared_from_this())
+      );
     }
   }
-  void feach_mobile() {
+  void do_feach_mobile(boost::system::error_code ec, nlohmann::json l_json) {
+    auto l_logger = session_data_->logger_;
+    if (ec) {
+      l_logger->log(log_loc(), level::err, "get user failed: {}", ec.message());
+      session_data_->seed_error(boost::beast::http::status::internal_server_error, ec);
+      return;
+    }
+    try {
+      user_.mobile_ = l_json["phone"].get<std::string>();
+    } catch (const nlohmann::json::exception& e) {
+      l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
+      session_data_->seed_error(boost::beast::http::status::internal_server_error, ec, e.what());
+      return;
+    } catch (const std::exception& e) {
+      l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
+      session_data_->seed_error(boost::beast::http::status::internal_server_error, ec, e.what());
+      return;
+    }
+
     // 创建用户
     entt::handle l_handle{*g_reg(), g_reg()->create()};
     l_handle.emplace<user>(user_);
     user_entity_ = l_handle.entity();
+    run_2();
   }
 
   void find_block() {
@@ -169,15 +191,8 @@ class computing_time {
     }
   }
 
- public:
-  void run(computing_time_post_req_data& in_data, const http_session_data_ptr& in_session_data) {
-    data_         = std::make_shared<computing_time_post_req_data>(std::move(in_data));
-    session_data_ = in_session_data;
-
-    rules_        = business::rules::get_default();
-    find_user();
+  void run_2() {
     find_block();
-
     create_time_clock();
     computing_time_run();
     nlohmann::json l_json;
@@ -192,6 +207,15 @@ class computing_time {
     l_response.keep_alive(l_req.keep_alive());
     l_response.prepare_payload();
     session_data_->seed(std::move(l_response));
+  }
+
+ public:
+  void run(computing_time_post_req_data& in_data, const http_session_data_ptr& in_session_data) {
+    data_         = std::make_shared<computing_time_post_req_data>(std::move(in_data));
+    session_data_ = in_session_data;
+
+    rules_        = business::rules::get_default();
+    find_user();
   }
 };
 
