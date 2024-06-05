@@ -131,12 +131,12 @@ class kitsu_client {
   }
 
   template <typename CompletionHandler>
-  void get_user(std::string in_uuid, CompletionHandler&& in_completio) {
+  void get_user(boost::uuids::uuid in_uuid, CompletionHandler&& in_completio) {
     boost::beast::http::request<boost::beast::http::empty_body> req{
         boost::beast::http::verb::get, fmt::format("/api/data/persons/{}", in_uuid), 11
     };
 
-    return boost::asio::async_initiate<CompletionHandler,void(boost::system::error_code, nlohmann::json)>(
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
         [this](auto in_handler, auto in_self, auto in_req) {
           in_self->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
               in_req,
@@ -202,4 +202,7 @@ void kitsu_response_header_operator::operator()(T* in_http_client_core, ResponeT
     }
   }
 }
+
+using kitsu_client_ptr = std::shared_ptr<kitsu_client>;
+
 }  // namespace doodle::kitsu
