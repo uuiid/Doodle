@@ -95,6 +95,7 @@
         "rpc_server/list_users",
         "kitsu/authenticated",
         "kitsu/get_task_directly",
+        "kitsu/get_user",
         "kitsu/get_task"
       ]
     }

@@ -42,7 +42,7 @@ class kitsu_client {
   }
   ~kitsu_client() = default;
 
- inline void set_access_token(std::string in_token) { access_token_ = std::move(in_token); }
+  inline void set_access_token(std::string in_token) { access_token_ = std::move(in_token); }
 
   template <typename CompletionHandler>
   auto authenticated(std::string in_token, CompletionHandler&& in_completion) {
@@ -85,7 +85,7 @@ class kitsu_client {
                 return;
               }
               auto l_json = nlohmann::json::parse(l_json_str);
-              l_com(ec, std::move(l_json));
+              boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
             }
         )
     );
@@ -124,9 +124,55 @@ class kitsu_client {
                 return;
               }
               auto l_json = nlohmann::json::parse(res.body());
-              l_com(ec, l_json);
+              boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
             }
         )
+    );
+  }
+
+  template <typename CompletionHandler>
+  void get_user(std::string in_uuid, CompletionHandler&& in_completio) {
+    boost::beast::http::request<boost::beast::http::empty_body> req{
+        boost::beast::http::verb::get, fmt::format("/api/data/persons/{}", in_uuid), 11
+    };
+
+    return boost::asio::async_initiate<CompletionHandler,void(boost::system::error_code, nlohmann::json)>(
+        [this](auto in_handler, auto in_self, auto in_req) {
+          in_self->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+              in_req,
+              boost::asio::bind_executor(
+                  g_io_context().get_executor(),
+                  [l_com = std::move(in_handler), this](
+                      boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res
+                  ) {
+                    if (ec) {
+                      http_client_core_ptr_->logger()->log(log_loc(), level::err, "get user failed: {}", ec.message());
+                      l_com(ec, nlohmann::json{});
+                      return;
+                    }
+
+                    if (res.result() != boost::beast::http::status::ok) {
+                      http_client_core_ptr_->logger()->log(
+                          log_loc(), level::err, "get user failed: {}", magic_enum::enum_integer(res.result())
+                      );
+                      ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+                      l_com(ec, nlohmann::json{});
+                      return;
+                    }
+
+                    if (!nlohmann::json::accept(res.body())) {
+                      http_client_core_ptr_->logger()->log(log_loc(), level::err, "get user failed: {}", res.body());
+                      ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+                      l_com(ec, nlohmann::json{});
+                      return;
+                    }
+                    auto l_json = nlohmann::json::parse(res.body());
+                    boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
+                  }
+              )
+          );
+        },
+        in_completio, this, req
     );
   }
 };
