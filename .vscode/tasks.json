@@ -50,7 +50,7 @@
     {
       "label": "运行boost测试",
       "type": "shell",
-      "command": "${command:cmake.getLaunchTargetPath}",
+      "command": "${command:cmake.launchTargetPath}",
       "args": [
         "--run_test=${input:test_}",
         "--color_output=true",
