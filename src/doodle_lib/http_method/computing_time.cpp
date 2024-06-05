@@ -34,12 +34,12 @@ struct computing_time_post_req_data {
   std::vector<task_data> data;
   // form json
   friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
-    std::istringstream l_year_month_stream(j.at("year_month").get<std::string>());
-    l_year_month_stream >> chrono::parse("%Y-%m", p.year_month_);
-    if (!l_year_month_stream) {
-      throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
-    }
-    p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
+    // std::istringstream l_year_month_stream(j.at("year_month").get<std::string>());
+    // l_year_month_stream >> chrono::parse("%Y-%m", p.year_month_);
+    // if (!l_year_month_stream) {
+    //   throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
+    // }
+    // p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
     p.data    = j.at("data").get<std::vector<task_data>>();
   }
 };
@@ -274,14 +274,18 @@ class computing_time_post {
 
     computing_time_post_req_data l_data{};
     try {
-      l_data = l_json.get<computing_time_post_req_data>();
+      l_data         = l_json.get<computing_time_post_req_data>();
+
+      l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(*in_handle->capture_->get<std::string>("user_id"));
+      std::istringstream l_year_month_stream{*in_handle->capture_->get<std::string>("year_month")};
+      l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
     } catch (const nlohmann::json::exception& e) {
       l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     } catch (const std::exception& e) {
-      l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
+      l_logger->log(log_loc(), level::err, "error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
@@ -306,7 +310,7 @@ class computing_time_get {
       in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
       return;
     }
-    auto l_req   = in_handle->request_parser_.get();
+    auto& l_req  = in_handle->request_parser_->get();
     auto l_url   = in_handle->url_;
 
     auto l_param = l_url.params();
@@ -338,18 +342,20 @@ class computing_time_get {
 
     auto l_user  = std::as_const(*g_reg()).view<const user>();
     auto l_block = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
+
+    nlohmann::json l_json{};
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.keep_alive(l_req.keep_alive());
+
     for (auto&& [e, l_u] : l_user.each()) {
       if (l_u.id_ == l_user_id) {
-        for (auto&& [e, l_b] : l_block.each()) {
+        for (auto&& [be, l_b] : l_block.each()) {
           if (l_b.year_month_ == l_year_month && l_b.user_refs_ == e) {
-            nlohmann::json l_json = l_b.task_info_;
-            auto& l_req = in_handle->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
-            boost::beast::http::response<boost::beast::http::string_body> l_response{
-                boost::beast::http::status::ok, l_req.version()
-            };
-            l_response.set(boost::beast::http::field::content_type, "application/json");
+            l_json            = l_b.task_info_;
             l_response.body() = l_json.dump();
-            l_response.keep_alive(l_req.keep_alive());
             l_response.prepare_payload();
             in_handle->seed(std::move(l_response));
             return;
@@ -357,17 +363,38 @@ class computing_time_get {
         }
       }
     }
+    l_response.result(boost::beast::http::status::not_found);
+    l_response.body() = l_json.dump();
+    l_response.prepare_payload();
+    in_handle->seed(std::move(l_response));
   }
+};
+
+class computing_time_put {
+ public:
+  computing_time_put() : executor_(g_thread().get_executor()) {}
+  ~computing_time_put() = default;
+  using executor_type   = boost::asio::any_io_executor;
+  boost::asio::any_io_executor executor_;
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {}
 };
 
 void reg_computing_time(http_route& in_route) {
   in_route
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/computing_time",
+          boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}",
           session::make_http_reg_fun<boost::beast::http::string_body>(computing_time_post{})
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/computing_time", session::make_http_reg_fun(computing_time_get{})
-      ));
+          boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}",
+          session::make_http_reg_fun(computing_time_get{})
+      ))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::put, "api/doodle/computing_time/{user_id}/{year_month}",
+          session::make_http_reg_fun<boost::beast::http::string_body>(computing_time_put{})
+      ))
+
+      ;
 }
 }  // namespace doodle::http
