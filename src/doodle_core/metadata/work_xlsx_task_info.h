@@ -6,9 +6,10 @@ class work_xlsx_task_info {
  public:
   // work_xlsx_task_info()  = default;
   // ~work_xlsx_task_info() = default;
+  using zoned_time = chrono::zoned_time<chrono::microseconds>;
   boost::uuids::uuid id_;
-  chrono::sys_time_pos start_time_;
-  chrono::sys_time_pos end_time_;
+  zoned_time start_time_;
+  zoned_time end_time_;
   chrono::microseconds duration_;
   std::string remark_;
   std::string user_remark_;
@@ -17,7 +18,6 @@ class work_xlsx_task_info {
 
   // to json
   friend void to_json(nlohmann::json& j, const work_xlsx_task_info& p);
-
 };
 
 class work_xlsx_task_info_block {

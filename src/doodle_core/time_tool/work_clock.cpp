@@ -220,7 +220,7 @@ std::vector<std::tuple<work_clock2::time_type, work_clock2::time_type, std::stri
     auto l_t1 = i.first & l_d;
     if (!boost::icl::is_empty(l_t1))
       l_r.emplace_back(std::make_tuple(
-          (++boost::icl::lower(i.first)), boost::icl::upper(i.first), fmt::to_string(fmt::join(i.second, " "))
+          (boost::icl::lower(i.first)), boost::icl::upper(i.first), fmt::to_string(fmt::join(i.second, " "))
       ));
   }
 

@@ -21,13 +21,13 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   struct computing_time_post_req_data {
     struct task_data {
       boost::uuids::uuid task_id;
-      std::chrono::system_clock::time_point start_time;
-      std::chrono::system_clock::time_point end_time;
+      chrono::local_time_pos start_time;
+      chrono::local_time_pos end_time;
       // form json
       friend void from_json(const nlohmann::json& j, task_data& p) {
         p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
-        auto l_start_time = parse_8601<std::chrono::system_clock::time_point>(j.at("start_date").get<std::string>());
-        auto l_end_time   = parse_8601<std::chrono::system_clock::time_point>(j.at("end_date").get<std::string>());
+        auto l_start_time = parse_8601<chrono::local_time_pos>(j.at("start_date").get<std::string>());
+        auto l_end_time   = parse_8601<chrono::local_time_pos>(j.at("end_date").get<std::string>());
         p.start_time      = std::max(l_start_time, l_end_time);
         p.end_time        = std::min(l_start_time, l_end_time);
       }
@@ -152,8 +152,8 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   }
 
   void create_time_clock() {
-    chrono::sys_days l_begin_time{chrono::sys_days{data_->year_month_ / chrono::day{1}}},
-        l_end_time{chrono::sys_days{data_->year_month_ / chrono::last} + chrono::days{3}};
+    chrono::local_days l_begin_time{chrono::local_days{data_->year_month_ / chrono::day{1}}},
+        l_end_time{chrono::local_days{data_->year_month_ / chrono::last} + chrono::days{3}};
 
     for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
       // 加入工作日规定时间
@@ -163,8 +163,14 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
         }
       }
     }
-    // 调整节假日
     holidaycn_time2{rules_.work_pair_p}.set_clock(time_clock_);
+#ifndef NDEBUG
+    auto l_logger = session_data_->logger_;
+    l_logger->log(log_loc(), level::info, "work_pair_p: {}", fmt::join(rules_.work_pair_p, ", "));
+    l_logger->log(log_loc(), level::info, "work: {}", time_clock_.debug_print());
+#endif
+
+    // 调整节假日
     // 排除绝对时间
     for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
       for (auto&& l_deduction : rules_.absolute_deduction[chrono::weekday{l_begin}.c_encoding()]) {
@@ -176,14 +182,15 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
 
   // 计算时间
   void computing_time_run() {
-    auto l_end_time  = chrono::sys_days{(data_->year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
-    auto l_all_works = time_clock_(chrono::sys_days{data_->year_month_ / chrono::day{1}}, l_end_time);
+    auto l_end_time =
+        chrono::local_days{(data_->year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+    auto l_all_works = time_clock_(chrono::local_days{data_->year_month_ / chrono::day{1}}, l_end_time);
 
 #ifndef NDEBUG
     auto l_logger = session_data_->logger_;
     l_logger->log(
         log_loc(), level::info, "begin_time: {}, end_time: {} work_time: {}",
-        chrono::sys_days{data_->year_month_ / chrono::day{1}}, l_end_time, l_all_works
+        chrono::local_days{data_->year_month_ / chrono::day{1}}, l_end_time, l_all_works
     );
 #endif
 
@@ -206,10 +213,10 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
         l_woeks1.push_back(chrono::floor<chrono::days>(l_task.start_time - l_task.end_time).count() + 1);
       }
       auto l_works_accumulate = ranges::accumulate(l_woeks1, std::int64_t{});
-      std::vector<chrono::sys_time_pos::duration> l_woeks2{};
+      std::vector<chrono::seconds> l_woeks2{};
       using rational_int = boost::rational<std::int64_t>;
       for (auto i = 0; i < l_woeks1.size(); ++i) {
-        l_woeks2.push_back(chrono::sys_time_pos::duration{
+        l_woeks2.push_back(chrono::seconds{
             boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
         });
       }
@@ -220,7 +227,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       );
 #endif
 
-      chrono::sys_time_pos l_begin_time{chrono::sys_days{data_->year_month_ / chrono::day{1}}};
+      chrono::local_time_pos l_begin_time{chrono::local_days{data_->year_month_ / chrono::day{1}}};
       for (auto i = 0; i < data_->data.size(); ++i) {
         auto l_end = time_clock_.next_time(l_begin_time, l_woeks2[i]);
 
@@ -228,15 +235,14 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
 #ifndef NDEBUG
         l_logger->log(log_loc(), level::info, "woeks1: {}, woeks2: {}", time_clock_(l_begin_time, l_end), l_woeks2[i]);
 #endif
-
         auto l_info          = time_clock_.get_time_info(l_begin_time, l_end);
         std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
 
         l_block.task_info_.emplace_back(work_xlsx_task_info{
             .id_                = core_set::get_set().get_uuid(),
-            .start_time_        = l_begin_time,
-            .end_time_          = l_end,
-            .duration_          = chrono::duration_cast<chrono::microseconds>(l_woeks2[i]),
+            .start_time_        = {chrono::current_zone(), l_begin_time},
+            .end_time_          = {chrono::current_zone(), l_end},
+            .duration_          = chrono::duration_cast<chrono::seconds>(l_woeks2[i]),
             .remark_            = l_remark,
             .kitsu_task_ref_id_ = data_->data[i].task_id
         });
@@ -341,7 +347,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     // 计算时间开始结束
-    chrono::sys_time_pos l_begin_time{chrono::sys_days{data_->year_month_ / chrono::day{1}}};
+    chrono::local_time_pos l_begin_time{chrono::local_days{data_->year_month_ / chrono::day{1}}};
     for (auto i = 0; i < l_block.task_info_.size(); ++i) {
       auto l_end                        = time_clock_.next_time(l_begin_time, l_block.task_info_[i].duration_);
       l_block.task_info_[i].start_time_ = l_begin_time;

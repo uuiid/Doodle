@@ -83,7 +83,7 @@ void holidaycn_time2::load_year(chrono::year in_year) {
     else
       for (auto &&[beg, end] : work_time) {
         holidaycn_list_work.emplace_back(
-            chrono::sys_time_pos{i.date} + beg, chrono::sys_time_pos{i.date} + end, i.name
+            chrono::local_time_pos{i.date} + beg, chrono::local_time_pos{i.date} + end, i.name + "调休"
         );
       }
   };

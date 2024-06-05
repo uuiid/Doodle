@@ -101,7 +101,7 @@ class DOODLE_CORE_API work_clock {
 };
 
 class DOODLE_CORE_API work_clock2 {
-  using time_type              = chrono::system_clock::time_point;
+  using time_type              = chrono::local_time_pos;
   using duration_type          = time_type::duration;
   using info_type              = std::set<std::string>;
   using discrete_interval_time = boost::icl::discrete_interval<time_type>;
@@ -136,6 +136,10 @@ class DOODLE_CORE_API work_clock2 {
    * @return 下一个时间点
    */
   time_type next_time(const time_type& in_begin, const duration_type& in_du) const;
+  template <typename Duration>
+  time_type next_time(const time_type& in_begin, const Duration& in_du) const {
+    return next_time(in_begin, chrono::duration_cast<duration_type>(in_du));
+  }
 
   /**
    * @brief 获取两个时间点之间点时间分段( 休息时间段 -> 工作时间段)
@@ -153,7 +157,9 @@ class DOODLE_CORE_API work_clock2 {
    * @param in_max 结束时间
    * @return 时间段和相应的备注
    */
-  std::vector<std::tuple<time_type,time_type,std::string>> get_time_info(const time_type& in_min, const time_type& in_max) const;
+  std::vector<std::tuple<time_type, time_type, std::string>> get_time_info(
+      const time_type& in_min, const time_type& in_max
+  ) const;
   /**
    * 这个是添加额外的信息, 并不会加入到计算时间中, 只会添加一个额外的辅助信息时间
    * @param in_time

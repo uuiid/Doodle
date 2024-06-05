@@ -68,8 +68,8 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
     for (auto&& l_row : in_comm(l_pre)) {
       work_xlsx_task_info l_info{};
       std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
-      l_info.start_time_  = l_row.start_time.value();
-      l_info.end_time_    = l_row.end_time.value();
+      l_info.start_time_  = {chrono::current_zone(), l_row.start_time.value()};
+      l_info.end_time_    = {chrono::current_zone(), l_row.end_time.value()};
       l_info.duration_    = chrono::microseconds{l_row.duration.value()};
       l_info.remark_      = l_row.remark.value();
       l_info.user_remark_ = l_row.user_remark.value();
@@ -172,11 +172,11 @@ void work_xlsx_task_info_block::insert(
   ));
   for (std::size_t i = 0; i < in_task.size(); ++i) {
     for (std::size_t j = 0; j < in_task[i].task_info_.size(); ++j) {
-      l_pre_sub.params.uuid       = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};
-      l_pre_sub.params.start_time = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].start_time_);
-      l_pre_sub.params.end_time   = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].end_time_);
+      l_pre_sub.params.uuid              = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};
+      l_pre_sub.params.start_time        = in_task[i].task_info_[j].start_time_.get_sys_time();
+      l_pre_sub.params.end_time          = in_task[i].task_info_[j].end_time_.get_sys_time();
 
-      l_pre_sub.params.duration   = in_task[i].task_info_[j].duration_.count();
+      l_pre_sub.params.duration          = in_task[i].task_info_[j].duration_.count();
       l_pre_sub.params.kitsu_task_ref_id = {
           in_task[i].task_info_[j].kitsu_task_ref_id_.begin(), in_task[i].task_info_[j].kitsu_task_ref_id_.end()
       };
@@ -248,10 +248,10 @@ void work_xlsx_task_info_block::update(
                           ));
   for (std::size_t i = 0; i < in_task.size(); ++i) {
     for (std::size_t j = 0; j < in_task[i].task_info_.size(); ++j) {
-      l_pre_sub.params.uuid       = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};
-      l_pre_sub.params.start_time = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].start_time_);
-      l_pre_sub.params.end_time   = chrono::time_point_cast<chrono::microseconds>(in_task[i].task_info_[j].end_time_);
-      l_pre_sub.params.duration   = in_task[i].task_info_[j].duration_.count();
+      l_pre_sub.params.uuid              = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};
+      l_pre_sub.params.start_time        = in_task[i].task_info_[j].start_time_.get_sys_time();
+      l_pre_sub.params.end_time          = in_task[i].task_info_[j].end_time_.get_sys_time();
+      l_pre_sub.params.duration          = in_task[i].task_info_[j].duration_.count();
       l_pre_sub.params.kitsu_task_ref_id = {
           in_task[i].task_info_[j].kitsu_task_ref_id_.begin(), in_task[i].task_info_[j].kitsu_task_ref_id_.end()
       };
@@ -277,8 +277,8 @@ void work_xlsx_task_info_block::delete_by_ids(
 // to json
 void to_json(nlohmann::json& j, const work_xlsx_task_info& p) {
   j["id"]                = fmt::to_string(p.id_);
-  j["start_time"]        = fmt::format("{:%FT%T}", p.start_time_);
-  j["end_time"]          = fmt::format("{:%FT%T}", p.end_time_);
+  j["start_time"]        = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
+  j["end_time"]          = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
   j["duration"]          = p.duration_.count();
   j["remark"]            = p.remark_;
   j["user_remark"]       = p.user_remark_;
