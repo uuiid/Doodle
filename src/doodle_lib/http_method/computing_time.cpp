@@ -176,9 +176,16 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
 
   // 计算时间
   void computing_time_run() {
-    auto l_all_works = time_clock_(
-        chrono::sys_days{data_->year_month_ / chrono::day{1}}, chrono::sys_days{data_->year_month_ / chrono::last}
+    auto l_end_time  = chrono::sys_days{(data_->year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+    auto l_all_works = time_clock_(chrono::sys_days{data_->year_month_ / chrono::day{1}}, l_end_time);
+
+#ifndef NDEBUG
+    auto l_logger = session_data_->logger_;
+    l_logger->log(
+        log_loc(), level::info, "begin_time: {}, end_time: {} work_time: {}",
+        chrono::sys_days{data_->year_month_ / chrono::day{1}}, l_end_time, l_all_works
     );
+#endif
 
     work_xlsx_task_info_block l_block{
         .id_         = block_.id_.is_nil() ? core_set::get_set().get_uuid() : block_.id_,
@@ -194,18 +201,34 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     });
 
     {  // 计算时间比例
-      std::vector<std::double_t> l_woeks1{};
+      std::vector<std::int64_t> l_woeks1{};
       for (auto&& l_task : data_->data) {
         l_woeks1.push_back(chrono::floor<chrono::days>(l_task.start_time - l_task.end_time).count() + 1);
       }
-      auto l_works_accumulate = ranges::accumulate(l_woeks1, std::double_t{});
+      auto l_works_accumulate = ranges::accumulate(l_woeks1, std::int64_t{});
+      std::vector<chrono::sys_time_pos::duration> l_woeks2{};
+      using rational_int = boost::rational<std::int64_t>;
+      for (auto i = 0; i < l_woeks1.size(); ++i) {
+        l_woeks2.push_back(chrono::sys_time_pos::duration{
+            boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
+        });
+      }
+
+#ifndef NDEBUG
+      l_logger->log(
+          log_loc(), level::info, "woeks1: {}, woeks2: {}", fmt::join(l_woeks1, ", "), fmt::join(l_woeks2, ", ")
+      );
+#endif
+
       chrono::sys_time_pos l_begin_time{chrono::sys_days{data_->year_month_ / chrono::day{1}}};
       for (auto i = 0; i < data_->data.size(); ++i) {
-        auto l_end = time_clock_.next_time(
-            l_begin_time, chrono::sys_time_pos::duration{boost::numeric_cast<std::int64_t>(
-                              l_all_works.count() * (l_woeks1[i] / l_works_accumulate)
-                          )}
-        );
+        auto l_end = time_clock_.next_time(l_begin_time, l_woeks2[i]);
+
+        // BOOST_ASSERT(time_clock_(l_begin_time, l_end) == l_woeks2[i]);
+#ifndef NDEBUG
+        l_logger->log(log_loc(), level::info, "woeks1: {}, woeks2: {}", time_clock_(l_begin_time, l_end), l_woeks2[i]);
+#endif
+
         auto l_info          = time_clock_.get_time_info(l_begin_time, l_end);
         std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
 
@@ -213,7 +236,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
             .id_                = core_set::get_set().get_uuid(),
             .start_time_        = l_begin_time,
             .end_time_          = l_end,
-            .duration_          = chrono::duration_cast<chrono::microseconds>(l_end - l_begin_time),
+            .duration_          = chrono::duration_cast<chrono::microseconds>(l_woeks2[i]),
             .remark_            = l_remark,
             .kitsu_task_ref_id_ = data_->data[i].task_id
         });
