@@ -39,7 +39,10 @@ std::tuple<bool, http_function::capture_t> http_function::set_match_url(boost::u
     if (!l_cap.is_capture && l_cap.name != l_seg) {
       return {false, {}};
     }
-    l_str.emplace(l_cap.name, l_seg);
+    if (l_cap.is_capture && !l_seg.empty())
+      l_str.emplace(l_cap.name, l_seg);
+    else if (l_seg.empty())
+      return {false, {}};
   }
   return {true, capture_t{l_str}};
 }
