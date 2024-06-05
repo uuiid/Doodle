@@ -394,8 +394,10 @@ class http_client_core
     } else {
       ptr_->socket_ = std::make_shared<socket_t>(l_s);
     }
-    ptr_->server_ip_ = l_url.host();
-    ptr_->logger_    = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", l_url.host(), socket()));
+    
+    if (!l_url.host().empty()) ptr_->server_ip_ = l_url.host();
+    
+    ptr_->logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", l_url.host(), socket()));
   }
 };
 }  // namespace doodle::http::detail
