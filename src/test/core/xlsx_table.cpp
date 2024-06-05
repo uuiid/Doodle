@@ -15,6 +15,14 @@ using namespace doodle;
 
 BOOST_AUTO_TEST_SUITE(xlsx_table)
 
+constexpr static std::string_view g_token{
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+    "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlwZSI6Im"
+    "FjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjoxNzY0NjMzNjAw"
+    "LCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684"
+};
+
+
 BOOST_AUTO_TEST_CASE(computing_time) {
   app_base l_app_base{};
 
@@ -28,6 +36,7 @@ BOOST_AUTO_TEST_CASE(computing_time) {
   auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
       std::make_shared<kitsu::kitsu_client>("192.168.40.182", "80")
   );
+  l_client->get()->set_access_token(std::string{g_token});
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
   http::reg_computing_time(*l_rout_ptr);
