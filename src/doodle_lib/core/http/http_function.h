@@ -20,6 +20,8 @@ struct capture_t {
   capture_t() = default;
   explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
 
+  inline std::string get(const std::string& in_str) const { return capture_map_.at(in_str); }
+
   template <typename T>
     requires std::is_arithmetic_v<T>
   std::optional<T> get(const std::string& in_str) const {
@@ -30,14 +32,6 @@ struct capture_t {
         default_logger_raw()->log(log_loc(), level::err, "get arithmetic error: {}", in_err.what());
         return {};
       }
-    }
-    return {};
-  }
-  template <typename T>
-    requires std::is_same_v<T, std::string>
-  std::optional<T> get(const std::string& in_str) const {
-    if (capture_map_.find(in_str) != capture_map_.end()) {
-      return capture_map_.at(in_str);
     }
     return {};
   }

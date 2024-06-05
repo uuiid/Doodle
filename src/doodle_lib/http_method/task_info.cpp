@@ -65,16 +65,10 @@ void task_info::post_task(boost::system::error_code in_error_code, const http_se
 }
 
 void task_info::get_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
-  auto l_id = in_data->capture_->get<std::string>("id");
-  if (!l_id) {
-    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
-  }
+  auto l_id = in_data->capture_->get("id");
   boost::uuids::uuid l_uuid{};
   {
-    std::istringstream l_stream{*l_id};
+    std::istringstream l_stream{l_id};
     l_stream >> l_uuid;
     if (l_stream.fail()) {
       in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
@@ -154,17 +148,11 @@ void task_info::list_task(boost::system::error_code in_error_code, const http_se
 }
 void task_info::get_task_logger(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
   auto l_cap = in_data->capture_;
-  auto l_id  = l_cap->get<std::string>("id");
-  if (!l_id) {
-    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
-  }
+  auto l_id  = l_cap->get("id");
 
   boost::uuids::uuid l_uuid{};
   {
-    std::istringstream l_stream{*l_id};
+    std::istringstream l_stream{l_id};
     l_stream >> l_uuid;
     if (l_stream.fail()) {
       in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
@@ -211,16 +199,10 @@ void task_info::get_task_logger(boost::system::error_code in_error_code, const h
   in_data->seed(std::move(l_response));
 }
 void task_info::delete_task(boost::system::error_code in_error_code, const http_session_data_ptr &in_data) {
-  auto l_id = in_data->capture_->get<std::string>("id");
-  if (!l_id) {
-    in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    in_data->seed_error(boost::beast::http::status::bad_request, in_error_code);
-    return;
-  }
+  auto l_id = in_data->capture_->get("id");
   boost::uuids::uuid l_uuid{};
   {
-    std::istringstream l_stream{*l_id};
+    std::istringstream l_stream{l_id};
     l_stream >> l_uuid;
     if (l_stream.fail()) {
       in_error_code.assign(ERROR_INVALID_DATA, boost::system::system_category());

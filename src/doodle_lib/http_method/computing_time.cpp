@@ -282,8 +282,8 @@ class computing_time_post {
     try {
       l_data         = l_json.get<computing_time_post_req_data>();
 
-      l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(*in_handle->capture_->get<std::string>("user_id"));
-      std::istringstream l_year_month_stream{*in_handle->capture_->get<std::string>("year_month")};
+      l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+      std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
       l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
     } catch (const nlohmann::json::exception& e) {
       l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
@@ -317,27 +317,14 @@ class computing_time_get {
       return;
     }
     auto& l_req           = in_handle->request_parser_->get();
-    auto l_user_str       = in_handle->capture_->get<std::string>("user_id");
-    auto l_year_month_str = in_handle->capture_->get<std::string>("year_month");
-
-    if (!l_user_str) {
-      l_logger->log(log_loc(), level::err, "url parse error: {}", "user_id is empty");
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "user_id is empty");
-      return;
-    }
-    if (!l_year_month_str) {
-      l_logger->log(log_loc(), level::err, "url parse error: {}", "year_month is empty");
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "year_month is empty");
-      return;
-    }
+    auto l_user_str       = in_handle->capture_->get("user_id");
+    auto l_year_month_str = in_handle->capture_->get("year_month");
 
     boost::uuids::uuid l_user_id{};
     chrono::year_month l_year_month{};
     try {
-      l_user_id = boost::lexical_cast<boost::uuids::uuid>(*l_user_str);
-      std::istringstream l_year_month_stream{*l_year_month_str};
+      l_user_id = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
+      std::istringstream l_year_month_stream{l_year_month_str};
       l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
     } catch (const std::exception& e) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
@@ -373,14 +360,34 @@ class computing_time_get {
   }
 };
 
-class computing_time_put {
+class computing_time_patch {
  public:
-  computing_time_put() : executor_(g_thread().get_executor()) {}
-  ~computing_time_put() = default;
-  using executor_type   = boost::asio::any_io_executor;
+  computing_time_patch() : executor_(g_thread().get_executor()) {}
+  ~computing_time_patch() = default;
+  using executor_type     = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
   boost::asio::any_io_executor get_executor() const { return executor_; }
-  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {}
+  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
+    auto l_logger = in_handle->logger_;
+    if (in_error_code) {
+      l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
+      in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
+      return;
+    }
+    auto l_req = in_handle->get_msg_body_parser<boost::beast::http::string_body>();
+    auto l_str = l_req->request_parser_->get().body();
+    if (!nlohmann::json::accept(l_str)) {
+      l_logger->log(log_loc(), level::err, "json parse error: {}", l_str);
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "不是json字符串");
+      return;
+    }
+    auto l_json           = nlohmann::json::parse(l_str);
+
+    auto l_user_str       = in_handle->capture_->get("user_id");
+    auto l_year_month_str = in_handle->capture_->get("year_month");
+    auto l_task_id_str    = in_handle->capture_->get("task_id");
+  }
 };
 
 void reg_computing_time(http_route& in_route) {
@@ -394,8 +401,8 @@ void reg_computing_time(http_route& in_route) {
           session::make_http_reg_fun(computing_time_get{})
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::put, "api/doodle/computing_time/{user_id}/{year_month}",
-          session::make_http_reg_fun<boost::beast::http::string_body>(computing_time_put{})
+          boost::beast::http::verb::patch, "api/doodle/computing_time/{user_id}/{year_month}/{task_id}",
+          session::make_http_reg_fun<boost::beast::http::string_body>(computing_time_patch{})
       ))
 
       ;
