@@ -15,36 +15,38 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 namespace doodle::http {
 
-struct computing_time_post_req_data {
-  struct task_data {
-    boost::uuids::uuid task_id;
-    std::chrono::system_clock::time_point start_time;
-    std::chrono::system_clock::time_point end_time;
+class computing_time_post_impl : public std::enable_shared_from_this<computing_time_post_impl> {
+ public:
+  struct computing_time_post_req_data {
+    struct task_data {
+      boost::uuids::uuid task_id;
+      std::chrono::system_clock::time_point start_time;
+      std::chrono::system_clock::time_point end_time;
+      // form json
+      friend void from_json(const nlohmann::json& j, task_data& p) {
+        p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
+        auto l_start_time = parse_8601<std::chrono::system_clock::time_point>(j.at("start_date").get<std::string>());
+        auto l_end_time   = parse_8601<std::chrono::system_clock::time_point>(j.at("end_date").get<std::string>());
+        p.start_time      = std::max(l_start_time, l_end_time);
+        p.end_time        = std::min(l_start_time, l_end_time);
+      }
+    };
+    chrono::year_month year_month_;
+    boost::uuids::uuid user_id;
+    std::vector<task_data> data;
     // form json
-    friend void from_json(const nlohmann::json& j, task_data& p) {
-      p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
-      auto l_start_time = parse_8601<std::chrono::system_clock::time_point>(j.at("start_date").get<std::string>());
-      auto l_end_time   = parse_8601<std::chrono::system_clock::time_point>(j.at("end_date").get<std::string>());
-      p.start_time      = std::max(l_start_time, l_end_time);
-      p.end_time        = std::min(l_start_time, l_end_time);
+    friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
+      // std::istringstream l_year_month_stream(j.at("year_month").get<std::string>());
+      // l_year_month_stream >> chrono::parse("%Y-%m", p.year_month_);
+      // if (!l_year_month_stream) {
+      //   throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
+      // }
+      // p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
+      p.data = j.at("data").get<std::vector<task_data>>();
     }
   };
-  chrono::year_month year_month_;
-  boost::uuids::uuid user_id;
-  std::vector<task_data> data;
-  // form json
-  friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
-    // std::istringstream l_year_month_stream(j.at("year_month").get<std::string>());
-    // l_year_month_stream >> chrono::parse("%Y-%m", p.year_month_);
-    // if (!l_year_month_stream) {
-    //   throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
-    // }
-    // p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
-    p.data = j.at("data").get<std::vector<task_data>>();
-  }
-};
 
-class computing_time : public std::enable_shared_from_this<computing_time> {
+ private:
   user user_;
   entt::entity user_entity_{entt::null};
 
@@ -73,12 +75,13 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
       l_kitsu_client->get_user(
           user_.id_,
           boost::asio::bind_executor(
-              g_io_context(), boost::beast::bind_front_handler(&computing_time::do_feach_mobile, shared_from_this())
+              g_io_context(),
+              boost::beast::bind_front_handler(&computing_time_post_impl::do_feach_mobile, shared_from_this())
           )
       );
     } else {
       boost::asio::post(boost::asio::bind_executor(
-          g_io_context(), boost::beast::bind_front_handler(&computing_time::run_2, shared_from_this())
+          g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::run_2, shared_from_this())
       ));
     }
   }
@@ -212,7 +215,7 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
     }
     block_ = l_block;
     boost::asio::post(
-        g_io_context(), boost::beast::bind_front_handler(&computing_time::create_block, shared_from_this())
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
     );
   }
 
@@ -278,9 +281,9 @@ class computing_time_post {
     }
     auto l_json = nlohmann::json::parse(l_str);
 
-    computing_time_post_req_data l_data{};
+    computing_time_post_impl::computing_time_post_req_data l_data{};
     try {
-      l_data         = l_json.get<computing_time_post_req_data>();
+      l_data         = l_json.get<computing_time_post_impl::computing_time_post_req_data>();
 
       l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
       std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
@@ -297,7 +300,7 @@ class computing_time_post {
       return;
     }
 
-    auto l_computing_time = std::make_shared<computing_time>();
+    auto l_computing_time = std::make_shared<computing_time_post_impl>();
     l_computing_time->run_post(l_data, in_handle);
   }
 };
@@ -387,6 +390,19 @@ class computing_time_patch {
     auto l_user_str       = in_handle->capture_->get("user_id");
     auto l_year_month_str = in_handle->capture_->get("year_month");
     auto l_task_id_str    = in_handle->capture_->get("task_id");
+    boost::uuids::uuid l_user_id{}, l_task_id{};
+    chrono::year_month l_year_month{};
+    try {
+      l_task_id = boost::lexical_cast<boost::uuids::uuid>(l_task_id_str);
+      l_user_id = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
+      std::istringstream l_year_month_stream{l_year_month_str};
+      l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
+    } catch (const std::exception& e) {
+      l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
+    }
   }
 };
 
