@@ -135,6 +135,11 @@ void kitsu_backend_sqlite::init(pooled_connection& in_conn) {
 
   // todo: 最后选择调休
 
+  // 最后连接引用
+  for (auto [e, l_b] : g_reg()->view<work_xlsx_task_info_block>().each()) {
+    g_reg()->get<user>(l_b.user_refs_).task_block_[l_b.year_month_] = e;
+  }
+
   connect(*g_reg());
 }
 
