@@ -71,7 +71,10 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
       user_.id_           = data_->user_id;
       auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
       l_kitsu_client->get_user(
-          user_.id_, boost::beast::bind_front_handler(&computing_time::do_feach_mobile, shared_from_this())
+          user_.id_,
+          boost::asio::bind_executor(
+              g_io_context(), boost::beast::bind_front_handler(&computing_time::do_feach_mobile, shared_from_this())
+          )
       );
     }
   }
@@ -103,10 +106,22 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
       );
       return;
     }
+    if (user_.mobile_.empty()) {
+      l_logger->log(log_loc(), level::err, "user {} mobile is empty", l_json["email"].get<std::string>());
+      session_data_->seed_error(
+          boost::beast::http::status::internal_server_error, ec,
+          fmt::format("{} mobile is empty", l_json["email"].get<std::string>())
+      );
+      return;
+    }
 
+    entt::handle l_handle{};
     // 创建用户
-    entt::handle l_handle{*g_reg(), g_reg()->create()};
-    l_handle.emplace<user>(user_);
+    if (user_entity_ == entt::null)
+      l_handle = {*g_reg(), g_reg()->create()};
+    else  // 存在用户则修改
+      l_handle = {*g_reg(), user_entity_};
+    l_handle.emplace_or_replace<user>(user_);
     user_entity_ = l_handle.entity();
     run_2();
   }
@@ -192,7 +207,12 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
       }
     }
     block_ = l_block;
+    boost::asio::post(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time::create_block, shared_from_this())
+    );
+  }
 
+  void create_block() {
     if (block_entity_ == entt::null) {
       block_entity_ = g_reg()->create();
       g_reg()->emplace<work_xlsx_task_info_block>(block_entity_, block_);
@@ -231,7 +251,7 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
 
 class computing_time_post {
  public:
-  computing_time_post() : executor_(g_io_context().get_executor()) {}
+  computing_time_post() : executor_(g_thread().get_executor()) {}
   ~computing_time_post() = default;
   using executor_type    = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
@@ -272,6 +292,17 @@ class computing_time_post {
     l_computing_time->run(l_data, in_handle);
   }
 };
+
+class computing_time_get {
+ public:
+  computing_time_get() : executor_(g_io_context().get_executor()) {}
+  ~computing_time_get() = default;
+  using executor_type   = boost::asio::any_io_executor;
+  boost::asio::any_io_executor executor_;
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {}
+};
+
 void reg_computing_time(http_route& in_route) {
   in_route.reg(std::make_shared<http_function>(
       boost::beast::http::verb::post, "api/doodle/computing_time",

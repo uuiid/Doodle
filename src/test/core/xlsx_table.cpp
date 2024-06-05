@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(computing_time) {
   auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
       std::make_shared<kitsu::kitsu_client>("192.168.40.182", "80")
   );
-  l_client->get()->set_access_token(std::string{g_token});
+  l_client->set_access_token(std::string{g_token});
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
   http::reg_computing_time(*l_rout_ptr);
