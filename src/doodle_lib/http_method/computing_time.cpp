@@ -219,7 +219,7 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
     } else {
       g_reg()->replace<work_xlsx_task_info_block>(block_entity_, block_);
     }
-    
+
     g_reg()->patch<user>(user_entity_).task_block_[data_->year_month_] = block_entity_;
   }
 
@@ -342,8 +342,7 @@ class computing_time_get {
       return;
     }
 
-    auto l_user  = std::as_const(*g_reg()).view<const user>();
-    auto l_block = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
+    auto l_user = std::as_const(*g_reg()).view<const user>();
 
     nlohmann::json l_json{};
     boost::beast::http::response<boost::beast::http::string_body> l_response{
@@ -353,16 +352,14 @@ class computing_time_get {
     l_response.keep_alive(l_req.keep_alive());
 
     for (auto&& [e, l_u] : l_user.each()) {
-      if (l_u.id_ == l_user_id) {
-        for (auto&& [be, l_b] : l_block.each()) {
-          if (l_b.year_month_ == l_year_month && l_b.user_refs_ == e) {
-            l_json            = l_b.task_info_;
-            l_response.body() = l_json.dump();
-            l_response.prepare_payload();
-            in_handle->seed(std::move(l_response));
-            return;
-          }
-        }
+      if (l_u.id_ == l_user_id && l_u.task_block_.contains(l_year_month)) {
+        auto l_block = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(l_u.task_block_.at(l_year_month));
+        l_json       = l_block.task_info_;
+        l_response.result(boost::beast::http::status::ok);
+        l_response.body() = l_json.dump();
+        l_response.prepare_payload();
+        in_handle->seed(std::move(l_response));
+        return;
       }
     }
     l_response.result(boost::beast::http::status::not_found);
