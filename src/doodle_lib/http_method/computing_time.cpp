@@ -85,12 +85,22 @@ class computing_time : public std::enable_shared_from_this<computing_time> {
     try {
       user_.mobile_ = l_json["phone"].get<std::string>();
     } catch (const nlohmann::json::exception& e) {
-      l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
-      session_data_->seed_error(boost::beast::http::status::internal_server_error, ec, e.what());
+      l_logger->log(
+          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
+      );
+      session_data_->seed_error(
+          boost::beast::http::status::internal_server_error, ec,
+          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
+      );
       return;
     } catch (const std::exception& e) {
-      l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
-      session_data_->seed_error(boost::beast::http::status::internal_server_error, ec, e.what());
+      l_logger->log(
+          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
+      );
+      session_data_->seed_error(
+          boost::beast::http::status::internal_server_error, ec,
+          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
+      );
       return;
     }
 
