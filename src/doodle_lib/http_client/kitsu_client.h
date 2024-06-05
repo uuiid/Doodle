@@ -145,9 +145,10 @@ class kitsu_client {
                   [l_com = std::move(in_handler), this](
                       boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res
                   ) {
+                    nlohmann::json l_json{};
                     if (ec) {
                       http_client_core_ptr_->logger()->log(log_loc(), level::err, "get user failed: {}", ec.message());
-                      l_com(ec, nlohmann::json{});
+                      boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
                       return;
                     }
 
@@ -156,17 +157,17 @@ class kitsu_client {
                           log_loc(), level::err, "get user failed: {}", magic_enum::enum_integer(res.result())
                       );
                       ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                      l_com(ec, nlohmann::json{});
+                      boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
                       return;
                     }
 
                     if (!nlohmann::json::accept(res.body())) {
                       http_client_core_ptr_->logger()->log(log_loc(), level::err, "get user failed: {}", res.body());
                       ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                      l_com(ec, nlohmann::json{});
+                      boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
                       return;
                     }
-                    auto l_json = nlohmann::json::parse(res.body());
+                    l_json = nlohmann::json::parse(res.body());
                     boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
                   }
               )
