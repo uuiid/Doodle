@@ -3,7 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "C:/Program Files/Autodesk/Maya2020/include"
             ],
             "defines": [
                 "_DEBUG",

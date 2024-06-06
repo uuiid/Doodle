@@ -44,21 +44,25 @@
             "request": "launch",
             "program": "${command:cmake.getLaunchTargetPath}",
             "args": [
-                "--cloth_sim_config=${workspaceFolder}/build/test_1.json"
+                "--replace_file_config=${workspaceFolder}/build/test_4.json"
             ],
             "stopAtEntry": false,
             "cwd": "${command:cmake.launchTargetDirectory}",
             "environment": [
                 {
                     "name": "MAYA_LOCATION",
-                    "value": "C:/Program Files/Autodesk/Maya2019"
+                    "value": "C:/Program Files/Autodesk/Maya2020"
                 },
                 {
                     "name": "PATH",
-                    "value": "%PATH%;C:/Program Files/Autodesk/Maya2019/bin"
+                    "value": "%PATH%;C:/Program Files/Autodesk/Maya2020/bin"
+                },
+                {
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya"
                 }
             ],
-            "console": "internalConsole",
+            "console": "externalTerminal",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
