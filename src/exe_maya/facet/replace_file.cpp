@@ -18,11 +18,14 @@
 
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/main/maya_plug_fwd.h"
+#include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 
 #include <exe_maya/core/maya_lib_guard.h>
+#include <maya/MFileObject.h>
+#include <maya/MSceneMessage.h>
 namespace doodle::maya_plug {
 
 bool replace_file_facet::post(const FSys::path& in_path) {
@@ -45,34 +48,66 @@ bool replace_file_facet::post(const FSys::path& in_path) {
 
   maya_file_io::set_workspace(l_arg.file_path);
 
-  maya_file_io::open_file(l_arg.file_path);
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)"));
-
   auto l_s = boost::asio::make_strand(g_io_context());
-  boost::asio::post(l_s, [this]() { this->create_ref_file(); });
-  boost::asio::post(l_s, [l_files = l_arg.file_list, this]() { this->replace_file(l_files); });
+  boost::asio::post(l_s, [l_files = l_arg.file_list, l_path = l_arg.file_path, this]() {
+    this->replace_file(l_files, l_path);
+  });
   return l_ret;
 }
-void replace_file_facet::create_ref_file() {
+
+void replace_file_facet::replace_file(
+    const std::vector<std::pair<FSys::path, FSys::path>>& in_files, const FSys::path& in_file_path
+) {
+  struct tmp_data {
+    std::vector<std::pair<FSys::path, FSys::path>> files_;
+    FSys::path file_path_;
+  };
+  tmp_data l_data{in_files, in_file_path};
+
+  MStatus k_s{};
+  {
+    maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
+        MSceneMessage::kBeforeLoadReferenceCheck,
+        [](bool* retCode, const MObject& referenceNode, MFileObject& file, void* clientData) {
+          auto* self  = reinterpret_cast<tmp_data*>(clientData);
+          auto l_name = conv::to_s(file.rawName());
+          auto l_it   = std::find_if(
+              self->files_.begin(), self->files_.end(),
+              [&l_name](const std::pair<FSys::path, FSys::path>& in_pair) -> bool {
+                return l_name == in_pair.first.filename();
+              }
+          );
+          if (l_it == self->files_.end()) {
+            default_logger_raw()->log(log_loc(), level::info, "跳过引用文件 {}", l_name);
+            return;
+          }
+
+          MStatus k_s{};
+          k_s = file.setRawFullName(conv::to_ms(l_it->second.generic_string()));
+          DOODLE_MAYA_CHICK(k_s);
+          *retCode = true;
+          default_logger_raw()->log(log_loc(), level::info, "替换加载引用文件 {}", l_it->second);
+        },
+        &l_data
+    )};
+    DOODLE_LOG_INFO("开始替换引用");
+    maya_file_io::open_file(in_file_path);
+  }
   DOODLE_LOG_INFO("开始扫瞄引用");
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-}
-void replace_file_facet::replace_file(const std::vector<std::pair<FSys::path, FSys::path>>& in_files) {
-  DOODLE_LOG_INFO("开始替换引用");
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)"));
+
   for (auto&& l_pair : in_files) {
     auto l_ref_it = std::find_if(ref_files_.begin(), ref_files_.end(), [&l_pair](entt::handle& in_handle) -> bool {
       auto&& l_ref = in_handle.get<reference_file>();
       return l_ref.get_abs_path().stem() == l_pair.first.stem();
     });
     if (l_ref_it == ref_files_.end()) {
-      DOODLE_LOG_ERROR("未查找到替换规则 {}", l_pair.first.string());
       continue;
     }
     auto&& l_ref = l_ref_it->get<reference_file>();
-    l_ref.replace_file(l_pair.second);
     l_ref.rename_namespace(l_pair.second.stem().string());
   }
-
   DOODLE_LOG_INFO("替换完成");
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
   maya_file_io::save_file(
