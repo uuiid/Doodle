@@ -222,6 +222,9 @@ void work_xlsx_task_info_block::update(
   }
 
   work_xlsx_task_info_block_sub_tab l_sub_tab{};
+  // delete sub
+  in_comm(sqlpp::remove_from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids))));
+
   auto l_pre_sub =
       in_comm.prepare(sqlpp::sqlite3::insert_into(l_sub_tab)
                           .set(
