@@ -29,7 +29,7 @@ class work_xlsx_task_info_block {
   boost::uuids::uuid id_;
   chrono::year_month year_month_;
   entt::entity user_refs_;
-  chrono::system_clock::duration duration_;
+  chrono::microseconds duration_;
 
   // 传入user的uuid 和 实体对应数据
   static std::vector<work_xlsx_task_info_block> select_all(
