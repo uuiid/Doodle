@@ -57,13 +57,14 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   business::rules rules_;
   business::work_clock2 time_clock_{};
   http_session_data_ptr session_data_;
+  //  共用
+  chrono::year_month year_month_{};
+
   // post 使用
   std::shared_ptr<computing_time_post_req_data> data_;
 
   // patch 使用
-
   boost::uuids::uuid user_id_{}, task_id_{};
-  chrono::year_month year_month_{};
   chrono::microseconds duration_{};
 
   void find_user() {
@@ -143,7 +144,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   void find_block() {
     auto l_block = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
     for (auto&& [e, l_b] : l_block.each()) {
-      if (l_b.year_month_ == data_->year_month_ && l_b.user_refs_ == user_entity_) {
+      if (l_b.year_month_ == year_month_ && l_b.user_refs_ == user_entity_) {
         block_        = l_b;
         block_entity_ = e;
         break;
@@ -152,8 +153,8 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   }
 
   void create_time_clock() {
-    chrono::local_days l_begin_time{chrono::local_days{data_->year_month_ / chrono::day{1}}},
-        l_end_time{chrono::local_days{data_->year_month_ / chrono::last} + chrono::days{3}};
+    chrono::local_days l_begin_time{chrono::local_days{year_month_ / chrono::day{1}}},
+        l_end_time{chrono::local_days{year_month_ / chrono::last} + chrono::days{3}};
 
     for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
       // 加入工作日规定时间
@@ -183,21 +184,21 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   // 计算时间
   void computing_time_run() {
     auto l_end_time =
-        chrono::local_days{(data_->year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
-    auto l_all_works = time_clock_(chrono::local_days{data_->year_month_ / chrono::day{1}}, l_end_time);
+        chrono::local_days{(year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+    auto l_all_works = time_clock_(chrono::local_days{year_month_ / chrono::day{1}}, l_end_time);
 
 #ifndef NDEBUG
     auto l_logger = session_data_->logger_;
     l_logger->log(
         log_loc(), level::info, "begin_time: {}, end_time: {} work_time: {}",
-        chrono::local_days{data_->year_month_ / chrono::day{1}}, l_end_time, l_all_works
+        chrono::local_days{year_month_ / chrono::day{1}}, l_end_time, l_all_works
     );
 #endif
 
     work_xlsx_task_info_block l_block{
         .id_         = block_.id_.is_nil() ? core_set::get_set().get_uuid() : block_.id_,
         // .task_info_  = std::vector<work_xlsx_task_info>{},
-        .year_month_ = data_->year_month_,
+        .year_month_ = year_month_,
         .user_refs_  = user_entity_,
         .duration_   = l_all_works
     };
@@ -227,7 +228,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       );
 #endif
 
-      chrono::local_time_pos l_begin_time{chrono::local_days{data_->year_month_ / chrono::day{1}}};
+      chrono::local_time_pos l_begin_time{chrono::local_days{year_month_ / chrono::day{1}}};
       for (auto i = 0; i < data_->data.size(); ++i) {
         auto l_end = time_clock_.next_time(l_begin_time, l_woeks2[i]);
 
@@ -260,7 +261,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       g_reg()->replace<work_xlsx_task_info_block>(block_entity_, block_);
     }
 
-    g_reg()->patch<user>(user_entity_).task_block_[data_->year_month_] = block_entity_;
+    g_reg()->patch<user>(user_entity_).task_block_[year_month_] = block_entity_;
   }
 
   void run_2() {
@@ -347,7 +348,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     // 计算时间开始结束
-    chrono::local_time_pos l_begin_time{chrono::local_days{data_->year_month_ / chrono::day{1}}};
+    chrono::local_time_pos l_begin_time{chrono::local_days{year_month_ / chrono::day{1}}};
     for (auto i = 0; i < l_block.task_info_.size(); ++i) {
       auto l_end                        = time_clock_.next_time(l_begin_time, l_block.task_info_[i].duration_);
       l_block.task_info_[i].start_time_ = l_begin_time;
@@ -374,8 +375,9 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       : session_data_(std::move(in_session_data)) {}
 
   void run_post(computing_time_post_req_data& in_data) {
-    data_  = std::make_shared<computing_time_post_req_data>(std::move(in_data));
-    rules_ = business::rules::get_default();
+    data_       = std::make_shared<computing_time_post_req_data>(std::move(in_data));
+    rules_      = business::rules::get_default();
+    year_month_ = data_->year_month_;
     find_user();
   }
 
@@ -536,7 +538,7 @@ class computing_time_patch {
       l_user_id = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
       std::istringstream l_year_month_stream{l_year_month_str};
       l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
-      l_duration = l_json["duration"].get<chrono::microseconds>();
+      l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
     } catch (const nlohmann::json::exception& e) {
       l_logger->log(log_loc(), level::err, "json parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
