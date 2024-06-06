@@ -153,7 +153,7 @@ class client {
   }
   template <typename CompletionHandler>
   void get_attendance_updatedata(
-      const std::string& in_user_id, const chrono::time_point<chrono::local_t>& in_work_date,
+      const std::string& in_user_id, const chrono::local_time_pos& in_work_date,
       CompletionHandler&& in_completion
   ) {
     boost::beast::http::request<boost::beast::http::string_body> req{

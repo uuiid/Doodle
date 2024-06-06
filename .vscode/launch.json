@@ -105,6 +105,22 @@
             "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
+            "name": "debug_test_自定义参数",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetPath}",
+            "args": [
+                "--log_level=message",
+                "--color_output=true",
+                "--detect_memory_leaks=0",
+                "--run_test=${input:test_}"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
     ],
     "inputs": [
@@ -113,18 +129,6 @@
             "type": "promptString",
             "description": "input arg",
             "default": ""
-        },
-        {
-            "id": "debug_target",
-            "type": "pickString",
-            "description": "要调试的目标",
-            "options": [
-                "DoodleExe",
-                "doodle_core",
-                "bvh_test",
-                "dingding_base"
-            ],
-            "default": "DoodleExe"
         },
         {
             "id": "test_",

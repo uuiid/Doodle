@@ -52,11 +52,17 @@
       "type": "shell",
       "command": "${command:cmake.launchTargetPath}",
       "args": [
-        "--run_test=${input:test_}",
         "--color_output=true",
         "--detect_memory_leaks=0",
-        "--log_level=message"
+        "--log_level=message",
+        "--run_test=${input:test_}"
       ],
+      "problemMatcher": []
+    },
+    {
+      "label": "运行boost测试自定义输入",
+      "type": "shell",
+      "command": "${command:cmake.launchTargetPath} --color_output=true --detect_memory_leaks=0 --log_level=message --run_test=${input:arg_input}",
       "problemMatcher": []
     }
   ],
