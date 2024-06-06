@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(access_token) {
 
   auto l_c                 = std::make_shared<doodle::dingding::client>(l_ctx);
 
-  l_c->access_token(l_app_key, l_app_secret, false, [](auto ec, auto json) {
+  l_c->async_access_token(l_app_key, l_app_secret, false, [](auto ec, auto json) {
     BOOST_TEST(!ec);
     BOOST_TEST(json.contains("accessToken"));
     BOOST_TEST(json.contains("expireIn"));
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
 
   auto l_c                 = std::make_shared<doodle::dingding::client>(l_ctx);
 
-  l_c->access_token(l_app_key, l_app_secret, false, [l_c, l_mobile](auto ec, auto json) {
+  l_c->async_access_token(l_app_key, l_app_secret, false, [l_c, l_mobile](auto ec, auto json) {
     BOOST_TEST(!ec);
     BOOST_TEST(json.contains("accessToken"));
     BOOST_TEST(json.contains("expireIn"));
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
 
   auto l_c                 = std::make_shared<doodle::dingding::client>(l_ctx);
 
-  l_c->access_token(l_app_key, l_app_secret, false, [l_c, l_mobile](auto ec, auto json) {
+  l_c->async_access_token(l_app_key, l_app_secret, false, [l_c, l_mobile](auto ec, auto json) {
     BOOST_TEST(!ec);
     BOOST_TEST(json.contains("accessToken"));
     BOOST_TEST(json.contains("expireIn"));

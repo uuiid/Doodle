@@ -12,14 +12,16 @@ void client::begin_refresh_token(chrono::seconds in_seconds) {
           http_client_core_ptr_->logger()->log(log_loc(), level::warn, "timer_ptr_ error: {}", ec);
           return;
         }
-        access_token(app_key, app_secret, true, [this](boost::system::error_code ec, nlohmann::json in_json) {
-          if (ec) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "refresh_token failed: {}", ec.message());
-            return;
-          }
-          access_token_ = in_json["accessToken"].get<std::string>();
-        });
+        access_token(app_key, app_secret, true);
       }
   ));
+}
+void client::access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire) {
+  async_access_token(in_app_key, in_app_secret, in_auto_expire, [this](boost::system::error_code ec, nlohmann::json in_json) {
+    if (ec) {
+      http_client_core_ptr_->logger()->log(log_loc(), level::err, "access_token failed: {}", ec.message());
+      return;
+    }
+  });
 }
 }  // namespace doodle::dingding

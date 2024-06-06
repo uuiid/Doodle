@@ -104,9 +104,11 @@ class client {
         http_client_core_ptr_old_(std::make_shared<https_client_core>(in_ctx, "https://oapi.dingtalk.com/", "443")){};
   ~client() = default;
 
+  void access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
+
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   template <typename CompletionHandler>
-  void access_token(
+  void async_access_token(
       std::string in_app_key, std::string in_app_secret, bool in_auto_expire, CompletionHandler&& in_completion
   ) {
     boost::beast::http::request<boost::beast::http::string_body> req{
@@ -125,8 +127,8 @@ class client {
         [this, in_auto_expire](auto&& handler, auto in_self, auto in_req) {
           http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
               in_req, json_body_impl_access_token<decltype(handler)>(
-                       std::move(handler), in_auto_expire, this, http_client_core_ptr_->logger()
-                   )
+                          std::move(handler), in_auto_expire, this, http_client_core_ptr_->logger()
+                      )
           );
         },
         in_completion, this, req
@@ -165,7 +167,8 @@ class client {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
         [this](auto&& in_completion, auto in_self, auto in_req) {
           in_self->http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-              in_req, json_body_impl<decltype(in_completion)>(std::move(in_completion), http_client_core_ptr_old_->logger())
+              in_req,
+              json_body_impl<decltype(in_completion)>(std::move(in_completion), http_client_core_ptr_old_->logger())
           );
         },
         in_completion, this, req
