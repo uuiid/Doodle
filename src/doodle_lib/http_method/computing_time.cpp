@@ -595,7 +595,7 @@ class computing_time_patch_delete {
 
         boost::asio::post(g_io_context(), [e, l_user_e, l_y_m, in_handle]() {
           g_reg()->patch<user>(l_user_e).task_block_.erase(l_y_m);
-          g_reg()->destroy(e);
+          if (g_reg()->valid(e)) g_reg()->destroy(e);
 
           boost::beast::http::response<boost::beast::http::empty_body> l_response{
               boost::beast::http::status::ok, in_handle->request_parser_->get().version()
