@@ -10,6 +10,7 @@ target_sources(
         file_exists.h
         task_sqlite_server.h
         computing_time.h
+        dingding_attendance.h
 
         PRIVATE
         computer.cpp
@@ -19,4 +20,5 @@ target_sources(
         file_exists.cpp
         task_sqlite_server.cpp
         computing_time.cpp
+        dingding_attendance.cpp
 )
