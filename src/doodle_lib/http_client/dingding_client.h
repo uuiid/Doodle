@@ -24,6 +24,80 @@ class client {
 
   void begin_refresh_token(chrono::seconds in_seconds = chrono::seconds(7200));
 
+  template <typename CompletionHandler>
+  struct json_body_impl {
+    CompletionHandler completion_handler_;
+    logger_ptr logger_;
+    explicit json_body_impl(CompletionHandler&& in_completion, logger_ptr in_logger)
+        : completion_handler_(std::move(in_completion)), logger_(std::move(in_logger)) {}
+    void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
+      nlohmann::json l_json{};
+      if (ec) {
+        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", ec.message());
+        boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+        return;
+      }
+
+      if (res.result() != boost::beast::http::status::ok) {
+        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", res.body());
+        ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+        boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+        return;
+      }
+
+      auto l_json_str = res.body();
+      if (!nlohmann::json::accept(l_json_str)) {
+        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", l_json_str);
+        ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+        boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+        return;
+      }
+      l_json = nlohmann::json::parse(l_json_str);
+      boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+    }
+  };
+  template <typename CompletionHandler>
+  struct json_body_impl_access_token {
+    CompletionHandler completion_handler_;
+    bool is_auto_expire_;
+    client* http_client_ding;
+    logger_ptr logger_;
+    explicit json_body_impl_access_token(
+        CompletionHandler&& in_completion, bool in_is_auto_expire_, client* in_http_client_ding, logger_ptr in_logger
+    )
+        : completion_handler_(std::move(in_completion)),
+          is_auto_expire_(in_is_auto_expire_),
+          http_client_ding(in_http_client_ding),
+          logger_(std::move(in_logger)) {}
+    void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
+      nlohmann::json l_json{};
+      if (ec) {
+        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", ec.message());
+        boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+        return;
+      }
+
+      if (res.result() != boost::beast::http::status::ok) {
+        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", res.body());
+        ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+        boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+        return;
+      }
+
+      auto l_json_str = res.body();
+      if (!nlohmann::json::accept(l_json_str)) {
+        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", l_json_str);
+        ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
+        boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+        return;
+      }
+      l_json                          = nlohmann::json::parse(l_json_str);
+      http_client_ding->access_token_ = l_json["accessToken"].get<std::string>();
+      if (is_auto_expire_) http_client_ding->begin_refresh_token(chrono::seconds(l_json["expireIn"].get<int>()));
+      boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
+    }
+  };
+
  public:
   explicit client(boost::asio::ssl::context& in_ctx)
       : http_client_core_ptr_(std::make_shared<https_client_core>(in_ctx, "https://api.dingtalk.com/", "443")),
@@ -46,36 +120,16 @@ class client {
     if (!timer_ptr_) {
       timer_ptr_ = std::make_shared<timer_t>(g_io_context());
     }
-    http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-        req,
-        [l_com = std::move(in_completion), in_auto_expire,
-         this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
-          if (ec) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "access_token failed: {}", ec.message());
-            l_com(ec, nlohmann::json{});
-            return;
-          }
 
-          if (res.result() != boost::beast::http::status::ok) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "access_token failed: {}", res.body());
-            ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-
-          auto l_json_str = res.body();
-          if (!nlohmann::json::accept(l_json_str)) {
-            http_client_core_ptr_->logger()->log(log_loc(), level::err, "access_token failed: {}", l_json_str);
-            ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-          auto l_json   = nlohmann::json::parse(l_json_str);
-          access_token_ = l_json["accessToken"].get<std::string>();
-          if (in_auto_expire) begin_refresh_token(chrono::seconds(l_json["expireIn"].get<int>()));
-
-          l_com(ec, nlohmann::json::parse(l_json_str));
-        }
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
+        [this, in_auto_expire](auto&& handler, auto in_self, auto in_req) {
+          http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+              in_req, json_body_impl_access_token<decltype(handler)>(
+                       std::move(handler), in_auto_expire, this, http_client_core_ptr_->logger()
+                   )
+          );
+        },
+        in_completion, this, req
     );
   }
 
@@ -86,39 +140,13 @@ class client {
     };
     req.body() = nlohmann::json{{"mobile", in_mobile}}.dump();
     req.set(boost::beast::http::field::content_type, "application/json");
-
-    http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-        req,
-        [l_com = std::move(in_completion),
-         this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
-          if (ec) {
-            http_client_core_ptr_old_->logger()->log(
-                log_loc(), level::err, "get_user_by_mobile failed: {}", ec.message()
-            );
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-
-          if (res.result() != boost::beast::http::status::ok) {
-            http_client_core_ptr_old_->logger()->log(
-                log_loc(), level::err, "get_user_by_mobile failed: {}", res.body()
-            );
-            ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-
-          auto l_json_str = res.body();
-          if (!nlohmann::json::accept(l_json_str)) {
-            http_client_core_ptr_old_->logger()->log(
-                log_loc(), level::err, "get_user_by_mobile failed: {}", l_json_str
-            );
-            ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-          l_com(ec, nlohmann::json::parse(l_json_str));
-        }
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
+        [this](auto&& handler, auto in_self, auto in_req) {
+          http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+              in_req, json_body_impl<decltype(handler)>(std::move(handler), http_client_core_ptr_old_->logger())
+          );
+        },
+        in_completion, this, req
     );
   }
   template <typename CompletionHandler>
@@ -134,40 +162,15 @@ class client {
     }.dump();
     req.set(boost::beast::http::field::content_type, "application/json");
 
-    http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-        req,
-        [l_com = std::move(in_completion),
-         this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
-          if (ec) {
-            http_client_core_ptr_old_->logger()->log(
-                log_loc(), level::err, "get_attendance_updatedata failed: {}", ec.message()
-            );
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-
-          if (res.result() != boost::beast::http::status::ok) {
-            http_client_core_ptr_old_->logger()->log(
-                log_loc(), level::err, "get_attendance_updatedata failed: {}", res.body()
-            );
-            ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-
-          auto l_json_str = res.body();
-          if (!nlohmann::json::accept(l_json_str)) {
-            http_client_core_ptr_old_->logger()->log(
-                log_loc(), level::err, "get_attendance_updatedata failed: {}", l_json_str
-            );
-            ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-            l_com(ec, nlohmann::json{});
-            return;
-          }
-          l_com(ec, nlohmann::json::parse(l_json_str));
-        }
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
+        [this](auto&& in_completion, auto in_self, auto in_req) {
+          in_self->http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
+              in_req, json_body_impl<decltype(in_completion)>(std::move(in_completion), http_client_core_ptr_old_->logger())
+          );
+        },
+        in_completion, this, req
     );
   }
 };
-
+using client_ptr = std::shared_ptr<client>;
 }  // namespace doodle::dingding
