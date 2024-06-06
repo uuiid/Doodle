@@ -25,7 +25,10 @@
 
 #include <exe_maya/core/maya_lib_guard.h>
 #include <maya/MFileObject.h>
+#include <maya/MFnReference.h>
+#include <maya/MNamespace.h>
 #include <maya/MSceneMessage.h>
+
 namespace doodle::maya_plug {
 
 bool replace_file_facet::post(const FSys::path& in_path) {
@@ -61,6 +64,7 @@ void replace_file_facet::replace_file(
   struct tmp_data {
     std::vector<std::pair<FSys::path, FSys::path>> files_;
     FSys::path file_path_;
+    std::vector<std::pair<MObject, std::string>> rename_namespaces{};
   };
   tmp_data l_data{in_files, in_file_path};
 
@@ -69,9 +73,9 @@ void replace_file_facet::replace_file(
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool* retCode, const MObject& referenceNode, MFileObject& file, void* clientData) {
-          auto* self  = reinterpret_cast<tmp_data*>(clientData);
-          auto l_name = conv::to_s(file.rawName());
-          auto l_it   = std::find_if(
+          auto* self        = reinterpret_cast<tmp_data*>(clientData);
+          FSys::path l_name = conv::to_s(file.rawName());
+          auto l_it         = std::find_if(
               self->files_.begin(), self->files_.end(),
               [&l_name](const std::pair<FSys::path, FSys::path>& in_pair) -> bool {
                 return l_name == in_pair.first.filename();
@@ -86,6 +90,8 @@ void replace_file_facet::replace_file(
           k_s = file.setRawFullName(conv::to_ms(l_it->second.generic_string()));
           DOODLE_MAYA_CHICK(k_s);
           *retCode = true;
+
+          self->rename_namespaces.emplace_back(referenceNode, l_it->second.stem().generic_string());
           default_logger_raw()->log(log_loc(), level::info, "替换加载引用文件 {}", l_it->second);
         },
         &l_data
@@ -97,18 +103,18 @@ void replace_file_facet::replace_file(
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)"));
 
-  for (auto&& l_pair : in_files) {
-    auto l_ref_it = std::find_if(ref_files_.begin(), ref_files_.end(), [&l_pair](entt::handle& in_handle) -> bool {
-      auto&& l_ref = in_handle.get<reference_file>();
-      return l_ref.get_abs_path().stem() == l_pair.first.stem();
-    });
-    if (l_ref_it == ref_files_.end()) {
-      continue;
-    }
-    auto&& l_ref = l_ref_it->get<reference_file>();
-    l_ref.rename_namespace(l_pair.second.stem().string());
+  // rename namespace
+  DOODLE_LOG_INFO("开始重命名命名空间");
+  MFnReference l_fn_ref{};
+  for (auto&& l_pair : l_data.rename_namespaces) {
+    k_s = l_fn_ref.setObject(l_pair.first);
+    DOODLE_MAYA_CHICK(k_s);
+    auto l_namespace = l_fn_ref.associatedNamespace(true);
+    if (l_namespace.length() == 0) continue;
+    k_s = MNamespace::renameNamespace(l_namespace, conv::to_ms(l_pair.second));
+    DOODLE_MAYA_CHICK(k_s);
   }
-  DOODLE_LOG_INFO("替换完成");
+  DOODLE_LOG_INFO("重命名完成");
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
   maya_file_io::save_file(
       maya_plug::maya_file_io::work_path("replace_file") / maya_plug::maya_file_io::get_current_path().filename()
