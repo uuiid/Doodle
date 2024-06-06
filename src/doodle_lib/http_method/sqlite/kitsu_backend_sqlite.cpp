@@ -30,9 +30,9 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
           l_insert_list.emplace_back(save_list_[i]);
         }
       }
-      T::insert(in_db, l_insert_list, map_id_);
-      T::update(in_db, l_update_list);
-      T::delete_by_ids(in_db, destroy_list_);
+      if (!l_insert_list.empty()) T::insert(in_db, l_insert_list, map_id_);
+      if (!l_update_list.empty()) T::update(in_db, l_update_list);
+      if (!destroy_list_.empty()) T::delete_by_ids(in_db, destroy_list_);
     }
 
     void get_data(kitsu_backend_sqlite::observer_data<T>& in_data) {
@@ -63,9 +63,9 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
           l_insert_list.emplace_back(save_list_[i]);
         }
       }
-      user::insert(in_db, l_insert_list);
-      user::update(in_db, l_update_list);
-      user::delete_by_ids(in_db, destroy_list_);
+      if (!l_insert_list.empty()) user::insert(in_db, l_insert_list);
+      if (!l_update_list.empty()) user::update(in_db, l_update_list);
+      if (!destroy_list_.empty()) user::delete_by_ids(in_db, destroy_list_);
     }
 
     void get_data(kitsu_backend_sqlite::observer_data<user>& in_data) {
