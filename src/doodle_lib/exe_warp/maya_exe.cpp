@@ -259,11 +259,9 @@ FSys::path maya_exe::find_maya_path(const logger_ptr &in_logger, boost::system::
   boost::ignore_unused(this);
   try {
     auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
-    in_logger->log(log_loc(), level::info, "开始寻找在注册表中寻找maya");
     winreg::RegKey l_key{};
     l_key.Open(HKEY_LOCAL_MACHINE, l_key_str, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
     auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
-
     return l_maya_path;
   } catch (const winreg::RegException &in_err) {
     in_logger->log(log_loc(), level::err, "在注册表中寻找maya失败,错误信息: {}", boost::diagnostic_information(in_err));
