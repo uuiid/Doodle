@@ -100,6 +100,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
 
   void operator()() const {
     auto l_db_conn = g_pool_db().get_connection();
+    l_db_conn.execute("PRAGMA foreign_keys = ON;");
     auto l_tx      = sqlpp::start_transaction(l_db_conn);
     (*save_user_)(l_db_conn);
     (*save_work_xlsx_task_info_block_)(l_db_conn);
