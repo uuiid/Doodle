@@ -51,7 +51,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   user user_;
   entt::entity user_entity_{entt::null};
 
-  work_xlsx_task_info_block block_;
+  work_xlsx_task_info_block block_{.id_ = boost::uuids::nil_uuid()};
   entt::entity block_entity_{entt::null};
 
   business::rules rules_;
@@ -272,7 +272,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     );
     nlohmann::json l_json{};
     l_json["data"]     = block_.task_info_;
-    l_json["id"]       = block_.id_;
+    l_json["id"]       = fmt::to_string(block_.id_);
     l_json["duration"] = block_.duration_.count();
 
     auto& l_req        = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
@@ -359,7 +359,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
 
     nlohmann::json l_json;
     l_json["data"]     = block_.task_info_;
-    l_json["id"]       = block_.id_;
+    l_json["id"]       = fmt::to_string(block_.id_);
     l_json["duration"] = block_.duration_.count();
 
     auto& l_req        = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
@@ -492,7 +492,7 @@ class computing_time_get {
       if (l_u.id_ == l_user_id && l_u.task_block_.contains(l_year_month)) {
         auto l_block       = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(l_u.task_block_.at(l_year_month));
         l_json["data"]     = l_block.task_info_;
-        l_json["id"]       = l_block.id_;
+        l_json["id"]       = fmt::to_string(l_block.id_);
         l_json["duration"] = l_block.duration_.count();
         l_response.result(boost::beast::http::status::ok);
         l_response.body() = l_json.dump();
