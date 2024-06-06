@@ -153,15 +153,14 @@ class client {
   }
   template <typename CompletionHandler>
   void get_attendance_updatedata(
-      const std::string& in_user_id, const time_point_wrap& in_work_date, CompletionHandler&& in_completion
+      const std::string& in_user_id, const chrono::time_point<chrono::local_t>& in_work_date,
+      CompletionHandler&& in_completion
   ) {
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::post, fmt::format("/topapi/attendance/getupdatedata?access_token={}", access_token_),
         11
     };
-    req.body() = nlohmann::json{
-        {"userid", in_user_id}, {"work_date", fmt::format("{:%Y-%m-%d}", in_work_date.get_local_time())}
-    }.dump();
+    req.body() = nlohmann::json{{"userid", in_user_id}, {"work_date", fmt::format("{:%Y-%m-%d}", in_work_date)}}.dump();
     req.set(boost::beast::http::field::content_type, "application/json");
 
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
