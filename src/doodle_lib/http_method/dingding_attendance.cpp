@@ -1,17 +1,155 @@
 #include "dingding_attendance.h"
 
+#include <doodle_core/metadata/user.h>
+
 #include "doodle_lib/core/http/http_session_data.h"
 #include "doodle_lib/core/http/http_websocket_data.h"
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/http_client/dingding_client.h>
+#include <doodle_lib/http_client/kitsu_client.h>
+
 namespace doodle::http {
 
 class dingding_attendance_impl : public std::enable_shared_from_this<dingding_attendance_impl> {
   http_session_data_ptr handle_;
+  user user_;
+  entt::entity user_entity_{entt::null};
+  chrono::year_month_day date_;
+  void find_user(const boost::uuids::uuid& in_user_id) {
+    auto l_logger = handle_->logger_;
+    auto l_user   = std::as_const(*g_reg()).view<const user>();
+    for (auto&& [e, l_u] : l_user.each()) {
+      if (l_u.id_ == in_user_id) {
+        user_        = l_u;
+        user_entity_ = e;
+        break;
+      }
+    }
+    if (user_.id_ == boost::uuids::nil_uuid() || user_.mobile_.empty()) {
+      user_.id_           = in_user_id;
+      auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
+      l_kitsu_client->get_user(
+          user_.id_,
+          boost::asio::bind_executor(
+              g_io_context(),
+              boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_mobile, shared_from_this())
+          )
+      );
+    } else {
+      boost::asio::post(boost::asio::bind_executor(
+          g_io_context(),
+          boost::beast::bind_front_handler(&dingding_attendance_impl::feach_dingding, shared_from_this())
+      ));
+    }
+  }
+  void do_feach_mobile(boost::system::error_code ec, nlohmann::json l_json) {
+    auto l_logger = handle_->logger_;
+    if (ec) {
+      l_logger->log(log_loc(), level::err, "get user failed: {}", ec.message());
+      handle_->seed_error(boost::beast::http::status::internal_server_error, ec);
+      return;
+    }
+    try {
+      user_.mobile_ = l_json["phone"].get<std::string>();
+    } catch (const nlohmann::json::exception& e) {
+      l_logger->log(
+          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
+      );
+      handle_->seed_error(
+          boost::beast::http::status::internal_server_error, ec,
+          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
+      );
+      return;
+    } catch (const std::exception& e) {
+      l_logger->log(
+          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
+      );
+      handle_->seed_error(
+          boost::beast::http::status::internal_server_error, ec,
+          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
+      );
+      return;
+    }
+    if (user_.mobile_.empty()) {
+      l_logger->log(log_loc(), level::err, "user {} mobile is empty", l_json["email"].get<std::string>());
+      handle_->seed_error(
+          boost::beast::http::status::internal_server_error, ec,
+          fmt::format("{} mobile is empty", l_json["email"].get<std::string>())
+      );
+      return;
+    }
+    entt::handle l_handle{};
+    // 创建用户
+    if (user_entity_ == entt::null)
+      l_handle = {*g_reg(), g_reg()->create()};
+    else  // 存在用户则修改
+      l_handle = {*g_reg(), user_entity_};
+    l_handle.emplace_or_replace<user>(user_);
+    user_entity_ = l_handle.entity();
+    boost::asio::post(boost::asio::bind_executor(
+        g_io_context(), boost::beast::bind_front_handler(&dingding_attendance_impl::feach_dingding, shared_from_this())
+    ));
+  }
+
+  void feach_dingding() {
+    auto l_kitsu_client = g_ctx().get<dingding::client_ptr>();
+    if (user_.dingding_id_.empty()) {
+      l_kitsu_client->get_user_by_mobile(
+          user_.mobile_,
+          boost::asio::bind_executor(
+              g_io_context(),
+              boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_dingding, shared_from_this())
+          )
+      );
+    } else {
+      feach_attendance();
+    }
+  }
+  void do_feach_dingding(boost::system::error_code in_err, nlohmann::json in_json) {
+    if (in_err) {
+      handle_->logger_->log(log_loc(), level::err, "get user by mobile failed: {}", in_err.message());
+      handle_->seed_error(
+          boost::beast::http::status::internal_server_error, in_err, "无法从手机号码中获取钉钉用户信息"
+      );
+      return;
+    }
+    if (in_json.contains("result") && in_json["result"].contains("userid")) {
+      user_.dingding_id_ = in_json["result"]["userid"].get<std::string>();
+    } else {
+      handle_->logger_->log(log_loc(), level::err, "get user by mobile failed: {}", in_json.dump());
+      handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "返回用户信息错误");
+      return;
+    }
+  }
+
+  void feach_attendance() {
+    auto l_kitsu_client = g_ctx().get<dingding::client_ptr>();
+    l_kitsu_client->get_attendance_updatedata(
+        user_.dingding_id_, chrono::local_days{date_},
+        boost::asio::bind_executor(
+            g_io_context(),
+            boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_attendance, shared_from_this())
+        )
+    );
+  }
+  void do_feach_attendance(boost::system::error_code in_err, nlohmann::json in_json) {
+    if (in_err) {
+      handle_->logger_->log(log_loc(), level::err, "get attendance failed: {}", in_err.message());
+      handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "获取考勤信息失败");
+      return;
+    }
+    
+  }
 
  public:
   explicit dingding_attendance_impl(http_session_data_ptr in_handle) : handle_(std::move(in_handle)) {}
   ~dingding_attendance_impl() = default;
+
+  void run_post(const boost::uuids::uuid& in_user_id, const chrono::year_month_day& in_date) {
+    find_user(in_user_id);
+    date_ = in_date;
+  }
 };
 
 class dingding_attendance_get {
@@ -54,6 +192,8 @@ class dingding_attendance_post {
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     }
+    auto l_impl = std::make_shared<dingding_attendance_impl>(in_handle);
+    l_impl->run_post(l_computing_time_id, l_date);
   }
 };
 
