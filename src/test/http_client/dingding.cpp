@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
   auto l_env               = boost::this_process::environment();
   std::string l_app_key    = l_env["DINGDING_APP_KEY"].to_string();
   std::string l_app_secret = l_env["DINGDING_APP_SECRET"].to_string();
-  std::string l_mobile     = l_env["DINGDING_MOBILE"].to_string();
+  std::string l_mobile     = boost::unit_test::framework::master_test_suite().argv[1];
 
   auto l_c                 = std::make_shared<doodle::dingding::client>(l_ctx);
 
@@ -60,16 +60,20 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
   auto l_env               = boost::this_process::environment();
   std::string l_app_key    = l_env["DINGDING_APP_KEY"].to_string();
   std::string l_app_secret = l_env["DINGDING_APP_SECRET"].to_string();
-  std::string l_mobile     = l_env["DINGDING_MOBILE"].to_string();
+  std::string l_time_str   = boost::unit_test::framework::master_test_suite().argv[2];
+  std::string l_user_id    = boost::unit_test::framework::master_test_suite().argv[3];
+  chrono::local_time_pos l_time{};
+  std::istringstream l_iss{l_time_str};
+  l_iss >> chrono::parse("%Y-%m-%d", l_time);
 
-  auto l_c                 = std::make_shared<doodle::dingding::client>(l_ctx);
+  auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
 
-  l_c->async_access_token(l_app_key, l_app_secret, false, [l_c, l_mobile](auto ec, auto json) {
+  l_c->async_access_token(l_app_key, l_app_secret, false, [l_c, l_time, l_user_id](auto ec, auto json) {
     BOOST_TEST(!ec);
     BOOST_TEST(json.contains("accessToken"));
     BOOST_TEST(json.contains("expireIn"));
 
-    l_c->get_attendance_updatedata("286954280924345155", time_point_wrap{2024, 5, 23}, [l_c](auto ec, auto json) {
+    l_c->get_attendance_updatedata(l_user_id, l_time, [l_c](auto ec, auto json) {
       BOOST_TEST(!ec);
       default_logger_raw()->info("json: {}", json.dump());
       BOOST_TEST(json.contains("result"));
