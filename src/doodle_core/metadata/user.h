@@ -43,7 +43,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   // 引用的task
   std::map<chrono::year_month, entt::entity> task_block_;
   // 引用的attendance
-  std::map<chrono::year_month_day, entt::entity> attendance_block_;
+  std::map<chrono::year_month_day, std::vector<entt::entity>> attendance_block_;
 
   user();
 
