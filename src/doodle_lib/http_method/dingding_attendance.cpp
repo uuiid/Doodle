@@ -234,7 +234,62 @@ class dingding_attendance_get {
   using executor_type        = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
   boost::asio::any_io_executor get_executor() const { return executor_; }
-  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {}
+  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
+    auto l_logger = in_handle->logger_;
+    if (in_error_code) {
+      l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
+      in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
+      return;
+    }
+    auto l_view    = std::as_const(*g_reg()).view<const user>();
+    auto l_date    = in_handle->capture_->get("date");
+    auto l_user_id = in_handle->capture_->get("user_id");
+    chrono::year_month_day l_ymd{};
+    boost::uuids::uuid l_user_uuid{};
+    try {
+      std::istringstream l_date_stream{l_date};
+      l_date_stream >> date::parse("%Y-%m-%d", l_ymd);
+      l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
+    } catch (const std::exception& e) {
+      l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
+    }
+    // res
+    auto& l_req = in_handle->request_parser_->get();
+
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, in_handle->request_parser_->get().version()
+    };
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+
+    // find user
+    bool is_find = false;
+    for (auto&& [e, l_u] : l_view.each()) {
+      if (l_u.id_ == l_user_uuid) {
+        auto l_user = l_u;
+        is_find     = true;
+        if (l_user.attendance_block_.contains(l_ymd)) {
+          nlohmann::json l_json{};
+          l_json            = l_user.attendance_block_[l_ymd];
+          l_response.body() = l_json.dump();
+        } else {
+          l_response.body() = "[]";
+        }
+        break;
+      }
+    }
+
+    if (!is_find) {
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::not_found, in_error_code, "not found user or date");
+      return;
+    }
+    l_response.prepare_payload();
+    in_handle->seed(std::move(l_response));
+  }
 };
 
 class dingding_company_get {
@@ -246,7 +301,7 @@ class dingding_company_get {
   boost::asio::any_io_executor get_executor() const { return executor_; }
   void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
     auto l_logger = in_handle->logger_;
-    if(in_error_code) {
+    if (in_error_code) {
       l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
       in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
       return;
