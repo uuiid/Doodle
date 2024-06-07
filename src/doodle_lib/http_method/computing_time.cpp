@@ -140,7 +140,6 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       l_handle                       = {*g_reg(), user_entity_};
       l_handle.patch<user>().mobile_ = user_.mobile_;
     }
-    l_handle.emplace_or_replace<user>(user_);
     user_entity_ = l_handle.entity();
     run_2();
   }

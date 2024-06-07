@@ -17,9 +17,11 @@ DOODLE_SQL_COLUMN_IMP(remark, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(attendance_type, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(user_ref_id, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(update_time, sqlpp::time_point, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(dingding_id, sqlpp::text, database_n::detail::can_be_null);
 
 DOODLE_SQL_TABLE_IMP(
-    attendance_tab, tables::column::id, uuid, start_time, end_time, remark, attendance_type, update_time, user_ref_id
+    attendance_tab, tables::column::id, uuid, start_time, end_time, remark, attendance_type, update_time, dingding_id,
+    user_ref_id
 );
 }  // namespace
 
@@ -38,6 +40,7 @@ std::vector<attendance> attendance::select_all(
     l_tmp.remark_      = l_row.remark;
     l_tmp.type_        = static_cast<att_enum>(l_row.attendance_type.value());
     l_tmp.update_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.update_time.value()};
+    l_tmp.dingding_id_ = l_row.dingding_id.value();
 
     if (l_get_user.contains(l_row.user_ref_id.value()) == false) {
       continue;
@@ -61,6 +64,7 @@ void attendance::create_table(pooled_connection& in_comm) {
       remark            TEXT,
       attendance_type   INTEGER NOT NULL,
       update_time       TIMESTAMP,
+      dingding_id       TEXT,
       user_ref_id       INTEGER REFERENCES user_tab(id) ON DELETE CASCADE
     );
   )");
@@ -103,7 +107,8 @@ void attendance::insert(
       l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.start_time = sqlpp::parameter(l_tab.start_time),
       l_tab.end_time = sqlpp::parameter(l_tab.end_time), l_tab.remark = sqlpp::parameter(l_tab.remark),
       l_tab.attendance_type = sqlpp::parameter(l_tab.attendance_type),
-      l_tab.update_time = sqlpp::parameter(l_tab.update_time), l_tab.user_ref_id = sqlpp::parameter(l_tab.user_ref_id)
+      l_tab.update_time = sqlpp::parameter(l_tab.update_time), l_tab.user_ref_id = sqlpp::parameter(l_tab.user_ref_id),
+      l_tab.dingding_id = sqlpp::parameter(l_tab.dingding_id)
   ));
   for (const auto& l_attendance : in_task) {
     l_pre.params.uuid            = {l_attendance.id_.begin(), l_attendance.id_.end()};
@@ -112,6 +117,7 @@ void attendance::insert(
     l_pre.params.remark          = l_attendance.remark_;
     l_pre.params.attendance_type = static_cast<std::uint32_t>(l_attendance.type_);
     l_pre.params.update_time     = l_attendance.update_time_.get_sys_time();
+    l_pre.params.dingding_id     = l_attendance.dingding_id_;
     if (in_map_id.contains(l_attendance.user_ref_id_) == false) {
       continue;
     }
@@ -129,7 +135,8 @@ void attendance::update(pooled_connection& in_comm, const std::vector<attendance
           .set(
               l_tab.start_time = sqlpp::parameter(l_tab.start_time), l_tab.end_time = sqlpp::parameter(l_tab.end_time),
               l_tab.remark = sqlpp::parameter(l_tab.remark), l_tab.update_time = sqlpp::parameter(l_tab.update_time),
-              l_tab.attendance_type = sqlpp::parameter(l_tab.attendance_type)
+              l_tab.attendance_type = sqlpp::parameter(l_tab.attendance_type),
+              l_tab.dingding_id     = sqlpp::parameter(l_tab.dingding_id)
           )
           .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
@@ -140,6 +147,7 @@ void attendance::update(pooled_connection& in_comm, const std::vector<attendance
     l_pre.params.attendance_type = static_cast<std::uint32_t>(l_attendance.type_);
     l_pre.params.uuid            = {l_attendance.id_.begin(), l_attendance.id_.end()};
     l_pre.params.update_time     = l_attendance.update_time_.get_sys_time();
+    l_pre.params.dingding_id     = l_attendance.dingding_id_;
     in_comm(l_pre);
   }
 }
