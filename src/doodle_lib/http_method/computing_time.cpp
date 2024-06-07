@@ -132,10 +132,14 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
 
     entt::handle l_handle{};
     // 创建用户
-    if (user_entity_ == entt::null)
+    if (user_entity_ == entt::null) {
       l_handle = {*g_reg(), g_reg()->create()};
-    else  // 存在用户则修改
-      l_handle = {*g_reg(), user_entity_};
+      l_handle.emplace<user>(user_);
+    } else  // 存在用户则修改
+    {
+      l_handle                       = {*g_reg(), user_entity_};
+      l_handle.patch<user>().mobile_ = user_.mobile_;
+    }
     l_handle.emplace_or_replace<user>(user_);
     user_entity_ = l_handle.entity();
     run_2();
