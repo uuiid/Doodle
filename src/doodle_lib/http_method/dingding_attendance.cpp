@@ -17,6 +17,10 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   user user_;
   entt::entity user_entity_{entt::null};
   chrono::year_month_day date_;
+
+  // 钉钉客户端
+  dingding::client_ptr dingding_client_;
+
   void find_user(const boost::uuids::uuid& in_user_id) {
     auto l_logger = handle_->logger_;
     auto l_user   = std::as_const(*g_reg()).view<const user>();
@@ -104,9 +108,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   }
 
   void feach_dingding() {
-    auto l_kitsu_client = g_ctx().get<dingding::client_ptr>();
     if (user_.dingding_id_.empty()) {
-      l_kitsu_client->get_user_by_mobile(
+      dingding_client_->get_user_by_mobile(
           user_.mobile_,
           boost::asio::bind_executor(
               g_io_context(),
@@ -135,8 +138,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   }
 
   void feach_attendance() {
-    auto l_kitsu_client = g_ctx().get<dingding::client_ptr>();
-    l_kitsu_client->get_attendance_updatedata(
+    dingding_client_->get_attendance_updatedata(
         user_.dingding_id_, chrono::local_days{date_},
         boost::asio::bind_executor(
             g_io_context(),
@@ -216,7 +218,10 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   explicit dingding_attendance_impl(http_session_data_ptr in_handle) : handle_(std::move(in_handle)) {}
   ~dingding_attendance_impl() = default;
 
-  void run_post(const boost::uuids::uuid& in_user_id, const chrono::year_month_day& in_date) {
+  void run_post(
+      const boost::uuids::uuid& in_user_id, const chrono::year_month_day& in_date, const dingding::client_ptr& in_client
+  ) {
+    dingding_client_ = in_client;
     find_user(in_user_id);
     date_ = in_date;
   }
@@ -230,6 +235,37 @@ class dingding_attendance_get {
   boost::asio::any_io_executor executor_;
   boost::asio::any_io_executor get_executor() const { return executor_; }
   void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {}
+};
+
+class dingding_company_get {
+ public:
+  dingding_company_get() : executor_(g_thread().get_executor()) {}
+  ~dingding_company_get() = default;
+  using executor_type     = boost::asio::any_io_executor;
+  boost::asio::any_io_executor executor_;
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
+    auto l_logger = in_handle->logger_;
+    if(in_error_code) {
+      l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
+      in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
+      return;
+    }
+    auto l_cs = g_ctx().get<dingding::dingding_company>();
+    nlohmann::json l_json{};
+    for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
+      l_json.emplace_back(l_value);
+    }
+    auto& l_req = in_handle->request_parser_->get();
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.body() = l_json.dump();
+    l_response.prepare_payload();
+    in_handle->seed(std::move(l_response));
+  }
 };
 
 class dingding_attendance_post {
@@ -258,21 +294,36 @@ class dingding_attendance_post {
       return;
     }
 
-    boost::uuids::uuid l_computing_time_id{};
+    boost::uuids::uuid l_computing_time_id{}, l_company{};
     chrono::year_month_day l_date{};
+    dingding::client_ptr l_dingding_client{};
+
     try {
-      auto l_date_str     = nlohmann::json::parse(l_body)["work_date"].get<std::string>();
+      auto l_json         = nlohmann::json::parse(l_body);
+      auto l_date_str     = l_json["work_date"].get<std::string>();
+      l_company           = boost::lexical_cast<boost::uuids::uuid>(l_json["company"].get<std::string>());
       l_computing_time_id = boost::lexical_cast<boost::uuids::uuid>(l_computing_time_id_str);
       std::istringstream l_date_stream{l_date_str};
       l_date_stream >> date::parse("%Y-%m-%d", l_date);
+
     } catch (const std::exception& e) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     }
+    auto& l_cs = g_ctx().get<dingding::dingding_company>();
+    if (l_cs.company_info_map_.contains(boost::lexical_cast<boost::uuids::uuid>(l_company))) {
+      l_dingding_client = l_cs.company_info_map_[boost::lexical_cast<boost::uuids::uuid>(l_company)].client_ptr_;
+    } else {
+      l_logger->log(log_loc(), level::err, "company not found: {}", l_company);
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "company not found");
+      return;
+    }
+
     auto l_impl = std::make_shared<dingding_attendance_impl>(in_handle);
-    l_impl->run_post(l_computing_time_id, l_date);
+    l_impl->run_post(l_computing_time_id, l_date, l_dingding_client);
   }
 };
 
@@ -285,6 +336,9 @@ void reg_dingding_attendance(http_route& in_route) {
       .reg(std::make_shared<http_function>(
           boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}",
           session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_get{})
+      ))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::get, "api/doodle/company", session::make_http_reg_fun(dingding_company_get{})
       ))
 
       ;
