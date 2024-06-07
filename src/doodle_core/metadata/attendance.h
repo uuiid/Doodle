@@ -2,21 +2,23 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 namespace doodle {
-enum class attendance_type_enum : std::uint32_t {
-  // 加班
-  overtime = 0,
-  // 请假
-  leave    = 1,
-};
 class attendance {
  public:
+  enum class att_enum : std::uint32_t {
+    // 加班
+    overtime = 0,
+    // 请假
+    leave    = 1,
+  };
   boost::uuids::uuid id_;
   chrono::zoned_time<chrono::microseconds> start_time_;
   chrono::zoned_time<chrono::microseconds> end_time_;
   std::string remark_;
-  attendance_type_enum type_{attendance_type_enum::overtime};
+  att_enum type_{att_enum::overtime};
 
   entt::entity user_ref_id_;
+
+  chrono::zoned_time<chrono::microseconds> update_time_{};  // 更新时间
 
  public:
   static std::vector<attendance> select_all(
