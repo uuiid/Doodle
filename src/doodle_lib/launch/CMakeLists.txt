@@ -7,6 +7,7 @@ target_sources(
         http_working_service.h
         auto_light_process.h
         file_exists_launch.h
+        kitsu_supplement.h
 
         PRIVATE
         main_gui.cpp
@@ -15,4 +16,5 @@ target_sources(
         http_working_service.cpp
         auto_light_process.cpp
         file_exists_launch.cpp
+        kitsu_supplement.cpp
 )
