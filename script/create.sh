@@ -266,8 +266,8 @@ sudo systemctl restart meilisearch
 export http_proxy="socks5://192.168.40.53:10810/"&&export https_proxy="socks5://192.168.40.53:10810/"
 export http_proxy="http://192.168.40.53:10810/"&&export https_proxy="http://192.168.40.53:10810/"
 
-sudo git clone --branch file_check_vite https://github.com/uuiid/kitsu.git
-git fetch origin file_check_vite && git checkout origin/file_check_vite
+sudo git clone --branch master_sy https://github.com/uuiid/kitsu.git
+git fetch origin master_sy && git checkout origin/master_sy
 
 cd /opt/test
 curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
