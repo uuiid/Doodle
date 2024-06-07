@@ -33,9 +33,9 @@ class client {
     // delete copy
     json_body_impl(const json_body_impl&)            = delete;
     json_body_impl& operator=(const json_body_impl&) = delete;
-    // move 
-    json_body_impl(json_body_impl&&)            = default;
-    json_body_impl& operator=(json_body_impl&&) = default;
+    // move
+    json_body_impl(json_body_impl&&)                 = default;
+    json_body_impl& operator=(json_body_impl&&)      = default;
 
     void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
       nlohmann::json l_json{};
@@ -81,8 +81,8 @@ class client {
     json_body_impl_access_token& operator=(const json_body_impl_access_token&) = delete;
 
     // move
-    json_body_impl_access_token(json_body_impl_access_token&&)            = default;
-    json_body_impl_access_token& operator=(json_body_impl_access_token&&) = default;
+    json_body_impl_access_token(json_body_impl_access_token&&)                 = default;
+    json_body_impl_access_token& operator=(json_body_impl_access_token&&)      = default;
 
     void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
       nlohmann::json l_json{};
@@ -190,4 +190,23 @@ class client {
   }
 };
 using client_ptr = std::shared_ptr<client>;
+
+class dingding_company {
+ public:
+  dingding_company()  = default;
+  ~dingding_company() = default;
+  struct company_info {
+    boost::uuids::uuid corp_id;
+    std::string app_key;
+    std::string app_secret;
+    std::string name;
+    client_ptr client_ptr_;
+    friend void to_json(nlohmann::json& j, const company_info& p) {
+      j["id"]   = p.corp_id;
+      j["name"] = p.name;
+    }
+  };
+  std::map<boost::uuids::uuid, company_info> company_info_map_;
+};
+
 }  // namespace doodle::dingding
