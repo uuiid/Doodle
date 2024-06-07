@@ -115,7 +115,9 @@
                 "--log_level=message",
                 "--color_output=true",
                 "--detect_memory_leaks=0",
-                "--run_test=${input:test_}"
+                "--run_test=${input:test_}",
+                "--",
+                "13546364873"
             ],
             "stopAtEntry": false,
             "cwd": "${command:cmake.launchTargetDirectory}",

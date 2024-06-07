@@ -26,10 +26,17 @@ class client {
 
   template <typename CompletionHandler>
   struct json_body_impl {
-    CompletionHandler completion_handler_;
+    std::decay_t<CompletionHandler> completion_handler_;
     logger_ptr logger_;
     explicit json_body_impl(CompletionHandler&& in_completion, logger_ptr in_logger)
         : completion_handler_(std::move(in_completion)), logger_(std::move(in_logger)) {}
+    // delete copy
+    json_body_impl(const json_body_impl&)            = delete;
+    json_body_impl& operator=(const json_body_impl&) = delete;
+    // move 
+    json_body_impl(json_body_impl&&)            = default;
+    json_body_impl& operator=(json_body_impl&&) = default;
+
     void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
       nlohmann::json l_json{};
       if (ec) {
@@ -58,7 +65,7 @@ class client {
   };
   template <typename CompletionHandler>
   struct json_body_impl_access_token {
-    CompletionHandler completion_handler_;
+    std::decay_t<CompletionHandler> completion_handler_;
     bool is_auto_expire_;
     client* http_client_ding;
     logger_ptr logger_;
@@ -69,6 +76,14 @@ class client {
           is_auto_expire_(in_is_auto_expire_),
           http_client_ding(in_http_client_ding),
           logger_(std::move(in_logger)) {}
+    // delete copy
+    json_body_impl_access_token(const json_body_impl_access_token&)            = delete;
+    json_body_impl_access_token& operator=(const json_body_impl_access_token&) = delete;
+
+    // move
+    json_body_impl_access_token(json_body_impl_access_token&&)            = default;
+    json_body_impl_access_token& operator=(json_body_impl_access_token&&) = default;
+
     void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
       nlohmann::json l_json{};
       if (ec) {
@@ -126,9 +141,10 @@ class client {
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
         [this, in_auto_expire](auto&& handler, auto in_self, auto in_req) {
           http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-              in_req, json_body_impl_access_token<decltype(handler)>(
-                          std::move(handler), in_auto_expire, this, http_client_core_ptr_->logger()
-                      )
+              in_req,
+              json_body_impl_access_token<decltype(handler)>{
+                  std::move(handler), in_auto_expire, this, http_client_core_ptr_->logger()
+              }
           );
         },
         in_completion, this, req
@@ -153,8 +169,7 @@ class client {
   }
   template <typename CompletionHandler>
   void get_attendance_updatedata(
-      const std::string& in_user_id, const chrono::local_time_pos& in_work_date,
-      CompletionHandler&& in_completion
+      const std::string& in_user_id, const chrono::local_time_pos& in_work_date, CompletionHandler&& in_completion
   ) {
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::post, fmt::format("/topapi/attendance/getupdatedata?access_token={}", access_token_),
