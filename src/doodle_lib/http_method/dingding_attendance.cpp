@@ -1,5 +1,6 @@
 #include "dingding_attendance.h"
 
+#include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/user.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
@@ -81,12 +82,22 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
     }
     entt::handle l_handle{};
     // 创建用户
-    if (user_entity_ == entt::null)
+    if (user_entity_ == entt::null) {
       l_handle = {*g_reg(), g_reg()->create()};
-    else  // 存在用户则修改
-      l_handle = {*g_reg(), user_entity_};
-    l_handle.emplace_or_replace<user>(user_);
+      l_handle.emplace<user>(user_);
+    } else  // 存在用户则修改
+    {
+      l_handle                       = {*g_reg(), user_entity_};
+      l_handle.patch<user>().mobile_ = user_.mobile_;
+    }
     user_entity_ = l_handle.entity();
+
+    if (user_.attendance_block_.contains(date_)) {
+      for (auto&& l_attendance : user_.attendance_block_[date_]) {
+        g_reg()->destroy(l_attendance);
+      }
+    }
+
     boost::asio::post(boost::asio::bind_executor(
         g_io_context(), boost::beast::bind_front_handler(&dingding_attendance_impl::feach_dingding, shared_from_this())
     ));
@@ -139,7 +150,66 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "获取考勤信息失败");
       return;
     }
-    
+    std::vector<attendance> l_attendance_list{};
+    try {
+      if (in_json.contains("result") && in_json["result"].contains("approve_list")) {
+        for (auto&& l_obj : in_json["result"]["approve_list"]) {
+          auto l_time_str = l_obj["begin_time"].get<std::string>();
+          chrono::local_time_pos l_end_time{};
+          chrono::local_time_pos l_begin_time{};
+          {
+            std::istringstream l_time_stream{l_time_str};
+            l_time_stream >> chrono::parse("%F %T", l_begin_time);
+            l_time_str = l_obj["end_time"].get<std::string>();
+            l_time_stream.clear();
+            l_time_stream.str(l_time_str);
+            l_time_stream >> chrono::parse("%F %T", l_end_time);
+          }
+          auto l_biz_type = l_obj["biz_type"].get<std::uint32_t>();
+          auto l_type =
+              (l_biz_type == 1 || l_biz_type == 2) ? attendance::att_enum::overtime : attendance::att_enum::leave;
+          attendance l_attendance{
+              .id_         = core_set::get_set().get_uuid(),
+              .start_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_begin_time},
+              .end_time_   = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_end_time},
+              .remark_ =
+                  fmt::format("{}-{}", l_obj["tag_name"].get<std::string>(), l_obj["sub_type"].get<std::string>()),
+              .type_        = l_type,
+              .user_ref_id_ = user_entity_,
+              .update_time_ =
+                  chrono::zoned_time<chrono::microseconds>{
+                      chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+                  },
+              .dingding_id_ = l_obj["procInst_id"].get<std::string>(),
+          };
+          l_attendance_list.emplace_back(std::move(l_attendance));
+        }
+      }
+    } catch (const std::exception& e) {
+      handle_->logger_->log(log_loc(), level::err, "get attendance failed: {}", e.what());
+      handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, e.what());
+      return;
+    }
+
+    std::vector<entt::entity> l_attendance_entity_list{l_attendance_list.size()};
+    g_reg()->create(l_attendance_entity_list.begin(), l_attendance_entity_list.end());
+    g_reg()->insert<attendance>(
+        l_attendance_entity_list.begin(), l_attendance_entity_list.end(), l_attendance_list.begin()
+    );
+    user_.attendance_block_[date_]                              = l_attendance_entity_list;
+    g_reg()->patch<user>(user_entity_).attendance_block_[date_] = l_attendance_entity_list;
+
+    nlohmann::json l_json{};
+    l_json      = l_attendance_list;
+    auto& l_req = handle_->request_parser_->get();
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.body() = l_json.dump();
+    l_response.prepare_payload();
+    handle_->seed(std::move(l_response));
   }
 
  public:
@@ -179,10 +249,19 @@ class dingding_attendance_post {
     auto l_req                   = in_handle->get_msg_body_parser<boost::beast::http::string_body>();
 
     auto l_computing_time_id_str = in_handle->capture_->get("user_id");
-    auto l_date_str              = in_handle->capture_->get("date");
+
+    auto l_body                  = l_req->request_parser_->get().body();
+    if (!nlohmann::json::accept(l_body)) {
+      l_logger->log(log_loc(), level::err, "url parse error: {}", l_body);
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, l_body);
+      return;
+    }
+
     boost::uuids::uuid l_computing_time_id{};
     chrono::year_month_day l_date{};
     try {
+      auto l_date_str     = nlohmann::json::parse(l_body)["work_date"].get<std::string>();
       l_computing_time_id = boost::lexical_cast<boost::uuids::uuid>(l_computing_time_id_str);
       std::istringstream l_date_stream{l_date_str};
       l_date_stream >> date::parse("%Y-%m-%d", l_date);
@@ -200,7 +279,7 @@ class dingding_attendance_post {
 void reg_dingding_attendance(http_route& in_route) {
   in_route
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/attendance/{user_id}/{date}",
+          boost::beast::http::verb::post, "api/doodle/attendance/{user_id}",
           session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_post{})
       ))
       .reg(std::make_shared<http_function>(
