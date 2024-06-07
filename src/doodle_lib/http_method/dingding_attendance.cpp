@@ -183,6 +183,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
                       chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
                   },
               .dingding_id_ = l_obj["procInst_id"].get<std::string>(),
+              .create_date_ = date_
           };
           l_attendance_list.emplace_back(std::move(l_attendance));
         }
