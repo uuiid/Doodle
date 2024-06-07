@@ -16,9 +16,10 @@ DOODLE_SQL_COLUMN_IMP(end_time, sqlpp::time_point, database_n::detail::can_be_nu
 DOODLE_SQL_COLUMN_IMP(remark, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(attendance_type, sqlpp::integer, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(user_ref_id, sqlpp::integer, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(update_time, sqlpp::time_point, database_n::detail::can_be_null);
 
 DOODLE_SQL_TABLE_IMP(
-    attendance_tab, tables::column::id, uuid, start_time, end_time, remark, attendance_type, user_ref_id
+    attendance_tab, tables::column::id, uuid, start_time, end_time, remark, attendance_type, update_time, user_ref_id
 );
 }  // namespace
 
@@ -32,10 +33,12 @@ std::vector<attendance> attendance::select_all(
   for (const auto& l_row : in_comm(l_pre)) {
     attendance l_tmp{};
     std::copy_n(l_row.uuid.value().begin(), l_tmp.id_.size(), l_tmp.id_.begin());
-    l_tmp.start_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.start_time.value()};
-    l_tmp.end_time_   = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.end_time.value()};
-    l_tmp.remark_     = l_row.remark;
-    l_tmp.type_       = static_cast<att_enum>(l_row.attendance_type.value());
+    l_tmp.start_time_  = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.start_time.value()};
+    l_tmp.end_time_    = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.end_time.value()};
+    l_tmp.remark_      = l_row.remark;
+    l_tmp.type_        = static_cast<att_enum>(l_row.attendance_type.value());
+    l_tmp.update_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.update_time.value()};
+
     if (l_get_user.contains(l_row.user_ref_id.value()) == false) {
       continue;
     }
@@ -57,6 +60,7 @@ void attendance::create_table(pooled_connection& in_comm) {
       end_time          TIMESTAMP NOT NULL,
       remark            TEXT,
       attendance_type   INTEGER NOT NULL,
+      update_time       TIMESTAMP,
       user_ref_id       INTEGER REFERENCES user_tab(id) ON DELETE CASCADE
     );
   )");
@@ -99,7 +103,7 @@ void attendance::insert(
       l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.start_time = sqlpp::parameter(l_tab.start_time),
       l_tab.end_time = sqlpp::parameter(l_tab.end_time), l_tab.remark = sqlpp::parameter(l_tab.remark),
       l_tab.attendance_type = sqlpp::parameter(l_tab.attendance_type),
-      l_tab.user_ref_id     = sqlpp::parameter(l_tab.user_ref_id)
+      l_tab.update_time = sqlpp::parameter(l_tab.update_time), l_tab.user_ref_id = sqlpp::parameter(l_tab.user_ref_id)
   ));
   for (const auto& l_attendance : in_task) {
     l_pre.params.uuid            = {l_attendance.id_.begin(), l_attendance.id_.end()};
@@ -107,6 +111,7 @@ void attendance::insert(
     l_pre.params.end_time        = l_attendance.end_time_.get_sys_time();
     l_pre.params.remark          = l_attendance.remark_;
     l_pre.params.attendance_type = static_cast<std::uint32_t>(l_attendance.type_);
+    l_pre.params.update_time     = l_attendance.update_time_.get_sys_time();
     if (in_map_id.contains(l_attendance.user_ref_id_) == false) {
       continue;
     }
@@ -119,20 +124,22 @@ void attendance::insert(
 }
 void attendance::update(pooled_connection& in_comm, const std::vector<attendance>& in_task) {
   attendance_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::update(l_tab)
-                                   .set(
-                                       l_tab.start_time      = sqlpp::parameter(l_tab.start_time),
-                                       l_tab.end_time        = sqlpp::parameter(l_tab.end_time),
-                                       l_tab.remark          = sqlpp::parameter(l_tab.remark),
-                                       l_tab.attendance_type = sqlpp::parameter(l_tab.attendance_type)
-                                   )
-                                   .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  auto l_pre = in_comm.prepare(
+      sqlpp::update(l_tab)
+          .set(
+              l_tab.start_time = sqlpp::parameter(l_tab.start_time), l_tab.end_time = sqlpp::parameter(l_tab.end_time),
+              l_tab.remark = sqlpp::parameter(l_tab.remark), l_tab.update_time = sqlpp::parameter(l_tab.update_time),
+              l_tab.attendance_type = sqlpp::parameter(l_tab.attendance_type)
+          )
+          .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
+  );
   for (const auto& l_attendance : in_task) {
     l_pre.params.start_time      = l_attendance.start_time_.get_sys_time();
     l_pre.params.end_time        = l_attendance.end_time_.get_sys_time();
     l_pre.params.remark          = l_attendance.remark_;
     l_pre.params.attendance_type = static_cast<std::uint32_t>(l_attendance.type_);
     l_pre.params.uuid            = {l_attendance.id_.begin(), l_attendance.id_.end()};
+    l_pre.params.update_time     = l_attendance.update_time_.get_sys_time();
     in_comm(l_pre);
   }
 }
@@ -147,11 +154,11 @@ void attendance::delete_by_ids(pooled_connection& in_comm, const std::vector<boo
 
 void to_json(nlohmann::json& j, const attendance& p) {
   j["id"]          = fmt::to_string(p.id_);
-  j["start_time"]  = fmt::format("%FT%TZ", p.start_time_.get_sys_time());
-  j["end_time"]    = fmt::format("%FT%TZ", p.end_time_.get_sys_time());
+  j["start_time"]  = fmt::format("%FT%T", p.start_time_.get_local_time());
+  j["end_time"]    = fmt::format("%FT%T", p.end_time_.get_local_time());
   j["remark"]      = p.remark_;
+  j["update_time"] = fmt::format("%FT%T", p.update_time_.get_local_time());
   j["type"]        = static_cast<std::uint32_t>(p.type_);
-  
 }
 // void from_json(const nlohmann::json& j, attendance& p) {
 //   p.id_          = j.at("id").get<boost::uuids::uuid>();
