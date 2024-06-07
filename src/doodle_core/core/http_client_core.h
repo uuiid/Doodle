@@ -124,6 +124,7 @@ class http_client_core
       // 重试次数
       std::size_t retry_count_{};
     };
+    boost::asio::executor_work_guard<ExecutorType> work_guard_;
     std::unique_ptr<data_type2> ptr_;
     socket_t& socket_;
     http_client_core* http_client_core_ptr_;
@@ -135,9 +136,12 @@ class http_client_core
     )
         : base_type(std::move(in_handler), in_executor_type_1),
           boost::asio::coroutine(),
+          work_guard_(boost::asio::make_work_guard(in_executor_type_1)),
           ptr_(std::make_unique<data_type2>()),
           socket_(in_ptr->stream()),
-          http_client_core_ptr_(in_ptr) {
+          http_client_core_ptr_(in_ptr)
+
+    {
       ptr_->request_ = std::move(in_req);
       ptr_->logger_  = in_ptr->ptr_->logger_;
     }
@@ -394,9 +398,9 @@ class http_client_core
     } else {
       ptr_->socket_ = std::make_shared<socket_t>(l_s);
     }
-    
+
     if (!l_url.host().empty()) ptr_->server_ip_ = l_url.host();
-    
+
     ptr_->logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", l_url.host(), socket()));
   }
 };
