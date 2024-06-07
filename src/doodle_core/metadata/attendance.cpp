@@ -35,7 +35,7 @@ std::vector<attendance> attendance::select_all(
     l_tmp.start_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.start_time.value()};
     l_tmp.end_time_   = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.end_time.value()};
     l_tmp.remark_     = l_row.remark;
-    l_tmp.type_       = static_cast<attendance_type_enum>(l_row.attendance_type.value());
+    l_tmp.type_       = static_cast<att_enum>(l_row.attendance_type.value());
     if (l_get_user.contains(l_row.user_ref_id.value()) == false) {
       continue;
     }
