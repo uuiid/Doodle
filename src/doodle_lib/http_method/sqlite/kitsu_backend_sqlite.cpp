@@ -101,7 +101,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
   void operator()() const {
     auto l_db_conn = g_pool_db().get_connection();
     l_db_conn.execute("PRAGMA foreign_keys = ON;");
-    auto l_tx      = sqlpp::start_transaction(l_db_conn);
+    auto l_tx = sqlpp::start_transaction(l_db_conn);
     (*save_user_)(l_db_conn);
     (*save_work_xlsx_task_info_block_)(l_db_conn);
     l_tx.commit();
@@ -135,10 +135,20 @@ void kitsu_backend_sqlite::init(pooled_connection& in_conn) {
   }
 
   // todo: 最后选择调休
+  {
+    auto l_attendance = attendance::select_all(in_conn, l_map_id);
+    std::vector<entt::entity> l_entities{l_attendance.size()};
+    g_reg()->create(l_entities.begin(), l_entities.end());
+    g_reg()->insert<attendance>(l_entities.begin(), l_entities.end(), l_attendance.begin());
+  }
 
   // 最后连接引用
   for (auto [e, l_b] : g_reg()->view<work_xlsx_task_info_block>().each()) {
     g_reg()->get<user>(l_b.user_refs_).task_block_[l_b.year_month_] = e;
+  }
+  for (auto [e, l_b] : g_reg()->view<attendance>().each()) {
+    chrono::year_month_day l_ymd{chrono::time_point_cast<chrono::days>(l_b.start_time_.get_local_time())};
+    g_reg()->get<user>(l_b.user_ref_id_).attendance_block_[l_b.create_date_].emplace_back(e);
   }
 
   connect(*g_reg());
