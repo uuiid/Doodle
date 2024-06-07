@@ -19,7 +19,8 @@ class attendance {
   entt::entity user_ref_id_;
 
   chrono::zoned_time<chrono::microseconds> update_time_{};  // 更新时间
-  std::string dingding_id_{};  // 钉钉id
+  std::string dingding_id_{};                               // 钉钉id
+  chrono::year_month_day create_date_{};                    // 创建日期
 
  public:
   static std::vector<attendance> select_all(
