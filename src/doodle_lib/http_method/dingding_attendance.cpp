@@ -18,6 +18,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   entt::entity user_entity_{entt::null};
   chrono::year_month_day date_;
 
+  std::vector<attendance> attendance_list_{};
+
   // 钉钉客户端
   dingding::client_ptr dingding_client_;
 
@@ -49,15 +51,16 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       return;
     }
 
-    // if (user_.attendance_block_.contains(date_)) {
-    //   for (auto&& l_attendance : user_.attendance_block_[date_]) {
-    //     auto& l_att = std::as_const(*g_reg()).get<const attendance>(l_attendance);
-    //     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
-    //       send_post_result();
-    //       return;
-    //     }
-    //   }
-    // }
+    if (user_.attendance_block_.contains(date_)) {
+      auto&& l_attendance_entt = user_.attendance_block_[date_];
+      auto& l_att              = std::as_const(*g_reg()).get<const attendance_block>(l_attendance_entt);
+      if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
+        attendance_list_ = l_att.attendance_block_;
+        l_logger->log(log_loc(), level::info, "使用缓存数据, {} {} {}", user_.mobile_, l_att.create_date_, l_att.id_);
+        send_post_result();
+        return;
+      }
+    }
 
     if (user_.mobile_.empty()) {
       user_.id_           = in_user_id;
@@ -170,12 +173,6 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       return;
     }
 
-    if (user_.attendance_block_.contains(date_)) {
-      for (auto&& l_attendance : user_.attendance_block_[date_]) {
-        g_reg()->destroy(l_attendance);
-      }
-    }
-
     std::vector<attendance> l_attendance_list{};
     try {
       if (in_json.contains("result") && in_json["result"].contains("approve_list")) {
@@ -202,12 +199,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
                   fmt::format("{}-{}", l_obj["tag_name"].get<std::string>(), l_obj["sub_type"].get<std::string>()),
               .type_        = l_type,
               .user_ref_id_ = user_entity_,
-              .update_time_ =
-                  chrono::zoned_time<chrono::microseconds>{
-                      chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
-                  },
               .dingding_id_ = l_obj["procInst_id"].get<std::string>(),
-              .create_date_ = date_
           };
           l_attendance_list.emplace_back(std::move(l_attendance));
         }
@@ -218,13 +210,23 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       return;
     }
 
-    std::vector<entt::entity> l_attendance_entity_list{l_attendance_list.size()};
-    g_reg()->create(l_attendance_entity_list.begin(), l_attendance_entity_list.end());
-    g_reg()->insert<attendance>(
-        l_attendance_entity_list.begin(), l_attendance_entity_list.end(), l_attendance_list.begin()
-    );
-    user_.attendance_block_[date_]                              = l_attendance_entity_list;
-    g_reg()->patch<user>(user_entity_).attendance_block_[date_] = l_attendance_entity_list;
+    entt::handle l_handle{};
+    if (user_.attendance_block_.contains(date_) && g_reg()->valid(user_.attendance_block_[date_])) {
+      l_handle = {*g_reg(), user_.attendance_block_[date_]};
+      l_handle.emplace<attendance_block>(attendance_block{
+          .id_          = core_set::get_set().get_uuid(),
+          .create_date_ = date_,
+          .update_time_ =
+              chrono::zoned_time<chrono::microseconds>{
+                  chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+              },
+          .user_ref_id_ = user_entity_
+      });
+    } else {
+      l_handle = {*g_reg(), g_reg()->create()};
+    }
+    l_handle.patch<attendance_block>().attendance_block_ = l_attendance_list;
+    attendance_list_                                     = l_attendance_list;
 
     send_post_result();
   }
@@ -232,7 +234,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   // 发送结果
   void send_post_result() {
     nlohmann::json l_json{};
-    l_json      = user_.attendance_block_[date_];
+    l_json      = attendance_list_;
     auto& l_req = handle_->request_parser_->get();
     boost::beast::http::response<boost::beast::http::string_body> l_response{
         boost::beast::http::status::ok, l_req.version()
