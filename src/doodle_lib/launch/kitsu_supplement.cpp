@@ -9,6 +9,7 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
+#include <doodle_lib/http_method/user_http.h>
 namespace doodle::launch {
 struct kitsu_supplement_args_t {
   std::string kitsu_ip_;
@@ -113,6 +114,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   auto l_rout_ptr = std::make_shared<http::http_route>();
   http::reg_computing_time(*l_rout_ptr);
   http::reg_dingding_attendance(*l_rout_ptr);
+  http::reg_user_http(*l_rout_ptr);
 
   // 开始运行服务器
   auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, 50023);

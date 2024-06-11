@@ -240,7 +240,7 @@ class user_get {
     }
 
     l_res.result(boost::beast::http::status::not_found);
-    l_res.body() = "[\"not found\"]";
+    l_res.body() = nlohmann::json{{"code", boost::beast::http::status::not_found}, {"message", "未找到用户"}}.dump();
     l_res.prepare_payload();
     in_handle->seed(std::move(l_res));
   }
@@ -252,7 +252,8 @@ void reg_user_http(http_route& in_route) {
           boost::beast::http::verb::get, "api/doodle/user/{user_id}", session::make_http_reg_fun(user_get{})
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/user", session::make_http_reg_fun(user_post{})
+          boost::beast::http::verb::post, "api/doodle/user/{user_id}",
+          session::make_http_reg_fun<boost::beast::http::string_body>(user_post{})
       ));
 }
 }  // namespace doodle::http
