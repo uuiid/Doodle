@@ -38,6 +38,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       return;
     }
 
+    // 寻找公司
     auto& l_d = g_ctx().get<const dingding::dingding_company>();
     if (l_d.company_info_map_.contains(user_.dingding_company_id_)) {
       dingding_client_ = l_d.company_info_map_.at(user_.dingding_company_id_).client_ptr_;
@@ -107,12 +108,6 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       l_handle.patch<user>().mobile_ = user_.mobile_;
     }
 
-    if (user_.attendance_block_.contains(date_)) {
-      for (auto&& l_attendance : user_.attendance_block_[date_]) {
-        g_reg()->destroy(l_attendance);
-      }
-    }
-
     boost::asio::post(boost::asio::bind_executor(
         g_io_context(), boost::beast::bind_front_handler(&dingding_attendance_impl::feach_dingding, shared_from_this())
     ));
@@ -146,6 +141,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "返回用户信息错误");
       return;
     }
+    feach_attendance();
   }
 
   void feach_attendance() {
@@ -163,6 +159,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "获取考勤信息失败");
       return;
     }
+
+    if (user_.attendance_block_.contains(date_)) {
+      for (auto&& l_attendance : user_.attendance_block_[date_]) {
+        g_reg()->destroy(l_attendance);
+      }
+    }
+
     std::vector<attendance> l_attendance_list{};
     try {
       if (in_json.contains("result") && in_json["result"].contains("approve_list")) {
