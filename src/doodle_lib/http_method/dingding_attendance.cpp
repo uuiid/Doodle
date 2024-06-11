@@ -2,9 +2,11 @@
 
 #include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/time_tool/work_clock.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
 #include "doodle_lib/core/http/http_websocket_data.h"
+#include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/dingding_client.h>
@@ -22,6 +24,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
 
   // 钉钉客户端
   dingding::client_ptr dingding_client_;
+
+  business::work_clock2 work_clock_;
 
   void find_user(const boost::uuids::uuid& in_user_id) {
     auto l_logger = handle_->logger_;
@@ -169,6 +173,26 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
         )
     );
   }
+
+  void create_clock() {
+    auto l_r = business::rules::get_default();
+    if (l_r.is_work_day(chrono::weekday{date_})) {
+      for (auto&& l_work_time : l_r.work_pair_p) {
+        work_clock_ += std::make_tuple(
+            chrono::local_days{date_} + l_work_time.first, chrono::local_days{date_} + l_work_time.second
+        );
+      }
+    }
+    // 调整节假日
+    holidaycn_time2{l_r.work_pair_p}.set_clock(work_clock_);
+    // 排除绝对时间
+    for (auto&& l_deduction : l_r.absolute_deduction[chrono::weekday{date_}.c_encoding()]) {
+      work_clock_ -= std::make_tuple(
+          chrono::local_days{date_} + l_deduction.first, chrono::local_days{date_} + l_deduction.second
+      );
+    }
+  }
+
   void do_feach_attendance(boost::system::error_code in_err, nlohmann::json in_json) {
     if (in_err) {
       handle_->logger_->log(log_loc(), level::err, "get attendance failed: {}", in_err.message());
@@ -191,6 +215,21 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
             l_time_stream.str(l_time_str);
             l_time_stream >> chrono::parse("%F %T", l_end_time);
           }
+          // 重新使用开始时间和时间时间段计算时间
+          chrono::hours_double l_duration{0};
+          if (auto l_du_str = l_obj["duration_unit"].get<std::string>(); l_du_str == "HOUR") {
+            l_duration = chrono::hours_double{l_obj["duration"].get<std::double_t>()};
+          } else if (l_du_str == "DAY") {
+            l_duration = chrono::hours_double{l_obj["duration"].get<std::double_t>() * 8};
+          } else {
+            handle_->logger_->log(log_loc(), level::err, "get attendance failed: duration_unit error");
+            handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "duration_unit error");
+            return;
+          }
+          l_end_time = work_clock_.next_time(
+              l_begin_time, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
+          );
+
           auto l_biz_type = l_obj["biz_type"].get<std::uint32_t>();
           auto l_type =
               (l_biz_type == 1 || l_biz_type == 2) ? attendance::att_enum::overtime : attendance::att_enum::leave;
