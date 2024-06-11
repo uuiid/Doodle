@@ -95,6 +95,7 @@
         "doodle_auto_light",
         "doodle_auto_light_process",
         "doodle_file_exists",
+        "doodle_kitsu_supplement",
         "Doxygen"
       ]
     },
@@ -151,6 +152,7 @@
         "doodle_auto_light",
         "doodle_auto_light_process",
         "doodle_file_exists",
+        "doodle_kitsu_supplement",
         "Doxygen"
       ]
     },

@@ -5,4 +5,4 @@
 
 #include "main_macro.h"
 
-DOODLE_MAIN_IMPL(doodle::launch::kitsu_supplement)
+DOODLE_MAIN_IMPL(doodle::launch::kitsu_supplement_t)
