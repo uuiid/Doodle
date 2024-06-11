@@ -11,7 +11,8 @@ target_sources(
         task_sqlite_server.h
         computing_time.h
         dingding_attendance.h
-
+        user_http.h
+        
         PRIVATE
         computer.cpp
         task_info.cpp
@@ -21,4 +22,5 @@ target_sources(
         task_sqlite_server.cpp
         computing_time.cpp
         dingding_attendance.cpp
+        user_http.cpp
 )
