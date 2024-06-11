@@ -101,13 +101,15 @@ class DOODLE_CORE_API work_clock {
 };
 
 class DOODLE_CORE_API work_clock2 {
-  using time_type              = chrono::local_time_pos;
-  using duration_type          = time_type::duration;
-  using info_type              = std::set<std::string>;
+ public:
+  using time_type     = chrono::local_time_pos;
+  using duration_type = time_type::duration;
+  using info_type     = std::set<std::string>;
+
+ private:
   using discrete_interval_time = boost::icl::discrete_interval<time_type>;
   using interval_set_time      = boost::icl::interval_set<time_type>;
   using interval_map_time      = boost::icl::interval_map<time_type, info_type>;
-
   interval_set_time interval_set_time_;
   interval_map_time interval_map_time_;
 
