@@ -66,6 +66,7 @@ void attendance::create_table(pooled_connection& in_comm) {
       remark            TEXT,
       attendance_type   INTEGER NOT NULL,
       update_time       TIMESTAMP,
+      create_date       DATE,
       dingding_id       TEXT,
       user_ref_id       INTEGER REFERENCES user_tab(id) ON DELETE CASCADE
     );
