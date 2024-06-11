@@ -345,7 +345,8 @@ class dingding_attendance_get {
         is_find     = true;
         if (l_user.attendance_block_.contains(l_ymd)) {
           nlohmann::json l_json{};
-          l_json            = l_user.attendance_block_[l_ymd];
+          l_json =
+              std::as_const(*g_reg()).get<const attendance_block>(l_user.attendance_block_[l_ymd]).attendance_block_;
           l_response.body() = l_json.dump();
         } else {
           l_response.body() = "[]";
