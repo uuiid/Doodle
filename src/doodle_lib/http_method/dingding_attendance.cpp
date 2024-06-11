@@ -201,7 +201,6 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
               .remark_ =
                   fmt::format("{}-{}", l_obj["tag_name"].get<std::string>(), l_obj["sub_type"].get<std::string>()),
               .type_        = l_type,
-              .user_ref_id_ = user_entity_,
               .dingding_id_ = l_obj["procInst_id"].get<std::string>(),
           };
           l_attendance_list.emplace_back(std::move(l_attendance));

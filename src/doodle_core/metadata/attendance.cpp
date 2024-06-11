@@ -34,7 +34,6 @@ void to_json(nlohmann::json& j, const attendance& p) {
   j["start_time"]  = fmt::format("%FT%T", p.start_time_.get_local_time());
   j["end_time"]    = fmt::format("%FT%T", p.end_time_.get_local_time());
   j["remark"]      = p.remark_;
-  j["update_time"] = fmt::format("%FT%T", p.update_time_.get_local_time());
   j["type"]        = static_cast<std::uint32_t>(p.type_);
 }
 
@@ -88,7 +87,6 @@ std::vector<attendance_block> attendance_block::select_all(
           .end_time_    = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_row.end_time},
           .remark_      = l_row.remark,
           .type_        = static_cast<attendance::att_enum>(l_row.attendance_type.value()),
-          .user_ref_id_ = l_b.user_ref_id_,
           .dingding_id_ = l_row.dingding_id,
       });
     }
