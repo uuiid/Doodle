@@ -14,6 +14,7 @@ struct kitsu_supplement_args_t {
   std::string kitsu_ip_;
   std::string kitsu_port_;
   std::string port_;
+  FSys::path db_path_{};
 
   std::string kitsu_token_{};
   // 公司
@@ -40,6 +41,7 @@ struct kitsu_supplement_args_t {
     in_json.at("kitsu_port").get_to(out_obj.kitsu_port_);
     in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
     in_json.at("port").get_to(out_obj.port_);
+    in_json.at("db_path").get_to(out_obj.db_path_);
     in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
   }
 };
@@ -78,7 +80,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
   // 初始化数据库
   {
-    g_pool_db().set_path("D:/test_files/test_db/test2.db");
+    g_pool_db().set_path(l_args.db_path_);
     auto l_db_conn = g_pool_db().get_connection();
     l_save.init(l_db_conn);
   }
