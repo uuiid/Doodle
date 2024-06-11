@@ -82,6 +82,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
 
   std::shared_ptr<sqlite_save_data<user>> save_user_{};
   std::shared_ptr<sqlite_save_data<work_xlsx_task_info_block>> save_work_xlsx_task_info_block_{};
+  std::shared_ptr<sqlite_save_data<attendance_block>> save_attendance_block_{};
 
   kitsu_backend_sqlite_fun(
 
@@ -95,7 +96,9 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
     save_user_->get_data(std::get<observer_data<user>>(in_data.observer_data_));
     save_work_xlsx_task_info_block_->get_data(std::get<observer_data<work_xlsx_task_info_block>>(in_data.observer_data_)
     );
+    save_attendance_block_->get_data(std::get<observer_data<attendance_block>>(in_data.observer_data_));
     save_work_xlsx_task_info_block_->map_id_ = save_user_->self_map_id_;
+    save_attendance_block_->map_id_          = save_user_->self_map_id_;
   }
 
   void operator()() const {

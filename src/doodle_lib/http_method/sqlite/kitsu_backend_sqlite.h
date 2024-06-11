@@ -7,6 +7,7 @@
 namespace doodle {
 class user;
 class work_xlsx_task_info_block;
+class attendance_block;
 
 }  // namespace doodle
 
@@ -15,7 +16,7 @@ class kitsu_backend_sqlite : public boost::noncopyable {
   using timer_t     = boost::asio::steady_timer;
   using timer_ptr_t = std::shared_ptr<timer_t>;
   timer_ptr_t timer_ptr_{};
-  
+
   class kitsu_backend_sqlite_fun;
 
   template <typename T>
@@ -63,7 +64,8 @@ class kitsu_backend_sqlite : public boost::noncopyable {
     }
   };
 
-  std::tuple<observer_data<user>, observer_data<work_xlsx_task_info_block>> observer_data_{};
+  std::tuple<observer_data<user>, observer_data<work_xlsx_task_info_block>, observer_data<attendance_block>>
+      observer_data_{};
 
   logger_ptr logger_ptr_{};
 
