@@ -56,7 +56,10 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       auto& l_att              = std::as_const(*g_reg()).get<const attendance_block>(l_attendance_entt);
       if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
         attendance_list_ = l_att.attendance_block_;
-        l_logger->log(log_loc(), level::info, "使用缓存数据, {} {} {}", user_.mobile_, l_att.create_date_, l_att.id_);
+        l_logger->log(
+            log_loc(), level::info, "使用缓存数据, {} {} {}", user_.mobile_, chrono::local_days{l_att.create_date_},
+            l_att.id_
+        );
         send_post_result();
         return;
       }
