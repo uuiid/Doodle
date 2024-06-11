@@ -202,7 +202,7 @@ class dingding_company {
     std::string name;
     client_ptr client_ptr_;
     friend void to_json(nlohmann::json& j, const company_info& p) {
-      j["id"]   = p.corp_id;
+      j["id"]   = fmt::to_string(p.corp_id);
       j["name"] = p.name;
     }
   };
