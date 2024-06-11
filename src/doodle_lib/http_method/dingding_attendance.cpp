@@ -216,6 +216,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
     entt::handle l_handle{};
     if (user_.attendance_block_.contains(date_) && g_reg()->valid(user_.attendance_block_[date_])) {
       l_handle = {*g_reg(), user_.attendance_block_[date_]};
+    } else {
+      l_handle = {*g_reg(), g_reg()->create()};
       l_handle.emplace<attendance_block>(attendance_block{
           .id_          = core_set::get_set().get_uuid(),
           .create_date_ = date_,
@@ -225,8 +227,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
               },
           .user_ref_id_ = user_entity_
       });
-    } else {
-      l_handle = {*g_reg(), g_reg()->create()};
+      user_.attendance_block_[date_]                              = l_handle.entity();
+      g_reg()->patch<user>(user_entity_).attendance_block_[date_] = l_handle.entity();
     }
     l_handle.patch<attendance_block>().attendance_block_ = l_attendance_list;
     attendance_list_                                     = l_attendance_list;
@@ -369,10 +371,10 @@ class dingding_attendance_post {
       in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
       return;
     }
-    auto l_req                   = in_handle->get_msg_body_parser<boost::beast::http::string_body>();
-    auto l_computing_time_id_str = in_handle->capture_->get("user_id");
+    auto l_req         = in_handle->get_msg_body_parser<boost::beast::http::string_body>();
+    auto l_user_id_str = in_handle->capture_->get("user_id");
 
-    auto l_body                  = l_req->request_parser_->get().body();
+    auto l_body        = l_req->request_parser_->get().body();
     if (!nlohmann::json::accept(l_body)) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", l_body);
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
@@ -380,14 +382,13 @@ class dingding_attendance_post {
       return;
     }
 
-    boost::uuids::uuid l_computing_time_id{}, l_company{};
+    boost::uuids::uuid l_user_id{};
     chrono::year_month_day l_date{};
 
     try {
-      auto l_json         = nlohmann::json::parse(l_body);
-      auto l_date_str     = l_json["work_date"].get<std::string>();
-      l_company           = boost::lexical_cast<boost::uuids::uuid>(l_json["company"].get<std::string>());
-      l_computing_time_id = boost::lexical_cast<boost::uuids::uuid>(l_computing_time_id_str);
+      auto l_json     = nlohmann::json::parse(l_body);
+      auto l_date_str = l_json["work_date"].get<std::string>();
+      l_user_id       = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
       std::istringstream l_date_stream{l_date_str};
       l_date_stream >> date::parse("%Y-%m-%d", l_date);
 
@@ -399,7 +400,7 @@ class dingding_attendance_post {
     }
 
     auto l_impl = std::make_shared<dingding_attendance_impl>(in_handle);
-    l_impl->run_post(l_computing_time_id, l_date);
+    l_impl->run_post(l_user_id, l_date);
   }
 };
 
