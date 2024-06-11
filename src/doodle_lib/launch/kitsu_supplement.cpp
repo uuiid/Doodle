@@ -14,7 +14,7 @@ namespace doodle::launch {
 struct kitsu_supplement_args_t {
   std::string kitsu_ip_;
   std::string kitsu_port_;
-  std::string port_;
+  std::uint16_t port_;
   FSys::path db_path_{};
 
   std::string kitsu_token_{};
@@ -49,7 +49,7 @@ struct kitsu_supplement_args_t {
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   auto& l_save = g_ctx().emplace<http::kitsu_backend_sqlite>();
 
-  kitsu_supplement_args_t l_args{.kitsu_ip_ = "192.168.40.182", .kitsu_port_ = "80", .port_ = "50025"};
+  kitsu_supplement_args_t l_args{.kitsu_ip_ = "192.168.40.182", .kitsu_port_ = "80", .port_ = 50025};
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
@@ -117,7 +117,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   http::reg_user_http(*l_rout_ptr);
 
   // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, 50023);
+  auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, l_args.port_);
   l_listener->run();
   l_save.run();
   in_vector.emplace_back(l_listener);
