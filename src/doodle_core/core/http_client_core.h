@@ -107,6 +107,16 @@ class http_client_core
   request_header_operator_type request_header_operator_;
   response_header_operator_type response_header_operator_;
 
+  // is_run 守卫
+  struct guard_is_run {
+    http_client_core& http_client_core_;
+    explicit guard_is_run(http_client_core& in_core) : http_client_core_(in_core) { http_client_core_.is_run_ = true; }
+    ~guard_is_run() {
+      http_client_core_.is_run_ = false;
+      http_client_core_.next();
+    }
+  };
+
  public:
   using state = http_client_core_ns::state;
 
@@ -128,6 +138,7 @@ class http_client_core
     std::unique_ptr<data_type2> ptr_;
     socket_t& socket_;
     http_client_core* http_client_core_ptr_;
+    std::shared_ptr<guard_is_run> guard_is_run_ptr_;
 
     using base_type = boost::beast::async_base<std::decay_t<CompletionHandler>, ExecutorType>;
     explicit connect_write_read_op(
@@ -139,7 +150,8 @@ class http_client_core
           work_guard_(boost::asio::make_work_guard(in_executor_type_1)),
           ptr_(std::make_unique<data_type2>()),
           socket_(in_ptr->stream()),
-          http_client_core_ptr_(in_ptr)
+          http_client_core_ptr_(in_ptr),
+          guard_is_run_ptr_()
 
     {
       ptr_->request_ = std::move(in_req);
@@ -154,6 +166,7 @@ class http_client_core
     connect_write_read_op& operator=(const connect_write_read_op&) = delete;
 
     void operator()() {
+      guard_is_run_ptr_ = std::make_shared<guard_is_run>(*http_client_core_ptr_);
       if (socket_.socket().is_open()) {
         do_write();
       } else {
@@ -295,9 +308,10 @@ class http_client_core
     log_info(ptr_->logger_, fmt::format("{} {}", in_type.target(), fmt::ptr(std::addressof(in_completion))));
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
         [](auto&& in_completion_, http_client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
-          connect_op{
+          in_client_ptr->ptr_->next_list_.emplace().emplace(connect_op{
               in_client_ptr, std::move(in_type), std::forward<decltype(in_completion_)>(in_completion_), in_executor_
-          }();
+          });
+          in_client_ptr->next();
         },
         in_completion, this, l_exe, in_type
     );
@@ -402,6 +416,14 @@ class http_client_core
     if (!l_url.host().empty()) ptr_->server_ip_ = l_url.host();
 
     ptr_->logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", l_url.host(), socket()));
+  }
+  void next() {
+    if (ptr_->next_list_.empty()) {
+      return;
+    }
+    if (is_run_) return;
+    ptr_->next_list_.front().maybe_invoke();
+    ptr_->next_list_.pop();
   }
 };
 }  // namespace doodle::http::detail
