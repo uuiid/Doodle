@@ -70,10 +70,13 @@ std::vector<attendance_block> attendance_block::select_all(
   }
 
   {
-    auto l_sub_pre = in_comm.prepare(
-        sqlpp::select(all_of(l_sub_tab)).from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids)))
-    );
-    for (const auto& l_row : in_comm(l_sub_pre)) {
+    std::vector<std::int64_t> l_tmp_ids{};
+    std::transform(l_ids.begin(), l_ids.end(), std::back_inserter(l_tmp_ids), [](const auto& in) -> std::int64_t {
+      return in.first;
+    });
+    for (const auto& l_row : in_comm(sqlpp::select(all_of(l_sub_tab))
+                                         .from(l_sub_tab)
+                                         .where(l_sub_tab.parent_id.in(sqlpp::value_list(l_tmp_ids))))) {
       auto& l_b = l_ret.at(l_ids.at(l_row.parent_id));
 
       boost::uuids::uuid l_uuid{};
