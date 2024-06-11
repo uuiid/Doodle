@@ -237,8 +237,11 @@ class user_get {
     for (auto&& [e, u] : l_v.each()) {
       if (u.id_ == l_user_id) {
         nlohmann::json l_json;
-        l_json       = u;
-        l_res.body() = l_json.dump();
+        l_json["id"]          = fmt::to_string(u.id_);
+        l_json["mobile"]      = u.mobile_;
+        l_json["dingding_id"] = u.dingding_id_;
+        l_json["company"]     = fmt::to_string(u.dingding_company_id_);
+        l_res.body()          = l_json.dump();
         l_res.prepare_payload();
         in_handle->seed(std::move(l_res));
         return;
