@@ -39,6 +39,25 @@ BOOST_AUTO_TEST_CASE(main) {
   entt::entity l_user_entity = l_handle;
   using namespace std::chrono_literals;
 
+  {  // 创建虚拟user, 用以检查调休等数据从钉钉中获取是否正常
+    l_handle         = {*g_reg(), g_reg()->create()};
+    auto& l_user     = l_handle.emplace<user>();
+    l_user.id_       = boost::lexical_cast<boost::uuids::uuid>("ce6d3b4d-75aa-4e0f-90af-18b913df138a");
+    l_user.mobile_   = "15827605754";
+
+    // 2
+    l_handle         = {*g_reg(), g_reg()->create()};
+    auto& l_user_2   = l_handle.emplace<user>();
+    l_user_2.id_     = boost::lexical_cast<boost::uuids::uuid>("5b5153a1-51a4-4376-9450-2c317e523cbe");
+    l_user_2.mobile_ = "18056860368";
+
+    // 3
+    l_handle         = {*g_reg(), g_reg()->create()};
+    auto& l_user_3   = l_handle.emplace<user>();
+    l_user_3.id_     = boost::lexical_cast<boost::uuids::uuid>("78a1ec16-8a2d-4ae2-b0c9-7a8092694100");
+    l_user_3.mobile_ = "15635681053";
+  }
+
   l_handle = {*g_reg(), g_reg()->create()};
   l_handle.emplace<attendance_block>(attendance_block{
       .id_ = core_set::get_set().get_uuid(),
