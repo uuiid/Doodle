@@ -2,6 +2,7 @@
 
 #include "doodle_core/metadata/time_point_wrap.h"
 #include "doodle_core/platform/win/register_file_type.h"
+#include <doodle_core/metadata/attendance.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
 #include "doodle_lib/core/http/http_websocket_data.h"
@@ -170,14 +171,26 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
         }
       }
     }
+    // 调整节假日
     holidaycn_time2{rules_.work_pair_p}.set_clock(time_clock_);
+
+    // 添加审批单
+    for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) {
+      if (user_.attendance_block_.contains(chrono::year_month_day{l_it})) {
+        auto l_block =
+            std::as_const(*g_reg()).get<attendance_block>(user_.attendance_block_.at(chrono::year_month_day{l_it}));
+        for (auto&& l_att : l_block.attendance_block_) {
+          time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_);
+        }
+      }
+    }
+
 #ifndef NDEBUG
     auto l_logger = session_data_->logger_;
     l_logger->log(log_loc(), level::info, "work_pair_p: {}", fmt::join(rules_.work_pair_p, ", "));
     l_logger->log(log_loc(), level::info, "work: {}", time_clock_.debug_print());
 #endif
 
-    // 调整节假日
     // 排除绝对时间
     for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
       for (auto&& l_deduction : rules_.absolute_deduction[chrono::weekday{l_begin}.c_encoding()]) {
