@@ -116,8 +116,9 @@ DOODLE_SQL_COLUMN_IMP(uuid, sqlpp::blob, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(user_name, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(mobile, sqlpp::text, database_n::detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(dingding_id, sqlpp::text, database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(dingding_company_id, sqlpp::blob, database_n::detail::can_be_null);
 
-DOODLE_SQL_TABLE_IMP(user_tab, tables::column::id, uuid, user_name, mobile, dingding_id);
+DOODLE_SQL_TABLE_IMP(user_tab, tables::column::id, uuid, user_name, mobile, dingding_id, dingding_company_id);
 }  // namespace
 
 std::vector<user> user::select_all(pooled_connection& in_comm) {
@@ -129,6 +130,11 @@ std::vector<user> user::select_all(pooled_connection& in_comm) {
     l_user.p_string_    = l_row.user_name.value();
     l_user.mobile_      = l_row.mobile.value();
     l_user.dingding_id_ = l_row.dingding_id.value();
+    if (!l_row.dingding_company_id.is_null())
+      std::copy_n(
+          l_row.dingding_company_id.value().begin(), l_user.dingding_company_id_.size(),
+          l_user.dingding_company_id_.begin()
+      );
     l_r.emplace_back(std::move(l_user));
   }
   return l_r;
@@ -148,11 +154,12 @@ std::map<std::int64_t, boost::uuids::uuid> user::select_all_map_id(pooled_connec
 void user::create_table(pooled_connection& in_comm) {
   in_comm.execute(R"(
     CREATE TABLE IF NOT EXISTS user_tab (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        uuid        BLOB    NOT NULL   UNIQUE,
-        user_name   TEXT,
-        mobile      TEXT,
-        dingding_id TEXT
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        uuid                BLOB    NOT NULL   UNIQUE,
+        user_name           TEXT,
+        mobile              TEXT,
+        dingding_id         TEXT,
+        dingding_company_id BLOB
     );
   )");
   in_comm.execute(R"(
@@ -179,13 +186,15 @@ void user::insert(pooled_connection& in_comm, const std::vector<user>& in_task) 
   user_tab l_tab{};
   auto l_pre = in_comm.prepare(sqlpp::insert_into(l_tab).set(
       l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.user_name = sqlpp::parameter(l_tab.user_name),
-      l_tab.mobile = sqlpp::parameter(l_tab.mobile), l_tab.dingding_id = sqlpp::parameter(l_tab.dingding_id)
+      l_tab.mobile = sqlpp::parameter(l_tab.mobile), l_tab.dingding_id = sqlpp::parameter(l_tab.dingding_id),
+      l_tab.dingding_company_id = sqlpp::parameter(l_tab.dingding_company_id)
   ));
   for (const auto& l_user : in_task) {
-    l_pre.params.uuid        = {l_user.id_.begin(), l_user.id_.end()};
-    l_pre.params.user_name   = l_user.p_string_;
-    l_pre.params.mobile      = l_user.mobile_;
-    l_pre.params.dingding_id = l_user.dingding_id_;
+    l_pre.params.uuid                = {l_user.id_.begin(), l_user.id_.end()};
+    l_pre.params.user_name           = l_user.p_string_;
+    l_pre.params.mobile              = l_user.mobile_;
+    l_pre.params.dingding_id         = l_user.dingding_id_;
+    l_pre.params.dingding_company_id = {l_user.dingding_company_id_.begin(), l_user.dingding_company_id_.end()};
     in_comm(l_pre);
   }
 }
@@ -193,16 +202,18 @@ void user::update(pooled_connection& in_comm, const std::vector<user>& in_task) 
   user_tab l_tab{};
   auto l_pre = in_comm.prepare(sqlpp::update(l_tab)
                                    .set(
-                                       l_tab.user_name   = sqlpp::parameter(l_tab.user_name),
-                                       l_tab.mobile      = sqlpp::parameter(l_tab.mobile),
-                                       l_tab.dingding_id = sqlpp::parameter(l_tab.dingding_id)
+                                       l_tab.user_name           = sqlpp::parameter(l_tab.user_name),
+                                       l_tab.mobile              = sqlpp::parameter(l_tab.mobile),
+                                       l_tab.dingding_id         = sqlpp::parameter(l_tab.dingding_id),
+                                       l_tab.dingding_company_id = sqlpp::parameter(l_tab.dingding_company_id)
                                    )
                                    .where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   for (const auto& l_user : in_task) {
-    l_pre.params.user_name   = l_user.p_string_;
-    l_pre.params.mobile      = l_user.mobile_;
-    l_pre.params.dingding_id = l_user.dingding_id_;
-    l_pre.params.uuid        = {l_user.id_.begin(), l_user.id_.end()};
+    l_pre.params.user_name           = l_user.p_string_;
+    l_pre.params.mobile              = l_user.mobile_;
+    l_pre.params.dingding_id         = l_user.dingding_id_;
+    l_pre.params.uuid                = {l_user.id_.begin(), l_user.id_.end()};
+    l_pre.params.dingding_company_id = {l_user.dingding_company_id_.begin(), l_user.dingding_company_id_.end()};
     in_comm(l_pre);
   }
 }
