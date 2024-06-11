@@ -1,4 +1,6 @@
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/metadata/attendance.h>
+#include <doodle_core/metadata/user.h>
 
 #include <doodle_app/app/app_command.h>
 
@@ -8,6 +10,7 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
+#include <doodle_lib/launch/kitsu_supplement.h>
 
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
@@ -23,30 +26,59 @@ constexpr static std::string_view g_token{
     "LCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684"
 };
 
-BOOST_AUTO_TEST_CASE(computing_time) {
-  app_base l_app_base{};
+BOOST_AUTO_TEST_CASE(main) {
+  const char* argv[] = {"test", "--config=D:/test_files/test_db/kitsu_supplement.json"};
 
-  auto& l_save = g_ctx().emplace<http::kitsu_backend_sqlite>();
+  app_command<launch::kitsu_supplement_t> l_app_base{2, argv};
+  // 创建基本的测试数据
 
-  {
-    g_pool_db().set_path("D:/test_files/test_db/test2.db");
-    auto l_db_conn = g_pool_db().get_connection();
-    l_save.init(l_db_conn);
-  }
-  auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
-      std::make_shared<kitsu::kitsu_client>("192.168.40.182", "80")
-  );
-  l_client->set_access_token(std::string{g_token});
-  
+  entt::handle l_handle{*g_reg(), g_reg()->create()};
+  auto& l_user               = l_handle.emplace<user>();
+  l_user.id_                 = boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b");
 
-  auto l_rout_ptr = std::make_shared<http::http_route>();
-  http::reg_computing_time(*l_rout_ptr);
-  http::reg_dingding_attendance(*l_rout_ptr);
+  entt::entity l_user_entity = l_handle;
+  using namespace std::chrono_literals;
 
-  // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, 50023);
-  l_listener->run();
-  l_save.run();
+  l_handle = {*g_reg(), g_reg()->create()};
+  l_handle.emplace<attendance_block>(attendance_block{
+      .id_ = core_set::get_set().get_uuid(),
+      .attendance_block_ =
+          {
+              attendance{
+                  .id_ = core_set::get_set().get_uuid(),
+                  .start_time_ =
+                      chrono::zoned_time<chrono::microseconds>{
+                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 9h
+                      },
+                  .end_time_ =
+                      chrono::zoned_time<chrono::microseconds>{
+                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 12h
+                      },
+                  .remark_ = "remark",
+                  .type_   = attendance::att_enum::overtime,
+              },
+              attendance{
+                  .id_ = core_set::get_set().get_uuid(),
+                  .start_time_ =
+                      chrono::zoned_time<chrono::microseconds>{
+                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 18h
+                      },
+                  .end_time_ =
+                      chrono::zoned_time<chrono::microseconds>{
+                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 22h
+                      },
+                  .remark_ = "remark",
+                  .type_   = attendance::att_enum::leave,
+              },
+          },
+      .create_date_ = chrono::year_month_day{2024y / 5 / 8},
+      .update_time_ =
+          chrono::zoned_time<chrono::microseconds>{
+              chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+          },
+      .user_ref_id_ = l_user_entity,
+  });
+
   try {
     // 工作守卫
     auto l_work_guard = boost::asio::make_work_guard(g_io_context());
