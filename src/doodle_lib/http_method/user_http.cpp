@@ -29,7 +29,7 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
       handle_->seed_error(boost::beast::http::status::not_found, l_ec, "未找到公司");
       return;
     }
-    dingding_client_ = g_ctx().get<dingding::dingding_company>().company_info_map_.at(in_company_id).client_;
+    dingding_client_ = g_ctx().get<dingding::dingding_company>().company_info_map_.at(in_company_id).client_ptr_;
 
     auto l_v         = std::as_const(*g_reg()).view<const user>();
     for (auto&& [e, u] : l_v.each()) {
