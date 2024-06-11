@@ -49,6 +49,16 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       return;
     }
 
+    // if (user_.attendance_block_.contains(date_)) {
+    //   for (auto&& l_attendance : user_.attendance_block_[date_]) {
+    //     auto& l_att = std::as_const(*g_reg()).get<const attendance>(l_attendance);
+    //     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
+    //       send_post_result();
+    //       return;
+    //     }
+    //   }
+    // }
+
     if (user_.mobile_.empty()) {
       user_.id_           = in_user_id;
       auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
@@ -216,8 +226,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
     user_.attendance_block_[date_]                              = l_attendance_entity_list;
     g_reg()->patch<user>(user_entity_).attendance_block_[date_] = l_attendance_entity_list;
 
+    send_post_result();
+  }
+
+  // 发送结果
+  void send_post_result() {
     nlohmann::json l_json{};
-    l_json      = l_attendance_list;
+    l_json      = user_.attendance_block_[date_];
     auto& l_req = handle_->request_parser_->get();
     boost::beast::http::response<boost::beast::http::string_body> l_response{
         boost::beast::http::status::ok, l_req.version()
