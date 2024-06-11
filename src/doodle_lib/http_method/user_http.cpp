@@ -61,7 +61,11 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
       return;
     }
     try {
-      user_.mobile_ = l_json["phone"].get<std::string>();
+      auto l_phone = l_json["phone"].get<std::string>();
+      if (l_phone != user_.mobile_) {
+        user_.dingding_id_.clear();
+      }
+      user_.mobile_ = l_phone;
     } catch (const nlohmann::json::exception& e) {
       l_logger->log(
           log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
