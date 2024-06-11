@@ -61,7 +61,7 @@ add_doodle_exe(doodle_client main_work.cpp)
 add_doodle_exe(doodle_auto_light service_auto_light.cpp)
 add_doodle_exe(doodle_auto_light_process auto_light_process.cpp)
 add_doodle_exe(doodle_file_exists file_exists_launch.cpp)
-
+add_doodle_exe(doodle_kitsu_supplement kitsu_supplement_main.cpp)
 
 list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复

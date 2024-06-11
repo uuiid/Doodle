@@ -39,6 +39,7 @@ struct kitsu_supplement_args_t {
     in_json.at("kitsu_ip").get_to(out_obj.kitsu_ip_);
     in_json.at("kitsu_port").get_to(out_obj.kitsu_port_);
     in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
+    in_json.at("port").get_to(out_obj.port_);
     in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
   }
 };

@@ -39,6 +39,19 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+            "name": "Doodle_debug_server",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetPath}",
+            "args": [
+                "--config=${workspaceFolder}/build/debug_server.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
             "name": "Doodle_maya_debug",
             "type": "cppvsdbg",
             "request": "launch",
