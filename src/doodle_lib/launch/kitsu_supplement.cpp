@@ -92,13 +92,16 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     auto& l_d = g_ctx().emplace<dingding::dingding_company>();
 
     for (auto&& l_c : l_args.dingding_company_list_) {
-      l_d.company_info_map_.emplace(dingding::dingding_company::company_info{
-          .corp_id     = l_c.id_,
-          .app_key     = l_c.app_key_,
-          .app_secret  = l_c.app_secret_,
-          .name        = l_c.name_,
-          .client_ptr_ = std::make_shared<dingding::client>(*l_ssl_ctx)
-      });
+      l_d.company_info_map_.emplace(
+          l_c.id_,
+          dingding::dingding_company::company_info{
+              .corp_id     = l_c.id_,
+              .app_key     = l_c.app_key_,
+              .app_secret  = l_c.app_secret_,
+              .name        = l_c.name_,
+              .client_ptr_ = std::make_shared<dingding::client>(*l_ssl_ctx)
+          }
+      );
     }
   }
   // 初始化路由
