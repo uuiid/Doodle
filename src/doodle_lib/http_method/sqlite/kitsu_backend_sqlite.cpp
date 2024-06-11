@@ -90,7 +90,10 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
       : executor_(g_thread().get_executor()),
 
         save_user_(std::make_shared<sqlite_save_data<user>>()),
-        save_work_xlsx_task_info_block_(std::make_shared<sqlite_save_data<work_xlsx_task_info_block>>()) {}
+        save_work_xlsx_task_info_block_(std::make_shared<sqlite_save_data<work_xlsx_task_info_block>>()),
+        save_attendance_block_(std::make_shared<sqlite_save_data<attendance_block>>())
+
+  {}
 
   void get_data(kitsu_backend_sqlite& in_data) {
     save_user_->get_data(std::get<observer_data<user>>(in_data.observer_data_));
