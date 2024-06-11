@@ -27,16 +27,17 @@ constexpr static std::string_view g_token{
 };
 
 BOOST_AUTO_TEST_CASE(main) {
-  const char* argv[] = {"test", "--config=D:/test_files/test_db/kitsu_supplement.json"};
+  const char* argv[] = {"test", "--config=E:/doodle/build/debug_server.json"};
 
   app_command<launch::kitsu_supplement_t> l_app_base{2, argv};
   // 创建基本的测试数据
 
   entt::handle l_handle{*g_reg(), g_reg()->create()};
-  auto& l_user               = l_handle.emplace<user>();
-  l_user.id_                 = boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b");
+  auto& l_user                = l_handle.emplace<user>();
+  l_user.id_                  = boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b");
+  l_user.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
 
-  entt::entity l_user_entity = l_handle;
+  entt::entity l_user_entity  = l_handle;
   using namespace std::chrono_literals;
 
   {  // 创建虚拟user, 用以检查调休等数据从钉钉中获取是否正常
@@ -100,6 +101,7 @@ BOOST_AUTO_TEST_CASE(main) {
           },
       .user_ref_id_ = l_user_entity,
   });
+  l_user.attendance_block_[chrono::year_month_day{2024y / 5 / 8}] = l_handle;
 
   try {
     // 工作守卫
