@@ -31,7 +31,24 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
         break;
       }
     }
-    if (user_.id_ == boost::uuids::nil_uuid() || user_.mobile_.empty()) {
+    if (user_entity_ == entt::null) {
+      l_logger->log(log_loc(), level::err, "user {} not found", in_user_id);
+      boost::system::error_code ec{boost::system::errc::bad_message, boost::system::generic_category()};
+      handle_->seed_error(boost::beast::http::status::not_found, ec, "user not found");
+      return;
+    }
+
+    auto& l_d = g_ctx().get<const dingding::dingding_company>();
+    if (l_d.company_info_map_.contains(user_.dingding_company_id_)) {
+      dingding_client_ = l_d.company_info_map_.at(user_.dingding_company_id_).client_ptr_;
+    } else {
+      l_logger->log(log_loc(), level::err, "company {} not found", user_.dingding_company_id_);
+      boost::system::error_code ec{boost::system::errc::bad_message, boost::system::generic_category()};
+      handle_->seed_error(boost::beast::http::status::not_found, ec, "company not found");
+      return;
+    }
+
+    if (user_.mobile_.empty()) {
       user_.id_           = in_user_id;
       auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
       l_kitsu_client->get_user(
@@ -85,16 +102,10 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       return;
     }
     entt::handle l_handle{};
-    // 创建用户
-    if (user_entity_ == entt::null) {
-      l_handle = {*g_reg(), g_reg()->create()};
-      l_handle.emplace<user>(user_);
-    } else  // 存在用户则修改
     {
       l_handle                       = {*g_reg(), user_entity_};
       l_handle.patch<user>().mobile_ = user_.mobile_;
     }
-    user_entity_ = l_handle.entity();
 
     if (user_.attendance_block_.contains(date_)) {
       for (auto&& l_attendance : user_.attendance_block_[date_]) {
@@ -219,10 +230,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   explicit dingding_attendance_impl(http_session_data_ptr in_handle) : handle_(std::move(in_handle)) {}
   ~dingding_attendance_impl() = default;
 
-  void run_post(
-      const boost::uuids::uuid& in_user_id, const chrono::year_month_day& in_date, const dingding::client_ptr& in_client
-  ) {
-    dingding_client_ = in_client;
+  void run_post(const boost::uuids::uuid& in_user_id, const chrono::year_month_day& in_date) {
     find_user(in_user_id);
     date_ = in_date;
   }
@@ -339,7 +347,6 @@ class dingding_attendance_post {
       return;
     }
     auto l_req                   = in_handle->get_msg_body_parser<boost::beast::http::string_body>();
-
     auto l_computing_time_id_str = in_handle->capture_->get("user_id");
 
     auto l_body                  = l_req->request_parser_->get().body();
@@ -352,7 +359,6 @@ class dingding_attendance_post {
 
     boost::uuids::uuid l_computing_time_id{}, l_company{};
     chrono::year_month_day l_date{};
-    dingding::client_ptr l_dingding_client{};
 
     try {
       auto l_json         = nlohmann::json::parse(l_body);
@@ -368,18 +374,9 @@ class dingding_attendance_post {
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
     }
-    auto& l_cs = g_ctx().get<dingding::dingding_company>();
-    if (l_cs.company_info_map_.contains(boost::lexical_cast<boost::uuids::uuid>(l_company))) {
-      l_dingding_client = l_cs.company_info_map_[boost::lexical_cast<boost::uuids::uuid>(l_company)].client_ptr_;
-    } else {
-      l_logger->log(log_loc(), level::err, "company not found: {}", l_company);
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "company not found");
-      return;
-    }
 
     auto l_impl = std::make_shared<dingding_attendance_impl>(in_handle);
-    l_impl->run_post(l_computing_time_id, l_date, l_dingding_client);
+    l_impl->run_post(l_computing_time_id, l_date);
   }
 };
 

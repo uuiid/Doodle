@@ -77,7 +77,16 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
         break;
       }
     }
-    if (user_.id_ == boost::uuids::nil_uuid() || user_.mobile_.empty()) {
+    if (user_entity_ == entt::null) {
+      l_logger->log(log_loc(), level::err, "user {} not found", data_->user_id);
+      session_data_->seed_error(
+          boost::beast::http::status::not_found, boost::system::errc::make_error_code(boost::system::errc::no_link),
+          fmt::format("user {} not found", data_->user_id)
+      );
+      return;
+    }
+
+    if (user_.mobile_.empty()) {
       user_.id_           = data_->user_id;
       auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
       l_kitsu_client->get_user(
@@ -131,16 +140,10 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     entt::handle l_handle{};
-    // 创建用户
-    if (user_entity_ == entt::null) {
-      l_handle = {*g_reg(), g_reg()->create()};
-      l_handle.emplace<user>(user_);
-    } else  // 存在用户则修改
     {
       l_handle                       = {*g_reg(), user_entity_};
       l_handle.patch<user>().mobile_ = user_.mobile_;
     }
-    user_entity_ = l_handle.entity();
     run_2();
   }
 
