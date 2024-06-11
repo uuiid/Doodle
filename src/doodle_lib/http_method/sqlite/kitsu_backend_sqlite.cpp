@@ -110,6 +110,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
     auto l_tx = sqlpp::start_transaction(l_db_conn);
     (*save_user_)(l_db_conn);
     (*save_work_xlsx_task_info_block_)(l_db_conn);
+    (*save_attendance_block_)(l_db_conn);
     l_tx.commit();
   }
 };
@@ -140,7 +141,7 @@ void kitsu_backend_sqlite::init(pooled_connection& in_conn) {
     g_reg()->insert<work_xlsx_task_info_block>(l_entities.begin(), l_entities.end(), l_tasks.begin());
   }
 
-  // todo: 最后选择调休
+  // 最后选择调休
   {
     auto l_attendance = attendance_block::select_all(in_conn, l_map_id);
     std::vector<entt::entity> l_entities{l_attendance.size()};

@@ -256,8 +256,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   ~dingding_attendance_impl() = default;
 
   void run_post(const boost::uuids::uuid& in_user_id, const chrono::year_month_day& in_date) {
-    find_user(in_user_id);
     date_ = in_date;
+    find_user(in_user_id);
   }
 };
 
