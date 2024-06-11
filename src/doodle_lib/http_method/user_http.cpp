@@ -12,7 +12,7 @@ namespace doodle::http {
 
 class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
   user user_{};
-  entt::entity user_entity_{};
+  entt::entity user_entity_{entt::null};
 
   http_session_data_ptr handle_;
 
@@ -20,6 +20,8 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
   dingding::client_ptr dingding_client_;
 
  public:
+  explicit user_post_impl(const http_session_data_ptr& in_handle) : handle_(in_handle) {}
+
   void run_post(boost::uuids::uuid in_user_id, boost::uuids::uuid in_company_id) {
     auto l_logger = handle_->logger_;
     if (!g_ctx().get<dingding::dingding_company>().company_info_map_.contains(in_company_id)) {
@@ -34,11 +36,12 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
     auto l_v         = std::as_const(*g_reg()).view<const user>();
     for (auto&& [e, u] : l_v.each()) {
       if (u.id_ == in_user_id) {
-        user_ = u;
+        user_        = u;
+        user_entity_ = e;
       }
     }
 
-    if (user_.id_ == boost::uuids::nil_uuid()) {
+    if (user_entity_ == entt::null) {
       user_.dingding_company_id_ = in_company_id;
       user_.id_                  = in_user_id;
     }
@@ -144,7 +147,10 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
   void send_response() {
     update_user();
     nlohmann::json l_json;
-    l_json     = user_;
+    l_json["id"]          = fmt::to_string(user_.id_);
+    l_json["mobile"]      = user_.mobile_;
+    l_json["dingding_id"] = user_.dingding_id_;
+    l_json["company"]     = fmt::to_string(user_.dingding_company_id_);
     auto l_res = boost::beast::http::response<boost::beast::http::string_body>{boost::beast::http::status::ok, 11};
     l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     l_res.set(boost::beast::http::field::content_type, "application/json");
@@ -176,7 +182,7 @@ class user_post {
     try {
       auto l_json           = nlohmann::json::parse(l_req.body());
       auto l_company_id_str = l_json.at("company").get<std::string>();
-      auto l_user_id_str    = l_json.at("user").get<std::string>();
+      auto l_user_id_str    = in_handle->capture_->get("user_id");
       l_company_id          = boost::lexical_cast<boost::uuids::uuid>(l_company_id_str);
       l_user_id             = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
     } catch (const std::exception& e) {
@@ -187,7 +193,7 @@ class user_post {
       return;
     }
 
-    auto l_impl = std::make_shared<user_post_impl>();
+    auto l_impl = std::make_shared<user_post_impl>(in_handle);
     l_impl->run_post(l_user_id, l_company_id);
   }
 };
