@@ -184,6 +184,81 @@ class DOODLE_CORE_API work_clock2 {
   work_clock2& operator+=(const std::tuple<time_type, time_type, std::string>& in_time);
   work_clock2& operator-=(const std::tuple<time_type, time_type>& in_time);
   work_clock2& operator-=(const std::tuple<time_type, time_type, std::string>& in_time);
+
+  template <typename Duration>
+  work_clock2& operator+=(const std::tuple<chrono::local_time<Duration>, chrono::local_time<Duration>>& in_time) {
+    *this += std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time)),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time))
+    );
+    return *this;
+  }
+  template <typename Duration>
+  work_clock2& operator+=(
+      const std::tuple<chrono::local_time<Duration>, chrono::local_time<Duration>, std::string>& in_time
+  ) {
+    *this += std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time)),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time)), std::get<2>(in_time)
+    );
+    return *this;
+  }
+  template <typename Duration>
+  work_clock2& operator-=(const std::tuple<chrono::local_time<Duration>, chrono::local_time<Duration>>& in_time) {
+    *this -= std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time)),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time))
+    );
+    return *this;
+  }
+  template <typename Duration>
+  work_clock2& operator-=(
+      const std::tuple<chrono::local_time<Duration>, chrono::local_time<Duration>, std::string>& in_time
+  ) {
+    *this -= std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time)),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time)), std::get<2>(in_time)
+    );
+    return *this;
+  }
+
+  template <typename Duration>
+  work_clock2& operator+=(const std::tuple<chrono::zoned_time<Duration>, chrono::zoned_time<Duration>>& in_time) {
+    *this += std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time).get_local_time()),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time).get_local_time())
+    );
+    return *this;
+  }
+  template <typename Duration>
+  work_clock2& operator+=(
+      const std::tuple<chrono::zoned_time<Duration>, chrono::zoned_time<Duration>, std::string>& in_time
+  ) {
+    *this += std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time).get_local_time()),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time).get_local_time()), std::get<2>(in_time)
+    );
+    return *this;
+  }
+  template <typename Duration>
+  work_clock2& operator-=(const std::tuple<chrono::zoned_time<Duration>, chrono::zoned_time<Duration>>& in_time) {
+    *this -= std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time).get_local_time()),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time).get_local_time())
+    );
+    return *this;
+  }
+  template <typename Duration>
+  work_clock2& operator-=(
+      const std::tuple<chrono::zoned_time<Duration>, chrono::zoned_time<Duration>, std::string>& in_time
+  ) {
+    *this -= std::make_tuple(
+        chrono::time_point_cast<duration_type>(std::get<0>(in_time).get_local_time()),
+        chrono::time_point_cast<duration_type>(std::get<1>(in_time).get_local_time()), std::get<2>(in_time)
+    );
+    return *this;
+  }
+
   std::string debug_print() const;
 };
 
