@@ -329,7 +329,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     if (user_.task_block_.contains(year_month_)) {
-      block_        = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(user_.task_block_.at(year_month_));
+      block_        = std::as_const(*g_reg()).get<const work_xlsx_task_info_block>(user_.task_block_.at(year_month_));
       block_entity_ = user_.task_block_.at(year_month_);
     } else {
       auto l_year_month_str =
@@ -381,7 +381,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     block_ = l_block;
-    create_block();
+    boost::asio::post(g_io_context(),boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this()));
 
     nlohmann::json l_json;
     l_json["data"]     = block_.task_info_;
@@ -516,9 +516,9 @@ class computing_time_get {
 
     for (auto&& [e, l_u] : l_user.each()) {
       if (l_u.id_ == l_user_id && l_u.task_block_.contains(l_year_month)) {
-        auto l_block       = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(l_u.task_block_.at(l_year_month));
-        l_json["data"]     = l_block.task_info_;
-        l_json["id"]       = fmt::to_string(l_block.id_);
+        auto l_block   = std::as_const(*g_reg()).get<const work_xlsx_task_info_block>(l_u.task_block_.at(l_year_month));
+        l_json["data"] = l_block.task_info_;
+        l_json["id"]   = fmt::to_string(l_block.id_);
         l_json["duration"] = l_block.duration_.count();
         l_response.result(boost::beast::http::status::ok);
         l_response.body() = l_json.dump();
