@@ -16,6 +16,7 @@ class client {
   https_client_core_ptr http_client_core_ptr_{};      // 新版本api
   https_client_core_ptr http_client_core_ptr_old_{};  // 旧版本api
   timer_ptr_t timer_ptr_{};
+  timer_ptr_t timer_ptr_rest_ssl{};
 
   std::string access_token_;
 
@@ -115,13 +116,13 @@ class client {
 
  public:
   explicit client(boost::asio::ssl::context& in_ctx)
-      : http_client_core_ptr_(std::make_shared<https_client_core>(in_ctx, "https://api.dingtalk.com/", "443")),
-        http_client_core_ptr_old_(std::make_shared<https_client_core>(in_ctx, "https://oapi.dingtalk.com/", "443")){};
+      : http_client_core_ptr_(std::make_shared<https_client_core>(in_ctx, "https://api.dingtalk.com/", "")),
+        http_client_core_ptr_old_(std::make_shared<https_client_core>(in_ctx, "https://oapi.dingtalk.com/", "")){};
   ~client() = default;
 
+  // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   void access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
 
-  // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   template <typename CompletionHandler>
   void async_access_token(
       std::string in_app_key, std::string in_app_secret, bool in_auto_expire, CompletionHandler&& in_completion
@@ -137,7 +138,6 @@ class client {
     if (!timer_ptr_) {
       timer_ptr_ = std::make_shared<timer_t>(g_io_context());
     }
-
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
         [this, in_auto_expire](auto&& handler, auto in_self, auto in_req) {
           http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
@@ -177,7 +177,6 @@ class client {
     };
     req.body() = nlohmann::json{{"userid", in_user_id}, {"work_date", fmt::format("{:%Y-%m-%d}", in_work_date)}}.dump();
     req.set(boost::beast::http::field::content_type, "application/json");
-
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
         [this](auto&& in_completion, auto in_self, auto in_req) {
           in_self->http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
