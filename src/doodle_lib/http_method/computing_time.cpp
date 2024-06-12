@@ -178,7 +178,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) {
       if (user_.attendance_block_.contains(chrono::year_month_day{l_it})) {
         auto l_block =
-            std::as_const(*g_reg()).get<attendance_block>(user_.attendance_block_.at(chrono::year_month_day{l_it}));
+            std::as_const(*g_reg()).get<const attendance_block>(user_.attendance_block_.at(chrono::year_month_day{l_it}));
         for (auto&& l_att : l_block.attendance_block_) {
           time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_);
         }
