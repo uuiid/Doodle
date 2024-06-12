@@ -60,8 +60,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       return true;
     } catch (...) {
       default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-
-      return;
+      return true;
     }
   }
 
