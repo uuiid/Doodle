@@ -612,14 +612,21 @@ class computing_time_patch_delete {
     }
     auto l_v = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
     for (auto&& [e, l_block] : l_v.each()) {
-      if (l_block.id_ == l_computing_time_id) {
+      if (auto l_it = std::ranges::find_if(
+              l_block.task_info_,
+              [l_computing_time_id](const auto& l_task) { return l_task.id_ == l_computing_time_id; }
+          );
+          l_it != l_block.task_info_.end()) {
         auto l_user_e = l_block.user_refs_;
         auto l_y_m    = l_block.year_month_;
 
-        boost::asio::post(g_io_context(), [e, l_user_e, l_y_m, in_handle]() {
-          g_reg()->patch<user>(l_user_e).task_block_.erase(l_y_m);
-          if (g_reg()->valid(e)) g_reg()->destroy(e);
-
+        boost::asio::post(g_io_context(), [e, l_user_e, l_y_m, in_handle, l_computing_time_id]() {
+          if (g_reg()->valid(e)) {
+            std::erase_if(
+                g_reg()->patch<work_xlsx_task_info_block>(e).task_info_,
+                [l_computing_time_id](const auto& l_task) { return l_task.id_ == l_computing_time_id; }
+            );
+          }
           boost::beast::http::response<boost::beast::http::empty_body> l_response{
               boost::beast::http::status::ok, in_handle->request_parser_->get().version()
           };
