@@ -316,7 +316,6 @@ class http_client_core
     // default_logger_raw()->log(log_loc(), level::info, l_oss.str());
     auto l_exe       = boost::asio::get_associated_executor(in_completion, g_io_context().get_executor());
     using connect_op = connect_write_read_op<decltype(l_exe), CompletionHandler, ResponseType, RequestType>;
-    this->expires_after(30s);
     log_info(ptr_->logger_, fmt::format("{} {}", in_type.target(), fmt::ptr(std::addressof(in_completion))));
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
         [](auto&& in_completion_, http_client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
