@@ -171,8 +171,7 @@ class http_client_core
 
     void operator()() {
       guard_is_run_ptr_ = std::make_shared<guard_is_run>(*http_client_core_ptr_);
-      http_client_core_ptr_->make_socket();
-      if (http_client_core_ptr_->stream().is_open()) {
+      if (http_client_core_ptr_->stream().socket().is_open()) {
         do_write();
       } else {
         do_resolve();
