@@ -40,13 +40,13 @@ class client {
     void operator()(boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
       nlohmann::json l_json{};
       if (ec) {
-        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", ec.message());
+        logger_->log(log_loc(), level::err, "failed: {}", ec.message());
         boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
         return;
       }
 
       if (res.result() != boost::beast::http::status::ok) {
-        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", res.body());
+        logger_->log(log_loc(), level::err, "failed: {}", res.body());
         ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
         boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
         return;
@@ -54,7 +54,7 @@ class client {
 
       auto l_json_str = res.body();
       if (!nlohmann::json::accept(l_json_str)) {
-        logger_->log(log_loc(), level::err, "get_user_by_mobile failed: {}", l_json_str);
+        logger_->log(log_loc(), level::err, "failed: {}", l_json_str);
         ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
         boost::asio::post(boost::asio::prepend(completion_handler_, ec, std::move(l_json)));
         return;
