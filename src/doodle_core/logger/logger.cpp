@@ -184,7 +184,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string &in_name, 
   std::vector<spdlog::sink_ptr> l_sinks{};
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
-  l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
+  // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
@@ -203,7 +203,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(
   std::vector<spdlog::sink_ptr> l_sinks{};
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
-  l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
+  // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
@@ -222,11 +222,11 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
   auto l_path = p_log_path / fmt::format("{}_{}.txt", in_name, core_set::get_set().get_uuid());
 
   std::vector<spdlog::sink_ptr> l_sinks{
-      std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true)
+      // std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true)
 
   };
-  if (in_path != l_path)
-    l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(in_path.generic_string(), true));
+  // if (in_path != l_path)
+  // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(in_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
 
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
