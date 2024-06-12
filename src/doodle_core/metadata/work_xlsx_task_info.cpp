@@ -225,30 +225,16 @@ void work_xlsx_task_info_block::update(
   // delete sub
   in_comm(sqlpp::remove_from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids))));
 
-  auto l_pre_sub =
-      in_comm.prepare(sqlpp::sqlite3::insert_into(l_sub_tab)
-                          .set(
-                              l_sub_tab.uuid              = sqlpp::parameter(l_sub_tab.uuid),
-                              l_sub_tab.start_time        = sqlpp::parameter(l_sub_tab.start_time),
-                              l_sub_tab.end_time          = sqlpp::parameter(l_sub_tab.end_time),
-                              l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
-                              l_sub_tab.kitsu_task_ref_id = sqlpp::parameter(l_sub_tab.kitsu_task_ref_id),
-                              l_sub_tab.parent_id         = sqlpp::parameter(l_sub_tab.parent_id),
-                              l_sub_tab.index_col         = sqlpp::parameter(l_sub_tab.index_col),
-                              l_sub_tab.remark            = sqlpp::parameter(l_sub_tab.remark),
-                              l_sub_tab.user_remark       = sqlpp::parameter(l_sub_tab.user_remark)
-                          )
-                          .on_conflict(l_sub_tab.uuid)
-                          .do_update(
-                              l_sub_tab.start_time        = sqlpp::sqlite3::excluded(l_sub_tab.start_time),
-                              l_sub_tab.end_time          = sqlpp::sqlite3::excluded(l_sub_tab.end_time),
-                              l_sub_tab.duration          = sqlpp::sqlite3::excluded(l_sub_tab.duration),
-                              l_sub_tab.kitsu_task_ref_id = sqlpp::sqlite3::excluded(l_sub_tab.kitsu_task_ref_id),
-                              l_sub_tab.parent_id         = sqlpp::sqlite3::excluded(l_sub_tab.parent_id),
-                              l_sub_tab.index_col         = sqlpp::sqlite3::excluded(l_sub_tab.index_col),
-                              l_sub_tab.remark            = sqlpp::sqlite3::excluded(l_sub_tab.remark),
-                              l_sub_tab.user_remark       = sqlpp::sqlite3::excluded(l_sub_tab.user_remark)
-                          ));
+  auto l_pre_sub = in_comm.prepare(sqlpp::insert_into(l_sub_tab).set(
+      l_sub_tab.uuid = sqlpp::parameter(l_sub_tab.uuid), l_sub_tab.start_time = sqlpp::parameter(l_sub_tab.start_time),
+      l_sub_tab.end_time          = sqlpp::parameter(l_sub_tab.end_time),
+      l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
+      l_sub_tab.kitsu_task_ref_id = sqlpp::parameter(l_sub_tab.kitsu_task_ref_id),
+      l_sub_tab.parent_id         = sqlpp::parameter(l_sub_tab.parent_id),
+      l_sub_tab.index_col         = sqlpp::parameter(l_sub_tab.index_col),
+      l_sub_tab.remark            = sqlpp::parameter(l_sub_tab.remark),
+      l_sub_tab.user_remark       = sqlpp::parameter(l_sub_tab.user_remark)
+  ));
   for (std::size_t i = 0; i < in_task.size(); ++i) {
     for (std::size_t j = 0; j < in_task[i].task_info_.size(); ++j) {
       l_pre_sub.params.uuid              = {in_task[i].task_info_[j].id_.begin(), in_task[i].task_info_[j].id_.end()};

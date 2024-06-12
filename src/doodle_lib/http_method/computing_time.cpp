@@ -346,7 +346,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     auto l_block   = block_;
 
     auto l_task_it = std::find_if(l_block.task_info_.begin(), l_block.task_info_.end(), [this](const auto& l_task) {
-      return l_task.kitsu_task_ref_id_ == task_id_;
+      return l_task.id_ == task_id_;
     });
     if (l_task_it == l_block.task_info_.end()) {
       l_logger->log(log_loc(), level::err, "task {} not found", task_id_);
@@ -363,7 +363,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     // 调整差值
     l_task_it->duration_ = duration_;
     for (auto&& l_task : l_block.task_info_) {
-      if (l_task.kitsu_task_ref_id_ != task_id_) {
+      if (l_task.id_ != task_id_) {
         l_task.duration_ += chrono::microseconds{boost::rational_cast<std::int64_t>(l_duration_int)};
       }
     }
