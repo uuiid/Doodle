@@ -234,7 +234,7 @@ class http_client_core
 
       ptr_->state_       = state::connect;
       ptr_->retry_count_ = 0;
-      log_info(ptr_->logger_, fmt::format("{}", ec));
+      // log_info(ptr_->logger_, fmt::format("{}", ec));
       if constexpr (use_ssl) {
         http_client_core_ptr_->ptr_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(*this));
       } else {
@@ -284,7 +284,8 @@ class http_client_core
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
-      boost::asio::async_connect(socket_.socket(), http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
+      socket_.async_connect(http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
+      // boost::asio::async_connect(socket_.socket(), http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
     }
     void do_resolve() {
       ptr_->state_ = state::start;
