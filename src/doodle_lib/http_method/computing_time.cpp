@@ -493,7 +493,7 @@ class computing_time_post {
 
 class computing_time_get {
  public:
-  computing_time_get() : executor_(g_thread().get_executor()) {}
+  computing_time_get() : executor_(g_io_context().get_executor()) {}
   ~computing_time_get() = default;
   using executor_type   = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
@@ -542,7 +542,7 @@ class computing_time_get {
       if (l_u.id_ == l_user_id && l_u.task_block_.contains(l_year_month)) {
         // 这里只使用视图, 要不然会导致注册表异常,  不可get
         auto l_view = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
-        for (auto&& [e, l_b] : l_view.each()) {
+        for (auto&& [e2, l_b] : l_view.each()) {
           if (l_b.year_month_ == l_year_month && l_b.user_refs_ == e) {
             l_json["data"]     = l_b.task_info_;
             l_json["id"]       = fmt::to_string(l_b.id_);
@@ -554,8 +554,10 @@ class computing_time_get {
             return;
           }
         }
+        goto end_not_found;
       }
     }
+  end_not_found:
     l_response.result(boost::beast::http::status::not_found);
     l_response.body() = l_json.dump();
     l_response.prepare_payload();
