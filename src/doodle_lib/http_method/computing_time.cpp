@@ -130,6 +130,13 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
           fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
       );
       return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      ec = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      session_data_->seed_error(
+          boost::beast::http::status::bad_request, ec, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
     if (user_.mobile_.empty()) {
       l_logger->log(log_loc(), level::err, "user {} mobile is empty", l_json["email"].get<std::string>());
@@ -470,6 +477,13 @@ class computing_time_post {
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
 
     auto l_computing_time = std::make_shared<computing_time_post_impl>(in_handle);
@@ -505,6 +519,13 @@ class computing_time_get {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
       return;
     }
 
@@ -588,6 +609,13 @@ class computing_time_patch {
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
 
     auto l_computing_time = std::make_shared<computing_time_post_impl>(in_handle);
@@ -619,6 +647,13 @@ class computing_time_patch_delete {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
       return;
     }
     auto l_v = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();

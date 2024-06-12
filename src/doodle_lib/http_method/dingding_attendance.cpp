@@ -113,6 +113,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
           fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
       );
       return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      ec = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      handle_->seed_error(
+          boost::beast::http::status::bad_request, ec, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
     if (user_.mobile_.empty()) {
       l_logger->log(log_loc(), level::err, "user {} mobile is empty", l_json["email"].get<std::string>());
@@ -237,6 +244,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
       handle_->logger_->log(log_loc(), level::err, "get attendance failed: {}", e.what());
       handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, e.what());
       return;
+    } catch (...) {
+      handle_->logger_->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_err = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      handle_->seed_error(
+          boost::beast::http::status::bad_request, in_err, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
 
     entt::handle l_handle{};
@@ -314,6 +328,13 @@ class dingding_attendance_get {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
       return;
     }
     // res
@@ -423,6 +444,13 @@ class dingding_attendance_post {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
       in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
+      return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
       return;
     }
 

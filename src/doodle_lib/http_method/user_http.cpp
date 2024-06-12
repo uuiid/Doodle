@@ -87,6 +87,13 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
           fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
       );
       return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      ec = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      handle_->seed_error(
+          boost::beast::http::status::bad_request, ec, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
     if (user_.mobile_.empty()) {
       l_logger->log(log_loc(), level::err, "user {} mobile is empty", l_json["email"].get<std::string>());
@@ -191,6 +198,13 @@ class user_post {
           boost::system::error_code{boost::system::errc::invalid_argument, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
       return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
+      return;
     }
 
     auto l_impl = std::make_shared<user_post_impl>(in_handle);
@@ -223,6 +237,13 @@ class user_get {
       in_error_code =
           boost::system::error_code{boost::system::errc::invalid_argument, boost::system::generic_category()};
       in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, "错误的 uuid 格式");
+      return;
+    } catch (...) {
+      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
+      in_handle->seed_error(
+          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
+      );
       return;
     }
     auto l_v = std::as_const(*g_reg()).view<const user>();
