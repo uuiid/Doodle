@@ -286,6 +286,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     find_block();
     create_time_clock();
     computing_time_run();
+    create_block();
     boost::asio::post(
         g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
     );
@@ -375,6 +376,9 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       l_block.task_info_[i].end_time_   = l_end;
       l_begin_time                      = l_end;
     }
+
+    block_ = l_block;
+    create_block();
 
     nlohmann::json l_json;
     l_json["data"]     = block_.task_info_;
