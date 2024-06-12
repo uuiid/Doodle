@@ -190,6 +190,9 @@ void kitsu_backend_sqlite::begin_save() {
 }
 
 void kitsu_backend_sqlite::save() {
+  bool l_is_empty = std::apply([](auto&... in_data) { return (!!in_data || ...); }, observer_data_);
+  if (!l_is_empty) return;
+
   kitsu_backend_sqlite_fun l_save{};
   l_save.get_data(*this);
   boost::asio::post(std::move(l_save));

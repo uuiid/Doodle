@@ -49,6 +49,9 @@ class kitsu_backend_sqlite : public boost::noncopyable {
       destroy_ids_.clear();
     }
 
+    // has value
+    operator bool() const { return !obs_update_.empty() || !obs_create_.empty() || !destroy_ids_.empty(); }
+
     std::tuple<std::vector<entt::entity>, std::vector<boost::uuids::uuid>> get_data() const {
       std::vector<entt::entity> l_data{};
       for (const auto& entity : obs_update_) {
@@ -57,8 +60,10 @@ class kitsu_backend_sqlite : public boost::noncopyable {
       for (const auto& entity : obs_create_) {
         l_data.push_back(entity);
       }
+      l_data |= ranges::actions::sort;
       l_data |= ranges::actions::unique;
       auto l_destroy_ids = destroy_ids_;
+      l_destroy_ids |= ranges::actions::sort;
       l_destroy_ids |= ranges::actions::unique;
       return {std::move(l_data), l_destroy_ids};
     }
