@@ -303,7 +303,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
 
 class dingding_attendance_get {
  public:
-  dingding_attendance_get() : executor_(g_thread().get_executor()) {}
+  dingding_attendance_get() : executor_(g_io_context().get_executor()) {}
   ~dingding_attendance_get() = default;
   using executor_type        = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;

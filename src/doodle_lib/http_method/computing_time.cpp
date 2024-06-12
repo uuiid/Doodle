@@ -567,7 +567,7 @@ class computing_time_get {
 
 class computing_time_patch {
  public:
-  computing_time_patch() : executor_(g_thread().get_executor()) {}
+  computing_time_patch() : executor_(g_io_context().get_executor()) {}
   ~computing_time_patch() = default;
   using executor_type     = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
@@ -627,7 +627,7 @@ class computing_time_patch {
 
 class computing_time_patch_delete {
  public:
-  computing_time_patch_delete() : executor_(g_thread().get_executor()) {}
+  computing_time_patch_delete() : executor_(g_io_context().get_executor()) {}
   ~computing_time_patch_delete() = default;
   using executor_type            = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
