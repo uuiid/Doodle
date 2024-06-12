@@ -249,6 +249,7 @@ class http_client_core
         this->complete(false, ec, ptr_->response_);
         return;
       }
+      log_info(ptr_->logger_, "state handshake");
       do_write();
     }
 
@@ -267,13 +268,13 @@ class http_client_core
       socket_.expires_after(30s);
       ptr_->state_ = state::write;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
-      ;
       boost::beast::http::async_write(*http_client_core_ptr_->ptr_->socket_, ptr_->request_, std::move(*this));
     }
     void do_read() {
       socket_.expires_after(30s);
       ptr_->state_ = state::read;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
+      ptr_->buffer_.clear();
       boost::beast::http::async_read(
           *http_client_core_ptr_->ptr_->socket_, ptr_->buffer_, ptr_->response_, std::move(*this)
       );
