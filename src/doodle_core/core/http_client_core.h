@@ -82,6 +82,7 @@ class http_client_core
     socket_ptr socket_{};
     logger_ptr logger_{};
     resolver_ptr resolver_{};
+    std::string scheme_{};  // http or https
     boost::asio::ip::tcp::resolver::results_type resolver_results_;
 
     std::queue<boost::beast::saved_handler> next_list_;
@@ -96,12 +97,17 @@ class http_client_core
     ssl_socket_ptr socket_{};
     logger_ptr logger_{};
     resolver_ptr resolver_{};
+    std::string scheme_{};  // http or https
     boost::asio::ip::tcp::resolver::results_type resolver_results_;
 
     std::queue<boost::beast::saved_handler> next_list_;
   };
 
   std::shared_ptr<data_type<use_ssl>> ptr_;
+
+  using timer_t     = boost::asio::steady_timer;
+  using timer_ptr_t = std::shared_ptr<timer_t>;
+  timer_ptr_t timer_ptr_;
 
   bool is_run_ = false;
   request_header_operator_type request_header_operator_;
@@ -265,13 +271,13 @@ class http_client_core
     }
 
     void do_write() {
-      socket_.expires_after(30s);
+      http_client_core_ptr_->expires_after(30s);
       ptr_->state_ = state::write;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       boost::beast::http::async_write(*http_client_core_ptr_->ptr_->socket_, ptr_->request_, std::move(*this));
     }
     void do_read() {
-      socket_.expires_after(30s);
+      http_client_core_ptr_->expires_after(30s);
       ptr_->state_ = state::read;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       ptr_->buffer_.clear();
@@ -280,7 +286,7 @@ class http_client_core
       );
     }
     void do_connect() {
-      socket_.expires_after(30s);
+      http_client_core_ptr_->expires_after(30s);
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
@@ -291,7 +297,10 @@ class http_client_core
       ptr_->state_ = state::start;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
       http_client_core_ptr_->ptr_->resolver_->async_resolve(
-          http_client_core_ptr_->server_ip(), http_client_core_ptr_->server_port(), std::move(*this)
+          http_client_core_ptr_->server_ip(),
+          http_client_core_ptr_->server_port().empty() ? http_client_core_ptr_->ptr_->scheme_
+                                                       : http_client_core_ptr_->server_port(),
+          std::move(*this)
       );
     }
   };
@@ -299,6 +308,7 @@ class http_client_core
  public:
   template <typename ResponseType, typename RequestType, typename CompletionHandler>
   auto async_read(RequestType& in_type, CompletionHandler&& in_completion) {
+    make_socket();
     request_header_operator_(this, in_type);
     in_type.prepare_payload();
     // std::ostringstream l_oss;
@@ -306,7 +316,7 @@ class http_client_core
     // default_logger_raw()->log(log_loc(), level::info, l_oss.str());
     auto l_exe       = boost::asio::get_associated_executor(in_completion, g_io_context().get_executor());
     using connect_op = connect_write_read_op<decltype(l_exe), CompletionHandler, ResponseType, RequestType>;
-    this->stream().expires_after(30s);
+    this->expires_after(30s);
     log_info(ptr_->logger_, fmt::format("{} {}", in_type.target(), fmt::ptr(std::addressof(in_completion))));
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, ResponseType)>(
         [](auto&& in_completion_, http_client_core* in_client_ptr, const auto& in_executor_, RequestType& in_type) {
@@ -387,38 +397,68 @@ class http_client_core
   [[nodiscard]] logger_ptr& logger() { return ptr_->logger_; }
   [[nodiscard]] const logger_ptr& logger() const { return ptr_->logger_; }
 
- private:
+  inline void restart() { make_ptr(); }
+
   void do_close() {
-    boost::system::error_code ec;
-    ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-    if (ec) {
-      ptr_->logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
+    if constexpr (use_ssl) {
+      boost::system::error_code ec;
+      ptr_->socket_->async_shutdown([ptr = ptr_, logger = ptr_->logger_](boost::system::error_code ec) {
+        if (ec) {
+          logger->log(log_loc(), level::err, "do_close error: {}", ec.message());
+        }
+      });
+    } else {
+      boost::system::error_code ec;
+      ptr_->socket_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+      if (ec) {
+        ptr_->logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
+      }
     }
   }
 
+ private:
   void make_ptr() {
     auto l_s        = boost::asio::make_strand(g_io_context());
     ptr_->resolver_ = std::make_shared<resolver_t>(l_s);
+    timer_ptr_      = std::make_shared<timer_t>(l_s);
+
     boost::urls::url l_url{ptr_->server_ip_};
-
     if constexpr (use_ssl) {
-      ptr_->socket_ = std::make_shared<ssl_socket_t>(l_s, ptr_->ssl_ctx_);
-
-      boost::beast::ssl_stream<boost::beast::tcp_stream>& l_ssl_stream = *ptr_->socket_;
-      l_ssl_stream.set_verify_mode(boost::asio::ssl::verify_none);
-
-      if (!SSL_set_tlsext_host_name(l_ssl_stream.native_handle(), l_url.host().data())) {
-        boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
-        default_logger_raw()->log(log_loc(), level::err, "SSL_set_tlsext_host_name: {}", ec.message());
-      }
+      auto l_scheme = l_url.scheme();
+      ptr_->scheme_ = l_scheme.empty() ? "https" : l_scheme;
     } else {
-      ptr_->socket_ = std::make_shared<socket_t>(l_s);
+      ptr_->scheme_ = l_url.scheme().empty() ? "http" : l_url.scheme();
     }
 
     if (!l_url.host().empty()) ptr_->server_ip_ = l_url.host();
-
+    // 创建socket
+    make_socket();
     ptr_->logger_ = g_logger_ctrl().make_log(fmt::format("{}_{}_{}", "http_client_core", l_url.host(), socket()));
   }
+
+  void make_socket() {
+    // 首先检查是否已经有 socket
+    if (ptr_->socket_) return;
+
+    auto l_s = boost::asio::make_strand(g_io_context());
+    if constexpr (use_ssl) {
+      boost::urls::url l_url{ptr_->server_ip_};
+      auto l_host   = l_url.host();
+      ptr_->socket_ = std::make_shared<ssl_socket_t>(timer_ptr_->get_executor(), ptr_->ssl_ctx_);
+      boost::beast::ssl_stream<boost::beast::tcp_stream>& l_ssl_stream = *ptr_->socket_;
+      l_ssl_stream.set_verify_mode(boost::asio::ssl::verify_none);
+
+      if (!l_host.empty())
+        if (!SSL_set_tlsext_host_name(l_ssl_stream.native_handle(), l_host.data())) {
+          boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+          default_logger_raw()->log(log_loc(), level::err, "SSL_set_tlsext_host_name: {}", ec.message());
+        }
+
+    } else {
+      ptr_->socket_ = std::make_shared<socket_t>(timer_ptr_->get_executor());
+    }
+  }
+
   void next() {
     if (ptr_->next_list_.empty()) {
       return;
@@ -426,6 +466,18 @@ class http_client_core
     if (is_run_) return;
     ptr_->next_list_.front().maybe_invoke();
     ptr_->next_list_.pop();
+  }
+
+  void expires_after(std::chrono::seconds in_seconds) {
+    stream().expires_after(in_seconds);
+    timer_ptr_->expires_after(in_seconds);
+
+    timer_ptr_->async_wait([this](const boost::system::error_code& in_ec) {
+      if (in_ec) {
+        return;
+      }
+      ptr_->socket_.reset();
+    });
   }
 };
 }  // namespace doodle::http::detail
