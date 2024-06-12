@@ -46,6 +46,7 @@ BOOST_AUTO_TEST_CASE(main) {
     l_user.id_                    = boost::lexical_cast<boost::uuids::uuid>("ce6d3b4d-75aa-4e0f-90af-18b913df138a");
     l_user.mobile_                = "15827605754";
     l_user.dingding_company_id_   = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+    l_user.dingding_id_           = "16951873382881136";
 
     // 2
     l_handle                      = {*g_reg(), g_reg()->create()};
@@ -53,6 +54,7 @@ BOOST_AUTO_TEST_CASE(main) {
     l_user_2.id_                  = boost::lexical_cast<boost::uuids::uuid>("5b5153a1-51a4-4376-9450-2c317e523cbe");
     l_user_2.mobile_              = "18056860368";
     l_user_2.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+    l_user_2.dingding_id_         = "16941375683116574";
 
     // 3
     l_handle                      = {*g_reg(), g_reg()->create()};
@@ -60,6 +62,7 @@ BOOST_AUTO_TEST_CASE(main) {
     l_user_3.id_                  = boost::lexical_cast<boost::uuids::uuid>("78a1ec16-8a2d-4ae2-b0c9-7a8092694100");
     l_user_3.mobile_              = "15635681053";
     l_user_3.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+    l_user_3.dingding_id_         = "250801386824116912";
   }
 
   l_handle = {*g_reg(), g_reg()->create()};

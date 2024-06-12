@@ -176,15 +176,10 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
 
   void create_clock() {
     auto l_r = business::rules::get_default();
-    if (l_r.is_work_day(chrono::weekday{date_})) {
-      for (auto&& l_work_time : l_r.work_pair_p) {
-        work_clock_ += std::make_tuple(
-            chrono::local_days{date_} + l_work_time.first, chrono::local_days{date_} + l_work_time.second
-        );
-      }
+    for (auto&& l_work_time : l_r.work_pair_p) {
+      work_clock_ += std::make_tuple(chrono::local_days{date_}, chrono::local_days{date_} + chrono::days{1});
     }
-    // 调整节假日
-    holidaycn_time2{l_r.work_pair_p}.set_clock(work_clock_);
+
     // 排除绝对时间
     for (auto&& l_deduction : l_r.absolute_deduction[chrono::weekday{date_}.c_encoding()]) {
       work_clock_ -= std::make_tuple(
@@ -202,6 +197,7 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
 
     std::vector<attendance> l_attendance_list{};
     try {
+      create_clock();
       if (in_json.contains("result") && in_json["result"].contains("approve_list")) {
         for (auto&& l_obj : in_json["result"]["approve_list"]) {
           auto l_time_str = l_obj["begin_time"].get<std::string>();
@@ -216,16 +212,8 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
             l_time_stream >> chrono::parse("%F %T", l_end_time);
           }
           // 重新使用开始时间和时间时间段计算时间
-          chrono::hours_double l_duration{0};
-          if (auto l_du_str = l_obj["duration_unit"].get<std::string>(); l_du_str == "HOUR") {
-            l_duration = chrono::hours_double{l_obj["duration"].get<std::double_t>()};
-          } else if (l_du_str == "DAY") {
-            l_duration = chrono::hours_double{l_obj["duration"].get<std::double_t>() * 8};
-          } else {
-            handle_->logger_->log(log_loc(), level::err, "get attendance failed: duration_unit error");
-            handle_->seed_error(boost::beast::http::status::internal_server_error, in_err, "duration_unit error");
-            return;
-          }
+          chrono::hours l_duration{0};
+          l_duration = chrono::floor<chrono::hours>(work_clock_(l_begin_time, l_end_time));
           l_end_time = work_clock_.next_time(
               l_begin_time, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
           );
