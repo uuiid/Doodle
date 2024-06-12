@@ -142,7 +142,6 @@ class http_client_core
     };
     boost::asio::executor_work_guard<ExecutorType> work_guard_;
     std::unique_ptr<data_type2> ptr_;
-    socket_t& socket_;
     http_client_core* http_client_core_ptr_;
     std::shared_ptr<guard_is_run> guard_is_run_ptr_;
 
@@ -155,7 +154,6 @@ class http_client_core
           boost::asio::coroutine(),
           work_guard_(boost::asio::make_work_guard(in_executor_type_1)),
           ptr_(std::make_unique<data_type2>()),
-          socket_(in_ptr->stream()),
           http_client_core_ptr_(in_ptr),
           guard_is_run_ptr_()
 
@@ -173,7 +171,8 @@ class http_client_core
 
     void operator()() {
       guard_is_run_ptr_ = std::make_shared<guard_is_run>(*http_client_core_ptr_);
-      if (socket_.socket().is_open()) {
+      http_client_core_ptr_->make_socket();
+      if (http_client_core_ptr_->stream().is_open()) {
         do_write();
       } else {
         do_resolve();
@@ -290,7 +289,7 @@ class http_client_core
       ptr_->state_ = state::resolve;
       ++ptr_->retry_count_;
       log_info(ptr_->logger_, fmt::format("state {}", ptr_->state_));
-      socket_.async_connect(http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
+      http_client_core_ptr_->stream().async_connect(http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
       // boost::asio::async_connect(socket_.socket(), http_client_core_ptr_->ptr_->resolver_results_, std::move(*this));
     }
     void do_resolve() {
