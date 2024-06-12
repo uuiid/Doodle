@@ -178,7 +178,8 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) {
       if (user_.attendance_block_.contains(chrono::year_month_day{l_it})) {
         auto l_block =
-            std::as_const(*g_reg()).get<const attendance_block>(user_.attendance_block_.at(chrono::year_month_day{l_it}));
+            std::as_const(*g_reg()).get<const attendance_block>(user_.attendance_block_.at(chrono::year_month_day{l_it})
+            );
         for (auto&& l_att : l_block.attendance_block_) {
           time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_);
         }
@@ -381,7 +382,9 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     block_ = l_block;
-    boost::asio::post(g_io_context(),boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this()));
+    boost::asio::post(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
+    );
 
     nlohmann::json l_json;
     l_json["data"]     = block_.task_info_;
@@ -516,15 +519,20 @@ class computing_time_get {
 
     for (auto&& [e, l_u] : l_user.each()) {
       if (l_u.id_ == l_user_id && l_u.task_block_.contains(l_year_month)) {
-        auto l_block   = std::as_const(*g_reg()).get<const work_xlsx_task_info_block>(l_u.task_block_.at(l_year_month));
-        l_json["data"] = l_block.task_info_;
-        l_json["id"]   = fmt::to_string(l_block.id_);
-        l_json["duration"] = l_block.duration_.count();
-        l_response.result(boost::beast::http::status::ok);
-        l_response.body() = l_json.dump();
-        l_response.prepare_payload();
-        in_handle->seed(std::move(l_response));
-        return;
+        // 这里只使用视图, 要不然会导致注册表异常,  不可get
+        auto l_view = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
+        for (auto&& [e, l_b] : l_view.each()) {
+          if (l_b.year_month_ == l_year_month && l_b.user_refs_ == e) {
+            l_json["data"]     = l_b.task_info_;
+            l_json["id"]       = fmt::to_string(l_b.id_);
+            l_json["duration"] = l_b.duration_.count();
+            l_response.result(boost::beast::http::status::ok);
+            l_response.body() = l_json.dump();
+            l_response.prepare_payload();
+            in_handle->seed(std::move(l_response));
+            return;
+          }
+        }
       }
     }
     l_response.result(boost::beast::http::status::not_found);
