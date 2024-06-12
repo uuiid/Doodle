@@ -406,7 +406,7 @@ class http_client_core
         if (ec) {
           logger->log(log_loc(), level::err, "do_close error: {}", ec.message());
         }
-        ptr_->socket_.reset();
+        ptr->socket_.reset();
       });
     } else {
       boost::system::error_code ec;
