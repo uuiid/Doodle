@@ -185,11 +185,11 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       }
     }
 
-#ifndef NDEBUG
-    auto l_logger = session_data_->logger_;
-    l_logger->log(log_loc(), level::info, "work_pair_p: {}", fmt::join(rules_.work_pair_p, ", "));
-    l_logger->log(log_loc(), level::info, "work: {}", time_clock_.debug_print());
-#endif
+    // #ifndef NDEBUG
+    //     auto l_logger = session_data_->logger_;
+    //     l_logger->log(log_loc(), level::info, "work_pair_p: {}", fmt::join(rules_.work_pair_p, ", "));
+    //     l_logger->log(log_loc(), level::info, "work: {}", time_clock_.debug_print());
+    // #endif
 
     // 排除绝对时间
     for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
@@ -205,13 +205,13 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     auto l_end_time  = chrono::local_days{(year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
     auto l_all_works = time_clock_(chrono::local_days{year_month_ / chrono::day{1}}, l_end_time);
 
-#ifndef NDEBUG
-    auto l_logger = session_data_->logger_;
-    l_logger->log(
-        log_loc(), level::info, "begin_time: {}, end_time: {} work_time: {}",
-        chrono::local_days{year_month_ / chrono::day{1}}, l_end_time, l_all_works
-    );
-#endif
+    // #ifndef NDEBUG
+    //     auto l_logger = session_data_->logger_;
+    //     l_logger->log(
+    //         log_loc(), level::info, "begin_time: {}, end_time: {} work_time: {}",
+    //         chrono::local_days{year_month_ / chrono::day{1}}, l_end_time, l_all_works
+    //     );
+    // #endif
 
     work_xlsx_task_info_block l_block{
         .id_         = block_.id_.is_nil() ? core_set::get_set().get_uuid() : block_.id_,
@@ -240,20 +240,22 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
         });
       }
 
-#ifndef NDEBUG
-      l_logger->log(
-          log_loc(), level::info, "woeks1: {}, woeks2: {}", fmt::join(l_woeks1, ", "), fmt::join(l_woeks2, ", ")
-      );
-#endif
+      // #ifndef NDEBUG
+      //       l_logger->log(
+      //           log_loc(), level::info, "woeks1: {}, woeks2: {}", fmt::join(l_woeks1, ", "), fmt::join(l_woeks2, ",
+      //           ")
+      //       );
+      // #endif
 
       chrono::local_time_pos l_begin_time{chrono::local_days{year_month_ / chrono::day{1}}};
       for (auto i = 0; i < data_->data.size(); ++i) {
-        auto l_end = time_clock_.next_time(l_begin_time, l_woeks2[i]);
+        auto l_end           = time_clock_.next_time(l_begin_time, l_woeks2[i]);
 
         // BOOST_ASSERT(time_clock_(l_begin_time, l_end) == l_woeks2[i]);
-#ifndef NDEBUG
-        l_logger->log(log_loc(), level::info, "woeks1: {}, woeks2: {}", time_clock_(l_begin_time, l_end), l_woeks2[i]);
-#endif
+        // #ifndef NDEBUG
+        //         l_logger->log(log_loc(), level::info, "woeks1: {}, woeks2: {}", time_clock_(l_begin_time, l_end),
+        //         l_woeks2[i]);
+        // #endif
         auto l_info          = time_clock_.get_time_info(l_begin_time, l_end);
         std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
 
@@ -326,9 +328,10 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       return;
     }
 
-    if (user_.task_block_.contains(year_month_))
-      block_ = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(user_.task_block_.at(year_month_));
-    else {
+    if (user_.task_block_.contains(year_month_)) {
+      block_        = std::as_const(*g_reg()).get<work_xlsx_task_info_block>(user_.task_block_.at(year_month_));
+      block_entity_ = user_.task_block_.at(year_month_);
+    } else {
       auto l_year_month_str =
           fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()});
 
