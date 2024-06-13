@@ -39,7 +39,7 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
-            "name": "Doodle_debug_server",
+            "name": "Doodle_debug_kitsu",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${command:cmake.getLaunchTargetPath}",

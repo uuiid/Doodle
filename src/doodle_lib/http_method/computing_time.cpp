@@ -86,10 +86,6 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       );
       return;
     }
-
-    boost::asio::post(boost::asio::bind_executor(
-        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::run_2, shared_from_this())
-    ));
   }
 
   void find_block() {
@@ -101,6 +97,21 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
         break;
       }
     }
+  }
+
+  void find_main() {
+    find_user();
+    find_block();
+    boost::asio::post(
+        g_thread(), boost::beast::bind_front_handler(&computing_time_post_impl::compute_time_thread, shared_from_this())
+    );
+  }
+
+  // 计算 时间 其他线程
+  void compute_time_thread() {
+    create_time_clock();
+    computing_time_run();
+    run_2();
   }
 
   void create_time_clock() {
@@ -230,29 +241,25 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   }
 
   void run_2() {
-    find_block();
-    create_time_clock();
-    computing_time_run();
-    create_block();
     boost::asio::post(
         g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
     );
-    boost::asio::post(g_thread(), [l_self = shared_from_this(), this]() {
-      nlohmann::json l_json{};
-      l_json["data"]     = block_.task_info_;
-      l_json["id"]       = fmt::to_string(block_.id_);
-      l_json["duration"] = block_.duration_.count();
+    // boost::asio::post(g_thread(), [l_self = shared_from_this(), this]() {
+    nlohmann::json l_json{};
+    l_json["data"]     = block_.task_info_;
+    l_json["id"]       = fmt::to_string(block_.id_);
+    l_json["duration"] = block_.duration_.count();
 
-      auto& l_req = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
-      boost::beast::http::response<boost::beast::http::string_body> l_response{
-          boost::beast::http::status::ok, l_req.version()
-      };
-      l_response.set(boost::beast::http::field::content_type, "application/json");
-      l_response.body() = l_json.dump();
-      l_response.keep_alive(l_req.keep_alive());
-      l_response.prepare_payload();
-      session_data_->seed(std::move(l_response));
-    });
+    auto& l_req        = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.body() = l_json.dump();
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.prepare_payload();
+    session_data_->seed(std::move(l_response));
+    // });
   }
 
   ///////////////////////////////////////
@@ -352,11 +359,15 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   explicit computing_time_post_impl(http_session_data_ptr in_session_data)
       : session_data_(std::move(in_session_data)) {}
 
+  // 这个不是主线程
   void run_post(computing_time_post_req_data& in_data) {
     data_       = std::make_shared<computing_time_post_req_data>(std::move(in_data));
     rules_      = business::rules::get_default();
     year_month_ = data_->year_month_;
-    find_user();
+
+    boost::asio::post(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::find_main, shared_from_this())
+    );
   }
 
   void run_patch(
