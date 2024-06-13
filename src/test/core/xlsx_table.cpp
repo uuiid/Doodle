@@ -6,6 +6,7 @@
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
@@ -18,6 +19,20 @@
 using namespace doodle;
 
 BOOST_AUTO_TEST_SUITE(xlsx_table)
+
+
+BOOST_AUTO_TEST_CASE(msg_body){
+  boost::beast::http::response<doodle::http::basic_json_body> l_respone{
+      boost::beast::http::status::ok, 11
+  };
+  l_respone.body() = nlohmann::json{
+      {"msg", "hello world"}
+  };
+  l_respone.payload_size();
+  // boost::beast::http::message_generator l_gen{std::move(l_respone)};
+  std::ostringstream l_str{};
+  l_str << l_respone;
+}
 
 constexpr static std::string_view g_token{
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."

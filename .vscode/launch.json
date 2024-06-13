@@ -151,6 +151,7 @@
             "description": "test分类",
             "options": [
                 "xlsx_table/main",
+                "xlsx_table/msg_body",
                 "dingding/access_token",
                 "dingding/get_user_by_mobile",
                 "dingding/get_attendance_updatedata",
