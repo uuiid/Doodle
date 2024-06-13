@@ -19,6 +19,7 @@ class http_route {
   using map_actin_type = std::vector<http_function_ptr>;
   std::map<boost::beast::http::verb, map_actin_type> actions;
   http_function_ptr not_function;
+  http_function_ptr options_function;
 
  public:
   http_route();
