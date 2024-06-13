@@ -237,20 +237,22 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     boost::asio::post(
         g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
     );
-    nlohmann::json l_json{};
-    l_json["data"]     = block_.task_info_;
-    l_json["id"]       = fmt::to_string(block_.id_);
-    l_json["duration"] = block_.duration_.count();
+    boost::asio::post(g_thread(), [l_self = shared_from_this(), this]() {
+      nlohmann::json l_json{};
+      l_json["data"]     = block_.task_info_;
+      l_json["id"]       = fmt::to_string(block_.id_);
+      l_json["duration"] = block_.duration_.count();
 
-    auto& l_req        = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
-    boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, l_req.version()
-    };
-    l_response.set(boost::beast::http::field::content_type, "application/json");
-    l_response.body() = l_json.dump();
-    l_response.keep_alive(l_req.keep_alive());
-    l_response.prepare_payload();
-    session_data_->seed(std::move(l_response));
+      auto& l_req = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
+      boost::beast::http::response<boost::beast::http::string_body> l_response{
+          boost::beast::http::status::ok, l_req.version()
+      };
+      l_response.set(boost::beast::http::field::content_type, "application/json");
+      l_response.body() = l_json.dump();
+      l_response.keep_alive(l_req.keep_alive());
+      l_response.prepare_payload();
+      session_data_->seed(std::move(l_response));
+    });
   }
 
   ///////////////////////////////////////
