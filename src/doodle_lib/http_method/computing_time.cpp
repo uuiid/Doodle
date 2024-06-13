@@ -87,72 +87,9 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       return;
     }
 
-    if (user_.mobile_.empty()) {
-      user_.id_           = data_->user_id;
-      auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
-      l_kitsu_client->get_user(
-          user_.id_,
-          boost::asio::bind_executor(
-              g_io_context(),
-              boost::beast::bind_front_handler(&computing_time_post_impl::do_feach_mobile, shared_from_this())
-          )
-      );
-    } else {
-      boost::asio::post(boost::asio::bind_executor(
-          g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::run_2, shared_from_this())
-      ));
-    }
-  }
-  void do_feach_mobile(boost::system::error_code ec, nlohmann::json l_json) {
-    auto l_logger = session_data_->logger_;
-    if (ec) {
-      l_logger->log(log_loc(), level::err, "get user failed: {}", ec.message());
-      session_data_->seed_error(boost::beast::http::status::internal_server_error, ec);
-      return;
-    }
-    try {
-      user_.mobile_ = l_json["phone"].get<std::string>();
-    } catch (const nlohmann::json::exception& e) {
-      l_logger->log(
-          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
-      );
-      session_data_->seed_error(
-          boost::beast::http::status::internal_server_error, ec,
-          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
-      );
-      return;
-    } catch (const std::exception& e) {
-      l_logger->log(
-          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
-      );
-      session_data_->seed_error(
-          boost::beast::http::status::internal_server_error, ec,
-          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
-      );
-      return;
-    } catch (...) {
-      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-      ec = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      session_data_->seed_error(
-          boost::beast::http::status::bad_request, ec, boost::current_exception_diagnostic_information()
-      );
-      return;
-    }
-    if (user_.mobile_.empty()) {
-      l_logger->log(log_loc(), level::err, "user {} mobile is empty", l_json["email"].get<std::string>());
-      session_data_->seed_error(
-          boost::beast::http::status::internal_server_error, ec,
-          fmt::format("{} mobile is empty", l_json["email"].get<std::string>())
-      );
-      return;
-    }
-
-    entt::handle l_handle{};
-    {
-      l_handle                       = {*g_reg(), user_entity_};
-      l_handle.patch<user>().mobile_ = user_.mobile_;
-    }
-    run_2();
+    boost::asio::post(boost::asio::bind_executor(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::run_2, shared_from_this())
+    ));
   }
 
   void find_block() {
