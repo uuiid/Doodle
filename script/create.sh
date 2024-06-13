@@ -179,11 +179,11 @@ server {
         proxy_pass http://localhost:5001;
     }
 
-    location /api/file_exists{
+    location /api/file_exists {
         proxy_pass http://192.168.20.181:50021;
     }
     
-    location /api/doodle{
+    location /api/doodle {
         proxy_pass http://192.168.20.181:50025;
     }
 
