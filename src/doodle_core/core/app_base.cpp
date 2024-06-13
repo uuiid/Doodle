@@ -54,6 +54,14 @@ app_base::app_base(int argc, const char* const argv[])
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
   default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   default_logger_raw()->flush();
+
+
+  sig_ptr = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+  sig_ptr->async_wait([this](const boost::system::error_code& ec, int signal_number) {
+    if (ec) return;
+    stop_app(0);
+  });
+
 }
 
 namespace {

@@ -8,6 +8,7 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
+#include <boost/asio/signal_set.hpp>
 #include <boost/signals2.hpp>
 
 #include <argh.h>
@@ -46,6 +47,9 @@ class DOODLE_CORE_API app_base {
   std::atomic_bool stop_;
 
   std::int32_t exit_code{0};
+  using signal_t = boost::asio::signal_set;
+
+  std::shared_ptr<signal_t> sig_ptr;
 
  public:
   explicit app_base(int argc, const char* const argv[]);
