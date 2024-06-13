@@ -17,11 +17,12 @@ void options_function_impl(const http_session_data_ptr& in_handle) {
   };
   l_response.set(boost::beast::http::field::content_type, "application/json");
 
-  l_response.set(boost::beast::http::field::allow, "POST, GET, PATCH, DELETE, OPTIONS");
+  l_response.set(boost::beast::http::field::allow, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_response.set(boost::beast::http::field::access_control_allow_methods, "POST, GET, PATCH, DELETE, OPTIONS");
+  l_response.set(boost::beast::http::field::access_control_allow_methods, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   l_response.set(
-      boost::beast::http::field::access_control_allow_headers, "Origin, X-Requested-With, Content-Type, Accept"
+      boost::beast::http::field::access_control_allow_headers,
+      "Authorization, Origin, X-Requested-With, Content-Type, Accept"
   );
 
   l_response.keep_alive(l_req.keep_alive());
