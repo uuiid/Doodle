@@ -107,11 +107,28 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     );
   }
 
-  // 计算 时间 其他线程
+  // 计算 时间和发送数据 其他线程
   void compute_time_thread() {
     create_time_clock();
     computing_time_run();
-    run_2();
+    boost::asio::post(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
+    );
+    // boost::asio::post(g_thread(), [l_self = shared_from_this(), this]() {
+    nlohmann::json l_json{};
+    l_json["data"]     = block_.task_info_;
+    l_json["id"]       = fmt::to_string(block_.id_);
+    l_json["duration"] = block_.duration_.count();
+
+    auto& l_req        = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
+    boost::beast::http::response<boost::beast::http::string_body> l_response{
+        boost::beast::http::status::ok, l_req.version()
+    };
+    l_response.set(boost::beast::http::field::content_type, "application/json");
+    l_response.body() = l_json.dump();
+    l_response.keep_alive(l_req.keep_alive());
+    l_response.prepare_payload();
+    session_data_->seed(std::move(l_response));
   }
 
   void create_time_clock() {
@@ -229,6 +246,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     block_ = l_block;
   }
 
+  // 主线程
   void create_block() {
     if (block_entity_ == entt::null) {
       block_entity_ = g_reg()->create();
@@ -238,28 +256,6 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     }
 
     g_reg()->patch<user>(user_entity_).task_block_[year_month_] = block_entity_;
-  }
-
-  void run_2() {
-    boost::asio::post(
-        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
-    );
-    // boost::asio::post(g_thread(), [l_self = shared_from_this(), this]() {
-    nlohmann::json l_json{};
-    l_json["data"]     = block_.task_info_;
-    l_json["id"]       = fmt::to_string(block_.id_);
-    l_json["duration"] = block_.duration_.count();
-
-    auto& l_req        = session_data_->get_msg_body_parser<boost::beast::http::string_body>()->request_parser_->get();
-    boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, l_req.version()
-    };
-    l_response.set(boost::beast::http::field::content_type, "application/json");
-    l_response.body() = l_json.dump();
-    l_response.keep_alive(l_req.keep_alive());
-    l_response.prepare_payload();
-    session_data_->seed(std::move(l_response));
-    // });
   }
 
   ///////////////////////////////////////
@@ -296,9 +292,14 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       );
       return;
     }
+    boost::asio::post(
+        g_thread(), boost::beast::bind_front_handler(&computing_time_post_impl::patch_time, shared_from_this())
+    );
   }
 
   void patch_time() {
+    create_time_clock();
+
     auto l_logger  = session_data_->logger_;
     auto l_block   = block_;
 
@@ -380,9 +381,9 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     duration_   = in_duration;
 
     rules_      = business::rules::get_default();
-    find_data();
-    create_time_clock();
-    patch_time();
+    boost::asio::post(
+        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::find_data, shared_from_this())
+    );
   }
 };
 
@@ -517,7 +518,7 @@ class computing_time_get {
 
 class computing_time_patch {
  public:
-  computing_time_patch() : executor_(g_io_context().get_executor()) {}
+  computing_time_patch() : executor_(g_thread().get_executor()) {}
   ~computing_time_patch() = default;
   using executor_type     = boost::asio::any_io_executor;
   boost::asio::any_io_executor executor_;
