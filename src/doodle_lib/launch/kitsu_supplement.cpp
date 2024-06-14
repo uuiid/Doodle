@@ -55,28 +55,11 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
     try {
       l_args = l_json.get<kitsu_supplement_args_t>();
-    } catch (const std::exception& e) {
-      default_logger_raw()->log(log_loc(), level::err, e.what());
-      return true;
     } catch (...) {
       default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
       return true;
     }
   }
-
-  // 开始监听取消信号
-  using signal_t = boost::asio::signal_set;
-  auto signal_   = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  signal_->async_wait([](boost::system::error_code in_error_code, int in_sig) {
-    if (in_error_code) {
-      if (!app_base::GetPtr()->is_stop())
-        default_logger_raw()->log(log_loc(), level::err, "信号错误: {}", in_error_code.message());
-      return;
-    }
-    default_logger_raw()->log(log_loc(), level::warn, "收到信号 {} {}", in_error_code.message(), in_sig);
-    app_base::GetPtr()->stop_app(1);
-  });
-  in_vector.emplace_back(signal_);
 
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
