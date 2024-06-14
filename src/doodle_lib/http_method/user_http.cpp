@@ -70,12 +70,10 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
       }
       user_.mobile_ = l_phone;
     } catch (const nlohmann::json::exception& e) {
-      l_logger->log(
-          log_loc(), level::err, "user {} json parse error: {}", l_json["email"].get<std::string>(), e.what()
-      );
+      l_logger->log(log_loc(), level::err, "user {} json parse error: 号码为空", l_json["email"].get<std::string>());
       handle_->seed_error(
           boost::beast::http::status::internal_server_error, ec,
-          fmt::format("{} {}", l_json["email"].get<std::string>(), e.what())
+          fmt::format("{} 号码为空 {}", l_json["email"].get<std::string>(), e.what())
       );
       return;
     } catch (const std::exception& e) {
