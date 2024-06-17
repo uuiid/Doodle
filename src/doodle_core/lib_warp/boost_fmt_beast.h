@@ -7,3 +7,8 @@
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+
+namespace fmt {
+template <>
+struct formatter<::boost::beast::http::verb> : ostream_formatter {};
+}  // namespace fmt

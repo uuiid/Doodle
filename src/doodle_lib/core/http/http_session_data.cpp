@@ -4,6 +4,7 @@
 
 #include "http_session_data.h"
 
+#include <doodle_core/lib_warp/boost_fmt_beast.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/lib_warp/boost_fmt_url.h>
 #include <doodle_core/logger/logger.h>
@@ -40,7 +41,7 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
   keep_alive_ = request_parser_->keep_alive();
 
   url_        = boost::url{request_parser_->get().target()};
-  logger_->log(log_loc(), level::info, "开始解析 url {}", url_);
+  logger_->log(log_loc(), level::info, "开始解析 url {} {}", request_parser_->get().method(), url_);
   auto& l_rote    = *route_ptr_;
   auto l_self_ptr = shared_from_this();
   l_rote(request_parser_->get().method(), url_.segments(), l_self_ptr)->callback_(l_self_ptr);
@@ -60,7 +61,7 @@ void http_session_data::seed_error(
   seed(std::move(l_response));
 }
 void http_session_data::seed(boost::beast::http::message_generator in_message_generator) {
-  logger_->log(log_loc(), level::err, "写入 {}", url_);
+  logger_->log(log_loc(), level::err, "写入 {} {}",request_parser_->get().method(), url_);
   boost::beast::async_write(
       *stream_, std::move(in_message_generator),
       boost::beast::bind_front_handler(&http_session_data::do_send, shared_from_this())
