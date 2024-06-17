@@ -19,7 +19,7 @@ namespace doodle::snapshot {
  * key           | 签名
  * create_table:  void (const conn_ptr& in_conn)
  * begin_save:    std::shared_ptr<void> (const conn_ptr& in_conn)
- * save:          template <typename Component> void (const Component& in_com, entt::entity& in_entity,
+ * save:          void (const Component& in_com, entt::entity& in_entity,
  * std::shared_ptr<void>& in_pre, const conn_ptr& in_conn)
  * destroy:       void (const std::vector<std::int64_t>&in_vector, const conn_ptr& in_conn)
  *
@@ -28,7 +28,7 @@ namespace doodle::snapshot {
  * get_size       std::underlying_type_t<entt::entity> (const conn_ptr& in_conn)
  * begin_load     std::shared_ptr<void> (const conn_ptr& in_conn)
  * load_entt      void (entt::entity& in_entity, std::shared_ptr<void>& in_pre)
- * load_com       template <typename Component> void (Component& in_entity, std::shared_ptr<void>& in_pre)
+ * load_com       void (Component& in_entity, std::shared_ptr<void>& in_pre)
  * has_table      bool (const conn_ptr& in_conn)
  *
  *

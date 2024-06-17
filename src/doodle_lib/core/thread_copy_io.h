@@ -26,10 +26,11 @@ class thread_copy_io_service {
   /**
    * @brief 这个是差异复制, 会自动比较文件的修改时间, 和大小 如果源文件的修改时间或者大小不同, 则会复制, 否则不会复制
    * @tparam CompletionHandler
-   * @param from
-   * @param to
-   * @param in_options
-   * @param handler
+   * @param from 源文件
+   * @param to 目标文件
+   * @param in_options 复制选项
+   * @param handler 完成回调
+   * @param in_logger 日志
    * @return
    */
   template <typename CompletionHandler>
