@@ -80,3 +80,7 @@ CMakeUserPresets.json
 .run
 
 /vcpkg/
+
+
+# 二进制测试文件
+*.abc
