@@ -92,20 +92,12 @@
       "targets": [
         "DoodleExe",
         "generate_token",
+        "test_main",
         "doodle_auto_light",
         "doodle_auto_light_process",
         "doodle_file_exists",
         "doodle_kitsu_supplement",
         "Doxygen"
-      ]
-    },
-    {
-      "name": "test",
-      "description": "构建boost测试",
-      "displayName": "测试",
-      "inherits": "debug",
-      "targets": [
-        "test_main"
       ]
     },
     {
