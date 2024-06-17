@@ -13,6 +13,7 @@ target_sources(test_main
         run_process_v2.cpp
         auto_light.cpp
         xlsx_table.cpp
+        blendshape_fbx.cpp
 )
 
 target_link_libraries(
