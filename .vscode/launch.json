@@ -25,10 +25,10 @@
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${command:cmake.getLaunchTargetPath}",
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/DoodleExe.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
@@ -42,12 +42,12 @@
             "name": "Doodle_debug_kitsu",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${command:cmake.getLaunchTargetPath}",
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
             "args": [
                 "--config=${workspaceFolder}/build/debug_server.json"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
@@ -107,7 +107,7 @@
             "name": "debug_test",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${command:cmake.getLaunchTargetPath}",
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
             "args": [
                 "--log_level=message",
                 "--color_output=true",
@@ -115,25 +115,7 @@
                 "--run_test=${input:test_}"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
-            "name": "debug_test_自定义参数",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${command:cmake.getLaunchTargetPath}",
-            "args": [
-                "--log_level=message",
-                "--color_output=true",
-                "--detect_memory_leaks=0",
-                "--run_test=${input:test_}",
-                "--",
-                "13546364873"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
@@ -150,6 +132,7 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
+                "blendshape_fbx",
                 "xlsx_table/main",
                 "xlsx_table/msg_body",
                 "dingding/access_token",

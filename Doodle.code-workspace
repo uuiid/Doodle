@@ -172,7 +172,8 @@
 			"stacktrace": "cpp",
 			"stdfloat": "cpp",
 			"syncstream": "cpp",
-			"*.inc": "cpp"
+			"*.inc": "cpp",
+			"eigen": "cpp"
 		}
 	}
 }
