@@ -259,6 +259,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
   }
 
   ///////////////////////////////////////
+  // 主线程
   void find_data() {
     auto l_logger = session_data_->logger_;
     auto l_user   = std::as_const(*g_reg()).view<const user>();
@@ -314,7 +315,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       );
       return;
     }
-    using rational_int = boost::rational<std::uint64_t>;
+    using rational_int = boost::rational<std::int64_t>;
     rational_int l_duration_int{
         (l_task_it->duration_ - duration_).count(), boost::numeric_cast<std::uint64_t>(l_block.task_info_.size() - 1)
     };
