@@ -42,17 +42,6 @@
 		"todo-tree.regex.regexCaseSensitive": false,
 		"git.fetchOnPull": true,
 		"C_Cpp.autocompleteAddParentheses": true,
-		"boost-test-adapter-xnely.tests": [
-			{
-				"testExecutables": [
-					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
-					}
-				],
-				"sourcePrefix": "${workspaceFolder}",
-				"debugConfig": "Doodle_debug"
-			},
-		],
 		"C_Cpp.intelliSenseEngine": "default",
 		"cmake.configureOnEdit": false,
 		"cmake.configureOnOpen": false,

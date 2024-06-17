@@ -14,7 +14,6 @@ if (TARGET torch)
             Boost::log_setup
             "${TORCH_LIBRARIES}"
     )
-    doodle_link_test(test_ai)
 endif ()
 
 # add_test(NAME test_ai_exe COMMAND test_ai --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

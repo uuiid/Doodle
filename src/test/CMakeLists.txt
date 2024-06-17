@@ -1,39 +1,5 @@
 
 
-macro(doodle_link_test)
-    target_sources(
-            ${ARGV0}
-            PUBLIC
-
-            PRIVATE
-            ${PROJECT_SOURCE_DIR}/src/DoodleExe.manifest
-            ${PROJECT_SOURCE_DIR}/src/icon.ico
-            ${PROJECT_SOURCE_DIR}/src/win_exe.rc
-    )
-    set_target_properties(${ARGV0}
-            PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-    target_link_libraries(${ARGV0}
-            PUBLIC
-            doodle_lib
-            Boost::unit_test_framework
-            cldapi.lib
-    )
-    target_compile_definitions(${ARGV0}
-            PUBLIC
-            CRTDBG_MAP_ALLOC
-            BOOST_TEST_DYN_LINK
-            BOOST_ALL_DYN_LINK
-    )
-    target_include_directories(
-            ${ARGV0}
-            PRIVATE
-            ${PROJECT_SOURCE_DIR}/src/test
-    )
-    target_compile_options(${ARGV0} PRIVATE
-            $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
-            $<$<CXX_COMPILER_ID:MSVC>:/MP>)
-endmacro()
-
 add_executable(
         test_main
         EXCLUDE_FROM_ALL
@@ -43,6 +9,34 @@ target_sources(
         PRIVATE
         test_main.cpp
 )
+
+target_sources(
+        test_main
+        PUBLIC
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/DoodleExe.manifest
+        ${PROJECT_SOURCE_DIR}/src/icon.ico
+        ${PROJECT_SOURCE_DIR}/src/win_exe.rc
+)
+set_target_properties(test_main
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+target_link_libraries(test_main
+        PUBLIC
+        doodle_lib
+        Boost::unit_test_framework
+        cldapi.lib
+)
+target_compile_definitions(test_main
+        PUBLIC
+        CRTDBG_MAP_ALLOC
+        BOOST_TEST_DYN_LINK
+        BOOST_ALL_DYN_LINK
+)
+
+target_compile_options(test_main PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
+        $<$<CXX_COMPILER_ID:MSVC>:/MP>)
+
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(math)
