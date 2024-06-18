@@ -35,6 +35,18 @@
 
 using namespace doodle;
 
+// 混合变形数据
+struct bl_mesh_data {
+  // 混合变形中的基本形状
+  Eigen::VectorXf base_mesh_{};
+  // 混合变形中的混变形状
+  Eigen::MatrixXf bs_mesh_{};
+  // 混合变形中的权重
+  Eigen::MatrixXf weight_{};
+  // 时间曲线
+  Eigen::MatrixXf time_curve_{};
+};
+
 void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   auto* l_manager = in_scene->GetFbxManager();
   std::shared_ptr<FbxExporter> l_exporter{
@@ -58,7 +70,10 @@ void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   l_exporter->Export(in_scene);
 }
 
-void write_fbx(const std::filesystem::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh& in_poly) {
+void write_fbx(
+    const std::filesystem::path& in_fbx_path, const bl_mesh_data& in_poly, const std::vector<std::size_t>& in_face_size,
+    const std::vector<std::int64_t>& in_face_index
+) {
   std::shared_ptr<FbxManager> l_manager{FbxManager::Create(), [](FbxManager* in_manager) { in_manager->Destroy(); }};
   FbxIOSettings* l_io_settings = FbxIOSettings::Create(l_manager.get(), IOSROOT);
   l_manager->SetIOSettings(l_io_settings);
@@ -91,33 +106,34 @@ void write_fbx(const std::filesystem::path& in_fbx_path, const Alembic::AbcGeom:
   {  // 先写出节点
     l_scene->GetRootNode()->AddChild(l_mesh_node);
 
-    const auto& l_sample       = in_poly.getSchema();
-    // 写出顶点
-    auto l_sample_data         = l_sample.getValue();
+    //   const auto& l_sample       = in_poly.getSchema();
+    //   // 写出顶点
+    //   auto l_sample_data         = l_sample.getValue();
 
-    auto l_sample_face_indices = l_sample_data.getFaceIndices();
-    auto l_sample_face_counts  = l_sample_data.getFaceCounts();
-    auto l_sample_pos          = l_sample_data.getPositions();
+    //   auto l_sample_face_indices = l_sample_data.getFaceIndices();
+    //   auto l_sample_face_counts  = l_sample_data.getFaceCounts();
+    //   auto l_sample_pos          = l_sample_data.getPositions();
 
-    doodle::default_logger_raw()->info("pos size: {}", l_sample_pos->size());
-    l_mesh->InitControlPoints(l_sample_pos->size());
+    doodle::default_logger_raw()->info("pos size: {}", in_poly.base_mesh_.rows() / 3);
+    l_mesh->InitControlPoints(in_poly.base_mesh_.rows() / 3);
     auto* l_pos_list = l_mesh->GetControlPoints();
-    for (std::size_t j = 0; j < l_sample_pos->size(); ++j) {
-      const auto& l_pos = (*l_sample_pos)[j];
-      l_pos_list[j]     = FbxVector4{l_pos.x, l_pos.y, l_pos.z};
-      //    doodle::default_logger_raw()->info("pos: {} {} {}", l_pos.x, l_pos.y, l_pos.z);
+    for (std::size_t j = 0; j < in_poly.base_mesh_.rows() / 3; ++j) {
+      l_pos_list[j] = FbxVector4{
+          (std::double_t)in_poly.base_mesh_[j], (std::double_t)in_poly.base_mesh_[++j],
+          (std::double_t)in_poly.base_mesh_[++j]
+      };
     }
-    doodle::default_logger_raw()->info("face size: {} {}", l_sample_face_counts->size(), l_sample_face_indices->size());
+    doodle::default_logger_raw()->info("face size: {} {}", in_face_size.size(), in_face_index.size());
     //  写出多边形连接
     std::size_t l_index{};
-    for (std::size_t j = 0; j < l_sample_face_counts->size(); ++j) {
+    for (std::size_t j = 0; j < in_face_size.size(); ++j) {
       l_mesh->BeginPolygon();
       // 在abc 多边形旋转顺序是相反的, 所以直接反向
-      for (std::int32_t k = (*l_sample_face_counts)[j] - 1; k > -1; --k) {
+      for (std::int32_t k = in_face_size[j] - 1; k > -1; --k) {
         //      doodle::default_logger_raw()->info("face index: {}", l_index + k);
-        l_mesh->AddPolygon((*l_sample_face_indices)[l_index + k]);
+        l_mesh->AddPolygon(in_face_index[l_index + k]);
       }
-      l_index += (*l_sample_face_counts)[j];
+      l_index += in_face_size[j];
       l_mesh->EndPolygon();
     }
 
@@ -137,7 +153,7 @@ void write_fbx(const std::filesystem::path& in_fbx_path, const Alembic::AbcGeom:
     l_layer_element_binormal->SetMappingMode(FbxLayerElement::eByControlPoint);
     l_layer_element_binormal->SetReferenceMode(FbxLayerElement::eDirect);
     // set normal
-    for (auto i = 0; i < l_sample_face_indices->size(); i += 3) {
+    for (auto i = 0; i < in_face_index.size(); i += 3) {
       //    auto l_normal = (l_pos_list[i + 1] - l_pos_list[i]).CrossProduct(l_pos_list[i + 2] - l_pos_list[i]);
       //    l_normal.Normalize();
       //    l_layer_element_normal->GetDirectArray().Add(FbxVector4{l_normal[0], l_normal[1], l_normal[2]});
@@ -149,112 +165,116 @@ void write_fbx(const std::filesystem::path& in_fbx_path, const Alembic::AbcGeom:
       l_layer_element_binormal->GetDirectArray().Add(FbxVector4{});
     }
 
-    l_layer->SetNormals(l_layer_element_normal);
-    l_layer->SetTangents(l_layer_element_tangent);
-    l_layer->SetBinormals(l_layer_element_binormal);
+    //   l_layer->SetNormals(l_layer_element_normal);
+    //   l_layer->SetTangents(l_layer_element_tangent);
+    //   l_layer->SetBinormals(l_layer_element_binormal);
 
-    auto* l_fbx_mat = FbxSurfaceLambert::Create(l_scene, "Fbx Default Material");
-    l_mesh_node->SetNodeAttribute(l_mesh);
-    l_mesh_node->AddMaterial(l_fbx_mat);
-  }
-  //  FbxNode* lSkeletonRoot = CreateSkeleton(l_scene, "skeleton");
-  //  l_scene->GetRootNode()->AddChild(lSkeletonRoot);
-  //  LinkPatchToSkeleton(l_scene, l_mesh_node, lSkeletonRoot);
-  //  StoreBindPose(l_scene, l_mesh_node);
-  //  return write_fbx_impl(l_scene, in_fbx_path);
-
-  const auto l_for_size = 2;
-  std::vector<FbxNode*> l_bones{};
-  //  auto l_name = "skeleton_";
-  //
-  //  FbxString lRootName(l_name);
-  //  lRootName += "Root";
-  //  FbxSkeleton* lSkeletonRootAttribute = FbxSkeleton::Create(l_scene, l_name);
-  //  lSkeletonRootAttribute->SetSkeletonType(FbxSkeleton::eLimbNode);
-  //  FbxNode* lSkeletonRoot = FbxNode::Create(l_scene, lRootName.Buffer());
-  //  lSkeletonRoot->SetNodeAttribute(lSkeletonRootAttribute);
-  //  lSkeletonRoot->LclTranslation.Set(FbxVector4(0.0, -40.0, 0.0));
-  //  l_scene->GetRootNode()->AddChild(lSkeletonRoot);
-
-  //
-  //  FbxString lLimbNodeName1(l_name);
-  //  lLimbNodeName1 += "LimbNode1";
-  //  FbxSkeleton* lSkeletonLimbNodeAttribute1 = FbxSkeleton::Create(l_scene,lLimbNodeName1);
-  //  lSkeletonLimbNodeAttribute1->SetSkeletonType(FbxSkeleton::eLimbNode);
-  //  lSkeletonLimbNodeAttribute1->Size.Set(1.0);
-  //  FbxNode* lSkeletonLimbNode1 = FbxNode::Create(l_scene,lLimbNodeName1.Buffer());
-  //  lSkeletonLimbNode1->SetNodeAttribute(lSkeletonLimbNodeAttribute1);
-  //  lSkeletonLimbNode1->LclTranslation.Set(FbxVector4(0.0, 40.0, 0.0));
-  //  lSkeletonRoot->AddChild(lSkeletonLimbNode1);
-
-  for (auto i = 0; i < l_for_size; ++i) {  // 再写 骨骼
-
-    // #ifdef DOODLE_1001
-    auto* l_sk_attr = FbxSkeleton::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
-    l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
-    //    l_sk_attr->Size.Set(1.0);
-
-    auto* l_bone_node = FbxNode::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
-    l_bone_node->SetNodeAttribute(l_sk_attr);
-    l_bone_node->SetRotationOrder(FbxNode::eSourcePivot, eEulerXYZ);
-    auto l_box = in_poly.getSchema().getSelfBoundsProperty().getValue().center();
-    l_bone_node->LclTranslation.Set(FbxDouble3{l_box.x, l_box.y, l_box.z});
-    l_bones.emplace_back(l_bone_node);
-    l_scene->GetRootNode()->AddChild(l_bone_node);
-    // #endif
-  }
-  //  return write_fbx_impl(l_scene, in_fbx_path);
-
-  {  // 写一个皮肤变形器
-    auto* l_sk = FbxSkin::Create(l_scene, "");
-    //    dynamic_cast<FbxGeometry*>(l_mesh_node->GetNodeAttribute())->AddDeformer(l_sk);
-    //    FbxGeometry* lPatchAttribute = (FbxGeometry*)l_mesh_node->GetNodeAttribute();
-    //    lPatchAttribute->AddDeformer(l_sk);
-
-    for (int l = 0; l < l_for_size; ++l) {
-      auto* l_cluster = FbxCluster::Create(l_scene, "");
-      l_cluster->SetLink(l_bones[l]);
-      l_cluster->SetLinkMode(FbxCluster::eTotalOne);
-      l_cluster->AddControlPointIndex(l, 1.0);
-
-      l_cluster->SetTransformMatrix(l_mesh_node->EvaluateGlobalTransform());
-      l_cluster->SetTransformLinkMatrix(l_bones[l]->EvaluateGlobalTransform());
-      if (!l_sk->AddCluster(l_cluster)) doodle::default_logger_raw()->info("add cluster error: {}", l);
-    }
-    l_mesh->AddDeformer(l_sk);
-    doodle::default_logger_raw()->info("sk cluster size {}", l_sk->GetClusterCount());
-    // 绑定post
-    auto* l_post = FbxPose::Create(l_scene, "bind_pose");
-    l_post->SetIsBindPose(true);
-    for (auto* l_bone : l_bones) {
-      if (l_post->Add(l_bone, l_bone->EvaluateGlobalTransform()) == -1) {
-        doodle::default_logger_raw()->info("add bone error: {}", l_bone->GetName());
-      }
-    }
-    l_post->Add(l_mesh_node, l_mesh_node->EvaluateGlobalTransform());
-
-    l_scene->AddPose(l_post);
+    //   auto* l_fbx_mat = FbxSurfaceLambert::Create(l_scene, "Fbx Default Material");
+    //   l_mesh_node->SetNodeAttribute(l_mesh);
+    //   l_mesh_node->AddMaterial(l_fbx_mat);
   }
 
-  {  // 写一个混变
-    auto* l_blend         = FbxBlendShape::Create(l_scene, "blend");
-    auto* l_blend_channel = FbxBlendShapeChannel::Create(l_scene, "blend_channel");
+  // //  FbxNode* lSkeletonRoot = CreateSkeleton(l_scene, "skeleton");
+  // //  l_scene->GetRootNode()->AddChild(lSkeletonRoot);
+  // //  LinkPatchToSkeleton(l_scene, l_mesh_node, lSkeletonRoot);
+  // //  StoreBindPose(l_scene, l_mesh_node);
+  // //  return write_fbx_impl(l_scene, in_fbx_path);
 
-    auto* l_shape         = FbxShape::Create(l_scene, "shape");
-    l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
-    auto* l_shape_pos = l_shape->GetControlPoints();
-    for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
-      l_shape_pos[i] = l_mesh->GetControlPointAt(i);
-    }
-    l_blend_channel->AddTargetShape(l_shape);
-    l_blend->AddBlendShapeChannel(l_blend_channel);
-    l_mesh->AddDeformer(l_blend);
-  }
+  // const auto l_for_size = 2;
+  // std::vector<FbxNode*> l_bones{};
+  // //  auto l_name = "skeleton_";
+  // //
+  // //  FbxString lRootName(l_name);
+  // //  lRootName += "Root";
+  // //  FbxSkeleton* lSkeletonRootAttribute = FbxSkeleton::Create(l_scene, l_name);
+  // //  lSkeletonRootAttribute->SetSkeletonType(FbxSkeleton::eLimbNode);
+  // //  FbxNode* lSkeletonRoot = FbxNode::Create(l_scene, lRootName.Buffer());
+  // //  lSkeletonRoot->SetNodeAttribute(lSkeletonRootAttribute);
+  // //  lSkeletonRoot->LclTranslation.Set(FbxVector4(0.0, -40.0, 0.0));
+  // //  l_scene->GetRootNode()->AddChild(lSkeletonRoot);
+
+  // //
+  // //  FbxString lLimbNodeName1(l_name);
+  // //  lLimbNodeName1 += "LimbNode1";
+  // //  FbxSkeleton* lSkeletonLimbNodeAttribute1 = FbxSkeleton::Create(l_scene,lLimbNodeName1);
+  // //  lSkeletonLimbNodeAttribute1->SetSkeletonType(FbxSkeleton::eLimbNode);
+  // //  lSkeletonLimbNodeAttribute1->Size.Set(1.0);
+  // //  FbxNode* lSkeletonLimbNode1 = FbxNode::Create(l_scene,lLimbNodeName1.Buffer());
+  // //  lSkeletonLimbNode1->SetNodeAttribute(lSkeletonLimbNodeAttribute1);
+  // //  lSkeletonLimbNode1->LclTranslation.Set(FbxVector4(0.0, 40.0, 0.0));
+  // //  lSkeletonRoot->AddChild(lSkeletonLimbNode1);
+
+  // for (auto i = 0; i < l_for_size; ++i) {  // 再写 骨骼
+
+  //   // #ifdef DOODLE_1001
+  //   auto* l_sk_attr = FbxSkeleton::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
+  //   l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
+  //   //    l_sk_attr->Size.Set(1.0);
+
+  //   auto* l_bone_node = FbxNode::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
+  //   l_bone_node->SetNodeAttribute(l_sk_attr);
+  //   l_bone_node->SetRotationOrder(FbxNode::eSourcePivot, eEulerXYZ);
+  //   auto l_box = in_poly.getSchema().getSelfBoundsProperty().getValue().center();
+  //   l_bone_node->LclTranslation.Set(FbxDouble3{l_box.x, l_box.y, l_box.z});
+  //   l_bones.emplace_back(l_bone_node);
+  //   l_scene->GetRootNode()->AddChild(l_bone_node);
+  //   // #endif
+  // }
+  // //  return write_fbx_impl(l_scene, in_fbx_path);
+
+  // {  // 写一个皮肤变形器
+  //   auto* l_sk = FbxSkin::Create(l_scene, "");
+  //   //    dynamic_cast<FbxGeometry*>(l_mesh_node->GetNodeAttribute())->AddDeformer(l_sk);
+  //   //    FbxGeometry* lPatchAttribute = (FbxGeometry*)l_mesh_node->GetNodeAttribute();
+  //   //    lPatchAttribute->AddDeformer(l_sk);
+
+  //   for (int l = 0; l < l_for_size; ++l) {
+  //     auto* l_cluster = FbxCluster::Create(l_scene, "");
+  //     l_cluster->SetLink(l_bones[l]);
+  //     l_cluster->SetLinkMode(FbxCluster::eTotalOne);
+  //     l_cluster->AddControlPointIndex(l, 1.0);
+
+  //     l_cluster->SetTransformMatrix(l_mesh_node->EvaluateGlobalTransform());
+  //     l_cluster->SetTransformLinkMatrix(l_bones[l]->EvaluateGlobalTransform());
+  //     if (!l_sk->AddCluster(l_cluster)) doodle::default_logger_raw()->info("add cluster error: {}", l);
+  //   }
+  //   l_mesh->AddDeformer(l_sk);
+  //   doodle::default_logger_raw()->info("sk cluster size {}", l_sk->GetClusterCount());
+  //   // 绑定post
+  //   auto* l_post = FbxPose::Create(l_scene, "bind_pose");
+  //   l_post->SetIsBindPose(true);
+  //   for (auto* l_bone : l_bones) {
+  //     if (l_post->Add(l_bone, l_bone->EvaluateGlobalTransform()) == -1) {
+  //       doodle::default_logger_raw()->info("add bone error: {}", l_bone->GetName());
+  //     }
+  //   }
+  //   l_post->Add(l_mesh_node, l_mesh_node->EvaluateGlobalTransform());
+
+  //   l_scene->AddPose(l_post);
+  // }
+
+  // {  // 写一个混变
+  //   auto* l_blend         = FbxBlendShape::Create(l_scene, "blend");
+  //   auto* l_blend_channel = FbxBlendShapeChannel::Create(l_scene, "blend_channel");
+
+  //   auto* l_shape         = FbxShape::Create(l_scene, "shape");
+  //   l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
+  //   auto* l_shape_pos = l_shape->GetControlPoints();
+  //   for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
+  //     l_shape_pos[i] = l_mesh->GetControlPointAt(i);
+  //   }
+  //   l_blend_channel->AddTargetShape(l_shape);
+  //   l_blend->AddBlendShapeChannel(l_blend_channel);
+  //   l_mesh->AddDeformer(l_blend);
+  // }
 
   return write_fbx_impl(l_scene, in_fbx_path);
 }
 
-Eigen::MatrixXf load_abc_mesh(const std::filesystem::path& in_path) {
+Eigen::MatrixXf load_abc_mesh(
+    const std::filesystem::path& in_path, std::vector<std::size_t>& in_face_size,
+    std::vector<std::int64_t>& in_face_index
+) {
   Alembic::Abc::IArchive l_ar{Alembic::AbcCoreOgawa::ReadArchive{}, in_path.generic_string()};
   auto l_top        = l_ar.getTop();
   const auto l_meta = l_top.getMetaData();
@@ -283,6 +303,18 @@ Eigen::MatrixXf load_abc_mesh(const std::filesystem::path& in_path) {
           // l_result.col(i) = Eigen::VectorXf{l_v->get(), l_v->size()};
         }
         doodle::default_logger_raw()->info("name {} size {}", l_child.getName(), l_result.rows());
+
+        auto l_face_index = l_s.getValue().getFaceIndices();
+        in_face_index.resize(l_face_index->size());
+        for (auto i = 0; i < l_face_index->size(); ++i) {
+          in_face_index[i] = (*l_face_index)[i];
+        }
+        auto l_face_size = l_s.getValue().getFaceCounts();
+        in_face_size.resize(l_face_size->size());
+        for (auto i = 0; i < l_face_size->size(); ++i) {
+          in_face_size[i] = (*l_face_size)[i];
+        }
+
         // std::cout << l_result << std::endl;
         return l_result;
       }
@@ -292,9 +324,13 @@ Eigen::MatrixXf load_abc_mesh(const std::filesystem::path& in_path) {
 }
 
 BOOST_AUTO_TEST_CASE(blendshape_fbx) {
-  auto l_mesh             = load_abc_mesh("E:/Doodle/src/test/core/test_bl.abc");
+  std::vector<std::size_t> l_face_size{};
+  std::vector<std::int64_t> l_face_index{};
+
+  auto l_mesh             = load_abc_mesh("E:/Doodle/src/test/core/test_bl.abc", l_face_size, l_face_index);
 
   Eigen::VectorXf Average = l_mesh.colwise().mean();
+  // l_
 
   std::cout << "Average: \n" << Average << std::endl;
   // std::cout << " Eigen::VectorXf::Ones(3): \n" << Eigen::VectorXf::Ones(in_mat.rows()) << std::endl;
@@ -319,4 +355,9 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
     }
   }
   std::cout << "mu U: \n" << l_u << std::endl;
+
+  bl_mesh_data l_data;
+  l_data.base_mesh_ = Average;
+
+  write_fbx("E:/Doodle/src/test/core/test_bl_end.fbx", l_data, l_face_size, l_face_index);
 }
