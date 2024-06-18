@@ -84,3 +84,4 @@ CMakeUserPresets.json
 
 # 二进制测试文件
 *.abc
+*.fbx
