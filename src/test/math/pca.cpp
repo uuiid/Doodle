@@ -86,4 +86,7 @@ BOOST_AUTO_TEST_CASE(test_pca) {
   std::cout << "org : \n" << l_mat << std::endl;
 
   pca_fun2(l_mat);
+
+  l_mat = Eigen::MatrixXf::Random(30, 3);
+  pca_fun2(l_mat);
 }
