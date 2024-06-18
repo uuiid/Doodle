@@ -315,31 +315,34 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
       );
       return;
     }
-    using rational_int = boost::rational<std::int64_t>;
-    rational_int l_duration_int{
-        (l_task_it->duration_ - duration_).count(), boost::numeric_cast<std::uint64_t>(l_block.task_info_.size() - 1)
-    };
-    // 调整差值
-    l_task_it->duration_ = duration_;
-    for (auto&& l_task : l_block.task_info_) {
-      if (l_task.id_ != task_id_) {
-        l_task.duration_ += chrono::microseconds{boost::rational_cast<std::int64_t>(l_duration_int)};
+
+    // 只有一个任务, 不可以调整
+    if (l_block.task_info_.size() != 1) {
+      using rational_int = boost::rational<std::int64_t>;
+      rational_int l_duration_int{
+          (l_task_it->duration_ - duration_).count(), boost::numeric_cast<std::int64_t>(l_block.task_info_.size() - 1)
+      };
+      // 调整差值
+      l_task_it->duration_ = duration_;
+      for (auto&& l_task : l_block.task_info_) {
+        if (l_task.id_ != task_id_) {
+          l_task.duration_ += chrono::microseconds{boost::rational_cast<std::int64_t>(l_duration_int)};
+        }
       }
-    }
 
-    // 计算时间开始结束
-    chrono::local_time_pos l_begin_time{chrono::local_days{year_month_ / chrono::day{1}}};
-    for (auto i = 0; i < l_block.task_info_.size(); ++i) {
-      auto l_end                        = time_clock_.next_time(l_begin_time, l_block.task_info_[i].duration_);
-      l_block.task_info_[i].start_time_ = l_begin_time;
-      l_block.task_info_[i].end_time_   = l_end;
-      l_begin_time                      = l_end;
+      // 计算时间开始结束
+      chrono::local_time_pos l_begin_time{chrono::local_days{year_month_ / chrono::day{1}}};
+      for (auto i = 0; i < l_block.task_info_.size(); ++i) {
+        auto l_end                        = time_clock_.next_time(l_begin_time, l_block.task_info_[i].duration_);
+        l_block.task_info_[i].start_time_ = l_begin_time;
+        l_block.task_info_[i].end_time_   = l_end;
+        l_begin_time                      = l_end;
+      }
+      block_ = l_block;
+      boost::asio::post(
+          g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
+      );
     }
-
-    block_ = l_block;
-    boost::asio::post(
-        g_io_context(), boost::beast::bind_front_handler(&computing_time_post_impl::create_block, shared_from_this())
-    );
 
     nlohmann::json l_json;
     l_json["data"]     = block_.task_info_;
