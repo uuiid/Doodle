@@ -318,11 +318,24 @@ class dingding_attendance_get {
     auto l_view    = std::as_const(*g_reg()).view<const user>();
     auto l_date    = in_handle->capture_->get("date");
     auto l_user_id = in_handle->capture_->get("user_id");
-    chrono::year_month_day l_ymd{};
+    std::vector<chrono::year_month_day> l_date_list{};
+
     boost::uuids::uuid l_user_uuid{};
     try {
+      chrono::year_month_day l_ymd{};
+      chrono::year_month l_ym{};
       std::istringstream l_date_stream{l_date};
-      l_date_stream >> date::parse("%Y-%m-%d", l_ymd);
+      l_date_stream >> date::parse("%Y-%m", l_ym);
+      if (!l_date_stream.eof()) {
+        l_date_stream >> date::parse("%Y-%m-%d", l_ymd);
+        l_date_list.emplace_back(l_ymd);
+      } else {
+        auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
+        for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end;
+             l_day += chrono::days{1}) {
+          l_date_list.emplace_back(l_day);
+        }
+      }
       l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
     } catch (const std::exception& e) {
       l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
@@ -352,14 +365,19 @@ class dingding_attendance_get {
       if (l_u.id_ == l_user_uuid) {
         auto l_user = l_u;
         is_find     = true;
-        if (l_user.attendance_block_.contains(l_ymd)) {
-          nlohmann::json l_json{};
-          l_json =
-              std::as_const(*g_reg()).get<const attendance_block>(l_user.attendance_block_[l_ymd]).attendance_block_;
-          l_response.body() = l_json.dump();
-        } else {
-          l_response.body() = "[]";
+        nlohmann::json l_json{};
+        for (auto&& l_ymd : l_date_list) {
+          if (l_user.attendance_block_.contains(l_ymd)) {
+            for (auto&& i :
+                 std::as_const(*g_reg()).get<const attendance_block>(l_user.attendance_block_[l_ymd]).attendance_block_)
+              l_json.emplace_back(i);
+          }
         }
+        if (l_json.empty()) {
+          l_json = nlohmann::json::array();
+        }
+        l_response.body() = l_json.dump();
+
         break;
       }
     }
