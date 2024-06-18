@@ -62,7 +62,7 @@ Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
 
   for (auto i = 0ll; i < l_com; ++i) {
     const std::float_t l_muliplier = l_s(i);
-    for (auto j = 0ll; j < l_rows; ++j) {
+    for (auto j = 0ll; j < l_u.rows(); ++j) {
       l_u(i, j) *= l_muliplier;
     }
   }
