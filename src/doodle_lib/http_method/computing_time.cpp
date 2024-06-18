@@ -298,7 +298,7 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     );
   }
 
-  void patch_time() {
+  void patch_time() try {
     create_time_clock();
 
     auto l_logger  = session_data_->logger_;
@@ -358,6 +358,12 @@ class computing_time_post_impl : public std::enable_shared_from_this<computing_t
     l_response.keep_alive(l_req.keep_alive());
     l_response.prepare_payload();
     session_data_->seed(std::move(l_response));
+  } catch (...) {
+    session_data_->seed_error(
+        boost::beast::http::status::internal_server_error,
+        boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        boost::current_exception_diagnostic_information()
+    );
   }
 
  public:
