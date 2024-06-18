@@ -133,6 +133,7 @@
             "description": "test分类",
             "options": [
                 "blendshape_fbx",
+                "test_pca",
                 "xlsx_table/main",
                 "xlsx_table/msg_body",
                 "dingding/access_token",

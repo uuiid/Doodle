@@ -118,9 +118,10 @@ void write_fbx(
     l_mesh->InitControlPoints(in_poly.base_mesh_.rows() / 3);
     auto* l_pos_list = l_mesh->GetControlPoints();
     for (std::size_t j = 0; j < in_poly.base_mesh_.rows() / 3; ++j) {
-      l_pos_list[j] = FbxVector4{
-          (std::double_t)in_poly.base_mesh_[j], (std::double_t)in_poly.base_mesh_[++j],
-          (std::double_t)in_poly.base_mesh_[++j]
+      auto l_poly_index = j * 3;
+      l_pos_list[j]     = FbxVector4{
+          (std::double_t)in_poly.base_mesh_[l_poly_index], (std::double_t)in_poly.base_mesh_[l_poly_index + 1],
+          (std::double_t)in_poly.base_mesh_[l_poly_index + 2]
       };
     }
     doodle::default_logger_raw()->info("face size: {} {}", in_face_size.size(), in_face_index.size());
@@ -165,13 +166,13 @@ void write_fbx(
       l_layer_element_binormal->GetDirectArray().Add(FbxVector4{});
     }
 
-    //   l_layer->SetNormals(l_layer_element_normal);
-    //   l_layer->SetTangents(l_layer_element_tangent);
-    //   l_layer->SetBinormals(l_layer_element_binormal);
+    l_layer->SetNormals(l_layer_element_normal);
+    l_layer->SetTangents(l_layer_element_tangent);
+    l_layer->SetBinormals(l_layer_element_binormal);
 
-    //   auto* l_fbx_mat = FbxSurfaceLambert::Create(l_scene, "Fbx Default Material");
-    //   l_mesh_node->SetNodeAttribute(l_mesh);
-    //   l_mesh_node->AddMaterial(l_fbx_mat);
+    auto* l_fbx_mat = FbxSurfaceLambert::Create(l_scene, "Fbx Default Material");
+    l_mesh_node->SetNodeAttribute(l_mesh);
+    l_mesh_node->AddMaterial(l_fbx_mat);
   }
 
   // //  FbxNode* lSkeletonRoot = CreateSkeleton(l_scene, "skeleton");
@@ -292,13 +293,13 @@ Eigen::MatrixXf load_abc_mesh(
         Alembic::AbcGeom::IPolyMesh l_poly{l_mesh};
         auto& l_s   = l_poly.getSchema();
         auto l_time = l_s.getTimeSampling();
-        l_result.resize(l_s.getPositionsProperty().getValue()->size() * 3, l_s.getNumSamples());
+        l_result.resize(l_s.getNumSamples(), l_s.getPositionsProperty().getValue()->size() * 3);
         for (std::int64_t i = 0; i < l_s.getNumSamples(); ++i) {
           auto l_v = l_s.getPositionsProperty().getValue(Alembic::Abc::ISampleSelector{i});
           for (auto i2 = 0; i2 < l_v->size(); ++i2) {
-            l_result(i2 * 3, i)     = (*l_v)[i2].x;
-            l_result(i2 * 3 + 1, i) = (*l_v)[i2].y;
-            l_result(i2 * 3 + 2, i) = (*l_v)[i2].z;
+            l_result(i, i2 * 3)     = (*l_v)[i2].x;
+            l_result(i, i2 * 3 + 1) = (*l_v)[i2].y;
+            l_result(i, i2 * 3 + 2) = (*l_v)[i2].z;
           }
           // l_result.col(i) = Eigen::VectorXf{l_v->get(), l_v->size()};
         }
@@ -327,7 +328,7 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
   std::vector<std::size_t> l_face_size{};
   std::vector<std::int64_t> l_face_index{};
 
-  auto l_mesh             = load_abc_mesh("E:/Doodle/src/test/core/test_bl.abc", l_face_size, l_face_index);
+  auto l_mesh             = load_abc_mesh("E:/Doodle/src/test/core/test_bl_simple.abc", l_face_size, l_face_index);
 
   Eigen::VectorXf Average = l_mesh.colwise().mean();
   // l_
@@ -344,9 +345,9 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
   Eigen::VectorXf l_s = l_svd.singularValues();
   std::size_t l_com   = l_s.size();
 
-  std::cout << "U: \n" << l_u << "\nV: \n" << l_v << "\nS: \n" << l_s << std::endl;
+  // std::cout << "U: \n" << l_u << "\nV: \n" << l_v << "\nS: \n" << l_s << std::endl;
 
-  auto l_rows = l_org.rows();
+  auto l_rows         = l_org.rows();
 
   for (auto i = 0ll; i < l_com; ++i) {
     const std::float_t l_muliplier = l_s(i);
@@ -354,7 +355,7 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
       l_u(j, i) *= l_muliplier;
     }
   }
-  std::cout << "mu U: \n" << l_u << std::endl;
+  // std::cout << "mu U: \n" << l_u << std::endl;
 
   bl_mesh_data l_data;
   l_data.base_mesh_ = Average;
