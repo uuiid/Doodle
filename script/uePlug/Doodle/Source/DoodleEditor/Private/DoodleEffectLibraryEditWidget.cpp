@@ -26,7 +26,7 @@
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "NiagaraEmitter.h"
-#include "NiagaraEditor/Public/NiagaraParameterDefinitions.h"
+#include "NiagaraParameterDefinitions.h"
 #include "NiagaraParameterCollection.h"
 #include "Serialization/ArchiveReplaceObjectAndStructPropertyRef.h"
 #include "PhysicsEngine/PhysicsAsset.h"
@@ -689,14 +689,14 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                                 .AutoWidth()
                                 [
                                     SNew(SCheckBox)
-                                        .IsChecked_Lambda([=]() -> ECheckBoxState
+                                        .IsChecked_Lambda([=, this]() -> ECheckBoxState
                                         {
                                             if (IsAutoReset)
                                                 return ECheckBoxState::Checked;
                                             else
                                                 return ECheckBoxState::Unchecked;
                                         })
-                                        .OnCheckStateChanged_Lambda([=](ECheckBoxState NewAutoCloseState)
+                                        .OnCheckStateChanged_Lambda([=, this](ECheckBoxState NewAutoCloseState)
                                         {
                                             if (NewAutoCloseState == ECheckBoxState::Checked)
                                             {

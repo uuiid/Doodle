@@ -38,7 +38,7 @@
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "NiagaraEmitter.h"
-#include "NiagaraEditor/Public/NiagaraParameterDefinitions.h"
+#include "NiagaraParameterDefinitions.h"
 #include "NiagaraParameterCollection.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 
