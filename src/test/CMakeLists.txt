@@ -25,6 +25,10 @@ target_link_libraries(test_main
         doodle_lib
         Boost::unit_test_framework
         cldapi.lib
+        Boost::log
+        Boost::log_setup
+        Alembic::Alembic
+        Fbx::Fbx-static
 )
 target_compile_definitions(test_main
         PUBLIC

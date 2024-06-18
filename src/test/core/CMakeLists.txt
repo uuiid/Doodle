@@ -16,20 +16,6 @@ target_sources(test_main
         blendshape_fbx.cpp
 )
 
-target_link_libraries(
-        test_main
-        PUBLIC
-        Boost::log
-        Boost::log_setup
-        Alembic::Alembic
-)
-
-# target_compile_definitions(
-# test_main
-# PUBLIC
-# BOOST_LOG_DYN_LINK
-# BOOST_USE_WINAPI_VERSION=0x0A00
-# )
 add_test(NAME test_boost_log COMMAND test_main --log_level=message --color_output=true --run_test=test_boost_log WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_test(NAME test_bvh COMMAND test_main --log_level=message --color_output=true --run_test=bvh_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_test(NAME test_pingyi COMMAND test_main --log_level=message --color_output=true --run_test=test_pingyi WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
