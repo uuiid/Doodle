@@ -12,6 +12,8 @@ $map_item = @(
 @( "C:\sy\WanYuFengShen_9", "", "万域封神" ),
 @( "C:\sy\KuangShenMoZun_9", "", "狂神魔尊" ),
 @( "C:\sy\WGXD", "", "独步万古" ),
+@( "C:\sy\ZMLCLWDSWD", "", "宗门里除了我都是卧底" ),
+@( "C:\sy\WDSXTQL", "", "我的师兄太强了" ),
 @( "C:\sy\WuJinShenYu_8", "", "无尽神域")
 )
 
@@ -118,4 +120,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 }
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 E:\Doodle\script\Cmd_tool\map_waibao_2.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 E:\Doodle\script\Cmd_tool\map_waibao_3.exe -requireAdmin
