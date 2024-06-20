@@ -125,6 +125,7 @@ bool cloth_sim::post(const FSys::path& in_path) {
     boost::asio::post(l_s, [l_s, this]() { this->export_anim_file(); });
   }
   boost::asio::post(l_s, [l_s, this]() { this->write_config(); });
+  boost::asio::post(l_s, [l_s, this]() { app_base::Get().stop_app(); });
 
   return l_ret;
 }

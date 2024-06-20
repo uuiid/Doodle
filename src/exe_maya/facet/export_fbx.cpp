@@ -142,6 +142,8 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
 
+  boost::asio::post(l_s, [](auto&&...) { app_base::Get().stop_app(); });
+
   return l_ret;
 }
 

@@ -16,7 +16,7 @@ namespace doodle {
 namespace detail {
 
 class DOODLE_CORE_API image_to_movie_interface {
- protected:
+ public:
   /**
    * 测试和创建输出路径
    * @param in_handle 传入的句柄

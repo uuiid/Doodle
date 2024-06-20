@@ -6,6 +6,7 @@
 #ifdef fsin
 #undef fsin
 #endif
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/logger/logger.h>
@@ -55,6 +56,8 @@ bool replace_file_facet::post(const FSys::path& in_path) {
   boost::asio::post(l_s, [l_files = l_arg.file_list, l_path = l_arg.file_path, this]() {
     this->replace_file(l_files, l_path);
   });
+  boost::asio::post(l_s, [](auto&&...) { app_base::Get().stop_app(); });
+
   return l_ret;
 }
 

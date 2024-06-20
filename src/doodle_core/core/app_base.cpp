@@ -54,14 +54,7 @@ app_base::app_base(int argc, const char* const argv[])
   l_program_info.handle_ = ::GetModuleHandleW(nullptr);
   default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   default_logger_raw()->flush();
-
-
-  sig_ptr = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
-  sig_ptr->async_wait([this](const boost::system::error_code& ec, int signal_number) {
-    if (ec) return;
-    stop_app(0);
-  });
-
+  add_signal();
 }
 
 namespace {
@@ -122,9 +115,19 @@ void app_base::stop_app(std::int32_t in_exit_code) {
   on_stop();
   g_ctx().emplace<program_info>().is_stop = true;
   facets_.clear();
+  if (sig_ptr) sig_ptr->cancel();
 }
 
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }
+
+void app_base::add_signal() {
+  sig_ptr = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+  sig_ptr->async_wait([this](const boost::system::error_code& ec, int signal_number) {
+    if (ec) return;
+    stop_app(0);
+  });
+}
+
 void app_base::write_current_error_tmp_dir() {
   auto l_tmp = FSys::temp_directory_path() / "doodle" / "log";
   if (!FSys::exists(l_tmp)) FSys::create_directories(l_tmp);

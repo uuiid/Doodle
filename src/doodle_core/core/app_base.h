@@ -63,6 +63,8 @@ class DOODLE_CORE_API app_base {
    */
   virtual std::int32_t run();
 
+  void add_signal();
+
   bool is_main_thread() const;
 
   virtual std::int32_t poll_one();
