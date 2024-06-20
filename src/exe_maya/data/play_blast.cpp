@@ -159,7 +159,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     //    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTargetFromScreen(k_play_blast_tex)};
 
     DOODLE_LOG_INFO("set output camera: {}", l_cam_path);
-    for (MTime i{in_start}; i < in_end; ++i) {
+    for (MTime i{in_start}; i <= in_end; ++i) {
       MAnimControl::setCurrentTime(i);
 
       renderer->render(d_str{fmt::format("batch:{}", l_cam_path)}, &l_rt, 1);
