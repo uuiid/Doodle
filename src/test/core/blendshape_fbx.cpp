@@ -39,12 +39,16 @@ using namespace doodle;
 struct bl_mesh_data {
   // 混合变形中的基本形状
   Eigen::VectorXf base_mesh_{};
-  // 混合变形中的混变形状
+
+  /**
+   * 混合变形中的混变形状
+   *
+   * bs_mesh_[点 * 3, 混合形状数]
+   *
+   */
   Eigen::MatrixXf bs_mesh_{};
-  // 混合变形中的权重
+  // 混合变形中的权重曲线
   Eigen::MatrixXf weight_{};
-  // 时间曲线
-  Eigen::MatrixXf time_curve_{};
 };
 
 void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
@@ -254,20 +258,49 @@ void write_fbx(
   //   l_scene->AddPose(l_post);
   // }
 
-  // {  // 写一个混变
-  //   auto* l_blend         = FbxBlendShape::Create(l_scene, "blend");
-  //   auto* l_blend_channel = FbxBlendShapeChannel::Create(l_scene, "blend_channel");
+  std::vector<fbxsdk::FbxBlendShapeChannel*> l_blend_channels{};
+  {  // 写混变
+    auto* l_blend = fbxsdk::FbxBlendShape::Create(l_scene, "blend_shape");
+    for (auto col = 0; col < in_poly.bs_mesh_.cols(); ++col) {
+      auto* l_shape = fbxsdk::FbxShape::Create(l_scene, fmt::format("shape_{}", col).c_str());
+      l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
+      auto* l_blend_channel =
+          fbxsdk::FbxBlendShapeChannel::Create(l_scene, fmt::format("blend_shape_channel_{}", col).c_str());
 
-  //   auto* l_shape         = FbxShape::Create(l_scene, "shape");
-  //   l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
-  //   auto* l_shape_pos = l_shape->GetControlPoints();
-  //   for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
-  //     l_shape_pos[i] = l_mesh->GetControlPointAt(i);
-  //   }
-  //   l_blend_channel->AddTargetShape(l_shape);
-  //   l_blend->AddBlendShapeChannel(l_blend_channel);
-  //   l_mesh->AddDeformer(l_blend);
-  // }
+      auto* l_shape_pos = l_shape->GetControlPoints();
+      // 顶点
+      std::copy(l_mesh->GetControlPoints(), l_mesh->GetControlPoints() + l_mesh->GetControlPointsCount(), l_shape_pos);
+      for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
+        auto l_index = i * 3;
+        l_shape_pos[i] += fbxsdk::FbxVector4{
+            (std::double_t)in_poly.bs_mesh_(l_index, col), (std::double_t)in_poly.bs_mesh_(l_index + 1, col),
+            (std::double_t)in_poly.bs_mesh_(l_index + 2, col)
+        };
+      }
+      l_blend_channel->AddTargetShape(l_shape);
+      l_blend_channels.emplace_back(l_blend_channel);
+      l_blend->AddBlendShapeChannel(l_blend_channel);
+    }
+    l_mesh->AddDeformer(l_blend);
+  }
+
+  {  // 写出动画曲线
+    fbxsdk::FbxTime l_fbx_time{};
+    Eigen::MatrixXf l_curve = in_poly.weight_.transpose();
+    for (auto i = 0; i < l_curve.rows(); ++i) {
+      auto l_anim_curve = l_blend_channels[i]->DeformPercent.GetCurve(anim_layer, true);
+      std::cout << "curve " << i << "\n";
+      for (auto j = 0; j < l_curve.cols(); ++j) {
+        l_anim_curve->KeyModifyBegin();
+        l_fbx_time.SetFrame(j, fbxsdk::FbxTime::ePAL);
+        auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+        l_anim_curve->KeySet(l_key_index, l_fbx_time, l_curve(i, j) * 100);
+        std::cout << l_curve(i, j) << " ";
+        l_anim_curve->KeyModifyEnd();
+      }
+      std::cout << std::endl;
+    }
+  }
 
   return write_fbx_impl(l_scene, in_fbx_path);
 }
@@ -293,17 +326,17 @@ Eigen::MatrixXf load_abc_mesh(
         Alembic::AbcGeom::IPolyMesh l_poly{l_mesh};
         auto& l_s   = l_poly.getSchema();
         auto l_time = l_s.getTimeSampling();
-        l_result.resize(l_s.getNumSamples(), l_s.getPositionsProperty().getValue()->size() * 3);
+        l_result.resize(l_s.getPositionsProperty().getValue()->size() * 3, l_s.getNumSamples());
         for (std::int64_t i = 0; i < l_s.getNumSamples(); ++i) {
           auto l_v = l_s.getPositionsProperty().getValue(Alembic::Abc::ISampleSelector{i});
           for (auto i2 = 0; i2 < l_v->size(); ++i2) {
-            l_result(i, i2 * 3)     = (*l_v)[i2].x;
-            l_result(i, i2 * 3 + 1) = (*l_v)[i2].y;
-            l_result(i, i2 * 3 + 2) = (*l_v)[i2].z;
+            l_result(i2 * 3 + 0, i) = (*l_v)[i2].x;
+            l_result(i2 * 3 + 1, i) = (*l_v)[i2].y;
+            l_result(i2 * 3 + 2, i) = (*l_v)[i2].z;
           }
           // l_result.col(i) = Eigen::VectorXf{l_v->get(), l_v->size()};
         }
-        doodle::default_logger_raw()->info("name {} size {}", l_child.getName(), l_result.rows());
+        doodle::default_logger_raw()->info("name {} size {}", l_child.getName(), l_result.rows() / 3);
 
         auto l_face_index = l_s.getValue().getFaceIndices();
         in_face_index.resize(l_face_index->size());
@@ -330,35 +363,60 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
 
   auto l_mesh             = load_abc_mesh("E:/Doodle/src/test/core/test_bl_simple.abc", l_face_size, l_face_index);
 
-  Eigen::VectorXf Average = l_mesh.colwise().mean();
+  Eigen::VectorXf Average = l_mesh.rowwise().mean();
+  default_logger_raw()->info("mesh size {} {}", l_mesh.rows(), l_mesh.cols());
   // l_
 
   std::cout << "Average: \n" << Average << std::endl;
-  // std::cout << " Eigen::VectorXf::Ones(3): \n" << Eigen::VectorXf::Ones(in_mat.rows()) << std::endl;
+  std::cout << "mesh: \n" << l_mesh << std::endl;
+  // 计算标准差
+  Eigen::MatrixXf l_org  = l_mesh;
+  Eigen::MatrixXf l_org2 = l_mesh;
 
-  Eigen::MatrixXf l_org = l_mesh - Eigen::VectorXf::Ones(l_mesh.rows()) * Average.transpose();
+  l_org.array().colwise() -= Average.array();
   std::cout << "l_org: \n" << l_org << std::endl;
+
+  // for (auto i = 0; i < l_org2.rows(); ++i) {
+  //   l_org2.row(i).array() -= Average(i);
+  // }
+  // if (l_org.isApprox(l_org2)) {
+  //   std::cout << "l_org == l_org2" << std::endl;
+  // } else {
+  //   std::cout << "l_org != l_org2" << std::endl;
+  //   std::cout << "l_org2: \n" << l_org2 << std::endl;
+  // }
 
   Eigen::JacobiSVD<Eigen::MatrixXf> l_svd{l_org, Eigen::ComputeThinU | Eigen::ComputeThinV};
   Eigen::MatrixXf l_u = l_svd.matrixU();
   Eigen::MatrixXf l_v = l_svd.matrixV();
   Eigen::VectorXf l_s = l_svd.singularValues();
-  std::size_t l_com   = l_s.size();
 
-  // std::cout << "U: \n" << l_u << "\nV: \n" << l_v << "\nS: \n" << l_s << std::endl;
+  std::cout << "U: \n" << l_u << "\nV: \n" << l_v << "\nS: \n" << l_s << std::endl;
 
-  auto l_rows         = l_org.rows();
+  Eigen::MatrixXf l_u2 = l_u;
 
-  for (auto i = 0ll; i < l_com; ++i) {
-    const std::float_t l_muliplier = l_s(i);
-    for (auto j = 0ll; j < l_u.rows(); ++j) {
-      l_u(j, i) *= l_muliplier;
-    }
-  }
-  // std::cout << "mu U: \n" << l_u << std::endl;
+  // 每行特征值乘以特征向量
+  l_u.array().rowwise() *= l_s.transpose().array();
+  // for (auto i = 0ll; i < l_s.size(); ++i) {
+  //   const std::float_t l_muliplier = l_s(i);
+  //   l_u2.col(i) *= l_muliplier;
+  //   // for (auto j = 0ll; j < l_u.rows(); ++j) {
+  //   //   l_u2(j, i) *= l_muliplier;
+  //   // }
+  // }
+  // if (l_u2.isApprox(l_u)) {
+  //   std::cout << "l_u2 == l_org" << std::endl;
+  // } else {
+  //   std::cout << "l_u2 != l_org" << std::endl;
+  // }
+  std::cout << "mu u: \n" << l_u << std::endl;
+
+  // std::cout << "l_v.transpose(): \n" << l_v.transpose() << std::endl;
 
   bl_mesh_data l_data;
   l_data.base_mesh_ = Average;
+  l_data.bs_mesh_   = l_u;
+  l_data.weight_    = l_v;
 
   write_fbx("E:/Doodle/src/test/core/test_bl_end.fbx", l_data, l_face_size, l_face_index);
 }
