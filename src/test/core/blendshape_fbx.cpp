@@ -293,11 +293,9 @@ void write_fbx(
         l_anim_curve->KeySet(l_key_index, l_fbx_time, l_curve(i, j) * 100);
         // std::cout << l_curve(i, j) << " ";
       }
+      l_anim_curve->KeyModifyEnd();
     }
-    l_anim_curve->KeyModifyEnd();
-  }
-  // std::cout << std::endl;
-  {
+
 #ifdef USE_AVX
     // 写出偏移曲线
     auto l_c_x = l_mesh_node->LclTranslation.GetCurve(anim_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
