@@ -115,7 +115,7 @@
                 "--run_test=${input:test_}"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
