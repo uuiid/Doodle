@@ -52,6 +52,7 @@ struct bl_mesh_data {
 
   // 优化后的形状数量
   std::size_t num_blend_shape_{};
+  std::vector<Eigen::Vector3d> mesh_off_{};
 };
 
 void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
@@ -108,7 +109,7 @@ void write_fbx(
   anim_stack->AddMember(anim_layer);
   l_scene->SetCurrentAnimationStack(anim_stack);
 
-  auto* l_mesh_node = FbxNode::Create(l_scene, "node");
+  auto* l_mesh_node = fbxsdk::FbxNode::Create(l_scene, "node");
   // 写出网格
   auto* l_mesh      = FbxMesh::Create(l_scene, "mesh");
 
@@ -184,85 +185,6 @@ void write_fbx(
     l_mesh_node->AddMaterial(l_fbx_mat);
   }
 
-  // //  FbxNode* lSkeletonRoot = CreateSkeleton(l_scene, "skeleton");
-  // //  l_scene->GetRootNode()->AddChild(lSkeletonRoot);
-  // //  LinkPatchToSkeleton(l_scene, l_mesh_node, lSkeletonRoot);
-  // //  StoreBindPose(l_scene, l_mesh_node);
-  // //  return write_fbx_impl(l_scene, in_fbx_path);
-
-  // const auto l_for_size = 2;
-  // std::vector<FbxNode*> l_bones{};
-  // //  auto l_name = "skeleton_";
-  // //
-  // //  FbxString lRootName(l_name);
-  // //  lRootName += "Root";
-  // //  FbxSkeleton* lSkeletonRootAttribute = FbxSkeleton::Create(l_scene, l_name);
-  // //  lSkeletonRootAttribute->SetSkeletonType(FbxSkeleton::eLimbNode);
-  // //  FbxNode* lSkeletonRoot = FbxNode::Create(l_scene, lRootName.Buffer());
-  // //  lSkeletonRoot->SetNodeAttribute(lSkeletonRootAttribute);
-  // //  lSkeletonRoot->LclTranslation.Set(FbxVector4(0.0, -40.0, 0.0));
-  // //  l_scene->GetRootNode()->AddChild(lSkeletonRoot);
-
-  // //
-  // //  FbxString lLimbNodeName1(l_name);
-  // //  lLimbNodeName1 += "LimbNode1";
-  // //  FbxSkeleton* lSkeletonLimbNodeAttribute1 = FbxSkeleton::Create(l_scene,lLimbNodeName1);
-  // //  lSkeletonLimbNodeAttribute1->SetSkeletonType(FbxSkeleton::eLimbNode);
-  // //  lSkeletonLimbNodeAttribute1->Size.Set(1.0);
-  // //  FbxNode* lSkeletonLimbNode1 = FbxNode::Create(l_scene,lLimbNodeName1.Buffer());
-  // //  lSkeletonLimbNode1->SetNodeAttribute(lSkeletonLimbNodeAttribute1);
-  // //  lSkeletonLimbNode1->LclTranslation.Set(FbxVector4(0.0, 40.0, 0.0));
-  // //  lSkeletonRoot->AddChild(lSkeletonLimbNode1);
-
-  // for (auto i = 0; i < l_for_size; ++i) {  // 再写 骨骼
-
-  //   // #ifdef DOODLE_1001
-  //   auto* l_sk_attr = FbxSkeleton::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
-  //   l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
-  //   //    l_sk_attr->Size.Set(1.0);
-
-  //   auto* l_bone_node = FbxNode::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
-  //   l_bone_node->SetNodeAttribute(l_sk_attr);
-  //   l_bone_node->SetRotationOrder(FbxNode::eSourcePivot, eEulerXYZ);
-  //   auto l_box = in_poly.getSchema().getSelfBoundsProperty().getValue().center();
-  //   l_bone_node->LclTranslation.Set(FbxDouble3{l_box.x, l_box.y, l_box.z});
-  //   l_bones.emplace_back(l_bone_node);
-  //   l_scene->GetRootNode()->AddChild(l_bone_node);
-  //   // #endif
-  // }
-  // //  return write_fbx_impl(l_scene, in_fbx_path);
-
-  // {  // 写一个皮肤变形器
-  //   auto* l_sk = FbxSkin::Create(l_scene, "");
-  //   //    dynamic_cast<FbxGeometry*>(l_mesh_node->GetNodeAttribute())->AddDeformer(l_sk);
-  //   //    FbxGeometry* lPatchAttribute = (FbxGeometry*)l_mesh_node->GetNodeAttribute();
-  //   //    lPatchAttribute->AddDeformer(l_sk);
-
-  //   for (int l = 0; l < l_for_size; ++l) {
-  //     auto* l_cluster = FbxCluster::Create(l_scene, "");
-  //     l_cluster->SetLink(l_bones[l]);
-  //     l_cluster->SetLinkMode(FbxCluster::eTotalOne);
-  //     l_cluster->AddControlPointIndex(l, 1.0);
-
-  //     l_cluster->SetTransformMatrix(l_mesh_node->EvaluateGlobalTransform());
-  //     l_cluster->SetTransformLinkMatrix(l_bones[l]->EvaluateGlobalTransform());
-  //     if (!l_sk->AddCluster(l_cluster)) doodle::default_logger_raw()->info("add cluster error: {}", l);
-  //   }
-  //   l_mesh->AddDeformer(l_sk);
-  //   doodle::default_logger_raw()->info("sk cluster size {}", l_sk->GetClusterCount());
-  //   // 绑定post
-  //   auto* l_post = FbxPose::Create(l_scene, "bind_pose");
-  //   l_post->SetIsBindPose(true);
-  //   for (auto* l_bone : l_bones) {
-  //     if (l_post->Add(l_bone, l_bone->EvaluateGlobalTransform()) == -1) {
-  //       doodle::default_logger_raw()->info("add bone error: {}", l_bone->GetName());
-  //     }
-  //   }
-  //   l_post->Add(l_mesh_node, l_mesh_node->EvaluateGlobalTransform());
-
-  //   l_scene->AddPose(l_post);
-  // }
-
   std::vector<fbxsdk::FbxBlendShapeChannel*> l_blend_channels{};
   {  // 写混变
     auto* l_blend = fbxsdk::FbxBlendShape::Create(l_scene, "blend_shape");
@@ -293,10 +215,13 @@ void write_fbx(
 
     fbxsdk::FbxTime l_fbx_time{};
     l_fbx_time.SetFrame(1000, fbxsdk::FbxTime::ePAL);
-    anim_stack->LocalStart  = l_fbx_time;
+    anim_stack->LocalStart = l_fbx_time;
     l_fbx_time.SetFrame(1000 + in_poly.weight_.cols(), fbxsdk::FbxTime::ePAL);
     anim_stack->LocalStop   = l_fbx_time;
-    Eigen::MatrixXd l_curve = in_poly.weight_.transpose();
+
+    // Eigen::MatrixXd l_curve = in_poly.weight_.transpose();
+    Eigen::MatrixXd l_curve = in_poly.weight_;
+
     for (auto i = 0; i < in_poly.num_blend_shape_; ++i) {
       auto l_anim_curve = l_blend_channels[i]->DeformPercent.GetCurve(anim_layer, true);
       // std::cout << "curve " << i << "\n";
@@ -309,6 +234,29 @@ void write_fbx(
         l_anim_curve->KeyModifyEnd();
       }
       // std::cout << std::endl;
+    }
+
+    // 写出偏移曲线
+    auto l_c_x = l_mesh_node->LclTranslation.GetCurve(anim_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
+    auto l_c_y = l_mesh_node->LclTranslation.GetCurve(anim_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+    auto l_c_z = l_mesh_node->LclTranslation.GetCurve(anim_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+    for (auto j = 0; j < l_curve.cols(); ++j) {
+      l_fbx_time.SetFrame(j + 1000, fbxsdk::FbxTime::ePAL);
+
+      l_c_x->KeyModifyBegin();
+      auto l_key_index = l_c_x->KeyAdd(l_fbx_time);
+      l_c_x->KeySet(l_key_index, l_fbx_time, in_poly.mesh_off_[j].x());
+      l_c_x->KeyModifyEnd();
+
+      l_c_y->KeyModifyBegin();
+      l_key_index = l_c_y->KeyAdd(l_fbx_time);
+      l_c_y->KeySet(l_key_index, l_fbx_time, in_poly.mesh_off_[j].y());
+      l_c_y->KeyModifyEnd();
+
+      l_c_z->KeyModifyBegin();
+      l_key_index = l_c_z->KeyAdd(l_fbx_time);
+      l_c_z->KeySet(l_key_index, l_fbx_time, in_poly.mesh_off_[j].z());
+      l_c_z->KeyModifyEnd();
     }
   }
 
@@ -370,6 +318,7 @@ Eigen::MatrixXd load_abc_mesh(
 BOOST_AUTO_TEST_CASE(blendshape_fbx) {
   std::vector<std::size_t> l_face_size{};
   std::vector<std::int64_t> l_face_index{};
+  bl_mesh_data l_data{};
 
   auto l_mesh =
       load_abc_mesh("E:/Doodle/src/test/core/DBXY_EP360_SC001_AN_TianMeng_rig_HL_.abc", l_face_size, l_face_index);
@@ -377,14 +326,35 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
   Eigen::VectorXd Average = l_mesh.rowwise().mean();
   default_logger_raw()->info("mesh size {} {}", l_mesh.rows(), l_mesh.cols());
   // l_
+  Eigen::AlignedBox3d l_average_box{};
+  // std::cout << "Average: \n" << Average.block<3, 1>(0, 0) << std::endl;
+  for (auto i = 0; i < Average.size() / 3; ++i) {
+    l_average_box.extend(Eigen::Vector3d{Average.block<3, 1>(i * 3, 0)});
+  }
+  // std::cout << "average box: \n" << l_average_box.center() << std::endl;
 
   // std::cout << "Average: \n" << Average << std::endl;
   // std::cout << "mesh: \n" << l_mesh << std::endl;
   // 计算标准差
-  Eigen::MatrixXd l_org  = l_mesh;
-  Eigen::MatrixXd l_org2 = l_mesh;
-
+  Eigen::MatrixXd l_org         = l_mesh;
+  Eigen::MatrixXd l_org2        = l_mesh;
+  Eigen::VectorXd l_average_tmp = Average;
   l_org.array().colwise() -= Average.array();
+  // std::cout << "l_org: \n" << l_org << std::endl;
+
+#ifdef USE_AVX
+  for (auto i = 0; i < l_org.cols(); ++i) {
+    Eigen::AlignedBox3d l_box{};
+    for (auto j = 0; j < l_org.rows() / 3; ++j) {
+      l_box.extend(Eigen::Vector3d{l_mesh.block<3, 1>(j * 3, i)});
+    }
+    Eigen::Vector3d l_off = l_box.center() - l_average_box.center();
+    l_data.mesh_off_.emplace_back(l_off);
+    for (auto j = 0; j < l_org.rows() / 3; ++j) {
+      l_org.block<3, 1>(j * 3, i) -= l_off;
+    }
+  }
+#endif
   // std::cout << "l_org: \n" << l_org << std::endl;
 
   // for (auto i = 0; i < l_org2.rows(); ++i) {
@@ -427,10 +397,9 @@ BOOST_AUTO_TEST_CASE(blendshape_fbx) {
   Eigen::VectorXd l_diff = l_u.cwiseAbs().colwise().sum();
   // std::cout << "diff: \n" << l_diff << std::endl;
 
-  bl_mesh_data l_data;
-  l_data.base_mesh_ = Average;
-  l_data.bs_mesh_   = l_u;
-  l_data.weight_    = l_v;
+  l_data.base_mesh_      = Average;
+  l_data.bs_mesh_        = l_u;
+  l_data.weight_         = l_v;
   for (auto i = 0; i < l_diff.size(); ++i) {
     if (l_diff(i) < 0.001) {
       l_data.num_blend_shape_ = i;
