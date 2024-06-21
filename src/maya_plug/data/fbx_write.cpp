@@ -505,8 +505,8 @@ void fbx_node_mesh::build_mesh() {
     auto* l_mat_layer = mesh->CreateElementMaterial();
     auto l_mats       = get_shading_engines(l_mesh);
     if (l_mats.size() == 1) {
-      l_mat_layer->SetMappingMode(FbxLayerElement::eAllSame);
-      l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+      l_mat_layer->SetMappingMode(fbxsdk::FbxLayerElement::eAllSame);
+      l_mat_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eIndexToDirect);
       l_mat_layer->GetIndexArray().Add(0);
       FbxSurfaceLambert* l_mat_surface{};
       const auto l_name = get_node_name(details::shading_engine_to_mat(l_mats.front()));
@@ -518,8 +518,8 @@ void fbx_node_mesh::build_mesh() {
       }
       node->AddMaterial(l_mat_surface);
     } else {
-      l_mat_layer->SetMappingMode(FbxLayerElement::eByPolygon);
-      l_mat_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+      l_mat_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByPolygon);
+      l_mat_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eIndexToDirect);
       MFnSet l_fn_set{};
       l_mat_ids.resize(l_fn_mesh.numPolygons());
       MStatus l_status{};
@@ -579,8 +579,8 @@ void fbx_node_mesh::build_mesh() {
     for (auto i = 0; i < l_uv_set_names.length(); ++i) {
       log_info(fmt::format("uv set name: {}", l_uv_set_names[i]));
       auto* l_layer = mesh->CreateElementUV(l_uv_set_names[i].asChar());
-      l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
-      l_layer->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+      l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByPolygonVertex);
+      l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eIndexToDirect);
       // for maya uv
       MFloatArray l_u{};
       MFloatArray l_v{};
@@ -604,8 +604,8 @@ void fbx_node_mesh::build_mesh() {
   // normals
   {
     auto l_layer = mesh->CreateElementNormal();
-    l_layer->SetMappingMode(FbxLayerElement::eByPolygonVertex);
-    l_layer->SetReferenceMode(FbxLayerElement::eDirect);
+    l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByPolygonVertex);
+    l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eDirect);
 
     for (auto i = 0; i < l_fn_mesh.numPolygons(); ++i) {
       MIntArray l_vert_list{};
@@ -620,8 +620,8 @@ void fbx_node_mesh::build_mesh() {
   // smoothing
   {
     auto l_layer = mesh->CreateElementSmoothing();
-    l_layer->SetMappingMode(FbxLayerElement::eByEdge);
-    l_layer->SetReferenceMode(FbxLayerElement::eDirect);
+    l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByEdge);
+    l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eDirect);
 
     for (auto i = 0; i < l_fn_mesh.numEdges(); ++i) {
       l_layer->GetDirectArray().Add(l_fn_mesh.isEdgeSmooth(i));

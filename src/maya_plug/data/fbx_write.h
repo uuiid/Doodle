@@ -147,9 +147,9 @@ class fbx_write {
   void not_export_anim(bool in_value = true);
   void ascii_fbx(bool in_value = true);
   void set_path(const FSys::path& in_path);
-  void set_logger(const logger_ptr&  in_logger);
+  void set_logger(const logger_ptr& in_logger);
 
-    void write_end();
+  void write_end();
   // 写出fbx
   void write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end);
   inline void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
@@ -161,6 +161,14 @@ class fbx_write {
   inline void add_mesh(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
     add_mesh(select_to_vector(in_vector), in_begin, in_end);
   }
+
+  // 只寻找mesh节点
+  fbx_write_ns::fbx_node* find_node(const MDagPath& in_path) const;
+
+  std::pair<MTime, MTime> get_anim_time() const;
+  fbxsdk::FbxLayer* get_main_layer() const;
+
+  fbxsdk::FbxSurfaceLambert* find_material(const std::string& in_name) const;
 
   // 写出相机
   // void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end);

@@ -9,7 +9,7 @@
 #include <fbxsdk.h>
 #include <maya/MFnMesh.h>
 namespace doodle::maya_plug {
-
+class fbx_write;
 /**
  * @brief 将一系列网格变形动画转换为混合变形节点
  */
@@ -18,11 +18,11 @@ class sequence_to_blend_shape {
   class impl;
   std::unique_ptr<impl> ptr;
 
-  void init(const MObject& in_mesh, std::int64_t in_samples);
+  void init(const MDagPath& in_mesh, std::int64_t in_samples);
 
  public:
   sequence_to_blend_shape();
-  explicit sequence_to_blend_shape(const MObject& in_mesh, std::int64_t in_samples) : sequence_to_blend_shape() {
+  explicit sequence_to_blend_shape(const MDagPath& in_mesh, std::int64_t in_samples) : sequence_to_blend_shape() {
     init(in_mesh, in_samples);
   }
 
@@ -37,7 +37,7 @@ class sequence_to_blend_shape {
   void compute();
 
   // 写出为fbx
-  void write_fbx(fbxsdk::FbxNode* in_node) const;
+  void write_fbx(const fbx_write& in_node) const;
 };
 
 }  // namespace doodle::maya_plug
