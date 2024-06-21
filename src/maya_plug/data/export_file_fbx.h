@@ -5,7 +5,6 @@
 
 #include <doodle_core/core/file_sys.h>
 
-#include <maya_plug/data/sequence_to_blend_shape.h>
 #include <maya_plug/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
@@ -27,7 +26,7 @@ class export_file_fbx {
   );
 
   std::string m_namespace_;
-  std::vector<sequence_to_blend_shape> blend_list{};
+  std::vector<std::shared_ptr<sequence_to_blend_shape>> blend_list{};
 
  public:
   export_file_fbx() = default;

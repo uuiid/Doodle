@@ -1102,68 +1102,18 @@ fbx_write::fbx_write() {
   scene_->SetCurrentAnimationStack(anim_stack);
 }
 
-void fbx_write::chick_export(
-    const MSelectionList& in_vector, const doodle::logger_ptr& in_logger, const MTime& in_begin, const MTime& in_end
-) {
-  logger_          = in_logger;
+void fbx_write::write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end) {
+  if (!logger_)
+    if (!g_ctx().contains<fbx_logger>())
+      logger_ =
+          g_ctx()
+              .emplace<fbx_logger>(g_logger_ctrl().make_log_file(path_.parent_path() / "fbx_log.txt", "fbx_logger"))
+              .logger_;
+    else
+      logger_ = g_ctx().get<fbx_logger>().logger_;
 
-  auto* anim_stack = scene_->GetCurrentAnimationStack();
-  FbxTime l_fbx_begin{};
-  l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
-  anim_stack->LocalStart = l_fbx_begin;
-  FbxTime l_fbx_end{};
-  l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
-  anim_stack->LocalStop = l_fbx_end;
-  MAnimControl::setCurrentTime(in_begin);
+  log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
 
-  std::vector<MDagPath> l_objs{};
-  MDagPath l_path{};
-  for (MItSelectionList l_it{in_vector}; !l_it.isDone(); l_it.next()) {
-    maya_chick(l_it.getDagPath(l_path));
-    l_objs.emplace_back(l_path);
-  }
-
-  init();
-  build_tree(l_objs);
-
-  try {
-    build_data();
-  } catch (const maya_error& in_error) {
-    auto l_str = boost::diagnostic_information(in_error);
-    MGlobal::displayError(conv::to_ms(l_str));
-    log_error(logger_, fmt::format("测试导出文件出现严重错误 {}", l_str));
-    return;
-  } catch (const doodle_error& in_error) {
-    auto l_str = boost::diagnostic_information(in_error);
-    MGlobal::displayError(conv::to_ms(l_str));
-    log_error(logger_, fmt::format("测试导出文件出现严重错误 {}", l_str));
-    return;
-  }
-  log_info(logger_, "开始导出动画");
-
-  if (export_anim_) {
-    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-      MAnimControl::setCurrentTime(l_time);
-      build_animation(l_time);
-    }
-  }
-  logger_->flush();
-}
-
-void fbx_write::write(
-    const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
-) {
-  if (!g_ctx().contains<fbx_logger>())
-    logger_ =
-        g_ctx()
-            .emplace<fbx_logger>(g_logger_ctrl().make_log_file(in_path.parent_path() / "fbx_log.txt", "fbx_logger"))
-            .logger_;
-  else
-    logger_ = g_ctx().get<fbx_logger>().logger_;
-
-  log_info(logger_, fmt::format("开始导出文件 {}", in_path.generic_string()));
-
-  path_            = in_path;
   auto* anim_stack = scene_->GetCurrentAnimationStack();
   FbxTime l_fbx_begin{};
   l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
@@ -1198,86 +1148,57 @@ void fbx_write::write(
       build_animation(l_time);
     }
   }
-  write_end();
   logger_->flush();
 }
 
-void fbx_write::write(
-    const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
-) {
+std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vector) {
   std::vector<MDagPath> l_objs{};
   MDagPath l_path{};
   for (MItSelectionList l_it{in_vector}; !l_it.isDone(); l_it.next()) {
     maya_chick(l_it.getDagPath(l_path));
     l_objs.emplace_back(l_path);
   }
-  write(l_objs, in_begin, in_end, in_path);
+  return l_objs;
 }
 
-void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path) {
-  path_            = in_path;
-  auto* anim_stack = scene_->GetCurrentAnimationStack();
-  FbxTime l_fbx_begin{};
-  l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
-  anim_stack->LocalStart = l_fbx_begin;
-  FbxTime l_fbx_end{};
-  l_fbx_end.SetFrame(in_end.value() + 1, fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
-  anim_stack->LocalStop = l_fbx_end;
+// void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end) {
+//   path_            = in_path;
+//   auto* anim_stack = scene_->GetCurrentAnimationStack();
+//   FbxTime l_fbx_begin{};
+//   l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
+//   anim_stack->LocalStart = l_fbx_begin;
+//   FbxTime l_fbx_end{};
+//   l_fbx_end.SetFrame(in_end.value() + 1, fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
+//   anim_stack->LocalStop = l_fbx_end;
 
-  MAnimControl::setCurrentTime(find_begin_anim_time());
+//   MAnimControl::setCurrentTime(find_begin_anim_time());
 
-  init();
-  //  build_tree(in_vector);
-  return;
-  try {
-    build_data();
-  } catch (const maya_error& in_error) {
-    auto l_str = boost::diagnostic_information(in_error);
-    MGlobal::displayError(conv::to_ms(l_str));
-    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
-    return;
-  } catch (const doodle_error& in_error) {
-    auto l_str = boost::diagnostic_information(in_error);
-    MGlobal::displayError(conv::to_ms(l_str));
-    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
-    return;
-  }
+//   init();
+//   //  build_tree(in_vector);
+//   return;
+//   try {
+//     build_data();
+//   } catch (const maya_error& in_error) {
+//     auto l_str = boost::diagnostic_information(in_error);
+//     MGlobal::displayError(conv::to_ms(l_str));
+//     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
+//     return;
+//   } catch (const doodle_error& in_error) {
+//     auto l_str = boost::diagnostic_information(in_error);
+//     MGlobal::displayError(conv::to_ms(l_str));
+//     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
+//     return;
+//   }
 
-  if (export_anim_) {
-    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-      MAnimControl::setCurrentTime(l_time);
-      build_animation(l_time);
-    }
-  }
-  write_end();
-}
+//   if (export_anim_) {
+//     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+//       MAnimControl::setCurrentTime(l_time);
+//       build_animation(l_time);
+//     }
+//   }
+//   logger_->flush();
+// }
 
-void fbx_write::write_end() {
-  std::shared_ptr<FbxExporter> l_exporter{
-      FbxExporter::Create(scene_->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }
-  };
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_MATERIAL, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_TEXTURE, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_EMBEDDED, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_SHAPE, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_GOBO, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_ANIMATION, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
-  manager_->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, true);
-
-  if (!l_exporter->Initialize(
-          path_.generic_string().c_str(),
-          ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
-                     : manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),
-          scene_->GetFbxManager()->GetIOSettings()
-      )) {
-    MGlobal::displayError(
-        conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
-    );
-    return;
-  }
-  l_exporter->Export(scene_);
-}
 void fbx_write::init() { tree_ = {std::make_shared<fbx_node_transform_t>(MDagPath{}, scene_->GetRootNode())}; }
 void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
   for (auto l_path : in_vector) {
@@ -1475,6 +1396,38 @@ MTime fbx_write::find_begin_anim_time() {
 
 void fbx_write::not_export_anim(bool in_value) { export_anim_ = !in_value; }
 void fbx_write::ascii_fbx(bool in_value) { ascii_fbx_ = in_value; }
+void fbx_write::set_path(const FSys::path& in_path) { path_ = in_path; }
+void fbx_write::set_logger(const logger_ptr& in_logger) { logger_ = in_logger; }
+void fbx_write::write_end() {
+  if (!manager_) return;
+  if (!scene_) return;
+  if (path_.empty()) return;
 
-fbx_write::~fbx_write() = default;
+  std::shared_ptr<FbxExporter> l_exporter{
+      FbxExporter::Create(scene_->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }
+  };
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_MATERIAL, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_TEXTURE, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_EMBEDDED, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_SHAPE, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_GOBO, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_ANIMATION, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
+  manager_->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, true);
+
+  if (!l_exporter->Initialize(
+          path_.generic_string().c_str(),
+          ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
+                     : manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),
+          scene_->GetFbxManager()->GetIOSettings()
+      )) {
+    MGlobal::displayError(
+        conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
+    );
+    return;
+  }
+  l_exporter->Export(scene_);
+}
+
+fbx_write::~fbx_write() { write_end(); }
 }  // namespace doodle::maya_plug

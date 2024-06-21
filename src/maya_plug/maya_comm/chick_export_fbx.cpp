@@ -41,8 +41,9 @@ MStatus chick_export_fbx::doIt(const MArgList &in_arg) {
   auto l_end_time   = MAnimControl::maxTime();
 
   fbx_write l_fbx_write{};
+  l_fbx_write.set_logger(spdlog::default_logger());
 
-  l_fbx_write.chick_export(l_list, spdlog::default_logger(), l_begin_time, l_end_time);
+  l_fbx_write.write(l_list, l_begin_time, l_end_time);
 
   return MS::kSuccess;
 }

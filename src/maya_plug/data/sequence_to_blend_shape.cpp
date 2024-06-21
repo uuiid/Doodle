@@ -105,7 +105,7 @@ void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
 
 void sequence_to_blend_shape::compute() {
   ptr->mesh_off_.resize(ptr->anim_mesh_.cols());
-  
+
   for (auto i = 0; i < ptr->anim_mesh_.cols(); ++i) {
     Eigen::AlignedBox3d l_box{};
     for (auto j = 0; j < ptr->anim_mesh_.rows() / 3; ++j) {
@@ -143,7 +143,13 @@ void sequence_to_blend_shape::compute() {
   // 完成计算
 }
 
-void sequence_to_blend_shape::write_fbx(fbxsdk::FbxNode* in_node) const {}
+void sequence_to_blend_shape::write_fbx(fbxsdk::FbxNode* in_node) const {
+  
+
+
+
+
+}
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
 }  // namespace doodle::maya_plug

@@ -48,7 +48,8 @@ void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, cons
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
   constexpr static auto maya_bakeResults_str{R"(
-bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}";)"};
+bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}";)"
+  };
   auto l_comm =
       fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, get_node_full_name(in_path));
   DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
@@ -120,7 +121,8 @@ FSys::path export_file_fbx::export_anim(
   log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
 
   fbx_write l_fbx_write{};
-  l_fbx_write.write(l_export_list, l_arg->begin_end_time.first, l_arg->begin_end_time.second, l_file_path);
+  l_fbx_write.set_path(l_file_path);
+  l_fbx_write.write(l_export_list, l_arg->begin_end_time.first, l_arg->begin_end_time.second);
   return l_file_path;
 }
 

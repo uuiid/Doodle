@@ -133,12 +133,12 @@ class fbx_write {
   bool export_anim_{true};
   bool ascii_fbx_{false};
 
-  void write_end();
   void init();
   void build_tree(const std::vector<MDagPath>& in_vector);
   void build_data();
   void build_animation(const MTime& in_time);
   MTime find_begin_anim_time();
+  static std::vector<MDagPath> select_to_vector(const MSelectionList& in_vector);
 
  public:
   fbx_write();
@@ -146,17 +146,24 @@ class fbx_write {
 
   void not_export_anim(bool in_value = true);
   void ascii_fbx(bool in_value = true);
+  void set_path(const FSys::path& in_path);
+  void set_logger(const logger_ptr&  in_logger);
 
-  void chick_export(
-      const MSelectionList& in_vector, const logger_ptr& in_logger, const MTime& in_begin, const MTime& in_end
-  );
+    void write_end();
+  // 写出fbx
+  void write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end);
+  inline void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
+    write(select_to_vector(in_vector), in_begin, in_end);
+  }
 
-  void write(
-      const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path
-  );
-  void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path);
+  // 后期继续添加( 写出带有解算的mesh )
+  void add_mesh(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end);
+  inline void add_mesh(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
+    add_mesh(select_to_vector(in_vector), in_begin, in_end);
+  }
 
-  void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, const FSys::path& in_path);
+  // 写出相机
+  // void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end);
 };
 
 }  // namespace doodle::maya_plug

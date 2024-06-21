@@ -75,8 +75,9 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
     maya_chick(l_status);
     l_fbx_write.ascii_fbx();
   }
-
-  l_fbx_write.write(l_list, l_begin_time, l_end_time, l_path);
+  
+  l_fbx_write.set_path(l_path);
+  l_fbx_write.write(l_list, l_begin_time, l_end_time);
 
   return MS::kSuccess;
 }
