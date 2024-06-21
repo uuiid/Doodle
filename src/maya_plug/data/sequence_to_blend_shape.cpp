@@ -54,6 +54,7 @@ class sequence_to_blend_shape::impl {
 
   // 混合变形中的基本形状
   Eigen::VectorXd base_mesh_{};
+  std::vector<std::vector<Eigen::Vector3d>> normal_{};
 
   /**
    * 混合变形中的混变形状
@@ -83,6 +84,8 @@ void sequence_to_blend_shape::init(const MDagPath& in_mesh, std::int64_t in_samp
   maya_chick(l_status);
   const auto l_num_points = l_mesh.numVertices();
   ptr->anim_mesh_.resize(l_num_points * 3, in_samples);
+  const auto l_num_poly = l_mesh.numPolygons();
+  ptr->normal_.resize(l_num_poly);
 }
 
 void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
@@ -103,9 +106,30 @@ void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
     ptr->anim_mesh_(i * 3 + 1, in_sample_index) = l_m_points[i].y;
     ptr->anim_mesh_(i * 3 + 2, in_sample_index) = l_m_points[i].z;
   }
+
+  // 添加法线
+  for (auto i = 0; i < l_fn_mesh.numPolygons(); ++i) {
+    MIntArray l_vert_list{};
+    maya_chick(l_fn_mesh.getPolygonVertices(i, l_vert_list));
+    auto& l_n = ptr->normal_[i];
+    if (l_n.empty()) l_n.resize(l_vert_list.length());
+
+    for (auto j = 0; j < l_vert_list.length(); ++j) {
+      MVector l_normal{};
+      maya_chick(l_fn_mesh.getFaceVertexNormal(i, l_vert_list[j], l_normal, MSpace::kObject));
+      l_n[j] += Eigen::Vector3d{l_normal.x, l_normal.y, l_normal.z};
+    }
+  }
 }
 
 void sequence_to_blend_shape::compute() {
+  // 计算法线
+  for (auto& l_n : ptr->normal_) {
+    for (auto& l_v : l_n) {
+      l_v.normalize();
+    }
+  }
+
   ptr->mesh_off_.resize(ptr->anim_mesh_.cols());
 
   for (auto i = 0; i < ptr->anim_mesh_.cols(); ++i) {
@@ -146,9 +170,9 @@ void sequence_to_blend_shape::compute() {
 }
 
 void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
-  auto l_my_node          = in_node.find_node(ptr->base_mesh_obj_);
-  
-  if(auto l_mesh = dynamic_cast<fbx_write_ns::fbx_node_mesh*>(l_my_node); l_mesh != nullptr) {
+  auto l_my_node = in_node.find_node(ptr->base_mesh_obj_);
+
+  if (auto l_mesh = dynamic_cast<fbx_write_ns::fbx_node_mesh*>(l_my_node); l_mesh != nullptr) {
     l_mesh->build_mesh();
   } else {
     throw_exception(doodle_error{"不是网格节点"});
@@ -166,13 +190,23 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
   MFnMesh l_fn_mesh{ptr->base_mesh_obj_};
 
-  {  // 添加顶点
-    l_mesh->InitControlPoints(ptr->base_mesh_.size() / 3);
+  {  // 调整顶点
+    // l_mesh->InitControlPoints(ptr->base_mesh_.size() / 3);
     auto* l_points = l_mesh->GetControlPoints();
 
     for (auto i = 0; i < ptr->base_mesh_.size() / 3; ++i) {
       l_points[i] =
           fbxsdk::FbxVector4{ptr->base_mesh_[i * 3 + 0], ptr->base_mesh_[i * 3 + 1], ptr->base_mesh_[i * 3 + 2]};
+    }
+    // 调整法线
+    auto l_layer = l_mesh->GetElementNormal();
+    for (auto i = 0, l_fbx_i = 0; i < l_fn_mesh.numPolygons(); ++i) {
+      MIntArray l_vert_list{};
+      maya_chick(l_fn_mesh.getPolygonVertices(i, l_vert_list));
+      for (auto j = 0; j < l_vert_list.length(); ++j, ++l_fbx_i) {
+        l_layer->GetDirectArray()[l_fbx_i] =
+            fbxsdk::FbxVector4{ptr->normal_[i][j].x(), ptr->normal_[i][j].y(), ptr->normal_[i][j].z()};
+      }
     }
   }
 
