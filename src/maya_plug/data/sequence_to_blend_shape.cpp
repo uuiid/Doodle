@@ -64,7 +64,10 @@ void sequence_to_blend_shape::init(const MDagPath& in_mesh, std::int64_t in_samp
 
 void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
   // default_logger_raw()->info("添加采样 {}", in_sample_index);
-  MFnMesh l_fn_mesh{base_mesh_obj_};
+  auto l_mesh_dag = base_mesh_obj_;
+  l_mesh_dag.extendToShape();
+  MFnMesh l_fn_mesh{l_mesh_dag};
+  l_fn_mesh.syncObject();
 
   MPointArray l_m_points{};
   l_fn_mesh.getPoints(l_m_points);

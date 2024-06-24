@@ -80,24 +80,39 @@ struct fbx_node_mesh : public fbx_node_transform {
   fbxsdk::FbxMesh* mesh{};
   std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
 
-  bool is_sim{};
   fbx_node_mesh() = default;
   explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
       : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
 
-  void build_bind_post();
+  virtual void build_bind_post();
+  virtual void build_data() override;
+  virtual void build_animation(const MTime& in_time) override;
+
+  virtual void build_mesh();
+  virtual void build_skin();
+  virtual void build_blend_shape();
+
+  [[nodiscard]] virtual MObject get_skin_custer() const;
+  [[nodiscard]] virtual std::vector<MDagPath> find_joint(const MObject& in_msk) const;
+  [[nodiscard]] virtual std::vector<MObject> find_blend_shape() const;
+
+  [[nodiscard]] virtual MObject get_bind_post() const;
+};
+
+struct fbx_node_sim_mesh : public fbx_node_mesh {
+  fbx_node_sim_mesh() = default;
+  explicit fbx_node_sim_mesh(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_mesh(in_dag_path, in_node) {}
   void build_data() override;
   void build_animation(const MTime& in_time) override;
 
-  void build_mesh();
-  void build_skin();
-  void build_blend_shape();
+  void build_bind_post() override;
 
-  [[nodiscard]] MObject get_skin_custer() const;
-  [[nodiscard]] std::vector<MDagPath> find_joint(const MObject& in_msk) const;
-  [[nodiscard]] std::vector<MObject> find_blend_shape() const;
-
-  [[nodiscard]] MObject get_bind_post() const;
+  void build_skin() override;
+  void build_blend_shape() override;
+  [[nodiscard]] MObject get_skin_custer() const override;
+  [[nodiscard]] std::vector<MDagPath> find_joint(const MObject& in_msk) const override;
+  [[nodiscard]] std::vector<MObject> find_blend_shape() const override;
+  [[nodiscard]] MObject get_bind_post() const override;
 };
 
 struct fbx_node_joint : public fbx_node_transform {
@@ -114,6 +129,7 @@ class fbx_write {
   FSys::path path_;
   using fbx_node_t           = fbx_write_ns::fbx_node;
   using fbx_node_mesh_t      = fbx_write_ns::fbx_node_mesh;
+  using fbx_node_sim_mesh_t  = fbx_write_ns::fbx_node_sim_mesh_t;
   using fbx_node_transform_t = fbx_write_ns::fbx_node_transform;
   using fbx_node_joint_t     = fbx_write_ns::fbx_node_joint;
   using fbx_node_ptr         = fbx_write_ns::fbx_node_ptr;

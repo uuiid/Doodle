@@ -295,16 +295,11 @@ void fbx_node_mesh::build_data() {
   fbx_node_transform::build_data();
 
   build_mesh();
-  // 如果是解算, 只需要构建mesh
-  if (is_sim) return;
   build_skin();
   build_blend_shape();
 }
 
 void fbx_node_mesh::build_bind_post() {
-  // 解算 不需要构建 bindpose
-  if (is_sim) return;
-
   MStatus l_status{};
   auto l_bind_post_obj = get_bind_post();
 
@@ -1049,6 +1044,22 @@ MObject fbx_node_mesh::get_bind_post() const {
   return MObject::kNullObj;
 }
 
+void fbx_node_sim_mesh::build_bind_post() { return; }
+void fbx_node_sim_mesh::build_data() {
+  // 如果是解算, 只需要构建mesh
+  if (!dag_path.isValid()) return;
+  fbx_node_transform::build_data();
+
+  build_mesh();
+}
+void fbx_node_sim_mesh::build_animation(const MTime& in_time) { return; }
+void fbx_node_sim_mesh::build_skin() { return; }
+void fbx_node_sim_mesh::build_blend_shape() { return; }
+MObject fbx_node_sim_mesh::get_skin_custer() const { return {}; }
+std::vector<MDagPath> fbx_node_sim_mesh::find_joint(const MObject& in_msk) const { return {}; }
+std::vector<MObject> fbx_node_sim_mesh::find_blend_shape() const { return {}; }
+MObject fbx_node_sim_mesh::get_bind_post() const { return {}; }
+
 void fbx_node_joint::build_data() {
   auto* l_sk_attr = FbxSkeleton::Create(node->GetScene(), "skeleton");
   l_sk_attr->SetSkeletonType(FbxSkeleton::eLimbNode);
@@ -1133,7 +1144,7 @@ void fbx_write::write(
 
   anim_time_            = {in_begin, in_end};
 
-  MAnimControl::setCurrentTime(in_begin);
+  MGlobal::viewFrame(in_begin);
 
   std::vector<sequence_to_blend_shape> l_sequence_to_blend_shape{};
   try {
@@ -1151,19 +1162,19 @@ void fbx_write::write(
 
     if (export_anim_) {
       for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-        MAnimControl::setCurrentTime(l_time);
+        MGlobal::viewFrame(l_time);
         build_animation(l_time);
-        for (auto&& i : l_sequence_to_blend_shape) {
-          i.add_sample(l_time.value() - in_begin.value());
-        }
+        // for (auto&& i : l_sequence_to_blend_shape) {
+        //   i.add_sample(l_time.value() - in_begin.value());
+        // }
       }
     }
-    for (auto&& i : l_sequence_to_blend_shape) {
-      i.compute();
-    }
-    for (auto&& i : l_sequence_to_blend_shape) {
-      i.write_fbx(*this);
-    }
+    // for (auto&& i : l_sequence_to_blend_shape) {
+    //   i.compute();
+    // }
+    // for (auto&& i : l_sequence_to_blend_shape) {
+    //   i.write_fbx(*this);
+    // }
 
   } catch (const std::exception& in_error) {
     auto l_str = boost::diagnostic_information(in_error);
@@ -1242,10 +1253,16 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
           auto l_parent_node = (*l_begin)->node;
 
           if (l_sub_path.hasFn(MFn::kMesh)) {
-            auto l_mesh = std::make_shared<fbx_node_mesh_t>(
-                l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
-            );
-            l_mesh->is_sim = in_is_sim;
+            std::shared_ptr<fbx_node_mesh_t> l_mesh{};
+            if (in_is_sim) {
+              l_mesh = std::make_shared<fbx_node_sim_mesh_t>(
+                  l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+              );
+            } else {
+              auto l_mesh = std::make_shared<fbx_node_mesh_t>(
+                  l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+              );
+            }
             joints_ |= ranges::action::push_back(l_mesh->find_joint(l_mesh->get_skin_custer()));
 
             l_begin = tree_.append_child(l_begin, l_mesh);
