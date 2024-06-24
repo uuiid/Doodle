@@ -8,6 +8,7 @@
 
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_conv_str.h>
+#include <maya_plug/data/sequence_to_blend_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
@@ -294,11 +295,16 @@ void fbx_node_mesh::build_data() {
   fbx_node_transform::build_data();
 
   build_mesh();
+  // 如果是解算, 只需要构建mesh
+  if (is_sim) return;
   build_skin();
   build_blend_shape();
 }
 
 void fbx_node_mesh::build_bind_post() {
+  // 解算 不需要构建 bindpose
+  if (is_sim) return;
+
   MStatus l_status{};
   auto l_bind_post_obj = get_bind_post();
 
@@ -1127,11 +1133,18 @@ void fbx_write::write(
 
   MAnimControl::setCurrentTime(in_begin);
 
-  init();
-  build_tree(in_vector);
-
+  std::vector<sequence_to_blend_shape> l_sequence_to_blend_shape{};
   try {
+    init();
+    build_tree(in_vector, in_sim_vector);
     build_data();
+
+    // 初始化解算分解器
+    std::int64_t l_size = in_begin.value() - in_end.value() + 1;
+    for (auto&& i : in_sim_vector) {
+      l_sequence_to_blend_shape.emplace_back(i, l_size);
+    }
+
   } catch (const maya_error& in_error) {
     auto l_str = boost::diagnostic_information(in_error);
     MGlobal::displayError(conv::to_ms(l_str));
@@ -1149,8 +1162,18 @@ void fbx_write::write(
     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
       MAnimControl::setCurrentTime(l_time);
       build_animation(l_time);
+      for (auto&& i : l_sequence_to_blend_shape) {
+        i.add_sample(l_time.value() - in_begin.value());
+      }
     }
   }
+  for (auto&& i : l_sequence_to_blend_shape) {
+    i.compute();
+  }
+  for (auto&& i : l_sequence_to_blend_shape) {
+    i.write_fbx(*this);
+  }
+
   logger_->flush();
 }
 
