@@ -47,71 +47,45 @@
 
 namespace doodle::maya_plug {
 
-class sequence_to_blend_shape::impl {
- public:
-  // 需要计算的动画数据
-  Eigen::MatrixXd anim_mesh_{};
-
-  // 混合变形中的基本形状
-  Eigen::VectorXd base_mesh_{};
-  std::vector<std::vector<Eigen::Vector3d>> normal_{};
-
-  /**
-   * 混合变形中的混变形状
-   *
-   * bs_mesh_[点 * 3, 混合形状数]
-   *
-   */
-  Eigen::MatrixXd bs_mesh_{};
-  // 混合变形中的权重曲线
-  Eigen::MatrixXd weight_{};
-
-  // 优化后的形状数量
-  std::size_t num_blend_shape_{};
-  std::vector<Eigen::Vector3d> mesh_off_{};
-
-  MDagPath base_mesh_obj_{};
-};
-
-sequence_to_blend_shape::sequence_to_blend_shape() : ptr(std::make_unique<impl>()) {}
+sequence_to_blend_shape::sequence_to_blend_shape() = default;
 
 void sequence_to_blend_shape::init(const MDagPath& in_mesh, std::int64_t in_samples) {
-  ptr->base_mesh_obj_ = in_mesh;
+  base_mesh_obj_ = in_mesh;
 
   MStatus l_status{};
   MFnMesh l_mesh{};
   l_status = l_mesh.setObject(in_mesh);
   maya_chick(l_status);
   const auto l_num_points = l_mesh.numVertices();
-  ptr->anim_mesh_.resize(l_num_points * 3, in_samples);
+  anim_mesh_.resize(l_num_points * 3, in_samples);
   const auto l_num_poly = l_mesh.numPolygons();
-  ptr->normal_.resize(l_num_poly);
+  normal_.resize(l_num_poly);
 }
 
 void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
-  MFnMesh l_fn_mesh{ptr->base_mesh_obj_};
+  MFnMesh l_fn_mesh{base_mesh_obj_};
 
   MPointArray l_m_points{};
   l_fn_mesh.getPoints(l_m_points, MSpace::kObject);
 
-  if (l_m_points.length() != ptr->anim_mesh_.rows() / 3) {
+  if (l_m_points.length() != anim_mesh_.rows() / 3) {
     throw_exception(doodle_error{"动画数据点数与基础形状点数不一致"});
   }
-  if (in_sample_index >= ptr->anim_mesh_.cols()) {
+  if (in_sample_index >= anim_mesh_.cols()) {
     throw_exception(doodle_error{"采样数超出范围"});
   }
 
   for (std::size_t i = 0; i < l_m_points.length(); ++i) {
-    ptr->anim_mesh_(i * 3 + 0, in_sample_index) = l_m_points[i].x;
-    ptr->anim_mesh_(i * 3 + 1, in_sample_index) = l_m_points[i].y;
-    ptr->anim_mesh_(i * 3 + 2, in_sample_index) = l_m_points[i].z;
+    anim_mesh_(i * 3 + 0, in_sample_index) = l_m_points[i].x;
+    anim_mesh_(i * 3 + 1, in_sample_index) = l_m_points[i].y;
+    anim_mesh_(i * 3 + 2, in_sample_index) = l_m_points[i].z;
   }
 
   // 添加法线
   for (auto i = 0; i < l_fn_mesh.numPolygons(); ++i) {
     MIntArray l_vert_list{};
     maya_chick(l_fn_mesh.getPolygonVertices(i, l_vert_list));
-    auto& l_n = ptr->normal_[i];
+    auto& l_n = normal_[i];
     if (l_n.empty()) l_n.resize(l_vert_list.length());
 
     for (auto j = 0; j < l_vert_list.length(); ++j) {
@@ -123,47 +97,47 @@ void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
 }
 
 void sequence_to_blend_shape::compute() {
-  default_logger_raw()->info("开始计算混合变形 {}", get_node_full_name(ptr->base_mesh_obj_));
+  default_logger_raw()->info("开始计算混合变形 {}", get_node_full_name(base_mesh_obj_));
   // 计算法线
-  for (auto& l_n : ptr->normal_) {
+  for (auto& l_n : normal_) {
     for (auto& l_v : l_n) {
       l_v.normalize();
     }
   }
 
-  ptr->mesh_off_.resize(ptr->anim_mesh_.cols());
+  mesh_off_.resize(anim_mesh_.cols());
 
-  for (auto i = 0; i < ptr->anim_mesh_.cols(); ++i) {
+  for (auto i = 0; i < anim_mesh_.cols(); ++i) {
     Eigen::AlignedBox3d l_box{};
-    for (auto j = 0; j < ptr->anim_mesh_.rows() / 3; ++j) {
-      l_box.extend(Eigen::Vector3d{ptr->anim_mesh_.block<3, 1>(j * 3, i)});
+    for (auto j = 0; j < anim_mesh_.rows() / 3; ++j) {
+      l_box.extend(Eigen::Vector3d{anim_mesh_.block<3, 1>(j * 3, i)});
     }
     Eigen::Vector3d l_off = l_box.center();
-    ptr->mesh_off_.emplace_back(l_off);
-    for (auto j = 0; j < ptr->anim_mesh_.rows() / 3; ++j) {
-      ptr->anim_mesh_.block<3, 1>(j * 3, i) -= l_off;
+    mesh_off_.emplace_back(l_off);
+    for (auto j = 0; j < anim_mesh_.rows() / 3; ++j) {
+      anim_mesh_.block<3, 1>(j * 3, i) -= l_off;
     }
   }
   // 平均
-  ptr->base_mesh_ = ptr->anim_mesh_.rowwise().mean();
+  base_mesh_ = anim_mesh_.rowwise().mean();
   // 计算标准差
-  ptr->anim_mesh_.array().colwise() -= ptr->base_mesh_.array();
+  anim_mesh_.array().colwise() -= base_mesh_.array();
 
   // svd分解
-  Eigen::JacobiSVD<Eigen::MatrixXd> l_svd{ptr->anim_mesh_, Eigen::ComputeThinU | Eigen::ComputeThinV};
-  ptr->bs_mesh_ = l_svd.matrixU();
-  ptr->weight_  = l_svd.matrixV().transpose();
+  Eigen::JacobiSVD<Eigen::MatrixXd> l_svd{anim_mesh_, Eigen::ComputeThinU | Eigen::ComputeThinV};
+  bs_mesh_ = l_svd.matrixU();
+  weight_  = l_svd.matrixV().transpose();
 
   // 乘以奇异值
-  ptr->bs_mesh_.array().colwise() *= l_svd.singularValues().array();
+  bs_mesh_.array().colwise() *= l_svd.singularValues().array();
 
   // 计算优化
-  Eigen::VectorXd l_diff = ptr->bs_mesh_.cwiseAbs().colwise().sum();
-  ptr->num_blend_shape_  = l_diff.size();
+  Eigen::VectorXd l_diff = bs_mesh_.cwiseAbs().colwise().sum();
+  num_blend_shape_  = l_diff.size();
 
   for (auto i = 0; i < l_diff.size(); ++i) {
     if (l_diff[i] < 0.01) {
-      ptr->num_blend_shape_ = i;
+      num_blend_shape_ = i;
       break;
     }
   }
@@ -171,7 +145,7 @@ void sequence_to_blend_shape::compute() {
 }
 
 void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
-  auto l_my_node = in_node.find_node(ptr->base_mesh_obj_);
+  auto l_my_node = in_node.find_node(base_mesh_obj_);
 
   if (auto l_mesh = dynamic_cast<fbx_write_ns::fbx_node_mesh*>(l_my_node); l_mesh != nullptr) {
     l_mesh->build_mesh();
@@ -189,15 +163,15 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
   auto l_mesh = static_cast<fbxsdk::FbxMesh*>(l_node_attr);
 
-  MFnMesh l_fn_mesh{ptr->base_mesh_obj_};
+  MFnMesh l_fn_mesh{base_mesh_obj_};
 
   {  // 调整顶点
-    // l_mesh->InitControlPoints(ptr->base_mesh_.size() / 3);
+    // l_mesh->InitControlPoints(base_mesh_.size() / 3);
     auto* l_points = l_mesh->GetControlPoints();
 
-    for (auto i = 0; i < ptr->base_mesh_.size() / 3; ++i) {
+    for (auto i = 0; i < base_mesh_.size() / 3; ++i) {
       l_points[i] =
-          fbxsdk::FbxVector4{ptr->base_mesh_[i * 3 + 0], ptr->base_mesh_[i * 3 + 1], ptr->base_mesh_[i * 3 + 2]};
+          fbxsdk::FbxVector4{base_mesh_[i * 3 + 0], base_mesh_[i * 3 + 1], base_mesh_[i * 3 + 2]};
     }
     // 调整法线
     auto l_layer = l_mesh->GetElementNormal();
@@ -206,7 +180,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
       maya_chick(l_fn_mesh.getPolygonVertices(i, l_vert_list));
       for (auto j = 0; j < l_vert_list.length(); ++j, ++l_fbx_i) {
         l_layer->GetDirectArray()[l_fbx_i] =
-            fbxsdk::FbxVector4{ptr->normal_[i][j].x(), ptr->normal_[i][j].y(), ptr->normal_[i][j].z()};
+            fbxsdk::FbxVector4{normal_[i][j].x(), normal_[i][j].y(), normal_[i][j].z()};
       }
     }
   }
@@ -216,7 +190,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
     auto l_blend_shape =
         fbxsdk::FbxBlendShape::Create(l_node->GetScene(), fmt::format("{}_blend_shape", l_node->GetName()).c_str());
 
-    for (auto i = 0; i < ptr->num_blend_shape_; ++i) {
+    for (auto i = 0; i < num_blend_shape_; ++i) {
       auto* l_shape = fbxsdk::FbxShape::Create(l_node->GetScene(), fmt::format("shape_{}", i).c_str());
       l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
       auto* l_blend_channel =
@@ -228,7 +202,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
       for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
         auto l_index = i * 3;
         l_shape_pos[i] += fbxsdk::FbxVector4{
-            ptr->bs_mesh_(l_index + 0, i), ptr->bs_mesh_(l_index + 1, i), ptr->bs_mesh_(l_index + 2, i)
+            bs_mesh_(l_index + 0, i), bs_mesh_(l_index + 1, i), bs_mesh_(l_index + 2, i)
         };
       }
       l_blend_channel->AddTargetShape(l_shape);
@@ -242,10 +216,10 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
     fbxsdk::FbxTime l_fbx_time{};
 
-    Eigen::MatrixXd l_curve = ptr->weight_.transpose();
-    // Eigen::MatrixXd l_curve = ptr->weight_;
+    Eigen::MatrixXd l_curve = weight_.transpose();
+    // Eigen::MatrixXd l_curve = weight_;
     auto* l_layer           = l_node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
-    for (auto i = 0; i < ptr->num_blend_shape_; ++i) {
+    for (auto i = 0; i < num_blend_shape_; ++i) {
       auto l_anim_curve = l_blend_channels[i]->DeformPercent.GetCurve(l_layer, true);
       // std::cout << "curve " << i << "\n";
       l_anim_curve->KeyModifyBegin();
@@ -267,17 +241,17 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
       l_c_x->KeyModifyBegin();
       auto l_key_index = l_c_x->KeyAdd(l_fbx_time);
-      l_c_x->KeySet(l_key_index, l_fbx_time, ptr->mesh_off_[j].x());
+      l_c_x->KeySet(l_key_index, l_fbx_time, mesh_off_[j].x());
       l_c_x->KeyModifyEnd();
 
       l_c_y->KeyModifyBegin();
       l_key_index = l_c_y->KeyAdd(l_fbx_time);
-      l_c_y->KeySet(l_key_index, l_fbx_time, ptr->mesh_off_[j].y());
+      l_c_y->KeySet(l_key_index, l_fbx_time, mesh_off_[j].y());
       l_c_y->KeyModifyEnd();
 
       l_c_z->KeyModifyBegin();
       l_key_index = l_c_z->KeyAdd(l_fbx_time);
-      l_c_z->KeySet(l_key_index, l_fbx_time, ptr->mesh_off_[j].z());
+      l_c_z->KeySet(l_key_index, l_fbx_time, mesh_off_[j].z());
       l_c_z->KeyModifyEnd();
     }
   }

@@ -8,6 +8,8 @@
 
 #include <fbxsdk.h>
 #include <maya/MFnMesh.h>
+#include <Eigen/Eigen>
+
 namespace doodle::maya_plug {
 class fbx_write;
 /**
@@ -15,9 +17,29 @@ class fbx_write;
  */
 class sequence_to_blend_shape {
  private:
-  class impl;
-  std::unique_ptr<impl> ptr;
+ 
+  // 需要计算的动画数据
+  Eigen::MatrixXd anim_mesh_{};
 
+  // 混合变形中的基本形状
+  Eigen::VectorXd base_mesh_{};
+  std::vector<std::vector<Eigen::Vector3d>> normal_{};
+
+  /**
+   * 混合变形中的混变形状
+   *
+   * bs_mesh_[点 * 3, 混合形状数]
+   *
+   */
+  Eigen::MatrixXd bs_mesh_{};
+  // 混合变形中的权重曲线
+  Eigen::MatrixXd weight_{};
+
+  // 优化后的形状数量
+  std::size_t num_blend_shape_{};
+  std::vector<Eigen::Vector3d> mesh_off_{};
+
+  MDagPath base_mesh_obj_{};
   void init(const MDagPath& in_mesh, std::int64_t in_samples);
 
  public:
