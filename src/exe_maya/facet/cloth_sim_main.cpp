@@ -220,7 +220,6 @@ void cloth_sim::export_fbx() {
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
-    l_ex.export_sim(in_handle);
   });
 }
 void cloth_sim::export_anim_file() {

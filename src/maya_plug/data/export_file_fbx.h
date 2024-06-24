@@ -35,7 +35,7 @@ class export_file_fbx {
       const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view,
       const MSelectionList& in_exclude = {}
   );
-  FSys::path export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view);
+ 
   FSys::path export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view);
 };
 

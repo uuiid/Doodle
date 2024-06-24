@@ -126,20 +126,6 @@ FSys::path export_file_fbx::export_anim(
   return l_file_path;
 }
 
-void export_file_fbx::cloth_to_blendshape(
-    const MTime& in_start, const MTime& in_end, const std::vector<MDagPath>& in_path,
-    const std::optional<MDagPath>& in_parent_path
-) {}
-
-FSys::path export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view
-) {
-  auto& l_arg = in_handle_view.get<generate_file_path_ptr>();
-  auto& l_ref = in_handle_view.get<reference_file>();
-  cloth_to_blendshape(l_arg->begin_end_time.first, l_arg->begin_end_time.second, l_ref.get_alll_cloth_obj());
-  export_anim(in_handle_view);
-  return {};
-}
-
 FSys::path export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view) {
   auto& l_arg = in_handle_view.get<generate_file_path_ptr>();
   auto& l_cam = g_reg()->ctx().get<maya_camera>();
