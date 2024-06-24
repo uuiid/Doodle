@@ -1145,6 +1145,24 @@ void fbx_write::write(
       l_sequence_to_blend_shape.emplace_back(i, l_size);
     }
 
+    log_info(logger_, "开始导出动画");
+
+    if (export_anim_) {
+      for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+        MAnimControl::setCurrentTime(l_time);
+        build_animation(l_time);
+        for (auto&& i : l_sequence_to_blend_shape) {
+          i.add_sample(l_time.value() - in_begin.value());
+        }
+      }
+    }
+    for (auto&& i : l_sequence_to_blend_shape) {
+      i.compute();
+    }
+    for (auto&& i : l_sequence_to_blend_shape) {
+      i.write_fbx(*this);
+    }
+
   } catch (const maya_error& in_error) {
     auto l_str = boost::diagnostic_information(in_error);
     MGlobal::displayError(conv::to_ms(l_str));
@@ -1155,23 +1173,6 @@ void fbx_write::write(
     MGlobal::displayError(conv::to_ms(l_str));
     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
     return;
-  }
-  log_info(logger_, "开始导出动画");
-
-  if (export_anim_) {
-    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-      MAnimControl::setCurrentTime(l_time);
-      build_animation(l_time);
-      for (auto&& i : l_sequence_to_blend_shape) {
-        i.add_sample(l_time.value() - in_begin.value());
-      }
-    }
-  }
-  for (auto&& i : l_sequence_to_blend_shape) {
-    i.compute();
-  }
-  for (auto&& i : l_sequence_to_blend_shape) {
-    i.write_fbx(*this);
   }
 
   logger_->flush();

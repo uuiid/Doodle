@@ -123,6 +123,7 @@ void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
 }
 
 void sequence_to_blend_shape::compute() {
+  default_logger_raw()->info("开始计算混合变形 {}", get_node_full_name(ptr->base_mesh_obj_));
   // 计算法线
   for (auto& l_n : ptr->normal_) {
     for (auto& l_v : l_n) {
