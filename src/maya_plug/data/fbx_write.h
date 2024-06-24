@@ -129,7 +129,7 @@ class fbx_write {
   FSys::path path_;
   using fbx_node_t           = fbx_write_ns::fbx_node;
   using fbx_node_mesh_t      = fbx_write_ns::fbx_node_mesh;
-  using fbx_node_sim_mesh_t  = fbx_write_ns::fbx_node_sim_mesh_t;
+  using fbx_node_sim_mesh_t  = fbx_write_ns::fbx_node_sim_mesh;
   using fbx_node_transform_t = fbx_write_ns::fbx_node_transform;
   using fbx_node_joint_t     = fbx_write_ns::fbx_node_joint;
   using fbx_node_ptr         = fbx_write_ns::fbx_node_ptr;
