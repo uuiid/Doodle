@@ -1163,12 +1163,7 @@ void fbx_write::write(
       i.write_fbx(*this);
     }
 
-  } catch (const maya_error& in_error) {
-    auto l_str = boost::diagnostic_information(in_error);
-    MGlobal::displayError(conv::to_ms(l_str));
-    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
-    return;
-  } catch (const doodle_error& in_error) {
+  } catch (const std::exception& in_error) {
     auto l_str = boost::diagnostic_information(in_error);
     MGlobal::displayError(conv::to_ms(l_str));
     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
