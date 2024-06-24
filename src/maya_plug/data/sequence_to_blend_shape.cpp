@@ -63,10 +63,11 @@ void sequence_to_blend_shape::init(const MDagPath& in_mesh, std::int64_t in_samp
 }
 
 void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
+  // default_logger_raw()->info("添加采样 {}", in_sample_index);
   MFnMesh l_fn_mesh{base_mesh_obj_};
 
   MPointArray l_m_points{};
-  l_fn_mesh.getPoints(l_m_points, MSpace::kObject);
+  l_fn_mesh.getPoints(l_m_points);
 
   if (l_m_points.length() != anim_mesh_.rows() / 3) {
     throw_exception(doodle_error{"动画数据点数与基础形状点数不一致"});
@@ -129,11 +130,11 @@ void sequence_to_blend_shape::compute() {
   weight_  = l_svd.matrixV().transpose();
 
   // 乘以奇异值
-  bs_mesh_.array().colwise() *= l_svd.singularValues().array();
+  bs_mesh_.array().rowwise() *= l_svd.singularValues().transpose().array();
 
   // 计算优化
   Eigen::VectorXd l_diff = bs_mesh_.cwiseAbs().colwise().sum();
-  num_blend_shape_  = l_diff.size();
+  num_blend_shape_       = l_diff.size();
 
   for (auto i = 0; i < l_diff.size(); ++i) {
     if (l_diff[i] < 0.01) {
@@ -147,9 +148,7 @@ void sequence_to_blend_shape::compute() {
 void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
   auto l_my_node = in_node.find_node(base_mesh_obj_);
 
-  if (auto l_mesh = dynamic_cast<fbx_write_ns::fbx_node_mesh*>(l_my_node); l_mesh != nullptr) {
-    l_mesh->build_mesh();
-  } else {
+  if (auto l_mesh = dynamic_cast<fbx_write_ns::fbx_node_mesh*>(l_my_node); l_mesh == nullptr) {
     throw_exception(doodle_error{"不是网格节点"});
   }
 
@@ -170,8 +169,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
     auto* l_points = l_mesh->GetControlPoints();
 
     for (auto i = 0; i < base_mesh_.size() / 3; ++i) {
-      l_points[i] =
-          fbxsdk::FbxVector4{base_mesh_[i * 3 + 0], base_mesh_[i * 3 + 1], base_mesh_[i * 3 + 2]};
+      l_points[i] = fbxsdk::FbxVector4{base_mesh_[i * 3 + 0], base_mesh_[i * 3 + 1], base_mesh_[i * 3 + 2]};
     }
     // 调整法线
     auto l_layer = l_mesh->GetElementNormal();
@@ -190,20 +188,19 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
     auto l_blend_shape =
         fbxsdk::FbxBlendShape::Create(l_node->GetScene(), fmt::format("{}_blend_shape", l_node->GetName()).c_str());
 
-    for (auto i = 0; i < num_blend_shape_; ++i) {
-      auto* l_shape = fbxsdk::FbxShape::Create(l_node->GetScene(), fmt::format("shape_{}", i).c_str());
+    for (auto col = 0; col < num_blend_shape_; ++col) {
+      auto* l_shape = fbxsdk::FbxShape::Create(l_node->GetScene(), fmt::format("shape_{}", col).c_str());
       l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
       auto* l_blend_channel =
-          fbxsdk::FbxBlendShapeChannel::Create(l_node->GetScene(), fmt::format("blend_shape_channel_{}", i).c_str());
+          fbxsdk::FbxBlendShapeChannel::Create(l_node->GetScene(), fmt::format("blend_shape_channel_{}", col).c_str());
 
       auto* l_shape_pos = l_shape->GetControlPoints();
       // 顶点
       std::copy(l_mesh->GetControlPoints(), l_mesh->GetControlPoints() + l_mesh->GetControlPointsCount(), l_shape_pos);
       for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
         auto l_index = i * 3;
-        l_shape_pos[i] += fbxsdk::FbxVector4{
-            bs_mesh_(l_index + 0, i), bs_mesh_(l_index + 1, i), bs_mesh_(l_index + 2, i)
-        };
+        l_shape_pos[i] +=
+            fbxsdk::FbxVector4{bs_mesh_(l_index + 0, col), bs_mesh_(l_index + 1, col), bs_mesh_(l_index + 2, col)};
       }
       l_blend_channel->AddTargetShape(l_shape);
       l_blend_channels.emplace_back(l_blend_channel);
@@ -216,18 +213,15 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
     fbxsdk::FbxTime l_fbx_time{};
 
-    Eigen::MatrixXd l_curve = weight_.transpose();
-    // Eigen::MatrixXd l_curve = weight_;
     auto* l_layer           = l_node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
     for (auto i = 0; i < num_blend_shape_; ++i) {
       auto l_anim_curve = l_blend_channels[i]->DeformPercent.GetCurve(l_layer, true);
       // std::cout << "curve " << i << "\n";
       l_anim_curve->KeyModifyBegin();
-      for (auto j = 0; j < l_curve.cols(); ++j) {
+      for (auto j = 0; j < weight_.cols(); ++j) {
         l_fbx_time.SetFrame(l_begin.value() + j, fbx_write_ns::fbx_node::maya_to_fbx_time(l_begin.unit()));
         auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-        l_anim_curve->KeySet(l_key_index, l_fbx_time, l_curve(i, j) * 100);
-        // std::cout << l_curve(i, j) << " ";
+        l_anim_curve->KeySet(l_key_index, l_fbx_time, weight_(i, j) * 100);
       }
       l_anim_curve->KeyModifyEnd();
     }
@@ -236,7 +230,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
     auto l_c_x = l_node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
     auto l_c_y = l_node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
     auto l_c_z = l_node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-    for (auto j = 0; j < l_curve.cols(); ++j) {
+    for (auto j = 0; j < weight_.cols(); ++j) {
       l_fbx_time.SetFrame(l_begin.value() + j, fbx_write_ns::fbx_node::maya_to_fbx_time(l_begin.unit()));
 
       l_c_x->KeyModifyBegin();

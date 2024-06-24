@@ -1142,7 +1142,7 @@ void fbx_write::write(
     build_data();
 
     // 初始化解算分解器
-    std::int64_t l_size = in_begin.value() - in_end.value() + 1;
+    std::int64_t l_size = in_end.value() - in_begin.value() + 1;
     for (auto&& i : in_sim_vector) {
       l_sequence_to_blend_shape.emplace_back(i, l_size);
     }
