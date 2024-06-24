@@ -61,7 +61,7 @@ struct bl_mesh_data {
 #endif
 };
 
-void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
+void write_fbx_impl(fbxsdk::FbxScene* in_scene, const FSys::path& in_fbx_path) {
   auto* l_manager = in_scene->GetFbxManager();
   std::shared_ptr<FbxExporter> l_exporter{
       FbxExporter::Create(in_scene->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }
@@ -89,11 +89,11 @@ void write_fbx(
     const std::vector<std::int64_t>& in_face_index
 ) {
   std::shared_ptr<FbxManager> l_manager{FbxManager::Create(), [](FbxManager* in_manager) { in_manager->Destroy(); }};
-  FbxIOSettings* l_io_settings = FbxIOSettings::Create(l_manager.get(), IOSROOT);
+  fbxsdk::FbxIOSettings* l_io_settings = fbxsdk::FbxIOSettings::Create(l_manager.get(), IOSROOT);
   l_manager->SetIOSettings(l_io_settings);
-  FbxScene* l_scene{FbxScene::Create(l_manager.get(), "scene")};
+  fbxsdk::FbxScene* l_scene{fbxsdk::FbxScene::Create(l_manager.get(), "scene")};
 
-  FbxDocumentInfo* l_doc_info{FbxDocumentInfo::Create(l_manager.get(), "info")};
+  fbxsdk::FbxDocumentInfo* l_doc_info{fbxsdk::FbxDocumentInfo::Create(l_manager.get(), "info")};
   l_doc_info->mTitle   = "doodle fbx";
   l_doc_info->mSubject = "doodle fbx";
   l_doc_info->mAuthor  = "doodle";
