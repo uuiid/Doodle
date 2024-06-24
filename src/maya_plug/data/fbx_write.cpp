@@ -1102,7 +1102,10 @@ fbx_write::fbx_write() {
   scene_->SetCurrentAnimationStack(anim_stack);
 }
 
-void fbx_write::write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end) {
+void fbx_write::write(
+    const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
+    const MTime& in_end
+) {
   if (!logger_)
     if (!g_ctx().contains<fbx_logger>())
       logger_ =
@@ -1200,45 +1203,56 @@ std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vecto
 // }
 
 void fbx_write::init() { tree_ = {std::make_shared<fbx_node_transform_t>(MDagPath{}, scene_->GetRootNode())}; }
-void fbx_write::build_tree(const std::vector<MDagPath>& in_vector) {
-  for (auto l_path : in_vector) {
-    auto l_begin = tree_.begin();
-    for (std::int32_t i = l_path.length() - 1; i >= 0; --i) {
-      MDagPath l_sub_path{l_path};
-      l_sub_path.pop(i);
+void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector) {
+  auto l_fun = [this](const std::vector<MDagPath>& in_vector, bool in_is_sim) {
+    for (auto l_path : in_vector) {
+      auto l_begin = tree_.begin();
+      for (std::int32_t i = l_path.length() - 1; i >= 0; --i) {
+        MDagPath l_sub_path{l_path};
+        l_sub_path.pop(i);
 
-      if (auto l_tree_it = ranges::find_if(
-              std::begin(l_begin), std::end(l_begin),
-              [&](const fbx_node_ptr& in_value) { return in_value->dag_path == l_sub_path; }
-          );
-          l_tree_it != std::end(l_begin)) {
-        l_begin = l_tree_it;
-      } else {
-        auto l_parent_node = (*l_begin)->node;
-
-        if (l_sub_path.hasFn(MFn::kMesh)) {
-          auto l_mesh =
-              std::make_shared<fbx_node_mesh_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()));
-          joints_ |= ranges::action::push_back(l_mesh->find_joint(l_mesh->get_skin_custer()));
-
-          l_begin = tree_.append_child(l_begin, l_mesh);
-        } else if (l_sub_path.hasFn(MFn::kJoint)) {
-          l_begin = tree_.append_child(
-              l_begin,
-              std::make_shared<fbx_node_joint_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()))
-          );
+        if (auto l_tree_it = ranges::find_if(
+                std::begin(l_begin), std::end(l_begin),
+                [&](const fbx_node_ptr& in_value) { return in_value->dag_path == l_sub_path; }
+            );
+            l_tree_it != std::end(l_begin)) {
+          l_begin = l_tree_it;
         } else {
-          l_begin = tree_.append_child(
-              l_begin, std::make_shared<fbx_node_transform_t>(
-                           l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
-                       )
-          );
+          auto l_parent_node = (*l_begin)->node;
+
+          if (l_sub_path.hasFn(MFn::kMesh)) {
+            auto l_mesh = std::make_shared<fbx_node_mesh_t>(
+                l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+            );
+            l_mesh->is_sim = in_is_sim;
+            joints_ |= ranges::action::push_back(l_mesh->find_joint(l_mesh->get_skin_custer()));
+
+            l_begin = tree_.append_child(l_begin, l_mesh);
+          } else if (l_sub_path.hasFn(MFn::kJoint)) {
+            l_begin = tree_.append_child(
+                l_begin, std::make_shared<fbx_node_joint_t>(
+                             l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+                         )
+            );
+          } else {
+            l_begin = tree_.append_child(
+                l_begin, std::make_shared<fbx_node_transform_t>(
+                             l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+                         )
+            );
+          }
+          node_map_.emplace(l_sub_path, *l_begin);
+          l_parent_node->AddChild((*l_begin)->node);
         }
-        node_map_.emplace(l_sub_path, *l_begin);
-        l_parent_node->AddChild((*l_begin)->node);
       }
     }
-  }
+  };
+
+  // 这个是绑定的网格
+  l_fun(in_vector, false);
+
+  // 这个是模拟的网格
+  l_fun(in_sim_vector, true);
 
   for (auto&& i : joints_) {
     auto l_begin = tree_.begin();

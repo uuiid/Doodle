@@ -79,6 +79,8 @@ struct fbx_node_cam : public fbx_node_transform {
 struct fbx_node_mesh : public fbx_node_transform {
   fbxsdk::FbxMesh* mesh{};
   std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
+
+  bool is_sim{};
   fbx_node_mesh() = default;
   explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
       : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
@@ -134,7 +136,7 @@ class fbx_write {
   bool ascii_fbx_{false};
 
   void init();
-  void build_tree(const std::vector<MDagPath>& in_vector);
+  void build_tree(const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector);
   void build_data();
   void build_animation(const MTime& in_time);
   MTime find_begin_anim_time();
@@ -151,15 +153,22 @@ class fbx_write {
 
   void write_end();
   // 写出fbx
-  void write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end);
+  inline void write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end) {
+    write(in_vector, {}, in_begin, in_end);
+  }
   inline void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
     write(select_to_vector(in_vector), in_begin, in_end);
   }
 
-  // 后期继续添加( 写出带有解算的mesh )
-  void add_mesh(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end);
-  inline void add_mesh(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
-    add_mesh(select_to_vector(in_vector), in_begin, in_end);
+  // 写出fbx
+  void write(
+      const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
+      const MTime& in_end
+  );
+  inline void write(
+      const MSelectionList& in_vector, const MSelectionList& in_sim_vector, const MTime& in_begin, const MTime& in_end
+  ) {
+    write(select_to_vector(in_vector), select_to_vector(in_sim_vector), in_begin, in_end);
   }
 
   // 只寻找mesh节点
