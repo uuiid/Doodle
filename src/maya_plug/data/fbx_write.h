@@ -134,6 +134,7 @@ class fbx_write {
 
   bool export_anim_{true};
   bool ascii_fbx_{false};
+  std::pair<MTime, MTime> anim_time_{};
 
   void init();
   void build_tree(const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector);

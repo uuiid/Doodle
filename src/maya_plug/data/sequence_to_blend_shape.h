@@ -6,9 +6,9 @@
 
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include <Eigen/Eigen>
 #include <fbxsdk.h>
 #include <maya/MFnMesh.h>
-#include <Eigen/Eigen>
 
 namespace doodle::maya_plug {
 class fbx_write;
@@ -17,7 +17,6 @@ class fbx_write;
  */
 class sequence_to_blend_shape {
  private:
- 
   // 需要计算的动画数据
   Eigen::MatrixXd anim_mesh_{};
 
@@ -49,9 +48,6 @@ class sequence_to_blend_shape {
   }
 
   virtual ~sequence_to_blend_shape();
-
-  sequence_to_blend_shape(sequence_to_blend_shape&& in) noexcept;
-  sequence_to_blend_shape& operator=(sequence_to_blend_shape&& in) noexcept;
 
   void add_sample(std::int64_t in_sample_index);
 

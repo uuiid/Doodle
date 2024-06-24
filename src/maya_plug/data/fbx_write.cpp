@@ -1131,6 +1131,8 @@ void fbx_write::write(
   l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
   anim_stack->LocalStop = l_fbx_end;
 
+  anim_time_            = {in_begin, in_end};
+
   MAnimControl::setCurrentTime(in_begin);
 
   std::vector<sequence_to_blend_shape> l_sequence_to_blend_shape{};
@@ -1431,6 +1433,8 @@ void fbx_write::not_export_anim(bool in_value) { export_anim_ = !in_value; }
 void fbx_write::ascii_fbx(bool in_value) { ascii_fbx_ = in_value; }
 void fbx_write::set_path(const FSys::path& in_path) { path_ = in_path; }
 void fbx_write::set_logger(const logger_ptr& in_logger) { logger_ = in_logger; }
+std::pair<MTime, MTime> fbx_write::get_anim_time() const { return anim_time_; };
+
 fbx_write_ns::fbx_node* fbx_write::find_node(const MDagPath& in_path) const {
   auto l_it = std::find_if(std::begin(tree_), std::end(tree_), [&](const fbx_node_ptr& in_value) -> bool {
     return in_value->dag_path == in_path;
