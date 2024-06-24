@@ -140,7 +140,7 @@ void sequence_to_blend_shape::compute() {
   num_blend_shape_       = l_diff.size();
 
   for (auto i = 0; i < l_diff.size(); ++i) {
-    if (l_diff[i] < 0.01) {
+    if (l_diff[i] < 0.1) {
       num_blend_shape_ = i;
       break;
     }
@@ -202,8 +202,12 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
       std::copy(l_mesh->GetControlPoints(), l_mesh->GetControlPoints() + l_mesh->GetControlPointsCount(), l_shape_pos);
       for (auto i = 0; i < l_mesh->GetControlPointsCount(); ++i) {
         auto l_index = i * 3;
-        l_shape_pos[i] +=
-            fbxsdk::FbxVector4{bs_mesh_(l_index + 0, col), bs_mesh_(l_index + 1, col), bs_mesh_(l_index + 2, col)};
+
+        fbxsdk::FbxVector4 l_pos{bs_mesh_(l_index + 0, col), bs_mesh_(l_index + 1, col), bs_mesh_(l_index + 2, col)};
+        if (l_pos.Length() < 0.00001) {
+          break;
+        }
+        l_shape_pos[i] += l_pos;
       }
       l_blend_channel->AddTargetShape(l_shape);
       l_blend_channels.emplace_back(l_blend_channel);
@@ -216,7 +220,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
     fbxsdk::FbxTime l_fbx_time{};
 
-    auto* l_layer           = l_node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
+    auto* l_layer = l_node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
     for (auto i = 0; i < num_blend_shape_; ++i) {
       auto l_anim_curve = l_blend_channels[i]->DeformPercent.GetCurve(l_layer, true);
       // std::cout << "curve " << i << "\n";
