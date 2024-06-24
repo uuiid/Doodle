@@ -1144,7 +1144,7 @@ void fbx_write::write(
 
   anim_time_            = {in_begin, in_end};
 
-  MGlobal::viewFrame(in_begin);
+  MAnimControl::setCurrentTime(in_begin);
 
   std::vector<sequence_to_blend_shape> l_sequence_to_blend_shape{};
   try {
@@ -1162,19 +1162,19 @@ void fbx_write::write(
 
     if (export_anim_) {
       for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-        MGlobal::viewFrame(l_time);
+        MAnimControl::setCurrentTime(l_time);
         build_animation(l_time);
-        // for (auto&& i : l_sequence_to_blend_shape) {
-        //   i.add_sample(l_time.value() - in_begin.value());
-        // }
+        for (auto&& i : l_sequence_to_blend_shape) {
+          i.add_sample(l_time.value() - in_begin.value());
+        }
       }
     }
-    // for (auto&& i : l_sequence_to_blend_shape) {
-    //   i.compute();
-    // }
-    // for (auto&& i : l_sequence_to_blend_shape) {
-    //   i.write_fbx(*this);
-    // }
+    for (auto&& i : l_sequence_to_blend_shape) {
+      i.compute();
+    }
+    for (auto&& i : l_sequence_to_blend_shape) {
+      i.write_fbx(*this);
+    }
 
   } catch (const std::exception& in_error) {
     auto l_str = boost::diagnostic_information(in_error);
@@ -1259,7 +1259,7 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
                   l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
               );
             } else {
-              auto l_mesh = std::make_shared<fbx_node_mesh_t>(
+              l_mesh = std::make_shared<fbx_node_mesh_t>(
                   l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
               );
             }
