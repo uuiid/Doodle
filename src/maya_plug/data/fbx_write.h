@@ -117,9 +117,9 @@ class fbx_write {
   using fbx_node_ptr         = fbx_write_ns::fbx_node_ptr;
   using fbx_tree_t           = fbx_write_ns::fbx_tree_t;
 
-  fbx_tree_t tree_{};                                                 // 用于存储节点的树
-  std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
-  std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};     // 用于存储节点的map
+  fbx_tree_t tree_{};                                                         // 用于存储节点的树
+  mutable std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
+  std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};             // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   fbx_write_ns::fbx_extra_data::bind_post_matrix_map_t bind_post_{};
   MObjectArray bind_pose_array_{};
@@ -166,7 +166,6 @@ class fbx_write {
   fbx_write_ns::fbx_node* find_node(const MDagPath& in_path) const;
 
   std::pair<MTime, MTime> get_anim_time() const;
-  fbxsdk::FbxLayer* get_main_layer() const;
 
   fbxsdk::FbxSurfaceLambert* find_material(const std::string& in_name) const;
 

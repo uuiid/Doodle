@@ -1398,6 +1398,24 @@ void fbx_write::not_export_anim(bool in_value) { export_anim_ = !in_value; }
 void fbx_write::ascii_fbx(bool in_value) { ascii_fbx_ = in_value; }
 void fbx_write::set_path(const FSys::path& in_path) { path_ = in_path; }
 void fbx_write::set_logger(const logger_ptr& in_logger) { logger_ = in_logger; }
+fbx_write_ns::fbx_node* fbx_write::find_node(const MDagPath& in_path) const {
+  auto l_it = std::find_if(std::begin(tree_), std::end(tree_), [&](const fbx_node_ptr& in_value) -> bool {
+    return in_value->dag_path == in_path;
+  });
+  if (l_it == std::end(tree_)) return nullptr;
+  return l_it->get();
+}
+
+fbxsdk::FbxSurfaceLambert* fbx_write::find_material(const std::string& in_obj) const {
+  auto l_it = material_map_.find(in_obj);
+  if (l_it == std::end(material_map_)) {
+    auto l_material = FbxSurfaceLambert::Create(scene_->GetFbxManager(), in_obj.c_str());
+    material_map_.emplace(in_obj, l_material);
+    return l_material;
+  }
+  return l_it->second;
+}
+
 void fbx_write::write_end() {
   if (!manager_) return;
   if (!scene_) return;
