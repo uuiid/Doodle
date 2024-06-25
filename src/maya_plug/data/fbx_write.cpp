@@ -1088,7 +1088,7 @@ void fbx_node_joint::build_data() {
   if (l_parent_path.hasFn(MFn::kTransform) && !l_parent_path.hasFn(MFn::kJoint)) {
     l_is_ = false;
   }
-  node->InheritType.Set(l_is_ ? FbxTransform::eInheritRrs : FbxTransform::eInheritRSrs);
+  node->InheritType.Set(l_is_ ? fbxsdk::FbxTransform::eInheritRrs : fbxsdk::FbxTransform::eInheritRSrs);
 }
 
 }  // namespace fbx_write_ns

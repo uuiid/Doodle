@@ -109,7 +109,7 @@ void sequence_to_blend_shape::compute() {
     }
   }
 
-  mesh_off_.resize(anim_mesh_.cols());
+  mesh_off_.reserve(anim_mesh_.cols());
 
   for (auto i = 0; i < anim_mesh_.cols(); ++i) {
     Eigen::AlignedBox3d l_box{};
