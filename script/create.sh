@@ -199,27 +199,11 @@ server {
 sudo rm /etc/nginx/sites-enabled/default
 sudo ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled
 
-sudo systemctl enable zou
-sudo systemctl enable zou-events
-sudo systemctl start zou
-sudo systemctl start zou-events
-sudo systemctl restart nginx
-
-
-
-"部署 Kitsu"
-
-cd /opt/
-sudo git clone -b build https://github.com/cgwire/kitsu
-cd kitsu
-git config --global --add safe.directory /opt/kitsu
-sudo git config --global --add safe.directory /opt/kitsu
-sudo git checkout build
-
-
-cd /opt/zou/
-DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou create-admin --password 8jO6sJm5EYAZSuZ7wy3P 957714080@qq.com
-DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou init-data
+"创建ssl证书"
+sudo mkdir /opt/ssl
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /opt/ssl/cert.key -out /opt/ssl/cert.crt
+"调整权限"
+sudo chown -R zou:www-data /opt/ssl
 
 
 "启动队列"
@@ -255,6 +239,32 @@ sudo systemctl enable zou-jobs
 sudo service zou-jobs start
 
 
+sudo systemctl enable zou
+sudo systemctl enable zou-events
+sudo systemctl start zou
+sudo systemctl start zou-events
+sudo systemctl restart nginx
+
+
+
+"部署 Kitsu"
+
+cd /opt/
+sudo git clone -b build https://github.com/cgwire/kitsu
+cd kitsu
+git config --global --add safe.directory /opt/kitsu
+sudo git config --global --add safe.directory /opt/kitsu
+sudo git checkout build
+
+初始化: 
+cd /opt/zou/
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou create-admin --password 8jO6sJm5EYAZSuZ7wy3P 957714080@qq.com
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou init-data
+
+
+
+
+
 
 
 sudo systemctl status zou
@@ -273,7 +283,9 @@ export http_proxy="http://192.168.40.53:10810/"&&export https_proxy="http://192.
 
 sudo git clone --branch master_sy https://github.com/uuiid/kitsu.git
 git fetch origin master_sy && git checkout origin/master_sy
+sudo cp -TRv /home/auto_light/dist /opt/kitsu/dist
 
+更新node
 cd /opt/test
 curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
@@ -283,7 +295,6 @@ sudo bash /tmp/nodesource_setup.sh
 sudo apt-get install nodejs -y
 sudo apt install nodejs -y
 
-sudo cp -TRv dist /opt/kitsu/dist
 
 
 更新核心
@@ -293,7 +304,46 @@ sudo systemctl restart zou&&sudo systemctl restart zou-events
 
 打开pg控制
 sudo nano /etc/postgresql/14/main/postgresql.conf
+listen_addresses = '*'                  # what IP address(es) to listen on;
 sudo ufw allow 5432
 sudo nano /etc/postgresql/14/main/pg_hba.conf
 host    all             all             192.168.40.53/32         md5
 sudo service postgresql restart
+
+
+"迁移数据库"
+
+source /opt/zou/env/bin/activate
+
+
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou clear-db
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou reset-migrations
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou upgrade-db
+
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj \
+SYNC_LOGIN="957714080@qq.com" \
+SYNC_PASSWORD="8jO6sJm5EYAZSuZ7wy3P" \
+zou sync-full --source http://192.168.40.182/api
+
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj \
+SYNC_LOGIN="957714080@qq.com" \
+SYNC_PASSWORD="8jO6sJm5EYAZSuZ7wy3P" \
+zou sync-full --source http://192.168.40.182/api --no-projects
+
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj \
+SYNC_LOGIN="957714080@qq.com" \
+SYNC_PASSWORD="8jO6sJm5EYAZSuZ7wy3P" \
+zou sync-full --source http://192.168.40.182/api --only-projects
+
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj \
+SYNC_LOGIN="957714080@qq.com" \
+SYNC_PASSWORD="8jO6sJm5EYAZSuZ7wy3P" \
+zou sync-full --source http://192.168.40.182/api --project AwesomeProject
+
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj \
+SYNC_LOGIN="957714080@qq.com" \
+SYNC_PASSWORD="8jO6sJm5EYAZSuZ7wy3P" \
+zou sync-full-files --source http://192.168.40.182/api
+
+
+pg_dump -C -h 192.168.40.182 -U postgres zoudb | psql -h localhost -U postgres zoudb
