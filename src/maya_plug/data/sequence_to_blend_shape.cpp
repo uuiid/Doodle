@@ -195,7 +195,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
       auto* l_shape = fbxsdk::FbxShape::Create(l_node->GetScene(), fmt::format("shape_{}", col).c_str());
       l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
       auto* l_blend_channel =
-          fbxsdk::FbxBlendShapeChannel::Create(l_node->GetScene(), fmt::format("blend_shape_channel_{}", col).c_str());
+          fbxsdk::FbxBlendShapeChannel::Create(l_node->GetScene(), fmt::format("{}_bsc_{}",l_node->GetName(), col).c_str());
 
       auto* l_shape_pos = l_shape->GetControlPoints();
       // 顶点
