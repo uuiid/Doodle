@@ -82,16 +82,18 @@
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2018/bin/maya.exe",
+            "program": "C:/Program Files/Autodesk/Maya2020/bin/maya.exe",
             "args": [
-                "-noAutoloadPlugins"
+                "-noAutoloadPlugins",
+                "-script",
+                "${workspaceFolder}/build/test_sim_fbx.mel"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
+                    "value": "${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya"
                 }
             ],
             "console": "internalConsole",
