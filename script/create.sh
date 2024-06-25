@@ -118,7 +118,8 @@ Environment="DOMAIN_NAME=192.168.40.182"
 
 Environment="USER_LIMIT=400"
 
-ExecStart=/opt/zou/env/bin/gunicorn  -c /etc/zou/gunicorn.conf -b 127.0.0.1:5000 zou.app:app
+RuntimeDirectory=zou
+ExecStart=/opt/zou/env/bin/gunicorn -p /run/zou/zou.pid -c /etc/zou/gunicorn.conf -b 127.0.0.1:5000 zou.app:app
 
 [Install]
 WantedBy=multi-user.target
@@ -144,7 +145,9 @@ WorkingDirectory=/opt/zou
 # Append DB_USERNAME=username DB_HOST=server when default values aren't used
 Environment="PATH=/opt/zou/env/bin"
 Environment="SECRET_KEY=yourrandomsecretkey" # Same one than zou.service
-ExecStart=/opt/zou/env/bin/gunicorn -c /etc/zou/gunicorn-events.conf -b 127.0.0.1:5001 zou.event_stream:app
+
+RuntimeDirectory=zou
+ExecStart=/opt/zou/env/bin/gunicorn -p /run/zou/zou-events.pid -c /etc/zou/gunicorn-events.conf -b 127.0.0.1:5001 zou.event_stream:app
 
 [Install]
 WantedBy=multi-user.target
@@ -207,7 +210,6 @@ sudo chown -R zou:www-data /opt/ssl
 
 
 "启动队列"
-
 sudo nano /etc/systemd/system/zou-jobs.service
 
 "
@@ -235,6 +237,69 @@ ExecStart=/opt/zou/env/bin/rq worker -c zou.job_settings
 WantedBy=multi-user.target
 
 "
+
+
+"轮换日志"
+
+sudo nano /etc/logrotate.d/zou
+
+"
+/opt/zou/logs/gunicorn_access.log {
+    daily
+    missingok
+    rotate 14
+    notifempty
+    nocompress
+    size 100M
+    create 644 zou zou
+    postrotate
+        kill -USR1 `cat /run/zou/zou.pid`
+    endscript
+}
+
+/opt/zou/logs/gunicorn_error.log {
+    daily
+    missingok
+    rotate 14
+    nocompress
+    size 100M
+    notifempty
+    create 644 zou zou
+    postrotate
+        kill -USR1 `cat /run/zou/zou.pid`
+    endscript
+}
+
+/opt/zou/logs/gunicorn_events_access.log {
+    daily
+    missingok
+    rotate 14
+    nocompress
+    size 100M
+    notifempty
+    create 644 zou zou
+    postrotate
+        kill -USR1 `cat /run/zou/zou-events.pid`
+    endscript
+}
+
+/opt/zou/logs/gunicorn_events_error.log {
+    daily
+    missingok
+    rotate 14
+    nocompress
+    size 100M
+    notifempty
+    create 644 zou zou
+    postrotate
+        kill -USR1 `cat /run/zou/zou-events.pid`
+    endscript
+}
+
+"
+
+logrotate /etc/logrotate.d/zou --debug
+
 sudo systemctl enable zou-jobs
 sudo service zou-jobs start
 
@@ -346,4 +411,4 @@ SYNC_PASSWORD="8jO6sJm5EYAZSuZ7wy3P" \
 zou sync-full-files --source http://192.168.40.182/api
 
 
-pg_dump -C -h 192.168.40.182 -U postgres zoudb | psql -h localhost -U postgres zoudb
+sudo cp -TRv /home/auto_light/previews /opt/zou/previews
