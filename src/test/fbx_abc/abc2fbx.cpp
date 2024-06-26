@@ -2,7 +2,6 @@
 // Created by td_main on 2023/9/12.
 //
 
-
 #include <doodle_lib/doodle_lib_all.h>
 
 #include <Alembic/Abc/ArchiveInfo.h>
@@ -26,6 +25,7 @@
 #include <Alembic/AbcGeom/OXform.h>
 #include <Alembic/AbcGeom/XformOp.h>
 #include <Alembic/Util/PlainOldDataType.h>
+#include <argh.h>
 #include <fbxsdk.h>
 namespace doodle {
 
@@ -141,7 +141,8 @@ void AddNodeRecursively(FbxArray<FbxNode*>& pNodeArray, FbxNode* pNode) {
 void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
   auto* l_manager = in_scene->GetFbxManager();
   std::shared_ptr<FbxExporter> l_exporter{
-      FbxExporter::Create(in_scene->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }};
+      FbxExporter::Create(in_scene->GetFbxManager(), ""), [](FbxExporter* in_exporter) { in_exporter->Destroy(); }
+  };
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_MATERIAL, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_TEXTURE, true);
   l_manager->GetIOSettings()->SetBoolProp(EXP_FBX_EMBEDDED, true);
