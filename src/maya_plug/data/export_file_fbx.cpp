@@ -122,6 +122,38 @@ FSys::path export_file_fbx::export_anim(
   return l_file_path;
 }
 
+FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file) {
+  std::vector<MDagPath> l_export_list{};
+  auto l_export_group = in_ref.export_group_attr();
+  if (!l_export_group) {
+    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
+    return {};
+  }
+
+  MItDag l_it{};
+  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
+  MDagPath l_path{};
+  for (; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getPath(l_path));
+    l_path.pop();
+    l_export_list.push_back(l_path);
+  }
+
+  m_namespace_ = in_ref.get_namespace();
+
+  bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
+
+  auto l_file_path = (*in_gen_file)(in_ref);
+  log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
+
+  std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj();
+
+  fbx_write l_fbx_write{};
+  l_fbx_write.set_path(l_file_path);
+  l_fbx_write.write(l_export_list, l_export_sim, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
+  return l_file_path;
+}
+
 FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
   auto& l_cam = g_reg()->ctx().get<maya_camera>();
   l_cam.unlock_attr();

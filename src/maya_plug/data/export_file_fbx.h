@@ -31,9 +31,11 @@ class export_file_fbx {
  public:
   export_file_fbx() = default;
 
-   FSys::path export_anim(
+  FSys::path export_anim(
       const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const MSelectionList& in_exclude = {}
   );
+
+  FSys::path export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file);
 
   FSys::path export_cam(const generate_file_path_ptr& in_gen);
 };
