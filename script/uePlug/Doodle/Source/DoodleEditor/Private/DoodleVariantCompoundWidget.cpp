@@ -599,7 +599,7 @@ FReply DoodleVariantCompoundWidget::OnLinkSkeletalMesh()
                     FVariantInfo Info = Data.Value;
                     for (int M = 0; M < Info.Variants.Num(); M++)
                     {
-                        if (M < Materials.Num())
+                        if (M < Materials.Num() && Info.Variants[M].MaterialSlotName.IsNone())
                             Info.Variants[M].MaterialSlotName = Materials[M].MaterialSlotName;
                     }
                     CurrentObject->AllVaraint[Data.Key] = Info;
@@ -658,7 +658,7 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
             FVariantInfo Info = Data.Value;
             for (int M=0;M<Info.Variants.Num();M++) 
             {
-                if(M< Materials.Num())
+                if(M< Materials.Num() && Info.Variants[M].MaterialSlotName.IsNone())
                     Info.Variants[M].MaterialSlotName = Materials[M].MaterialSlotName;
             }
             CurrentObject->AllVaraint[Data.Key] = Info;
