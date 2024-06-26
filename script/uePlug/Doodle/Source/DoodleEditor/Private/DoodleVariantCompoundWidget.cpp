@@ -27,7 +27,7 @@
 
 const FName DoodleVariantCompoundWidget::Name{ TEXT("VariantCompoundWidget") };
 
-DECLARE_DELEGATE_OneParam(FAssetDataParamDelegate, FAssetData);
+DECLARE_DELEGATE_TwoParams(FAssetDataParamDelegate, FAssetData,FName);
 DECLARE_DELEGATE_OneParam(FTextParamDelegate, FText);
 DECLARE_DELEGATE_OneParam(FECheckBoxStateParamDelegate, ECheckBoxState);
 DECLARE_DELEGATE_RetVal(ECheckBoxState,FReturnECheckBoxStateParam);
@@ -166,7 +166,7 @@ public:
                         {
                             if (AssetData.IsValid()) 
                             {
-                                OnObjectChanged.ExecuteIfBound(AssetData);
+                                OnObjectChanged.ExecuteIfBound(AssetData, InItem->Slot);
                             }
                         })
                         .AllowClear(true)
@@ -443,7 +443,7 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
         {
             OnMaterialCheckStateChanged.ExecuteIfBound(state, InItem->Index);
         })
-        .OnObjectChanged_Lambda([this, InItem](FAssetData AssetData)
+        .OnObjectChanged_Lambda([this, InItem](FAssetData AssetData,FName SlotName)
         {
             if (CurrentObject)
             {
@@ -453,7 +453,7 @@ TSharedRef<ITableRow> DoodleVariantCompoundWidget::MaterialListOnGenerateRow(TSh
                 TObjectPtr<UMaterialInterface> ui = Cast<UMaterialInterface>(AssetData.GetAsset());
                 if (ui) 
                 {
-                    Arr.Variants[index] = FSkeletalMaterial(ui);
+                    Arr.Variants[index] = FSkeletalMaterial(ui,true,false,SlotName);
                     CurrentObject->AllVaraint[NowVaraint] = Arr;
                     MaterialItems[index]->Material = Arr.Variants[index].MaterialInterface;
                     CurrentObject->Modify();
@@ -593,6 +593,17 @@ FReply DoodleVariantCompoundWidget::OnLinkSkeletalMesh()
                     return FReply::Handled();
                 }
                 CurrentObject->Mesh = L_Mesh;
+                TArray<FSkeletalMaterial> Materials = L_Mesh->GetMaterials();
+                for (TPair<FString, FVariantInfo> Data : CurrentObject->AllVaraint)
+                {
+                    FVariantInfo Info = Data.Value;
+                    for (int M = 0; M < Info.Variants.Num(); M++)
+                    {
+                        if (M < Materials.Num())
+                            Info.Variants[M].MaterialSlotName = Materials[M].MaterialSlotName;
+                    }
+                    CurrentObject->AllVaraint[Data.Key] = Info;
+                }
                 //------------------------
                 UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
                 UserData->VariantObj = CurrentObject;
@@ -640,6 +651,19 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
         NameText->SetColorAndOpacity(FLinearColor::White);
         NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
         ButtonLinkMesh->SetVisibility(EVisibility::Hidden);
+        //-----------------
+        TArray<FSkeletalMaterial> Materials = CurrentObject->Mesh->GetMaterials();
+        for (TPair<FString, FVariantInfo> Data : CurrentObject->AllVaraint)
+        {
+            FVariantInfo Info = Data.Value;
+            for (int M=0;M<Info.Variants.Num();M++) 
+            {
+                if(M< Materials.Num())
+                    Info.Variants[M].MaterialSlotName = Materials[M].MaterialSlotName;
+            }
+            CurrentObject->AllVaraint[Data.Key] = Info;
+        }
+        CurrentObject->Modify();
     }
     else
     {
@@ -817,7 +841,10 @@ FReply DoodleVariantCompoundWidget::OnVariantAttach(FString TheVaraint)
     TArray<FSkeletalMaterial> L_List = CurrentObject->AllVaraint[TheVaraint].Variants;
     for (int i = 0;i < L_List.Num();i++)
     {
-        L_Skin->GetSkeletalMeshComponent()->SetMaterial(i, L_List[i].MaterialInterface);
+        FName SlotName = L_List[i].MaterialSlotName;
+        int32 Index = L_Skin->GetSkeletalMeshComponent()->GetMaterialIndex(SlotName);
+        if(Index!=-1)
+        L_Skin->GetSkeletalMeshComponent()->SetMaterial(Index, L_List[i].MaterialInterface);
     }
     L_Skin->GetSkeletalMeshComponent()->PostApplyToComponent();
     //-----------------------
