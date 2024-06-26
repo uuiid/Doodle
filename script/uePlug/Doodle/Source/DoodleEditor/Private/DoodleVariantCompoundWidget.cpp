@@ -593,6 +593,17 @@ FReply DoodleVariantCompoundWidget::OnLinkSkeletalMesh()
                     return FReply::Handled();
                 }
                 CurrentObject->Mesh = L_Mesh;
+                TArray<FSkeletalMaterial> Materials = L_Mesh->GetMaterials();
+                for (TPair<FString, FVariantInfo> Data : CurrentObject->AllVaraint)
+                {
+                    FVariantInfo Info = Data.Value;
+                    for (int M = 0; M < Info.Variants.Num(); M++)
+                    {
+                        if (M < Materials.Num())
+                            Info.Variants[M].MaterialSlotName = Materials[M].MaterialSlotName;
+                    }
+                    CurrentObject->AllVaraint[Data.Key] = Info;
+                }
                 //------------------------
                 UDoodleVariantAssetUserData* UserData = NewObject<UDoodleVariantAssetUserData>(L_Mesh, NAME_None, RF_NoFlags);
                 UserData->VariantObj = CurrentObject;
@@ -640,6 +651,19 @@ void DoodleVariantCompoundWidget::SetSetVariantData(UDoodleVariantObject* obj)
         NameText->SetColorAndOpacity(FLinearColor::White);
         NameText->SetText(FText::FromString(CurrentObject->Mesh->GetPathName()));
         ButtonLinkMesh->SetVisibility(EVisibility::Hidden);
+        //-----------------
+        TArray<FSkeletalMaterial> Materials = CurrentObject->Mesh->GetMaterials();
+        for (TPair<FString, FVariantInfo> Data : CurrentObject->AllVaraint)
+        {
+            FVariantInfo Info = Data.Value;
+            for (int M=0;M<Info.Variants.Num();M++) 
+            {
+                if(M< Materials.Num())
+                    Info.Variants[M].MaterialSlotName = Materials[M].MaterialSlotName;
+            }
+            CurrentObject->AllVaraint[Data.Key] = Info;
+        }
+        CurrentObject->Modify();
     }
     else
     {
