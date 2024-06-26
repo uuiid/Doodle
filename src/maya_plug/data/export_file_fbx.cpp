@@ -141,12 +141,16 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
 
   m_namespace_ = in_ref.get_namespace();
 
-  bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
+  // bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
 
   auto l_file_path = (*in_gen_file)(in_ref);
   log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
 
   std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj();
+  // 排除 export_sim 中的物体
+  std::erase_if(l_export_list, [&](const MDagPath& in) {
+    return std::ranges::find(l_export_sim, in) != l_export_sim.end();
+  });
 
   fbx_write l_fbx_write{};
   l_fbx_write.set_path(l_file_path);
