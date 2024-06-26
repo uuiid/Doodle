@@ -32,7 +32,6 @@ namespace doodle::maya_plug {
 
 void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, const MDagPath& in_path) {
   MStatus k_s{};
-  auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
   /**
    *
    * @brief
@@ -85,12 +84,10 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 }
 
 FSys::path export_file_fbx::export_anim(
-    const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view, const MSelectionList& in_exclude
+    const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const MSelectionList& in_exclude
 ) {
   std::vector<MDagPath> l_export_list{};
-  auto& k_cfg         = g_reg()->ctx().get<project_config::base_config>();
-  auto& l_ref         = in_handle_view.get<reference_file>();
-  auto l_export_group = l_ref.export_group_attr();
+  auto l_export_group = in_ref.export_group_attr();
   if (!l_export_group) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return {};
@@ -111,33 +108,63 @@ FSys::path export_file_fbx::export_anim(
     l_export_list.push_back(l_path);
   }
 
-  m_namespace_ = l_ref.get_namespace();
+  m_namespace_ = in_ref.get_namespace();
   log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));
 
-  auto l_arg = in_handle_view.get<generate_file_path_ptr>();
-  bake_anim(l_arg->begin_end_time.first, l_arg->begin_end_time.second, *l_export_group);
+  bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
 
-  auto l_file_path = (*l_arg)(l_ref);
+  auto l_file_path = (*in_gen_file)(in_ref);
   log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
 
   fbx_write l_fbx_write{};
   l_fbx_write.set_path(l_file_path);
-  l_fbx_write.write(l_export_list, l_arg->begin_end_time.first, l_arg->begin_end_time.second);
+  l_fbx_write.write(l_export_list, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
   return l_file_path;
 }
 
-FSys::path export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view) {
-  auto& l_arg = in_handle_view.get<generate_file_path_ptr>();
+FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file) {
+  std::vector<MDagPath> l_export_list{};
+  auto l_export_group = in_ref.export_group_attr();
+  if (!l_export_group) {
+    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
+    return {};
+  }
+
+  MItDag l_it{};
+  maya_chick(l_it.reset(*l_export_group, MItDag::kDepthFirst, MFn::kMesh));
+  MDagPath l_path{};
+  for (; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getPath(l_path));
+    l_path.pop();
+    l_export_list.push_back(l_path);
+  }
+
+  m_namespace_ = in_ref.get_namespace();
+
+  bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
+
+  auto l_file_path = (*in_gen_file)(in_ref);
+  log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
+
+  std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj();
+
+  fbx_write l_fbx_write{};
+  l_fbx_write.set_path(l_file_path);
+  l_fbx_write.write(l_export_list, l_export_sim, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
+  return l_file_path;
+}
+
+FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
   auto& l_cam = g_reg()->ctx().get<maya_camera>();
   l_cam.unlock_attr();
-  l_cam.back_camera(l_arg->begin_end_time.first, l_arg->begin_end_time.second);
+  l_cam.back_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", l_cam.get_transform_name());
   if (l_cam.camera_parent_is_word()) {
-    l_cam.fix_group_camera(l_arg->begin_end_time.first, l_arg->begin_end_time.second);
+    l_cam.fix_group_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   }
   auto&& [l_b, l_p] = g_reg()->ctx().get<maya_camera>().export_file(
-      l_arg->begin_end_time.first, l_arg->begin_end_time.second,
-      std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(l_arg)
+      in_gen->begin_end_time.first, in_gen->begin_end_time.second,
+      std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(in_gen)
   );
   return l_p;
 }

@@ -44,7 +44,7 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
 
   auto l_cloth = qcloth_factory{}.create_cloth();
   DOODLE_LOG_INFO("开始导出abc");
-  export_file_abc l_ex{};
+
   auto l_gen               = std::make_shared<reference_file_ns::generate_abc_file_path>();
 
   auto l_config_export     = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
@@ -55,11 +55,8 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
 
   export_file_fbx l_ex_fbx{};
   ranges::for_each(l_refs, [&](entt::handle& in_handle) {
-    in_handle.emplace<generate_file_path_ptr>(l_gen);
-    l_gen->set_fbx_path(false);
-    l_ex.export_sim(in_handle);
     l_gen->set_fbx_path(true);
-    l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
+    l_ex_fbx.export_sim(in_handle.get<reference_file>(), l_gen);
   });
 
   return MStatus{};

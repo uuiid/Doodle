@@ -160,7 +160,7 @@ void cloth_sim::touch_sim() {
   ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
     auto l_c     = in_handle.get<cloth_interface>();
     auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->rest(l_ref_h);              /// 添加rest
+    l_c->rest(l_ref_h);                     /// 添加rest
     l_c->set_cache_folder(l_ref_h, false);  /// 设置缓存文件夹
   });
 
@@ -187,25 +187,15 @@ void cloth_sim::play_blast() {
 }
 
 void cloth_sim::export_abc() {
-  DOODLE_LOG_INFO("开始导出abc");
-  export_file_abc l_ex{};
+  DOODLE_LOG_INFO("开始导出解算fbx");
   auto l_gen             = std::make_shared<reference_file_ns::generate_abc_file_path>();
   const MTime k_end_time = MAnimControl::maxTime();
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
 
   export_file_fbx l_ex_fbx{};
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    in_handle.emplace<generate_file_path_ptr>(l_gen);
-    l_gen->set_fbx_path(false);
-    auto l_sim_path = l_ex.export_sim(in_handle);
-    for (auto&& i : l_sim_path) {
-      if (!i.empty()) {
-        out_and_ref_file_map_[in_handle].emplace_back(i);
-      }
-    }
-    if (l_ex.get_export_list().isEmpty()) return;
     l_gen->set_fbx_path(true);
-    auto l_path = l_ex_fbx.export_anim(in_handle, l_ex.get_export_list());
+    auto l_path = l_ex_fbx.export_sim(in_handle.get<reference_file>(), l_gen);
     if (!l_path.empty()) {
       out_and_ref_file_map_[in_handle].emplace_back(l_path);
     }
@@ -218,9 +208,7 @@ void cloth_sim::export_fbx() {
   auto l_gen             = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   const MTime k_end_time = MAnimControl::maxTime();
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    in_handle.emplace<generate_file_path_ptr>(l_gen);
-  });
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { in_handle.emplace<generate_file_path_ptr>(l_gen); });
 }
 void cloth_sim::export_anim_file() {
   DOODLE_LOG_INFO("开始导出动画文件");
@@ -236,8 +224,7 @@ void cloth_sim::export_anim_file() {
       [&](entt::handle& in_handle) {
         auto& l_ref = in_handle.get<reference_file>();
         if (!l_ref.is_loaded()) l_ref.load_file();
-        in_handle.emplace<generate_file_path_ptr>(l_gen);
-        auto l_path = l_ex.export_anim(in_handle);
+        auto l_path = l_ex.export_anim(l_ref, l_gen);
         if (!l_path.empty()) {
           out_and_ref_file_map_[in_handle].emplace_back(l_path);
         }
@@ -245,9 +232,7 @@ void cloth_sim::export_anim_file() {
   );
   // 导出相机
   g_reg()->ctx().emplace<maya_camera>().conjecture();
-  auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_h.emplace<generate_file_path_ptr>(l_gen);
-  camera_path_ = l_ex.export_cam(l_h);
+  camera_path_ = l_ex.export_cam(l_gen);
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");

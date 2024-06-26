@@ -59,8 +59,7 @@ void export_fbx_facet::export_fbx() {
   l_out_arg.end_time    = MAnimControl::maxTime().value();
   for (auto&& i : ref_files_) {
     if (i.get<reference_file>().export_group_attr()) {
-      i.emplace<generate_file_path_ptr>(l_gen);
-      auto l_path = l_ex.export_anim(i);
+      auto l_path = l_ex.export_anim(i.get<reference_file>(), l_gen);
       if (!l_path.empty()) {
         l_out_arg.out_file_list.emplace_back(l_path, i.get<reference_file>().get_abs_path());
       }
@@ -70,9 +69,7 @@ void export_fbx_facet::export_fbx() {
     }
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
-  auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_h.emplace<generate_file_path_ptr>(l_gen);
-  auto l_cam_path = l_ex.export_cam(l_h);
+  auto l_cam_path = l_ex.export_cam(l_gen);
 
   l_out_arg.out_file_list.emplace_back(l_cam_path, FSys::path{});
 
