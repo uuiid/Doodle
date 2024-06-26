@@ -31,12 +31,11 @@ class export_file_fbx {
  public:
   export_file_fbx() = default;
 
-  FSys::path export_anim(
-      const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view,
-      const MSelectionList& in_exclude = {}
+   FSys::path export_anim(
+      const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const MSelectionList& in_exclude = {}
   );
- 
-  FSys::path export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view);
+
+  FSys::path export_cam(const generate_file_path_ptr& in_gen);
 };
 
 }  // namespace doodle::maya_plug
