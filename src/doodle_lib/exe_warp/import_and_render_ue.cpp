@@ -113,7 +113,7 @@ void import_and_render_ue::fix_config() const {
 [/Script/Engine.RendererSettings]
 r.TextureStreaming=True
 r.GBufferFormat=3
-r.AllowStaticLighting=False
+r.AllowStaticLighting=True
 r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
@@ -129,7 +129,7 @@ r.Nanite.ProjectEnabled=False
     l_str += R"([/Script/Engine.RendererSettings]
 r.TextureStreaming=True
 r.GBufferFormat=1
-r.AllowStaticLighting=False
+r.AllowStaticLighting=True
 r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
@@ -149,7 +149,7 @@ r.Nanite.ProjectEnabled=False
   };
   l_set_data("r.TextureStreaming", "True");
   l_set_data("r.GBufferFormat", "1");
-  l_set_data("r.AllowStaticLighting", "False");
+  l_set_data("r.AllowStaticLighting", "True");
   l_set_data("r.Streaming.PoolSize", "16384");
   l_set_data("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject", "False");
   l_set_data("r.Lumen.HardwareRayTracing", "False");
