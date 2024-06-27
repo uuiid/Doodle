@@ -52,6 +52,10 @@
 #include "Tracks/MovieScene3DTransformTrack.h"
 #include "Components/LightComponent.h"
 
+//---
+
+#include "Components/DirectionalLightComponent.h"
+
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
 	LogToConsole = true;
@@ -327,11 +331,38 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
     }
     //-----------------------
     DirectionalLight1 = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
-    DirectionalLight1->SetBrightness(10.0f);
+    DirectionalLight1->SetBrightness(2.0f);
     DirectionalLight1->GetLightComponent()->SetLightingChannels(false, true, false);
+	
     DirectionalLight2 = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
     DirectionalLight2->SetBrightness(7.0f);
     DirectionalLight2->GetLightComponent()->SetLightingChannels(false, true, false);
+	
+	// 设置可移动性
+	DirectionalLight1->SetMobility(EComponentMobility::Movable);
+	DirectionalLight2->SetMobility(EComponentMobility::Movable);
+	
+	// 设置源角度
+    DirectionalLight1->GetComponent()->SetLightSourceAngle(15);
+	DirectionalLight2->GetComponent()->SetLightSourceAngle(15);
+
+	// 设置间接光强度
+	DirectionalLight1->GetComponent()->SetIndirectLightingIntensity(0.0f);
+	DirectionalLight2->GetComponent()->SetIndirectLightingIntensity(0.0f);
+
+	// 设置体积散射光强度
+	DirectionalLight1->GetComponent()->SetVolumetricScatteringIntensity(0.0f);
+	DirectionalLight2->GetComponent()->SetVolumetricScatteringIntensity(0.0f);
+
+	// 设置大气太阳光
+	DirectionalLight1->GetComponent()->SetAtmosphereSunLight(false);
+	DirectionalLight2->GetComponent()->SetAtmosphereSunLight(false);
+
+	// 设置影响半透明
+	DirectionalLight1->GetComponent()->SetAffectTranslucentLighting(false);
+	DirectionalLight2->GetComponent()->SetAffectTranslucentLighting(false);
+	
+
 }
 
 void UDoodleAutoAnimationCommandlet::OnBuildSequence()
