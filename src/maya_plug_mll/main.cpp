@@ -197,7 +197,7 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
 
   /// 添加创建布料命令
-  status = maya_reg->register_command<::doodle::maya_plug::create_qcloth_assets>(k_plugin);
+  status = maya_reg->register_command<::doodle::maya_plug::create_qcloth_assets_context_comm>(k_plugin);
   CHECK_MSTATUS(status);
 
   /// 添加加载实体命令

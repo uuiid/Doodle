@@ -137,4 +137,53 @@ void create_qcloth_assets::reset_properties() {
 }
 
 create_qcloth_assets::~create_qcloth_assets() = default;
+
+//////////////////////////
+
+void* create_qcloth_assets_comm::creator() { return new create_qcloth_assets_comm{}; }
+
+bool create_qcloth_assets_comm::hasSyntax() const { return true; }
+
+bool create_qcloth_assets_comm::isUndoable() const { return true; }
+
+MStatus create_qcloth_assets_comm::doIt(const MArgList& in_arg) {
+  MGlobal::displayInfo("doIt");
+  return redoIt();
+}
+
+MStatus create_qcloth_assets_comm::redoIt() {
+  MGlobal::displayInfo("redoIt");
+  return MStatus::kSuccess;
+}
+
+MStatus create_qcloth_assets_comm::undoIt() {
+  MGlobal::displayInfo("undoIt");
+  return MStatus::kSuccess;
+}
+
+/////////////////////////////
+
+void create_qcloth_assets_context::toolOnSetup(MEvent& in_event) {
+  MGlobal::displayInfo("toolOnSetup");
+
+  setAllowDoubleClickAction();
+  setAllowPreSelectHilight();
+}
+
+void create_qcloth_assets_context::toolOffCleanup() { MGlobal::displayInfo("toolOffCleanup"); }
+
+void create_qcloth_assets_context::getClassName(MString& in_name) const { in_name = "create_qcloth_assets_context"; }
+
+void create_qcloth_assets_context::deleteAction() { MGlobal::displayInfo("deleteAction"); }
+
+void completeAction() { MGlobal::displayInfo("completeAction"); }
+
+void create_qcloth_assets_context::abortAction() { MGlobal::displayInfo("abortAction"); }
+
+/////////////////////////////
+
+void* create_qcloth_assets_context_comm::creator() { return new create_qcloth_assets_context_comm{}; }
+
+MPxContext* create_qcloth_assets_context_comm::makeObj() { return new create_qcloth_assets_context{}; }
+
 }  // namespace doodle::maya_plug
