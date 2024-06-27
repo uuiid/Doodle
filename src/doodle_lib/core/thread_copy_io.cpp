@@ -55,7 +55,7 @@ boost::system::error_code thread_copy_io_service::copy_impl(
   static std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
   for (int i = 0; i < 10; ++i) {
     try {
-      in_logger->log(log_loc(), spdlog::level::info, "复制 {} -> {}", from, to);
+      in_logger->log(log_loc(), spdlog::level::warn, "复制 {} -> {}", from, to);
       if (FSys::is_regular_file(from) && !FSys::is_hidden(from) &&
           from.extension() != doodle_config::doodle_flag_name) {
         in_fun_ptr(from, to);
