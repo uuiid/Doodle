@@ -362,6 +362,11 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
 	// 设置影响半透明
 	DirectionalLight1->GetComponent()->SetAffectTranslucentLighting(false);
 	DirectionalLight2->GetComponent()->SetAffectTranslucentLighting(false);
+
+	// 取消投射阴影
+	DirectionalLight1->GetComponent()->SetCastShadows(false);
+	// 高光度范围
+	DirectionalLight1->GetComponent()->SetSpecularScale(0.2f);
 	
 
 }
