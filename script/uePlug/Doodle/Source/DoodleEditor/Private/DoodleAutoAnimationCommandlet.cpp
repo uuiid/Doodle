@@ -55,7 +55,8 @@
 //---
 
 #include "Components/DirectionalLightComponent.h"
-
+#include "MoviePipelineAntiAliasingSetting.h"
+#include "MoviePipelineGameOverrideSetting.h"
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
 	LogToConsole = true;
@@ -700,6 +701,23 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
     }
     Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
     Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
+
+	// 设置抗拒齿方法
+    UMoviePipelineAntiAliasingSetting * AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass()));
+    if (AntiAliasing) {
+		AntiAliasing->SpatialSampleCount = 1;
+		AntiAliasing->TemporalSampleCount = 1;
+		AntiAliasing->bOverrideAntiAliasing = true;
+		AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
+		AntiAliasing->bRenderWarmUpFrames = true;
+		AntiAliasing->EngineWarmUpCount = 64;
+	}
+	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass()));
+		GameOver)
+	{
+		GameOver->bCinematicQualitySettings = false;
+	}
+
     //-------------------------Save
     MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
     FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
