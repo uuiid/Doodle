@@ -27,9 +27,8 @@ class scan_win_service_t {
   std::map<FSys::path, entt::handle> path_map_;
 
   void scan();
-  void open_project();
 
-  void end_open_project();
+  void begin_scan();
   void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec);
 
   void on_timer(const boost::system::error_code& ec);
@@ -39,5 +38,7 @@ class scan_win_service_t {
   ~scan_win_service_t() = default;
 
   void start();
+
+  inline auto get_scan_data() const { return scam_data_vec_; }
 };
 }  // namespace doodle
