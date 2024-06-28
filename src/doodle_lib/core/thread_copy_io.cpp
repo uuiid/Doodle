@@ -117,7 +117,7 @@ boost::system::error_code thread_copy_io_service::delete_impl(
       if (FSys::is_regular_file(from)) {
         return l_ec;
       }
-
+      std::vector<FSys::path> l_remove_files{};
       if (in_options == FSys::copy_options::recursive) {
         for (auto &&l_file : FSys::recursive_directory_iterator(to)) {
           auto l_lex_path = l_file.path().lexically_proximate(to);
@@ -131,10 +131,11 @@ boost::system::error_code thread_copy_io_service::delete_impl(
             continue;
           }
 
-          if (FSys::exists(from / l_lex_path)) {
-            FSys::remove_all(l_file.path());
+          if (!FSys::exists(from / l_lex_path)) {
+            l_remove_files.emplace_back(l_file.path());
           }
         }
+
       } else {
         for (auto &&l_file : FSys::directory_iterator(from)) {
           auto l_lex_path = l_file.path().lexically_proximate(to);
@@ -148,10 +149,15 @@ boost::system::error_code thread_copy_io_service::delete_impl(
           }
 
           if (FSys::exists(from / l_lex_path)) {
-            FSys::remove_all(l_file.path());
+            l_remove_files.emplace_back(l_file.path());
           }
         }
       }
+
+      for (auto &&l_file : l_remove_files) {
+        FSys::remove_all(l_file);
+      }
+
       return l_ec;
     } catch (const FSys::filesystem_error &in_error) {
       if (in_error.code() == l_error_code_NETNAME_DELETED) {
