@@ -92,6 +92,11 @@ void scan_win_service_t::scan() {
 }
 void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec) {
   scam_data_vec_ |= ranges::actions::push_back(in_data_vec);
+  for (auto&& l_data : in_data_vec) {
+    scan_data_map_[l_data->rig_file_.uuid_] = l_data;
+    scan_data_map_[l_data->ue_file_.uuid_] = l_data;
+    scan_data_map_[l_data->solve_file_.uuid_] = l_data;
+  }
 
     // 开始启动下一次循环
   if (app_base::GetPtr()->is_stop()) return;

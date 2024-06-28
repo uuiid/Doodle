@@ -26,6 +26,8 @@ class scan_win_service_t {
   std::map<uuid, entt::handle> handle_map_;
   std::map<FSys::path, entt::handle> path_map_;
 
+  std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr> scan_data_map_;
+
   void scan();
 
   void begin_scan();
@@ -39,6 +41,6 @@ class scan_win_service_t {
 
   void start();
 
-  inline auto get_scan_data() const { return scam_data_vec_; }
+  inline auto get_scan_data() const { return scan_data_map_; }
 };
 }  // namespace doodle
