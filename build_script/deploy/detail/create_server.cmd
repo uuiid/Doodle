@@ -1,2 +1,2 @@
-nssm install doodle_scan_win_service D:/doodle_exe/bin/doodle_auto_light.exe
-nssm set doodle_scan_win_service ObjectName auto_light root
+nssm install file_association_http D:/doodle_exe/bin/file_association_http.exe
+nssm set file_association_http ObjectName auto_light root
