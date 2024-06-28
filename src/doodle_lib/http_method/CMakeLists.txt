@@ -12,6 +12,7 @@ target_sources(
         computing_time.h
         dingding_attendance.h
         user_http.h
+        file_association.h
         
         PRIVATE
         computer.cpp
@@ -23,4 +24,5 @@ target_sources(
         computing_time.cpp
         dingding_attendance.cpp
         user_http.cpp
+        file_association.cpp
 )
