@@ -18,14 +18,16 @@ class create_qcloth_assets
     : public TemplateAction<create_qcloth_assets, create_qcloth_assets_ns::name, create_qcloth_assets_ns::syntax> {
   class impl;
   std::unique_ptr<impl> p_i;
+  struct create_arg {
+    MObject low_obj_;
+    std::vector<MObject> high_obj_list_;
+  };
 
   void parse_arg(const MArgList& in_arg);
   static std::vector<MObject> get_all_node();
 
   void delete_node();
   void reset_properties();
-
-  void filter_create_node(const std::vector<MObject>& in_obj);
 
  public:
   create_qcloth_assets();
