@@ -2,7 +2,7 @@
 // Created by TD on 2023/12/29.
 //
 
-#include "auto_light_service.h"
+#include "file_association_http.h"
 
 #include <doodle_core/core/app_service.h>
 #include <doodle_core/database_task/sqlite_client.h>
