@@ -18,7 +18,7 @@
 #include <windows.h>
 namespace doodle::launch {
 
-struct auto_light_service_args_t {
+struct file_association_http_args_t {
   std::string kitsu_ip_;
   std::string kitsu_port_;
   std::uint16_t port_;
@@ -26,7 +26,7 @@ struct auto_light_service_args_t {
   std::string kitsu_token_{};
 
   // form json
-  friend void from_json(const nlohmann::json& in_json, auto_light_service_args_t& out_obj) {
+  friend void from_json(const nlohmann::json& in_json, file_association_http_t& out_obj) {
     if (in_json.contains("kitsu_ip")) in_json.at("kitsu_ip").get_to(out_obj.kitsu_ip_);
     if (in_json.contains("kitsu_port")) in_json.at("kitsu_port").get_to(out_obj.kitsu_port_);
     if (in_json.contains("kitsu_token")) in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
@@ -34,7 +34,7 @@ struct auto_light_service_args_t {
   }
 };
 
-bool auto_light_service_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   auto l_scan = g_ctx().emplace<scan_win_service_t>();
   l_scan.start();
 

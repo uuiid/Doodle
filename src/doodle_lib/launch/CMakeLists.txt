@@ -2,7 +2,7 @@ target_sources(
         doodle_lib
         PUBLIC
         main_gui.h
-        auto_light_service.h
+        file_association_http.h
         http_distributed_tasks.h
         http_working_service.h
         auto_light_process.h
@@ -11,7 +11,7 @@ target_sources(
 
         PRIVATE
         main_gui.cpp
-        auto_light_service.cpp
+        file_association_http.cpp
         http_distributed_tasks.cpp
         http_working_service.cpp
         auto_light_process.cpp
