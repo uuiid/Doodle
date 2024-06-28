@@ -14,18 +14,25 @@
 namespace doodle::maya_plug {
 namespace create_qcloth_assets_ns {
 
-char cloth[]       = {"-c"};
-char cloth_l[]     = {"-cloth"};
+constexpr char cloth[]       = {"-c"};
+constexpr char cloth_l[]     = {"-cloth"};
 
-char collision[]   = {"-co"};
-char collision_l[] = {"-collision"};
+constexpr char collision[]   = {"-co"};
+constexpr char collision_l[] = {"-collision"};
+
+constexpr char add[]         = {"-a"};
+constexpr char add_l[]       = {"-add"};
+
+constexpr char create[]      = {"-cr"};
+constexpr char create_l[]    = {"-create"};
 
 MSyntax syntax() {
   MSyntax l_syntax{};
-  l_syntax.addFlag(cloth, cloth_l, MSyntax::MArgType::kLong);
-  l_syntax.addFlag(collision, collision_l, MSyntax::MArgType::kLong);
+  l_syntax.addFlag(cloth, cloth_l, MSyntax::MArgType::kString);
+  l_syntax.addFlag(collision, collision_l, MSyntax::MArgType::kString);
 
   l_syntax.makeFlagMultiUse(cloth);
+  l_syntax.makeFlagMultiUse(collision);
   l_syntax.enableQuery(false);
   l_syntax.enableEdit(false);
   return l_syntax;
@@ -38,6 +45,8 @@ class create_qcloth_assets::impl {
   entt::handle coll_p;
 
   std::vector<MObject> create_nodes{};
+
+  bool is_edit;
 };
 
 create_qcloth_assets::create_qcloth_assets() : p_i(std::make_unique<impl>()) {}
@@ -45,6 +54,14 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
   DOODLE_LOG_INFO(in_arg);
   MStatus l_s{};
   MArgDatabase const l_arg{syntax(), in_arg, &l_s};
+
+  if (l_arg.isEdit(&l_s)) {
+    DOODLE_MAYA_CHICK(l_s);
+    MGlobal::displayError(conv::to_ms(fmt::format("编辑 {}", fmt::ptr(this))));
+    p_i->is_edit = true;
+    return;
+  }
+
   if (l_arg.isFlagSet(create_qcloth_assets_ns::cloth, &l_s)) {
     DOODLE_MAYA_CHICK(l_s);
     auto l_num = l_arg.numberOfFlagUses(create_qcloth_assets_ns::cloth);
@@ -71,7 +88,8 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
 }
 MStatus create_qcloth_assets::doIt(const MArgList& in_arg) {
   parse_arg(in_arg);
-  return redoIt();
+  return MStatus::kSuccess;
+  // return redoIt();
 }
 MStatus create_qcloth_assets::undoIt() {
   // 删除所有的创建成功的层级
@@ -84,6 +102,8 @@ MStatus create_qcloth_assets::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {
+  if (p_i->is_edit) return MStatus::kSuccess;
+
   auto l_org_list = get_all_node();
   try {
     for (auto& l_h : p_i->cloth_list) {
@@ -137,53 +157,5 @@ void create_qcloth_assets::reset_properties() {
 }
 
 create_qcloth_assets::~create_qcloth_assets() = default;
-
-//////////////////////////
-
-void* create_qcloth_assets_comm::creator() { return new create_qcloth_assets_comm{}; }
-
-bool create_qcloth_assets_comm::hasSyntax() const { return true; }
-
-bool create_qcloth_assets_comm::isUndoable() const { return true; }
-
-MStatus create_qcloth_assets_comm::doIt(const MArgList& in_arg) {
-  MGlobal::displayInfo("doIt");
-  return redoIt();
-}
-
-MStatus create_qcloth_assets_comm::redoIt() {
-  MGlobal::displayInfo("redoIt");
-  return MStatus::kSuccess;
-}
-
-MStatus create_qcloth_assets_comm::undoIt() {
-  MGlobal::displayInfo("undoIt");
-  return MStatus::kSuccess;
-}
-
-/////////////////////////////
-
-void create_qcloth_assets_context::toolOnSetup(MEvent& in_event) {
-  MGlobal::displayInfo("toolOnSetup");
-
-  setAllowDoubleClickAction();
-  setAllowPreSelectHilight();
-}
-
-void create_qcloth_assets_context::toolOffCleanup() { MGlobal::displayInfo("toolOffCleanup"); }
-
-void create_qcloth_assets_context::getClassName(MString& in_name) const { in_name = "create_qcloth_assets_context"; }
-
-void create_qcloth_assets_context::deleteAction() { MGlobal::displayInfo("deleteAction"); }
-
-void completeAction() { MGlobal::displayInfo("completeAction"); }
-
-void create_qcloth_assets_context::abortAction() { MGlobal::displayInfo("abortAction"); }
-
-/////////////////////////////
-
-void* create_qcloth_assets_context_comm::creator() { return new create_qcloth_assets_context_comm{}; }
-
-MPxContext* create_qcloth_assets_context_comm::makeObj() { return new create_qcloth_assets_context{}; }
 
 }  // namespace doodle::maya_plug
