@@ -124,23 +124,6 @@ MObject qcloth_shape::get_ql_solver() {
   return l_object;
 }
 
-MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
-  MStatus l_s{};
-  MObject l_skin_cluster{};
-  /// \brief 获得组件点上下文
-  auto l_shape = maya_plug::get_shape(in_anim_node);
-
-  /// 寻找高模的皮肤簇
-  for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
-       i.next()) {
-    l_skin_cluster = i.currentItem(&l_s);
-    DOODLE_MAYA_CHICK(l_s);
-  }
-
-  DOODLE_CHICK(!l_skin_cluster.isNull(), doodle_error{"没有找到皮肤簇变形节点"s});
-  return l_skin_cluster;
-}
-
 MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
 
 MDagPath qcloth_shape::cloth_mesh() const {

@@ -65,6 +65,29 @@ class cloth_group {
 };
 
 /**
+ * @brief 获取传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇
+ * @param in_anim_node 动画[绑定]网格体或者变换节点
+ * @return 寻找到的皮肤簇(不为空)
+ * @throw 为空时抛出异常 maya_error
+ */
+MObject get_skin_custer(const MObject& in_anim_node) {
+  MStatus l_s{};
+  MObject l_skin_cluster{};
+  /// \brief 获得组件点上下文
+  auto l_shape = maya_plug::get_shape(in_anim_node);
+
+  /// 寻找高模的皮肤簇
+  for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
+       i.next()) {
+    l_skin_cluster = i.currentItem(&l_s);
+    DOODLE_MAYA_CHICK(l_s);
+  }
+
+  DOODLE_CHICK(!l_skin_cluster.isNull(), doodle_error{"没有找到皮肤簇变形节点"s});
+  return l_skin_cluster;
+}
+
+/**
  * @brief 复制并制作低模
  * @param in_object 传入的低模物体
  * @param in_parent 传入低模的父物体
@@ -216,7 +239,7 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   MStatus l_s{};
 
   /// 先将高模的皮肤簇权重重置为0;
-  MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
+  MFnSkinCluster l_fn_skin_cluster{get_skin_custer(in_anim_node), &l_s};
   l_s = l_fn_skin_cluster.setEnvelope(0);
   DOODLE_MAYA_CHICK(l_s);
 
@@ -564,7 +587,7 @@ void sort_group() {
 void rest_skin_custer_attr(const MObject& in_anim_node) {
   MStatus l_s{};
   /// 先将高模的皮肤簇权重重置为1;
-  MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
+  MFnSkinCluster l_fn_skin_cluster{get_skin_custer(in_anim_node), &l_s};
   l_s = l_fn_skin_cluster.setEnvelope(1);
   DOODLE_MAYA_CHICK(l_s);
 }

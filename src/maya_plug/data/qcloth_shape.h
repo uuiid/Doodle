@@ -52,13 +52,7 @@ class qcloth_shape : public cloth_interface::element_type {
     MObject deformBase_grp;
   };
 
-  /**
-   * @brief 获取传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇
-   * @param in_anim_node 动画[绑定]网格体或者变换节点
-   * @return 寻找到的皮肤簇(不为空)
-   * @throw 为空时抛出异常 maya_error
-   */
-  static MObject get_skin_custer(const MObject& in_anim_node);
+
 
  private:
   /**
