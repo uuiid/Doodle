@@ -57,6 +57,7 @@
 #include "Components/DirectionalLightComponent.h"
 #include "MoviePipelineAntiAliasingSetting.h"
 #include "MoviePipelineGameOverrideSetting.h"
+#include "MoviePipelineConsoleVariableSetting.h"
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 {
 	LogToConsole = true;
@@ -721,6 +722,12 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		GameOver)
 	{
 		GameOver->bCinematicQualitySettings = false;
+	}
+
+	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
+                Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())
+            )) {
+		ConsoleVar->AddOrUpdateConsoleVariable(TEXT("r.SetNearClipPlane"), 0.5);
 	}
 
     //-------------------------Save
