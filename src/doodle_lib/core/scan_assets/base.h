@@ -32,6 +32,20 @@ class scan_category_data_t {
     other,
   };
 
+  NLOHMANN_JSON_SERIALIZE_ENUM(
+      assets_type_enum,
+      {
+          {assets_type_enum::scene, "scene"},
+          {assets_type_enum::prop, "prop"},
+          {assets_type_enum::character, "character"},
+          {assets_type_enum::rig, "rig"},
+          {assets_type_enum::animation, "animation"},
+          {assets_type_enum::fvx, "fvx"},
+          {assets_type_enum::fcx, "fcx"},
+          {assets_type_enum::other, "other"},
+      }
+  );
+
   virtual ~scan_category_data_t() = default;
   // uuid和文件路径的类
   struct uuid_path_t {
