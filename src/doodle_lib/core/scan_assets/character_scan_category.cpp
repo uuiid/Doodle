@@ -105,7 +105,15 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
     logger_->log(log_loc(), level::info, "扫描到rig文件:{}", l_ptr->rig_file_.path_);
   }
 
-  return l_out | ranges::views::transform([](const auto &in_ptr) -> scan_category_data_ptr { return in_ptr; }) |
+  return l_out |
+         ranges::views::transform(
+             [](const std::shared_ptr<character_scan_category_data_t> &in_ptr) -> scan_category_data_ptr {
+               in_ptr->rig_file_.path_.make_preferred();
+               in_ptr->ue_file_.path_.make_preferred();
+               in_ptr->solve_file_.path_.make_preferred();
+               return in_ptr;
+             }
+         ) |
          ranges::to_vector;
 }
 
