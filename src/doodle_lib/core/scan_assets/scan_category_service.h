@@ -27,6 +27,7 @@ class scan_category_service_t {
   using logger_data_ptr = std::shared_ptr<logger_data_t>;
   logger_ptr logger_;
   void init_logger_data();
+  boost::asio::thread_pool thread_pool_{};
 
  public:
   logger_data_ptr logger_data_;
@@ -46,7 +47,7 @@ class scan_category_service_t {
           auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)> >(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
-          boost::asio::post(g_thread(), [in_project_root, in_scan_category_ptr, l_f]() {
+          boost::asio::post(thread_pool_, [in_project_root, in_scan_category_ptr, l_f]() {
             boost::system::error_code l_err{};
             std::vector<scan_category_data_ptr> l_list;
             try {
