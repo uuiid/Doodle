@@ -19,7 +19,7 @@ class DOODLE_CORE_API process_message {
     info    = 0,
     warning = 1,
   };
-  enum state { success = 1, fail = 2, wait = 3, run = 4 };
+  enum state { success = 1, fail = 2, wait = 3, run = 4, pause = 5 };
 
  private:
   struct data_t {

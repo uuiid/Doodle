@@ -47,7 +47,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     std::lock_guard const _lock{data_->_mutex};
-    if (data_->p_state == process_message::state::wait) {
+    if (data_->p_state == process_message::state::wait || data_->p_state == process_message::state::pause) {
       data_->p_state = process_message::state::run;
       data_->p_time  = chrono::system_clock::now();
     }
@@ -90,7 +90,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
         data_->p_progress = {1, 1};
         if (auto l_enum = magic_enum::enum_cast<process_message::state>(fmt::to_string(msg.payload));
             l_enum.has_value()) {
-          if (data_->p_state == process_message::state::run && *l_enum == process_message::state::wait)
+          if (data_->p_state == process_message::state::run && *l_enum == process_message::state::pause)
             data_->p_extra_time += chrono::system_clock::now() - data_->p_time;
           data_->p_state = l_enum.value();
         }
@@ -194,6 +194,7 @@ chrono::sys_time_pos::duration process_message::get_time() const {
 
   switch (data_->p_state) {
     case state::wait:
+    case state::pause:
       break;
     case state::run:
       l_out += chrono::system_clock::now() - data_->p_time;
