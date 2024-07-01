@@ -13,7 +13,16 @@
 
 namespace doodle::details {
 class scan_category_data_t;
-
+enum class assets_type_enum {
+  scene,
+  prop,
+  character,
+  rig,
+  animation,
+  fvx,
+  fcx,
+  other,
+};
 class scan_category_data_t {
  private:
   entt::handle get_project_handle() const;
@@ -21,30 +30,8 @@ class scan_category_data_t {
   entt::handle get_assets_handle() const;
 
  public:
-  enum class assets_type_enum {
-    scene,
-    prop,
-    character,
-    rig,
-    animation,
-    fvx,
-    fcx,
-    other,
-  };
 
-  NLOHMANN_JSON_SERIALIZE_ENUM(
-      assets_type_enum,
-      {
-          {assets_type_enum::scene, "scene"},
-          {assets_type_enum::prop, "prop"},
-          {assets_type_enum::character, "character"},
-          {assets_type_enum::rig, "rig"},
-          {assets_type_enum::animation, "animation"},
-          {assets_type_enum::fvx, "fvx"},
-          {assets_type_enum::fcx, "fcx"},
-          {assets_type_enum::other, "other"},
-      }
-  );
+  using assets_type_enum = assets_type_enum;
 
   virtual ~scan_category_data_t() = default;
   // uuid和文件路径的类
@@ -93,5 +80,19 @@ class scan_category_t {
   virtual ~scan_category_t()                                                            = default;
   virtual std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const = 0;
 };
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    assets_type_enum,
+    {
+        {assets_type_enum::scene, "scene"},
+        {assets_type_enum::prop, "prop"},
+        {assets_type_enum::character, "character"},
+        {assets_type_enum::rig, "rig"},
+        {assets_type_enum::animation, "animation"},
+        {assets_type_enum::fvx, "fvx"},
+        {assets_type_enum::fcx, "fcx"},
+        {assets_type_enum::other, "other"},
+    }
+);
 
 }  // namespace doodle::details
