@@ -44,6 +44,9 @@ class DOODLE_CORE_API process_message {
     boost::asio::cancellation_signal cancel_sig;
 
     logger_ptr p_logger;
+
+    // 额外的时间段
+    chrono::sys_time_pos::duration p_extra_time{0};
   };
   std::shared_ptr<data_t> data_;
 

@@ -71,7 +71,9 @@ bool long_time_tasks_widget::render() {
 
       imgui::TableNextColumn();
       using namespace std::literals;
-      dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
+      dear::Text(
+          msg.get_time() == chrono::sys_time_pos::duration{0} ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time())
+      );
 
       ImGui::TableNextColumn();
 
