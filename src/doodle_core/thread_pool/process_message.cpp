@@ -89,10 +89,11 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
         data_->p_end      = chrono::system_clock::now();
         data_->p_progress = {1, 1};
         if (auto l_enum = magic_enum::enum_cast<process_message::state>(fmt::to_string(msg.payload));
-            l_enum.has_value())
+            l_enum.has_value()) {
           if (data_->p_state == process_message::state::run && *l_enum == process_message::state::wait)
             data_->p_extra_time += chrono::system_clock::now() - data_->p_time;
-        data_->p_state = l_enum.value();
+          data_->p_state = l_enum.value();
+        }
         break;
 
       case spdlog::level::level_enum::n_levels:
