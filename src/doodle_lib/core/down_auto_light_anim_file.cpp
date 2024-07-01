@@ -40,7 +40,7 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
     l_stream.connect(boost::asio::ip::tcp::endpoint{boost::asio::ip::address_v4::from_string("192.168.40.181"), 50026});
     for (auto &&i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{
-          boost::beast::http::verb::get, fmt::format("api/doodle/file_association/{}", i.id_), 11
+          boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", i.id_), 11
       };
       l_req.set(boost::beast::http::field::host, "192.168.40.181:50026");
       l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
