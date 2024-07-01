@@ -7,6 +7,7 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/meta_data/main_map.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
@@ -77,7 +78,9 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
     out_error_code =
         boost::system::error_code{boost::system::errc::connection_refused, boost::system::generic_category()};
   }
-
+  for (auto &&i : l_out) {
+    i.ue_prj_path_ = ue_main_map::find_ue_project_file(i.ue_file_);
+  }
   return l_out;
 }
 
