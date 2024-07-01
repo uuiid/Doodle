@@ -50,6 +50,7 @@ class file_association_get {
       l_json["maya_file"]   = l_data->rig_file_.path_;
       l_json["ue_file"]     = l_data->ue_file_.path_;
       l_json["solve_file_"] = l_data->solve_file_.path_;
+      l_json["type"]        = l_data->assets_type_;
 
       boost::beast::http::response<boost::beast::http::string_body> l_res{
           boost::beast::http::status::ok, l_req.version()
