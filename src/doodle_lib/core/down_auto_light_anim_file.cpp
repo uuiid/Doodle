@@ -52,7 +52,7 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
       boost::beast::http::read(l_stream, l_buffer, l_res);
       if (l_res.result() != boost::beast::http::status::ok) {
         if (l_res.result() == boost::beast::http::status::not_found) {
-          data_->logger_->log(log_loc(), level::err, "未找到关联数据:{}", i.export_file_);
+          data_->logger_->log(log_loc(), level::err, "未找到关联数据:{} {}", i.export_file_, i.id_);
           out_error_code = boost::system::error_code{
               boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
           };
