@@ -50,7 +50,9 @@ void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
 
 void scan_win_service_t::scan() {
   scam_data_vec_.clear();
-  std::ranges::for_each(scan_categories_is_scan_, [](auto&& in_bool) { in_bool = false; });
+  for (auto&& l_data : scan_categories_is_scan_) {
+    l_data = false;
+  }
   std::size_t l_size{};
   for (auto&& l_root : project_roots_) {
     for (auto&& l_data : scan_categories_) {
@@ -98,7 +100,7 @@ void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_cate
   // 开始启动下一次循环
   if (app_base::GetPtr()->is_stop()) return;
   if (g_ctx().get<program_info>().stop_attr()) return;
-  if (!std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](auto&& in_bool) {
+  if (!std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](const bool& in_bool) {
         return in_bool;
       }))
     return;
