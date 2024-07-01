@@ -56,7 +56,7 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
           out_error_code = boost::system::error_code{
               boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
           };
-          return;
+          return l_out;
         }
         continue;
       }
