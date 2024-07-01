@@ -20,6 +20,8 @@
 #include <doodle_lib/core/thread_copy_io.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+
+#include <boost/beast.hpp>
 namespace doodle {
 
 void down_auto_light_anim_file::init() {
@@ -29,8 +31,55 @@ void down_auto_light_anim_file::init() {
 }
 
 std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_file::fetch_association_data(
-    const std::vector<boost::uuids::uuid> &in_uuid
-) const {}
+    const std::vector<boost::uuids::uuid> &in_uuid, boost::system::error_code &out_error_code
+) const {
+  std::vector<down_auto_light_anim_file::association_data> l_out{};
+  boost::beast::tcp_stream l_stream{g_io_context()};
+
+  try {
+    l_stream.connect(boost::asio::ip::tcp::endpoint{boost::asio::ip::address_v4::from_string("192.168.40.181"), 50026});
+    for (auto &&i : in_uuid) {
+      boost::beast::http::request<boost::beast::http::empty_body> l_req{
+          boost::beast::http::verb::get, fmt::format("api/doodle/file_association/{}", i), 11
+      };
+      l_req.set(boost::beast::http::field::host, "192.168.40.181:50026");
+      l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+      l_req.set(boost::beast::http::field::accept, "application/json");
+      l_req.prepare_payload();
+      boost::beast::http::write(l_stream, l_req);
+      boost::beast::flat_buffer l_buffer{};
+      boost::beast::http::response<boost::beast::http::string_body> l_res;
+      boost::beast::http::read(l_stream, l_buffer, l_res);
+      if (l_res.result() != boost::beast::http::status::ok) {
+        if (l_res.result() == boost::beast::http::status::not_found) {
+          data_->logger_->log(log_loc(), level::err, "未找到关联数据:{}", i);
+          out_error_code = boost::system::error_code{
+              boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
+          };
+          return;
+        }
+        continue;
+      }
+
+      auto l_json = nlohmann::json::parse(l_res.body());
+
+      association_data l_data{
+          .id_        = i,
+          .maya_file_ = l_json.at("maya_file").get<std::string>(),
+          .ue_file_   = l_json.at("ue_file").get<std::string>(),
+          .type_      = l_json.at("type").get<details::assets_type_enum>(),
+      };
+      l_out.emplace_back(std::move(l_data));
+    }
+
+  } catch (const std::exception &e) {
+    data_->logger_->log(log_loc(), level::err, "连接服务器失败:{}", e.what());
+    out_error_code =
+        boost::system::error_code{boost::system::errc::connection_refused, boost::system::generic_category()};
+  }
+
+  return l_out;
+}
 
 void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_error_code) const {
   // 检查项目
@@ -55,7 +104,12 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
 
   l_refs_tmp |= ranges::actions::unique;
 
-  auto l_refs       = fetch_association_data(l_refs_tmp);
+  auto l_refs = fetch_association_data(l_refs_tmp, in_error_code);
+  if (in_error_code) {
+    wait_op_->ec_ = in_error_code;
+    wait_op_->complete();
+    return;
+  }
 
   // 检查文件
 

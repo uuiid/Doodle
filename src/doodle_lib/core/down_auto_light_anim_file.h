@@ -68,7 +68,9 @@ class down_auto_light_anim_file {
   };
 
   // 从网络api中获取关联数据
-  std::vector<association_data> fetch_association_data(const std::vector<boost::uuids::uuid>& in_uuid) const;
+  std::vector<association_data> fetch_association_data(
+      const std::vector<boost::uuids::uuid>& in_uuid, boost::system::error_code& out_error_code
+  ) const;
 
  public:
   explicit down_auto_light_anim_file(entt::handle in_msg)
