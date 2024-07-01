@@ -196,8 +196,8 @@ class ue_exe::run_ue_copy_file : public ue_exe::run_ue_base {
   ue_exe::call_fun_type call_attr{};
   logger_ptr logger_attr{};
   void run() override {
-    g_ctx().get<thread_copy_io_service>().async_delete_remote_not_exit_and_copy_old(
-        copy_path_attr, std::vector<FSys::path>{"Shot"}, FSys::copy_options::recursive, logger_attr,
+    g_ctx().get<thread_copy_io_service>().async_copy_old(
+        copy_path_attr, FSys::copy_options::recursive, logger_attr,
         [l_c = call_attr](boost::system::error_code in_error_code) {
           if (in_error_code) {
             BOOST_ASIO_ERROR_LOCATION(in_error_code);
