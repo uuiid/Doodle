@@ -7,7 +7,6 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
-#include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
@@ -178,7 +177,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
 
       // 道具文件
       case details::assets_type_enum::prop: {
-        auto l_prop_path = h.ue_file_.lexically_relative(l_root / doodle_config::ue4_content / "Prop");
+        auto l_prop_path = h.ue_file_.lexically_relative(l_root / "Prop");
         if (l_prop_path.empty()) continue;
         auto l_prop_path_name = *l_prop_path.begin();
         l_copy_path.emplace_back(
