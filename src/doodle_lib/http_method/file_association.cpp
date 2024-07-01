@@ -42,7 +42,7 @@ class file_association_get {
       return;
     }
 
-    auto l_map = g_ctx().get<scan_win_service_t>().get_scan_data();
+    auto l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
     if (l_map.contains(l_id)) {
       auto l_data = l_map.at(l_id);
 

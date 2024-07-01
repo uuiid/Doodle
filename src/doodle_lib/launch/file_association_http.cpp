@@ -35,8 +35,8 @@ struct file_association_http_args_t {
 };
 
 bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
-  auto l_scan = g_ctx().emplace<scan_win_service_t>();
-  l_scan.start();
+  auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
+  l_scan->start();
 
   file_association_http_args_t l_args{.kitsu_ip_ = "192.168.40.182", .kitsu_port_ = "80", .port_ = 50026};
 
