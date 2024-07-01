@@ -52,6 +52,19 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+            "name": "Doodle_debug_file_association",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/file_association_http.exe",
+            "args": [
+                "--config=${workspaceFolder}/build/debug_server.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
             "name": "Doodle_maya_debug",
             "type": "cppvsdbg",
             "request": "launch",
