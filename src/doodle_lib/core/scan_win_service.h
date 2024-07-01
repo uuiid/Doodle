@@ -19,8 +19,7 @@ class scan_win_service_t {
   timer_ptr_t timer_;
   signal_ptr_t signal_;
 
-  std::vector<doodle::details::scan_category_data_ptr> scam_data_vec_;
-  std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
+   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
   std::vector<details::scan_category_t::project_root_t> project_roots_;
   std::vector<bool> scan_categories_is_scan_;
   std::map<uuid, entt::handle> handle_map_;

@@ -49,7 +49,6 @@ void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
 }
 
 void scan_win_service_t::scan() {
-  scam_data_vec_.clear();
   for (auto&& l_data : scan_categories_is_scan_) {
     l_data = false;
   }
@@ -79,8 +78,6 @@ void scan_win_service_t::scan() {
   }
 }
 void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec) {
-  scam_data_vec_ |= ranges::actions::push_back(in_data_vec);
-
   static auto l_id_is_nil = [](boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
     if (in_uuid.is_nil()) {
       in_uuid = core_set::get_set().get_uuid();
