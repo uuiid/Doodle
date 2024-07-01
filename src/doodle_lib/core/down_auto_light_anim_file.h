@@ -63,13 +63,13 @@ class down_auto_light_anim_file {
     FSys::path maya_file_{};
     FSys::path ue_file_{};
     details::assets_type_enum type_{};
-
     FSys::path ue_prj_path_{};
+    FSys::path export_file_{};
   };
 
   // 从网络api中获取关联数据
   std::vector<association_data> fetch_association_data(
-      const std::vector<boost::uuids::uuid>& in_uuid, boost::system::error_code& out_error_code
+      const std::vector<association_data>& in_uuid, boost::system::error_code& out_error_code
   ) const;
 
  public:

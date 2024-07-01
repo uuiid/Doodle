@@ -31,7 +31,7 @@ void down_auto_light_anim_file::init() {
 }
 
 std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_file::fetch_association_data(
-    const std::vector<boost::uuids::uuid> &in_uuid, boost::system::error_code &out_error_code
+    const std::vector<association_data> &in_uuid, boost::system::error_code &out_error_code
 ) const {
   std::vector<down_auto_light_anim_file::association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
@@ -40,7 +40,7 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
     l_stream.connect(boost::asio::ip::tcp::endpoint{boost::asio::ip::address_v4::from_string("192.168.40.181"), 50026});
     for (auto &&i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{
-          boost::beast::http::verb::get, fmt::format("api/doodle/file_association/{}", i), 11
+          boost::beast::http::verb::get, fmt::format("api/doodle/file_association/{}", i.id_), 11
       };
       l_req.set(boost::beast::http::field::host, "192.168.40.181:50026");
       l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -52,7 +52,7 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
       boost::beast::http::read(l_stream, l_buffer, l_res);
       if (l_res.result() != boost::beast::http::status::ok) {
         if (l_res.result() == boost::beast::http::status::not_found) {
-          data_->logger_->log(log_loc(), level::err, "未找到关联数据:{}", i);
+          data_->logger_->log(log_loc(), level::err, "未找到关联数据:{}", i.export_file_);
           out_error_code = boost::system::error_code{
               boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
           };
@@ -64,7 +64,7 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
       auto l_json = nlohmann::json::parse(l_res.body());
 
       association_data l_data{
-          .id_        = i,
+          .id_        = i.id_,
           .maya_file_ = l_json.at("maya_file").get<std::string>(),
           .ue_file_   = l_json.at("ue_file").get<std::string>(),
           .type_      = l_json.at("type").get<details::assets_type_enum>(),
@@ -94,18 +94,21 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
     return;
   }
   project l_project = msg_.get<project>();
-  std::vector<boost::uuids::uuid> l_refs_tmp{};
+  std::vector<association_data> l_refs_tmp{};
 
   for (auto &&i : data_->out_maya_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
     auto l_uuid = FSys::software_flag_file(i.ref_file);
     if (l_uuid.is_nil()) continue;
 
-    l_refs_tmp.emplace_back(std::move(l_uuid));
+    l_refs_tmp.emplace_back(association_data{.id_ = l_uuid, .export_file_ = i.ref_file});
   }
 
-  l_refs_tmp |= ranges::actions::unique;
-
+  std::sort(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto &l, const auto &r) { return l.id_ < r.id_; });
+  l_refs_tmp.erase(
+      std::unique(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto &l, const auto &r) { return l.id_ == r.id_; }),
+      l_refs_tmp.end()
+  );
   auto l_refs = fetch_association_data(l_refs_tmp, in_error_code);
   if (in_error_code) {
     wait_op_->ec_ = in_error_code;
