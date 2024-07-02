@@ -113,6 +113,7 @@ boost::system::error_code thread_copy_io_service::delete_impl(
   std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
   for (int i = 0; i < 10; ++i) {
     try {
+      if (!FSys::is_directory(to)) return l_ec;
       in_logger->log(
           log_loc(), spdlog::level::warn, "删除 {} 中不存在, {} 中存在的文件, 排除文件夹 {}", from, to,
           in_exclude_local_dir
