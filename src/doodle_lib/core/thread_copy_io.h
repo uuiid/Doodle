@@ -178,15 +178,36 @@ class thread_copy_io_service {
                l_gruad = boost::asio::make_work_guard(boost::asio::get_associated_executor(*l_handler))]() {
                 boost::system::error_code l_ec;
 
-                std::vector<FSys::path> l_form_tmp = std::ranges::keys(from_and_to);
+                std::vector<FSys::path> l_form_tmp{};
+                std::vector<FSys::path> l_to_tmp{};
+                for (auto&& [f, t] : from_and_to) {
+                  l_form_tmp.emplace_back(f);
+                  l_to_tmp.emplace_back(t);
+                }
+                // sort to_tmp
+                std::sort(l_to_tmp.begin(), l_to_tmp.end(), [](const FSys::path& l, const FSys::path& r) {
+                  return l > r;
+                });
+                // unique to_tmp
+                l_to_tmp.erase(
+                    std::unique(
+                        l_to_tmp.begin(), l_to_tmp.end(),
+                        [](const FSys::path& l, const FSys::path& r) { return l == r; }
+                    ),
+                    l_to_tmp.end()
+                );
 
+                // 先复制文件
                 for (auto&& [from, to] : from_and_to) {
                   l_ec = this->copy_impl(from, to, in_options, in_logger, copy_old_file);
                   if (l_ec) {
                     boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
                     return;
                   }
-                  l_ec = this->delete_impl(l_form_tmp, to, in_exclude_local_dir, in_options, in_logger);
+                }
+                // 排除旧的文件
+                for (auto&& l_to : l_to_tmp) {
+                  l_ec = this->delete_impl(l_form_tmp, l_to, in_exclude_local_dir, in_options, in_logger);
                   if (l_ec) {
                     boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
                     return;
