@@ -19,7 +19,7 @@ class thread_copy_io_service {
   ) const;
 
   boost::system::error_code delete_impl(
-      const FSys::path& from, const FSys::path& to, const std::vector<FSys::path>& in_exclude_local_dir,
+      const std::vector<FSys::path>& from, const FSys::path& to, const std::vector<FSys::path>& in_exclude_local_dir,
       FSys::copy_options in_options, logger_ptr in_logger
   ) const;
 
@@ -177,13 +177,16 @@ class thread_copy_io_service {
               [this, l_handler, from_and_to, in_options, in_logger, in_exclude_local_dir,
                l_gruad = boost::asio::make_work_guard(boost::asio::get_associated_executor(*l_handler))]() {
                 boost::system::error_code l_ec;
+
+                std::vector<FSys::path> l_form_tmp = std::ranges::keys(from_and_to);
+
                 for (auto&& [from, to] : from_and_to) {
                   l_ec = this->copy_impl(from, to, in_options, in_logger, copy_old_file);
                   if (l_ec) {
                     boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
                     return;
                   }
-                  l_ec = this->delete_impl(from, to, in_exclude_local_dir, in_options, in_logger);
+                  l_ec = this->delete_impl(l_form_tmp, to, in_exclude_local_dir, in_options, in_logger);
                   if (l_ec) {
                     boost::asio::post(boost::asio::prepend(*l_handler, l_ec));
                     return;

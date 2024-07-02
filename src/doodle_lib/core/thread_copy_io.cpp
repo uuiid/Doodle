@@ -106,7 +106,7 @@ boost::system::error_code thread_copy_io_service::copy_impl(
 }
 
 boost::system::error_code thread_copy_io_service::delete_impl(
-    const FSys::path &from, const FSys::path &to, const std::vector<FSys::path> &in_exclude_local_dir,
+    const std::vector<FSys::path> &from, const FSys::path &to, const std::vector<FSys::path> &in_exclude_local_dir,
     FSys::copy_options in_options, logger_ptr in_logger
 ) const {
   boost::system::error_code l_ec{};
@@ -114,9 +114,7 @@ boost::system::error_code thread_copy_io_service::delete_impl(
   for (int i = 0; i < 10; ++i) {
     try {
       in_logger->log(log_loc(), spdlog::level::warn, "删除 {} 中不存在, {} 中存在的文件", from, to);
-      if (FSys::is_regular_file(from)) {
-        return l_ec;
-      }
+
       std::vector<FSys::path> l_remove_files{};
       if (in_options == FSys::copy_options::recursive) {
         for (auto &&l_file : FSys::recursive_directory_iterator(to)) {
@@ -131,13 +129,15 @@ boost::system::error_code thread_copy_io_service::delete_impl(
             continue;
           }
 
-          if (!FSys::exists(from / l_lex_path)) {
+          if (std::none_of(from.begin(), from.end(), [&l_lex_path](const FSys::path &l_from) {
+                return FSys::exists(l_from / l_lex_path);
+              })) {
             l_remove_files.emplace_back(l_file.path());
           }
         }
 
       } else {
-        for (auto &&l_file : FSys::directory_iterator(from)) {
+        for (auto &&l_file : FSys::directory_iterator(to)) {
           auto l_lex_path = l_file.path().lexically_proximate(to);
           if (std::any_of(
                   in_exclude_local_dir.begin(), in_exclude_local_dir.end(),
@@ -148,7 +148,9 @@ boost::system::error_code thread_copy_io_service::delete_impl(
             continue;
           }
 
-          if (FSys::exists(from / l_lex_path)) {
+          if (std::none_of(from.begin(), from.end(), [&l_lex_path](const FSys::path &l_from) {
+                return FSys::exists(l_from / l_lex_path);
+              })) {
             l_remove_files.emplace_back(l_file.path());
           }
         }
