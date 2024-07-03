@@ -755,25 +755,24 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty() {
     LFilter.bRecursivePaths          = true;
     LFilter.bRecursiveClasses        = true;
     LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
-	
-	TArray<UObject*> L_Save{}; 
+
+    TArray<UObject*> L_Save{};
 
     IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool {
-          if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Engine/")) ||
-              FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Plugins/"))) {
-            return true;
-          }
-          if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset())) {
-            bool L_bHasProperty{true};
-            //L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
-            L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
-            L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
-            L_Save.Add(L_Mat);
-          }
-          return true;
-        });
-        UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-        EditorAssetSubsystem->SaveLoadedAssets(L_Save);
+      if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Character/")) ||
+          FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Prop/"))) {
+        if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset())) {
+          bool L_bHasProperty{true};
+          // L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+          L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
+          L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+          L_Save.Add(L_Mat);
+        };
+      }
+      return true;
+    });
+    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+    EditorAssetSubsystem->SaveLoadedAssets(L_Save);
 }
 
 
