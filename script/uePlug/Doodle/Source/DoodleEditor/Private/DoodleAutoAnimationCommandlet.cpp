@@ -754,6 +754,7 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty() {
     LFilter.bIncludeOnlyOnDiskAssets = false;
     LFilter.bRecursivePaths          = true;
     LFilter.bRecursiveClasses        = true;
+    LFilter.PackagePaths             = TArray<FName>{FName{TEXT("/Game/Character/")}, FName{TEXT("/Game/Prop/")}};
     LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
 
     TArray<UObject*> L_Save{};
