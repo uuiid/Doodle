@@ -128,7 +128,8 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
         boost::process::on_exit =
             [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
               logger_attr->log(log_loc(), level::info, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
-
+              logger_attr->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
+              
               if (in_exit != 0 && !in_error_code) {
                 boost::system::error_code l_ec{boost::system::errc::make_error_code(boost::system::errc::io_error)};
                 BOOST_ASIO_ERROR_LOCATION(l_ec);
