@@ -112,7 +112,7 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
   /// Script/Engine.StaticMesh'/Doodle/lock_dev/Assets/EnviroDome.EnviroDome'
   /// Script/Engine.Material'/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M'
   static ConstructorHelpers::FObjectFinder<UStaticMesh> SkyDome_Mesh(TEXT("/Doodle/lock_dev/Assets/EnviroDome.EnviroDome"));
-  static ConstructorHelpers::FObjectFinder<UMaterial> SkyDome_Mat(TEXT("/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M"));
+  // static ConstructorHelpers::FObjectFinder<UMaterial> SkyDome_Mat(TEXT("/Doodle/lock_dev/Assets/BackDrop_M.BackDrop_M"));
   SkyDome->SetStaticMesh(SkyDome_Mesh.Object);
   SkyDome->bVisibleInRayTracing         = false;
   SkyDome->CastShadow                   = false;

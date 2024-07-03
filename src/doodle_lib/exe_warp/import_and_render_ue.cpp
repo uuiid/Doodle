@@ -182,7 +182,7 @@ void import_and_render_ue::operator()(
   fix_config();
   g_ctx().get<ue_exe_ptr>()->async_run(
       msg_,
-      fmt::format("{} -run=DoodleAutoAnimation -Params={}", data_->down_info_.render_project_, gen_import_config()),
+      fmt::format("{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation -Params={}", data_->down_info_.render_project_, gen_import_config()),
       boost::asio::bind_executor(g_io_context(), std::move(*this))
   );
 }
