@@ -29,6 +29,9 @@ private:
 	void OnCreateSequenceWorld();
 	void OnBuildSequence();
 	void OnSaveReanderConfig();
+	
+	// 修复材质属性
+	void FixMaterialProperty();
 
 	TSharedPtr<FJsonObject> JsonObject;
 	ULevelSequence* TheLevelSequence;

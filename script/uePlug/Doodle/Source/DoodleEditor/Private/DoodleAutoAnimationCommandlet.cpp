@@ -83,6 +83,9 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
         UE_LOG(LogTemp, Error, TEXT("No params field in cmd arguments"));
         return -1;
     }
+
+	FixMaterialProperty();
+	
 	//--------------------
     FString JsonString;
     if (FFileHelper::LoadFileToString(JsonString, *FilePath))
@@ -745,6 +748,35 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
     FAssetRegistryModule::AssetCreated(NewConfig);
     EditorAssetSubsystem->SaveLoadedAsset(NewConfig);
 }
+
+void UDoodleAutoAnimationCommandlet::FixMaterialProperty() {
+    FARFilter LFilter{};
+    LFilter.bIncludeOnlyOnDiskAssets = false;
+    LFilter.bRecursivePaths          = true;
+    LFilter.bRecursiveClasses        = true;
+    LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
+	
+	TArray<UObject*> L_Save{}; 
+
+    IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool {
+          if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Engine/")) ||
+              FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Plugins/"))) {
+            return true;
+          }
+          if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset())) {
+            bool L_bHasProperty{true};
+            //L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+            L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
+            L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+            L_Save.Add(L_Mat);
+          }
+          return true;
+        });
+        UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+        EditorAssetSubsystem->SaveLoadedAssets(L_Save);
+}
+
+
 
 //"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
 //UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
