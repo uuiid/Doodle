@@ -42,4 +42,11 @@ class http_listener {
   http_route_ptr route_ptr_;
   std::shared_ptr<acceptor_type> acceptor_ptr_;
 };
+
+namespace detail {
+boost::asio::awaitable<void> run_http_listener(
+    boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr,
+    std::uint16_t in_port = doodle_config::http_port
+);
+}
 }  // namespace doodle::http
