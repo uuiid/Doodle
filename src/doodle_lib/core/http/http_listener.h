@@ -49,4 +49,15 @@ boost::asio::awaitable<void> run_http_listener(
     std::uint16_t in_port = doodle_config::http_port
 );
 }
+
+inline void run_http_listener(
+    boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr,
+    std::uint16_t in_port = doodle_config::http_port
+) {
+  boost::asio::co_spawn(
+      in_io_context, detail::run_http_listener(in_io_context, in_route_ptr, in_port),
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::deferred)
+  );
+}
+
 }  // namespace doodle::http
