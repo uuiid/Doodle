@@ -101,7 +101,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
   using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
   using endpoint_type   = boost::asio::ip::tcp::endpoint;
   using tcp_stream_type = executor_type::as_default_on_t<boost::beast::tcp_stream>;
-  tcp_stream_type l_stream{co_await boost::asio::this_coro::executor, std::move(in_socket)};
+  tcp_stream_type l_stream{std::move(in_socket)};
   l_stream.expires_after(30s);
   auto l_session = std::make_shared<session_data>();
   l_session->logger_ =
@@ -144,13 +144,13 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
   }
   // todo: 请求分发到对应的处理函数
   std::function<boost::asio::awaitable<boost::beast::http::message_generator>()> l_callback;
-  auto l_gen        = co_await l_callback();
-  auto [l_ec, bytes_transferred] = co_await boost::beast::async_write(l_stream, std::move(l_gen));
+  auto l_gen      = co_await l_callback();
+  auto [l_ec2, _] = co_await boost::beast::async_write(l_stream, std::move(l_gen));
   if (!l_session->keep_alive_) {
-    if (l_ec) {
-      l_session->logger_->log(log_loc(), level::err, "发送错误码 {}", l_ec);
+    if (l_ec2) {
+      l_session->logger_->log(log_loc(), level::err, "发送错误码 {}", l_ec2);
     }
-    l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+    l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec2);
     l_stream.close();
     co_return;
   }
