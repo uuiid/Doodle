@@ -103,10 +103,11 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   http::reg_user_http(*l_rout_ptr);
 
   // 开始运行服务器
-  auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, l_args.port_);
-  l_listener->run();
+  // auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, l_args.port_);
+  // l_listener->run();
+  http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
   l_save.run();
-  in_vector.emplace_back(l_listener);
+  // in_vector.emplace_back(l_listener);
 
   return false;
 }
