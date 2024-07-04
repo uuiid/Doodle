@@ -47,7 +47,7 @@
                 "--config=${workspaceFolder}/build/debug_server.json"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
@@ -60,7 +60,7 @@
                 "--config=${workspaceFolder}/build/debug_server.json"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
