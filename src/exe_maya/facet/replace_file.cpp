@@ -86,6 +86,7 @@ void replace_file_facet::replace_file(
           );
           if (l_it == self->files_.end()) {
             default_logger_raw()->log(log_loc(), level::info, "跳过引用文件 {}", l_name);
+            *retCode = true;
             return;
           }
 
