@@ -38,6 +38,39 @@ namespace detail {
 
 }  // namespace detail
 
+// 声明
+// template <typename T, typename CompletionHandler>
+// auto async_get(const entt::registry& in_reg, const std::vector<entt::entity>& in_entts, CompletionHandler&& handler);
+// template <typename T, typename CompletionHandler>
+// auto async_get(const entt::registry& in_reg, entt::entity& in_entt, CompletionHandler&& handler);
+// template <typename T, typename CompletionHandler>
+// auto async_valid(const entt::registry& in_reg, const std::vector<entt::entity>& in_entts, CompletionHandler&& handler);
+// template <typename T, typename CompletionHandler>
+// auto async_valid(const entt::registry& in_reg, const entt::entity& in_entt, CompletionHandler&& handler);
+// template <typename T, typename CompletionHandler>
+// auto async_emplace_or_replace(
+//     entt::registry& in_reg, const std::vector<std::tuple<entt::entity, T>>& in_entts, CompletionHandler&& handler
+// );
+// template <typename T, typename CompletionHandler>
+// auto async_emplace_or_replace(
+//     entt::registry& in_reg, const std::tuple<entt::entity, T>& in_entt, CompletionHandler&& handler
+// );
+// template <typename CompletionHandler>
+// auto async_destroy(
+//     const entt::registry& in_reg, const std::vector<entt::entity>& in_entts, CompletionHandler&& handler
+// );
+// template <typename CompletionHandler>
+// auto async_destroy(const entt::registry& in_reg, const entt::entity& in_entt, CompletionHandler&& handler);
+
+// template <typename T, typename CompletionHandler>
+// auto async_remove(entt::registry& in_reg, const std::vector<entt::entity>& in_entts, CompletionHandler&& handler);
+
+// template <typename T, typename CompletionHandler>
+// auto async_remove(entt::registry& in_reg, const entt::entity& in_entt, CompletionHandler&& handler);
+
+
+
+// 定义
 template <typename T, typename CompletionHandler>
 auto async_get(const entt::registry& in_reg, const std::vector<entt::entity>& in_entts, CompletionHandler&& handler) {
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
