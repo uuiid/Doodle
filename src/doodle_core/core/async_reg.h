@@ -68,7 +68,7 @@ namespace detail {
 // auto async_remove(entt::registry& in_reg, const entt::entity& in_entt, CompletionHandler&& handler);
 
 // 定义
-template <typename T, typename CompletionHandler>
+template <typename T, boost::asio::completion_token_for<void(std::vector<std::optional<T>>)> CompletionHandler>
 auto async_get(const entt::registry& in_reg, const std::vector<entt::entity>& in_entts, CompletionHandler&& handler) {
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void(std::vector<std::optional<T>>)>(
@@ -84,7 +84,7 @@ auto async_get(const entt::registry& in_reg, const std::vector<entt::entity>& in
           else
             l_result.emplace_back(std::nullopt);
         }
-        boost::asio::post(l_exe, std::bind_front(handler, l_result));
+        boost::asio::post(in_exe, std::bind_front(handler, l_result));
       },
       handler, in_reg, in_entts, l_exe
   );
@@ -101,7 +101,7 @@ auto async_get(const entt::registry& in_reg, entt::entity& in_entt, CompletionHa
         std::optional<T> l_result{};
         if (in_reg.valid(in_entt) && in_reg.all_of<T>(in_entt)) l_result = in_reg.get<T>(in_entt);
 
-        boost::asio::post(l_exe, std::bind_front(handler, l_result));
+        boost::asio::post(in_exe, std::bind_front(handler, l_result));
       },
       handler, in_reg, in_entt, l_exe
   );
@@ -159,6 +159,28 @@ auto async_emplace_or_replace(
       handler, in_reg, in_entts, l_exe
   );
 }
+
+template <typename T, typename CompletionHandler>
+auto async_emplace_or_replace(
+    entt::registry& in_reg, const std::vector<entt::entity>& in_entts, const std::vector<T>& in_values,
+    CompletionHandler&& handler
+) {
+  auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
+  return boost::asio::async_initiate<CompletionHandler, void()>(
+      // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
+      [](auto&& handler, entt::registry& in_reg, const std::vector<entt::entity>& in_entts,
+         const std::vector<T>& in_values, const boost::asio::any_io_executor& in_exe) {
+        // 切换到 g_strand 线程
+        co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
+        for (const auto& [l_entt, l_value] : ranges::views::zip(in_entts, in_values))
+          if (in_reg.valid(l_entt)) in_reg.emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
+
+        boost::asio::post(in_exe, handler);
+      },
+      handler, in_reg, in_entts, in_values, l_exe
+  );
+}
+
 template <typename T, typename CompletionHandler>
 auto async_emplace_or_replace(
     entt::registry& in_reg, const std::tuple<entt::entity, T>& in_entt, CompletionHandler&& handler
