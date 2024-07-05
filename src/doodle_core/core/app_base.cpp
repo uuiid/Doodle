@@ -84,18 +84,37 @@ app_base& app_base::Get() { return *self; }
 app_base* app_base::GetPtr() { return self; }
 std::int32_t app_base::run() {
   if (stop_) return 0;
-  try {
-    g_io_context().run();
-  } catch (...) {
-    exit_code = 1;
-    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+
+  if (!use_multithread_) {
+    try {
+      g_io_context().run();
+    } catch (...) {
+      exit_code = 1;
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    }
+    try {
+      g_io_context().run_for(std::chrono::milliseconds(10));
+    } catch (...) {
+      exit_code = 1;
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    }
+  } else {
+    std::vector<std::thread> l_threads{std::thread::hardware_concurrency() * 3};
+    for (auto& l_thread : l_threads) {
+      l_thread = std::thread([this] {
+        try {
+          g_io_context().run();
+        } catch (...) {
+          exit_code = 1;
+          default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+        }
+      });
+    }
+    for (auto& l_thread : l_threads) {
+      l_thread.join();
+    }
   }
-  try {
-    g_io_context().run_for(std::chrono::milliseconds(10));
-  } catch (...) {
-    exit_code = 1;
-    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-  }
+
   return exit_code;
 }
 
@@ -119,6 +138,7 @@ void app_base::stop_app(std::int32_t in_exit_code) {
 }
 
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }
+void app_base::use_multithread(bool in_use) { use_multithread_ = in_use; }
 
 void app_base::add_signal() {
   sig_ptr = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
