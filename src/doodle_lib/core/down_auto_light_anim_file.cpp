@@ -98,6 +98,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
 
   for (auto &&i : data_->out_maya_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
+    data_->logger_->log(log_loc(), level::warn, "引用文件:{}", i.ref_file);
     auto l_uuid = FSys::software_flag_file(i.ref_file);
     if (l_uuid.is_nil()) continue;
 
