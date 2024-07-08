@@ -118,14 +118,18 @@ r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
 r.Nanite.ProjectEnabled=False
+
+[/Script/Engine.Engine]
+NearClipPlane=0.500000
 ")";
     return;
   }
 
   auto l_file = FSys::ifstream{l_file_path};
   std::string l_str{std::istreambuf_iterator<char>{l_file}, std::istreambuf_iterator<char>{}};
-  auto l_find_render_setting = l_str.find("[/Script/Engine.RendererSettings]");
-  if (l_find_render_setting == std::string::npos) {
+
+  if (auto l_find_render_setting = l_str.find("[/Script/Engine.RendererSettings]");
+      l_find_render_setting == std::string::npos) {
     l_str += R"([/Script/Engine.RendererSettings]
 r.TextureStreaming=True
 r.GBufferFormat=1
@@ -136,24 +140,36 @@ r.Lumen.HardwareRayTracing=False
 r.Nanite.ProjectEnabled=False
 )";
     FSys::ofstream{l_file_path} << l_str;
-    return;
+  } else {
+    auto l_set_data = [&](const std::string &in_key, const std::string &in_value) {
+      auto l_find = l_str.find(in_key);
+      if (l_find == std::string::npos) {
+        l_str.insert(l_find_render_setting + 34, fmt::format("{}={}\n", in_key, in_value));
+      } else {
+        l_str.replace(l_find, l_str.find("\n", l_find) - l_find, fmt::format("{}={}", in_key, in_value));
+      }
+    };
+    l_set_data("r.TextureStreaming", "True");
+    l_set_data("r.GBufferFormat", "1");
+    l_set_data("r.AllowStaticLighting", "True");
+    l_set_data("r.Streaming.PoolSize", "16384");
+    l_set_data("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject", "False");
+    l_set_data("r.Lumen.HardwareRayTracing", "False");
+    l_set_data("r.Nanite.ProjectEnabled", "False");
   }
 
-  auto l_set_data = [&](const std::string &in_key, const std::string &in_value) {
-    auto l_find = l_str.find(in_key);
+  if (auto l_find_engine = l_str.find("[/Script/Engine.Engine]"); l_find_engine == std::string::npos) {
+    l_str += R"([/Script/Engine.Engine]
+NearClipPlane=0.500000
+)";
+  } else {
+    auto l_find = l_str.find("NearClipPlane");
     if (l_find == std::string::npos) {
-      l_str.insert(l_find_render_setting + 34, fmt::format("{}={}\n", in_key, in_value));
+      l_str.insert(l_find_engine + 24, fmt::format("{}={}\n", "NearClipPlane", "0.500000"));
     } else {
-      l_str.replace(l_find, l_str.find("\n", l_find) - l_find, fmt::format("{}={}", in_key, in_value));
+      l_str.replace(l_find, l_str.find("\n", l_find) - l_find, fmt::format("{}={}", "NearClipPlane", "0.500000"));
     }
-  };
-  l_set_data("r.TextureStreaming", "True");
-  l_set_data("r.GBufferFormat", "1");
-  l_set_data("r.AllowStaticLighting", "True");
-  l_set_data("r.Streaming.PoolSize", "16384");
-  l_set_data("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject", "False");
-  l_set_data("r.Lumen.HardwareRayTracing", "False");
-  l_set_data("r.Nanite.ProjectEnabled", "False");
+  }
 
   FSys::ofstream{l_file_path} << l_str;
 }
@@ -182,7 +198,11 @@ void import_and_render_ue::operator()(
   fix_config();
   g_ctx().get<ue_exe_ptr>()->async_run(
       msg_,
-      fmt::format("{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation -Params={}", data_->down_info_.render_project_, gen_import_config()),
+      fmt::format(
+          "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation "
+          "-Params={}",
+          data_->down_info_.render_project_, gen_import_config()
+      ),
       boost::asio::bind_executor(g_io_context(), std::move(*this))
   );
 }
