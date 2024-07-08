@@ -479,6 +479,51 @@ class http_client_core
     });
   }
 };
+
+class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
+ public:
+  using resolver_t     = boost::asio::ip::tcp::resolver;
+  using resolver_ptr   = std::shared_ptr<resolver_t>;
+  using buffer_type    = boost::beast::flat_buffer;
+
+  using timer_t        = boost::asio::steady_timer;
+  using timer_ptr_t    = std::shared_ptr<timer_t>;
+
+  using ssl_socket_t   = boost::beast::ssl_stream<boost::beast::tcp_stream>;
+  using ssl_socket_ptr = std::shared_ptr<ssl_socket_t>;
+
+  using socket_t       = boost::beast::tcp_stream;
+  using socket_ptr     = std::shared_ptr<socket_t>;
+
+ private:
+  boost::asio::any_io_executor executor_;
+
+ public:
+  http_client_data_base() = default;
+  template <typename ExecutorType>
+  explicit http_client_data_base(ExecutorType&& in_executor) : executor_(in_executor) {}
+  std::string server_ip_{};
+  std::string server_port_{};
+  logger_ptr logger_{};
+  resolver_ptr resolver_{};
+  boost::asio::ip::tcp::resolver::results_type resolver_results_;
+
+  std::variant<socket_ptr, ssl_socket_ptr> socket_{};
+
+  // 定时关闭
+  timer_ptr_t timer_ptr_;
+
+  virtual void init(std::string in_server_url, boost::asio::ssl::context* in_ctx = nullptr);
+
+  void expires_after(std::chrono::seconds in_seconds);
+  void do_close();
+};
+
+template <typename ResponseBody, typename RequestType, typename ClientData>
+boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
+read_and_write(ClientData& in_client_data, boost::beast::http::request<RequestType>& in_req) {
+  co_return std::make_tuple(boost::system::error_code{}, boost::beast::http::response<ResponseBody>{});
+}
 }  // namespace doodle::http::detail
 
 namespace doodle::http {
