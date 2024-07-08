@@ -73,20 +73,20 @@ auto async_get(const entt::registry& in_reg, const std::vector<entt::entity>& in
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void(std::vector<std::optional<T>>)>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, const entt::registry& in_reg, const std::vector<entt::entity>& in_entts,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, const entt::registry* in_reg, const std::vector<entt::entity>& in_entts,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
-        co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
+        // co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         std::vector<std::optional<T>> l_result;
         for (const auto& l_entt : in_entts) {
-          if (in_reg.valid(l_entt) && in_reg.all_of<T>(l_entt))
-            l_result.emplace_back(in_reg.get<T>(l_entt));
+          if (in_reg->valid(l_entt) && in_reg->all_of<T>(l_entt))
+            l_result.emplace_back(in_reg->get<T>(l_entt));
           else
             l_result.emplace_back(std::nullopt);
         }
-        boost::asio::post(in_exe, std::bind_front(handler, l_result));
+        boost::asio::post(in_exe, boost::asio::prepend(std::move(handler), l_result));
       },
-      handler, in_reg, in_entts, l_exe
+      handler, &in_reg, in_entts, l_exe
   );
 }
 template <typename T, typename CompletionHandler>
@@ -94,16 +94,16 @@ auto async_get(const entt::registry& in_reg, entt::entity& in_entt, CompletionHa
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void(std::optional<T>)>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, const entt::registry& in_reg, const entt::entity& in_entt,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, const entt::registry* in_reg, const entt::entity& in_entt,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         std::optional<T> l_result{};
-        if (in_reg.valid(in_entt) && in_reg.all_of<T>(in_entt)) l_result = in_reg.get<T>(in_entt);
+        if (in_reg->valid(in_entt) && in_reg->all_of<T>(in_entt)) l_result = in_reg->get<T>(in_entt);
 
         boost::asio::post(in_exe, std::bind_front(handler, l_result));
       },
-      handler, in_reg, in_entt, l_exe
+      handler, &in_reg, in_entt, l_exe
   );
 }
 
@@ -112,16 +112,16 @@ auto async_valid(const entt::registry& in_reg, const std::vector<entt::entity>& 
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void(std::vector<bool>)>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, const entt::registry& in_reg, const std::vector<entt::entity>& in_entts,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, const entt::registry* in_reg, const std::vector<entt::entity>& in_entts,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         std::vector<bool> l_result;
-        for (const auto& l_entt : in_entts) l_result.emplace_back(in_reg.valid(l_entt) && in_reg.all_of<T>(l_entt));
+        for (const auto& l_entt : in_entts) l_result.emplace_back(in_reg->valid(l_entt) && in_reg->all_of<T>(l_entt));
 
         boost::asio::post(in_exe, std::bind_front(handler, l_result));
       },
-      handler, in_reg, in_entts, l_exe
+      handler, &in_reg, in_entts, l_exe
   );
 }
 template <typename T, typename CompletionHandler>
@@ -129,14 +129,14 @@ auto async_valid(const entt::registry& in_reg, const entt::entity& in_entt, Comp
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void(bool)>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, const entt::registry& in_reg, const entt::entity& in_entt,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, const entt::registry* in_reg, const entt::entity& in_entt,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
-        bool l_result = in_reg.valid(in_entt) && in_reg.all_of<T>(in_entt);
+        bool l_result = in_reg->valid(in_entt) && in_reg->all_of<T>(in_entt);
         boost::asio::post(in_exe, std::bind_front(handler, l_result));
       },
-      handler, in_reg, in_entt, l_exe
+      handler, &in_reg, in_entt, l_exe
   );
 }
 
@@ -147,16 +147,16 @@ auto async_emplace_or_replace(
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, entt::registry& in_reg, const std::vector<std::tuple<entt::entity, T>>& in_entts,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, entt::registry* in_reg, const std::vector<std::tuple<entt::entity, T>>& in_entts,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         for (const auto& [l_entt, l_value] : in_entts)
-          if (in_reg.valid(l_entt)) in_reg.emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
+          if (in_reg->valid(l_entt)) in_reg->emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
 
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entts, l_exe
+      handler, &in_reg, in_entts, l_exe
   );
 }
 
@@ -168,16 +168,16 @@ auto async_emplace_or_replace(
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, entt::registry& in_reg, const std::vector<entt::entity>& in_entts,
-         const std::vector<T>& in_values, const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, entt::registry* in_reg, const std::vector<entt::entity>& in_entts,
+         const std::vector<T>& in_values, const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         for (const auto& [l_entt, l_value] : ranges::views::zip(in_entts, in_values))
-          if (in_reg.valid(l_entt)) in_reg.emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
+          if (in_reg->valid(l_entt)) in_reg->emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
 
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entts, in_values, l_exe
+      handler, &in_reg, in_entts, in_values, l_exe
   );
 }
 
@@ -188,16 +188,16 @@ auto async_emplace_or_replace(
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, entt::registry& in_reg, const std::tuple<entt::entity, T>& in_entt,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, entt::registry* in_reg, const std::tuple<entt::entity, T>& in_entt,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         const auto& [l_entt, l_value] = in_entt;
-        if (in_reg.valid(l_entt)) in_reg.emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
+        if (in_reg->valid(l_entt)) in_reg->emplace_or_replace<T>(l_entt, std::forward<T>(l_value));
 
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entt, l_exe
+      handler, &in_reg, in_entt, l_exe
   );
 }
 
@@ -208,16 +208,16 @@ auto async_destroy(
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, const entt::registry& in_reg, const std::vector<entt::entity>& in_entts,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, const entt::registry* in_reg, const std::vector<entt::entity>& in_entts,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         for (const auto& l_entt : in_entts)
-          if (in_reg.valid(l_entt)) in_reg.destroy(l_entt);
+          if (in_reg->valid(l_entt)) in_reg->destroy(l_entt);
 
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entts, l_exe
+      handler, &in_reg, in_entts, l_exe
   );
 }
 template <typename CompletionHandler>
@@ -225,14 +225,14 @@ auto async_destroy(const entt::registry& in_reg, const entt::entity& in_entt, Co
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, const entt::registry& in_reg, const entt::entity& in_entt,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, const entt::registry* in_reg, const entt::entity& in_entt,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
-        if (in_reg.valid(in_entt)) in_reg.destroy(in_entt);
+        if (in_reg->valid(in_entt)) in_reg->destroy(in_entt);
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entt, l_exe
+      handler, &in_reg, in_entt, l_exe
   );
 }
 
@@ -241,16 +241,16 @@ auto async_remove(entt::registry& in_reg, const std::vector<entt::entity>& in_en
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, entt::registry& in_reg, const std::vector<entt::entity>& in_entts,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, entt::registry* in_reg, const std::vector<entt::entity>& in_entts,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         for (const auto& l_entt : in_entts)
-          if (in_reg.valid(l_entt)) in_reg.remove<T>(l_entt);
+          if (in_reg->valid(l_entt)) in_reg->remove<T>(l_entt);
 
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entts, l_exe
+      handler, &in_reg, in_entts, l_exe
   );
 }
 template <typename T, typename CompletionHandler>
@@ -258,14 +258,14 @@ auto async_remove(entt::registry& in_reg, const entt::entity& in_entt, Completio
   auto l_exe = boost::asio::get_associated_executor(handler, g_io_context());
   return boost::asio::async_initiate<CompletionHandler, void()>(
       // warning: 此处协程不一定急切执行,  不可使用 lambda 捕获, 会使堆栈错误
-      [](auto&& handler, entt::registry& in_reg, const entt::entity& in_entt,
-         const boost::asio::any_io_executor& in_exe) {
+      [](auto&& handler, entt::registry* in_reg, const entt::entity& in_entt,
+         const boost::asio::any_io_executor& in_exe) -> void {
         // 切换到 g_strand 线程
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
-        if (in_reg.valid(in_entt)) in_reg.remove<T>(in_entt);
+        if (in_reg->valid(in_entt)) in_reg->remove<T>(in_entt);
         boost::asio::post(in_exe, handler);
       },
-      handler, in_reg, in_entt, l_exe
+      handler, &in_reg, in_entt, l_exe
   );
 }
 }  // namespace doodle::async_reg
