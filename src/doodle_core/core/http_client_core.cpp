@@ -6,7 +6,7 @@
 namespace doodle::http::detail {
 
 void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::context* in_ctx) {
-  resolver_  = std::make_shared<boost::asio::ip::tcp::resolver>(executor_);
+  resolver_  = std::make_shared<resolver_t>(executor_);
   timer_ptr_ = std::make_shared<boost::asio::steady_timer>(executor_);
   boost::urls::url l_url{in_server_url};
   logger_    = g_logger_ctrl().make_log(fmt::format("{}_{}", "http_client", l_url.host()));
@@ -82,4 +82,17 @@ void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
   });
 }
 
+http_client_data_base::socket_t& http_client_data_base::socket() {
+  return std::visit(
+      entt::overloaded{
+          [](socket_ptr& in_socket) -> socket_t& { return *in_socket; },
+          [](ssl_socket_ptr& in_socket) -> socket_t& { return in_socket->next_layer(); }
+      },
+      socket_
+  );
+}
+http_client_data_base::ssl_socket_t* http_client_data_base::ssl_socket() {
+  auto l_socket = std::get_if<ssl_socket_ptr>(&socket_);
+  return l_socket ? l_socket->get() : nullptr;
+}
 }  // namespace doodle::http::detail

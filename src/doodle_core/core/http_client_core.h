@@ -482,19 +482,21 @@ class http_client_core
 
 class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
  public:
-  using resolver_t     = boost::asio::ip::tcp::resolver;
+  using executor_type  = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+
+  using resolver_t     = executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
   using resolver_ptr   = std::shared_ptr<resolver_t>;
   using buffer_type    = boost::beast::flat_buffer;
 
   using timer_t        = boost::asio::steady_timer;
   using timer_ptr_t    = std::shared_ptr<timer_t>;
 
-  using ssl_socket_t   = boost::beast::ssl_stream<boost::beast::tcp_stream>;
-  using ssl_socket_ptr = std::shared_ptr<ssl_socket_t>;
 
-  using socket_t       = boost::beast::tcp_stream;
+  using socket_t       = executor_type::as_default_on_t<boost::beast::tcp_stream>;
   using socket_ptr     = std::shared_ptr<socket_t>;
 
+  using ssl_socket_t   = boost::beast::ssl_stream<socket_t>;
+  using ssl_socket_ptr = std::shared_ptr<ssl_socket_t>;
  private:
   boost::asio::any_io_executor executor_;
 
@@ -517,13 +519,24 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
 
   void expires_after(std::chrono::seconds in_seconds);
   void do_close();
+
+  socket_t& socket();
+  ssl_socket_t* ssl_socket();
 };
 
-template <typename ResponseBody, typename RequestType, typename ClientData>
+template <typename ResponseBody, typename RequestType>
 boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
-read_and_write(ClientData& in_client_data, boost::beast::http::request<RequestType>& in_req) {
+read_and_write(
+    const std::shared_ptr<http_client_data_base>& in_client_data, boost::beast::http::request<RequestType>& in_req
+) {
+  if (!in_client_data->socket().socket().is_open()) {
+    auto [l_e1, l_re] =
+        co_await in_client_data->resolver_->async_resolve(in_client_data->server_ip_, in_client_data->server_port_);
+  }
+
   co_return std::make_tuple(boost::system::error_code{}, boost::beast::http::response<ResponseBody>{});
 }
+
 }  // namespace doodle::http::detail
 
 namespace doodle::http {
