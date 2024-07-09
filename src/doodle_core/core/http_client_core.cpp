@@ -51,7 +51,7 @@ void http_client_data_base::do_close() {
             boost::system::error_code ec;
             in_socket->socket().close();
             in_socket->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-            if (ec) {
+            if (ec && ec != boost::beast::errc::not_connected) {
               logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
             }
             socket_ = {};
