@@ -535,6 +535,7 @@ read_and_write(
     const std::shared_ptr<http_client_data_base>& in_client_data, const boost::beast::http::request<RequestType>& in_req
 ) {
   using buffer_type = boost::beast::flat_buffer;
+  auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());
 
   boost::beast::http::response<ResponseBody> l_ret{};
   if (!in_client_data->socket().socket().is_open()) {
