@@ -25,6 +25,24 @@ BOOST_AUTO_TEST_CASE(authenticated) {
   g_io_context().run();
 }
 
+BOOST_AUTO_TEST_CASE(authenticated2) {
+  doodle_lib l_lib{};
+  auto l_c = std::make_shared<doodle::http::detail::http_client_data_base>(boost::asio::make_strand(g_io_context()));
+  l_c->init("http://192.168.40.182");
+  boost::beast::http::request<boost::beast::http::string_body> req{
+      boost::beast::http::verb::get, "/api/auth/authenticated", 11
+  };
+  req.set(boost::beast::http::field::host, "192.168.40.182");
+  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  req.set(boost::beast::http::field::authorization, "Bearer " + std::string{g_token});
+  boost::asio::co_spawn(
+      g_io_context(), doodle::http::detail::read_and_write<boost::beast::http::string_body>(l_c, req),
+      boost::asio::bind_executor(g_io_context(), boost::asio::use_awaitable)
+  );
+  g_io_context().run();
+  
+}
+
 BOOST_AUTO_TEST_CASE(get_task) {
   doodle_lib l_lib{};
   auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");

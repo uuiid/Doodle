@@ -497,7 +497,8 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   using ssl_socket_t   = boost::beast::ssl_stream<socket_t>;
   using ssl_socket_ptr = std::shared_ptr<ssl_socket_t>;
 
-  using buffer_type                   = boost::beast::flat_buffer;
+  using buffer_type    = boost::beast::flat_buffer;
+
  private:
   boost::asio::any_io_executor executor_;
 
@@ -530,6 +531,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http:
 read_and_write(
     const std::shared_ptr<http_client_data_base>& in_client_data, const boost::beast::http::request<RequestType>& in_req
 ) {
+  using buffer_type = boost::beast::flat_buffer;
+
   boost::beast::http::response<ResponseBody> l_ret{};
   if (!in_client_data->socket().socket().is_open()) {
     auto [l_e1, l_re] =
@@ -540,40 +543,62 @@ read_and_write(
     }
 
     in_client_data->resolver_results_ = l_re;
-    auto [l_e2, l_end] = co_await in_client_data->socket().socket().async_connect(*in_client_data->resolver_results_);
+    auto [l_e2] = co_await in_client_data->socket().socket().async_connect(*in_client_data->resolver_results_);
     if (l_e2) {
       in_client_data->logger_->log(log_loc(), level::err, "async_connect error: {}", l_e2.message());
       co_return std::make_tuple(l_e2, l_ret);
     }
 
     if (auto l_ssl = in_client_data->ssl_socket(); l_ssl) {
-      auto [l_e3, l_end2] = co_await l_ssl->async_handshake(boost::asio::ssl::stream_base::client);
+      auto [l_e3] = co_await l_ssl->async_handshake(boost::asio::ssl::stream_base::client);
       if (l_e3) {
         in_client_data->logger_->log(log_loc(), level::err, "async_handshake error: {}", l_e3.message());
         co_return std::make_tuple(l_e3, l_ret);
       }
     }
   }
+  buffer_type l_buffer{};
+  if (auto ssl = in_client_data->ssl_socket(); ssl) {
+    auto [l_ew, l_bw] = co_await boost::beast::http::async_write(*ssl, in_req);
+    if (l_ew) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
+      co_return std::make_tuple(l_ew, l_ret);
+    }
 
-  auto [l_ew, l_bw] = std::visit(
-      [&](auto&& in_socket_ptr) { co_return co_await boost::beast::http::async_write(*in_socket_ptr, in_req); },
-      in_client_data->socket_
-  );
-  if (l_ew) {
-    in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
-    co_return std::make_tuple(l_ew, l_ret);
+    auto [l_er, l_br] = co_await boost::beast::http::async_read(*ssl, l_buffer, l_ret);
+    if (l_er) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
+      co_return std::make_tuple(l_er, l_ret);
+    }
+
+    co_return std::make_tuple(boost::system::error_code{}, l_ret);
+  } else {
+    auto [l_ew, l_bw] = co_await boost::beast::http::async_write(in_client_data->socket(), in_req);
+    if (l_ew) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
+      co_return std::make_tuple(l_ew, l_ret);
+    }
+
+    auto [l_er, l_br] =
+        co_await boost::beast::http::async_read(in_client_data->socket(), l_buffer, l_ret);
+    if (l_er) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
+      co_return std::make_tuple(l_er, l_ret);
+    }
+
+    co_return std::make_tuple(boost::system::error_code{}, l_ret);
   }
 
-  auto [l_er, l_br] = std::visit(
-      [&](auto&& in_socket_ptr) {
-        co_return co_await boost::beast::http::async_read(*in_socket_ptr, in_client_data->buffer_, l_ret);
-      },
-      in_client_data->socket_
-  );
-  if (l_er) {
-    in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
-    co_return std::make_tuple(l_er, l_ret);
-  }
+  // auto [l_er, l_br] = std::visit(
+  //     [&](auto&& in_socket_ptr) {
+  //       co_return co_await boost::beast::http::async_read(*in_socket_ptr, l_buffer, l_ret);
+  //     },
+  //     in_client_data->socket_
+  // );
+  // if (l_er) {
+  //   in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
+  //   co_return std::make_tuple(l_er, l_ret);
+  // }
 
   co_return std::make_tuple(boost::system::error_code{}, l_ret);
 }
