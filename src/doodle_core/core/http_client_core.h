@@ -557,10 +557,12 @@ read_and_write(
       }
     }
   }
+  using visit_return_type = boost::asio::async_result<
+      http_client_data_base::executor_type, void(boost::system::error_code, std::size_t)>::return_type;
 
   auto [l_ew, l_bw] = co_await std::visit(
       [in_req_ptr =
-           &in_req](auto&& in_socket_ptr) -> decltype(boost::beast::http::async_write(*in_socket_ptr, in_req)) {
+           &in_req](auto&& in_socket_ptr) -> visit_return_type {
         // 此处调整异步堆栈
         auto l_req = in_req_ptr;
         co_return co_await boost::beast::http::async_write(*in_socket_ptr, *l_req);
@@ -574,8 +576,7 @@ read_and_write(
   }
 
   auto [l_er, l_br] = co_await std::visit(
-      [in_ret_ptr = &l_ret](auto&& in_socket_ptr
-      ) -> decltype(boost::beast::http::async_read(*in_socket_ptr, std::declval<buffer_type>(), l_ret)) {
+      [in_ret_ptr = &l_ret](auto&& in_socket_ptr) -> visit_return_type {
         // 此处调整异步堆栈
         auto l_ret_ptr = in_ret_ptr;
         buffer_type l_buffer2{};
