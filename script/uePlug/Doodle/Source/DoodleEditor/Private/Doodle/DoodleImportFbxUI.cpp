@@ -438,50 +438,6 @@ void UDoodleFbxImport_1::AssembleScene() {
 }
 
 bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton) {
-  TArray<fbxsdk::FbxNode*> L_Fbx_Node_List{};
-  FString L_NameSpace{};
-  auto* L_ImportFbx = UnFbx::FFbxImporter::GetInstance();
-  L_ImportFbx->ClearAllCaches();
-  L_ImportFbx->ImportFromFile(*ImportPath, FPaths::GetExtension(ImportPath));
-  ON_SCOPE_EXIT { L_ImportFbx->ReleaseScene(); };
-  FScopedSlowTask L_Task_Scoped2{
-      (float_t)L_ImportFbx->Scene->GetNodeCount(), LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
-
-  TSet<FString> L_NodeNameSet{};
-
-  for (size_t i = 0; i < L_ImportFbx->Scene->GetNodeCount(); ++i) {
-    const auto L_FbxNode = L_ImportFbx->Scene->GetNode(i);
-    // 只添加骨骼
-    if (auto L_Attr = L_FbxNode->GetNodeAttribute();
-        L_Attr && L_Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton) {
-      FString L_Name = MakeName(L_ImportFbx->Scene->GetNode(i)->GetName());
-      L_NodeNameSet.Add(L_Name);
-    }
-    // 获取名称空间
-    if (L_NameSpace.IsEmpty()) L_NameSpace = GetNamespace(L_ImportFbx->Scene->GetNode(i)->GetName());
-
-    L_Task_Scoped2.EnterProgressFrame(1.0f);
-  }
-  if (L_NameSpace.IsEmpty()) {
-    return false;
-  }
-
-  for (auto&& L_SK_Data : In_Skeleton) {
-    if (FString L_BaseName = FPaths::GetBaseFilename(ImportPath);
-        !L_SK_Data.SkinTag.IsEmpty() && L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE) {
-      SkinObj = L_SK_Data.SkinObj;
-      return true;
-    }
-  }
-  for (auto&& L_SK_Data : In_Skeleton) {
-    if (Algo::AllOf(
-            L_SK_Data.BoneNames, [&](const FString& IN_Str) { return L_NodeNameSet.Contains(IN_Str); }
-        )  /// 进一步确认骨骼内容
-    ) {
-      SkinObj = L_SK_Data.SkinObj;
-      return true;
-    }
-  }
   return false;
 }
 
@@ -1223,30 +1179,6 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         .FillWidth(1.0f)
         [
           SNew(SButton)
-            .Text(LOCTEXT("Search USkeleton", "Search USkeleton"))
-        .ToolTipText(LOCTEXT("Search USkeleton Tip", "寻找骨骼"))
-        .OnClicked_Lambda([this]() {
-                         FindSK();
-                         return FReply::Handled();
-                       })
-        ]
-        + SHorizontalBox::Slot()
-        .FillWidth(1.0f)
-        [
-          SNew(SButton)
-            .Text(LOCTEXT("Search USkeleton And Import", "Search USkeleton And Import"))
-        .ToolTipText(LOCTEXT("Search USkeleton Tip2", "寻找骨骼并导入Fbx"))
-        .OnClicked_Lambda([this]() {
-                         FindSK();
-                         ImportFile();
-                         return FReply::Handled();
-                       })
-        ]
-
-        + SHorizontalBox::Slot()
-        .FillWidth(1.0f)
-        [
-          SNew(SButton)
             .Text(LOCTEXT("Clear USkeleton", "Clear USkeleton"))
         .ToolTipText(LOCTEXT("Clear USkeleton Tip", "清除查找的骨骼"))
         .OnClicked_Lambda([this]() {
@@ -1300,30 +1232,12 @@ TSharedRef<SDockTab> SDoodleImportFbxUI::OnSpawnAction(const FSpawnTabArgs& Spaw
   return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(SDoodleImportFbxUI)];  // 这里创建我们自己的界面
 }
 
-bool SDoodleImportFbxUI::IsCamera(const UnFbx::FFbxImporter* InFbx) {
-  TArray<fbxsdk::FbxCamera*> L_Cameras{};
-  MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
+bool SDoodleImportFbxUI::IsCamera(const FString& In_File) {
+  auto LPath = FPaths::GetBaseFilename(In_File);
 
-  return !L_Cameras.IsEmpty();
+  return LPath.Contains(TEXT("camera"));
 }
-
-void SDoodleImportFbxUI::FindSK() {
-  for (auto&& i : ListImportData) {
-    if (auto&& L_Fbx = Cast<UDoodleFbxImport_1>(i)) {
-      if (FPaths::FileExists(L_Fbx->ImportPath) && FPaths::GetExtension(L_Fbx->ImportPath, true) == TEXT(".fbx")) {
-        UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-        TArray<TSharedPtr<UDoodleFbxImport_1>> L_RemoveList;
-        FScopedSlowTask L_Task_Scoped1{2.0f, LOCTEXT("FindSK1", "加载 fbx 文件中...")};
-        L_Task_Scoped1.MakeDialog();
-        // FString L_Debug_str{};
-
-        FbxImporter->ImportFromFile(L_Fbx->ImportPath, FPaths::GetExtension(L_Fbx->ImportPath));
-        ON_SCOPE_EXIT { FbxImporter->ReleaseScene(); };
-        L_Fbx->FindSkeleton(AllSkinObjs);
-      }
-    }
-  }
-}
+ 
 
 void SDoodleImportFbxUI::ImportFile() {
   FScopedSlowTask L_Task_Scoped1{
@@ -1403,17 +1317,7 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
   SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_File{};
   /// 扫描fbx 和abc 文件
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
-    UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-
-    FScopedSlowTask L_Task_Scoped1{2.0f, LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
-    L_Task_Scoped1.MakeDialog();
-    // FString L_Debug_str{};
-
-    FbxImporter->ImportFromFile(In_File, FPaths::GetExtension(In_File));
-    ON_SCOPE_EXIT { FbxImporter->ReleaseScene(); };
-    FbxImporter;
-
-    if (IsCamera(FbxImporter)) {
+    if (IsCamera(In_File)) {
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork21", "确认为相机"));
       SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
       L_ptr->ImportPath                                      = In_File;
@@ -1422,8 +1326,6 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
       L_ptr->ImportPath                    = In_File;
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork3", "寻找匹配骨骼"));
-      // if (L_ptr->FindSkeleton(AllSkinObjs))
-      L_ptr->FindSkeleton(AllSkinObjs);
       L_File = ListImportData.Emplace_GetRef(L_ptr);
     }
   }
@@ -1450,16 +1352,7 @@ void SDoodleImportFbxUI::AddCameraFile(const FString& In_File) {
   SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_File{};
   /// 扫描fbx 和abc 文件
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
-    UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-
-    FScopedSlowTask L_Task_Scoped1{2.0f, LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
-    L_Task_Scoped1.MakeDialog();
-    // FString L_Debug_str{};
-
-    FbxImporter->ImportFromFile(In_File, FPaths::GetExtension(In_File));
-    ON_SCOPE_EXIT { FbxImporter->ReleaseScene(); };
-
-    if (IsCamera(FbxImporter)) {
+    if (IsCamera(In_File)) {
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork21", "确认为相机"));
       SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
       L_ptr->ImportPath                                      = In_File;
