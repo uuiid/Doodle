@@ -72,13 +72,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
     if (user_.mobile_.empty()) {
       user_.id_           = in_user_id;
       auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
-      l_kitsu_client->get_user(
-          user_.id_,
-          boost::asio::bind_executor(
-              g_io_context(),
-              boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_mobile, shared_from_this())
-          )
-      );
+      // l_kitsu_client->get_user(
+      //     user_.id_,
+      //     boost::asio::bind_executor(
+      //         g_io_context(),
+      //         boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_mobile, shared_from_this())
+      //     )
+      // );
     } else {
       boost::asio::post(boost::asio::bind_executor(
           g_io_context(),

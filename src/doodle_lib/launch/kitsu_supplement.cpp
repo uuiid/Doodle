@@ -73,9 +73,9 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   }
   {
     // 初始化 kitsu 客户端
-    auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
-        std::make_shared<kitsu::kitsu_client>(l_args.kitsu_ip_, l_args.kitsu_port_)
-    );
+    auto l_client =
+        g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(std::make_shared<kitsu::kitsu_client>(g_io_context(), "")
+        );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
 
     // 初始化钉钉客户端

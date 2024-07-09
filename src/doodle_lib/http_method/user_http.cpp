@@ -47,12 +47,12 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
     }
 
     auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
-    l_kitsu_client->get_user(
-        user_.id_,
-        boost::asio::bind_executor(
-            g_io_context(), boost::beast::bind_front_handler(&user_post_impl::do_feach_mobile, shared_from_this())
-        )
-    );
+    // l_kitsu_client->get_user(
+    //     user_.id_,
+    //     boost::asio::bind_executor(
+    //         g_io_context(), boost::beast::bind_front_handler(&user_post_impl::do_feach_mobile, shared_from_this())
+    //     )
+    // );
   }
 
  private:
