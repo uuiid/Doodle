@@ -162,7 +162,7 @@
                 "rpc_server/base",
                 "rpc_server/list_users",
                 "kitsu/login",
-                "kitsu/authenticated",
+                "kitsu/get_user",
                 "kitsu/get_task"
             ]
         }

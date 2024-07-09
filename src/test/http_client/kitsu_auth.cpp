@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(authenticated2) {
 // 直接获取task
 BOOST_AUTO_TEST_CASE(get_task) {
   doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>(g_io_context(), "");
+  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>(g_io_context(), "http://192.168.40.182");
   l_c->set_access_token(std::string{g_token});
 
   auto l_f = boost::asio::co_spawn(
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(get_task) {
 // 获取用户
 BOOST_AUTO_TEST_CASE(get_user) {
   doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>(g_io_context(), "");
+  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>(g_io_context(), "http://192.168.40.182");
   l_c->set_access_token(std::string{g_token});
   auto l_f = boost::asio::co_spawn(
       g_io_context(), l_c->get_user(boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b")),
