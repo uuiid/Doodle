@@ -9,200 +9,66 @@
 namespace doodle::kitsu {
 class kitsu_client;
 
-class kitsu_request_header_operator {
- public:
-  kitsu_client* kitsu_client_ptr_{};
-  template <typename T, typename ResponeType>
-  void operator()(T* in_http_client_core, ResponeType& in_req);
-};
-
-class kitsu_response_header_operator {
- public:
-  kitsu_client* kitsu_client_ptr_{};
-  template <typename T, typename ResponeType>
-  void operator()(T* in_http_client_core, ResponeType& in_req);
-};
-
 class kitsu_client {
-  using http_client_core =
-      doodle::http::detail::http_client_core<kitsu_request_header_operator, kitsu_response_header_operator>;
+  using http_client_core     = doodle::http::detail::http_client_data_base;
   using http_client_core_ptr = std::shared_ptr<http_client_core>;
   http_client_core_ptr http_client_core_ptr_{};
-  friend class kitsu_request_header_operator;
-  friend class kitsu_response_header_operator;
   std::string access_token_{};
   std::string refresh_token_{};
   std::string session_cookie_{};
+  template <typename Req>
+  std::decay_t<Req> header_operator_req(Req&& in_req) {
+    in_req.set(boost::beast::http::field::accept, "application/json");
+    in_req.set(boost::beast::http::field::content_type, "application/json");
+    in_req.set(boost::beast::http::field::host, http_client_core_ptr_->server_ip_);
+    in_req.set(boost::beast::http::field::authorization, "Bearer " + access_token_);
+    if (!session_cookie_.empty()) {
+      in_req.set(boost::beast::http::field::cookie, session_cookie_ + ";");
+    }
+    in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    in_req.keep_alive(true);
+    in_req.prepare_payload();
+    return std::move(in_req);
+  }
+
+  template <typename Resp>
+  void header_operator_resp(Resp& in_resp) {
+    auto l_set_cookie = in_resp[boost::beast::http::field::set_cookie];
+    if (!l_set_cookie.empty()) {
+      std::vector<std::string> l_cookie;
+      boost::split(l_cookie, l_set_cookie, boost::is_any_of(";"));
+      for (auto& l_item : l_cookie) {
+        if (l_item.starts_with("session=")) {
+          session_cookie_ = l_item;
+        }
+      }
+    }
+  }
 
  public:
-  explicit kitsu_client(std::string in_ip, std::string in_port)
-      : http_client_core_ptr_(std::make_shared<http_client_core>(std::move(in_ip), std::move(in_port))) {
-    http_client_core_ptr_->request_header_operator().kitsu_client_ptr_  = this;
-    http_client_core_ptr_->response_header_operator().kitsu_client_ptr_ = this;
+  template <typename ExecutorType>
+  explicit kitsu_client(ExecutorType&& in_executor, std::string in_url)
+      : http_client_core_ptr_(std::make_shared<http_client_core>(in_executor)) {
+    http_client_core_ptr_->init(in_url);
   }
   ~kitsu_client() = default;
 
   inline void set_access_token(std::string in_token) { access_token_ = std::move(in_token); }
 
-  template <typename CompletionHandler>
-  auto authenticated(std::string in_token, CompletionHandler&& in_completion) {
-    boost::beast::http::request<boost::beast::http::string_body> req{
-        boost::beast::http::verb::get, "/api/auth/authenticated", 11
-    };
-    access_token_ = in_token;
+  struct task {
+    // form json
+    friend void from_json(const nlohmann::json& j, task& p) {}
+  };
+  boost::asio::awaitable<std::tuple<boost::system::error_code, task>> get_task(const boost::uuids::uuid& in_uuid);
 
-    // boost::asio::async_initiate<void(boost::system::error_code, nlohmann::json)>(
+  struct user_t {
+    std::string phone_{};
+    // form json
+    friend void from_json(const nlohmann::json& j, user_t& p) { j.at("phone").get_to(p.phone_); }
+  };
 
-    // );
-
-    http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-        req,
-        boost::asio::bind_executor(
-            g_io_context().get_executor(),
-            [l_com = std::move(in_completion),
-             this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
-              if (ec) {
-                http_client_core_ptr_->logger()->log(log_loc(), level::err, "authenticated failed: {}", ec.message());
-                l_com(ec, nlohmann::json{});
-                return;
-              }
-
-              if (res.result() != boost::beast::http::status::ok) {
-                http_client_core_ptr_->logger()->log(
-                    log_loc(), level::err, "authenticated failed: {} {}", magic_enum::enum_integer(res.result()),
-                    res.body()
-                );
-                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                l_com(ec, nlohmann::json{});
-                return;
-              }
-
-              auto l_json_str = res.body();
-              if (!nlohmann::json::accept(l_json_str)) {
-                http_client_core_ptr_->logger()->log(log_loc(), level::err, "authenticated failed: {}", l_json_str);
-                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                l_com(ec, nlohmann::json{});
-                return;
-              }
-              auto l_json = nlohmann::json::parse(l_json_str);
-              boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
-            }
-        )
-    );
-  }
-
-  template <typename CompletionHandler>
-  void get_task(std::string in_uuid, CompletionHandler&& in_completio) {
-    boost::beast::http::request<boost::beast::http::empty_body> req{
-        boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_uuid), 11
-    };
-    http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-        req,
-        boost::asio::bind_executor(
-            g_io_context().get_executor(),
-            [l_com = std::move(in_completio),
-             this](boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res) {
-              if (ec) {
-                http_client_core_ptr_->logger()->log(log_loc(), level::err, "get task failed: {}", ec.message());
-                l_com(ec, nlohmann::json{});
-                return;
-              }
-
-              if (res.result() != boost::beast::http::status::ok) {
-                http_client_core_ptr_->logger()->log(
-                    log_loc(), level::err, "get task failed: {}", magic_enum::enum_integer(res.result())
-                );
-                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                l_com(ec, nlohmann::json{});
-                return;
-              }
-
-              if (!nlohmann::json::accept(res.body())) {
-                http_client_core_ptr_->logger()->log(log_loc(), level::err, "get task failed: {}", res.body());
-                ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                l_com(ec, nlohmann::json{});
-                return;
-              }
-              auto l_json = nlohmann::json::parse(res.body());
-              boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
-            }
-        )
-    );
-  }
-
-  template <typename CompletionHandler>
-  void get_user(boost::uuids::uuid in_uuid, CompletionHandler&& in_completio) {
-    boost::beast::http::request<boost::beast::http::empty_body> req{
-        boost::beast::http::verb::get, fmt::format("/api/data/persons/{}", in_uuid), 11
-    };
-
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
-        [this](auto in_handler, auto in_self, auto in_req) {
-          in_self->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-              in_req,
-              boost::asio::bind_executor(
-                  g_io_context().get_executor(),
-                  [l_com = std::move(in_handler), this](
-                      boost::system::error_code ec, boost::beast::http::response<boost::beast::http::string_body> res
-                  ) {
-                    nlohmann::json l_json{};
-                    if (ec) {
-                      http_client_core_ptr_->logger()->log(log_loc(), level::err, "get user failed: {}", ec.message());
-                      boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
-                      return;
-                    }
-
-                    if (res.result() != boost::beast::http::status::ok) {
-                      http_client_core_ptr_->logger()->log(
-                          log_loc(), level::err, "get user failed: {}", magic_enum::enum_integer(res.result())
-                      );
-                      ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                      boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
-                      return;
-                    }
-
-                    if (!nlohmann::json::accept(res.body())) {
-                      http_client_core_ptr_->logger()->log(log_loc(), level::err, "get user failed: {}", res.body());
-                      ec = boost::system::errc::make_error_code(boost::system::errc::bad_message);
-                      boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
-                      return;
-                    }
-                    l_json = nlohmann::json::parse(res.body());
-                    boost::asio::post(boost::asio::prepend(l_com, ec, std::move(l_json)));
-                  }
-              )
-          );
-        },
-        in_completio, this, req
-    );
-  }
+  boost::asio::awaitable<std::tuple<boost::system::error_code, user_t>> get_user(const boost::uuids::uuid& in_uuid);
 };
-template <typename T, typename ResponeType>
-void kitsu_request_header_operator::operator()(T* in_http_client_core, ResponeType& in_req) {
-  in_req.set(boost::beast::http::field::accept, "application/json");
-  in_req.set(boost::beast::http::field::content_type, "application/json");
-  in_req.set(boost::beast::http::field::host, kitsu_client_ptr_->http_client_core_ptr_->server_ip());
-  in_req.set(boost::beast::http::field::authorization, "Bearer " + kitsu_client_ptr_->access_token_);
-  if (!kitsu_client_ptr_->session_cookie_.empty()) {
-    in_req.set(boost::beast::http::field::cookie, kitsu_client_ptr_->session_cookie_ + ";");
-  }
-  in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  in_req.keep_alive(true);
-  in_req.prepare_payload();
-}
-template <typename T, typename ResponeType>
-void kitsu_response_header_operator::operator()(T* in_http_client_core, ResponeType& in_req) {
-  auto l_set_cookie = in_req[boost::beast::http::field::set_cookie];
-  if (!l_set_cookie.empty()) {
-    std::vector<std::string> l_cookie;
-    boost::split(l_cookie, l_set_cookie, boost::is_any_of(";"));
-    for (auto& l_item : l_cookie) {
-      if (l_item.starts_with("session=")) {
-        kitsu_client_ptr_->session_cookie_ = l_item;
-      }
-    }
-  }
-}
 
 using kitsu_client_ptr = std::shared_ptr<kitsu_client>;
 
