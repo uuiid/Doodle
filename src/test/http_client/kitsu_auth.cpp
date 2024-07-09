@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(authenticated2) {
   req.set(boost::beast::http::field::authorization, "Bearer " + std::string{g_token});
   boost::asio::co_spawn(
       g_io_context(), doodle::http::detail::read_and_write<boost::beast::http::string_body>(l_c, req),
-      boost::asio::bind_executor(g_io_context(), boost::asio::use_awaitable)
+      boost::asio::bind_executor(g_io_context(), boost::asio::use_future)
   );
   g_io_context().run();
   

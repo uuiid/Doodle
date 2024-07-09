@@ -147,6 +147,7 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
+                "kitsu/authenticated2",
                 "blendshape_fbx",
                 "test_pca",
                 "copy_folder",
