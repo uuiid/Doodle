@@ -536,6 +536,7 @@ read_and_write(
 ) {
   using buffer_type = boost::beast::flat_buffer;
   auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());
+  in_client_data->expires_after(std::chrono::seconds{10});
 
   boost::beast::http::response<ResponseBody> l_ret{};
   if (!in_client_data->socket().socket().is_open()) {
@@ -545,6 +546,7 @@ read_and_write(
       in_client_data->logger_->log(log_loc(), level::err, "async_resolve error: {}", l_e1.message());
       co_return std::make_tuple(l_e1, l_ret);
     }
+    in_client_data->expires_after(std::chrono::seconds{10});
 
     in_client_data->resolver_results_ = l_re;
     auto [l_e2] = co_await in_client_data->socket().socket().async_connect(*in_client_data->resolver_results_);
@@ -564,6 +566,7 @@ read_and_write(
   using visit_return_type = boost::asio::async_result<
       http_client_data_base::co_executor_type, void(boost::system::error_code, std::size_t)>::return_type;
 
+  in_client_data->expires_after(std::chrono::seconds{10});
   auto [l_ew, l_bw] = co_await std::visit(
       [in_req_ptr = &in_req](auto&& in_socket_ptr) -> visit_return_type {
         // 此处调整异步堆栈
@@ -577,6 +580,7 @@ read_and_write(
     in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
     co_return std::make_tuple(l_ew, l_ret);
   }
+  in_client_data->expires_after(std::chrono::seconds{10});
 
   auto [l_er, l_br] = co_await std::visit(
       [in_ret_ptr = &l_ret](auto&& in_socket_ptr) -> visit_return_type {
