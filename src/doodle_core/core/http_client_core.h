@@ -497,6 +497,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   using ssl_socket_t   = boost::beast::ssl_stream<socket_t>;
   using ssl_socket_ptr = std::shared_ptr<ssl_socket_t>;
 
+  using buffer_type                   = boost::beast::flat_buffer;
  private:
   boost::asio::any_io_executor executor_;
 
@@ -509,7 +510,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   logger_ptr logger_{};
   resolver_ptr resolver_{};
   boost::asio::ip::tcp::resolver::results_type resolver_results_;
-
+  buffer_type buffer_{};
   std::variant<socket_ptr, ssl_socket_ptr> socket_{};
 
   // 定时关闭
@@ -555,7 +556,7 @@ read_and_write(
   }
 
   auto [l_ew, l_bw] = std::visit(
-      [&](auto&& in_socket_ptr) { co_return co_await boost::beast::async_write(*in_socket_ptr, in_req); },
+      [&](auto&& in_socket_ptr) { co_return co_await boost::beast::http::async_write(*in_socket_ptr, in_req); },
       in_client_data->socket_
   );
   if (l_ew) {
@@ -565,7 +566,7 @@ read_and_write(
 
   auto [l_er, l_br] = std::visit(
       [&](auto&& in_socket_ptr) {
-        co_return co_await boost::beast::async_read(*in_socket_ptr, in_client_data->buffer_, l_ret);
+        co_return co_await boost::beast::http::async_read(*in_socket_ptr, in_client_data->buffer_, l_ret);
       },
       in_client_data->socket_
   );
