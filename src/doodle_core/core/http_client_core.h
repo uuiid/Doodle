@@ -482,22 +482,23 @@ class http_client_core
 
 class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
  public:
-  using executor_type  = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using co_executor_type = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using executor_type    = boost::asio::any_io_executor;
 
-  using resolver_t     = executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
-  using resolver_ptr   = std::shared_ptr<resolver_t>;
-  using buffer_type    = boost::beast::flat_buffer;
+  using resolver_t       = co_executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
+  using resolver_ptr     = std::shared_ptr<resolver_t>;
+  using buffer_type      = boost::beast::flat_buffer;
 
-  using timer_t        = boost::asio::steady_timer;
-  using timer_ptr_t    = std::shared_ptr<timer_t>;
+  using timer_t          = boost::asio::steady_timer;
+  using timer_ptr_t      = std::shared_ptr<timer_t>;
 
-  using socket_t       = executor_type::as_default_on_t<boost::beast::tcp_stream>;
-  using socket_ptr     = std::shared_ptr<socket_t>;
+  using socket_t         = co_executor_type::as_default_on_t<boost::beast::tcp_stream>;
+  using socket_ptr       = std::shared_ptr<socket_t>;
 
-  using ssl_socket_t   = boost::beast::ssl_stream<socket_t>;
-  using ssl_socket_ptr = std::shared_ptr<ssl_socket_t>;
+  using ssl_socket_t     = boost::beast::ssl_stream<socket_t>;
+  using ssl_socket_ptr   = std::shared_ptr<ssl_socket_t>;
 
-  using buffer_type    = boost::beast::flat_buffer;
+  using buffer_type      = boost::beast::flat_buffer;
 
  private:
   boost::asio::any_io_executor executor_;
@@ -505,7 +506,9 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
  public:
   http_client_data_base() = default;
   template <typename ExecutorType>
-  explicit http_client_data_base(ExecutorType&& in_executor) : executor_(in_executor) {}
+  explicit http_client_data_base(ExecutorType&& in_executor) : executor_(boost::asio::make_strand(in_executor)) {}
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+
   std::string server_ip_{};
   std::string server_port_{};
   logger_ptr logger_{};
@@ -558,11 +561,10 @@ read_and_write(
     }
   }
   using visit_return_type = boost::asio::async_result<
-      http_client_data_base::executor_type, void(boost::system::error_code, std::size_t)>::return_type;
+      http_client_data_base::co_executor_type, void(boost::system::error_code, std::size_t)>::return_type;
 
   auto [l_ew, l_bw] = co_await std::visit(
-      [in_req_ptr =
-           &in_req](auto&& in_socket_ptr) -> visit_return_type {
+      [in_req_ptr = &in_req](auto&& in_socket_ptr) -> visit_return_type {
         // 此处调整异步堆栈
         auto l_req = in_req_ptr;
         co_return co_await boost::beast::http::async_write(*in_socket_ptr, *l_req);
