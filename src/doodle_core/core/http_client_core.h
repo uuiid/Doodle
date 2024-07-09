@@ -557,48 +557,36 @@ read_and_write(
       }
     }
   }
-  buffer_type l_buffer{};
-  if (auto ssl = in_client_data->ssl_socket(); ssl) {
-    auto [l_ew, l_bw] = co_await boost::beast::http::async_write(*ssl, in_req);
-    if (l_ew) {
-      in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
-      co_return std::make_tuple(l_ew, l_ret);
-    }
 
-    auto [l_er, l_br] = co_await boost::beast::http::async_read(*ssl, l_buffer, l_ret);
-    if (l_er) {
-      in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
-      co_return std::make_tuple(l_er, l_ret);
-    }
+  auto [l_ew, l_bw] = co_await std::visit(
+      [in_req_ptr =
+           &in_req](auto&& in_socket_ptr) -> decltype(boost::beast::http::async_write(*in_socket_ptr, in_req)) {
+        // 此处调整异步堆栈
+        auto l_req = in_req_ptr;
+        co_return co_await boost::beast::http::async_write(*in_socket_ptr, *l_req);
+      },
+      in_client_data->socket_
+  );
 
-    co_return std::make_tuple(boost::system::error_code{}, l_ret);
-  } else {
-    auto [l_ew, l_bw] = co_await boost::beast::http::async_write(in_client_data->socket(), in_req);
-    if (l_ew) {
-      in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
-      co_return std::make_tuple(l_ew, l_ret);
-    }
-
-    auto [l_er, l_br] =
-        co_await boost::beast::http::async_read(in_client_data->socket(), l_buffer, l_ret);
-    if (l_er) {
-      in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
-      co_return std::make_tuple(l_er, l_ret);
-    }
-
-    co_return std::make_tuple(boost::system::error_code{}, l_ret);
+  if (l_ew) {
+    in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
+    co_return std::make_tuple(l_ew, l_ret);
   }
 
-  // auto [l_er, l_br] = std::visit(
-  //     [&](auto&& in_socket_ptr) {
-  //       co_return co_await boost::beast::http::async_read(*in_socket_ptr, l_buffer, l_ret);
-  //     },
-  //     in_client_data->socket_
-  // );
-  // if (l_er) {
-  //   in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
-  //   co_return std::make_tuple(l_er, l_ret);
-  // }
+  auto [l_er, l_br] = co_await std::visit(
+      [in_ret_ptr = &l_ret](auto&& in_socket_ptr
+      ) -> decltype(boost::beast::http::async_read(*in_socket_ptr, std::declval<buffer_type>(), l_ret)) {
+        // 此处调整异步堆栈
+        auto l_ret_ptr = in_ret_ptr;
+        buffer_type l_buffer2{};
+        co_return co_await boost::beast::http::async_read(*in_socket_ptr, l_buffer2, *l_ret_ptr);
+      },
+      in_client_data->socket_
+  );
+  if (l_er) {
+    in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
+    co_return std::make_tuple(l_er, l_ret);
+  }
 
   co_return std::make_tuple(boost::system::error_code{}, l_ret);
 }
