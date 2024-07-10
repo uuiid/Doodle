@@ -64,8 +64,8 @@ void authorization::load_authorization_data(const std::string& in_data) {
     return;
   }
 
-  *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
-  //  p_i->ciphertext_data = std::move(ciphertext);
+  *p_i                 = nlohmann::json::parse(decryptedtext).get<impl>();
+  p_i->ciphertext_data = in_data;
 }
 
 void authorization::load_authorization_data(std::istream& in_path) {

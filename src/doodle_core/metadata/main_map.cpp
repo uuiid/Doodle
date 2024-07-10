@@ -30,4 +30,9 @@ void ue_main_map::find_ue_project_file(const entt::handle_view<assets_file, ue_m
   auto l_upej = find_u_pej(l_path);
   if (!l_upej.empty()) in_handle_view.emplace_or_replace<ue_main_map>(l_upej);
 }
+FSys::path ue_main_map::find_ue_project_file(const FSys::path& in_path) {
+  if (in_path.empty()) return {};
+  return find_u_pej(in_path);
+}
+
 }  // namespace doodle

@@ -93,4 +93,8 @@ details::database_pool_info& g_pool_db() {
   return db;
 }
 
+boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() {
+  static auto strand = boost::asio::make_strand(g_io_context());
+  return strand;
+}
 }  // namespace doodle

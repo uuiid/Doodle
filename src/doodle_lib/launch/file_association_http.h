@@ -7,10 +7,10 @@
 
 #include <argh.h>
 namespace doodle::launch {
-class auto_light_service_t {
+class file_association_http_t {
  public:
-  auto_light_service_t()  = default;
-  ~auto_light_service_t() = default;
+  file_association_http_t()  = default;
+  ~file_association_http_t() = default;
 
   bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector);
 };

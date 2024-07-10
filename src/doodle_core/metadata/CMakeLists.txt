@@ -26,6 +26,7 @@ target_sources(
         server_task_info.h
         attendance.h
         work_xlsx_task_info.h
+        kitsu_file_path.h
 
         PRIVATE
         assets.cpp
@@ -53,6 +54,7 @@ target_sources(
         server_task_info.cpp
         attendance.cpp
         work_xlsx_task_info.cpp
+        kitsu_file_path.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)

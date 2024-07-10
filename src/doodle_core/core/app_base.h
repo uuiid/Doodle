@@ -50,6 +50,7 @@ class DOODLE_CORE_API app_base {
   using signal_t = boost::asio::signal_set;
 
   std::shared_ptr<signal_t> sig_ptr;
+  bool use_multithread_{false};
 
  public:
   explicit app_base(int argc, const char* const argv[]);
@@ -66,6 +67,7 @@ class DOODLE_CORE_API app_base {
   void add_signal();
 
   bool is_main_thread() const;
+  void use_multithread(bool in_use = true);
 
   virtual std::int32_t poll_one();
   // get argh

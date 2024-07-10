@@ -6,6 +6,8 @@
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/doodle_core_export.h>
 
+#include <boost/asio.hpp>
+
 #include <entt/entt.hpp>
 namespace boost::asio {
 class io_context;
@@ -30,4 +32,5 @@ DOODLE_CORE_API registry_ptr &g_reg();
 DOODLE_CORE_API details::logger_ctrl &g_logger_ctrl();
 DOODLE_CORE_API details::database_info &g_db();
 DOODLE_CORE_API details::database_pool_info &g_pool_db();
+DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
 }  // namespace doodle

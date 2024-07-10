@@ -47,7 +47,20 @@
                 "--config=${workspaceFolder}/build/debug_server.json"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
+            "name": "Doodle_debug_file_association",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/file_association_http.exe",
+            "args": [
+                "--config=${workspaceFolder}/build/debug_server.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
@@ -134,8 +147,10 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
+                "kitsu/authenticated2",
                 "blendshape_fbx",
                 "test_pca",
+                "copy_folder",
                 "xlsx_table/main",
                 "xlsx_table/msg_body",
                 "dingding/access_token",

@@ -47,12 +47,11 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     std::lock_guard const _lock{data_->_mutex};
-    if (data_->info_.empty() && data_->warn_.empty()) {
+    if (data_->p_state == process_message::state::wait || data_->p_state == process_message::state::pause) {
       data_->p_state = process_message::state::run;
       data_->p_time  = chrono::system_clock::now();
     }
-    constexpr auto g_success               = magic_enum::enum_name(process_message::state::success);
-    constexpr auto g_fail                  = magic_enum::enum_name(process_message::state::fail);
+
     constexpr std::size_t g_max_size       = 1024 * 100;
     constexpr std::size_t g_max_size_clear = 1024 * 77;
     switch (msg.level) {
@@ -89,10 +88,11 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::off:
         data_->p_end      = chrono::system_clock::now();
         data_->p_progress = {1, 1};
-        if (msg.payload == g_success) {
-          data_->p_state = process_message::state::success;
-        } else if (msg.payload == g_fail) {
-          data_->p_state = process_message::state::fail;
+        if (auto l_enum = magic_enum::enum_cast<process_message::state>(fmt::to_string(msg.payload));
+            l_enum.has_value()) {
+          if (data_->p_state == process_message::state::run && *l_enum == process_message::state::pause)
+            data_->p_extra_time += chrono::system_clock::now() - data_->p_time;
+          data_->p_state = l_enum.value();
         }
         break;
 
@@ -190,16 +190,20 @@ const process_message::state& process_message::get_state() const {
 chrono::sys_time_pos::duration process_message::get_time() const {
   std::lock_guard _lock{data_->_mutex};
 
+  chrono::sys_time_pos::duration l_out = data_->p_extra_time;
+
   switch (data_->p_state) {
     case state::wait:
-      return chrono::sys_time_pos::duration{0};
+    case state::pause:
+      break;
     case state::run:
-      return chrono::system_clock::now() - data_->p_time;
+      l_out += chrono::system_clock::now() - data_->p_time;
+      break;
     case state::fail:
     case state::success:
-      return data_->p_end - data_->p_time;
+      l_out += data_->p_end - data_->p_time;
   }
-  return {};
+  return l_out;
 }
 std::string process_message::message_back() const {
   std::lock_guard _lock{data_->_mutex};

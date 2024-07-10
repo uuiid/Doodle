@@ -479,6 +479,122 @@ class http_client_core
     });
   }
 };
+
+class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
+ public:
+  using co_executor_type = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using executor_type    = boost::asio::any_io_executor;
+
+  using resolver_t       = co_executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
+  using resolver_ptr     = std::shared_ptr<resolver_t>;
+  using buffer_type      = boost::beast::flat_buffer;
+
+  using timer_t          = boost::asio::steady_timer;
+  using timer_ptr_t      = std::shared_ptr<timer_t>;
+
+  using socket_t         = co_executor_type::as_default_on_t<boost::beast::tcp_stream>;
+  using socket_ptr       = std::shared_ptr<socket_t>;
+
+  using ssl_socket_t     = boost::beast::ssl_stream<socket_t>;
+  using ssl_socket_ptr   = std::shared_ptr<ssl_socket_t>;
+
+  using buffer_type      = boost::beast::flat_buffer;
+
+ private:
+  boost::asio::any_io_executor executor_;
+
+ public:
+  http_client_data_base() = default;
+  template <typename ExecutorType>
+  explicit http_client_data_base(ExecutorType&& in_executor) : executor_(boost::asio::make_strand(in_executor)) {}
+  boost::asio::any_io_executor get_executor() const { return executor_; }
+
+  std::string server_ip_{};
+  std::string server_port_{};
+  logger_ptr logger_{};
+  resolver_ptr resolver_{};
+  boost::asio::ip::tcp::resolver::results_type resolver_results_;
+  buffer_type buffer_{};
+  std::variant<socket_ptr, ssl_socket_ptr> socket_{};
+
+  // 定时关闭
+  timer_ptr_t timer_ptr_;
+
+  virtual void init(std::string in_server_url, boost::asio::ssl::context* in_ctx = nullptr);
+
+  void expires_after(std::chrono::seconds in_seconds);
+  void do_close();
+
+  socket_t& socket();
+  ssl_socket_t* ssl_socket();
+};
+
+template <typename ResponseBody, typename RequestType>
+boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
+read_and_write(
+    const std::shared_ptr<http_client_data_base>& in_client_data, const boost::beast::http::request<RequestType>& in_req
+) {
+  using buffer_type = boost::beast::flat_buffer;
+  auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());
+
+  boost::beast::http::response<ResponseBody> l_ret{};
+  if (!in_client_data->socket().socket().is_open()) {
+    auto [l_e1, l_re] =
+        co_await in_client_data->resolver_->async_resolve(in_client_data->server_ip_, in_client_data->server_port_);
+    if (l_e1) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_resolve error: {}", l_e1.message());
+      co_return std::make_tuple(l_e1, l_ret);
+    }
+
+    in_client_data->resolver_results_ = l_re;
+    auto [l_e2] = co_await in_client_data->socket().socket().async_connect(*in_client_data->resolver_results_);
+    if (l_e2) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_connect error: {}", l_e2.message());
+      co_return std::make_tuple(l_e2, l_ret);
+    }
+
+    if (auto l_ssl = in_client_data->ssl_socket(); l_ssl) {
+      auto [l_e3] = co_await l_ssl->async_handshake(boost::asio::ssl::stream_base::client);
+      if (l_e3) {
+        in_client_data->logger_->log(log_loc(), level::err, "async_handshake error: {}", l_e3.message());
+        co_return std::make_tuple(l_e3, l_ret);
+      }
+    }
+  }
+  using visit_return_type = boost::asio::async_result<
+      http_client_data_base::co_executor_type, void(boost::system::error_code, std::size_t)>::return_type;
+
+  auto [l_ew, l_bw] = co_await std::visit(
+      [in_req_ptr = &in_req](auto&& in_socket_ptr) -> visit_return_type {
+        // 此处调整异步堆栈
+        auto l_req = in_req_ptr;
+        co_return co_await boost::beast::http::async_write(*in_socket_ptr, *l_req);
+      },
+      in_client_data->socket_
+  );
+
+  if (l_ew) {
+    in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
+    co_return std::make_tuple(l_ew, l_ret);
+  }
+
+  auto [l_er, l_br] = co_await std::visit(
+      [in_ret_ptr = &l_ret](auto&& in_socket_ptr) -> visit_return_type {
+        // 此处调整异步堆栈
+        auto l_ret_ptr = in_ret_ptr;
+        buffer_type l_buffer2{};
+        co_return co_await boost::beast::http::async_read(*in_socket_ptr, l_buffer2, *l_ret_ptr);
+      },
+      in_client_data->socket_
+  );
+  if (l_er) {
+    in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
+    co_return std::make_tuple(l_er, l_ret);
+  }
+
+  co_return std::make_tuple(boost::system::error_code{}, l_ret);
+}
+
 }  // namespace doodle::http::detail
 
 namespace doodle::http {

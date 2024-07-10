@@ -136,8 +136,9 @@ public class doodleEditor : ModuleRules
 				"Media",
                 "NiagaraEditor",
                 "ToolWidgets",
-                "MovieSceneCaptureDialog"
-            }
+                "MovieSceneCaptureDialog",
+				"MovieRenderPipelineSettings"// 自动导入设置模块
+			}
 		);
 
 

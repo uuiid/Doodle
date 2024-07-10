@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <boost/asio.hpp>
@@ -56,6 +57,20 @@ class down_auto_light_anim_file {
   // 分析输出文件
   void analysis_out_file(boost::system::error_code in_error_code) const;
   void gen_render_config_file() const;
+
+  struct association_data {
+    boost::uuids::uuid id_{};
+    FSys::path maya_file_{};
+    FSys::path ue_file_{};
+    details::assets_type_enum type_{};
+    FSys::path ue_prj_path_{};
+    FSys::path export_file_{};
+  };
+
+  // 从网络api中获取关联数据
+  std::vector<association_data> fetch_association_data(
+      const std::vector<association_data>& in_uuid, boost::system::error_code& out_error_code
+  ) const;
 
  public:
   explicit down_auto_light_anim_file(entt::handle in_msg)

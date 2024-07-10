@@ -19,33 +19,11 @@
 namespace doodle {
 
 void scan_win_service_t::start() {
-  timer_  = std::make_shared<timer_t>(g_io_context());
-  open_project();
+  timer_ = std::make_shared<timer_t>(g_io_context());
+  begin_scan();
 }
 
-void scan_win_service_t::open_project() {
-  auto l_main_prj = register_file_type::get_main_project();
-  default_logger_raw()->log(log_loc(), level::warn, "开始正式初始化数据库 {} ", l_main_prj);
-  if (l_main_prj.empty()) {
-    default_logger_raw()->log(log_loc(), level::err, "未找到主工程路径");
-    app_base::Get().stop_app();
-    return;
-  }
-  g_ctx().get<database_n::file_translator_ptr>()->async_open(
-      l_main_prj, false, false, g_reg(),
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::bind_executor(
-                                                g_io_context(),
-                                                [this](const boost::system::error_code& in_code) {
-                                                  if (in_code) return;
-                                                  end_open_project();
-                                                }
-                                            )
-      )
-  );
-}
-
-void scan_win_service_t::end_open_project() {
+void scan_win_service_t::begin_scan() {
   project_roots_   = register_file_type::get_project_list();
   scan_categories_ = {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
@@ -55,21 +33,7 @@ void scan_win_service_t::end_open_project() {
     g_ctx().emplace<details::scan_category_service_t>();
   }
   scan_categories_is_scan_.resize(scan_categories_.size() * project_roots_.size());
-  auto l_database_view = g_reg()->view<database, assets_file>().each();
 
-  handle_map_          = l_database_view | ranges::views::transform([](auto&& in_entity) {
-                  return std::make_pair(
-                      std::get<database&>(in_entity).uuid(), entt::handle{*g_reg(), std::get<entt::entity>(in_entity)}
-                  );
-                }) |
-                ranges::to<std::map<uuid, entt::handle>>();
-  path_map_ =
-      l_database_view | ranges::views::transform([](auto&& in_entity) {
-        return std::make_pair(
-            std::get<assets_file&>(in_entity).path_attr(), entt::handle{*g_reg(), std::get<entt::entity>(in_entity)}
-        );
-      }) |
-      ranges::to<std::map<FSys::path, entt::handle>>();
   if (app_base::GetPtr()->is_stop()) return;
   boost::asio::post(g_io_context(), [this]() { scan(); });
 }
@@ -80,13 +44,14 @@ void scan_win_service_t::on_timer(const boost::system::error_code& ec) {
     return;
   }
   if (app_base::GetPtr()->is_stop()) return;
-  open_project();
+  begin_scan();
   //  add_handle();
 }
 
 void scan_win_service_t::scan() {
-  scam_data_vec_.clear();
-  std::ranges::for_each(scan_categories_is_scan_, [](auto&& in_bool) { in_bool = false; });
+  for (auto&& l_data : scan_categories_is_scan_) {
+    l_data = false;
+  }
   std::size_t l_size{};
   for (auto&& l_root : project_roots_) {
     for (auto&& l_data : scan_categories_) {
@@ -113,20 +78,26 @@ void scan_win_service_t::scan() {
   }
 }
 void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec) {
-  for (const auto& l_data : in_data_vec) {
-    if (!l_data) continue;
-    auto l_handle_vec = l_data->create_handles(handle_map_, *g_reg());
-    for (auto&& l_h : l_handle_vec) {
-      if (l_h.any_of<database>()) handle_map_.emplace(l_h.get<database>().uuid(), l_h);
-      if (l_h.any_of<assets_file>() && path_map_.contains(l_h.get<assets_file>().path_attr())) {
-        path_map_.at(l_h.get<assets_file>().path_attr()).destroy();
-      }
+  static auto l_id_is_nil = [](boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
+    if (in_uuid.is_nil()) {
+      in_uuid = core_set::get_set().get_uuid();
+      FSys::software_flag_file(in_path, in_uuid);
     }
+  };
+
+  for (auto&& l_data : in_data_vec) {
+    l_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
+    l_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
+    l_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
+    scan_data_map_[l_data->rig_file_.uuid_]   = l_data;
+    scan_data_map_[l_data->ue_file_.uuid_]    = l_data;
+    scan_data_map_[l_data->solve_file_.uuid_] = l_data;
   }
+
   // 开始启动下一次循环
   if (app_base::GetPtr()->is_stop()) return;
   if (g_ctx().get<program_info>().stop_attr()) return;
-  if (!std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](auto&& in_bool) {
+  if (!std::all_of(scan_categories_is_scan_.begin(), scan_categories_is_scan_.end(), [](const bool& in_bool) {
         return in_bool;
       }))
     return;

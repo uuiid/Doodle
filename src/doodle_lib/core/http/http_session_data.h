@@ -21,6 +21,24 @@ using http_route_ptr = std::shared_ptr<http_route>;
 class http_session_data;
 using http_session_data_ptr = std::shared_ptr<http_session_data>;
 
+namespace detail {
+
+class session_data {
+ public:
+  session_data()  = default;
+  ~session_data() = default;
+  logger_ptr logger_{};
+  std::shared_ptr<capture_t> capture_{};
+  http_route_ptr route_ptr_{};
+  boost::url url_;
+  std::shared_ptr<void> request_body_parser_;
+  std::uint32_t version_{};
+  bool keep_alive_{};
+};
+
+boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);
+}  // namespace detail
+
 class http_session_data : public std::enable_shared_from_this<http_session_data> {
  private:
   void do_read(boost::system::error_code ec, std::size_t bytes_transferred);
@@ -76,7 +94,7 @@ struct http_method_base : doodle::detail::wait_op {
   http_session_data_ptr handle_{};
 
   explicit http_method_base(Handler&& handler)
-      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))){};
+      : doodle::detail::wait_op(&http_method_base::on_complete, std::make_shared<Handler>(std::move(handler))) {};
   ~http_method_base() = default;
 
  private:
@@ -109,7 +127,7 @@ struct async_read_body {
       : request_parser_(
             std::make_unique<boost::beast::http::request_parser<MsgBody>>(std::move(*in_handle->request_parser_))
         ),
-        handle_(*in_handle){};
+        handle_(*in_handle) {};
 
   // copy delete
   async_read_body(const async_read_body&)                = delete;

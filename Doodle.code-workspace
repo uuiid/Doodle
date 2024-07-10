@@ -173,7 +173,8 @@
 			"stdfloat": "cpp",
 			"syncstream": "cpp",
 			"*.inc": "cpp",
-			"eigen": "cpp"
+			"eigen": "cpp",
+			"*.rh": "cpp"
 		}
 	}
 }

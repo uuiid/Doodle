@@ -86,6 +86,7 @@ std::vector<project> register_file_type::get_project_list() {
     );
     l_list.emplace_back("万域封神", R"(//192.168.10.218/WanYuFengShen)", "WanYuFengShen", "WY", "U:/");
     l_list.emplace_back("双生武魂", R"(/192.168.10.240/public/SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)");
+    l_list.emplace_back("宗门里除了我都是卧底", R"(//192.168.10.240/public/ZMLCLWDSWD)", "ZMLCLWDSWD", "ZM", R"(C:\sy\ZMLCLWDSWD)");
   }
   return l_list;
 }

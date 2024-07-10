@@ -24,6 +24,9 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   [[maybe_unused]] MStatus redoIt() override;
   [[maybe_unused]] [[nodiscard]] bool isUndoable() const override;
 
+  // 此处作为mfn模拟, 刷新节点的引用文件属性, 传入的是引用文件的 Mobject
+  static MStatus refresh_node(MObject& in_node);
+
  private:
   MStatus delete_node();
   bool has_node() const;

@@ -52,7 +52,7 @@ boost::system::error_code thread_copy_io_service::copy_impl(
     copy_fun_ptr in_fun_ptr
 ) const {
   boost::system::error_code l_ec{};
-  static std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
+  std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
   for (int i = 0; i < 10; ++i) {
     try {
       in_logger->log(log_loc(), spdlog::level::warn, "复制 {} -> {}", from, to);
@@ -79,6 +79,91 @@ boost::system::error_code thread_copy_io_service::copy_impl(
           }
         }
       }
+      return l_ec;
+    } catch (const FSys::filesystem_error &in_error) {
+      if (in_error.code() == l_error_code_NETNAME_DELETED) {
+        in_logger->log(log_loc(), spdlog::level::warn, "复制文件网络错误 开始重试第 {}次 {}, ", i++, in_error.what());
+      } else {
+        in_logger->log(log_loc(), spdlog::level::err, "复制文件错误 {}", in_error.what());
+        l_ec = in_error.code();
+        BOOST_ASIO_ERROR_LOCATION(l_ec);
+        break;
+      }
+    } catch (const std::system_error &in_error) {
+      in_logger->log(log_loc(), spdlog::level::err, in_error.what());
+      l_ec = in_error.code();
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      break;
+    } catch (...) {
+      in_logger->log(log_loc(), spdlog::level::err, "未知错误 {}", boost::current_exception_diagnostic_information());
+      l_ec = boost::system::errc::make_error_code(boost::system::errc::io_error);
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      break;
+    }
+  }
+
+  return l_ec;
+}
+
+boost::system::error_code thread_copy_io_service::delete_impl(
+    const std::vector<FSys::path> &from, const FSys::path &to, const std::vector<FSys::path> &in_exclude_local_dir,
+    FSys::copy_options in_options, logger_ptr in_logger
+) const {
+  boost::system::error_code l_ec{};
+  std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
+  for (int i = 0; i < 10; ++i) {
+    try {
+      if (!FSys::is_directory(to)) return l_ec;
+      in_logger->log(
+          log_loc(), spdlog::level::warn, "删除 {} 中不存在, {} 中存在的文件, 排除文件夹 {}", from, to,
+          in_exclude_local_dir
+      );
+
+      std::vector<FSys::path> l_remove_files{};
+      if (in_options == FSys::copy_options::recursive) {
+        for (auto &&l_file : FSys::recursive_directory_iterator(to)) {
+          auto l_lex_path = l_file.path().lexically_proximate(to);
+
+          if (std::any_of(
+                  in_exclude_local_dir.begin(), in_exclude_local_dir.end(),
+                  [&l_lex_path](const FSys::path &in_exclude) {
+                    return l_lex_path.generic_string().starts_with(in_exclude.generic_string());
+                  }
+              )) {
+            continue;
+          }
+
+          if (std::none_of(from.begin(), from.end(), [&l_lex_path](const FSys::path &l_from) {
+                return FSys::exists(l_from / l_lex_path);
+              })) {
+            l_remove_files.emplace_back(l_file.path());
+          }
+        }
+
+      } else {
+        for (auto &&l_file : FSys::directory_iterator(to)) {
+          auto l_lex_path = l_file.path().lexically_proximate(to);
+          if (std::any_of(
+                  in_exclude_local_dir.begin(), in_exclude_local_dir.end(),
+                  [&l_lex_path](const FSys::path &in_exclude) {
+                    return l_lex_path.generic_string().starts_with(in_exclude.generic_string());
+                  }
+              )) {
+            continue;
+          }
+
+          if (std::none_of(from.begin(), from.end(), [&l_lex_path](const FSys::path &l_from) {
+                return FSys::exists(l_from / l_lex_path);
+              })) {
+            l_remove_files.emplace_back(l_file.path());
+          }
+        }
+      }
+
+      for (auto &&l_file : l_remove_files) {
+        FSys::remove_all(l_file);
+      }
+
       return l_ec;
     } catch (const FSys::filesystem_error &in_error) {
       if (in_error.code() == l_error_code_NETNAME_DELETED) {

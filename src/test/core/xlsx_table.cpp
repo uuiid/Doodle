@@ -20,18 +20,14 @@ using namespace doodle;
 
 BOOST_AUTO_TEST_SUITE(xlsx_table)
 
-
-BOOST_AUTO_TEST_CASE(msg_body){
-  boost::beast::http::response<doodle::http::basic_json_body> l_respone{
-      boost::beast::http::status::ok, 11
-  };
-  l_respone.body() = nlohmann::json{
-      {"msg", "hello world"}
-  };
-  l_respone.payload_size();
+BOOST_AUTO_TEST_CASE(msg_body) {
+  boost::beast::http::response<doodle::http::basic_json_body> l_respone{boost::beast::http::status::ok, 11};
+  l_respone.body() = nlohmann::json{{"msg", "hello world"}};
+  l_respone.prepare_payload();
   // boost::beast::http::message_generator l_gen{std::move(l_respone)};
   std::ostringstream l_str{};
   l_str << l_respone;
+  default_logger_raw()->info(l_str.str());
 }
 
 constexpr static std::string_view g_token{

@@ -59,6 +59,10 @@ bool long_time_tasks_widget::render() {
         case process_message::state::run:
           ImGui::Text("正在运行");
           break;
+        case process_message::state::pause: {
+          dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 1.0f, 0.0f, 1.0f}};
+          ImGui::Text("暂停中...");
+        } break;
         case process_message::state::fail: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 0.0f, 0.0f, 1.0f}};
           ImGui::Text("错误结束");
@@ -71,7 +75,9 @@ bool long_time_tasks_widget::render() {
 
       imgui::TableNextColumn();
       using namespace std::literals;
-      dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
+      dear::Text(
+          msg.get_time() == chrono::sys_time_pos::duration{0} ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time())
+      );
 
       ImGui::TableNextColumn();
 

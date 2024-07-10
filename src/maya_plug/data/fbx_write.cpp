@@ -876,6 +876,28 @@ void fbx_node_mesh::build_blend_shape() {
       if (l_point_data.length() == 0) {
         continue;
       }
+      auto l_bl_weight_plug = get_plug(i, "weight").elementByPhysicalIndex(j, &l_status);
+
+      {
+        // 去除特定名称的混变
+        MString l_name = l_bl_weight_plug.partialName(false, false, false, true, false, true);
+        constexpr static std::array l_name_list{
+            std::string_view{"EyeLidLayer"},       std::string_view{"SquintLayer"},
+            std::string_view{"EyeBrowLayer"},      std::string_view{"LipLayer"},
+            std::string_view{"JawLayer"},          std::string_view{"zipperLips_RLayer"},
+            std::string_view{"zipperLips_LLayer"}, std::string_view{"NoseLayer"},
+            std::string_view{"SmilePullLayer"},    std::string_view{"SmileBulgeLayer"},
+            std::string_view{"CheekRaiserLayer"},  std::string_view{"MouthNarrowLayer"},
+            std::string_view{"CheekLayer"},        std::string_view{"RegionsLayer"},
+            std::string_view{"UpMidLoLayer"},      std::string_view{"asFaceBS"},
+        };
+        if (std::any_of(std::begin(l_name_list), std::end(l_name_list), [&](const std::string_view& in_name) -> bool {
+              return conv::to_s(l_name) == in_name;
+            })) {
+          default_logger_raw()->log(log_loc(), level::info, "blend shape {} is not export", l_name);
+          continue;
+        }
+      }
       {
         // 检查全部接近0, 全部接近0就直接不导出
         bool l_is_zero{true};
@@ -913,7 +935,6 @@ void fbx_node_mesh::build_blend_shape() {
         continue;
       }
 
-      auto l_bl_weight_plug = get_plug(i, "weight").elementByPhysicalIndex(j, &l_status);
       FbxProperty::Create(
           l_fbx_bl->RootProperty, FbxStringDT,
           fmt::format("RootGroup|{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()

@@ -138,7 +138,13 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
     //    l_ptr->maya_file_.last_write_time_ = FSys::last_write_time(l_maya_path);
   }
 
-  return l_out | ranges::views::transform([](auto &&i) -> scan_category_data_ptr { return i; }) | ranges::to_vector;
+  return l_out | ranges::views::transform([](auto &&in_ptr) -> scan_category_data_ptr {
+           in_ptr->rig_file_.path_.make_preferred();
+           in_ptr->ue_file_.path_.make_preferred();
+           in_ptr->solve_file_.path_.make_preferred();
+           return in_ptr;
+         }) |
+         ranges::to_vector;
 }
 
 }  // namespace doodle::details
