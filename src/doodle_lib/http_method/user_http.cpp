@@ -109,12 +109,12 @@ class user_post_impl : public std::enable_shared_from_this<user_post_impl> {
 
   void feach_dingding() {
     if (user_.dingding_id_.empty()) {
-      dingding_client_->get_user_by_mobile(
-          user_.mobile_,
-          boost::asio::bind_executor(
-              g_io_context(), boost::beast::bind_front_handler(&user_post_impl::do_feach_dingding, shared_from_this())
-          )
-      );
+      // dingding_client_->get_user_by_mobile(
+      //     user_.mobile_,
+      //     boost::asio::bind_executor(
+      //         g_io_context(), boost::beast::bind_front_handler(&user_post_impl::do_feach_dingding, shared_from_this())
+      //     )
+      // );
     } else {
       send_response();
     }

@@ -142,13 +142,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
 
   void feach_dingding() {
     if (user_.dingding_id_.empty()) {
-      dingding_client_->get_user_by_mobile(
-          user_.mobile_,
-          boost::asio::bind_executor(
-              g_io_context(),
-              boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_dingding, shared_from_this())
-          )
-      );
+      // dingding_client_->get_user_by_mobile(
+      //     user_.mobile_,
+      //     boost::asio::bind_executor(
+      //         g_io_context(),
+      //         boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_dingding, shared_from_this())
+      //     )
+      // );
     } else {
       feach_attendance();
     }
@@ -172,13 +172,13 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   }
 
   void feach_attendance() {
-    dingding_client_->get_attendance_updatedata(
-        user_.dingding_id_, chrono::local_days{date_},
-        boost::asio::bind_executor(
-            g_io_context(),
-            boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_attendance, shared_from_this())
-        )
-    );
+    // dingding_client_->get_attendance_updatedata(
+    //     user_.dingding_id_, chrono::local_days{date_},
+    //     boost::asio::bind_executor(
+    //         g_io_context(),
+    //         boost::beast::bind_front_handler(&dingding_attendance_impl::do_feach_attendance, shared_from_this())
+    //     )
+    // );
   }
 
   void create_clock() {

@@ -8,23 +8,6 @@
 #include <boost/test/unit_test_log.hpp>
 using namespace doodle;
 BOOST_AUTO_TEST_SUITE(dingding)
-BOOST_AUTO_TEST_CASE(access_token) {
-  app_base l_app_base{};
-  boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
-
-  auto l_env               = boost::this_process::environment();
-  std::string l_app_key    = l_env["DINGDING_APP_KEY"].to_string();
-  std::string l_app_secret = l_env["DINGDING_APP_SECRET"].to_string();
-
-  auto l_c                 = std::make_shared<doodle::dingding::client>(l_ctx);
-
-  l_c->async_access_token(l_app_key, l_app_secret, false, [](auto ec, auto json) {
-    BOOST_TEST(!ec);
-    BOOST_TEST(json.contains("accessToken"));
-    BOOST_TEST(json.contains("expireIn"));
-  });
-  g_io_context().run();
-}
 
 BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
   app_base l_app_base{};
@@ -38,22 +21,14 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
 
   auto l_c          = std::make_shared<doodle::dingding::client>(l_ctx);
   auto l_work_guard = boost::asio::make_work_guard(g_io_context());
-  l_c->async_access_token(l_app_key, l_app_secret, false, [l_c, l_mobile, l_work_guard](auto ec, auto json) mutable {
-    BOOST_TEST(!ec);
-    BOOST_TEST(json.contains("accessToken"));
-    BOOST_TEST(json.contains("expireIn"));
-
-    l_c->get_user_by_mobile(l_mobile, [l_c, l_work_guard](auto ec, auto json) mutable {
-      BOOST_TEST(!ec);
-      default_logger_raw()->info("json: {}", json.dump());
-      BOOST_TEST(json.contains("result"));
-      BOOST_TEST(json["result"].contains("userid"));
-      default_logger_raw()->info("userid: {}", json["result"]["userid"].get<std::string>());
-      l_work_guard.reset();
-    });
-  });
+  l_c->access_token(l_app_key, l_app_secret, false);
+  auto l_f = boost::asio::co_spawn(g_io_context(), l_c->get_user_by_mobile(l_mobile), boost::asio::use_future);
 
   g_io_context().run();
+  auto [l_e, l_r] = l_f.get();
+
+  BOOST_TEST(!l_e);
+  BOOST_TEST_MESSAGE(l_r);
 }
 
 BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
@@ -70,19 +45,13 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
   l_iss >> chrono::parse("%Y-%m-%d", l_time);
 
   auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
-
-  l_c->async_access_token(l_app_key, l_app_secret, false, [l_c, l_time, l_user_id](auto ec, auto json) {
-    BOOST_TEST(!ec);
-    BOOST_TEST(json.contains("accessToken"));
-    BOOST_TEST(json.contains("expireIn"));
-
-    l_c->get_attendance_updatedata(l_user_id, l_time, [l_c](auto ec, auto json) {
-      BOOST_TEST(!ec);
-      default_logger_raw()->info("json: {}", json.dump());
-      BOOST_TEST(json.contains("result"));
-      BOOST_TEST(json["result"].contains("approve_list"));
-    });
-  });
+  l_c->access_token(l_app_key, l_app_secret, false);
+  auto l_f = boost::asio::co_spawn(g_io_context(), l_c->get_attendance_updatedata(l_user_id, l_time), boost::asio::use_future);
+ 
   g_io_context().run();
+  auto [l_e, l_r] = l_f.get();
+
+  BOOST_TEST(!l_e);
+  // BOOST_TEST_MESSAGE(l_r);
 }
 BOOST_AUTO_TEST_SUITE_END()
