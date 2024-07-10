@@ -23,6 +23,7 @@
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/maya_comm/file_info_edit.h>
 
 #include <exe_maya/core/maya_lib_guard.h>
 #include <maya/MFileObject.h>
@@ -105,7 +106,6 @@ void replace_file_facet::replace_file(
   }
   DOODLE_LOG_INFO("开始扫瞄引用");
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f -ignore_ref;)"));
 
   // rename namespace
   DOODLE_LOG_INFO("开始重命名命名空间");
@@ -118,8 +118,12 @@ void replace_file_facet::replace_file(
     k_s = MNamespace::renameNamespace(l_namespace, conv::to_ms(l_pair.second));
     DOODLE_MAYA_CHICK(k_s);
   }
+
+  for (auto&& l_pair : l_data.rename_namespaces) {
+    file_info_edit::refresh_node(l_pair.first);
+  }
+
   DOODLE_LOG_INFO("重命名完成");
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
   maya_file_io::save_file(
       maya_plug::maya_file_io::work_path("replace_file") / maya_plug::maya_file_io::get_current_path().filename()
   );

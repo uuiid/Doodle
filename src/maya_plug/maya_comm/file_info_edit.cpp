@@ -11,6 +11,7 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnReference.h>
+#include <maya/MItDependencyGraph.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItSelectionList.h>
 #include <maya/mocapserver.h>
@@ -67,7 +68,7 @@ MSyntax file_info_edit_syntax() {
   return l_syntax;
 }
 
-MStatus file_info_edit::doIt(const MArgList &in_list) {
+MStatus file_info_edit::doIt(const MArgList& in_list) {
   MStatus l_status{};
   MArgDatabase l_arg_data{syntax(), in_list, &l_status};
   maya_chick(l_status);
@@ -310,6 +311,26 @@ MStatus file_info_edit::create_node() {
     }
   }
   return l_status;
+}
+
+MStatus file_info_edit::refresh_node(MObject& in_node) {
+  MStatus l_status{};
+  MFnDependencyNode l_fn_node{};
+  MFnReference l_fn_ref{};
+  maya_chick(l_fn_ref.setObject(in_node));
+
+  for (MItDependencyGraph l_it{in_node, MFn::kPluginDependNode}; !l_it.isDone(); l_it.next()) {
+    l_fn_node.setObject(l_it.thisNode());
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
+      set_attribute(
+          l_it.thisNode(), "reference_file_path", conv::to_s(l_fn_ref.fileName(false, false, false, &l_status))
+      );
+      set_attribute(
+          l_it.thisNode(), "reference_file_namespace", conv::to_s(l_fn_ref.associatedNamespace(false, &l_status))
+      );
+      break;
+    }
+  }
 }
 
 MStatus file_info_edit::set_node_attr() {
