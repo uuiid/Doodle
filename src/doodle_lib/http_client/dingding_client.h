@@ -4,14 +4,17 @@
 
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+
+// #include <asio/experimental/as_single.hpp>
+
 namespace doodle::dingding {
 
 class client {
-  using https_client_core     = doodle::http::https_client_core;
+  using https_client_core     = doodle::http::detail::http_client_data_base;
   using https_client_core_ptr = std::shared_ptr<https_client_core>;
 
-  using timer_t               = boost::asio::steady_timer;
-  using timer_ptr_t           = std::shared_ptr<timer_t>;
+  using timer_t = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::steady_timer>;
+  using timer_ptr_t = std::shared_ptr<timer_t>;
 
   https_client_core_ptr http_client_core_ptr_{};      // 新版本api
   https_client_core_ptr http_client_core_ptr_old_{};  // 旧版本api
@@ -23,7 +26,23 @@ class client {
   std::string app_key;
   std::string app_secret;
 
-  void begin_refresh_token(chrono::seconds in_seconds = chrono::seconds(7200));
+  bool auto_expire_;
+
+  boost::asio::awaitable<void> begin_refresh_token();
+
+  template <typename Req>
+  std::decay_t<Req> header_operator_req(Req&& in_req) {
+    in_req.set(boost::beast::http::field::accept, "application/json");
+    in_req.set(boost::beast::http::field::content_type, "application/json");
+    in_req.set(boost::beast::http::field::host, http_client_core_ptr_->server_ip_);
+    in_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    in_req.keep_alive(true);
+    in_req.prepare_payload();
+    return std::move(in_req);
+  }
+
+  template <typename Resp>
+  void header_operator_resp(Resp& in_resp) {}
 
   template <typename CompletionHandler>
   struct json_body_impl {
@@ -116,8 +135,12 @@ class client {
 
  public:
   explicit client(boost::asio::ssl::context& in_ctx)
-      : http_client_core_ptr_(std::make_shared<https_client_core>(in_ctx, "https://api.dingtalk.com/", "")),
-        http_client_core_ptr_old_(std::make_shared<https_client_core>(in_ctx, "https://oapi.dingtalk.com/", "")){};
+      : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
+        http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
+        timer_ptr_{std::make_shared<boost::asio::steady_timer>(g_io_context())} {
+    http_client_core_ptr_->init("https://api.dingtalk.com/", &in_ctx);
+    http_client_core_ptr_old_->init("https://oapi.dingtalk.com/", &in_ctx);
+  };
   ~client() = default;
 
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
