@@ -15,6 +15,7 @@ boost::asio::awaitable<void> client::begin_refresh_token() {
     };
     req.body() = nlohmann::json{{"appKey", app_key}, {"appSecret", app_secret}}.dump();
     req.set(boost::beast::http::field::content_type, "application/json");
+    req.set(boost::beast::http::field::host, http_client_core_ptr_->server_ip_);
     auto [l_e, l_res] = co_await http::detail::read_and_write<http::basic_json_body>(
         http_client_core_ptr_, header_operator_req(std::move(req))
     );
@@ -60,15 +61,16 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> clien
   };
   req.body() = nlohmann::json{{"mobile", in_mobile}}.dump();
   req.set(boost::beast::http::field::content_type, "application/json");
+  req.set(boost::beast::http::field::host, http_client_core_ptr_old_->server_ip_);
   auto [l_e, l_res] = co_await http::detail::read_and_write<http::basic_json_body>(
-      http_client_core_ptr_, header_operator_req(std::move(req))
+      http_client_core_ptr_old_, header_operator_req(std::move(req))
   );
   if (l_e) {
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_e);
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_e);
     co_return std::make_tuple(l_e, l_ret);
   }
   if (l_res.result() != boost::beast::http::status::ok) {
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_res.result());
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_res.result());
     co_return std::make_tuple(l_e, l_ret);
   }
 
@@ -77,7 +79,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> clien
     l_ret = l_json["result"]["userid"].get<std::string>();
   } catch (const nlohmann::json::exception& e) {
     l_e = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "get_user_by_mobile error: {}", e.what());
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "get_user_by_mobile error: {}", e.what());
     co_return std::make_tuple(l_e, l_ret);
   }
   co_return std::make_tuple(l_e, l_ret);
@@ -94,15 +96,17 @@ client::get_attendance_updatedata(
   };
   req.body() = nlohmann::json{{"userid", in_userid}, {"work_date", fmt::format("{:%Y-%m-%d}", in_work_date)}}.dump();
   req.set(boost::beast::http::field::content_type, "application/json");
+  req.set(boost::beast::http::field::host, http_client_core_ptr_old_->server_ip_);
+
   auto [l_e, l_res] = co_await http::detail::read_and_write<http::basic_json_body>(
-      http_client_core_ptr_, header_operator_req(std::move(req))
+      http_client_core_ptr_old_, header_operator_req(std::move(req))
   );
   if (l_e) {
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_e);
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_e);
     co_return std::make_tuple(l_e, l_ret);
   }
   if (l_res.result() != boost::beast::http::status::ok) {
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_res.result());
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "read_and_write error: {}", l_res.result());
     co_return std::make_tuple(l_e, l_ret);
   }
 
@@ -112,7 +116,7 @@ client::get_attendance_updatedata(
     l_ret = l_json["result"]["approve_list"].get<std::vector<attendance_update>>();
   } catch (const nlohmann::json::exception& e) {
     l_e = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "get_attendance_updatedata error: {}", e.what());
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "get_attendance_updatedata error: {}", e.what());
     co_return std::make_tuple(l_e, l_ret);
   }
   co_return std::make_tuple(l_e, l_ret);
