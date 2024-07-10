@@ -55,6 +55,7 @@ class client {
 
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   void access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
+  boost::asio::awaitable<void> async_access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
 
   boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> get_user_by_mobile(
       const std::string& in_mobile

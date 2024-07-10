@@ -549,7 +549,7 @@ read_and_write(
     in_client_data->expires_after(std::chrono::seconds{10});
 
     in_client_data->resolver_results_ = l_re;
-    auto [l_e2] = co_await in_client_data->socket().socket().async_connect(*in_client_data->resolver_results_);
+    auto [l_e2] = co_await in_client_data->socket().async_connect(*in_client_data->resolver_results_);
     if (l_e2) {
       in_client_data->logger_->log(log_loc(), level::err, "async_connect error: {}", l_e2.message());
       co_return std::make_tuple(l_e2, l_ret);

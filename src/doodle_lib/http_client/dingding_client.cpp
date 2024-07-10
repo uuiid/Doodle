@@ -5,7 +5,7 @@
 
 namespace doodle::dingding {
 boost::asio::awaitable<void> client::begin_refresh_token() {
-  while (auto_expire_) {
+  do {
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
       co_return;
     }
@@ -39,7 +39,7 @@ boost::asio::awaitable<void> client::begin_refresh_token() {
       http_client_core_ptr_->logger_->log(log_loc(), level::warn, "timer_ptr_ error: {}", l_ex);
       co_return;
     }
-  }
+  } while (auto_expire_);
 }
 void client::access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire) {
   app_key      = in_app_key;
@@ -50,6 +50,15 @@ void client::access_token(const std::string& in_app_key, const std::string& in_a
       http_client_core_ptr_->get_executor(), begin_refresh_token(),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
   );
+}
+
+boost::asio::awaitable<void> client::async_access_token(
+    const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire
+) {
+  app_key      = in_app_key;
+  app_secret   = in_app_secret;
+  auto_expire_ = in_auto_expire;
+  co_return co_await begin_refresh_token();
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> client::get_user_by_mobile(
