@@ -34,10 +34,16 @@ class session_data {
   std::shared_ptr<void> request_body_parser_;
   std::uint32_t version_{};
   bool keep_alive_{};
+
+  boost::beast::http::message_generator make_error_code_msg(
+      boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
+  );
 };
 
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);
 }  // namespace detail
+using session_data     = detail::session_data;
+using session_data_ptr = std::shared_ptr<detail::session_data>;
 
 class http_session_data : public std::enable_shared_from_this<http_session_data> {
  private:

@@ -9,11 +9,9 @@
 namespace doodle::http {
 
 namespace {
-void options_function_impl(const http_session_data_ptr& in_handle) {
-  auto l_logger = in_handle->logger_;
-  auto& l_req   = in_handle->request_parser_->get();
+boost::asio::awaitable<boost::beast::http::message_generator> options_function_impl(session_data_ptr in_handle) {
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
-      boost::beast::http::status::ok, l_req.version()
+      boost::beast::http::status::ok, in_handle->version_
   };
   l_response.set(boost::beast::http::field::content_type, "application/json");
 
@@ -25,20 +23,23 @@ void options_function_impl(const http_session_data_ptr& in_handle) {
       "Authorization, Origin, X-Requested-With, Content-Type, Accept"
   );
 
-  l_response.keep_alive(l_req.keep_alive());
+  l_response.keep_alive(in_handle->keep_alive_);
   l_response.prepare_payload();
-  in_handle->seed(std::move(l_response));
+  co_return l_response;
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> not_function_impl(session_data_ptr in_handle) {
+  static boost::system::error_code l_error_code{ERROR_SERVICE_NOT_FOUND, boost::system::system_category()};
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_error_code);
+}
+
 }  // namespace
 
 http_route::http_route()
     : actions(),
       not_function(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "",
-          [](const http_session_data_ptr& in_handle) {
-            boost::system::error_code l_error_code{ERROR_SERVICE_NOT_FOUND, boost::system::system_category()};
-            in_handle->seed_error(boost::beast::http::status::not_found, l_error_code);
-          }
+          boost::beast::http::verb::get, "", not_function_impl
+
       )),
       options_function(std::make_shared<http_function>(boost::beast::http::verb::options, "", options_function_impl))
 
@@ -50,7 +51,7 @@ http_route& http_route::reg(const doodle::http::http_function_ptr in_function) {
 }
 
 http_function_ptr http_route::operator()(
-    boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const http_session_data_ptr& in_handle
+    boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
 ) const {
   auto l_iter = actions.find(in_verb);
 

@@ -47,7 +47,7 @@ void http_session_data::do_read(boost::system::error_code ec, std::size_t bytes_
   logger_->log(log_loc(), level::info, "开始解析 url {} {}", request_parser_->get().method(), url_);
   auto& l_rote    = *route_ptr_;
   auto l_self_ptr = shared_from_this();
-  l_rote(request_parser_->get().method(), url_.segments(), l_self_ptr)->callback_(l_self_ptr);
+  // l_rote(request_parser_->get().method(), url_.segments(), l_self_ptr)->callback_(l_self_ptr);
 }
 void http_session_data::seed_error(
     boost::beast::http::status in_status, boost::system::error_code ec, const std::string& in_str
@@ -148,8 +148,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         co_return;
     }
     // todo: 请求分发到对应的处理函数
-    std::function<boost::asio::awaitable<boost::beast::http::message_generator>(const session_data_ptr&)> l_callback;
-    auto l_gen = co_await l_callback(l_session);
+    auto l_callback = (*in_route_ptr)(l_request_parser->get().method(), l_session->url_.segments(), l_session);
+    auto l_gen      = co_await l_callback->callback_(l_session);
 
     if (!l_session->keep_alive_) {
       auto [l_ec2, _] = co_await boost::beast::async_write(l_stream, std::move(l_gen));
@@ -186,6 +186,20 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
   }
 }
 
+boost::beast::http::message_generator session_data::make_error_code_msg(
+    boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str
+) {
+  logger_->log(log_loc(), level::err, "发送错误码 {} {}", ec, in_str);
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{in_status, version_};
+  l_response.set(boost::beast::http::field::content_type, "plain/text");
+  l_response.set(boost::beast::http::field::accept, "application/json");
+  l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_response.keep_alive(keep_alive_);
+  l_response.body() = ec.message() + in_str;
+  l_response.prepare_payload();
+  return l_response;
+}
 }  // namespace detail
 
 }  // namespace doodle::http

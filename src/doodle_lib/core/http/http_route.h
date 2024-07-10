@@ -4,6 +4,8 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/core/http/http_session_data.h>
+
 #include <boost/dynamic_bitset.hpp>
 #include <boost/url.hpp>
 namespace doodle::http {
@@ -27,7 +29,7 @@ class http_route {
   http_route& reg(const http_function_ptr in_function);
   // 路由分发
   http_function_ptr operator()(
-      boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const http_session_data_ptr& in_handle
+      boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
   ) const;
 };
 
