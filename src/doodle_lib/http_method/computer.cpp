@@ -126,12 +126,13 @@ void computer::reg_computer(boost::system::error_code in_error_code, const http_
 }
 
 void computer::reg(doodle::http::http_route &in_route) {
-  in_route.reg(std::make_shared<http_function>(
-      boost::beast::http::verb ::get, "v1/computer",
-      session::make_http_reg_fun(
-          boost::asio::bind_executor(g_io_context(), &computer::list_computers),
-          boost::asio::bind_executor(g_io_context(), &computer::reg_computer)
-      )
-  ));
+  // todo: 注册计算机
+  // in_route.reg(std::make_shared<http_function>(
+  //     boost::beast::http::verb ::get, "v1/computer",
+  //     session::make_http_reg_fun(
+  //         boost::asio::bind_executor(g_io_context(), &computer::list_computers),
+  //         boost::asio::bind_executor(g_io_context(), &computer::reg_computer)
+  //     )
+  // ));
 }
 }  // namespace doodle::http
