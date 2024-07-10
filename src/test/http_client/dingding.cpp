@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(access_token) {
 
   auto l_c          = std::make_shared<doodle::dingding::client>(l_ctx);
   auto l_work_guard = boost::asio::make_work_guard(g_io_context());
-  l_c->access_token(l_app_key, l_app_secret, false);
+  l_c->access_token(l_app_key, l_app_secret);
 
   g_io_context().run();
 }
@@ -43,8 +43,9 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
 
         auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
 
-        co_await l_c->async_access_token(l_app_key, l_app_secret, false);
+        l_c->access_token(l_app_key, l_app_secret);
         auto [l_ec, l_r] = co_await l_c->get_user_by_mobile(l_mobile);
+        app_base::Get().on_cancel.emit();
         co_return std::make_tuple(l_ec);
       }(),
       boost::asio::use_future
@@ -76,7 +77,7 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
 
         auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
 
-        co_await l_c->async_access_token(l_app_key, l_app_secret, false);
+        l_c->access_token(l_app_key, l_app_secret);
         auto [l_ec, l_r] = co_await l_c->get_attendance_updatedata(l_user_id, l_time);
         co_return std::make_tuple(l_ec);
       }(),

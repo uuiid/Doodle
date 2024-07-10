@@ -93,7 +93,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
                   .client_ptr_ = std::make_shared<dingding::client>(*l_ssl_ctx)
               }
           )
-          .first->second.client_ptr_->access_token(l_c.app_key_, l_c.app_secret_, true);
+          .first->second.client_ptr_->access_token(l_c.app_key_, l_c.app_secret_);
     }
   }
   // 初始化路由

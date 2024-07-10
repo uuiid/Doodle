@@ -9,7 +9,7 @@
 
 namespace doodle::dingding {
 
-class client {
+class client : public std::enable_shared_from_this<client> {
   using https_client_core     = doodle::http::detail::http_client_data_base;
   using https_client_core_ptr = std::shared_ptr<https_client_core>;
 
@@ -29,6 +29,8 @@ class client {
   bool auto_expire_;
 
   boost::asio::awaitable<void> begin_refresh_token();
+
+  boost::asio::awaitable<void> clear_token(chrono::seconds in_seconds);
 
   template <typename Req>
   std::decay_t<Req> header_operator_req(Req&& in_req) {
@@ -54,8 +56,7 @@ class client {
   ~client() = default;
 
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
-  void access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
-  boost::asio::awaitable<void> async_access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
+  void access_token(const std::string& in_app_key, const std::string& in_app_secret);
 
   boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> get_user_by_mobile(
       const std::string& in_mobile
