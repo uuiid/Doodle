@@ -320,8 +320,8 @@ MStatus file_info_edit::refresh_node(MObject& in_node) {
   maya_chick(l_fn_ref.setObject(in_node));
 
   for (MItDependencyGraph l_it{in_node, MFn::kPluginDependNode}; !l_it.isDone(); l_it.next()) {
-    if (l_it.thisNode().apiType() == doodle_file_info::doodle_id) {
-      l_fn_node.setObject(l_it.thisNode());
+    l_fn_node.setObject(l_it.thisNode());
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       set_attribute(
           l_it.thisNode(), "reference_file_path", conv::to_s(l_fn_ref.fileName(false, false, false, &l_status))
       );
