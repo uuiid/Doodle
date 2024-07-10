@@ -40,28 +40,28 @@ FSys::path import_and_render_ue::gen_import_config() const {
   // 渲染配置
   {
     data_->import_data_.movie_pipeline_config = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_Config",
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:03}{3}/{0}_EP{1:04}_SC{2:03}{3}_Config",
         data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
         data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
     );
     data_->import_data_.movie_pipeline_config.replace_extension(data_->import_data_.movie_pipeline_config.stem());
 
     data_->import_data_.level_sequence_import = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}", data_->import_data_.project_.p_shor_str,
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:03}{3}/{0}_EP{1:04}_SC{2:03}{3}", data_->import_data_.project_.p_shor_str,
         data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
     );
     data_->import_data_.level_sequence_vfx = data_->import_data_.level_sequence_import.generic_string() + "_Vfx";
     data_->import_data_.level_sequence_import.replace_extension(data_->import_data_.level_sequence_import.stem());
 
     data_->import_data_.create_map = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/{0}_EP{1:04}_SC{2:04}{3}_LV",
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:03}{3}/{0}_EP{1:04}_SC{2:03}{3}_LV",
         data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
         data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
     );
     data_->import_data_.vfx_map    = data_->import_data_.create_map + "_Vfx_LV";
 
     data_->import_data_.import_dir = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:04}{3}/Import_{4:%m_%d_%H_%M}", data_->import_data_.project_.p_shor_str,
+        "/Game/Shot/ep{1:04}/{0}{1:04}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", data_->import_data_.project_.p_shor_str,
         data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum,
         time_point_wrap{}.get_local_time()
     );

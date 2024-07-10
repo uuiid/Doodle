@@ -105,6 +105,8 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
     l_refs_tmp.emplace_back(association_data{.id_ = l_uuid, .export_file_ = i.ref_file});
   }
 
+
+
   std::sort(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto &l, const auto &r) { return l.id_ < r.id_; });
   l_refs_tmp.erase(
       std::unique(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto &l, const auto &r) { return l.id_ == r.id_; }),
@@ -194,6 +196,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
         break;
     }
   }
+  data_->logger_->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
   g_ctx().get<ue_exe_ptr>()->async_copy_old_project(
       msg_, l_copy_path, boost::asio::bind_executor(g_io_context(), *this)
   );
