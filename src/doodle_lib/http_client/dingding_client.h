@@ -137,7 +137,7 @@ class client {
   explicit client(boost::asio::ssl::context& in_ctx)
       : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
         http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
-        timer_ptr_{std::make_shared<boost::asio::steady_timer>(g_io_context())} {
+        timer_ptr_{std::make_shared<timer_t>(g_io_context())} {
     http_client_core_ptr_->init("https://api.dingtalk.com/", &in_ctx);
     http_client_core_ptr_old_->init("https://oapi.dingtalk.com/", &in_ctx);
   };
@@ -146,70 +146,37 @@ class client {
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   void access_token(const std::string& in_app_key, const std::string& in_app_secret, bool in_auto_expire);
 
-  template <typename CompletionHandler>
-  void async_access_token(
-      std::string in_app_key, std::string in_app_secret, bool in_auto_expire, CompletionHandler&& in_completion
-  ) {
-    boost::beast::http::request<boost::beast::http::string_body> req{
-        boost::beast::http::verb::post, "/v1.0/oauth2/accessToken", 11
-    };
-    req.body() = nlohmann::json{{"appKey", in_app_key}, {"appSecret", in_app_secret}}.dump();
-    req.set(boost::beast::http::field::content_type, "application/json");
+  boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> get_user_by_mobile(
+      const std::string& in_mobile
+  );
 
-    app_key    = in_app_key;
-    app_secret = in_app_secret;
-    if (!timer_ptr_) {
-      timer_ptr_ = std::make_shared<timer_t>(g_io_context());
+  struct attendance_update {
+    chrono::local_time_pos begin_time_;
+    chrono::local_time_pos end_time_;
+    std::int32_t biz_type_;
+    std::string tag_name_;
+    std::string sub_type_;
+    std::string prcoInst_id_;
+    // form json
+    friend void from_json(const nlohmann::json& j, attendance_update& p) {
+      std::istringstream l_time_stream{};
+
+      l_time_stream.str(j.at("begin_time").get<std::string>());
+      l_time_stream >> chrono::parse("%F %T", p.begin_time_);
+
+      l_time_stream.str(j.at("end_time").get<std::string>());
+      l_time_stream >> chrono::parse("%F %T", p.end_time_);
+
+      p.biz_type_    = j.at("biz_type").get<std::int32_t>();
+      p.tag_name_    = j.at("tag_name").get<std::string>();
+      p.sub_type_    = j.at("sub_type").get<std::string>();
+      p.prcoInst_id_ = j.at("prcoInst_id").get<std::string>();
     }
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
-        [this, in_auto_expire](auto&& handler, auto in_self, auto in_req) {
-          http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-              in_req,
-              json_body_impl_access_token<decltype(handler)>{
-                  std::move(handler), in_auto_expire, this, http_client_core_ptr_->logger()
-              }
-          );
-        },
-        in_completion, this, req
-    );
-  }
+  };
 
-  template <typename CompletionHandler>
-  void get_user_by_mobile(const std::string& in_mobile, CompletionHandler&& in_completion) {
-    boost::beast::http::request<boost::beast::http::string_body> req{
-        boost::beast::http::verb::post, fmt::format("/topapi/v2/user/getbymobile?access_token={}", access_token_), 11
-    };
-    req.body() = nlohmann::json{{"mobile", in_mobile}}.dump();
-    req.set(boost::beast::http::field::content_type, "application/json");
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
-        [this](auto&& handler, auto in_self, auto in_req) {
-          http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-              in_req, json_body_impl<decltype(handler)>(std::move(handler), http_client_core_ptr_old_->logger())
-          );
-        },
-        in_completion, this, req
-    );
-  }
-  template <typename CompletionHandler>
-  void get_attendance_updatedata(
-      const std::string& in_user_id, const chrono::local_time_pos& in_work_date, CompletionHandler&& in_completion
-  ) {
-    boost::beast::http::request<boost::beast::http::string_body> req{
-        boost::beast::http::verb::post, fmt::format("/topapi/attendance/getupdatedata?access_token={}", access_token_),
-        11
-    };
-    req.body() = nlohmann::json{{"userid", in_user_id}, {"work_date", fmt::format("{:%Y-%m-%d}", in_work_date)}}.dump();
-    req.set(boost::beast::http::field::content_type, "application/json");
-    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, nlohmann::json)>(
-        [this](auto&& in_completion, auto in_self, auto in_req) {
-          in_self->http_client_core_ptr_old_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-              in_req,
-              json_body_impl<decltype(in_completion)>(std::move(in_completion), http_client_core_ptr_old_->logger())
-          );
-        },
-        in_completion, this, req
-    );
-  }
+  // 获取考勤数据
+  boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<attendance_update>>>
+  get_attendance_updatedata(const std::string& in_user_id, const chrono::local_time_pos& in_work_date);
 };
 using client_ptr = std::shared_ptr<client>;
 
