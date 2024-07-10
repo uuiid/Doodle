@@ -532,7 +532,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
 template <typename ResponseBody, typename RequestType>
 boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
 read_and_write(
-    const std::shared_ptr<http_client_data_base>& in_client_data, const boost::beast::http::request<RequestType>& in_req
+    std::shared_ptr<http_client_data_base> in_client_data,   boost::beast::http::request<RequestType> in_req
 ) {
   using buffer_type = boost::beast::flat_buffer;
   auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());

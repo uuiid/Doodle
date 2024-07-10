@@ -10,7 +10,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::task>
   };
 
   auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
-      http_client_core_ptr_, header_operator_req(req)
+      http_client_core_ptr_, header_operator_req(std::move(req))
   );
   if (l_e) {
     co_return std::make_tuple(l_e, task{});
@@ -35,7 +35,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
 
   user_t l_user;
   auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
-      http_client_core_ptr_, header_operator_req(req)
+      http_client_core_ptr_, header_operator_req(std::move(req))
   );
   if (l_e) {
     co_return std::make_tuple(l_e, l_user);
