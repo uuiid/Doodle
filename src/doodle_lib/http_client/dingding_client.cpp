@@ -45,11 +45,6 @@ void client::access_token(const std::string& in_app_key, const std::string& in_a
   app_key      = in_app_key;
   app_secret   = in_app_secret;
   auto_expire_ = in_auto_expire;
-
-  boost::asio::co_spawn(
-      http_client_core_ptr_->get_executor(), begin_refresh_token(),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-  );
 }
 
 boost::asio::awaitable<void> client::async_access_token(
@@ -64,6 +59,8 @@ boost::asio::awaitable<void> client::async_access_token(
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> client::get_user_by_mobile(
     const std::string& in_mobile
 ) {
+  if (access_token_.empty()) co_await begin_refresh_token();
+
   std::string l_ret{};
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, fmt::format("/topapi/v2/user/getbymobile?access_token={}", access_token_), 11
@@ -99,6 +96,8 @@ client::get_attendance_updatedata(
     const std::string& in_userid, const chrono::local_time_pos& in_work_date
 
 ) {
+  if (access_token_.empty()) co_await begin_refresh_token();
+  
   std::vector<attendance_update> l_ret{};
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, fmt::format("/topapi/attendance/getupdatedata?access_token={}", access_token_), 11
