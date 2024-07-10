@@ -311,6 +311,7 @@ void UDoodleFbxImport_1::ImportFile() {
   K_FBX_F->ImportUI->bResetToFbxOnMaterialConflict               = false;
 
   K_FBX_F->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
+  K_FBX_F->ImportUI->SkeletalMeshImportData->bUseT0AsRefPose     = false;
   K_FBX_F->ImportUI->bAutomatedImportShouldDetectType            = false;
   K_FBX_F->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
   K_FBX_F->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;
@@ -1318,14 +1319,12 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
   /// 扫描fbx 和abc 文件
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
     if (IsCamera(In_File)) {
-      L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork21", "确认为相机"));
       SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
     } else {
       TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
       L_ptr->ImportPath                    = In_File;
-      L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork3", "寻找匹配骨骼"));
       L_File = ListImportData.Emplace_GetRef(L_ptr);
     }
   }
@@ -1353,7 +1352,6 @@ void SDoodleImportFbxUI::AddCameraFile(const FString& In_File) {
   /// 扫描fbx 和abc 文件
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
     if (IsCamera(In_File)) {
-      L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork21", "确认为相机"));
       SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
