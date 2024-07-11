@@ -270,24 +270,29 @@ MStatus file_info_edit::add_collision() {
 MStatus file_info_edit::create_node() {
   MStatus l_status{};
   {  // 创建节点
-    if (has_node() && !is_force) {
-      displayError("has node, use -f to force");
-      return MS::kSuccess;
-    }
-    if (is_force) {
-      l_status = delete_node();
-      maya_chick(l_status);
-    }
+
     for (MItDependencyNodes l_it{MFn::kReference, &l_status}; !l_it.isDone(); l_it.next()) {
       MFnReference l_fn_ref{l_it.thisNode(), &l_status};
       if (!is_ignore_ref && !l_fn_ref.isLoaded()) continue;
+      auto l_this_node = l_it.thisNode();
+      MObject l_doodle_ref_node{};
+      for (MItDependencyGraph l_it_ref{l_this_node, MFn::kPluginDependNode}; !l_it_ref.isDone(); l_it_ref.next()) {
+        MFnDependencyNode l_fn_node{};
+        l_fn_node.setObject(l_it_ref.thisNode());
+        if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
+          l_doodle_ref_node = l_it_ref.thisNode();
+        }
+      }
+      if (l_doodle_ref_node.isNull()) {
+        l_doodle_ref_node = dg_modifier_.createNode(doodle_file_info::doodle_id, &l_status);
+        maya_chick(l_status);
+        MFnDependencyNode l_fn_node{l_doodle_ref_node, &l_status};
+        maya_chick(l_status);
 
-      MObject l_node = dg_modifier_.createNode(doodle_file_info::doodle_id, &l_status);
-      maya_chick(l_status);
-      MFnDependencyNode l_fn_node{l_node, &l_status};
-      maya_chick(l_status);
-
-      maya_chick(dg_modifier_.connect(get_plug(l_it.thisNode(), "message"), get_plug(l_node, "reference_file")));
+        maya_chick(
+            dg_modifier_.connect(get_plug(l_it.thisNode(), "message"), get_plug(l_doodle_ref_node, "reference_file"))
+        );
+      }
 
       auto l_file_path = l_fn_ref.fileName(false, false, false, &l_status);
       if (l_status != MStatus::kSuccess) {
@@ -296,7 +301,7 @@ MStatus file_info_edit::create_node() {
         continue;
       }
 
-      dg_modifier_.newPlugValueString(get_plug(l_node, "reference_file_path"), l_file_path);
+      dg_modifier_.newPlugValueString(get_plug(l_doodle_ref_node, "reference_file_path"), l_file_path);
       maya_chick(l_status);
 
       auto l_namespace = l_fn_ref.associatedNamespace(false, &l_status);
@@ -305,7 +310,7 @@ MStatus file_info_edit::create_node() {
         l_status = MStatus::kSuccess;
         continue;
       }
-      dg_modifier_.newPlugValueString(get_plug(l_node, "reference_file_namespace"), l_namespace);
+      dg_modifier_.newPlugValueString(get_plug(l_doodle_ref_node, "reference_file_namespace"), l_namespace);
       maya_chick(l_status);
       maya_chick(dg_modifier_.doIt());
     }
