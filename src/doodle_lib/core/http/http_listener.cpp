@@ -8,7 +8,6 @@
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
-#include <doodle_lib/core/http/socket_logger.h>
 namespace doodle::http {
 boost::asio::awaitable<void> detail::run_http_listener(
     boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port
