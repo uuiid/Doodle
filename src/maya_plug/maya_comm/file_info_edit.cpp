@@ -336,6 +336,8 @@ MStatus file_info_edit::refresh_node(MObject& in_node) {
       break;
     }
   }
+
+  return l_status;
 }
 
 MStatus file_info_edit::set_node_attr() {
