@@ -80,6 +80,11 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   for (auto&& i_ns : l_set_list) {
     for (auto l_h : l_cloth) {
       auto l_c = l_h.get<cloth_interface>();
+      if(!l_ref_map.contains(i_ns)){
+        displayError(conv::to_ms(fmt::format("没有找到 {} 的引用, 使用 doodle_file_info_edit 命令刷新", i_ns)));
+        l_status = MStatus::kFailure;
+        return l_status;
+      }
       if (l_c->get_namespace() == i_ns) l_c->set_cache_folder(l_ref_map[i_ns], true);
     }
   }

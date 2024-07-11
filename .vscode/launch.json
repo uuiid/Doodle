@@ -97,7 +97,6 @@
             "request": "launch",
             "program": "C:/Program Files/Autodesk/Maya2020/bin/maya.exe",
             "args": [
-                "-noAutoloadPlugins",
                 "-script",
                 "${workspaceFolder}/build/test_sim_fbx.mel"
             ],

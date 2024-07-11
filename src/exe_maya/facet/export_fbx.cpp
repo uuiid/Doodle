@@ -33,6 +33,7 @@
 #include "maya_plug/main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/maya_comm/file_info_edit.h>
 
 #include "core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
@@ -115,7 +116,8 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
 
   maya_file_io::set_workspace(l_arg.file_path);
   maya_file_io::open_file(l_arg.file_path, l_arg.use_all_ref ? MFileIO::kLoadAllReferences : MFileIO::kLoadDefault);
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit -f;)"));
+  maya_chick(file_info_edit::delete_node_static());
+  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
 
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
   g_ctx().emplace<reference_file_factory>();
