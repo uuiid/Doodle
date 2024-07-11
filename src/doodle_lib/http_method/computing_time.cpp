@@ -110,7 +110,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 // 计算时间
 work_xlsx_task_info_block computing_time_run(
     const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const entt::handle& in_user,
-    const work_xlsx_task_info_block& in_block, const computing_time_post_req_data& in_data
+    const work_xlsx_task_info_block& in_block, computing_time_post_req_data& in_data
 ) {
   auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
   auto l_all_works = in_time_clock(chrono::local_days{in_year_month / chrono::day{1}}, l_end_time);
@@ -132,9 +132,9 @@ work_xlsx_task_info_block computing_time_run(
   };
 
   // 进行排序
-  std::sort(in_data.data.begin(), in_data.data.end(), [](const auto& l_left, const auto& l_right) {
-    return l_left.start_time < l_right.start_time;
-  });
+
+  std::ranges::sort(in_data.data, [](auto&& l_left, auto&& l_right) { return l_left.start_time < l_right.start_time; });
+  // });
 
   {  // 计算时间比例
     std::vector<std::int64_t> l_woeks1{};
@@ -225,7 +225,6 @@ std::optional<work_xlsx_task_info_block> patch_time(
   }
   return l_block;
 }
-
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
