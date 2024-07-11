@@ -23,6 +23,18 @@ using http_session_data_ptr = std::shared_ptr<http_session_data>;
 
 namespace detail {
 
+enum class content_type {
+  text_plain,
+  application_json,
+  text_html,
+  text_css,
+  text_javascript,
+  text_xml,
+  image_jpeg,
+  image_png,
+  image_gif,
+};
+
 class session_data {
  public:
   session_data()  = default;
@@ -34,6 +46,9 @@ class session_data {
   std::shared_ptr<void> request_body_parser_;
   std::uint32_t version_{};
   bool keep_alive_{};
+
+  content_type content_type_{content_type::text_plain};
+  std::variant<std::string, nlohmann::json> body_{};  // std::variant<std::string, nlohmann::json>
 
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""

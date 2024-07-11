@@ -147,9 +147,29 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
       default:
         co_return;
     }
+
+    // 检查内容格式
+    boost::system::error_code l_error_code{};
+    auto l_content_type = l_request_parser->get()[boost::beast::http::field::content_type];
+    if (l_content_type.contains("application/json")) {
+      try {
+        l_session->body_         = nlohmann::json::parse(l_request_parser_string->get().body());
+        l_session->content_type_ = content_type::application_json;
+      } catch (const nlohmann::json::exception& e) {
+        l_session->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
+        l_error_code = error_enum::bad_json_string;
+      }
+    } else {
+      l_session->body_ = l_request_parser_string->get().body();
+    }
+
     // todo: 请求分发到对应的处理函数
     auto l_callback = (*in_route_ptr)(l_request_parser->get().method(), l_session->url_.segments(), l_session);
-    auto l_gen      = co_await l_callback->callback_(l_session);
+
+    auto l_gen = l_error_code ? l_session->make_error_code_msg(boost::beast::http::status::bad_request, l_error_code)
+                              : co_await l_callback->callback_(l_session);
+
+    // auto l_gen  = co_await l_callback->callback_(l_session);
 
     if (!l_session->keep_alive_) {
       auto [l_ec2, _] = co_await boost::beast::async_write(l_stream, std::move(l_gen));
