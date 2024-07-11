@@ -478,19 +478,19 @@ class dingding_attendance_post {
 };
 
 void reg_dingding_attendance(http_route& in_route) {
-  in_route
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/attendance/{user_id}",
-          session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_post{})
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}",
-          session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_get{})
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/company", session::make_http_reg_fun(dingding_company_get{})
-      ))
-
-      ;
+  // in_route
+  //     .reg(std::make_shared<http_function>(
+  //         boost::beast::http::verb::post, "api/doodle/attendance/{user_id}",
+  //         session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_post{})
+  //     ))
+  //     .reg(std::make_shared<http_function>(
+  //         boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}",
+  //         session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_get{})
+  //     ))
+  //     .reg(std::make_shared<http_function>(
+  //         boost::beast::http::verb::get, "api/doodle/company", session::make_http_reg_fun(dingding_company_get{})
+  //     ))
+  //
+  //     ;
 }
 }  // namespace doodle::http
