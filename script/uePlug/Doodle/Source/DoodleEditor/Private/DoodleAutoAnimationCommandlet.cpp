@@ -727,11 +727,6 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		GameOver->bCinematicQualitySettings = false;
 	}
 
-	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
-                Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())
-            )) {
-		ConsoleVar->AddOrUpdateConsoleVariable(TEXT("r.SetNearClipPlane"), 0.5);
-	}
 
     //-------------------------Save
     MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
