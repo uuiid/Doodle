@@ -27,11 +27,11 @@ class file_info_edit : public TemplateAction<file_info_edit, file_info_edit_ns::
   // 此处作为mfn模拟, 刷新节点的引用文件属性, 传入的是引用文件的 Mobject
   static MStatus refresh_node(MObject& in_node);
 
-  static MStatus delete_node();
+  static MStatus delete_node_static();
 
  private:
   bool has_node() const;
-
+  MStatus delete_node();
   MStatus create_node();
   MStatus add_collision();
   MStatus add_wind_field();

@@ -408,6 +408,19 @@ MStatus file_info_edit::delete_node() {
   }
   return l_status;
 }
+MStatus file_info_edit::delete_node_static() {
+  MStatus l_status{};
+  for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
+    MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
+    maya_chick(l_status);
+    if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
+      auto l_node = l_it.thisNode(&l_status);
+      maya_chick(l_status);
+      maya_chick(MGlobal::deleteNode(l_node));
+    }
+  }
+  return l_status;
+}
 
 bool file_info_edit::has_node() const {
   MStatus l_status{};
