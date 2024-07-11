@@ -105,6 +105,20 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
     logger_->log(log_loc(), level::info, "扫描到rig文件:{}", l_ptr->rig_file_.path_);
   }
 
+  // 添加Solve文件
+  for (auto &&l_ptr : l_out) {
+    auto l_solve_path = in_root.p_path / "6-moxing" / "CFX";
+    if (!FSys::exists(l_ptr->rig_file_.path_)) continue;
+    l_solve_path /= fmt::format("{}_cloth.ma", l_ptr->rig_file_.path_.stem().generic_string());
+    if (!FSys::exists(l_solve_path)) continue;
+    if (!FSys::is_regular_file(l_solve_path)) continue;
+
+    l_ptr->solve_file_.path_            = l_solve_path;
+    l_ptr->solve_file_.uuid_            = FSys::software_flag_file(l_solve_path);
+    l_ptr->solve_file_.last_write_time_ = FSys::last_write_time(l_solve_path);
+    logger_->log(log_loc(), level::info, "扫描到Solve文件:{}", l_ptr->solve_file_.path_);
+  }
+
   return l_out |
          ranges::views::transform(
              [](const std::shared_ptr<character_scan_category_data_t> &in_ptr) -> scan_category_data_ptr {
