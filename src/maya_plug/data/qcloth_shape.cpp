@@ -789,4 +789,25 @@ void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
   set_attribute(l_ql_core, "gravity2", get_attribute<std::double_t>(l_node, "gravityz"));
 }
 
+void qcloth_shape::set_cache_folder_read_only(const entt::handle& in_handle) const {
+  // std::string k_namespace = in_handle.get<reference_file>().get_namespace();
+  // std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
+  auto l_cache_folder = get_attribute<std::string>(obj, "cacheFolder");
+  // auto k_cache            = get_plug(obj, "cacheFolder");
+  // auto k_file_name    = maya_file_io::get_current_path();
+  // FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
+  // l_string /= in_path;
+  // DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
+  auto k_path = maya_file_io::work_path(l_cache_folder);
+  DOODLE_LOG_WARN("发现缓存路径 {}", k_path);
+  // if (need_clear && FSys::exists(k_path)) {
+  // DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
+  // FSys::remove_all(k_path);
+  // }
+  // FSys::create_directories(k_path);
+  // set_attribute(obj, "cacheFolder", l_string.generic_string());
+  // set_attribute(obj, "cacheName", k_node_name);
+  set_attribute(obj, "readOnly", true);
+}
+
 }  // namespace doodle::maya_plug

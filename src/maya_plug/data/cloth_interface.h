@@ -33,6 +33,8 @@ class cloth_interface {
   inline void set_cache_folder(const entt::handle& in_handle, bool need_clear) const {
     set_cache_folder(in_handle, FSys::path{}, need_clear);
   }
+  // 设置缓存为只读
+  virtual void set_cache_folder_read_only(const entt::handle& in_handle) const = 0;
 };
 
 class cloth_factory_interface {

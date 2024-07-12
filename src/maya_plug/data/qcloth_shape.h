@@ -93,6 +93,7 @@ class qcloth_shape : public cloth_interface::element_type {
   [[nodiscard]] std::string get_namespace() const override;
   void cover_cloth_attr(const entt::handle& in_handle) const override;
   [[nodiscard]] MDagPath get_shape() const override;
+  void set_cache_folder_read_only(const entt::handle& in_handle) const override;
 
   /**
    * @brief 获取布料形状（这个是一个tran）
