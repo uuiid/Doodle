@@ -736,7 +736,7 @@ void qcloth_shape::rest(const entt::handle& in_handle) const {
   DOODLE_LOG_INFO("开始寻找布料对应的初识姿势 {} -> {}", get_node_name(l_path), l_name);
   maya_chick(l_list.add(conv::to_ms(l_name)));
   maya_chick(MGlobal::setActiveSelectionList(l_list));
-  maya_chick(MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"}));
+  MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"});
 }
 MObject qcloth_shape::get_solver() const {
   MStatus l_status{};
