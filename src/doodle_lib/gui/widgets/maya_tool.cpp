@@ -387,7 +387,6 @@ bool maya_tool::render() {
       k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-      if (ptr_attr->replace_ref_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
       k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
       k_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
       k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
