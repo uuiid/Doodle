@@ -129,4 +129,17 @@ client::get_attendance_updatedata(
   co_return std::make_tuple(l_e, l_ret);
 }
 
+std::shared_ptr<dingding_company::client_guard> dingding_company::get_client(const boost::uuids::uuid& in_id) {
+  client_ptr l_ptr{};
+  if (company_client_map_[in_id].empty()) {
+    l_ptr = std::make_shared<client>(ssl_context_);
+    l_ptr->access_token(company_info_map_[in_id].app_key, company_info_map_[in_id].app_secret);
+  } else {
+    l_ptr = std::move(company_client_map_[in_id].front());
+    company_client_map_[in_id].pop_front();
+  }
+
+  return std::make_shared<client_guard>(l_ptr, this);
+}
+
 }  // namespace doodle::dingding

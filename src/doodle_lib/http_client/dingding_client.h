@@ -94,20 +94,42 @@ using client_ptr = std::shared_ptr<client>;
 
 class dingding_company {
  public:
-  dingding_company()  = default;
+  explicit dingding_company(boost::asio::ssl::context& in_ssl_context) : ssl_context_(in_ssl_context) {}
   ~dingding_company() = default;
   struct company_info {
     boost::uuids::uuid corp_id;
     std::string app_key;
     std::string app_secret;
     std::string name;
-    client_ptr client_ptr_;
     friend void to_json(nlohmann::json& j, const company_info& p) {
       j["id"]   = fmt::to_string(p.corp_id);
       j["name"] = p.name;
     }
   };
   std::map<boost::uuids::uuid, company_info> company_info_map_;
+
+ private:
+  // 客户端守卫
+  class client_guard {
+   public:
+    client_ptr client_ptr_;
+
+    ~client_guard() try { company_ptr_->company_client_map_[id_].emplace_back(std::move(client_ptr_)); } catch (...) {
+      default_logger_raw()->error("guard client error");
+    }
+
+   private:
+    boost::uuids::uuid id_{};
+    dingding_company* company_ptr_{};
+    explicit client_guard(client_ptr in_client_ptr, dingding_company* in_company)
+        : client_ptr_(std::move(in_client_ptr)), company_ptr_(in_company) {}
+  };
+
+  std::map<boost::uuids::uuid, std::deque<client_ptr>> company_client_map_;
+  boost::asio::ssl::context& ssl_context_;
+
+ public:
+  std::shared_ptr<client_guard> get_client(const boost::uuids::uuid& in_id) ;
 };
 
 }  // namespace doodle::dingding
