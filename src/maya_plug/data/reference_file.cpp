@@ -485,7 +485,7 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       reference_file k_ref{l_it.thisNode()};
       if (!k_ref.get_namespace().empty()) {
-        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", k_ref.get_abs_path());
+        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {} {}", k_ref.get_abs_path(), k_ref.get_namespace());
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<reference_file>(k_ref);
         l_ret.emplace_back(l_h);
