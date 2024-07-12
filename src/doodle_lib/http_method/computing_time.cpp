@@ -15,6 +15,7 @@
 
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/share_fun.h>
 namespace doodle::http {
 struct computing_time_post_req_data {
   struct task_data {
@@ -44,13 +45,7 @@ struct computing_time_post_req_data {
     p.data = j.at("data").get<std::vector<task_data>>();
   }
 };
-std::tuple<entt::handle, user> find_user_handle(entt::registry& reg, const boost::uuids::uuid& user_id) {
-  auto l_v = reg.view<const user>();
-  for (auto&& [e, l_user] : l_v.each()) {
-    if (l_user.id_ == user_id) return {{reg, e}, l_user};
-  }
-  return {};
-}
+
 
 std::tuple<entt::handle, work_xlsx_task_info_block> find_block_handle(
     entt::registry& reg, const chrono::year_month& in_year_month, const entt::entity& in_user
