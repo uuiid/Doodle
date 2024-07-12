@@ -792,7 +792,7 @@ void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
 void qcloth_shape::set_cache_folder_read_only(const entt::handle& in_handle) const {
   // std::string k_namespace = in_handle.get<reference_file>().get_namespace();
   // std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
-  auto l_cache_folder = get_attribute<std::string>(obj, "cacheFolder");
+  auto l_cache_folder = conv::to_s(get_attribute<MString>(obj, "cacheFolder"));
   // auto k_cache            = get_plug(obj, "cacheFolder");
   // auto k_file_name    = maya_file_io::get_current_path();
   // FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
