@@ -53,6 +53,9 @@ class session_data {
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
   );
+  boost::beast::http::message_generator make_error_code_msg(
+      boost::beast::http::status in_status, const std::string& in_str
+  );
 };
 
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);
