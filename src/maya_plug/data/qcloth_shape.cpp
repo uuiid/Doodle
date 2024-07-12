@@ -736,7 +736,10 @@ void qcloth_shape::rest(const entt::handle& in_handle) const {
   DOODLE_LOG_INFO("开始寻找布料对应的初识姿势 {} -> {}", get_node_name(l_path), l_name);
   maya_chick(l_list.add(conv::to_ms(l_name)));
   maya_chick(MGlobal::setActiveSelectionList(l_list));
-  MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"});
+  auto l_status = MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"});
+  if (!l_status) {
+    DOODLE_LOG_WARN("布料对应的初识姿势 {} 设置出错", l_name);
+  }
 }
 MObject qcloth_shape::get_solver() const {
   MStatus l_status{};
@@ -798,7 +801,7 @@ void qcloth_shape::set_cache_folder_read_only(const entt::handle& in_handle) con
   // FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
   // l_string /= in_path;
   // DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
-  auto k_path = maya_file_io::work_path(l_cache_folder);
+  auto k_path         = maya_file_io::work_path(l_cache_folder);
   DOODLE_LOG_WARN("发现缓存路径 {}", k_path);
   // if (need_clear && FSys::exists(k_path)) {
   // DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
