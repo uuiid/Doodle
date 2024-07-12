@@ -11,6 +11,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/share_fun.h>
 
 namespace doodle::http {
 
@@ -301,196 +302,169 @@ class dingding_attendance_impl : public std::enable_shared_from_this<dingding_at
   }
 };
 
-class dingding_attendance_get {
- public:
-  dingding_attendance_get() : executor_(g_io_context().get_executor()) {}
-  ~dingding_attendance_get() = default;
-  using executor_type        = boost::asio::any_io_executor;
-  boost::asio::any_io_executor executor_;
-  boost::asio::any_io_executor get_executor() const { return executor_; }
-  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
-    auto l_logger = in_handle->logger_;
-    if (in_error_code) {
-      l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
-      in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
-      return;
-    }
-    auto l_view    = std::as_const(*g_reg()).view<const user>();
-    auto l_date    = in_handle->capture_->get("date");
-    auto l_user_id = in_handle->capture_->get("user_id");
-    std::vector<chrono::year_month_day> l_date_list{};
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_post(session_data_ptr in_handle) {
+  auto l_logger      = in_handle->logger_;
 
-    boost::uuids::uuid l_user_uuid{};
-    try {
-      chrono::year_month_day l_ymd{};
-      chrono::year_month l_ym{};
-      std::istringstream l_date_stream{l_date};
-      l_date_stream >> date::parse("%Y-%m", l_ym);
-      if (!l_date_stream.eof()) {
-        l_date_stream >> date::parse("%Y-%m-%d", l_ymd);
-        l_date_list.emplace_back(l_ymd);
-      } else {
-        auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
-        for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end;
-             l_day += chrono::days{1}) {
-          l_date_list.emplace_back(l_day);
+  auto l_user_id_str = in_handle->capture_->get("user_id");
+
+  if (in_handle->content_type_ != detail::content_type::application_json) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "content type is not json");
+  }
+
+  boost::uuids::uuid l_user_id{};
+  chrono::year_month_day l_date{};
+
+  try {
+    auto l_json     = std::get<nlohmann::json>(in_handle->body_);
+    auto l_date_str = l_json["work_date"].get<std::string>();
+    l_user_id       = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
+    std::istringstream l_date_stream{l_date_str};
+    l_date_stream >> date::parse("%Y-%m-%d", l_date);
+  } catch (...) {
+    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
+    );
+  }
+
+  // 保存本次线程
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+
+  // 切换到主线程
+  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+
+  auto [l_user_handle, l_user] = find_user_handle(*g_reg(), l_user_id);
+
+  if (!l_user_handle) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有用户");
+  auto& l_d = g_ctx().get<const dingding::dingding_company>();
+  if (!l_d.company_info_map_.contains(l_user_id))
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
+
+  std::vector<attendance> l_attendance_list_{};
+
+  if (l_user.attendance_block_.contains(l_date)) {
+    auto&& l_attendance_entt = l_user.attendance_block_[l_date];
+    auto& l_att              = std::as_const(*g_reg()).get<const attendance_block>(l_attendance_entt);
+    if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
+      l_attendance_list_ = l_att.attendance_block_;
+      goto seed_success;
+    }
+  }
+
+  if (l_user.mobile_.empty()) {
+  }
+
+seed_success:
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, in_handle->version_
+  };
+  l_response.keep_alive(in_handle->keep_alive_);
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  nlohmann::json l_json{};
+  l_json            = l_attendance_list_;
+  l_response.body() = l_json.dump();
+  l_response.prepare_payload();
+  co_return l_response;
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
+  auto l_logger  = in_handle->logger_;
+
+  auto l_date    = in_handle->capture_->get("date");
+  auto l_user_id = in_handle->capture_->get("user_id");
+  std::vector<chrono::year_month_day> l_date_list{};
+
+  boost::uuids::uuid l_user_uuid{};
+  try {
+    chrono::year_month_day l_ymd{};
+    chrono::year_month l_ym{};
+    std::istringstream l_date_stream{l_date};
+    l_date_stream >> date::parse("%Y-%m", l_ym);
+    if (!l_date_stream.eof()) {
+      l_date_stream >> date::parse("%Y-%m-%d", l_ymd);
+      l_date_list.emplace_back(l_ymd);
+    } else {
+      auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
+      for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end;
+           l_day += chrono::days{1}) {
+        l_date_list.emplace_back(l_day);
+      }
+    }
+    l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
+  } catch (...) {
+    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "参数错误");
+  }
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+
+  // 转到主线程
+  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+  auto l_view = std::as_const(*g_reg()).view<const user>();
+  std::vector<attendance> l_r{};
+  bool is_find = false;
+  for (auto&& [e, l_u] : l_view.each()) {
+    if (l_u.id_ == l_user_uuid) {
+      auto l_user = l_u;
+      is_find     = true;
+      for (auto&& l_ymd : l_date_list) {
+        if (l_user.attendance_block_.contains(l_ymd)) {
+          for (auto&& i :
+               std::as_const(*g_reg()).get<const attendance_block>(l_user.attendance_block_[l_ymd]).attendance_block_)
+            // l_json.emplace_back(i);
+            l_r.emplace_back(i);
         }
       }
-      l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
-    } catch (const std::exception& e) {
-      l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
-      return;
-    } catch (...) {
-      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(
-          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
-      );
-      return;
+      break;
     }
-    // res
-    auto& l_req = in_handle->request_parser_->get();
-
-    boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, in_handle->request_parser_->get().version()
-    };
-    l_response.keep_alive(l_req.keep_alive());
-    l_response.set(boost::beast::http::field::content_type, "application/json");
-
-    // find user
-    bool is_find = false;
-    for (auto&& [e, l_u] : l_view.each()) {
-      if (l_u.id_ == l_user_uuid) {
-        auto l_user = l_u;
-        is_find     = true;
-        nlohmann::json l_json{};
-        for (auto&& l_ymd : l_date_list) {
-          if (l_user.attendance_block_.contains(l_ymd)) {
-            for (auto&& i :
-                 std::as_const(*g_reg()).get<const attendance_block>(l_user.attendance_block_[l_ymd]).attendance_block_)
-              l_json.emplace_back(i);
-          }
-        }
-        if (l_json.empty()) {
-          l_json = nlohmann::json::array();
-        }
-        l_response.body() = l_json.dump();
-
-        break;
-      }
-    }
-
-    if (!is_find) {
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::not_found, in_error_code, "not found user or date");
-      return;
-    }
-    l_response.prepare_payload();
-    in_handle->seed(std::move(l_response));
   }
-};
+  // 转入 this_exe
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-class dingding_company_get {
- public:
-  dingding_company_get() : executor_(g_thread().get_executor()) {}
-  ~dingding_company_get() = default;
-  using executor_type     = boost::asio::any_io_executor;
-  boost::asio::any_io_executor executor_;
-  boost::asio::any_io_executor get_executor() const { return executor_; }
-  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
-    auto l_logger = in_handle->logger_;
-    if (in_error_code) {
-      l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
-      in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
-      return;
-    }
-    auto l_cs = g_ctx().get<dingding::dingding_company>();
-    nlohmann::json l_json{};
-    for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
-      l_json.emplace_back(l_value);
-    }
-    auto& l_req = in_handle->request_parser_->get();
-    boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, l_req.version()
-    };
-    l_response.keep_alive(l_req.keep_alive());
-    l_response.set(boost::beast::http::field::content_type, "application/json");
-    l_response.body() = l_json.dump();
-    l_response.prepare_payload();
-    in_handle->seed(std::move(l_response));
+  if (!is_find) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户不存在");
   }
-};
 
-class dingding_attendance_post {
- public:
-  dingding_attendance_post() : executor_(g_thread().get_executor()) {}
-  ~dingding_attendance_post() = default;
-  using executor_type         = boost::asio::any_io_executor;
-  boost::asio::any_io_executor executor_;
-  boost::asio::any_io_executor get_executor() const { return executor_; }
-  void operator()(boost::system::error_code in_error_code, const http_session_data_ptr& in_handle) const {
-    auto l_logger = in_handle->logger_;
-    if (in_error_code) {
-      l_logger->log(log_loc(), level::err, "error: {}", in_error_code.message());
-      in_handle->seed_error(boost::beast::http::status::internal_server_error, in_error_code);
-      return;
-    }
-    auto l_req         = in_handle->get_msg_body_parser<boost::beast::http::string_body>();
-    auto l_user_id_str = in_handle->capture_->get("user_id");
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, in_handle->version_
+  };
+  nlohmann::json l_json{};
+  l_json            = l_r;
+  l_response.body() = l_json.dump();
+  l_response.keep_alive(in_handle->keep_alive_);
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.prepare_payload();
+  co_return std::move(l_response);
+}
 
-    auto l_body        = l_req->request_parser_->get().body();
-    if (!nlohmann::json::accept(l_body)) {
-      l_logger->log(log_loc(), level::err, "url parse error: {}", l_body);
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, l_body);
-      return;
-    }
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_get(session_data_ptr in_handle) {
+  auto l_logger = in_handle->logger_;
 
-    boost::uuids::uuid l_user_id{};
-    chrono::year_month_day l_date{};
-
-    try {
-      auto l_json     = nlohmann::json::parse(l_body);
-      auto l_date_str = l_json["work_date"].get<std::string>();
-      l_user_id       = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
-      std::istringstream l_date_stream{l_date_str};
-      l_date_stream >> date::parse("%Y-%m-%d", l_date);
-
-    } catch (const std::exception& e) {
-      l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(boost::beast::http::status::bad_request, in_error_code, e.what());
-      return;
-    } catch (...) {
-      l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-      in_error_code = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-      in_handle->seed_error(
-          boost::beast::http::status::bad_request, in_error_code, boost::current_exception_diagnostic_information()
-      );
-      return;
-    }
-
-    auto l_impl = std::make_shared<dingding_attendance_impl>(in_handle);
-    l_impl->run_post(l_user_id, l_date);
+  auto l_cs     = g_ctx().get<dingding::dingding_company>();
+  nlohmann::json l_json{};
+  for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
+    l_json.emplace_back(l_value);
   }
-};
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, in_handle->version_
+  };
+  l_response.keep_alive(in_handle->keep_alive_);
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.body() = l_json.dump();
+  l_response.prepare_payload();
+  co_return std::move(l_response);
+}
 
 void reg_dingding_attendance(http_route& in_route) {
-  // in_route
-  //     .reg(std::make_shared<http_function>(
-  //         boost::beast::http::verb::post, "api/doodle/attendance/{user_id}",
-  //         session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_post{})
-  //     ))
-  //     .reg(std::make_shared<http_function>(
-  //         boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}",
-  //         session::make_http_reg_fun<boost::beast::http::string_body>(dingding_attendance_get{})
-  //     ))
-  //     .reg(std::make_shared<http_function>(
-  //         boost::beast::http::verb::get, "api/doodle/company", session::make_http_reg_fun(dingding_company_get{})
-  //     ))
-  //
-  //     ;
+  in_route
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::post, "api/doodle/attendance/{user_id}", dingding_attendance_post
+      ))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
+      ))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/company",dingding_company_get
+      ))
+
+      ;
 }
 }  // namespace doodle::http
