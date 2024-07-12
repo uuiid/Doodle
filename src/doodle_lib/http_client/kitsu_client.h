@@ -79,6 +79,7 @@ class kitsu_client_factory {
  public:
   kitsu_client_factory() = default;
 
+  boost::asio::any_io_executor executor_{};
  private:
   // 客户端守卫
   class kitsu_client_guard {
@@ -97,7 +98,7 @@ class kitsu_client_factory {
   };
 
  public:
-  std::shared_ptr<kitsu_client_guard> create_client();
+  boost::asio::awaitable<std::shared_ptr<kitsu_client_guard>> create_client();
 };
 
 }  // namespace doodle::kitsu

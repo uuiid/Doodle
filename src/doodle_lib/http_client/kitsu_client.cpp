@@ -50,4 +50,21 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
   co_return std::make_tuple(l_e, l_user);
 }
 
+boost::asio::awaitable<std::shared_ptr<kitsu_client_factory::kitsu_client_guard>> kitsu_client_factory::create_client(
+
+) {
+  // todo 使用线程池
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+
+  // 转换到自己的线程
+  co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
+
+  auto l_value = std::make_shared<kitsu_client_guard>(std::make_shared<kitsu_client>(g_io_context(), ""));
+  // 恢复线程
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
+  co_return l_value;
+
+
+}
+
 }  // namespace doodle::kitsu
