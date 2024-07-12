@@ -114,8 +114,10 @@ class dingding_company {
    public:
     client_ptr client_ptr_;
 
-    ~client_guard() try { company_ptr_->company_client_map_[id_].emplace_back(std::move(client_ptr_)); } catch (...) {
-      default_logger_raw()->error("guard client error");
+    ~client_guard() {
+      boost::asio::post(company_ptr_->executor_, [client_ptr = client_ptr_, company_ptr = company_ptr_, id = id_]() {
+        company_ptr->company_client_map_[id].emplace_back(std::move(client_ptr));
+      });
     }
 
    private:
@@ -127,9 +129,12 @@ class dingding_company {
 
   std::map<boost::uuids::uuid, std::deque<client_ptr>> company_client_map_;
   boost::asio::ssl::context& ssl_context_;
+  boost::asio::any_io_executor executor_;
+
+  std::shared_ptr<client_guard> get_client_impl(const boost::uuids::uuid& in_id);
 
  public:
-  std::shared_ptr<client_guard> get_client(const boost::uuids::uuid& in_id) ;
+  boost::asio::awaitable<std::shared_ptr<client_guard>> get_client(const boost::uuids::uuid& in_id);
 };
 
 }  // namespace doodle::dingding
