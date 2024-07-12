@@ -412,14 +412,18 @@ MStatus file_info_edit::delete_node() {
 }
 MStatus file_info_edit::delete_node_static() {
   MStatus l_status{};
+  std::vector<MObject> l_delete_node{};
   for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
     MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
     maya_chick(l_status);
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       auto l_node = l_it.thisNode(&l_status);
       maya_chick(l_status);
-      maya_chick(MGlobal::deleteNode(l_node));
+      l_delete_node.emplace_back(l_node);
     }
+  }
+  for (auto&& i : l_delete_node) {
+    maya_chick(MGlobal::deleteNode(i));
   }
   return l_status;
 }
