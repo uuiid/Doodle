@@ -5,7 +5,6 @@
 #include <doodle_core/time_tool/work_clock.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
-#include "doodle_lib/core/http/http_websocket_data.h"
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
