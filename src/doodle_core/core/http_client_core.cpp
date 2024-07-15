@@ -95,4 +95,23 @@ http_client_data_base::ssl_socket_t* http_client_data_base::ssl_socket() {
   auto l_socket = std::get_if<ssl_socket_ptr>(&socket_);
   return l_socket ? l_socket->get() : nullptr;
 }
+
+void awaitable_queue::awaitable_queue_impl::await_suspend(std::coroutine_handle<queue_guard_ptr> in_handle) {
+  {
+    std::lock_guard<std::recursive_mutex> l{lock_};
+    next_list_.emplace(in_handle);
+  }
+}
+bool awaitable_queue::awaitable_queue_impl::await_ready() { return !is_run_; }
+void awaitable_queue::awaitable_queue_impl::next() {
+  if (next_list_.empty()) return;
+  next_list_.front().resume();
+  next_list_.pop();
+}
+void awaitable_queue::awaitable_queue_impl::maybe_invoke() {
+  if (is_run_) return;
+  is_run_ = true;
+  next();
+}
+
 }  // namespace doodle::http::detail

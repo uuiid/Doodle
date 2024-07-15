@@ -15,6 +15,7 @@
 #include <boost/beast/ssl.hpp>
 #include <boost/url.hpp>
 
+#include <atomic>
 #include <magic_enum.hpp>
 namespace doodle::http::detail {
 
@@ -480,6 +481,47 @@ class http_client_core
   }
 };
 
+class awaitable_queue {
+  struct awaitable_queue_impl;
+
+ public:
+  awaitable_queue()  = default;
+  ~awaitable_queue() = default;
+
+  class queue_guard {
+    std::shared_ptr<awaitable_queue_impl> impl_;
+
+   public:
+    explicit queue_guard(awaitable_queue& in_queue) : impl_{in_queue.impl_} {}
+    ~queue_guard() {
+      impl_->is_run_ = false;
+      impl_->maybe_invoke();
+    }
+  };
+  using queue_guard_ptr = std::shared_ptr<queue_guard>;
+
+  bool await_ready() const noexcept { return impl_->await_ready(); }
+  void await_suspend(std::coroutine_handle<queue_guard_ptr> in_handle) { impl_->await_suspend(in_handle); }
+
+  inline queue_guard_ptr await_resume() { return std::make_shared<queue_guard>(*this); }
+
+ private:
+  struct awaitable_queue_impl {
+    std::atomic_bool is_run_;
+    std::queue<std::coroutine_handle<>> next_list_{};
+    std::recursive_mutex lock_{};
+    awaitable_queue_impl()  = default;
+    ~awaitable_queue_impl() = default;
+    void await_suspend(std::coroutine_handle<queue_guard_ptr> in_handle);
+    bool await_ready();
+
+    void next();
+    void maybe_invoke();
+  };
+
+  std::shared_ptr<awaitable_queue_impl> impl_ = std::make_shared<awaitable_queue_impl>();
+};
+
 class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
  public:
   using co_executor_type = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
@@ -531,9 +573,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
 
 template <typename ResponseBody, typename RequestType>
 boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
-read_and_write(
-    std::shared_ptr<http_client_data_base> in_client_data,   boost::beast::http::request<RequestType> in_req
-) {
+read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::beast::http::request<RequestType> in_req) {
   using buffer_type = boost::beast::flat_buffer;
   auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());
   in_client_data->expires_after(std::chrono::seconds{10});
