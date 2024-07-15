@@ -562,6 +562,9 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   // 定时关闭
   timer_ptr_t timer_ptr_;
 
+  // 异步队列
+  awaitable_queue queue_;
+
   virtual void init(std::string in_server_url, boost::asio::ssl::context* in_ctx = nullptr);
 
   void expires_after(std::chrono::seconds in_seconds);
@@ -575,6 +578,7 @@ template <typename ResponseBody, typename RequestType>
 boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
 read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::beast::http::request<RequestType> in_req) {
   using buffer_type = boost::beast::flat_buffer;
+  auto l_g          = co_await in_client_data->queue_;
   auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());
   in_client_data->expires_after(std::chrono::seconds{10});
 
