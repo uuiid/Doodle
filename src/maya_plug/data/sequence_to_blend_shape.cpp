@@ -194,8 +194,9 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
     for (auto col = 0; col < num_blend_shape_; ++col) {
       auto* l_shape = fbxsdk::FbxShape::Create(l_node->GetScene(), fmt::format("shape_{}", col).c_str());
       l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
-      auto* l_blend_channel =
-          fbxsdk::FbxBlendShapeChannel::Create(l_node->GetScene(), fmt::format("{}_bsc_{}",l_node->GetName(), col).c_str());
+      auto* l_blend_channel = fbxsdk::FbxBlendShapeChannel::Create(
+          l_node->GetScene(), fmt::format("{}_bsc_{}", l_node->GetName(), col).c_str()
+      );
 
       auto* l_shape_pos = l_shape->GetControlPoints();
       // 顶点
@@ -255,6 +256,13 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
       l_c_z->KeySet(l_key_index, l_fbx_time, mesh_off_[j].z());
       l_c_z->KeyModifyEnd();
     }
+  }
+  // 写出 bind pose
+  {
+    auto* l_post = FbxPose::Create(l_node->GetScene(), fmt::format("{}_post", l_node->GetName()).c_str());
+    l_post->SetIsBindPose(true);
+    l_post->Add(l_node, l_node->EvaluateGlobalTransform());
+    l_node->GetScene()->AddPose(l_post);
   }
 }
 
