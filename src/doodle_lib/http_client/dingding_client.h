@@ -101,6 +101,7 @@ class dingding_company {
     std::string app_key;
     std::string app_secret;
     std::string name;
+    client_ptr client_ptr;
     friend void to_json(nlohmann::json& j, const company_info& p) {
       j["id"]   = fmt::to_string(p.corp_id);
       j["name"] = p.name;
