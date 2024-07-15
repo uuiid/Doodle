@@ -13,8 +13,9 @@
 
 namespace doodle::gui {
 class subtitle_processing::subtitle_srt_line {
- public:
+public:
   subtitle_srt_line() = default;
+
   explicit subtitle_srt_line(std::string in_time) : time_str(std::move(in_time)), time_begin(), time_end(), subtitle() {
     parse_time(time_str);
   };
@@ -46,7 +47,7 @@ class subtitle_processing::subtitle_srt_line {
 };
 
 class subtitle_processing::impl {
- public:
+public:
   impl() = default;
 
   gui_cache<std::vector<std::string>> list_srt_file{"##list"s, std::vector<std::string>{}};
@@ -68,21 +69,23 @@ subtitle_processing::subtitle_processing() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
   init();
 }
+
 void subtitle_processing::init() {
   p_i->sig_scoped = g_ctx().get<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_vector) {
     p_i->list_srt_file = in_vector | ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                               return in_handle && in_handle.any_of<assets_file>();
-                             }) |
-                             ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                               auto& l_p = in_handle.get<assets_file>().path_attr();
-                               return l_p.extension() == ".srt";
-                             }) |
-                             ranges::views::transform([](const entt::handle& in_handle) -> std::string {
-                               return in_handle.get<assets_file>().get_path_normal().generic_string();
-                             }) |
-                             ranges::to_vector;
-      });
+                           return in_handle && in_handle.any_of<assets_file>();
+                         }) |
+                         ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                           auto& l_p = in_handle.get<assets_file>().path_attr();
+                           return l_p.extension() == ".srt";
+                         }) |
+                         ranges::views::transform([](const entt::handle& in_handle) -> std::string {
+                           return in_handle.get<assets_file>().get_path_normal().generic_string();
+                         }) |
+                         ranges::to_vector;
+  });
 }
+
 bool subtitle_processing::render() {
   dear::ListBox{*p_i->list_srt_file.gui_name} && [&]() {
     for (auto&& i : p_i->list_srt_file.data) {
@@ -110,6 +113,7 @@ bool subtitle_processing::render() {
   }
   return p_i->open;
 }
+
 void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_subtitles_file) {
   boost::contract::check l_ = boost::contract::function().precondition([&]() {
     DOODLE_CHICK(FSys::exists(in_path), doodle_error{"文件 {} 不存在", in_path});
@@ -206,16 +210,18 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
         }
         /// \brief 在最有一次循环中如果还有剩余字符串直接加入字幕
         if (!l_sub.empty()) l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_sub);
-
-        /// \brief 设置时间
-        auto l_du = (it->time_end - it->time_begin) / l_sub_list.size();
-        for (auto&& [l_index, l_line] : l_sub_list | ranges::views::enumerate) {
-          l_line.time_begin = it->time_begin + (l_du * l_index);
-          l_line.time_end   = it->time_begin + (l_du * (l_index + 1));
-        }
-        it = l_vector.erase(it);
-        it = l_vector.insert(it, l_sub_list.begin(), l_sub_list.end());
-        it = it + l_sub_list.size();
+        if (!l_str_list.empty()) {
+          /// \brief 设置时间
+          auto l_du = (it->time_end - it->time_begin) / l_sub_list.size();
+          for (auto&& [l_index, l_line] : l_sub_list | ranges::views::enumerate) {
+            l_line.time_begin = it->time_begin + (l_du * l_index);
+            l_line.time_end   = it->time_begin + (l_du * (l_index + 1));
+          }
+          it = l_vector.erase(it);
+          it = l_vector.insert(it, l_sub_list.begin(), l_sub_list.end());
+          it = it + l_sub_list.size();
+        } else
+          ++it;
       } else {
         ++it;
       }
@@ -227,10 +233,10 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
       l_vector | ranges::views::enumerate |
       ranges::views::transform([&](const std::pair<std::size_t, subtitle_srt_line>& in_pair) -> std::string {
         auto l_str = fmt::format(
-            R"({}
+          R"({}
 {}
 {})",
-            in_pair.first + 1, in_pair.second.time_str, in_pair.second.subtitle
+          in_pair.first + 1, in_pair.second.time_str, in_pair.second.subtitle
         );
         return l_str;
       }) |
@@ -239,6 +245,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
   DOODLE_LOG_INFO("输出文件 {}", out_subtitles_file);
   FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_sub_str_list, "\n\n"));
 }
+
 const std::string& subtitle_processing::title() const { return p_i->title_name_; }
 subtitle_processing::~subtitle_processing() = default;
-}  // namespace doodle::gui
+} // namespace doodle::gui
