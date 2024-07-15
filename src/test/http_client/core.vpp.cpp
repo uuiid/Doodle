@@ -16,13 +16,13 @@ BOOST_AUTO_TEST_CASE(quequ_t) {
   app_base l_app_base{};
   boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
   auto l_c = std::make_shared<http::detail::http_client_data_base>(g_io_context());
-  l_c->init("https://baidu.com/",&l_ctx);
+  l_c->init("https://baidu.com/", &l_ctx);
   boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/", 11};
   l_req.prepare_payload();
   auto l_f1 = boost::asio::co_spawn(
       g_io_context(), http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req), boost::asio::use_future
   );
-  auto l_f2 =    boost::asio::co_spawn(
+  auto l_f2 = boost::asio::co_spawn(
       g_io_context(), http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req), boost::asio::use_future
   );
   g_io_context().run();
