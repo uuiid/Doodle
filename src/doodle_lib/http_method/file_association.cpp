@@ -23,7 +23,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
                                              boost::current_exception_diagnostic_information());
   }
 
-  auto l_map = co_await g_ctx().get<std::shared_ptr<scan_win_service_t>>()->async_scan_data(boost::asio::use_awaitable);
+  auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
   boost::beast::http::response<boost::beast::http::string_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };

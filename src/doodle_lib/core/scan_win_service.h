@@ -8,10 +8,11 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio.hpp>
+
 namespace doodle {
 class scan_win_service_t {
-  using timer_t      = boost::asio::steady_timer;
-  using timer_ptr_t  = std::shared_ptr<timer_t>;
+  using timer_t     = boost::asio::steady_timer;
+  using timer_ptr_t = std::shared_ptr<timer_t>;
 
   using signal_t     = boost::asio::signal_set;
   using signal_ptr_t = std::shared_ptr<signal_t>;
@@ -34,26 +35,30 @@ class scan_win_service_t {
 
   void on_timer(const boost::system::error_code& ec);
 
- public:
+public:
   scan_win_service_t()  = default;
   ~scan_win_service_t() = default;
 
   void start();
 
-  inline auto get_scan_data() const { return scan_data_map_; }
+  const std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>& get_scan_data() const {
+    return scan_data_map_;
+  }
 
   template <typename CompletionHandler>
   auto async_scan_data(CompletionHandler&& handler) {
     auto l_init = [this](auto&& in_handle) {
       using handler_type = std::decay_t<decltype(in_handle)>;
       boost::asio::post(boost::asio::bind_executor(
-          g_io_context(), [this, in_handle = std::make_shared<handler_type>(std::forward<decltype(in_handle)>(in_handle)
-                                 )]() { (*in_handle)(boost::system::error_code(), scan_data_map_); }
+        g_io_context(), [this, in_handle = std::make_shared<handler_type>(std::forward<decltype(in_handle)>(in_handle)
+        )]() {
+          (*in_handle)(boost::system::error_code(), scan_data_map_);
+        }
       ));
     };
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code, decltype(scan_data_map_))>(
-        l_init, handler
+      l_init, handler
     );
   }
 };
-}  // namespace doodle
+} // namespace doodle

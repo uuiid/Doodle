@@ -35,6 +35,7 @@ struct file_association_http_args_t {
 };
 
 bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+  app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
   l_scan->start();
 
