@@ -29,7 +29,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
       !l_json["exe"].is_string()) {
     co_return in_handle->make_error_code_msg(
       boost::beast::http::status::bad_request, "请求缺失必要参数"
-    )
+    );
   }
   server_task_info l_task_handle{
       core_set::get_set().get_uuid(), l_json["exe"].get<std::string>(),
@@ -51,12 +51,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   l_task_handle.submit_time_ = chrono::sys_time_pos::clock::now();
   l_task_handle.log_path_    = fmt::format("task_log/{}", l_task_handle.id_);
 
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_e = entt::handle{*g_reg(), g_reg()->create()};
   l_e.emplace<server_task_info>(l_task_handle);
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   nlohmann::json l_task_handle_json{};
   l_task_handle_json = l_task_handle;
-
   boost::beast::http::response<boost::beast::http::string_body> l_response{
       boost::beast::http::status::ok, in_handle->version_
   };
@@ -81,6 +83,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
       "无效的任务id"
     );
   }
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
 
   server_task_info l_task_handle{};
   bool is_db = false;
@@ -95,6 +99,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
     }
   }
 
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
   if (!is_db) {
     co_return in_handle->make_error_code_msg(
       boost::beast::http::status::not_found,
@@ -126,6 +131,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
     l_page_size = std::stoul(l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10));
   }
 
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   std::vector<server_task_info> l_tasks{};
   {
     auto l_view             = std::as_const(*g_reg()).view<const server_task_info>();
@@ -136,6 +143,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
       l_tasks.emplace_back(l_view.get<server_task_info>(e));
     }
   }
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   nlohmann::json l_tasks_json{};
   l_tasks_json = l_tasks;
@@ -171,6 +179,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
     l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
         .value_or(level::err);
   }
+
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
   for (auto&& [e, l_ptr] : l_view.each()) {
     if (l_ptr.id_ == l_task_handle.id_) {
@@ -178,6 +189,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
       break;
     }
   }
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
+
   auto l_log_path = l_task_handle.get_log_path(l_level);
   if (!FSys::exists(l_log_path)) {
     co_return in_handle->make_error_code_msg(
@@ -216,6 +229,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
     );
   }
 
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   {
     for (auto&& [e, l_ptr] : g_reg()->view<server_task_info>().each()) {
       if (l_ptr.id_ == l_uuid) {
@@ -224,6 +239,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
       }
     }
   }
+  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
       boost::beast::http::status::ok, in_handle->version_
