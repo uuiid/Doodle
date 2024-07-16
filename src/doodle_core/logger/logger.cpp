@@ -184,12 +184,13 @@ void logger_ctrl::init_temp_log() {
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string& in_name, bool out_console) {
   auto l_name = in_name;
-  boost::erase_all(
+  std::erase_if(
     l_name,
     [](const char& in)-> bool {
       return !std::isalpha(in);
     }
   );
+
   auto l_path = p_log_path / fmt::format("{}_{}.txt", l_name, core_set::get_set().get_uuid());
 
   std::vector<spdlog::sink_ptr> l_sinks{};
