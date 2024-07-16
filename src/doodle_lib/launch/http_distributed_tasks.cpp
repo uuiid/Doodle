@@ -15,15 +15,15 @@
 #include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/task_server.h>
-namespace doodle::launch {
 
-void reg_func(doodle::http::http_route &in_route) {
+namespace doodle::launch {
+void reg_func(doodle::http::http_route& in_route) {
   http::computer::reg(in_route);
   http::task_info::reg(in_route);
 }
 
-bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
-  auto &l_app         = static_cast<app_service &>(app_base::Get());
+bool http_distributed_tasks::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+  auto& l_app         = static_cast<app_service&>(app_base::Get());
   l_app.service_name_ = L"doodle_http_service";
   l_app.display_name_ = L"doodle_http_service";
   l_app.description_  = L"http 服务, 用于在一个线程中执行http任务";
@@ -38,14 +38,12 @@ bool http_distributed_tasks::operator()(const argh::parser &in_arh, std::vector<
   auto l_rout_ptr = std::make_shared<http::http_route>();
   default_logger_raw()->log(log_loc(), level::warn, "开始路由");
   reg_func(*l_rout_ptr);
-  auto l_listener = std::make_shared<http::http_listener>(g_io_context(), l_rout_ptr);
-  default_logger_raw()->log(log_loc(), level::warn, "启动侦听器");
-  l_listener->run();
-  in_vector.emplace_back(l_listener);
+  http::run_http_listener(g_io_context(), l_rout_ptr);
   if (!g_ctx().contains<http::task_server>()) {
     g_ctx().emplace<http::task_server>();
   }
   g_ctx().get<http::task_server>().run();
+  default_logger_raw()->log(log_loc(), level::warn, "启动侦听器");
   return false;
 }
-}  // namespace doodle::launch
+} // namespace doodle::launch

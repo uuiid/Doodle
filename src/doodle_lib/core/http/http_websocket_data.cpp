@@ -16,25 +16,25 @@
 #include "socket_logger.h"
 namespace doodle::http {
 void http_websocket_data::run(const http_session_data_ptr& in_data) {
-  logger_ =
-      g_logger_ctrl().make_log(fmt::format("{}_{}", "socket", SOCKET(in_data->stream_->socket().native_handle())));
-  logger_->log(log_loc(), level::info, "开始处理请求 {}", in_data->request_parser_->get().target());
+  // logger_ =
+  //     g_logger_ctrl().make_log(fmt::format("{}_{}", "socket", SOCKET(in_data->stream_->socket().native_handle())));
+  // logger_->log(log_loc(), level::info, "开始处理请求 {}", in_data->request_parser_->get().target());
 
   stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
   stream_->set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
     res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   }));
   g_websocket_data_manager().push_back(shared_from_this());
-  stream_->async_accept(
-      in_data->request_parser_->get(),
-      [this, l_self = shared_from_this()](boost::system::error_code ec) {
-        if (ec) {
-          logger_->log(log_loc(), level::err, "async_accept error: {}", ec);
-          return;
-        }
-        do_read();
-      }
-  );
+  // stream_->async_accept(
+  //     in_data->request_parser_->get(),
+  //     [this, l_self = shared_from_this()](boost::system::error_code ec) {
+  //       if (ec) {
+  //         logger_->log(log_loc(), level::err, "async_accept error: {}", ec);
+  //         return;
+  //       }
+  //       do_read();
+  //     }
+  // );
 }
 
 void http_websocket_data::run_fun() {
