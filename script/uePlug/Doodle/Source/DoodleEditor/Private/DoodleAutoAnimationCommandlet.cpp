@@ -618,6 +618,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         L_Actor2->GetSkeletalMeshComponent()->SetLightingChannels(true, false, false);
                         L_Actor2->GetSkeletalMeshComponent()->SetVisibility(false);
                         L_Actor2->GetSkeletalMeshComponent()->SetCastHiddenShadow(true);
+                        L_Actor2->GetSkeletalMeshComponent()->SetReceivesDecals(false);
                         const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
                         TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
                         UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
@@ -696,52 +697,60 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 {
     UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-    DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
+    DestinationPath                             = JsonObject->GetStringField(TEXT("out_file_dir"));
+    MoviePipelineConfigPath                     = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
+    FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
     //------------
-    UMoviePipelinePrimaryConfig* Config = NewObject<UMoviePipelinePrimaryConfig>(GetTransientPackage());
-    Config->SetFlags(RF_Transactional);
-    UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
-    OutputSetting->OutputDirectory.Path = DestinationPath;
-    //----------------------
-    UMoviePipelineImageSequenceOutput_JPG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_JPG>();
-    if (FormatSetting)
+    UMoviePipelinePrimaryConfig* Config = LoadObject<UMoviePipelinePrimaryConfig>(nullptr, *MoviePipelineConfigPath);
+    if (!Config)
     {
+        UPackage* Package = CreatePackage(*MoviePipelineConfigPath);
+        Config = NewObject<UMoviePipelinePrimaryConfig>(Package, *ConfigName, RF_Public | RF_Standalone | RF_Transactional);
+        IAssetRegistry::GetChecked().AssetCreated(Config);
+        Package->Modify();
+    }
+
+    //----------------------
+    UMoviePipelineOutputSetting* OutputSetting =
+        Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
+    OutputSetting->OutputDirectory.Path                  = DestinationPath;
+    UMoviePipelineImageSequenceOutput_JPG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_JPG>();
+    if (FormatSetting) {
         Config->RemoveSetting(FormatSetting);
     }
     Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
     Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
 
-	// 设置抗拒齿方法
-    UMoviePipelineAntiAliasingSetting * AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass()));
+    // 设置抗拒齿方法
+    UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(
+        Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())
+    );
     if (AntiAliasing) {
-		AntiAliasing->SpatialSampleCount = 1;
-		AntiAliasing->TemporalSampleCount = 1;
-		AntiAliasing->bOverrideAntiAliasing = true;
-		AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
-		AntiAliasing->bRenderWarmUpFrames = true;
-		AntiAliasing->EngineWarmUpCount = 64;
+        AntiAliasing->SpatialSampleCount    = 1;
+        AntiAliasing->TemporalSampleCount   = 1;
+        AntiAliasing->bOverrideAntiAliasing = true;
+        AntiAliasing->AntiAliasingMethod    = EAntiAliasingMethod::AAM_TSR;
+        AntiAliasing->bRenderWarmUpFrames   = true;
+        AntiAliasing->EngineWarmUpCount     = 64;
+    }
+    if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(
+            Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())
+        );
+        GameOver) {
+        GameOver->bCinematicQualitySettings = false;
+    }
+	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
+                Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())
+            )) {
+        Config->RemoveSetting(ConsoleVar);
 	}
-	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass()));
-		GameOver)
-	{
-		GameOver->bCinematicQualitySettings = false;
-	}
-
 
     //-------------------------Save
-    MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
-    FString ConfigName = FPaths::GetBaseFilename(MoviePipelineConfigPath);
-    //-----------------
-    UPackage* NewPackage = CreatePackage(*MoviePipelineConfigPath);
-    NewPackage->MarkAsFullyLoaded();
-    //---------------------
-    UObject* DuplicateObject = StaticDuplicateObject(Config, NewPackage, FName(*ConfigName), RF_NoFlags);
-    UMoviePipelinePrimaryConfig* NewConfig = Cast<UMoviePipelinePrimaryConfig>(DuplicateObject);
-    NewConfig->SetFlags(RF_Public | RF_Transactional | RF_Standalone);
-    NewConfig->MarkPackageDirty();
+    Config->SetFlags(RF_Public | RF_Transactional | RF_Standalone);
+    Config->MarkPackageDirty();
     //--------------------------
-    FAssetRegistryModule::AssetCreated(NewConfig);
-    EditorAssetSubsystem->SaveLoadedAsset(NewConfig);
+    FAssetRegistryModule::AssetCreated(Config);
+    EditorAssetSubsystem->SaveLoadedAsset(Config);
 }
 
 void UDoodleAutoAnimationCommandlet::FixMaterialProperty() {
@@ -773,5 +782,5 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty() {
 
 
 
-//"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
+//"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=D:/test_files/test_ue_auto_main/out.json
 //UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
