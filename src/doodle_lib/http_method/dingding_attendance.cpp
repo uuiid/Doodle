@@ -75,14 +75,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     auto&& l_attendance_entt = l_user.attendance_block_[l_date];
     auto& l_att              = std::as_const(*g_reg()).get<const attendance_block>(l_attendance_entt);
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
-      l_attendance_list = l_att.attendance_block_;
+      co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
       boost::beast::http::response<boost::beast::http::string_body> l_response{
           boost::beast::http::status::ok, in_handle->version_
       };
       l_response.keep_alive(in_handle->keep_alive_);
       l_response.set(boost::beast::http::field::content_type, "application/json");
       nlohmann::json l_json{};
-      l_json            = l_attendance_list;
+      l_json            = l_att.attendance_block_;
       l_response.body() = l_json.dump();
       l_response.prepare_payload();
       co_return l_response;
