@@ -19,7 +19,7 @@
 namespace doodle::launch {
 void reg_func(doodle::http::http_route& in_route) {
   http::computer::reg(in_route);
-  http::task_info::reg(in_route);
+  http::task_info_reg(in_route);
 }
 
 bool http_distributed_tasks::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {

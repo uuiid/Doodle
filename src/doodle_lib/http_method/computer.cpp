@@ -99,16 +99,16 @@ void computer::list_computers(boost::system::error_code in_error_code, const htt
   }
 
   nlohmann::json l_json = l_computers;
-  auto &l_req           = in_handle->request_parser_->get();
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, l_req.version()
-  };
-  l_response.result(boost::beast::http::status::ok);
-  l_response.keep_alive(l_req.keep_alive());
-  l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_json.dump();
-  l_response.prepare_payload();
-  in_handle->seed(std::move(l_response));
+  // auto &l_req           = in_handle->request_parser_->get();
+  // boost::beast::http::response<boost::beast::http::string_body> l_response{
+  //     boost::beast::http::status::ok, l_req.version()
+  // };
+  // l_response.result(boost::beast::http::status::ok);
+  // l_response.keep_alive(l_req.keep_alive());
+  // l_response.set(boost::beast::http::field::content_type, "application/json");
+  // l_response.body() = l_json.dump();
+  // l_response.prepare_payload();
+  // in_handle->seed(std::move(l_response));
 }
 void computer::reg_computer(boost::system::error_code in_error_code, const http_websocket_data_ptr &in_web_socket) {
   auto l_logger          = in_web_socket->logger_;
