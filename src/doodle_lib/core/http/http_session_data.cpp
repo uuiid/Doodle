@@ -47,7 +47,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     l_session->logger_->log(
       log_loc(), level::info, "开始解析 url {} {}", l_request_parser->get().method(), l_session->url_
     );
-    switch (l_request_parser->get().method()) {
+    auto l_method = l_request_parser->get().method();
+    switch (l_method) {
       case boost::beast::http::verb::get:
       case boost::beast::http::verb::head:
       case boost::beast::http::verb::options:
@@ -82,7 +83,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     }
 
     // todo: 请求分发到对应的处理函数
-    auto l_callback = (*in_route_ptr)(l_request_parser->get().method(), l_session->url_.segments(), l_session);
+    auto l_callback = (*in_route_ptr)(l_method, l_session->url_.segments(), l_session);
 
     auto l_gen = l_error_code
                    ? l_session->make_error_code_msg(boost::beast::http::status::bad_request, l_error_code)

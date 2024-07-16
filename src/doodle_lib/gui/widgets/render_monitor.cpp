@@ -27,6 +27,7 @@ void render_monitor::task_t_gui::parse_time() {
     l_ss >> chrono::parse("%Y-%m-%d %H:%M:%S", end_time_point_);
   }
 }
+
 void render_monitor::task_t_gui::update_duration() {
   if (start_time_point_.time_since_epoch().count() == 0) return;
   if (end_time_point_.time_since_epoch().count() == 0) {
@@ -47,6 +48,7 @@ void render_monitor::init() {
   p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
   do_find_server_address();
 }
+
 bool render_monitor::render() {
   std::call_once(p_i->once_flag_, [this]() { init(); });
 
@@ -55,10 +57,10 @@ bool render_monitor::render() {
     dear::Text(p_i->progress_message_);
   }
   if (auto l_ = dear::CollapsingHeader{
-          *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
-      }) {
+      *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+  }) {
     if (auto l_table = dear::Table{*p_i->component_table_id_, 3}) {
-      ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
+      ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
 
       ImGui::TableSetupColumn("名称");
       ImGui::TableSetupColumn("ip");
@@ -79,10 +81,10 @@ bool render_monitor::render() {
   }
 
   if (auto l_ = dear::CollapsingHeader{
-          *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
-      }) {
+      *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+  }) {
     if (auto l_table = dear::Table{*p_i->render_task_table_id_, 11}) {
-      ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
+      ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
 
       ImGui::TableSetupColumn("id");
       ImGui::TableSetupColumn("名称");
@@ -104,9 +106,9 @@ bool render_monitor::render() {
         ImGui::TableNextColumn();
         // 设置选择任务
         if (ImGui::Selectable(
-                l_render_task.id_str_.c_str(),
-                p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
-            )) {
+          l_render_task.id_str_.c_str(),
+          p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
+        )) {
           p_i->current_select_logger_ = l_render_task.id_;
           get_logger();
         }
@@ -140,7 +142,7 @@ bool render_monitor::render() {
       }
     }
   }
-  if (auto l_ = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
+  if (auto l_        = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
     if (auto l_combo = dear::Combo{*p_i->logger_level_, p_i->logger_level_.data.c_str()}; l_combo) {
       for (auto&& i : magic_enum::enum_names<level::level_enum>()) {
         if (ImGui::Selectable(i.data(), p_i->index_ == magic_enum::enum_cast<level::level_enum>(i).value())) {
@@ -160,8 +162,7 @@ bool render_monitor::render() {
 }
 
 void render_monitor::do_find_server_address() {
-  p_i->http_client_core_ptr_ = std::make_shared<http::http_client_core>(register_file_type::get_server_address());
-  p_i->progress_message_     = "正在查找服务器数据...";
+  p_i->progress_message_ = "正在查找服务器数据...";
   get_remote_data();
 }
 
@@ -171,17 +172,18 @@ void render_monitor::do_wait() {
 
   p_i->timer_ptr_->expires_after(doodle::chrono::seconds{3});
   p_i->timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::GetPtr()->on_cancel.slot(),
-      [this, self = shared_from_this()](boost::system::error_code ec) {
-        if (!open_) return;
-        if (ec) {
-          log_info(p_i->logger_ptr_, fmt::format("{}", ec));
-          return;
-        }
-        get_remote_data();
+    app_base::GetPtr()->on_cancel.slot(),
+    [this, self = shared_from_this()](boost::system::error_code ec) {
+      if (!open_) return;
+      if (ec) {
+        log_info(p_i->logger_ptr_, fmt::format("{}", ec));
+        return;
       }
+      get_remote_data();
+    }
   ));
 }
+
 void render_monitor::get_remote_data() {
   // get computers
   boost::beast::http::request<boost::beast::http::empty_body> l_req_computer{
@@ -189,86 +191,8 @@ void render_monitor::get_remote_data() {
   };
   l_req_computer.keep_alive(true);
   l_req_computer.set(boost::beast::http::field::accept, "application/json");
-
-  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
-      l_req_computer, boost::asio::bind_executor(
-                          g_io_context(), boost::asio::bind_cancellation_slot(
-                                              app_base::GetPtr()->on_cancel.slot(),
-                                              [this, self = shared_from_this()](
-                                                  const boost::system::error_code& in_code,
-                                                  const boost::beast::http::response<http::basic_json_body>& in_res
-                                              ) {
-                                                if (in_code) {
-                                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-                                                  p_i->progress_message_ = fmt::format("{}", in_code);
-                                                  return;
-                                                }
-                                                p_i->progress_message_.clear();
-
-                                                if (in_res.result() != boost::beast::http::status::ok) {
-                                                  p_i->progress_message_ =
-                                                      fmt::format("错误 {}", enum_to_num(in_res.result()));
-                                                  return;
-                                                }
-                                                auto l_json = in_res.body();
-                                                p_i->computers_.clear();
-                                                for (auto&& l_c : l_json) {
-                                                  p_i->computers_.emplace_back(
-                                                      l_c["name"].get<std::string>(), l_c["ip"].get<std::string>(),
-                                                      l_c["status"].get<std::string>()
-                                                  );
-                                                }
-                                              }
-                                          )
-                      )
-  );
-  boost::beast::http::request<boost::beast::http::empty_body> l_req_task{boost::beast::http::verb::get, "v1/task", 11};
-  l_req_task.keep_alive(true);
-  l_req_task.set(boost::beast::http::field::accept, "application/json");
-
-  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<http::basic_json_body>>(
-      l_req_task,
-      boost::asio::bind_executor(
-          g_io_context(), boost::asio::bind_cancellation_slot(
-                              app_base::GetPtr()->on_cancel.slot(),
-                              [this, self = shared_from_this()](
-                                  const boost::system::error_code& in_code,
-                                  const boost::beast::http::response<http::basic_json_body>& in_res
-                              ) {
-                                if (in_code) {
-                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-                                  p_i->progress_message_ = fmt::format("{}", in_code);
-                                  do_wait();
-                                  return;
-                                }
-                                p_i->progress_message_.clear();
-
-                                if (in_res.result() != boost::beast::http::status::ok) {
-                                  p_i->progress_message_ = fmt::format("错误 {}", enum_to_num(in_res.result()));
-                                  return;
-                                }
-                                auto l_json = in_res.body();
-                                p_i->render_tasks_.clear();
-                                for (auto&& l_c : l_json) {
-                                  auto& l_task = p_i->render_tasks_.emplace_back(
-                                      l_c["id"].get<std::int32_t>(), fmt::format("{}", l_c["id"].get<std::int32_t>()),
-                                      l_c["name"].get<std::string>(), conv_state(l_c["status"]),
-                                      l_c["source_computer"].get<std::string>(), l_c["submitter"].get<std::string>(),
-                                      l_c["submit_time"].get<std::string>(), l_c["run_computer"].get<std::string>(),
-                                      l_c["run_computer_ip"].get<std::string>(), conv_time(l_c["run_time"]),
-                                      conv_time(l_c["end_time"])
-                                  );
-                                  l_task.delete_button_id_ = fmt::format("删除##{}", l_task.id_);
-                                  l_task.parse_time();
-                                  l_task.update_duration();
-                                }
-
-                                do_wait();
-                              }
-                          )
-      )
-  );
 }
+
 std::string render_monitor::conv_time(const nlohmann::json& in_json) {
   if (in_json.is_null()) return {};
   if (!in_json.is_string()) return {};
@@ -276,15 +200,16 @@ std::string render_monitor::conv_time(const nlohmann::json& in_json) {
   if (l_time_str.starts_with("1970")) return {};
   return l_time_str;
 }
+
 std::string render_monitor::conv_state(const nlohmann::json& in_json) {
   if (in_json.is_null()) return {};
   if (!in_json.is_string()) return {};
   static const std::pair<server_task_info_status, std::string> m[] = {
-      {server_task_info_status::submitted, "任务已经提交"},   {server_task_info_status::assigned, "任务已经分配"},
+      {server_task_info_status::submitted, "任务已经提交"}, {server_task_info_status::assigned, "任务已经分配"},
       {server_task_info_status::completed, "任务已经被完成"}, {server_task_info_status::canceled, "任务已经被取消"},
-      {server_task_info_status::failed, "任务已经失败"},      {server_task_info_status::unknown, "未知状态"},
+      {server_task_info_status::failed, "任务已经失败"}, {server_task_info_status::unknown, "未知状态"},
   };
-  auto l_status = in_json.get<server_task_info_status>();
+  auto l_status    = in_json.get<server_task_info_status>();
   auto l_status_it =
       std::find_if(std::begin(m), std::end(m), [&](auto&& in_pair) { return in_pair.first == l_status; });
   std::string l_status_str = l_status_it != std::end(m) ? l_status_it->second : "未知状态"s;
@@ -302,51 +227,25 @@ void render_monitor::get_logger() {
   };
   l_logger_get.keep_alive(true);
   l_logger_get.set(boost::beast::http::field::accept, "application/json");
-
-  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-      l_logger_get,
-      boost::asio::bind_executor(
-          g_io_context(), boost::asio::bind_cancellation_slot(
-                              app_base::GetPtr()->on_cancel.slot(),
-                              [this, self = shared_from_this()](
-                                  const boost::system::error_code& in_code,
-                                  const boost::beast::http::response<boost::beast::http::string_body>& in_res
-                              ) {
-                                if (in_code) {
-                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-                                  p_i->progress_message_ = fmt::format("{}", in_code);
-                                  p_i->logger_data.clear();
-                                  return;
-                                }
-                                p_i->progress_message_.clear();
-
-                                if (in_res.result() != boost::beast::http::status::ok) {
-                                  p_i->logger_ptr_->error("错误{}", enum_to_num(in_res.result()));
-                                  p_i->logger_data.clear();
-                                  return;
-                                }
-                                p_i->logger_data = std::move(in_res.body());
-                              }
-                          )
-      )
-  );
 }
+
 void render_monitor::do_wait_logger() {
   if (!open_) return;
   if (app_base::GetPtr()->is_stop()) return;
   p_i->logger_timer_ptr_->expires_after(doodle::chrono::seconds{3});
   p_i->logger_timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::GetPtr()->on_cancel.slot(),
-      [this, self = shared_from_this()](boost::system::error_code ec) {
-        if (!open_) return;
-        if (ec) {
-          p_i->logger_ptr_->error("timer_ptr_ error: {}", ec);
-          return;
-        }
-        get_logger();
+    app_base::GetPtr()->on_cancel.slot(),
+    [this, self = shared_from_this()](boost::system::error_code ec) {
+      if (!open_) return;
+      if (ec) {
+        p_i->logger_ptr_->error("timer_ptr_ error: {}", ec);
+        return;
       }
+      get_logger();
+    }
   ));
 }
+
 void render_monitor::delete_task(const std::int32_t in_id) {
   boost::urls::url l_url{};
   l_url.set_path(fmt::format("v1/task/{}", in_id));
@@ -355,33 +254,8 @@ void render_monitor::delete_task(const std::int32_t in_id) {
       boost::beast::http::verb::delete_, l_url.c_str(), 11
   };
   l_logger_get.keep_alive(true);
-
-  p_i->http_client_core_ptr_->async_read<boost::beast::http::response<boost::beast::http::string_body>>(
-      l_logger_get,
-      boost::asio::bind_executor(
-          g_io_context(), boost::asio::bind_cancellation_slot(
-                              app_base::GetPtr()->on_cancel.slot(),
-                              [this, self = shared_from_this()](
-                                  const boost::system::error_code& in_code,
-                                  const boost::beast::http::response<boost::beast::http::string_body>& in_res
-                              ) {
-                                if (in_code) {
-                                  log_error(p_i->logger_ptr_, fmt::format("{}", in_code));
-                                  p_i->progress_message_ = fmt::format("{}", in_code);
-                                  return;
-                                }
-                                p_i->progress_message_.clear();
-
-                                if (in_res.result() != boost::beast::http::status::ok) {
-                                  p_i->logger_ptr_->error("错误{}", enum_to_num(in_res.result()));
-                                  return;
-                                }
-                              }
-                          )
-      )
-  );
 }
 
 render_monitor::~render_monitor() = default;
-}  // namespace gui
-}  // namespace doodle
+} // namespace gui
+} // namespace doodle
