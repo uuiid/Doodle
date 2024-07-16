@@ -8,7 +8,6 @@
 // #include <asio/experimental/as_single.hpp>
 
 namespace doodle::dingding {
-
 class client : public std::enable_shared_from_this<client> {
   using https_client_core     = doodle::http::detail::http_client_data_base;
   using https_client_core_ptr = std::shared_ptr<https_client_core>;
@@ -16,8 +15,8 @@ class client : public std::enable_shared_from_this<client> {
   using timer_t = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::steady_timer>;
   using timer_ptr_t = std::shared_ptr<timer_t>;
 
-  https_client_core_ptr http_client_core_ptr_{};      // 新版本api
-  https_client_core_ptr http_client_core_ptr_old_{};  // 旧版本api
+  https_client_core_ptr http_client_core_ptr_{}; // 新版本api
+  https_client_core_ptr http_client_core_ptr_old_{}; // 旧版本api
   timer_ptr_t timer_ptr_{};
   timer_ptr_t timer_ptr_rest_ssl{};
 
@@ -43,13 +42,14 @@ class client : public std::enable_shared_from_this<client> {
   }
 
   template <typename Resp>
-  void header_operator_resp(Resp& in_resp) {}
+  void header_operator_resp(Resp& in_resp) {
+  }
 
- public:
+public:
   explicit client(boost::asio::ssl::context& in_ctx)
-      : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
-        http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
-        timer_ptr_{std::make_shared<timer_t>(g_io_context())} {
+    : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
+      http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
+      timer_ptr_{std::make_shared<timer_t>(g_io_context())} {
     http_client_core_ptr_->init("https://api.dingtalk.com/", &in_ctx);
     http_client_core_ptr_old_->init("https://oapi.dingtalk.com/", &in_ctx);
   };
@@ -59,7 +59,7 @@ class client : public std::enable_shared_from_this<client> {
   void access_token(const std::string& in_app_key, const std::string& in_app_secret);
 
   boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> get_user_by_mobile(
-      const std::string& in_mobile
+    const std::string& in_mobile
   );
 
   struct attendance_update {
@@ -90,29 +90,35 @@ class client : public std::enable_shared_from_this<client> {
   boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<attendance_update>>>
   get_attendance_updatedata(const std::string& in_user_id, const chrono::local_time_pos& in_work_date);
 };
+
 using client_ptr = std::shared_ptr<client>;
 
 class dingding_company {
- public:
-  explicit dingding_company(boost::asio::ssl::context& in_ssl_context) : ssl_context_(in_ssl_context) {}
+public:
+  explicit dingding_company() {
+  }
+
   ~dingding_company() = default;
+
   struct company_info {
     boost::uuids::uuid corp_id;
     std::string app_key;
     std::string app_secret;
     std::string name;
     client_ptr client_ptr;
+
     friend void to_json(nlohmann::json& j, const company_info& p) {
       j["id"]   = fmt::to_string(p.corp_id);
       j["name"] = p.name;
     }
   };
+
   std::map<boost::uuids::uuid, company_info> company_info_map_;
 
- private:
+private:
   // 客户端守卫
   class client_guard {
-   public:
+  public:
     client_ptr client_ptr_;
 
     ~client_guard() {
@@ -121,21 +127,21 @@ class dingding_company {
       });
     }
 
-   private:
+  private:
     boost::uuids::uuid id_{};
     dingding_company* company_ptr_{};
+
     explicit client_guard(client_ptr in_client_ptr, dingding_company* in_company)
-        : client_ptr_(std::move(in_client_ptr)), company_ptr_(in_company) {}
+      : client_ptr_(std::move(in_client_ptr)), company_ptr_(in_company) {
+    }
   };
 
   std::map<boost::uuids::uuid, std::deque<client_ptr>> company_client_map_;
-  boost::asio::ssl::context& ssl_context_;
   boost::asio::any_io_executor executor_;
 
   std::shared_ptr<client_guard> get_client_impl(const boost::uuids::uuid& in_id);
 
- public:
+public:
   boost::asio::awaitable<std::shared_ptr<client_guard>> get_client(const boost::uuids::uuid& in_id);
 };
-
-}  // namespace doodle::dingding
+} // namespace doodle::dingding
