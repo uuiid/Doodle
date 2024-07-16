@@ -116,32 +116,5 @@ public:
   std::map<boost::uuids::uuid, company_info> company_info_map_;
 
 private:
-  // 客户端守卫
-  class client_guard {
-  public:
-    client_ptr client_ptr_;
-
-    ~client_guard() {
-      boost::asio::post(company_ptr_->executor_, [client_ptr = client_ptr_, company_ptr = company_ptr_, id = id_]() {
-        company_ptr->company_client_map_[id].emplace_back(std::move(client_ptr));
-      });
-    }
-
-  private:
-    boost::uuids::uuid id_{};
-    dingding_company* company_ptr_{};
-
-    explicit client_guard(client_ptr in_client_ptr, dingding_company* in_company)
-      : client_ptr_(std::move(in_client_ptr)), company_ptr_(in_company) {
-    }
-  };
-
-  std::map<boost::uuids::uuid, std::deque<client_ptr>> company_client_map_;
-  boost::asio::any_io_executor executor_;
-
-  std::shared_ptr<client_guard> get_client_impl(const boost::uuids::uuid& in_id);
-
-public:
-  boost::asio::awaitable<std::shared_ptr<client_guard>> get_client(const boost::uuids::uuid& in_id);
 };
 } // namespace doodle::dingding

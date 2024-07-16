@@ -129,28 +129,4 @@ client::get_attendance_updatedata(
   co_return std::make_tuple(l_e, l_ret);
 }
 
-std::shared_ptr<dingding_company::client_guard> dingding_company::get_client_impl(const boost::uuids::uuid& in_id) {
-  client_ptr l_ptr{};
-  // if (company_client_map_[in_id].empty()) {
-  //   l_ptr = std::make_shared<client>(ssl_context_);
-  //   l_ptr->access_token(company_info_map_[in_id].app_key, company_info_map_[in_id].app_secret);
-  // } else {
-  //   l_ptr = std::move(company_client_map_[in_id].front());
-  //   company_client_map_[in_id].pop_front();
-  // }
-
-  return std::make_shared<client_guard>(l_ptr, this);
-}
-boost::asio::awaitable<std::shared_ptr<dingding_company::client_guard>> dingding_company::get_client(
-    const boost::uuids::uuid& in_id
-) {
-  auto l_this_exe = co_await boost::asio::this_coro::executor;
-  // 切换到我们自己的线程
-  co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
-  auto l_value = get_client_impl(in_id);
-  // 恢复线程
-  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
-  co_return l_value;
-}
-
 }  // namespace doodle::dingding

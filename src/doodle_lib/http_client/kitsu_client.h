@@ -16,6 +16,7 @@ class kitsu_client {
   std::string access_token_{};
   std::string refresh_token_{};
   std::string session_cookie_{};
+
   template <typename Req>
   std::decay_t<Req> header_operator_req(Req&& in_req) {
     in_req.set(boost::beast::http::field::accept, "application/json");
@@ -45,20 +46,23 @@ class kitsu_client {
     }
   }
 
- public:
+public:
   template <typename ExecutorType>
   explicit kitsu_client(ExecutorType&& in_executor, std::string in_url)
-      : http_client_core_ptr_(std::make_shared<http_client_core>(in_executor)) {
+    : http_client_core_ptr_(std::make_shared<http_client_core>(in_executor)) {
     http_client_core_ptr_->init(in_url);
   }
+
   ~kitsu_client() = default;
 
   inline void set_access_token(std::string in_token) { access_token_ = std::move(in_token); }
 
   struct task {
     // form json
-    friend void from_json(const nlohmann::json& j, task& p) {}
+    friend void from_json(const nlohmann::json& j, task& p) {
+    }
   };
+
   boost::asio::awaitable<std::tuple<boost::system::error_code, task>> get_task(const boost::uuids::uuid& in_uuid);
 
   struct user_t {
@@ -72,33 +76,4 @@ class kitsu_client {
 
 using kitsu_client_ptr = std::shared_ptr<kitsu_client>;
 
-// 客户端工厂
-class kitsu_client_factory {
-  std::deque<kitsu_client_ptr> kitsu_client_pool_;
-
- public:
-  kitsu_client_factory() = default;
-
-  boost::asio::any_io_executor executor_{};
- private:
-  // 客户端守卫
-  class kitsu_client_guard {
-   public:
-    kitsu_client_ptr kitsu_client_ptr_;
-    ~kitsu_client_guard() { kitsu_client_factory_ptr_->kitsu_client_pool_.emplace_back(kitsu_client_ptr_); }
-
-    explicit kitsu_client_guard(kitsu_client_ptr in_kitsu_client_ptr, kitsu_client_factory* in_kitsu_client_factory_ptr)
-        : kitsu_client_ptr_(std::move(in_kitsu_client_ptr)),
-          kitsu_client_factory_ptr_(in_kitsu_client_factory_ptr)
-
-    {}
-
-   private:
-    kitsu_client_factory* kitsu_client_factory_ptr_;
-  };
-
- public:
-  boost::asio::awaitable<std::shared_ptr<kitsu_client_guard>> create_client();
-};
-
-}  // namespace doodle::kitsu
+} // namespace doodle::kitsu

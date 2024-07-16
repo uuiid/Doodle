@@ -13,7 +13,6 @@
 #include <doodle_lib/http_method/share_fun.h>
 
 namespace doodle::http {
-
 namespace {
 auto create_clock(const chrono::year_month_day& in_date) {
   business::work_clock2 l_work_clock{};
@@ -25,15 +24,15 @@ auto create_clock(const chrono::year_month_day& in_date) {
   // 排除绝对时间
   for (auto&& l_deduction : l_r.absolute_deduction[chrono::weekday{in_date}.c_encoding()]) {
     l_work_clock -= std::make_tuple(
-        chrono::local_days{in_date} + l_deduction.first, chrono::local_days{in_date} + l_deduction.second
+      chrono::local_days{in_date} + l_deduction.first, chrono::local_days{in_date} + l_deduction.second
     );
   }
   return l_work_clock;
 }
-}  // namespace
+} // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_post(session_data_ptr in_handle) {
-  auto l_logger      = in_handle->logger_;
+  auto l_logger = in_handle->logger_;
 
   auto l_user_id_str = in_handle->capture_->get("user_id");
 
@@ -53,7 +52,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
+      boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
     );
   }
 
@@ -70,14 +69,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (!l_d.company_info_map_.contains(l_user_id))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
 
-  std::vector<attendance> l_attendance_list_{};
+  std::vector<attendance> l_attendance_list{};
 
   if (l_user.attendance_block_.contains(l_date)) {
     auto&& l_attendance_entt = l_user.attendance_block_[l_date];
     auto& l_att              = std::as_const(*g_reg()).get<const attendance_block>(l_attendance_entt);
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
-      l_attendance_list_ = l_att.attendance_block_;
-      goto seed_success;
+      l_attendance_list = l_att.attendance_block_;
+      boost::beast::http::response<boost::beast::http::string_body> l_response{
+          boost::beast::http::status::ok, in_handle->version_
+      };
+      l_response.keep_alive(in_handle->keep_alive_);
+      l_response.set(boost::beast::http::field::content_type, "application/json");
+      nlohmann::json l_json{};
+      l_json            = l_attendance_list;
+      l_response.body() = l_json.dump();
+      l_response.prepare_payload();
+      co_return l_response;
     }
   }
 
@@ -106,24 +114,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 
   if (l_e4) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e4.message());
 
-  std::vector<attendance> l_attendance_list{};
   try {
     auto l_clock = create_clock(l_date);
     for (auto&& l_obj : l_attend) {
       // 重新使用开始时间和时间时间段计算时间
       chrono::hours l_duration{0};
-      l_duration = chrono::floor<chrono::hours>(l_clock(l_obj.begin_time_, l_obj.end_time_));
+      l_duration      = chrono::floor<chrono::hours>(l_clock(l_obj.begin_time_, l_obj.end_time_));
       l_obj.end_time_ =
           l_clock.next_time(l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration));
 
       auto l_type =
           (l_obj.biz_type_ == 1 || l_obj.biz_type_ == 2) ? attendance::att_enum::overtime : attendance::att_enum::leave;
       attendance l_attendance{
-          .id_          = core_set::get_set().get_uuid(),
-          .start_time_  = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.begin_time_},
-          .end_time_    = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.end_time_},
-          .remark_      = fmt::format("{}-{}", l_obj.tag_name_, l_obj.sub_type_),
-          .type_        = l_type,
+          .id_ = core_set::get_set().get_uuid(),
+          .start_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.begin_time_},
+          .end_time_ = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.end_time_},
+          .remark_ = fmt::format("{}-{}", l_obj.tag_name_, l_obj.sub_type_),
+          .type_ = l_type,
           .dingding_id_ = l_obj.prcoInst_id_
       };
       l_attendance_list.emplace_back(std::move(l_attendance));
@@ -151,12 +158,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   } else {
     l_handle = {*g_reg(), g_reg()->create()};
     l_handle.emplace<attendance_block>(attendance_block{
-        .id_          = core_set::get_set().get_uuid(),
+        .id_ = core_set::get_set().get_uuid(),
         .create_date_ = l_date,
         .update_time_ =
-            chrono::zoned_time<chrono::microseconds>{
-                chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
-            },
+        chrono::zoned_time<chrono::microseconds>{
+            chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+        },
         .user_ref_id_ = l_user_handle
     });
     l_user.attendance_block_[l_date]                      = l_handle.entity();
@@ -167,21 +174,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   // 切换回来
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-seed_success:
   boost::beast::http::response<boost::beast::http::string_body> l_response{
       boost::beast::http::status::ok, in_handle->version_
   };
   l_response.keep_alive(in_handle->keep_alive_);
   l_response.set(boost::beast::http::field::content_type, "application/json");
   nlohmann::json l_json{};
-  l_json            = l_attendance_list_;
+  l_json            = l_attendance_list;
   l_response.body() = l_json.dump();
   l_response.prepare_payload();
   co_return l_response;
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
-  auto l_logger  = in_handle->logger_;
+  auto l_logger = in_handle->logger_;
 
   auto l_date    = in_handle->capture_->get("date");
   auto l_user_id = in_handle->capture_->get("user_id");
@@ -252,7 +258,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_get(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
 
-  auto l_cs     = g_ctx().get<dingding::dingding_company>();
+  auto l_cs = g_ctx().get<dingding::dingding_company>();
   nlohmann::json l_json{};
   for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
     l_json.emplace_back(l_value);
@@ -270,14 +276,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_g
 void reg_dingding_attendance(http_route& in_route) {
   in_route
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/attendance/{user_id}", dingding_attendance_post
+        boost::beast::http::verb::post, "api/doodle/attendance/{user_id}", dingding_attendance_post
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
+        boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
       ))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/company",dingding_company_get
-      ))
-
-      ;
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/company", dingding_company_get
+      ));
 }
-}  // namespace doodle::http
+} // namespace doodle::http
