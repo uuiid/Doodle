@@ -86,15 +86,15 @@ void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_cate
     }
   };
   scan_data_maps_[index_ ? 1 : 0] = scan_data_maps_[index_];
-  auto& l_data                    = scan_data_maps_[index_ ? 1 : 0];
+  auto& l_scan_data                    = scan_data_maps_[index_ ? 1 : 0];
 
   for (auto&& l_data : in_data_vec) {
     l_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
     l_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
     l_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
-    l_data[l_data->rig_file_.uuid_]   = l_data;
-    l_data[l_data->ue_file_.uuid_]    = l_data;
-    l_data[l_data->solve_file_.uuid_] = l_data;
+    l_scan_data[l_data->rig_file_.uuid_]   = l_data;
+    l_scan_data[l_data->ue_file_.uuid_]    = l_data;
+    l_scan_data[l_data->solve_file_.uuid_] = l_data;
   }
   index_ = !index_;
 
