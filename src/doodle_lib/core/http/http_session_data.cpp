@@ -47,7 +47,10 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     l_session->logger_->log(
       log_loc(), level::info, "开始解析 url {} {}", l_request_parser->get().method(), l_session->url_
     );
-    auto l_method = l_request_parser->get().method();
+    auto l_method              = l_request_parser->get().method();
+    std::string l_content_type = l_request_parser->get()[boost::beast::http::field::content_type];
+    // 检查内容格式
+    boost::system::error_code l_error_code{};
     switch (l_method) {
       case boost::beast::http::verb::get:
       case boost::beast::http::verb::head:
@@ -62,26 +65,21 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
           std::move(*l_request_parser)
         );
         co_await boost::beast::http::async_read(l_stream, buffer_, *l_request_parser_string);
+        if (l_content_type.find("application/json") != std::string::npos) {
+          try {
+            l_session->body_         = nlohmann::json::parse(l_request_parser_string->get().body());
+            l_session->content_type_ = content_type::application_json;
+          } catch (const nlohmann::json::exception& e) {
+            l_session->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
+            l_error_code = error_enum::bad_json_string;
+          }
+        } else {
+          l_session->body_ = l_request_parser_string->get().body();
+        }
         break;
       default:
         co_return;
     }
-
-    // 检查内容格式
-    boost::system::error_code l_error_code{};
-    auto l_content_type = l_request_parser->get()[boost::beast::http::field::content_type];
-    if (l_content_type.contains("application/json")) {
-      try {
-        l_session->body_         = nlohmann::json::parse(l_request_parser_string->get().body());
-        l_session->content_type_ = content_type::application_json;
-      } catch (const nlohmann::json::exception& e) {
-        l_session->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
-        l_error_code = error_enum::bad_json_string;
-      }
-    } else {
-      l_session->body_ = l_request_parser_string->get().body();
-    }
-
     // todo: 请求分发到对应的处理函数
     auto l_callback = (*in_route_ptr)(l_method, l_session->url_.segments(), l_session);
 
@@ -111,16 +109,17 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         .async_wait(
           boost::asio::experimental::wait_for_all(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
         );
-    if (l_ec_r) {
-      l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec_r);
-      l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_r);
-      l_stream.close();
-      co_return;
-    }
-    if (l_ec_w) {
-      l_session->logger_->log(log_loc(), level::err, "发送错误码 {}", l_ec_w);
-      l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_w);
-      l_stream.close();
+    if (l_ec_r || l_ec_w) {
+      if (l_ec_r) {
+        l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec_r);
+        l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_r);
+        l_stream.close();
+      }
+      if (l_ec_w) {
+        l_session->logger_->log(log_loc(), level::err, "发送错误 {}", l_ec_w);
+        l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_w);
+        l_stream.close();
+      }
       co_return;
     }
   }
