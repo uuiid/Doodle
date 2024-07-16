@@ -98,7 +98,7 @@ http_client_data_base::ssl_socket_t* http_client_data_base::ssl_socket() {
   return l_socket ? l_socket->get() : nullptr;
 }
 
-void awaitable_queue::awaitable_queue_impl::await_suspend(call_fun_t in_handle) {
+void awaitable_queue::awaitable_queue_impl::await_suspend(std::function<void()> in_handle) {
   {
     const std::lock_guard l{lock_};
     next_list_.emplace(in_handle);
@@ -110,9 +110,7 @@ bool awaitable_queue::awaitable_queue_impl::await_ready() { return !is_run_; }
 void awaitable_queue::awaitable_queue_impl::next() {
   if (next_list_.empty()) return;
   const std::lock_guard l{lock_};
-  auto l_guard = std::make_shared<queue_guard>(*awaitable_queue_);
-  boost::asio::post(boost::asio::bind_executor(next_list_.front().executor_,
-                                               boost::asio::prepend(next_list_.front().handler_, l_guard)));
+  next_list_.front()();
   next_list_.pop();
 }
 
