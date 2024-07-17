@@ -43,6 +43,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     l_stream.close();
     co_return;
   }
+  l_stream.expires_after(30s);
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_session->version_    = l_request_parser->get().version();
     l_session->keep_alive_ = l_request_parser->keep_alive();
@@ -69,6 +70,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
           std::move(*l_request_parser)
         );
         co_await boost::beast::http::async_read(l_stream, buffer_, *l_request_parser_string);
+        l_stream.expires_after(30s);
+
         if (l_content_type.find("application/json") != std::string::npos) {
           try {
             l_session->body_         = nlohmann::json::parse(l_request_parser_string->get().body());
@@ -126,6 +129,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
       }
       co_return;
     }
+    l_stream.expires_after(30s);
+
   }
 }
 
