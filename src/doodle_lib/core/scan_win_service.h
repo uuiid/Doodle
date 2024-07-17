@@ -19,6 +19,7 @@ class scan_win_service_t {
 
   timer_ptr_t timer_;
   signal_ptr_t signal_;
+  boost::asio::any_io_executor executor_{};
 
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
   std::vector<details::scan_category_t::project_root_t> project_roots_;
@@ -31,10 +32,8 @@ class scan_win_service_t {
 
   void scan();
 
-  void begin_scan();
+  boost::asio::awaitable<void> begin_scan();
   void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec);
-
-  void on_timer(const boost::system::error_code& ec);
 
 public:
   scan_win_service_t()  = default;
