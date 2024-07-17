@@ -20,7 +20,7 @@ bool file_exists_launch_t::operator()(const argh::parser& in_arh, std::vector<st
   // l_app.display_name_ = L"doodle_http_file_exists";
   // l_app.description_  = L"http 服务, 用于在一个线程中确认文件的存在性";
   // l_app.command_line_ = L"";
-
+  app_base::Get().use_multithread(true);
   default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
