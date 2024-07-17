@@ -62,6 +62,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
               boost::asio::use_awaitable))
         );
 
+    // 同步缓冲区
     std::int32_t l_current_index     = !index_;
     scan_data_maps_[l_current_index] = scan_data_maps_[index_];
     for (auto i : l_index) {
@@ -71,6 +72,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       }
       add_handle(l_v[i], l_current_index);
     }
+    // 交换缓冲区
     index_ = l_current_index;
 
     default_logger_raw()->log(log_loc(), level::info, "扫描完成");
