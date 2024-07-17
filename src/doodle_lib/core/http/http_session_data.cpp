@@ -29,7 +29,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
 
   l_session->logger_ =
       std::make_shared<spdlog::async_logger>(fmt::format("{}_{}", "socket", SOCKET(l_stream.socket().native_handle())),
-                                             {g_logger_ctrl().rotating_file_sink_}, spdlog::thread_pool());
+                                             spdlog::sinks_init_list{g_logger_ctrl().rotating_file_sink_},
+                                             spdlog::thread_pool());
 
   boost::beast::flat_buffer buffer_;
   auto l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
