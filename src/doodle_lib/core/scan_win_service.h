@@ -31,7 +31,8 @@ class scan_win_service_t {
   std::atomic_int index_{};
 
   boost::asio::awaitable<void> begin_scan();
-  void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec);
+  void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec,
+                  std::int32_t in_current_index);
 
 public:
   scan_win_service_t()  = default;

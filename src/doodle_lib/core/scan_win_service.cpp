@@ -62,13 +62,17 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
               boost::asio::use_awaitable))
         );
 
+    std::int32_t l_current_index     = !index_;
+    scan_data_maps_[l_current_index] = scan_data_maps_[index_];
     for (auto i : l_index) {
       if (l_ecs[i]) {
         default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {}", l_ecs[i].message());
         co_return;
       }
-      add_handle(l_v[i]);
+      add_handle(l_v[i], l_current_index);
     }
+    index_ = l_current_index;
+
     default_logger_raw()->log(log_loc(), level::info, "扫描完成");
 
     timer_->expires_after(30s);
@@ -81,17 +85,16 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 }
 
 
-void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec) {
+void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec,
+                                    std::int32_t in_current_index) {
   static auto l_id_is_nil = [](boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
     if (in_uuid.is_nil()) {
       in_uuid = core_set::get_set().get_uuid();
       FSys::software_flag_file(in_path, in_uuid);
     }
   };
-  std::int32_t l_current_index     = !index_;
-  scan_data_maps_[l_current_index] = scan_data_maps_[index_];
-  auto& l_scan_data                = scan_data_maps_[l_current_index];
 
+  auto& l_scan_data = scan_data_maps_[in_current_index];
   for (auto&& l_data : in_data_vec) {
     l_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
     l_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
@@ -100,6 +103,5 @@ void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_cate
     l_scan_data[l_data->ue_file_.uuid_]    = l_data;
     l_scan_data[l_data->solve_file_.uuid_] = l_data;
   }
-  index_ = l_current_index;
 }
 } // namespace doodle
