@@ -17,6 +17,8 @@
 #include <doodle_lib/core/scan_assets/scan_category_service.h>
 #include <doodle_lib/core/scan_assets/scene_scan_category.h>
 
+#include <boost/asio/experimental/parallel_group.hpp>
+
 namespace doodle {
 void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
@@ -38,17 +40,36 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // if (app_base::GetPtr()->is_stop()) co_return;
+    using opt_t = decltype(g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
+      project_roots_[0], scan_categories_[0], boost::asio::deferred));
+    std::vector<opt_t> l_opts{};
+    default_logger_raw()->log(log_loc(), level::info, "开始扫描");
+    // 添加扫瞄操作
     for (auto&& l_root : project_roots_) {
       for (auto&& l_data : scan_categories_) {
-        auto [l_v, l_ec] = co_await g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
-          l_root, l_data, boost::asio::bind_executor(executor_, boost::asio::as_tuple(boost::asio::use_awaitable)));
-        if (l_ec) {
-          default_logger_raw()->log(log_loc(), level::err, "扫描资产失败:{} {}", l_ec.message(), l_root);
-          if (l_ec == boost::asio::error::operation_aborted) co_return;
-        }
-        add_handle(l_v);
+        l_opts.emplace_back(
+          g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
+            l_root, l_data, boost::asio::deferred)
+
+        );
       }
     }
+
+    auto [l_index,l_v,l_ecs] = co_await
+        boost::asio::experimental::make_parallel_group(l_opts).async_wait(
+          boost::asio::experimental::wait_for_all(), boost::asio::bind_executor(
+            executor_, boost::asio::as_tuple(
+              boost::asio::use_awaitable))
+        );
+
+    for (auto i : l_index) {
+      if (l_ecs[i]) {
+        default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {}", l_ecs[i].message());
+        co_return;
+      }
+      add_handle(l_v[i]);
+    }
+    default_logger_raw()->log(log_loc(), level::info, "扫描完成");
 
     timer_->expires_after(30s);
     auto [l_ec] = co_await timer_->async_wait(boost::asio::as_tuple(boost::asio::use_awaitable));

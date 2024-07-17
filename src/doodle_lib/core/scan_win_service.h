@@ -30,8 +30,6 @@ class scan_win_service_t {
   std::array<scan_category_data_id_map, 2> scan_data_maps_;
   std::atomic_int index_{};
 
-  void scan();
-
   boost::asio::awaitable<void> begin_scan();
   void add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec);
 
