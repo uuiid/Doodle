@@ -502,9 +502,16 @@ void fbx_node_mesh::build_mesh() {
   }
 
   {
+    // 材质
     std::vector<std::int32_t> l_mat_ids{};
-    auto* l_mat_layer = mesh->CreateElementMaterial();
-    auto l_mats       = get_shading_engines(l_mesh);
+    fbxsdk::FbxGeometryElementMaterial* l_mat_layer{};
+    if (mesh->GetElementMaterialCount() == 0) {
+      l_mat_layer = mesh->CreateElementMaterial();
+    } else {
+      l_mat_layer = mesh->GetElementMaterial(0);
+    }
+
+    auto l_mats = get_shading_engines(l_mesh);
     if (l_mats.size() == 1) {
       l_mat_layer->SetMappingMode(fbxsdk::FbxLayerElement::eAllSame);
       l_mat_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eIndexToDirect);
@@ -573,6 +580,15 @@ void fbx_node_mesh::build_mesh() {
     mesh->BuildMeshEdgeArray();
   }
 
+  // uv
+  std::vector<fbxsdk::FbxGeometryElementUV*> l_uvs{};
+  for (auto i = 0; i < mesh->GetElementUVCount(); ++i) {
+    l_uvs.push_back(mesh->GetElementUV(i));
+  }
+  // delete old uv
+  for (auto i = 0; i < l_uvs.size(); ++i) {
+    mesh->RemoveElementUV(l_uvs[i]);
+  }
   [&]() {
     // get uv set names
     MStringArray l_uv_set_names{};
@@ -604,7 +620,12 @@ void fbx_node_mesh::build_mesh() {
 
   // normals
   {
-    auto l_layer = mesh->CreateElementNormal();
+    fbxsdk::FbxGeometryElementNormal* l_layer;
+    if (mesh->GetElementNormalCount() == 0) {
+      l_layer = mesh->CreateElementNormal();
+    } else {
+      l_layer = mesh->GetElementNormal(0);
+    }
     l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByPolygonVertex);
     l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eDirect);
 
@@ -620,7 +641,12 @@ void fbx_node_mesh::build_mesh() {
   }
   // smoothing
   {
-    auto l_layer = mesh->CreateElementSmoothing();
+    fbxsdk::FbxGeometryElementSmoothing* l_layer;
+    if (mesh->GetElementSmoothingCount() == 0) {
+      l_layer = mesh->CreateElementSmoothing();
+    } else {
+      l_layer = mesh->GetElementSmoothing(0);
+    }
     l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByEdge);
     l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eDirect);
 
