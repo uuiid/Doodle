@@ -620,14 +620,16 @@ void fbx_node_mesh::build_mesh() {
 
   // normals
   {
-    fbxsdk::FbxGeometryElementNormal* l_layer;
-    if (mesh->GetElementNormalCount() == 0) {
-      l_layer = mesh->CreateElementNormal();
-    } else {
-      l_layer = mesh->GetElementNormal(0);
+    // 这里有fbx 的怪癖,  要一个layer, 将所有的normal写进去, 不可以直接创建 Normal layer
+    FbxLayer* l_layer = mesh->GetLayer(0);
+    if (!l_layer) {
+      mesh->CreateLayer();
+      l_layer = mesh->GetLayer(0);
     }
-    l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByPolygonVertex);
-    l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eDirect);
+    FbxLayerElementNormal* l_layer_n = FbxLayerElementNormal::Create(mesh, "");
+    l_layer_n->SetMappingMode(FbxLayerElement::eByPolygonVertex);
+    l_layer_n->SetReferenceMode(FbxLayerElement::eDirect);
+    default_logger_raw()->info("写出mesh normal {}", node->GetName());
 
     for (auto i = 0; i < l_fn_mesh.numPolygons(); ++i) {
       MIntArray l_vert_list{};
@@ -635,9 +637,10 @@ void fbx_node_mesh::build_mesh() {
       for (auto j = 0; j < l_vert_list.length(); ++j) {
         MVector l_normal{};
         maya_chick(l_fn_mesh.getFaceVertexNormal(i, l_vert_list[j], l_normal, MSpace::kObject));
-        l_layer->GetDirectArray().Add(FbxVector4{l_normal.x, l_normal.y, l_normal.z});
+        l_layer_n->GetDirectArray().Add(FbxVector4{l_normal.x, l_normal.y, l_normal.z});
       }
     }
+    l_layer->SetNormals(l_layer_n);
   }
   // smoothing
   {
