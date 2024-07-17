@@ -479,8 +479,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_exists_fun(se
   project l_project{};
 
   if (auto l_it = l_url_query.find("project"); l_it != l_url_query.npos) {
-    auto l_project_str = l_url_query.substr(l_it + 8, l_url_query.find('&', l_it) - l_it - 8);
-    auto l_projects    = register_file_type::get_project_list();
+    auto l_project_str     = l_url_query.substr(l_it + 8, l_url_query.find('&', l_it) - l_it - 8);
+    static auto l_projects = register_file_type::get_project_list();
     if (auto l_it_prj = std::ranges::find_if(
         l_projects, [&](const project& in_project) -> bool { return in_project.get_name() == l_project_str; }
       );
