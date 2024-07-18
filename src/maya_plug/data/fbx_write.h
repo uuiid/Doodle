@@ -29,7 +29,6 @@ struct fbx_extra_data {
   logger_ptr logger_{};
 
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
-  MObjectArray* bind_pose_array_{};
   fbx_extra_data() = default;
 };
 

@@ -1238,7 +1238,6 @@ void fbx_write::build_data() {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       (*i)->extra_data_.tree_            = &tree_;
       (*i)->extra_data_.material_map_    = &material_map_;
-      (*i)->extra_data_.bind_pose_array_ = &bind_pose_array_;
       (*i)->extra_data_.logger_          = logger_;
       l_iter_init(i);
     }
