@@ -85,7 +85,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_res.set(boost::beast::http::field::content_type, "application/json");
   l_res.keep_alive(false);
-  l_res.body() = l_json.dump();
+  l_res.body() = l_json_res.dump();
   l_res.prepare_payload();
   co_return std::move(l_res);
 }
