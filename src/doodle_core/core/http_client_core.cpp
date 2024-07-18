@@ -79,7 +79,7 @@ void http_client_data_base::re_init() {
 
 bool http_client_data_base::is_open() {
   return
-      std::visit([](auto&& in_socket_ptr)-> bool { return in_socket_ptr; }, socket_)
+      std::visit([](auto&& in_socket_ptr) -> bool { return !!in_socket_ptr; }, socket_)
       && socket().socket().is_open();
 }
 
