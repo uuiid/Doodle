@@ -66,7 +66,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 
   if (!l_user_handle) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有用户");
   auto& l_d = g_ctx().get<const dingding::dingding_company>();
-  if (!l_d.company_info_map_.contains(l_user_id))
+  if (!l_d.company_info_map_.contains(l_user.dingding_company_id_))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
 
   std::vector<attendance> l_attendance_list{};
