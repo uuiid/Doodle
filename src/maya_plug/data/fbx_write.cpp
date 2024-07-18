@@ -198,7 +198,7 @@ void fbx_node_transform::build_data() {
   //   previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).form_matrix.eulerRotation();
   // } else {
   // }
-  previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
+  // previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
 }
 
 void fbx_node_transform::build_animation(const MTime& in_time) {
@@ -310,211 +310,7 @@ void fbx_node_mesh::build_data() {
   build_blend_shape();
 }
 
-void fbx_node_mesh::build_bind_post() {
-  MStatus l_status{};
-
-  // 一级: 寻找 skin 节点上的 worldMatrix 属性作为 bindpose
-  // 二级: 寻找 bindpose 节点中的 worldMatrix 属性
-  // 三级: 寻找 joint 节点上的 bindPose 属性
-  // 最终无法找到时, 使用单位矩阵
-  auto l_skin_obj = get_skin_custer();
-
-  if (l_skin_obj.isNull() || !l_skin_obj.hasFn(MFn::Type::kDagPose)) {
-    extra_data_.logger_->log(log_loc(), level::err, "{} 中, 未找到 skin 节点", dag_path);
-    return;
-  }
-
-  if (std::find_if(
-        extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
-        [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_skin_obj; }
-      ) != extra_data_.bind_pose_array_->end()) {
-    log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_skin_obj)));
-    return;
-  }
-  extra_data_.bind_pose_array_->append(l_skin_obj);
-
-  std::set<MDagPath, details::cmp_dag> l_js_set{};
-  {
-    auto l_js = find_joint(l_skin_obj);
-    l_js_set  = std::set<MDagPath, details::cmp_dag>{l_js.begin(), l_js.end()};
-  }
-  {
-    auto l_bind_pre_matrix                  = get_plug(l_skin_obj, "bindPreMatrix");
-    auto l_skin_world_matrix_plug_list_plug = get_plug(l_skin_obj, "matrix");
-    for (auto i = 0; i < l_skin_world_matrix_plug_list_plug.numElements(); ++i) {
-      MFnDagNode l_mfn_node{};
-      if (l_skin_world_matrix_plug_list_plug[i].isConnected()) {
-        // 获取 joint
-        auto l_source_plug = l_skin_world_matrix_plug_list_plug[i].source(&l_status);
-        maya_chick(l_status);
-        auto l_join_node = l_source_plug.node(&l_status);
-        maya_chick(l_status);
-        auto l_joint = get_dag_path(l_join_node);
-
-        auto l_post_plug = l_bind_pre_matrix[i];
-        MObject l_post_handle{};
-        maya_chick(l_post_plug.getValue(l_post_handle));
-        const MFnMatrixData l_data{l_post_handle};
-        auto l_world_matrix = l_data.matrix(&l_status).inverse();
-        maya_chick(l_status);
-
-        (*extra_data_.bind_post)[l_joint] = {l_world_matrix, l_world_matrix};
-        if (l_js_set.contains(l_joint))
-          l_js_set.erase(l_joint);
-      }
-    }
-  }
-
-  auto l_bind_post_obj = get_bind_post();
-
-  if (std::find_if(
-        extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
-        [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
-      ) != extra_data_.bind_pose_array_->end()) {
-    log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_bind_post_obj)));
-    return;
-  }
-
-  extra_data_.bind_pose_array_->append(l_bind_post_obj);
-
-  auto l_member_list       = get_plug(l_bind_post_obj, "members");
-  auto l_world_matrix_list = get_plug(l_bind_post_obj, "worldMatrix");
-  auto l_xform_matrix_list = get_plug(l_bind_post_obj, "xformMatrix");
-
-  l_world_matrix_list.evaluateNumElements(&l_status);
-  maya_chick(l_status);
-
-  // 缺失bindpose的tran节点和对于的索引
-  std::map<MDagPath, std::int32_t, details::cmp_dag> l_tran_map{};
-
-  const auto l_couts = l_member_list.evaluateNumElements(&l_status);
-  maya_chick(l_status);
-  for (auto i = 0; i < l_couts; ++i) {
-    auto l_member = l_member_list.elementByPhysicalIndex(i, &l_status);
-    maya_chick(l_status);
-    auto l_member_source = l_member.source(&l_status);
-    maya_chick(l_status);
-    auto l_node = l_member_source.node(&l_status);
-    maya_chick(l_status);
-    if (l_node.hasFn(MFn::kDagNode)) {
-      MFnDagNode l_fn_node{l_node};
-      MDagPath l_path{};
-      maya_chick(l_fn_node.getPath(l_path));
-      if (l_js_set.contains(l_path))
-        continue;
-
-      MTransformationMatrix l_world_matrix{};
-      if (l_node.hasFn(MFn::Type::kJoint)) {
-        auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
-        maya_chick(l_status);
-        MObject l_world_handle{};
-        if (l_world_matrix_plug.getValue(l_world_handle)) {
-          const MFnMatrixData l_data{l_world_handle};
-          l_world_matrix = l_data.transformation(&l_status);
-          maya_chick(l_status);
-        } else {
-          extra_data_.logger_->log(
-            log_loc(), level::err, "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
-            l_world_matrix_plug.partialName()
-          );
-          auto l_post_plug = get_plug(l_node, "bindPose");
-          MObject l_post_handle{};
-          if (l_post_plug.getValue(l_post_handle)) {
-            const MFnMatrixData l_data{l_post_handle};
-            l_world_matrix = l_data.transformation(&l_status);
-            maya_chick(l_status);
-          } else {
-            throw_exception(doodle_error{
-                fmt::format("没有找到 bindpose 属性 {} 的值", conv::to_s(l_world_matrix_plug.partialName()))
-            });
-          }
-        }
-      } else if (l_node.hasFn(MFn::Type::kTransform)) {
-        auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
-        maya_chick(l_status);
-        MObject l_world_handle{};
-        if (l_world_matrix_plug.getValue(l_world_handle)) {
-          const MFnMatrixData l_data{l_world_handle};
-          l_world_matrix = l_data.transformation(&l_status);
-          maya_chick(l_status);
-        } else {
-          l_tran_map.emplace(l_path, i);
-          extra_data_.logger_->log(
-            log_loc(), level::err, "没有找到 节点{} bindpose 属性 {} 的值,", l_path,
-            l_world_matrix_plug.partialName()
-          );
-        }
-      } else {
-        throw_exception(doodle_error{"没有找到bindpose, 找绑定 {}", i});
-      }
-
-      (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_world_matrix};
-    } else {
-      log_error(fmt::format("node {} is not dag node", l_member.name()));
-      //      throw_exception(doodle_error{"错误的 bindpose, 找绑定 {}", i});
-    }
-  }
-
-  // for (const auto& [l_path, l_index] : l_tran_map) {
-  //   MMatrix l_parent_world_matrix{};
-  //   auto l_parent_path = l_path;
-  //   l_parent_path.pop();
-  //   if (extra_data_.bind_post->contains(l_parent_path)) {
-  //     l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix.asMatrix();
-  //   }
-  //   auto l_xform_matrix_plug = l_xform_matrix_list.elementByLogicalIndex(l_index, &l_status);
-  //   maya_chick(l_status);
-  //   MObject l_xform_handle{};
-  //   if (l_xform_matrix_plug.getValue(l_xform_handle)) {
-  //     const MFnMatrixData l_data{l_xform_handle};
-  //     const auto& l_xform_matrix = l_data.matrix(&l_status);
-  //     maya_chick(l_status);
-  //
-  //     auto l_world_matrix              = l_xform_matrix * l_parent_world_matrix;
-  //     (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_xform_matrix};
-  //   } else {
-  //     throw_exception(doodle_error{fmt::format(
-  //         "在二次寻找中没有找到 {} bindpose 属性 {} 的值", l_path, conv::to_s(l_xform_matrix_plug.partialName())
-  //     )});
-  //   }
-  // }
-
-  std::set<MDagPath, details::cmp_dag> l_all_path{};
-  for (auto& l_bp : *extra_data_.bind_post) {
-    auto l_parent_path = l_bp.first;
-    while (l_parent_path.length() > 0) {
-      l_all_path.insert(l_parent_path);
-      maya_chick(l_parent_path.pop());
-    }
-  }
-  for (auto&& l_path : l_all_path) {
-    if (!extra_data_.bind_post->contains(l_path)) {
-      (*extra_data_.bind_post)[l_path] = {MTransformationMatrix::identity, MTransformationMatrix::identity};
-    }
-  }
-
-  for (auto& l_bp : *extra_data_.bind_post) {
-    if (l_bp.first.length() == 1) continue;
-    MDagPath l_parent_path{l_bp.first};
-    maya_chick(l_parent_path.pop());
-
-    auto l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix;
-
-    MEulerRotation l_joint_rotate{};
-
-    if (l_bp.first.hasFn(MFn::Type::kJoint)) {
-      auto l_vector_x = get_plug(l_bp.first.node(), "jointOrientX").asDouble(&l_status);
-      maya_chick(l_status);
-      auto l_vector_y = get_plug(l_bp.first.node(), "jointOrientY").asDouble(&l_status);
-      maya_chick(l_status);
-      auto l_vector_z = get_plug(l_bp.first.node(), "jointOrientZ").asDouble(&l_status);
-      maya_chick(l_status);
-      l_joint_rotate.setValue(l_vector_x, l_vector_y, l_vector_z);
-    }
-    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse();
-    l_bp.second.form_matrix.rotateBy(l_joint_rotate.inverse(), MSpace::kTransform);
-  }
-}
+void fbx_node_mesh::build_bind_post() {}
 
 void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
@@ -708,6 +504,7 @@ void fbx_node_mesh::build_skin() {
     return;
   }
   auto l_skin_obj = get_skin_custer();
+  default_logger_raw()->info("使用皮肤簇 {}", get_node_name(l_skin_obj));
   if (l_skin_obj.isNull()) {
     log_error(fmt::format(" {} is not skin", dag_path));
     return;
@@ -716,20 +513,6 @@ void fbx_node_mesh::build_skin() {
   mesh->AddDeformer(l_sk);
 
   auto l_joint_list = find_joint(l_skin_obj);
-
-  std::vector<MPlug> l_skin_world_matrix_plug_list{};
-  {
-    MStatus l_status{};
-    auto l_skin_world_matrix_plug_list_plug = get_plug(l_skin_obj, "matrix");
-    for (auto i = 0; i < l_skin_world_matrix_plug_list_plug.numElements(); ++i) {
-      if (l_skin_world_matrix_plug_list_plug[i].isConnected()) {
-        l_skin_world_matrix_plug_list.emplace_back(
-          l_skin_world_matrix_plug_list_plug.elementByPhysicalIndex(i).source(&l_status)
-        );
-        maya_chick(l_status);
-      }
-    }
-  }
 
   MFnSkinCluster l_skin_cluster{l_skin_obj};
   auto l_skinning_method = get_plug(l_skin_obj, "skinningMethod").asInt();
@@ -781,38 +564,38 @@ void fbx_node_mesh::build_skin() {
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
     fbxsdk::FbxAMatrix l_fbx_matrix{};
-    if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
-      extra_data_.logger_->log(
-        log_loc(), level::err,
-        "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
-        l_joint->dag_path
-      );
+    // if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
+    //   extra_data_.logger_->log(
+    //     log_loc(), level::err,
+    //     "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
+    //     l_joint->dag_path
+    //   );
+    //
+    // } else {
+    //   auto l_matrix = extra_data_.bind_post->at(l_joint->dag_path).world_matrix.asMatrix();
+    //   for (auto i = 0; i < 4; ++i)
+    //     for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_matrix[i][j];
+    // }
+    auto l_node = l_joint->dag_path.node();
 
-      auto l_node = l_joint->dag_path.node();
-
-      auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
-      auto l_index             = ranges::distance(
-        std::begin(l_skin_world_matrix_plug_list),
-        ranges::find_if(l_skin_world_matrix_plug_list, boost::lambda2::_1 == l_world_matrix_plug)
-      );
-      if (l_index == l_skin_world_matrix_plug_list.size()) {
-        log_error(fmt::format("can not find world matrix plug: {}", get_node_name(l_node)));
-        throw_exception(doodle_error{fmt::format("没有寻找到绑定矩阵, 请寻求绑定解决: {}", get_node_name(l_node))});
+    auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
+    if (l_world_matrix_plug.numElements() > 0 && l_world_matrix_plug[0].isConnected()) {
+      MPlugArray l_dest_plug{};
+      l_world_matrix_plug[0].destinations(l_dest_plug);
+      if (l_dest_plug.length() > 0) {
+        auto l_index          = l_dest_plug[0].logicalIndex();
+        auto l_post_plug      = get_plug(l_dest_plug[0].node(), "bindPreMatrix").elementByLogicalIndex(l_index);
+        MObject l_post_handle = l_post_plug.asMObject();
+        const MFnMatrixData l_data{l_post_handle, &l_status};
+        if (l_status) {
+          auto l_world_matrix = l_data.matrix(&l_status).inverse();
+          maya_chick(l_status);
+          for (auto i = 0; i < 4; ++i)
+            for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
+        } else {
+          default_logger_raw()->error("matrix data error index {}: {}", l_index, l_status.errorString());
+        }
       }
-
-      auto l_post_plug = get_plug(l_skin_obj, "bindPreMatrix")[l_index];
-      MObject l_post_handle{};
-      maya_chick(l_post_plug.getValue(l_post_handle));
-      const MFnMatrixData l_data{l_post_handle};
-      auto l_world_matrix = l_data.matrix(&l_status).inverse();
-      maya_chick(l_status);
-
-      for (auto i = 0; i < 4; ++i)
-        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
-    } else {
-      auto l_matrix = extra_data_.bind_post->at(l_joint->dag_path).world_matrix.asMatrix();
-      for (auto i = 0; i < 4; ++i)
-        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_matrix[i][j];
     }
     l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
