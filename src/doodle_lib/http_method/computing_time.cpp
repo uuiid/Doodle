@@ -16,6 +16,7 @@
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/share_fun.h>
+
 namespace doodle::http {
 struct computing_time_post_req_data {
   struct task_data {
@@ -31,6 +32,7 @@ struct computing_time_post_req_data {
       p.end_time        = std::min(l_start_time, l_end_time);
     }
   };
+
   chrono::year_month year_month_;
   boost::uuids::uuid user_id;
   std::vector<task_data> data;
@@ -48,7 +50,7 @@ struct computing_time_post_req_data {
 
 
 std::tuple<entt::handle, work_xlsx_task_info_block> find_block_handle(
-    entt::registry& reg, const chrono::year_month& in_year_month, const entt::entity& in_user
+  entt::registry& reg, const chrono::year_month& in_year_month, const entt::entity& in_user
 ) {
   auto l_v = reg.view<const work_xlsx_task_info_block>();
   for (auto&& [e, l_block] : l_v.each()) {
@@ -61,7 +63,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
   business::work_clock2 l_time_clock_{};
   auto l_rules_ = business::rules::get_default();
   chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
-      l_end_time{chrono::local_days{in_year_month / chrono::last} + chrono::days{3}};
+                     l_end_time{chrono::local_days{in_year_month / chrono::last} + chrono::days{3}};
 
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
     // 加入工作日规定时间
@@ -104,8 +106,8 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 
 // 计算时间
 work_xlsx_task_info_block computing_time_run(
-    const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const entt::handle& in_user,
-    const work_xlsx_task_info_block& in_block, computing_time_post_req_data& in_data
+  const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const entt::handle& in_user,
+  const work_xlsx_task_info_block& in_block, computing_time_post_req_data& in_data
 ) {
   auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
   auto l_all_works = in_time_clock(chrono::local_days{in_year_month / chrono::day{1}}, l_end_time);
@@ -119,11 +121,11 @@ work_xlsx_task_info_block computing_time_run(
   // #endif
 
   work_xlsx_task_info_block l_block{
-      .id_         = in_block.id_.is_nil() ? core_set::get_set().get_uuid() : in_block.id_,
+      .id_ = in_block.id_.is_nil() ? core_set::get_set().get_uuid() : in_block.id_,
       // .task_info_  = std::vector<work_xlsx_task_info>{},
       .year_month_ = in_year_month,
-      .user_refs_  = in_user,
-      .duration_   = l_all_works
+      .user_refs_ = in_user,
+      .duration_ = l_all_works
   };
 
   // 进行排序
@@ -131,7 +133,8 @@ work_xlsx_task_info_block computing_time_run(
   std::ranges::sort(in_data.data, [](auto&& l_left, auto&& l_right) { return l_left.start_time < l_right.start_time; });
   // });
 
-  {  // 计算时间比例
+  {
+    // 计算时间比例
     std::vector<std::int64_t> l_woeks1{};
     for (auto&& l_task : in_data.data) {
       l_woeks1.push_back(chrono::floor<chrono::days>(l_task.start_time - l_task.end_time).count() + 1);
@@ -155,7 +158,7 @@ work_xlsx_task_info_block computing_time_run(
 
     chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}};
     for (auto i = 0; i < in_data.data.size(); ++i) {
-      auto l_end           = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
+      auto l_end = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
 
       // BOOST_ASSERT(in_time_clock(l_begin_time, l_end) == l_woeks2[i]);
       // #ifndef NDEBUG
@@ -166,11 +169,11 @@ work_xlsx_task_info_block computing_time_run(
       std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
 
       l_block.task_info_.emplace_back(work_xlsx_task_info{
-          .id_                = core_set::get_set().get_uuid(),
-          .start_time_        = {chrono::current_zone(), l_begin_time},
-          .end_time_          = {chrono::current_zone(), l_end},
-          .duration_          = chrono::duration_cast<chrono::seconds>(l_woeks2[i]),
-          .remark_            = l_remark,
+          .id_ = core_set::get_set().get_uuid(),
+          .start_time_ = {chrono::current_zone(), l_begin_time},
+          .end_time_ = {chrono::current_zone(), l_end},
+          .duration_ = chrono::duration_cast<chrono::seconds>(l_woeks2[i]),
+          .remark_ = l_remark,
           .kitsu_task_ref_id_ = in_data.data[i].task_id
       });
       l_begin_time = l_end;
@@ -180,10 +183,10 @@ work_xlsx_task_info_block computing_time_run(
 }
 
 std::optional<work_xlsx_task_info_block> patch_time(
-    const business::work_clock2& in_time_clock, const work_xlsx_task_info_block& in_block,
-    const boost::uuids::uuid& in_task_id_, const chrono::microseconds& in_duration, const logger_ptr& in_logger_ptr
+  const business::work_clock2& in_time_clock, const work_xlsx_task_info_block& in_block,
+  const boost::uuids::uuid& in_task_id_, const chrono::microseconds& in_duration, const logger_ptr& in_logger_ptr
 ) {
-  auto l_block   = in_block;
+  auto l_block = in_block;
 
   auto l_task_it = std::ranges::find_if(l_block.task_info_, [&in_task_id_](const auto& l_task) {
     return l_task.id_ == in_task_id_;
@@ -226,8 +229,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
 
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
+      boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+      "不是json请求"
     );
 
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
@@ -242,15 +245,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   } catch (const std::exception& e) {
     l_logger->log(log_loc(), level::err, "error: {}", e.what());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
+      boost::beast::http::status::bad_request,
+      boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
     );
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
+      boost::beast::http::status::internal_server_error,
+      boost::system::errc::make_error_code(boost::system::errc::bad_message),
+      boost::current_exception_diagnostic_information()
     );
   }
   // 保存现在的执行线程
@@ -260,8 +263,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   auto [l_user_handle, l_user] = find_user_handle(*g_reg(), l_data.user_id);
   if (!l_user_handle)
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
+      boost::beast::http::status::not_found,
+      boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
     );
   auto [l_block_handle, l_block_old] = find_block_handle(*g_reg(), l_data.year_month_, l_user_handle);
 
@@ -297,7 +300,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get(session_data_ptr in_handle) {
-  auto l_logger         = in_handle->logger_;
+  auto l_logger = in_handle->logger_;
 
   auto l_user_str       = in_handle->capture_->get("user_id");
   auto l_year_month_str = in_handle->capture_->get("year_month");
@@ -311,15 +314,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
   } catch (const std::exception& e) {
     l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
+      boost::beast::http::status::bad_request,
+      boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
     );
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
+      boost::beast::http::status::internal_server_error,
+      boost::system::errc::make_error_code(boost::system::errc::bad_message),
+      boost::current_exception_diagnostic_information()
     );
   }
 
@@ -356,10 +359,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
+      boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+      "不是json请求"
     );
-  auto& l_json          = std::get<nlohmann::json>(in_handle->body_);
+  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
 
   auto l_user_str       = in_handle->capture_->get("user_id");
   auto l_year_month_str = in_handle->capture_->get("year_month");
@@ -373,18 +376,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     std::istringstream l_year_month_stream{l_year_month_str};
     l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
     l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
-  } catch (const std::exception& e) {
-    l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
-    );
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
+      boost::beast::http::status::internal_server_error,
+      boost::system::errc::make_error_code(boost::system::errc::bad_message),
+      boost::current_exception_diagnostic_information()
     );
   }
 
@@ -396,8 +393,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   auto [l_user_handle, l_user] = find_user_handle(*g_reg(), l_user_id);
   if (!l_user_handle)
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
+      boost::beast::http::status::not_found,
+      boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
     );
   work_xlsx_task_info_block l_block{};
   entt::handle l_block_handle{};
@@ -409,9 +406,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
         fmt::format("{}-{}", std::int32_t{l_year_month.year()}, std::uint32_t{l_year_month.month()});
     l_logger->log(log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_, l_year_month_str);
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
-        fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_, l_year_month_str)
+      boost::beast::http::status::not_found,
+      boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
+      fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_, l_year_month_str)
     );
   }
 
@@ -419,29 +416,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   co_await boost::asio::post(l_this_exe, boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
   auto l_timer_clock = create_time_clock(l_year_month, l_user);
   auto l_block_opt   = patch_time(l_timer_clock, l_block, l_task_id, l_duration, in_handle->logger_);
-  if (!l_block_opt) {
-    nlohmann::json l_json_res{};
-    l_json_res["data"]     = l_block.task_info_;
-    l_json_res["id"]       = fmt::to_string(l_block.id_);
-    l_json_res["duration"] = l_block.duration_.count();
-
-    boost::beast::http::response<boost::beast::http::string_body> l_response{
-        boost::beast::http::status::ok, in_handle->version_
-    };
-    l_response.set(boost::beast::http::field::content_type, "application/json");
-    l_response.body() = l_json_res.dump();
-    l_response.keep_alive(in_handle->keep_alive_);
-    l_response.prepare_payload();
-    co_return l_response;
-  } else {
+  if (l_block_opt) {
     // 切换到主线程
     co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
     l_block_handle.emplace_or_replace<work_xlsx_task_info_block>(*l_block_opt);
+    // 切换到自己的线程
+    co_await boost::asio::post(l_this_exe, boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
+    l_block = *l_block_opt;
   }
+  nlohmann::json l_json_res{};
+  l_json_res["data"]     = l_block.task_info_;
+  l_json_res["id"]       = fmt::to_string(l_block.id_);
+  l_json_res["duration"] = l_block.duration_.count();
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      boost::beast::http::status::ok, in_handle->version_
+  };
+  l_response.set(boost::beast::http::field::content_type, "application/json");
+  l_response.body() = l_json_res.dump();
+  l_response.keep_alive(in_handle->keep_alive_);
+  l_response.prepare_payload();
+  co_return l_response;
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch_delete(session_data_ptr in_handle) {
-  auto l_logger                = in_handle->logger_;
+  auto l_logger = in_handle->logger_;
 
   auto l_computing_time_id_str = in_handle->capture_->get("computing_time_id");
   boost::uuids::uuid l_computing_time_id{};
@@ -450,31 +449,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   } catch (const std::exception& e) {
     l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
+      boost::beast::http::status::bad_request,
+      boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
     );
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
+      boost::beast::http::status::internal_server_error,
+      boost::system::errc::make_error_code(boost::system::errc::bad_message),
+      boost::current_exception_diagnostic_information()
     );
   }
   auto l_v = std::as_const(*g_reg()).view<const work_xlsx_task_info_block>();
   for (auto&& [e, l_block] : l_v.each()) {
     if (auto l_it = std::ranges::find_if(
-            l_block.task_info_, [l_computing_time_id](const auto& l_task) { return l_task.id_ == l_computing_time_id; }
-        );
-        l_it != l_block.task_info_.end()) {
+        l_block.task_info_, [l_computing_time_id](const auto& l_task) { return l_task.id_ == l_computing_time_id; }
+      );
+      l_it != l_block.task_info_.end()) {
       auto l_user_e = l_block.user_refs_;
       auto l_y_m    = l_block.year_month_;
       // 切换到主注册表线程
       co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
       if (g_reg()->valid(e)) {
         std::erase_if(
-            g_reg()->patch<work_xlsx_task_info_block>(e).task_info_,
-            [l_computing_time_id](const auto& l_task) { return l_task.id_ == l_computing_time_id; }
+          g_reg()->patch<work_xlsx_task_info_block>(e).task_info_,
+          [l_computing_time_id](const auto& l_task) { return l_task.id_ == l_computing_time_id; }
         );
       }
       boost::beast::http::response<boost::beast::http::empty_body> l_response{
@@ -497,20 +496,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 void reg_computing_time(http_route& in_route) {
   in_route
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_post
+        boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_post
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_get
+        boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_get
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::patch, "api/doodle/computing_time/{user_id}/{year_month}/{task_id}",
-          computing_time_patch
+        boost::beast::http::verb::patch, "api/doodle/computing_time/{user_id}/{year_month}/{task_id}",
+        computing_time_patch
       ))
       .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::delete_, "api/doodle/computing_time/{computing_time_id}",
-          computing_time_patch_delete
-      ))
-
-      ;
+        boost::beast::http::verb::delete_, "api/doodle/computing_time/{computing_time_id}",
+        computing_time_patch_delete
+      ));
 }
-}  // namespace doodle::http
+} // namespace doodle::http
