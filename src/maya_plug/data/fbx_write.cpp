@@ -103,7 +103,6 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
   maya_chick(l_status);
   node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
   auto l_rot = in_matrix.eulerRotation();
-  //  l_rot      = l_rot.boundIt().closestSolution(previous_frame_euler_rotation);
 
   MAngle l_angle_x{};
   l_angle_x.setUnit(MAngle::kRadians);
@@ -193,12 +192,6 @@ void fbx_node_transform::build_data() {
   auto l_attr_null = FbxNull::Create(node->GetScene(), l_transform.name().asChar());
   l_attr_null->Look.Set(FbxNull::eNone);
   node->SetNodeAttribute(l_attr_null);
-
-  // if (extra_data_.bind_post->count(dag_path)) {
-  //   previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).form_matrix.eulerRotation();
-  // } else {
-  // }
-  // previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
 }
 
 void fbx_node_transform::build_animation(const MTime& in_time) {
@@ -310,7 +303,8 @@ void fbx_node_mesh::build_data() {
   build_blend_shape();
 }
 
-void fbx_node_mesh::build_bind_post() {}
+void fbx_node_mesh::build_bind_post() {
+}
 
 void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
@@ -564,18 +558,6 @@ void fbx_node_mesh::build_skin() {
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
     fbxsdk::FbxAMatrix l_fbx_matrix{};
-    // if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
-    //   extra_data_.logger_->log(
-    //     log_loc(), level::err,
-    //     "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
-    //     l_joint->dag_path
-    //   );
-    //
-    // } else {
-    //   auto l_matrix = extra_data_.bind_post->at(l_joint->dag_path).world_matrix.asMatrix();
-    //   for (auto i = 0; i < 4; ++i)
-    //     for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_matrix[i][j];
-    // }
     auto l_node = l_joint->dag_path.node();
 
     auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
@@ -1256,7 +1238,6 @@ void fbx_write::build_data() {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       (*i)->extra_data_.tree_            = &tree_;
       (*i)->extra_data_.material_map_    = &material_map_;
-      (*i)->extra_data_.bind_post        = &bind_post_;
       (*i)->extra_data_.bind_pose_array_ = &bind_pose_array_;
       (*i)->extra_data_.logger_          = logger_;
       l_iter_init(i);

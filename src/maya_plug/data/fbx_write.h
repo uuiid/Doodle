@@ -25,15 +25,9 @@ using fbx_node_ptr = std::shared_ptr<fbx_node>;
 using fbx_tree_t   = tree<fbx_node_ptr>;
 // 额外数据
 struct fbx_extra_data {
-  struct bind_post_matrix {
-    MTransformationMatrix world_matrix{};
-    MTransformationMatrix form_matrix{};
-  };
   fbx_tree_t* tree_{};
   logger_ptr logger_{};
 
-  using bind_post_matrix_map_t = std::map<MDagPath, bind_post_matrix, details::cmp_dag>;
-  std::map<MDagPath, bind_post_matrix, details::cmp_dag>* bind_post{};
   std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
   MObjectArray* bind_pose_array_{};
   fbx_extra_data() = default;
@@ -44,7 +38,6 @@ struct fbx_node {
   FbxNode* node{};
   std::once_flag flag_{};
   fbx_extra_data extra_data_{};
-  MEulerRotation previous_frame_euler_rotation{};
 
   fbx_node() = default;
   explicit fbx_node(const MDagPath& in_dag_path, FbxNode* in_node) : dag_path(in_dag_path), node(in_node) {}
@@ -139,7 +132,6 @@ class fbx_write {
   mutable std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};             // 用于存储节点的map
   std::vector<MDagPath> joints_{};
-  fbx_write_ns::fbx_extra_data::bind_post_matrix_map_t bind_post_{};
   MObjectArray bind_pose_array_{};
 
   struct fbx_logger {
