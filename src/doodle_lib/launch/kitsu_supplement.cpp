@@ -10,14 +10,15 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 #include <doodle_lib/http_method/user_http.h>
+
 namespace doodle::launch {
 struct kitsu_supplement_args_t {
-  std::string kitsu_ip_;
-  std::string kitsu_port_;
+  std::string kitsu_url_;
   std::uint16_t port_;
   FSys::path db_path_{};
 
   std::string kitsu_token_{};
+
   // 公司
   struct dingding_company_t {
     boost::uuids::uuid id_;
@@ -34,22 +35,27 @@ struct kitsu_supplement_args_t {
       in_json.at("name").get_to(out_obj.name_);
     }
   };
+
   std::vector<dingding_company_t> dingding_company_list_{};
 
   // form json
   friend void from_json(const nlohmann::json& in_json, kitsu_supplement_args_t& out_obj) {
-    in_json.at("kitsu_ip").get_to(out_obj.kitsu_ip_);
-    in_json.at("kitsu_port").get_to(out_obj.kitsu_port_);
+    if (in_json.contains("kitsu_ip") && in_json.contains("kitsu_port")) {
+      out_obj.kitsu_url_ = fmt::format("http://{}:{}", in_json.at("kitsu_ip").get<std::string>(),
+                                       in_json.at("kitsu_port").get<std::string>());
+    }
+    if (in_json.contains("kitsu_url")) in_json.at("kitsu_url").get_to(out_obj.kitsu_url_);
     in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
     in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
   }
 };
+
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   auto& l_save = g_ctx().emplace<http::kitsu_backend_sqlite>();
 
-  kitsu_supplement_args_t l_args{.kitsu_ip_ = "192.168.40.182", .kitsu_port_ = "80", .port_ = 50025};
+  kitsu_supplement_args_t l_args{.kitsu_url_ = "http://192.168.40.182", .port_ = 50025};
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
@@ -74,7 +80,8 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   {
     // 初始化 kitsu 客户端
     auto l_client =
-        g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(std::make_shared<kitsu::kitsu_client>(g_io_context(), "")
+        g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
+          std::make_shared<kitsu::kitsu_client>(g_io_context(), l_args.kitsu_url_)
         );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
 
@@ -83,17 +90,17 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
     for (auto&& l_c : l_args.dingding_company_list_) {
       l_d.company_info_map_
-          .emplace(
-              l_c.id_,
-              dingding::dingding_company::company_info{
-                  .corp_id     = l_c.id_,
-                  .app_key     = l_c.app_key_,
-                  .app_secret  = l_c.app_secret_,
-                  .name        = l_c.name_,
-                  .client_ptr = std::make_shared<dingding::client>(*l_ssl_ctx)
-              }
-          )
-          .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
+         .emplace(
+           l_c.id_,
+           dingding::dingding_company::company_info{
+               .corp_id = l_c.id_,
+               .app_key = l_c.app_key_,
+               .app_secret = l_c.app_secret_,
+               .name = l_c.name_,
+               .client_ptr = std::make_shared<dingding::client>(*l_ssl_ctx)
+           }
+         )
+         .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
     }
   }
   // 初始化路由
@@ -111,4 +118,4 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
   return false;
 }
-}  // namespace doodle::launch
+} // namespace doodle::launch
