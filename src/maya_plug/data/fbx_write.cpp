@@ -44,16 +44,18 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MVector.h>
 #include <treehh/tree.hh>
+
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
-
 struct skin_guard {
   MObject skin_{};
+
   explicit skin_guard(const MObject& in_sk) : skin_{in_sk} {
     if (!skin_.isNull()) {
       get_plug(skin_, "envelope").setDouble(0.0);
     }
   }
+
   ~skin_guard() {
     if (!skin_.isNull()) {
       MFnSkinCluster l_fn_skin{skin_};
@@ -61,13 +63,16 @@ struct skin_guard {
     }
   }
 };
+
 struct blend_shape_guard {
   std::vector<MObject> blend_shape_list_{};
+
   explicit blend_shape_guard(const std::vector<MObject>& in_list) : blend_shape_list_{in_list} {
     for (auto& l_blend_shape : blend_shape_list_) {
       get_plug(l_blend_shape, "envelope").setDouble(0.0);
     }
   }
+
   ~blend_shape_guard() {
     for (auto& l_blend_shape : blend_shape_list_) {
       get_plug(l_blend_shape, "envelope").setDouble(1.0);
@@ -78,6 +83,7 @@ struct blend_shape_guard {
 void fbx_node::build_node() {
   std::call_once(flag_, [&]() { build_data(); });
 }
+
 FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
   switch (in_value) {
     case MTime::k25FPS:
@@ -90,6 +96,7 @@ FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
       return FbxTime::ePAL;
   }
 }
+
 void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix) const {
   MStatus l_status{};
   auto l_loc = in_matrix.getTranslation(MSpace::kWorld, &l_status);
@@ -149,6 +156,7 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
 
   set_node_transform_matrix(l_transform.transformation());
 }
+
 ///
 
 void fbx_node_cam::build_data() {
@@ -172,7 +180,9 @@ void fbx_node_cam::build_data() {
   l_cam->Position.Set(l_cam->EvaluatePosition());
   //  l_cam->EvaluateUpDirection(l_cam->EvaluatePosition(), l_cam->EvaluateLookAtPosition());
 }
-void fbx_node_cam::build_animation(const MTime& in_time) {}
+
+void fbx_node_cam::build_animation(const MTime& in_time) {
+}
 
 ///
 
@@ -184,11 +194,11 @@ void fbx_node_transform::build_data() {
   l_attr_null->Look.Set(FbxNull::eNone);
   node->SetNodeAttribute(l_attr_null);
 
-  if (extra_data_.bind_post->count(dag_path)) {
-    previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).form_matrix.eulerRotation();
-  } else {
-    previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
-  }
+  // if (extra_data_.bind_post->count(dag_path)) {
+  //   previous_frame_euler_rotation = extra_data_.bind_post->at(dag_path).form_matrix.eulerRotation();
+  // } else {
+  // }
+  previous_frame_euler_rotation = l_transform.transformation().eulerRotation();
 }
 
 void fbx_node_transform::build_animation(const MTime& in_time) {
@@ -288,6 +298,7 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
     l_anim_curve->KeyModifyEnd();
   }
 }
+
 ////
 
 void fbx_node_mesh::build_data() {
@@ -301,16 +312,64 @@ void fbx_node_mesh::build_data() {
 
 void fbx_node_mesh::build_bind_post() {
   MStatus l_status{};
-  auto l_bind_post_obj = get_bind_post();
 
-  if (l_bind_post_obj.isNull() || !l_bind_post_obj.hasFn(MFn::Type::kDagPose)) {
-    extra_data_.logger_->log(log_loc(), level::err, "{} 中, 未找到 bind pose 节点", dag_path);
+  // 一级: 寻找 skin 节点上的 worldMatrix 属性作为 bindpose
+  // 二级: 寻找 bindpose 节点中的 worldMatrix 属性
+  // 三级: 寻找 joint 节点上的 bindPose 属性
+  // 最终无法找到时, 使用单位矩阵
+  auto l_skin_obj = get_skin_custer();
+
+  if (l_skin_obj.isNull() || !l_skin_obj.hasFn(MFn::Type::kDagPose)) {
+    extra_data_.logger_->log(log_loc(), level::err, "{} 中, 未找到 skin 节点", dag_path);
     return;
   }
 
   if (std::find_if(
-          extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
-          [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
+        extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
+        [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_skin_obj; }
+      ) != extra_data_.bind_pose_array_->end()) {
+    log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_skin_obj)));
+    return;
+  }
+  extra_data_.bind_pose_array_->append(l_skin_obj);
+
+  std::set<MDagPath, details::cmp_dag> l_js_set{};
+  {
+    auto l_js = find_joint(l_skin_obj);
+    l_js_set  = std::set<MDagPath, details::cmp_dag>{l_js.begin(), l_js.end()};
+  }
+  {
+    auto l_bind_pre_matrix                  = get_plug(l_skin_obj, "bindPreMatrix");
+    auto l_skin_world_matrix_plug_list_plug = get_plug(l_skin_obj, "matrix");
+    for (auto i = 0; i < l_skin_world_matrix_plug_list_plug.numElements(); ++i) {
+      MFnDagNode l_mfn_node{};
+      if (l_skin_world_matrix_plug_list_plug[i].isConnected()) {
+        // 获取 joint
+        auto l_source_plug = l_skin_world_matrix_plug_list_plug[i].source(&l_status);
+        maya_chick(l_status);
+        auto l_join_node = l_source_plug.node(&l_status);
+        maya_chick(l_status);
+        auto l_joint = get_dag_path(l_join_node);
+
+        auto l_post_plug = l_bind_pre_matrix[i];
+        MObject l_post_handle{};
+        maya_chick(l_post_plug.getValue(l_post_handle));
+        const MFnMatrixData l_data{l_post_handle};
+        auto l_world_matrix = l_data.matrix(&l_status).inverse();
+        maya_chick(l_status);
+
+        (*extra_data_.bind_post)[l_joint] = {l_world_matrix, l_world_matrix};
+        if (l_js_set.contains(l_joint))
+          l_js_set.erase(l_joint);
+      }
+    }
+  }
+
+  auto l_bind_post_obj = get_bind_post();
+
+  if (std::find_if(
+        extra_data_.bind_pose_array_->begin(), extra_data_.bind_pose_array_->end(),
+        [&](const auto& in_bind_pose) -> bool { return in_bind_pose == l_bind_post_obj; }
       ) != extra_data_.bind_pose_array_->end()) {
     log_info(fmt::format("{} 已经存在, 不进行查找", get_node_name(l_bind_post_obj)));
     return;
@@ -321,11 +380,8 @@ void fbx_node_mesh::build_bind_post() {
   auto l_member_list       = get_plug(l_bind_post_obj, "members");
   auto l_world_matrix_list = get_plug(l_bind_post_obj, "worldMatrix");
   auto l_xform_matrix_list = get_plug(l_bind_post_obj, "xformMatrix");
-  auto l_world             = get_plug(l_bind_post_obj, "world");
-  auto l_global_list       = get_plug(l_bind_post_obj, "global");
-  auto l_parent_list       = get_plug(l_bind_post_obj, "parents");
+
   l_world_matrix_list.evaluateNumElements(&l_status);
-  l_xform_matrix_list.evaluateNumElements(&l_status);
   maya_chick(l_status);
 
   // 缺失bindpose的tran节点和对于的索引
@@ -334,8 +390,6 @@ void fbx_node_mesh::build_bind_post() {
   const auto l_couts = l_member_list.evaluateNumElements(&l_status);
   maya_chick(l_status);
   for (auto i = 0; i < l_couts; ++i) {
-    //    bool l_is_global = l_global_list.elementByPhysicalIndex(i, &l_status).asBool();
-    //    maya_chick(l_status);
     auto l_member = l_member_list.elementByPhysicalIndex(i, &l_status);
     maya_chick(l_status);
     auto l_member_source = l_member.source(&l_status);
@@ -346,16 +400,10 @@ void fbx_node_mesh::build_bind_post() {
       MFnDagNode l_fn_node{l_node};
       MDagPath l_path{};
       maya_chick(l_fn_node.getPath(l_path));
-      //      auto l_matrix_plug = l_xform_matrix_list.elementByPhysicalIndex(i, &l_status);
-      //      maya_chick(l_status);
-      //      MObject l_handle{};
-      //      maya_chick(l_matrix_plug.getValue(l_handle));
-      //      MFnMatrixData l_matrix_data{l_handle};
-      //
-      //      auto l_matrix = l_matrix_data.transformation(&l_status);
-      //      maya_chick(l_status);
-      MTransformationMatrix l_world_matrix{};
+      if (l_js_set.contains(l_path))
+        continue;
 
+      MTransformationMatrix l_world_matrix{};
       if (l_node.hasFn(MFn::Type::kJoint)) {
         auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
         maya_chick(l_status);
@@ -366,8 +414,8 @@ void fbx_node_mesh::build_bind_post() {
           maya_chick(l_status);
         } else {
           extra_data_.logger_->log(
-              log_loc(), level::err, "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
-              l_world_matrix_plug.partialName()
+            log_loc(), level::err, "正在使用 {} 节点的备用值 bindpose 属性 可能不准确", l_path,
+            l_world_matrix_plug.partialName()
           );
           auto l_post_plug = get_plug(l_node, "bindPose");
           MObject l_post_handle{};
@@ -381,7 +429,6 @@ void fbx_node_mesh::build_bind_post() {
             });
           }
         }
-
       } else if (l_node.hasFn(MFn::Type::kTransform)) {
         auto l_world_matrix_plug = l_world_matrix_list.elementByLogicalIndex(i, &l_status);
         maya_chick(l_status);
@@ -393,8 +440,8 @@ void fbx_node_mesh::build_bind_post() {
         } else {
           l_tran_map.emplace(l_path, i);
           extra_data_.logger_->log(
-              log_loc(), level::err, "没有找到 节点{} bindpose 属性 {} 的值, 将在第二次中寻找", l_path,
-              l_world_matrix_plug.partialName()
+            log_loc(), level::err, "没有找到 节点{} bindpose 属性 {} 的值,", l_path,
+            l_world_matrix_plug.partialName()
           );
         }
       } else {
@@ -408,29 +455,29 @@ void fbx_node_mesh::build_bind_post() {
     }
   }
 
-  for (const auto& [l_path, l_index] : l_tran_map) {
-    MMatrix l_parent_world_matrix{};
-    auto l_parent_path = l_path;
-    l_parent_path.pop();
-    if (extra_data_.bind_post->contains(l_parent_path)) {
-      l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix.asMatrix();
-    }
-    auto l_xform_matrix_plug = l_xform_matrix_list.elementByLogicalIndex(l_index, &l_status);
-    maya_chick(l_status);
-    MObject l_xform_handle{};
-    if (l_xform_matrix_plug.getValue(l_xform_handle)) {
-      const MFnMatrixData l_data{l_xform_handle};
-      const auto& l_xform_matrix = l_data.matrix(&l_status);
-      maya_chick(l_status);
-
-      auto l_world_matrix              = l_xform_matrix * l_parent_world_matrix;
-      (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_xform_matrix};
-    } else {
-      throw_exception(doodle_error{fmt::format(
-          "在二次寻找中没有找到 {} bindpose 属性 {} 的值", l_path, conv::to_s(l_xform_matrix_plug.partialName())
-      )});
-    }
-  }
+  // for (const auto& [l_path, l_index] : l_tran_map) {
+  //   MMatrix l_parent_world_matrix{};
+  //   auto l_parent_path = l_path;
+  //   l_parent_path.pop();
+  //   if (extra_data_.bind_post->contains(l_parent_path)) {
+  //     l_parent_world_matrix = extra_data_.bind_post->at(l_parent_path).world_matrix.asMatrix();
+  //   }
+  //   auto l_xform_matrix_plug = l_xform_matrix_list.elementByLogicalIndex(l_index, &l_status);
+  //   maya_chick(l_status);
+  //   MObject l_xform_handle{};
+  //   if (l_xform_matrix_plug.getValue(l_xform_handle)) {
+  //     const MFnMatrixData l_data{l_xform_handle};
+  //     const auto& l_xform_matrix = l_data.matrix(&l_status);
+  //     maya_chick(l_status);
+  //
+  //     auto l_world_matrix              = l_xform_matrix * l_parent_world_matrix;
+  //     (*extra_data_.bind_post)[l_path] = {l_world_matrix, l_xform_matrix};
+  //   } else {
+  //     throw_exception(doodle_error{fmt::format(
+  //         "在二次寻找中没有找到 {} bindpose 属性 {} 的值", l_path, conv::to_s(l_xform_matrix_plug.partialName())
+  //     )});
+  //   }
+  // }
 
   std::set<MDagPath, details::cmp_dag> l_all_path{};
   for (auto& l_bp : *extra_data_.bind_post) {
@@ -465,10 +512,6 @@ void fbx_node_mesh::build_bind_post() {
       l_joint_rotate.setValue(l_vector_x, l_vector_y, l_vector_z);
     }
     l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse();
-    //    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_parent_world_matrix.asMatrixInverse() *
-    //                              l_joint_rotate.asMatrix().inverse();
-    //    l_bp.second.form_matrix = l_bp.second.world_matrix.asMatrix() * l_joint_rotate.asMatrix().inverse() *
-    //                              l_parent_world_matrix.asMatrixInverse();
     l_bp.second.form_matrix.rotateBy(l_joint_rotate.inverse(), MSpace::kTransform);
   }
 }
@@ -611,7 +654,7 @@ void fbx_node_mesh::build_mesh() {
         auto l_poly_len = l_fn_mesh.polygonVertexCount(k);
         for (std::int32_t j = 0; j < l_poly_len; ++j) {
           std::int32_t l_uv_id{};
-          l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]);  // warning: 这个我们忽略返回值, 不去测试错误
+          l_fn_mesh.getPolygonUVid(k, j, l_uv_id, &l_uv_set_names[i]); // warning: 这个我们忽略返回值, 不去测试错误
           l_layer->GetIndexArray().Add(l_uv_id);
         }
       }
@@ -681,7 +724,7 @@ void fbx_node_mesh::build_skin() {
     for (auto i = 0; i < l_skin_world_matrix_plug_list_plug.numElements(); ++i) {
       if (l_skin_world_matrix_plug_list_plug[i].isConnected()) {
         l_skin_world_matrix_plug_list.emplace_back(
-            l_skin_world_matrix_plug_list_plug.elementByPhysicalIndex(i).source(&l_status)
+          l_skin_world_matrix_plug_list_plug.elementByPhysicalIndex(i).source(&l_status)
         );
         maya_chick(l_status);
       }
@@ -740,17 +783,17 @@ void fbx_node_mesh::build_skin() {
     fbxsdk::FbxAMatrix l_fbx_matrix{};
     if (!extra_data_.bind_post->contains(l_joint->dag_path)) {
       extra_data_.logger_->log(
-          log_loc(), level::err,
-          "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
-          l_joint->dag_path
+        log_loc(), level::err,
+        "本次导出文件可能出错, 最好寻找绑定, 出错的骨骼, {} 骨骼的bindpose上没有记录值, 使用skin上的值进行处理 ",
+        l_joint->dag_path
       );
 
-      auto l_node              = l_joint->dag_path.node();
+      auto l_node = l_joint->dag_path.node();
 
       auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
       auto l_index             = ranges::distance(
-          std::begin(l_skin_world_matrix_plug_list),
-          ranges::find_if(l_skin_world_matrix_plug_list, boost::lambda2::_1 == l_world_matrix_plug)
+        std::begin(l_skin_world_matrix_plug_list),
+        ranges::find_if(l_skin_world_matrix_plug_list, boost::lambda2::_1 == l_world_matrix_plug)
       );
       if (l_index == l_skin_world_matrix_plug_list.size()) {
         log_error(fmt::format("can not find world matrix plug: {}", get_node_name(l_node)));
@@ -777,7 +820,8 @@ void fbx_node_mesh::build_skin() {
     }
   }
 
-  {  // build post
+  {
+    // build post
     auto* l_post = FbxPose::Create(node->GetScene(), fmt::format("{}_post", get_node_name(l_skin_obj)).c_str());
     l_post->SetIsBindPose(true);
     std::vector<fbx_node_ptr> post_add{};
@@ -911,18 +955,18 @@ void fbx_node_mesh::build_blend_shape() {
         // 去除特定名称的混变
         MString l_name = l_bl_weight_plug.partialName(false, false, false, true, false, true);
         constexpr static std::array l_name_list{
-            std::string_view{"EyeLidLayer"},       std::string_view{"SquintLayer"},
-            std::string_view{"EyeBrowLayer"},      std::string_view{"LipLayer"},
-            std::string_view{"JawLayer"},          std::string_view{"zipperLips_RLayer"},
+            std::string_view{"EyeLidLayer"}, std::string_view{"SquintLayer"},
+            std::string_view{"EyeBrowLayer"}, std::string_view{"LipLayer"},
+            std::string_view{"JawLayer"}, std::string_view{"zipperLips_RLayer"},
             std::string_view{"zipperLips_LLayer"}, std::string_view{"NoseLayer"},
-            std::string_view{"SmilePullLayer"},    std::string_view{"SmileBulgeLayer"},
-            std::string_view{"CheekRaiserLayer"},  std::string_view{"MouthNarrowLayer"},
-            std::string_view{"CheekLayer"},        std::string_view{"RegionsLayer"},
-            std::string_view{"UpMidLoLayer"},      std::string_view{"asFaceBS"},
+            std::string_view{"SmilePullLayer"}, std::string_view{"SmileBulgeLayer"},
+            std::string_view{"CheekRaiserLayer"}, std::string_view{"MouthNarrowLayer"},
+            std::string_view{"CheekLayer"}, std::string_view{"RegionsLayer"},
+            std::string_view{"UpMidLoLayer"}, std::string_view{"asFaceBS"},
         };
         if (std::any_of(std::begin(l_name_list), std::end(l_name_list), [&](const std::string_view& in_name) -> bool {
-              return conv::to_s(l_name) == in_name;
-            })) {
+          return conv::to_s(l_name) == in_name;
+        })) {
           default_logger_raw()->log(log_loc(), level::info, "blend shape {} is not export", l_name);
           continue;
         }
@@ -958,24 +1002,24 @@ void fbx_node_mesh::build_blend_shape() {
 
       if (l_point_data.length() != l_point_index_main.size()) {
         log_error(fmt::format(
-            "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
-            l_point_index_main.size()
+          "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
+          l_point_index_main.size()
         ));
         continue;
       }
 
       FbxProperty::Create(
-          l_fbx_bl->RootProperty, FbxStringDT,
-          fmt::format("RootGroup|{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
+        l_fbx_bl->RootProperty, FbxStringDT,
+        fmt::format("RootGroup|{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
       );
       auto l_fbx_bl_channel = FbxBlendShapeChannel::Create(
-          node->GetScene(),
-          fmt::format("{}", l_bl_weight_plug.partialName(true, false, false, true, false, true)).c_str()
+        node->GetScene(),
+        fmt::format("{}", l_bl_weight_plug.partialName(true, false, false, true, false, true)).c_str()
       );
       l_fbx_bl->AddBlendShapeChannel(l_fbx_bl_channel);
       auto l_fbx_deform = FbxShape::Create(
-          node->GetScene(),
-          fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
+        node->GetScene(),
+        fmt::format("{}", l_bl_weight_plug.partialName(false, false, false, true, false, true)).c_str()
       );
       l_fbx_bl_channel->AddTargetShape(l_fbx_deform);
       blend_shape_channel_.emplace_back(l_bl_weight_plug, l_fbx_bl_channel);
@@ -1095,6 +1139,7 @@ MObject fbx_node_mesh::get_bind_post() const {
 }
 
 void fbx_node_sim_mesh::build_bind_post() { return; }
+
 void fbx_node_sim_mesh::build_data() {
   // 如果是解算, 只需要构建mesh
   if (!dag_path.isValid()) return;
@@ -1102,6 +1147,7 @@ void fbx_node_sim_mesh::build_data() {
 
   build_mesh();
 }
+
 void fbx_node_sim_mesh::build_animation(const MTime& in_time) { return; }
 void fbx_node_sim_mesh::build_skin() { return; }
 void fbx_node_sim_mesh::build_blend_shape() { return; }
@@ -1140,8 +1186,7 @@ void fbx_node_joint::build_data() {
   }
   node->InheritType.Set(l_is_ ? fbxsdk::FbxTransform::eInheritRrs : fbxsdk::FbxTransform::eInheritRSrs);
 }
-
-}  // namespace fbx_write_ns
+} // namespace fbx_write_ns
 
 fbx_write::fbx_write() {
   manager_ = std::shared_ptr<FbxManager>{FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); }};
@@ -1170,15 +1215,15 @@ fbx_write::fbx_write() {
 }
 
 void fbx_write::write(
-    const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
-    const MTime& in_end
+  const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
+  const MTime& in_end
 ) {
   if (!logger_)
     if (!g_ctx().contains<fbx_logger>())
       logger_ =
           g_ctx()
-              .emplace<fbx_logger>(g_logger_ctrl().make_log_file(path_.parent_path() / "fbx_log.txt", "fbx_logger"))
-              .logger_;
+          .emplace<fbx_logger>(g_logger_ctrl().make_log_file(path_.parent_path() / "fbx_log.txt", "fbx_logger"))
+          .logger_;
     else
       logger_ = g_ctx().get<fbx_logger>().logger_;
 
@@ -1192,7 +1237,7 @@ void fbx_write::write(
   l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
   anim_stack->LocalStop = l_fbx_end;
 
-  anim_time_            = {in_begin, in_end};
+  anim_time_ = {in_begin, in_end};
 
   MAnimControl::setCurrentTime(in_begin);
 
@@ -1225,7 +1270,6 @@ void fbx_write::write(
     for (auto&& i : l_sequence_to_blend_shape) {
       i.write_fbx(*this);
     }
-
   } catch (const std::exception& in_error) {
     auto l_str = boost::diagnostic_information(in_error);
     MGlobal::displayError(conv::to_ms(l_str));
@@ -1285,6 +1329,7 @@ std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vecto
 // }
 
 void fbx_write::init() { tree_ = {std::make_shared<fbx_node_transform_t>(MDagPath{}, scene_->GetRootNode())}; }
+
 void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector) {
   auto l_fun = [this](const std::vector<MDagPath>& in_vector, bool in_is_sim) {
     for (auto l_path : in_vector) {
@@ -1294,10 +1339,10 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
         l_sub_path.pop(i);
 
         if (auto l_tree_it = ranges::find_if(
-                std::begin(l_begin), std::end(l_begin),
-                [&](const fbx_node_ptr& in_value) { return in_value->dag_path == l_sub_path; }
-            );
-            l_tree_it != std::end(l_begin)) {
+            std::begin(l_begin), std::end(l_begin),
+            [&](const fbx_node_ptr& in_value) { return in_value->dag_path == l_sub_path; }
+          );
+          l_tree_it != std::end(l_begin)) {
           l_begin = l_tree_it;
         } else {
           auto l_parent_node = (*l_begin)->node;
@@ -1306,11 +1351,11 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
             std::shared_ptr<fbx_node_mesh_t> l_mesh{};
             if (in_is_sim) {
               l_mesh = std::make_shared<fbx_node_sim_mesh_t>(
-                  l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+                l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
               );
             } else {
               l_mesh = std::make_shared<fbx_node_mesh_t>(
-                  l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+                l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
               );
             }
             joints_ |= ranges::action::push_back(l_mesh->find_joint(l_mesh->get_skin_custer()));
@@ -1318,15 +1363,15 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
             l_begin = tree_.append_child(l_begin, l_mesh);
           } else if (l_sub_path.hasFn(MFn::kJoint)) {
             l_begin = tree_.append_child(
-                l_begin, std::make_shared<fbx_node_joint_t>(
-                             l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
-                         )
+              l_begin, std::make_shared<fbx_node_joint_t>(
+                l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+              )
             );
           } else {
             l_begin = tree_.append_child(
-                l_begin, std::make_shared<fbx_node_transform_t>(
-                             l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
-                         )
+              l_begin, std::make_shared<fbx_node_transform_t>(
+                l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+              )
             );
           }
           node_map_.emplace(l_sub_path, *l_begin);
@@ -1349,24 +1394,24 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
       l_sub_path.pop(j);
 
       if (auto l_tree_it = ranges::find_if(
-              std::begin(l_begin), std::end(l_begin),
-              [&](const fbx_node_ptr& in_value) { return in_value->dag_path == l_sub_path; }
-          );
-          l_tree_it != std::end(l_begin)) {
+          std::begin(l_begin), std::end(l_begin),
+          [&](const fbx_node_ptr& in_value) { return in_value->dag_path == l_sub_path; }
+        );
+        l_tree_it != std::end(l_begin)) {
         l_begin = l_tree_it;
       } else {
         auto l_parent_node = (*l_begin)->node;
 
         if (l_sub_path.hasFn(MFn::kJoint)) {
           l_begin = tree_.append_child(
-              l_begin,
-              std::make_shared<fbx_node_joint_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()))
+            l_begin,
+            std::make_shared<fbx_node_joint_t>(l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str()))
           );
         } else {
           l_begin = tree_.append_child(
-              l_begin, std::make_shared<fbx_node_transform_t>(
-                           l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
-                       )
+            l_begin, std::make_shared<fbx_node_transform_t>(
+              l_sub_path, FbxNode::Create(scene_, get_node_name(l_sub_path).c_str())
+            )
           );
         }
         l_parent_node->AddChild((*l_begin)->node);
@@ -1388,10 +1433,10 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
       maya_chick(l_dag_it.getPath(l_path));
 
       if (auto l_tree_it = ranges::find_if(
-              std::begin(tree_), std::end(tree_),
-              [&](fbx_node_ptr& in_value) -> bool { return in_value->dag_path == l_path; }
-          );
-          l_tree_it == std::end(tree_) && (l_path.hasFn(MFn::kTransform) && !l_path.hasFn(MFn::kConstraint))) {
+          std::begin(tree_), std::end(tree_),
+          [&](fbx_node_ptr& in_value) -> bool { return in_value->dag_path == l_path; }
+        );
+        l_tree_it == std::end(tree_) && (l_path.hasFn(MFn::kTransform) && !l_path.hasFn(MFn::kConstraint))) {
         l_parent_path = l_path;
         l_parent_path.pop();
         auto l_tree_parent = ranges::find_if(std::begin(tree_), std::end(tree_), [&](fbx_node_ptr& in_value) -> bool {
@@ -1403,16 +1448,16 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
         }
         auto l_parent_node = (*l_tree_parent)->node;
 
-        fbx_tree_t ::iterator l_node_iter{};
+        fbx_tree_t::iterator l_node_iter{};
         if (l_path.hasFn(MFn::kJoint)) {
           l_node_iter = tree_.append_child(
-              l_tree_parent,
-              std::make_shared<fbx_node_joint_t>(l_path, FbxNode::Create(scene_, get_node_name(l_path).c_str()))
+            l_tree_parent,
+            std::make_shared<fbx_node_joint_t>(l_path, FbxNode::Create(scene_, get_node_name(l_path).c_str()))
           );
         } else {
           l_node_iter = tree_.append_child(
-              l_tree_parent,
-              std::make_shared<fbx_node_transform_t>(l_path, FbxNode::Create(scene_, get_node_name(l_path).c_str()))
+            l_tree_parent,
+            std::make_shared<fbx_node_transform_t>(l_path, FbxNode::Create(scene_, get_node_name(l_path).c_str()))
           );
         }
         l_parent_node->AddChild((*l_node_iter)->node);
@@ -1421,6 +1466,7 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
     }
   }
 }
+
 void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_init{};
   l_iter_init = [&](const fbx_tree_t::iterator& in_iterator) {
@@ -1468,6 +1514,7 @@ void fbx_write::build_data() {
   l_iter_fun_tran(tree_.begin());
   l_iter_fun_mesh(tree_.begin());
 }
+
 void fbx_write::build_animation(const MTime& in_time) {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun{};
   l_iter_fun = [&](const fbx_tree_t::iterator& in_iterator) {
@@ -1538,13 +1585,14 @@ void fbx_write::write_end() {
   manager_->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, true);
 
   if (!l_exporter->Initialize(
-          path_.generic_string().c_str(),
-          ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
-                     : manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),
-          scene_->GetFbxManager()->GetIOSettings()
-      )) {
+    path_.generic_string().c_str(),
+    ascii_fbx_
+      ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
+      : manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),
+    scene_->GetFbxManager()->GetIOSettings()
+  )) {
     MGlobal::displayError(
-        conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
+      conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
     );
     return;
   }
@@ -1552,4 +1600,4 @@ void fbx_write::write_end() {
 }
 
 fbx_write::~fbx_write() { write_end(); }
-}  // namespace doodle::maya_plug
+} // namespace doodle::maya_plug
