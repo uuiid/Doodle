@@ -8,37 +8,9 @@
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
-#include <doodle_lib/core/http/socket_logger.h>
 namespace doodle::http {
-void http_listener::run() {
-  auto acceptor_ptr = std::make_shared<acceptor_type>(executor_, end_point_);
-  acceptor_ptr->listen(boost::asio::socket_base::max_listen_connections);
-  acceptor_ptr_ = std::move(acceptor_ptr);
-
-  do_accept();
-}
-void http_listener::do_accept() {
-  acceptor_ptr_->async_accept(
-      boost::asio::make_strand(executor_),
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::beast::bind_front_handler(&http_listener::on_accept, this)
-      )
-  );
-}
-void http_listener::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
-  if (ec) {
-    if (ec == boost::asio::error::operation_aborted) {
-      return;
-    }
-    default_logger_raw()->log(log_loc(), level::err, "on_accept error: {}", ec.message());
-  } else {
-    std::make_shared<http_session_data>(std::move(socket), route_ptr_)->rend_head();
-  }
-  do_accept();
-}
-
 boost::asio::awaitable<void> detail::run_http_listener(
-   boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port
+    boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port
 ) {
   using executor_type = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
   using endpoint_type = boost::asio::ip::tcp::endpoint;
@@ -61,13 +33,14 @@ boost::asio::awaitable<void> detail::run_http_listener(
       }
       default_logger_raw()->log(log_loc(), level::err, "on_accept error: {}", l_ec.message());
     } else {
-      std::make_shared<http_session_data>(std::move(l_socket), in_route_ptr)->rend_head();
+      boost::asio::co_spawn(
+          l_executor, detail::async_session(std::move(l_socket), in_route_ptr),
+          boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+      );
     }
   }
 }
-void run_http_listener(
-   boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port
-) {
+void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port) {
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)

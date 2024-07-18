@@ -11,4 +11,8 @@
 namespace fmt {
 template <>
 struct formatter<::boost::beast::http::verb> : ostream_formatter {};
+
+template <>
+struct formatter<::boost::beast::http::status> : ostream_formatter {};
+
 }  // namespace fmt

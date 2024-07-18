@@ -4,4 +4,5 @@ target_sources(
         PRIVATE
         dingding.cpp
         kitsu_auth.cpp
+        core.vpp.cpp
 )

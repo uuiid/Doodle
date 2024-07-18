@@ -14,8 +14,8 @@ namespace doodle::http {
 std::vector<http_function::capture_data_t> http_function::set_cap_bit(std::string& in_str) {
   std::vector<std::string> l_vector{};
   boost::split(l_vector, in_str, boost::is_any_of("/"));
-  l_vector =
-      ranges::views::filter(l_vector, [](const std::string& in_str) { return !in_str.empty(); }) | ranges::to_vector;
+  std::erase_if(l_vector, [](const std::string& in_str) { return in_str.empty(); });
+
   std::vector<capture_data_t> l_capture_vector{l_vector.size()};
   for (size_t i = 0; i < l_vector.size(); ++i) {
     if (l_vector[i].front() == '{' && l_vector[i].back() == '}') {

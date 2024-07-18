@@ -15,19 +15,9 @@ constexpr static std::string_view g_token{
     "LCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684"
 };
 
-BOOST_AUTO_TEST_CASE(authenticated) {
-  doodle_lib l_lib{};
-  auto l_c = doodle::kitsu::kitsu_client{"192.168.40.182", "80"};
-  l_c.authenticated(std::string{g_token}, [](boost::system::error_code ec, nlohmann::json in_json) {
-    BOOST_TEST(!ec);
-    BOOST_TEST_MESSAGE(in_json.dump());
-  });
-  g_io_context().run();
-}
-
 BOOST_AUTO_TEST_CASE(authenticated2) {
   doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::http::detail::http_client_data_base>(boost::asio::make_strand(g_io_context()));
+  auto l_c = std::make_shared<doodle::http::detail::http_client_data_base>(g_io_context());
   l_c->init("http://192.168.40.182");
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::get, "/api/auth/authenticated", 11
@@ -40,54 +30,39 @@ BOOST_AUTO_TEST_CASE(authenticated2) {
       boost::asio::bind_executor(g_io_context(), boost::asio::use_future)
   );
   g_io_context().run();
-  
-}
-
-BOOST_AUTO_TEST_CASE(get_task) {
-  doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");
-  l_c->authenticated(std::string{g_token}, [l_c](boost::system::error_code ec, nlohmann::json in_json) {
-    BOOST_TEST(!ec);
-    BOOST_TEST_MESSAGE(in_json.dump());
-
-    l_c->get_task("cde5305c-678c-4a3d-8baf-79cddfc9e9c3", [](boost::system::error_code ec, nlohmann::json in_json) {
-      BOOST_TEST(!ec);
-      default_logger_raw()->log(log_loc(), level::info, in_json.dump());
-      BOOST_TEST_MESSAGE(in_json.dump());
-    });
-  });
-  g_io_context().run();
 }
 
 // 直接获取task
-BOOST_AUTO_TEST_CASE(get_task_directly) {
+BOOST_AUTO_TEST_CASE(get_task) {
   doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");
+  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>(g_io_context(), "http://192.168.40.182");
   l_c->set_access_token(std::string{g_token});
-  l_c->get_task("cde5305c-678c-4a3d-8baf-79cddfc9e9c3", [](boost::system::error_code ec, nlohmann::json in_json) {
-    BOOST_TEST(!ec);
-    default_logger_raw()->log(log_loc(), level::info, in_json.dump());
-    BOOST_TEST_MESSAGE(in_json.dump());
-  });
 
+  auto l_f = boost::asio::co_spawn(
+      g_io_context(), l_c->get_task(boost::lexical_cast<boost::uuids::uuid>("cde5305c-678c-4a3d-8baf-79cddfc9e9c3")),
+      boost::asio::bind_executor(g_io_context(), boost::asio::use_future)
+  );
   g_io_context().run();
+
+  auto [l_e, l_r] = l_f.get();
+  BOOST_TEST(!l_e);
 }
 
 // 获取用户
 BOOST_AUTO_TEST_CASE(get_user) {
   doodle_lib l_lib{};
-  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>("192.168.40.182", "80");
+  auto l_c = std::make_shared<doodle::kitsu::kitsu_client>(g_io_context(), "http://192.168.40.182");
   l_c->set_access_token(std::string{g_token});
-  l_c->get_user(
-      boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b"),
-      [](boost::system::error_code ec, nlohmann::json in_json) {
-        BOOST_TEST(!ec);
-        default_logger_raw()->log(log_loc(), level::info, in_json.dump());
-        BOOST_TEST_MESSAGE(in_json.dump());
-      }
+  auto l_f = boost::asio::co_spawn(
+      g_io_context(), l_c->get_user(boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b")),
+      boost::asio::bind_executor(g_io_context(), boost::asio::use_future)
   );
 
   g_io_context().run();
+
+  auto [l_e, l_r] = l_f.get();
+  BOOST_TEST(!l_e);
+  BOOST_TEST_MESSAGE(l_r.phone_);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

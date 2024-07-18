@@ -16,8 +16,8 @@
 #include <wil/resource.h>
 #include <wil/result.h>
 #include <windows.h>
-namespace doodle::launch {
 
+namespace doodle::launch {
 struct file_association_http_args_t {
   std::string kitsu_ip_;
   std::string kitsu_port_;
@@ -35,6 +35,7 @@ struct file_association_http_args_t {
 };
 
 bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+  app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
   l_scan->start();
 
@@ -54,13 +55,8 @@ bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector
   auto l_rout_ptr = std::make_shared<http::http_route>();
   default_logger_raw()->log(log_loc(), level::warn, "开始路由");
   http::reg_file_association_http(*l_rout_ptr);
-
-  auto l_listener = std::make_shared<http::http_listener>(g_thread().executor(), l_rout_ptr, l_args.port_);
+  http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
   default_logger_raw()->log(log_loc(), level::warn, "启动侦听器");
-  l_listener->run();
-  in_vector.emplace_back(l_listener);
-
   return false;
 }
-
-}  // namespace doodle::launch
+} // namespace doodle::launch

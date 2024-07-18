@@ -6,6 +6,7 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+
 namespace doodle::http {
 /**
  * @brief task_info 任务信息
@@ -30,17 +31,6 @@ namespace doodle::http {
  * project_en_str: 项目英文缩写
  * project_shor_str: 项目简称
  */
-class task_info {
- public:
-  task_info()  = default;
-  ~task_info() = default;
 
-  static void post_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
-  static void get_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
-  static void list_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
-  static void delete_task(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
-  static void get_task_logger(boost::system::error_code in_error_code, const http_session_data_ptr& in_data);
-
-  static void reg(http_route& in_route);
-};
-}  // namespace doodle::http
+void task_info_reg(http_route& in_route);
+} // namespace doodle::http

@@ -84,7 +84,6 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
 
     // logger
     logger_ptr logger_ptr_{};
-    std::shared_ptr<http::http_client_core> http_client_core_ptr_{};
   };
   std::unique_ptr<impl> p_i;
 

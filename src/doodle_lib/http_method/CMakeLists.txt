@@ -13,7 +13,8 @@ target_sources(
         dingding_attendance.h
         user_http.h
         file_association.h
-        
+        share_fun.h
+
         PRIVATE
         computer.cpp
         task_info.cpp
@@ -25,4 +26,6 @@ target_sources(
         dingding_attendance.cpp
         user_http.cpp
         file_association.cpp
+        share_fun.cpp
+
 )
