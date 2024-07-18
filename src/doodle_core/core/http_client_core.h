@@ -86,6 +86,7 @@ public:
                                                            in_self
         };
         in_self->impl_->await_suspend(l_fun);
+        in_self->impl_->maybe_invoke();
       }, in_token, this, l_exe);
   }
 
@@ -133,6 +134,8 @@ public:
 
 private:
   boost::asio::any_io_executor executor_;
+  boost::asio::ssl::context* ctx_{};
+  boost::urls::scheme scheme_id_{};
 
 public:
   http_client_data_base() = default;
@@ -162,8 +165,13 @@ public:
   void expires_after(std::chrono::seconds in_seconds);
   void do_close();
 
+  // 在测试打开为真时,一定会返回
   socket_t& socket();
+  // 在测试打开为真时, 有可能返回空指针
   ssl_socket_t* ssl_socket();
+  // 重新初始化
+  void re_init();
+  bool is_open();
 };
 
 template <typename ResponseBody, typename RequestType>
@@ -172,10 +180,11 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
   using buffer_type = boost::beast::flat_buffer;
   auto l_g          = co_await in_client_data->queue_.queue(boost::asio::use_awaitable);
   auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());
-  in_client_data->expires_after(std::chrono::seconds{10});
+  in_client_data->expires_after(30s);
 
   boost::beast::http::response<ResponseBody> l_ret{};
-  if (!in_client_data->socket().socket().is_open()) {
+  if (!in_client_data->is_open()) {
+    in_client_data->re_init();
     auto [l_e1, l_re] =
         co_await in_client_data->resolver_->async_resolve(in_client_data->server_ip_, in_client_data->server_port_);
     if (l_e1) {
@@ -202,7 +211,7 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
   using visit_return_type = boost::asio::async_result<
     http_client_data_base::co_executor_type, void(boost::system::error_code, std::size_t)>::return_type;
 
-  in_client_data->expires_after(std::chrono::seconds{10});
+  in_client_data->expires_after(30s);
   auto [l_ew, l_bw] = co_await std::visit(
     [in_req_ptr = &in_req](auto&& in_socket_ptr) -> visit_return_type {
       // 此处调整异步堆栈
@@ -216,7 +225,7 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
     in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
     co_return std::make_tuple(l_ew, l_ret);
   }
-  in_client_data->expires_after(std::chrono::seconds{10});
+  in_client_data->expires_after(30s);
 
   auto [l_er, l_br] = co_await std::visit(
     [in_ret_ptr = &l_ret](auto&& in_socket_ptr) -> visit_return_type {

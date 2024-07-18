@@ -18,18 +18,20 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
     server_port_ = "443";
   else
     server_port_ = "80";
+  scheme_id_ = l_url.scheme_id();
+  ctx_       = in_ctx;
 
-  switch (l_url.scheme_id()) {
+  switch (scheme_id_) {
     case boost::urls::scheme::http: // http
       socket_ = std::make_shared<socket_t>(executor_);
       break;
     case boost::urls::scheme::https: // https
     {
-      if (in_ctx == nullptr) {
+      if (ctx_ == nullptr) {
         logger_->log(log_loc(), level::err, "https 需要 ssl context");
         return;
       }
-      auto l_ssl = std::make_shared<ssl_socket_t>(executor_, *in_ctx);
+      auto l_ssl = std::make_shared<ssl_socket_t>(executor_, *ctx_);
       l_ssl->set_verify_mode(boost::asio::ssl::verify_none);
       if (!SSL_set_tlsext_host_name(l_ssl->native_handle(), server_ip_.c_str())) {
         boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
@@ -44,6 +46,43 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
       break;
   }
 }
+
+void http_client_data_base::re_init() {
+  if (is_open()) return;
+
+  switch (scheme_id_) {
+    case boost::urls::scheme::http: // http
+      socket_ = std::make_shared<socket_t>(executor_);
+      break;
+    case boost::urls::scheme::https: // https
+    {
+      if (ctx_ == nullptr) {
+        logger_->log(log_loc(), level::err, "https 需要 ssl context");
+        return;
+      }
+      auto l_ssl = std::make_shared<ssl_socket_t>(executor_, *ctx_);
+      l_ssl->set_verify_mode(boost::asio::ssl::verify_none);
+      if (!SSL_set_tlsext_host_name(l_ssl->native_handle(), server_ip_.c_str())) {
+        boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+        logger_->log(log_loc(), level::err, "SSL_set_tlsext_host_name error: {}", ec.message());
+        return;
+      }
+      socket_ = l_ssl;
+    }
+    break;
+    default:
+      logger_->log(log_loc(), level::err, "不支持的协议 {}", boost::urls::to_string(scheme_id_));
+      break;
+  }
+}
+
+
+bool http_client_data_base::is_open() {
+  return
+      std::visit([](auto&& in_socket_ptr)-> bool { return in_socket_ptr; }, socket_)
+      && socket().socket().is_open();
+}
+
 
 void http_client_data_base::do_close() {
   std::visit(
@@ -108,7 +147,7 @@ void awaitable_queue::awaitable_queue_impl::await_suspend(std::function<void()> 
 bool awaitable_queue::awaitable_queue_impl::await_ready() { return !is_run_; }
 
 void awaitable_queue::awaitable_queue_impl::next() {
-  if (next_list_.empty()) return;
+  is_run_ = true;
   const std::lock_guard l{lock_};
   next_list_.front()();
   next_list_.pop();
@@ -116,7 +155,7 @@ void awaitable_queue::awaitable_queue_impl::next() {
 
 void awaitable_queue::awaitable_queue_impl::maybe_invoke() {
   if (is_run_) return;
-  is_run_ = true;
+  if (next_list_.empty()) return;
   next();
 }
 } // namespace doodle::http::detail
