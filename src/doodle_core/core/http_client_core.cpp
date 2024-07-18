@@ -113,6 +113,7 @@ void http_client_data_base::do_close() {
 
 void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
   timer_ptr_->expires_after(in_seconds);
+  socket().expires_after(in_seconds);
 
   timer_ptr_->async_wait([this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
     if (in_ec) {
