@@ -77,9 +77,9 @@ public:
 private:
   struct awaitable_queue_impl {
     std::queue<std::function<void()>> next_list_{};
-    std::recursive_mutex lock_{};
+    std::recursive_mutex lock_;
     std::atomic_int limit_{1};
-    std::atomic_int run_task_{};
+    std::atomic_int run_task_;
 
     awaitable_queue_impl() = default;
 
