@@ -514,9 +514,7 @@ void fbx_node_mesh::build_skin() {
 
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> l_dag_tree_map{};
   for (auto l_it = extra_data_.tree_->begin(); l_it != extra_data_.tree_->end(); ++l_it) {
-    if (ranges::find_if(l_joint_list, boost::lambda2::_1 == (*l_it)->dag_path) != std::end(l_joint_list)) {
-      l_dag_tree_map.emplace((*l_it)->dag_path, (*l_it));
-    }
+    l_dag_tree_map.emplace((*l_it)->dag_path, (*l_it));
   }
   std::map<MDagPath, FbxCluster*, details::cmp_dag> l_dag_fbx_map{};
 
@@ -553,31 +551,39 @@ void fbx_node_mesh::build_skin() {
     break;
   }
 
+  // 使用 skin 节点上的 bindPreMatrix 属性迭代设置控制点的矩阵
+  // 骨骼, 和皮肤簇中矩阵的对应关系
+  std::map<MDagPath, MMatrix> l_dag_matrix_map{};
+  {
+    auto l_matrix_plug          = get_plug(l_skin_obj, "matrix");
+    auto l_bind_pre_matrix_plug = get_plug(l_skin_obj, "bindPreMatrix");
+    for (auto i = 0; i < l_matrix_plug.numElements(); ++i) {
+      auto l_matrix_obj = l_bind_pre_matrix_plug[i].asMObject(&l_status);
+      maya_chick(l_status);
+      MFnMatrixData l_matrix{};
+      maya_chick(l_matrix.setObject(l_matrix_obj));
+      if (l_matrix_plug[i].isSource(&l_status) && l_status) {
+        auto l_soure = l_matrix_plug[i].source();
+        auto l_m     = l_matrix.matrix(&l_status);
+        maya_chick(l_status);
+        l_dag_matrix_map.emplace(get_dag_path(l_soure.node()), l_m);
+      }
+    }
+  }
+
   for (auto&& i : l_joint_list) {
     auto l_joint    = l_dag_tree_map[i];
     auto* l_cluster = l_dag_fbx_map[i];
     l_cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
-    fbxsdk::FbxAMatrix l_fbx_matrix{};
-    auto l_node = l_joint->dag_path.node();
+    FbxAMatrix l_fbx_matrix{};
 
-    auto l_world_matrix_plug = get_plug(l_node, "worldMatrix");
-    if (l_world_matrix_plug.numElements() > 0 && l_world_matrix_plug[0].isConnected()) {
-      MPlugArray l_dest_plug{};
-      l_world_matrix_plug[0].destinations(l_dest_plug);
-      if (l_dest_plug.length() > 0) {
-        auto l_index          = l_dest_plug[0].logicalIndex();
-        auto l_post_plug      = get_plug(l_dest_plug[0].node(), "bindPreMatrix").elementByLogicalIndex(l_index);
-        MObject l_post_handle = l_post_plug.asMObject();
-        const MFnMatrixData l_data{l_post_handle, &l_status};
-        if (l_status) {
-          auto l_world_matrix = l_data.matrix(&l_status).inverse();
-          maya_chick(l_status);
-          for (auto i = 0; i < 4; ++i)
-            for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
-        } else {
-          default_logger_raw()->error("matrix data error index {}: {}", l_index, l_status.errorString());
-        }
-      }
+    if (l_dag_matrix_map.contains(l_joint->dag_path)) {
+      auto l_world_matrix = l_dag_matrix_map[l_joint->dag_path].inverse();
+      for (auto i = 0; i < 4; ++i)
+        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
+    } else {
+      l_fbx_matrix.SetIdentity();
+      default_logger_raw()->warn("无法获取矩阵 {}", l_joint->dag_path);
     }
     l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
@@ -1236,9 +1242,9 @@ void fbx_write::build_data() {
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_init{};
   l_iter_init = [&](const fbx_tree_t::iterator& in_iterator) {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      (*i)->extra_data_.tree_            = &tree_;
-      (*i)->extra_data_.material_map_    = &material_map_;
-      (*i)->extra_data_.logger_          = logger_;
+      (*i)->extra_data_.tree_         = &tree_;
+      (*i)->extra_data_.material_map_ = &material_map_;
+      (*i)->extra_data_.logger_       = logger_;
       l_iter_init(i);
     }
   };
