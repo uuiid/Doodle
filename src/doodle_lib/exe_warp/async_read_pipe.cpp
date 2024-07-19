@@ -10,7 +10,7 @@ boost::asio::awaitable<void> async_read_pipe(std::shared_ptr<boost::asio::readab
                                              level::level_enum in_level,
                                              std::string in_out_code) {
   boost::asio::streambuf l_buffer{};
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     auto [l_ec, l_size] = co_await
         boost::asio::async_read_until(
           *in_pip, l_buffer, '\n', boost::asio::as_tuple(boost::asio::use_awaitable));
