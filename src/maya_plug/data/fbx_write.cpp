@@ -553,7 +553,7 @@ void fbx_node_mesh::build_skin() {
 
   // 使用 skin 节点上的 bindPreMatrix 属性迭代设置控制点的矩阵
   // 骨骼, 和皮肤簇中矩阵的对应关系
-  std::map<MDagPath, MMatrix> l_dag_matrix_map{};
+  std::map<MDagPath, MMatrix, details::cmp_dag> l_dag_matrix_map{};
   {
     auto l_matrix_plug          = get_plug(l_skin_obj, "matrix");
     auto l_bind_pre_matrix_plug = get_plug(l_skin_obj, "bindPreMatrix");
