@@ -19,6 +19,7 @@ target_sources(
         app_service.h
         http_client_core.h
         async_reg.h
+        co_queue.h
 
         PRIVATE
         core_set.cpp
@@ -34,4 +35,5 @@ target_sources(
         wait_op.cpp
         app_service.cpp
         http_client_core.cpp
+        co_queue.cpp
 )
