@@ -295,7 +295,6 @@ public:
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
-  const std::shared_ptr<maya_exe_ns::arg>& in_arg,
-  logger_ptr in_logger
+  std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 );
 } // namespace doodle

@@ -20,6 +20,7 @@
 
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/exe_warp/async_read_pipe.h>
+#include <doodle_lib/exe_warp/windows_hide.h>
 
 #include "boost/process/start_dir.hpp"
 #include "boost/signals2/connection.hpp"
@@ -445,7 +446,7 @@ maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
-  const std::shared_ptr<maya_exe_ns::arg>& in_arg,
+  std::shared_ptr<maya_exe_ns::arg> in_arg,
   logger_ptr in_logger
 ) {
   auto l_g                 = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
@@ -485,15 +486,19 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
   auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
 
+  auto l_process_maya = boost::process::v2::process{
+      g_io_context(), l_run_path,
+      {fmt::format("--{}={}", in_arg->get_arg(), l_arg_path)},
+      boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
+      boost::process::v2::process_environment{l_env},
+      boost::process::v2::process_start_dir{l_maya_path / "bin"},
+      details::hide_and_not_create_windows
+  };
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info), boost::asio::detached);
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::debug), boost::asio::detached);
 
   auto [l_ec,l_exit_code] = co_await boost::process::v2::async_execute(
-    boost::process::v2::process{
-        g_io_context(), l_maya_path,
-        {fmt::format("--{}={}", in_arg->get_arg(), l_arg_path)},
-        boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe}
-    }, boost::asio::as_tuple(boost::asio::use_awaitable));
+    std::move(l_process_maya), boost::asio::as_tuple(boost::asio::use_awaitable));
   if (l_exit_code != 0 || l_ec) {
     co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
   }
