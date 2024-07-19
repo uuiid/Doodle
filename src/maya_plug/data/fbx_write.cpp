@@ -534,7 +534,7 @@ void fbx_node_mesh::build_skin() {
     maya_chick(l_skin_cluster.getPathAtIndex(l_index, l_skin_mesh_path));
 
     MItGeometry l_it_geo{l_skin_mesh_path};
-    log_info(fmt::format("写出皮肤簇 {} 顶点数 {}", l_skin_mesh_path, l_it_geo.count()));
+    log_info(fmt::format("写出网格体 {} 顶点数 {}", l_skin_mesh_path, l_it_geo.count()));
     for (; !l_it_geo.isDone(); l_it_geo.next()) {
       auto l_com = l_it_geo.currentItem(&l_status);
       maya_chick(l_status);
@@ -558,13 +558,18 @@ void fbx_node_mesh::build_skin() {
     auto l_matrix_plug          = get_plug(l_skin_obj, "matrix");
     auto l_bind_pre_matrix_plug = get_plug(l_skin_obj, "bindPreMatrix");
     for (auto i = 0; i < l_matrix_plug.numElements(); ++i) {
-      auto l_matrix_obj = l_bind_pre_matrix_plug[i].asMObject(&l_status);
-      maya_chick(l_status);
-      MFnMatrixData l_matrix{};
-      maya_chick(l_matrix.setObject(l_matrix_obj));
-      if (l_matrix_plug[i].isSource(&l_status) && l_status) {
+      if (l_matrix_plug[i].isConnected(&l_status) && l_status) {
+        auto l_log_index = l_matrix_plug[i].logicalIndex(&l_status);
+        maya_chick(l_status);
+        auto l_bind_pre_matrix = l_bind_pre_matrix_plug.elementByLogicalIndex(l_log_index, &l_status);
+        maya_chick(l_status);
+        auto l_matrix_obj = l_bind_pre_matrix.asMObject(&l_status);
+        maya_chick(l_status);
+        MFnMatrixData l_matrix{};
+        maya_chick(l_matrix.setObject(l_matrix_obj));
         auto l_soure = l_matrix_plug[i].source();
-        auto l_m     = l_matrix.matrix(&l_status);
+        // default_logger_raw()->info("{}",l_soure.info());
+        auto l_m = l_matrix.matrix(&l_status);
         maya_chick(l_status);
         l_dag_matrix_map.emplace(get_dag_path(l_soure.node()), l_m);
       }
@@ -579,8 +584,8 @@ void fbx_node_mesh::build_skin() {
 
     if (l_dag_matrix_map.contains(l_joint->dag_path)) {
       auto l_world_matrix = l_dag_matrix_map[l_joint->dag_path].inverse();
-      for (auto i = 0; i < 4; ++i)
-        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i][j] = l_world_matrix[i][j];
+      for (auto i2 = 0; i2 < 4; ++i2)
+        for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i2][j] = l_world_matrix[i2][j];
     } else {
       l_fbx_matrix.SetIdentity();
       default_logger_raw()->warn("无法获取矩阵 {}", l_joint->dag_path);

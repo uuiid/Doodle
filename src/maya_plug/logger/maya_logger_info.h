@@ -21,6 +21,7 @@ class maya_msg : public spdlog::sinks::base_sink<mutex_t> {
     boost::erase_all(k_str, "\n");
     MString k_m_str{};
     k_m_str.setUTF8(k_str.data());
+
     switch (MGlobal::mayaState()) {
       case MGlobal::MMayaState::kInteractive: {
         switch (msg.level) {
@@ -28,12 +29,8 @@ class maya_msg : public spdlog::sinks::base_sink<mutex_t> {
             MGlobal::displayError(k_m_str);
             break;
           }
-          case spdlog::level::warn: {
-            //            MGlobal::displayWarning(k_m_str);
-            break;
-          }
           default: {
-            //            MGlobal::displayInfo(k_m_str);
+            // MGlobal::displayInfo(k_m_str);
             break;
           }
         }
