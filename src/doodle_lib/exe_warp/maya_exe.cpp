@@ -19,6 +19,7 @@
 #include <doodle_app/app/app_command.h>
 
 #include <doodle_lib/core/filesystem_extend.h>
+#include <doodle_lib/exe_warp/async_read_pipe.h>
 
 #include "boost/process/start_dir.hpp"
 #include "boost/signals2/connection.hpp"
@@ -466,34 +467,32 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
     FSys::create_directories(in_arg->out_path_file_.parent_path());
   auto l_arg_path = FSys::write_tmp_file("maya/arg", in_arg->to_json_str(), ".json");
 
-  in_logger->info("开始写入配置文件 {}", l_arg_path);
+  in_logger->warn("开始写入配置文件 {}", l_arg_path);
 
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
 
-  auto l_this_env_ = boost::process::v2::environment::current();
-  std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value> l_env{
-      l_this_env_.begin(), l_this_env_.end()};
-
-  if (l_env.contains("PYTHONHOME")) {
-    l_env.erase("PYTHONHOME");
-  }
-  if (l_env.contains("PYTHONPATH")) {
-    l_env.erase("PYTHONPATH");
+  std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value> l_env{};
+  for (auto&& l_it : boost::process::v2::environment::current()) {
+    if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH")
+      l_env.emplace(l_it.key(), l_it.value());
   }
 
-  l_env["MAYA_LOCATION"] = l_maya_path.generic_string();
-  l_env["Path"].push_back((l_maya_path / "bin").generic_string());
-  l_env["Path"].push_back(l_run_path.parent_path().generic_string());
-  l_env["MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_string();
+  l_env[L"MAYA_LOCATION"] = l_maya_path.generic_wstring();
+  l_env[L"Path"].push_back((l_maya_path / "bin").generic_wstring());
+  l_env[L"Path"].push_back(l_run_path.parent_path().generic_wstring());
+  l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
   add_maya_module();
-  boost::asio::readable_pipe l_out_pipe{g_io_context()};
-  boost::asio::readable_pipe l_err_pipe{g_io_context()};
+  auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+
+  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info), boost::asio::detached);
+  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::debug), boost::asio::detached);
 
   auto [l_ec,l_exit_code] = co_await boost::process::v2::async_execute(
     boost::process::v2::process{
         g_io_context(), l_maya_path,
         {fmt::format("--{}={}", in_arg->get_arg(), l_arg_path)},
-        boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe}
+        boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe}
     }, boost::asio::as_tuple(boost::asio::use_awaitable));
   if (l_exit_code != 0 || l_ec) {
     co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
