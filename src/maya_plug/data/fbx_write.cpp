@@ -559,6 +559,7 @@ void fbx_node_mesh::build_skin() {
     auto l_bind_pre_matrix_plug = get_plug(l_skin_obj, "bindPreMatrix");
     for (auto i = 0; i < l_matrix_plug.numElements(); ++i) {
       if (l_matrix_plug[i].isConnected(&l_status) && l_status) {
+        // 这里必须使用逻辑索以才会正确
         auto l_log_index = l_matrix_plug[i].logicalIndex(&l_status);
         maya_chick(l_status);
         auto l_bind_pre_matrix = l_bind_pre_matrix_plug.elementByLogicalIndex(l_log_index, &l_status);
