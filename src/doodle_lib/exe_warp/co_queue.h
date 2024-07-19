@@ -33,7 +33,12 @@ private:
   };
 
 public:
-  awaitable_queue_limitation()  = default;
+  awaitable_queue_limitation() = default;
+
+  explicit awaitable_queue_limitation(const std::int32_t in_limit) : impl_{std::make_shared<awaitable_queue_impl>()} {
+    impl_->limit_ = in_limit;
+  }
+
   ~awaitable_queue_limitation() = default;
 
   class queue_guard {
@@ -65,7 +70,7 @@ public:
       }, in_token, this, l_exe);
   }
 
-  void set_limit(int in_limit) {
+  void set_limit(std::int32_t in_limit) {
     impl_->limit_ = in_limit;
   }
 
