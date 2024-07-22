@@ -440,5 +440,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
                                   l_import_data.level_sequence_import, l_import_data.movie_pipeline_config),
                                 in_logger);
   in_logger->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
+  co_return std::tuple(boost::system::error_code{}, l_import_data.out_file_dir);
 }
 } // namespace doodle
