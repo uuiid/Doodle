@@ -23,6 +23,7 @@ namespace fbx_write_ns {
 struct fbx_node;
 using fbx_node_ptr = std::shared_ptr<fbx_node>;
 using fbx_tree_t   = tree<fbx_node_ptr>;
+
 // 额外数据
 struct fbx_extra_data {
   fbx_tree_t* tree_{};
@@ -39,7 +40,9 @@ struct fbx_node {
   fbx_extra_data extra_data_{};
 
   fbx_node() = default;
-  explicit fbx_node(const MDagPath& in_dag_path, FbxNode* in_node) : dag_path(in_dag_path), node(in_node) {}
+
+  explicit fbx_node(const MDagPath& in_dag_path, FbxNode* in_node) : dag_path(in_dag_path), node(in_node) {
+  }
 
   void build_node();
 
@@ -50,20 +53,26 @@ struct fbx_node {
 
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
 
- protected:
+protected:
   virtual void build_data() = 0;
 };
 
 struct fbx_node_transform : public fbx_node {
   fbx_node_transform() = default;
-  explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {}
+
+  explicit fbx_node_transform(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node(in_dag_path, in_node) {
+  }
+
   void build_data() override;
   void build_animation(const MTime& in_time) override;
 };
 
 struct fbx_node_cam : public fbx_node_transform {
   fbx_node_cam() = default;
-  explicit fbx_node_cam(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {}
+
+  explicit fbx_node_cam(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {
+  }
+
   void build_data() override;
   void build_animation(const MTime& in_time) override;
 };
@@ -73,10 +82,11 @@ struct fbx_node_mesh : public fbx_node_transform {
   std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
 
   fbx_node_mesh() = default;
-  explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
-      : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {}
 
-  virtual void build_bind_post();
+  explicit fbx_node_mesh(const MDagPath& in_dag_path, FbxNode* in_node)
+    : fbx_node_transform(in_dag_path, in_node), mesh{}, blend_shape_channel_{} {
+  }
+
   virtual void build_data() override;
   virtual void build_animation(const MTime& in_time) override;
 
@@ -93,11 +103,13 @@ struct fbx_node_mesh : public fbx_node_transform {
 
 struct fbx_node_sim_mesh : public fbx_node_mesh {
   fbx_node_sim_mesh() = default;
-  explicit fbx_node_sim_mesh(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_mesh(in_dag_path, in_node) {}
+
+  explicit fbx_node_sim_mesh(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_mesh(in_dag_path, in_node) {
+  }
+
   void build_data() override;
   void build_animation(const MTime& in_time) override;
 
-  void build_bind_post() override;
 
   void build_skin() override;
   void build_blend_shape() override;
@@ -109,11 +121,13 @@ struct fbx_node_sim_mesh : public fbx_node_mesh {
 
 struct fbx_node_joint : public fbx_node_transform {
   fbx_node_joint() = default;
-  explicit fbx_node_joint(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {}
+
+  explicit fbx_node_joint(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {
+  }
+
   void build_data() override;
 };
-
-}  // namespace fbx_write_ns
+} // namespace fbx_write_ns
 class fbx_write {
   std::shared_ptr<fbxsdk::FbxManager> manager_;
 
@@ -127,9 +141,9 @@ class fbx_write {
   using fbx_node_ptr         = fbx_write_ns::fbx_node_ptr;
   using fbx_tree_t           = fbx_write_ns::fbx_tree_t;
 
-  fbx_tree_t tree_{};                                                         // 用于存储节点的树
-  mutable std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{};  // 用于存储材质的map
-  std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{};             // 用于存储节点的map
+  fbx_tree_t tree_{}; // 用于存储节点的树
+  mutable std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{}; // 用于存储材质的map
+  std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{}; // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   MObjectArray bind_pose_array_{};
 
@@ -150,7 +164,7 @@ class fbx_write {
   MTime find_begin_anim_time();
   static std::vector<MDagPath> select_to_vector(const MSelectionList& in_vector);
 
- public:
+public:
   fbx_write();
   ~fbx_write();
 
@@ -164,17 +178,19 @@ class fbx_write {
   inline void write(const std::vector<MDagPath>& in_vector, const MTime& in_begin, const MTime& in_end) {
     write(in_vector, {}, in_begin, in_end);
   }
+
   inline void write(const MSelectionList& in_vector, const MTime& in_begin, const MTime& in_end) {
     write(select_to_vector(in_vector), in_begin, in_end);
   }
 
   // 写出fbx
   void write(
-      const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
-      const MTime& in_end
+    const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
+    const MTime& in_end
   );
+
   inline void write(
-      const MSelectionList& in_vector, const MSelectionList& in_sim_vector, const MTime& in_begin, const MTime& in_end
+    const MSelectionList& in_vector, const MSelectionList& in_sim_vector, const MTime& in_begin, const MTime& in_end
   ) {
     write(select_to_vector(in_vector), select_to_vector(in_sim_vector), in_begin, in_end);
   }
@@ -189,5 +205,4 @@ class fbx_write {
   // 写出相机
   // void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end);
 };
-
-}  // namespace doodle::maya_plug
+} // namespace doodle::maya_plug

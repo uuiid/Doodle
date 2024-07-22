@@ -303,8 +303,6 @@ void fbx_node_mesh::build_data() {
   build_blend_shape();
 }
 
-void fbx_node_mesh::build_bind_post() {
-}
 
 void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
@@ -607,21 +605,13 @@ void fbx_node_mesh::build_skin() {
     l_iter = [&](fbx_tree_t::iterator in_parent) -> bool {
       bool l_r{};
       for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
-        auto l_sub_has = l_iter(l_it);
-        if (ranges::find_if(l_joint_list, boost::lambda2::_1 == (*l_it)->dag_path) != std::end(l_joint_list) ||
-            (*l_it)->dag_path == dag_path || l_sub_has) {
-          post_add.emplace_back(*l_it);
-          l_r |= true;
-        }
+        l_r = true;
+        l_post->Add((*l_it)->node, (*l_it)->node->EvaluateGlobalTransform());
       }
       return l_r;
     };
-
     l_iter(extra_data_.tree_->begin());
 
-    for (auto&& i : post_add) {
-      l_post->Add(i->node, i->node->EvaluateGlobalTransform());
-    }
     node->GetScene()->AddPose(l_post);
   }
   mesh->AddDeformer(l_sk);
@@ -915,7 +905,6 @@ MObject fbx_node_mesh::get_bind_post() const {
   return MObject::kNullObj;
 }
 
-void fbx_node_sim_mesh::build_bind_post() { return; }
 
 void fbx_node_sim_mesh::build_data() {
   // 如果是解算, 只需要构建mesh
@@ -1255,20 +1244,6 @@ void fbx_write::build_data() {
     }
   };
   l_iter_init(tree_.begin());
-
-  std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_bind_post{};
-
-  l_iter_bind_post = [&](const fbx_tree_t::iterator& in_iterator) {
-    for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
-      if ((*i)->dag_path.hasFn(MFn::kMesh))
-        if (auto l_ptr = std::dynamic_pointer_cast<fbx_node_mesh_t>(*i); l_ptr) {
-          l_ptr->build_bind_post();
-        }
-      l_iter_bind_post(i);
-    }
-    return false;
-  };
-  l_iter_bind_post(tree_.begin());
 
   std::function<void(const fbx_tree_t::iterator& in_iterator)> l_iter_fun_tran{};
   l_iter_fun_tran = [&](const fbx_tree_t::iterator& in_iterator) {
