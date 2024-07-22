@@ -405,6 +405,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   import_and_render_ue_ns::args in_args, logger_ptr in_logger
 ) {
   // 先下载文件
+  {
+    auto [l_ec, l_down_info] = co_await analysis_out_file(in_args, in_logger);
+    if (l_ec)
+      co_return std::tuple(l_ec, FSys::path{});
+    in_args.down_info_ = l_down_info;
+  }
 
   // 导入文件
   in_logger->warn("开始导入文件 {} ", in_args.down_info_.render_project_);
