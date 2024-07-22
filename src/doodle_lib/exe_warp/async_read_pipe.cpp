@@ -4,6 +4,7 @@
 
 #include "async_read_pipe.h"
 #include <doodle_core/core/core_set.h>
+#include "boost/locale/encoding.hpp"
 
 namespace doodle {
 boost::asio::awaitable<void> async_read_pipe(std::shared_ptr<boost::asio::readable_pipe> in_pip, logger_ptr in_logger,
