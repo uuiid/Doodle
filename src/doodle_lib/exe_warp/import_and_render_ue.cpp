@@ -13,103 +13,94 @@
 
 namespace doodle {
 void import_and_render_ue::init() {
-  if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>(std::make_shared<ue_exe>());
-  data_->logger_ = msg_.get<process_message>().logger();
 }
 
-FSys::path import_and_render_ue::gen_import_config() const {
-  auto l_maya_out     = msg_.get<maya_exe_ns::maya_out_arg>();
-  auto l_maya_out_arg = l_maya_out.out_file_list |
+import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render_ue_ns::args in_args) {
+  auto l_maya_out_arg = in_args.maya_out_arg_.out_file_list |
                         ranges::views::filter([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
                           return !in_arg.out_file.empty() && FSys::exists(in_arg.out_file);
                         }) |
                         ranges::to_vector;
+  import_and_render_ue_ns::import_data_t l_import_data;
+  l_import_data.episode    = in_args.episodes_;
+  l_import_data.shot       = in_args.shot_;
+  l_import_data.begin_time = in_args.maya_out_arg_.begin_time;
+  l_import_data.end_time   = in_args.maya_out_arg_.end_time;
 
-  data_->import_data_.episode    = msg_.get<episodes>();
-  data_->import_data_.shot       = msg_.get<shot>();
-  data_->import_data_.begin_time = l_maya_out.begin_time;
-  data_->import_data_.end_time   = l_maya_out.end_time;
-
-  data_->import_data_.project_     = msg_.get<project>();
-  data_->import_data_.out_file_dir =
-      data_->down_info_.render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
+  l_import_data.project_     = in_args.project_;
+  l_import_data.out_file_dir =
+      in_args.down_info_.render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
       fmt::format(
-        "{}_Ep{:04}_sc{:04}{}", data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
-        data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
+        "{}_Ep{:04}_sc{:04}{}", l_import_data.project_.p_shor_str, l_import_data.episode.p_episodes,
+        l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
       );
 
   // 渲染配置
   {
-    data_->import_data_.movie_pipeline_config = fmt::format(
+    l_import_data.movie_pipeline_config = fmt::format(
       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config",
-      data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
-      data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
+      l_import_data.project_.p_shor_str, l_import_data.episode.p_episodes,
+      l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
-    data_->import_data_.movie_pipeline_config.replace_extension(data_->import_data_.movie_pipeline_config.stem());
+    l_import_data.movie_pipeline_config.replace_extension(l_import_data.movie_pipeline_config.stem());
 
-    data_->import_data_.level_sequence_import = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}", data_->import_data_.project_.p_shor_str,
-      data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
+    l_import_data.level_sequence_import = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}", l_import_data.project_.p_shor_str,
+      l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
-    data_->import_data_.level_sequence_vfx = data_->import_data_.level_sequence_import.generic_string() + "_Vfx";
-    data_->import_data_.level_sequence_import.replace_extension(data_->import_data_.level_sequence_import.stem());
+    l_import_data.level_sequence_vfx = l_import_data.level_sequence_import.generic_string() + "_Vfx";
+    l_import_data.level_sequence_import.replace_extension(l_import_data.level_sequence_import.stem());
 
-    data_->import_data_.create_map = fmt::format(
+    l_import_data.create_map = fmt::format(
       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_LV",
-      data_->import_data_.project_.p_shor_str, data_->import_data_.episode.p_episodes,
-      data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum
+      l_import_data.project_.p_shor_str, l_import_data.episode.p_episodes,
+      l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
-    data_->import_data_.vfx_map = data_->import_data_.create_map + "_Vfx_LV";
+    l_import_data.vfx_map = l_import_data.create_map + "_Vfx_LV";
 
-    data_->import_data_.import_dir = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", data_->import_data_.project_.p_shor_str,
-      data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot, data_->import_data_.shot.p_shot_enum,
+    l_import_data.import_dir = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", l_import_data.project_.p_shor_str,
+      l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum,
       time_point_wrap{}.get_local_time()
     );
 
-    data_->import_data_.render_map = fmt::format(
-      "/Game/Shot/ep{0:04}/sc{1:03}{2}", data_->import_data_.episode.p_episodes, data_->import_data_.shot.p_shot,
-      data_->import_data_.shot.p_shot_enum
+    l_import_data.render_map = fmt::format(
+      "/Game/Shot/ep{0:04}/sc{1:03}{2}", l_import_data.episode.p_episodes, l_import_data.shot.p_shot,
+      l_import_data.shot.p_shot_enum
     );
   }
 
-  data_->import_data_.files = l_maya_out_arg |
-                              ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
-                                auto l_file_name_str = in_arg.out_file.filename().generic_string();
-                                auto l_ext           = in_arg.out_file.extension().generic_string();
-                                std::string l_type{};
-                                if (l_file_name_str.find("_camera_") != std::string::npos) {
-                                  l_type = "cam";
-                                } else if (l_ext == ".abc") {
-                                  l_type = "geo";
-                                } else if (l_ext == ".fbx") {
-                                  l_type = "char";
-                                }
-                                return import_and_render_ue::import_files_t{l_type, in_arg.out_file};
-                              }) |
-                              ranges::to_vector;
-  data_->import_data_.original_map = data_->down_info_.scene_file_.generic_string();
-
-  nlohmann::json l_json{};
-  l_json          = data_->import_data_;
-  auto l_tmp_path = FSys::get_cache_path(FSys::path{"ue_import"} / version::build_info::get().version_str) /
-                    (core_set::get_set().get_uuid_str() + ".json");
-  FSys::ofstream{l_tmp_path} << l_json.dump();
-  return l_tmp_path;
+  l_import_data.files = l_maya_out_arg |
+                        ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
+                          auto l_file_name_str = in_arg.out_file.filename().generic_string();
+                          auto l_ext           = in_arg.out_file.extension().generic_string();
+                          std::string l_type{};
+                          if (l_file_name_str.find("_camera_") != std::string::npos) {
+                            l_type = "cam";
+                          } else if (l_ext == ".abc") {
+                            l_type = "geo";
+                          } else if (l_ext == ".fbx") {
+                            l_type = "char";
+                          }
+                          return import_and_render_ue_ns::import_files_t{l_type, in_arg.out_file};
+                        }) |
+                        ranges::to_vector;
+  l_import_data.original_map = in_args.down_info_.scene_file_.generic_string();
+  return l_import_data;
 }
 
-void import_and_render_ue::fix_project() const {
-  auto l_json     = nlohmann::json::parse(FSys::ifstream{data_->down_info_.render_project_});
+void fix_project(const import_and_render_ue_ns::args& in_args) {
+  auto l_json     = nlohmann::json::parse(FSys::ifstream{in_args.down_info_.render_project_});
   auto&& l_plugin = l_json["Plugins"];
   l_plugin.clear();
   auto&& l_plugin_obj     = l_plugin.emplace_back(nlohmann::json::object());
   l_plugin_obj["Name"]    = "Doodle";
   l_plugin_obj["Enabled"] = true;
-  FSys::ofstream{data_->down_info_.render_project_} << l_json.dump();
+  FSys::ofstream{in_args.down_info_.render_project_} << l_json.dump();
 }
 
-void import_and_render_ue::fix_config() const {
-  auto l_file_path = data_->down_info_.render_project_.parent_path() / "Config" / "DefaultEngine.ini";
+void fix_config(const import_and_render_ue_ns::args& in_args) {
+  auto l_file_path = in_args.down_info_.render_project_.parent_path() / "Config" / "DefaultEngine.ini";
 
   if (!FSys::exists(l_file_path)) {
     FSys::ofstream{l_file_path} << R"(
@@ -177,79 +168,35 @@ NearClipPlane=0.500000
   FSys::ofstream{l_file_path} << l_str;
 }
 
-void import_and_render_ue::operator()(
-  boost::system::error_code in_error_code, down_auto_light_anim_file::down_info in_down_info
-) const {
-  if (!data_->logger_) {
-    default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
-    in_error_code.assign(error_enum::component_missing_error, doodle_category::get());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    wait_op_->ec_ = in_error_code;
-    wait_op_->complete();
-    return;
-  }
-  if (in_error_code) {
-    data_->logger_->log(log_loc(), level::level_enum::err, "导入ue错误 error:{}", in_error_code);
-    wait_op_->ec_ = in_error_code;
-    wait_op_->complete();
-    return;
-  }
+boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
+  import_and_render_ue_ns::args in_args, logger_ptr in_logger
+) {
+  in_logger->warn("开始导入文件 {} ", in_args.down_info_.render_project_);
+  fix_config(in_args);
+  fix_project(in_args);
+  auto l_import_data = gen_import_config(in_args);
+  nlohmann::json l_json{};
+  l_json          = l_import_data;
+  auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+  auto l_ec1      = co_await async_run_ue(fmt::format(
+                                       "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation  -Params={}",
+                                       in_args.down_info_.render_project_, l_tmp_path),
+                                     in_logger);
+  if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
 
-  data_->down_info_ = in_down_info;
-  data_->logger_->log(log_loc(), level::level_enum::warn, "开始导入文件 {} ", data_->down_info_.render_project_);
-  fix_project();
-  fix_config();
-  g_ctx().get<ue_exe_ptr>()->async_run(
-    msg_,
-    fmt::format(
-      "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation "
-      "-Params={}",
-      data_->down_info_.render_project_, gen_import_config()
-    ),
-    boost::asio::bind_executor(g_io_context(), std::move(*this))
-  );
-}
-
-void import_and_render_ue::operator()(boost::system::error_code in_error_code) const {
-  if (in_error_code) {
-    data_->logger_->log(log_loc(), level::level_enum::err, "渲染错误 error:{}", in_error_code);
-    wait_op_->ec_ = in_error_code;
-    wait_op_->complete();
-    return;
-  }
-  switch (data_->status_) {
-    case status::import_file: {
-      data_->logger_->log(
-        log_loc(), level::level_enum::warn, "渲染开始, 输出目录 {}", data_->import_data_.out_file_dir
-      );
-      if (FSys::exists(data_->import_data_.out_file_dir)) {
-        try {
-          FSys::remove_all(data_->import_data_.out_file_dir);
-        } catch (FSys::filesystem_error& err) {
-          data_->logger_->log(log_loc(), level::level_enum::err, "渲染删除上次输出错误 error:{}", err.what());
-        }
-      }
-      data_->status_ = status::render;
-      g_ctx().get<ue_exe_ptr>()->async_run(
-        msg_,
-        fmt::format(
-          R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
-          data_->down_info_.render_project_, data_->import_data_.render_map,
-          data_->import_data_.level_sequence_import, data_->import_data_.movie_pipeline_config
-        ),
-        boost::asio::bind_executor(g_io_context(), std::move(*this))
-      );
-    }
-    break;
-    case status::render: {
-      data_->logger_->log(
-        log_loc(), level::level_enum::warn, "完成渲染, 输出目录 {}", data_->import_data_.out_file_dir
-      );
-      set_out_file_dir_(data_->import_data_.out_file_dir);
-      wait_op_->ec_ = in_error_code;
-      wait_op_->complete();
-      break;
+  in_logger->warn("渲染开始, 输出目录 {}", l_import_data.out_file_dir);
+  if (exists(l_import_data.out_file_dir)) {
+    try {
+      FSys::remove_all(l_import_data.out_file_dir);
+    } catch (FSys::filesystem_error& err) {
+      in_logger->error("渲染删除上次输出错误 error:{}", err.what());
     }
   }
+  l_ec1 = co_await async_run_ue(fmt::format(
+                                  R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
+                                  in_args.down_info_.render_project_, l_import_data.render_map,
+                                  l_import_data.level_sequence_import, l_import_data.movie_pipeline_config),
+                                in_logger);
+  in_logger->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
 }
 } // namespace doodle
