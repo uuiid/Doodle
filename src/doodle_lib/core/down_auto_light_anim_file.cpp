@@ -22,23 +22,21 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 
 #include <boost/beast.hpp>
-namespace doodle {
 
+namespace doodle {
 void down_auto_light_anim_file::init() {
   data_->logger_ = msg_.get<process_message>().logger();
-
-  if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>(std::make_shared<ue_exe>());
 }
 
 std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_file::fetch_association_data(
-    const std::vector<association_data> &in_uuid, boost::system::error_code &out_error_code
+  const std::vector<association_data>& in_uuid, boost::system::error_code& out_error_code
 ) const {
   std::vector<down_auto_light_anim_file::association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
 
   try {
     l_stream.connect(boost::asio::ip::tcp::endpoint{boost::asio::ip::address_v4::from_string("192.168.40.181"), 50026});
-    for (auto &&i : in_uuid) {
+    for (auto&& i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{
           boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", i.id_), 11
       };
@@ -64,20 +62,19 @@ std::vector<down_auto_light_anim_file::association_data> down_auto_light_anim_fi
       auto l_json = nlohmann::json::parse(l_res.body());
 
       association_data l_data{
-          .id_        = i.id_,
+          .id_ = i.id_,
           .maya_file_ = l_json.at("maya_file").get<std::string>(),
-          .ue_file_   = l_json.at("ue_file").get<std::string>(),
-          .type_      = l_json.at("type").get<details::assets_type_enum>(),
+          .ue_file_ = l_json.at("ue_file").get<std::string>(),
+          .type_ = l_json.at("type").get<details::assets_type_enum>(),
       };
       l_out.emplace_back(std::move(l_data));
     }
-
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     data_->logger_->log(log_loc(), level::err, "连接服务器失败:{}", e.what());
     out_error_code =
         boost::system::error_code{boost::system::errc::connection_refused, boost::system::generic_category()};
   }
-  for (auto &&i : l_out) {
+  for (auto&& i : l_out) {
     i.ue_prj_path_ = ue_main_map::find_ue_project_file(i.ue_file_);
   }
   return l_out;
@@ -96,7 +93,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   project l_project = msg_.get<project>();
   std::vector<association_data> l_refs_tmp{};
 
-  for (auto &&i : data_->out_maya_arg_.out_file_list) {
+  for (auto&& i : data_->out_maya_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
     data_->logger_->log(log_loc(), level::warn, "引用文件:{}", i.ref_file);
     auto l_uuid = FSys::software_flag_file(i.ref_file);
@@ -105,12 +102,10 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
     l_refs_tmp.emplace_back(association_data{.id_ = l_uuid, .export_file_ = i.ref_file});
   }
 
-
-
-  std::sort(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto &l, const auto &r) { return l.id_ < r.id_; });
+  std::sort(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto& l, const auto& r) { return l.id_ < r.id_; });
   l_refs_tmp.erase(
-      std::unique(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto &l, const auto &r) { return l.id_ == r.id_; }),
-      l_refs_tmp.end()
+    std::unique(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto& l, const auto& r) { return l.id_ == r.id_; }),
+    l_refs_tmp.end()
   );
   auto l_refs = fetch_association_data(l_refs_tmp, in_error_code);
   if (in_error_code) {
@@ -124,7 +119,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   auto l_scene_uuid = boost::uuids::nil_uuid();
   FSys::path l_down_path_file_name{};
 
-  for (auto &&h : l_refs) {
+  for (auto&& h : l_refs) {
     if (auto l_is_e = h.ue_file_.empty(), l_is_ex = FSys::exists(h.ue_file_); l_is_e || !l_is_ex) {
       if (l_is_e)
         data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 的 ue 引用无效, 为空", h.maya_file_);
@@ -155,7 +150,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
 
-  for (auto &&h : l_refs) {
+  for (auto&& h : l_refs) {
     auto l_down_path  = h.ue_prj_path_.parent_path();
     auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
     auto l_local_path = g_root / l_project.p_shor_str / l_down_path_file_name;
@@ -163,7 +158,7 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
     switch (h.type_) {
       // 场景文件
       case details::assets_type_enum::scene: {
-        auto l_original = h.ue_file_.lexically_relative(l_root);
+        auto l_original               = h.ue_file_.lexically_relative(l_root);
         data_->down_info_.scene_file_ =
             fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
 
@@ -174,12 +169,14 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
         if (!FSys::exists(l_local_path / h.ue_prj_path_.filename()))
           l_copy_path.emplace_back(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename());
         data_->down_info_.render_project_ = l_local_path / h.ue_prj_path_.filename();
-      } break;
+      }
+      break;
 
       // 角色文件
       case details::assets_type_enum::character: {
         l_copy_path.emplace_back(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content);
-      } break;
+      }
+      break;
 
       // 道具文件
       case details::assets_type_enum::prop: {
@@ -187,10 +184,11 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
         if (l_prop_path.empty()) continue;
         auto l_prop_path_name = *l_prop_path.begin();
         l_copy_path.emplace_back(
-            l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
-            l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name
+          l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
+          l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name
         );
-      } break;
+      }
+      break;
 
       default:
         break;
@@ -198,12 +196,12 @@ void down_auto_light_anim_file::analysis_out_file(boost::system::error_code in_e
   }
   data_->logger_->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
   g_ctx().get<ue_exe_ptr>()->async_copy_old_project(
-      msg_, l_copy_path, boost::asio::bind_executor(g_io_context(), *this)
+    msg_, l_copy_path, boost::asio::bind_executor(g_io_context(), *this)
   );
 }
 
 void down_auto_light_anim_file::operator()(
-    boost::system::error_code in_error_code, const maya_exe_ns::maya_out_arg &in_vector
+  boost::system::error_code in_error_code, const maya_exe_ns::maya_out_arg& in_vector
 ) const {
   if (!data_->logger_) {
     default_logger_raw()->log(log_loc(), level::level_enum::err, "缺失组建错误 缺失日志组件");
@@ -222,6 +220,7 @@ void down_auto_light_anim_file::operator()(
   data_->out_maya_arg_ = in_vector;
   analysis_out_file(in_error_code);
 }
+
 void down_auto_light_anim_file::operator()(boost::system::error_code in_error_code) const {
   if (in_error_code) {
     data_->logger_->log(log_loc(), level::level_enum::err, "maya_to_exe_file error:{}", in_error_code);
@@ -233,5 +232,4 @@ void down_auto_light_anim_file::operator()(boost::system::error_code in_error_co
   wait_op_->ec_ = in_error_code;
   wait_op_->complete();
 }
-
-}  // namespace doodle
+} // namespace doodle
