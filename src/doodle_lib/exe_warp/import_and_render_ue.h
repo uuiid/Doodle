@@ -89,4 +89,8 @@ struct args {
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
   import_and_render_ue_ns::args in_args, logger_ptr in_logger
 );
+
+boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
+  std::shared_ptr<maya_exe_ns::arg> in_arg, import_and_render_ue_ns::args in_args, logger_ptr in_logger
+);
 } // namespace doodle
