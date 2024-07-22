@@ -12,14 +12,6 @@
 
 namespace doodle {
 namespace import_and_render_ue_ns {
-struct args {
-  episodes episodes_{};
-  shot shot_{};
-  project project_{};
-  maya_exe_ns::maya_out_arg maya_out_arg_{};
-  down_auto_light_anim_file::down_info down_info_{};
-};
-
 struct import_files_t {
   std::string type_;
   FSys::path path_;
@@ -76,6 +68,21 @@ struct import_data_t {
     l_path2.replace_extension();
     j["movie_pipeline_config"] = l_path2;
   }
+};
+
+struct down_info {
+public:
+  FSys::path render_project_{}; // 渲染工程文件(.project)
+  // 场景文件
+  FSys::path scene_file_{};
+};
+
+struct args {
+  episodes episodes_{};
+  shot shot_{};
+  project project_{};
+  maya_exe_ns::maya_out_arg maya_out_arg_{};
+  down_info down_info_{};
 };
 }
 

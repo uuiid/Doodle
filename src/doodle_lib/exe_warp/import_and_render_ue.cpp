@@ -291,10 +291,10 @@ boost::system::error_code copy_diff(const FSys::path& from, const FSys::path& to
   return l_ec;
 }
 
-boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_anim_file::down_info>> analysis_out_file(
+boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_ue_ns::down_info>> analysis_out_file(
   import_and_render_ue_ns::args in_args, logger_ptr in_logger) {
   std::vector<association_data> l_refs_tmp{};
-  down_auto_light_anim_file::down_info l_out{};
+  import_and_render_ue_ns::down_info l_out{};
 
   for (auto&& i : in_args.maya_out_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
@@ -311,7 +311,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
     l_refs_tmp.end()
   );
   auto [l_ec,l_refs] = co_await fetch_association_data(l_refs_tmp, in_logger);
-  if (l_ec) co_return std::tuple{l_ec, down_auto_light_anim_file::down_info{}};
+  if (l_ec) co_return std::tuple{l_ec, import_and_render_ue_ns::down_info{}};
 
   // 检查文件
 
@@ -325,7 +325,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
       else if (!l_is_ex)
         in_logger->error("文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_);
       co_return std::tuple{boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
-                           down_auto_light_anim_file::down_info{}};
+                           import_and_render_ue_ns::down_info{}};
     }
 
     if (h.type_ == details::assets_type_enum::scene) {
@@ -336,7 +336,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
   if (l_scene_uuid.is_nil()) {
     in_logger->error("未查找到主项目文件(没有找到场景文件)");
     co_return std::tuple{boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
-                         down_auto_light_anim_file::down_info{}};
+                         import_and_render_ue_ns::down_info{}};
   }
 
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
@@ -358,15 +358,15 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
             fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
         auto l_ec_copy = copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content,
                                    in_logger);
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
         // 配置文件夹复制
         l_ec_copy = copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config,
                               in_logger);
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
         // 复制项目文件
         if (!FSys::exists(l_local_path / h.ue_prj_path_.filename())) {
           l_ec_copy = copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), in_logger);
-          if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
+          if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
         }
         l_out.render_project_ = l_local_path / h.ue_prj_path_.filename();
       }
@@ -376,7 +376,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
       case details::assets_type_enum::character: {
         auto l_ec_copy = copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content,
                                    in_logger);
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
       }
       break;
 
@@ -389,7 +389,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
           l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
           l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, in_logger
         );
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
       }
       break;
       default:
