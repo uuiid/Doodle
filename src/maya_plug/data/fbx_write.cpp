@@ -944,6 +944,8 @@ void fbx_node_joint::build_data() {
   node->UpdatePivotsAndLimitsFromProperties();
   node->SetNodeAttribute(l_sk_attr);
   build_node_transform(dag_path);
+  // 骨骼强制缩放为1
+  node->LclScaling.Set({1.0, 1.0, 1.0});
 
   auto l_parent_path = dag_path;
   l_parent_path.pop();
