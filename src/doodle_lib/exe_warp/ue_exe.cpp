@@ -28,12 +28,12 @@
 #include <filesystem>
 #include <memory>
 #include <string>
-namespace doodle {
 
+namespace doodle {
 class ue_exe::run_ue_base {
- public:
-  virtual void run()        = 0;
-  virtual void cancel()     = 0;
+public:
+  virtual void run() = 0;
+  virtual void cancel() = 0;
   virtual bool is_running() = 0;
 };
 
@@ -44,14 +44,14 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
   boost::asio::streambuf out_strbuff_attr{};
   boost::asio::streambuf err_strbuff_attr{};
 
- public:
+public:
   boost::signals2::scoped_connection cancel_attr{};
   boost::process::child child_attr{};
   ue_exe::call_fun_type call_attr{};
   FSys::path ue_path{};
   std::string arg_attr{};
   logger_ptr logger_attr{};
-  ue_exe *self_{};
+  ue_exe* self_{};
   bool is_cancel{};
 
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
@@ -67,18 +67,18 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
     }
     if (l_version != version::build_info::get().version_str) {
       logger_attr->log(
-          log_loc(), level::warn, "Doodle 插件版本不匹配, 重新安装查插件版本 {} != {}", l_version,
-          version::build_info::get().version_str
+        log_loc(), level::warn, "Doodle 插件版本不匹配, 重新安装查插件版本 {} != {}", l_version,
+        version::build_info::get().version_str
       );
       try {
         toolkit::installUePath(core_set::get_set().ue4_path / "Engine");
-      } catch (const FSys::filesystem_error &error) {
+      } catch (const FSys::filesystem_error& error) {
         logger_attr->log(log_loc(), level::err, "安装插件失败 {}", error.what());
         return error.code();
       }
     } else {
       logger_attr->log(
-          log_loc(), level::info, "Doodle 插件版本匹配 {} == {}", l_version, version::build_info::get().version_str
+        log_loc(), level::info, "Doodle 插件版本匹配 {} == {}", l_version, version::build_info::get().version_str
       );
     }
     return {};
@@ -126,65 +126,69 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
         boost::process::cmd = fmt::format("{} {}", ue_path, arg_attr), boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
         boost::process::on_exit =
-            [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
-              logger_attr->log(log_loc(), level::info, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
-              logger_attr->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
-              
-              if (in_exit != 0 && !in_error_code) {
-                boost::system::error_code l_ec{boost::system::errc::make_error_code(boost::system::errc::io_error)};
-                BOOST_ASIO_ERROR_LOCATION(l_ec);
-                call_attr->ec_ = l_ec;
-              } else {
-                call_attr->ec_ = in_error_code;
-              }
-              call_attr->complete();
-              self_->notify_run();
-            },
+        [this, l_self = shared_from_this()](int in_exit, const std::error_code& in_error_code) {
+          logger_attr->log(log_loc(), level::info, "运行结束 ue_exe: {} 退出代码 {}", ue_path, in_exit);
+          logger_attr->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
+
+          if (in_exit != 0 && !in_error_code) {
+            boost::system::error_code l_ec{boost::system::errc::make_error_code(boost::system::errc::io_error)};
+            BOOST_ASIO_ERROR_LOCATION(l_ec);
+            call_attr->ec_ = l_ec;
+          } else {
+            call_attr->ec_ = in_error_code;
+          }
+          call_attr->complete();
+          self_->notify_run();
+        },
         boost::process::windows::hide, l_eve
     };
 
     read_out();
     read_err();
   }
+
   void read_out() {
     boost::asio::async_read_until(
-        out_attr, out_strbuff_attr, '\n',
-        [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
-          if (!in_code) {
-            std::string l_line;
-            std::istream l_istream{&out_strbuff_attr};
-            std::getline(l_istream, l_line);
-            while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
-            if (!l_line.empty()) logger_attr->log(log_loc(), level::debug, l_line);
-            read_out();
-          } else {
-            out_attr.close();
-            if (in_code != boost::asio::error::broken_pipe)
-              logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
-          }
+      out_attr, out_strbuff_attr, '\n',
+      [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
+        if (!in_code) {
+          std::string l_line;
+          std::istream l_istream{&out_strbuff_attr};
+          std::getline(l_istream, l_line);
+          while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
+          if (!l_line.empty()) logger_attr->log(log_loc(), level::debug, l_line);
+          read_out();
+        } else {
+          out_attr.close();
+          if (in_code != boost::asio::error::broken_pipe)
+            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
         }
+      }
     );
   }
+
   void read_err() {
     boost::asio::async_read_until(
-        err_attr, err_strbuff_attr, '\n',
-        [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
-          if (!in_code) {
-            std::string l_line{};
-            std::istream l_istream{&err_strbuff_attr};
-            std::getline(l_istream, l_line);
-            while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
-            if (!l_line.empty()) logger_attr->log(log_loc(), level::info, l_line);
-            read_err();
-          } else {
-            err_attr.close();
-            if (in_code != boost::asio::error::broken_pipe)
-              logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
-          }
+      err_attr, err_strbuff_attr, '\n',
+      [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
+        if (!in_code) {
+          std::string l_line{};
+          std::istream l_istream{&err_strbuff_attr};
+          std::getline(l_istream, l_line);
+          while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
+          if (!l_line.empty()) logger_attr->log(log_loc(), level::info, l_line);
+          read_err();
+        } else {
+          err_attr.close();
+          if (in_code != boost::asio::error::broken_pipe)
+            logger_attr->log(log_loc(), level::err, "管道错误 ue_exe: {} {}", ue_path, in_code);
         }
+      }
     );
   }
+
   bool is_running() override { return child_attr.running(); }
+
   virtual void cancel() override {
     child_attr.terminate();
     is_cancel = true;
@@ -192,24 +196,28 @@ class ue_exe::run_ue : public std::enable_shared_from_this<ue_exe::run_ue>, publ
 };
 
 class ue_exe::run_ue_copy_file : public ue_exe::run_ue_base {
- public:
+public:
   std::vector<std::pair<FSys::path, FSys::path>> copy_path_attr{};
   ue_exe::call_fun_type call_attr{};
   logger_ptr logger_attr{};
+
   void run() override {
     g_ctx().get<thread_copy_io_service>().async_copy_old(
-        copy_path_attr, FSys::copy_options::recursive, logger_attr,
-        [l_c = call_attr, logger_attr = logger_attr](boost::system::error_code in_error_code) {
-          if (in_error_code) {
-            BOOST_ASIO_ERROR_LOCATION(in_error_code);
-          }
-          logger_attr->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
-          l_c->ec_ = in_error_code;
-          l_c->complete();
+      copy_path_attr, FSys::copy_options::recursive, logger_attr,
+      [l_c = call_attr, logger_attr = logger_attr](boost::system::error_code in_error_code) {
+        if (in_error_code) {
+          BOOST_ASIO_ERROR_LOCATION(in_error_code);
         }
+        logger_attr->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
+        l_c->ec_ = in_error_code;
+        l_c->complete();
+      }
     );
   }
-  void cancel() override {}
+
+  void cancel() override {
+  }
+
   bool is_running() override { return *call_attr; }
 };
 
@@ -225,7 +233,7 @@ void ue_exe::notify_run() {
   }
 }
 
-void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_line, call_fun_type in_call_fun) {
+void ue_exe::queue_up(const entt::handle& in_msg, const std::string& in_command_line, call_fun_type in_call_fun) {
   auto l_run         = std::make_shared<run_ue>();
   l_run->ue_path     = ue_path_;
   l_run->arg_attr    = in_command_line;
@@ -244,8 +252,8 @@ void ue_exe::queue_up(const entt::handle &in_msg, const std::string &in_command_
 }
 
 void ue_exe::queue_up(
-    const entt::handle &in_msg, const std::vector<std::pair<FSys::path, FSys::path>> &in_command_line,
-    doodle::ue_exe::call_fun_type in_call_fun
+  const entt::handle& in_msg, const std::vector<std::pair<FSys::path, FSys::path>>& in_command_line,
+  doodle::ue_exe::call_fun_type in_call_fun
 ) {
   if (!g_ctx().contains<thread_copy_io_service>()) g_ctx().emplace<thread_copy_io_service>();
 
@@ -257,7 +265,7 @@ void ue_exe::queue_up(
   notify_run();
 }
 
-boost::system::error_code ue_exe::find_ue_exe(const logger_ptr &in_logger) {
+boost::system::error_code ue_exe::find_ue_exe(const logger_ptr& in_logger) {
   auto l_ue_path = core_set::get_set().ue4_path;
   if (l_ue_path.empty()) {
     in_logger->log(log_loc(), level::err, "ue_exe 路径为空, 无法启动UE");
@@ -270,7 +278,8 @@ boost::system::error_code ue_exe::find_ue_exe(const logger_ptr &in_logger) {
   }
   return {};
 }
-std::string ue_exe::get_file_version(const FSys::path &in_path) {
+
+std::string ue_exe::get_file_version(const FSys::path& in_path) {
   auto l_version_path = in_path.parent_path() / "UnrealEditor.version";
 
   if (!FSys::exists(l_version_path)) {
@@ -282,4 +291,6 @@ std::string ue_exe::get_file_version(const FSys::path &in_path) {
   return fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>());
 }
 
-}  // namespace doodle
+boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string& in_arg, logger_ptr in_logger) {
+}
+} // namespace doodle
