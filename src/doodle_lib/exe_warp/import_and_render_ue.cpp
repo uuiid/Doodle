@@ -451,7 +451,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     co_return std::tuple(l_ec, FSys::path{});
   }
   in_args.maya_out_arg_ = l_out;
-  auto [l_ec2, l_ret] = co_await async_import_and_render_ue(in_args, in_logger);
+  auto [l_ec2, l_ret]   = co_await async_import_and_render_ue(in_args, in_logger);
   if (l_ec) {
     co_return std::tuple(l_ec, FSys::path{});
   }
