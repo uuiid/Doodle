@@ -69,6 +69,17 @@ class DOODLE_CORE_API doodle_category : public bsys::error_category {
   static const bsys::error_category& get();
 };
 
+class DOODLE_CORE_API exit_code_category : public bsys::error_category {
+public:
+  const char* name() const noexcept final;
+
+  std::string message(int ev) const final;
+
+  bsys::error_condition default_error_condition(int ev) const noexcept final;
+
+  static const bsys::error_category& get();
+};
+
 template <typename exception_type>
 [[noreturn]] inline void throw_exception(
     exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
