@@ -220,6 +220,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
   //重新设置初始位置
   for (auto j = 0; j < weight_.cols(); ++j) {
     l_node->LclTranslation.Set({mesh_off_[j].x(), mesh_off_[j].y(), mesh_off_[j].z()});
+    break;
   }
 
   {
