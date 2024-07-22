@@ -497,11 +497,27 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info), boost::asio::detached);
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::debug), boost::asio::detached);
 
-  auto [l_ec,l_exit_code] = co_await boost::process::v2::async_execute(
-    std::move(l_process_maya), boost::asio::as_tuple(boost::asio::use_awaitable));
-  if (l_exit_code != 0 || l_ec) {
-    co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
+  l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
+  auto [l_array_completion_order,l_ec,l_exit_code, l_ec_t] = co_await boost::asio::experimental::make_parallel_group(
+    boost::process::v2::async_execute(
+      std::move(l_process_maya), boost::asio::deferred),
+    l_timer->async_wait(boost::asio::deferred)
+  ).async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
+
+  switch (l_array_completion_order[0]) {
+    case 0:
+      if (l_exit_code != 0 || l_ec) {
+        co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
+      }
+      co_return std::tuple{std::move(l_ec), get_out_arg(in_arg->out_path_file_)};
+    case 1:
+      if (l_ec) {
+        in_logger->error("maya 运行超时: {}", l_ec.message());
+        co_return std::make_tuple(l_ec, maya_exe_ns::maya_out_arg{});
+      }
+    default:
+      co_return std::make_tuple(boost::system::error_code{boost::asio::error::timed_out},
+                                maya_exe_ns::maya_out_arg{});
   }
-  co_return std::tuple{std::move(l_ec), get_out_arg(in_arg->out_path_file_)};
 }
 } // namespace doodle
