@@ -291,7 +291,8 @@ class maya_ctx {
 public:
   maya_ctx()  = default;
   ~maya_ctx() = default;
-  std::shared_ptr<awaitable_queue_limitation> queue_ = std::make_shared<awaitable_queue_limitation>();
+  std::shared_ptr<awaitable_queue_limitation> queue_ = std::make_shared<awaitable_queue_limitation>(
+    core_set::get_set().p_max_thread);
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
