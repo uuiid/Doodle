@@ -7,9 +7,11 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/main_map.h>
 
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_core/core/http_client_core.h>
 
 namespace doodle {
 import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render_ue_ns::args in_args) {
@@ -174,15 +176,13 @@ struct association_data {
   FSys::path export_file_{};
 };
 
-
-std::vector<down_auto_light_anim_file::association_data> fetch_association_data(
-  const std::vector<association_data>& in_uuid, boost::system::error_code& out_error_code
+boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
+  std::vector<association_data> in_uuid, logger_ptr in_logger
 ) {
-  std::vector<down_auto_light_anim_file::association_data> l_out{};
+  std::vector<association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
-
+  auto l_c = std::make_shared<http::detail::http_client_data_base>(co_await boost::asio::this_coro::executor);
   try {
-    l_stream.connect(boost::asio::ip::tcp::endpoint{boost::asio::ip::address_v4::from_string("192.168.40.181"), 50026});
     for (auto&& i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{
           boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", i.id_), 11
@@ -191,19 +191,13 @@ std::vector<down_auto_light_anim_file::association_data> fetch_association_data(
       l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
       l_req.set(boost::beast::http::field::accept, "application/json");
       l_req.prepare_payload();
-      boost::beast::http::write(l_stream, l_req);
-      boost::beast::flat_buffer l_buffer{};
-      boost::beast::http::response<boost::beast::http::string_body> l_res;
-      boost::beast::http::read(l_stream, l_buffer, l_res);
+      auto [l_ec,l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req);
       if (l_res.result() != boost::beast::http::status::ok) {
-        if (l_res.result() == boost::beast::http::status::not_found) {
-          data_->logger_->log(log_loc(), level::err, "未找到关联数据:{} {}", i.export_file_, i.id_);
-          out_error_code = boost::system::error_code{
-              boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
-          };
-          return l_out;
-        }
-        continue;
+        in_logger->log(log_loc(), level::err, "未找到关联数据:{} {}", i.export_file_, i.id_);
+        co_return std::tuple{boost::system::error_code{
+                                 boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
+                             },
+                             l_out};
       }
 
       auto l_json = nlohmann::json::parse(l_res.body());
@@ -217,20 +211,90 @@ std::vector<down_auto_light_anim_file::association_data> fetch_association_data(
       l_out.emplace_back(std::move(l_data));
     }
   } catch (const std::exception& e) {
-    data_->logger_->log(log_loc(), level::err, "连接服务器失败:{}", e.what());
-    out_error_code =
-        boost::system::error_code{boost::system::errc::connection_refused, boost::system::generic_category()};
+    in_logger->error("连接服务器失败:{}", e.what());
+    co_return std::tuple{boost::system::error_code{
+                             boost::system::errc::connection_refused, boost::system::generic_category()
+                         },
+                         l_out};
   }
   for (auto&& i : l_out) {
     i.ue_prj_path_ = ue_main_map::find_ue_project_file(i.ue_file_);
   }
-  return l_out;
+  co_return std::tuple{boost::system::error_code{}, l_out};
 }
 
+void copy_diff_impl(const FSys::path& from, const FSys::path& to) {
+  if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
+      FSys::last_write_time(from) != FSys::last_write_time(to)) {
+    if (!FSys::exists(to) || FSys::last_write_time(from) > FSys::last_write_time(to)) {
+      if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
+
+      auto l_to   = to;
+      auto l_from = from;
+      static FSys::path l_path{R"(\\?\)"};
+      if (l_to.make_preferred().native().size() > MAX_PATH) {
+        l_to = l_path / l_to;
+      }
+      if (l_from.make_preferred().native().size() > MAX_PATH) {
+        l_from = l_path / l_from;
+      }
+
+      FSys::copy_file(l_from, l_to, FSys::copy_options::overwrite_existing);
+    }
+  }
+}
+
+boost::system::error_code copy_diff(const FSys::path& from, const FSys::path& to,
+                                    logger_ptr in_logger) {
+  boost::system::error_code l_ec{};
+  std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
+  for (int i = 0; i < 10; ++i) {
+    try {
+      in_logger->log(log_loc(), spdlog::level::warn, "复制 {} -> {}", from, to);
+      if (FSys::is_regular_file(from) && !FSys::is_hidden(from) &&
+          from.extension() != doodle_config::doodle_flag_name) {
+        copy_diff_impl(from, to);
+        return l_ec;
+      }
+
+      for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
+        auto l_to_file = to / l_file.path().lexically_proximate(from);
+        if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path()) &&
+            l_file.path().extension() != doodle_config::doodle_flag_name) {
+          copy_diff_impl(l_file.path(), l_to_file);
+        }
+      }
+
+      return l_ec;
+    } catch (const FSys::filesystem_error& in_error) {
+      if (in_error.code() == l_error_code_NETNAME_DELETED) {
+        in_logger->log(log_loc(), spdlog::level::warn, "复制文件网络错误 开始重试第 {}次 {}, ", i++, in_error.what());
+      } else {
+        in_logger->log(log_loc(), spdlog::level::err, "复制文件错误 {}", in_error.what());
+        l_ec = in_error.code();
+        BOOST_ASIO_ERROR_LOCATION(l_ec);
+        break;
+      }
+    } catch (const std::system_error& in_error) {
+      in_logger->log(log_loc(), spdlog::level::err, in_error.what());
+      l_ec = in_error.code();
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      break;
+    } catch (...) {
+      in_logger->log(log_loc(), spdlog::level::err, "未知错误 {}", boost::current_exception_diagnostic_information());
+      l_ec = boost::system::errc::make_error_code(boost::system::errc::io_error);
+      BOOST_ASIO_ERROR_LOCATION(l_ec);
+      break;
+    }
+  }
+
+  return l_ec;
+}
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_anim_file::down_info>> analysis_out_file(
   import_and_render_ue_ns::args in_args, logger_ptr in_logger) {
   std::vector<association_data> l_refs_tmp{};
+  down_auto_light_anim_file::down_info l_out{};
 
   for (auto&& i : in_args.maya_out_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
@@ -246,12 +310,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
     std::unique(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto& l, const auto& r) { return l.id_ == r.id_; }),
     l_refs_tmp.end()
   );
-  auto l_refs = fetch_association_data(l_refs_tmp, in_error_code);
-  if (in_error_code) {
-    wait_op_->ec_ = in_error_code;
-    wait_op_->complete();
-    return;
-  }
+  auto [l_ec,l_refs] = co_await fetch_association_data(l_refs_tmp, in_logger);
+  if (l_ec) co_return std::tuple{l_ec, down_auto_light_anim_file::down_info{}};
 
   // 检查文件
 
@@ -261,15 +321,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
   for (auto&& h : l_refs) {
     if (auto l_is_e = h.ue_file_.empty(), l_is_ex = FSys::exists(h.ue_file_); l_is_e || !l_is_ex) {
       if (l_is_e)
-        data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 的 ue 引用无效, 为空", h.maya_file_);
+        in_logger->error("文件 {} 的 ue 引用无效, 为空", h.maya_file_);
       else if (!l_is_ex)
-        data_->logger_->log(log_loc(), level::level_enum::err, "文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_);
-
-      in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
-      BOOST_ASIO_ERROR_LOCATION(in_error_code);
-      wait_op_->ec_ = in_error_code;
-      wait_op_->complete();
-      return;
+        in_logger->error("文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_);
+      co_return std::tuple{boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
+                           down_auto_light_anim_file::down_info{}};
     }
 
     if (h.type_ == details::assets_type_enum::scene) {
@@ -278,17 +334,17 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
     }
   }
   if (l_scene_uuid.is_nil()) {
-    data_->logger_->log(log_loc(), level::level_enum::err, "未查找到主项目文件(没有找到场景文件)");
-    in_error_code.assign(error_enum::file_not_exists, doodle_category::get());
-    BOOST_ASIO_ERROR_LOCATION(in_error_code);
-    wait_op_->ec_ = in_error_code;
-    wait_op_->complete();
-    return;
+    in_logger->error("未查找到主项目文件(没有找到场景文件)");
+    co_return std::tuple{boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
+                         down_auto_light_anim_file::down_info{}};
   }
 
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
 
+  // 开始复制文件
+  // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
+  auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
   for (auto&& h : l_refs) {
     auto l_down_path  = h.ue_prj_path_.parent_path();
     auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
@@ -297,23 +353,30 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
     switch (h.type_) {
       // 场景文件
       case details::assets_type_enum::scene: {
-        auto l_original               = h.ue_file_.lexically_relative(l_root);
-        data_->down_info_.scene_file_ =
+        auto l_original   = h.ue_file_.lexically_relative(l_root);
+        l_out.scene_file_ =
             fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-
-        l_copy_path.emplace_back(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content);
+        auto l_ec_copy = copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content,
+                                   in_logger);
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
         // 配置文件夹复制
-        l_copy_path.emplace_back(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config);
+        l_ec_copy = copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config,
+                              in_logger);
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
         // 复制项目文件
-        if (!FSys::exists(l_local_path / h.ue_prj_path_.filename()))
-          l_copy_path.emplace_back(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename());
-        data_->down_info_.render_project_ = l_local_path / h.ue_prj_path_.filename();
+        if (!FSys::exists(l_local_path / h.ue_prj_path_.filename())) {
+          l_ec_copy = copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), in_logger);
+          if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
+        }
+        l_out.render_project_ = l_local_path / h.ue_prj_path_.filename();
       }
       break;
 
       // 角色文件
       case details::assets_type_enum::character: {
-        l_copy_path.emplace_back(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content);
+        auto l_ec_copy = copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content,
+                                   in_logger);
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
       }
       break;
 
@@ -322,21 +385,19 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, down_auto_light_ani
         auto l_prop_path = h.ue_file_.lexically_relative(l_root / "Prop");
         if (l_prop_path.empty()) continue;
         auto l_prop_path_name = *l_prop_path.begin();
-        l_copy_path.emplace_back(
+        auto l_ec_copy        = copy_diff(
           l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
-          l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name
+          l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, in_logger
         );
+        if (l_ec_copy) co_return std::tuple{l_ec_copy, down_auto_light_anim_file::down_info{}};
       }
       break;
-
       default:
         break;
     }
   }
-  data_->logger_->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
-  g_ctx().get<ue_exe_ptr>()->async_copy_old_project(
-    msg_, l_copy_path, boost::asio::bind_executor(g_io_context(), *this)
-  );
+  in_logger->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
+  co_return std::tuple{boost::system::error_code{}, l_out};
 }
 
 
