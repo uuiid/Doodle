@@ -311,7 +311,7 @@ void UDoodleFbxImport_1::ImportFile() {
   K_FBX_F->ImportUI->bResetToFbxOnMaterialConflict               = false;
 
   K_FBX_F->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
-  K_FBX_F->ImportUI->SkeletalMeshImportData->bUseT0AsRefPose     = false;
+  K_FBX_F->ImportUI->SkeletalMeshImportData->bUseT0AsRefPose     = true;
   K_FBX_F->ImportUI->bAutomatedImportShouldDetectType            = false;
   K_FBX_F->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
   K_FBX_F->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;

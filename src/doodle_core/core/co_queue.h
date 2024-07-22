@@ -7,6 +7,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <queue>
 
 namespace doodle {
 class awaitable_queue_limitation {

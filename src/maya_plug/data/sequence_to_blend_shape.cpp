@@ -46,7 +46,6 @@
 // #define DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
 
 namespace doodle::maya_plug {
-
 sequence_to_blend_shape::sequence_to_blend_shape() = default;
 
 void sequence_to_blend_shape::init(const MDagPath& in_mesh, std::int64_t in_samples) {
@@ -158,7 +157,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
   auto l_node             = l_my_node->node;
   auto&& [l_begin, l_end] = in_node.get_anim_time();
 
-  auto* l_node_attr       = l_node->GetNodeAttribute();
+  auto* l_node_attr = l_node->GetNodeAttribute();
   if (l_node_attr->GetAttributeType() != fbxsdk::FbxNodeAttribute::eMesh) {
     throw_exception(doodle_error{"不是网格节点"});
   }
@@ -167,7 +166,8 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 
   MFnMesh l_fn_mesh{base_mesh_obj_};
 
-  {  // 调整顶点
+  {
+    // 调整顶点
     // l_mesh->InitControlPoints(base_mesh_.size() / 3);
     auto* l_points = l_mesh->GetControlPoints();
 
@@ -187,7 +187,8 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
   }
 
   std::vector<fbxsdk::FbxBlendShapeChannel*> l_blend_channels{};
-  {  // 添加混合变形
+  {
+    // 添加混合变形
     auto l_blend_shape =
         fbxsdk::FbxBlendShape::Create(l_node->GetScene(), fmt::format("{}_blend_shape", l_node->GetName()).c_str());
 
@@ -195,7 +196,7 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
       auto* l_shape = fbxsdk::FbxShape::Create(l_node->GetScene(), fmt::format("shape_{}", col).c_str());
       l_shape->InitControlPoints(l_mesh->GetControlPointsCount());
       auto* l_blend_channel = fbxsdk::FbxBlendShapeChannel::Create(
-          l_node->GetScene(), fmt::format("{}_bsc_{}", l_node->GetName(), col).c_str()
+        l_node->GetScene(), fmt::format("{}_bsc_{}", l_node->GetName(), col).c_str()
       );
 
       auto* l_shape_pos = l_shape->GetControlPoints();
@@ -216,8 +217,13 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
     }
     l_mesh->AddDeformer(l_blend_shape);
   }
+  //重新设置初始位置
+  for (auto j = 0; j < weight_.cols(); ++j) {
+    l_node->LclTranslation.Set({mesh_off_[j].x(), mesh_off_[j].y(), mesh_off_[j].z()});
+  }
 
-  {  // 写出动画曲线
+  {
+    // 写出动画曲线
 
     fbxsdk::FbxTime l_fbx_time{};
 
@@ -267,4 +273,4 @@ void sequence_to_blend_shape::write_fbx(const fbx_write& in_node) const {
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
-}  // namespace doodle::maya_plug
+} // namespace doodle::maya_plug
