@@ -489,16 +489,14 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   if (auto l_e = copy_diff(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content, in_logger))
     co_return std::tuple{l_e, FSys::path{}};
   if (auto l_e = copy_diff(l_u_project, l_rem_path / l_u_project.filename(), in_logger))
-    co_return std::tuple{
-        l_e, FSys::path{}};
+    co_return std::tuple{l_e, FSys::path{}};
   // maya输出文件
   for (const auto& l_maya : l_maya_out) {
     if (auto l_e = copy_diff(l_maya, l_rem_path.parent_path() / l_maya.stem(), in_logger))
-      co_return std::tuple{
-          l_e, FSys::path{}};
+      co_return std::tuple{l_e, FSys::path{}};
   }
-  if (auto l_e = copy_diff(l_movie_path, l_rem_path / "move" / l_movie_path.filename(), in_logger)) co_return std::tuple
-      {l_e, FSys::path{}};
+  if (auto l_e = copy_diff(l_movie_path, l_rem_path / "move" / l_movie_path.filename(), in_logger))
+    co_return std::tuple{l_e, FSys::path{}};
   co_return std::tuple{l_ec, l_ret};
 }
 } // namespace doodle
