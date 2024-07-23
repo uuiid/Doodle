@@ -88,7 +88,9 @@ FSys::path image_to_move::create_out_path(const entt::handle& in_handle) {
 
   FSys::path l_out = in_handle.get<out_file_path>().path;
   detail::create_out_path(
-    l_out, in_handle.get<episodes>(), in_handle.get<shot>(), in_handle.try_get<project>());
+    l_out, in_handle.all_of<episodes>() ? in_handle.get<episodes>() : episodes{},
+    in_handle.all_of<shot>() ? in_handle.get<shot>() : shot{},
+    in_handle.try_get<project>());
   in_handle.replace<out_file_path>(l_out);
   return l_out;
 }
@@ -101,16 +103,16 @@ FSys::path create_out_path(const FSys::path& in_dir, const episodes& in_eps, con
   if (!l_out.has_extension()) {
     if (in_project)
       l_out /= fmt::format(
-        "EP{:04}_SC{:03}{}.mp4", in_eps ? in_eps.p_episodes : 0,
-        in_shot ? in_shot.p_shot : 0,
-        in_shot ? in_shot.p_shot_enum : shot::shot_ab_enum::None
+        "EP{:04}_SC{:03}{}.mp4", in_eps.p_episodes,
+        in_shot.p_shot,
+        in_shot.p_shot_enum
       );
     else
       l_out /= fmt::format(
         "{}_EP{:04}_SC{:03}{}.mp4", in_project->p_shor_str,
-        in_eps ? in_eps.p_episodes : 0,
-        in_shot ? in_shot.p_shot : 0,
-        in_shot ? in_shot.p_shot_enum : shot::shot_ab_enum::None
+        in_eps.p_episodes,
+        in_shot.p_shot,
+        in_shot.p_shot_enum
       );
   } else
     l_out.extension().replace_extension(".mp4");
