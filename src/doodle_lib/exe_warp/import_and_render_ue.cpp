@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/main_map.h>
 
+#include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_core/core/http_client_core.h>
