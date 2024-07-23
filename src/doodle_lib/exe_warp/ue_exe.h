@@ -25,6 +25,10 @@
 #include <vector>
 
 namespace doodle {
+namespace ue_exe_ns {
+std::string get_file_version(const FSys::path& in_path);
+}
+
 class ue_ctx {
 public:
   ue_ctx()  = default;

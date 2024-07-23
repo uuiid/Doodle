@@ -181,6 +181,8 @@ struct maya_out_arg {
     nlohmann_json_j["out_file_list"] = nlohmann_json_t.out_file_list;
   };
 };
+
+FSys::path find_maya_path();
 } // namespace maya_exe_ns
 
 class maya_ctx {

@@ -39,7 +39,7 @@
 
 namespace doodle {
 namespace {
-std::tuple<boost::system::error_code, FSys::path> find_maya_path() {
+std::tuple<boost::system::error_code, FSys::path> find_maya_path_impl() {
   try {
     auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
     winreg::RegKey l_key{};
@@ -115,12 +115,20 @@ maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
 }
 }
 
+namespace maya_exe_ns {
+FSys::path find_maya_path() {
+  auto [l_e, l_maya_path] = find_maya_path_impl();
+  if (l_e) throw_exception(l_e);
+  return l_maya_path;
+}
+}
+
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
   std::shared_ptr<maya_exe_ns::arg> in_arg,
   logger_ptr in_logger
 ) {
   auto l_g                 = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
-  auto [l_e1, l_maya_path] = find_maya_path();
+  auto [l_e1, l_maya_path] = find_maya_path_impl();
   if (l_e1) {
     in_logger->error("查找Maya路径失败: {}", l_e1.message());
     co_return std::make_tuple(l_e1, maya_exe_ns::maya_out_arg());

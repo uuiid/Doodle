@@ -26,16 +26,17 @@
 #include <string>
 
 namespace doodle {
-auto get_file_version(const FSys::path& in_path) {
+std::tuple<boost::system::error_code, std::string> get_file_version_impl(const FSys::path& in_path) {
   auto l_version_path = in_path.parent_path() / "UnrealEditor.version";
 
   if (!FSys::exists(l_version_path)) {
-    throw_exception(doodle_error{"未找到 UnrealEditor.version 文件"});
+    return {boost::system::errc::no_such_file_or_directory, std::string};
   }
   FSys::ifstream l_ifstream{l_version_path};
   nlohmann::json const l_json = nlohmann::json::parse(l_ifstream);
 
-  return fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>());
+  return {
+      {}, fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>())};
 }
 
 namespace {
@@ -54,6 +55,16 @@ boost::system::error_code chick_ue_plug() {
     }
   }
   return {};
+}
+}
+
+namespace ue_exe_ns {
+std::string get_file_version(const FSys::path& in_path) {
+  auto [l_ec, l_str] = get_file_version_impl(in_path);
+  if (l_ec) {
+    throw_error(l_ec);
+  }
+  return l_str;
 }
 }
 
@@ -79,9 +90,10 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string
     if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH")
       l_env.emplace(l_it.key(), l_it.value());
   }
-  l_env["UE-LocalDataCachePath"]  = L"%GAMEDIR%DerivedDataCache";
-  l_env["UE-SharedDataCachePath"] = fmt::format(L"{}\\UE\\DerivedDataCache",
-                                                boost::locale::conv::utf_to_utf<wchar_t>(core_set::get_set().depot_ip));
+  l_env[L"UE-LocalDataCachePath"]  = L"%GAMEDIR%DerivedDataCache";
+  l_env[L"UE-SharedDataCachePath"] = fmt::format(L"{}\\UE\\DerivedDataCache",
+                                                 boost::locale::conv::utf_to_utf<wchar_t>(
+                                                   core_set::get_set().depot_ip));
 
   auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
   auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
