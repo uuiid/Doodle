@@ -189,7 +189,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
         in_logger->error("maya进程返回值错误 {}", l_exit_code);
         co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
       }
-      in_logger->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::success));
       co_return std::tuple{std::move(l_ec), get_out_arg(in_arg->out_path_file_)};
     case 1:
       if (l_ec) {
