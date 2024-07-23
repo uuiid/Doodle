@@ -50,28 +50,6 @@
 #endif
 namespace doodle::gui {
 namespace {
-nlohmann::json create_cgru_json() {
-  auto l_json                  = nlohmann::json{};
-  auto& l_job_obj              = l_json["job"];
-  l_job_obj["name"]            = "test job";
-  l_job_obj["user_name"]       = "doodle";
-  l_job_obj["host_name"]       = "localhost";
-  l_job_obj["priority"]        = 99;
-  auto& l_blocks               = l_job_obj["blocks"];
-  auto& l_block                = l_blocks[0];
-  l_block["flags"]             = 0;
-  l_block["name"]              = "block of tasks";
-  l_block["service"]           = "generic";
-  l_block["capacity"]          = 1000;
-  l_block["working_directory"] = "D:/doodle_exe/bin";
-  l_block["parser"]            = "generic";
-  auto& l_tasks                = l_block["tasks"];
-  auto& l_task                 = l_tasks[0];
-  l_task["name"]               = "auto light";
-  l_task["command"]            = "";
-  return l_json;
-}
-
 std::string get_user_name() {
   DWORD l_size = 0;
   auto l_err   = ::GetUserNameW(nullptr, &l_size);
@@ -169,22 +147,7 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
                  return in_info.episode_.analysis(l_stem) && in_info.shot_.analysis(l_stem);
                }) |
                ranges::to_vector;
-#ifdef DOODLE_USE_ENTT
-  auto l_prj_view = g_reg()->view<assets, project>().each();
-  if (ranges::distance(l_prj_view) != 0) {
-    path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
-      auto l_stem = in_info.path_.stem().generic_string();
-      auto l_it   = ranges::find_if(l_prj_view, [&](const std::tuple<entt::entity, assets&, project&> in_tuple) {
-        return l_stem.starts_with(std::get<project&>(in_tuple).p_shor_str);
-      });
-      if (l_it != l_prj_view.end()) {
-        in_info.project_ = std::get<project&>(*l_it);
-        return false;
-      }
-      return true;
-    });
-  }
-#else
+
   auto l_prj_list = register_file_type::get_project_list();
   path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
     auto l_stem = in_info.path_.stem().generic_string();
@@ -196,7 +159,6 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
     }
     return true;
   });
-#endif
 }
 
 void maya_tool::init() {
@@ -204,18 +166,8 @@ void maya_tool::init() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
   p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
-  if (!g_ctx().contains<maya_ctx>())
-    g_ctx().emplace<maya_ctx>();
 }
 
-entt::handle maya_tool::analysis_path(const path_info_t& in_path) {
-  entt::handle l_handle{*g_reg(), g_reg()->create()};
-  l_handle.emplace<process_message>(in_path.path_.filename().generic_string());
-  l_handle.emplace<episodes>(in_path.episode_);
-  l_handle.emplace<shot>(in_path.shot_);
-  l_handle.emplace<project>(in_path.project_);
-  return l_handle;
-}
 
 bool maya_tool::render() {
   ImGui::Text("解算文件列表(将文件拖入此处)");
@@ -407,48 +359,13 @@ bool maya_tool::render() {
   }
 
   if (imgui::Button("使用ue输出排屏(远程)")) {
-    std::string l_host_name = boost::asio::ip::host_name();
-    l_host_name             =
-        ranges::views::all(l_host_name) |
-        ranges::views::transform([](char in_c) { return std::tolower(in_c, core_set::get_set().utf8_locale); }) |
-        ranges::to<std::string>;
-
+    auto l_host_name = boost::asio::ip::host_name();
     auto l_user_name = get_user_name();
-    l_user_name      =
-        ranges::views::all(l_user_name) |
-        ranges::views::transform([](char in_c) { return std::tolower(in_c, core_set::get_set().utf8_locale); }) |
-        ranges::to<std::string>;
-    std::vector<nlohmann::json> l_task_list{};
-    for (auto&& l_info : path_info_) {
-      auto l_json                                       = create_cgru_json();
-      l_json["job"]["name"]                             = l_info.path_.stem().generic_string();
-      l_json["job"]["user_name"]                        = l_user_name;
-      l_json["job"]["host_name"]                        = l_host_name;
-      l_json["job"]["blocks"][0]["tasks"][0]["command"] = fmt::format(
-        "D:/doodle_exe/bin/doodle_auto_light_process.exe --animation --maya_file=\"{}\"",
-        l_info.path_.generic_string()
-      );
-      l_task_list.push_back(l_json);
-    }
-    post_http_task(l_task_list);
   }
   ImGui::SameLine();
   if (imgui::Button("使用ue输出排屏(远程)(解算版)")) {
     auto l_host_name = boost::asio::ip::host_name();
     auto l_user_name = get_user_name();
-    std::vector<nlohmann::json> l_task_list{};
-    for (auto&& l_info : path_info_) {
-      auto l_json                                       = create_cgru_json();
-      l_json["job"]["name"]                             = l_info.path_.stem().generic_string();
-      l_json["job"]["user_name"]                        = l_user_name;
-      l_json["job"]["host_name"]                        = l_host_name;
-      l_json["job"]["blocks"][0]["tasks"][0]["command"] = fmt::format(
-        "D:/doodle_exe/bin/doodle_auto_light_process.exe cfx --animation --maya_file=\"{}\"",
-        l_info.path_.generic_string()
-      );
-      l_task_list.push_back(l_json);
-    }
-    post_http_task(l_task_list);
   }
 
   if (ImGui::Button("打开监视器")) {
