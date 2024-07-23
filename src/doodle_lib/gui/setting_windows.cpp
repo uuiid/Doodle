@@ -1,4 +1,3 @@
-
 //
 // Created by TD on 2021/9/15.
 //
@@ -30,19 +29,20 @@
 #include <winreg/WinReg.hpp>
 
 namespace doodle::gui {
-
 class setting_windows::impl {
- public:
+public:
   impl()
-      : p_user("用户"s, ""s),
-        p_org_name("部门"s, ""s),
-        p_cache("缓存位置"s, ""s),
-        p_doc("文档路径"s, ""s),
-        p_maya_path("maya 版本"s, 2019),
-        p_ue_path("ue路径"s, ""s),
-        p_ue_version("ue版本"s),
-        p_batch_max("最大任务数"s, std::int32_t{core_set::get_set().p_max_thread}),
-        p_timeout("任务超时时间"s, boost::numeric_cast<std::int32_t>(core_set::get_set().timeout)) {}
+    : p_user("用户"s, ""s),
+      p_org_name("部门"s, ""s),
+      p_cache("缓存位置"s, ""s),
+      p_doc("文档路径"s, ""s),
+      p_maya_path("maya 版本"s, 2019),
+      p_ue_path("ue路径"s, ""s),
+      p_ue_version("ue版本"s),
+      p_batch_max("最大任务数"s, std::int32_t{core_set::get_set().p_max_thread}),
+      p_timeout("任务超时时间"s, boost::numeric_cast<std::int32_t>(core_set::get_set().timeout)) {
+  }
+
   gui::gui_cache<std::string> p_user;
   gui::gui_cache<std::string> p_org_name;
   gui::gui_cache<std::string> p_cache;
@@ -65,13 +65,12 @@ class setting_windows::impl {
 
 setting_windows::setting_windows() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
-  if (!g_reg()->ctx().contains<maya_exe_ptr>()) g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
 
   init();
 }
 
 void setting_windows::save() {
-  auto& set                    = core_set::get_set();
+  auto& set = core_set::get_set();
 
   set.organization_name        = p_i->p_org_name.data;
   set.maya_version             = p_i->p_maya_path.data;
@@ -83,16 +82,17 @@ void setting_windows::save() {
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
   set.next_time_               = p_i->welcome_show;
 
-  auto&& l_u                   = g_reg()->ctx().get<user::current_user>();
+  auto&& l_u = g_reg()->ctx().get<user::current_user>();
   l_u.user_name_attr(p_i->p_user());
   core_set_init{}.write_file();
 }
+
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
-  auto l_user                          = g_reg()->ctx().get<user::current_user>().get_handle();
-  p_i->p_user.data                     = l_user.get<user>().get_name();
-  p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().get_id());
+  auto l_user      = g_reg()->ctx().get<user::current_user>().get_handle();
+  p_i->p_user.data = l_user.get<user>().get_name();
+  p_i->user_uuid   = fmt::format("用户id: {}", l_user.get<database>().get_id());
 
   p_i->p_org_name.data                 = core_set::get_set().organization_name;
   p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();
@@ -127,11 +127,10 @@ bool setting_windows::render() {
   ImGui::SameLine();
   if (ImGui::Button("测试寻找")) {
     boost::system::error_code l_error_code{};
-    p_i->maya_path =
-        g_reg()->ctx().get<maya_exe_ptr>()->find_maya_path(spdlog::default_logger(), l_error_code).generic_string();
-    if (l_error_code) {
-      default_logger_raw()->log(spdlog::level::err, "没有找到maya文件的运行程序 {}", l_error_code.message());
-      p_i->maya_path = fmt::format("没有找到maya文件的运行程序({})", l_error_code.message());
+    try {
+      p_i->maya_path = maya_exe_ns::find_maya_path().generic_string();
+    } catch (...) {
+      p_i->maya_path = fmt::format("没有找到maya文件的运行程序({})", boost::current_exception_diagnostic_information());
     }
   }
   constexpr static auto g_text{"拖拽ue exe文件到此处"};
@@ -140,9 +139,9 @@ bool setting_windows::render() {
   if (imgui::InputText(*p_i->p_ue_path.gui_name, &(p_i->p_ue_path.data))) {
     get_ue_version();
   };
-  if (auto l_drag = dear::DragDropTarget{}) {
+  if (auto l_drag          = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
-        l_data && l_data->IsDelivery()) {
+      l_data && l_data->IsDelivery()) {
       auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
       if (!l_list->empty()) {
         p_i->p_ue_path.data = l_list->front().parent_path().parent_path().parent_path().parent_path().generic_string();
@@ -170,6 +169,7 @@ bool setting_windows::render() {
 }
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }
+
 void setting_windows::get_ue_version() {
   if (p_i->p_ue_path.data.empty()) return;
   auto l_path = FSys::path{p_i->p_ue_path.data} / "Engine/Binaries/Win64/UnrealEditor.exe";
@@ -178,11 +178,9 @@ void setting_windows::get_ue_version() {
     return;
   }
   try {
-    if (!g_ctx().contains<ue_exe_ptr>()) g_ctx().emplace<ue_exe_ptr>() = std::make_shared<ue_exe>();
-    p_i->p_ue_version = g_ctx().get<ue_exe_ptr>()->get_file_version(l_path);
-  } catch (const doodle_error& error) {
-    p_i->p_ue_version = boost::diagnostic_information(error);
+    p_i->p_ue_version = ue_exe_ns::get_file_version(l_path);
+  } catch (...) {
+    p_i->p_ue_version = boost::current_exception_diagnostic_information();
   }
 }
-
-}  // namespace doodle::gui
+} // namespace doodle::gui

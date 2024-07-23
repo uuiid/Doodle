@@ -35,19 +35,20 @@
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <wil/result.h>
-namespace doodle::launch {
+#include <doodle_lib/exe_warp/ue_exe.h>
 
+namespace doodle::launch {
 // 映射网络驱动器
-bool map_network_drive(const std::string &in_drive, const std::string &in_path) {
+bool map_network_drive(const std::string& in_drive, const std::string& in_path) {
   auto l_drive = conv::utf_to_utf<wchar_t>(in_drive);
   auto l_path  = conv::utf_to_utf<wchar_t>(in_path);
 
-  NETRESOURCEW l_net_resource{};  // 网络资源
+  NETRESOURCEW l_net_resource{}; // 网络资源
   l_net_resource.dwType       = RESOURCETYPE_DISK;
   l_net_resource.lpLocalName  = l_drive.data();
   l_net_resource.lpRemoteName = l_path.data();
 
-  auto l_ret                  = WNetAddConnection2W(&l_net_resource, nullptr, nullptr, CONNECT_TEMPORARY);
+  auto l_ret = WNetAddConnection2W(&l_net_resource, nullptr, nullptr, CONNECT_TEMPORARY);
   if (l_ret != NO_ERROR) {
     LOG_LAST_ERROR();
     default_logger_raw()->error("映射网络驱动器失败: {}", l_ret);
@@ -56,13 +57,13 @@ bool map_network_drive(const std::string &in_drive, const std::string &in_path) 
   return true;
 }
 
-bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
+bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   auto l_sink        = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
   using work_guard_t = decltype(boost::asio::make_work_guard(g_io_context()));
   auto l_work_guard  = std::make_shared<work_guard_t>(boost::asio::make_work_guard(g_io_context()));
 
-  using signal_t     = boost::asio::signal_set;
-  auto signal_       = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+  using signal_t = boost::asio::signal_set;
+  auto signal_   = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
   signal_->async_wait([](boost::system::error_code in_error_code, int in_sig) {
     if (in_error_code) {
       if (!app_base::GetPtr()->is_stop())
@@ -84,7 +85,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
       {"R:", R"(\\192.168.10.240\public\WanGuShenHua)"},
       {"U:", R"(\\192.168.10.218\WanYuFengShen)"}
   };
-  for (auto &l_drive : l_drive_list) {
+  for (auto& l_drive : l_drive_list) {
     if (!FSys::exists(l_drive.first))
       if (!map_network_drive(l_drive.first, l_drive.second)) return true;
   }
@@ -97,7 +98,10 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
     default_logger_raw()->error("必须有maya文件");
     return true;
   }
-  auto l_maya       = g_ctx().emplace<maya_exe_ptr>(std::make_shared<maya_exe>());
+  if (!g_ctx().contains<maya_ctx>())
+    g_ctx().emplace<maya_ctx>();
+  if (!g_ctx().contains<ue_ctx>())
+    g_ctx().emplace<ue_ctx>();
   FSys::path l_file = FSys::from_quotation_marks(in_arh(g_maya_file).str());
   auto l_strm       = l_file.stem().generic_string();
   if (!FSys::exists(l_file)) {
@@ -109,7 +113,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   if (in_arh(g_export_anim_time)) {
     try {
       l_export_anim_time = std::stoi(in_arh(g_export_anim_time).str());
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
       default_logger_raw()->error("导出动画时间解析错误: {}", e.what());
     }
   }
@@ -120,7 +124,7 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   l_episodes.analysis(l_file);
   l_shot.analysis(l_file);
   auto l_prj_list = register_file_type::get_project_list();
-  auto l_it = ranges::find_if(l_prj_list, [&](const project &in_prj) { return l_strm.starts_with(in_prj.p_shor_str); });
+  auto l_it = ranges::find_if(l_prj_list, [&](const project& in_prj) { return l_strm.starts_with(in_prj.p_shor_str); });
   if (l_it != l_prj_list.end()) {
     l_project = *l_it;
   } else {
@@ -129,50 +133,35 @@ bool auto_light_process_t::operator()(const argh::parser &in_arh, std::vector<st
   }
 
   entt::handle l_msg{*g_reg(), g_reg()->create()};
-  auto &l_process_message = l_msg.emplace<process_message>(l_file.filename().generic_string());
+  auto& l_process_message = l_msg.emplace<process_message>(l_file.filename().generic_string());
   l_process_message.logger()->sinks().emplace_back(l_sink);
-  l_msg.emplace<episodes>(l_episodes);
-  l_msg.emplace<shot>(l_shot);
-  l_msg.emplace<project>(l_project);
-
-  down_auto_light_anim_file l_down_anim_file{l_msg};
-  import_and_render_ue l_import_and_render_ue{l_msg};
-  auto_light_render_video l_auto_light_render_video{l_msg};
-  up_auto_light_anim_file l_up_auto_light_file{l_msg};
-  l_up_auto_light_file.async_end(boost::asio::bind_executor(
-      g_io_context(),
-      [l_msg, l_work_guard](boost::system::error_code in_error_code, std::filesystem::path in_path) mutable {
-        l_work_guard.reset();
-        if (in_error_code) {
-          l_msg.get<process_message>().set_state(process_message::state::fail);
-          app_base::GetPtr()->stop_app(in_error_code.value());
-        } else {
-          default_logger_raw()->info("成功");
-          l_msg.get<process_message>().set_state(process_message::state::success);
-          app_base::GetPtr()->stop_app();
-        }
-      }
-  ));
-  l_auto_light_render_video.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_up_auto_light_file)));
-  l_import_and_render_ue.async_end(boost::asio::bind_executor(g_io_context(), std::move(l_auto_light_render_video)));
-  l_down_anim_file.async_down_end(boost::asio::bind_executor(g_io_context(), std::move(l_import_and_render_ue)));
+  import_and_render_ue_ns::args l_args{};
+  l_args.episodes_ = l_episodes;
+  l_args.project_  = l_project;
+  l_args.shot_     = l_shot;
 
   if (in_arh[g_animation]) {
     auto l_arg             = maya_exe_ns::export_fbx_arg{};
     l_arg.file_path        = l_file;
     l_arg.export_anim_time = l_export_anim_time;
-
-    l_maya->async_run_maya(l_msg, l_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));
+    l_args.maya_arg_       = std::make_shared<maya_exe_ns::export_fbx_arg>(l_arg);
   } else if (in_arh[g_cfx]) {
-    //    auto l_arg             = maya_exe_ns::export_fbx_arg{};
-    //    l_arg.file_path        = l_file;
-    //    l_arg.export_anim_time = l_export_anim_time;
-    //    l_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
-    //    l_maya->async_run_maya(l_msg, l_arg, boost::asio::bind_executor(g_io_context(), std::move(l_down_anim_file)));
+    auto l_arg             = maya_exe_ns::qcloth_arg{};
+    l_arg.file_path        = l_file;
+    l_arg.export_anim_time = l_export_anim_time;
+    l_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
+    l_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
+    l_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
+    l_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
+    l_args.maya_arg_ = std::make_shared<maya_exe_ns::qcloth_arg>(l_arg);
   } else {
     default_logger_raw()->error("必须有参数");
     return true;
   }
+  boost::asio::co_spawn(
+    g_io_context(),
+    async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_process_message.logger()),
+    boost::asio::detached);
   return false;
 }
-}  // namespace doodle::launch
+} // namespace doodle::launch

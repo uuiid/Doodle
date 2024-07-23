@@ -221,5 +221,4 @@ class thread_copy_io_service {
     );
   }
 };
-
 }  // namespace doodle

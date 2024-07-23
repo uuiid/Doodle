@@ -10,18 +10,18 @@
 #include <spdlog/spdlog.h>
 
 namespace doodle {
-
 namespace details {
 template <class Mutex>
 class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
   std::shared_ptr<process_message::data_t> data_;
 
- public:
+public:
   explicit process_message_sink(std::shared_ptr<process_message::data_t> in_process_message)
-      : data_(std::move(in_process_message)) {}
+    : data_(std::move(in_process_message)) {
+  }
 
- private:
- protected:
+private:
+protected:
   void sink_it_(const spdlog::details::log_msg& msg) override {
     // 测试是否可以转换为进度
     rational_int l_progress{};
@@ -79,17 +79,21 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
         data_->err_.append(formatted.data(), formatted.size());
         if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10};
         if (data_->err_.size() > g_max_size) data_->err_.erase(0, g_max_size_clear);
+        data_->p_state = process_message::state::fail;
+        data_->p_end   = chrono::system_clock::now();
         break;
       case spdlog::level::level_enum::critical:
         data_->critical_.append(formatted.data(), formatted.size());
         if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10};
         if (data_->critical_.size() > g_max_size) data_->critical_.erase(0, g_max_size_clear);
+        data_->p_state = process_message::state::fail;
+        data_->p_end   = chrono::system_clock::now();
         break;
       case spdlog::level::level_enum::off:
-        data_->p_end      = chrono::system_clock::now();
+        data_->p_end = chrono::system_clock::now();
         data_->p_progress = {1, 1};
         if (auto l_enum = magic_enum::enum_cast<process_message::state>(fmt::to_string(msg.payload));
-            l_enum.has_value()) {
+          l_enum.has_value()) {
           if (data_->p_state == process_message::state::run && *l_enum == process_message::state::pause)
             data_->p_extra_time += chrono::system_clock::now() - data_->p_time;
           data_->p_state = l_enum.value();
@@ -108,7 +112,7 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
         data_->p_str_end = fmt::to_string(msg.payload);
-        //        data_->p_str_end |= ranges::actions::remove_if([](char in_c) { return std::isspace(in_c); });
+      //        data_->p_str_end |= ranges::actions::remove_if([](char in_c) { return std::isspace(in_c); });
         if (data_->p_str_end.size() > 70) data_->p_str_end.erase(70, std::string::npos);
         break;
       case spdlog::level::level_enum::off:
@@ -119,19 +123,21 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
     data_->p_progress += l_progress;
     if (data_->p_progress > 1) --data_->p_progress;
   }
-  void flush_() override {}
+
+  void flush_() override {
+  }
 };
-}  // namespace details
+} // namespace details
 using process_message_sink_mt = details::process_message_sink<std::mutex>;
 
 process_message::process_message(std::string in_name) : data_(std::make_shared<data_t>()) {
-  data_->p_state   = state::wait;
-  data_->p_time    = chrono::system_clock::now();
+  data_->p_state = state::wait;
+  data_->p_time  = chrono::system_clock::now();
 
   data_->p_name    = std::move(in_name);
   data_->p_name_id = fmt::format("{}##{}", data_->p_name, fmt::ptr(this));
 
-  data_->p_logger  = g_logger_ctrl().make_log(data_->p_name);
+  data_->p_logger = g_logger_ctrl().make_log(data_->p_name);
   data_->p_logger->sinks().emplace_back(std::make_shared<process_message_sink_mt>(this->data_));
 }
 
@@ -147,7 +153,7 @@ void process_message::set_state(state in_state) {
       break;
     case success:
     case fail:
-      data_->p_end      = chrono::system_clock::now();
+      data_->p_end = chrono::system_clock::now();
       data_->p_progress = {1, 1};
       break;
   }
@@ -158,22 +164,27 @@ std::string process_message::trace_log() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->trace_;
 }
+
 std::string process_message::debug_log() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->debug_;
 }
+
 std::string process_message::info_log() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->info_;
 }
+
 std::string process_message::warn_log() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->warn_;
 }
+
 std::string process_message::err_log() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->err_;
 }
+
 std::string process_message::critical_log() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->critical_;
@@ -183,10 +194,12 @@ rational_int process_message::get_progress() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->p_progress;
 }
+
 const process_message::state& process_message::get_state() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->p_state;
 }
+
 chrono::sys_time_pos::duration process_message::get_time() const {
   std::lock_guard _lock{data_->_mutex};
 
@@ -205,15 +218,16 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   }
   return l_out;
 }
+
 std::string process_message::message_back() const {
   std::lock_guard _lock{data_->_mutex};
   return data_->p_str_end;
 }
 
 const std::string& process_message::get_name_id() const { return data_->p_name_id; }
+
 void process_message::progress_clear() {
   std::lock_guard const _lock{data_->_mutex};
   data_->p_progress = 0;
 }
-
-}  // namespace doodle
+} // namespace doodle
