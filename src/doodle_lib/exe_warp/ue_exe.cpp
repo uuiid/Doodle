@@ -30,7 +30,7 @@ std::tuple<boost::system::error_code, std::string> get_file_version_impl(const F
   auto l_version_path = in_path.parent_path() / "UnrealEditor.version";
 
   if (!FSys::exists(l_version_path)) {
-    return {boost::system::errc::no_such_file_or_directory, std::string{}};
+    return {{boost::system::errc::no_such_file_or_directory, boost::system::generic_category()}, std::string{}};
   }
   FSys::ifstream l_ifstream{l_version_path};
   nlohmann::json const l_json = nlohmann::json::parse(l_ifstream);
@@ -90,17 +90,18 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string
     if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH")
       l_env.emplace(l_it.key(), l_it.value());
   }
-  l_env[L"UE-LocalDataCachePath"]  = L"%GAMEDIR%DerivedDataCache";
+  l_env[L"UE-LocalDataCachePath"]  = std::wstring{L"%GAMEDIR%DerivedDataCache"};
   l_env[L"UE-SharedDataCachePath"] = fmt::format(L"{}\\UE\\DerivedDataCache",
                                                  boost::locale::conv::utf_to_utf<wchar_t>(
                                                    core_set::get_set().depot_ip));
+  auto l_wargs = boost::locale::conv::utf_to_utf<wchar_t>(in_arg);
 
   auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
   auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
 
   auto l_process_ue = boost::process::v2::process{
       co_await boost::asio::this_coro::executor, l_ue_path,
-      in_arg,
+      {in_arg},
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
       details::hide_and_not_create_windows

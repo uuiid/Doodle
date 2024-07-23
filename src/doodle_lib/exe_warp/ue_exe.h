@@ -6,23 +6,17 @@
 
 #include <doodle_core/core/co_queue.h>
 
-#include <doodle_core/core/global_function.h>
-#include <doodle_core/core/wait_op.h>
+
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/thread_pool/process_message.h>
+
 
 #include <boost/asio.hpp>
-#include <boost/asio/any_completion_handler.hpp>
-#include <boost/asio/async_result.hpp>
-#include <boost/process.hpp>
-#include <boost/process/windows.hpp>
+
 #include <boost/system.hpp>
 
-#include <cstdint>
+
 #include <memory>
-#include <stack>
-#include <utility>
-#include <vector>
+
 
 namespace doodle {
 namespace ue_exe_ns {

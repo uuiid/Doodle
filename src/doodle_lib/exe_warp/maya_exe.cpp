@@ -118,7 +118,7 @@ maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
 namespace maya_exe_ns {
 FSys::path find_maya_path() {
   auto [l_e, l_maya_path] = find_maya_path_impl();
-  if (l_e) throw_exception(l_e);
+  if (l_e) throw_error(l_e);
   return l_maya_path;
 }
 }

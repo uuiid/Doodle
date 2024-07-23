@@ -317,7 +317,7 @@ bool maya_tool::render() {
       l_args.shot_     = i.shot_;
       l_args.maya_arg_ = std::make_shared<maya_exe_ns::export_fbx_arg>(k_arg);
       boost::asio::co_spawn(
-        g_io_context(), async_auto_loght(l_args, l_msg.logger()),
+        g_io_context(), async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
         [h = l_msg_handle](std::exception_ptr, std::tuple<boost::system::error_code, FSys::path> in_t) {
           if (std::get<0>(in_t))
             h.get<process_message>().set_state(process_message::state::fail);
@@ -348,7 +348,7 @@ bool maya_tool::render() {
       l_args.shot_     = i.shot_;
       l_args.maya_arg_ = std::make_shared<maya_exe_ns::qcloth_arg>(k_arg);
       boost::asio::co_spawn(
-        g_io_context(), async_auto_loght(l_args, l_msg.logger()),
+        g_io_context(), async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
         [h = l_msg_handle](std::exception_ptr, std::tuple<boost::system::error_code, FSys::path> in_t) {
           if (std::get<0>(in_t))
             h.get<process_message>().set_state(process_message::state::fail);

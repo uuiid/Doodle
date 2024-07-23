@@ -159,7 +159,7 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
     return true;
   }
   boost::asio::co_spawn(
-    g_io_context(), async_auto_loght(l_args, l_process_message.logger()), boost::asio::detached);
+    g_io_context(), async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_process_message.logger()), boost::asio::detached);
   return false;
 }
 } // namespace doodle::launch
