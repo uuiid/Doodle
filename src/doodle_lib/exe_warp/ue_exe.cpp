@@ -30,7 +30,7 @@ std::tuple<boost::system::error_code, std::string> get_file_version_impl(const F
   auto l_version_path = in_path.parent_path() / "UnrealEditor.version";
 
   if (!FSys::exists(l_version_path)) {
-    return {boost::system::errc::no_such_file_or_directory, std::string};
+    return {boost::system::errc::no_such_file_or_directory, std::string{}};
   }
   FSys::ifstream l_ifstream{l_version_path};
   nlohmann::json const l_json = nlohmann::json::parse(l_ifstream);
