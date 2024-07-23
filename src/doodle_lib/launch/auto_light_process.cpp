@@ -24,8 +24,6 @@
 #include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
 
-#include <doodle_lib/core/auto_light_render_video.h>
-#include <doodle_lib/core/down_auto_light_anim_file.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>

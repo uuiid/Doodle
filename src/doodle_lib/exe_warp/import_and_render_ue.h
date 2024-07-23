@@ -8,7 +8,6 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
-#include <doodle_lib/core/down_auto_light_anim_file.h>
 
 namespace doodle {
 namespace import_and_render_ue_ns {

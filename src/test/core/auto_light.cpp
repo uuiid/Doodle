@@ -14,7 +14,6 @@
 
 #include <doodle_app/app/app_command.h>
 
-#include <doodle_lib/core/down_auto_light_anim_file.h>
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/up_auto_light_file.h>
