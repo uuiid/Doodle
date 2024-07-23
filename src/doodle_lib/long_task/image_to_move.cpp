@@ -136,8 +136,8 @@ boost::system::error_code create_move(
   //        }
   //      });
 
-  in_logger->log(log_loc(), level::info, "开始创建视频 {}", in_out_path);
-  in_logger->log(log_loc(), level::info, "获得图片路径 {}", l_vector.front().path_attr.parent_path());
+  in_logger->info("开始创建视频 {}", in_out_path);
+  in_logger->info("获得图片路径 {}", l_vector.front().path_attr.parent_path());
 
   if (FSys::exists(in_out_path)) {
     FSys::remove(in_out_path, l_ec);
@@ -154,19 +154,19 @@ boost::system::error_code create_move(
   auto l_gamma = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto& l_image : l_vector) {
     if (l_stop) {
-      in_logger->log(log_loc(), level::err, "合成视频被主动结束 合成视频文件将被主动删除");
+      in_logger->error("合成视频被主动结束 合成视频文件将被主动删除");
       try {
         remove(in_out_path);
       } catch (const FSys::filesystem_error& err) {
-        in_logger->log(log_loc(), level::err, "合成视频主动删除失败 {} ", boost::diagnostic_information(err));
+        in_logger->error("合成视频主动删除失败 {} ", boost::diagnostic_information(err));
       }
-      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::fail));
+      in_logger->log(level::off, fmt::to_string(process_message::fail));
       l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
       BOOST_ASIO_ASSERT(l_ec);
       return l_ec;
     }
 
-    in_logger->log(log_loc(), level::info, "开始读取图片 {}", l_image.path_attr);
+    in_logger->info("开始读取图片 {}", l_image.path_attr);
 
     k_image = cv::imread(l_image.path_attr.generic_string());
     if (k_image.empty()) {
@@ -179,13 +179,13 @@ boost::system::error_code create_move(
       cv::LUT(k_image, l_gamma, k_image);
     }
     watermark_add_image(k_image, l_image.watermarks_attr);
-    in_logger->log(log_loc(), level::info, "开始写入图片 {}", l_image.path_attr);
-    in_logger->log(log_loc(), level::info, "progress 1/{}", k_size_len + k_size_len / 10);
+    in_logger->info("开始写入图片 {}", l_image.path_attr);
+    in_logger->info("progress 1/{}", k_size_len + k_size_len / 10);
     video << k_image;
   }
 
-  in_logger->log(log_loc(), level::info, "成功完成任务");
-  in_logger->log(log_loc(), level::off, fmt::to_string(process_message::success));
+  in_logger->info("成功完成任务");
+  in_logger->log(level::off, fmt::to_string(process_message::success));
   return l_ec;
 }
 } // namespace detail

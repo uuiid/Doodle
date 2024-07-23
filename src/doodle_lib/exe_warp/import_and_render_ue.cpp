@@ -12,6 +12,7 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_core/core/http_client_core.h>
+#include <doodle_lib/long_task/image_to_move.h>
 
 namespace doodle {
 import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render_ue_ns::args in_args) {
@@ -292,11 +293,11 @@ boost::system::error_code copy_diff(const FSys::path& from, const FSys::path& to
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_ue_ns::down_info>> analysis_out_file(
-  import_and_render_ue_ns::args in_args, logger_ptr in_logger) {
+  std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger) {
   std::vector<association_data> l_refs_tmp{};
   import_and_render_ue_ns::down_info l_out{};
 
-  for (auto&& i : in_args.maya_out_arg_.out_file_list) {
+  for (auto&& i : in_args->maya_out_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
     in_logger->warn("引用文件:{}", i.ref_file);
     auto l_uuid = FSys::software_flag_file(i.ref_file);
@@ -348,7 +349,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
   for (auto&& h : l_refs) {
     auto l_down_path  = h.ue_prj_path_.parent_path();
     auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
-    auto l_local_path = g_root / in_args.project_.p_shor_str / l_down_path_file_name;
+    auto l_local_path = g_root / in_args->project_.p_shor_str / l_down_path_file_name;
 
     switch (h.type_) {
       // 场景文件
@@ -402,27 +403,27 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
 
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
-  import_and_render_ue_ns::args in_args, logger_ptr in_logger
+  std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
   // 先下载文件
   {
     auto [l_ec, l_down_info] = co_await analysis_out_file(in_args, in_logger);
     if (l_ec)
       co_return std::tuple(l_ec, FSys::path{});
-    in_args.down_info_ = l_down_info;
+    in_args->down_info_ = l_down_info;
   }
 
   // 导入文件
-  in_logger->warn("开始导入文件 {} ", in_args.down_info_.render_project_);
-  fix_config(in_args);
-  fix_project(in_args);
-  auto l_import_data = gen_import_config(in_args);
+  in_logger->warn("开始导入文件 {} ", in_args->down_info_.render_project_);
+  fix_config(*in_args);
+  fix_project(*in_args);
+  auto l_import_data = gen_import_config(*in_args);
   nlohmann::json l_json{};
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   auto l_ec1      = co_await async_run_ue(fmt::format(
                                             "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation  -Params={}",
-                                            in_args.down_info_.render_project_, l_tmp_path),
+                                            in_args->down_info_.render_project_, l_tmp_path),
                                           in_logger);
   if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
 
@@ -436,7 +437,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   }
   l_ec1 = co_await async_run_ue(fmt::format(
                                   R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
-                                  in_args.down_info_.render_project_, l_import_data.render_map,
+                                  in_args->down_info_.render_project_, l_import_data.render_map,
                                   l_import_data.level_sequence_import, l_import_data.movie_pipeline_config),
                                 in_logger);
   in_logger->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
@@ -444,17 +445,60 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
-  import_and_render_ue_ns::args in_args, logger_ptr in_logger
+  std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
-  auto [l_ec,l_out] = co_await async_run_maya(in_args.maya_arg_, in_logger);
+  auto [l_ec,l_out] = co_await async_run_maya(in_args->maya_arg_, in_logger);
   if (l_ec) {
     co_return std::tuple(l_ec, FSys::path{});
   }
-  in_args.maya_out_arg_ = l_out;
-  auto [l_ec2, l_ret]   = co_await async_import_and_render_ue(in_args, in_logger);
+  in_args->maya_out_arg_ = l_out;
+  auto [l_ec2, l_ret]    = co_await async_import_and_render_ue(in_args, in_logger);
+  if (l_ec2) {
+    co_return std::tuple(l_ec2, FSys::path{});
+  }
+
+  // 合成视屏
+  in_logger->warn("开始合成视屏 :{}", l_ret);
+  auto l_movie_path = detail::create_out_path(l_ret, in_args->episodes_, in_args->shot_, &in_args->project_);
+  l_ec              = detail::create_move(l_movie_path, in_logger, movie::image_attr::make_default_attr(
+                                            &in_args->episodes_, &in_args->shot_,
+                                            FSys::list_files(l_ret)));
   if (l_ec) {
     co_return std::tuple(l_ec, FSys::path{});
   }
+  in_logger->warn("开始上传文件夹 :{}", l_ret);
+  auto l_u_project = in_args->down_info_.render_project_;
+  auto l_scene     = l_u_project.parent_path();
+  auto l_rem_path  = in_args->project_.p_path / "03_Workflow" / doodle_config::ue4_shot /
+                     fmt::format("EP{:04}", in_args->episodes_.p_episodes) / l_u_project.stem();
+  // maya输出
+  auto l_maya_out = in_args->maya_out_arg_.out_file_list |
+                    ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
+                      return in_arg.out_file.parent_path();
+                    }) |
+                    ranges::views::filter([](const FSys::path& in_path) { return !in_path.empty(); }) |
+                    ranges::to_vector;
+  l_maya_out |= ranges::actions::unique;
+  std::vector<std::pair<FSys::path, FSys::path>> l_up_file_list{};
+  // 渲染输出文件
+  if (auto l_e = copy_diff(l_ret, l_rem_path / l_ret.lexically_proximate(l_scene), in_logger); l_e)
+    co_return std::tuple{l_e, FSys::path{}};
+  // 渲染工程文件
+  if (auto l_e = copy_diff(l_scene / doodle_config::ue4_config, l_rem_path / doodle_config::ue4_config, in_logger))
+    co_return std::tuple{l_e, FSys::path{}};
+  if (auto l_e = copy_diff(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content, in_logger))
+    co_return std::tuple{l_e, FSys::path{}};
+  if (auto l_e = copy_diff(l_u_project, l_rem_path / l_u_project.filename(), in_logger))
+    co_return std::tuple{
+        l_e, FSys::path{}};
+  // maya输出文件
+  for (const auto& l_maya : l_maya_out) {
+    if (auto l_e = copy_diff(l_maya, l_rem_path.parent_path() / l_maya.stem(), in_logger))
+      co_return std::tuple{
+          l_e, FSys::path{}};
+  }
+  if (auto l_e = copy_diff(l_movie_path, l_rem_path / "move" / l_movie_path.filename(), in_logger)) co_return std::tuple
+      {l_e, FSys::path{}};
   co_return std::tuple{l_ec, l_ret};
 }
 } // namespace doodle

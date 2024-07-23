@@ -80,11 +80,14 @@ protected:
         if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10};
         if (data_->err_.size() > g_max_size) data_->err_.erase(0, g_max_size_clear);
         data_->p_state = process_message::state::fail;
+        data_->p_end   = chrono::system_clock::now();
         break;
       case spdlog::level::level_enum::critical:
         data_->critical_.append(formatted.data(), formatted.size());
         if (data_->p_state == process_message::state::run) data_->p_progress += {1, 10};
         if (data_->critical_.size() > g_max_size) data_->critical_.erase(0, g_max_size_clear);
+        data_->p_state = process_message::state::fail;
+        data_->p_end   = chrono::system_clock::now();
         break;
       case spdlog::level::level_enum::off:
         data_->p_end = chrono::system_clock::now();
