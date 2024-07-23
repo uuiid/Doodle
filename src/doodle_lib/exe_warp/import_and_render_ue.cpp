@@ -444,9 +444,9 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
-  std::shared_ptr<maya_exe_ns::arg> in_arg, import_and_render_ue_ns::args in_args, logger_ptr in_logger
+  import_and_render_ue_ns::args in_args, logger_ptr in_logger
 ) {
-  auto [l_ec,l_out] = co_await async_run_maya(in_arg, in_logger);
+  auto [l_ec,l_out] = co_await async_run_maya(in_args.maya_arg_, in_logger);
   if (l_ec) {
     co_return std::tuple(l_ec, FSys::path{});
   }

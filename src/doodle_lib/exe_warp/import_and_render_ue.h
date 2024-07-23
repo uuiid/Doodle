@@ -83,6 +83,7 @@ struct args {
   project project_{};
   maya_exe_ns::maya_out_arg maya_out_arg_{};
   down_info down_info_{};
+  std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
 };
 }
 
@@ -91,6 +92,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
 );
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
-  std::shared_ptr<maya_exe_ns::arg> in_arg, import_and_render_ue_ns::args in_args, logger_ptr in_logger
+  import_and_render_ue_ns::args in_args, logger_ptr in_logger
 );
 } // namespace doodle
