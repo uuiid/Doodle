@@ -87,8 +87,7 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(co_await boost::asio::this_coro::executor);
   std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value> l_env{};
   for (auto&& l_it : boost::process::v2::environment::current()) {
-    if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH")
-      l_env.emplace(l_it.key(), l_it.value());
+    l_env.emplace(l_it.key(), l_it.value());
   }
   l_env[L"UE-LocalDataCachePath"]  = std::wstring{L"%GAMEDIR%DerivedDataCache"};
   l_env[L"UE-SharedDataCachePath"] = fmt::format(L"{}\\UE\\DerivedDataCache",
