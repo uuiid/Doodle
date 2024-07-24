@@ -173,7 +173,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
       details::hide_and_not_create_windows
   };
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info), boost::asio::detached);
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::debug), boost::asio::detached);
+  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info), boost::asio::detached);
 
   l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
   auto [l_array_completion_order,l_ec,l_exit_code, l_ec_t] = co_await boost::asio::experimental::make_parallel_group(

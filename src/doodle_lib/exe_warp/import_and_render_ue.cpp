@@ -465,7 +465,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     co_return std::tuple(boost::system::error_code{}, FSys::path{});
   }
-
+  in_logger->warn("开始运行maya");
   auto [l_ec,l_out] = co_await async_run_maya(in_args->maya_arg_, in_logger);
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if (l_ec) {

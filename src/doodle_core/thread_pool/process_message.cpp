@@ -16,18 +16,18 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
   static constexpr std::size_t g_max_size       = 1024 * 100;
   static constexpr std::size_t g_max_size_clear = 1024 * 77;
   static constexpr std::int32_t l_n{10};
+  static constexpr std::size_t l_end_size{120};
 
 public:
   std::array<logger_Buffer, 2> buffers_;
   std::atomic_int32_t index_;
 
   process_message_sink() {
-    for (auto&& i : buffers_[0].loggers_) {
-      i.reserve(g_max_size + g_max_size_clear);
-    }
-
-    for (auto&& i : buffers_[1].loggers_) {
-      i.reserve(g_max_size + g_max_size_clear);
+    for (auto&& b : buffers_) {
+      b.end_str_.reserve(l_end_size);
+      for (auto&& i : b.loggers_) {
+        i.reserve(g_max_size + g_max_size_clear);
+      }
     }
   }
 
@@ -73,8 +73,9 @@ protected:
         l_logg.append(formatted.data(), formatted.size());
         l_buffer->progress_ += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
         if (l_logg.size() > g_max_size) l_logg.erase(0, g_max_size_clear);
-        l_buffer->end_str_  = fmt::to_string(msg.payload);
-        if (l_buffer->end_str_.size() > 70) l_buffer->end_str_.erase(70, std::string::npos);
+        std::copy_n(std::begin(formatted),
+                    std::clamp(formatted.size(), std::size_t{0}, l_end_size),
+                    l_buffer->end_str_.begin());
         break;
       }
       case spdlog::level::level_enum::off:
