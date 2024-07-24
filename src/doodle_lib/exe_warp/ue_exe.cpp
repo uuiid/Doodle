@@ -93,7 +93,6 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector
   l_env[L"UE-SharedDataCachePath"] = fmt::format(L"{}\\UE\\DerivedDataCache",
                                                  boost::locale::conv::utf_to_utf<wchar_t>(
                                                    core_set::get_set().depot_ip));
-  auto l_wargs = boost::locale::conv::utf_to_utf<wchar_t>(in_arg);
 
   auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
   auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
