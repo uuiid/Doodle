@@ -184,6 +184,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
   std::vector<association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
   auto l_c = std::make_shared<http::detail::http_client_data_base>(co_await boost::asio::this_coro::executor);
+  l_c->init("http://192.168.40.181:50026");
   try {
     for (auto&& i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{
@@ -423,10 +424,10 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
-  auto l_ec1      = co_await async_run_ue(fmt::format(
-                                            "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation  -Params={}",
-                                            in_args->down_info_.render_project_, l_tmp_path),
-                                          in_logger);
+  auto l_ec1 = co_await async_run_ue(fmt::format(
+                                       "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation  -Params={}",
+                                       in_args->down_info_.render_project_, l_tmp_path),
+                                     in_logger);
   if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
 
   in_logger->warn("渲染开始, 输出目录 {}", l_import_data.out_file_dir);
