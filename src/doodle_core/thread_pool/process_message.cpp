@@ -13,11 +13,22 @@ namespace doodle {
 namespace details {
 template <class Mutex>
 class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
+  constexpr std::size_t g_max_size       = 1024 * 100;
+  constexpr std::size_t g_max_size_clear = 1024 * 77;
+
 public:
   std::array<logger_Buffer, 2> buffers_;
   std::atomic_int32_t index_;
 
-  process_message_sink() = default;
+  process_message_sink() {
+    for (auto&& i : buffers_[0].loggers_) {
+      i.reserve(g_max_size + g_max_size_clear);
+    }
+
+    for (auto&& i : buffers_[1].loggers_) {
+      i.reserve(g_max_size + g_max_size_clear);
+    }
+  }
 
 private:
 protected:
@@ -51,8 +62,6 @@ protected:
       l_buffer->start_time_ = chrono::system_clock::now();
     }
 
-    constexpr std::size_t g_max_size       = 1024 * 100;
-    constexpr std::size_t g_max_size_clear = 1024 * 77;
     switch (msg.level) {
       case spdlog::level::level_enum::debug:
       case spdlog::level::level_enum::info:
