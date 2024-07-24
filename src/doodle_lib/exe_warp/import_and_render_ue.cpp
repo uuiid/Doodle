@@ -253,7 +253,7 @@ boost::system::error_code copy_diff(const FSys::path& from, const FSys::path& to
   std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
   for (int i = 0; i < 10; ++i) {
     try {
-      in_logger->log(log_loc(), spdlog::level::warn, "复制 {} -> {}", from, to);
+      in_logger->warn("复制 {} -> {}", from, to);
       if (FSys::is_regular_file(from) && !FSys::is_hidden(from) &&
           from.extension() != doodle_config::doodle_flag_name) {
         copy_diff_impl(from, to);
@@ -344,7 +344,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
 
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
-
+  in_logger->warn("排队复制文件");
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   // 开始复制文件
   // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
@@ -417,21 +417,29 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   }
 
   // 导入文件
-  in_logger->warn("开始导入文件 {} ", in_args->down_info_.render_project_);
   fix_config(*in_args);
   fix_project(*in_args);
   auto l_import_data = gen_import_config(*in_args);
   nlohmann::json l_json{};
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+  in_logger->warn("排队导入文件 {} ", in_args->down_info_.render_project_);
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
-  auto l_ec1 = co_await async_run_ue(fmt::format(
-                                       "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation  -Params={}",
-                                       in_args->down_info_.render_project_, l_tmp_path),
+  auto l_ec1 = co_await async_run_ue({
+                                         in_args->down_info_.render_project_.generic_string(),
+                                         "-windowed",
+                                         "-log",
+                                         "-stdout",
+                                         "-AllowStdOutLogVerbosity",
+                                         "-ForceLogFlush",
+                                         "-Unattended",
+                                         "-run=DoodleAutoAnimation",
+                                         fmt::format("-Params={}", in_args->down_info_.render_project_, l_tmp_path)
+                                     },
                                      in_logger);
   if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
-
-  in_logger->warn("渲染开始, 输出目录 {}", l_import_data.out_file_dir);
+  in_logger->warn("导入文件完成");
+  in_logger->warn("排队渲染, 输出目录 {}", l_import_data.out_file_dir);
   if (exists(l_import_data.out_file_dir)) {
     try {
       FSys::remove_all(l_import_data.out_file_dir);
@@ -440,10 +448,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     }
   }
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
-  l_ec1 = co_await async_run_ue(fmt::format(
-                                  R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
-                                  in_args->down_info_.render_project_, l_import_data.render_map,
-                                  l_import_data.level_sequence_import, l_import_data.movie_pipeline_config),
+  l_ec1 = co_await async_run_ue({in_args->down_info_.render_project_.generic_string(),
+                                 l_import_data.render_map.generic_string(), "-game",
+                                 fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
+                                 fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config),
+                                 "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+                                 "-Unattended"},
                                 in_logger);
   in_logger->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
   co_return std::tuple(boost::system::error_code{}, l_import_data.out_file_dir);

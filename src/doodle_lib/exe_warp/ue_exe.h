@@ -23,5 +23,5 @@ public:
   std::shared_ptr<awaitable_queue_limitation> queue_ = std::make_shared<awaitable_queue_limitation>();
 };
 
-boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string& in_arg, logger_ptr in_logger);
+boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector<std::string>& in_arg, logger_ptr in_logger);
 } // namespace doodle

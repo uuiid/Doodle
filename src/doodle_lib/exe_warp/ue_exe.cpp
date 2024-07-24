@@ -68,7 +68,7 @@ std::string get_file_version(const FSys::path& in_path) {
 }
 }
 
-boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string& in_arg, logger_ptr in_logger) {
+boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector<std::string>& in_arg, logger_ptr in_logger) {
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
 
   in_logger->info(" 开始检查 UE 版本");
@@ -100,7 +100,7 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::string
 
   auto l_process_ue = boost::process::v2::process{
       co_await boost::asio::this_coro::executor, l_ue_path,
-      {in_arg},
+      in_arg,
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
       details::hide_and_not_create_windows
