@@ -74,6 +74,7 @@ protected:
         l_logg.append(formatted.data(), formatted.size());
         l_buffer->progress_ += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
         if (l_logg.size() > g_max_size) l_logg.erase(0, g_max_size_clear);
+        l_buffer->end_str_.clear();
         std::copy_n(std::begin(formatted),
                     std::clamp(formatted.size(), std::size_t{0}, l_end_size),
                     l_buffer->end_str_.begin());
