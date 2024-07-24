@@ -353,7 +353,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
     auto l_down_path  = h.ue_prj_path_.parent_path();
     auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
     auto l_local_path = g_root / in_args->project_.p_shor_str / l_down_path_file_name;
-
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+      in_logger->error(" 用户取消操作");
+      co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted},
+                           import_and_render_ue_ns::down_info{});
+    }
     switch (h.type_) {
       // 场景文件
       case details::assets_type_enum::scene: {
@@ -425,6 +429,10 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   in_logger->warn("排队导入文件 {} ", in_args->down_info_.render_project_);
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
+  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+    in_logger->error(" 用户取消操作");
+    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
+  }
   auto l_ec1 = co_await async_run_ue({
                                          in_args->down_info_.render_project_.generic_string(),
                                          "-windowed",
@@ -448,6 +456,10 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     }
   }
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
+  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+    in_logger->error(" 用户取消操作");
+    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
+  }
   l_ec1 = co_await async_run_ue({in_args->down_info_.render_project_.generic_string(),
                                  l_import_data.render_map.generic_string(), "-game",
                                  fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
@@ -463,7 +475,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-    co_return std::tuple(boost::system::error_code{}, FSys::path{});
+    in_logger->error(" 用户取消操作");
+    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
   }
   in_logger->warn("开始运行maya");
   auto [l_ec,l_out] = co_await async_run_maya(in_args->maya_arg_, in_logger);
