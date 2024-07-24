@@ -434,7 +434,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
                                          "-ForceLogFlush",
                                          "-Unattended",
                                          "-run=DoodleAutoAnimation",
-                                         fmt::format("-Params={}", in_args->down_info_.render_project_, l_tmp_path)
+                                         fmt::format("-Params={}", l_tmp_path)
                                      },
                                      in_logger);
   if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
@@ -462,6 +462,10 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
   std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
+  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+    co_return std::tuple(boost::system::error_code{}, FSys::path{});
+  }
+
   auto [l_ec,l_out] = co_await async_run_maya(in_args->maya_arg_, in_logger);
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if (l_ec) {
