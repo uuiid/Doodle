@@ -226,9 +226,9 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
   auto l_end_call = [this, l_old]() {
     if (*l_old) {
       default_logger_raw()->log(log_loc(), level::warn, "{}, 旧版文件, 不导入", project_path);
-      default_logger_raw()->log(log_loc(), level::off, fmt::to_string(process_message::state::fail));
+      default_logger_raw()->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::fail));
     } else {
-      default_logger_raw()->log(log_loc(), level::off, fmt::to_string(process_message::state::success));
+      default_logger_raw()->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::success));
     }
     g_reg()->ctx().erase<process_message>();
     g_ctx().get<core_sig>().project_end_open();

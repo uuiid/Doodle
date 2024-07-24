@@ -72,7 +72,7 @@ boost::system::error_code connect_video_t::connect_video(
         l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
         BOOST_ASIO_ASSERT(l_ec);
       }
-      in_logger->log(log_loc(), level::off, fmt::to_string(process_message::state::fail));
+      in_logger->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::fail));
       return l_ec;
     }
 
@@ -98,7 +98,7 @@ boost::system::error_code connect_video_t::connect_video(
   }
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
-  in_logger->log(log_loc(), level::off, fmt::to_string(process_message::state::success));
+  in_logger->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::success));
   return l_ec;
 }
 
