@@ -422,6 +422,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   nlohmann::json l_json{};
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   auto l_ec1      = co_await async_run_ue(fmt::format(
                                             "{} -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended -run=DoodleAutoAnimation  -Params={}",
                                             in_args->down_info_.render_project_, l_tmp_path),
@@ -436,6 +437,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
       in_logger->error("渲染删除上次输出错误 error:{}", err.what());
     }
   }
+  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   l_ec1 = co_await async_run_ue(fmt::format(
                                   R"({} {} -game -LevelSequence="{}" -MoviePipelineConfig="{}" -windowed -log -stdout -AllowStdOutLogVerbosity -ForceLogFlush -Unattended)",
                                   in_args->down_info_.render_project_, l_import_data.render_map,
@@ -449,6 +451,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
   auto [l_ec,l_out] = co_await async_run_maya(in_args->maya_arg_, in_logger);
+  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if (l_ec) {
     co_return std::tuple(l_ec, FSys::path{});
   }
@@ -457,6 +460,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   if (l_ec2) {
     co_return std::tuple(l_ec2, FSys::path{});
   }
+  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
 
   // 合成视屏
   in_logger->warn("开始合成视屏 :{}", l_ret);
