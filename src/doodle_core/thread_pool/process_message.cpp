@@ -125,7 +125,7 @@ process_message::process_message(std::string in_name) : data_(std::make_shared<d
 
   data_->p_logger = g_logger_ctrl().make_log(data_->p_name);
   data_->sink_    = std::make_shared<process_message_sink_mt>();
-  data_->p_logger->sinks().emplace_back(std::make_shared<process_message_sink_mt>());
+  data_->p_logger->sinks().emplace_back(data_->sink_);
 }
 
 const std::string& process_message::get_name() const { return data_->p_name; }
