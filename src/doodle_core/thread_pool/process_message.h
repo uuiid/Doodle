@@ -14,14 +14,18 @@ namespace details {
 struct logger_Buffer {
   enum state { success = 1, fail = 2, wait = 3, run = 4, pause = 5 };
 
-  std::array<std::string, 6> loggers_;
-  rational_int progress_;
-  state state_{logger_Buffer::wait};
-  std::string end_str_;
-  chrono::sys_time_pos::duration extra_time_{0};
+  static constexpr std::size_t g_max_size = 1024 * 100;
+  static constexpr std::size_t l_end_size{120};
+  using log_str     = std::array<char, g_max_size>;
+  using log_end_str = std::array<char, l_end_size>;
+  std::array<log_str, 6> loggers_;
+  log_end_str end_str_;
+  std::atomic<rational_int> progress_;
+  std::atomic<state> state_{logger_Buffer::wait};
+  std::atomic<chrono::sys_time_pos::duration> extra_time_{};
 
-  chrono::sys_time_pos start_time_;
-  chrono::sys_time_pos end_time_;
+  std::atomic<chrono::sys_time_pos> start_time_;
+  std::atomic<chrono::sys_time_pos> end_time_;
 };
 
 template <class Mutex>
@@ -55,9 +59,9 @@ public:
   [[nodiscard]] const std::string& get_name_id() const;
 
   void progress_clear();
-  [[nodiscard]] std::string message_back() const;
+  [[nodiscard]] details::logger_Buffer::log_end_str message_back() const;
 
-  [[nodiscard]] std::string level_log(const level::level_enum in_level) const;
+  [[nodiscard]] details::logger_Buffer::log_str level_log(const level::level_enum in_level) const;
 
   [[nodiscard]] rational_int get_progress() const;
 

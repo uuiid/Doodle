@@ -20,24 +20,17 @@ class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
   static constexpr std::size_t l_end_size{120};
 
 public:
-  std::array<logger_Buffer, 2> buffers_;
-  std::atomic_int32_t index_;
+  logger_Buffer buffer_;
 
   process_message_sink() {
-    for (auto&& b : buffers_) {
-      b.end_str_.reserve(l_end_size);
-      for (auto&& i : b.loggers_) {
-        i.reserve(g_max_size + g_max_size_clear);
-      }
-    }
   }
 
 private:
 protected:
   void sink_it_(const spdlog::details::log_msg& msg) override {
     // 获取未使用的缓冲区
-    buffers_[!index_]       = buffers_[index_];
-    logger_Buffer* l_buffer = &buffers_[!index_];
+
+    logger_Buffer* l_buffer = &buffer_;
 
     // 测试是否可以转换为进度
     if (msg.payload.starts_with("progress") && msg.payload.size() > 8) {
@@ -55,6 +48,8 @@ protected:
       }
       return;
     }
+    rational_int l_progress                     = l_buffer->progress_;
+    chrono::sys_time_pos::duration l_extra_time = l_buffer->extra_time_;
 
     // 格式化
     spdlog::memory_buf_t formatted;
@@ -71,13 +66,14 @@ protected:
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical: {
         auto&& l_logg = l_buffer->loggers_[msg.level];
-        l_logg.append(formatted.data(), formatted.size());
-        l_buffer->progress_ += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
-        if (l_logg.size() > g_max_size) l_logg.erase(0, g_max_size_clear);
-        l_buffer->end_str_.clear();
+        std::rotate(l_logg.begin(), l_logg.end() + formatted.size(), l_logg.end());
+        std::copy(formatted.begin(), formatted.end(), l_logg.rbegin());
+        l_progress += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
+        l_buffer->end_str_.fill(' ');
         std::copy_n(std::begin(formatted),
-                    std::clamp(formatted.size(), std::size_t{0}, l_end_size),
+                    std::clamp(formatted.size(), std::size_t{0}, l_buffer->end_str_.size()),
                     l_buffer->end_str_.begin());
+
         break;
       }
       case spdlog::level::level_enum::off:
@@ -86,7 +82,7 @@ protected:
         if (auto l_enum = magic_enum::enum_cast<process_message::state>(fmt::to_string(msg.payload));
           l_enum.has_value()) {
           if (l_buffer->state_ == process_message::state::run && *l_enum == process_message::state::pause)
-            l_buffer->extra_time_ += chrono::system_clock::now() - l_buffer->start_time_;
+            l_extra_time += chrono::system_clock::now() - chrono::sys_time_pos{l_buffer->start_time_};
           l_buffer->state_ = l_enum.value();
         }
         break;
@@ -110,10 +106,10 @@ protected:
         break;
     }
 
-    if (l_buffer->progress_ > 1) --l_buffer->progress_;
+    if (l_progress > 1) --l_progress;
 
-    // 交换
-    index_ = !index_;
+    l_buffer->progress_ = l_progress;
+    l_buffer->extra_time_ = l_extra_time;
   }
 
   void flush_() override {
@@ -136,39 +132,40 @@ const std::string& process_message::get_name() const { return data_->p_name; }
 logger_ptr process_message::logger() const { return data_->p_logger; }
 
 
-std::string process_message::level_log(const level::level_enum in_level) const {
-  return data_->sink_->buffers_[data_->sink_->index_].loggers_[in_level];
+details::logger_Buffer::log_str process_message::level_log(const level::level_enum in_level) const {
+  return data_->sink_->buffer_.loggers_[in_level];
+}
+
+details::logger_Buffer::log_end_str process_message::message_back() const {
+  return data_->sink_->buffer_.end_str_;
 }
 
 rational_int process_message::get_progress() const {
-  return data_->sink_->buffers_[data_->sink_->index_].progress_;
+  return data_->sink_->buffer_.progress_;
 }
 
 const process_message::state& process_message::get_state() const {
-  return data_->sink_->buffers_[data_->sink_->index_].state_;
+  return data_->sink_->buffer_.state_;
 }
 
 chrono::sys_time_pos::duration process_message::get_time() const {
-  chrono::sys_time_pos::duration l_out = data_->sink_->buffers_[data_->sink_->index_].extra_time_;
-
-  switch (data_->sink_->buffers_[data_->sink_->index_].state_) {
+  chrono::sys_time_pos::duration l_out = data_->sink_->buffer_.extra_time_;
+  chrono::sys_time_pos l_start         = data_->sink_->buffer_.start_time_;
+  chrono::sys_time_pos l_end           = data_->sink_->buffer_.end_time_;
+  switch (data_->sink_->buffer_.state_) {
     case state::wait:
     case state::pause:
       break;
     case state::run:
-      l_out += chrono::system_clock::now() - data_->sink_->buffers_[data_->sink_->index_].start_time_;
+      l_out += chrono::system_clock::now() - l_start;
       break;
     case state::fail:
     case state::success:
-      l_out += data_->sink_->buffers_[data_->sink_->index_].end_time_ - data_->sink_->buffers_[data_->sink_->index_].
-          start_time_;
+      l_out += l_end - l_start;
   }
   return l_out;
 }
 
-std::string process_message::message_back() const {
-  return data_->sink_->buffers_[data_->sink_->index_].end_str_;
-}
 
 const std::string& process_message::get_name_id() const { return data_->p_name_id; }
 } // namespace doodle
