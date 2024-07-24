@@ -494,7 +494,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
 
   // 合成视屏
   in_logger->warn("开始合成视屏 :{}", l_ret);
-  auto l_movie_path = detail::create_out_path(l_ret, in_args->episodes_, in_args->shot_, &in_args->project_);
+  auto l_movie_path = detail::create_out_path(l_ret.parent_path(), in_args->episodes_, in_args->shot_, &in_args->project_);
   l_ec              = detail::create_move(l_movie_path, in_logger, movie::image_attr::make_default_attr(
                                             &in_args->episodes_, &in_args->shot_,
                                             FSys::list_files(l_ret)));
