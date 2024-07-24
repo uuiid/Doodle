@@ -345,6 +345,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
   static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
 
+  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   // 开始复制文件
   // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
