@@ -152,17 +152,21 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
     return std::ranges::find(l_export_sim, in) != l_export_sim.end();
   });
 
-  fbx_write l_fbx_write{};
-  l_fbx_write.set_path(l_file_path);
-  l_fbx_write.write(l_export_list, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
+  {
+    fbx_write l_fbx_write{};
+    l_fbx_write.set_path(l_file_path);
+    l_fbx_write.write(l_export_list, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
+  }
 
   l_file_path.replace_extension(".abc");
   default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
-  alembic::archive_out l_archive_out{l_file_path, l_export_sim, in_gen_file->begin_end_time.first,
-                                     in_gen_file->begin_end_time.second};
-  for (auto i = in_gen_file->begin_end_time.first; i <= in_gen_file->begin_end_time.second; ++i) {
-    MAnimControl::setCurrentTime(i);
-    l_archive_out.write();
+  {
+    alembic::archive_out l_archive_out{l_file_path, l_export_sim, in_gen_file->begin_end_time.first,
+                                       in_gen_file->begin_end_time.second};
+    for (auto i = in_gen_file->begin_end_time.first; i <= in_gen_file->begin_end_time.second; ++i) {
+      MAnimControl::setCurrentTime(i);
+      l_archive_out.write();
+    }
   }
 
   return l_file_path;
