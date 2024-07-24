@@ -10,6 +10,8 @@ namespace doodle {
 boost::asio::awaitable<void> async_read_pipe(std::shared_ptr<boost::asio::readable_pipe> in_pip, logger_ptr in_logger,
                                              level::level_enum in_level,
                                              std::string in_out_code) {
+  for (auto&& i : in_out_code)
+    std::tolower(i);
   boost::asio::streambuf l_buffer{};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     auto [l_ec, l_size] = co_await
@@ -29,7 +31,9 @@ boost::asio::awaitable<void> async_read_pipe(std::shared_ptr<boost::asio::readab
     std::getline(l_is, l_line);
     while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
     if (!l_line.empty()) {
-      in_logger->log(in_level, boost::locale::conv::to_utf<char>(l_line, in_out_code));
+      if (in_out_code != "utf-8")
+        l_line = boost::locale::conv::to_utf<char>(l_line, in_out_code);
+      in_logger->log(in_level, l_line);
     }
   }
 }
