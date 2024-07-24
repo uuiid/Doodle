@@ -22,23 +22,25 @@
 #include <utility>
 
 namespace doodle::gui {
-
 class create_video::image_arg : public gui::gui_cache<std::string> {
- public:
+public:
   using base_type = gui::gui_cache<std::string>;
+
   explicit image_arg(
-      const entt::handle& in_handle, std::vector<FSys::path> in_image_attr, const std::string& in_show_str
+    const entt::handle& in_handle, std::vector<FSys::path> in_image_attr, const std::string& in_show_str
   )
-      : base_type(in_show_str), out_handle(in_handle), image_attr(std::move(in_image_attr)){};
+    : base_type(in_show_str), out_handle(in_handle), image_attr(std::move(in_image_attr)) {
+  };
 
   entt::handle out_handle;
   std::vector<FSys::path> image_attr;
 };
 
 class video_gui_cache : boost::less_than_comparable<video_gui_cache> {
- public:
+public:
   explicit video_gui_cache(std::string in_name, std::string in_data, FSys::path in_path)
-      : gui_name_(std::move(in_name)), data_(std::move(in_data)), path_(std::move(in_path)){};
+    : gui_name_(std::move(in_name)), data_(std::move(in_data)), path_(std::move(in_path)) {
+  };
   gui_cache_name_id gui_name_;
   std::string data_;
   FSys::path path_;
@@ -47,7 +49,7 @@ class video_gui_cache : boost::less_than_comparable<video_gui_cache> {
 };
 
 class create_video::impl {
- public:
+public:
   using image_cache = create_video::image_arg;
   using video_cache = video_gui_cache;
 
@@ -79,9 +81,9 @@ bool create_video::render() {
       dear::Selectable(*i.gui_name);
     }
   }
-  if (auto l_drag = dear::DragDropTarget{}) {
+  if (auto l_drag          = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
-        l_data && l_data->IsDelivery()) {
+      l_data && l_data->IsDelivery()) {
       auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
 
       for (auto&& l_file : *l_list) {
@@ -94,13 +96,13 @@ bool create_video::render() {
           }
 
           auto&& l_out = p_i->image_to_video_list.emplace_back(
-              create_image_to_move_handle(l_file), l_list_files, l_file.generic_string()
+            create_image_to_move_handle(l_file), l_list_files, l_file.generic_string()
           );
         }
       }
       if (ranges::all_of(*l_list, [](const FSys::path& in_path) -> bool { return FSys::is_regular_file(in_path); })) {
         auto&& l_out = p_i->image_to_video_list.emplace_back(
-            create_image_to_move_handle(l_list->front().parent_path()), *l_list, l_list->front().generic_string()
+          create_image_to_move_handle(l_list->front().parent_path()), *l_list, l_list->front().generic_string()
         );
       }
     }
@@ -114,29 +116,29 @@ bool create_video::render() {
 
     ranges::for_each(p_i->image_to_video_list, [=, this](const impl::image_cache& in_cache) {
       in_cache.out_handle.emplace<process_message>(
-          in_cache.out_handle.get<image_to_move ::element_type ::out_file_path>().path.filename().generic_string()
+        in_cache.out_handle.get<image_to_move::element_type::out_file_path>().path.filename().generic_string()
       );
       g_reg()->ctx().get<image_to_move>()->async_create_move(
-          in_cache.out_handle, in_cache.image_attr,
+        in_cache.out_handle, in_cache.image_attr,
 
-          boost::asio::bind_executor(
-              g_io_context(),
-              [this, l_h = in_cache.out_handle, l_sort_file_stem](
-                  const FSys::path& in_path, const boost::system::error_code& in_error_code
-              ) {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
-                if (in_error_code) {
-                  l_h.get<process_message>().set_state(process_message::state::fail);
-                  return;
-                }
-                if (ranges::count_if(p_i->video_list, [&](const video_gui_cache& in_gui_cache) {
-                      return in_gui_cache.path_ == in_path;
-                    }) == 0) {
-                  p_i->video_list.emplace_back(in_path.filename().generic_string(), in_path.generic_string(), in_path);
-                  p_i->video_list |= ranges::actions::sort(l_sort_file_stem);
-                }
-
-              }
-          )
+        boost::asio::bind_executor(
+          g_io_context(),
+          [this, l_h = in_cache.out_handle, l_sort_file_stem](
+        const FSys::path& in_path, const boost::system::error_code& in_error_code
+      ) {
+            /// \brief 在这里我们将合成的视频添加到下一个工具栏中
+            if (in_error_code) {
+              l_h.get<process_message>().logger()->error("创建视频失败: {}", in_error_code.message());
+              return;
+            }
+            if (ranges::count_if(p_i->video_list, [&](const video_gui_cache& in_gui_cache) {
+              return in_gui_cache.path_ == in_path;
+            }) == 0) {
+              p_i->video_list.emplace_back(in_path.filename().generic_string(), in_path.generic_string(), in_path);
+              p_i->video_list |= ranges::actions::sort(l_sort_file_stem);
+            }
+          }
+        )
       );
     });
   }
@@ -146,9 +148,9 @@ bool create_video::render() {
       dear::Selectable(*i.gui_name_);
     }
   };
-  if (auto l_drag = dear::DragDropTarget{}) {
+  if (auto l_drag          = dear::DragDropTarget{}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data());
-        l_data && l_data->IsDelivery()) {
+      l_data && l_data->IsDelivery()) {
       auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
       p_i->video_list.clear();
       for (auto&& l_file : *l_list) {
@@ -178,27 +180,29 @@ bool create_video::render() {
       l_out_video_h.emplace_or_replace<connect_video::element_type::out_file_path>(l_list.front().parent_path());
       if (!l_out_video_h.all_of<process_message>())
         l_out_video_h.emplace<process_message>(
-            l_out_video_h.get<connect_video::element_type::out_file_path>().path.filename().generic_string()
+          l_out_video_h.get<connect_video::element_type::out_file_path>().path.filename().generic_string()
         );
 
       if (!g_ctx().contains<connect_video>())
         g_ctx().emplace<connect_video>(std::make_shared<detail::connect_video_t>());
 
       g_ctx().get<connect_video>()->async_connect_video(
-          l_out_video_h, l_list,
-          boost::asio::bind_executor(
-              g_io_context(),
-              [this, l_out_video_h](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
-                if (in_error_code) l_out_video_h.get<process_message>().set_state(process_message::state::fail);
-                default_logger_raw()->info("完成视频合成 {}", in_path);
-              }
-          )
+        l_out_video_h, l_list,
+        boost::asio::bind_executor(
+          g_io_context(),
+          [this, l_out_video_h](const FSys::path& in_path, const boost::system::error_code& in_error_code) {
+            if (in_error_code) l_out_video_h.get<process_message>().logger()->error(
+              "连接视频失败: {}", in_error_code.message());
+            default_logger_raw()->info("完成视频合成 {}", in_path);
+          }
+        )
       );
     }
   }
 
   return p_i->open;
 }
+
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
   boost::ignore_unused(this);
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
@@ -206,11 +210,11 @@ entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
 
-  l_h.emplace_or_replace<image_to_move ::element_type ::out_file_path>(in_path.parent_path());
+  l_h.emplace_or_replace<image_to_move::element_type::out_file_path>(in_path.parent_path());
 
   return l_h;
 }
+
 const std::string& create_video::title() const { return p_i->title_name_; }
 create_video::~create_video() = default;
-
-}  // namespace doodle::gui
+} // namespace doodle::gui

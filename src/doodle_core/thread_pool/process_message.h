@@ -31,11 +31,6 @@ using process_message_sink_mt = details::process_message_sink<std::mutex>;
 
 class DOODLE_CORE_API process_message {
 public:
-  enum level {
-    info = 0,
-    warning = 1,
-  };
-
   using state = details::logger_Buffer::state;
 
 private:
@@ -61,7 +56,7 @@ public:
   void progress_clear();
   [[nodiscard]] std::string message_back() const;
 
-  [[nodiscard]] std::string level_log(const level in_level) const;
+  [[nodiscard]] std::string level_log(const level::level_enum in_level) const;
 
   [[nodiscard]] rational_int get_progress() const;
 

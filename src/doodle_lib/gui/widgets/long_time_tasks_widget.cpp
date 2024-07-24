@@ -15,7 +15,6 @@
 #include <fmt/chrono.h>
 
 namespace doodle::gui {
-
 long_time_tasks_widget::long_time_tasks_widget() : p_current_select() { title_name_ = std::string{name}; }
 
 bool long_time_tasks_widget::render() {
@@ -38,9 +37,9 @@ bool long_time_tasks_widget::render() {
       imgui::TableNextRow();
       imgui::TableNextColumn();
       if (dear::Selectable(
-              msg.get_name_id(), p_current_select == k_h,
-              ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap
-          )) {
+        msg.get_name_id(), p_current_select == k_h,
+        ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap
+      )) {
         p_current_select = k_h;
       }
 
@@ -62,21 +61,24 @@ bool long_time_tasks_widget::render() {
         case process_message::state::pause: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 1.0f, 0.0f, 1.0f}};
           ImGui::Text("暂停中...");
-        } break;
+        }
+        break;
         case process_message::state::fail: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 0.0f, 0.0f, 1.0f}};
           ImGui::Text("错误结束");
-        } break;
+        }
+        break;
         case process_message::state::success: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{0.0f, 1.0f, 0.0f, 1.0f}};
           ImGui::Text("成功完成");
-        } break;
+        }
+        break;
       }
 
       imgui::TableNextColumn();
       using namespace std::literals;
       dear::Text(
-          msg.get_time() == chrono::sys_time_pos::duration{0} ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time())
+        msg.get_time() == chrono::sys_time_pos::duration{0} ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time())
       );
 
       ImGui::TableNextColumn();
@@ -88,43 +90,19 @@ bool long_time_tasks_widget::render() {
     }
   };
   ImGui::Combo(
-      "日志等级", reinterpret_cast<int*>(&index_),
-      [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
-        constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
-        *out_text                       = l_leve_names_tmp[in_index].data();
-        return true;
-      },
-      nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
+    "日志等级", reinterpret_cast<int*>(&index_),
+    [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
+      constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
+      *out_text                       = l_leve_names_tmp[in_index].data();
+      return true;
+    },
+    nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
   );
 
   dear::Text("主要日志"s);
   if (dear::Child l_c{"main_log", ImVec2{0, 266}, true}; l_c) {
     if (p_current_select && p_current_select.any_of<process_message>()) {
-      switch (index_) {
-        case level::level_enum::trace:
-          log_ = p_current_select.get<process_message>().trace_log();
-          break;
-        case level::level_enum::debug:
-          log_ = p_current_select.get<process_message>().debug_log();
-          break;
-        case level::level_enum::info:
-          log_ = p_current_select.get<process_message>().info_log();
-          break;
-        case level::level_enum::warn:
-          log_ = p_current_select.get<process_message>().warn_log();
-          break;
-        case level::level_enum::err:
-          log_ = p_current_select.get<process_message>().err_log();
-          break;
-        case level::level_enum::critical:
-          log_ = p_current_select.get<process_message>().critical_log();
-          break;
-        case level::level_enum::off:
-          break;
-        case level::level_enum::n_levels:
-          break;
-      }
-
+      log_ = p_current_select.get<process_message>().level_log(index_);
       dear::TextWrapPos l_wrap{};
       imgui::TextUnformatted(log_.data(), log_.data() + log_.size());
     }
@@ -132,5 +110,6 @@ bool long_time_tasks_widget::render() {
 
   return open;
 }
+
 const std::string& long_time_tasks_widget::title() const { return title_name_; }
-}  // namespace doodle::gui
+} // namespace doodle::gui

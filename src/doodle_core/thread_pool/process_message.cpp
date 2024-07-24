@@ -13,8 +13,9 @@ namespace doodle {
 namespace details {
 template <class Mutex>
 class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
-  constexpr std::size_t g_max_size       = 1024 * 100;
-  constexpr std::size_t g_max_size_clear = 1024 * 77;
+  static constexpr std::size_t g_max_size       = 1024 * 100;
+  static constexpr std::size_t g_max_size_clear = 1024 * 77;
+  static constexpr std::int32_t l_n{10};
 
 public:
   std::array<logger_Buffer, 2> buffers_;
@@ -67,14 +68,13 @@ protected:
       case spdlog::level::level_enum::info:
       case spdlog::level::level_enum::warn:
       case spdlog::level::level_enum::err:
-      case spdlog::level::level_enum::critical:
+      case spdlog::level::level_enum::critical: {
         auto&& l_logg = l_buffer->loggers_[msg.level];
         l_logg.append(formatted.data(), formatted.size());
-        static constexpr std::int32_t l_n{10};
         l_buffer->progress_ += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
         if (l_logg.size() > g_max_size) l_logg.erase(0, g_max_size_clear);
-
         break;
+      }
       case spdlog::level::level_enum::off:
         l_buffer->end_time_ = chrono::system_clock::now();
         l_buffer->progress_ = {1, 1};
@@ -132,7 +132,7 @@ const std::string& process_message::get_name() const { return data_->p_name; }
 logger_ptr process_message::logger() const { return data_->p_logger; }
 
 
-std::string process_message::level_log(const level in_level) const {
+std::string process_message::level_log(const level::level_enum in_level) const {
   return data_->sink_->buffers_[data_->sink_->index_].loggers_[in_level];
 }
 

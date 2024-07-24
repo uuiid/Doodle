@@ -245,9 +245,10 @@ bool maya_tool::render() {
                                                                std::tuple<boost::system::error_code,
                                                                           maya_exe_ns::maya_out_arg> in_t) {
                                               if (std::get<0>(in_t))
-                                                h.get<process_message>().set_state(process_message::state::fail);
+                                                h.get<process_message>().logger()->error(std::get<0>(in_t).message());
                                               else
-                                                h.get<process_message>().set_state(process_message::state::success);
+                                                h.get<process_message>().logger()->log(
+                                                  level::off, magic_enum::enum_name(process_message::state::success));
                                             }));
     }
   }
@@ -270,9 +271,10 @@ bool maya_tool::render() {
                                                                std::tuple<boost::system::error_code,
                                                                           maya_exe_ns::maya_out_arg> in_t) {
                                               if (std::get<0>(in_t))
-                                                h.get<process_message>().set_state(process_message::state::fail);
+                                                h.get<process_message>().logger()->error(std::get<0>(in_t).message());
                                               else
-                                                h.get<process_message>().set_state(process_message::state::success);
+                                                h.get<process_message>().logger()->log(
+                                                  level::off, magic_enum::enum_name(process_message::state::success));
                                             }));
     }
   }
@@ -301,9 +303,10 @@ bool maya_tool::render() {
                                                                std::tuple<boost::system::error_code,
                                                                           maya_exe_ns::maya_out_arg> in_t) {
                                               if (std::get<0>(in_t))
-                                                h.get<process_message>().set_state(process_message::state::fail);
+                                                h.get<process_message>().logger()->error(std::get<0>(in_t).message());
                                               else
-                                                h.get<process_message>().set_state(process_message::state::success);
+                                                h.get<process_message>().logger()->log(
+                                                  level::off, magic_enum::enum_name(process_message::state::success));
                                             }));
     }
   }
@@ -330,9 +333,10 @@ bool maya_tool::render() {
                                             [h = l_msg_handle](std::exception_ptr,
                                                                std::tuple<boost::system::error_code, FSys::path> in_t) {
                                               if (std::get<0>(in_t))
-                                                h.get<process_message>().set_state(process_message::state::fail);
+                                                h.get<process_message>().logger()->error(std::get<0>(in_t).message());
                                               else
-                                                h.get<process_message>().set_state(process_message::state::success);
+                                                h.get<process_message>().logger()->log(
+                                                  level::off, magic_enum::enum_name(process_message::state::success));
                                             }));
     }
   }
@@ -361,14 +365,15 @@ bool maya_tool::render() {
         g_thread(),
         async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
         boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(),
-                                            ([h = l_msg_handle](std::exception_ptr,
-                                                                std::tuple<boost::system::error_code, FSys::path>
-                                                                in_t) {
+                                            [h = l_msg_handle](std::exception_ptr,
+                                                               std::tuple<boost::system::error_code, FSys::path>
+                                                               in_t) {
                                               if (std::get<0>(in_t))
-                                                h.get<process_message>().set_state(process_message::state::fail);
+                                                h.get<process_message>().logger()->error(std::get<0>(in_t).message());
                                               else
-                                                h.get<process_message>().set_state(process_message::state::success);
-                                            })));
+                                                h.get<process_message>().logger()->log(
+                                                  level::off, magic_enum::enum_name(process_message::state::success));
+                                            }));
     }
   }
 
