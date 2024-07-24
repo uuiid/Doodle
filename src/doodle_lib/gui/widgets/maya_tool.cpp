@@ -240,7 +240,7 @@ bool maya_tool::render() {
       auto&& l_msg        = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
         g_thread(), async_run_maya(std::make_shared<maya_exe_ns::qcloth_arg>(k_arg), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(),
+        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
                                             [h = l_msg_handle](std::exception_ptr,
                                                                std::tuple<boost::system::error_code,
                                                                           maya_exe_ns::maya_out_arg> in_t) {
@@ -264,7 +264,7 @@ bool maya_tool::render() {
       auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
         g_thread(), async_run_maya(std::make_shared<maya_exe_ns::export_fbx_arg>(k_arg), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(),
+        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
                                             [h = l_msg_handle](std::exception_ptr,
                                                                std::tuple<boost::system::error_code,
                                                                           maya_exe_ns::maya_out_arg> in_t) {
@@ -294,7 +294,7 @@ bool maya_tool::render() {
       auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
         g_thread(), async_run_maya(std::make_shared<maya_exe_ns::replace_file_arg>(k_arg), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(),
+        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
                                             [h = l_msg_handle](std::exception_ptr,
                                                                std::tuple<boost::system::error_code,
                                                                           maya_exe_ns::maya_out_arg> in_t) {
@@ -323,7 +323,7 @@ bool maya_tool::render() {
       boost::asio::co_spawn(
         g_thread(),
         async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(),
+        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
                                             [h = l_msg_handle](std::exception_ptr,
                                                                std::tuple<boost::system::error_code, FSys::path> in_t) {
                                               if (!std::get<0>(in_t))
@@ -356,7 +356,7 @@ bool maya_tool::render() {
       boost::asio::co_spawn(
         g_thread(),
         async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(),
+        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
                                             [h = l_msg_handle](std::exception_ptr,
                                                                std::tuple<boost::system::error_code, FSys::path>
                                                                in_t) {

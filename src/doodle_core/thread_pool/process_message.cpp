@@ -4,6 +4,7 @@
 #include <doodle_core/lib_warp/boost_fmt_rational.h>
 #include <doodle_core/logger/logger.h>
 
+#include "core/app_base.h"
 #include <magic_enum.hpp>
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
@@ -127,6 +128,7 @@ process_message::process_message(std::string in_name) : data_(std::make_shared<d
   data_->p_logger = g_logger_ctrl().make_log(data_->p_name);
   data_->sink_    = std::make_shared<process_message_sink_mt>();
   data_->p_logger->sinks().emplace_back(data_->sink_);
+  data_->scoped_connection_ = app_base::Get().on_stop.connect([this]() { this->aborted(); });
 }
 
 const std::string& process_message::get_name() const { return data_->p_name; }

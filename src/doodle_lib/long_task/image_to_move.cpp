@@ -131,12 +131,7 @@ boost::system::error_code create_move(
   std::atomic_bool l_stop{};
   boost::system::error_code l_ec{};
   // todo: 这里我们需要一个信号来停止
-  //  boost::signals2::scoped_connection l_connection =
-  //      in_msg.aborted_sig.connect([l_s = std::addressof(l_stop)]() mutable {
-  //        if (!(*l_s)) {
-  //          *l_s = true;
-  //        }
-  //      });
+
 
   in_logger->info("开始创建视频 {}", in_out_path);
   in_logger->info("获得图片路径 {}", l_vector.front().path_attr.parent_path());

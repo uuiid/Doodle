@@ -39,6 +39,7 @@ private:
     std::string p_name_id;
     boost::asio::cancellation_signal cancel_sig;
     logger_ptr p_logger;
+    boost::signals2::scoped_connection scoped_connection_;
     std::shared_ptr<details::process_message_sink_mt> sink_;
   };
 
@@ -72,12 +73,11 @@ public:
   [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
   [[nodiscard]] logger_ptr logger() const;
 
-  boost::signals2::signal<void()> aborted_sig;
   inline auto get_cancel_slot() { return data_->cancel_sig.slot(); }
 
-  inline void aborted() {
-    aborted_sig();
+  bool is_connected() const { return data_->cancel_sig.slot().has_handler(); }
 
+  inline void aborted() {
     data_->cancel_sig.emit(boost::asio::cancellation_type::all);
   }
 };
