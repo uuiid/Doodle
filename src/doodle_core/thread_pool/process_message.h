@@ -6,63 +6,53 @@
 #include <boost/signals2.hpp>
 
 #include <magic_enum.hpp>
-namespace doodle {
 
+namespace doodle {
 using rational_int = boost::rational<std::size_t>;
+
 namespace details {
-template <class Mutex>
-class process_message_sink;
-}
-class DOODLE_CORE_API process_message {
- public:
-  enum level {
-    info    = 0,
-    warning = 1,
-  };
+struct logger_Buffer {
   enum state { success = 1, fail = 2, wait = 3, run = 4, pause = 5 };
 
- private:
+  std::array<std::string, 6> loggers_;
+  rational_int progress_;
+  state state_{logger_Buffer::wait};
+  std::string end_str_;
+  chrono::sys_time_pos::duration extra_time_{0};
+
+  chrono::sys_time_pos start_time_;
+  chrono::sys_time_pos end_time_;
+};
+
+template <class Mutex>
+class process_message_sink;
+using process_message_sink_mt = details::process_message_sink<std::mutex>;
+}
+
+class DOODLE_CORE_API process_message {
+public:
+  enum level {
+    info = 0,
+    warning = 1,
+  };
+
+  using state = details::logger_Buffer::state;
+
+private:
   struct data_t {
-    chrono::sys_time_pos p_time;
-    chrono::sys_time_pos p_end;
-    std::string p_err;
-    std::string p_log;
-
-    std::string trace_;
-    std::string debug_;
-    std::string info_;
-    std::string warn_;
-    std::string err_;
-    std::string critical_;
-
-    std::string p_str_end;
     std::string p_name;
     std::string p_name_id;
-    state p_state;
-    rational_int p_progress;
-    std::mutex _mutex;
     boost::asio::cancellation_signal cancel_sig;
-
     logger_ptr p_logger;
-
-    // 额外的时间段
-    chrono::sys_time_pos::duration p_extra_time{0};
+    std::shared_ptr<details::process_message_sink_mt> sink_;
   };
+
   std::shared_ptr<data_t> data_;
 
   template <class Mutex>
   friend class details::process_message_sink;
 
- public:
-  class log_msg_guard {
-    std::shared_ptr<std::lock_guard<std::mutex>> lock_;
-
-   public:
-    std::string_view msg_;
-    log_msg_guard() = default;
-    explicit log_msg_guard(std::shared_ptr<std::lock_guard<std::mutex>> in_lock, std::string_view in_msg)
-        : lock_(std::move(in_lock)), msg_(in_msg) {}
-  };
+public:
   explicit process_message(std::string in_name);
 
   [[nodiscard]] const std::string& get_name() const;
@@ -71,15 +61,10 @@ class DOODLE_CORE_API process_message {
   void progress_clear();
   [[nodiscard]] std::string message_back() const;
 
-  void set_state(state in_state);
-  [[nodiscard]] std::string trace_log() const;
-  [[nodiscard]] std::string debug_log() const;
-  [[nodiscard]] std::string info_log() const;
-  [[nodiscard]] std::string warn_log() const;
-  [[nodiscard]] std::string err_log() const;
-  [[nodiscard]] std::string critical_log() const;
+  [[nodiscard]] std::string level_log(const level in_level) const;
 
   [[nodiscard]] rational_int get_progress() const;
+
   [[nodiscard]] inline std::double_t get_progress_f() const {
     return boost::rational_cast<std::double_t>(get_progress() * rational_int{100});
   };
@@ -101,5 +86,6 @@ class DOODLE_CORE_API process_message {
     data_->cancel_sig.emit(boost::asio::cancellation_type::all);
   }
 };
+
 inline auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
-}  // namespace doodle
+} // namespace doodle
