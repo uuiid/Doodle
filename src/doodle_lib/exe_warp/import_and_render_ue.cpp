@@ -467,6 +467,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
                                  "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
                                  "-Unattended"},
                                 in_logger);
+  if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
   in_logger->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
   co_return std::tuple(boost::system::error_code{}, l_import_data.out_file_dir);
 }
