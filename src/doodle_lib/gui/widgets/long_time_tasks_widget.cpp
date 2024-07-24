@@ -48,7 +48,7 @@ bool long_time_tasks_widget::render() {
 
       imgui::TableNextColumn();
       auto&& l_message_back = msg.message_back();
-      imgui::TextUnformatted(l_message_back.data(), l_message_back.data() + l_message_back.size());
+      imgui::Text(l_message_back.data());
 
       imgui::TableNextColumn();
       //      dear::Text(std::string{magic_enum::enum_name(msg.get_state())});
