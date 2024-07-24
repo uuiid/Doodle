@@ -187,7 +187,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string& in_name, 
   std::erase_if(
     l_name,
     [](const char& in)-> bool {
-      return !std::isalpha(in) || !std::isalnum(in);
+      return !std::isalnum(in);
     }
   );
 
