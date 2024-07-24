@@ -73,6 +73,8 @@ protected:
         l_logg.append(formatted.data(), formatted.size());
         l_buffer->progress_ += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
         if (l_logg.size() > g_max_size) l_logg.erase(0, g_max_size_clear);
+        l_buffer->end_str_  = fmt::to_string(msg.payload);
+        if (l_buffer->end_str_.size() > 70) l_buffer->end_str_.erase(70, std::string::npos);
         break;
       }
       case spdlog::level::level_enum::off:
@@ -92,15 +94,13 @@ protected:
     switch (msg.level) {
       case spdlog::level::level_enum::trace:
       case spdlog::level::level_enum::debug:
-        break;
       case spdlog::level::level_enum::info:
       case spdlog::level::level_enum::warn:
+        break;
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical:
         l_buffer->state_ = process_message::state::fail;
         l_buffer->end_time_ = chrono::system_clock::now();
-        l_buffer->end_str_  = fmt::to_string(msg.payload);
-        if (l_buffer->end_str_.size() > 70) l_buffer->end_str_.erase(70, std::string::npos);
         break;
       case spdlog::level::level_enum::off:
       case spdlog::level::level_enum::n_levels:
