@@ -17,6 +17,9 @@ boost::asio::awaitable<void> async_read_pipe(std::shared_ptr<boost::asio::readab
           *in_pip, l_buffer, '\n', boost::asio::as_tuple(boost::asio::use_awaitable));
 
     if (l_ec) {
+      if (l_ec == boost::asio::error::operation_aborted || l_ec == boost::asio::error::broken_pipe) {
+        co_return;
+      }
       in_logger->warn(l_ec.what());
       co_return;
     }
