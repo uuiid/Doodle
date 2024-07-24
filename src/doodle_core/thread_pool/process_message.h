@@ -59,16 +59,16 @@ public:
   [[nodiscard]] const std::string& get_name_id() const;
 
   void progress_clear();
-  [[nodiscard]] details::logger_Buffer::log_end_str message_back() const;
+  [[nodiscard]] const details::logger_Buffer::log_end_str& message_back() const;
 
-  [[nodiscard]] details::logger_Buffer::log_str level_log(const level::level_enum in_level) const;
+  [[nodiscard]] const details::logger_Buffer::log_str& level_log(const level::level_enum in_level) const;
 
   [[nodiscard]] rational_int get_progress() const;
 
   [[nodiscard]] inline std::double_t get_progress_f() const {
     return boost::rational_cast<std::double_t>(get_progress() * rational_int{100});
   };
-  [[nodiscard]] const state& get_state() const;
+  [[nodiscard]] state get_state() const;
   [[nodiscard]] chrono::sys_time_pos::duration get_time() const;
 
   [[nodiscard]] inline bool is_run() const { return get_state() == state::run; }

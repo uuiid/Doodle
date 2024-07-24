@@ -14,15 +14,15 @@ namespace doodle {
 namespace details {
 template <class Mutex>
 class process_message_sink : public spdlog::sinks::base_sink<Mutex> {
-  static constexpr std::size_t g_max_size       = 1024 * 100;
-  static constexpr std::size_t g_max_size_clear = 1024 * 77;
   static constexpr std::int32_t l_n{10};
-  static constexpr std::size_t l_end_size{120};
 
 public:
   logger_Buffer buffer_;
 
   process_message_sink() {
+    for (auto&& i : buffer_.loggers_) {
+      i.fill('\0');
+    }
   }
 
 private:
@@ -66,13 +66,16 @@ protected:
       case spdlog::level::level_enum::err:
       case spdlog::level::level_enum::critical: {
         auto&& l_logg = l_buffer->loggers_[msg.level];
-        std::rotate(l_logg.begin(), l_logg.end() + formatted.size(), l_logg.end());
-        std::copy(formatted.begin(), formatted.end(), l_logg.rbegin());
+        std::rotate(l_logg.rbegin(), l_logg.rbegin() + formatted.size(), l_logg.rend());
+        std::copy(formatted.begin(), formatted.begin() + formatted.size(), l_logg.begin());
         l_progress += {1, boost::numeric_cast<std::int32_t>(std::pow(l_n, std::clamp(5 - msg.level, 0, 5)))};
         l_buffer->end_str_.fill(' ');
         std::copy_n(std::begin(formatted),
                     std::clamp(formatted.size(), std::size_t{0}, l_buffer->end_str_.size()),
                     l_buffer->end_str_.begin());
+        for (auto&& i : l_buffer->end_str_) {
+          if (i == '\n') i = '\0';
+        }
 
         break;
       }
@@ -108,7 +111,7 @@ protected:
 
     if (l_progress > 1) --l_progress;
 
-    l_buffer->progress_ = l_progress;
+    l_buffer->progress_   = l_progress;
     l_buffer->extra_time_ = l_extra_time;
   }
 
@@ -132,11 +135,11 @@ const std::string& process_message::get_name() const { return data_->p_name; }
 logger_ptr process_message::logger() const { return data_->p_logger; }
 
 
-details::logger_Buffer::log_str process_message::level_log(const level::level_enum in_level) const {
+const details::logger_Buffer::log_str& process_message::level_log(const level::level_enum in_level) const {
   return data_->sink_->buffer_.loggers_[in_level];
 }
 
-details::logger_Buffer::log_end_str process_message::message_back() const {
+const details::logger_Buffer::log_end_str& process_message::message_back() const {
   return data_->sink_->buffer_.end_str_;
 }
 
@@ -144,7 +147,7 @@ rational_int process_message::get_progress() const {
   return data_->sink_->buffer_.progress_;
 }
 
-const process_message::state& process_message::get_state() const {
+process_message::state process_message::get_state() const {
   return data_->sink_->buffer_.state_;
 }
 

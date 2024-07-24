@@ -47,7 +47,8 @@ bool long_time_tasks_widget::render() {
       dear::Text(fmt::format("{:04f}%", msg.get_progress_f()));
 
       imgui::TableNextColumn();
-      dear::Text(msg.message_back());
+      auto&& l_message_back = msg.message_back();
+      imgui::TextUnformatted(l_message_back.data(), l_message_back.data() + l_message_back.size());
 
       imgui::TableNextColumn();
       //      dear::Text(std::string{magic_enum::enum_name(msg.get_state())});
@@ -102,9 +103,9 @@ bool long_time_tasks_widget::render() {
   dear::Text("主要日志"s);
   if (dear::Child l_c{"main_log", ImVec2{0, 266}, true}; l_c) {
     if (p_current_select && p_current_select.any_of<process_message>()) {
-      log_ = p_current_select.get<process_message>().level_log(index_);
+      auto&& l_text = p_current_select.get<process_message>().level_log(index_);
       dear::TextWrapPos l_wrap{};
-      imgui::TextUnformatted(log_.data(), log_.data() + log_.size());
+      imgui::TextUnformatted(l_text.data());
     }
   }
 
