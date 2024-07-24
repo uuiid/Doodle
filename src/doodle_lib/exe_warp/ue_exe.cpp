@@ -104,8 +104,8 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector
       boost::process::v2::process_environment{l_env},
       details::hide_and_not_create_windows
   };
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info, "utf-16"), boost::asio::detached);
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info, "utf-16"), boost::asio::detached);
+  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info, "utf-8"), boost::asio::detached);
+  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info, "utf-8"), boost::asio::detached);
 
   l_timer->expires_after(chrono::seconds{core_set::get_set().timeout * 5});
   auto [l_array_completion_order,l_ec,l_exit_code, l_ec_t] = co_await boost::asio::experimental::make_parallel_group(
