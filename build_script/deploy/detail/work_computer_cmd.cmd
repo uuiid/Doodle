@@ -4,7 +4,7 @@ set UE_CMD_PATH=C:/Program Files/Epic Games/UE_5.2/Engine/Binaries/Win64/UnrealE
 reg delete HKLM\SOFTWARE\Doodle /f
 
 @REM 复制文件
-robocopy %DoodleSource% D:/doodle_exe/ /MIR /xd cgru
+robocopy %DoodleSource% D:/doodle_exe/ /MIR /xd
 
 IF EXIST %UE_CMD_PATH% (
     set USER_DOODLE_PATH=%USERPROFILE%\Documents\doodle

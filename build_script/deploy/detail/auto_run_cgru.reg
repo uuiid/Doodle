@@ -1,4 +1,4 @@
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run]
-"cgru"="cmd /c cd /D D:\\doodle_exe\\cgru&&call D:\\doodle_exe\\cgru\\start\\AFANASY\\99.render.cmd"
+"doodle_run"="cmd /c cd /D D:\\doodle_exe\\bin&&call D:\\doodle_exe\\bin\\....exe"

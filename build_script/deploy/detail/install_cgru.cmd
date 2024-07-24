@@ -1,1 +1,0 @@
-robocopy //192.168.40.53/Doodle2/script/cgru D:/doodle_exe/cgru /MIR

@@ -1,1 +1,0 @@
-start "test" "D:\doodle_exe\cgru\start\AFANASY\99.render.cmd"
