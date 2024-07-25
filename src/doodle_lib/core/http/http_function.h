@@ -14,6 +14,8 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
+#include "http_route.h"
+
 namespace doodle::http {
 struct capture_t {
   std::map<std::string, std::string> capture_map_;
@@ -63,7 +65,7 @@ class http_function {
 
   const boost::beast::http::verb verb_;
   const std::vector<capture_data_t> capture_vector_;
-  const bool has_websocket_;
+  const std::function<void (const websocket_route_ptr&)> websocket_callback_;
 
 public:
   using capture_t = capture_t;
@@ -72,17 +74,19 @@ public:
     boost::beast::http::verb in_verb, std::string in_url,
     std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
   )
-    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)), has_websocket_{false} {
+    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {
   }
+
   explicit http_function(
     boost::beast::http::verb in_verb, std::string in_url,
     std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
-    bool in_has_websocket
+    std::function<void (const websocket_route_ptr&)> in_callback_websocket
   )
-    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)), has_websocket_{in_has_websocket} {
+    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)),
+      websocket_callback_{in_callback_websocket} {
   }
 
-  [[nodiscard]] inline bool has_websocket() const { return has_websocket_; }
+  [[nodiscard]] inline bool has_websocket() const { return static_cast<bool>(websocket_callback_); }
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
