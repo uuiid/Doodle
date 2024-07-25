@@ -47,6 +47,6 @@ class http_websocket_client : public std::enable_shared_from_this<http_websocket
   );
 
   boost::asio::awaitable<void> async_read_websocket();
-  boost::asio::awaitable<void> async_write_websocket(std::string in_data);
+  boost::asio::awaitable<boost::system::error_code> async_write_websocket(std::string in_data);
 };
 }

@@ -143,17 +143,26 @@ class http_work::websocket_run_task_fun : public std::enable_shared_from_this<we
   }
 };
 
-boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket_data_ptr in_handle) {
+boost::asio::awaitable<std::string> websocket_run_task_fun_launch(
+    http_work* in_work, http_websocket_data_ptr in_handle
+) {
   if (!in_handle->body_.contains("id")) {
     in_handle->logger_->log(log_loc(), level::err, "json parse error: {}", in_handle->body_.dump());
     co_return std::string{};
   }
-  // http_work_->send_state(computer_status::busy);
-  // auto l_run = std::make_shared<websocket_run_task_fun>(http_work_);
-  // l_run->run(
-  //     in_json["id"].get<std::string>(), in_json["exe"].get<std::string>(),
-  //     in_json["command"].get<std::vector<std::string>>()
-  // );
+  if (in_work->status_ == computer_status::busy) {
+    in_handle->logger_->log(log_loc(), level::err, "computer busy: {}", in_handle->body_.dump());
+    co_return std::string{};
+  }
+
+  boost::asio::co_spawn(
+      in_work->executor_,
+      in_work->async_run_task(
+          in_handle->body_["id"].get<std::string>(), in_handle->body_["exe"].get<std::string>(),
+          in_handle->body_["command"].get<std::vector<std::string>>()
+      ),
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+  );
 }
 
 void http_work::run(const std::string& in_url) {
@@ -173,60 +182,51 @@ void http_work::run(const std::string& in_url) {
 
 boost::asio::awaitable<void> http_work::async_run() {
   auto l_web_route = std::make_shared<websocket_route>();
-  l_web_route->reg("run_task", std::make_shared<websocket_route::call_fun_type>(websocket_run_task_fun_launch));
-  co_await websocket_client_->init(url_, l_web_route);
-  boost::asio::co_spawn(
-      executor_, websocket_client_->async_read_websocket(),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+  l_web_route->reg(
+      "run_task", std::make_shared<websocket_route::call_fun_type>(std::bind_front(websocket_run_task_fun_launch, this))
   );
-
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-    timer_->expires_after(std::chrono::seconds{2});
-    auto [l_tec] = co_await timer_->async_wait();
-    if (l_tec) {
-      logger_->error("定时器错误 {}", l_tec);
+    co_await websocket_client_->init(url_, l_web_route);
+
+    if (auto l_ec_1 = co_await websocket_client_->async_write_websocket(
+            nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
+        );
+        l_ec_1) {
+      logger_->error("写入错误 {}", l_ec_1);
       break;
+    }
+    boost::asio::co_spawn(
+        executor_, websocket_client_->async_read_websocket(),
+        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+    );
+
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+      timer_->expires_after(std::chrono::seconds{2});
+      if (auto [l_tec] = co_await timer_->async_wait(); l_tec) {
+        logger_->error("定时器错误 {}", l_tec);
+        break;
+      }
+      if (auto l_ec = co_await websocket_client_->async_write_websocket(
+              nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
+          );
+          l_ec) {
+        logger_->error("写入错误 {}", l_ec);
+        break;
+      }
     }
   }
 }
-
-void http_work::do_wait() {
-  // logger_->log(log_loc(), level::info, "开始等待下一次心跳");
-  timer_->expires_after(std::chrono::seconds{2});
-  timer_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::Get().on_cancel.slot(),
-      [this](boost::system::error_code in_error_code) {
-        if (in_error_code == boost::asio::error::operation_aborted) {
-          return;
-        }
-        if (in_error_code) {
-          logger_->log(log_loc(), level::err, "on_wait error: {}", in_error_code);
-          return;
-        }
-        // if (!is_connect_ || !websocket_data_->stream_->is_open()) {
-        //   do_connect();
-        //   return;
-        // }
-        do_wait();
-      }
-  ));
-}
-
-void http_work::send_state(computer_status in_status) {
-  // websocket_data_->seed(nlohmann::json{{"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}});
-  do_wait();
-}
-
-void http_work::end_task(boost::system::error_code in_error_code) {
-  if (in_error_code) {
-    logger_->log(log_loc(), level::err, "任务执行失败: {}", in_error_code);
-  } else {
-    logger_->log(log_loc(), level::info, "任务执行成功");
+boost::asio::awaitable<void> http_work::async_run_task(
+    std::string in_id, std::string in_exe, std::vector<std::string> in_command
+) {
+  status_ = computer_status::busy;
+  if (auto l_ec = co_await websocket_client_->async_write_websocket(
+          nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
+      );
+      l_ec) {
+    logger_->error("写入错误 {}", l_ec);
+    co_return;
   }
-  // websocket_data_->seed(nlohmann::json{
-  //     {"type", computer_websocket_fun::set_task},
-  //     {"status", in_error_code ? server_task_info_status::failed : server_task_info_status::completed}
-  // });
-  send_state(computer_status::free);
 }
-} // namespace doodle::http
+
+}  // namespace doodle::http
