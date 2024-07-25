@@ -90,7 +90,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     boost::system::error_code l_error_code{};
     switch (l_method) {
       case boost::beast::http::verb::get:
-        if (boost::beast::websocket::is_upgrade(l_request_parser->get())) {
+        if (boost::beast::websocket::is_upgrade(l_request_parser->get()) && (*in_route_ptr)(
+              l_method, l_session->url_.segments(), l_session)->has_websocket()) {
           boost::beast::get_lowest_layer(l_stream).expires_never();
           co_await async_websocket_session(std::move(l_stream), l_request_parser->get(), in_route_ptr->websocket_route_,
                                            l_session->logger_);
