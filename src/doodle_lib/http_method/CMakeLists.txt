@@ -27,5 +27,6 @@ target_sources(
         user_http.cpp
         file_association.cpp
         share_fun.cpp
+        computer_reg_data.cpp
 
 )
