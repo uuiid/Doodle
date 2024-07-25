@@ -11,6 +11,9 @@
 #include <boost/url.hpp>
 
 namespace doodle::http {
+class http_websocket_client;
+}
+namespace doodle::http {
 struct capture_t;
 class http_route;
 using http_route_ptr = std::shared_ptr<http_route>;
@@ -62,6 +65,7 @@ class http_websocket_data {
   nlohmann::json body_{};  // std::variant<std::string, nlohmann::json>
   logger_ptr logger_{};
   std::shared_ptr<void> user_data_{};
+  std::weak_ptr<http_websocket_client> client_{};
 };
 
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);

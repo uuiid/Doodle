@@ -68,7 +68,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   l_response.prepare_payload();
 
   g_ctx().get<task_server>().add_task(l_e);
-  g_ctx().get<task_server>().run();
   co_return std::move(l_response);
 }
 

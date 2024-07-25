@@ -53,6 +53,7 @@ void http_websocket_client::init(boost::beast::websocket::stream<tcp_stream_type
 
 boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
   auto l_data     = std::make_shared<detail::http_websocket_data>();
+  l_data->client_ = weak_from_this();
   l_data->logger_ = logger_;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     boost::beast::flat_buffer l_buffer{};

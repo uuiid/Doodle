@@ -2,7 +2,7 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 
-#include "core/http/websocket_route.h"
+#include <doodle_lib/core/http/http_websocket_client.h>
 namespace doodle {
 class server_task_info;
 }
@@ -20,6 +20,7 @@ class computer_reg_data {
   doodle::computer computer_data_;
   std::shared_ptr<doodle::server_task_info> task_info_;
   entt::entity task_info_entity_{};
+  std::weak_ptr<http_websocket_client> client;
 };
 using computer_reg_data_ptr      = std::shared_ptr<computer_reg_data>;
 using computer_reg_data_weak_ptr = std::weak_ptr<computer_reg_data>;
