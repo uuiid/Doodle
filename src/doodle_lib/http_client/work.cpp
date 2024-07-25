@@ -156,11 +156,10 @@ boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket
   // );
 }
 
-void http_work::run(const std::string& in_server_address, std::uint16_t in_port) {
+void http_work::run(const std::string& in_url) {
   executor_         = boost::asio::make_strand(g_io_context());
   timer_            = std::make_shared<timer>(executor_);
-  server_address_   = in_server_address;
-  port_             = in_port;
+  url_              = in_url;
 
   websocket_client_ = std::make_shared<http_websocket_client>();
   logger_           = g_logger_ctrl().make_log("http_work");
@@ -176,23 +175,19 @@ boost::asio::awaitable<void> http_work::async_run() {
   auto l_web_route = std::make_shared<websocket_route>();
   l_web_route->reg("run_task", std::make_shared<websocket_route::call_fun_type>(websocket_run_task_fun_launch));
   co_await websocket_client_->init(url_, l_web_route);
-  co_await websocket_client_->async_read_websocket();
-  // 这里不可以使用取消槽, 否则会导致悬挂
-  // websocket_data_->async_connect(
-  //   server_address_, "v1/computer", port_,
-  //   // boost::asio::bind_cancellation_slot(
-  //   // app_base::Get().on_cancel.slot(),
-  //   [this](boost::system::error_code in_error_code) {
-  //     if (in_error_code) {
-  //       logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
-  //       do_wait();
-  //       return;
-  //     }
-  //     is_connect_ = true;
-  //     send_state(computer_status::free);
-  //   }
-  //   // )
-  // );
+  boost::asio::co_spawn(
+      executor_, websocket_client_->async_read_websocket(),
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+  );
+
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+    timer_->expires_after(std::chrono::seconds{2});
+    auto [l_tec] = co_await timer_->async_wait();
+    if (l_tec) {
+      logger_->error("定时器错误 {}", l_tec);
+      break;
+    }
+  }
 }
 
 void http_work::do_wait() {

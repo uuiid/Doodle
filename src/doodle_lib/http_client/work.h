@@ -24,7 +24,8 @@ class http_work {
   //  using client_core     = doodle::detail::client_core;
   //  using client_core_ptr = std::shared_ptr<client_core>;
   //  boost::asio::basic_io_object;
-  using timer           = boost::asio::high_resolution_timer;
+  using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using timer           = executor_type::as_default_on_t<boost::asio::high_resolution_timer>;
   using timer_ptr       = std::shared_ptr<timer>;
 
   using response_type   = boost::beast::http::response<boost::beast::http::string_body>;
@@ -38,9 +39,6 @@ class http_work {
   timer_ptr timer_{};
 
   std::shared_ptr<http_websocket_client> websocket_client_{};
-
-  std::string server_address_{};
-  std::uint16_t port_{};
 
   logger_ptr logger_{};
   std::string task_id_{};
@@ -80,6 +78,6 @@ class http_work {
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const std::string& in_server_address, std::uint16_t in_port = doodle_config::http_port);
+  void run(const std::string& in_url);
 };
 }  // namespace doodle::http
