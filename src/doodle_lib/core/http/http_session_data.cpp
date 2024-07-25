@@ -13,6 +13,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_websocket_data.h>
 #include <doodle_lib/core/http/websocket_route.h>
+#include <doodle_lib/core/http/http_websocket_client.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 
@@ -39,47 +40,14 @@ boost::asio::awaitable<void> async_websocket_session(tcp_stream_type in_socket,
     }
   ));
   auto [l_ec] = co_await l_stream.async_accept(in_req);
-  boost::beast::flat_buffer l_buffer{};
-  auto l_data     = std::make_shared<http_websocket_data>();
-  l_data->logger_ = in_logger;
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    auto [l_ec_r,l_tr_s] = co_await l_stream.async_read(l_buffer);
-    if (l_ec_r) {
-      if (l_ec_r == boost::beast::websocket::error::closed) {
-        co_return;
-      }
-      in_logger->error(l_ec_r.what());
-      auto [l_ec_close] = co_await l_stream.async_close(boost::beast::websocket::close_code::normal);
-      if (l_ec_close)
-        in_logger->error(l_ec_close.what());
-      co_return;
-    }
-
-    std::string l_call_fun_name{};
-    try {
-      l_data->body_ = nlohmann::json::parse(std::string_view{reinterpret_cast<const char*>(l_buffer.data().data()),
-                                                             l_buffer.size()});
-      l_call_fun_name = l_data->body_["type"].get<std::string>();
-    } catch (const nlohmann::json::exception& in_e) {
-      in_logger->error(in_e.what());
-      continue;
-    }
-    l_stream.text(true);
-    l_buffer.consume(l_buffer.size());
-    auto l_call_fun = (*in_websocket_route)(l_call_fun_name);
-    std::string l_str = co_await (*l_call_fun)(l_data);
-    if (l_str.empty())
-      continue;
-
-    auto [l_ec_w, l_tr_w] = co_await l_stream.async_write(boost::asio::buffer(l_str));
-    if (l_ec_w) {
-      in_logger->error(l_ec_w.what());
-      auto [l_ec_close] = co_await l_stream.async_close(boost::beast::websocket::close_code::normal);
-      if (l_ec_close)
-        in_logger->error(l_ec_close.what());
-      co_return;
-    }
+  if (l_ec) {
+    in_logger->error("无法接受请求 {}", l_ec.what());
+    co_return;
   }
+  auto l_c = std::make_shared<http_websocket_client>();
+  l_c->init(std::move(l_stream), in_websocket_route, in_logger);
+  co_await l_c->async_read_websocket();
+  co_return;
 }
 
 

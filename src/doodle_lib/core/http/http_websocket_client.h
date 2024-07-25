@@ -30,7 +30,7 @@ public:
   // 客户端使用
   boost::asio::awaitable<void> init(const std::string& in_url, websocket_route_ptr in_websocket_route);
   // 服务端使用
-  void init(tcp_stream_type in_stream, websocket_route_ptr in_websocket_route,
+  void init(boost::beast::websocket::stream<tcp_stream_type> in_stream, websocket_route_ptr in_websocket_route,
             logger_ptr in_logger);
 
   boost::asio::awaitable<void> async_read_websocket();

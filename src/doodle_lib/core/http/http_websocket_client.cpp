@@ -43,7 +43,7 @@ boost::asio::awaitable<void> http_websocket_client::init(const std::string& in_u
   }
 }
 
-void http_websocket_client::init(tcp_stream_type in_stream,
+void http_websocket_client::init(boost::beast::websocket::stream<tcp_stream_type> in_stream,
                                  websocket_route_ptr in_websocket_route,
                                  logger_ptr in_logger) {
   web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(std::move(in_stream));
