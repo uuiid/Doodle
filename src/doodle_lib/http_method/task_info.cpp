@@ -21,15 +21,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   auto l_logger = in_handle->logger_;
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-      "不是json请求"
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "不是json请求"
     );
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
   if (!l_json.contains("command") || !l_json["command"].is_array() || !l_json.contains("exe") ||
       !l_json["exe"].is_string()) {
-    co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::bad_request, "请求缺失必要参数"
-    );
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "请求缺失必要参数");
   }
   server_task_info l_task_handle{
       core_set::get_set().get_uuid(), l_json["exe"].get<std::string>(),
@@ -51,7 +49,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   l_task_handle.submit_time_ = chrono::sys_time_pos::clock::now();
   l_task_handle.log_path_    = fmt::format("task_log/{}", l_task_handle.id_);
 
-  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  auto l_this_exe            = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_e = entt::handle{*g_reg(), g_reg()->create()};
   l_e.emplace<server_task_info>(l_task_handle);
@@ -67,7 +65,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   l_response.body() = l_task_handle_json.dump();
   l_response.prepare_payload();
 
-  g_ctx().get<task_server>().add_task(l_e);
+  co_await g_ctx().get<task_server>().add_task(l_e);
   co_return std::move(l_response);
 }
 
@@ -77,10 +75,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
     auto l_id = in_handle->capture_->get("id");
     l_uuid    = boost::lexical_cast<boost::uuids::uuid>(l_id);
   } catch (...) {
-    co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::bad_request,
-      "无效的任务id"
-    );
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
   auto l_this_exe = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
@@ -100,10 +95,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
 
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
   if (!is_db) {
-    co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::not_found,
-      "任务不存在"
-    );
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务不存在");
   }
 
   nlohmann::json l_json{};
@@ -164,10 +156,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
     auto l_id = in_handle->capture_->get("id");
     l_uuid    = boost::lexical_cast<boost::uuids::uuid>(l_id);
   } catch (...) {
-    co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::bad_request,
-      "无效的任务id"
-    );
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
 
   server_task_info l_task_handle{l_uuid};
@@ -176,7 +165,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   auto l_query = in_handle->url_.query();
   if (auto l_it = l_query.find("level"); l_it != l_query.npos) {
     l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
-        .value_or(level::err);
+                  .value_or(level::err);
   }
 
   auto l_this_exe = co_await boost::asio::this_coro::executor;
@@ -192,10 +181,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
 
   auto l_log_path = l_task_handle.get_log_path(l_level);
   if (!FSys::exists(l_log_path)) {
-    co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::not_found,
-      "日志文件不存在"
-    );
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志文件不存在");
   }
   boost::beast::http::response<boost::beast::http::file_body> l_response{
       boost::beast::http::status::ok, in_handle->version_
@@ -206,10 +192,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   boost::system::error_code l_code{};
   l_response.body().open(l_log_path.string().c_str(), boost::beast::file_mode::scan, l_code);
   if (l_code) {
-    co_return in_handle->make_error_code_msg(
-      l_code.value(),
-      l_code.what()
-    );
+    co_return in_handle->make_error_code_msg(l_code.value(), l_code.what());
   }
   l_response.prepare_payload();
   co_return std::move(l_response);
@@ -222,10 +205,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
     auto l_id = in_handle->capture_->get("id");
     l_uuid    = boost::lexical_cast<boost::uuids::uuid>(l_id);
   } catch (...) {
-    co_return in_handle->make_error_code_msg(
-      boost::beast::http::status::bad_request,
-      "无效的任务id"
-    );
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
 
   auto l_this_exe = co_await boost::asio::this_coro::executor;
@@ -247,32 +227,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
   l_response.keep_alive(in_handle->keep_alive_);
   l_response.set(boost::beast::http::field::content_type, "application/json");
   l_response.prepare_payload();
-  g_ctx().get<task_server>().erase_task(l_uuid);
+  co_await g_ctx().get<task_server>().erase_task(l_uuid);
   co_return std::move(l_response);
 }
-}
+}  // namespace
 
 void task_info_reg(doodle::http::http_route& in_route) {
-  in_route
-      .reg(std::make_shared<http_function>(
-        boost::beast::http::verb::get, "v1/task",
-        list_task
-      ))
-      .reg(std::make_shared<http_function>(
-        boost::beast::http::verb::get, "v1/task/{id}",
-        get_task
-      ))
-      .reg(std::make_shared<http_function>(
-        boost::beast::http::verb::get, "v1/task/{id}/log",
-        get_task_logger
-      ))
-      .reg(std::make_shared<http_function>(
-        boost::beast::http::verb::post, "v1/task",
-        post_task
-      ))
-      .reg(std::make_shared<http_function>(
-        boost::beast::http::verb::delete_, "v1/task/{id}",
-        delete_task
+  in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "v1/task", list_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "v1/task/{id}", get_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "v1/task/{id}/log", get_task_logger))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "v1/task", post_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "v1/task/{id}", delete_task
       ));
 }
 } // namespace doodle::http
