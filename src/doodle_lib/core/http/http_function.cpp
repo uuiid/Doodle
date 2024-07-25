@@ -8,7 +8,6 @@
 #include <doodle_core/logger/logger.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
-#include <doodle_lib/core/http/http_websocket_data.h>
 namespace doodle::http {
 
 std::vector<http_function::capture_data_t> http_function::set_cap_bit(std::string& in_str) {

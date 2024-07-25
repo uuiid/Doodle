@@ -3,7 +3,6 @@ target_sources(
         PUBLIC
         http_listener.h
         http_session_data.h
-        http_websocket_data.h
         http_route.h
         http_function.h
         json_body.h
@@ -14,7 +13,6 @@ target_sources(
         PRIVATE
         http_listener.cpp
         http_session_data.cpp
-        http_websocket_data.cpp
         http_route.cpp
         http_function.cpp
         json_body.cpp
