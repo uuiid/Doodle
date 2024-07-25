@@ -54,6 +54,8 @@ std::tuple<boost::system::error_code, FSys::path> find_maya_path_impl() {
 
 std::tuple<boost::system::error_code, FSys::path>
 install_maya_exe(FSys::path in_maya_path) {
+
+  static bool is_run{false};
   boost::system::error_code l_ec{};
   FSys::path l_out{};
   try {
@@ -61,6 +63,9 @@ install_maya_exe(FSys::path in_maya_path) {
                          version::build_info::get().version_str;
     const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
     l_out                 = l_target_path / l_run_name;
+    if(is_run)
+      return {{}, l_out};
+
     if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
 
     if (!FSys::exists(l_target_path / "ShadeFragment")) {
@@ -85,6 +90,7 @@ install_maya_exe(FSys::path in_maya_path) {
         if (!FSys::exists(l_path_dll)) FSys::copy(l_it, l_path_dll, FSys::copy_options::overwrite_existing);
       }
     }
+    is_run = true;
   } catch (const FSys::filesystem_error& in_err) {
     l_ec = in_err.code();
   }
@@ -133,10 +139,15 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
     in_logger->error("查找Maya路径失败: {}", l_e1.message());
     co_return std::make_tuple(l_e1, maya_exe_ns::maya_out_arg());
   }
-  auto [l_e2, l_run_path] = install_maya_exe(l_maya_path);
-  if (l_e2) {
-    in_logger->error("maya 运行路径转换失败: {}", l_e2.message());
-    co_return std::make_tuple(l_e2, maya_exe_ns::maya_out_arg());
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  {
+    co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+    auto [l_e2, l_run_path] = install_maya_exe(l_maya_path);
+    if (l_e2) {
+      in_logger->error("maya 运行路径转换失败: {}", l_e2.message());
+      co_return std::make_tuple(l_e2, maya_exe_ns::maya_out_arg());
+    }
+    co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
   }
 
   in_arg->maya_path      = l_maya_path;
