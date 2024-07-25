@@ -13,12 +13,14 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
-namespace doodle::http {
 
+namespace doodle::http {
 struct capture_t {
   std::map<std::string, std::string> capture_map_;
   capture_t() = default;
-  explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
+
+  explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {
+  }
 
   inline std::string get(const std::string& in_str) const { return capture_map_.at(in_str); }
 
@@ -35,6 +37,7 @@ struct capture_t {
     }
     return {};
   }
+
   template <typename T>
     requires std::is_same_v<T, entt::entity>
   std::optional<T> get(const std::string& in_str) const {
@@ -60,21 +63,26 @@ class http_function {
 
   const boost::beast::http::verb verb_;
   const std::vector<capture_data_t> capture_vector_;
+  const bool has_websocket_;
 
- public:
+public:
   using capture_t = capture_t;
 
   explicit http_function(
-      boost::beast::http::verb in_verb, std::string in_url,
-      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
+    boost::beast::http::verb in_verb, std::string in_url,
+    std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
   )
-      : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {}
+    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)), has_websocket_{false} {
+  }
+
+
+
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
 
   std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
 };
-using http_function_ptr = std::shared_ptr<http_function>;
 
-}  // namespace doodle::http
+using http_function_ptr = std::shared_ptr<http_function>;
+} // namespace doodle::http
