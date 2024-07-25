@@ -14,6 +14,7 @@
 #include <doodle_lib/http_method/computer_reg_data.h>
 
 namespace doodle::http {
+namespace {
 boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_handle) {
   auto l_logger   = in_handle->logger_;
   auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
@@ -23,7 +24,7 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
     in_handle->user_data_ = l_computer;
   }
 
-  if (!in_handle->body_.contains("state") || !in_handle->body_["state"].is_string()) co_return {};
+  if (!in_handle->body_.contains("state") || !in_handle->body_["state"].is_string()) co_return std::string{};
   l_computer->computer_data_.client_status_ =
       magic_enum::enum_cast<doodle::computer_status>(in_handle->body_["state"].get<std::string>())
           .value_or(doodle::computer_status::unknown);
@@ -31,6 +32,7 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   if (in_handle->body_.contains("host_name") && in_handle->body_["host_name"].is_string()) {
     l_computer->computer_data_.name_ = in_handle->body_["host_name"].get<std::string>();
   }
+  co_return std::string{};
 }
 
 boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_handle) {
@@ -46,6 +48,7 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
   }
   auto l_task = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
   l_task->write_log(in_handle->body_["level"].get<level::level_enum>(), in_handle->body_["msg"].get<std::string>());
+  co_return std::string{};
 }
 
 boost::asio::awaitable<std::string> web_set_task_fun(http_websocket_data_ptr in_handle) {
@@ -72,9 +75,9 @@ boost::asio::awaitable<std::string> web_set_task_fun(http_websocket_data_ptr in_
     );
   }
   l_computer->computer_data_.server_status_ = doodle::computer_status::free;
+  co_return std::string{};
 }
 
-namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> list_computers(session_data_ptr in_handle) {
   std::vector<doodle::computer> l_computers{};
   for (auto&& l_web_ : computer_reg_data_manager::get().list()) {
@@ -94,7 +97,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_computers(ses
 }
 
 void reg_computer(const websocket_route_ptr& in_web_socket) {
-  in_web_socket->reg("set_state", web_set_tate_fun).reg("logger", web_logger_fun).reg("set_task", web_set_task_fun);
+  in_web_socket->reg("set_state", std::make_shared<websocket_route::call_fun_type>(web_set_tate_fun))
+      .reg("logger", std::make_shared<websocket_route::call_fun_type>(web_logger_fun))
+      .reg("set_task", std::make_shared<websocket_route::call_fun_type>(web_set_task_fun));
 }
 }  // namespace
 

@@ -18,7 +18,7 @@
 
 namespace doodle::launch {
 void reg_func(doodle::http::http_route& in_route) {
-  http::computer::reg(in_route);
+  http::computer_reg(in_route);
   http::task_info_reg(in_route);
 }
 
