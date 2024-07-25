@@ -4,6 +4,7 @@
 
 #include "websocket_route.h"
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/logger/logger.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
 

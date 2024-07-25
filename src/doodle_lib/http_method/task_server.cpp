@@ -9,7 +9,6 @@
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
-#include <doodle_lib/core/http/http_websocket_data.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 namespace doodle::http {
 task_server::task_server()

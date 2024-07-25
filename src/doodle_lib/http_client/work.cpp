@@ -9,7 +9,6 @@
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
-#include <doodle_lib/core/http/http_websocket_data.h>
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>

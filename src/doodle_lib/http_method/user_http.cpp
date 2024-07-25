@@ -5,7 +5,6 @@
 #include <doodle_core/metadata/user.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
-#include "doodle_lib/core/http/http_websocket_data.h"
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/share_fun.h>

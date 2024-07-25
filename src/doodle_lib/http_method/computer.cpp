@@ -9,7 +9,6 @@
 #include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
-#include <doodle_lib/core/http/http_websocket_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/http_method/computer_reg_data.h>

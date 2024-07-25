@@ -5,7 +5,6 @@
 #include <doodle_core/metadata/attendance.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
-#include "doodle_lib/core/http/http_websocket_data.h"
 
 #include <boost/rational.hpp>
 //
