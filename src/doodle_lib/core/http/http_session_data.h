@@ -31,7 +31,7 @@ enum class content_type {
 };
 
 class session_data {
-public:
+ public:
   session_data()  = default;
   ~session_data() = default;
   logger_ptr logger_{};
@@ -43,31 +43,29 @@ public:
   bool keep_alive_{};
 
   content_type content_type_{content_type::text_plain};
-  std::variant<std::string, nlohmann::json> body_{}; // std::variant<std::string, nlohmann::json>
+  std::variant<std::string, nlohmann::json> body_{};  // std::variant<std::string, nlohmann::json>
 
   boost::beast::http::message_generator make_error_code_msg(
-    boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
+      boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
   );
-  boost::beast::http::message_generator make_error_code_msg(
-    std::int32_t in_code, const std::string& in_str
-  );
+  boost::beast::http::message_generator make_error_code_msg(std::int32_t in_code, const std::string& in_str);
 
   inline boost::beast::http::message_generator make_error_code_msg(
-    boost::beast::http::status in_code, const std::string& in_str
+      boost::beast::http::status in_code, const std::string& in_str
   ) {
     return make_error_code_msg(enum_to_num(in_code), in_str);
   }
 };
 
 class http_websocket_data {
-public:
-  nlohmann::json body_{}; // std::variant<std::string, nlohmann::json>
+ public:
+  nlohmann::json body_{};  // std::variant<std::string, nlohmann::json>
   logger_ptr logger_{};
+  std::shared_ptr<void> user_data_{};
 };
 
-
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);
-} // namespace detail
+}  // namespace detail
 using session_data     = detail::session_data;
 using session_data_ptr = std::shared_ptr<detail::session_data>;
-} // namespace doodle::http
+}  // namespace doodle::http

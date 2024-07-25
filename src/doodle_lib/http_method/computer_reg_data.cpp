@@ -11,17 +11,21 @@ computer_reg_data_manager& computer_reg_data_manager::get() {
   return l_manager;
 }
 void computer_reg_data_manager::reg(computer_reg_data_ptr in_data) {
-  std::lock_guard<std::mutex> l_lock(mutex_);
-  computer_reg_datas_.insert(in_data);
+  std::lock_guard l_lock(mutex_);
+  computer_reg_datas_.emplace_back(in_data);
   clear_old();
 }
-std::set<computer_reg_data_ptr> computer_reg_data_manager::list() {
-  std::lock_guard<std::mutex> l_lock(mutex_);
-  return computer_reg_datas_;
+std::vector<computer_reg_data_ptr> computer_reg_data_manager::list() {
+  std::lock_guard l_lock(mutex_);
+  std::vector<computer_reg_data_ptr> l_out{};
+  for (auto& it : computer_reg_datas_) {
+    l_out.emplace_back(it);
+  }
+  return l_out;
 }
 void computer_reg_data_manager::clear_old() {
   for (auto it = computer_reg_datas_.begin(); it != computer_reg_datas_.end();) {
-    if ((*it)->websocket_data_.expired()) {
+    if (it->expired()) {
       it = computer_reg_datas_.erase(it);
     } else {
       ++it;

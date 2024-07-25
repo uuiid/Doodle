@@ -90,9 +90,8 @@ public:
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
 
-  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
+  const std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
   const std::function<void (const websocket_route_ptr&)> websocket_callback_;
-
 };
 
 using http_function_ptr = std::shared_ptr<http_function>;

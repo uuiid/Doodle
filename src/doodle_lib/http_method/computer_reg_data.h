@@ -11,21 +11,20 @@ namespace doodle::http {
 
 class computer_reg_data {
   friend class computer_reg_data_manager;
-  std::weak_ptr<detail::http_websocket_data> websocket_data_;
 
  public:
   computer_reg_data() = default;
-  explicit computer_reg_data(const doodle::computer& in_data, http_websocket_data_ptr in_data_ptr)
-      : computer_data_(in_data), websocket_data_(in_data_ptr) {}
+  explicit computer_reg_data(const doodle::computer& in_data) : computer_data_(in_data) {}
   ~computer_reg_data() = default;
 
   doodle::computer computer_data_;
   std::shared_ptr<doodle::server_task_info> task_info_;
   entt::entity task_info_entity_{};
 };
-using computer_reg_data_ptr = std::shared_ptr<computer_reg_data>;
+using computer_reg_data_ptr      = std::shared_ptr<computer_reg_data>;
+using computer_reg_data_weak_ptr = std::weak_ptr<computer_reg_data>;
 class computer_reg_data_manager {
-  std::set<computer_reg_data_ptr> computer_reg_datas_;
+  std::vector<computer_reg_data_weak_ptr> computer_reg_datas_;
   std::mutex mutex_;
   void clear_old();
 
@@ -34,7 +33,7 @@ class computer_reg_data_manager {
   ~computer_reg_data_manager() = default;
 
   void reg(computer_reg_data_ptr in_data);
-  std::set<computer_reg_data_ptr> list();
+  std::vector<computer_reg_data_ptr> list();
   static computer_reg_data_manager& get();
 };
 }  // namespace doodle::http
