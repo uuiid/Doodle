@@ -8,6 +8,7 @@ target_sources(
         http_function.h
         json_body.h
         websocket_route.h
+        http_websocket_client.h
 
 
         PRIVATE
@@ -18,4 +19,5 @@ target_sources(
         http_function.cpp
         json_body.cpp
         websocket_route.cpp
+        http_websocket_client.cpp
 )
