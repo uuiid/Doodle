@@ -101,7 +101,7 @@ FSys::path create_out_path(const FSys::path& in_dir, const episodes& in_eps, con
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension()) {
-    if (in_project)
+    if (!in_project)
       l_out /= fmt::format(
         "EP{:04}_SC{:03}{}.mp4", in_eps.p_episodes,
         in_shot.p_shot,
