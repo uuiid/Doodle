@@ -63,6 +63,13 @@ public:
   }
 };
 
+class http_websocket_data {
+public:
+  nlohmann::json body_{}; // std::variant<std::string, nlohmann::json>
+  logger_ptr logger_{};
+};
+
+
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);
 } // namespace detail
 using session_data     = detail::session_data;

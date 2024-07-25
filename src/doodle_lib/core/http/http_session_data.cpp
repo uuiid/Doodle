@@ -12,12 +12,78 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_websocket_data.h>
+#include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/http/socket_logger.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 
 namespace doodle::http {
 namespace detail {
+using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+using endpoint_type   = boost::asio::ip::tcp::endpoint;
+using tcp_stream_type = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+
+boost::asio::awaitable<void> async_websocket_session(tcp_stream_type in_socket,
+                                                     boost::beast::http::request<boost::beast::http::empty_body> in_req,
+                                                     websocket_route_ptr in_websocket_route,
+                                                     logger_ptr in_logger) {
+  using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using tcp_stream_type = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+
+  boost::beast::websocket::stream<tcp_stream_type> l_stream{std::move(in_socket)};
+  l_stream.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
+  l_stream.set_option(boost::beast::websocket::stream_base::decorator(
+    [](boost::beast::websocket::response_type& res) {
+      res.set(boost::beast::http::field::server,
+              std::string(BOOST_BEAST_VERSION_STRING) +
+              " doodle-server");
+    }
+  ));
+  auto [l_ec] = co_await l_stream.async_accept(in_req);
+  boost::beast::flat_buffer l_buffer{};
+  auto l_data     = std::make_shared<http_websocket_data>();
+  l_data->logger_ = in_logger;
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    auto [l_ec_r,l_tr_s] = co_await l_stream.async_read(l_buffer);
+    if (l_ec_r) {
+      if (l_ec_r == boost::beast::websocket::error::closed) {
+        co_return;
+      }
+      in_logger->error(l_ec_r.what());
+      auto [l_ec_close] = co_await l_stream.async_close(boost::beast::websocket::close_code::normal);
+      if (l_ec_close)
+        in_logger->error(l_ec_close.what());
+      co_return;
+    }
+
+    std::string l_call_fun_name{};
+    try {
+      l_data->body_ = nlohmann::json::parse(std::string_view{reinterpret_cast<const char*>(l_buffer.data().data()),
+                                                             l_buffer.size()});
+      l_call_fun_name = l_data->body_["type"].get<std::string>();
+    } catch (const nlohmann::json::exception& in_e) {
+      in_logger->error(in_e.what());
+      continue;
+    }
+    l_stream.text(true);
+    l_buffer.consume(l_buffer.size());
+    auto l_call_fun = (*in_websocket_route)(l_call_fun_name);
+    std::string l_str = co_await (*l_call_fun)(l_data);
+    if (l_str.empty())
+      continue;
+
+    auto [l_ec_w, l_tr_w] = co_await l_stream.async_write(l_str);
+    if (l_ec_w) {
+      in_logger->error(l_ec_w.what());
+      auto [l_ec_close] = co_await l_stream.async_close(boost::beast::websocket::close_code::normal);
+      if (l_ec_close)
+        in_logger->error(l_ec_close.what());
+      co_return;
+    }
+  }
+}
+
+
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr) {
   using executor_type    = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
   using endpoint_type    = boost::asio::ip::tcp::endpoint;
@@ -58,6 +124,12 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     boost::system::error_code l_error_code{};
     switch (l_method) {
       case boost::beast::http::verb::get:
+        if (boost::beast::websocket::is_upgrade(l_request_parser->get())) {
+          boost::beast::get_lowest_layer(l_stream).expires_never();
+          co_await async_websocket_session(std::move(l_stream), l_request_parser->get(), in_route_ptr->websocket_route_,
+                                           l_session->logger_);
+          co_return;
+        }
       case boost::beast::http::verb::head:
       case boost::beast::http::verb::options:
         break;
@@ -130,7 +202,6 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
       co_return;
     }
     l_stream.expires_after(30s);
-
   }
 }
 

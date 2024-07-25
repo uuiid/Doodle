@@ -3,7 +3,8 @@
 //
 
 #include "websocket_route.h"
-#include <doodle_lib/core/http/http_websocket_data.h>
+#include <doodle_lib/core/http/http_session_data.h>
+
 namespace doodle::http {
 websocket_route::map_actin_type websocket_route::operator()(const std::string& in_name) const {
   auto l_iter = actions_.find(in_name);
@@ -16,7 +17,8 @@ websocket_route& websocket_route::reg(const std::string& in_name, const map_acti
   return *this;
 }
 
-void websocket_route::not_function(const http_websocket_data_ptr&  in_data, const nlohmann::json& in_json) {
-  in_data->logger_->log(log_loc(), level::err, "websocket not found {}", in_json["type"].get<std::string>());
+boost::asio::awaitable<std::string> websocket_route::not_function(http_websocket_data_ptr in_data) {
+  in_data->logger_->log(log_loc(), level::err, "websocket not found {}", in_data->body_["type"].get<std::string>());
+  co_return std::string{};
 }
-}  // namespace doodle::http
+} // namespace doodle::http

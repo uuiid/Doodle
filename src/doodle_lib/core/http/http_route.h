@@ -10,12 +10,11 @@
 #include <boost/url.hpp>
 namespace doodle::http {
 class http_function;
-class http_session_data;
 class http_websocket_data;
-using http_session_data_ptr   = std::shared_ptr<http_session_data>;
 using http_function_ptr       = std::shared_ptr<http_function>;
 using http_websocket_data_ptr = std::shared_ptr<http_websocket_data>;
-
+class websocket_route;
+using websocket_route_ptr = std::shared_ptr<websocket_route>;
 class http_route {
  private:
   using map_actin_type = std::vector<http_function_ptr>;
@@ -24,6 +23,7 @@ class http_route {
   http_function_ptr options_function;
 
  public:
+  websocket_route_ptr websocket_route_;
   http_route();
   // 注册路由
   http_route& reg(const http_function_ptr in_function);
