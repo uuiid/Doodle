@@ -8,6 +8,7 @@
 
 #include "doodle_lib/core/http/http_session_data.h"
 #include "doodle_lib/core/http/http_websocket_data.h"
+#include <magic_enum.hpp>
 
 namespace doodle::http {
 namespace {

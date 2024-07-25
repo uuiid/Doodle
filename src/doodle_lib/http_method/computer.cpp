@@ -27,16 +27,16 @@ class web_set_tate_fun {
 
   void operator()(const http_websocket_data_ptr &in_handle, const nlohmann::json &in_json) {
     auto l_logger   = in_handle->logger_;
-    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
-
-    if (!in_json.contains("state") || !in_json["state"].is_string()) return;
-    l_computer->computer_data_.client_status_ =
-        magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
-            .value_or(doodle::computer_status::unknown);
-
-    if (in_json.contains("host_name") && in_json["host_name"].is_string()) {
-      l_computer->computer_data_.name_ = in_json["host_name"].get<std::string>();
-    }
+    // auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+    //
+    // if (!in_json.contains("state") || !in_json["state"].is_string()) return;
+    // l_computer->computer_data_.client_status_ =
+    //     magic_enum::enum_cast<doodle::computer_status>(in_json["state"].get<std::string>())
+    //         .value_or(doodle::computer_status::unknown);
+    //
+    // if (in_json.contains("host_name") && in_json["host_name"].is_string()) {
+    //   l_computer->computer_data_.name_ = in_json["host_name"].get<std::string>();
+    // }
   }
 };
 class web_logger_fun {
@@ -48,15 +48,15 @@ class web_logger_fun {
 
   static constexpr std::string_view name{"logger"};
   void operator()(const http_websocket_data_ptr &in_handle, const nlohmann::json &in_json) {
-    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
-    auto l_logger   = in_handle->logger_;
-
-    if (!l_computer->task_info_) {
-      l_logger->log(log_loc(), level::err, "task_info is null");
-      return;
-    }
-    auto l_task = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
-    l_task->write_log(in_json["level"].get<level::level_enum>(), in_json["msg"].get<std::string>());
+    // auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+    // auto l_logger   = in_handle->logger_;
+    //
+    // if (!l_computer->task_info_) {
+    //   l_logger->log(log_loc(), level::err, "task_info is null");
+    //   return;
+    // }
+    // auto l_task = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
+    // l_task->write_log(in_json["level"].get<level::level_enum>(), in_json["msg"].get<std::string>());
   }
 };
 class web_set_task_fun {
@@ -68,37 +68,37 @@ class web_set_task_fun {
 
   static constexpr std::string_view name{"set_task"};
   void operator()(const http_websocket_data_ptr &in_handle, const nlohmann::json &in_json) {
-    auto l_logger   = in_handle->logger_;
-    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
-
-    if (!l_computer->task_info_) {
-      l_logger->log(log_loc(), level::err, "task_info is null");
-      return;
-    }
-    auto l_task     = l_computer->task_info_;
-    l_task->status_ = magic_enum::enum_cast<server_task_info_status>(in_json["status"].get<std::string>())
-                          .value_or(server_task_info_status::unknown);
-    if (l_task->status_ == server_task_info_status::completed || l_task->status_ == server_task_info_status::failed) {
-      l_task->end_time_ = std::chrono::system_clock::now();
-    }
-    {
-      g_reg()->patch<doodle::server_task_info>(
-          l_computer->task_info_entity_, [l_task](doodle::server_task_info &in_task) { in_task = *l_task; }
-      );
-    }
-    l_computer->computer_data_.server_status_ = doodle::computer_status::free;
+    // auto l_logger   = in_handle->logger_;
+    // auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+    //
+    // if (!l_computer->task_info_) {
+    //   l_logger->log(log_loc(), level::err, "task_info is null");
+    //   return;
+    // }
+    // auto l_task     = l_computer->task_info_;
+    // l_task->status_ = magic_enum::enum_cast<server_task_info_status>(in_json["status"].get<std::string>())
+    //                       .value_or(server_task_info_status::unknown);
+    // if (l_task->status_ == server_task_info_status::completed || l_task->status_ == server_task_info_status::failed) {
+    //   l_task->end_time_ = std::chrono::system_clock::now();
+    // }
+    // {
+    //   g_reg()->patch<doodle::server_task_info>(
+    //       l_computer->task_info_entity_, [l_task](doodle::server_task_info &in_task) { in_task = *l_task; }
+    //   );
+    // }
+    // l_computer->computer_data_.server_status_ = doodle::computer_status::free;
   }
 };
 
 void computer::list_computers(boost::system::error_code in_error_code, const http_session_data_ptr &in_handle) {
-  std::vector<doodle::computer> l_computers{};
-  for (auto &&l_web_ : g_websocket_data_manager().get_list()) {
-    if (auto l_computer = std::static_pointer_cast<computer_reg_data>(l_web_->user_data_); l_computer) {
-      l_computers.emplace_back(l_computer->computer_data_);
-    }
-  }
-
-  nlohmann::json l_json = l_computers;
+  // std::vector<doodle::computer> l_computers{};
+  // for (auto &&l_web_ : g_websocket_data_manager().get_list()) {
+  //   if (auto l_computer = std::static_pointer_cast<computer_reg_data>(l_web_->user_data_); l_computer) {
+  //     l_computers.emplace_back(l_computer->computer_data_);
+  //   }
+  // }
+  //
+  // nlohmann::json l_json = l_computers;
   // auto &l_req           = in_handle->request_parser_->get();
   // boost::beast::http::response<boost::beast::http::string_body> l_response{
   //     boost::beast::http::status::ok, l_req.version()
@@ -110,20 +110,20 @@ void computer::list_computers(boost::system::error_code in_error_code, const htt
   // l_response.prepare_payload();
   // in_handle->seed(std::move(l_response));
 }
-void computer::reg_computer(boost::system::error_code in_error_code, const http_websocket_data_ptr &in_web_socket) {
-  auto l_logger          = in_web_socket->logger_;
-  auto l_remote_endpoint = boost::beast::get_lowest_layer(*in_web_socket->stream_).socket().remote_endpoint();
-  l_logger->log(log_loc(), level::info, "注册计算机 {}", l_remote_endpoint.address().to_string());
-  auto l_computer                           = std::make_shared<computer_reg_data>(doodle::computer{
-      fmt::format("计算机 {}", l_remote_endpoint.address().to_string()), l_remote_endpoint.address().to_string()
-  });
-  l_computer->computer_data_.server_status_ = doodle::computer_status::free;
-  in_web_socket->user_data_                 = l_computer;
-
-  auto l_web_route                          = std::make_shared<class websocket_route>();
-  l_web_route->reg(web_set_tate_fun{}).reg(web_logger_fun{}).reg(web_set_task_fun{});
-  in_web_socket->route_ptr_ = l_web_route;
-}
+// void computer::reg_computer(boost::system::error_code in_error_code, const http_websocket_data_ptr &in_web_socket) {
+//   auto l_logger          = in_web_socket->logger_;
+//   auto l_remote_endpoint = boost::beast::get_lowest_layer(*in_web_socket->stream_).socket().remote_endpoint();
+//   l_logger->log(log_loc(), level::info, "注册计算机 {}", l_remote_endpoint.address().to_string());
+//   auto l_computer                           = std::make_shared<computer_reg_data>(doodle::computer{
+//       fmt::format("计算机 {}", l_remote_endpoint.address().to_string()), l_remote_endpoint.address().to_string()
+//   });
+//   l_computer->computer_data_.server_status_ = doodle::computer_status::free;
+//   in_web_socket->user_data_                 = l_computer;
+//
+//   auto l_web_route                          = std::make_shared<class websocket_route>();
+//   l_web_route->reg(web_set_tate_fun{}).reg(web_logger_fun{}).reg(web_set_task_fun{});
+//   in_web_socket->route_ptr_ = l_web_route;
+// }
 
 void computer::reg(doodle::http::http_route &in_route) {
   // todo: 注册计算机

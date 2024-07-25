@@ -71,7 +71,7 @@ boost::asio::awaitable<void> async_websocket_session(tcp_stream_type in_socket,
     if (l_str.empty())
       continue;
 
-    auto [l_ec_w, l_tr_w] = co_await l_stream.async_write(l_str);
+    auto [l_ec_w, l_tr_w] = co_await l_stream.async_write(boost::asio::buffer(l_str));
     if (l_ec_w) {
       in_logger->error(l_ec_w.what());
       auto [l_ec_close] = co_await l_stream.async_close(boost::beast::websocket::close_code::normal);

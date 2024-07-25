@@ -10,9 +10,7 @@
 #include <boost/url.hpp>
 namespace doodle::http {
 class http_function;
-class http_websocket_data;
 using http_function_ptr       = std::shared_ptr<http_function>;
-using http_websocket_data_ptr = std::shared_ptr<http_websocket_data>;
 class websocket_route;
 using websocket_route_ptr = std::shared_ptr<websocket_route>;
 class http_route {

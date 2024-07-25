@@ -14,7 +14,7 @@ boost::asio::awaitable<void> http_websocket_client::init(const std::string& in_u
   websocket_route_ = in_websocket_route;
   web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(
     boost::asio::make_strand(g_io_context()));
-  logger_ = g_logger_ctrl().make_log(fmt::format("websocket_{}_{}", url_.host(), url_.port()));
+  logger_ = g_logger_ctrl().make_log(fmt::format("websocket_{}_{}", std::string{url_.host()}, std::string{url_.port()}));
 
   using resolver_type = executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
   auto l_resolver     = std::make_shared<resolver_type>(g_io_context());
@@ -93,7 +93,7 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
 boost::asio::awaitable<void> http_websocket_client::async_write_websocket(
   std::string in_data) {
   auto l_g              = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
-  auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(in_data);
+  auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(in_data));
   if (l_ec_w) {
     logger_->error(l_ec_w.what());
     auto [l_ec_close] = co_await web_stream_->async_close(boost::beast::websocket::close_code::normal);

@@ -110,9 +110,9 @@ public:
         std::string l_line{};
         std::getline(l_stream, l_line);
         auto l_level = log_level(l_line, level::info);
-        impl_->http_work_->websocket_data_->seed(
-          nlohmann::json{{"type", "logger"}, {"level", l_level}, {"task_id", impl_->task_id_}, {"msg", l_line}}
-        );
+        // impl_->http_work_->websocket_data_->seed(
+        //   nlohmann::json{{"type", "logger"}, {"level", l_level}, {"task_id", impl_->task_id_}, {"msg", l_line}}
+        // );
         do_read_out();
       }
       // )
@@ -134,9 +134,9 @@ public:
         std::string l_line;
         std::getline(l_stream, l_line);
         auto l_level = log_level(l_line, level::err);
-        impl_->http_work_->websocket_data_->seed(
-          nlohmann::json{{"type", "logger"}, {"level", l_level}, {"task_id", impl_->task_id_}, {"msg", l_line}}
-        );
+        // impl_->http_work_->websocket_data_->seed(
+        //   nlohmann::json{{"type", "logger"}, {"level", l_level}, {"task_id", impl_->task_id_}, {"msg", l_line}}
+        // );
         do_read_err();
       }
       // )
@@ -176,38 +176,38 @@ void http_work::run(const std::string& in_server_address, std::uint16_t in_port)
   server_address_ = in_server_address;
   port_           = in_port;
 
-  websocket_data_ = std::make_shared<http_websocket_data>();
+  // websocket_data_ = std::make_shared<http_websocket_data>();
   logger_         = g_logger_ctrl().make_log("http_work");
 
   core_set_init{}.config_to_user();
-  app_base::Get().on_cancel.slot().assign([this](boost::asio::cancellation_type_t in_error_code) {
-    websocket_data_->do_close();
-  });
+  // app_base::Get().on_cancel.slot().assign([this](boost::asio::cancellation_type_t in_error_code) {
+  //   websocket_data_->do_close();
+  // });
   host_name_ = boost::asio::ip::host_name();
 
   auto l_web_route = std::make_shared<websocket_route>();
-  l_web_route->reg(websocket_run_task_fun_launch{this});
-  websocket_data_->route_ptr_ = l_web_route;
+  // l_web_route->reg(websocket_run_task_fun_launch{this});
+  // websocket_data_->route_ptr_ = l_web_route;
   do_connect();
 }
 
 void http_work::do_connect() {
   // 这里不可以使用取消槽, 否则会导致悬挂
-  websocket_data_->async_connect(
-    server_address_, "v1/computer", port_,
-    // boost::asio::bind_cancellation_slot(
-    // app_base::Get().on_cancel.slot(),
-    [this](boost::system::error_code in_error_code) {
-      if (in_error_code) {
-        logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
-        do_wait();
-        return;
-      }
-      is_connect_ = true;
-      send_state(computer_status::free);
-    }
-    // )
-  );
+  // websocket_data_->async_connect(
+  //   server_address_, "v1/computer", port_,
+  //   // boost::asio::bind_cancellation_slot(
+  //   // app_base::Get().on_cancel.slot(),
+  //   [this](boost::system::error_code in_error_code) {
+  //     if (in_error_code) {
+  //       logger_->log(log_loc(), level::err, "连接失败 {}", in_error_code);
+  //       do_wait();
+  //       return;
+  //     }
+  //     is_connect_ = true;
+  //     send_state(computer_status::free);
+  //   }
+  //   // )
+  // );
 }
 
 void http_work::do_wait() {
@@ -223,17 +223,17 @@ void http_work::do_wait() {
         logger_->log(log_loc(), level::err, "on_wait error: {}", in_error_code);
         return;
       }
-      if (!is_connect_ || !websocket_data_->stream_->is_open()) {
-        do_connect();
-        return;
-      }
+      // if (!is_connect_ || !websocket_data_->stream_->is_open()) {
+      //   do_connect();
+      //   return;
+      // }
       do_wait();
     }
   ));
 }
 
 void http_work::send_state(computer_status in_status) {
-  websocket_data_->seed(nlohmann::json{{"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}});
+  // websocket_data_->seed(nlohmann::json{{"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}});
   do_wait();
 }
 
@@ -243,10 +243,10 @@ void http_work::end_task(boost::system::error_code in_error_code) {
   } else {
     logger_->log(log_loc(), level::info, "任务执行成功");
   }
-  websocket_data_->seed(nlohmann::json{
-      {"type", computer_websocket_fun::set_task},
-      {"status", in_error_code ? server_task_info_status::failed : server_task_info_status::completed}
-  });
+  // websocket_data_->seed(nlohmann::json{
+  //     {"type", computer_websocket_fun::set_task},
+  //     {"status", in_error_code ? server_task_info_status::failed : server_task_info_status::completed}
+  // });
   send_state(computer_status::free);
 }
 } // namespace doodle::http

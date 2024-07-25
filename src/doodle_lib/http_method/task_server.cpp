@@ -73,70 +73,70 @@ void task_server::clear_task() {
 }
 
 void task_server::confirm_task() {
-  auto l_computers = g_websocket_data_manager().get_list();
-  for (auto&& [id_, l_task] : task_map_) {
-    if (l_task->status_ != server_task_info_status::assigned) continue;
-    if (auto l_computer = std::find_if(
-            l_computers.begin(), l_computers.end(),
-            [l_task](const auto& in_computer) {
-              if (auto l_computer_data = std::static_pointer_cast<computer_reg_data>(in_computer->user_data_);
-                  l_computer_data) {
-                return l_computer_data->task_info_ == l_task;
-              }
-              return false;
-            }
-        );
-        l_computer == l_computers.end()) {
-      l_task->status_ = server_task_info_status::submitted;
-      l_task->run_computer_.clear();
-      l_task->run_time_ = std::chrono::system_clock::time_point{};
-      {
-        g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_], [l_task](doodle::server_task_info& in_task) {
-          in_task = *l_task;
-        });
-      }
-    }
-  }
+  // auto l_computers = g_websocket_data_manager().get_list();
+  // for (auto&& [id_, l_task] : task_map_) {
+  //   if (l_task->status_ != server_task_info_status::assigned) continue;
+  //   if (auto l_computer = std::find_if(
+  //           l_computers.begin(), l_computers.end(),
+  //           [l_task](const auto& in_computer) {
+  //             if (auto l_computer_data = std::static_pointer_cast<computer_reg_data>(in_computer->user_data_);
+  //                 l_computer_data) {
+  //               return l_computer_data->task_info_ == l_task;
+  //             }
+  //             return false;
+  //           }
+  //       );
+  //       l_computer == l_computers.end()) {
+  //     l_task->status_ = server_task_info_status::submitted;
+  //     l_task->run_computer_.clear();
+  //     l_task->run_time_ = std::chrono::system_clock::time_point{};
+  //     {
+  //       g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_], [l_task](doodle::server_task_info& in_task) {
+  //         in_task = *l_task;
+  //       });
+  //     }
+  //   }
+  // }
 }
 
 void task_server::assign_task() {
-  auto l_computers = g_websocket_data_manager().get_list();
-  for (auto&& [id_, l_task] : task_map_) {
-    if (l_task->status_ != server_task_info_status::submitted) continue;
-
-    for (auto& l_computer : l_computers) {
-      if (auto l_computer_data = std::static_pointer_cast<computer_reg_data>(l_computer->user_data_); l_computer_data) {
-        if (l_computer_data->computer_data_.server_status_ != computer_status::free ||
-            l_computer_data->computer_data_.client_status_ != computer_status::free)
-          continue;
-
-        l_computer_data->computer_data_.server_status_ = computer_status::busy;
-        l_task->status_                                = server_task_info_status::assigned;
-        l_task->run_computer_                          = l_computer_data->computer_data_.name_;
-        l_task->run_time_                              = std::chrono::system_clock::now();
-        l_task->run_computer_ip_                       = l_computer_data->computer_data_.ip_;
-        {
-          g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_], [l_task](doodle::server_task_info& in_task) {
-            in_task = *l_task;
-          });
-        }
-        nlohmann::json l_json{};
-
-        l_json["type"]    = http_websocket_data_fun::run_task;
-        l_json["id"]      = fmt::to_string(id_);
-        l_json["exe"]     = l_task->exe_;
-        l_json["command"] = l_task->command_;
-        l_computer->seed(l_json);
-        logger_ptr_->log(
-            log_loc(), level::info, "分配任务 {}_{} 给 {}({})", l_task->name_, id_,
-            l_computer_data->computer_data_.name_, l_computer_data->computer_data_.ip_
-        );
-        l_computer_data->task_info_ = l_task;
-        l_computer_data->task_info_entity_ = task_entity_map_[id_];
-        break;
-      }
-    }
-  }
+  // auto l_computers = g_websocket_data_manager().get_list();
+  // for (auto&& [id_, l_task] : task_map_) {
+  //   if (l_task->status_ != server_task_info_status::submitted) continue;
+  //
+  //   for (auto& l_computer : l_computers) {
+  //     if (auto l_computer_data = std::static_pointer_cast<computer_reg_data>(l_computer->user_data_); l_computer_data) {
+  //       if (l_computer_data->computer_data_.server_status_ != computer_status::free ||
+  //           l_computer_data->computer_data_.client_status_ != computer_status::free)
+  //         continue;
+  //
+  //       l_computer_data->computer_data_.server_status_ = computer_status::busy;
+  //       l_task->status_                                = server_task_info_status::assigned;
+  //       l_task->run_computer_                          = l_computer_data->computer_data_.name_;
+  //       l_task->run_time_                              = std::chrono::system_clock::now();
+  //       l_task->run_computer_ip_                       = l_computer_data->computer_data_.ip_;
+  //       {
+  //         g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_], [l_task](doodle::server_task_info& in_task) {
+  //           in_task = *l_task;
+  //         });
+  //       }
+  //       nlohmann::json l_json{};
+  //
+  //       l_json["type"]    = http_websocket_data_fun::run_task;
+  //       l_json["id"]      = fmt::to_string(id_);
+  //       l_json["exe"]     = l_task->exe_;
+  //       l_json["command"] = l_task->command_;
+  //       l_computer->seed(l_json);
+  //       logger_ptr_->log(
+  //           log_loc(), level::info, "分配任务 {}_{} 给 {}({})", l_task->name_, id_,
+  //           l_computer_data->computer_data_.name_, l_computer_data->computer_data_.ip_
+  //       );
+  //       l_computer_data->task_info_ = l_task;
+  //       l_computer_data->task_info_entity_ = task_entity_map_[id_];
+  //       break;
+  //     }
+  //   }
+  // }
 }
 
 }  // namespace doodle::http
