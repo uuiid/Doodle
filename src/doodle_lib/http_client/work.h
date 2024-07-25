@@ -9,6 +9,8 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/process.hpp>
+
+#include "core/http/http_websocket_client.h"
 namespace doodle::http {
 class http_websocket_data;
 /**
@@ -31,11 +33,11 @@ class http_work {
   using signal_set_ptr  = std::shared_ptr<signal_set>;
   using logger_sink_ptr = std::shared_ptr<spdlog::sinks::sink>;
   class websocket_run_task_fun;
-  class websocket_run_task_fun_launch;
+
   // 自动连接定时器
   timer_ptr timer_{};
 
-  std::shared_ptr<http_websocket_data> websocket_data_{};
+  std::shared_ptr<http_websocket_client> websocket_client_{};
 
   std::string server_address_{};
   std::uint16_t port_{};
@@ -55,7 +57,9 @@ class http_work {
   boost::asio::streambuf err_strbuff_attr{};
   std::shared_ptr<boost::process::async_pipe> out_pipe_{};
   std::shared_ptr<boost::process::async_pipe> err_pipe_{};
+  boost::asio::any_io_executor executor_{};
 
+  std::string url_{};
   // async read out
   void do_read_out();
   void do_read_err();
@@ -69,6 +73,8 @@ class http_work {
   void send_state(computer_status in_status);
 
   void end_task(boost::system::error_code in_error_code);
+
+  boost::asio::awaitable<void> async_run();
 
  public:
   http_work()  = default;
