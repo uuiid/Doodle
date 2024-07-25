@@ -8,7 +8,6 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 
-#include <doodle_lib/core/http/socket_logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>

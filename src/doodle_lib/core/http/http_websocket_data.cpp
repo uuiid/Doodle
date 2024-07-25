@@ -13,7 +13,6 @@
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
-#include "socket_logger.h"
 
 namespace doodle::http {
 http_websocket_data_manager& g_websocket_data_manager() {

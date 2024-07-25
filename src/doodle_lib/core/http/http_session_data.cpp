@@ -13,7 +13,6 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_websocket_data.h>
 #include <doodle_lib/core/http/websocket_route.h>
-#include <doodle_lib/core/http/socket_logger.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 
