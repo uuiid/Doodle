@@ -8,27 +8,27 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/url.hpp>
+
 namespace doodle::http {
 class http_function;
-using http_function_ptr       = std::shared_ptr<http_function>;
+using http_function_ptr = std::shared_ptr<http_function>;
 class websocket_route;
 using websocket_route_ptr = std::shared_ptr<websocket_route>;
+
 class http_route {
- private:
+private:
   using map_actin_type = std::vector<http_function_ptr>;
   std::map<boost::beast::http::verb, map_actin_type> actions;
   http_function_ptr not_function;
   http_function_ptr options_function;
 
- public:
-  websocket_route_ptr websocket_route_;
+public:
   http_route();
   // 注册路由
   http_route& reg(const http_function_ptr in_function);
   // 路由分发
   http_function_ptr operator()(
-      boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
+    boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
   ) const;
 };
-
-}  // namespace doodle::http
+} // namespace doodle::http

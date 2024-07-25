@@ -93,7 +93,10 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         if (boost::beast::websocket::is_upgrade(l_request_parser->get()) && (*in_route_ptr)(
               l_method, l_session->url_.segments(), l_session)->has_websocket()) {
           boost::beast::get_lowest_layer(l_stream).expires_never();
-          co_await async_websocket_session(std::move(l_stream), l_request_parser->get(), in_route_ptr->websocket_route_,
+          auto l_websocket_route = std::make_shared<websocket_route>();
+          (*in_route_ptr)(
+              l_method, l_session->url_.segments(), l_session)->websocket_callback_(l_websocket_route);
+          co_await async_websocket_session(std::move(l_stream), l_request_parser->get(), l_websocket_route,
                                            l_session->logger_);
           co_return;
         }
