@@ -84,7 +84,7 @@ bool long_time_tasks_widget::render() {
 
       ImGui::TableNextColumn();
 
-      if (!msg.is_connected()) {
+      if (msg.is_connected()) {
         if (ImGui::SmallButton(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted();
       } else
         ImGui::Text("无");
