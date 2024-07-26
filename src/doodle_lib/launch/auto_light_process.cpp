@@ -29,11 +29,11 @@
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/gui/widgets/render_monitor.h>
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <wil/result.h>
-#include <doodle_lib/exe_warp/ue_exe.h>
 
 namespace doodle::launch {
 // 映射网络驱动器
@@ -41,12 +41,12 @@ bool map_network_drive(const std::string& in_drive, const std::string& in_path) 
   auto l_drive = conv::utf_to_utf<wchar_t>(in_drive);
   auto l_path  = conv::utf_to_utf<wchar_t>(in_path);
 
-  NETRESOURCEW l_net_resource{}; // 网络资源
+  NETRESOURCEW l_net_resource{};  // 网络资源
   l_net_resource.dwType       = RESOURCETYPE_DISK;
   l_net_resource.lpLocalName  = l_drive.data();
   l_net_resource.lpRemoteName = l_path.data();
 
-  auto l_ret = WNetAddConnection2W(&l_net_resource, nullptr, nullptr, CONNECT_TEMPORARY);
+  auto l_ret                  = WNetAddConnection2W(&l_net_resource, nullptr, nullptr, CONNECT_TEMPORARY);
   if (l_ret != NO_ERROR) {
     LOG_LAST_ERROR();
     default_logger_raw()->error("映射网络驱动器失败: {}", l_ret);
@@ -60,8 +60,8 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   using work_guard_t = decltype(boost::asio::make_work_guard(g_io_context()));
   auto l_work_guard  = std::make_shared<work_guard_t>(boost::asio::make_work_guard(g_io_context()));
 
-  using signal_t = boost::asio::signal_set;
-  auto signal_   = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
+  using signal_t     = boost::asio::signal_set;
+  auto signal_       = std::make_shared<signal_t>(g_io_context(), SIGINT, SIGTERM);
   signal_->async_wait([](boost::system::error_code in_error_code, int in_sig) {
     if (in_error_code) {
       if (!app_base::GetPtr()->is_stop())
@@ -85,7 +85,8 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   };
   for (auto& l_drive : l_drive_list) {
     if (!FSys::exists(l_drive.first))
-      if (!map_network_drive(l_drive.first, l_drive.second)) return true;
+      if (!map_network_drive(l_drive.first, l_drive.second))
+        ;
   }
 
   if (in_arh[g_only_map_drive]) {
@@ -96,10 +97,8 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
     default_logger_raw()->error("必须有maya文件");
     return true;
   }
-  if (!g_ctx().contains<maya_ctx>())
-    g_ctx().emplace<maya_ctx>();
-  if (!g_ctx().contains<ue_ctx>())
-    g_ctx().emplace<ue_ctx>();
+  if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
+  if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
   FSys::path l_file = FSys::from_quotation_marks(in_arh(g_maya_file).str());
   auto l_strm       = l_file.stem().generic_string();
   if (!FSys::exists(l_file)) {
@@ -157,9 +156,9 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
     return true;
   }
   boost::asio::co_spawn(
-    g_io_context(),
-    async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_process_message.logger()),
-    boost::asio::detached);
+      g_io_context(),
+      async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_process_message.logger()),
+      boost::asio::detached);
   return false;
 }
 } // namespace doodle::launch
