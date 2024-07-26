@@ -5,13 +5,11 @@
 #include "work.h"
 
 #include <doodle_core/core/app_base.h>
-#include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/up_auto_light_file.h>
-#include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
@@ -20,7 +18,6 @@
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/process/v2.hpp>
 
-#include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
