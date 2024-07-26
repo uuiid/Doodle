@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(server_and_works) {
   std::vector<std::shared_ptr<http::http_work>> l_works{};
   for (int i = 0; i < 15; ++i) {
     auto l_work = std::make_shared<http::http_work>();
-    l_work->run("http://127.0.0.1:50023");
+    l_work->run("http://127.0.0.1:50023/v1/computer");
     l_works.emplace_back(std::move(l_work));
   }
 
