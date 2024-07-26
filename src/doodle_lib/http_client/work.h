@@ -9,7 +9,7 @@
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
 
-#include "core/http/http_websocket_client.h"
+#include <doodle_lib/core/http/http_websocket_client.h>
 namespace doodle::http {
 namespace detail {
 class http_websocket_data;
