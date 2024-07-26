@@ -102,9 +102,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_computers(ses
 }
 
 void reg_computer(const websocket_route_ptr& in_web_socket) {
-  in_web_socket->reg("set_state", std::make_shared<websocket_route::call_fun_type>(web_set_tate_fun))
-      .reg("logger", std::make_shared<websocket_route::call_fun_type>(web_logger_fun))
-      .reg("set_task", std::make_shared<websocket_route::call_fun_type>(web_set_task_fun));
+  in_web_socket->reg("set_state", websocket_route::call_fun_type(web_set_tate_fun))
+      .reg("logger", websocket_route::call_fun_type(web_logger_fun))
+      .reg("set_task", websocket_route::call_fun_type(web_set_task_fun));
 }
 }  // namespace
 

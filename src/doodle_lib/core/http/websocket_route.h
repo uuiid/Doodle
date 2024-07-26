@@ -33,7 +33,7 @@ class websocket_route {
   static boost::asio::awaitable<std::string> not_function(http_websocket_data_ptr in_data);
 
  public:
-  websocket_route() : not_function_{not_function} {}
+  websocket_route() : not_function_{not_function}, actions_{} {}
 
   ~websocket_route() = default;
 
