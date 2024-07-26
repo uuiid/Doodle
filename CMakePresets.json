@@ -139,8 +139,8 @@
       "targets": [
         "DoodleExe",
         "generate_token",
-        "doodle_server",
-        "doodle_client",
+        "doodle_auto_light_server",
+        "doodle_auto_light_client",
         "file_association_http",
         "doodle_auto_light_process",
         "doodle_file_exists",
