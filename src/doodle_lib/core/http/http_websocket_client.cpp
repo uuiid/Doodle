@@ -102,7 +102,7 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
     std::string l_str = co_await (*l_call_fun)(l_data);
     if (l_str.empty()) continue;
 
-    co_await async_write_websocket(l_str);
+    // co_await async_write_websocket(l_str);
     boost::asio::co_spawn(g_io_context(), async_write_websocket(std::move(l_str)), boost::asio::detached);
   }
 }
