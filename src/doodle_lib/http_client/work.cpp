@@ -131,13 +131,13 @@ boost::asio::awaitable<void> http_work::async_run_task(
     co_return;
   }
 
-  auto l_timer    = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  if (FSys::path l_path = in_exe; !l_path.has_root_name())
-    in_exe = boost::process::v2::environment::find_executable(in_exe).generic_string();
+  auto l_timer      = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  auto l_out_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_err_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  FSys::path l_path = in_exe;
+  if (!l_path.has_root_name()) l_path = boost::process::v2::environment::find_executable(in_exe);
   auto l_process_maya = boost::process::v2::process{
-      g_io_context(), in_exe, in_command, boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
+      g_io_context(), l_path, in_command, boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       details::hide_and_not_create_windows
   };
   boost::asio::co_spawn(executor_, async_read_pip(l_out_pipe), boost::asio::detached);
