@@ -45,10 +45,10 @@ BOOST_AUTO_TEST_CASE(only_server) {
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
-  http::computer::reg(*l_rout_ptr);
+  http::computer_reg(*l_rout_ptr);
   http::task_info_reg(*l_rout_ptr);
   // 开始运行服务器
-  http::run_http_listener(g_io_context(), l_rout_ptr);
+  http::run_http_listener(g_io_context(), l_rout_ptr, 50023);
   g_ctx().get<http::task_server>().run();
   g_ctx().get<http::task_sqlite_server>().run();
 
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(only_works) {
   std::vector<std::shared_ptr<http::http_work>> l_works{};
   for (int i = 0; i < 15; ++i) {
     auto l_work = std::make_shared<http::http_work>();
-    l_work->run("127.0.0.1", 50023);
+    l_work->run("http://127.0.0.1:50023");
     l_works.emplace_back(std::move(l_work));
   }
   try {
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(server_and_works) {
   }
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
-  http::computer::reg(*l_rout_ptr);
+  http::computer_reg(*l_rout_ptr);
   http::task_info_reg(*l_rout_ptr);
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, 50023);
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(server_and_works) {
   std::vector<std::shared_ptr<http::http_work>> l_works{};
   for (int i = 0; i < 15; ++i) {
     auto l_work = std::make_shared<http::http_work>();
-    l_work->run("192.168.40.53", 50023);
+    l_work->run("http://127.0.0.1:50023");
     l_works.emplace_back(std::move(l_work));
   }
 
