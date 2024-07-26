@@ -39,7 +39,7 @@ class http_websocket_client : public std::enable_shared_from_this<http_websocket
   http_websocket_client()  = default;
   ~http_websocket_client() = default;
   // 客户端使用
-  boost::asio::awaitable<void> init(const std::string& in_url, websocket_route_ptr in_websocket_route);
+  boost::asio::awaitable<boost::system::error_code> init(const std::string& in_url, websocket_route_ptr in_websocket_route);
   // 服务端使用
   void init(
       boost::beast::websocket::stream<tcp_stream_type> in_stream, websocket_route_ptr in_websocket_route,
