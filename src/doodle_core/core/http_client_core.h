@@ -8,6 +8,7 @@
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/core/co_queue.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/ts/netfwd.hpp>
@@ -158,7 +159,7 @@ public:
   timer_ptr_t timer_ptr_;
 
   // 异步队列
-  awaitable_queue queue_;
+  awaitable_queue_limitation queue_;
 
   virtual void init(std::string in_server_url, boost::asio::ssl::context* in_ctx = nullptr);
 
