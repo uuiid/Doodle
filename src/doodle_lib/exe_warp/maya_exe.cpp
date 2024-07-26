@@ -140,7 +140,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   }
   auto l_this_exe = co_await boost::asio::this_coro::executor;
 
-  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto [l_e2, l_run_path] = install_maya_exe(l_maya_path);
   if (l_e2) {
     in_logger->error("maya 运行路径转换失败: {}", l_e2.message());
