@@ -28,7 +28,9 @@ class http_work {
   using timer         = executor_type::as_default_on_t<boost::asio::high_resolution_timer>;
   using timer_ptr     = std::shared_ptr<timer>;
 
-  friend boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket_data_ptr in_handle);
+  friend boost::asio::awaitable<std::string> websocket_run_task_fun_launch(
+      http_work* in_work, http_websocket_data_ptr in_handle
+  );
   boost::asio::any_io_executor executor_{};
   // 自动连接定时器
   timer_ptr timer_{};

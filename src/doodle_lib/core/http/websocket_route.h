@@ -21,7 +21,6 @@ class websocket_route {
   struct call_fun_type {
     using call_t = std::function<boost::asio::awaitable<std::string>(http_websocket_data_ptr)>;
     call_t call{};
-    void* user_data_{};
     // call_fun_type() = default;
     // explicit call_fun_type(call_t in_call) : call{std::move(in_call)} {}
     // explicit call_fun_type(call_t in_call, void* in_user_data) : call{std::move(in_call)}, user_data_{in_user_data} {}
