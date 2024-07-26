@@ -33,6 +33,7 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   if (in_handle->body_.contains("host_name") && in_handle->body_["host_name"].is_string()) {
     l_computer->computer_data_.name_ = in_handle->body_["host_name"].get<std::string>();
   }
+  l_computer->computer_data_.ip_ = in_handle->remote_endpoint_;
   co_return std::string{};
 }
 

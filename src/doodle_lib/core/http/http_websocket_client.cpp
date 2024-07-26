@@ -64,6 +64,14 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
   auto l_data     = std::make_shared<detail::http_websocket_data>();
   l_data->client_ = weak_from_this();
   l_data->logger_ = logger_;
+  {
+    boost::system::error_code l_code{};
+    auto l_rem_ep = boost::beast::get_lowest_layer(*web_stream_).socket().remote_endpoint(l_code);
+    if (!l_code)
+      l_data->remote_endpoint_ = l_rem_ep.address().to_string();
+    else
+      logger_->error("错误的远程端点获取 {}", l_code);
+  }
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     boost::beast::flat_buffer l_buffer{};
     auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
