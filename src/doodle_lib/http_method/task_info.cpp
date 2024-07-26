@@ -85,7 +85,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
   {
     auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
     for (auto&& [e, l_ptr] : l_view.each()) {
-      if (l_ptr.id_ == l_task_handle.id_) {
+      if (l_ptr.id_ == l_uuid) {
         l_task_handle = l_ptr;
         is_db         = true;
         break;
