@@ -34,7 +34,7 @@ class http_websocket_client : public std::enable_shared_from_this<http_websocket
   logger_ptr logger_;
   websocket_route_ptr websocket_route_;
   std::shared_ptr<awaitable_queue_limitation> write_queue_limitation_;
-
+  boost::asio::executor executor_;
  public:
   http_websocket_client()  = default;
   ~http_websocket_client() = default;
