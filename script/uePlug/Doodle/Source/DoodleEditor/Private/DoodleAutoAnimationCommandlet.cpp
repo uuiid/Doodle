@@ -769,7 +769,7 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty() {
           FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Prop/"))) {
         if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset())) {
           bool L_bHasProperty{true};
-          // L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+          L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
           L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
           L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
           L_Save.Add(L_Mat);
