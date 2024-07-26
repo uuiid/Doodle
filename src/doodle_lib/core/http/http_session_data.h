@@ -67,6 +67,7 @@ class http_websocket_data {
   std::string remote_endpoint_{};
   std::shared_ptr<void> user_data_{};
   std::weak_ptr<http_websocket_client> client_{};
+  void* in_args_{};
 };
 
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);

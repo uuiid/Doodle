@@ -22,21 +22,20 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
-boost::asio::awaitable<std::string> websocket_run_task_fun_launch(
-    http_work* in_work, http_websocket_data_ptr in_handle
-) {
+boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket_data_ptr in_handle) {
   if (!in_handle->body_.contains("id")) {
     in_handle->logger_->log(log_loc(), level::err, "json parse error: {}", in_handle->body_.dump());
     co_return std::string{};
   }
-  if (in_work->status_ == computer_status::busy) {
+  auto l_http_work = static_cast<http_work*>(in_handle->in_args_);
+  if (l_http_work->status_ == computer_status::busy) {
     in_handle->logger_->log(log_loc(), level::err, "computer busy: {}", in_handle->body_.dump());
     co_return std::string{};
   }
 
   boost::asio::co_spawn(
-      in_work->executor_,
-      in_work->async_run_task(
+      l_http_work->executor_,
+      l_http_work->async_run_task(
           in_handle->body_["id"].get<std::string>(), in_handle->body_["exe"].get<std::string>(),
           in_handle->body_["command"].get<std::vector<std::string>>()
       ),
@@ -61,9 +60,7 @@ void http_work::run(const std::string& in_url) {
 
 boost::asio::awaitable<void> http_work::async_run() {
   auto l_web_route = std::make_shared<websocket_route>();
-  l_web_route->reg(
-      "run_task", std::make_shared<websocket_route::call_fun_type>(std::bind_front(websocket_run_task_fun_launch, this))
-  );
+  l_web_route->reg("run_task", websocket_route::call_fun_type{websocket_run_task_fun_launch, this});
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     if (auto l_ec = co_await websocket_client_->init(url_, l_web_route); l_ec) {
       continue;

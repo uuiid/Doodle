@@ -99,7 +99,8 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
     web_stream_->text(true);
 
     auto l_call_fun   = (*websocket_route_)(l_call_fun_name);
-    std::string l_str = co_await (*l_call_fun)(l_data);
+    l_data->in_args_  = l_call_fun.user_data_;
+    std::string l_str = co_await l_call_fun.call(l_data);
     if (l_str.empty()) continue;
 
     // co_await async_write_websocket(l_str);
