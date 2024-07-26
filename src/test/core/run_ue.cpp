@@ -17,6 +17,6 @@ BOOST_AUTO_TEST_CASE(core_run_ue) {
   core_set_init{}.config_to_user();
   core_set_init{}.read_file();
   boost::asio::co_spawn(g_io_context(),
-                        async_run_ue("--version", spdlog::default_logger()), boost::asio::detached);
+                        async_run_ue({"--version"}, spdlog::default_logger()), boost::asio::detached);
   g_io_context().run();
 }
