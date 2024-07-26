@@ -16,7 +16,7 @@ boost::asio::awaitable<void> http_websocket_client::init(
   url_             = boost::urls::url{in_url};
   websocket_route_ = in_websocket_route;
   executor_        = boost::asio::make_strand(g_io_context());
-  web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(executor_);
+  web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(boost::asio::make_strand(g_io_context()));
   logger_ =
       g_logger_ctrl().make_log(fmt::format("websocket_{}_{}", std::string{url_.host()}, std::string{url_.port()}));
 
@@ -50,7 +50,7 @@ void http_websocket_client::init(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, websocket_route_ptr in_websocket_route,
     logger_ptr in_logger
 ) {
-  executor_        = in_stream.get_executor();
+  // executor_        = in_stream.get_executor();
   web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(std::move(in_stream));
   websocket_route_ = in_websocket_route;
   logger_          = in_logger;

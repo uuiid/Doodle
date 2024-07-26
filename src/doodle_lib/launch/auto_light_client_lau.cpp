@@ -16,7 +16,13 @@ bool auto_light_client_lau::operator()(const argh::parser& in_arh, std::vector<s
   auto http_client_service_ptr_ = std::make_shared<http::http_work>();
   in_vector.emplace_back(http_client_service_ptr_);
 
-  http_client_service_ptr_->run(register_file_type::get_server_address());
+  std::string l_ip{};
+  if (auto l_ip_str = in_arh({"--address","-a"}); l_ip_str) {
+    l_ip = l_ip_str.str();
+  } else
+    l_ip = fmt::format("http://{}:50025", register_file_type::get_server_address());
+
+  http_client_service_ptr_->run(l_ip);
 
   return false;
 }
