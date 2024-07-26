@@ -26,12 +26,12 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
   auto l_resolver         = std::make_shared<resolver_type>(g_io_context());
   auto [l_ec, l_res]      = co_await l_resolver->async_resolve(url_.host(), url_.port());
   if (l_ec) {
-    logger_->error("resolver error", l_ec.what());
+    logger_->error("resolver error {}", l_ec.what());
     co_return l_ec;
   }
   auto [l_ec_c, l_res_endpoint] = co_await boost::beast::get_lowest_layer(*web_stream_).async_connect(l_res);
   if (l_ec_c) {
-    logger_->error("connect error", l_ec_c.what());
+    logger_->error("connect error {}", l_ec_c.what());
     co_return l_ec_c;
   }
   boost::beast::get_lowest_layer(*web_stream_).expires_never();
@@ -43,7 +43,7 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
 
   auto [l_ec_h] = co_await web_stream_->async_handshake(url_.host(), url_.encoded_target());
   if (l_ec_h) {
-    logger_->error("handshake error", l_ec_h.what());
+    logger_->error("handshake error {}", l_ec_h.what());
     co_return l_ec_h;
   }
   co_return boost::system::error_code{};
