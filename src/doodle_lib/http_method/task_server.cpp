@@ -28,7 +28,7 @@ void task_server::init() {
 void task_server::run() { boost::asio::co_spawn(executor_, async_run(), boost::asio::detached); }
 boost::asio::awaitable<void> task_server::async_run() {
   if (is_running_) co_return;
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     timer_ptr_->expires_after(1s);
     auto [l_ec] = co_await timer_ptr_->async_wait();
     if (l_ec) {

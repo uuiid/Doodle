@@ -5,9 +5,9 @@
 #include "work.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
-#include <doodle_core/lib_warp/boost_fmt_error.h>
 
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/up_auto_light_file.h>
@@ -64,7 +64,7 @@ boost::asio::awaitable<void> http_work::async_run() {
   l_web_route->reg(
       "run_task", std::make_shared<websocket_route::call_fun_type>(std::bind_front(websocket_run_task_fun_launch, this))
   );
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     co_await websocket_client_->init(url_, l_web_route);
 
     if (auto l_ec_1 = co_await websocket_client_->async_write_websocket(
@@ -79,7 +79,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
     );
 
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       timer_->expires_after(std::chrono::seconds{2});
       if (auto [l_tec] = co_await timer_->async_wait(); l_tec) {
         logger_->error("定时器错误 {}", l_tec);
