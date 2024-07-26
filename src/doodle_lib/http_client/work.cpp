@@ -202,7 +202,7 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
       } catch (const nlohmann::json::exception& e) {
         logger_->warn("json parse error: {}", e.what());
         l_line = nlohmann::json{
-            {"type", "logger"}, {"level", log_level(l_line)}, {"task_id", task_id_}, {"msg", "解码错误"}
+            {"type", "logger"}, {"level", log_level(l_line)}, {"task_id", task_id_}, {"msg", "日志解码错误"}
         }.dump();
       }
       l_ec = co_await websocket_client_->async_write_websocket(std::move(l_line));
