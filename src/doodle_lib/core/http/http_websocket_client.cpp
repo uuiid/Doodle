@@ -19,6 +19,7 @@ boost::asio::awaitable<void> http_websocket_client::init(
   web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(boost::asio::make_strand(g_io_context()));
   logger_ =
       g_logger_ctrl().make_log(fmt::format("websocket_{}_{}", std::string{url_.host()}, std::string{url_.port()}));
+  write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
 
   using resolver_type = executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
   auto l_resolver     = std::make_shared<resolver_type>(g_io_context());
@@ -54,6 +55,7 @@ void http_websocket_client::init(
   web_stream_      = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(std::move(in_stream));
   websocket_route_ = in_websocket_route;
   logger_          = in_logger;
+  write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
 }
 
 boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
