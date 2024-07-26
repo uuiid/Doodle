@@ -68,6 +68,7 @@ boost::asio::awaitable<void> http_work::async_run() {
     if (auto l_ec = co_await websocket_client_->init(url_, l_web_route); l_ec) {
       continue;
     }
+    status_ = computer_status::online;
     if (auto l_ec_1 = co_await websocket_client_->async_write_websocket(
             nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
         );
@@ -79,6 +80,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         executor_, websocket_client_->async_read_websocket(),
         boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
     );
+    status_ = computer_status::free;
 
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       timer_->expires_after(std::chrono::seconds{2});
