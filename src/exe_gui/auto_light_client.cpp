@@ -6,4 +6,4 @@
 #include <doodle_lib/launch/http_working_service.h>
 
 #include "main_macro.h"
-DOODLE_SERVICE_MAIN_IMPL(app_service_t, doodle::launch::http_working_service_t);
+DOODLE_MAIN_IMPL(doodle::launch::http_working_service_t);
