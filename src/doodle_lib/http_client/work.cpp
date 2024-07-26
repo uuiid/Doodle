@@ -100,19 +100,17 @@ boost::asio::awaitable<void> http_work::async_run() {
         boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
     );
     status_ = computer_status::free;
-
-    if (auto l_ec = co_await websocket_client_->async_write_websocket(
-            nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
-        );
-        l_ec) {
-      logger_->error("写入错误 {}", l_ec);
-      break;
-    }
-
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       timer_->expires_after(std::chrono::seconds{2});
       if (auto [l_tec] = co_await timer_->async_wait(); l_tec) {
         logger_->error("定时器错误 {}", l_tec);
+        break;
+      }
+      if (auto l_ec = co_await websocket_client_->async_write_websocket(
+              nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
+          );
+          l_ec) {
+        logger_->error("写入错误 {}", l_ec);
         break;
       }
     }
