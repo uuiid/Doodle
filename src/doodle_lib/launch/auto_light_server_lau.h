@@ -7,7 +7,7 @@
 #include <argh.h>
 namespace doodle::launch {
 
-class http_distributed_tasks {
+class auto_light_server_lau {
  public:
   bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector);
 };

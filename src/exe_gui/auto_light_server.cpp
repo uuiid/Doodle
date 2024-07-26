@@ -3,7 +3,7 @@
 //
 #include <doodle_core/core/app_service.h>
 
-#include <doodle_lib/launch/http_distributed_tasks.h>
+#include <doodle_lib/launch/auto_light_server_lau.h>
 
 #include "main_macro.h"
-DOODLE_MAIN_IMPL(doodle::launch::http_distributed_tasks);
+DOODLE_MAIN_IMPL(doodle::launch::auto_light_server_lau);

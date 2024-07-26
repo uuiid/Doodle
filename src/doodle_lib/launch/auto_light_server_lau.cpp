@@ -2,7 +2,7 @@
 // Created by TD on 2024/2/26.
 //
 
-#include "http_distributed_tasks.h"
+#include "auto_light_server_lau.h"
 
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/app_service.h>
@@ -22,13 +22,7 @@ void reg_func(doodle::http::http_route& in_route) {
   http::task_info_reg(in_route);
 }
 
-bool http_distributed_tasks::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
-  auto& l_app         = static_cast<app_service&>(app_base::Get());
-  l_app.service_name_ = L"doodle_http_service";
-  l_app.display_name_ = L"doodle_http_service";
-  l_app.description_  = L"http 服务, 用于在一个线程中执行http任务";
-  l_app.command_line_ = L"";
-
+bool auto_light_server_lau::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
 
   auto l_snapshot_ptr = std::make_shared<http::http_snapshot>();
@@ -46,4 +40,4 @@ bool http_distributed_tasks::operator()(const argh::parser& in_arh, std::vector<
   default_logger_raw()->log(log_loc(), level::warn, "启动侦听器");
   return false;
 }
-} // namespace doodle::launch
+}  // namespace doodle::launch

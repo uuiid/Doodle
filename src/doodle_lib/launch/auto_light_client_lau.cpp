@@ -2,7 +2,7 @@
 // Created by TD on 2024/3/1.
 //
 
-#include "http_working_service.h"
+#include "auto_light_client_lau.h"
 
 #include <doodle_core/core/app_service.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -11,13 +11,8 @@
 #include <doodle_lib/http_client/work.h>
 
 namespace doodle::launch {
-bool http_working_service_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+bool auto_light_client_lau::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   using signal_set              = boost::asio::signal_set;
-  auto& l_app                   = static_cast<app_service&>(app_base::Get());
-  l_app.service_name_           = L"doodle_http_client_service";
-  l_app.display_name_           = L"doodle_http_client_service";
-  l_app.description_            = L"http 客户端, 用于在一个线程中执行http任务";
-  l_app.command_line_           = L"";
   auto http_client_service_ptr_ = std::make_shared<http::http_work>();
   in_vector.emplace_back(http_client_service_ptr_);
 
