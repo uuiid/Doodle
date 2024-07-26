@@ -60,7 +60,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_this_exe = co_await boost::asio::this_coro::executor;
 
   // 切换到主线程
-  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
 
   auto [l_user_handle, l_user] = find_user_handle(*g_reg(), l_user_id);
 
@@ -217,7 +217,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_this_exe = co_await boost::asio::this_coro::executor;
 
   // 转到主线程
-  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_view = std::as_const(*g_reg()).view<const user>();
   std::vector<attendance> l_r{};
   bool is_find = false;

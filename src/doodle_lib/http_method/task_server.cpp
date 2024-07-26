@@ -47,7 +47,7 @@ boost::asio::awaitable<void> task_server::async_run() {
 }
 
 boost::asio::awaitable<void> task_server::add_task(entt::entity in_entity) {
-  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_task = g_reg()->get<doodle::server_task_info>(in_entity);
   co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
 
@@ -55,7 +55,7 @@ boost::asio::awaitable<void> task_server::add_task(entt::entity in_entity) {
   task_map_[l_task.id_]        = std::make_shared<doodle::server_task_info>(l_task);
 }
 boost::asio::awaitable<void> task_server::erase_task(const boost::uuids::uuid& in_id) {
-  co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   task_map_.erase(in_id);
   task_entity_map_.erase(in_id);
 }
@@ -84,7 +84,7 @@ boost::asio::awaitable<void> task_server::confirm_task() {
       l_task->run_computer_.clear();
       l_task->run_time_ = std::chrono::system_clock::time_point{};
       {
-        co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+        co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_]) = *l_task;
         co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
       }
@@ -108,7 +108,7 @@ boost::asio::awaitable<void> task_server::assign_task() {
       l_task->run_time_                         = std::chrono::system_clock::now();
       l_task->run_computer_ip_                  = l_computer->computer_data_.ip_;
       {
-        co_await boost::asio::post(boost::asio::bind_executor(g_thread(), boost::asio::use_awaitable));
+        co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_]) = *l_task;
         co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
       }
