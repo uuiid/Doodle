@@ -17,7 +17,7 @@ class task_sqlite_server_fun {
   explicit task_sqlite_server_fun(
       const std::vector<server_task_info>& in_task_list, const std::vector<boost::uuids::uuid>& in_destroy_ids
   )
-      : task_list_(in_task_list), destroy_ids_(in_destroy_ids), executor_(g_thread().get_executor()) {}
+      : task_list_(in_task_list), destroy_ids_(in_destroy_ids), executor_(g_strand()) {}
 
   void operator()() const {
     auto l_db_conn = g_pool_db().get_connection();

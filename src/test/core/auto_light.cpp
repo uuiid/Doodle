@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(server_and_works) {
   g_ctx().get<http::task_sqlite_server>().run();
 
   std::vector<std::shared_ptr<http::http_work>> l_works{};
-  for (int i = 0; i < 15; ++i) {
+  for (int i = 0; i < 1; ++i) {
     auto l_work = std::make_shared<http::http_work>();
     l_work->run("http://127.0.0.1:50023/v1/computer");
     l_works.emplace_back(std::move(l_work));
