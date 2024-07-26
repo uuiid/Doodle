@@ -32,7 +32,7 @@ bool auto_light_server_lau::operator()(const argh::parser& in_arh, std::vector<s
   auto l_rout_ptr = std::make_shared<http::http_route>();
   default_logger_raw()->log(log_loc(), level::warn, "开始路由");
   reg_func(*l_rout_ptr);
-  http::run_http_listener(g_io_context(), l_rout_ptr);
+  http::run_http_listener(g_io_context(), l_rout_ptr, 50023);
   if (!g_ctx().contains<http::task_server>()) {
     g_ctx().emplace<http::task_server>();
   }
