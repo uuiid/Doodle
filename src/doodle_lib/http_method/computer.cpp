@@ -22,6 +22,7 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   if (!l_computer) {
     l_computer            = std::make_shared<computer_reg_data>();
     in_handle->user_data_ = l_computer;
+    computer_reg_data_manager::get().reg(l_computer);
   }
 
   if (!in_handle->body_.contains("state") || !in_handle->body_["state"].is_string()) co_return std::string{};
