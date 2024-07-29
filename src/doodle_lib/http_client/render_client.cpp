@@ -4,17 +4,39 @@
 
 #include "render_client.h"
 
+#include <doodle_lib/core/http/json_body.h>
+
 #include <boost/asio.hpp>
 
-#include "core/http/json_body.h"
+#include <wil/resource.h>
+#include <wil/result.h>
 namespace doodle::render_client {
+namespace {
+std::string get_user_name() {
+  DWORD l_size = 0;
+  auto l_err   = ::GetUserNameW(nullptr, &l_size);
+  if (::GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    LOG_IF_WIN32_ERROR(::GetLastError());
+    return {"doodle"};
+  }
+  std::unique_ptr<wchar_t[]> l_user_name = std::make_unique<wchar_t[]>(l_size);
+  l_err                                  = ::GetUserNameW(l_user_name.get(), &l_size);
+
+  if (FALSE == l_err) {
+    LOG_IF_WIN32_ERROR(::GetLastError());
+    return {"doodle"};
+  }
+  l_size = l_size - 1;
+  return boost::locale::conv::utf_to_utf<char>(l_user_name.get(), l_user_name.get() + l_size);
+}
+}  // namespace
 boost::asio::awaitable<void> client::render(
     std::string in_name, FSys::path in_exe_path, std::vector<std::string> in_run_args
 ) {
   boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, "v1/task", 11};
   l_req.body() = nlohmann::json{
       {"source_computer", boost::asio::ip::host_name()},
-      {"submitter", boost::asio::ip::host_name()},
+      {"submitter", get_user_name()},
       {"name", in_name},
       {"command", in_run_args},
       {"exe", in_exe_path.generic_string()}

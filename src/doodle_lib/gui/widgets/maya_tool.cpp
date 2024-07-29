@@ -47,39 +47,19 @@
 #include <boost/process/posix.hpp>
 #endif
 namespace doodle::gui {
-namespace {
-std::string get_user_name() {
-  DWORD l_size = 0;
-  auto l_err   = ::GetUserNameW(nullptr, &l_size);
-  if (::GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-    LOG_IF_WIN32_ERROR(::GetLastError());
-    return {"doodle"};
-  }
-  std::unique_ptr<wchar_t[]> l_user_name = std::make_unique<wchar_t[]>(l_size);
-  l_err                                  = ::GetUserNameW(l_user_name.get(), &l_size);
-
-  if (FALSE == l_err) {
-    LOG_IF_WIN32_ERROR(::GetLastError());
-    return {"doodle"};
-  }
-  l_size = l_size - 1;
-  return boost::locale::conv::utf_to_utf<char>(l_user_name.get(), l_user_name.get() + l_size);
-}
-} // namespace
 
 namespace maya_tool_ns {
 enum class maya_type { ma, mb };
 
 class maya_file_type_gui : public gui_cache<maya_type> {
-public:
-  maya_file_type_gui() : gui_cache<maya_type>("转换文件格式", maya_type::mb) {
-  }
+ public:
+  maya_file_type_gui() : gui_cache<maya_type>("转换文件格式", maya_type::mb) {}
 
   std::string show_id_attr{".mb"};
 };
 
 class maya_reference_info : boost::equality_comparable<maya_reference_info> {
-public:
+ public:
   maya_reference_info() = default;
 
   virtual ~maya_reference_info() {
@@ -99,7 +79,7 @@ public:
 };
 
 class ref_attr_gui {
-public:
+ public:
   ref_attr_gui()  = default;
   ~ref_attr_gui() = default;
   gui_cache<std::vector<maya_tool_ns::maya_reference_info>> ref_attr{
@@ -107,10 +87,10 @@ public:
   };
   gui_cache_name_id de_button_attr{"添加"};
 };
-} // namespace maya_tool_ns
+}  // namespace maya_tool_ns
 
 class maya_tool::impl {
-public:
+ public:
   gui_cache_name_id convert_maya_id_attr{"转换文件设置"};
 
   maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
@@ -124,10 +104,8 @@ public:
 };
 
 maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
-  if (!g_ctx().contains<maya_ctx>())
-    g_ctx().emplace<maya_ctx>();
-  if (!g_ctx().contains<ue_ctx>())
-    g_ctx().emplace<ue_ctx>();
+  if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
+  if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
   title_name_ = std::string{name};
   init();
 }
@@ -149,7 +127,7 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
   auto l_prj_list = register_file_type::get_project_list();
   path_info_ |= ranges::actions::remove_if([&](path_info_t& in_info) -> bool {
     auto l_stem = in_info.path_.stem().generic_string();
-    auto l_it   =
+    auto l_it =
         ranges::find_if(l_prj_list, [&](const project& in_prj) { return l_stem.starts_with(in_prj.p_shor_str); });
     if (l_it != l_prj_list.end()) {
       in_info.project_ = *l_it;
@@ -163,16 +141,15 @@ void maya_tool::init() {
   ptr_attr->scoped_connection_1 = g_ctx().get<core_sig>().project_end_open.connect([this]() {
     p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
-  p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
+  p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
 }
-
 
 bool maya_tool::render() {
   ImGui::Text("解算文件列表(将文件拖入此处)");
   auto* l_win_main = ImGui::GetCurrentWindow();
-  if (auto l_drag          = dear::DragDropTargetCustom{l_win_main->ContentRegionRect, l_win_main->ID}) {
+  if (auto l_drag = dear::DragDropTargetCustom{l_win_main->ContentRegionRect, l_win_main->ID}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data());
-      l_data && l_data->IsDelivery()) {
+        l_data && l_data->IsDelivery()) {
       auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
       set_path(*l_list);
     }
@@ -239,15 +216,19 @@ bool maya_tool::render() {
       auto l_msg_handle   = entt::handle{*g_reg(), g_reg()->create()};
       auto&& l_msg        = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
-        g_thread(), async_run_maya(std::make_shared<maya_exe_ns::qcloth_arg>(k_arg), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
-                                            [h = l_msg_handle](std::exception_ptr,
-                                                               std::tuple<boost::system::error_code,
-                                                                          maya_exe_ns::maya_out_arg> in_t) {
-                                              if (!std::get<0>(in_t))
-                                                h.get<process_message>().logger()->log(
-                                                  level::off, magic_enum::enum_name(process_message::state::success));
-                                            }));
+          g_thread(), async_run_maya(std::make_shared<maya_exe_ns::qcloth_arg>(k_arg), l_msg.logger()),
+          boost::asio::bind_cancellation_slot(
+              l_msg.get_cancel_slot(),
+              [h = l_msg_handle](
+                  std::exception_ptr, std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg> in_t
+              ) {
+                if (!std::get<0>(in_t))
+                  h.get<process_message>().logger()->log(
+                      level::off, magic_enum::enum_name(process_message::state::success)
+                  );
+              }
+          )
+      );
     }
   }
   ImGui::SameLine();
@@ -263,15 +244,19 @@ bool maya_tool::render() {
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
       auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
-        g_thread(), async_run_maya(std::make_shared<maya_exe_ns::export_fbx_arg>(k_arg), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
-                                            [h = l_msg_handle](std::exception_ptr,
-                                                               std::tuple<boost::system::error_code,
-                                                                          maya_exe_ns::maya_out_arg> in_t) {
-                                              if (!std::get<0>(in_t))
-                                                h.get<process_message>().logger()->log(
-                                                  level::off, magic_enum::enum_name(process_message::state::success));
-                                            }));
+          g_thread(), async_run_maya(std::make_shared<maya_exe_ns::export_fbx_arg>(k_arg), l_msg.logger()),
+          boost::asio::bind_cancellation_slot(
+              l_msg.get_cancel_slot(),
+              [h = l_msg_handle](
+                  std::exception_ptr, std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg> in_t
+              ) {
+                if (!std::get<0>(in_t))
+                  h.get<process_message>().logger()->log(
+                      level::off, magic_enum::enum_name(process_message::state::success)
+                  );
+              }
+          )
+      );
     }
   }
   ImGui::SameLine();
@@ -281,27 +266,31 @@ bool maya_tool::render() {
       k_arg.file_path = i.path_;
       k_arg.file_list = ptr_attr->ref_attr.ref_attr() |
                         ranges::views::transform(
-                          [](const maya_tool_ns::maya_reference_info& in_info) -> std::pair<FSys::path, FSys::path> {
-                            return {in_info.f_file_path_attr.data, in_info.to_file_path_attr.data};
-                          }
+                            [](const maya_tool_ns::maya_reference_info& in_info) -> std::pair<FSys::path, FSys::path> {
+                              return {in_info.f_file_path_attr.data, in_info.to_file_path_attr.data};
+                            }
                         ) |
                         ranges::to_vector;
       k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
-      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
-      auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
+      auto l_msg_handle      = entt::handle{*g_reg(), g_reg()->create()};
+      auto&& l_msg           = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
-        g_thread(), async_run_maya(std::make_shared<maya_exe_ns::replace_file_arg>(k_arg), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
-                                            [h = l_msg_handle](std::exception_ptr,
-                                                               std::tuple<boost::system::error_code,
-                                                                          maya_exe_ns::maya_out_arg> in_t) {
-                                              if (!std::get<0>(in_t))
-                                                h.get<process_message>().logger()->log(
-                                                  level::off, magic_enum::enum_name(process_message::state::success));
-                                            }));
+          g_thread(), async_run_maya(std::make_shared<maya_exe_ns::replace_file_arg>(k_arg), l_msg.logger()),
+          boost::asio::bind_cancellation_slot(
+              l_msg.get_cancel_slot(),
+              [h = l_msg_handle](
+                  std::exception_ptr, std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg> in_t
+              ) {
+                if (!std::get<0>(in_t))
+                  h.get<process_message>().logger()->log(
+                      level::off, magic_enum::enum_name(process_message::state::success)
+                  );
+              }
+          )
+      );
     }
   }
 
@@ -321,15 +310,18 @@ bool maya_tool::render() {
       l_args.shot_     = i.shot_;
       l_args.maya_arg_ = std::make_shared<maya_exe_ns::export_fbx_arg>(k_arg);
       boost::asio::co_spawn(
-        g_thread(),
-        async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
-                                            [h = l_msg_handle](std::exception_ptr,
-                                                               std::tuple<boost::system::error_code, FSys::path> in_t) {
-                                              if (!std::get<0>(in_t))
-                                                h.get<process_message>().logger()->log(
-                                                  level::off, magic_enum::enum_name(process_message::state::success));
-                                            }));
+          g_thread(),
+          async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
+          boost::asio::bind_cancellation_slot(
+              l_msg.get_cancel_slot(),
+              [h = l_msg_handle](std::exception_ptr, std::tuple<boost::system::error_code, FSys::path> in_t) {
+                if (!std::get<0>(in_t))
+                  h.get<process_message>().logger()->log(
+                      level::off, magic_enum::enum_name(process_message::state::success)
+                  );
+              }
+          )
+      );
     }
   }
   ImGui::SameLine();
@@ -346,35 +338,33 @@ bool maya_tool::render() {
       k_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
       k_arg.sim_path_list = list_sim_file(i.project_);
 
-      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
-      auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
+      auto l_msg_handle   = entt::handle{*g_reg(), g_reg()->create()};
+      auto&& l_msg        = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       import_and_render_ue_ns::args l_args{};
       l_args.episodes_ = i.episode_;
       l_args.project_  = i.project_;
       l_args.shot_     = i.shot_;
       l_args.maya_arg_ = std::make_shared<maya_exe_ns::qcloth_arg>(k_arg);
       boost::asio::co_spawn(
-        g_thread(),
-        async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
-        boost::asio::bind_cancellation_slot(l_msg.get_cancel_slot(),
-                                            [h = l_msg_handle](std::exception_ptr,
-                                                               std::tuple<boost::system::error_code, FSys::path>
-                                                               in_t) {
-                                              if (!std::get<0>(in_t))
-                                                h.get<process_message>().logger()->log(
-                                                  level::off, magic_enum::enum_name(process_message::state::success));
-                                            }));
+          g_thread(),
+          async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_msg.logger()),
+          boost::asio::bind_cancellation_slot(
+              l_msg.get_cancel_slot(),
+              [h = l_msg_handle](std::exception_ptr, std::tuple<boost::system::error_code, FSys::path> in_t) {
+                if (!std::get<0>(in_t))
+                  h.get<process_message>().logger()->log(
+                      level::off, magic_enum::enum_name(process_message::state::success)
+                  );
+              }
+          )
+      );
     }
   }
 
   if (imgui::Button("使用ue输出排屏(远程)")) {
-    auto l_host_name = boost::asio::ip::host_name();
-    auto l_user_name = get_user_name();
   }
   ImGui::SameLine();
   if (imgui::Button("使用ue输出排屏(远程)(解算版)")) {
-    auto l_host_name = boost::asio::ip::host_name();
-    auto l_user_name = get_user_name();
   }
 
   if (ImGui::Button("打开监视器")) {
@@ -383,12 +373,9 @@ bool maya_tool::render() {
   return open;
 }
 
+void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {}
 
-void maya_tool::post_http_task(const std::vector<nlohmann::json>& in_task) {
-}
-
-void maya_tool::open_mir() {
-}
+void maya_tool::open_mir() {}
 
 std::set<FSys::path> maya_tool::list_sim_file(const doodle::project& in_project) {
   auto l_sim_path = in_project.p_path / "6-moxing" / "CFX";

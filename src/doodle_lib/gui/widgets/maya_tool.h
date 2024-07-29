@@ -8,6 +8,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/render_client.h>
 
 #include <vector>
 
@@ -31,6 +32,7 @@ class DOODLELIB_API maya_tool {
   bool open{true};
   class impl;
   std::unique_ptr<impl> ptr_attr;
+  std::shared_ptr<render_client::client> p_render_client{};
 
   void set_path(const std::vector<FSys::path>& in_path);
 
