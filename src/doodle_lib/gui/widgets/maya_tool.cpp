@@ -362,9 +362,29 @@ bool maya_tool::render() {
   }
 
   if (imgui::Button("使用ue输出排屏(远程)")) {
+    if (!p_render_client) p_render_client = std::make_shared<render_client::client>(core_set::get_render_url());
+    for (auto&& i : path_info_)
+      boost::asio::co_spawn(
+          g_io_context(),
+          p_render_client->render(
+              i.path_.filename().generic_string(), "doodle_auto_light_process.exe",
+              {fmt::format("--maya_file={}", i.path_), "--animation"}
+          ),
+          boost::asio::detached
+      );
   }
   ImGui::SameLine();
   if (imgui::Button("使用ue输出排屏(远程)(解算版)")) {
+    if (!p_render_client) p_render_client = std::make_shared<render_client::client>(core_set::get_render_url());
+    for (auto&& i : path_info_)
+      boost::asio::co_spawn(
+          g_io_context(),
+          p_render_client->render(
+              i.path_.filename().generic_string(), "doodle_auto_light_process.exe",
+              {fmt::format("--maya_file={}", i.path_), "--cfx"}
+          ),
+          boost::asio::detached
+      );
   }
 
   if (ImGui::Button("打开监视器")) {

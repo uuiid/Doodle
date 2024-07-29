@@ -130,8 +130,8 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   }
 
   entt::handle l_msg{*g_reg(), g_reg()->create()};
-  auto& l_process_message = l_msg.emplace<process_message>(l_file.filename().generic_string());
-  l_process_message.logger()->sinks().emplace_back(l_sink);
+
+  spdlog::default_logger()->sinks().emplace_back(l_sink);
   import_and_render_ue_ns::args l_args{};
   l_args.episodes_ = l_episodes;
   l_args.project_  = l_project;
@@ -157,7 +157,7 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   }
   boost::asio::co_spawn(
       g_io_context(),
-      async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), l_process_message.logger()),
+      async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), spdlog::default_logger()),
       boost::asio::detached);
   return false;
 }

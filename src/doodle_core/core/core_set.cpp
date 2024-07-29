@@ -69,12 +69,20 @@ core_set::core_set()
   }
   utf8_locale = boost::locale::generator().generate("zh_CN.UTF-8");
 
-  user_id = get_uuid();
+  user_id     = get_uuid();
 }
 
 boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }
 
 FSys::path core_set::get_doc() const { return p_doc; }
+
+std::string core_set::get_render_url() {
+#ifdef NDEBUG
+  return {"\\\\192.168.40.181\\Doodletemp"};
+#else
+  return {"\\\\192.168.20.89\\UE_Config\\Doodletemp"};
+#endif
+}
 
 void core_set::set_root(const FSys::path &in_root) {
   p_root      = in_root;

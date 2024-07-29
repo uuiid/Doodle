@@ -45,6 +45,8 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   std::locale utf8_locale;
   void add_recent_project(const FSys::path &in);
 
+  static std::string get_render_url();
+
   // 部门
   std::string organization_name;
 

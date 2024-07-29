@@ -22,7 +22,8 @@ class client {
   https_client_core_ptr http_client_core_ptr_{};
 
  public:
-  client(const std::string& in_url) : http_client_core_ptr_{std::make_shared<https_client_core>(g_io_context())} {
+  explicit client(const std::string& in_url)
+      : http_client_core_ptr_{std::make_shared<https_client_core>(g_io_context())} {
     http_client_core_ptr_->init(in_url);
   }
 
