@@ -91,7 +91,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     http_client_ptr_t http_client_ptr_{};
     boost::asio::cancellation_signal signal_{};
   };
-  std::unique_ptr<impl> p_i;
+  std::shared_ptr<impl> p_i;
 
   void delete_task(const uuid in_id);
   // 刷新
@@ -101,7 +101,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
   static std::string conv_state(const nlohmann::json& in_json);
 
  public:
-  render_monitor() : p_i(std::make_unique<impl>()){};
+  render_monitor() : p_i(std::make_shared<impl>()){};
   ~render_monitor();
 
   constexpr static std::string_view name{gui::config::menu_w::render_monitor};

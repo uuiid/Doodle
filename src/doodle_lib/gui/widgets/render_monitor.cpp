@@ -161,22 +161,22 @@ bool render_monitor::render() {
 }
 
 boost::asio::awaitable<void> render_monitor::async_refresh() {
-  auto l_self = shared_from_this();
+  auto l_self = p_i;
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    auto l_c = co_await p_i->http_client_ptr_->get_computers();
-    p_i->computers_.clear();
+    auto l_c = co_await l_self->http_client_ptr_->get_computers();
+    l_self->computers_.clear();
     for (auto& l_computer : l_c) {
-      p_i->computers_.push_back(computer_gui{
+      l_self->computers_.push_back(computer_gui{
           .name_   = l_computer.name_,
           .ip_     = l_computer.ip_,
           .status_ = std::string{magic_enum::enum_name(l_computer.client_status_)}
       });
     }
-    auto l_tasks = co_await p_i->http_client_ptr_->get_task();
-    p_i->render_tasks_.clear();
+    auto l_tasks = co_await l_self->http_client_ptr_->get_task();
+    l_self->render_tasks_.clear();
     for (auto& l_task : l_tasks) {
-      p_i->render_tasks_.push_back(task_t_gui{
+      l_self->render_tasks_.push_back(task_t_gui{
           .id_              = l_task.id_,
           .id_str_          = fmt::to_string(l_task.id_),
           .name_            = l_task.name_,
@@ -189,11 +189,11 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
           .run_time_        = fmt::to_string(l_task.run_time_),
       });
     }
-    p_i->timer_ptr_->expires_after(3s);
-    auto [l_ec] = co_await p_i->timer_ptr_->async_wait(boost::asio::as_tuple(boost::asio::use_awaitable));
+    l_self->timer_ptr_->expires_after(3s);
+    auto [l_ec] = co_await l_self->timer_ptr_->async_wait(boost::asio::as_tuple(boost::asio::use_awaitable));
     if (l_ec) {
-      log_info(p_i->logger_ptr_, fmt::format("{}", l_ec));
-      p_i->progress_message_ = "获取数据失败";
+      log_info(l_self->logger_ptr_, fmt::format("{}", l_ec));
+      l_self->progress_message_ = "获取数据失败";
     }
   }
 }
