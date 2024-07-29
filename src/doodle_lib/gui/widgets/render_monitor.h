@@ -18,7 +18,7 @@
 namespace doodle {
 namespace gui {
 
-class render_monitor : public std::enable_shared_from_this<render_monitor> {
+class render_monitor {
  private:
   struct computer_gui {
     std::string name_{};
@@ -51,7 +51,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     // 计算持续时间
     void update_duration();
   };
-  using timer_t           = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::system_timer>;
+  using timer_t = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::system_timer>;
   using timer_ptr_t       = std::shared_ptr<timer_t>;
   using strand_t          = boost::asio::strand<boost::asio::io_context::executor_type>;
   using strand_ptr_t      = std::shared_ptr<strand_t>;
@@ -78,11 +78,15 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     gui_cache<std::string> logger_level_{"日志等级", magic_enum::enum_name(level::err)};
     std::string logger_data{};
     std::optional<uuid> current_select_logger_{};
-    timer_ptr_t logger_timer_ptr_{};
 
     strand_ptr_t strand_ptr_{};
     timer_ptr_t timer_ptr_{};
     std::once_flag once_flag_{};
+
+    // 分页索引
+    int32_t page_index_{0};
+    // 最大页数
+    int32_t max_page_num_{0};
 
     // logger
     logger_ptr logger_ptr_{};
@@ -93,10 +97,10 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
   };
   std::shared_ptr<impl> p_i;
 
-  void delete_task(const uuid in_id);
   // 刷新
   boost::asio::awaitable<void> async_refresh();
   boost::asio::awaitable<void> async_refresh_task();
+  boost::asio::awaitable<void> async_delete_task(const uuid in_id);
 
   static std::string conv_time(const nlohmann::json& in_json);
   static std::string conv_state(const nlohmann::json& in_json);

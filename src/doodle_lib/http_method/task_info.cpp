@@ -125,10 +125,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
   auto l_this_exe = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   std::vector<server_task_info> l_tasks{};
+  std::size_t l_view_size = 0;
   {
-    auto l_view             = std::as_const(*g_reg()).view<const server_task_info>();
-    std::size_t l_view_size = l_view.size();
-    auto l_view_end         = l_view.begin() + std::clamp((l_page + 1) * l_page_size, 0ull, l_view_size);
+    auto l_view     = std::as_const(*g_reg()).view<const server_task_info>();
+    l_view_size     = l_view.size();
+    auto l_view_end = l_view.begin() + std::clamp((l_page + 1) * l_page_size, 0ull, l_view_size);
     for (auto it = l_view.begin() + std::clamp(l_page * l_page_size, 0ull, l_view_size); it != l_view_end; ++it) {
       auto e = *it;
       l_tasks.emplace_back(l_view.get<server_task_info>(e));
@@ -137,7 +138,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   nlohmann::json l_tasks_json{};
-  l_tasks_json = l_tasks;
+  l_tasks_json["tasks"] = l_tasks;
+  l_tasks_json["size"]  = l_view_size;
 
   boost::beast::http::response<boost::beast::http::string_body> l_response{
       boost::beast::http::status::ok, in_handle->version_

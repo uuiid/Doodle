@@ -33,7 +33,8 @@ class client {
       std::string in_name, FSys::path in_exe_path, std::vector<std::string> in_run_args
   );
   boost::asio::awaitable<std::vector<computer>> get_computers();
-  boost::asio::awaitable<std::vector<server_task_info>> get_task();
+  boost::asio::awaitable<std::tuple<std::vector<server_task_info>, std::size_t>> get_task(std::size_t in_begin, std::size_t in_count);
   boost::asio::awaitable<std::string> get_logger(boost::uuids::uuid in_uuid, level::level_enum in_level);
+  boost::asio::awaitable<void> delete_task(boost::uuids::uuid in_uuid);
 };
 }  // namespace doodle::render_client

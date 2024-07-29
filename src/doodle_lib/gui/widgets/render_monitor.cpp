@@ -42,7 +42,6 @@ void render_monitor::task_t_gui::update_duration() {
 void render_monitor::init() {
   p_i->strand_ptr_       = std::make_shared<strand_t>(boost::asio::make_strand(g_io_context()));
   p_i->timer_ptr_        = std::make_shared<timer_t>(*p_i->strand_ptr_);
-  p_i->logger_timer_ptr_ = std::make_shared<timer_t>(*p_i->strand_ptr_);
 
   p_i->progress_message_ = "正在查找服务器";
   p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
@@ -139,6 +138,10 @@ bool render_monitor::render() {
 
         ImGui::TableNextColumn();
         if (ImGui::Button(l_render_task.delete_button_id_.c_str())) {
+          boost::asio::co_spawn(
+              *p_i->strand_ptr_, async_delete_task(l_render_task.id_),
+              boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+          );
         }
       }
     }
@@ -184,9 +187,10 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
   }
 }
 boost::asio::awaitable<void> render_monitor::async_refresh_task() {
-  auto l_self  = p_i;
-  auto l_tasks = co_await l_self->http_client_ptr_->get_task();
+  auto l_self            = p_i;
+  auto [l_tasks, l_size] = co_await l_self->http_client_ptr_->get_task(l_self->page_index_ * 50, 50);
   l_self->render_tasks_.clear();
+  l_self->max_page_num_ = l_size / 50 + (l_size % 50 == 0 ? 0 : 1);
   for (auto& l_task : l_tasks) {
     l_self->render_tasks_.push_back(task_t_gui{
         .id_               = l_task.id_,
@@ -202,6 +206,12 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
         .delete_button_id_ = "删除任务"
     });
   }
+}
+
+boost::asio::awaitable<void> render_monitor::async_delete_task(const uuid in_id) {
+  auto l_self = p_i;
+  co_await l_self->http_client_ptr_->delete_task(in_id);
+  co_await async_refresh();
 }
 
 std::string render_monitor::conv_time(const nlohmann::json& in_json) {
@@ -226,8 +236,6 @@ std::string render_monitor::conv_state(const nlohmann::json& in_json) {
   std::string l_status_str = l_status_it != std::end(m) ? l_status_it->second : "未知状态"s;
   return l_status_str;
 }
-
-void render_monitor::delete_task(const uuid in_id) {}
 
 render_monitor::~render_monitor() { p_i->signal_.emit(boost::asio::cancellation_type::all);
 }
