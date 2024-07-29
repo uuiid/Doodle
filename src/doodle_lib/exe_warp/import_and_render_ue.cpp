@@ -445,6 +445,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
         in_logger
     );
     if (!l_ec) break;
+    in_logger->warn("导入文件失败 开始第 {} 重试", i + 1);
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
@@ -471,6 +472,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
         in_logger
     );
     if (!l_ec) break;
+    in_logger->warn("渲染失败 开始第 {} 重试", i + 1);
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
