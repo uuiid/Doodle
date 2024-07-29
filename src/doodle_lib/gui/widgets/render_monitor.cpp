@@ -174,29 +174,33 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
           .status_ = std::string{magic_enum::enum_name(l_computer.client_status_)}
       });
     }
-    auto l_tasks = co_await l_self->http_client_ptr_->get_task();
-    l_self->render_tasks_.clear();
-    for (auto& l_task : l_tasks) {
-      l_self->render_tasks_.push_back(task_t_gui{
-          .id_               = l_task.id_,
-          .id_str_           = fmt::to_string(l_task.id_),
-          .name_             = l_task.name_,
-          .status_           = conv_state((l_task.status_)),
-          .source_computer_  = l_task.source_computer_,
-          .submitter_        = l_task.submitter_,
-          .submit_time_      = fmt::to_string(l_task.submit_time_),
-          .run_computer_     = l_task.run_computer_,
-          .run_computer_ip_  = l_task.run_computer_ip_,
-          .run_time_         = fmt::to_string(l_task.run_time_),
-          .delete_button_id_ = "删除任务"
-      });
-    }
+    co_await async_refresh_task();
     l_self->timer_ptr_->expires_after(3s);
     auto [l_ec] = co_await l_self->timer_ptr_->async_wait();
     if (l_ec) {
       log_info(l_self->logger_ptr_, fmt::format("{}", l_ec));
       l_self->progress_message_ = "获取数据失败";
     }
+  }
+}
+boost::asio::awaitable<void> render_monitor::async_refresh_task() {
+  auto l_self  = p_i;
+  auto l_tasks = co_await l_self->http_client_ptr_->get_task();
+  l_self->render_tasks_.clear();
+  for (auto& l_task : l_tasks) {
+    l_self->render_tasks_.push_back(task_t_gui{
+        .id_               = l_task.id_,
+        .id_str_           = fmt::to_string(l_task.id_),
+        .name_             = l_task.name_,
+        .status_           = conv_state((l_task.status_)),
+        .source_computer_  = l_task.source_computer_,
+        .submitter_        = l_task.submitter_,
+        .submit_time_      = fmt::to_string(l_task.submit_time_),
+        .run_computer_     = l_task.run_computer_,
+        .run_computer_ip_  = l_task.run_computer_ip_,
+        .run_time_         = fmt::to_string(l_task.run_time_),
+        .delete_button_id_ = "删除任务"
+    });
   }
 }
 

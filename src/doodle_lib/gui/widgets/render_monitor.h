@@ -96,6 +96,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
   void delete_task(const uuid in_id);
   // 刷新
   boost::asio::awaitable<void> async_refresh();
+  boost::asio::awaitable<void> async_refresh_task();
 
   static std::string conv_time(const nlohmann::json& in_json);
   static std::string conv_state(const nlohmann::json& in_json);
