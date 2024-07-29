@@ -212,7 +212,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
 boost::asio::awaitable<void> render_monitor::async_delete_task(const uuid in_id) {
   auto l_self = p_i;
   co_await l_self->http_client_ptr_->delete_task(in_id);
-  co_await async_refresh();
+  co_await async_refresh_task();
 }
 
 std::string render_monitor::conv_time(const nlohmann::json& in_json) {
