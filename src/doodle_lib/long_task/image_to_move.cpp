@@ -103,13 +103,13 @@ FSys::path create_out_path(const FSys::path& in_dir, const episodes& in_eps, con
   if (!l_out.has_extension()) {
     if (!in_project)
       l_out /= fmt::format(
-        "EP{:04}_SC{:03}{}.mp4", in_eps.p_episodes,
+        "EP{:03}_SC{:03}{}.mp4", in_eps.p_episodes,
         in_shot.p_shot,
         in_shot.p_shot_enum
       );
     else
       l_out /= fmt::format(
-        "{}_EP{:04}_SC{:03}{}.mp4", in_project->p_shor_str,
+        "{}_EP{:03}_SC{:03}{}.mp4", in_project->p_shor_str,
         in_eps.p_episodes,
         in_shot.p_shot,
         in_shot.p_shot_enum
