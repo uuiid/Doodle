@@ -204,7 +204,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
         .run_computer_     = l_task.run_computer_,
         .run_computer_ip_  = l_task.run_computer_ip_,
         .run_time_         = fmt::to_string(l_task.run_time_),
-        .delete_button_id_ = fmt::format("删除任务##", ++l_index)
+        .delete_button_id_ = fmt::format("删除任务##{}", ++l_index)
     });
   }
 }
