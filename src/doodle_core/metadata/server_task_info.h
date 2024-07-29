@@ -8,6 +8,7 @@
 
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#include <strstream>
 namespace doodle {
 
 /**
@@ -117,19 +118,29 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
-    j.at("id").get_to(p.id_);
+    std::string l_uuid_str{};
+    j.at("id").get_to(l_uuid_str);
+    p.id_ = boost::lexical_cast<uuid>(l_uuid_str);
     j.at("exe").get_to(p.exe_);
     j.at("command").get_to(p.command_);
     j.at("status").get_to(p.status_);
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
     j.at("submitter").get_to(p.submitter_);
-    j.at("submit_time").get_to(p.submit_time_);
+    std::string l_time_str{};
+    j.at("submit_time").get_to(l_time_str);
+    std::istringstream l_time_ss{l_time_str};
+    l_time_ss >> chrono::parse("%F %T", p.submit_time_);
     j.at("run_computer").get_to(p.run_computer_);
     j.at("run_computer_ip").get_to(p.run_computer_ip_);
-    j.at("run_time").get_to(p.run_time_);
-    j.at("end_time").get_to(p.end_time_);
-    j.at("ref_id").get_to(p.ref_id_);
+    j.at("run_time").get_to(l_time_str);
+    l_time_ss = std::istringstream{l_time_str};
+    l_time_ss >> chrono::parse("%F %T", p.run_time_);
+    j.at("end_time").get_to(l_time_str);
+    l_time_ss = std::istringstream{l_time_str};
+    l_time_ss >> chrono::parse("%F %T", p.end_time_);
+    j.at("ref_id").get_to(l_uuid_str);
+    p.ref_id_ = boost::lexical_cast<uuid>(l_uuid_str);
   }
 };
 }  // namespace doodle
