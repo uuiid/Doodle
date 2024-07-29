@@ -343,8 +343,8 @@ sudo systemctl restart meilisearch
 
 更新界面
 
-export http_proxy="socks5://192.168.40.53:10810/"&&export https_proxy="socks5://192.168.40.53:10810/"
-export http_proxy="http://192.168.40.53:10810/"&&export https_proxy="http://192.168.40.53:10810/"
+export http_proxy="socks5://192.168.20.89:10810/"&&export https_proxy="socks5://192.168.20.89:10810/"
+export http_proxy="http://192.168.20.89:10810/"&&export https_proxy="http://192.168.20.89:10810/"
 
 sudo git clone --branch master_sy https://github.com/uuiid/kitsu.git
 git fetch origin master_sy && git checkout origin/master_sy
@@ -372,7 +372,7 @@ sudo nano /etc/postgresql/14/main/postgresql.conf
 listen_addresses = '*'                  # what IP address(es) to listen on;
 sudo ufw allow 5432
 sudo nano /etc/postgresql/14/main/pg_hba.conf
-host    all             all             192.168.40.53/32         md5
+host    all             all             192.168.20.89/32         md5
 sudo service postgresql restart
 
 

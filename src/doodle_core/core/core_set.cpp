@@ -54,7 +54,7 @@ core_set::core_set()
 #ifdef NDEBUG
       depot_ip{"\\\\192.168.10.218\\Doodletemp"}
 #else
-      depot_ip{"\\\\192.168.40.53\\UE_Config\\Doodletemp"}
+      depot_ip{"\\\\192.168.20.89\\UE_Config\\Doodletemp"}
 #endif
 
 {

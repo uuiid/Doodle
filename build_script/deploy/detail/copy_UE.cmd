@@ -1,1 +1,1 @@
-robocopy \\192.168.40.53\ue\UE_5.2 "C:\Program Files\Epic Games\UE_5.2" /s /ndl /np /njh /njs /ns /nc /nfl
+robocopy \\192.168.20.89\ue\UE_5.2 "C:\Program Files\Epic Games\UE_5.2" /s /ndl /np /njh /njs /ns /nc /nfl
