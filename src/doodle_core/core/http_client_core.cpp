@@ -105,7 +105,11 @@ void http_client_data_base::do_close() {
       },
       socket_
   );
-
+  boost::system::error_code ec;
+  timer_ptr_->cancel(ec);
+  if (ec) {
+    logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
+  }
   // co_await std::get<ssl_socket_ptr>(socket_)->async_shutdown(boost::asio::use_awaitable);
 }
 

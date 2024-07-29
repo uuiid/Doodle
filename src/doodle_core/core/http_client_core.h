@@ -142,6 +142,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
 
  public:
   http_client_data_base() = default;
+  ~http_client_data_base() = default;
 
   template <typename ExecutorType>
   explicit http_client_data_base(ExecutorType&& in_executor) : executor_(boost::asio::make_strand(in_executor)) {}
