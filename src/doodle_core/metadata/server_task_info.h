@@ -88,7 +88,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   void write_log(level::level_enum in_level, std::string_view in_msg);
   bool operator==(const server_task_info& in_rhs) const;
 
-  public:
+ public:
   static std::vector<server_task_info> select_all(pooled_connection& in_comm);
   static void create_table(pooled_connection& in_comm);
 
@@ -114,6 +114,22 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["run_time"]        = fmt::to_string(p.run_time_);
     j["end_time"]        = fmt::to_string(p.end_time_);
     j["ref_id"]          = fmt::to_string(p.ref_id_);
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, server_task_info& p) {
+    j.at("id").get_to(p.id_);
+    j.at("exe").get_to(p.exe_);
+    j.at("command").get_to(p.command_);
+    j.at("status").get_to(p.status_);
+    j.at("name").get_to(p.name_);
+    j.at("source_computer").get_to(p.source_computer_);
+    j.at("submitter").get_to(p.submitter_);
+    j.at("submit_time").get_to(p.submit_time_);
+    j.at("run_computer").get_to(p.run_computer_);
+    j.at("run_computer_ip").get_to(p.run_computer_ip_);
+    j.at("run_time").get_to(p.run_time_);
+    j.at("end_time").get_to(p.end_time_);
+    j.at("ref_id").get_to(p.ref_id_);
   }
 };
 }  // namespace doodle
