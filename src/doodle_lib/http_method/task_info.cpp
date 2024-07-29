@@ -53,6 +53,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_e = entt::handle{*g_reg(), g_reg()->create()};
   l_e.emplace<server_task_info>(l_task_handle);
+  g_reg()->sort<server_task_info>([](const entt::entity lhs, const entt::entity rhs) { return lhs < rhs; });
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   nlohmann::json l_task_handle_json{};
@@ -219,6 +220,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
         break;
       }
     }
+    g_reg()->sort<server_task_info>([](const entt::entity lhs, const entt::entity rhs) { return lhs < rhs; });
   }
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
