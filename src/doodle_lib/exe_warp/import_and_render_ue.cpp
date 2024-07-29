@@ -399,6 +399,10 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
             l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, in_logger
         );
         if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
+        l_ec_copy = copy_diff(
+            l_down_path / doodle_config::ue4_config / "Prop" / "a_PropPublicFiles",
+            l_local_path / doodle_config::ue4_config / "Prop" / "a_PropPublicFiles", in_logger
+        );
       } break;
       default:
         break;
@@ -431,12 +435,19 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     in_logger->error(" 用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
   }
-  auto l_ec1 = co_await async_run_ue(
-      {in_args->down_info_.render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
-       "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
-      in_logger
-  );
-  if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
+  boost::system::error_code l_ec;
+  // 添加三次重试
+  for (int i = 0; i < 3; ++i) {
+    l_ec = co_await async_run_ue(
+        {in_args->down_info_.render_project_.generic_string(), "-windowed", "-log", "-stdout",
+         "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation",
+         fmt::format("-Params={}", l_tmp_path)},
+        in_logger
+    );
+    if (!l_ec) break;
+  }
+  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+
   in_logger->warn("导入文件完成");
   in_logger->warn("排队渲染, 输出目录 {}", l_import_data.out_file_dir);
   if (exists(l_import_data.out_file_dir)) {
@@ -451,14 +462,18 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     in_logger->error(" 用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
   }
-  l_ec1 = co_await async_run_ue(
-      {in_args->down_info_.render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
-       fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
-       fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log", "-stdout",
-       "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-      in_logger
-  );
-  if (l_ec1) co_return std::tuple(l_ec1, FSys::path{});
+  for (int i = 0; i < 3; ++i) {
+    l_ec = co_await async_run_ue(
+        {in_args->down_info_.render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
+         fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
+         fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log",
+         "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
+        in_logger
+    );
+    if (!l_ec) break;
+  }
+  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+
   in_logger->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
   co_return std::tuple(boost::system::error_code{}, l_import_data.out_file_dir);
 }
@@ -471,10 +486,19 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
   }
   in_logger->warn("开始运行maya");
-  auto [l_ec, l_out] = co_await async_run_maya(in_args->maya_arg_, in_logger);
-  if (l_ec) {
-    co_return std::tuple(l_ec, FSys::path{});
+  // 添加三次重试
+  maya_exe_ns::maya_out_arg l_out{};
+  boost::system::error_code l_ec{};
+  for (int i = 0; i < 3; ++i) {
+    std::tie(l_ec, l_out) = co_await async_run_maya(in_args->maya_arg_, in_logger);
+    if (!l_ec) {
+      break;
+    }
+    in_logger->warn("运行maya错误, 开始第{}次重试", i + 1);
+    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
+  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   in_args->maya_out_arg_ = l_out;
   auto [l_ec2, l_ret]    = co_await async_import_and_render_ue(in_args, in_logger);
