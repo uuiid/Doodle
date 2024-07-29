@@ -9,14 +9,12 @@ UDoodleGhostTrailComponent::UDoodleGhostTrailComponent(
     : UActorComponent(ObjectInitializer) {
   BoneName                          = TEXT("Spine1_M");
   PrimaryComponentTick.bCanEverTick = true;
-  FRichCurve *RichCurve             = TransparentCurve.GetRichCurve();
-  RichCurve->AutoSetTangents();
-  RichCurve->SetKeyTangentMode(
-      RichCurve->AddKey(0.0f, 0.0f), ERichCurveTangentMode::RCTM_Auto
-  );
-  RichCurve->SetKeyTangentMode(
-      RichCurve->AddKey(1.0f, 1.0f), ERichCurveTangentMode::RCTM_Auto
-  );
+  ColorCurve                        = CreateDefaultSubobject<UCurveLinearColor>(FName{TEXT("ColorCurve")});
+
+  for (FRichCurveEditInfo &RichCurve : ColorCurve->GetCurves()) {
+    RichCurve.CurveToEdit->AddKey(0.0f, 0.0f);
+    RichCurve.CurveToEdit->AddKey(1.0f, 1.0f);
+  }
 }
 
 void UDoodleGhostTrailComponent::BeginPlay() {
@@ -121,11 +119,7 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
 void UDoodleGhostTrailComponent::UpdataGhost(float DeltaTime) {
   for (auto &&i : GhostInfos) {
     i.Age += DeltaTime;
-    FRichCurve *RichCurve = TransparentCurve.GetRichCurve();
-    if (RichCurve) {
-      float LValue = RichCurve->Eval(i.Age / i.Life);
-      UpdataMaterial_Doodle(i.Ghost, LValue);
-    }
+    UpdataMaterial_Doodle(i.Ghost, ColorCurve->GetLinearColorValue(i.Age / i.Life));
   }
 }
 void UDoodleGhostTrailComponent::SetMaterial_Doodle(UPoseableMeshComponent *InGhost) {
@@ -137,13 +131,13 @@ void UDoodleGhostTrailComponent::SetMaterial_Doodle(UPoseableMeshComponent *InGh
   }
 }
 
-void UDoodleGhostTrailComponent::UpdataMaterial_Doodle(UPoseableMeshComponent *InGhost, float InValue) {
+void UDoodleGhostTrailComponent::UpdataMaterial_Doodle(UPoseableMeshComponent *InGhost, FLinearColor InValue) {
   TArray<UMaterialInterface *> LMaterials = InGhost->GetMaterials();
   for (auto LM : LMaterials) {
     UMaterialInstanceDynamic *MaterialInstanceDynamic =
         Cast<UMaterialInstanceDynamic>(LM);
     if (MaterialInstanceDynamic) {
-      MaterialInstanceDynamic->SetScalarParameterValue(TransparentName, InValue);
+      MaterialInstanceDynamic->SetVectorParameterValue(ColorCurveName, InValue);
     }
   }
 }

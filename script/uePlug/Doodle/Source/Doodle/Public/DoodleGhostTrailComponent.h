@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 
 #include "Components/ActorComponent.h"
+#include "Curves/CurveLinearColor.h"
 
 #include "DoodleGhostTrailComponent.generated.h"
 class UPoseableMeshComponent;
@@ -41,11 +42,11 @@ class DOODLE_API UDoodleGhostTrailComponent : public UActorComponent {
   UPROPERTY(EditAnywhere, Interp, Category = "Doodle", DisplayName = "残影寿命")
   float Life{1.5f};
 
-  UPROPERTY(EditAnyWhere, Interp, BlueprintReadOnly, Interp, Category = "Doodle", DisplayName = "透明曲线")
-  FRuntimeFloatCurve TransparentCurve;
+  UPROPERTY(EditAnyWhere, Interp, BlueprintReadOnly, Interp, Category = "Doodle", DisplayName = "颜色曲线")
+  TObjectPtr<UCurveLinearColor> ColorCurve;
 
-  UPROPERTY(EditAnywhere, Interp, Category = "Doodle", DisplayName = "材质透明参数")
-  FName TransparentName{TEXT("TransparentName")};
+  UPROPERTY(EditAnywhere, Interp, Category = "Doodle", DisplayName = "材质颜色参数")
+  FName ColorCurveName{TEXT("ColorCurveName")};
 
   /** If true, this component will be rendered in the CustomDepth pass (usually used for outlines) */
   UPROPERTY(EditAnywhere, Interp, AdvancedDisplay, BlueprintReadOnly, Category = "Doodle", meta = (DisplayName = "Render CustomDepth Pass"))
@@ -64,7 +65,7 @@ class DOODLE_API UDoodleGhostTrailComponent : public UActorComponent {
 
   void SetMaterial_Doodle(UPoseableMeshComponent *InGhost);
 
-  void UpdataMaterial_Doodle(UPoseableMeshComponent *InGhost, float InValue);
+  void UpdataMaterial_Doodle(UPoseableMeshComponent *InGhost, FLinearColor InValue);
 
   void ClearGhost();
 };
