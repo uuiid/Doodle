@@ -46,7 +46,10 @@ void render_monitor::init() {
 
   p_i->progress_message_ = "正在查找服务器";
   p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
-  do_find_server_address();
+  p_i->http_client_ptr_  = std::make_shared<client_t>(core_set::get_render_url());
+  boost::asio::co_spawn(
+      *p_i->strand_ptr_, async_refresh(), boost::asio::bind_cancellation_slot(p_i->signal_.slot(), boost::asio::detached)
+  );
 }
 
 bool render_monitor::render() {
@@ -57,10 +60,10 @@ bool render_monitor::render() {
     dear::Text(p_i->progress_message_);
   }
   if (auto l_ = dear::CollapsingHeader{
-      *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
-  }) {
+          *p_i->component_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+      }) {
     if (auto l_table = dear::Table{*p_i->component_table_id_, 3}) {
-      ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
+      ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
 
       ImGui::TableSetupColumn("名称");
       ImGui::TableSetupColumn("ip");
@@ -81,10 +84,10 @@ bool render_monitor::render() {
   }
 
   if (auto l_ = dear::CollapsingHeader{
-      *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
-  }) {
+          *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+      }) {
     if (auto l_table = dear::Table{*p_i->render_task_table_id_, 11}) {
-      ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
+      ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
 
       ImGui::TableSetupColumn("id");
       ImGui::TableSetupColumn("名称");
@@ -106,11 +109,10 @@ bool render_monitor::render() {
         ImGui::TableNextColumn();
         // 设置选择任务
         if (ImGui::Selectable(
-          l_render_task.id_str_.c_str(),
-          p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
-        )) {
+                l_render_task.id_str_.c_str(),
+                p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
+            )) {
           p_i->current_select_logger_ = l_render_task.id_;
-          get_logger();
         }
         ImGui::TableNextColumn();
         dear::Text(l_render_task.name_);
@@ -136,19 +138,16 @@ bool render_monitor::render() {
 
         ImGui::TableNextColumn();
         if (ImGui::Button(l_render_task.delete_button_id_.c_str())) {
-          delete_task(l_render_task.id_);
-          get_remote_data();
         }
       }
     }
   }
-  if (auto l_        = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
+  if (auto l_ = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
     if (auto l_combo = dear::Combo{*p_i->logger_level_, p_i->logger_level_.data.c_str()}; l_combo) {
       for (auto&& i : magic_enum::enum_names<level::level_enum>()) {
         if (ImGui::Selectable(i.data(), p_i->index_ == magic_enum::enum_cast<level::level_enum>(i).value())) {
           p_i->index_             = magic_enum::enum_cast<level::level_enum>(i).value();
           p_i->logger_level_.data = i.data();
-          get_logger();
         }
       }
     }
@@ -161,36 +160,42 @@ bool render_monitor::render() {
   return open_;
 }
 
-void render_monitor::do_find_server_address() {
-  p_i->progress_message_ = "正在查找服务器数据...";
-  get_remote_data();
-}
+boost::asio::awaitable<void> render_monitor::async_refresh() {
+  auto l_self = shared_from_this();
 
-void render_monitor::do_wait() {
-  if (!open_) return;
-  if (app_base::GetPtr()->is_stop()) return;
-
-  p_i->timer_ptr_->expires_after(doodle::chrono::seconds{3});
-  p_i->timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
-    app_base::GetPtr()->on_cancel.slot(),
-    [this, self = shared_from_this()](boost::system::error_code ec) {
-      if (!open_) return;
-      if (ec) {
-        log_info(p_i->logger_ptr_, fmt::format("{}", ec));
-        return;
-      }
-      get_remote_data();
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    auto l_c = co_await p_i->http_client_ptr_->get_computers();
+    p_i->computers_.clear();
+    for (auto& l_computer : l_c) {
+      p_i->computers_.push_back(computer_gui{
+          .name_   = l_computer.name_,
+          .ip_     = l_computer.ip_,
+          .status_ = std::string{magic_enum::enum_name(l_computer.client_status_)}
+      });
     }
-  ));
-}
-
-void render_monitor::get_remote_data() {
-  // get computers
-  boost::beast::http::request<boost::beast::http::empty_body> l_req_computer{
-      boost::beast::http::verb::get, "v1/computer", 11
-  };
-  l_req_computer.keep_alive(true);
-  l_req_computer.set(boost::beast::http::field::accept, "application/json");
+    auto l_tasks = co_await p_i->http_client_ptr_->get_task();
+    p_i->render_tasks_.clear();
+    for (auto& l_task : l_tasks) {
+      p_i->render_tasks_.push_back(task_t_gui{
+          .id_              = l_task.id_,
+          .id_str_          = fmt::to_string(l_task.id_),
+          .name_            = l_task.name_,
+          .status_          = conv_state((l_task.status_)),
+          .source_computer_ = l_task.source_computer_,
+          .submitter_       = l_task.submitter_,
+          .submit_time_     = fmt::to_string(l_task.submit_time_),
+          .run_computer_    = l_task.run_computer_,
+          .run_computer_ip_ = l_task.run_computer_ip_,
+          .run_time_        = fmt::to_string(l_task.run_time_),
+      });
+    }
+    p_i->timer_ptr_->expires_after(3s);
+    auto [l_ec] = co_await p_i->timer_ptr_->async_wait(boost::asio::as_tuple(boost::asio::use_awaitable));
+    if (l_ec) {
+      log_info(p_i->logger_ptr_, fmt::format("{}", l_ec));
+      p_i->progress_message_ = "获取数据失败";
+    }
+  }
 }
 
 std::string render_monitor::conv_time(const nlohmann::json& in_json) {
@@ -205,57 +210,20 @@ std::string render_monitor::conv_state(const nlohmann::json& in_json) {
   if (in_json.is_null()) return {};
   if (!in_json.is_string()) return {};
   static const std::pair<server_task_info_status, std::string> m[] = {
-      {server_task_info_status::submitted, "任务已经提交"}, {server_task_info_status::assigned, "任务已经分配"},
+      {server_task_info_status::submitted, "任务已经提交"},   {server_task_info_status::assigned, "任务已经分配"},
       {server_task_info_status::completed, "任务已经被完成"}, {server_task_info_status::canceled, "任务已经被取消"},
-      {server_task_info_status::failed, "任务已经失败"}, {server_task_info_status::unknown, "未知状态"},
+      {server_task_info_status::failed, "任务已经失败"},      {server_task_info_status::unknown, "未知状态"},
   };
-  auto l_status    = in_json.get<server_task_info_status>();
+  auto l_status = in_json.get<server_task_info_status>();
   auto l_status_it =
       std::find_if(std::begin(m), std::end(m), [&](auto&& in_pair) { return in_pair.first == l_status; });
   std::string l_status_str = l_status_it != std::end(m) ? l_status_it->second : "未知状态"s;
   return l_status_str;
 }
 
-void render_monitor::get_logger() {
-  if (!p_i->current_select_logger_) return;
-  boost::urls::url l_url{};
-  l_url.set_path(fmt::format("v1/task/{}/log", *p_i->current_select_logger_));
-  l_url.set_encoded_query(fmt::format("level={}", magic_enum::enum_name(p_i->index_)));
-  // get logger
-  boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
-      boost::beast::http::verb::get, l_url.c_str(), 11
-  };
-  l_logger_get.keep_alive(true);
-  l_logger_get.set(boost::beast::http::field::accept, "application/json");
-}
+void render_monitor::delete_task(const uuid in_id) {}
 
-void render_monitor::do_wait_logger() {
-  if (!open_) return;
-  if (app_base::GetPtr()->is_stop()) return;
-  p_i->logger_timer_ptr_->expires_after(doodle::chrono::seconds{3});
-  p_i->logger_timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
-    app_base::GetPtr()->on_cancel.slot(),
-    [this, self = shared_from_this()](boost::system::error_code ec) {
-      if (!open_) return;
-      if (ec) {
-        p_i->logger_ptr_->error("timer_ptr_ error: {}", ec);
-        return;
-      }
-      get_logger();
-    }
-  ));
+render_monitor::~render_monitor() { p_i->signal_.emit(boost::asio::cancellation_type::all);
 }
-
-void render_monitor::delete_task(const std::int32_t in_id) {
-  boost::urls::url l_url{};
-  l_url.set_path(fmt::format("v1/task/{}", in_id));
-  // get logger
-  boost::beast::http::request<boost::beast::http::empty_body> l_logger_get{
-      boost::beast::http::verb::delete_, l_url.c_str(), 11
-  };
-  l_logger_get.keep_alive(true);
-}
-
-render_monitor::~render_monitor() = default;
 } // namespace gui
 } // namespace doodle

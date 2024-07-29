@@ -78,9 +78,9 @@ FSys::path core_set::get_doc() const { return p_doc; }
 
 std::string core_set::get_render_url() {
 #ifdef NDEBUG
-  return {"\\\\192.168.40.181\\Doodletemp"};
+  return {"http://192.168.40.181:50023"};
 #else
-  return {"\\\\192.168.20.89\\UE_Config\\Doodletemp"};
+  return {"http://192.168.20.89:50023"};
 #endif
 }
 

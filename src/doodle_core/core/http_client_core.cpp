@@ -22,10 +22,10 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
   ctx_       = in_ctx;
 
   switch (scheme_id_) {
-    case boost::urls::scheme::http: // http
+    case boost::urls::scheme::http:  // http
       socket_ = std::make_shared<socket_t>(executor_);
       break;
-    case boost::urls::scheme::https: // https
+    case boost::urls::scheme::https:  // https
     {
       if (ctx_ == nullptr) {
         logger_->log(log_loc(), level::err, "https 需要 ssl context");
@@ -39,8 +39,7 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
         return;
       }
       socket_ = l_ssl;
-    }
-    break;
+    } break;
     default:
       logger_->log(log_loc(), level::err, "不支持的协议 {}", l_url.scheme());
       break;
@@ -49,12 +48,14 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
 
 void http_client_data_base::re_init() {
   if (is_open()) return;
+  if (std::visit([](auto&& in_socket_ptr) -> bool { return !!in_socket_ptr; }, socket_) && socket().socket().is_open())
+    return;
 
   switch (scheme_id_) {
-    case boost::urls::scheme::http: // http
+    case boost::urls::scheme::http:  // http
       socket_ = std::make_shared<socket_t>(executor_);
       break;
-    case boost::urls::scheme::https: // https
+    case boost::urls::scheme::https:  // https
     {
       if (ctx_ == nullptr) {
         logger_->log(log_loc(), level::err, "https 需要 ssl context");
@@ -68,44 +69,41 @@ void http_client_data_base::re_init() {
         return;
       }
       socket_ = l_ssl;
-    }
-    break;
+    } break;
     default:
       logger_->log(log_loc(), level::err, "不支持的协议 {}", boost::urls::to_string(scheme_id_));
       break;
   }
 }
 
-
 bool http_client_data_base::is_open() {
-  return
-      std::visit([](auto&& in_socket_ptr) -> bool { return !!in_socket_ptr; }, socket_)
-      && socket().socket().is_open();
+  return std::visit([](auto&& in_socket_ptr) -> bool { return !!in_socket_ptr; }, socket_) &&
+         socket().socket().is_open() && is_open_and_cond_;
 }
 
-
 void http_client_data_base::do_close() {
+  is_open_and_cond_ = false;
   std::visit(
-    entt::overloaded{
-        [this](socket_ptr& in_socket) {
-          boost::system::error_code ec;
-          in_socket->socket().close();
-          in_socket->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-          if (ec && ec != boost::beast::errc::not_connected) {
-            logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
-          }
-          socket_ = {};
-        },
-        [this](ssl_socket_ptr& in_socket) {
-          in_socket->async_shutdown([ptr = shared_from_this()](boost::system::error_code ec) {
-            if (ec) {
-              ptr->logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
+      entt::overloaded{
+          [this](socket_ptr& in_socket) {
+            boost::system::error_code ec;
+            in_socket->socket().close();
+            in_socket->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            if (ec && ec != boost::beast::errc::not_connected) {
+              logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
             }
-            ptr->socket_ = {};
-          });
-        }
-    },
-    socket_
+            socket_ = {};
+          },
+          [this](ssl_socket_ptr& in_socket) {
+            in_socket->async_shutdown([ptr = shared_from_this()](boost::system::error_code ec) {
+              if (ec) {
+                ptr->logger_->log(log_loc(), level::err, "do_close error: {}", ec.message());
+              }
+              ptr->socket_ = {};
+            });
+          }
+      },
+      socket_
   );
 
   // co_await std::get<ssl_socket_ptr>(socket_)->async_shutdown(boost::asio::use_awaitable);
@@ -125,11 +123,11 @@ void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
 
 http_client_data_base::socket_t& http_client_data_base::socket() {
   return std::visit(
-    entt::overloaded{
-        [](socket_ptr& in_socket) -> socket_t& { return *in_socket; },
-        [](ssl_socket_ptr& in_socket) -> socket_t& { return in_socket->next_layer(); }
-    },
-    socket_
+      entt::overloaded{
+          [](socket_ptr& in_socket) -> socket_t& { return *in_socket; },
+          [](ssl_socket_ptr& in_socket) -> socket_t& { return in_socket->next_layer(); }
+      },
+      socket_
   );
 }
 
@@ -159,4 +157,4 @@ void awaitable_queue::awaitable_queue_impl::maybe_invoke() {
   if (next_list_.empty()) return;
   next();
 }
-} // namespace doodle::http::detail
+}  // namespace doodle::http::detail

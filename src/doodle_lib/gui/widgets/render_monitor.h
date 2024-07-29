@@ -2,17 +2,17 @@
 // Created by td_main on 2023/8/22.
 //
 #pragma once
+#include <doodle_core/core/http_client_core.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
-#include <doodle_core/core/http_client_core.h>
 
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/render_client.h>
 
 #include <boost/asio.hpp>
-#include <boost/beast.hpp>
 
 #include <cstdint>
 namespace doodle {
@@ -26,7 +26,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     std::string status_{};
   };
   struct task_t_gui {
-    std::int32_t id_{};
+    uuid id_{};
     std::string id_str_{};
     std::string name_{};
     std::string status_{};
@@ -51,10 +51,12 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     // 计算持续时间
     void update_duration();
   };
-  using timer_t      = boost::asio::system_timer;
-  using timer_ptr_t  = std::shared_ptr<timer_t>;
-  using strand_t     = boost::asio::strand<boost::asio::io_context::executor_type>;
-  using strand_ptr_t = std::shared_ptr<strand_t>;
+  using timer_t           = boost::asio::system_timer;
+  using timer_ptr_t       = std::shared_ptr<timer_t>;
+  using strand_t          = boost::asio::strand<boost::asio::io_context::executor_type>;
+  using strand_ptr_t      = std::shared_ptr<strand_t>;
+  using client_t          = render_client::client;
+  using http_client_ptr_t = std::shared_ptr<client_t>;
 
   struct impl {
     gui_cache_name_id component_collapsing_header_id_{"渲染注册"};
@@ -75,7 +77,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     level::level_enum index_{level::warn};
     gui_cache<std::string> logger_level_{"日志等级", magic_enum::enum_name(level::err)};
     std::string logger_data{};
-    std::optional<std::int32_t> current_select_logger_{};
+    std::optional<uuid> current_select_logger_{};
     timer_ptr_t logger_timer_ptr_{};
 
     strand_ptr_t strand_ptr_{};
@@ -84,18 +86,16 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
 
     // logger
     logger_ptr logger_ptr_{};
+
+    // 客户端
+    http_client_ptr_t http_client_ptr_{};
+    boost::asio::cancellation_signal signal_{};
   };
   std::unique_ptr<impl> p_i;
 
-  void do_wait();
-  void do_find_server_address();
-
-  void do_wait_logger();
-  void get_logger();
-
-  void get_remote_data();
-
-  void delete_task(const std::int32_t in_id);
+  void delete_task(const uuid in_id);
+  // 刷新
+  boost::asio::awaitable<void> async_refresh();
 
   static std::string conv_time(const nlohmann::json& in_json);
   static std::string conv_state(const nlohmann::json& in_json);
