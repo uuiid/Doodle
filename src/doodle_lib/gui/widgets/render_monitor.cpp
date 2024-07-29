@@ -48,7 +48,8 @@ void render_monitor::init() {
   p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
   p_i->http_client_ptr_  = std::make_shared<client_t>(core_set::get_render_url());
   boost::asio::co_spawn(
-      *p_i->strand_ptr_, async_refresh(), boost::asio::bind_cancellation_slot(p_i->signal_.slot(), boost::asio::detached)
+      *p_i->strand_ptr_, async_refresh(),
+      boost::asio::bind_cancellation_slot(p_i->signal_.slot(), boost::asio::detached)
   );
 }
 
@@ -190,7 +191,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
       });
     }
     l_self->timer_ptr_->expires_after(3s);
-    auto [l_ec] = co_await l_self->timer_ptr_->async_wait(boost::asio::as_tuple(boost::asio::use_awaitable));
+    auto [l_ec] = co_await l_self->timer_ptr_->async_wait();
     if (l_ec) {
       log_info(l_self->logger_ptr_, fmt::format("{}", l_ec));
       l_self->progress_message_ = "获取数据失败";

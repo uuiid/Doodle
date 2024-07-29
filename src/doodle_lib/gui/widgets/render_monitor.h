@@ -51,7 +51,7 @@ class render_monitor : public std::enable_shared_from_this<render_monitor> {
     // 计算持续时间
     void update_duration();
   };
-  using timer_t           = boost::asio::system_timer;
+  using timer_t           = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::system_timer>;
   using timer_ptr_t       = std::shared_ptr<timer_t>;
   using strand_t          = boost::asio::strand<boost::asio::io_context::executor_type>;
   using strand_ptr_t      = std::shared_ptr<strand_t>;
