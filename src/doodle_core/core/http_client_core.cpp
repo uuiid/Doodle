@@ -115,7 +115,17 @@ void http_client_data_base::do_close() {
 
 void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
   timer_ptr_->expires_after(in_seconds);
-  socket().expires_after(in_seconds);
+  std::visit(
+      entt::overloaded{
+          [&](socket_ptr& in_socket) {
+            if (in_socket) in_socket->expires_after(in_seconds);
+          },
+          [&](ssl_socket_ptr& in_socket) {
+            if (in_socket) boost::beast::get_lowest_layer(*in_socket).expires_after(in_seconds);
+          }
+      },
+      socket_
+  );
 
   timer_ptr_->async_wait([this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
     if (in_ec) {

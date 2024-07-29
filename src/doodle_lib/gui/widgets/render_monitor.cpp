@@ -191,6 +191,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
   auto [l_tasks, l_size] = co_await l_self->http_client_ptr_->get_task(l_self->page_index_ * 50, 50);
   l_self->render_tasks_.clear();
   l_self->max_page_num_ = l_size / 50 + (l_size % 50 == 0 ? 0 : 1);
+  std::size_t l_index{};
   for (auto& l_task : l_tasks) {
     l_self->render_tasks_.push_back(task_t_gui{
         .id_               = l_task.id_,
@@ -203,7 +204,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
         .run_computer_     = l_task.run_computer_,
         .run_computer_ip_  = l_task.run_computer_ip_,
         .run_time_         = fmt::to_string(l_task.run_time_),
-        .delete_button_id_ = "删除任务"
+        .delete_button_id_ = fmt::format("删除任务##", ++l_index)
     });
   }
 }
