@@ -178,16 +178,17 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
     l_self->render_tasks_.clear();
     for (auto& l_task : l_tasks) {
       l_self->render_tasks_.push_back(task_t_gui{
-          .id_              = l_task.id_,
-          .id_str_          = fmt::to_string(l_task.id_),
-          .name_            = l_task.name_,
-          .status_          = conv_state((l_task.status_)),
-          .source_computer_ = l_task.source_computer_,
-          .submitter_       = l_task.submitter_,
-          .submit_time_     = fmt::to_string(l_task.submit_time_),
-          .run_computer_    = l_task.run_computer_,
-          .run_computer_ip_ = l_task.run_computer_ip_,
-          .run_time_        = fmt::to_string(l_task.run_time_),
+          .id_               = l_task.id_,
+          .id_str_           = fmt::to_string(l_task.id_),
+          .name_             = l_task.name_,
+          .status_           = conv_state((l_task.status_)),
+          .source_computer_  = l_task.source_computer_,
+          .submitter_        = l_task.submitter_,
+          .submit_time_      = fmt::to_string(l_task.submit_time_),
+          .run_computer_     = l_task.run_computer_,
+          .run_computer_ip_  = l_task.run_computer_ip_,
+          .run_time_         = fmt::to_string(l_task.run_time_),
+          .delete_button_id_ = "删除任务"
       });
     }
     l_self->timer_ptr_->expires_after(3s);
