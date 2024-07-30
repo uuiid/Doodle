@@ -38,7 +38,7 @@ void watermark_add_image(cv::Mat& in_image, const std::vector<image_to_move::ima
   for (auto&& [l_key, l_string] : l_string_map) {
     std::int32_t l_baseline = 0;
 
-    auto textSize = l_ft2->getTextSize(l_string, l_fontHeight, l_thickness, &l_baseline);
+    auto textSize           = l_ft2->getTextSize(l_string, l_fontHeight, l_thickness, &l_baseline);
     if (l_thickness > 0) l_baseline += l_thickness;
     l_baseline_map[l_key] = l_baseline;
   }
@@ -52,23 +52,23 @@ void watermark_add_image(cv::Mat& in_image, const std::vector<image_to_move::ima
     textSize.height += l_baseline_map[l_watermark.height_proportion_attr];
     // center the text
     cv::Point textOrg(
-      (in_image.cols) * l_watermark.width_proportion_attr, (in_image.rows) * l_watermark.height_proportion_attr
+        (in_image.cols) * l_watermark.width_proportion_attr, (in_image.rows) * l_watermark.height_proportion_attr
     );
 
     // draw the box
     cv::rectangle(
-      l_image, textOrg + cv::Point(0, l_baseline_map[l_watermark.height_proportion_attr]),
-      textOrg + cv::Point(textSize.width, -textSize.height), cv::Scalar(30, 31, 34, 75), -1
+        l_image, textOrg + cv::Point(0, l_baseline_map[l_watermark.height_proportion_attr]),
+        textOrg + cv::Point(textSize.width, -textSize.height), cv::Scalar(30, 31, 34, 75), -1
     );
 
     cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
     // then put the text itself
     l_ft2->putText(
-      in_image, l_watermark.text_attr, textOrg, l_fontHeight,
-      cv::Scalar{
-          l_watermark.rgba_attr[0], l_watermark.rgba_attr[1], l_watermark.rgba_attr[2], l_watermark.rgba_attr[3]
-      },
-      l_thickness, cv::LineTypes::LINE_AA, true
+        in_image, l_watermark.text_attr, textOrg, l_fontHeight,
+        cv::Scalar{
+            l_watermark.rgba_attr[0], l_watermark.rgba_attr[1], l_watermark.rgba_attr[2], l_watermark.rgba_attr[3]
+        },
+        l_thickness, cv::LineTypes::LINE_AA, true
     );
   }
 }
@@ -80,39 +80,32 @@ auto create_gamma_LUT_table(const std::double_t& in_gamma) {
   for (int i = 0; i < 256; ++i) p[i] = cv::saturate_cast<uchar>(std::pow(i / 255.0, in_gamma) * 255.0);
   return lookupTable;
 }
-} // namespace
-
+}  // namespace
 
 FSys::path image_to_move::create_out_path(const entt::handle& in_handle) {
   boost::ignore_unused(this);
 
   FSys::path l_out = in_handle.get<out_file_path>().path;
-  detail::create_out_path(
-    l_out, in_handle.all_of<episodes>() ? in_handle.get<episodes>() : episodes{},
-    in_handle.all_of<shot>() ? in_handle.get<shot>() : shot{},
-    in_handle.try_get<project>());
+  l_out            = detail::create_out_path(
+      l_out, in_handle.all_of<episodes>() ? in_handle.get<episodes>() : episodes{},
+      in_handle.all_of<shot>() ? in_handle.get<shot>() : shot{}, in_handle.try_get<project>()
+  );
   in_handle.replace<out_file_path>(l_out);
   return l_out;
 }
 
-FSys::path create_out_path(const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot,
-                           const project* in_project) {
+FSys::path create_out_path(
+    const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot, const project* in_project
+) {
   FSys::path l_out = in_dir;
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension()) {
     if (!in_project)
-      l_out /= fmt::format(
-        "EP{:03}_SC{:03}{}.mp4", in_eps.p_episodes,
-        in_shot.p_shot,
-        in_shot.p_shot_enum
-      );
+      l_out /= fmt::format("EP{:03}_SC{:03}{}.mp4", in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum);
     else
       l_out /= fmt::format(
-        "{}_EP{:03}_SC{:03}{}.mp4", in_project->p_shor_str,
-        in_eps.p_episodes,
-        in_shot.p_shot,
-        in_shot.p_shot_enum
+          "{}_EP{:03}_SC{:03}{}.mp4", in_project->p_shor_str, in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum
       );
   } else
     l_out.extension().replace_extension(".mp4");
@@ -122,7 +115,7 @@ FSys::path create_out_path(const FSys::path& in_dir, const episodes& in_eps, con
 }
 
 boost::system::error_code create_move(
-  const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector
+    const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector
 ) {
   /// \brief 这里排序组件
   auto l_vector = in_vector;
@@ -131,7 +124,6 @@ boost::system::error_code create_move(
   std::atomic_bool l_stop{};
   boost::system::error_code l_ec{};
   // todo: 这里我们需要一个信号来停止
-
 
   in_logger->info("开始创建视频 {}", in_out_path);
   in_logger->info("获得图片路径 {}", l_vector.front().path_attr.parent_path());
@@ -145,10 +137,10 @@ boost::system::error_code create_move(
   }
 
   const static cv::Size k_size{1920, 1080};
-  auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
+  auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image = cv::Mat{};
   const auto& k_size_len = l_vector.size();
-  auto l_gamma = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
+  auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto& l_image : l_vector) {
     if (l_stop) {
       in_logger->error("合成视频被主动结束 合成视频文件将被主动删除");
