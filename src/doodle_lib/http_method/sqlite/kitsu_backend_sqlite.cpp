@@ -172,7 +172,7 @@ void kitsu_backend_sqlite::clear() {
 }
 
 void kitsu_backend_sqlite::run() {
-  timer_ptr_  = std::make_shared<timer_t>(g_io_context());
+  timer_ptr_  = std::make_shared<timer_t>(g_strand());
   logger_ptr_ = g_logger_ctrl().make_log("kitsu_backend_sqlite");
   connect(*g_reg());
   begin_save();

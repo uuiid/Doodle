@@ -557,6 +557,9 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   }
   if (auto l_e = copy_diff(l_movie_path, l_rem_path.parent_path() / "mov" / l_movie_path.filename(), in_logger))
     co_return std::tuple{l_e, FSys::path{}};
+  // 额外要求上传的序列图片
+    if (auto l_e = copy_diff(l_ret, in_args->project_.p_auto_upload_path / fmt::format("EP_{:03}", in_args->episodes_.p_episodes)/ l_ret.filename(), in_logger))
+      co_return std::tuple{l_e, FSys::path{}};
   co_return std::tuple{l_ec, l_ret};
 }
 } // namespace doodle
