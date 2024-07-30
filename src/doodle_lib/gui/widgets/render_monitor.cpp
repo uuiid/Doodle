@@ -244,7 +244,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh_logger() {
   );
 }
 
-boost::asio::awaitable<void> render_monitor::async_delete_task(const uuid in_id) {
+boost::asio::awaitable<void> render_monitor::async_delete_task(  uuid in_id) {
   auto l_self = p_i;
   co_await l_self->http_client_ptr_->delete_task(in_id);
   co_await async_refresh_task();
