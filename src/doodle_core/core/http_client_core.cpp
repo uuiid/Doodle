@@ -4,6 +4,8 @@
 
 #include "http_client_core.h"
 
+#include "app_base.h"
+
 namespace doodle::http::detail {
 void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::context* in_ctx) {
   resolver_  = std::make_shared<resolver_t>(executor_);
@@ -127,12 +129,15 @@ void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
       socket_
   );
 
-  timer_ptr_->async_wait([this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
-    if (in_ec) {
-      return;
-    }
-    do_close();
-  });
+  timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
+      app_base::Get().on_cancel.slot(),
+      [this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
+        if (in_ec) {
+          return;
+        }
+        do_close();
+      }
+  ));
 }
 
 http_client_data_base::socket_t& http_client_data_base::socket() {
