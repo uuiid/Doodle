@@ -233,7 +233,11 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
 }
 
 boost::asio::awaitable<void> render_monitor::async_refresh_logger() {
-  auto l_self         = p_i;
+  auto l_self = p_i;
+  if (!l_self->current_select_logger_) {
+    l_self->logger_data = {};
+    co_return;
+  }
   l_self->logger_data = co_await l_self->http_client_ptr_->get_logger(
       *l_self->current_select_logger_,
       magic_enum::enum_cast<level::level_enum>(l_self->logger_level_.data).value_or(level::err)
