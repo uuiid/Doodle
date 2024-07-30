@@ -1,7 +1,7 @@
 set DoodleName=%1
 set DoodleSource=//192.168.20.89/Doodle2/build/Ninja_release/_CPack_Packages/win64/7Z/%DoodleName%
 set UE_CMD_PATH=C:/Program Files/Epic Games/UE_5.2/Engine/Binaries/Win64/UnrealEditor-Cmd.exe
-reg delete HKLM\SOFTWARE\Doodle /f
+@REM reg delete HKLM\SOFTWARE\Doodle /f
 
 @REM 复制文件
 robocopy %DoodleSource% D:/doodle_exe/ /MIR /xd
