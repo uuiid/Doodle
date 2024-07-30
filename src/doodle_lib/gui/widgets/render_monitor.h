@@ -84,6 +84,7 @@ class render_monitor {
     std::once_flag once_flag_{};
 
     // 分页索引
+    gui_cache_name_id page_index_id_{"分页索引"};
     int32_t page_index_{0};
     // 最大页数
     int32_t max_page_num_{0};

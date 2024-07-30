@@ -86,6 +86,13 @@ bool render_monitor::render() {
   if (auto l_ = dear::CollapsingHeader{
           *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
       }) {
+    if (ImGui::InputInt(*p_i->page_index_id_, &p_i->page_index_)) {
+      p_i->page_index_ = std::clamp(p_i->page_index_, 0, p_i->max_page_num_);
+      boost::asio::co_spawn(
+          *p_i->strand_ptr_, async_refresh_task(),
+          boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+      );
+    }
     if (auto l_table = dear::Table{*p_i->render_task_table_id_, 11}) {
       ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
 
@@ -188,9 +195,10 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
 }
 boost::asio::awaitable<void> render_monitor::async_refresh_task() {
   auto l_self            = p_i;
-  auto [l_tasks, l_size] = co_await l_self->http_client_ptr_->get_task(l_self->page_index_ * 50, 50);
+  auto [l_tasks, l_size] = co_await l_self->http_client_ptr_->get_task(l_self->page_index_, 50);
   l_self->render_tasks_.clear();
-  l_self->max_page_num_ = l_size / 50 + (l_size % 50 == 0 ? 0 : 1);
+  std::int64_t l_size_t = l_size;
+  l_self->max_page_num_ = l_size_t / 50 + (l_size_t % 50 == 0 ? 0 : 1);
   std::size_t l_index{};
   for (auto& l_task : l_tasks) {
     l_self->render_tasks_.push_back(task_t_gui{
