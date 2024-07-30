@@ -7,7 +7,6 @@ target_sources(
         task_info.h
         task_server.h
         file_exists.h
-        task_sqlite_server.h
         computing_time.h
         dingding_attendance.h
         user_http.h
@@ -19,7 +18,6 @@ target_sources(
         task_info.cpp
         task_server.cpp
         file_exists.cpp
-        task_sqlite_server.cpp
         computing_time.cpp
         dingding_attendance.cpp
         user_http.cpp
