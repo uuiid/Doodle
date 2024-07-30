@@ -83,9 +83,10 @@ bool render_monitor::render() {
     }
   }
 
-  if (auto l_ = dear::CollapsingHeader{
-          *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
-      }) {
+  // if (auto l_ = dear::CollapsingHeader{
+  //         *p_i->render_task_collapsing_header_id_, ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen
+  //     }) {
+  if (dear::Group l_g{}; l_g) {
     if (ImGui::InputInt(*p_i->page_index_id_, &p_i->page_index_)) {
       p_i->page_index_ = std::clamp(p_i->page_index_, 0, p_i->max_page_num_);
       boost::asio::co_spawn(
@@ -160,7 +161,10 @@ bool render_monitor::render() {
       }
     }
   }
-  if (auto l_ = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
+  // ImGui::SameLine();
+  if (dear::Group l_g{}; l_g) {
+    // }
+    // if (auto l_ = dear::CollapsingHeader{*p_i->logger_collapsing_header_id_}) {
     if (auto l_combo = dear::Combo{*p_i->logger_level_, p_i->logger_level_.data.c_str()}; l_combo) {
       for (auto&& i : magic_enum::enum_names<level::level_enum>()) {
         if (ImGui::Selectable(i.data(), p_i->index_ == magic_enum::enum_cast<level::level_enum>(i).value())) {
@@ -177,6 +181,7 @@ bool render_monitor::render() {
       dear::TextWrapPos l_wrap{};
       imgui::TextUnformatted(p_i->logger_data.data(), p_i->logger_data.data() + p_i->logger_data.size());
     }
+    // }
   }
 
   return open_;
@@ -244,7 +249,7 @@ boost::asio::awaitable<void> render_monitor::async_refresh_logger() {
   );
 }
 
-boost::asio::awaitable<void> render_monitor::async_delete_task(  uuid in_id) {
+boost::asio::awaitable<void> render_monitor::async_delete_task(uuid in_id) {
   auto l_self = p_i;
   co_await l_self->http_client_ptr_->delete_task(in_id);
   co_await async_refresh_task();

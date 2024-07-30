@@ -27,7 +27,7 @@ void http_snapshot::run() {
     snapshot::sqlite_snapshot l_snapshot{register_file_type::get_server_snapshot_path(), *g_reg()};
     l_snapshot.load<server_task_info>();
   }
-  g_reg()->sort<server_task_info>([](const entt::entity lhs, const entt::entity rhs) { return lhs < rhs; });
+  // g_reg()->sort<server_task_info>([](const entt::entity lhs, const entt::entity rhs) { return lhs < rhs; });
   observer_        = std::make_any<observer_t>();
   auto& l_observer = std::any_cast<observer_t&>(observer_);
   l_observer.connect(*g_reg());
