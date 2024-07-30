@@ -403,6 +403,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
             l_down_path / doodle_config::ue4_config / "Prop" / "a_PropPublicFiles",
             l_local_path / doodle_config::ue4_config / "Prop" / "a_PropPublicFiles", in_logger
         );
+        // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
+        if (l_ec_copy) in_logger->log(level::off, magic_enum::enum_name(process_message::state::run));
       } break;
       default:
         break;
@@ -446,6 +448,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     );
     if (!l_ec) break;
     in_logger->warn("导入文件失败 开始第 {} 重试", i + 1);
+    // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
+    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
@@ -473,6 +477,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     );
     if (!l_ec) break;
     in_logger->warn("渲染失败 开始第 {} 重试", i + 1);
+    // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
+    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
