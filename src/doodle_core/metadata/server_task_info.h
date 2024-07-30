@@ -83,6 +83,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   // 引用其他info 的id
   boost::uuids::uuid ref_id_{};
+  std::string end_log{};
 
   std::string read_log(level::level_enum in_level) const;
   FSys::path get_log_path(level::level_enum in_level) const;
@@ -115,6 +116,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["run_time"]        = fmt::to_string(p.run_time_);
     j["end_time"]        = fmt::to_string(p.end_time_);
     j["ref_id"]          = fmt::to_string(p.ref_id_);
+    j["end_log"]         = p.end_log;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
@@ -141,6 +143,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     l_time_ss >> chrono::parse("%F %T", p.end_time_);
     j.at("ref_id").get_to(l_uuid_str);
     p.ref_id_ = boost::lexical_cast<uuid>(l_uuid_str);
+    j.at("end_log").get_to(p.end_log);
   }
 };
 }  // namespace doodle

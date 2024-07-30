@@ -51,8 +51,22 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
     l_logger->log(log_loc(), level::err, "task_info is null");
     co_return std::string{};
   }
-  auto l_task = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
-  l_task->write_log(in_handle->body_["level"].get<level::level_enum>(), in_handle->body_["msg"].get<std::string>());
+  auto l_task    = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
+  auto l_level   = in_handle->body_["level"].get<level::level_enum>();
+  auto l_log_str = in_handle->body_["msg"].get<std::string>();
+  l_task->write_log(l_level, l_log_str);
+  switch (l_level) {
+    case level::warn:
+    case level::err: {
+      auto l_this_exe = co_await boost::asio::this_coro::executor;
+      co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
+      l_computer->task_info_->end_log = l_log_str;
+      co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
+      break;
+    }
+    default:
+      break;
+  }
   co_return std::string{};
 }
 
