@@ -100,7 +100,7 @@ boost::asio::awaitable<void> client::delete_task(boost::uuids::uuid in_uuid) {
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   l_req.prepare_payload();
   auto [l_ec, l_res] =
-      co_await http::detail::read_and_write<http::basic_json_body>(http_client_core_ptr_, std::move(l_req));
+      co_await http::detail::read_and_write<boost::beast::http::string_body>(http_client_core_ptr_, std::move(l_req));
   co_return;
 }
 
