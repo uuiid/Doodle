@@ -142,7 +142,7 @@ FSys::path register_file_type::get_server_snapshot_path() {
     return l_path;
   } catch (const winreg::RegException& e) {
     default_logger_raw()->log(log_loc(), level::warn, "读取服务器快照路径失败 {}", e.what());
-    return R"(D:/doodle_snapshot)";
+    return R"(D:/doodle_snapshot/doodle_task.doodle_db)";
   }
 }
 }  // namespace doodle

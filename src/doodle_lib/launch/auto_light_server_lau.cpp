@@ -12,7 +12,6 @@
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/computer.h>
-#include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/task_server.h>
 
@@ -25,10 +24,8 @@ void reg_func(doodle::http::http_route& in_route) {
 bool auto_light_server_lau::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
 
-  auto l_snapshot_ptr = std::make_shared<http::http_snapshot>();
-  in_vector.emplace_back(l_snapshot_ptr);
   default_logger_raw()->log(log_loc(), level::warn, "开始加载快照");
-  l_snapshot_ptr->run();
+
   auto l_rout_ptr = std::make_shared<http::http_route>();
   default_logger_raw()->log(log_loc(), level::warn, "开始路由");
   reg_func(*l_rout_ptr);

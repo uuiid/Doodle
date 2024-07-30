@@ -23,7 +23,6 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/work.h>
 #include <doodle_lib/http_method/computer.h>
-#include <doodle_lib/http_method/http_snapshot.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/task_server.h>
 #include <doodle_lib/http_method/task_sqlite_server.h>
