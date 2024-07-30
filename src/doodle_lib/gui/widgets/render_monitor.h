@@ -102,6 +102,7 @@ class render_monitor {
   boost::asio::awaitable<void> async_refresh();
   boost::asio::awaitable<void> async_refresh_task();
   boost::asio::awaitable<void> async_delete_task(const uuid in_id);
+  boost::asio::awaitable<void> async_refresh_logger();
 
   static std::string conv_time(const nlohmann::json& in_json);
   static std::string conv_state(const nlohmann::json& in_json);

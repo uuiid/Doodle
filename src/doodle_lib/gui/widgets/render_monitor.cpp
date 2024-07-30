@@ -188,6 +188,10 @@ boost::asio::awaitable<void> render_monitor::async_refresh() {
       });
     }
     co_await async_refresh_task();
+    if (l_self->current_select_logger_) {
+      co_await async_refresh_logger();
+    }
+
     l_self->timer_ptr_->expires_after(3s);
     auto [l_ec] = co_await l_self->timer_ptr_->async_wait();
     if (l_ec) {
@@ -218,6 +222,14 @@ boost::asio::awaitable<void> render_monitor::async_refresh_task() {
         .delete_button_id_ = fmt::format("删除任务##{}", ++l_index)
     });
   }
+}
+
+boost::asio::awaitable<void> render_monitor::async_refresh_logger() {
+  auto l_self         = p_i;
+  l_self->logger_data = co_await l_self->http_client_ptr_->get_logger(
+      *l_self->current_select_logger_,
+      magic_enum::enum_cast<level::level_enum>(l_self->logger_level_.data).value_or(level::err)
+  );
 }
 
 boost::asio::awaitable<void> render_monitor::async_delete_task(const uuid in_id) {
