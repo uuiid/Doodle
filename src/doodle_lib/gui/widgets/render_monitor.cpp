@@ -120,6 +120,10 @@ bool render_monitor::render() {
                 p_i->current_select_logger_ ? *p_i->current_select_logger_ == l_render_task.id_ : false
             )) {
           p_i->current_select_logger_ = l_render_task.id_;
+          boost::asio::co_spawn(
+              *p_i->strand_ptr_, async_refresh_logger(),
+              boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+          );
         }
         ImGui::TableNextColumn();
         dear::Text(l_render_task.name_);
@@ -162,6 +166,10 @@ bool render_monitor::render() {
         if (ImGui::Selectable(i.data(), p_i->index_ == magic_enum::enum_cast<level::level_enum>(i).value())) {
           p_i->index_             = magic_enum::enum_cast<level::level_enum>(i).value();
           p_i->logger_level_.data = i.data();
+          boost::asio::co_spawn(
+              *p_i->strand_ptr_, async_refresh_logger(),
+              boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+          );
         }
       }
     }
