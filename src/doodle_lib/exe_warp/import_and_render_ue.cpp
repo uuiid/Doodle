@@ -400,8 +400,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
         );
         if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
         l_ec_copy = copy_diff(
-            l_down_path / doodle_config::ue4_config / "Prop" / "a_PropPublicFiles",
-            l_local_path / doodle_config::ue4_config / "Prop" / "a_PropPublicFiles", in_logger
+            l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
+            l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", in_logger
         );
         // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
         if (l_ec_copy) in_logger->log(level::off, magic_enum::enum_name(process_message::state::run));
