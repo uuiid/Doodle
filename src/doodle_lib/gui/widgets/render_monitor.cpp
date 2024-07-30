@@ -145,6 +145,9 @@ bool render_monitor::render() {
 
         ImGui::TableNextColumn();
         if (ImGui::Button(l_render_task.delete_button_id_.c_str())) {
+          if (p_i->current_select_logger_ == l_render_task.id_) {
+            p_i->current_select_logger_ = std::nullopt;
+          }
           boost::asio::co_spawn(
               *p_i->strand_ptr_, async_delete_task(l_render_task.id_),
               boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
