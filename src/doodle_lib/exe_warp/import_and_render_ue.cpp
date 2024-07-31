@@ -32,7 +32,7 @@ import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render
   l_import_data.out_file_dir =
       in_args.down_info_.render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
       fmt::format(
-          "{}_Ep{:04}_sc{:04}{}", l_import_data.project_.p_shor_str, l_import_data.episode.p_episodes,
+          "{}_EP{:03}_SC{:03}{}", l_import_data.project_.p_shor_str, l_import_data.episode.p_episodes,
           l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
       );
 
@@ -558,7 +558,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   if (auto l_e = copy_diff(l_movie_path, l_rem_path.parent_path() / "mov" / l_movie_path.filename(), in_logger))
     co_return std::tuple{l_e, FSys::path{}};
   // 额外要求上传的序列图片
-    if (auto l_e = copy_diff(l_ret, in_args->project_.p_auto_upload_path / fmt::format("EP_{:03}", in_args->episodes_.p_episodes)/ l_ret.filename(), in_logger))
+    if (auto l_e = copy_diff(l_ret, in_args->project_.p_auto_upload_path / fmt::format("EP{:03}", in_args->episodes_.p_episodes)/ "自动灯光序列帧"/l_ret.filename(), in_logger))
       co_return std::tuple{l_e, FSys::path{}};
   co_return std::tuple{l_ec, l_ret};
 }
