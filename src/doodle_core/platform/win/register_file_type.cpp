@@ -62,7 +62,7 @@ std::vector<project> register_file_type::get_project_list() {
       auto l_path   = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(path)"));
       auto l_en_str = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(en_str)"));
       auto l_local  = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(local)"));
-      l_list.emplace_back(std::move(l_name), std::move(l_path), std::move(l_en_str), std::move(l_short), l_local);
+      l_list.emplace_back(std::move(l_name), std::move(l_path), std::move(l_en_str), std::move(l_short), l_local, "");
     }
   } catch (const winreg::RegException& e) {
     l_list.emplace_back(

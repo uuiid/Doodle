@@ -30,12 +30,10 @@
 
 namespace doodle::database_n {
 file_translator::file_translator()
-  : registry_attr(g_reg()), obs(obs_all{}), timer_(std::make_shared<timer_t>(g_io_context())) {
-}
+    : registry_attr(g_reg()), obs(obs_all{}), timer_(std::make_shared<timer_t>(g_io_context())) {}
 
 file_translator::file_translator(registry_ptr in_registry)
-  : registry_attr(in_registry), obs(obs_all{}), timer_(std::make_shared<timer_t>(g_io_context())) {
-}
+    : registry_attr(in_registry), obs(obs_all{}), timer_(std::make_shared<timer_t>(g_io_context())) {}
 
 registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
   registry_ptr l_reg = std::make_shared<entt::registry>();
@@ -60,7 +58,7 @@ registry_ptr file_translator::load_new_file(const FSys::path& in_path) {
     return l_reg;
   }
   l_reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
-  l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp", "");
+  l_reg->ctx().emplace<project>("tmp", in_path, "tmp", "tmp", "", "");
   return l_reg;
 }
 
@@ -94,7 +92,7 @@ boost::system::error_code file_translator::async_open_impl() {
     g_reg()->clear();
     l_obs.connect(registry_attr);
     if (g_reg()->ctx().contains<project>()) g_reg()->ctx().erase<project>();
-    g_reg()->ctx().emplace<project>("tmp", project_path, "tmp", "tmp", "");
+    g_reg()->ctx().emplace<project>("tmp", project_path, "tmp", "tmp", "", "");
     g_reg()->ctx().emplace<project_config::base_config>() = project_config::base_config::get_default();
     save_all                                              = false;
     l_error_code                                          = async_save_impl();
@@ -135,7 +133,7 @@ boost::system::error_code file_translator::async_open_impl() {
       registry_attr->clear();
       std::this_thread::sleep_for(std::chrono::microseconds{1});
       default_logger_raw()->log(
-        log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", project_path, l, in_error.what()
+          log_loc(), level::err, "打开文件 {} 开始重试 {} 失败 {}", project_path, l, in_error.what()
       );
     }
   }
@@ -157,23 +155,23 @@ void file_translator::begin_save() {
   if (timer_->expiry() <= std::chrono::steady_clock::now()) {
     timer_->expires_from_now(std::chrono::seconds(1));
     timer_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::Get().on_cancel.slot(),
-      [this](const boost::system::error_code& in_error) {
-        if (in_error) {
-          log_info(fmt::format("定时器取消 {}", in_error.message()));
-          return;
-        }
-        if (project_path.empty()) {
-          return;
-        }
+        app_base::Get().on_cancel.slot(),
+        [this](const boost::system::error_code& in_error) {
+          if (in_error) {
+            log_info(fmt::format("定时器取消 {}", in_error.message()));
+            return;
+          }
+          if (project_path.empty()) {
+            return;
+          }
 
-        if (!std::any_cast<obs_all&>(obs).has_update()) {
-          begin_save();
-          return;
-        }
+          if (!std::any_cast<obs_all&>(obs).has_update()) {
+            begin_save();
+            return;
+          }
 
-        async_save_impl();
-      }
+          async_save_impl();
+        }
     ));
   }
 }
@@ -235,22 +233,22 @@ void file_translator::async_import_impl(const FSys::path& in_path) {
   };
 
   boost::asio::post(
-    g_thread(),
-    [l_image = in_path.parent_path() / doodle_config::image_folder_name,
-      l_target = project_path.parent_path() / doodle_config::image_folder_name]() {
-      FSys::copy(l_image, l_target, FSys::copy_options::recursive | FSys::copy_options::overwrite_existing);
-    }
+      g_thread(),
+      [l_image  = in_path.parent_path() / doodle_config::image_folder_name,
+       l_target = project_path.parent_path() / doodle_config::image_folder_name]() {
+        FSys::copy(l_image, l_target, FSys::copy_options::recursive | FSys::copy_options::overwrite_existing);
+      }
   );
   boost::asio::post(
-    g_thread(),
-    [this, in_path, l_k_con = g_ctx().get<database_info>().get_connection_const(), l_end_call, l_old]() mutable {
-      database_n::select l_select{};
-      if (l_select.is_old(in_path, l_k_con)) {
-        DOODLE_LOG_INFO("旧版文件, 不导入");
-        *l_old = true;
-      }
-      std::any_cast<obs_all&>(obs).import_project(registry_attr, l_k_con);
-      boost::asio::post(g_io_context(), l_end_call);
+      g_thread(),
+      [this, in_path, l_k_con = g_ctx().get<database_info>().get_connection_const(), l_end_call, l_old]() mutable {
+        database_n::select l_select{};
+        if (l_select.is_old(in_path, l_k_con)) {
+          DOODLE_LOG_INFO("旧版文件, 不导入");
+          *l_old = true;
+        }
+        std::any_cast<obs_all&>(obs).import_project(registry_attr, l_k_con);
+        boost::asio::post(g_io_context(), l_end_call);
     }
   );
 }
