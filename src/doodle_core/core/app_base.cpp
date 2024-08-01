@@ -92,12 +92,6 @@ std::int32_t app_base::run() {
       exit_code = 1;
       default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     }
-    try {
-      g_io_context().run_for(std::chrono::milliseconds(10));
-    } catch (...) {
-      exit_code = 1;
-      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    }
   } else {
     std::vector<std::thread> l_threads{std::thread::hardware_concurrency() * 3};
     for (auto& l_thread : l_threads) {

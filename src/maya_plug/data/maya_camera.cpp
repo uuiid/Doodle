@@ -9,8 +9,8 @@
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
-#include <maya_plug/main/maya_plug_fwd.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include "exception/exception.h"
 #include "maya_conv_str.h"
@@ -170,7 +170,7 @@ maya_camera maya_camera::conjecture() {
   DOODLE_MAYA_CHICK(k_s);
   MDagPath l_cam_dag_path{};
 
-  static std::regex l_re{R"(^[A-Z]{2}_EP\d{3}_SC\d{3}[A-Z]?)"};
+  static std::regex l_re{R"(^[A-Z]{2}_EP\d+_SC\d+[A-Z]?)"};
 
   for (; !k_it.isDone(); k_it.next()) {
     MDagPath k_path{};
@@ -182,7 +182,7 @@ maya_camera maya_camera::conjecture() {
     if (l_prj_set.contains(k_path_str.substr(1, 2))) {
       continue;
     }
-    auto l_sub = k_path_str.substr(1);
+    auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1));
     if (std::regex_search(l_sub, l_re)) {
       l_cam_dag_path = k_path;
       break;
