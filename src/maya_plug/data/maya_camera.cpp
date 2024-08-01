@@ -10,6 +10,7 @@
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/main/maya_plug_fwd.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
 
 #include "exception/exception.h"
 #include "maya_conv_str.h"
