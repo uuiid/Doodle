@@ -8,6 +8,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include "maya_plug_fwd.h"
+#include <maya_plug/abc/alembic_archive_out.h>
 #include <maya_plug/data/fbx_write.h>
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/reference_file.h>
@@ -19,7 +20,6 @@
 #include "exception/exception.h"
 #include "fmt/core.h"
 #include "maya_conv_str.h"
-#include <maya_plug/abc/alembic_archive_out.h>
 #include <maya/MAnimControl.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagModifier.h>
@@ -68,8 +68,8 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 
       try {
         l_comm = fmt::format(
-          R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}";)", in_start.value(), in_end.value(),
-          get_node_full_name(in_path)
+            R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}";)", in_start.value(), in_end.value(),
+            get_node_full_name(in_path)
         );
         DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
         k_s = MGlobal::executeCommand(d_str{l_comm});
@@ -84,7 +84,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 }
 
 FSys::path export_file_fbx::export_anim(
-  const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const MSelectionList& in_exclude
+    const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const MSelectionList& in_exclude
 ) {
   std::vector<MDagPath> l_export_list{};
   auto l_export_group = in_ref.export_group_attr();
@@ -139,7 +139,7 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
     l_export_list.push_back(l_path);
   }
 
-  m_namespace_ = in_ref.get_namespace();
+  m_namespace_     = in_ref.get_namespace();
 
   // bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
 
@@ -161,8 +161,9 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
   l_file_path.replace_extension(".abc");
   default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
   {
-    alembic::archive_out l_archive_out{l_file_path, l_export_sim, in_gen_file->begin_end_time.first,
-                                       in_gen_file->begin_end_time.second};
+    alembic::archive_out l_archive_out{
+        l_file_path, l_export_sim, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
+    };
     for (auto i = in_gen_file->begin_end_time.first; i <= in_gen_file->begin_end_time.second; ++i) {
       MAnimControl::setCurrentTime(i);
       l_archive_out.write();
@@ -173,14 +174,14 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
 }
 
 FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
-  auto& l_cam = g_reg()->ctx().get<maya_camera>();
+  auto l_cam = maya_camera::conjecture();
   l_cam.unlock_attr();
   l_cam.back_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", l_cam.get_transform_name());
   if (l_cam.camera_parent_is_word()) {
     return {};
   }
-  auto&& [l_b, l_p] = g_reg()->ctx().get<maya_camera>().export_file(
+  auto&& [l_b, l_p] = l_cam.export_file(
     in_gen->begin_end_time.first, in_gen->begin_end_time.second,
     std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(in_gen)
   );

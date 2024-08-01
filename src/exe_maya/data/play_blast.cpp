@@ -117,11 +117,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   p_uuid = core_set::get_set().get_uuid_str();
   MStatus k_s{};
 
-  if (!g_reg()->ctx().contains<maya_camera>()) {
-    g_reg()->ctx().emplace<maya_camera>().conjecture();
-  }
 
-  auto& k_cam = g_reg()->ctx().get<maya_camera>();
+
+  auto  k_cam = maya_camera::conjecture();
   k_cam.set_render_cam();
   k_cam.set_play_attr();
 

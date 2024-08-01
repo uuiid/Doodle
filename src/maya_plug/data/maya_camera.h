@@ -63,7 +63,7 @@ class maya_camera {
 
   bool unlock_attr();
 
-  void conjecture();
+  static maya_camera conjecture();
   void set_render_cam() const;
   void set_play_attr();
   std::double_t focalLength() const;

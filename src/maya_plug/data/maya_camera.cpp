@@ -155,7 +155,7 @@ bool maya_camera::unlock_attr() {
 
   return false;
 }
-void maya_camera::conjecture() {
+maya_camera maya_camera::conjecture() {
   DOODLE_LOG_INFO("开始测量相机优先级");
 
   auto l_prj_list = register_file_type::get_project_list();
@@ -190,12 +190,7 @@ void maya_camera::conjecture() {
 
   DOODLE_CHICK(l_cam_dag_path.isValid(), doodle_error{"没有找到任何相机"s});
 
-  if (g_reg()->ctx().contains<maya_camera>()) {
-    g_reg()->ctx().get<maya_camera>().p_path = l_cam_dag_path;
-  } else {
-    this->p_path = l_cam_dag_path;
-    g_reg()->ctx().emplace<maya_camera>(*this);
-  }
+  return maya_camera{l_cam_dag_path};
 }
 void maya_camera::set_render_cam() const {
   MStatus k_s;
