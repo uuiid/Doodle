@@ -183,6 +183,7 @@ maya_camera maya_camera::conjecture() {
       continue;
     }
     auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1));
+    default_logger_raw()->warn("开始测试相机 {}", l_sub);
     if (std::regex_search(l_sub, l_re)) {
       l_cam_dag_path = k_path;
       break;
