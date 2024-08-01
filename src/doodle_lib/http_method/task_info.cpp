@@ -113,15 +113,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_data_ptr in_handle) {
-  auto l_url_query   = in_handle->url_.query();
-  std::size_t l_page = 0;
-  if (auto l_it = l_url_query.find("page"); l_it != l_url_query.npos) {
-    l_page = std::stoul(l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5));
-  }
+  auto l_url_query        = in_handle->url_.query();
+  std::size_t l_page      = 0;
   std::size_t l_page_size = 100;
-  if (auto l_it = l_url_query.find("page_size"); l_it != l_url_query.npos) {
-    l_page_size = std::stoul(l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10));
+  try {
+    if (auto l_it = l_url_query.find("page"); l_it != l_url_query.npos) {
+      l_page = std::stoull(l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5));
+    }
+    if (auto l_it = l_url_query.find("page_size"); l_it != l_url_query.npos) {
+      l_page_size = std::stoull(l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10));
+    }
+  } catch (const std::exception& e) {
+    in_handle->logger_->error("错误的分页参数:{}", e.what());
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的分页参数");
   }
+  l_page = l_page > 0 ? l_page - 1 : 0;
 
   auto l_this_exe = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
