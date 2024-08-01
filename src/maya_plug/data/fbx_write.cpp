@@ -117,6 +117,12 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
   node->LclRotation.Set({l_angle_x.asDegrees(), l_angle_y.asDegrees(), l_angle_z.asDegrees()});
   std::double_t l_scale[3]{};
   in_matrix.getScale(l_scale, MSpace::kWorld);
+  if (l_scale[0] == 0.0 && l_scale[1] == 0.0 && l_scale[2] == 0.0) {
+    extra_data_.logger_->error(" {} 缩放为 0", node->GetName());
+    throw_exception(doodle_error{fmt::format(" {} 缩放为 0", node->GetName())});
+  }
+
+
   node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   node->ScalingMax.Set({});
 }
@@ -1005,45 +1011,45 @@ void fbx_write::write(
   l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
   anim_stack->LocalStop = l_fbx_end;
 
-  anim_time_ = {in_begin, in_end};
+  anim_time_            = {in_begin, in_end};
 
   MAnimControl::setCurrentTime(in_begin);
 
   std::vector<sequence_to_blend_shape> l_sequence_to_blend_shape{};
-  try {
-    init();
-    build_tree(in_vector, in_sim_vector);
-    build_data();
+  // try {
+  init();
+  build_tree(in_vector, in_sim_vector);
+  build_data();
 
-    // 初始化解算分解器
-    std::int64_t l_size = in_end.value() - in_begin.value() + 1;
-    for (auto&& i : in_sim_vector) {
-      l_sequence_to_blend_shape.emplace_back(i, l_size);
-    }
+  // 初始化解算分解器
+  std::int64_t l_size = in_end.value() - in_begin.value() + 1;
+  for (auto&& i : in_sim_vector) {
+    l_sequence_to_blend_shape.emplace_back(i, l_size);
+  }
 
-    log_info(logger_, "开始导出动画");
+  log_info(logger_, "开始导出动画");
 
-    if (export_anim_) {
-      for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-        MAnimControl::setCurrentTime(l_time);
-        build_animation(l_time);
-        for (auto&& i : l_sequence_to_blend_shape) {
-          i.add_sample(l_time.value() - in_begin.value());
-        }
+  if (export_anim_) {
+    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+      MAnimControl::setCurrentTime(l_time);
+      build_animation(l_time);
+      for (auto&& i : l_sequence_to_blend_shape) {
+        i.add_sample(l_time.value() - in_begin.value());
       }
     }
-    for (auto&& i : l_sequence_to_blend_shape) {
-      i.compute();
-    }
-    for (auto&& i : l_sequence_to_blend_shape) {
-      i.write_fbx(*this);
-    }
-  } catch (const std::exception& in_error) {
-    auto l_str = boost::diagnostic_information(in_error);
-    MGlobal::displayError(conv::to_ms(l_str));
-    log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
-    return;
   }
+  for (auto&& i : l_sequence_to_blend_shape) {
+    i.compute();
+  }
+  for (auto&& i : l_sequence_to_blend_shape) {
+    i.write_fbx(*this);
+  }
+  // } catch (const std::exception& in_error) {
+  //   auto l_str = boost::diagnostic_information(in_error);
+  //   MGlobal::displayError(conv::to_ms(l_str));
+  //   log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
+  //   return;
+  // }
 
   logger_->flush();
 }

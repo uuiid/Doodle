@@ -5,7 +5,7 @@
 #include "maya_camera.h"
 
 #include <doodle_core/metadata/episodes.h>
-#include <doodle_core/metadata/shot.h>
+#include <doodle_core/platform/win/register_file_type.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
@@ -158,18 +158,19 @@ bool maya_camera::unlock_attr() {
 void maya_camera::conjecture() {
   DOODLE_LOG_INFO("开始测量相机优先级");
 
-  auto l_reg_list =
-      g_reg()->ctx().get<project_config::base_config>().maya_camera_select |
-      ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
-        return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
-      }) |
-      ranges::to_vector;
+  auto l_prj_list = register_file_type::get_project_list();
+  std::set<std::string> l_prj_set{};
+  for (const auto& l_prj : l_prj_list) {
+    l_prj_set.insert(l_prj.p_shor_str);
+  }
 
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
   DOODLE_MAYA_CHICK(k_s);
+  MDagPath l_cam_dag_path{};
 
-  std::vector<camera> k_list{};
+  static std::regex l_re{R"(^[A-Z]{2}_EP\d{3}_SC\d{3}[A-Z]?)"};
+
   for (; !k_it.isDone(); k_it.next()) {
     MDagPath k_path{};
     k_s = k_it.getPath(k_path);
@@ -177,27 +178,22 @@ void maya_camera::conjecture() {
     std::string k_path_str = d_str{k_path.fullPathName(&k_s)};
     DOODLE_MAYA_CHICK(k_s);
 
-    camera k_cam{k_path, 0};
-    for (const auto& k_reg : l_reg_list) {
-      if (std::regex_search(k_path_str, k_reg.reg)) {
-        k_cam.priority += k_reg.priority;
-      }
+    if (l_prj_set.contains(k_path_str.substr(1, 2))) {
+      continue;
     }
-    k_list.push_back(std::move(k_cam));
+    auto l_sub = k_path_str.substr(1);
+    if (std::regex_search(l_sub, l_re)) {
+      l_cam_dag_path = k_path;
+      break;
+    }
   }
 
-  std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) { return in_l > in_r; });
-
-  for (const auto& k_c : k_list) {
-    DOODLE_LOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
-  }
-
-  DOODLE_CHICK(!k_list.empty(), doodle_error{"没有找到任何相机"s});
+  DOODLE_CHICK(l_cam_dag_path.isValid(), doodle_error{"没有找到任何相机"s});
 
   if (g_reg()->ctx().contains<maya_camera>()) {
-    g_reg()->ctx().get<maya_camera>().p_path = k_list.front().p_dag_path;
+    g_reg()->ctx().get<maya_camera>().p_path = l_cam_dag_path;
   } else {
-    this->p_path = k_list.front().p_dag_path;
+    this->p_path = l_cam_dag_path;
     g_reg()->ctx().emplace<maya_camera>(*this);
   }
 }

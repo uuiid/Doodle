@@ -178,7 +178,7 @@ FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
   l_cam.back_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", l_cam.get_transform_name());
   if (l_cam.camera_parent_is_word()) {
-    l_cam.fix_group_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
+    return {};
   }
   auto&& [l_b, l_p] = g_reg()->ctx().get<maya_camera>().export_file(
     in_gen->begin_end_time.first, in_gen->begin_end_time.second,

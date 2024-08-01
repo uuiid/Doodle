@@ -39,11 +39,16 @@ MStatus chick_export_fbx::doIt(const MArgList &in_arg) {
   maya_chick(l_arg_data.getObjects(l_list));
   auto l_begin_time = MAnimControl::minTime();
   auto l_end_time   = MAnimControl::maxTime();
+  try {
+    fbx_write l_fbx_write{};
+    l_fbx_write.set_logger(spdlog::default_logger());
 
-  fbx_write l_fbx_write{};
-  l_fbx_write.set_logger(spdlog::default_logger());
-
-  l_fbx_write.write(l_list, l_begin_time, l_end_time);
+    l_fbx_write.write(l_list, l_begin_time, l_end_time);
+  } catch (const std::exception& in_error) {
+    auto l_str = boost::diagnostic_information(in_error);
+    MGlobal::displayError(conv::to_ms(l_str));
+    return MS::kFailure;
+  }
 
   return MS::kSuccess;
 }
