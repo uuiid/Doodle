@@ -86,5 +86,5 @@ public:
   }
 };
 
-inline auto format_as(process_message::state f) { return magic_enum::enum_name(f); }
+inline auto format_as(details::logger_Buffer::state f) { return magic_enum::enum_name(f); }
 } // namespace doodle
