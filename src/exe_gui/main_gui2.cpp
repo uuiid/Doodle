@@ -118,26 +118,26 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In
                       webviewController->put_Bounds(bounds);
 
                       // Schedule an async task to navigate to Bing
-                      webview->Navigate(L"https://www.bing.com/");
+                      webview->Navigate(L"http://127.0.0.1:5173/");
 
                       // <NavigationEvents>
                       // Step 4 - Navigation events
                       // register an ICoreWebView2NavigationStartingEventHandler to cancel any non-https navigation
                       EventRegistrationToken token;
-                      webview->add_NavigationStarting(
-                          Callback<ICoreWebView2NavigationStartingEventHandler>(
-                              [](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
-                                wil::unique_cotaskmem_string uri;
-                                args->get_Uri(&uri);
-                                std::wstring source(uri.get());
-                                if (source.substr(0, 5) != L"https") {
-                                  args->put_Cancel(true);
-                                }
-                                return S_OK;
-                              }
-                          ).Get(),
-                          &token
-                      );
+                      // webview->add_NavigationStarting(
+                      //     Callback<ICoreWebView2NavigationStartingEventHandler>(
+                      //         [](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
+                      //           wil::unique_cotaskmem_string uri;
+                      //           args->get_Uri(&uri);
+                      //           std::wstring source(uri.get());
+                      //           if (source.substr(0, 5) != L"https") {
+                      //             args->put_Cancel(true);
+                      //           }
+                      //           return S_OK;
+                      //         }
+                      //     ).Get(),
+                      //     &token
+                      // );
                       // </NavigationEvents>
 
                       // <Scripting>
