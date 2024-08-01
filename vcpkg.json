@@ -8,7 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
-  "builtin-baseline": "d8160798747ac9953d3374f9473393868d76dfe6",
+  "builtin-baseline": "1de2026f28ead93ff1773e6e680387643e914ea1",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
@@ -34,6 +34,7 @@
     "cmakerc",
     "treehh",
     "wil",
+    "webview2",
     {
       "name": "fmt",
       "default-features": true,

@@ -90,7 +90,7 @@ find_package(wil CONFIG REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
 # this is heuristically generated, and may not be correct
 find_package(implot CONFIG REQUIRED)
-
+find_package(unofficial-webview2 CONFIG REQUIRED)
 # 寻找反射
 # find_package(rttr CONFIG REQUIRED)
 

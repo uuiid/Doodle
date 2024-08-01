@@ -48,7 +48,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     auto l_date_str = l_json["work_date"].get<std::string>();
     l_user_id       = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
     std::istringstream l_date_stream{l_date_str};
-    l_date_stream >> date::parse("%Y-%m-%d", l_date);
+    l_date_stream >> chrono::parse("%Y-%m-%d", l_date);
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
@@ -198,9 +198,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     chrono::year_month_day l_ymd{};
     chrono::year_month l_ym{};
     std::istringstream l_date_stream{l_date};
-    l_date_stream >> date::parse("%Y-%m", l_ym);
+    l_date_stream >> chrono::parse("%Y-%m", l_ym);
     if (!l_date_stream.eof()) {
-      l_date_stream >> date::parse("%Y-%m-%d", l_ymd);
+      l_date_stream >> chrono::parse("%Y-%m-%d", l_ymd);
       l_date_list.emplace_back(l_ymd);
     } else {
       auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};

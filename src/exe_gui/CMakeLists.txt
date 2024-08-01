@@ -42,12 +42,9 @@ set_target_properties(doodle
 target_link_libraries(doodle
         PUBLIC
         doodle_lib
+        unofficial::webview2::webview2
 )
 # target_link_options(doodle PUBLIC /MAP:test.txt)
-target_link_options(doodle PUBLIC /ENTRY:mainCRTStartup)
-
-
-
 
 install(TARGETS doodle
         RUNTIME_DEPENDENCIES
