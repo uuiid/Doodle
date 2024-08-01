@@ -18,7 +18,6 @@ target_link_options(DoodleExe PUBLIC /ENTRY:mainCRTStartup)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
 include(InstallRequiredSystemLibraries)
 
 
@@ -27,6 +26,40 @@ install(TARGETS DoodleExe
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )
+
+
+add_executable(
+        doodle
+        WIN32
+        main_gui2.cpp
+        ../DoodleExe.manifest
+        ../icon.ico
+        ../win_exe.rc
+)
+
+set_target_properties(doodle
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+target_link_libraries(doodle
+        PUBLIC
+        doodle_lib
+)
+# target_link_options(doodle PUBLIC /MAP:test.txt)
+target_link_options(doodle PUBLIC /ENTRY:mainCRTStartup)
+
+
+
+
+install(TARGETS doodle
+        RUNTIME_DEPENDENCIES
+        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
+        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+)
+
+
+
+
+
+
 
 set(DOODLE_INSTALL_IGNORE_ITEM
         doodle_maya_exe_2018.exe
