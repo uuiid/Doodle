@@ -28,7 +28,7 @@ int core_process_message(int argc, char* argv[]) {
 
   if (!l_h.get<process_message>().is_run()) return 1;
 
-  l_log->log(log_loc(), level::off, "{}", process_message::state::success);
+  l_log->log(log_loc(), level::off, "{}", magic_enum::enum_name(process_message::state::success));
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   if (!l_h.get<process_message>().is_success()) return 1;
