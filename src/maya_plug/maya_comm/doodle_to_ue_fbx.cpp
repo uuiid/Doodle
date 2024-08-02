@@ -101,6 +101,17 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   }
   MAnimControl::setCurrentTime(l_begin_time);
 
+  if (l_list.length() == 1) {
+    MDagPath l_cam_dag_path{};
+    l_status = l_list.getDagPath(0, l_cam_dag_path);
+    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    if(l_cam_dag_path.hasFn(MFn::kCamera)) {
+      l_fbx_write.set_path(l_path);
+      l_fbx_write.write(l_cam_dag_path, l_begin_time, l_end_time);
+      return MS::kSuccess;
+    }
+  }
+
   l_fbx_write.set_path(l_path);
   l_fbx_write.write(l_list, l_sim_list, l_begin_time, l_end_time);
 
