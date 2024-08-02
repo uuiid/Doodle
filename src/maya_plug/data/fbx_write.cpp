@@ -119,10 +119,6 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
   node->LclRotation.Set({l_angle_x.asDegrees(), l_angle_y.asDegrees(), l_angle_z.asDegrees()});
   std::double_t l_scale[3]{};
   in_matrix.getScale(l_scale, MSpace::kWorld);
-  if (l_scale[0] == 0.0 && l_scale[1] == 0.0 && l_scale[2] == 0.0) {
-    extra_data_.logger_->error("{} 缩放为 0", dag_path);
-    throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
-  }
 
   node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
   node->ScalingMax.Set({});
@@ -188,11 +184,109 @@ void fbx_node_cam::build_data() {
 }
 
 void fbx_node_cam::build_animation(const MTime& in_time) {
-  fbx_node_transform::build_animation(in_time);
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
-  MFnCamera l_fn_cam{dag_path};
+
   auto* l_layer = node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
+  MStatus l_status{};
+
+  MFnTransform const l_transform{dag_path};
+  // tran x
+  {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_x    = l_transform.getTranslation(MSpace::kWorld).x;
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_x);
+    l_anim_curve->KeyModifyEnd();
+  }
+  // tran y
+  {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_y    = l_transform.getTranslation(MSpace::kWorld).y;
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_y);
+    l_anim_curve->KeyModifyEnd();
+  }
+  // tran z
+  {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_z    = l_transform.getTranslation(MSpace::kWorld).z;
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_z);
+    l_anim_curve->KeyModifyEnd();
+  }
+
+  {
+    MQuaternion l_rot{};
+
+    l_transform.getRotation(l_rot, MSpace::kWorld);
+    auto l_rot_tmp = l_rot.asEulerRotation();
+    // rot x
+    {
+      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      maya_chick(l_status);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_tmp.x);
+      l_anim_curve->KeyModifyEnd();
+    }
+
+    // rot y
+    {
+      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      maya_chick(l_status);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_tmp.y);
+      l_anim_curve->KeyModifyEnd();
+    }
+
+    // rot z
+    {
+      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      maya_chick(l_status);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_tmp.z);
+      l_anim_curve->KeyModifyEnd();
+    }
+  }
+  std::double_t l_size[3]{};
+  l_transform.getScale(l_size);
+  if (l_size[0] == 0 && l_size[1] == 0 && l_size[2] == 0) {
+    extra_data_.logger_->error("{} 缩放为 0", dag_path);
+    throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
+  }
+  // size x
+  {
+    auto* l_anim_curve = node->LclScaling.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_size[0]);
+    l_anim_curve->KeyModifyEnd();
+  }
+  // size y
+  {
+    auto* l_anim_curve = node->LclScaling.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_size[1]);
+    l_anim_curve->KeyModifyEnd();
+  }
+  // size z
+  {
+    auto* l_anim_curve = node->LclScaling.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_size[2]);
+    l_anim_curve->KeyModifyEnd();
+  }
+
+  MFnCamera l_fn_cam{dag_path};
+
   {
     auto l_cureve = camera_->FocalLength.GetCurve(l_layer, true);
     l_cureve->KeyModifyBegin();
@@ -231,8 +325,7 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
 ////
 void fbx_node_transform::build_data() {
   build_node_transform(dag_path);
-  MFnTransform l_transform{dag_path};
-  auto l_attr_null = FbxNull::Create(node->GetScene(), l_transform.name().asChar());
+  auto l_attr_null = FbxNull::Create(node->GetScene(), get_node_name(dag_path).c_str());
   l_attr_null->Look.Set(FbxNull::eNone);
   node->SetNodeAttribute(l_attr_null);
 }
