@@ -4,7 +4,6 @@
 
 #include "maya_exe.h"
 
-#include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/logger/logger.h"
@@ -13,7 +12,6 @@
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/platform/win/register_file_type.h>
-#include <doodle_core/thread_pool/process_message.h>
 
 #include <doodle_app/app/app_command.h>
 
@@ -26,7 +24,6 @@
 #include <boost/asio/high_resolution_timer.hpp>
 #include <boost/asio/readable_pipe.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/process.hpp>
 #include <boost/process/v2.hpp>
 
 #include <filesystem>
