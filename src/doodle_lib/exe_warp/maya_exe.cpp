@@ -74,7 +74,10 @@ std::tuple<boost::system::error_code, FSys::path> install_maya_exe(FSys::path in
         FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
     );
 
-    FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
+    FSys::copy(
+        register_file_type::program_location() / l_run_name, l_target_path / l_run_name,
+        FSys::copy_options::overwrite_existing
+    );
 
     auto l_program_path = register_file_type::program_location();
     for (auto&& l_it : FSys::directory_iterator(l_program_path)) {
