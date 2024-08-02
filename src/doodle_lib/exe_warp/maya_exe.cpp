@@ -66,24 +66,24 @@ std::tuple<boost::system::error_code, FSys::path> install_maya_exe(FSys::path in
 
     FSys::copy(
         in_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment",
-        FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
+        FSys::copy_options::recursive | FSys::copy_options::update_existing
     );
 
     FSys::copy(
         in_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment",
-        FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
+        FSys::copy_options::recursive | FSys::copy_options::update_existing
     );
 
     FSys::copy(
         register_file_type::program_location() / l_run_name, l_target_path / l_run_name,
-        FSys::copy_options::overwrite_existing
+        FSys::copy_options::update_existing
     );
 
     auto l_program_path = register_file_type::program_location();
     for (auto&& l_it : FSys::directory_iterator(l_program_path)) {
       if (l_it.is_regular_file() && l_it.path().extension() == ".dll") {
         auto l_path_dll = l_target_path / l_it.path().filename();
-        FSys::copy(l_it, l_path_dll, FSys::copy_options::overwrite_existing);
+        FSys::copy(l_it, l_path_dll, FSys::copy_options::update_existing);
       }
     }
     is_run = true;
