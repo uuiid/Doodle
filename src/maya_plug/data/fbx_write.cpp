@@ -167,27 +167,64 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
 
 void fbx_node_cam::build_data() {
   fbx_node_transform::build_data();
-  auto* l_cam = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
-  node->SetNodeAttribute(l_cam);
+  camera_ = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
+  node->SetNodeAttribute(camera_);
   MFnCamera l_fn_cam{dag_path};
-  l_cam->ProjectionType.Set(l_fn_cam.isOrtho() ? FbxCamera::eOrthogonal : FbxCamera::ePerspective);
+  camera_->ProjectionType.Set(l_fn_cam.isOrtho() ? FbxCamera::eOrthogonal : FbxCamera::ePerspective);
   std::int32_t l_width{}, l_height{};
   std::double_t l_horizontal_fov{}, l_vertical_fov{};
   l_fn_cam.getPortFieldOfView(l_width, l_height, l_horizontal_fov, l_vertical_fov);
-  l_cam->SetAspect(FbxCamera::EAspectRatioMode::eWindowSize, l_width, l_height);
-  l_cam->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
+  camera_->SetAspect(FbxCamera::EAspectRatioMode::eWindowSize, l_width, l_height);
 
-  l_cam->SetApertureWidth(l_fn_cam.horizontalFilmAperture());
-  l_cam->SetApertureHeight(l_fn_cam.verticalFilmAperture());
-  l_cam->SetApertureMode(FbxCamera::eFocalLength);
-  l_cam->FocalLength.Set(l_fn_cam.focalLength());
-  l_cam->FocusDistance.Set(l_fn_cam.focusDistance());
+  camera_->SetApertureWidth(l_fn_cam.horizontalFilmAperture());
+  camera_->SetApertureHeight(l_fn_cam.verticalFilmAperture());
+  camera_->SetApertureMode(FbxCamera::eFocalLength);
 
-  l_cam->Position.Set(l_cam->EvaluatePosition());
-  //  l_cam->EvaluateUpDirection(l_cam->EvaluatePosition(), l_cam->EvaluateLookAtPosition());
+  camera_->FocalLength.Set(l_fn_cam.focalLength());
+  camera_->FocusDistance.Set(l_fn_cam.focusDistance());
+  camera_->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
+  camera_->Position.Set(camera_->EvaluatePosition());
+  camera_->EvaluateUpDirection(camera_->EvaluatePosition(), camera_->EvaluateLookAtPosition());
 }
 
-void fbx_node_cam::build_animation(const MTime& in_time) {}
+void fbx_node_cam::build_animation(const MTime& in_time) {
+  fbx_node_transform::build_animation(in_time);
+  FbxTime l_fbx_time{};
+  l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
+  MFnCamera l_fn_cam{dag_path};
+  auto* l_layer = node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
+  {
+    auto l_cureve = camera_->FocalLength.GetCurve(l_layer, true);
+    l_cureve->KeyModifyBegin();
+    auto l_index = l_cureve->KeyAdd(l_fbx_time);
+    l_cureve->KeySetValue(l_index, l_fn_cam.focalLength());
+    l_cureve->KeyModifyEnd();
+  }
+  // camera_->FocusDistance.Set(l_fn_cam.focusDistance());
+  {
+    auto l_cureve = camera_->FocusDistance.GetCurve(l_layer, true);
+    l_cureve->KeyModifyBegin();
+    auto l_index = l_cureve->KeyAdd(l_fbx_time);
+    l_cureve->KeySetValue(l_index, l_fn_cam.focusDistance());
+    l_cureve->KeyModifyEnd();
+  }
+  // camera_->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
+  {
+    auto l_cureve = camera_->FilmAspectRatio.GetCurve(l_layer, true);
+    l_cureve->KeyModifyBegin();
+    auto l_index = l_cureve->KeyAdd(l_fbx_time);
+    l_cureve->KeySetValue(l_index, l_fn_cam.aspectRatio());
+    l_cureve->KeyModifyEnd();
+  }
+  // camera_->Position.Set(camera_->EvaluatePosition());
+  // {
+  //   auto l_cureve = camera_->Position.GetCurve(l_layer, true);
+  //   l_cureve->KeyModifyBegin();
+  //   auto l_index = l_cureve->KeyAdd(l_fbx_time);
+  //   l_cureve->KeySetValue(l_index, camera_->EvaluatePosition());
+  //   l_cureve->KeyModifyEnd();
+  // }
+}
 
 ///
 
@@ -275,7 +312,6 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
   if (l_size_x == 0 && l_size_y == 0 && l_size_z == 0) {
     extra_data_.logger_->error("{} 缩放为 0", dag_path);
     throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
-
   }
   // size x
   {

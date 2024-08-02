@@ -69,6 +69,7 @@ struct fbx_node_transform : public fbx_node {
 
 struct fbx_node_cam : public fbx_node_transform {
   fbx_node_cam() = default;
+  FbxCamera *camera_{};
 
   explicit fbx_node_cam(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {
   }
