@@ -29,7 +29,7 @@ struct fbx_extra_data {
   fbx_tree_t* tree_{};
   logger_ptr logger_{};
 
-  std::map<std::string, fbxsdk::FbxSurfaceLambert*>* material_map_{};
+  std::map<std::string, FbxSurfaceLambert*>* material_map_{};
   fbx_extra_data() = default;
 };
 
@@ -79,7 +79,7 @@ struct fbx_node_cam : public fbx_node_transform {
 };
 
 struct fbx_node_mesh : public fbx_node_transform {
-  fbxsdk::FbxMesh* mesh{};
+  FbxMesh* mesh{};
   std::vector<std::pair<MPlug, FbxBlendShapeChannel*>> blend_shape_channel_{};
 
   fbx_node_mesh() = default;
@@ -130,9 +130,9 @@ struct fbx_node_joint : public fbx_node_transform {
 };
 } // namespace fbx_write_ns
 class fbx_write {
-  std::shared_ptr<fbxsdk::FbxManager> manager_;
+  std::shared_ptr<FbxManager> manager_;
 
-  fbxsdk::FbxScene* scene_;
+  FbxScene* scene_;
   FSys::path path_;
   using fbx_node_t           = fbx_write_ns::fbx_node;
   using fbx_node_mesh_t      = fbx_write_ns::fbx_node_mesh;
@@ -143,7 +143,7 @@ class fbx_write {
   using fbx_tree_t           = fbx_write_ns::fbx_tree_t;
 
   fbx_tree_t tree_{}; // 用于存储节点的树
-  mutable std::map<std::string, fbxsdk::FbxSurfaceLambert*> material_map_{}; // 用于存储材质的map
+  mutable std::map<std::string, FbxSurfaceLambert*> material_map_{}; // 用于存储材质的map
   std::map<MDagPath, fbx_node_ptr, details::cmp_dag> node_map_{}; // 用于存储节点的map
   std::vector<MDagPath> joints_{};
   MObjectArray bind_pose_array_{};
@@ -196,12 +196,15 @@ public:
     write(select_to_vector(in_vector), select_to_vector(in_sim_vector), in_begin, in_end);
   }
 
+  // 写出相机
+  void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end);
+
   // 只寻找mesh节点
   fbx_write_ns::fbx_node* find_node(const MDagPath& in_path) const;
 
   std::pair<MTime, MTime> get_anim_time() const;
 
-  fbxsdk::FbxSurfaceLambert* find_material(const std::string& in_name) const;
+  FbxSurfaceLambert* find_material(const std::string& in_name) const;
 
   // 写出相机
   // void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end);

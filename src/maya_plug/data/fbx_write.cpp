@@ -1093,6 +1093,47 @@ void fbx_write::write(
   logger_->flush();
 }
 
+void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end) {
+  if (!logger_)
+    if (!g_ctx().contains<fbx_logger>())
+      logger_ =
+          g_ctx()
+              .emplace<fbx_logger>(g_logger_ctrl().make_log_file(path_.parent_path() / "fbx_log.txt", "fbx_logger"))
+              .logger_;
+    else
+      logger_ = g_ctx().get<fbx_logger>().logger_;
+
+  log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
+
+  auto* anim_stack = scene_->GetCurrentAnimationStack();
+  FbxTime l_fbx_begin{};
+  l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
+  anim_stack->LocalStart = l_fbx_begin;
+  FbxTime l_fbx_end{};
+  l_fbx_end.SetFrame(in_end.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
+  anim_stack->LocalStop = l_fbx_end;
+
+  anim_time_            = {in_begin, in_end};
+
+  MAnimControl::setCurrentTime(in_begin);
+
+  auto l_fbx_cam = std::make_shared<fbx_write_ns::fbx_node_cam>(
+      in_cam_path, FbxNode::Create(scene_, get_node_name(in_cam_path).c_str())
+  );
+  l_fbx_cam->extra_data_.logger_ = logger_;
+  l_fbx_cam->build_data();
+  logger_->info("开始导出camera动画 {}", in_cam_path);
+
+  if (export_anim_) {
+    for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
+      MAnimControl::setCurrentTime(l_time);
+      l_fbx_cam->build_animation(l_time);
+    }
+  }
+
+  logger_->flush();
+}
+
 std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vector) {
   std::vector<MDagPath> l_objs{};
   MDagPath l_path{};

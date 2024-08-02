@@ -177,14 +177,13 @@ FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
   auto l_cam = maya_camera::conjecture();
   l_cam.unlock_attr();
   l_cam.back_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
-  DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", l_cam.get_transform_name());
-  if (l_cam.camera_parent_is_word()) {
-    return {};
+  auto l_path = (*std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(in_gen))({});
+  {
+    fbx_write l_fbx_write{};
+    l_fbx_write.set_path(l_path);
+    l_fbx_write.write(l_cam.p_path, in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   }
-  auto&& [l_b, l_p] = l_cam.export_file(
-    in_gen->begin_end_time.first, in_gen->begin_end_time.second,
-    std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(in_gen)
-  );
-  return l_p;
+
+  return l_path;
 }
 } // namespace doodle::maya_plug
