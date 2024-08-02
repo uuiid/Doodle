@@ -181,7 +181,7 @@ FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
   {
     fbx_write l_fbx_write{};
     l_fbx_write.set_path(l_path);
-    l_fbx_write.write(l_cam.p_path, in_gen->begin_end_time.first, in_gen->begin_end_time.second);
+    l_fbx_write.write(get_dag_path(l_cam.p_path.transform()), in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   }
 
   return l_path;
