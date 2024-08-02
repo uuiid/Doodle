@@ -19,15 +19,17 @@ namespace bsys = boost::system;
 
 namespace maya_enum {
 enum class maya_error_t : std::int32_t {
-  success = 0,
+  success           = 0,
+  // 未知错误
+  unknown_error     = 1,
   // 相机命名错误
-  camera_name_error,
+  camera_name_error = 2,
   // 骨骼缩放为 0 错误
-  bone_scale_error,
+  bone_scale_error  = 3,
 };
 [[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(maya_error_t e);
 
-}
+}  // namespace maya_enum
 
 namespace error_enum {
 enum error_t : std::int32_t {

@@ -189,7 +189,19 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
     case 0:
       if (l_exit_code != 0 || l_ec) {
         if (!l_ec) l_ec = {l_exit_code, exit_code_category::get()};
-        in_logger->error("maya进程返回值错误 {}", l_exit_code);
+        switch (l_exit_code) {
+          case maya_enum::maya_error_t::unknown_error:
+            in_logger->error("maya 运行未知错误");
+            break;
+          case maya_enum::maya_error_t::camera_name_error:
+            in_logger->error("maya 中没有正确的 camera 名字");
+            break;
+          case maya_enum::maya_error_t::bone_scale_error:
+            in_logger->error("maya 中骨骼有缩放值为 0 的情况");
+            break;
+          default:
+            in_logger->error("maya进程返回值错误 {}", l_exit_code);
+        }
         co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
       }
       co_return std::tuple{std::move(l_ec), get_out_arg(in_arg->out_path_file_)};
