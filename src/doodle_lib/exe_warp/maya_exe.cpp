@@ -189,7 +189,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
     case 0:
       if (l_exit_code != 0 || l_ec) {
         if (!l_ec) l_ec = {l_exit_code, exit_code_category::get()};
-        switch (l_exit_code) {
+        switch (maya_enum::maya_error_t{l_exit_code}) {
           case maya_enum::maya_error_t::unknown_error:
             in_logger->error("maya 运行未知错误");
             break;
