@@ -178,8 +178,19 @@ void fbx_node_cam::build_data() {
 
   camera_->FocalLength.Set(l_fn_cam.focalLength());
   camera_->FocusDistance.Set(l_fn_cam.focusDistance());
+  if (!camera_->FocusDistance.GetFlag(FbxPropertyFlags::EFlags::eAnimatable))
+    camera_->FocusDistance.ModifyFlag(FbxPropertyFlags::EFlags::eAnimatable, true);
   camera_->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
   camera_->Position.Set(camera_->EvaluatePosition());
+  {
+    auto l_up = l_fn_cam.upDirection();
+    camera_->UpVector.Set({l_up.x, l_up.y, l_up.z});
+  }
+  {
+    auto l_p = l_fn_cam.centerOfInterestPoint();
+    camera_->InterestPosition.Set({l_p.x, l_p.y, l_p.z});
+  }
+
   camera_->EvaluateUpDirection(camera_->EvaluatePosition(), camera_->EvaluateLookAtPosition());
 }
 
@@ -254,41 +265,11 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
       l_anim_curve->KeyModifyEnd();
     }
   }
-  std::double_t l_size[3]{};
-  l_transform.getScale(l_size);
-  if (l_size[0] == 0 && l_size[1] == 0 && l_size[2] == 0) {
-    extra_data_.logger_->error("{} 缩放为 0", dag_path);
-    throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
-  }
-  // size x
-  {
-    auto* l_anim_curve = node->LclScaling.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
-    l_anim_curve->KeyModifyBegin();
-    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_size[0]);
-    l_anim_curve->KeyModifyEnd();
-  }
-  // size y
-  {
-    auto* l_anim_curve = node->LclScaling.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
-    l_anim_curve->KeyModifyBegin();
-    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_size[1]);
-    l_anim_curve->KeyModifyEnd();
-  }
-  // size z
-  {
-    auto* l_anim_curve = node->LclScaling.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-    l_anim_curve->KeyModifyBegin();
-    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_size[2]);
-    l_anim_curve->KeyModifyEnd();
-  }
 
   MFnCamera l_fn_cam{dag_path};
 
   {
-    auto l_cureve = camera_->FocalLength.GetCurve(l_layer, true);
+    auto* l_cureve = camera_->FocalLength.GetCurve(l_layer, true);
     l_cureve->KeyModifyBegin();
     auto l_index = l_cureve->KeyAdd(l_fbx_time);
     l_cureve->KeySetValue(l_index, l_fn_cam.focalLength());
@@ -296,20 +277,15 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
   }
   // camera_->FocusDistance.Set(l_fn_cam.focusDistance());
   {
-    auto l_cureve = camera_->FocusDistance.GetCurve(l_layer, true);
+    // auto* l_node = camera_->FocusDistance.CreateCurveNode(l_layer);
+    auto* l_cureve = camera_->FocusDistance.GetCurve(l_layer, true);
     l_cureve->KeyModifyBegin();
     auto l_index = l_cureve->KeyAdd(l_fbx_time);
     l_cureve->KeySetValue(l_index, l_fn_cam.focusDistance());
     l_cureve->KeyModifyEnd();
   }
   // camera_->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
-  {
-    auto l_cureve = camera_->FilmAspectRatio.GetCurve(l_layer, true);
-    l_cureve->KeyModifyBegin();
-    auto l_index = l_cureve->KeyAdd(l_fbx_time);
-    l_cureve->KeySetValue(l_index, l_fn_cam.aspectRatio());
-    l_cureve->KeyModifyEnd();
-  }
+
   // camera_->Position.Set(camera_->EvaluatePosition());
   // {
   //   auto l_cureve = camera_->Position.GetCurve(l_layer, true);
