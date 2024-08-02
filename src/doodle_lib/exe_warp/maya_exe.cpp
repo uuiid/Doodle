@@ -22,7 +22,12 @@
 #include <doodle_lib/exe_warp/windows_hide.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
+#include <boost/asio/readable_pipe.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/process.hpp>
+#include <boost/process/v2.hpp>
 
 #include <filesystem>
 #include <fmt/core.h>
@@ -30,12 +35,6 @@
 #include <string>
 #include <winnt.h>
 #include <winreg/WinReg.hpp>
-
-#include <boost/asio/readable_pipe.hpp>
-#include <boost/process.hpp>
-#include <boost/process/v2.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
-#include <boost/interprocess/managed_shared_memory.hpp>
 
 namespace doodle {
 namespace {
@@ -52,8 +51,7 @@ std::tuple<boost::system::error_code, FSys::path> find_maya_path_impl() {
   return {};
 }
 
-std::tuple<boost::system::error_code, FSys::path>
-install_maya_exe(FSys::path in_maya_path) {
+std::tuple<boost::system::error_code, FSys::path> install_maya_exe(FSys::path in_maya_path) {
   static bool is_run{false};
   boost::system::error_code l_ec{};
   FSys::path l_out{};
@@ -62,31 +60,27 @@ install_maya_exe(FSys::path in_maya_path) {
                          version::build_info::get().version_str;
     const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
     l_out                 = l_target_path / l_run_name;
-    if (is_run)
-      return {{}, l_out};
+    if (is_run) return {{}, l_out};
 
     if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
 
-    if (!FSys::exists(l_target_path / "ShadeFragment")) {
-      FSys::copy(
+    FSys::copy(
         in_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment",
         FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
-      );
-    }
-    if (!FSys::exists(l_target_path / "ScriptFragment")) {
-      FSys::copy(
+    );
+
+    FSys::copy(
         in_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment",
         FSys::copy_options::recursive | FSys::copy_options::overwrite_existing
-      );
-    }
-    if (!FSys::exists(l_out)) {
-      FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
-    }
+    );
+
+    FSys::copy(register_file_type::program_location() / l_run_name, l_target_path / l_run_name);
+
     auto l_program_path = register_file_type::program_location();
     for (auto&& l_it : FSys::directory_iterator(l_program_path)) {
       if (l_it.is_regular_file() && l_it.path().extension() == ".dll") {
         auto l_path_dll = l_target_path / l_it.path().filename();
-        if (!FSys::exists(l_path_dll)) FSys::copy(l_it, l_path_dll, FSys::copy_options::overwrite_existing);
+        FSys::copy(l_it, l_path_dll, FSys::copy_options::overwrite_existing);
       }
     }
     is_run = true;
@@ -118,7 +112,7 @@ maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
   auto l_json = nlohmann::json::parse(l_str);
   return l_json.get<maya_exe_ns::maya_out_arg>();
 }
-}
+}  // namespace
 
 namespace maya_exe_ns {
 FSys::path find_maya_path() {
@@ -126,11 +120,10 @@ FSys::path find_maya_path() {
   if (l_e) throw_error(l_e);
   return l_maya_path;
 }
-}
+}  // namespace maya_exe_ns
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
-  std::shared_ptr<maya_exe_ns::arg> in_arg,
-  logger_ptr in_logger
+    std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 ) {
   auto l_g                 = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
   auto [l_e1, l_maya_path] = find_maya_path_impl();
@@ -161,8 +154,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
 
   std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value> l_env{};
   for (auto&& l_it : boost::process::v2::environment::current()) {
-    if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH")
-      l_env.emplace(l_it.key(), l_it.value());
+    if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH") l_env.emplace(l_it.key(), l_it.value());
   }
 
   l_env[L"MAYA_LOCATION"] = l_maya_path.generic_wstring();
@@ -170,11 +162,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   l_env[L"Path"].push_back(l_run_path.parent_path().generic_wstring());
   l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
   add_maya_module();
-  auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_out_pipe     = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_err_pipe     = std::make_shared<boost::asio::readable_pipe>(g_io_context());
 
   auto l_process_maya = boost::process::v2::process{
-      g_io_context(), l_run_path,
+      g_io_context(),
+      l_run_path,
       {fmt::format("--{}={}", in_arg->get_arg(), l_arg_path)},
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
@@ -185,11 +178,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info), boost::asio::detached);
 
   l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
-  auto [l_array_completion_order,l_ec,l_exit_code, l_ec_t] = co_await boost::asio::experimental::make_parallel_group(
-    boost::process::v2::async_execute(
-      std::move(l_process_maya), boost::asio::deferred),
-    l_timer->async_wait(boost::asio::deferred)
-  ).async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
+  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t] =
+      co_await boost::asio::experimental::make_parallel_group(
+          boost::process::v2::async_execute(std::move(l_process_maya), boost::asio::deferred),
+          l_timer->async_wait(boost::asio::deferred)
+      )
+          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
 
   switch (l_array_completion_order[0]) {
     case 0:
@@ -205,8 +199,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
         co_return std::make_tuple(l_ec, maya_exe_ns::maya_out_arg{});
       }
     default:
-      co_return std::make_tuple(boost::system::error_code{boost::asio::error::timed_out},
-                                maya_exe_ns::maya_out_arg{});
+      co_return std::make_tuple(boost::system::error_code{boost::asio::error::timed_out}, maya_exe_ns::maya_out_arg{});
   }
 }
 } // namespace doodle
