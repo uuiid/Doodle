@@ -162,9 +162,7 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
 ///
 
 void fbx_node_cam::build_data() {
-  fbx_node_transform::build_data();
   camera_ = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
-  node->SetNodeAttribute(camera_);
   MFnCamera l_fn_cam{dag_path};
   camera_->ProjectionType.Set(l_fn_cam.isOrtho() ? FbxCamera::eOrthogonal : FbxCamera::ePerspective);
   std::int32_t l_width{}, l_height{};
@@ -182,16 +180,20 @@ void fbx_node_cam::build_data() {
     camera_->FocusDistance.ModifyFlag(FbxPropertyFlags::EFlags::eAnimatable, true);
   camera_->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
   camera_->Position.Set(camera_->EvaluatePosition());
-  {
-    auto l_up = l_fn_cam.upDirection();
-    camera_->UpVector.Set({l_up.x, l_up.y, l_up.z});
-  }
+  // {
+  //   auto l_up = l_fn_cam.upDirection();
+  //   if (camera_->UpVector.GetFlag(FbxPropertyFlags::EFlags::eNotSavable))
+  //
+  //   camera_->UpVector.Set({l_up.x, l_up.y, l_up.z});
+  // }
   {
     auto l_p = l_fn_cam.centerOfInterestPoint();
     camera_->InterestPosition.Set({l_p.x, l_p.y, l_p.z});
   }
-
-  camera_->EvaluateUpDirection(camera_->EvaluatePosition(), camera_->EvaluateLookAtPosition());
+  node->SetNodeAttribute(camera_);
+  build_node_transform(dag_path);
+  // 相机的缩放强制设置为1
+  node->LclScaling.Set({1.0, 1.0, 1.0});
 }
 
 void fbx_node_cam::build_animation(const MTime& in_time) {
@@ -200,6 +202,7 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
 
   auto* l_layer = node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
   MStatus l_status{};
+  MFnCamera l_fn_cam{dag_path};
 
   MFnTransform const l_transform{dag_path};
   // tran x
@@ -235,13 +238,16 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
 
     l_transform.getRotation(l_rot, MSpace::kWorld);
     auto l_rot_tmp = l_rot.asEulerRotation();
+    MAngle l_ang{};
     // rot x
     {
       auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
       l_anim_curve->KeyModifyBegin();
       auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
       maya_chick(l_status);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_tmp.x);
+      l_ang.setUnit(MAngle::kRadians);
+      l_ang.setValue(l_rot_tmp.x);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
       l_anim_curve->KeyModifyEnd();
     }
 
@@ -251,7 +257,9 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
       l_anim_curve->KeyModifyBegin();
       auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
       maya_chick(l_status);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_tmp.y);
+      l_ang.setUnit(MAngle::kRadians);
+      l_ang.setValue(l_rot_tmp.y);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
       l_anim_curve->KeyModifyEnd();
     }
 
@@ -261,12 +269,12 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
       l_anim_curve->KeyModifyBegin();
       auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
       maya_chick(l_status);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_rot_tmp.z);
+      l_ang.setUnit(MAngle::kRadians);
+      l_ang.setValue(l_rot_tmp.z);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
       l_anim_curve->KeyModifyEnd();
     }
   }
-
-  MFnCamera l_fn_cam{dag_path};
 
   {
     auto* l_cureve = camera_->FocalLength.GetCurve(l_layer, true);
@@ -1189,6 +1197,7 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   auto l_fbx_cam = std::make_shared<fbx_write_ns::fbx_node_cam>(
       in_cam_path, FbxNode::Create(scene_, get_node_name(in_cam_path).c_str())
   );
+  scene_->GetRootNode()->AddChild(l_fbx_cam->node);
   l_fbx_cam->extra_data_.logger_ = logger_;
   l_fbx_cam->build_data();
   logger_->info("开始导出camera动画 {}", in_cam_path);

@@ -30,6 +30,7 @@
     "boost-beast",
     "boost-icl",
     "boost-lambda2",
+    "boost-units",
     "argh",
     "cmakerc",
     "treehh",
