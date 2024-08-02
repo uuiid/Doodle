@@ -90,7 +90,7 @@ std::int32_t app_base::run() {
       g_io_context().run();
     } catch (...) {
       exit_code = 1;
-      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
     std::vector<std::thread> l_threads{std::thread::hardware_concurrency() * 3};
@@ -100,7 +100,7 @@ std::int32_t app_base::run() {
           g_io_context().run();
         } catch (...) {
           exit_code = 1;
-          default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+          default_logger_raw()->error(boost::current_exception_diagnostic_information());
         }
       });
     }
