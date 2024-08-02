@@ -4,6 +4,8 @@
 
 #include "fbx_write.h"
 
+#include <doodle_core/exception/exception.h>
+
 #include <boost/lambda2.hpp>
 
 #include <maya_plug/data/dagpath_cmp.h>
@@ -118,8 +120,8 @@ void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix)
   std::double_t l_scale[3]{};
   in_matrix.getScale(l_scale, MSpace::kWorld);
   if (l_scale[0] == 0.0 && l_scale[1] == 0.0 && l_scale[2] == 0.0) {
-    extra_data_.logger_->error(" {} 缩放为 0", node->GetName());
-    throw_exception(doodle_error{fmt::format(" {} 缩放为 0", dag_path)});
+    extra_data_.logger_->error("{} 缩放为 0", dag_path);
+    throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
   }
 
   node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
@@ -271,7 +273,9 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
   auto l_size_y = get_plug(dag_path.node(), "scaleY").asDouble();
   auto l_size_z = get_plug(dag_path.node(), "scaleZ").asDouble();
   if (l_size_x == 0 && l_size_y == 0 && l_size_z == 0) {
-    throw_exception(doodle_error{fmt::format("{} scale is zero", dag_path)});
+    extra_data_.logger_->error("{} 缩放为 0", dag_path);
+    throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
+
   }
   // size x
   {

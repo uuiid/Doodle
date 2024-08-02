@@ -17,6 +17,18 @@ namespace doodle {
 
 namespace bsys = boost::system;
 
+namespace maya_enum {
+enum class maya_error_t : std::int32_t {
+  success = 0,
+  // 相机命名错误
+  camera_name_error,
+  // 骨骼缩放为 0 错误
+  bone_scale_error,
+};
+[[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(maya_error_t e);
+
+}
+
 namespace error_enum {
 enum error_t : std::int32_t {
   success = 0,
@@ -69,13 +81,20 @@ class DOODLE_CORE_API doodle_category : public bsys::error_category {
   static const bsys::error_category& get();
 };
 
-class DOODLE_CORE_API exit_code_category : public bsys::error_category {
-public:
+class DOODLE_CORE_API maya_code_category : public bsys::error_category {
+ public:
   const char* name() const noexcept final;
 
   std::string message(int ev) const final;
 
-  bsys::error_condition default_error_condition(int ev) const noexcept final;
+  static const bsys::error_category& get();
+};
+
+class DOODLE_CORE_API exit_code_category : public bsys::error_category {
+ public:
+  const char* name() const noexcept final;
+
+  std::string message(int ev) const final;
 
   static const bsys::error_category& get();
 };
@@ -128,4 +147,12 @@ struct DOODLE_CORE_API is_error_code_enum<::doodle::error_enum::error_t> : std::
 namespace std {
 template <>
 struct DOODLE_CORE_API is_error_code_enum<::doodle::error_enum::error_t> : std::true_type {};
+}  // namespace std
+namespace boost::system {
+template <>
+struct DOODLE_CORE_API is_error_code_enum<::doodle::maya_enum::maya_error_t> : std::true_type {};
+}  // namespace boost::system
+namespace std {
+template <>
+struct DOODLE_CORE_API is_error_code_enum<::doodle::maya_enum::maya_error_t> : std::true_type {};
 }  // namespace std

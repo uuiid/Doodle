@@ -88,6 +88,9 @@ std::int32_t app_base::run() {
   if (!use_multithread_) {
     try {
       g_io_context().run();
+    } catch (const std::system_error& in_err) {
+      exit_code = in_err.code().value();
+      default_logger_raw()->error(in_err.what());
     } catch (...) {
       exit_code = 1;
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
@@ -98,6 +101,9 @@ std::int32_t app_base::run() {
       l_thread = std::thread([this] {
         try {
           g_io_context().run();
+        } catch (const std::system_error& in_err) {
+          exit_code = in_err.code().value();
+          default_logger_raw()->error(in_err.what());
         } catch (...) {
           exit_code = 1;
           default_logger_raw()->error(boost::current_exception_diagnostic_information());
