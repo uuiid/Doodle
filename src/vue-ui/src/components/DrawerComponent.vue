@@ -10,7 +10,7 @@ const items: DrawerMenuItem[] = [
   },
   {
     title: '批量导出',
-    icon: 'mdi-home',
+    icon: 'mdi-lan-connect',
     to: { name: 'BatchExportView' },
   },
   {
