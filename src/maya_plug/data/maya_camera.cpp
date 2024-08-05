@@ -179,7 +179,7 @@ maya_camera maya_camera::conjecture() {
     std::string k_path_str = d_str{k_path.fullPathName(&k_s)};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (l_prj_set.contains(k_path_str.substr(1, 2))) {
+    if (!l_prj_set.contains(k_path_str.substr(1, 2))) {
       continue;
     }
     auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1));
