@@ -172,6 +172,7 @@ maya_camera maya_camera::conjecture() {
 
   static std::regex l_re{R"(^[A-Z]{2}_EP\d+_SC\d+[A-Z]?)"};
 
+  auto l_s_name = maya_file_io::get_current_path().stem().generic_string();
   for (; !k_it.isDone(); k_it.next()) {
     MDagPath k_path{};
     k_s = k_it.getPath(k_path);
@@ -179,12 +180,12 @@ maya_camera maya_camera::conjecture() {
     std::string k_path_str = d_str{k_path.fullPathName(&k_s)};
     DOODLE_MAYA_CHICK(k_s);
 
+    auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1) - 1);
+    default_logger_raw()->warn("获取场景名称 {}, 并开始测试相机 {}", l_s_name, l_sub);
     if (!l_prj_set.contains(k_path_str.substr(1, 2))) {
       continue;
     }
-    auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1));
-    default_logger_raw()->warn("开始测试相机 {}", l_sub);
-    if (std::regex_search(l_sub, l_re)) {
+    if (std::regex_search(l_sub, l_re) && l_sub == l_s_name) {
       l_cam_dag_path = k_path;
       break;
     }
