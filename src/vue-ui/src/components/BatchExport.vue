@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { computer, task } from '@/store';
-import { ref } from 'vue';
+import {computer, task} from '@/store';
+import {ref} from 'vue';
+
 /** Props */
 // defineProps({
 //   msg: {
@@ -23,9 +24,11 @@ const computers = ref([
   },
 ]);
 const fetchComputers = function () {
-  computer.get().then(res => {
+  computer.get().then((res) => {
     computers.value = res.body;
     // console.log(computers)
+  }).catch(e => {
+    console.log(e);
   });
 };
 fetchComputers();
@@ -69,10 +72,11 @@ const tasks_handle = [
     key: 'end_time',
   },
 ];
+
 function fetchTasks({
-  page,
-  itemsPerPage,
-}: {
+                      page,
+                      itemsPerPage,
+                    }: {
   page: number;
   itemsPerPage: number;
 }) {
@@ -81,18 +85,19 @@ function fetchTasks({
     tasks_length.value = res.body.size;
   });
 }
-fetchTasks({ page: 0, itemsPerPage: tasks_per_page.value });
+
+fetchTasks({page: 0, itemsPerPage: tasks_per_page.value});
 </script>
 
 <template>
   <v-container class="fill-height">
     <v-data-table :items="computers"></v-data-table>
     <v-data-table-server
-      v-model:items-per-page="tasks_per_page"
-      :headers="tasks_handle"
-      :items="tasks"
-      :items-length="tasks_length"
-      @update:options="fetchTasks"
+        v-model:items-per-page="tasks_per_page"
+        :headers="tasks_handle"
+        :items="tasks"
+        :items-length="tasks_length"
+        @update:options="fetchTasks"
     ></v-data-table-server>
   </v-container>
 </template>

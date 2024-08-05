@@ -9,7 +9,7 @@ const title = import.meta.env.VITE_APP_TITLE;
 defineProps({
   msg: {
     type: String,
-    default: 'Welcome to Vuetify.',
+    default: 'doodle 工具包',
   },
 });
 </script>
@@ -24,18 +24,13 @@ defineProps({
         src="@/assets/logo.svg"
       />
       <h1 class="text-h2 font-weight-bold mb-3">
-        Welcome to the Vuetify
-        <v-code tag="code">{{ 'v' + version }}</v-code>
+        doodle 工具包
       </h1>
       <p>{{ msg }}</p>
       <p class="text-medium-emphasis">
-        <a
-          href="https://github.com/logue/vite-vuetify-ts-starter"
-          target="_blank"
-        >
-          vite-vuetify-ts-starter
-        </a>
-        &nbsp;/&nbsp;Build:
+        核心版本
+        <v-code tag="code">{{ 'v' + version }}</v-code>
+        Build:
         <time
           :datetime="Meta.date"
           v-text="new Date(Meta.date).toLocaleString()"
@@ -55,48 +50,6 @@ defineProps({
         file.
       </v-alert>
       <div class="py-10" />
-      <v-row class="d-flex align-center justify-center">
-        <v-col cols="auto">
-          <v-btn
-            href="https://next.vuetifyjs.com/components/all/"
-            min-width="164"
-            prepend-icon="mdi-view-dashboard"
-            rel="noopener noreferrer"
-            target="_blank"
-            variant="text"
-          >
-            Components
-          </v-btn>
-        </v-col>
-
-        <v-col cols="auto">
-          <v-btn
-            color="primary"
-            href="https://next.vuetifyjs.com/introduction/why-vuetify/#feature-guides"
-            min-width="228"
-            prepend-icon="mdi-speedometer"
-            rel="noopener noreferrer"
-            size="x-large"
-            target="_blank"
-            variant="flat"
-          >
-            Get Started
-          </v-btn>
-        </v-col>
-
-        <v-col cols="auto">
-          <v-btn
-            href="https://community.vuetifyjs.com/"
-            min-width="164"
-            prepend-icon="mdi-account-group"
-            rel="noopener noreferrer"
-            target="_blank"
-            variant="text"
-          >
-            Community
-          </v-btn>
-        </v-col>
-      </v-row>
     </v-responsive>
   </v-container>
 </template>

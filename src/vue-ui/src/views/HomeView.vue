@@ -5,5 +5,5 @@ import HelloWorld from '@/components/HelloWorld.vue';
 </script>
 
 <template>
-  <HelloWorld msg="test  2" />
+  <HelloWorld msg=" " />
 </template>
