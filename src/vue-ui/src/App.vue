@@ -75,7 +75,7 @@ onMounted(() => {
 <template>
   <v-app :theme="isDark">
     <v-navigation-drawer v-model="drawer" temporary>
-      <drawer-component />
+      <DrawerComponent />
     </v-navigation-drawer>
 
     <v-app-bar>
