@@ -59,8 +59,8 @@ class session_data {
     return make_error_code_msg(enum_to_num(in_code), in_str);
   }
 
-  template <typename T = boost::beast::http::string_body>
-  boost::beast::http::response<T> make_msg(T&& in_body) {
+  template <typename T = boost::beast::http::string_body, typename Value>
+  boost::beast::http::response<T> make_msg(Value&& in_body) {
     boost::beast::http::response<T> l_res{boost::beast::http::status::ok, version_};
     l_res.set(boost::beast::http::field::content_type, "application/json");
     l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
