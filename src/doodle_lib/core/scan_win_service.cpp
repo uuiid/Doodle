@@ -24,8 +24,10 @@ void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
   timer_    = std::make_shared<timer_t>(executor_);
 
-  boost::asio::co_spawn(executor_, begin_scan(),
-                        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached));
+  boost::asio::co_spawn(
+      executor_, begin_scan(),
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+  );
 }
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
@@ -37,37 +39,44 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   if (!g_ctx().contains<details::scan_category_service_t>()) {
     g_ctx().emplace<details::scan_category_service_t>();
   }
+  std::vector<std::string> l_msg{};
+  for (auto&& l_root : project_roots_)
+    for (auto&& l_data : {
+             "character",
+             "scene",
+             "prop",
+         })
+      l_msg.emplace_back(fmt::format("扫根目录瞄 {} 中 {} ", l_root.p_local_path, l_data));
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // if (app_base::GetPtr()->is_stop()) co_return;
     using opt_t = decltype(g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
-      project_roots_[0], scan_categories_[0], boost::asio::deferred));
+        project_roots_[0], scan_categories_[0], boost::asio::deferred
+    ));
     std::vector<opt_t> l_opts{};
     default_logger_raw()->log(log_loc(), level::info, "开始扫描");
     // 添加扫瞄操作
     for (auto&& l_root : project_roots_) {
       for (auto&& l_data : scan_categories_) {
-        l_opts.emplace_back(
-          g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
-            l_root, l_data, boost::asio::deferred)
+        l_opts.emplace_back(g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
+            l_root, l_data, boost::asio::deferred
+        )
 
         );
       }
     }
 
-    auto [l_index,l_v,l_ecs] = co_await
-        boost::asio::experimental::make_parallel_group(l_opts).async_wait(
-          boost::asio::experimental::wait_for_all(), boost::asio::bind_executor(
-            executor_, boost::asio::as_tuple(
-              boost::asio::use_awaitable))
-        );
+    auto [l_index, l_v, l_ecs] = co_await boost::asio::experimental::make_parallel_group(l_opts).async_wait(
+        boost::asio::experimental::wait_for_all(),
+        boost::asio::bind_executor(executor_, boost::asio::as_tuple(boost::asio::use_awaitable))
+    );
 
     // 同步缓冲区
     std::int32_t l_current_index     = !index_;
     scan_data_maps_[l_current_index] = scan_data_maps_[index_];
     for (auto i : l_index) {
       if (l_ecs[i]) {
-        default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {}", l_ecs[i].message());
+        default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {} {}", l_msg[i], l_ecs[i].message());
         continue;
       }
       add_handle(l_v[i], l_current_index);
@@ -86,9 +95,9 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   }
 }
 
-
-void scan_win_service_t::add_handle(const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec,
-                                    std::int32_t in_current_index) {
+void scan_win_service_t::add_handle(
+    const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
+) {
   static auto l_id_is_nil = [](boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
     if (in_uuid.is_nil()) {
       in_uuid = core_set::get_set().get_uuid();
