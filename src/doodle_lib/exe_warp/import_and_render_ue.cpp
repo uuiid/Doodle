@@ -493,12 +493,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     in_logger->error(" 用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
   }
-  in_logger->warn("开始运行maya");
   // 添加三次重试
   maya_exe_ns::maya_out_arg l_out{};
   boost::system::error_code l_ec{};
   for (int i = 0; i < 3; ++i) {
     std::tie(l_ec, l_out) = co_await async_run_maya(in_args->maya_arg_, in_logger);
+    in_logger->warn("开始运行maya");
     if (!l_ec) {
       break;
     }
