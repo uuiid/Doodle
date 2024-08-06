@@ -42,6 +42,11 @@ const router: Router = createRouter({
       component: HomeView,
     },
     {
+      path: '/ModelView',
+      name: 'ModelView',
+      component: async () => await import('@/views/ModelView.vue'),
+    },
+    {
       path: '/BatchExportView',
       name: 'BatchExportView',
       component: async () => await import('@/views/BatchExportView.vue'),

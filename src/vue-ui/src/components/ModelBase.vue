@@ -1,0 +1,23 @@
+<script lang="ts" setup>
+
+
+
+
+</script>
+
+<template>
+  <v-container class="fill-height">
+    <v-col class="d-flex align-center justify-center" cols="2">
+      <v-sheet class="pa-4" rounded="lg">
+        <v-treeview :items="[]"></v-treeview>
+      </v-sheet>
+      <v-sheet class="pa-4" rounded="lg">
+        <v-treeview :items="[]"></v-treeview>
+      </v-sheet>
+    </v-col>
+  </v-container>
+</template>
+
+<style scoped>
+
+</style>
