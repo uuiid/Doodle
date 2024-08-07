@@ -54,6 +54,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
         '/v1': {
           target: 'http://127.0.0.1:50023',
         },
+        '/api': {
+          target: 'http://127.0.0.1:50027',
+        },
       },
     },
     // Resolver

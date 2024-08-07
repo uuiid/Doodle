@@ -1,13 +1,14 @@
 /**
  * Vuetify3 Plugin
  */
-import { createVuetify, type VuetifyOptions } from 'vuetify';
+import {createVuetify, type VuetifyOptions} from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 // import { aliases, mdi } from 'vuetify/iconsets/mdi-svg';
 import * as labsComponents from 'vuetify/labs/components';
+import {VTreeview} from 'vuetify/labs/VTreeview'
 // Translations provided by Vuetify
-import { zhHans } from 'vuetify/locale';
+import {zhHans} from 'vuetify/locale';
 
 // Misc
 // import { loadFonts } from '@/plugins/webfontloader';
@@ -24,52 +25,52 @@ import '@mdi/font/css/materialdesignicons.css';
  * @see {@link https://vuetifyjs.com/en/features/treeshaking/}
  */
 let vuetifyConfig: VuetifyOptions = {
-  // Global configuration
-  // https://vuetifyjs.com/en/features/global-configuration/
-  /*
-  defaults: {
-    global: {
-      ripple: false,
+    // Global configuration
+    // https://vuetifyjs.com/en/features/global-configuration/
+    /*
+    defaults: {
+      global: {
+        ripple: false,
+      },
+      VSheet: {
+        elevation: 4,
+      },
     },
-    VSheet: {
-      elevation: 4,
+    */
+    /*
+    // Icon Fonts
+    // https://vuetifyjs.com/en/features/icon-fonts/
+    icons: {
+      defaultSet: 'mdi',
+      aliases,
+      sets: {
+        mdi,
+      },
     },
-  },
-  */
-  /*
-  // Icon Fonts
-  // https://vuetifyjs.com/en/features/icon-fonts/
-  icons: {
-    defaultSet: 'mdi',
-    aliases,
-    sets: {
-      mdi,
+    */
+    // Internationalization (i18n)
+    // https://vuetifyjs.com/en/features/internationalization/#internationalization-i18n
+    locale: {
+        locale: 'zhHans',
+        fallback: 'zhHans',
+        messages: {zhHans},
     },
-  },
-  */
-  // Internationalization (i18n)
-  // https://vuetifyjs.com/en/features/internationalization/#internationalization-i18n
-  locale: {
-    locale: 'zhHans',
-    fallback: 'zhHans',
-    messages: { zhHans },
-  },
-  // Theme
-  // https://vuetifyjs.com/en/features/theme/
-  theme: {
-    defaultTheme: 'light',
-  },
+    // Theme
+    // https://vuetifyjs.com/en/features/theme/
+    theme: {
+        defaultTheme: 'light',
+    },
 };
 
 if (import.meta.env.DEV) {
-  // Disable treeshaking for DEV mode.
-  vuetifyConfig = {
-    components: { components, labsComponents },
-    directives,
-    ...vuetifyConfig,
-  };
+    // Disable treeshaking for DEV mode.
+    vuetifyConfig = {
+        components: {components, labsComponents, VTreeview},
+        directives,
+        ...vuetifyConfig,
+    };
 }
 export default createVuetify(vuetifyConfig);
 
 // Export for test.
-export { components, directives };
+export {components, directives};
