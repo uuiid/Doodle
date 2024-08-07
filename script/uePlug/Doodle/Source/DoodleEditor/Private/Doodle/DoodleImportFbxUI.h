@@ -14,6 +14,10 @@ class FFbxImporter;
 
 class UGeometryCache;
 
+UENUM()
+enum class EImportSuffix : uint8 { Lig = 0, Lig_Sim, Vfx, Vfx_Colony, End };
+ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
+
 USTRUCT()
 struct FDoodleUSkeletonData_1 {
  public:
@@ -89,7 +93,7 @@ class UDoodleBaseImportData : public UObject {
    * @param In_Path 传入的路径(提取信息)
    * @return FString  返回的导入ue4的路径
    */
-  virtual void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix){};
+  virtual void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix){};
 
   virtual void ImportFile(){};
 
@@ -116,7 +120,7 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
   UDoodleFbxCameraImport_1* CameraImport;
 
   bool OnlyAnim{true};
-  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
+  void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
   void ImportFile() override;
 
   void AssembleScene() override;
@@ -130,6 +134,7 @@ class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData {
   GENERATED_BODY()
   // 初次导入
   bool FirstImport{false};
+  EImportSuffix Path_Suffix;
 
   UDoodleFbxCameraImport_1(){};
 
@@ -137,7 +142,7 @@ class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData {
 
   ~UDoodleFbxCameraImport_1() override {}
 
-  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
+  void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
   void ImportFile() override;
   void AssembleScene() override;
 };
@@ -156,7 +161,7 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
 
   ~UDoodleAbcImport_1() override {}
 
-  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
+  void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
   void ImportFile() override;
   void AssembleScene() override;
 };
@@ -180,8 +185,8 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
-  static FString Path_Suffix;
   static FString NewFolderName;
+
  private:
   /// @brief 导入的列表
   TSharedPtr<class SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
@@ -193,7 +198,8 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   /// 导入路径的后缀
   FString Path_Prefix;
-
+  EImportSuffix Path_Suffix;
+  TArray<TSharedPtr<FString>> All_Path_Suffix{};
   ECheckBoxState OnlyCamera{ECheckBoxState::Unchecked};
 
   // 判断fbx是否是相机fbx
@@ -210,7 +216,7 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
    *
    * @param In_Path_Prefix 传入的路径
    */
-  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix);
+  void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix);
   // 检查fbx是否只导入动画
   void SetFbxOnlyAnim();
 

@@ -95,24 +95,23 @@
 #include "GeometryCache.h"       // 几何缓存
 #include "GeometryCacheActor.h"  // 几何缓存actor
 #include "GeometryCacheComponent.h"
-#include "LevelSequenceActor.h"               // 序列actor
-#include "LevelSequencePlayer.h"              // 播放序列
-#include "MovieSceneGeometryCacheTrack.h"     // 几何缓存轨道
-#include "MovieSceneToolsProjectSettings.h"   // 定序器项目设置
-#include "PackageHelperFunctions.h"           // 保存包
+#include "LevelSequenceActor.h"              // 序列actor
+#include "LevelSequencePlayer.h"             // 播放序列
+#include "MovieSceneGeometryCacheTrack.h"    // 几何缓存轨道
+#include "MovieSceneToolsProjectSettings.h"  // 定序器项目设置
+#include "PackageHelperFunctions.h"          // 保存包
+#include "Sections/MovieSceneLevelVisibilitySection.h"
 #include "Sections/MovieSceneSpawnSection.h"  // 生成段
 #include "SequencerTools.h"                   // 序列工具
 #include "Subsystems/EditorActorSubsystem.h"  // 创建actor
 #include "Subsystems/EditorAssetSubsystem.h"
+#include "Tracks/MovieSceneLevelVisibilityTrack.h"
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
-#include "Tracks/MovieSceneLevelVisibilityTrack.h"
-#include "Sections/MovieSceneLevelVisibilitySection.h"
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 
-FString SDoodleImportFbxUI::Path_Suffix{TEXT("")};
 FString SDoodleImportFbxUI::NewFolderName{TEXT("")};
 
 namespace {
@@ -236,7 +235,7 @@ void FSearchEpShotModel_2::GenStartAndEndTime(const FString& In_ImportPath) {
 }
 
 FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) const {
-  FString L_Path = FString::Printf(TEXT("/Game/Shot/ep%.4d/%s%.4d_sc%.4d%s"), Eps, *In_Path_Prefix, Eps, Shot, *ShotAb);
+  FString L_Path = FString::Printf(TEXT("/Game/Shot/ep%.4d/%s%.3d_sc%.3d%s"), Eps, *In_Path_Prefix, Eps, Shot, *ShotAb);
   return L_Path;
 }
 
@@ -277,12 +276,13 @@ FString UDoodleBaseImportData::GetPathPrefix(const FString& In_Path) {
   return L_Prefix;
 }
 
-void UDoodleFbxImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
+void UDoodleFbxImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) {
   GenStartAndEndTime();
   const FString L_String = FString::Format(
       TEXT("FbxI_{0}_{1}"),
       TArray<FStringFormatArg>{
-          FStringFormatArg{In_Path_Suffix}, FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}}
+          FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
+          FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}}
   );
   ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
 }
@@ -438,14 +438,27 @@ void UDoodleFbxImport_1::AssembleScene() {
   }
 }
 
-bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton) {
-  return false;
-}
+bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton) { return false; }
 
-void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
+void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) {
   const FString L_Folder = GetImportPath(In_Path_Prefix);
   FString L_Base         = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path_Prefix.ToUpper(), Eps, Shot, *ShotAb);
-  if (In_Path_Suffix == TEXT("Vfx")) L_Base += TEXT("_Vfx");
+  switch (In_Path_Suffix) {
+    case EImportSuffix::Lig:
+      break;
+    case EImportSuffix::Lig_Sim:
+      break;
+    case EImportSuffix::Vfx:
+    case EImportSuffix::Vfx_Colony:
+      L_Base += TEXT("_");
+	  L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
+      break;
+    case EImportSuffix::End:
+      break;
+    default:
+      break;
+  }
+
   ImportPathDir = L_Folder / L_Base;
 }
 
@@ -551,19 +564,21 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   FFrameNumber offset{50};
   L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
   L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
-  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End+1}, true);
+  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End + 1}, true);
   //-------Add Visibility Track
-  UMovieSceneLevelVisibilityTrack* NewTrack = L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
+  UMovieSceneLevelVisibilityTrack* NewTrack =
+      L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
   L_ShotSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack));
   NewTrack = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
-  UMovieSceneLevelVisibilitySection* NewSection = CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
+  UMovieSceneLevelVisibilitySection* NewSection =
+      CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
   TRange<FFrameNumber> SectionRange = L_ShotSequence->GetMovieScene()->GetPlaybackRange();
   NewSection->SetRange(SectionRange);
   NewTrack->AddSection(*NewSection);
   //-------Add Sub
   UMovieSceneSubTrack* NewTrack1 = L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneSubTrack>();
   L_ShotSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack1));
-  NewTrack1 = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
+  NewTrack1                          = L_ShotSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
   UMovieSceneSubSection* NewSection1 = CastChecked<UMovieSceneSubSection>(NewTrack1->CreateNewSection());
   NewSection1->SetRange(SectionRange);
   NewTrack1->AddSection(*NewSection1);
@@ -717,13 +732,26 @@ void UDoodleFbxCameraImport_1::ImportFile() {
     EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel);
   }
   //---------------
-  if (SDoodleImportFbxUI::Path_Suffix == TEXT("Vfx")) {
-    FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
-    FString FolderPath        = FPaths::Combine(LongImportPathDir, TEXT("Vfx"));
-    if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath)) {
-      EditorAssetSubsystem->MakeDirectory(FolderPath);
-    }
+
+  switch (Path_Suffix) {
+    case EImportSuffix::Lig:
+      break;
+    case EImportSuffix::Lig_Sim:
+      break;
+    case EImportSuffix::Vfx:
+    case EImportSuffix::Vfx_Colony: {
+      FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
+      FString FolderPath        = FPaths::Combine(LongImportPathDir, TEXT("Vfx"));
+      if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath)) {
+        EditorAssetSubsystem->MakeDirectory(FolderPath);
+      }
+    } break;
+    case EImportSuffix::End:
+      break;
+    default:
+      break;
   }
+
   //--------------
   if (SDoodleImportFbxUI::NewFolderName != TEXT("")) {
     FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
@@ -738,11 +766,12 @@ void UDoodleFbxCameraImport_1::ImportFile() {
 
 void UDoodleFbxCameraImport_1::AssembleScene() {}
 
-void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
+void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) {
   FString L_String = FString::Format(
       TEXT("AbcI_{0}_{1}"),
       TArray<FStringFormatArg>{
-          FStringFormatArg{In_Path_Suffix}, FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}}
+          FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
+          FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}}
   );
   ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
 }
@@ -751,15 +780,15 @@ void UDoodleAbcImport_1::ImportFile() {
   UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
   L_Data->GroupName                 = TEXT("doodle import");
   L_Data->Filenames.Add(ImportPath);
-  L_Data->DestinationPath                            = ImportPathDir;
-  L_Data->bReplaceExisting                           = true;
-  L_Data->bSkipReadOnly                              = true;
-  L_Data->bReplaceExisting                           = true;
+  L_Data->DestinationPath                     = ImportPathDir;
+  L_Data->bReplaceExisting                    = true;
+  L_Data->bSkipReadOnly                       = true;
+  L_Data->bReplaceExisting                    = true;
 
-  UDoodleAbcImportFactory* k_abc_f                   = NewObject<UDoodleAbcImportFactory>(L_Data);
-  L_Data->Factory                                    = k_abc_f;
-  UDoodleAbcImportSettings* k_abc_stting             = NewObject<UDoodleAbcImportSettings>(L_Data);
-  k_abc_f->ImportSettings                            = k_abc_stting;
+  UDoodleAbcImportFactory* k_abc_f            = NewObject<UDoodleAbcImportFactory>(L_Data);
+  L_Data->Factory                             = k_abc_f;
+  UDoodleAbcImportSettings* k_abc_stting      = NewObject<UDoodleAbcImportSettings>(L_Data);
+  k_abc_f->ImportSettings                     = k_abc_stting;
 
   k_abc_stting->ImportType                    = EDoodleAlembicImportType::GeometryCache;  // 导入为几何缓存
   k_abc_stting->ConversionSettings.bFlipV     = true;
@@ -961,10 +990,12 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
   const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
 #endif
 
-  const static TArray<TSharedPtr<FString>> L_DepType{
-      MakeShared<FString>(TEXT("Lig")), MakeShared<FString>(TEXT("Lig_Sim")), MakeShared<FString>(TEXT("Vfx"))};
+  UEnum* L_Enum = StaticEnum<EImportSuffix>();
+  for (EImportSuffix L_E : TEnumRange<EImportSuffix>()) {
+    All_Path_Suffix.Add(MakeShared<FString>(L_Enum->GetNameStringByValue(static_cast<uint8>(L_E))));
+  }
 
-  Path_Suffix = *L_DepType[0];
+  Path_Suffix = EImportSuffix::Lig;
 
   // clang-format off
   ChildSlot
@@ -1037,19 +1068,19 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         [
           ///  
           SNew(SComboBox<TSharedPtr<FString>>)
-                 .OptionsSource(&L_DepType)
+                 .OptionsSource(&All_Path_Suffix)
                  .OnSelectionChanged_Lambda(
                                                 [this](const TSharedPtr<FString>& In, ESelectInfo::Type) {
-                                                  GenPathPrefix(Path_Prefix, *In);
+                                                  GenPathPrefix(Path_Prefix, static_cast<EImportSuffix>(StaticEnum<EImportSuffix>()->GetValueByNameString(*In)));
                                                 })
                  .OnGenerateWidget_Lambda(
                                                 [this](const TSharedPtr<FString>& In) {
                                                   return SNew(STextBlock).Text(FText::FromString(*In));
                                                 })
-                 .InitiallySelectedItem(L_DepType[0])
+                 .InitiallySelectedItem(All_Path_Suffix[0])
           [
             SNew(STextBlock)
-            .Text_Lambda([this]() { return FText::FromString(Path_Suffix); })
+            .Text_Lambda([this]() { return FText::FromString(StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(Path_Suffix))); })
           ]
         ]
       ]
@@ -1238,7 +1269,6 @@ bool SDoodleImportFbxUI::IsCamera(const FString& In_File) {
 
   return LPath.Contains(TEXT("camera"));
 }
- 
 
 void SDoodleImportFbxUI::ImportFile() {
   FScopedSlowTask L_Task_Scoped1{
@@ -1254,7 +1284,7 @@ void SDoodleImportFbxUI::ImportFile() {
   }
 }
 
-void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) {
+void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) {
   Path_Prefix = In_Path_Prefix;
   Path_Suffix = In_Path_Suffix;
   for (auto&& L_Fbx : ListImportData) {
@@ -1325,7 +1355,7 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
     } else {
       TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
       L_ptr->ImportPath                    = In_File;
-      L_File = ListImportData.Emplace_GetRef(L_ptr);
+      L_File                               = ListImportData.Emplace_GetRef(L_ptr);
     }
   }
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc")) {

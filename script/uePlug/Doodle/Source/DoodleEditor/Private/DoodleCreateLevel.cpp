@@ -156,21 +156,21 @@ void FDoodleCreateLevel::ImportSkeletalMesh(const FString& InFbxpath) {
   UDoodleFbxImport_1* L_FbxImport = NewObject<UDoodleFbxImport_1>();
   L_FbxImport->ImportPath         = InFbxpath;
   L_FbxImport->FindSkeleton(AllSkinObjs);
-  L_FbxImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), "Lig");
+  L_FbxImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), EImportSuffix::Lig);
   AllImportData.Add(L_FbxImport);
 }
 
 void FDoodleCreateLevel::ImportGeometryCache(const FString& InAbcPath) {
   UDoodleAbcImport_1* L_AbcImport = NewObject<UDoodleAbcImport_1>();
   L_AbcImport->ImportPath         = InAbcPath;
-  L_AbcImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InAbcPath), "Lig");
+  L_AbcImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InAbcPath), EImportSuffix::Lig);
   AllImportData.Add(L_AbcImport);
 }
 
 void FDoodleCreateLevel::ImportCamera(const FString& InFbxpath) {
   UDoodleFbxCameraImport_1* L_FbxCameraImport = NewObject<UDoodleFbxCameraImport_1>();
   L_FbxCameraImport->ImportPath               = InFbxpath;
-  L_FbxCameraImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), "Lig");
+  L_FbxCameraImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), EImportSuffix::Lig);
   AllImportData.Add(L_FbxCameraImport);
 }
 
