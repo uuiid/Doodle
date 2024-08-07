@@ -728,13 +728,20 @@ void fbx_node_mesh::build_skin() {
     l_iter = [&](fbx_tree_t::iterator in_parent) -> bool {
       bool l_r{};
       for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
-        l_r = true;
-        l_post->Add((*l_it)->node, (*l_it)->node->EvaluateGlobalTransform());
+        auto l_sub_has = l_iter(l_it);
+        if (ranges::find_if(l_joint_list, boost::lambda2::_1 == (*l_it)->dag_path) != std::end(l_joint_list) ||
+            (*l_it)->dag_path == dag_path || l_sub_has) {
+          post_add.emplace_back(*l_it);
+          l_r |= true;
+            }
       }
       return l_r;
     };
     l_iter(extra_data_.tree_->begin());
 
+    for (auto&& i : post_add) {
+      l_post->Add(i->node, i->node->EvaluateGlobalTransform());
+    }
     node->GetScene()->AddPose(l_post);
   }
   mesh->AddDeformer(l_sk);
