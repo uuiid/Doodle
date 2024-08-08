@@ -18,17 +18,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, e.what());
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request,
-                                             boost::current_exception_diagnostic_information());
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
+    );
   }
 
   auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
-  boost::beast::http::response<boost::beast::http::string_body> l_res{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_res.set(boost::beast::http::field::content_type, "application/json");
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.keep_alive(in_handle->keep_alive_);
   if (l_map.contains(l_id)) {
     auto l_data = l_map.at(l_id);
     nlohmann::json l_json;
@@ -36,24 +31,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
     l_json["ue_file"]     = l_data->ue_file_.path_;
     l_json["solve_file_"] = l_data->solve_file_.path_;
     l_json["type"]        = l_data->assets_type_;
-
-    l_res.body() = l_json.dump();
-    l_res.prepare_payload();
-
-    co_return std::move(l_res);
+    co_return in_handle->make_msg(l_json.dump());
   }
   l_logger->log(log_loc(), level::info, "file not found");
-  l_res.result(boost::beast::http::status::not_found);
-  l_res.body() = nlohmann::json{{"message", "file not found"}}.dump();
-  l_res.prepare_payload();
-  co_return std::move(l_res);
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found");
 }
-
 
 void reg_file_association_http(http_route& in_route) {
   in_route.reg(std::make_shared<http_function>(
-    boost::beast::http::verb::get, "api/doodle/file_association/{uuid}",
-    file_association_get
+      boost::beast::http::verb::get, "api/doodle/file_association/{uuid}", file_association_get
   ));
 }
-} // namespace doodle::http
+}  // namespace doodle::http
