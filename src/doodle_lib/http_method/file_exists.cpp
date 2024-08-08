@@ -486,11 +486,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_exists_fun(se
             l_projects, [&](const project& in_project) -> bool { return in_project.get_name() == l_project_str; }
         );
         l_it_prj == l_projects.end()) {
-      co_return in_handle->make_error_code_msg(404, fmt::format("项目不存在 {}", l_project_str));
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, fmt::format("项目不存在 {}", l_project_str));
     } else
       l_project = *l_it_prj;
   } else {
-    co_return in_handle->make_error_code_msg(404, "缺失项目参数");
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失项目参数");
   }
 
   department_ l_department{};
@@ -498,11 +498,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_exists_fun(se
     auto l_department_str = l_url_query.substr(l_it + 11, l_url_query.find('&', l_it) - l_it - 11);
     auto l_dep            = magic_enum::enum_cast<department_>(l_department_str);
     if (!l_dep) {
-      co_return in_handle->make_error_code_msg(404, fmt::format("部门参数错误 {}", l_department_str));
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, fmt::format("部门参数错误 {}", l_department_str));
     }
     l_department = *l_dep;
   } else {
-    co_return in_handle->make_error_code_msg(404, "缺失部门参数");
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失部门参数");
   }
 
   task_type l_task_type{};
@@ -518,11 +518,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_exists_fun(se
         auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
         auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
         if (!l_task_t) {
-          co_return in_handle->make_error_code_msg(404, fmt::format("任务类型参数错误 {}", l_task_type_str));
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, fmt::format("任务类型参数错误 {}", l_task_type_str));
         }
         l_task_type = *l_task_t;
       } else {
-        co_return in_handle->make_error_code_msg(404, "缺失任务类型参数");
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失任务类型参数");
       }
     }
     case department_::角色模型: {
@@ -537,32 +537,32 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_exists_fun(se
         auto l_task_type_str = l_url_query.substr(l_it + 10, l_url_query.find('&', l_it) - l_it - 10);
         auto l_task_t        = magic_enum::enum_cast<task_type>(l_task_type_str);
         if (!l_task_t) {
-          co_return in_handle->make_error_code_msg(404, fmt::format("任务类型参数错误 {}", l_task_type_str));
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, fmt::format("任务类型参数错误 {}", l_task_type_str));
         }
         l_task_type = *l_task_t;
       } else {
-        co_return in_handle->make_error_code_msg(404, "缺失任务类型参数");
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失任务类型参数");
       }
       if (auto l_it = l_url_query.find("season"); l_it != l_url_query.npos) {
         auto l_season_str = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
         if (l_season_str.empty()) {
-          co_return in_handle->make_error_code_msg(404, "缺失季度参数");
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失季度参数");
         }
         l_season = std::stoi(l_season_str);
       } else {
-        co_return in_handle->make_error_code_msg(404, "缺失季度参数");
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失季度参数");
       }
       // name
       if (auto l_it = l_url_query.find("name"); l_it != l_url_query.npos) {
         l_name = l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5);
       } else {
-        co_return in_handle->make_error_code_msg(404, "缺失名称参数");
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失名称参数");
       }
       // number
       if (auto l_it = l_url_query.find("number"); l_it != l_url_query.npos) {
         l_number = l_url_query.substr(l_it + 7, l_url_query.find('&', l_it) - l_it - 7);
       } else {
-        co_return in_handle->make_error_code_msg(404, "缺失编号参数");
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失编号参数");
       }
 
       break;
@@ -574,23 +574,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_exists_fun(se
       if (auto l_it = l_url_query.find("episodes"); l_it != l_url_query.npos) {
         auto l_ep_str = l_url_query.substr(l_it + 9, l_url_query.find('&', l_it) - l_it - 9);
         if (l_ep_str.empty()) {
-          co_return in_handle->make_error_code_msg(404, "缺失集数参数");
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失集数参数");
         }
         l_episodes = std::stoi(l_ep_str);
       } else {
-        co_return in_handle->make_error_code_msg(404, "缺失集数参数");
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "缺失集数参数");
       }
       // shot
       if (auto l_it = l_url_query.find("shot"); l_it != l_url_query.npos) {
         l_shot = l_url_query.substr(l_it + 5, l_url_query.find('&', l_it) - l_it - 5);
       } else {
-        co_return session.make_error_code_msg(404, "缺失shot参数");
+        co_return session.make_error_code_msg(boost::beast::http::status::not_found, "缺失shot参数");
       }
       break;
     }
 
     default: {
-      co_return session.make_error_code_msg(404, "部门不支持");
+      co_return session.make_error_code_msg(boost::beast::http::status::not_found, "部门不支持");
     }
   }
 

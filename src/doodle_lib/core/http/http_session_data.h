@@ -50,14 +50,13 @@ class session_data {
 
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
-  );
-  boost::beast::http::message_generator make_error_code_msg(std::int32_t in_code, const std::string& in_str);
-
-  inline boost::beast::http::message_generator make_error_code_msg(
-      boost::beast::http::status in_code, const std::string& in_str
   ) {
-    return make_error_code_msg(enum_to_num(in_code), in_str);
+    make_error_code_msg(in_status, ec.what() + in_str);
   }
+
+  boost::beast::http::message_generator make_error_code_msg(
+      boost::beast::http::status in_code, const std::string& in_str, std::int32_t in_msg_code = -1
+  );
 
   template <typename T = boost::beast::http::string_body, typename Value>
   boost::beast::http::response<T> make_msg(Value&& in_body) {

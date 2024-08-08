@@ -43,6 +43,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
     co_return std::move(l_res);
   }
   l_logger->log(log_loc(), level::info, "file not found");
+  l_res.result(boost::beast::http::status::not_found);
   l_res.body() = nlohmann::json{{"message", "file not found"}}.dump();
   l_res.prepare_payload();
   co_return std::move(l_res);

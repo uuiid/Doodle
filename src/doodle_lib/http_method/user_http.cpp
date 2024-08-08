@@ -29,12 +29,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
     l_user_id             = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
   } catch (...) {
     co_return in_handle->make_error_code_msg(
-      404, boost::current_exception_diagnostic_information()
+      boost::beast::http::status::not_found, boost::current_exception_diagnostic_information()
     );
   }
   if (!g_ctx().get<dingding::dingding_company>().company_info_map_.contains(l_company_id))
     co_return in_handle->make_error_code_msg(
-      404, "该公司不存在"
+      boost::beast::http::status::not_found, "该公司不存在"
     );
 
   auto l_dingding_client = g_ctx().get<dingding::dingding_company>().company_info_map_.at(l_company_id).client_ptr;
@@ -53,14 +53,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
   auto [l_e2, l_m] = co_await l_kitsu_client->get_user(l_user_id);
   if (l_e2)
     co_return in_handle->make_error_code_msg(
-      404, l_e2.what()
+      boost::beast::http::status::not_found, l_e2.what()
     );
   l_user.mobile_ = l_m.phone_;
   if (l_user.dingding_id_.empty()) {
     auto [l_e3, l_dingding_user] = co_await l_dingding_client->get_user_by_mobile(l_user.mobile_);
     if (l_e3)
       co_return in_handle->make_error_code_msg(
-        404, l_e3.what()
+        boost::beast::http::status::not_found, l_e3.what()
       );
 
     l_user.dingding_id_ = l_dingding_user;
@@ -101,11 +101,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_get(session_d
     l_logger->log(log_loc(), level::err, "error: {}", e.what());
 
     co_return in_handle->make_error_code_msg(
-      404, "错误的 uuid 格式"
+      boost::beast::http::status::not_found, "错误的 uuid 格式"
     );
   } catch (...) {
     co_return in_handle->make_error_code_msg(
-      404, boost::current_exception_diagnostic_information());
+      boost::beast::http::status::not_found, boost::current_exception_diagnostic_information());
   }
   auto l_v = std::as_const(*g_reg()).view<const user>();
 
