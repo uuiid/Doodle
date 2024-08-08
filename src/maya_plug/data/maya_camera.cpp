@@ -157,8 +157,47 @@ bool maya_camera::unlock_attr() {
   return false;
 }
 maya_camera maya_camera::conjecture() {
-  DOODLE_LOG_INFO("开始测量相机优先级");
+  {
+    default_logger_raw()->warn("先旧版本相机测试");
+    auto l_list = project_config::base_config::get_default().maya_camera_select;
+    auto l_reg_list =
+        l_list |
+        ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
+          return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
+        }) |
+        ranges::to_vector;
 
+    MStatus k_s;
+    MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
+    DOODLE_MAYA_CHICK(k_s);
+
+    std::vector<camera> k_list{};
+    for (; !k_it.isDone(); k_it.next()) {
+      MDagPath k_path{};
+      k_s = k_it.getPath(k_path);
+      DOODLE_MAYA_CHICK(k_s);
+      std::string k_path_str = d_str{k_path.fullPathName(&k_s)};
+      DOODLE_MAYA_CHICK(k_s);
+
+      camera k_cam{k_path, 0};
+      for (const auto& k_reg : l_reg_list) {
+        if (std::regex_search(k_path_str, k_reg.reg)) {
+          k_cam.priority += k_reg.priority;
+        }
+      }
+      k_list.push_back(std::move(k_cam));
+    }
+
+    std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) { return in_l > in_r; });
+
+    for (const auto& k_c : k_list) {
+      DOODLE_LOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
+    }
+    if (!k_list.empty()) {
+      return maya_camera{k_list[0].p_dag_path};
+    }
+  }
+  default_logger_raw()->warn("新版本相机测试");
   auto l_prj_list = register_file_type::get_project_list();
   std::set<std::string> l_prj_set{};
   for (const auto& l_prj : l_prj_list) {
