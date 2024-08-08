@@ -20,7 +20,7 @@ namespace doodle::maya_plug {
 #define DOODLE_MAYA_CHICK(in_status) \
   if (auto&& l_m_s = in_status; !l_m_s) throw_exception(std::runtime_error{fmt::to_string(l_m_s)})
 
-inline void maya_chick(const MStatus& in_status, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
+inline void maya_chick(const MStatus& in_status, ::boost::source_location const& in_loc = std::source_location::current()) {
   if (!in_status) throw_exception(std::runtime_error{fmt::to_string(in_status)}, in_loc);
 }
 

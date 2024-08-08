@@ -103,19 +103,22 @@ class DOODLE_CORE_API exit_code_category : public bsys::error_category {
 
 template <typename exception_type>
 [[noreturn]] inline void throw_exception(
-    exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+    exception_type&& in_exception_type, ::boost::source_location const& in_loc = std::source_location::current()
 ) {
   boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
 }
 
 template <typename Error>
-[[noreturn]] void throw_error(Error in_error_index, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
+[[noreturn]] void throw_error(
+    Error in_error_index, ::boost::source_location const& in_loc = std::source_location::current()
+) {
   boost::throw_exception(sys_error{bsys::error_code{in_error_index}}, in_loc);
 }
 
 template <typename Error>
 [[noreturn]] void throw_error(
-    Error in_error_index, const std::string& mess, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+    Error in_error_index, const std::string& mess,
+    ::boost::source_location const& in_loc = std::source_location::current()
 ) {
   boost::throw_exception(sys_error{bsys::error_code{in_error_index}, mess}, in_loc);
 }

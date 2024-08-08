@@ -6,7 +6,7 @@
 template <typename... Args>
 inline void log_debug(
     const doodle::logger_ptr& in_logger, fmt::format_string<Args...> in_fmt, Args&&... in_args,
-    ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+    ::boost::source_location const& in_loc = std::source_location::current()
 ) {
   in_logger->log(
       spdlog::source_loc{in_loc.file_name(), static_cast<std::int32_t>(in_loc.line()), in_loc.function_name()},
