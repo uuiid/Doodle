@@ -163,6 +163,9 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
 
 void fbx_node_cam::build_data() {
   camera_ = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
+  node->SetNodeAttribute(camera_);
+  build_node_transform(dag_path);
+
   MFnCamera l_fn_cam{dag_path};
   camera_->ProjectionType.Set(l_fn_cam.isOrtho() ? FbxCamera::eOrthogonal : FbxCamera::ePerspective);
   std::int32_t l_width{}, l_height{};
@@ -190,8 +193,7 @@ void fbx_node_cam::build_data() {
     auto l_p = l_fn_cam.centerOfInterestPoint();
     camera_->InterestPosition.Set({l_p.x, l_p.y, l_p.z});
   }
-  node->SetNodeAttribute(camera_);
-  build_node_transform(dag_path);
+
   // 相机的缩放强制设置为1
   node->LclScaling.Set({1.0, 1.0, 1.0});
 }
@@ -1078,6 +1080,7 @@ fbx_write::fbx_write() {
   scene_->SetSceneInfo(l_doc_info);
   scene_->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::cm);
   scene_->GetGlobalSettings().SetTimeMode(fbx_write_ns::fbx_node::maya_to_fbx_time(MTime::uiUnit()));
+  scene_->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
 
   auto* anim_stack = FbxAnimStack::Create(scene_, "anim_stack");
   auto* anim_layer = FbxAnimLayer::Create(scene_, "anim_layer");
