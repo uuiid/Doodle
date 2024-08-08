@@ -164,6 +164,7 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
 void fbx_node_cam::build_data() {
   camera_ = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
   node->SetNodeAttribute(camera_);
+  node->PostRotation.Set({0, -90, 0});
   build_node_transform(dag_path);
 
   MFnCamera l_fn_cam{dag_path};
@@ -1081,6 +1082,7 @@ fbx_write::fbx_write() {
   scene_->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::cm);
   scene_->GetGlobalSettings().SetTimeMode(fbx_write_ns::fbx_node::maya_to_fbx_time(MTime::uiUnit()));
   scene_->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
+  scene_->GetGlobalSettings().SetOriginalUpAxis(FbxAxisSystem::MayaYUp);
 
   auto* anim_stack = FbxAnimStack::Create(scene_, "anim_stack");
   auto* anim_layer = FbxAnimLayer::Create(scene_, "anim_layer");
