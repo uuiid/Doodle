@@ -133,8 +133,8 @@ void cloth_sim::sim() {
   try {
     maya_file_io::save_file(k_save_file);
     DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
-  } catch (const maya_error& error) {
-    DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
+  } catch (const std::runtime_error& error) {
+    DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error.what());
   }
   const MTime k_end_time = MAnimControl::maxTime();
   for (auto&& i = t_post_time_; i <= k_end_time; ++i) {

@@ -48,21 +48,3 @@ class TemplateAction : public MPxCommand {
 
 }  // namespace doodle
 
-/**
- *
- */
-
-namespace fmt {
-/**
- * @brief 格式化和maya异常
- *
- */
-template <>
-struct formatter<::doodle::maya_plug::maya_error> : formatter<string_view> {
-  template <typename FormatContext>
-  auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-    return formatter<string_view>::format(boost::diagnostic_information(in_), ctx);
-  }
-};
-
-}  // namespace fmt

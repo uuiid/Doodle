@@ -390,7 +390,7 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
   auto l_size_y = get_plug(dag_path.node(), "scaleY").asDouble();
   auto l_size_z = get_plug(dag_path.node(), "scaleZ").asDouble();
   if (l_size_x == 0 && l_size_y == 0 && l_size_z == 0) {
-    extra_data_.logger_->error("{} 缩放为 0", dag_path);
+    default_logger_raw()->error("{} 缩放为 0", dag_path);
     throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
   }
   // size x
@@ -1229,44 +1229,6 @@ std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vecto
   }
   return l_objs;
 }
-
-// void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end) {
-//   path_            = in_path;
-//   auto* anim_stack = scene_->GetCurrentAnimationStack();
-//   FbxTime l_fbx_begin{};
-//   l_fbx_begin.SetFrame(in_begin.value(), fbx_write_ns::fbx_node::maya_to_fbx_time(in_begin.unit()));
-//   anim_stack->LocalStart = l_fbx_begin;
-//   FbxTime l_fbx_end{};
-//   l_fbx_end.SetFrame(in_end.value() + 1, fbx_write_ns::fbx_node::maya_to_fbx_time(in_end.unit()));
-//   anim_stack->LocalStop = l_fbx_end;
-
-//   MAnimControl::setCurrentTime(find_begin_anim_time());
-
-//   init();
-//   //  build_tree(in_vector);
-//   return;
-//   try {
-//     build_data();
-//   } catch (const maya_error& in_error) {
-//     auto l_str = boost::diagnostic_information(in_error);
-//     MGlobal::displayError(conv::to_ms(l_str));
-//     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
-//     return;
-//   } catch (const doodle_error& in_error) {
-//     auto l_str = boost::diagnostic_information(in_error);
-//     MGlobal::displayError(conv::to_ms(l_str));
-//     log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
-//     return;
-//   }
-
-//   if (export_anim_) {
-//     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
-//       MAnimControl::setCurrentTime(l_time);
-//       build_animation(l_time);
-//     }
-//   }
-//   logger_->flush();
-// }
 
 void fbx_write::init() { tree_ = {std::make_shared<fbx_node_transform_t>(MDagPath{}, scene_->GetRootNode())}; }
 
