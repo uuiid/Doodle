@@ -201,7 +201,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   boost::system::error_code l_code{};
   l_response.body().open(l_log_path.string().c_str(), boost::beast::file_mode::scan, l_code);
   if (l_code) {
-    co_return in_handle->make_error_code_msg(l_code.value(), l_code.what());
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_code.what(),l_code.value());
   }
   l_response.prepare_payload();
   co_return std::move(l_response);

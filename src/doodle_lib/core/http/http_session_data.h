@@ -51,7 +51,7 @@ class session_data {
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
   ) {
-    make_error_code_msg(in_status, ec.what() + in_str);
+    return make_error_code_msg(in_status, ec.what() + in_str);
   }
 
   boost::beast::http::message_generator make_error_code_msg(
