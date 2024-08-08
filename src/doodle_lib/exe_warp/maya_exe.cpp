@@ -125,7 +125,8 @@ FSys::path find_maya_path() {
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
     std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 ) {
-  auto l_g                 = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
+  auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
+  in_logger->warn("开始运行maya");
   auto [l_e1, l_maya_path] = find_maya_path_impl();
   if (l_e1) {
     in_logger->error("查找Maya路径失败: {}", l_e1.message());
