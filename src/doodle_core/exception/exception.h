@@ -26,6 +26,8 @@ enum class maya_error_t : std::int32_t {
   camera_name_error = 2,
   // 骨骼缩放为 0 错误
   bone_scale_error  = 3,
+  // 相机纵横比错误
+  camera_aspect_error = 4,
 };
 [[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(maya_error_t e);
 

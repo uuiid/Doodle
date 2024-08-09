@@ -7,6 +7,7 @@
 #include <doodle_core/exception/exception.h>
 
 #include <boost/lambda2.hpp>
+#include <boost/math/special_functions/relative_difference.hpp>
 
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_conv_str.h>
@@ -45,10 +46,25 @@
 #include <maya/MTime.h>
 #include <maya/MTransformationMatrix.h>
 #include <maya/MVector.h>
+#include <numbers>
 #include <treehh/tree.hh>
-
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
+
+inline std::double_t radians_to_degrees(const std::double_t in_radians) {
+  MAngle l_angle{};
+  l_angle.setUnit(MAngle::kRadians);
+  l_angle.setValue(in_radians);
+  return l_angle.asDegrees();
+}
+
+inline std::double_t degrees_to_radians(const std::double_t in_degrees) {
+  MAngle l_angle{};
+  l_angle.setUnit(MAngle::kDegrees);
+  l_angle.setValue(in_degrees);
+  return l_angle.asRadians();
+}
+
 struct skin_guard {
   MObject skin_{};
 
@@ -164,7 +180,32 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
 void fbx_node_cam::build_data() {
   camera_ = FbxCamera::Create(node->GetScene(), get_node_name(dag_path).c_str());
   node->SetNodeAttribute(camera_);
-  node->PostRotation.Set({0, -90, 0});
+
+  MFnTransform const l_transform{dag_path};
+  MStatus l_status{};
+  {
+    const auto l_pose_quaternion = l_transform.rotateOrientation(MSpace::Space::kTransform, &l_status);
+    auto l_x_rot                 = l_pose_quaternion.asEulerRotation().x + (std::numbers::pi / 2);  // 弧度表示
+    auto l_axi                   = MVector{0, std::sin(l_x_rot), std::cos(l_x_rot)};
+    default_logger_raw()->info("axi {}", l_axi);
+    MQuaternion l_rot{degrees_to_radians(90), l_axi};
+    // l_rot *= l_rot2;
+    if (node->PostRotation.GetFlag(FbxPropertyFlags::EFlags::eNotSavable))
+      node->PostRotation.ModifyFlag(FbxPropertyFlags::EFlags::eNotSavable, false);
+    // 旋转 -90 度, 使用弧度输入
+    auto l_tmp_rot    = (l_pose_quaternion * l_rot).asEulerRotation();
+    node->Freeze.Set(true);
+    // node->PreRotation.Set(
+    //     {-radians_to_degrees(l_tmp_rot.x), -radians_to_degrees(l_tmp_rot.y), radians_to_degrees(l_tmp_rot.z)}
+    // );
+    node->PostRotation.Set(
+        {radians_to_degrees(l_tmp_rot.x), radians_to_degrees(l_tmp_rot.y), radians_to_degrees(l_tmp_rot.z)}
+    );
+    // node->SetPostRotation(
+    //     FbxNode::EPivotSet::eSourcePivot,
+    //     {radians_to_degrees(l_tmp_rot.x), radians_to_degrees(l_tmp_rot.y), radians_to_degrees(l_tmp_rot.z)}
+    // );
+  }
   build_node_transform(dag_path);
 
   MFnCamera l_fn_cam{dag_path};
@@ -177,6 +218,11 @@ void fbx_node_cam::build_data() {
   camera_->SetApertureWidth(l_fn_cam.horizontalFilmAperture());
   camera_->SetApertureHeight(l_fn_cam.verticalFilmAperture());
   camera_->SetApertureMode(FbxCamera::eFocalLength);
+
+  if (boost::math::relative_difference(l_fn_cam.horizontalFilmAperture() / l_fn_cam.verticalFilmAperture(), 1.78) >
+      0.001) {
+    throw_error(::doodle::maya_enum::maya_error_t::camera_aspect_error);
+  }
 
   camera_->FocalLength.Set(l_fn_cam.focalLength());
   camera_->FocusDistance.Set(l_fn_cam.focusDistance());
