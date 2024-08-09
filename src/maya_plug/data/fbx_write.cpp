@@ -184,27 +184,18 @@ void fbx_node_cam::build_data() {
   MFnTransform const l_transform{dag_path};
   MStatus l_status{};
   {
-    const auto l_pose_quaternion = l_transform.rotateOrientation(MSpace::Space::kTransform, &l_status);
-    auto l_x_rot                 = l_pose_quaternion.asEulerRotation().x + (std::numbers::pi / 2);  // 弧度表示
-    auto l_axi                   = MVector{0, std::sin(l_x_rot), std::cos(l_x_rot)};
-    default_logger_raw()->info("axi {}", l_axi);
-    MQuaternion l_rot{degrees_to_radians(90), l_axi};
-    // l_rot *= l_rot2;
-    if (node->PostRotation.GetFlag(FbxPropertyFlags::EFlags::eNotSavable))
-      node->PostRotation.ModifyFlag(FbxPropertyFlags::EFlags::eNotSavable, false);
-    // 旋转 -90 度, 使用弧度输入
-    auto l_tmp_rot    = (l_pose_quaternion * l_rot).asEulerRotation();
+    const auto l_pose_quaternion = l_transform.transformation(&l_status).rotationOrientation();
+    maya_chick(l_status);
+    // auto l_x_rot                 = l_pose_quaternion.asEulerRotation().x + std::numbers::pi / 2;  // 弧度表示
+    // auto l_axi                   = MVector{0, std::sin(l_x_rot), std::cos(l_x_rot)};
+    // default_logger_raw()->info("axi {}", l_axi);
+    MQuaternion l_rot{std::numbers::pi / 2, {0, -1, 0}};
+    auto l_tmp_rot = (l_pose_quaternion.inverse() * l_rot).asEulerRotation();
+
     node->Freeze.Set(true);
-    // node->PreRotation.Set(
-    //     {-radians_to_degrees(l_tmp_rot.x), -radians_to_degrees(l_tmp_rot.y), radians_to_degrees(l_tmp_rot.z)}
-    // );
     node->PostRotation.Set(
         {radians_to_degrees(l_tmp_rot.x), radians_to_degrees(l_tmp_rot.y), radians_to_degrees(l_tmp_rot.z)}
     );
-    // node->SetPostRotation(
-    //     FbxNode::EPivotSet::eSourcePivot,
-    //     {radians_to_degrees(l_tmp_rot.x), radians_to_degrees(l_tmp_rot.y), radians_to_degrees(l_tmp_rot.z)}
-    // );
   }
   build_node_transform(dag_path);
 
@@ -230,14 +221,14 @@ void fbx_node_cam::build_data() {
     camera_->FocusDistance.ModifyFlag(FbxPropertyFlags::EFlags::eAnimatable, true);
   camera_->FilmAspectRatio.Set(l_fn_cam.aspectRatio());
   camera_->Position.Set(camera_->EvaluatePosition());
-  // {
-  //   auto l_up = l_fn_cam.upDirection();
-  //   if (camera_->UpVector.GetFlag(FbxPropertyFlags::EFlags::eNotSavable))
-  //
-  //   camera_->UpVector.Set({l_up.x, l_up.y, l_up.z});
-  // }
   {
-    auto l_p = l_fn_cam.centerOfInterestPoint();
+    auto l_up = l_fn_cam.upDirection(MSpace::Space::kWorld);
+    if (!camera_->UpVector.GetFlag(FbxPropertyFlags::EFlags::eNotSavable))
+      camera_->UpVector.ModifyFlag(FbxPropertyFlags::EFlags::eNotSavable, false);
+    camera_->UpVector.Set({l_up.x, l_up.y, l_up.z});
+  }
+  {
+    auto l_p = l_fn_cam.centerOfInterestPoint(MSpace::kWorld);
     camera_->InterestPosition.Set({l_p.x, l_p.y, l_p.z});
   }
 
