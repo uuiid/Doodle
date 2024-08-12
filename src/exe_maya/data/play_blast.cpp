@@ -11,6 +11,8 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/image_to_movie.h>
 
+#include <doodle_lib/long_task/image_to_move.h>
+
 #include "boost/numeric/conversion/cast.hpp"
 
 #include "maya_plug/main/maya_plug_fwd.h"
@@ -117,11 +119,30 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   p_uuid = core_set::get_set().get_uuid_str();
   MStatus k_s{};
 
-
-
-  auto  k_cam = maya_camera::conjecture();
+  auto k_cam = maya_camera::conjecture();
   k_cam.set_render_cam();
   k_cam.set_play_attr();
+  // 设置一些固定属性
+  movie::image_attr l_image{};
+  l_image.gamma_t = 0.9;
+  /// \brief 相机名称
+  l_image.watermarks_attr.emplace_back(
+      k_cam.get_transform_name(), 0.1, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
+  );
+
+  /// \brief 绘制摄像机avo
+  l_image.watermarks_attr.emplace_back(
+      fmt::format("FOV: {:.3f}", k_cam.focalLength()), 0.91, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
+  );
+  /// \brief 当前时间节点
+  l_image.watermarks_attr.emplace_back(
+      fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())), 0.1, 0.91,
+      movie::image_watermark::rgba_t{25, 220, 2}
+  );
+  /// \brief 制作人姓名
+  l_image.watermarks_attr.emplace_back(
+      g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.5, 0.91, movie::image_watermark::rgba_t{25, 220, 2}
+  );
 
   //  k_s = MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
   //  colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
@@ -129,6 +150,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   //
   //  CHECK_MSTATUS_AND_RETURN_IT(k_s);
   //  MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
+  std::vector<movie::image_attr> l_handle_list{};
 
   {
     MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
@@ -158,6 +180,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     //    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTargetFromScreen(k_play_blast_tex)};
 
     DOODLE_LOG_INFO("set output camera: {}", l_cam_path);
+    // 开始排屏, 并且开始将结果属性写入
+    /// \brief 当前帧和总帧数
+    auto k_len = in_end - in_start + 1;
     for (MTime i{in_start}; i <= in_end; ++i) {
       MAnimControl::setCurrentTime(i);
 
@@ -193,6 +218,17 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
         MString const k_path{d_str{k_p.generic_string()}};
         l_tex_manager->saveTexture(l_tex.get(), k_path);
+
+        // 开始设置属性
+        movie::image_attr l_image_tmp = l_image;
+        l_image_tmp.path_attr         = k_p;
+        l_image_tmp.gamma_t           = 0.9;
+        l_image_tmp.num_attr          = i.value();
+        l_image_tmp.watermarks_attr.emplace_back(
+            fmt::format("{}/{}", i.value(), boost::numeric_cast<std::int32_t>(k_len.value())), 0.5, 0.1,
+            movie::image_watermark::rgba_t{25, 220, 2}
+        );
+        l_handle_list.push_back(std::move(l_image_tmp));
       }
     }
     //    renderer->removeNotification(p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic);
@@ -202,50 +238,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     renderer->unsetOutputTargetOverrideSize();
   }
 
+  auto l_out_path = detail::create_out_path(get_out_path(), p_eps, p_shot, nullptr);
+  detail::create_move(l_out_path, spdlog::default_logger(), l_handle_list);
   auto k_f = get_file_dir();
-
-  std::vector<movie::image_attr> l_handle_list{};
-  std::double_t k_frame{0};
-  for (auto& l_path : FSys::directory_iterator{k_f}) {
-    movie::image_attr k_image{};
-    k_image.path_attr = l_path;
-    k_image.gamma_t   = 0.9;
-    /// \brief 相机名称
-    k_image.watermarks_attr.emplace_back(
-        k_cam.get_transform_name(), 0.1, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
-    );
-    /// \brief 当前帧和总帧数
-    auto k_len = in_end - in_start + 1;
-    k_image.watermarks_attr.emplace_back(
-        fmt::format("{}/{}", in_start.value() + k_frame, boost::numeric_cast<std::int32_t>(k_len.value())), 0.5, 0.1,
-        movie::image_watermark::rgba_t{25, 220, 2}
-    );
-    ++k_frame;
-    /// \brief 绘制摄像机avo
-    k_image.watermarks_attr.emplace_back(
-        fmt::format("FOV: {:.3f}", k_cam.focalLength()), 0.91, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
-    );
-    /// \brief 当前时间节点
-    k_image.watermarks_attr.emplace_back(
-        fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())), 0.1, 0.91,
-        movie::image_watermark::rgba_t{25, 220, 2}
-    );
-    /// \brief 制作人姓名
-    k_image.watermarks_attr.emplace_back(
-        g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.5, 0.91, movie::image_watermark::rgba_t{25, 220, 2}
-    );
-    l_handle_list.push_back(std::move(k_image));
-  }
-  auto k_msg = entt::handle{*g_reg(), g_reg()->create()};
-  k_msg.emplace<process_message>("制作拍屏");
-  k_msg.emplace<image_to_move::element_type::out_file_path>(get_out_path());
-  k_msg.emplace<episodes>(p_eps);
-  k_msg.emplace<shot>(p_shot);
-
-  auto l_logger   = k_msg.get<process_message>().logger();
-  auto l_out_path = g_ctx().get<image_to_move>()->create_out_path(k_msg);
-
-  g_ctx().get<image_to_move>()->create_move(l_out_path, l_logger, l_handle_list);
   default_logger_raw()->log(log_loc(), spdlog::level::info, "完成视频合成 {} , 并删除图片 {}", l_out_path, k_f);
   try {
     FSys::remove_all(k_f);

@@ -119,12 +119,11 @@ boost::system::error_code create_move(
 ) {
   /// \brief 这里排序组件
   auto l_vector = in_vector;
-  movie::image_attr::extract_num(l_vector);
+  if (std::ranges::any_of(l_vector, [](const movie::image_attr& in_item) { return in_item.num_attr == 0; }))
+    movie::image_attr::extract_num(l_vector);
   std::sort(l_vector.begin(), l_vector.end());
   std::atomic_bool l_stop{};
   boost::system::error_code l_ec{};
-  // todo: 这里我们需要一个信号来停止
-
   in_logger->info("开始创建视频 {}", in_out_path);
   in_logger->info("获得图片路径 {}", l_vector.front().path_attr.parent_path());
 
