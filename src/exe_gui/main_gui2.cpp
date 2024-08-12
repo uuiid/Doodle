@@ -8,8 +8,10 @@
 #include <string>
 #include <tchar.h>
 #include <wil/com.h>
+#include <wil/cppwinrt.h>
 #include <windows.h>
-#include <wrl.h>
+#include <winrt/base.h>
+// #include <wrl.h>
 // <IncludeHeader>
 // include WebView2 header
 #include "WebView2.h"
@@ -35,6 +37,124 @@ static wil::com_ptr<ICoreWebView2Controller> webviewController;
 
 // Pointer to WebView window
 static wil::com_ptr<ICoreWebView2> webview;
+
+namespace doodle {
+
+class CoreWebView2CreateCoreWebView2ControllerCompletedHandler
+    : public winrt::implements<
+          CoreWebView2CreateCoreWebView2ControllerCompletedHandler,
+          ::ICoreWebView2CreateCoreWebView2ControllerCompletedHandler> {
+  HWND hwnd_;
+
+ public:
+  CoreWebView2CreateCoreWebView2ControllerCompletedHandler() = default;
+  explicit CoreWebView2CreateCoreWebView2ControllerCompletedHandler(HWND hwnd) : hwnd_(hwnd) {}
+  HRESULT STDMETHODCALLTYPE Invoke(HRESULT result, ICoreWebView2Controller* controller) {
+    if (controller != nullptr) {
+      webviewController = controller;
+      controller->get_CoreWebView2(&webview);
+    }
+
+    // Add a few settings for the webview
+    // The demo step is redundant since the values are the default settings
+    wil::com_ptr<ICoreWebView2Settings> settings;
+    webview->get_Settings(&settings);
+    settings->put_IsScriptEnabled(TRUE);
+    settings->put_AreDefaultScriptDialogsEnabled(TRUE);
+    settings->put_IsWebMessageEnabled(TRUE);
+
+    // Resize WebView to fit the bounds of the parent window
+    RECT bounds;
+    GetClientRect(hwnd_, &bounds);
+    controller->put_Bounds(bounds);
+
+    // Schedule an async task to navigate to Bing
+    webview->Navigate(L"http://127.0.0.1:5173/");
+
+    // <NavigationEvents>
+    // Step 4 - Navigation events
+    // register an ICoreWebView2NavigationStartingEventHandler to cancel any non-https navigation
+    EventRegistrationToken token;
+    // webview->add_NavigationStarting(
+    //     Callback<ICoreWebView2NavigationStartingEventHandler>(
+    //         [](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
+    //           wil::unique_cotaskmem_string uri;
+    //           args->get_Uri(&uri);
+    //           std::wstring source(uri.get());
+    //           if (source.substr(0, 5) != L"https") {
+    //             args->put_Cancel(true);
+    //           }
+    //           return S_OK;
+    //         }
+    //     ).Get(),
+    //     &token
+    // );
+    // </NavigationEvents>
+
+    // <Scripting>
+    // Step 5 - Scripting
+    // Schedule an async task to add initialization script that freezes the Object object
+    webview->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
+    // Schedule an async task to get the document URL
+    // webview->ExecuteScript(
+    //     L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+    //                                  [](HRESULT errorCode, LPCWSTR resultObjectAsJson) -> HRESULT {
+    //                                    LPCWSTR URL = resultObjectAsJson;
+    //                                    // doSomethingWithURL(URL);
+    //                                    return S_OK;
+    //                                  }
+    //                              ).Get()
+    // );
+    // </Scripting>
+
+    // <CommunicationHostWeb>
+    // Step 6 - Communication between host and web content
+    // Set an event handler for the host to return received message back to the web content
+    // webview->add_WebMessageReceived(
+    //     Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+    //         [](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
+    //           wil::unique_cotaskmem_string message;
+    //           args->TryGetWebMessageAsString(&message);
+    //           // processMessage(&message);
+    //           webview->PostWebMessageAsString(message.get());
+    //           return S_OK;
+    //         }
+    //     ).Get(),
+    //     &token
+    // );
+
+    // Schedule an async task to add initialization script that
+    // 1) Add an listener to print message from the host
+    // 2) Post document URL to the host
+    webview->AddScriptToExecuteOnDocumentCreated(
+        L"window.chrome.webview.addEventListener(\'message\', event => alert(event.data));"
+        L"window.chrome.webview.postMessage(window.document.URL);",
+        nullptr
+    );
+    // </CommunicationHostWeb>
+
+    return S_OK;
+  }
+};
+
+class CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
+    : public winrt::implements<
+          CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,
+          ::ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler> {
+  HWND hwnd_;
+
+ public:
+  CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler() = default;
+  explicit CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler(HWND hwnd) : hwnd_(hwnd) {}
+  HRESULT STDMETHODCALLTYPE Invoke(HRESULT result, ICoreWebView2Environment* environment) {
+    if (FAILED(result)) {
+      return result;
+    }
+    auto l_controller = winrt::make<CoreWebView2CreateCoreWebView2ControllerCompletedHandler>();
+    return environment->CreateCoreWebView2Controller(hwnd_, l_controller.get());
+  }
+};
+}  // namespace doodle
 
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
   WNDCLASSEX wcex;
@@ -90,106 +210,12 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In
   // <-- WebView2 sample code starts here -->
   // Step 3 - Create a single WebView within the parent window
   // Locate the browser and set up the environment for WebView
-  CreateCoreWebView2EnvironmentWithOptions(
-      nullptr, nullptr, nullptr,
-      Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-          [hWnd](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
-            // Create a CoreWebView2Controller and get the associated CoreWebView2 whose parent is the main window hWnd
-            env->CreateCoreWebView2Controller(
-                hWnd,
-                Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-                    [hWnd](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
-                      if (controller != nullptr) {
-                        webviewController = controller;
-                        webviewController->get_CoreWebView2(&webview);
-                      }
 
-                      // Add a few settings for the webview
-                      // The demo step is redundant since the values are the default settings
-                      wil::com_ptr<ICoreWebView2Settings> settings;
-                      webview->get_Settings(&settings);
-                      settings->put_IsScriptEnabled(TRUE);
-                      settings->put_AreDefaultScriptDialogsEnabled(TRUE);
-                      settings->put_IsWebMessageEnabled(TRUE);
-
-                      // Resize WebView to fit the bounds of the parent window
-                      RECT bounds;
-                      GetClientRect(hWnd, &bounds);
-                      webviewController->put_Bounds(bounds);
-
-                      // Schedule an async task to navigate to Bing
-                      webview->Navigate(L"http://127.0.0.1:5173/");
-
-                      // <NavigationEvents>
-                      // Step 4 - Navigation events
-                      // register an ICoreWebView2NavigationStartingEventHandler to cancel any non-https navigation
-                      EventRegistrationToken token;
-                      // webview->add_NavigationStarting(
-                      //     Callback<ICoreWebView2NavigationStartingEventHandler>(
-                      //         [](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
-                      //           wil::unique_cotaskmem_string uri;
-                      //           args->get_Uri(&uri);
-                      //           std::wstring source(uri.get());
-                      //           if (source.substr(0, 5) != L"https") {
-                      //             args->put_Cancel(true);
-                      //           }
-                      //           return S_OK;
-                      //         }
-                      //     ).Get(),
-                      //     &token
-                      // );
-                      // </NavigationEvents>
-
-                      // <Scripting>
-                      // Step 5 - Scripting
-                      // Schedule an async task to add initialization script that freezes the Object object
-                      webview->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
-                      // Schedule an async task to get the document URL
-                      webview->ExecuteScript(
-                          L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-                                                       [](HRESULT errorCode, LPCWSTR resultObjectAsJson) -> HRESULT {
-                                                         LPCWSTR URL = resultObjectAsJson;
-                                                         // doSomethingWithURL(URL);
-                                                         return S_OK;
-                                                       }
-                                                   ).Get()
-                      );
-                      // </Scripting>
-
-                      // <CommunicationHostWeb>
-                      // Step 6 - Communication between host and web content
-                      // Set an event handler for the host to return received message back to the web content
-                      webview->add_WebMessageReceived(
-                          Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-                              [](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
-                                wil::unique_cotaskmem_string message;
-                                args->TryGetWebMessageAsString(&message);
-                                // processMessage(&message);
-                                webview->PostWebMessageAsString(message.get());
-                                return S_OK;
-                              }
-                          ).Get(),
-                          &token
-                      );
-
-                      // Schedule an async task to add initialization script that
-                      // 1) Add an listener to print message from the host
-                      // 2) Post document URL to the host
-                      webview->AddScriptToExecuteOnDocumentCreated(
-                          L"window.chrome.webview.addEventListener(\'message\', event => alert(event.data));"
-                          L"window.chrome.webview.postMessage(window.document.URL);",
-                          nullptr
-                      );
-                      // </CommunicationHostWeb>
-
-                      return S_OK;
-                    }
-                ).Get()
-            );
-            return S_OK;
-          }
-      ).Get()
-  );
+  // CreateCoreWebView2EnvironmentWithOptions(
+  //      nullptr, nullptr, nullptr,createEnvironmentCompletedHandler);
+  auto l_createEnvironmentCompletedHandler =
+      winrt::make<doodle::CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(hWnd);
+  CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr, l_createEnvironmentCompletedHandler.get());
 
   // <-- WebView2 sample code ends here -->
 
