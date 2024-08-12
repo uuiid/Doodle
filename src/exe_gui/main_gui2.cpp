@@ -4,6 +4,7 @@
 
 // compile with: /D_UNICODE /DUNICODE /DWIN32 /D_WINDOWS /c
 
+#include <nlohmann/json.hpp>
 #include <stdlib.h>
 #include <string>
 #include <tchar.h>
@@ -14,6 +15,8 @@
 // #include <wrl.h>
 // <IncludeHeader>
 // include WebView2 header
+#include "doodle_lib/doodle_lib_fwd.h"
+
 #include "WebView2.h"
 // </IncludeHeader>
 
@@ -22,10 +25,10 @@ using namespace Microsoft::WRL;
 // Global variables
 
 // The main window class name.
-static TCHAR szWindowClass[] = _T("DesktopApp");
+static TCHAR szWindowClass[] = _T("DoodleDesktopApp");
 
 // The string that appears in the application's title bar.
-static TCHAR szTitle[]       = _T("WebView sample");
+static TCHAR szTitle[]       = _T("Doodle Web");
 
 HINSTANCE hInst;
 
@@ -40,6 +43,42 @@ static wil::com_ptr<ICoreWebView2> webview;
 
 namespace doodle {
 
+class FilePath_CoreWebView2WebMessageReceivedEventHandler
+    : public winrt::implements<
+          FilePath_CoreWebView2WebMessageReceivedEventHandler, ::ICoreWebView2WebMessageReceivedEventHandler> {
+  wil::com_ptr<ICoreWebView2> webview_view2_;
+
+ public:
+  FilePath_CoreWebView2WebMessageReceivedEventHandler() = default;
+  explicit FilePath_CoreWebView2WebMessageReceivedEventHandler(ICoreWebView2* in_view2) : webview_view2_(in_view2) {}
+
+  HRESULT STDMETHODCALLTYPE Invoke(
+      /* [in] */ ICoreWebView2* sender,
+      /* [in] */ ICoreWebView2WebMessageReceivedEventArgs* args
+  ) override {
+    wil::com_ptr<ICoreWebView2WebMessageReceivedEventArgs2> args2 =
+        wil::com_ptr<ICoreWebView2WebMessageReceivedEventArgs>(args).query<ICoreWebView2WebMessageReceivedEventArgs2>();
+    wil::com_ptr<ICoreWebView2ObjectCollectionView> objectsCollection;
+    args2->get_AdditionalObjects(&objectsCollection);
+    unsigned int length;
+    objectsCollection->get_Count(&length);
+
+    // Array of file paths to be sent back to the webview as JSON
+    std::vector<FSys::path> l_files{};
+    for (unsigned int i = 0; i < length; i++) {
+      wil::com_ptr<IUnknown> object;
+      objectsCollection->GetValueAtIndex(i, &object);
+      if (wil::com_ptr<ICoreWebView2File> file = object.query<ICoreWebView2File>(); file) {
+        // Add the file to message to be sent back to webview
+        wil::unique_cotaskmem_string path;
+        file->get_Path(&path);
+        l_files.emplace_back(path.get());
+      }
+    }
+    return webview_view2_->PostWebMessageAsJson(conv::utf_to_utf<wchar_t>(nlohmann::json{l_files}.dump()).c_str());
+  }
+};
+
 class CoreWebView2CreateCoreWebView2ControllerCompletedHandler
     : public winrt::implements<
           CoreWebView2CreateCoreWebView2ControllerCompletedHandler,
@@ -49,7 +88,7 @@ class CoreWebView2CreateCoreWebView2ControllerCompletedHandler
  public:
   CoreWebView2CreateCoreWebView2ControllerCompletedHandler() = default;
   explicit CoreWebView2CreateCoreWebView2ControllerCompletedHandler(HWND hwnd) : hwnd_(hwnd) {}
-  HRESULT STDMETHODCALLTYPE Invoke(HRESULT result, ICoreWebView2Controller* controller) {
+  HRESULT STDMETHODCALLTYPE Invoke(HRESULT result, ICoreWebView2Controller* controller) override {
     if (controller != nullptr) {
       webviewController = controller;
       controller->get_CoreWebView2(&webview);
@@ -75,6 +114,9 @@ class CoreWebView2CreateCoreWebView2ControllerCompletedHandler
     // Step 4 - Navigation events
     // register an ICoreWebView2NavigationStartingEventHandler to cancel any non-https navigation
     EventRegistrationToken token;
+    webview->add_WebMessageReceived(
+        winrt::make<FilePath_CoreWebView2WebMessageReceivedEventHandler>(webview.get()).get(), &token
+    );
     // webview->add_NavigationStarting(
     //     Callback<ICoreWebView2NavigationStartingEventHandler>(
     //         [](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
@@ -146,7 +188,7 @@ class CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
  public:
   CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler() = default;
   explicit CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler(HWND hwnd) : hwnd_(hwnd) {}
-  HRESULT STDMETHODCALLTYPE Invoke(HRESULT result, ICoreWebView2Environment* environment) {
+  HRESULT STDMETHODCALLTYPE Invoke(HRESULT result, ICoreWebView2Environment* environment) override {
     if (FAILED(result)) {
       return result;
     }
