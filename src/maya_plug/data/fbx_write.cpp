@@ -211,7 +211,7 @@ void fbx_node_cam::build_data() {
   camera_->SetApertureMode(FbxCamera::eFocalLength);
 
   if (boost::math::relative_difference(l_fn_cam.horizontalFilmAperture() / l_fn_cam.verticalFilmAperture(), 1.78) >
-      0.001) {
+      0.005) {
     throw_error(::doodle::maya_enum::maya_error_t::camera_aspect_error);
   }
 
