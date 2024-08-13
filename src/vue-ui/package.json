@@ -26,7 +26,7 @@
   "packageManager": "pnpm@9.6.0",
   "main": "out/main/index.cjs",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "electron-vite dev ",
     "clean": "rimraf ./node_modules/.vite",
     "build": "electron-vite build",
     "build:unpack": "npm run build && electron-builder --dir",

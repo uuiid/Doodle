@@ -19,9 +19,9 @@
 
 #include "WebView2.h"
 // </IncludeHeader>
+#include <webview.h>
 
-using namespace Microsoft::WRL;
-
+namespace doodle {
 // Global variables
 
 // The main window class name.
@@ -40,8 +40,6 @@ static wil::com_ptr<ICoreWebView2Controller> webviewController;
 
 // Pointer to WebView window
 static wil::com_ptr<ICoreWebView2> webview;
-
-namespace doodle {
 
 class FilePath_CoreWebView2WebMessageReceivedEventHandler
     : public winrt::implements<
@@ -199,100 +197,26 @@ class CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
 }  // namespace doodle
 
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
-  WNDCLASSEX wcex;
+  try {
+    long count = 0;
 
-  wcex.cbSize        = sizeof(WNDCLASSEX);
-  wcex.style         = CS_HREDRAW | CS_VREDRAW;
-  wcex.lpfnWndProc   = WndProc;
-  wcex.cbClsExtra    = 0;
-  wcex.cbWndExtra    = 0;
-  wcex.hInstance     = hInstance;
-  wcex.hIcon         = LoadIcon(hInstance, IDI_APPLICATION);
-  wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
-  wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-  wcex.lpszMenuName  = NULL;
-  wcex.lpszClassName = szWindowClass;
-  wcex.hIconSm       = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+    webview::webview w(true, nullptr);
+    w.set_title("doodle web");
+    w.set_size(1200, 900, WS_OVERLAPPEDWINDOW);
 
-  if (!RegisterClassEx(&wcex)) {
-    MessageBox(NULL, _T("Call to RegisterClassEx failed!"), _T("Windows Desktop Guided Tour"), NULL);
+    // A binding that counts up or down and immediately returns the new value.
+    w.bind("get_file_path", [&](const std::string& req) -> std::string {
+      std::cout << req << std::endl;
 
+      return "test";
+    });
+    w.navigate("http://127.0.0.1:5173/");
+    w.dispatch();
+
+    w.run();
+  } catch (...) {
+    std::cerr << boost::current_exception_diagnostic_information() << std::endl;
     return 1;
-  }
-
-  // Store instance handle in our global variable
-  hInst     = hInstance;
-
-  // The parameters to CreateWindow explained:
-  // szWindowClass: the name of the application
-  // szTitle: the text that appears in the title bar
-  // WS_OVERLAPPEDWINDOW: the type of window to create
-  // CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-  // 500, 100: initial size (width, length)
-  // NULL: the parent of this window
-  // NULL: this application does not have a menu bar
-  // hInstance: the first parameter from WinMain
-  // NULL: not used in this application
-  HWND hWnd = CreateWindow(
-      szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1200, 900, NULL, NULL, hInstance, NULL
-  );
-
-  if (!hWnd) {
-    MessageBox(NULL, _T("Call to CreateWindow failed!"), _T("Windows Desktop Guided Tour"), NULL);
-
-    return 1;
-  }
-
-  // The parameters to ShowWindow explained:
-  // hWnd: the value returned from CreateWindow
-  // nCmdShow: the fourth parameter from WinMain
-  ShowWindow(hWnd, nCmdShow);
-  UpdateWindow(hWnd);
-
-  // <-- WebView2 sample code starts here -->
-  // Step 3 - Create a single WebView within the parent window
-  // Locate the browser and set up the environment for WebView
-
-  // CreateCoreWebView2EnvironmentWithOptions(
-  //      nullptr, nullptr, nullptr,createEnvironmentCompletedHandler);
-  auto l_createEnvironmentCompletedHandler =
-      winrt::make<doodle::CoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(hWnd);
-  CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr, l_createEnvironmentCompletedHandler.get());
-
-  // <-- WebView2 sample code ends here -->
-
-  // Main message loop:
-  MSG msg;
-  while (GetMessage(&msg, NULL, 0, 0)) {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-
-  return (int)msg.wParam;
-}
-
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_DESTROY  - post a quit message and return
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-  TCHAR greeting[] = _T("Hello, Windows desktop!");
-
-  switch (message) {
-    case WM_SIZE:
-      if (webviewController != nullptr) {
-        RECT bounds;
-        GetClientRect(hWnd, &bounds);
-        webviewController->put_Bounds(bounds);
-      };
-      break;
-    case WM_DESTROY:
-      PostQuitMessage(0);
-      break;
-    default:
-      return DefWindowProc(hWnd, message, wParam, lParam);
-      break;
   }
 
   return 0;

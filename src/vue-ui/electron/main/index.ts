@@ -32,36 +32,6 @@ if (!app.requestSingleInstanceLock()) {
 let mainWindow = null
 
 function createWindow(): void {
-
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    if((details.url.startsWith('https://192.168') || details.url.startsWith('https://127.0')) && details.responseHeaders && details.responseHeaders['Set-Cookie']){
-      for (let i = 0; i < details.responseHeaders['Set-Cookie'].length; i++)
-        details.responseHeaders['Set-Cookie'][i] += "; SameSite=None; Secure";
-    }
-    callback({ responseHeaders: details.responseHeaders });
-  })
-
-  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    // set custom User-Agent in requestHeaders
-    details.requestHeaders['User-Agent'] = `Kitsu publisher ${app.getVersion()}`
-    // set custom Authorization header with access_token
-    try {
-      const url = new URL(store.get('login.server'))
-      if (
-        details.url.startsWith(String(url)) &&
-        store.get('login.access_token') !== ''
-      ) {
-        details.requestHeaders['Authorization'] = `Bearer ${store.get(
-          'login.access_token'
-        )}`
-      }
-    } catch (error) {
-      // do nothing
-    }
-
-    callback({ cancel: false, requestHeaders: details.requestHeaders })
-  })
-
   let mainWindowState = windowStateKeeper({
     defaultWidth: 1024,
     defaultHeight: 768
@@ -104,21 +74,8 @@ function createWindow(): void {
 
 
   //open the pages different from the Kitsu server in the default browser
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      const url_server = new URL(store.get('login.server'))
-      if (
-        url.startsWith(String(url_server)) &&
-        store.get('login.access_token') !== ''
-      ) {
-        return { action: 'allow' }
-      }
-    } catch (error) {
-      // do nothing
-    }
-    open(url)
-    return { action: 'deny' }
-  })
+  // mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  // })
 
   /**
    * If you install `show: true` then it can cause issues when trying to close the window.
@@ -155,62 +112,6 @@ function createWindow(): void {
       }
     })
   }
-
-
-  ipcMain.handle('dark-theme:toggle', () => {
-    nativeTheme.themeSource = store.get('main.isDarkTheme') ? 'dark' : 'light'
-    return store.get('main.isDarkTheme')
-  })
-
-
-  ipcMain.handle('launch-command:post-exports', (event, command, variables) => {
-    if (command === '') {
-      console.log('No command to launch before importing to Kitsu Publisher.')
-      return false
-    } else {
-      command = formatUnicorn(command, variables)
-      const commandOutput = { output: '', command: command, statusCode: 0 }
-      const commandSpawn = spawn(command, [], {
-        shell: true,
-        // encoding: 'buffer',
-        windowsHide: true,
-        env: { ...process.env, ...variables },
-        timeout: 60000 // TODO : make the timeout configurable
-      })
-      console.log(
-        `Launch command "${command}" before importing to Kitsu Publisher.`
-      )
-
-      const manageOutputData = (data, isStdout) => {
-        var output
-        if (process.platform === 'win32' && codePage !== undefined) {
-          // get Windows code page
-          output = iconv.decode(data, `cp${codePage}`)
-        } else {
-          output = iconv.decode(data, 'utf8')
-        }
-        commandOutput.output += isStdout ? output : colors.red(output)
-      }
-
-      commandSpawn.stdout.on('data', (data) => {
-        manageOutputData(data, true)
-      })
-
-      commandSpawn.stderr.on('data', (data) => {
-        manageOutputData(data, false)
-      })
-
-      commandSpawn.on('close', (statusCode) => {
-        console.log('Output :')
-        console.log(commandOutput.output)
-        console.log(`Command exited with status code ${statusCode}.`)
-        commandOutput.statusCode = statusCode
-        mainWindow.webContents.send('commandOutput', commandOutput)
-      })
-
-      return true
-    }
-  })
 
   ipcMain.handle('open-dialog:show', (event, options) => {
     return dialog.showOpenDialogSync(mainWindow, options)

@@ -1,8 +1,10 @@
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import { defineConfig, externalizeDepsPlugin, defineViteConfig } from 'electron-vite';
 import { resolve, join } from 'path';
 import vue from '@vitejs/plugin-vue';
 import { builtinModules } from 'module';
-import vuetify from 'vite-plugin-vuetify';
+import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
+import { checker } from 'vite-plugin-checker';
+import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig(({ command, mode }) => {
   const PACKAGE_ROOT = __dirname;
@@ -41,31 +43,56 @@ export default defineConfig(({ command, mode }) => {
         },
       },
     },
-    renderer: {
-      plugins: [vue(), vuetify({ autoImport: true })],
-      root: '.',
-      build: {
-        sourcemap: true,
-        rollupOptions: {
-          input: {
-            index: resolve(__dirname, 'index.html'),
+    renderer: defineViteConfig(
+      ({ command, mode }) => {
+        return {
+          server: {
+            host: true,
           },
-        },
-      },
-      resolve: {
-        vue: 'vue/dist/vue.esm.js',
-        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
-        alias: {
-          '@': join(PACKAGE_ROOT, 'src') + '/',
-        },
-      },
-      css: {
-        preprocessorOptions: {
-          scss: {
-            additionalData: ``,
+          plugins: [vue({
+            template: {
+              // https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vite-plugin#image-loading
+              transformAssetUrls,
+            },
+          }), vuetify({
+            autoImport: true,
+            styles: { configFile: 'src/styles/settings.scss' },
+          }),
+            // vite-plugin-checker
+            // https://github.com/fi3ework/vite-plugin-checker
+            checker({
+              typescript: true,
+              // vueTsc: true,
+              // eslint: { lintCommand: 'eslint' },
+              // stylelint: { lintCommand: 'stylelint' },
+            })],
+          root: '.',
+          build: {
+            sourcemap: true,
+            rollupOptions: {
+              input: {
+                index: resolve(__dirname, 'index.html'),
+              },
+            },
           },
-        },
+          resolve: {
+            // https://vitejs.dev/config/shared-options.html#resolve-alias
+            // vue: 'vue/dist/vue.esm.js',
+            extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+            alias: {
+              '@': fileURLToPath(new URL('./src', import.meta.url)),
+              '~': fileURLToPath(new URL('./node_modules', import.meta.url)),
+            },
+          },
+          css: {
+            preprocessorOptions: {
+              scss: {
+                additionalData: ``,
+              },
+            },
+          },
+        };
       },
-    },
+    ),
   };
 });

@@ -44,12 +44,12 @@ const router: Router = createRouter({
     {
       path: '/ModelView',
       name: 'ModelView',
-      component: async () => await import('@/views/ModelView.vue'),
+      component: () => import('@/views/ModelView.vue'),
     },
     {
       path: '/BatchExportView',
       name: 'BatchExportView',
-      component: async () => await import('@/views/BatchExportView.vue'),
+      component: () => import('@/views/BatchExportView.vue'),
     },
     {
       path: '/about',
@@ -57,7 +57,7 @@ const router: Router = createRouter({
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: async () => await import('@/views/AboutView.vue'),
+      component: () => import('@/views/AboutView.vue'),
     },
   ],
 });
@@ -68,7 +68,7 @@ router.beforeEach(
   async (
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
-    next: NavigationGuardNext
+    next: NavigationGuardNext,
   ) => {
     const globalStore = useGlobal();
     // Show Loading
@@ -78,7 +78,7 @@ router.beforeEach(
     // Hide snack bar
     globalStore.setMessage('');
     next();
-  }
+  },
 );
 
 // Global After Hooks
