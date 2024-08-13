@@ -187,7 +187,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateEffectSequence()
     }
     //------------
     const FFrameRate L_Rate{ 25, 1 };
-    FFrameNumber Offset{ 0 };
+    FFrameNumber Offset{ 50 };
     L_Start = FFrameNumber(JsonObject->GetIntegerField(TEXT("begin_time")));
     L_End = FFrameNumber(JsonObject->GetIntegerField(TEXT("end_time")));
     //--------------------------
@@ -268,7 +268,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
     }
     //------------
     const FFrameRate L_Rate{ 25, 1 };
-    FFrameNumber Offset{ 0 };
+    FFrameNumber Offset{ 50 };
     L_Start = FFrameNumber(JsonObject->GetIntegerField(TEXT("begin_time")));
     L_End = FFrameNumber(JsonObject->GetIntegerField(TEXT("end_time")));
     //--------------------------
@@ -611,6 +611,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
                         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
                         UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
+                        AnimSection->SetPreRollFrames(50);
                         AnimSection->Modify();
                         //--------------------------Clone------------------------
                         ASkeletalMeshActor* L_Actor2 = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
@@ -628,6 +629,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                         L_MovieSceneSpawnSection2->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
                         UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID2);
                         UMovieSceneSection* AnimSection2 = L_MovieSceneSkeletalAnim2->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
+                        AnimSection2->SetPreRollFrames(50);
                         AnimSection2->Modify();
                         //----------------------
                         TheLevelSequence->GetMovieScene()->Modify();
@@ -667,6 +669,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     //------------------------------
                     UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
                     UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(L_Start, L_Actor->GetGeometryCacheComponent());
+                    AnimSection->SetPreRollFrames(50);
                     L_Actor->Modify();
                     //---------------------------Clone----------------------------
                     AGeometryCacheActor* L_Actor2 = TheSequenceWorld->SpawnActor<AGeometryCacheActor>(FVector::ZeroVector, FRotator::ZeroRotator);
@@ -682,6 +685,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
                     L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
                     UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID2);
                     UMovieSceneSection* AnimSection2 = L_MovieSceneGeoTrack2->AddNewAnimation(L_Start, L_Actor2->GetGeometryCacheComponent());
+                    AnimSection2->SetPreRollFrames(50);
                     L_Actor2->Modify();
                     //------------------------
                     TheLevelSequence->GetMovieScene()->Modify();
