@@ -83,7 +83,7 @@ router.beforeEach(
 
 // Global After Hooks
 // https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks}
-router.afterEach(() => {
+router.afterEach((to, from, failure) => {
   const globalStore = useGlobal();
   // Hide Loading
   globalStore.setLoading(false);

@@ -6,17 +6,17 @@ const items: DrawerMenuItem[] = [
   {
     title: 'Home',
     icon: 'mdi-home',
-    to: {name: 'Home'},
+    to: { name: 'Home' },
   },
   {
     title: '模型库',
     icon: 'mdi-file-document',
-    to: {name: 'ModelView'},
+    to: { name: 'ModelView' },
   },
   {
     title: '批量导出',
     icon: 'mdi-lan-connect',
-    to: {name: 'BatchExportView'},
+    to: { name: 'BatchExportView' },
   },
   {
     title: '-', // Divider
@@ -24,7 +24,7 @@ const items: DrawerMenuItem[] = [
   {
     title: 'About',
     icon: 'mdi-information',
-    to: {name: 'About'},
+    to: { name: 'About' },
   },
   {
     title: 'Disabled Item',
@@ -37,36 +37,36 @@ const items: DrawerMenuItem[] = [
 <template>
   <v-list nav>
     <template v-for="item in items" :key="item.title">
-      <v-divider v-if="item.title === '-'"/>
+      <v-divider v-if="item.title === '-'" />
       <template v-else>
         <!-- Menu Item -->
         <v-list-item
-            v-if="!item.items"
-            :disabled="!item.to"
-            :prepend-icon="item.icon"
-            :title="item.title"
-            :to="item.to"
-            link
+          v-if="!item.items"
+          :disabled="!item.to"
+          :prepend-icon="item.icon"
+          :title="item.title"
+          :to="item.to"
+          link
         />
         <!-- Sub menu -->
         <v-list-group v-else-if="item.items" v-model="item.active">
           <template #activator="{ props }">
             <v-list-item
-                :prepend-icon="item.icon"
-                :title="item.title"
-                v-bind="props"
+              :prepend-icon="item.icon"
+              :title="item.title"
+              v-bind="props"
             />
           </template>
           <!-- Sub menu item -->
           <template v-for="subItem in item.items" :key="subItem.title">
-            <v-divider v-if="subItem.title === '-'"/>
+            <v-divider v-if="subItem.title === '-'" />
             <v-list-item
-                v-else
-                :disabled="!subItem.to"
-                :prepend-icon="subItem.icon"
-                :title="subItem.title"
-                :to="subItem.to"
-                link
+              v-else
+              :disabled="!subItem.to"
+              :prepend-icon="subItem.icon"
+              :title="subItem.title"
+              :to="subItem.to"
+              link
             />
           </template>
         </v-list-group>

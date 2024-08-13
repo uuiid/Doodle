@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import {computer, task} from '@/store';
-import {ref} from 'vue';
+import { computer, task } from '@/store';
+import { ref } from 'vue';
 
 /** Props */
 // defineProps({
@@ -23,12 +23,27 @@ const computers = ref([
     status: 'Online',
   },
 ]);
-const fetchComputers = function () {
+const computer_handle = [
+  {
+    title: '名称',
+    key: 'name',
+  },
+  {
+    title: 'IP',
+    key: 'ip',
+  },
+  {
+    title: '状态',
+    key: 'status',
+  },
+];
+const fetchComputers = function() {
   computer.get().then((res) => {
-    computers.value = res.body;
+    if (res.body)
+      computers.value = res.body;
     // console.log(computers)
   }).catch(e => {
-    console.log(e);
+    // console.log(e);
   });
 };
 fetchComputers();
@@ -81,30 +96,30 @@ function fetchTasks({
   itemsPerPage: number;
 }) {
   task.get(page, itemsPerPage).then(res => {
-    tasks.value = res.body.tasks;
-    tasks_length.value = res.body.size;
+    if (res.body) {
+      tasks.value = res.body.tasks;
+      tasks_length.value = res.body.size;
+    }
+  }).catch((e) => {
+    // console.log(e);
   });
 }
 
-fetchTasks({page: 0, itemsPerPage: tasks_per_page.value});
+// fetchTasks({ page: 0, itemsPerPage: tasks_per_page.value });
 </script>
 
 <template>
-  <v-container class="fill-height">
-    <v-data-table :items="computers"></v-data-table>
+  <v-container class="fill-height2">
+    <v-data-table :headers="computer_handle" :items="computers"></v-data-table>
     <v-data-table-server
-        v-model:items-per-page="tasks_per_page"
-        :headers="tasks_handle"
-        :items="tasks"
-        :items-length="tasks_length"
-        @update:options="fetchTasks"
+      v-model:items-per-page="tasks_per_page"
+      :headers="tasks_handle"
+      :items="tasks"
+      :items-length="tasks_length"
+      @update:options="fetchTasks"
     ></v-data-table-server>
   </v-container>
 </template>
 
 <style scoped>
-.logo:hover {
-  will-change: filter;
-  filter: drop-shadow(0 0 1em #2196f3aa);
-}
 </style>

@@ -5,5 +5,8 @@ import BatchExport from '@/components/BatchExport.vue';
 </script>
 
 <template>
-  <BatchExport msg="Welcome to Batch Export" />
+  <BatchExport />
 </template>
+
+<style scoped>
+</style>
