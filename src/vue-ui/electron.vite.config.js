@@ -1,24 +1,25 @@
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
-import { resolve, join } from 'path'
-import vue from '@vitejs/plugin-vue2'
-import { builtinModules } from 'module'
+import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import { resolve, join } from 'path';
+import vue from '@vitejs/plugin-vue';
+import { builtinModules } from 'module';
+import vuetify from 'vite-plugin-vuetify';
 
 export default defineConfig(({ command, mode }) => {
-  const PACKAGE_ROOT = __dirname
+  const PACKAGE_ROOT = __dirname;
   return {
     main: {
       plugins: [externalizeDepsPlugin()],
       build: {
         lib: {
           entry: resolve(__dirname, 'electron/main/index.ts'),
-          formats: ['cjs']
+          formats: ['cjs'],
         },
         rollupOptions: {
           input: {
-            index: resolve(__dirname, 'electron/main/index.ts')
-          }
-        }
-      }
+            index: resolve(__dirname, 'electron/main/index.ts'),
+          },
+        },
+      },
     },
     preload: {
       plugins: [externalizeDepsPlugin()],
@@ -27,44 +28,44 @@ export default defineConfig(({ command, mode }) => {
         minify: process.env.MODE !== 'development',
         lib: {
           entry: resolve(__dirname, 'electron/preload/index.ts'),
-          formats: ['cjs']
+          formats: ['cjs'],
         },
         rollupOptions: {
           external: ['electron', ...builtinModules],
           input: {
-            index: resolve(__dirname, 'electron/preload/index.ts')
+            index: resolve(__dirname, 'electron/preload/index.ts'),
           },
           output: {
-            entryFileNames: '[name].cjs'
-          }
-        }
-      }
+            entryFileNames: '[name].cjs',
+          },
+        },
+      },
     },
     renderer: {
-      plugins: [vue()],
+      plugins: [vue(), vuetify({ autoImport: true })],
       root: '.',
       build: {
         sourcemap: true,
         rollupOptions: {
           input: {
-            index: resolve(__dirname, 'index.html')
-          }
-        }
+            index: resolve(__dirname, 'index.html'),
+          },
+        },
       },
       resolve: {
         vue: 'vue/dist/vue.esm.js',
         extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
         alias: {
-          '@': join(PACKAGE_ROOT, 'src') + '/'
-        }
+          '@': join(PACKAGE_ROOT, 'src') + '/',
+        },
       },
       css: {
         preprocessorOptions: {
           scss: {
-            additionalData: `@import "@/variables.scss";`
-          }
-        }
-      }
-    }
-  }
-})
+            additionalData: ``,
+          },
+        },
+      },
+    },
+  };
+});

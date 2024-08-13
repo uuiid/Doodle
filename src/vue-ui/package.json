@@ -24,6 +24,7 @@
     "pnpm": ">=9.6.0"
   },
   "packageManager": "pnpm@9.6.0",
+  "main": "out/main/index.cjs",
   "scripts": {
     "dev": "electron-vite dev",
     "clean": "rimraf ./node_modules/.vite",
@@ -45,8 +46,11 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@mdi/font": "^7.4.47",
     "@types/superagent": "^8.1.8",
+    "colors": "^1.4.0",
     "core-js": "^3.37.1",
     "electron-window-state": "^5.0.3",
+    "format-unicorn": "^1.1.1",
+    "iconv-lite": "^0.6.3",
     "pinia": "^2.2.0",
     "pinia-plugin-persistedstate": "^3.2.1",
     "superagent": "^9.0.2",
@@ -62,7 +66,7 @@
     "@types/jsdom": "^21.1.7",
     "@types/node": "^20.14.12",
     "@types/webfontloader": "^1.6.38",
-    "@vitejs/plugin-vue": "^5.1.0",
+    "@vitejs/plugin-vue": "^5.1.2",
     "@vitest/coverage-v8": "^2.0.4",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/eslint-config-typescript": "^13.0.0",

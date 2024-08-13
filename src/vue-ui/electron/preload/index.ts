@@ -3,7 +3,6 @@ import { electronAPI } from '@electron-toolkit/preload'
 import { readFileSync, access, accessSync, constants, PathLike, readdirSync } from 'fs'
 import { store, config } from '../main/store'
 import path from 'path'
-const io = require('socket.io-client')
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -96,57 +95,6 @@ const api = {
   toggleDarkTheme: () => {
     return ipcRenderer.invoke('dark-theme:toggle')
   },
-  socketio: {
-    create: () => {
-      socketio = io(`${store.get('login.server')}/events`, {
-        transportOptions: {
-          polling: {
-            extraHeaders: {
-              Authorization: `Bearer ${store.get('login.access_token')}`,
-              'User-Agent': `Kitsu publisher ${config.get('appVersion')}`
-            }
-          }
-        }
-      })
-    },
-    destroy: () => {
-      if (socketio !== null) {
-        socketio.disconnect()
-      }
-      socketio = null
-    },
-    on: (event, fun) => {
-      if (socketio !== null) {
-        socketio.on(event, fun)
-      }
-    },
-    off: (event, fun) => {
-      if (socketio !== null) {
-        socketio.off(event, fun)
-      }
-    },
-    connect: () => {
-      if (socketio !== null) {
-        socketio.connect()
-      }
-    },
-    disconnect: () => {
-      if (socketio !== null) {
-        socketio.disconnect()
-      }
-    }
-  },
-  ipcRenderer: {
-    on: (channel, listener) => {
-      ipcRenderer.on(channel, listener)
-    },
-    removeListener: (channel, listener) => {
-      ipcRenderer.removeListener(channel, listener)
-    },
-    removeAllListeners: (channel) => {
-      ipcRenderer.removeAllListeners(channel)
-    }
-  }
 }
 
 /**
