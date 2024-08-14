@@ -44,7 +44,7 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
     //      l_conn(l_pre);
     //    }
   }
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg) {
+  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg) {
     auto& l_conn = *in_ptr;
     const tables::tag_table l_table{};
     const tables::entity l_entt_id{};
@@ -67,7 +67,7 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
         log_error(fmt::format("数据库id {} 没有找到实体", l_id));
       }
     }
-    in_reg->insert<tag_type>(l_entts.begin(), l_entts.end(), tag_type{});
+    in_reg.insert<tag_type>(l_entts.begin(), l_entts.end(), tag_type{});
   }
   void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
     detail::sql_com_destroy<tables::tag_table>(in_ptr, in_handle);

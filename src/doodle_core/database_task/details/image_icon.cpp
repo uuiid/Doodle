@@ -52,7 +52,7 @@ void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::map<std::i
   }
 }
 void sql_com<doodle::image_icon>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::image_icon l_table{};
@@ -78,7 +78,7 @@ void sql_com<doodle::image_icon>::select(
       log_error(fmt::format("image_icon id {} not found", l_id));
     }
   }
-  in_reg->insert<doodle::image_icon>(l_entts.begin(), l_entts.end(), l_img.begin());
+  in_reg.insert<doodle::image_icon>(l_entts.begin(), l_entts.end(), l_img.begin());
 }
 void sql_com<doodle::image_icon>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::image_icon>(in_ptr, in_handle);

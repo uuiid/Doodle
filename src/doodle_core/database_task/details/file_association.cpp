@@ -79,7 +79,7 @@ void sql_com<doodle::file_association>::update(
   }
 }
 void sql_com<doodle::file_association>::select(
-    doodle::conn_ptr &in_ptr, const std::map<std::int64_t, entt::handle> &in_handle, const doodle::registry_ptr &in_reg
+    conn_ptr &in_ptr, const std::map<std::int64_t, entt::handle> &in_handle, entt::registry &in_reg
 ) {
   auto &l_conn = *in_ptr;
   tables::file_association l_table{};
@@ -142,7 +142,7 @@ void sql_com<doodle::file_association>::select(
     }
   }
 
-  in_reg->insert<file_association>(l_entts.begin(), l_entts.end(), l_img.begin());
+  in_reg.insert<file_association>(l_entts.begin(), l_entts.end(), l_img.begin());
 }
 void sql_com<doodle::file_association>::destroy(doodle::conn_ptr &in_ptr, const std::vector<std::int64_t> &in_handle) {
   detail::sql_com_destroy<tables::file_association>(in_ptr, in_handle);

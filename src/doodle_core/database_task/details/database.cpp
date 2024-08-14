@@ -38,7 +38,7 @@ void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt:
 }
 
 void sql_com<doodle::database>::select(
-    conn_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
 
@@ -62,12 +62,12 @@ void sql_com<doodle::database>::select(
     l_id.emplace_back(row.id.value());
     l_entts.emplace_back(num_to_enum<entt::entity>(row.id.value()));
   }
-  in_reg->create(l_entts.begin(), l_entts.end());
-  in_reg->insert<database>(l_entts.begin(), l_entts.end(), l_data.begin());
+  in_reg.create(l_entts.begin(), l_entts.end());
+  in_reg.insert<database>(l_entts.begin(), l_entts.end(), l_data.begin());
 
-  BOOST_ASSERT(l_entts.size() == in_reg->view<database>().size());
+  BOOST_ASSERT(l_entts.size() == in_reg.view<database>().size());
 
-  for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], entt::handle{*in_reg, l_entts[i]});
+  for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], entt::handle{in_reg, l_entts[i]});
 }
 
 void sql_com<doodle::database>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {

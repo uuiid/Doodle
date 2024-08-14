@@ -47,7 +47,7 @@ class file_one_path : public detail::sql_create_table_base<table_type> {
       l_conn(l_pre);
     }
   };
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg) {
+  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg) {
     auto& l_conn = *in_ptr;
     const table_type l_table{};
     const tables::entity l_entt_id{};
@@ -76,7 +76,7 @@ class file_one_path : public detail::sql_create_table_base<table_type> {
       }
     }
 
-    in_reg->insert<base_type>(l_entts.begin(), l_entts.end(), l_assets.begin());
+    in_reg.insert<base_type>(l_entts.begin(), l_entts.end(), l_assets.begin());
   };
   void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
     detail::sql_com_destroy<table_type>(in_ptr, in_handle);

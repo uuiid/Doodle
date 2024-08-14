@@ -234,7 +234,7 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::m
 }
 
 void sql_com<project_config::base_config>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   std::vector<project_config::base_config> l_config;
@@ -332,7 +332,7 @@ void sql_com<project_config::base_config>::select(
     }
   }
 
-  in_reg->insert<project_config::base_config>(l_entts.begin(), l_entts.end(), l_config.begin());
+  in_reg.insert<project_config::base_config>(l_entts.begin(), l_entts.end(), l_config.begin());
 }
 void sql_com<project_config::base_config>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::project_config>(in_ptr, in_handle);

@@ -60,7 +60,7 @@ void sql_com<doodle::user>::update(conn_ptr& in_ptr, const std::map<std::int64_t
 }
 
 void sql_com<doodle::user>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& reg_
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& reg_
 ) {
   auto& l_conn = *in_ptr;
 
@@ -93,7 +93,7 @@ void sql_com<doodle::user>::select(
         // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
-    reg_->insert<doodle::user>(l_entts.begin(), l_entts.end(), l_works.begin());
+    reg_.insert<doodle::user>(l_entts.begin(), l_entts.end(), l_works.begin());
   }
 }
 

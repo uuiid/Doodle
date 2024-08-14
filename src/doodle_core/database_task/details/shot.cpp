@@ -60,7 +60,7 @@ void sql_com<doodle::shot>::update(conn_ptr& in_ptr, const std::map<std::int64_t
   }
 }
 void sql_com<doodle::shot>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::shot l_table{};
@@ -90,7 +90,7 @@ void sql_com<doodle::shot>::select(
       // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  in_reg->insert<doodle::shot>(l_entts.begin(), l_entts.end(), l_shot.begin());
+  in_reg.insert<doodle::shot>(l_entts.begin(), l_entts.end(), l_shot.begin());
 }
 void sql_com<doodle::shot>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::shot>(in_ptr, in_handle);

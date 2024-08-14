@@ -15,7 +15,7 @@ class entt_handle_ref : public detail::sql_create_table_base<table_type> {
   entt_handle_ref() = default;
   void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   void update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id);
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg);
+  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg);
   void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
 };
 
@@ -71,7 +71,7 @@ void entt_handle_ref<table_type, base_type>::update(
 
 template <typename table_type, typename base_type>
 void entt_handle_ref<table_type, base_type>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   const table_type l_table{};
@@ -93,14 +93,14 @@ void entt_handle_ref<table_type, base_type>::select(
     auto l_ref = row.ref_id.value();
     auto l_id  = row.entity_id.value();
     if (in_handle.contains(l_id) && in_handle.contains(l_ref)) {
-      l_refs.emplace_back(*in_reg, in_handle.at(l_ref).entity());
+      l_refs.emplace_back(in_reg, in_handle.at(l_ref).entity());
       l_entts.emplace_back(in_handle.at(l_id));
     } else {
       log_error(fmt::format("数据库中存在无效的引用 {} -> {}", l_id, l_ref));
     }
   }
 
-  in_reg->insert<base_type>(l_entts.begin(), l_entts.end(), l_refs.begin());
+  in_reg.insert<base_type>(l_entts.begin(), l_entts.end(), l_refs.begin());
 }
 template <typename table_type, typename base_type>
 void entt_handle_ref<table_type, base_type>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {

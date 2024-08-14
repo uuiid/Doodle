@@ -60,7 +60,7 @@ void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::map<std::int6
   }
 }
 void sql_com<doodle::comment>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::comment l_table{};
@@ -99,7 +99,7 @@ void sql_com<doodle::comment>::select(
   //      in_reg->emplace<doodle::comment>(l_entt, l_com);
   //    }
   //  }
-  in_reg->insert<doodle::comment>(l_entts.begin(), l_entts.end(), l_comment.begin());
+  in_reg.insert<doodle::comment>(l_entts.begin(), l_entts.end(), l_comment.begin());
 }
 void sql_com<doodle::comment>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::comment>(in_ptr, in_handle);

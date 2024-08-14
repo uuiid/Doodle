@@ -97,7 +97,7 @@ void sql_com<doodle::maya_anim_file>::update(conn_ptr& in_ptr, const std::map<st
 }
 
 void sql_com<doodle::maya_anim_file>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
 
@@ -148,7 +148,7 @@ void sql_com<doodle::maya_anim_file>::select(
       }
     }
   }
-  in_reg->insert(l_entts.begin(), l_entts.end(), l_maya_anim_files.begin());
+  in_reg.insert(l_entts.begin(), l_entts.end(), l_maya_anim_files.begin());
 }
 
 void sql_com<doodle::maya_anim_file>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {

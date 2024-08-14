@@ -37,6 +37,13 @@ SPDLOG_API spdlog::logger* default_logger_raw();
 namespace level {}  // namespace level
 }  // namespace spdlog
 
+#define DOODLE_TO_MAIN_THREAD()                                   \
+  auto this_executor = co_await boost::asio::this_coro::executor; \
+  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
+
+#define DOODLE_TO_SELF() \
+  co_await boost::asio::post(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
+
 // #include <>
 namespace doodle {
 using entt::literals::operator""_hs;
@@ -168,7 +175,7 @@ template <typename>
 struct sql_ctx;
 }  // namespace database_n
 
-using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
+using conn_ptr          = std::unique_ptr<sqlpp::sqlite3::connection>;
 using pooled_connection = sqlpp::sqlite3::pooled_connection;
 
 namespace json_rpc {
@@ -182,5 +189,5 @@ class session_manager;
 namespace business {
 class work_clock;
 class work_clock2;
-}
+}  // namespace business
 };  // namespace doodle

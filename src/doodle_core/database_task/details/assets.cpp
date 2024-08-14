@@ -76,7 +76,7 @@ void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::map<std::int64
 }
 
 void sql_com<doodle::assets>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::assets l_table{};
@@ -109,7 +109,7 @@ void sql_com<doodle::assets>::select(
       // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  in_reg->insert<doodle::assets>(l_entts.begin(), l_entts.end(), l_assets.begin());
+  in_reg.insert<doodle::assets>(l_entts.begin(), l_entts.end(), l_assets.begin());
   /// 向后插入, 防止找不到自身的句柄
   for (auto [l_c, l_p] : l_ass_parent) {
     l_p.get<assets>().add_child(l_c);

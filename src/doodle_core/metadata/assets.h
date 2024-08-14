@@ -65,7 +65,10 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
    * @param j json
    * @param p 资产
    */
-  friend void to_json(nlohmann::json& j, const assets& p) { j["path"] = p.p_path; }
+  friend void to_json(nlohmann::json& j, const assets& p) {
+    j["id"]   = p.parent_.entity();
+    j["path"] = p.p_path;
+  }
   /**
    * @copydoc to_json(nlohmann::json& j, const assets& p)
    */

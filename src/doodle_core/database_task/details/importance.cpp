@@ -53,7 +53,7 @@ void sql_com<doodle::importance>::update(conn_ptr& in_ptr, const std::map<std::i
 }
 
 void sql_com<doodle::importance>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, const registry_ptr& in_reg
+    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
 
@@ -84,7 +84,7 @@ void sql_com<doodle::importance>::select(
         // DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
-    in_reg->insert<doodle::importance>(l_entts.begin(), l_entts.end(), l_works.begin());
+    in_reg.insert<doodle::importance>(l_entts.begin(), l_entts.end(), l_works.begin());
   }
 }
 

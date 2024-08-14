@@ -57,7 +57,7 @@ struct future_data {
 
   std::vector<std::tuple<std::int64_t, std::future<t>>> data{};
 
-  void install_reg(const registry_ptr& in_reg, const id_map_type& in_map_type) {
+  void install_reg(entt::registry& in_reg, const id_map_type& in_map_type) {
     std::vector<entt::entity> l_entt_list{};
     std::set<entt::entity> l_entt_set;
     std::vector<t> l_data_list{};
@@ -71,7 +71,7 @@ struct future_data {
       }
       auto l_entt = in_map_type.at(l_id);
       /// \brief 保证实体已经注册
-      if (!in_reg->valid(l_entt)) {
+      if (!in_reg.valid(l_entt)) {
         l_not_valid_entity.emplace_back(l_entt);
         continue;
       }
@@ -88,10 +88,10 @@ struct future_data {
       DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(t).name(), l_not_valid_entity, l_duplicate_entity);
     }
     DOODLE_CHICK(
-        ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }), doodle_error{"无效实体"}
+        ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg.valid(in); }), doodle_error{"无效实体"}
     );
-    in_reg->remove<t>(l_entt_list.begin(), l_entt_list.end());
-    in_reg->insert<t>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
+    in_reg.remove<t>(l_entt_list.begin(), l_entt_list.end());
+    in_reg.insert<t>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
     // for (auto&& e : l_entt_list) {
     //   // 触发更改
     //   in_reg->patch<t>(e);
@@ -198,7 +198,7 @@ class select::impl {
       l_future_data->data.emplace_back(std::make_tuple(boost::numeric_cast<std::int64_t>(l_id), std::move(l_fut)));
     }
     list_install.emplace_back([l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {
-      return l_future_data->install_reg(in, id_map);
+      return l_future_data->install_reg(*in, id_map);
     });
   }
   template <typename... Type>
@@ -233,7 +233,7 @@ class select::impl {
     }
 
     list_install.emplace_back([l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {
-      return l_future_data->install_reg(in, id_map);
+      return l_future_data->install_reg(*in, id_map);
     });
   }
 };
