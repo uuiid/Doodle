@@ -518,10 +518,49 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   in_logger->warn("开始合成视屏 :{}", l_ret);
   auto l_movie_path =
       detail::create_out_path(l_ret.parent_path(), in_args->episodes_, in_args->shot_, &in_args->project_);
-  l_ec = detail::create_move(
-      l_movie_path, in_logger,
-      movie::image_attr::make_default_attr(&in_args->episodes_, &in_args->shot_, FSys::list_files(l_ret))
-  );
+  {
+    std::vector<FSys::path> l_move_paths{};
+    std::vector<FSys::path> l_remove_paths{};
+
+    for (auto&& l_path : FSys::directory_iterator{l_ret}) {
+      auto l_ext = l_path.path().extension();
+      if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") {
+        auto l_stem  = l_path.path().stem().generic_string();
+        auto l_begin = l_stem.find('.');
+
+        if (l_begin == std::string::npos) {
+          l_remove_paths.emplace_back(l_path.path());
+          continue;
+        }
+        std::int32_t l_frame_num{};
+        try {
+          auto l_id   = l_stem.substr(l_begin + 1, l_stem.find('.', l_begin + 1) - l_begin - 1);
+          l_frame_num = std::stoi(l_id);
+        } catch (...) {
+          l_remove_paths.emplace_back(l_path.path());
+          continue;
+        }
+
+        if (l_frame_num < in_args->maya_arg_->export_anim_time) {
+          l_remove_paths.emplace_back(l_path.path());
+          continue;
+        }
+        l_move_paths.emplace_back(l_path.path());
+      }
+    }
+    if (l_move_paths.empty()) {
+      co_return std::tuple(boost::system::error_code{}, l_ret);
+    }
+    std::error_code l_sys_ec{};
+    for (auto&& l_path : l_remove_paths) {
+      FSys::remove(l_path, l_sys_ec);
+    }
+
+    l_ec = detail::create_move(
+        l_movie_path, in_logger,
+        movie::image_attr::make_default_attr(&in_args->episodes_, &in_args->shot_, l_move_paths)
+    );
+  }
   if (l_ec) {
     co_return std::tuple(l_ec, FSys::path{});
   }
