@@ -35,8 +35,6 @@
     "cmakerc",
     "treehh",
     "wil",
-    "webview2",
-    "zserge-webview",
     {
       "name": "fmt",
       "default-features": true,

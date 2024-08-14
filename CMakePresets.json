@@ -129,7 +129,6 @@
       "jobs": 10,
       "targets": [
         "DoodleExe",
-        "doodle",
         "generate_token",
         "doodle_auto_light_server",
         "doodle_auto_light_client",
