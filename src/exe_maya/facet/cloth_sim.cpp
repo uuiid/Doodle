@@ -61,11 +61,14 @@ bool cloth_sim::post(const FSys::path& in_path) {
 
   l_ret          = true;
   out_path_file_ = l_arg.out_path_file_;
-  sim_file_map_  = l_arg.sim_path_list |
-                  ranges::views::transform([](const auto& in_path) -> std::pair<std::string, FSys::path> {
-                    return {in_path.filename().string(), in_path};
-                  }) |
-                  ranges::to<std::map<std::string, FSys::path>>;
+
+  if (FSys::is_directory(l_arg.sim_path)) {
+    for (auto&& l_p : FSys::directory_iterator(l_arg.sim_path)) {
+      if (FSys::is_regular_file(l_p) && l_p.path().extension() == ".ma") {
+        sim_file_map_[l_p.path().filename().string()] = l_p.path();
+      }
+    }
+  }
 
   g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));

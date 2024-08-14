@@ -202,9 +202,9 @@ bool maya_tool::render() {
       if (ptr_attr->sim_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_sim_file;
       if (ptr_attr->export_abc_type_) k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-      k_arg.sim_path_list = list_sim_file(i.project_);
-      auto l_msg_handle   = entt::handle{*g_reg(), g_reg()->create()};
-      auto&& l_msg        = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
+      k_arg.sim_path    = i.project_.p_path / "6-moxing" / "CFX";
+      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
+      auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       boost::asio::co_spawn(
           g_thread(), async_run_maya(std::make_shared<maya_exe_ns::qcloth_arg>(k_arg), l_msg.logger()),
           boost::asio::bind_cancellation_slot(
@@ -326,10 +326,10 @@ bool maya_tool::render() {
       k_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
       k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       k_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
-      k_arg.sim_path_list = list_sim_file(i.project_);
+      k_arg.sim_path    = i.project_.p_path / "6-moxing" / "CFX";
 
-      auto l_msg_handle   = entt::handle{*g_reg(), g_reg()->create()};
-      auto&& l_msg        = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
+      auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
+      auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       import_and_render_ue_ns::args l_args{};
       l_args.episodes_ = i.episode_;
       l_args.project_  = i.project_;

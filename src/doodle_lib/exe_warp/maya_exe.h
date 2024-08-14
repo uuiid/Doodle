@@ -75,16 +75,17 @@ public:
 class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
 public:
   constexpr static std::string_view k_name{"cloth_sim_config"};
-  std::set<FSys::path> sim_path_list{};
+  FSys::path sim_path{};
+
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const qcloth_arg& nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg&>(nlohmann_json_t));
-    nlohmann_json_j["sim_path_list"] = nlohmann_json_t.sim_path_list;
+    nlohmann_json_j["sim_path"] = nlohmann_json_t.sim_path;
   };
 
   friend void from_json(const nlohmann::json& nlohmann_json_j, qcloth_arg& nlohmann_json_t) {
     from_json(nlohmann_json_j, dynamic_cast<arg&>(nlohmann_json_t));
-    nlohmann_json_j["sim_path_list"].get_to(nlohmann_json_t.sim_path_list);
+    nlohmann_json_j["sim_path"].get_to(nlohmann_json_t.sim_path);
   };
 
   std::string to_json_str() const override {
