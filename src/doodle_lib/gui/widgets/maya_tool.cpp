@@ -107,7 +107,6 @@ maya_tool::maya_tool() : ptr_attr(std::make_unique<impl>()) {
   if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
   if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
   title_name_ = std::string{name};
-  init();
 }
 
 void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
@@ -137,13 +136,6 @@ void maya_tool::set_path(const std::vector<FSys::path>& in_path) {
   });
 }
 
-void maya_tool::init() {
-  ptr_attr->scoped_connection_1 = g_ctx().get<core_sig>().project_end_open.connect([this]() {
-    p_text = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
-  });
-  p_text                        = g_reg()->ctx().get<project_config::base_config>().vfx_cloth_sim_path.generic_string();
-}
-
 bool maya_tool::render() {
   ImGui::Text("解算文件列表(将文件拖入此处)");
   auto* l_win_main = ImGui::GetCurrentWindow();
@@ -159,8 +151,6 @@ bool maya_tool::render() {
       dear::Selectable(f.path_.generic_string());
     }
   }
-
-  dear::Text(fmt::format("解算资产: {}", p_text));
 
   imgui::Checkbox("自动上传", &p_upload_files);
   dear::TreeNode{"解算设置"} && [this]() {

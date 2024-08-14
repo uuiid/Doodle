@@ -16,7 +16,6 @@ namespace doodle::gui {
 
 class DOODLELIB_API maya_tool {
   FSys::path p_cloth_path{};
-  std::string p_text{};
 
   struct path_info_t {
     FSys::path path_;
@@ -47,7 +46,6 @@ class DOODLELIB_API maya_tool {
   virtual ~maya_tool();
   constexpr static std::string_view name{gui::config::menu_w::comm_maya_tool};
 
-  void init();
   const std::string& title() const;
   bool render();
 };
