@@ -19,9 +19,8 @@ namespace doodle::gui {
 
 boost::asio::awaitable<void> weite_tasks_info() {
   static chrono::sys_time_pos g_p{chrono::system_clock::now()};
-  std::string l_info{};
 
-  constexpr static std::map<process_message::state, std::string> g_name{
+  const static std::unordered_map<process_message::state, std::string_view> g_name{
       {process_message::state::fail, "失败"},
       {process_message::state::success, "成功"},
       {process_message::state::run, "运行中"},
@@ -32,14 +31,16 @@ boost::asio::awaitable<void> weite_tasks_info() {
       co_await boost::asio::this_coro::executor
   };
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    std::string l_info{};
     for (const auto&& [e, msg] : g_reg()->view<process_message>().each()) {
-      l_info += fmt::format("{} {} {} \n", msg.get_name(), g_name.at(msg.get_state()), msg.message_back());
+      l_info += fmt::format("{} {} \n", msg.get_name(), g_name.at(msg.get_state()));
     }
-    if(!l_info.empty()) {
+    if (!l_info.empty()) {
       FSys::path l_path{
-          FSys::get_cache_path("process_info") / fmt::format("{}_{}.txt", g_p, boost::this_process::get_id())
+          FSys::get_cache_path("process_info") /
+          fmt::format("{:%Y_%m_%d_%H_%M_%S}_{}.txt", g_p, boost::this_process::get_id())
       };
-      FSys::ofstream{l_path} << l_info;
+      FSys::ofstream{l_path, std::ios::out | std::ios::trunc} << l_info;
     }
 
     l_timer.expires_after(1s);
