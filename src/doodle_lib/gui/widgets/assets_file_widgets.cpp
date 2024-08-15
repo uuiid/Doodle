@@ -206,7 +206,6 @@ class assets_file_widgets::impl {
         user_p       = l_ass.user_attr().get<user>().get_name();
         file_path_p  = l_ass.get_path_normal().generic_string();
       }
-      file_association_p = fmt::format("{}", in_h.any_of<file_association_ref>() ? "以关联" : "未关联");
     }
 
     std::string ass_p;

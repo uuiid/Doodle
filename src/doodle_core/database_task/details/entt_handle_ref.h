@@ -106,8 +106,5 @@ template <typename table_type, typename base_type>
 void entt_handle_ref<table_type, base_type>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<table_type>(in_ptr, in_handle);
 }
-template <>
-struct sql_com<doodle::file_association_ref>
-    : public entt_handle_ref<tables::file_association_ref, doodle::file_association_ref> {};
 
 }  // namespace doodle::database_n
