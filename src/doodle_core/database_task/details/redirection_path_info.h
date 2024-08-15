@@ -8,13 +8,5 @@
 #include <cstdint>
 
 namespace doodle::database_n {
-template <>
-struct sql_com<doodle::redirection_path_info> : detail::sql_create_table_base<tables::redirection_path_info> {
-  sql_com() = default;
-  void create_table(conn_ptr& in_ptr);
-  void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
-  void update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id);
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg);
-  void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
-};
+
 }  // namespace doodle::database_n

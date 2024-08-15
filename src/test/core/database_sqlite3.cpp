@@ -95,11 +95,6 @@ void create_test_database() {
   {
     auto l_h = entt::handle{*g_reg(), g_reg()->create()};
     l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::redirection_path_info>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
     l_h.emplace<doodle::business::rules>();
   }
   {

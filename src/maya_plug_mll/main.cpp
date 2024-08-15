@@ -200,9 +200,6 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_command<::doodle::maya_plug::create_qcloth_assets>(k_plugin);
   CHECK_MSTATUS(status);
 
-  /// 添加加载实体命令
-  status = maya_reg->register_command<::doodle::maya_plug::add_entt>(k_plugin);
-  CHECK_MSTATUS(status);
   ///  添加自定义fbx导出
   status = maya_reg->register_command<::doodle::maya_plug::doodle_to_ue_fbx>(k_plugin);
   CHECK_MSTATUS(status);

@@ -148,7 +148,7 @@ class select::impl {
               entt_tool::load_comm<
                   doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
                   doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon,
-                  doodle::importance, doodle::redirection_path_info>(l_h, k_json);
+                  doodle::importance >(l_h, k_json);
             }}
         );
         results.emplace_back(l_fun.share());
