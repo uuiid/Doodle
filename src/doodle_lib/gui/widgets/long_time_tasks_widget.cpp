@@ -4,6 +4,7 @@
 
 #include "long_time_tasks_widget.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 
@@ -15,7 +16,50 @@
 #include <fmt/chrono.h>
 
 namespace doodle::gui {
-long_time_tasks_widget::long_time_tasks_widget() : p_current_select() { title_name_ = std::string{name}; }
+
+boost::asio::awaitable<void> weite_tasks_info() {
+  static chrono::sys_time_pos g_p{chrono::system_clock::now()};
+  std::string l_info{};
+
+  constexpr static std::map<process_message::state, std::string> g_name{
+      {process_message::state::fail, "失败"},
+      {process_message::state::success, "成功"},
+      {process_message::state::run, "运行中"},
+      {process_message::state::wait, "等待中"},
+      {process_message::state::pause, "暂停"}
+  };
+  boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::system_timer> l_timer{
+      co_await boost::asio::this_coro::executor
+  };
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    for (const auto&& [e, msg] : g_reg()->view<process_message>().each()) {
+      l_info += fmt::format("{} {} {} \n", msg.get_name(), g_name.at(msg.get_state()), msg.message_back());
+    }
+    if(!l_info.empty()) {
+      FSys::path l_path{
+          FSys::get_cache_path("process_info") / fmt::format("{}_{}.txt", g_p, boost::this_process::get_id())
+      };
+      FSys::ofstream{l_path} << l_info;
+    }
+
+    l_timer.expires_after(1s);
+    auto [l_ec] = co_await l_timer.async_wait();
+    if (l_ec == boost::asio::error::operation_aborted) {
+      break;
+    }
+  }
+}
+
+long_time_tasks_widget::long_time_tasks_widget() : p_current_select() {
+  title_name_ = std::string{name};
+  static std::once_flag l_flag;
+  std::call_once(l_flag, []() {
+    boost::asio::co_spawn(
+        g_io_context(), weite_tasks_info(),
+        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+    );
+  });
+}
 
 bool long_time_tasks_widget::render() {
   static auto flags{
@@ -37,9 +81,9 @@ bool long_time_tasks_widget::render() {
       imgui::TableNextRow();
       imgui::TableNextColumn();
       if (dear::Selectable(
-        msg.get_name_id(), p_current_select == k_h,
-        ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap
-      )) {
+              msg.get_name_id(), p_current_select == k_h,
+              ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap
+          )) {
         p_current_select = k_h;
       }
 
@@ -62,24 +106,21 @@ bool long_time_tasks_widget::render() {
         case process_message::state::pause: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 1.0f, 0.0f, 1.0f}};
           ImGui::Text("暂停中...");
-        }
-        break;
+        } break;
         case process_message::state::fail: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{1.0f, 0.0f, 0.0f, 1.0f}};
           ImGui::Text("错误结束");
-        }
-        break;
+        } break;
         case process_message::state::success: {
           dear::WithStyleColor l_color{ImGuiCol_Text, ImVec4{0.0f, 1.0f, 0.0f, 1.0f}};
           ImGui::Text("成功完成");
-        }
-        break;
+        } break;
       }
 
       imgui::TableNextColumn();
       using namespace std::literals;
       dear::Text(
-        msg.get_time() == chrono::sys_time_pos::duration{0} ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time())
+          msg.get_time() == chrono::sys_time_pos::duration{0} ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time())
       );
 
       ImGui::TableNextColumn();
@@ -91,13 +132,13 @@ bool long_time_tasks_widget::render() {
     }
   };
   ImGui::Combo(
-    "日志等级", reinterpret_cast<int*>(&index_),
-    [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
-      constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
-      *out_text                       = l_leve_names_tmp[in_index].data();
-      return true;
-    },
-    nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
+      "日志等级", reinterpret_cast<int*>(&index_),
+      [](void* in_data, std::int32_t in_index, const char** out_text) -> bool {
+        constexpr auto l_leve_names_tmp = magic_enum::enum_names<level::level_enum>();
+        *out_text                       = l_leve_names_tmp[in_index].data();
+        return true;
+      },
+      nullptr, static_cast<std::int32_t>(magic_enum::enum_count<level::level_enum>()) - 2
   );
 
   dear::Text("主要日志"s);
