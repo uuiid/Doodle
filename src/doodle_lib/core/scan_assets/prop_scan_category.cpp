@@ -5,7 +5,6 @@
 #include "prop_scan_category.h"
 
 #include <doodle_core/metadata/assets_file.h>
-#include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/season.h>
 namespace doodle::details {
 
