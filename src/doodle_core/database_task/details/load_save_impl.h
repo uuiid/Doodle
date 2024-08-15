@@ -21,7 +21,6 @@
 #include <doodle_core/database_task/details/image_icon.h>
 #include <doodle_core/database_task/details/importance.h>
 #include <doodle_core/database_task/details/load_save_impl.h>
-#include <doodle_core/database_task/details/main_map.h>
 #include <doodle_core/database_task/details/maya_anim_file.h>
 #include <doodle_core/database_task/details/project.h>
 #include <doodle_core/database_task/details/project_config.h>
@@ -359,6 +358,6 @@ using obs_all = obs_main<
     std::tuple<
         doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap,
         doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, doodle::business::rules,
-        doodle::user, doodle::project, doodle::project_config::base_config, main_project, ue_main_map, maya_anim_file,
-        scene_id, character_id, prop_id, rig_id, animation_id, simulation_id>>;
+        doodle::user, doodle::project, doodle::project_config::base_config, main_project, maya_anim_file, scene_id,
+        character_id, prop_id, rig_id, animation_id, simulation_id>>;
 }  // namespace doodle::database_n
