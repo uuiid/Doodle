@@ -19,7 +19,6 @@ target_sources(
         rules.h
         file_one_path.h
         render_ue4_arg.h
-        file_association.h
         main_map.h
         maya_anim_file.h
         computer.h
@@ -47,7 +46,6 @@ target_sources(
         rules.cpp
         file_one_path.cpp
         render_ue4_arg.cpp
-        file_association.cpp
         main_map.cpp
         maya_anim_file.cpp
         computer.cpp

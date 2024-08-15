@@ -10,7 +10,6 @@ target_sources(doodle_lib
         assets_file_edit.h
         time_edit.h
         file_one_edit_t.h
-        file_association_edit.h
         ue_main_map_edit.h
 
         PRIVATE
@@ -24,6 +23,5 @@ target_sources(doodle_lib
         assets_file_edit.cpp
         time_edit.cpp
         file_one_edit_t.cpp
-        file_association_edit.cpp
         ue_main_map_edit.cpp
 )

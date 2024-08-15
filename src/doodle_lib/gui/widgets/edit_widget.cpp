@@ -21,7 +21,6 @@
 #include <doodle_lib/gui/widgets/derail/assets_file_edit.h>
 #include <doodle_lib/gui/widgets/derail/command_edit.h>
 #include <doodle_lib/gui/widgets/derail/episodes_edit.h>
-#include <doodle_lib/gui/widgets/derail/file_association_edit.h>
 #include <doodle_lib/gui/widgets/derail/file_one_edit_t.h>
 #include <doodle_lib/gui/widgets/derail/importance_edit.h>
 #include <doodle_lib/gui/widgets/derail/season_edit.h>
@@ -97,8 +96,7 @@ class edit_widgets::impl {
       std::shared_ptr<render_edit_impl<comment, render::command_edit_t>>,
       std::shared_ptr<render_edit_impl<importance, render::importance_edit_t>>,
       std::shared_ptr<render_edit_impl<time_point_wrap, render::time_edit_t>>,
-      std::shared_ptr<render_edit_impl<ue_main_map, render::ue_main_map_edit>>,
-      std::shared_ptr<render::file_association_edit_t>>
+      std::shared_ptr<render_edit_impl<ue_main_map, render::ue_main_map_edit>>>
       render_data;
 
   std::string title_name_;
@@ -124,8 +122,7 @@ edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
       std::make_shared<impl::render_edit_impl<comment, render::command_edit_t>>(p_i.get()),
       std::make_shared<impl::render_edit_impl<importance, render::importance_edit_t>>(p_i.get()),
       std::make_shared<impl::render_edit_impl<time_point_wrap, render::time_edit_t>>(p_i.get()),
-      std::make_shared<impl::render_edit_impl<ue_main_map, render::ue_main_map_edit>>(p_i.get()),
-      std::make_shared<render::file_association_edit_t>("关系编辑"s)  //
+      std::make_shared<impl::render_edit_impl<ue_main_map, render::ue_main_map_edit>>(p_i.get())
 
   );
 }
