@@ -1,0 +1,8 @@
+### GET request to example server
+POST http://127.0.0.1:50027/api/doodle/model
+Content-Type: application/json
+
+{
+  "path": "D:/test_files/7_bangding_v2.doodle_db"
+}
+###

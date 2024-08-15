@@ -35,7 +35,7 @@ namespace {
 
 tree<assets> get_trees(const entt::registry& in_reg) {
   auto l_view = in_reg.view<assets>();
-  tree<assets> l_e{};
+  tree<assets> l_e{assets{}};
 
   std::function<void(const entt::const_handle&, const tree<assets>::iterator&)> l_buill_tree{};
   l_buill_tree = [&](const entt::const_handle& in_h, const tree<assets>::iterator& in_parent) {
@@ -98,7 +98,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_base_open_po
   l_data.registry_            = {};
   try {
     database_n::obs_all l_obs{};
-    auto l_k_con = g_ctx().emplace<database_info>().get_connection_const();
+    auto l_k_con = l_data.database_info_.get_connection_const();
     l_obs.open(l_data.registry_, l_k_con);
     l_data.any_ = l_obs;
   } catch (...) {
