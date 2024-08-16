@@ -112,7 +112,6 @@ class connect_video_interface;
 using database_info = details::database_info;
 using program_info  = details::program_info;
 using identifier    = details::identifier;
-class maya_anim_file;
 
 class convert;
 class doodle_error;

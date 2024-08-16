@@ -22,7 +22,6 @@ target_sources(doodle_core
         load_save_impl.h
         entt_handle_ref.h
         tag.h
-        maya_anim_file.h
         server_task_info.h
 
 
@@ -51,6 +50,5 @@ target_sources(doodle_core
         load_save_impl.cpp
         entt_handle_ref.cpp
         tag.cpp
-        maya_anim_file.cpp
         server_task_info.cpp
 )

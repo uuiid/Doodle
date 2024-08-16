@@ -20,7 +20,6 @@ target_sources(
         file_one_path.h
         render_ue4_arg.h
         main_map.h
-        maya_anim_file.h
         computer.h
         server_task_info.h
         attendance.h
@@ -49,7 +48,6 @@ target_sources(
         file_one_path.cpp
         render_ue4_arg.cpp
         main_map.cpp
-        maya_anim_file.cpp
         computer.cpp
         server_task_info.cpp
         attendance.cpp
