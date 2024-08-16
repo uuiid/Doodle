@@ -17,7 +17,6 @@ target_sources(
         move_create.h
         rules.h
         file_one_path.h
-        render_ue4_arg.h
         main_map.h
         computer.h
         server_task_info.h
@@ -44,7 +43,6 @@ target_sources(
         move_create.cpp
         rules.cpp
         file_one_path.cpp
-        render_ue4_arg.cpp
         main_map.cpp
         computer.cpp
         server_task_info.cpp
