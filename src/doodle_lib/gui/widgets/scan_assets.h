@@ -13,6 +13,20 @@ namespace doodle::gui {
 
 class DOODLELIB_API scan_assets_t {
   bool is_open{true};
+  template <class Mutex>
+  friend class scan_sink_t;
+  struct logger_data_t {
+    std::mutex mutex_;
+    std::string data_;
+
+    void clear() {
+      std::lock_guard const _lock{mutex_};
+      data_.clear();
+    }
+  };
+  using logger_data_ptr = std::shared_ptr<logger_data_t>;
+
+  logger_data_ptr logger_data_;
 
   logger_ptr logger_;
   struct project_root_gui_t : doodle::details::scan_category_t::project_root_t {
@@ -81,7 +95,6 @@ class DOODLELIB_API scan_assets_t {
   bool render();
 
  private:
-  std::shared_ptr<doodle::details::scan_category_service_t::logger_data_t> logger_data_;
   std::string log_str_;
 };
 

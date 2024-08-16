@@ -16,8 +16,29 @@
 #include <doodle_lib/core/scan_assets/scene_scan_category.h>
 
 namespace doodle::gui {
+// namespace {
+template <class Mutex>
+class scan_sink_t : public spdlog::sinks::base_sink<Mutex> {
+  std::shared_ptr<scan_assets_t::logger_data_t> logger_data_;
 
+ public:
+  explicit scan_sink_t(std::shared_ptr<scan_assets_t::logger_data_t> in_logger_data_)
+      : logger_data_{std::move(in_logger_data_)} {}
+
+ private:
+ protected:
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    // 格式化
+    std::lock_guard const _lock{logger_data_->mutex_};
+    logger_data_->data_.append(msg.payload.data(), msg.payload.size());
+    logger_data_->data_.append("\n");
+  }
+  void flush_() override{};
+};
+// }  // namespace
+using scan_assets_scan_sink_t = scan_sink_t<std::mutex>;
 void scan_assets_t::init_scan_categories() {
+  logger_data_ = std::make_shared<logger_data_t>();
   auto l_list    = register_file_type::get_project_list();
   project_roots_ = l_list | ranges::views::transform([](const project& in_project) -> project_root_gui_t {
                      project_root_gui_t l_root{};
@@ -51,7 +72,9 @@ void scan_assets_t::init_scan_categories() {
   };
 
   if (!g_ctx().contains<doodle::details::scan_category_service_t>()) {
-    logger_data_ = g_ctx().emplace<doodle::details::scan_category_service_t>().logger_data_;
+    g_ctx().emplace<doodle::details::scan_category_service_t>().logger_->sinks().emplace_back(
+        std::make_shared<scan_assets_scan_sink_t>(logger_data_)
+    );
   }
 
   create_scan_categories();

@@ -13,26 +13,15 @@ namespace doodle::details {
 
 class scan_category_service_t {
  public:
-  struct logger_data_t {
-    std::mutex mutex_;
-    std::string data_;
-
-    void clear() {
-      std::lock_guard const _lock{mutex_};
-      data_.clear();
-    }
-  };
-
  private:
-  using logger_data_ptr = std::shared_ptr<logger_data_t>;
-  logger_ptr logger_;
   void init_logger_data();
   boost::asio::thread_pool thread_pool_{};
 
  public:
-  logger_data_ptr logger_data_;
+  logger_ptr logger_;
 
   scan_category_service_t() : logger_{} { init_logger_data(); }
+
   virtual ~scan_category_service_t() = default;
   template <typename CompletionHandler>
   auto async_scan_files(
