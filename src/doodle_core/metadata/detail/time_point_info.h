@@ -50,9 +50,12 @@ struct formatter<::doodle::business::rules_ns::time_point_info> : formatter<std:
   auto format(const ::doodle::business::rules_ns::time_point_info& in_, FormatContext& ctx) const
       -> decltype(ctx.out()) {
     using namespace std::literals;
-    return vformat_to(
-        ctx.out(), "{}: {} {} {}",
-        make_format_args(in_.is_extra_work ? "工作" : "休息", in_.first, in_.second, in_.info)
+    return formatter<std::string>::format(
+        fmt::format(
+            "{}: {} {} {}", in_.is_extra_work ? "工作" : "休息", in_.first.get_sys_time(), in_.second.get_sys_time(),
+            in_.info
+        ),
+        ctx
     );
   }
 };
