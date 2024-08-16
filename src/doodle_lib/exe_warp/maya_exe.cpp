@@ -203,6 +203,9 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
           case maya_enum::maya_error_t::camera_aspect_error:
             in_logger->error("maya 中摄像机的宽高比不正确");
             break;
+          case maya_enum::maya_error_t::cache_path_error:
+            in_logger->error("maya 中解算缓存路径不存在");
+            break;
           default:
             in_logger->error("maya进程返回值错误 {}", l_exit_code);
         }

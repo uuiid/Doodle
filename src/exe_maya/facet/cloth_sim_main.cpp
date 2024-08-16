@@ -149,9 +149,7 @@ void cloth_sim::sim() {
 
 void cloth_sim::touch_sim() {
   DOODLE_LOG_INFO("开始触摸解算");
-  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-    auto l_c     = in_handle.get<cloth_interface>();
-  });
+  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) { auto l_c = in_handle.get<cloth_interface>(); });
 
   std::map<std::string, entt::handle> l_ref_map{};
   l_ref_map = ref_files_ |
