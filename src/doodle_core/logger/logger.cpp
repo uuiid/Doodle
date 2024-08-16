@@ -2,8 +2,8 @@
 
 #include <doodle_core/core/core_set.h>
 
-#include <boost/locale.hpp>
 #include <boost/algorithm/string/erase.hpp>
+#include <boost/locale.hpp>
 #include <boost/process/environment.hpp>
 
 #include <Windows.h>
@@ -19,31 +19,30 @@
 namespace doodle::details {
 template <class Mutex>
 class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
-public:
+ public:
   msvc_doodle_sink() = default;
 
-protected:
+ protected:
   void sink_it_(const spdlog::details::log_msg& msg) override {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
 #ifdef _WIN32
     OutputDebugString(
 #ifdef UNICODE
-      boost::locale::conv::utf_to_utf<wchar_t>(
+        boost::locale::conv::utf_to_utf<wchar_t>(
 #endif
-        fmt::to_string(formatted)
+            fmt::to_string(formatted)
 #ifdef UNICODE
-      )
+        )
 #endif
-      .c_str()
+            .c_str()
     );
 #else
     std::cout << fmt::to_string(formatted) << std::endl;
 #endif
   }
 
-  void flush_() override {
-  }
+  void flush_() override {}
 };
 
 using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
@@ -58,14 +57,14 @@ using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 //
 template <typename Mutex>
 class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
-public:
+ public:
   explicit rotating_file_sink(FSys::path in_path, std::size_t max_size, std::size_t max_files = 10);
 
-protected:
+ protected:
   void sink_it_(const spdlog::details::log_msg& msg) override;
   void flush_() override;
 
-private:
+ private:
   // Rotate files:
   // log.txt -> log.1.txt
   // log.1.txt -> log.2.txt
@@ -83,12 +82,12 @@ private:
 
 template <typename Mutex>
 rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t max_size, std::size_t max_files /*= 10*/)
-  : file_stem_(in_path.stem().generic_string()),
-    base_filename_(std::move(in_path)),
-    max_size_(std::clamp(max_size, 2ull, 1024ull * 1024ull * 1024ull * 1024ull)),
-    max_files_(std::clamp(max_files, 2ull, 200000ull)),
-    current_size_(0),
-    index_(0) {
+    : file_stem_(in_path.stem().generic_string()),
+      base_filename_(std::move(in_path)),
+      max_size_(std::clamp(max_size, 2ull, 1024ull * 1024ull * 1024ull * 1024ull)),
+      max_files_(std::clamp(max_files, 2ull, 200000ull)),
+      current_size_(0),
+      index_(1) {
   base_filename_.replace_filename(fmt::format("{}.{}.txt", file_stem_, index_));
   FSys::create_directories(base_filename_.parent_path());
   if (FSys::exists(base_filename_)) current_size_ = FSys::file_size(base_filename_);
@@ -129,11 +128,12 @@ void rotating_file_sink<Mutex>::rotate_() {
   current_size_ = 0;
 
   // delete existing file
+  std::error_code l_ec{};
   if (index_ > max_files_) {
     for (std::size_t i = index_ - max_files_; i > 0; --i) {
       auto l_target = base_filename_;
       l_target.replace_filename(fmt::format("{}.{}.txt", file_stem_, i));
-      FSys::remove(l_target);
+      FSys::remove(l_target, l_ec);
     }
   }
 }
@@ -141,9 +141,9 @@ void rotating_file_sink<Mutex>::rotate_() {
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
 
 logger_ctrl::logger_ctrl()
-  : p_log_path(
-    FSys::temp_directory_path() / "doodle" / "log" / fmt::format("process_id_{}", boost::this_process::get_id())
-  ) {
+    : p_log_path(
+          FSys::temp_directory_path() / "doodle" / "log" / fmt::format("process_id_{}", boost::this_process::get_id())
+      ) {
   spdlog::init_thread_pool(8192, 1);
   init_temp_log();
 }
@@ -155,7 +155,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path& in_path, c
   try {
     rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 512ull);
     l_logger            = std::make_shared<spdlog::async_logger>(
-      in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
+        in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
 
 #if !defined(NDEBUG)
@@ -184,23 +184,18 @@ void logger_ctrl::init_temp_log() {
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string& in_name, bool out_console) {
   auto l_name = in_name;
-  std::erase_if(
-    l_name,
-    [](const char& in)-> bool {
-      return !std::isalnum(in) && in != '_' && in != '.';
-    }
-  );
+  std::erase_if(l_name, [](const char& in) -> bool { return !std::isalnum(in) && in != '_' && in != '.'; });
 
   auto l_path = p_log_path / fmt::format("{}_{}.txt", l_name, core_set::get_set().get_uuid());
 
   std::vector<spdlog::sink_ptr> l_sinks{};
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
-         ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
+      ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
-    in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+      in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
   l_logger->set_level(spdlog::level::trace);
   l_logger->should_log(spdlog::level::trace);
@@ -209,18 +204,18 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string& in_name, 
 }
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log(
-  const FSys::path& in_path, const std::string& in_name, bool out_console
+    const FSys::path& in_path, const std::string& in_name, bool out_console
 ) {
   auto l_path = p_log_path / in_path / fmt::format("{}.txt", in_name);
 
   std::vector<spdlog::sink_ptr> l_sinks{};
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
-         ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
+      ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
-    in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+      in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
   l_logger->set_level(spdlog::level::trace);
   l_logger->should_log(spdlog::level::trace);
@@ -230,7 +225,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(
 }
 
 logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
-  const FSys::path& in_path, const std::string& in_name, bool out_console
+    const FSys::path& in_path, const std::string& in_name, bool out_console
 ) {
   auto l_path = p_log_path / fmt::format("{}_{}.txt", in_name, core_set::get_set().get_uuid());
 
@@ -243,10 +238,10 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
   l_sinks.emplace_back(rotating_file_sink_);
 
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
-         ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
+      ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
-    in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+      in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
   DOODLE_ADD_DEBUG_SINK(l_logger);
   return l_logger;
