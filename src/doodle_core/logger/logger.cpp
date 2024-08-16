@@ -140,10 +140,7 @@ void rotating_file_sink<Mutex>::rotate_() {
 
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
 
-logger_ctrl::logger_ctrl()
-    : p_log_path(
-          FSys::temp_directory_path() / "doodle" / "log" / fmt::format("process_id_{}", boost::this_process::get_id())
-      ) {
+logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
   spdlog::init_thread_pool(8192, 1);
   init_temp_log();
 }
