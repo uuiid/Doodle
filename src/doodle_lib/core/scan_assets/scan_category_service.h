@@ -55,6 +55,8 @@ class scan_category_service_t {
             } catch (const FSys::filesystem_error& e) {
               in_scan_category_ptr->logger_->log(log_loc(), level::err, e.what());
               l_err = e.code();
+            } catch (...) {
+              l_err = boost::system::errc::make_error_code(boost::system::errc::not_supported);
             }
             boost::asio::post(boost::asio::prepend(std::move(*l_f), l_list, l_err));
           });
