@@ -25,10 +25,6 @@ enum class assets_type_enum {
 };
 class scan_category_data_t {
  private:
-  entt::handle get_project_handle() const;
-
-  entt::handle get_assets_handle() const;
-
  public:
 
   using assets_type_enum = assets_type_enum;
