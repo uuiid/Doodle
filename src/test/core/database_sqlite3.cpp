@@ -20,7 +20,6 @@
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/server_task_info.h>

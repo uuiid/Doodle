@@ -13,7 +13,6 @@
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/process_message.h>

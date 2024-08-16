@@ -14,7 +14,6 @@ target_sources(
         shot.h
         time_point_wrap.h
         user.h
-        redirection_path_info.h
         move_create.h
         rules.h
         file_one_path.h
@@ -42,7 +41,6 @@ target_sources(
         shot.cpp
         time_point_wrap.cpp
         user.cpp
-        redirection_path_info.cpp
         move_create.cpp
         rules.cpp
         file_one_path.cpp

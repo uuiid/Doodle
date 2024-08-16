@@ -15,7 +15,6 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>

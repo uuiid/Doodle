@@ -23,7 +23,6 @@
 #include <doodle_core/database_task/details/load_save_impl.h>
 #include <doodle_core/database_task/details/project.h>
 #include <doodle_core/database_task/details/project_config.h>
-#include <doodle_core/database_task/details/redirection_path_info.h>
 #include <doodle_core/database_task/details/rules.h>
 #include <doodle_core/database_task/details/season.h>
 #include <doodle_core/database_task/details/shot.h>

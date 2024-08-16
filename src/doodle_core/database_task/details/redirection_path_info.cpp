@@ -9,7 +9,6 @@
 
 #include "core/core_help_impl.h"
 #include "metadata/metadata.h"
-#include "metadata/redirection_path_info.h"
 #include <algorithm>
 #include <cstdint>
 #include <entt/entity/entity.hpp>

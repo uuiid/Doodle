@@ -9,7 +9,6 @@
 #include <doodle_core/lib_warp/std_fmt_optional.h>
 #include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_core/metadata/episodes.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/shot.h>
 
 #include <boost/lambda2.hpp>
