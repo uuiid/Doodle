@@ -9,14 +9,6 @@
 #include <doodle_core/metadata/metadata.h>
 
 namespace doodle {
-/**
- * @brief 文件代表的类型
- *
- */
-enum class assets_file_type : std::uint32_t {
-  none = 0,
-
-};
 
 class assets_file;
 

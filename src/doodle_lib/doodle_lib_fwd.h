@@ -44,7 +44,6 @@ class project;
 class episodes;
 class shot;
 class assets;
-class core_sql;
 class assets_file;
 class time_point_wrap;
 class comment;
