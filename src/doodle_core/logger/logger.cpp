@@ -78,6 +78,8 @@ class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
   std::size_t current_size_;
   std::ofstream file_helper_;
   std::size_t index_;
+
+  std::int32_t pid{boost::this_process::get_id()};
 };
 
 template <typename Mutex>
@@ -88,7 +90,7 @@ rotating_file_sink<Mutex>::rotating_file_sink(FSys::path in_path, std::size_t ma
       max_files_(std::clamp(max_files, 2ull, 200000ull)),
       current_size_(0),
       index_(1) {
-  base_filename_.replace_filename(fmt::format("{}.{}.txt", file_stem_, index_));
+  base_filename_.replace_filename(fmt::format("{}.{}.{}.txt", file_stem_,pid, index_));
   FSys::create_directories(base_filename_.parent_path());
   if (FSys::exists(base_filename_)) current_size_ = FSys::file_size(base_filename_);
   file_helper_.open(base_filename_, std::ios_base::app | std::ios_base::out | std::ios_base::binary);
@@ -123,7 +125,7 @@ template <typename Mutex>
 void rotating_file_sink<Mutex>::rotate_() {
   file_helper_ = {};
   //  auto l_target = base_filename_;
-  base_filename_.replace_filename(fmt::format("{}.{}.txt", file_stem_, ++index_));
+  base_filename_.replace_filename(fmt::format("{}.{}.{}.txt", file_stem_,pid,   ++index_));
   file_helper_.open(base_filename_, std::ios_base::app | std::ios_base::out | std::ios_base::binary);
   current_size_ = 0;
 
@@ -132,7 +134,7 @@ void rotating_file_sink<Mutex>::rotate_() {
   if (index_ > max_files_) {
     for (std::size_t i = index_ - max_files_; i > 0; --i) {
       auto l_target = base_filename_;
-      l_target.replace_filename(fmt::format("{}.{}.txt", file_stem_, i));
+      l_target.replace_filename(fmt::format("{}.{}.{}.txt", file_stem_,pid,  i));
       FSys::remove(l_target, l_ec);
     }
   }
