@@ -55,8 +55,10 @@ private:
 	FName EffectMapPath;
 	ULevelSequence* EffectLevelSequence;
 	UWorld* EffectSequenceWorld;
-
+	
+	// 辅助光源
 	ADirectionalLight* DirectionalLight1;
+	// 主光源
 	ADirectionalLight* DirectionalLight2;
-	FRotator CameraRot;
+
 };
