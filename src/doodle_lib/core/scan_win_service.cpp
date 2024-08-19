@@ -73,7 +73,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
     // 同步缓冲区
     std::int32_t l_current_index     = !index_;
-    scan_data_maps_[l_current_index] = {};
+    scan_data_maps_[l_current_index] = scan_data_maps_[index_];
     for (auto i : l_index) {
       if (l_ecs[i]) {
         default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {} {}", l_msg[i], l_ecs[i].message());
