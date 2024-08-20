@@ -20,8 +20,6 @@
 #include <magic_enum.hpp>
 
 namespace doodle::http::detail {
-template <typename, typename, bool>
-class http_client_core;
 
 namespace http_client_core_ns {
 enum state {
@@ -34,80 +32,6 @@ enum state {
 
 inline auto format_as(state f) { return magic_enum::enum_name(f); }
 }  // namespace http_client_core_ns
-
-class awaitable_queue {
- public:
-  class queue_guard;
-  using queue_guard_ptr = std::shared_ptr<queue_guard>;
-
- private:
-  struct awaitable_queue_impl;
-
-  template <typename CompletionToken>
-  struct call_fun_t {
-    boost::asio::any_io_executor executor_{};
-    std::shared_ptr<std::decay_t<CompletionToken>> handler_;
-    awaitable_queue* queue_{};
-
-    void operator()() const {
-      boost::asio::post(boost::asio::bind_executor(executor_, [h = std::move(handler_), q = queue_]() {
-        auto l_guard = std::make_shared<queue_guard>(*q);
-        (*h)(l_guard);
-      }));
-    }
-  };
-
- public:
-  awaitable_queue()  = default;
-  ~awaitable_queue() = default;
-
-  class queue_guard {
-    std::shared_ptr<awaitable_queue_impl> impl_;
-
-   public:
-    explicit queue_guard(awaitable_queue& in_queue) : impl_{in_queue.impl_} {}
-
-    ~queue_guard() {
-      impl_->is_run_ = false;
-      impl_->maybe_invoke();
-    }
-  };
-
-  template <typename CompletionToken>
-  auto queue(CompletionToken&& in_token) {
-    boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_token);
-    return boost::asio::async_initiate<CompletionToken, void(queue_guard_ptr)>(
-        [](auto&& in_compl, awaitable_queue* in_self, const boost::asio::any_io_executor& in_exe) {
-          call_fun_t<std::decay_t<decltype(in_compl)>> l_fun{
-              in_exe, std::make_shared<std::decay_t<decltype(in_compl)>>(std::forward<decltype(in_compl)>(in_compl)),
-              in_self
-          };
-          in_self->impl_->await_suspend(l_fun);
-          in_self->impl_->maybe_invoke();
-        },
-        in_token, this, l_exe
-    );
-  }
-
- private:
-  struct awaitable_queue_impl {
-    std::atomic_bool is_run_;
-    std::queue<std::function<void()>> next_list_{};
-    std::recursive_mutex lock_{};
-    awaitable_queue* awaitable_queue_{};
-
-    explicit awaitable_queue_impl(awaitable_queue* in_queue) : awaitable_queue_(in_queue) {}
-
-    ~awaitable_queue_impl() = default;
-    void await_suspend(std::function<void()> in_handle);
-    bool await_ready();
-
-    void next();
-    void maybe_invoke();
-  };
-
-  std::shared_ptr<awaitable_queue_impl> impl_ = std::make_shared<awaitable_queue_impl>(this);
-};
 
 class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
  public:
@@ -141,7 +65,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   bool is_open_and_cond_{false};
 
  public:
-  http_client_data_base() = default;
+  http_client_data_base()  = default;
   ~http_client_data_base() = default;
 
   template <typename ExecutorType>

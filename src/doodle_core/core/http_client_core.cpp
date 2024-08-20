@@ -155,25 +155,4 @@ http_client_data_base::ssl_socket_t* http_client_data_base::ssl_socket() {
   return l_socket ? l_socket->get() : nullptr;
 }
 
-void awaitable_queue::awaitable_queue_impl::await_suspend(std::function<void()> in_handle) {
-  {
-    const std::lock_guard l{lock_};
-    next_list_.emplace(in_handle);
-  }
-}
-
-bool awaitable_queue::awaitable_queue_impl::await_ready() { return !is_run_; }
-
-void awaitable_queue::awaitable_queue_impl::next() {
-  is_run_ = true;
-  const std::lock_guard l{lock_};
-  next_list_.front()();
-  next_list_.pop();
-}
-
-void awaitable_queue::awaitable_queue_impl::maybe_invoke() {
-  if (is_run_) return;
-  if (next_list_.empty()) return;
-  next();
-}
 }  // namespace doodle::http::detail
