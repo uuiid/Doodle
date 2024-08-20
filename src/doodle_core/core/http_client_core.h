@@ -100,7 +100,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   void re_init();
   bool is_open();
 };
-
+using http_client_data_base_ptr = std::shared_ptr<http_client_data_base>;
 template <typename ResponseBody, typename RequestType>
 boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
 read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::beast::http::request<RequestType> in_req) {

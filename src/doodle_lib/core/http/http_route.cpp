@@ -36,8 +36,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> not_function_impl(
 }  // namespace
 
 http_route::http_route()
-    : actions(),
-      not_function(std::make_shared<http_function>(
+    : not_function(std::make_shared<http_function>(
           boost::beast::http::verb::get, "", not_function_impl
 
       )),
