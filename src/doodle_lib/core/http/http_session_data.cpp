@@ -18,9 +18,10 @@
 
 namespace doodle::http {
 namespace detail {
-using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-using endpoint_type   = boost::asio::ip::tcp::endpoint;
-using tcp_stream_type = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+using executor_type      = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+using endpoint_type      = boost::asio::ip::tcp::endpoint;
+using tcp_stream_type    = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+using request_parser_ptr = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
 
 boost::asio::awaitable<void> async_websocket_session(
     tcp_stream_type in_socket, boost::beast::http::request<boost::beast::http::empty_body> in_req,
@@ -45,15 +46,20 @@ boost::asio::awaitable<void> async_websocket_session(
   co_return;
 }
 
+boost::asio::awaitable<boost::system::error_code> proxy_relay(
+    tcp_stream_type& in_proxy_stream, std::shared_ptr<tcp_stream_type>& in_target_stream,
+    request_parser_ptr in_request_parser, logger_ptr in_logger
+) {
+  boost::system::error_code l_ec{};
+  // WARN: 这个函数必须将下一次的头部读取完毕
+  co_return l_ec;
+}
+
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr) {
-  using executor_type    = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-  using endpoint_type    = boost::asio::ip::tcp::endpoint;
-  using tcp_stream_type  = executor_type::as_default_on_t<boost::beast::tcp_stream>;
-  using session_data_ptr = std::shared_ptr<session_data>;
   tcp_stream_type l_stream{std::move(in_socket)};
+  std::shared_ptr<tcp_stream_type> l_proxy_relay_stream{};
   l_stream.expires_after(30s);
   auto l_session     = std::make_shared<session_data>();
-
   l_session->logger_ = std::make_shared<spdlog::async_logger>(
       fmt::format("{}_{}", "socket", SOCKET(l_stream.socket().native_handle())),
       spdlog::sinks_init_list{g_logger_ctrl().rotating_file_sink_}, spdlog::thread_pool()
@@ -79,7 +85,19 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     l_session->logger_->log(
         log_loc(), level::info, "开始解析 url {} {}", l_request_parser->get().method(), l_session->url_
     );
-    auto l_method              = l_request_parser->get().method();
+    auto l_method   = l_request_parser->get().method();
+    // WARN: 请求分发到对应的处理函数, 如果没有对应的处理函数则直接转发代理
+    auto l_callback = (*in_route_ptr)(l_method, l_session->url_.segments(), l_session);
+    if (!l_callback) {
+      l_ec = co_await proxy_relay(l_stream, l_proxy_relay_stream, l_request_parser, l_session->logger_);
+      if (l_ec) {
+        l_session->logger_->log(log_loc(), level::err, "代理失败 {}", l_ec);
+        l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+        l_stream.close();
+      }
+      continue;
+    }
+
     std::string l_content_type = l_request_parser->get()[boost::beast::http::field::content_type];
     // 检查内容格式
     boost::system::error_code l_error_code{};
@@ -96,7 +114,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
           co_return;
         }
       case boost::beast::http::verb::head:
-        case boost::beast::http::verb::options:
+      case boost::beast::http::verb::options:
         l_session->req_header_ = std::move(l_request_parser->release().base());
         break;
 
@@ -126,9 +144,6 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
       default:
         co_return;
     }
-    // todo: 请求分发到对应的处理函数
-    auto l_callback = (*in_route_ptr)(l_method, l_session->url_.segments(), l_session);
-
     auto l_gen = l_error_code ? l_session->make_error_code_msg(boost::beast::http::status::bad_request, l_error_code)
                               : co_await l_callback->callback_(l_session);
 
