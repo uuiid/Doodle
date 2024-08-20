@@ -3,3 +3,14 @@
 //
 
 #pragma once
+namespace doodle::http {
+
+struct kitsu_data_t {
+
+
+
+
+
+};
+
+}  // namespace doodle::http

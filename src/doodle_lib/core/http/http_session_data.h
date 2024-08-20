@@ -37,18 +37,21 @@ class session_data {
  public:
   session_data()  = default;
   ~session_data() = default;
-  logger_ptr logger_{};
-  std::shared_ptr<capture_t> capture_{};
-  http_route_ptr route_ptr_{};
+  logger_ptr logger_;
+  std::shared_ptr<capture_t> capture_;
+  http_route_ptr route_ptr_;
   boost::url url_;
-  std::shared_ptr<void> request_body_parser_;
   std::uint32_t version_{};
   bool keep_alive_{};
 
   content_type content_type_{content_type::text_plain};
-  std::variant<std::string, nlohmann::json> body_{};  // std::variant<std::string, nlohmann::json>
+  std::variant<std::string, nlohmann::json> body_;  // std::variant<std::string, nlohmann::json>
+  // 请求头
+  boost::beast::http::request_header<> req_header_;
 
-  boost::beast::http::request_header<> req_header_{};
+  // 每次连接自定义数据
+  std::any user_data_;
+
 
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
