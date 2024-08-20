@@ -10,4 +10,9 @@ struct kitsu_data_t {
   std::shared_ptr<detail::http_client_data_base> http_kitsu_{};
 };
 
+struct kitsu_ctx_t {
+  std::string url_{};
+  std::string access_token_{};
+};
+
 }  // namespace doodle::http
