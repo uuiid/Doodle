@@ -54,6 +54,7 @@ struct kitsu_supplement_args_t {
 
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   auto& l_save = g_ctx().emplace<http::kitsu_backend_sqlite>();
+  app_base::Get().use_multithread(true);
 
   kitsu_supplement_args_t l_args{.kitsu_url_ = "http://192.168.40.182", .port_ = 50025};
 
