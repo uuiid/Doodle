@@ -57,15 +57,24 @@ class awaitable_queue_limitation {
   auto queue(CompletionToken&& in_token) {
     boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_token);
     return boost::asio::async_initiate<CompletionToken, void(queue_guard_ptr)>(
-      [](auto&& in_compl, awaitable_queue_limitation* in_self, const boost::asio::any_io_executor& in_exe) {
-        call_fun_t<std::decay_t<decltype(in_compl)>> l_fun{in_exe, std::make_shared<std::decay_t<decltype(in_compl)>>(
-                                                             std::forward<decltype(in_compl)>(in_compl)
-                                                           ),
-                                                           in_self
-        };
-        in_self->impl_->await_suspend(l_fun);
-        in_self->impl_->maybe_invoke();
-      }, in_token, this, l_exe);
+        [](auto&& in_compl, awaitable_queue_limitation* in_self, const boost::asio::any_io_executor& in_exe) {
+          if (in_self->impl_->run_task_ == 0) {
+            ++in_self->impl_->run_task_;
+            boost::asio::dispatch(boost::asio::bind_executor(
+                in_exe, boost::asio::consign(std::move(in_compl), std::make_shared<queue_guard>(*in_self))
+            ));
+            return;
+          }
+
+          call_fun_t<std::decay_t<decltype(in_compl)>> l_fun{
+              in_exe, std::make_shared<std::decay_t<decltype(in_compl)>>(std::forward<decltype(in_compl)>(in_compl)),
+              in_self
+          };
+          in_self->impl_->await_suspend(l_fun);
+          in_self->impl_->maybe_invoke();
+        },
+        in_token, this, l_exe
+    );
   }
 
   void set_limit(std::int32_t in_limit) { impl_->limit_ = in_limit; }
