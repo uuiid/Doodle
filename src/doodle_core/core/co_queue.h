@@ -27,7 +27,7 @@ class awaitable_queue_limitation {
 
     void operator()() const {
       boost::asio::post(boost::asio::bind_executor(
-          executor_, boost::asio::consign(std::move(*handler_), std::make_shared<queue_guard>(*queue_))
+          executor_, boost::asio::prepend(std::move(*handler_), std::make_shared<queue_guard>(*queue_))
       ));
     }
   };
@@ -58,13 +58,13 @@ class awaitable_queue_limitation {
     boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_token);
     return boost::asio::async_initiate<CompletionToken, void(queue_guard_ptr)>(
         [](auto&& in_compl, awaitable_queue_limitation* in_self, const boost::asio::any_io_executor& in_exe) {
-          if (in_self->impl_->run_task_ == 0) {
-            ++in_self->impl_->run_task_;
-            boost::asio::dispatch(boost::asio::bind_executor(
-                in_exe, boost::asio::consign(std::move(in_compl), std::make_shared<queue_guard>(*in_self))
-            ));
-            return;
-          }
+          // if (in_self->impl_->run_task_ == 0) {
+          //   ++in_self->impl_->run_task_;
+          //   boost::asio::dispatch(boost::asio::bind_executor(
+          //       in_exe, boost::asio::prepend(std::move(in_compl), std::make_shared<queue_guard>(*in_self))
+          //   ));
+          //   return;
+          // }
 
           call_fun_t<std::decay_t<decltype(in_compl)>> l_fun{
               in_exe, std::make_shared<std::decay_t<decltype(in_compl)>>(std::forward<decltype(in_compl)>(in_compl)),
