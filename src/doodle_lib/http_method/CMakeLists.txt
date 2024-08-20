@@ -28,3 +28,5 @@ target_sources(
         model_base.cpp
 
 )
+
+add_subdirectory(kitsu)
