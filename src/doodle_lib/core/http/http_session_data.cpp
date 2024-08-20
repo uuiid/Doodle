@@ -96,7 +96,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
           co_return;
         }
       case boost::beast::http::verb::head:
-      case boost::beast::http::verb::options:
+        case boost::beast::http::verb::options:
+        l_session->req_header_ = std::move(l_request_parser->release().base());
         break;
 
       case boost::beast::http::verb::post:
@@ -120,6 +121,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         } else {
           l_session->body_ = l_request_parser_string->get().body();
         }
+        l_session->req_header_ = std::move(l_request_parser_string->release().base());
         break;
       default:
         co_return;

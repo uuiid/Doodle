@@ -48,6 +48,8 @@ class session_data {
   content_type content_type_{content_type::text_plain};
   std::variant<std::string, nlohmann::json> body_{};  // std::variant<std::string, nlohmann::json>
 
+  boost::beast::http::request_header<> req_header_{};
+
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
   ) {
