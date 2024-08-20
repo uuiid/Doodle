@@ -4,6 +4,7 @@
 
 #pragma once
 #include <boost/asio.hpp>
+
 #include <atomic>
 #include <functional>
 #include <memory>
@@ -11,11 +12,11 @@
 
 namespace doodle {
 class awaitable_queue_limitation {
-public:
+ public:
   class queue_guard;
   using queue_guard_ptr = std::shared_ptr<queue_guard>;
 
-private:
+ private:
   struct awaitable_queue_impl;
 
   template <typename CompletionToken>
@@ -24,16 +25,14 @@ private:
     std::shared_ptr<std::decay_t<CompletionToken>> handler_;
     awaitable_queue_limitation* queue_{};
 
-
     void operator()() const {
-      boost::asio::post(boost::asio::bind_executor(executor_, [h = std::move(handler_), q = queue_]() {
-        auto l_guard = std::make_shared<queue_guard>(*q);
-        (*h)(l_guard);
-      }));
+      boost::asio::post(boost::asio::bind_executor(
+          executor_, boost::asio::consign(std::move(*handler_), std::make_shared<queue_guard>(*queue_))
+      ));
     }
   };
 
-public:
+ public:
   awaitable_queue_limitation() = default;
 
   explicit awaitable_queue_limitation(const std::int32_t in_limit) : impl_{std::make_shared<awaitable_queue_impl>()} {
@@ -45,16 +44,14 @@ public:
   class queue_guard {
     std::shared_ptr<awaitable_queue_impl> impl_;
 
-  public:
-    explicit queue_guard(awaitable_queue_limitation& in_queue) : impl_{in_queue.impl_} {
-    }
+   public:
+    explicit queue_guard(awaitable_queue_limitation& in_queue) : impl_{in_queue.impl_} {}
 
     ~queue_guard() {
       --impl_->run_task_;
       impl_->maybe_invoke();
     }
   };
-
 
   template <typename CompletionToken>
   auto queue(CompletionToken&& in_token) {
@@ -71,18 +68,16 @@ public:
       }, in_token, this, l_exe);
   }
 
-  void set_limit(std::int32_t in_limit) {
-    impl_->limit_ = in_limit;
-  }
+  void set_limit(std::int32_t in_limit) { impl_->limit_ = in_limit; }
 
-private:
+ private:
   struct awaitable_queue_impl {
     std::queue<std::function<void()>> next_list_{};
     std::recursive_mutex lock_;
     std::atomic_int limit_{1};
     std::atomic_int run_task_;
 
-    awaitable_queue_impl() = default;
+    awaitable_queue_impl()  = default;
 
     ~awaitable_queue_impl() = default;
     void await_suspend(std::function<void()> in_handle);
@@ -91,7 +86,6 @@ private:
     void maybe_invoke();
   };
 
-  std::shared_ptr<awaitable_queue_impl> impl_ = std::make_shared<awaitable_queue_impl>(
-  );
+  std::shared_ptr<awaitable_queue_impl> impl_ = std::make_shared<awaitable_queue_impl>();
 };
-} // namespace doodle
+}  // namespace doodle
