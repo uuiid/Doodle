@@ -21,8 +21,7 @@ struct capture_t {
   std::map<std::string, std::string> capture_map_;
   capture_t() = default;
 
-  explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {
-  }
+  explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
 
   inline std::string get(const std::string& in_str) const { return capture_map_.at(in_str); }
 
@@ -55,7 +54,30 @@ struct capture_t {
   }
 };
 
-class http_function {
+class http_function_base_t {
+ protected:
+  boost::beast::http::verb verb_;
+
+ public:
+  http_function_base_t() = default;
+  explicit http_function_base_t(
+      boost::beast::http::verb in_verb,
+      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
+      std::function<void(const websocket_route_ptr&)> in_callback_websocket
+  )
+      : verb_{in_verb}, callback_{std::move(in_callback)}, websocket_callback_{std::move(in_callback_websocket)} {}
+  virtual ~http_function_base_t() = default;
+
+  [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
+  [[nodiscard]] inline bool has_websocket() const { return static_cast<bool>(websocket_callback_); }
+
+  virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const = 0;
+
+  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
+  std::function<void(const websocket_route_ptr&)> websocket_callback_;
+};
+
+class http_function : public http_function_base_t {
   struct capture_data_t {
     std::string name;
     bool is_capture;
@@ -63,36 +85,27 @@ class http_function {
 
   static std::vector<capture_data_t> set_cap_bit(std::string& in_str);
 
-  const boost::beast::http::verb verb_;
   const std::vector<capture_data_t> capture_vector_;
 
-public:
+ public:
   using capture_t = capture_t;
 
   explicit http_function(
-    boost::beast::http::verb in_verb, std::string in_url,
-    std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
+      boost::beast::http::verb in_verb, std::string in_url,
+      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
   )
-    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {
-  }
+      : http_function_base_t(in_verb, std::move(in_callback), {}), capture_vector_(set_cap_bit(in_url)) {}
 
   explicit http_function(
-    boost::beast::http::verb in_verb, std::string in_url,
-    std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
-    std::function<void (const websocket_route_ptr&)> in_callback_websocket
+      boost::beast::http::verb in_verb, std::string in_url,
+      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
+      std::function<void(const websocket_route_ptr&)> in_callback_websocket
   )
-    : verb_{in_verb}, capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)),
-      websocket_callback_{in_callback_websocket} {
-  }
+      : http_function_base_t(in_verb, std::move(in_callback), std::move(in_callback_websocket)),
+        capture_vector_(set_cap_bit(in_url)) {}
 
-  [[nodiscard]] inline bool has_websocket() const { return static_cast<bool>(websocket_callback_); }
-
-  [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
-  std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const;
-
-  const std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
-  const std::function<void (const websocket_route_ptr&)> websocket_callback_;
+  std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
 
 using http_function_ptr = std::shared_ptr<http_function>;
-} // namespace doodle::http
+}  // namespace doodle::http
