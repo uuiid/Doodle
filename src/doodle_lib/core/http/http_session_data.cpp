@@ -89,7 +89,7 @@ boost::asio::awaitable<boost::system::error_code> async_relay(
 
 boost::asio::awaitable<boost::system::error_code> proxy_relay(
     tcp_stream_type_ptr in_source_stream, tcp_stream_type_ptr in_target_stream, request_parser_ptr in_request_parser,
-    logger_ptr in_logger
+    boost::beast::flat_buffer& in_flat_buffer, logger_ptr in_logger
 ) {
   boost::system::error_code l_ec{};
   using buffer_request_type                 = boost::beast::http::request_parser<boost::beast::http::buffer_body>;
@@ -104,8 +104,6 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
   using buffer_response_serializer_type_ptr = std::shared_ptr<buffer_response_serializer_type>;
 
   // 开始转发请求
-  boost::beast::flat_buffer l_flat_buffer{};
-
   {
     // 开始转发请求
     buffer_request_type_ptr l_request_parser{std::make_shared<buffer_request_type>(std::move(*in_request_parser))};
@@ -122,7 +120,7 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
     }
     // 异步读取, 并且写入
     l_ec = co_await async_relay<true>(
-        *in_target_stream, *in_source_stream, l_flat_buffer, *l_request_parser, *l_request_serializer, in_logger
+        *in_target_stream, *in_source_stream, in_flat_buffer, *l_request_parser, *l_request_serializer, in_logger
     );
     if (l_ec) co_return l_ec;
     in_target_stream->expires_after(30s);
@@ -135,9 +133,8 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
         std::make_shared<buffer_response_serializer_type>(l_response_parser->get())
     };
 
-
     std::tie(l_ec, std::ignore) =
-        co_await boost::beast::http::async_read_header(*in_target_stream, l_flat_buffer, *l_response_parser);
+        co_await boost::beast::http::async_read_header(*in_target_stream, in_flat_buffer, *l_response_parser);
     if (l_ec) {
       in_logger->error("无法读取回复头 {}", l_ec.message());
       co_return l_ec;
@@ -152,7 +149,7 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
       co_return l_ec;
     }
     l_ec = co_await async_relay<false>(
-        *in_target_stream, *in_source_stream, l_flat_buffer, *l_response_parser, *l_response_serializer, in_logger
+        *in_source_stream, *in_target_stream, in_flat_buffer, *l_response_parser, *l_response_serializer, in_logger
     );
     if (l_ec) co_return l_ec;
     in_target_stream->expires_after(30s);
@@ -197,11 +194,18 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     auto l_callback = (*in_route_ptr)(l_method, l_session->url_.segments(), l_session);
     if (!l_callback) {
       if (!l_proxy_relay_stream) l_proxy_relay_stream = co_await in_route_ptr->create_proxy_factory_();
-      l_ec = co_await proxy_relay(l_stream, l_proxy_relay_stream, l_request_parser, l_session->logger_);
-      if (l_ec) {
-        l_session->logger_->log(log_loc(), level::err, "代理失败 {}", l_ec);
+      if (!l_proxy_relay_stream) {
+        l_session->logger_->error("代理打开失败 {}", l_ec);
         l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
         l_stream->close();
+        co_return;
+      }
+      l_ec = co_await proxy_relay(l_stream, l_proxy_relay_stream, l_request_parser, buffer_, l_session->logger_);
+      if (l_ec) {
+        l_session->logger_->error("代理失败 {}", l_ec);
+        l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+        l_stream->close();
+        co_return;
       }
       // 读取下一次头
       l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
