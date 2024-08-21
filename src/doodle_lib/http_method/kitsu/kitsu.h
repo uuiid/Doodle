@@ -10,6 +10,7 @@ using http_route_ptr = std::shared_ptr<http_route>;
 
 struct kitsu_data_t {
   std::shared_ptr<detail::http_client_data_base> http_kitsu_{};
+  std::map<boost::uuids::uuid, std::string> task_types_{};
 };
 
 struct kitsu_ctx_t {
