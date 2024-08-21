@@ -92,19 +92,28 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
     logger_ptr in_logger
 ) {
   boost::system::error_code l_ec{};
-  using buffer_request_type      = boost::beast::http::request_parser<boost::beast::http::buffer_body>;
-  using buffer_response_type     = boost::beast::http::response_parser<boost::beast::http::buffer_body>;
-  using buffer_request_type_ptr  = std::shared_ptr<buffer_request_type>;
-  using buffer_response_type_ptr = std::shared_ptr<buffer_response_type>;
+  using buffer_request_type                 = boost::beast::http::request_parser<boost::beast::http::buffer_body>;
+  using buffer_response_type                = boost::beast::http::response_parser<boost::beast::http::buffer_body>;
+  using buffer_request_type_ptr             = std::shared_ptr<buffer_request_type>;
+  using buffer_response_type_ptr            = std::shared_ptr<buffer_response_type>;
+
+  using buffer_request_serializer_type      = boost::beast::http::request_serializer<boost::beast::http::buffer_body>;
+  using buffer_request_serializer_type_ptr  = std::shared_ptr<buffer_request_serializer_type>;
+
+  using buffer_response_serializer_type     = boost::beast::http::response_serializer<boost::beast::http::buffer_body>;
+  using buffer_response_serializer_type_ptr = std::shared_ptr<buffer_response_serializer_type>;
+
+  // 开始转发请求
   boost::beast::flat_buffer l_flat_buffer{};
 
   {
     // 开始转发请求
     buffer_request_type_ptr l_request_parser{std::make_shared<buffer_request_type>(std::move(*in_request_parser))};
-    boost::beast::http::request_serializer<boost::beast::http::buffer_body> l_request_serializer{l_request_parser->get()
+    buffer_request_serializer_type_ptr l_request_serializer{
+        std::make_shared<buffer_request_serializer_type>(l_request_parser->get())
     };
     std::tie(l_ec, std::ignore) =
-        co_await boost::beast::http::async_write_header(*in_target_stream, l_request_serializer);
+        co_await boost::beast::http::async_write_header(*in_target_stream, *l_request_serializer);
     in_target_stream->expires_after(30s);
     in_source_stream->expires_after(30s);
     if (l_ec) {
@@ -113,7 +122,7 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
     }
     // 异步读取, 并且写入
     l_ec = co_await async_relay<true>(
-        *in_target_stream, *in_source_stream, l_flat_buffer, *l_request_parser, l_request_serializer, in_logger
+        *in_target_stream, *in_source_stream, l_flat_buffer, *l_request_parser, *l_request_serializer, in_logger
     );
     if (l_ec) co_return l_ec;
     in_target_stream->expires_after(30s);
@@ -122,9 +131,10 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
 
   {  // 开始转发回复
     buffer_response_type_ptr l_response_parser{std::make_shared<buffer_response_type>()};
-    boost::beast::http::response_serializer<boost::beast::http::buffer_body> l_response_serializer{
-        l_response_parser->get()
+    buffer_response_serializer_type_ptr l_response_serializer{
+        std::make_shared<buffer_response_serializer_type>(l_response_parser->get())
     };
+
 
     std::tie(l_ec, std::ignore) =
         co_await boost::beast::http::async_read_header(*in_target_stream, l_flat_buffer, *l_response_parser);
@@ -136,18 +146,17 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
     in_source_stream->expires_after(30s);
 
     std::tie(l_ec, std::ignore) =
-        co_await boost::beast::http::async_write_header(*in_source_stream, l_response_serializer);
+        co_await boost::beast::http::async_write_header(*in_source_stream, *l_response_serializer);
     if (l_ec) {
       in_logger->error("无法发送回复头 {}", l_ec.message());
       co_return l_ec;
     }
     l_ec = co_await async_relay<false>(
-        *in_target_stream, *in_source_stream, l_flat_buffer, *l_response_parser, l_response_serializer, in_logger
+        *in_target_stream, *in_source_stream, l_flat_buffer, *l_response_parser, *l_response_serializer, in_logger
     );
     if (l_ec) co_return l_ec;
     in_target_stream->expires_after(30s);
     in_source_stream->expires_after(30s);
-
   }
   co_return l_ec;
 }
