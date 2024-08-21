@@ -96,7 +96,6 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
   using buffer_response_type     = boost::beast::http::response_parser<boost::beast::http::buffer_body>;
   using buffer_request_type_ptr  = std::shared_ptr<buffer_request_type>;
   using buffer_response_type_ptr = std::shared_ptr<buffer_response_type>;
-  char l_buffer[1024 * 4];
   boost::beast::flat_buffer l_flat_buffer{};
 
   {
