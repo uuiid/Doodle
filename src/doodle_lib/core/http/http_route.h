@@ -32,7 +32,7 @@ class http_route {
    *
    * @note 这个创建路由方式暗示使用代理转发, 会将请求转发到代理服务器, 并且没有 404 响应
    */
-  explicit http_route(std::function<tcp_stream_type_ptr()> in_create_proxy_factory)
+  explicit http_route(std::function<boost::asio::awaitable<tcp_stream_type_ptr>()> in_create_proxy_factory)
       : create_proxy_factory_(in_create_proxy_factory){};
   // 注册路由
   http_route& reg(const http_function_ptr in_function);

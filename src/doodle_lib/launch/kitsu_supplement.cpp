@@ -107,7 +107,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     }
   }
   // 初始化路由
-  auto l_rout_ptr = std::make_shared<http::http_route>();
+  auto l_rout_ptr = http::create_kitsu_route();
   http::reg_computing_time(*l_rout_ptr);
   http::reg_dingding_attendance(*l_rout_ptr);
   http::reg_user_http(*l_rout_ptr);

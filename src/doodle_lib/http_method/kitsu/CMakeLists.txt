@@ -6,4 +6,5 @@ target_sources(
 
         PRIVATE
         task.cpp
+        kitsu.cpp
 )
