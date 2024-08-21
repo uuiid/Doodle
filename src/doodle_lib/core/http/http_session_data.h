@@ -19,7 +19,11 @@ class http_route;
 using http_route_ptr = std::shared_ptr<http_route>;
 class http_session_data;
 using http_session_data_ptr = std::shared_ptr<http_session_data>;
-
+using executor_type       = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+using endpoint_type       = boost::asio::ip::tcp::endpoint;
+using tcp_stream_type     = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+using tcp_stream_type_ptr = std::shared_ptr<tcp_stream_type>;
+using request_parser_ptr  = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
 namespace detail {
 enum class content_type {
   text_plain,

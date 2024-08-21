@@ -18,10 +18,6 @@
 
 namespace doodle::http {
 namespace detail {
-using executor_type      = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-using endpoint_type      = boost::asio::ip::tcp::endpoint;
-using tcp_stream_type    = executor_type::as_default_on_t<boost::beast::tcp_stream>;
-using request_parser_ptr = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
 
 boost::asio::awaitable<void> async_websocket_session(
     tcp_stream_type in_socket, boost::beast::http::request<boost::beast::http::empty_body> in_req,
@@ -46,22 +42,124 @@ boost::asio::awaitable<void> async_websocket_session(
   co_return;
 }
 
+template <bool isRequest, typename SyncWriteStream, typename SyncReadStream, typename DynamicBuffer>
+boost::asio::awaitable<boost::system::error_code> async_relay(
+    SyncWriteStream& in_sync_write_stream, SyncReadStream& in_sync_read_stream, DynamicBuffer& in_dynamic_buffer,
+    boost::beast::http::parser<isRequest, boost::beast::http::buffer_body>& in_parser,
+    boost::beast::http::serializer<isRequest, boost::beast::http::buffer_body>& in_serializer, logger_ptr in_logger
+) {
+  char l_buffer[1024 * 4];
+  boost::system::error_code l_ec{};
+  // 异步读取, 并且写入
+  do {
+    if (!in_parser.is_done()) {
+      // Set up the body for writing into our small buffer
+      in_parser.get().body().data = l_buffer;
+      in_parser.get().body().size = sizeof(l_buffer);
+      std::tie(l_ec, std::ignore) =
+          co_await boost::beast::http::async_read(in_sync_read_stream, in_dynamic_buffer, in_parser);
+
+      // This error is returned when buffer_body uses up the buffer
+      if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
+      if (l_ec) {
+        in_logger->error("无法读取请求体 {}", l_ec.message());
+        co_return l_ec;
+      }
+      // Set up the body for reading.
+      // This is how much was parsed:
+      in_parser.get().body().size = sizeof(l_buffer) - in_parser.get().body().size;
+      in_parser.get().body().data = l_buffer;
+      in_parser.get().body().more = !in_parser.is_done();
+    } else {
+      in_parser.get().body().data = nullptr;
+      in_parser.get().body().size = 0;
+    }
+    // Write everything in the buffer (which might be empty)
+    std::tie(l_ec, std::ignore) = co_await boost::beast::http::async_write(in_sync_write_stream, in_serializer);
+    // This error is returned when buffer_body uses up the buffer
+    if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
+    if (l_ec) {
+      in_logger->error("无法发送请求体 {}", l_ec.message());
+      co_return l_ec;
+    }
+  } while (!in_parser.is_done() && !in_serializer.is_done());
+
+  co_return l_ec;
+}
+
 boost::asio::awaitable<boost::system::error_code> proxy_relay(
-    tcp_stream_type& in_proxy_stream, std::shared_ptr<tcp_stream_type>& in_target_stream,
-    request_parser_ptr in_request_parser, logger_ptr in_logger
+    tcp_stream_type_ptr in_source_stream, tcp_stream_type_ptr in_target_stream, request_parser_ptr in_request_parser,
+    logger_ptr in_logger
 ) {
   boost::system::error_code l_ec{};
-  // WARN: 这个函数必须将下一次的头部读取完毕
+  using buffer_request_type      = boost::beast::http::request_parser<boost::beast::http::buffer_body>;
+  using buffer_response_type     = boost::beast::http::response_parser<boost::beast::http::buffer_body>;
+  using buffer_request_type_ptr  = std::shared_ptr<buffer_request_type>;
+  using buffer_response_type_ptr = std::shared_ptr<buffer_response_type>;
+  char l_buffer[1024 * 4];
+  boost::beast::flat_buffer l_flat_buffer{};
+
+  {
+    // 开始转发请求
+    buffer_request_type_ptr l_request_parser{std::make_shared<buffer_request_type>(std::move(*in_request_parser))};
+    boost::beast::http::request_serializer<boost::beast::http::buffer_body> l_request_serializer{l_request_parser->get()
+    };
+    std::tie(l_ec, std::ignore) =
+        co_await boost::beast::http::async_write_header(*in_target_stream, l_request_serializer);
+    in_target_stream->expires_after(30s);
+    in_source_stream->expires_after(30s);
+    if (l_ec) {
+      in_logger->error("无法发送请求头 {}", l_ec.message());
+      co_return l_ec;
+    }
+    // 异步读取, 并且写入
+    l_ec = co_await async_relay<true>(
+        *in_target_stream, *in_source_stream, l_flat_buffer, *l_request_parser, l_request_serializer, in_logger
+    );
+    if (l_ec) co_return l_ec;
+    in_target_stream->expires_after(30s);
+    in_source_stream->expires_after(30s);
+  }
+
+  {  // 开始转发回复
+    buffer_response_type_ptr l_response_parser{std::make_shared<buffer_response_type>()};
+    boost::beast::http::response_serializer<boost::beast::http::buffer_body> l_response_serializer{
+        l_response_parser->get()
+    };
+
+    std::tie(l_ec, std::ignore) =
+        co_await boost::beast::http::async_read_header(*in_target_stream, l_flat_buffer, *l_response_parser);
+    if (l_ec) {
+      in_logger->error("无法读取回复头 {}", l_ec.message());
+      co_return l_ec;
+    }
+    in_target_stream->expires_after(30s);
+    in_source_stream->expires_after(30s);
+
+    std::tie(l_ec, std::ignore) =
+        co_await boost::beast::http::async_write_header(*in_source_stream, l_response_serializer);
+    if (l_ec) {
+      in_logger->error("无法发送回复头 {}", l_ec.message());
+      co_return l_ec;
+    }
+    l_ec = co_await async_relay<false>(
+        *in_target_stream, *in_source_stream, l_flat_buffer, *l_response_parser, l_response_serializer, in_logger
+    );
+    if (l_ec) co_return l_ec;
+    in_target_stream->expires_after(30s);
+    in_source_stream->expires_after(30s);
+
+  }
   co_return l_ec;
 }
 
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr) {
-  tcp_stream_type l_stream{std::move(in_socket)};
-  std::shared_ptr<tcp_stream_type> l_proxy_relay_stream{};
-  l_stream.expires_after(30s);
+  tcp_stream_type_ptr l_stream = std::make_shared<tcp_stream_type>(std::move(in_socket));
+  tcp_stream_type_ptr l_proxy_relay_stream{};
+  l_stream->expires_after(30s);
   auto l_session     = std::make_shared<session_data>();
   l_session->logger_ = std::make_shared<spdlog::async_logger>(
-      fmt::format("{}_{}", "socket", SOCKET(l_stream.socket().native_handle())),
+      fmt::format("{}_{}", "socket", SOCKET(l_stream->socket().native_handle())),
       spdlog::sinks_init_list{g_logger_ctrl().rotating_file_sink_}, spdlog::thread_pool()
   );
 
@@ -69,14 +167,15 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
   auto l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
   std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::string_body>> l_request_parser_string;
 
-  auto [l_ec, bytes_transferred] = co_await boost::beast::http::async_read_header(l_stream, buffer_, *l_request_parser);
+  auto [l_ec, bytes_transferred] =
+      co_await boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser);
   if (l_ec) {
     l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec);
-    l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
-    l_stream.close();
+    l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+    l_stream->close();
     co_return;
   }
-  l_stream.expires_after(30s);
+  l_stream->expires_after(30s);
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_session->version_    = l_request_parser->get().version();
     l_session->keep_alive_ = l_request_parser->keep_alive();
@@ -89,12 +188,25 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     // WARN: 请求分发到对应的处理函数, 如果没有对应的处理函数则直接转发代理
     auto l_callback = (*in_route_ptr)(l_method, l_session->url_.segments(), l_session);
     if (!l_callback) {
+      if (!l_proxy_relay_stream) l_proxy_relay_stream = co_await in_route_ptr->create_proxy_factory_();
       l_ec = co_await proxy_relay(l_stream, l_proxy_relay_stream, l_request_parser, l_session->logger_);
       if (l_ec) {
         l_session->logger_->log(log_loc(), level::err, "代理失败 {}", l_ec);
-        l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
-        l_stream.close();
+        l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+        l_stream->close();
       }
+      // 读取下一次头
+      l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
+      l_stream->expires_after(30s);
+      std::tie(l_ec, std::ignore) =
+          co_await boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser);
+      if (l_ec) {
+        l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec);
+        l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+        l_stream->close();
+        co_return;
+      }
+      l_stream->expires_after(30s);
       continue;
     }
 
@@ -105,11 +217,11 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
       case boost::beast::http::verb::get:
         if (boost::beast::websocket::is_upgrade(l_request_parser->get()) &&
             (*in_route_ptr)(l_method, l_session->url_.segments(), l_session)->has_websocket()) {
-          boost::beast::get_lowest_layer(l_stream).expires_never();
+          boost::beast::get_lowest_layer(*l_stream).expires_never();
           auto l_websocket_route = std::make_shared<websocket_route>();
           (*in_route_ptr)(l_method, l_session->url_.segments(), l_session)->websocket_callback_(l_websocket_route);
           co_await async_websocket_session(
-              std::move(l_stream), l_request_parser->get(), l_websocket_route, l_session->logger_
+              std::move(*l_stream), l_request_parser->get(), l_websocket_route, l_session->logger_
           );
           co_return;
         }
@@ -125,8 +237,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         l_request_parser_string = std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>(
             std::move(*l_request_parser)
         );
-        co_await boost::beast::http::async_read(l_stream, buffer_, *l_request_parser_string);
-        l_stream.expires_after(30s);
+        co_await boost::beast::http::async_read(*l_stream, buffer_, *l_request_parser_string);
+        l_stream->expires_after(30s);
 
         if (l_content_type.find("application/json") != std::string::npos) {
           try {
@@ -150,12 +262,12 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     // auto l_gen  = co_await l_callback->callback_(l_session);
 
     if (!l_session->keep_alive_) {
-      auto [l_ec2, _] = co_await boost::beast::async_write(l_stream, std::move(l_gen));
+      auto [l_ec2, _] = co_await boost::beast::async_write(*l_stream, std::move(l_gen));
       if (l_ec2) {
         l_session->logger_->log(log_loc(), level::err, "发送错误码 {}", l_ec2);
       }
-      l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec2);
-      l_stream.close();
+      l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec2);
+      l_stream->close();
       co_return;
     }
 
@@ -163,8 +275,8 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
     auto [_, l_ec_r, l_sz_r, l_ec_w, l_sz_w] =
         co_await boost::asio::experimental::make_parallel_group(
-            boost::beast::http::async_read_header(l_stream, buffer_, *l_request_parser, boost::asio::deferred),
-            boost::beast::async_write(l_stream, std::move(l_gen), boost::asio::deferred)
+            boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser, boost::asio::deferred),
+            boost::beast::async_write(*l_stream, std::move(l_gen), boost::asio::deferred)
         )
             .async_wait(
                 boost::asio::experimental::wait_for_all(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
@@ -172,17 +284,17 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
     if (l_ec_r || l_ec_w) {
       if (l_ec_r) {
         l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec_r);
-        l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_r);
-        l_stream.close();
+        l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_r);
+        l_stream->close();
       }
       if (l_ec_w) {
         l_session->logger_->log(log_loc(), level::err, "发送错误 {}", l_ec_w);
-        l_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_w);
-        l_stream.close();
+        l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec_w);
+        l_stream->close();
       }
       co_return;
     }
-    l_stream.expires_after(30s);
+    l_stream->expires_after(30s);
   }
 }
 
