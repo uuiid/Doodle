@@ -51,7 +51,10 @@ void database_pool_info::create_pool(const std::string& in_path) {
   pool_ = std::make_shared<sqlpp::sqlite3::connection_pool>(l_config, 300);
 }
 
-pooled_connection database_pool_info::get_connection() const { return pool_->get(); }
+sql_connection_ptr database_pool_info::get_connection() const {
+  auto l_ptr = std::make_shared<sqlpp::sqlite3::pooled_connection>(std::move(pool_->get()));
+  return l_ptr;
+}
 
 }  // namespace details
 }  // namespace doodle

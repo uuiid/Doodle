@@ -36,7 +36,7 @@ DOODLE_SQL_TABLE_IMP(
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
-    pooled_connection& in_comm, const std::map<boost::uuids::uuid, entt::entity>& in_map_id
+    const sql_connection_ptr& in_comm, const std::map<boost::uuids::uuid, entt::entity>& in_map_id
 ) {
   auto l_user_id_maps = user::select_all_map_id(in_comm);
   work_xlsx_task_info_block_tab l_tab{};
@@ -44,7 +44,7 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
   std::vector<work_xlsx_task_info_block> l_ret{};
   std::vector<std::int64_t> l_ret_id{};
   std::map<std::int64_t, std::size_t> l_map_id{};
-  for (auto&& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
+  for (auto&& l_row : (*in_comm)(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     work_xlsx_task_info_block l_info{};
     std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
     l_info.year_month_ = chrono::year_month{
@@ -59,13 +59,13 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
   }
 
   work_xlsx_task_info_block_sub_tab l_sub_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::select(sqlpp::all_of(l_sub_tab))
+  auto l_pre = in_comm->prepare(sqlpp::select(sqlpp::all_of(l_sub_tab))
                                    .from(l_sub_tab)
                                    .order_by(l_sub_tab.index_col.asc())
                                    .where(l_sub_tab.parent_id == sqlpp::parameter(l_sub_tab.parent_id)));
   for (auto&& [l_id, l_index] : l_map_id) {
     l_pre.params.parent_id = l_id;
-    for (auto&& l_row : in_comm(l_pre)) {
+    for (auto&& l_row : (*in_comm)(l_pre)) {
       work_xlsx_task_info l_info{};
       std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
       l_info.start_time_  = {chrono::current_zone(), l_row.start_time.value()};
@@ -83,8 +83,8 @@ std::vector<work_xlsx_task_info_block> work_xlsx_task_info_block::select_all(
 
   return l_ret;
 }
-void work_xlsx_task_info_block::create_table(pooled_connection& in_comm) {
-  in_comm.execute(R"(
+void work_xlsx_task_info_block::create_table(const sql_connection_ptr& in_comm) {
+  in_comm->execute(R"(
     CREATE TABLE IF NOT EXISTS work_xlsx_task_info_block_tab (
       id          INTEGER    PRIMARY KEY NOT NULL,
       uuid        BLOB       NOT NULL UNIQUE,
@@ -94,10 +94,10 @@ void work_xlsx_task_info_block::create_table(pooled_connection& in_comm) {
       user_ref_id INTEGER     REFERENCES user_tab(id) ON DELETE CASCADE
     );
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE INDEX IF NOT EXISTS work_xlsx_task_info_block_tab_uuid_index ON work_xlsx_task_info_block_tab (uuid);
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE TABLE IF NOT EXISTS work_xlsx_task_info_block_sub_tab (
       id                INTEGER    PRIMARY KEY NOT NULL,
       uuid              BLOB       NOT NULL UNIQUE,
@@ -111,22 +111,22 @@ void work_xlsx_task_info_block::create_table(pooled_connection& in_comm) {
       user_remark       TEXT
     );
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE INDEX IF NOT EXISTS work_xlsx_task_info_block_sub_tab_uuid_index ON work_xlsx_task_info_block_sub_tab (uuid);
   )");
 }
 
 std::vector<bool> work_xlsx_task_info_block::filter_exist(
-    pooled_connection& in_comm, const std::vector<work_xlsx_task_info_block>& in_task
+    const sql_connection_ptr& in_comm, const std::vector<work_xlsx_task_info_block>& in_task
 ) {
   work_xlsx_task_info_block_tab l_tab{};
   std::vector<bool> l_ret{};
-  auto l_pre = in_comm.prepare(
+  auto l_pre = in_comm->prepare(
       sqlpp::select(sqlpp::count(l_tab.id)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
   for (const auto& l_info : in_task) {
     l_pre.params.uuid = {l_info.id_.begin(), l_info.id_.end()};
-    for (const auto& l_row : in_comm(l_pre)) {
+    for (const auto& l_row : (*in_comm)(l_pre)) {
       l_ret.emplace_back(l_row.count.value() > 0);
       break;
     }
@@ -134,7 +134,7 @@ std::vector<bool> work_xlsx_task_info_block::filter_exist(
   return l_ret;
 }
 void work_xlsx_task_info_block::insert(
-    pooled_connection& in_comm, const std::vector<work_xlsx_task_info_block>& in_task,
+    const sql_connection_ptr& in_comm, const std::vector<work_xlsx_task_info_block>& in_task,
     const std::map<entt::entity, boost::uuids::uuid>& in_map_id
 ) {
   auto l_user_id_maps = user::select_all_map_id(in_comm);
@@ -145,7 +145,7 @@ void work_xlsx_task_info_block::insert(
   }
 
   work_xlsx_task_info_block_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::insert_into(l_tab).set(
+  auto l_pre = in_comm->prepare(sqlpp::insert_into(l_tab).set(
       l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.year_c = sqlpp::parameter(l_tab.year_c),
       l_tab.month_c = sqlpp::parameter(l_tab.month_c), l_tab.duration = sqlpp::parameter(l_tab.duration),
       l_tab.user_ref_id = sqlpp::parameter(l_tab.user_ref_id)
@@ -157,10 +157,10 @@ void work_xlsx_task_info_block::insert(
     l_pre.params.month_c     = std::uint32_t(l_info.year_month_.month());
     l_pre.params.duration    = l_info.duration_.count();
     l_pre.params.user_ref_id = l_user_uuid_maps.at(in_map_id.at(l_info.user_refs_));
-    l_ids.emplace_back(in_comm(l_pre));
+    l_ids.emplace_back((*in_comm)(l_pre));
   }
   work_xlsx_task_info_block_sub_tab l_sub_tab{};
-  auto l_pre_sub = in_comm.prepare(sqlpp::insert_into(l_sub_tab).set(
+  auto l_pre_sub = in_comm->prepare(sqlpp::insert_into(l_sub_tab).set(
       l_sub_tab.uuid = sqlpp::parameter(l_sub_tab.uuid), l_sub_tab.start_time = sqlpp::parameter(l_sub_tab.start_time),
       l_sub_tab.end_time          = sqlpp::parameter(l_sub_tab.end_time),
       l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
@@ -185,15 +185,15 @@ void work_xlsx_task_info_block::insert(
       l_pre_sub.params.remark      = in_task[i].task_info_[j].remark_;
       l_pre_sub.params.user_remark = in_task[i].task_info_[j].user_remark_;
 
-      in_comm(l_pre_sub);
+      (*in_comm)(l_pre_sub);
     }
   }
 }
 void work_xlsx_task_info_block::update(
-    pooled_connection& in_comm, const std::vector<work_xlsx_task_info_block>& in_task
+    const sql_connection_ptr& in_comm, const std::vector<work_xlsx_task_info_block>& in_task
 ) {
   work_xlsx_task_info_block_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::update(l_tab)
+  auto l_pre = in_comm->prepare(sqlpp::update(l_tab)
                                    .set(
                                        l_tab.year_c   = sqlpp::parameter(l_tab.year_c),
                                        l_tab.month_c  = sqlpp::parameter(l_tab.month_c),
@@ -205,17 +205,17 @@ void work_xlsx_task_info_block::update(
     l_pre.params.month_c  = std::uint32_t(l_info.year_month_.month());
     l_pre.params.duration = l_info.duration_.count();
     l_pre.params.uuid     = {l_info.id_.begin(), l_info.id_.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
   // select id
   std::vector<std::int64_t> l_ids{};
   {
     auto l_pre2 =
-        in_comm.prepare(sqlpp::select(l_tab.id).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+        in_comm->prepare(sqlpp::select(l_tab.id).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
 
     for (auto&& l_info : in_task) {
       l_pre2.params.uuid = {l_info.id_.begin(), l_info.id_.end()};
-      for (auto&& l_row : in_comm(l_pre2)) {
+      for (auto&& l_row : (*in_comm)(l_pre2)) {
         l_ids.emplace_back(l_row.id.value());
       }
     }
@@ -223,9 +223,9 @@ void work_xlsx_task_info_block::update(
 
   work_xlsx_task_info_block_sub_tab l_sub_tab{};
   // delete sub
-  in_comm(sqlpp::remove_from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids))));
+  (*in_comm)(sqlpp::remove_from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids))));
 
-  auto l_pre_sub = in_comm.prepare(sqlpp::insert_into(l_sub_tab).set(
+  auto l_pre_sub = in_comm->prepare(sqlpp::insert_into(l_sub_tab).set(
       l_sub_tab.uuid = sqlpp::parameter(l_sub_tab.uuid), l_sub_tab.start_time = sqlpp::parameter(l_sub_tab.start_time),
       l_sub_tab.end_time          = sqlpp::parameter(l_sub_tab.end_time),
       l_sub_tab.duration          = sqlpp::parameter(l_sub_tab.duration),
@@ -248,18 +248,18 @@ void work_xlsx_task_info_block::update(
       l_pre_sub.params.index_col   = j;
       l_pre_sub.params.remark      = in_task[i].task_info_[j].remark_;
       l_pre_sub.params.user_remark = in_task[i].task_info_[j].user_remark_;
-      in_comm(l_pre_sub);
+      (*in_comm)(l_pre_sub);
     }
   }
 }
 void work_xlsx_task_info_block::delete_by_ids(
-    pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids
+    const sql_connection_ptr& in_comm, const std::vector<boost::uuids::uuid>& in_ids
 ) {
   work_xlsx_task_info_block_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  auto l_pre = in_comm->prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   for (const auto& l_id : in_ids) {
     l_pre.params.uuid = {l_id.begin(), l_id.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
 

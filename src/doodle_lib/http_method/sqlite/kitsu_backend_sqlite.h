@@ -83,7 +83,7 @@ class kitsu_backend_sqlite : public boost::noncopyable {
   void save();
 
  public:
-  void init(pooled_connection& in_conn);
+  void init(const sql_connection_ptr& in_conn);
   void run();
 };
 }  // namespace doodle::http

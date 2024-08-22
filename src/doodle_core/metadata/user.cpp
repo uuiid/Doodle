@@ -121,10 +121,10 @@ DOODLE_SQL_COLUMN_IMP(dingding_company_id, sqlpp::blob, database_n::detail::can_
 DOODLE_SQL_TABLE_IMP(user_tab, tables::column::id, uuid, user_name, mobile, dingding_id, dingding_company_id);
 }  // namespace
 
-std::vector<user> user::select_all(pooled_connection& in_comm) {
+std::vector<user> user::select_all(const sql_connection_ptr& in_comm) {
   user_tab l_tab{};
   std::vector<user> l_r{};
-  for (const auto& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
+  for (const auto& l_row : (*in_comm)(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     user l_user{};
     std::copy_n(l_row.uuid.value().begin(), l_user.id_.size(), l_user.id_.begin());
     l_user.p_string_    = l_row.user_name.value();
@@ -140,10 +140,10 @@ std::vector<user> user::select_all(pooled_connection& in_comm) {
   return l_r;
 }
 
-std::map<std::int64_t, boost::uuids::uuid> user::select_all_map_id(pooled_connection& in_comm) {
+std::map<std::int64_t, boost::uuids::uuid> user::select_all_map_id(const sql_connection_ptr& in_comm) {
   user_tab l_tab{};
   std::map<std::int64_t, boost::uuids::uuid> l_r{};
-  for (const auto& l_row : in_comm(sqlpp::select(l_tab.id, l_tab.uuid).from(l_tab).unconditionally())) {
+  for (const auto& l_row : (*in_comm)(sqlpp::select(l_tab.id, l_tab.uuid).from(l_tab).unconditionally())) {
     boost::uuids::uuid l_uuid{};
     std::copy_n(l_row.uuid.value().begin(), l_uuid.size(), l_uuid.begin());
     l_r.emplace(l_row.id.value(), l_uuid);
@@ -151,8 +151,8 @@ std::map<std::int64_t, boost::uuids::uuid> user::select_all_map_id(pooled_connec
   return l_r;
 }
 
-void user::create_table(pooled_connection& in_comm) {
-  in_comm.execute(R"(
+void user::create_table(const sql_connection_ptr& in_comm) {
+  in_comm->execute(R"(
     CREATE TABLE IF NOT EXISTS user_tab (
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
         uuid                BLOB    NOT NULL   UNIQUE,
@@ -162,29 +162,29 @@ void user::create_table(pooled_connection& in_comm) {
         dingding_company_id BLOB
     );
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE INDEX IF NOT EXISTS user_tab_uuid_index ON user_tab (uuid);
   )");
 }
 
-std::vector<bool> user::filter_exist(pooled_connection& in_comm, const std::vector<user>& in_task) {
+std::vector<bool> user::filter_exist(const sql_connection_ptr& in_comm, const std::vector<user>& in_task) {
   user_tab l_tab{};
   std::vector<bool> l_r{};
-  auto l_pre = in_comm.prepare(
+  auto l_pre = in_comm->prepare(
       sqlpp::select(sqlpp::count(l_tab.id)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
   for (const auto& l_user : in_task) {
     l_pre.params.uuid = {l_user.id_.begin(), l_user.id_.end()};
-    for (const auto& l_row : in_comm(l_pre)) {
+    for (const auto& l_row : (*in_comm)(l_pre)) {
       l_r.emplace_back(l_row.count.value() > 0);
       break;
     }
   }
   return l_r;
 }
-void user::insert(pooled_connection& in_comm, const std::vector<user>& in_task) {
+void user::insert(const sql_connection_ptr& in_comm, const std::vector<user>& in_task) {
   user_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::insert_into(l_tab).set(
+  auto l_pre = in_comm->prepare(sqlpp::insert_into(l_tab).set(
       l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.user_name = sqlpp::parameter(l_tab.user_name),
       l_tab.mobile = sqlpp::parameter(l_tab.mobile), l_tab.dingding_id = sqlpp::parameter(l_tab.dingding_id),
       l_tab.dingding_company_id = sqlpp::parameter(l_tab.dingding_company_id)
@@ -195,12 +195,12 @@ void user::insert(pooled_connection& in_comm, const std::vector<user>& in_task) 
     l_pre.params.mobile              = l_user.mobile_;
     l_pre.params.dingding_id         = l_user.dingding_id_;
     l_pre.params.dingding_company_id = {l_user.dingding_company_id_.begin(), l_user.dingding_company_id_.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
-void user::update(pooled_connection& in_comm, const std::vector<user>& in_task) {
+void user::update(const sql_connection_ptr& in_comm, const std::vector<user>& in_task) {
   user_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::update(l_tab)
+  auto l_pre = in_comm->prepare(sqlpp::update(l_tab)
                                    .set(
                                        l_tab.user_name           = sqlpp::parameter(l_tab.user_name),
                                        l_tab.mobile              = sqlpp::parameter(l_tab.mobile),
@@ -214,15 +214,15 @@ void user::update(pooled_connection& in_comm, const std::vector<user>& in_task) 
     l_pre.params.dingding_id         = l_user.dingding_id_;
     l_pre.params.uuid                = {l_user.id_.begin(), l_user.id_.end()};
     l_pre.params.dingding_company_id = {l_user.dingding_company_id_.begin(), l_user.dingding_company_id_.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
-void user::delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
+void user::delete_by_ids(const sql_connection_ptr& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
   user_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  auto l_pre = in_comm->prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   for (const auto& l_id : in_ids) {
     l_pre.params.uuid = {l_id.begin(), l_id.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
 

@@ -46,11 +46,11 @@ DOODLE_SQL_COLUMN_IMP(command_value, sqlpp::text, database_n::detail::can_be_nul
 DOODLE_SQL_TABLE_IMP(command_tab, tables::column::id, command_task_id, command_index, command_value);
 }  // namespace
 
-std::vector<server_task_info> server_task_info::select_all(pooled_connection& in_comm) {
+std::vector<server_task_info> server_task_info::select_all(const sql_connection_ptr& in_comm) {
   server_task_info_tab l_tab{};
   std::vector<server_task_info> l_res{};
   std::vector<std::int64_t> l_ids{};
-  for (auto&& l_row : in_comm(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
+  for (auto&& l_row : (*in_comm)(sqlpp::select(sqlpp::all_of(l_tab)).from(l_tab).unconditionally())) {
     server_task_info l_info{};
     std::copy_n(l_row.uuid.value().begin(), l_info.id_.size(), l_info.id_.begin());
     l_info.exe_ = l_row.exe.value();
@@ -72,14 +72,14 @@ std::vector<server_task_info> server_task_info::select_all(pooled_connection& in
 
   command_tab l_command_tab{};
   auto l_pre_com =
-      in_comm.prepare(sqlpp::select(sqlpp::all_of(l_command_tab))
+      in_comm->prepare(sqlpp::select(sqlpp::all_of(l_command_tab))
                           .from(l_command_tab)
                           .order_by(l_command_tab.command_index.asc())
                           .where(l_command_tab.command_task_id == sqlpp::parameter(l_command_tab.command_task_id)));
   for (auto&& l_id : l_ids) {
     std::vector<std::string> l_command{};
     l_pre_com.params.command_task_id = l_id;
-    for (auto&& l_row : in_comm(l_pre_com)) {
+    for (auto&& l_row : (*in_comm)(l_pre_com)) {
       l_command.emplace_back(l_row.command_value.value());
     }
     l_res[std::distance(l_ids.begin(), std::find(l_ids.begin(), l_ids.end(), l_id))].command_ = std::move(l_command);
@@ -89,25 +89,25 @@ std::vector<server_task_info> server_task_info::select_all(pooled_connection& in
 }
 
 std::vector<bool> server_task_info::filter_exist(
-    pooled_connection& in_comm, const std::vector<server_task_info>& in_task
+    const sql_connection_ptr& in_comm, const std::vector<server_task_info>& in_task
 ) {
   server_task_info_tab l_tab{};
   std::vector<bool> l_res{};
-  auto l_pre = in_comm.prepare(
+  auto l_pre = in_comm->prepare(
       sqlpp::select(sqlpp::count(l_tab.id)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
   for (auto i = 0; i < in_task.size(); ++i) {
     l_pre.params.uuid = {in_task[i].id_.begin(), in_task[i].id_.end()};
-    for (auto&& l_row : in_comm(l_pre)) {
+    for (auto&& l_row : (*in_comm)(l_pre)) {
       l_res.emplace_back(l_row.count.value() > 0);
     }
   }
   return l_res;
 }
 
-void server_task_info::insert(pooled_connection& in_comm, const std::vector<server_task_info>& in_task) {
+void server_task_info::insert(const sql_connection_ptr& in_comm, const std::vector<server_task_info>& in_task) {
   server_task_info_tab l_tab{};
-  auto l_pre = in_comm.prepare(
+  auto l_pre = in_comm->prepare(
       sqlpp::sqlite3::insert_into(l_tab)
           .set(
               l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.status = sqlpp::parameter(l_tab.status),
@@ -151,12 +151,12 @@ void server_task_info::insert(pooled_connection& in_comm, const std::vector<serv
     l_pre.params.end_time = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.end_time_);
     l_pre.params.log_path = l_task.log_path_.generic_string();
     l_pre.params.ref_id   = {l_task.ref_id_.begin(), l_task.ref_id_.end()};
-    l_ids.emplace_back(in_comm(l_pre));
+    l_ids.emplace_back((*in_comm)(l_pre));
   }
 
   command_tab l_command_tab{};
   auto l_pre_com =
-      in_comm.prepare(sqlpp::sqlite3::insert_into(l_command_tab)
+      in_comm->prepare(sqlpp::sqlite3::insert_into(l_command_tab)
                           .set(
                               l_command_tab.command_task_id = sqlpp::parameter(l_command_tab.command_task_id),
                               l_command_tab.command_index   = sqlpp::parameter(l_command_tab.command_index),
@@ -167,14 +167,14 @@ void server_task_info::insert(pooled_connection& in_comm, const std::vector<serv
       l_pre_com.params.command_task_id = l_ids[i];
       l_pre_com.params.command_index   = j;
       l_pre_com.params.command_value   = in_task[i].command_[j];
-      in_comm(l_pre_com);
+      (*in_comm)(l_pre_com);
     }
   }
 }
 
-void server_task_info::update(pooled_connection& in_comm, const std::vector<server_task_info>& in_task) {
+void server_task_info::update(const sql_connection_ptr& in_comm, const std::vector<server_task_info>& in_task) {
   server_task_info_tab l_tab{};
-  auto l_pre = in_comm.prepare(
+  auto l_pre = in_comm->prepare(
       sqlpp::update(l_tab)
           .set(
               l_tab.exe = sqlpp::parameter(l_tab.exe), l_tab.status = sqlpp::parameter(l_tab.status),
@@ -204,21 +204,21 @@ void server_task_info::update(pooled_connection& in_comm, const std::vector<serv
     l_pre.params.end_time = chrono::time_point_cast<sqlpp::time_point::_cpp_value_type::duration>(l_task.end_time_);
     l_pre.params.log_path = l_task.log_path_.generic_string();
     l_pre.params.ref_id   = {l_task.ref_id_.begin(), l_task.ref_id_.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
 
-void server_task_info::delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
+void server_task_info::delete_by_ids(const sql_connection_ptr& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
   server_task_info_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  auto l_pre = in_comm->prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   for (auto&& l_id : in_ids) {
     l_pre.params.uuid = {l_id.begin(), l_id.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
 
-void server_task_info::create_table(pooled_connection& in_comm) {
-  in_comm.execute(R"(
+void server_task_info::create_table(const sql_connection_ptr& in_comm) {
+  in_comm->execute(R"(
 CREATE TABLE IF NOT EXISTS server_task_info_tab (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid            BLOB NOT NULL UNIQUE,
@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS server_task_info_tab (
     ref_id          BLOB
     )
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
 CREATE TABLE IF NOT EXISTS command_tab (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     command_task_id  INTEGER ,

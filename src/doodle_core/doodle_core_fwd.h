@@ -172,7 +172,6 @@ template <typename>
 struct sql_ctx;
 }  // namespace database_n
 
-using pooled_connection  = sqlpp::sqlite3::pooled_connection;
 using sql_connection     = sqlpp::sqlite3::common_connection;
 using sql_connection_ptr = std::shared_ptr<sql_connection>;
 

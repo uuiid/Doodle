@@ -90,15 +90,15 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   };
 
  public:
-  static std::vector<user> select_all(pooled_connection& in_comm);
-  static std::map<std::int64_t, boost::uuids::uuid> select_all_map_id(pooled_connection& in_comm);
-  static void create_table(pooled_connection& in_comm);
+  static std::vector<user> select_all(const sql_connection_ptr& in_comm);
+  static std::map<std::int64_t, boost::uuids::uuid> select_all_map_id(const sql_connection_ptr& in_comm);
+  static void create_table(const sql_connection_ptr& in_comm);
 
   // 过滤已经存在的任务
-  static std::vector<bool> filter_exist(pooled_connection& in_comm, const std::vector<user>& in_task);
-  static void insert(pooled_connection& in_comm, const std::vector<user>& in_task);
-  static void update(pooled_connection& in_comm, const std::vector<user>& in_task);
-  static void delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids);
+  static std::vector<bool> filter_exist(const sql_connection_ptr& in_comm, const std::vector<user>& in_task);
+  static void insert(const sql_connection_ptr& in_comm, const std::vector<user>& in_task);
+  static void update(const sql_connection_ptr& in_comm, const std::vector<user>& in_task);
+  static void delete_by_ids(const sql_connection_ptr& in_comm, const std::vector<boost::uuids::uuid>& in_ids);
 
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);

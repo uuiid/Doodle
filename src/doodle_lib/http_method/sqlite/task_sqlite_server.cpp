@@ -21,7 +21,7 @@ class task_sqlite_server_fun {
 
   void operator()() const {
     auto l_db_conn = g_pool_db().get_connection();
-    auto l_tx      = sqlpp::start_transaction(l_db_conn);
+    auto l_tx      = sqlpp::start_transaction(*l_db_conn);
     auto l_indexs  = server_task_info::filter_exist(l_db_conn, task_list_);
     std::vector<server_task_info> l_insert_list{};
     std::vector<server_task_info> l_update_list{};
@@ -39,7 +39,7 @@ class task_sqlite_server_fun {
   }
 };
 
-void task_sqlite_server::init(pooled_connection& in_conn) {
+void task_sqlite_server::init(const sql_connection_ptr& in_conn) {
   server_task_info::create_table(in_conn);
   auto l_tasks = server_task_info::select_all(in_conn);
 

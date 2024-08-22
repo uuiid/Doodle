@@ -38,7 +38,7 @@ void to_json(nlohmann::json& j, const attendance& p) {
 }
 
 std::vector<attendance_block> attendance_block::select_all(
-    pooled_connection& in_comm, const std::map<boost::uuids::uuid, entt::entity>& in_map_id
+    const sql_connection_ptr& in_comm, const std::map<boost::uuids::uuid, entt::entity>& in_map_id
 ) {
   auto l_get_user = user::select_all_map_id(in_comm);
   attendance_block_tab l_tab{};
@@ -46,8 +46,8 @@ std::vector<attendance_block> attendance_block::select_all(
   std::vector<attendance_block> l_ret{};
   std::map<std::int64_t, std::size_t> l_ids{};
   {
-    auto l_pre = in_comm.prepare(sqlpp::select(all_of(l_tab)).from(l_tab).unconditionally());
-    for (const auto& l_row : in_comm(l_pre)) {
+    auto l_pre = in_comm->prepare(sqlpp::select(all_of(l_tab)).from(l_tab).unconditionally());
+    for (const auto& l_row : (*in_comm)(l_pre)) {
       if (l_get_user.contains(l_row.user_ref_id.value()) == false) {
         continue;
       }
@@ -73,7 +73,7 @@ std::vector<attendance_block> attendance_block::select_all(
     std::transform(l_ids.begin(), l_ids.end(), std::back_inserter(l_tmp_ids), [](const auto& in) -> std::int64_t {
       return in.first;
     });
-    for (const auto& l_row : in_comm(sqlpp::select(all_of(l_sub_tab))
+    for (const auto& l_row : (*in_comm)(sqlpp::select(all_of(l_sub_tab))
                                          .from(l_sub_tab)
                                          .where(l_sub_tab.parent_id.in(sqlpp::value_list(l_tmp_ids))))) {
       auto& l_b = l_ret.at(l_ids.at(l_row.parent_id));
@@ -93,9 +93,9 @@ std::vector<attendance_block> attendance_block::select_all(
   }
   return l_ret;
 }
-void attendance_block::create_table(pooled_connection& in_comm) {
+void attendance_block::create_table(const sql_connection_ptr& in_comm) {
   // 外键 user_ref_id-> (user) id
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE TABLE IF NOT EXISTS attendance_block_tab (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid              BLOB NOT NULL    UNIQUE,
@@ -104,11 +104,11 @@ void attendance_block::create_table(pooled_connection& in_comm) {
       user_ref_id       INTEGER REFERENCES user_tab(id) ON DELETE CASCADE
     );
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE INDEX IF NOT EXISTS attendance_block_tab_uuid_index ON attendance_block_tab (uuid);
   )");
 
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE TABLE IF NOT EXISTS attendance_block_sub_tab (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid              BLOB NOT NULL    UNIQUE,
@@ -120,23 +120,23 @@ void attendance_block::create_table(pooled_connection& in_comm) {
       parent_id         INTEGER REFERENCES attendance_block_tab(id) ON DELETE CASCADE
     );
   )");
-  in_comm.execute(R"(
+  in_comm->execute(R"(
     CREATE INDEX IF NOT EXISTS attendance_block_sub_tab_uuid_index ON attendance_block_sub_tab (uuid);
   )");
 }
 
 // 过滤已经存在的任务
 std::vector<bool> attendance_block::filter_exist(
-    pooled_connection& in_comm, const std::vector<attendance_block>& in_task
+    const sql_connection_ptr& in_comm, const std::vector<attendance_block>& in_task
 ) {
   attendance_block_tab l_tab{};
   std::vector<bool> l_ret{};
-  auto l_pre = in_comm.prepare(
+  auto l_pre = in_comm->prepare(
       sqlpp::select(sqlpp::count(l_tab.id)).from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid))
   );
   for (const auto& l_attendance_block : in_task) {
     l_pre.params.uuid = {l_attendance_block.id_.begin(), l_attendance_block.id_.end()};
-    for (const auto& l_row : in_comm(l_pre)) {
+    for (const auto& l_row : (*in_comm)(l_pre)) {
       l_ret.emplace_back(l_row.count > 0);
       break;
     }
@@ -144,7 +144,7 @@ std::vector<bool> attendance_block::filter_exist(
   return l_ret;
 }
 void attendance_block::insert(
-    pooled_connection& in_comm, const std::vector<attendance_block>& in_task,
+    const sql_connection_ptr& in_comm, const std::vector<attendance_block>& in_task,
     const std::map<entt::entity, boost::uuids::uuid>& in_map_id
 ) {
   auto l_get_user    = user::select_all_map_id(in_comm);
@@ -158,7 +158,7 @@ void attendance_block::insert(
   }();
 
   attendance_block_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::insert_into(l_tab).set(
+  auto l_pre = in_comm->prepare(sqlpp::insert_into(l_tab).set(
       l_tab.uuid = sqlpp::parameter(l_tab.uuid), l_tab.update_time = sqlpp::parameter(l_tab.update_time),
       l_tab.create_date = sqlpp::parameter(l_tab.create_date), l_tab.user_ref_id = sqlpp::parameter(l_tab.user_ref_id)
   ));
@@ -174,11 +174,11 @@ void attendance_block::insert(
       continue;
     }
     l_pre.params.user_ref_id = l_get_user_id.at(in_map_id.at(l_attendance_block.user_ref_id_));
-    l_ids.emplace_back(in_comm(l_pre));
+    l_ids.emplace_back(in_comm->operator()(l_pre));
   }
 
   attendance_block_sub_tab l_sub_tab{};
-  auto l_sub_pre = in_comm.prepare(sqlpp::insert_into(l_sub_tab).set(
+  auto l_sub_pre = in_comm->prepare(sqlpp::insert_into(l_sub_tab).set(
       l_sub_tab.uuid = sqlpp::parameter(l_sub_tab.uuid), l_sub_tab.start_time = sqlpp::parameter(l_sub_tab.start_time),
       l_sub_tab.end_time = sqlpp::parameter(l_sub_tab.end_time), l_sub_tab.remark = sqlpp::parameter(l_sub_tab.remark),
       l_sub_tab.attendance_type = sqlpp::parameter(l_sub_tab.attendance_type),
@@ -196,13 +196,13 @@ void attendance_block::insert(
       l_sub_pre.params.attendance_type = static_cast<std::uint32_t>(l_attendance.type_);
       l_sub_pre.params.dingding_id     = l_attendance.dingding_id_;
       l_sub_pre.params.parent_id       = l_id;
-      in_comm(l_sub_pre);
+      (*in_comm)(l_sub_pre);
     }
   }
 }
-void attendance_block::update(pooled_connection& in_comm, const std::vector<attendance_block>& in_task) {
+void attendance_block::update(const sql_connection_ptr& in_comm, const std::vector<attendance_block>& in_task) {
   attendance_block_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::update(l_tab)
+  auto l_pre = in_comm->prepare(sqlpp::update(l_tab)
                                    .set(
                                        l_tab.update_time = sqlpp::parameter(l_tab.update_time),
                                        l_tab.create_date = sqlpp::parameter(l_tab.create_date),
@@ -213,7 +213,7 @@ void attendance_block::update(pooled_connection& in_comm, const std::vector<atte
     l_pre.params.update_time = l_attendance_block.update_time_.get_sys_time();
     l_pre.params.create_date = l_attendance_block.create_date_;
     l_pre.params.uuid        = {l_attendance_block.id_.begin(), l_attendance_block.id_.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 
   // get ids
@@ -227,16 +227,16 @@ void attendance_block::update(pooled_connection& in_comm, const std::vector<atte
         }
     );
 
-    auto l_pre = in_comm.prepare(sqlpp::select(l_tab.id).from(l_tab).where(l_tab.uuid.in(sqlpp::value_list(l_uuids))));
-    for (const auto& l_row : in_comm(l_pre)) {
+    auto l_pre = in_comm->prepare(sqlpp::select(l_tab.id).from(l_tab).where(l_tab.uuid.in(sqlpp::value_list(l_uuids))));
+    for (const auto& l_row : (*in_comm)(l_pre)) {
       l_ids.emplace_back(l_row.id);
     }
   }
   // delete all sub
   attendance_block_sub_tab l_sub_tab{};
-  in_comm(sqlpp::remove_from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids))));
+  (*in_comm)(sqlpp::remove_from(l_sub_tab).where(l_sub_tab.parent_id.in(sqlpp::value_list(l_ids))));
   // insert all sub
-  auto l_sub_pre = in_comm.prepare(sqlpp::insert_into(l_sub_tab).set(
+  auto l_sub_pre = in_comm->prepare(sqlpp::insert_into(l_sub_tab).set(
       l_sub_tab.uuid = sqlpp::parameter(l_sub_tab.uuid), l_sub_tab.start_time = sqlpp::parameter(l_sub_tab.start_time),
       l_sub_tab.end_time = sqlpp::parameter(l_sub_tab.end_time), l_sub_tab.remark = sqlpp::parameter(l_sub_tab.remark),
       l_sub_tab.attendance_type = sqlpp::parameter(l_sub_tab.attendance_type),
@@ -254,16 +254,16 @@ void attendance_block::update(pooled_connection& in_comm, const std::vector<atte
       l_sub_pre.params.attendance_type = static_cast<std::uint32_t>(l_attendance.type_);
       l_sub_pre.params.dingding_id     = l_attendance.dingding_id_;
       l_sub_pre.params.parent_id       = l_id;
-      in_comm(l_sub_pre);
+      (*in_comm)(l_sub_pre);
     }
   }
 }
-void attendance_block::delete_by_ids(pooled_connection& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
+void attendance_block::delete_by_ids(const sql_connection_ptr& in_comm, const std::vector<boost::uuids::uuid>& in_ids) {
   attendance_block_tab l_tab{};
-  auto l_pre = in_comm.prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
+  auto l_pre = in_comm->prepare(sqlpp::remove_from(l_tab).where(l_tab.uuid == sqlpp::parameter(l_tab.uuid)));
   for (const auto& l_id : in_ids) {
     l_pre.params.uuid = {l_id.begin(), l_id.end()};
-    in_comm(l_pre);
+    (*in_comm)(l_pre);
   }
 }
 

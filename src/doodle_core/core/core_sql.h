@@ -44,7 +44,7 @@ class DOODLE_CORE_API database_pool_info {
   }
   [[nodiscard]] inline const FSys::path& get_path() const { return path_; }
 
-  [[nodiscard]] pooled_connection get_connection() const;
+  [[nodiscard]] sql_connection_ptr get_connection() const;
 
   // async_install_db
   template <typename T, typename CompletionHandler>

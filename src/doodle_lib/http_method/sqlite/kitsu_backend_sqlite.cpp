@@ -19,7 +19,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
     std::vector<boost::uuids::uuid> destroy_list_{};
     std::map<entt::entity, boost::uuids::uuid> map_id_{};  // 用于关联
 
-    void operator()(pooled_connection& in_db) const {
+    void operator()(const sql_connection_ptr& in_db) const {
       auto l_indexs = T::filter_exist(in_db, save_list_);
       std::vector<T> l_insert_list{};
       std::vector<T> l_update_list{};
@@ -52,7 +52,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
     std::vector<boost::uuids::uuid> destroy_list_{};
     std::map<entt::entity, boost::uuids::uuid> self_map_id_{};  // 用于关联
 
-    void operator()(pooled_connection& in_db) const {
+    void operator()(const sql_connection_ptr& in_db) const {
       auto l_indexs = user::filter_exist(in_db, save_list_);
       std::vector<user> l_insert_list{};
       std::vector<user> l_update_list{};
@@ -106,8 +106,8 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
 
   void operator()() const {
     auto l_db_conn = g_pool_db().get_connection();
-    l_db_conn.execute("PRAGMA foreign_keys = ON;");
-    auto l_tx = sqlpp::start_transaction(l_db_conn);
+    l_db_conn->execute("PRAGMA foreign_keys = ON;");
+    auto l_tx = sqlpp::start_transaction(*l_db_conn);
     (*save_user_)(l_db_conn);
     (*save_work_xlsx_task_info_block_)(l_db_conn);
     (*save_attendance_block_)(l_db_conn);
@@ -115,7 +115,7 @@ class kitsu_backend_sqlite::kitsu_backend_sqlite_fun {
   }
 };
 
-void kitsu_backend_sqlite::init(pooled_connection& in_conn) {
+void kitsu_backend_sqlite::init(const sql_connection_ptr& in_conn) {
   // 先创建user表, 以便其他外键关联
   user::create_table(in_conn);
   work_xlsx_task_info_block::create_table(in_conn);
