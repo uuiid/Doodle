@@ -22,7 +22,7 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::assets>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::assets l_table{};
@@ -46,7 +46,7 @@ void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::h
   }
 }
 
-void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::assets>::update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::assets l_table{};
@@ -76,7 +76,7 @@ void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const std::map<std::int64
 }
 
 void sql_com<doodle::assets>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::assets l_table{};
@@ -115,7 +115,7 @@ void sql_com<doodle::assets>::select(
     l_p.get<assets>().add_child(l_c);
   }
 }
-void sql_com<doodle::assets>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::assets>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets>(in_ptr, in_handle);
 }
 

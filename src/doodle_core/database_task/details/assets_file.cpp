@@ -20,9 +20,9 @@
 #include <wil/result.h>
 namespace doodle::database_n {
 
-void sql_com<doodle::assets_file>::create_table(conn_ptr& in_ptr) { sql_create_table_base::create_table(in_ptr); }
+void sql_com<doodle::assets_file>::create_table(const sql_connection_ptr& in_ptr) { sql_create_table_base::create_table(in_ptr); }
 
-void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::assets_file>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
   tables::assets_file const l_table{};
   sql_create_table_base::create_table(in_ptr, l_table.organization);
@@ -61,7 +61,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
   }
 }
 
-void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::assets_file>::update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
   tables::assets_file const l_table{};
   sql_create_table_base::create_table(in_ptr, l_table.organization);
@@ -115,7 +115,7 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::map<std::
   });
 }
 void sql_com<doodle::assets_file>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   const tables::assets_file l_table{};
@@ -176,7 +176,7 @@ void sql_com<doodle::assets_file>::select(
 
   in_reg.insert<doodle::assets_file>(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
-void sql_com<doodle::assets_file>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::assets_file>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets_file>(in_ptr, in_handle);
 }
 }  // namespace doodle::database_n

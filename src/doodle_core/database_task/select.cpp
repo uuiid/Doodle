@@ -122,7 +122,7 @@ class select::impl {
 // #define DOODLE_SQL_compatible_v2
 #if defined(DOODLE_SQL_compatible_v2)
 #pragma region "old compatible 兼容旧版函数"
-  void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  void select_old(entt::registry& in_reg, const sql_connection_ptr& in_conn) {
     if (auto [l_v, l_i] = doodle::database_n::details::get_version(in_conn);
         l_v == 3 && l_i >= 4 && doodle::database_n::details::db_compatible::has_metadatatab_table(in_conn)) {
       Metadatatab l_metadatatab{};
@@ -147,7 +147,7 @@ class select::impl {
               entt_tool::load_comm<
                   doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
                   doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon,
-                  doodle::importance >(l_h, k_json);
+                  doodle::importance>(l_h, k_json);
             }}
         );
         results.emplace_back(l_fun.share());
@@ -170,19 +170,19 @@ class select::impl {
 #pragma endregion
 #endif
   template <typename Type>
-  void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  void _select_com_(entt::registry& in_reg, const sql_connection_ptr& in_conn) {
     tables::com_entity l_com_entity{};
 
     auto&& l_s = strands_.emplace_back(boost::asio::make_strand(g_thread()));
     std::size_t l_size{1};
-    for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_com_entity.id)).from(l_com_entity).unconditionally())) {
+    for (auto&& raw : (*in_conn)(sqlpp::select(sqlpp::count(l_com_entity.id)).from(l_com_entity).unconditionally())) {
       l_size = raw.count.value();
       break;
     }
 
     auto l_future_data = std::make_shared<future_data<Type>>();
 
-    for (auto&& row : in_conn(sqlpp::select(l_com_entity.entity_id, l_com_entity.json_data)
+    for (auto&& row : (*in_conn)(sqlpp::select(l_com_entity.entity_id, l_com_entity.json_data)
                                   .from(l_com_entity)
                                   .where(l_com_entity.com_hash == entt::type_id<Type>().hash()))) {
       if (stop) return;
@@ -201,21 +201,21 @@ class select::impl {
     });
   }
   template <typename... Type>
-  void select_com(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  void select_com(entt::registry& in_reg, const sql_connection_ptr& in_conn) {
     (_select_com_<Type>(in_reg, in_conn), ...);
   }
 
-  void select_entt(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  void select_entt(entt::registry& in_reg, const sql_connection_ptr& in_conn) {
     tables::entity l_entity{};
 
     std::size_t l_size{1};
-    for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_entity.id)).from(l_entity).unconditionally())) {
+    for (auto&& raw : (*in_conn)(sqlpp::select(sqlpp::count(l_entity.id)).from(l_entity).unconditionally())) {
       l_size = raw.count.value();
       break;
     }
     auto l_future_data = std::make_shared<future_data<database>>();
 
-    for (auto& row : in_conn(sqlpp::select(sqlpp::all_of(l_entity)).from(l_entity).unconditionally())) {
+    for (auto& row : (*in_conn)(sqlpp::select(sqlpp::all_of(l_entity)).from(l_entity).unconditionally())) {
       if (stop) return;
       auto l_e = num_to_enum<entt::entity>(row.id.value());
       create_entt.push_back(l_e);
@@ -246,19 +246,19 @@ namespace {
 DOODLE_SQL_TABLE_IMP(context, tables::column::id, tables::column::com_hash, tables::column::json_data);
 
 void _select_ctx_(
-    entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn,
+    entt::registry& in_reg, const sql_connection_ptr& in_conn,
     const std::map<std::uint32_t, std::function<void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list
 ) {
   context l_context{};
 
-  for (auto&& row : in_conn(sqlpp::select(l_context.com_hash, l_context.json_data).from(l_context).unconditionally())) {
+  for (auto&& row : (*in_conn)(sqlpp::select(l_context.com_hash, l_context.json_data).from(l_context).unconditionally())) {
     if (auto l_f = in_fun_list.find(row.com_hash.value()); l_f != in_fun_list.end()) {
       in_fun_list.at(row.com_hash.value())(in_reg, row.json_data.value());
     }
   }
 }
 template <typename... Type>
-void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+void select_ctx_template(entt::registry& in_reg, const sql_connection_ptr& in_conn) {
   std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{std::make_pair(
       entt::type_id<Type>().hash(),
       [&](entt::registry& in_reg, const std::string& in_str) {
@@ -272,7 +272,7 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
 
 }  // namespace
 
-bool select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect) {
+bool select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, const sql_connection_ptr& in_connect) {
   p_i->only_ctx = false;
   p_i->project  = in_project_path;
 #if defined(DOODLE_SQL_compatible_v2)
@@ -281,17 +281,17 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) { in_.get(); });
   p_i->results.clear();
 #endif
-  if (!detail::has_table(tables::com_entity{}, *in_connect)) return false;
+  if (!detail::has_table(tables::com_entity{}, in_connect)) return false;
 
   /// \brief 选中实体
-  p_i->select_entt(*p_i->local_reg, *in_connect);
+  p_i->select_entt(*p_i->local_reg, in_connect);
   /// \brief 等待实体创建完成
 
   /// @brief 选中组件
-  p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *in_connect);
+  p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, in_connect);
 
   /// \brief 选中上下文
-  select_ctx_template<DOODLE_SQLITE_TYPE_CTX>(in_registry, *in_connect);
+  select_ctx_template<DOODLE_SQLITE_TYPE_CTX>(in_registry, in_connect);
 
   /// \brief 开始修改注册表
   auto l_id = p_i->create_entt;
@@ -306,11 +306,11 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   return true;
 }
 
-bool select::is_old(const FSys::path& in_project_path, conn_ptr& in_connect) {
+bool select::is_old(const FSys::path& in_project_path, const sql_connection_ptr& in_connect) {
   p_i->only_ctx = false;
   p_i->project  = in_project_path;
 
-  return detail::has_table(tables::com_entity{}, *in_connect);
+  return detail::has_table(tables::com_entity{}, in_connect);
 }
 
 void patch_0001(const registry_ptr& in_ptr) {

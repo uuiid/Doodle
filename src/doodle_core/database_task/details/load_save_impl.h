@@ -93,7 +93,7 @@ class impl_obs {
     obs_create_.clear();
   }
 
-  void open(entt::registry& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+  void open(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
     database_n::sql_com<type_t> l_table{};
     if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
   };
@@ -102,7 +102,7 @@ class impl_obs {
         in_handles | ranges::views::filter([](const entt::handle& in_h) { return in_h && in_h.any_of<type_t>(); })
     );
   }
-  void save(entt::registry& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+  void save(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
     std::set<entt::entity> l_create{};
 
     for (auto&& i : obs_create_) {
@@ -131,7 +131,7 @@ class impl_obs {
     if (!l_install.empty()) l_orm.insert(in_conn, l_install);
     if (!in_handle.empty()) l_orm.destroy(in_conn, in_handle);
   }
-  void save_all(entt::registry& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+  void save_all(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
     boost::ignore_unused(in_handle);
 
     auto l_v       = in_registry_ptr.view<database, type_t>();
@@ -185,7 +185,7 @@ class impl_obs<database> {
     destroy_ids_.clear();
   }
 
-  void open(entt::registry& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+  void open(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
     boost::ignore_unused(this);
     database_n::sql_com<database> l_table{};
     if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
@@ -198,7 +198,7 @@ class impl_obs<database> {
     additional_save_handles_ |= ranges::actions::push_back(in_handles);
   }
 
-  void save(entt::registry& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+  void save(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
     std::set<entt::handle> l_create{};
 
     for (auto&& i : obs_create_) {
@@ -224,7 +224,7 @@ class impl_obs<database> {
     if (!destroy_ids_.empty()) l_orm.destroy(in_conn, destroy_ids_);
   }
 
-  void save_all(entt::registry& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+  void save_all(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
     auto l_v       = in_registry_ptr.view<database>();
     auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
                        return {in_registry_ptr, in_e};
@@ -242,14 +242,14 @@ class impl_obs<database> {
 template <typename type_t>
 class impl_ctx {
  public:
-  void open(entt::registry& in_registry_ptr, conn_ptr& in_conn) {
+  void open(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn) {
     database_n::sql_ctx<type_t> l_table{};
     if (l_table.has_table(in_conn)) {
       if (in_registry_ptr.ctx().contains<type_t>()) in_registry_ptr.ctx().erase<type_t>();
       l_table.select(in_conn, in_registry_ptr.ctx().emplace<type_t>());
     }
   }
-  void save(entt::registry& in_registry_ptr, conn_ptr& in_conn) {
+  void save(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn) {
     if (!in_registry_ptr.ctx().contains<type_t>()) return;
 
     database_n::sql_ctx<type_t> l_table{};
@@ -285,8 +285,8 @@ class obs_main {
     return std::apply([&](auto&&... x) { return ((x->has_update() || ...)); }, obs_data_);
   }
 
-  void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) { open(*in_registry_ptr, in_conn); }
-  void open(entt::registry& in_registry, conn_ptr& in_conn) {
+  void open(const registry_ptr& in_registry_ptr, const sql_connection_ptr& in_conn) { open(*in_registry_ptr, in_conn); }
+  void open(entt::registry& in_registry, const sql_connection_ptr& in_conn) {
     std::map<std::int64_t, entt::handle> l_map{};
     std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
@@ -295,13 +295,13 @@ class obs_main {
     std::apply([&](auto&&... x) { (x->connect(in_registry), ...); }, obs_data_);
   }
 
-  void open_ctx(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+  void open_ctx(const registry_ptr& in_registry_ptr, const sql_connection_ptr& in_conn) {
     std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->open(*in_registry_ptr, in_conn), ...); }, ctx_data_);
     std::apply([&](auto&&... x) { (x->connect(*in_registry_ptr), ...); }, obs_data_);
   }
-  //  void add_ref_project(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+  //  void add_ref_project(const registry_ptr& in_registry_ptr, const sql_connection_ptr& in_conn) {
   //    std::map<std::int64_t, entt::handle> l_map{};
   //    std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
   //    std::apply([&](auto&&... x) { (x->open(in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
@@ -310,7 +310,7 @@ class obs_main {
   //    std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
   //  }
 
-  void import_project(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+  void import_project(const registry_ptr& in_registry_ptr, const sql_connection_ptr& in_conn) {
     std::map<std::int64_t, entt::handle> l_map{};
     std::apply([&](auto&&... x) { (x->disconnect(), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->open(*in_registry_ptr, in_conn, l_map), ...); }, obs_data_);
@@ -338,13 +338,13 @@ class obs_main {
   void connect(entt::registry& in_registry_ptr) {
     std::apply([&](auto&&... x) { (x->connect(in_registry_ptr), ...); }, obs_data_);
   }
-  void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+  void save(const registry_ptr& in_registry_ptr, const sql_connection_ptr& in_conn) {
     std::vector<std::int64_t> l_handles{};
     std::apply([&](auto&&... x) { (x->save(*in_registry_ptr, in_conn), ...); }, ctx_data_);
     std::apply([&](auto&&... x) { (x->save(*in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
     std::apply([&](auto&&... x) { (x->clear(), ...); }, obs_data_);
   }
-  void save_all(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+  void save_all(const registry_ptr& in_registry_ptr, const sql_connection_ptr& in_conn) {
     std::vector<std::int64_t> l_handles{};
     std::apply([&](auto&&... x) { (x->save(*in_registry_ptr, in_conn), ...); }, ctx_data_);
     std::apply([&](auto&&... x) { (x->save_all(*in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);

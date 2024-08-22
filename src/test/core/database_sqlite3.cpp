@@ -196,33 +196,43 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
 BOOST_AUTO_TEST_CASE(test_sqlite3_multi_thread) {
   app_command<> l_App{};
   l_App.use_multithread(true);
+  g_pool_db().set_path("D:/test.db");
+  {
+    auto L_con = g_pool_db().get_connection();
+    server_task_info::create_table(L_con);
+  }
   std::vector<server_task_info> l_list{};
-  for (int i = 0; i < 10000000; ++i) {
+  l_list.reserve(1000000);
+  for (int i = 0; i < 1000000; ++i) {
     l_list.emplace_back(server_task_info{core_set::get_set().get_uuid(), "tset.exe", {"dasdas", "daaaa", "adsdasds"}});
   }
-
-  for (int i = 0; i < 10000000; ++i) {
-    boost::asio::post(g_io_context(), [i, &l_list]() {
+  auto l_s = boost::asio::make_strand(g_io_context());
+  for (int i = 0; i < 1000000; ++i) {
+    boost::asio::post(l_s, [i, &l_list]() {
+      auto l_conn = g_pool_db().get_connection();
+      auto l_c    = sqlpp::start_transaction(l_conn);
       if (i % 2 == 0) {
-        auto l_conn = g_pool_db().get_connection();
         server_task_info::insert(l_conn, {l_list[i]});
       } else {
-        auto l_conn = g_pool_db().get_connection();
         server_task_info::delete_by_ids(l_conn, {l_list[i].id_});
       }
+      l_c.commit();
     });
   }
 
-  for (int i = 0; i < 10000000; ++i) {
-    boost::asio::post(g_io_context(), [i, &l_list]() {
+  for (int i = 0; i < 1000000; ++i) {
+    boost::asio::post(l_s, [i, &l_list]() {
+      auto l_conn = g_pool_db().get_connection();
+      auto l_c    = sqlpp::start_transaction(l_conn);
+
       if (i % 2 != 0) {
-        auto l_conn = g_pool_db().get_connection();
         server_task_info::insert(l_conn, {l_list[i]});
       } else {
-        auto l_conn = g_pool_db().get_connection();
         server_task_info::delete_by_ids(l_conn, {l_list[i].id_});
       }
+      l_c.commit();
     });
   }
+  boost::asio::post(l_s, []() { app_base::Get().stop_app(); });
   l_App.run();
 }

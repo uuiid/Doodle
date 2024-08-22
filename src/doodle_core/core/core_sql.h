@@ -22,8 +22,8 @@ class DOODLE_CORE_API database_info {
   database_info() : database_info(memory_data){};
   explicit database_info(FSys::path in_path) : path_(std::move(in_path)){};
 
-  [[nodiscard]] conn_ptr get_connection() const;
-  [[nodiscard]] conn_ptr get_connection_const() const;
+  [[nodiscard]] sql_connection_ptr get_connection() const;
+  [[nodiscard]] sql_connection_ptr get_connection_const() const;
 };
 
 class DOODLE_CORE_API database_pool_info {

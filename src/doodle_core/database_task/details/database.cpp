@@ -14,13 +14,13 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::database>::create_table(doodle::conn_ptr& in_ptr) {
+void sql_com<doodle::database>::create_table(const sql_connection_ptr& in_ptr) {
   const tables::entity l_tabl{};
   in_ptr->execute(detail::create_table(l_tabl).end());
   in_ptr->execute(detail::create_index(l_tabl.id));
 }
 
-void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::database>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
 
@@ -38,7 +38,7 @@ void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt:
 }
 
 void sql_com<doodle::database>::select(
-    conn_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
 
@@ -70,7 +70,7 @@ void sql_com<doodle::database>::select(
   for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], entt::handle{in_reg, l_entts[i]});
 }
 
-void sql_com<doodle::database>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::database>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   tables::entity l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.id == sqlpp::parameter(l_tabl.id)));

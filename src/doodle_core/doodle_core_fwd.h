@@ -87,23 +87,23 @@ struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
     return *this;
   }
 };
-using maya_file_id         = entt::tag<"maya_file"_hs>;
-using ue_file_id           = entt::tag<"ue_file"_hs>;
-using maya_rig_file_id     = entt::tag<"maya_rig_file"_hs>;
-using ue_file_preset_id    = entt::tag<"ue_file_preset"_hs>;
+using maya_file_id      = entt::tag<"maya_file"_hs>;
+using ue_file_id        = entt::tag<"ue_file"_hs>;
+using maya_rig_file_id  = entt::tag<"maya_rig_file"_hs>;
+using ue_file_preset_id = entt::tag<"ue_file_preset"_hs>;
 
 // 场景id
-using scene_id             = entt::tag<"scene"_hs>;
+using scene_id          = entt::tag<"scene"_hs>;
 // 人物id
-using character_id         = entt::tag<"character"_hs>;
+using character_id      = entt::tag<"character"_hs>;
 // 道具id
-using prop_id              = entt::tag<"prop"_hs>;
+using prop_id           = entt::tag<"prop"_hs>;
 // rig id
-using rig_id               = entt::tag<"rig"_hs>;
+using rig_id            = entt::tag<"rig"_hs>;
 // 动画id
-using animation_id         = entt::tag<"animation"_hs>;
+using animation_id      = entt::tag<"animation"_hs>;
 // 解算id
-using simulation_id        = entt::tag<"simulation"_hs>;
+using simulation_id     = entt::tag<"simulation"_hs>;
 
 class connect_video_interface;
 
@@ -120,14 +120,14 @@ class user;
 class project;
 class comment;
 class assets;
-using maya_file            = detail::one_file_base<detail::maya_file_id>;
-using ue_file              = detail::one_file_base<detail::ue_file_id>;
-using maya_rig_file        = detail::one_file_base<detail::maya_rig_file_id>;
-using ue_file_preset       = detail::one_file_base<detail::ue_file_preset_id>;
+using maya_file      = detail::one_file_base<detail::maya_file_id>;
+using ue_file        = detail::one_file_base<detail::ue_file_id>;
+using maya_rig_file  = detail::one_file_base<detail::maya_rig_file_id>;
+using ue_file_preset = detail::one_file_base<detail::ue_file_preset_id>;
 
-using computer_ref         = detail::entt_handle_ref<entt::tag<"computer"_hs>>;
-using task_ref             = detail::entt_handle_ref<entt::tag<"task"_hs>>;
-using main_project         = entt::tag<"main_project"_hs>;
+using computer_ref   = detail::entt_handle_ref<entt::tag<"computer"_hs>>;
+using task_ref       = detail::entt_handle_ref<entt::tag<"task"_hs>>;
+using main_project   = entt::tag<"main_project"_hs>;
 class ue_main_map;
 
 using scene_id      = detail::scene_id;
@@ -172,8 +172,9 @@ template <typename>
 struct sql_ctx;
 }  // namespace database_n
 
-using conn_ptr          = std::unique_ptr<sqlpp::sqlite3::connection>;
-using pooled_connection = sqlpp::sqlite3::pooled_connection;
+using pooled_connection  = sqlpp::sqlite3::pooled_connection;
+using sql_connection     = sqlpp::sqlite3::common_connection;
+using sql_connection_ptr = std::shared_ptr<sql_connection>;
 
 namespace json_rpc {
 class server;

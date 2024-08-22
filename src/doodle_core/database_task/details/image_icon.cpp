@@ -16,7 +16,7 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::image_icon>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::image_icon l_table{};
@@ -33,7 +33,7 @@ void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<ent
   }
 }
 
-void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::image_icon>::update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::image_icon l_table{};
@@ -52,7 +52,7 @@ void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::map<std::i
   }
 }
 void sql_com<doodle::image_icon>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::image_icon l_table{};
@@ -80,7 +80,7 @@ void sql_com<doodle::image_icon>::select(
   }
   in_reg.insert<doodle::image_icon>(l_entts.begin(), l_entts.end(), l_img.begin());
 }
-void sql_com<doodle::image_icon>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::image_icon>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::image_icon>(in_ptr, in_handle);
 }
 

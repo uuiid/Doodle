@@ -45,8 +45,8 @@ class sqlite_snapshot {
     entt::entity entity_{};
     entt::meta_any pre_sql_data_;
     bool is_entity_{false};
-    conn_ptr conn_ptr_;
-    explicit save_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
+    sql_connection_ptr conn_ptr_;
+    explicit save_snapshot_t(entt::registry& in_registry, sql_connection_ptr in_conn)
         : snapshot_{in_registry}, conn_ptr_{std::move(in_conn)} {}
 
     template <typename Component>
@@ -116,8 +116,8 @@ class sqlite_snapshot {
     entt::meta_func get_size_func;
     entt::meta_any result_sql_data_;
 
-    conn_ptr conn_ptr_;
-    explicit load_snapshot_t(entt::registry& in_registry, conn_ptr in_conn)
+    const sql_connection_ptr conn_ptr_;
+    explicit load_snapshot_t(entt::registry& in_registry, sql_connection_ptr in_conn)
         : loader_{in_registry}, conn_ptr_{std::move(in_conn)} {}
 
     template <typename Component>
@@ -161,9 +161,9 @@ class sqlite_snapshot {
 
   void init_base_meta();
 
-  using tx_t = decltype(sqlpp::start_transaction(*std::declval<conn_ptr>()));
+  using tx_t = decltype(sqlpp::start_transaction(*std::declval<sql_connection_ptr>()));
   std::shared_ptr<tx_t> tx_{};
-  conn_ptr conn_ptr_{};
+  sql_connection_ptr conn_ptr_{};
   std::unique_ptr<save_snapshot_t> save_snapshot_{};
 
  public:

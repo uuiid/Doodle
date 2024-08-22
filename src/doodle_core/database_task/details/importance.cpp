@@ -12,7 +12,7 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::importance>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::importance l_tabl{};
@@ -30,7 +30,7 @@ void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<ent
   }
 }
 
-void sql_com<doodle::importance>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::importance>::update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::importance l_tabl{};
@@ -53,7 +53,7 @@ void sql_com<doodle::importance>::update(conn_ptr& in_ptr, const std::map<std::i
 }
 
 void sql_com<doodle::importance>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
 
@@ -88,7 +88,7 @@ void sql_com<doodle::importance>::select(
   }
 }
 
-void sql_com<doodle::importance>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::importance>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::importance>(in_ptr, in_handle);
 }
 

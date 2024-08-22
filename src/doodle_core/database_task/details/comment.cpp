@@ -17,7 +17,7 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::comment>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::comment l_table{};
@@ -36,7 +36,9 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<entt::
   }
 }
 
-void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::comment>::update(
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id
+) {
   auto& l_conn = *in_ptr;
 
   tables::comment l_table{};
@@ -60,7 +62,7 @@ void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::map<std::int6
   }
 }
 void sql_com<doodle::comment>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::comment l_table{};
@@ -101,7 +103,7 @@ void sql_com<doodle::comment>::select(
   //  }
   in_reg.insert<doodle::comment>(l_entts.begin(), l_entts.end(), l_comment.begin());
 }
-void sql_com<doodle::comment>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::comment>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::comment>(in_ptr, in_handle);
 }
 

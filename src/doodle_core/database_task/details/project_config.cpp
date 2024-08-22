@@ -30,7 +30,7 @@
 #include <vector>
 
 namespace doodle::database_n {
-void sql_com<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr) {
+void sql_com<project_config::base_config>::create_table(const sql_connection_ptr& in_ptr) {
   detail::sql_create_table_base<tables::project_config>::create_table(in_ptr);
 
   create_table_parent_id<
@@ -38,7 +38,8 @@ void sql_com<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr
       tables::project_config_maya_camera_select>(in_ptr);
 }
 void sql_com<project_config::base_config>::install_sub(
-    conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
+    const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_handles,
+    const std::map<entt::handle, std::int64_t>& in_map
 ) {
   auto& l_conn = *in_ptr;
   {
@@ -94,7 +95,9 @@ void sql_com<project_config::base_config>::install_sub(
   }
 }
 
-void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<project_config::base_config>::insert(
+    const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id
+) {
   auto& l_conn = *in_ptr;
 
   std::map<entt::handle, std::int64_t> map_id{};
@@ -156,7 +159,9 @@ void sql_com<project_config::base_config>::insert(conn_ptr& in_ptr, const std::v
   install_sub(in_ptr, in_id, map_id);
 }
 
-void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<project_config::base_config>::update(
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id
+) {
   auto& l_conn = *in_ptr;
 
   {
@@ -234,7 +239,7 @@ void sql_com<project_config::base_config>::update(conn_ptr& in_ptr, const std::m
 }
 
 void sql_com<project_config::base_config>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   std::vector<project_config::base_config> l_config;
@@ -334,14 +339,16 @@ void sql_com<project_config::base_config>::select(
 
   in_reg.insert<project_config::base_config>(l_entts.begin(), l_entts.end(), l_config.begin());
 }
-void sql_com<project_config::base_config>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<project_config::base_config>::destroy(
+    const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle
+) {
   detail::sql_com_destroy<tables::project_config>(in_ptr, in_handle);
   detail::sql_com_destroy_parent_id<tables::project_config_assets_list>(in_ptr, in_handle);
   detail::sql_com_destroy_parent_id<tables::project_config_icon_extensions>(in_ptr, in_handle);
   detail::sql_com_destroy_parent_id<tables::project_config_maya_camera_select>(in_ptr, in_handle);
 }
 
-void sql_ctx<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr) {
+void sql_ctx<project_config::base_config>::create_table(const sql_connection_ptr& in_ptr) {
   detail::sql_create_table_base<tables::project_config>::create_table(in_ptr);
 
   create_table_parent_id<
@@ -350,7 +357,7 @@ void sql_ctx<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr
 }
 
 void sql_ctx<project_config::base_config>::install_sub(
-    doodle::conn_ptr& in_ptr, const std::int64_t in_id, const project_config::base_config& in_config
+    const sql_connection_ptr& in_ptr, const std::int64_t in_id, const project_config::base_config& in_config
 ) {
   auto& l_conn = *in_ptr;
   {
@@ -396,7 +403,9 @@ void sql_ctx<project_config::base_config>::install_sub(
   }
 }
 
-void sql_ctx<project_config::base_config>::insert(conn_ptr& in_ptr, const project_config::base_config& in_config) {
+void sql_ctx<project_config::base_config>::insert(
+    const sql_connection_ptr& in_ptr, const project_config::base_config& in_config
+) {
   auto& l_conn = *in_ptr;
 
   tables::project_config const l_tabl{};
@@ -428,7 +437,9 @@ void sql_ctx<project_config::base_config>::insert(conn_ptr& in_ptr, const projec
   detail::sql_com_destroy_parent_id<tables::project_config_maya_camera_select>(in_ptr, l_main_id_list);
   install_sub(in_ptr, l_id, in_config);
 }
-void sql_ctx<project_config::base_config>::select(conn_ptr& in_ptr, project_config::base_config& in_config) {
+void sql_ctx<project_config::base_config>::select(
+    const sql_connection_ptr& in_ptr, project_config::base_config& in_config
+) {
   auto& l_conn = *in_ptr;
 
   std::int64_t l_parent_id{};

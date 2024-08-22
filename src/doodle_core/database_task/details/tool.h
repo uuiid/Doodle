@@ -66,15 +66,15 @@ struct pragma_table : sqlpp::table_t<pragma_table, tables::column::name> {
 };
 
 template <typename table_t>
-bool has_table(const table_t& /*table*/, sqlpp::sqlite3::connection& in_connection) {
+bool has_table(const table_t& /*table*/, const sql_connection_ptr& in_connection) {
   const tables::sqlite_master l_table{};
   for (auto&& row :
-       in_connection(sqlpp::select(sqlpp::count(l_table.name))
-                         .from(l_table)
-                         .where(
-                             l_table.name == (sqlpp::name_of<table_t>::template char_ptr<create_table_ctx>()) &&
-                             l_table.type == "table"
-                         ))) {
+       (*in_connection)(sqlpp::select(sqlpp::count(l_table.name))
+                            .from(l_table)
+                            .where(
+                                l_table.name == (sqlpp::name_of<table_t>::template char_ptr<create_table_ctx>()) &&
+                                l_table.type == "table"
+                            ))) {
     return row.count.value() > 0;
   }
   //  pragma_table l_tab{};
@@ -85,9 +85,9 @@ bool has_table(const table_t& /*table*/, sqlpp::sqlite3::connection& in_connecti
   return false;
 }
 template <typename column_t>
-bool has_colume2(sqlpp::sqlite3::connection& in_connection, const column_t& in_column) {
+bool has_colume2(const sql_connection_ptr& in_connection, const column_t& in_column) {
   pragma_table l_tab{};
-  for (auto&& row : in_connection(
+  for (auto&& row : (*in_connection)(
            sqlpp::custom_query(
                sqlpp::select(sqlpp::count(l_tab.name)),
                sqlpp::verbatim(fmt::format(
@@ -107,7 +107,7 @@ template <typename table_t>
 struct sql_create_table_base {
  private:
   template <typename table_sub_t>
-  void impl_create_table_parent_id(doodle::conn_ptr& in_ptr) {
+  void impl_create_table_parent_id(const doodle::sql_connection_ptr& in_ptr) {
     const table_sub_t l_table{};
     in_ptr->execute(detail::create_table(l_table).foreign_column(l_table.parent_id, table_t{}.id).end());
     in_ptr->execute(detail::create_index(l_table.parent_id));
@@ -116,37 +116,37 @@ struct sql_create_table_base {
 
  protected:
   template <typename... table_subs_t>
-  void create_table_parent_id(doodle::conn_ptr& in_ptr) {
+  void create_table_parent_id(const sql_connection_ptr& in_ptr) {
     (impl_create_table_parent_id<table_subs_t>(in_ptr), ...);
   }
   template <typename column_t>
-  void create_table(doodle::conn_ptr& in_ptr, const column_t& in_column) {
-    if (!has_colume2(*in_ptr, in_column)) {
+  void create_table(const sql_connection_ptr& in_ptr, const column_t& in_column) {
+    if (!has_colume2(in_ptr, in_column)) {
       in_ptr->execute(detail::create_colume(in_column));
     }
   }
 
   template <typename column_t>
-  bool has_colume(doodle::conn_ptr& in_ptr, const column_t& in_column) {
-    return has_colume2(*in_ptr, in_column);
+  bool has_colume(const sql_connection_ptr& in_ptr, const column_t& in_column) {
+    return has_colume2(in_ptr, in_column);
   }
 
  public:
   sql_create_table_base() = default;
-  virtual void create_table(doodle::conn_ptr& in_ptr) {
+  virtual void create_table(const sql_connection_ptr& in_ptr) {
     const table_t l_tables{};
     in_ptr->execute(detail::create_table(l_tables).foreign_column(l_tables.entity_id, tables::entity{}.id).end());
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_id));
   };
 
-  bool has_table(doodle::conn_ptr& in_ptr) {
+  bool has_table(const sql_connection_ptr& in_ptr) {
     const table_t l_tables{};
-    return doodle::database_n::detail::has_table(l_tables, *in_ptr);
+    return doodle::database_n::detail::has_table(l_tables, in_ptr);
   }
 
   std::tuple<std::map<std::int64_t, entt::handle>, std::vector<entt::handle>> split_update_install(
-      doodle::conn_ptr& in_ptr, const std::vector<entt::handle>& in_entts
+      const doodle::sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_entts
   ) {
     const table_t l_table{};
 
@@ -173,19 +173,19 @@ template <>
 struct sql_create_table_base<tables::entity> {
  public:
   sql_create_table_base() = default;
-  virtual void create_table(doodle::conn_ptr& in_ptr) {
+  virtual void create_table(const doodle::sql_connection_ptr& in_ptr) {
     const tables::entity l_tables{};
     in_ptr->execute(detail::create_table(l_tables).unique_column(l_tables.uuid_data).end());
     in_ptr->execute(detail::create_index(l_tables.id));
   };
 
-  bool has_table(doodle::conn_ptr& in_ptr) {
+  bool has_table(const doodle::sql_connection_ptr& in_ptr) {
     const tables::entity l_tables{};
-    return doodle::database_n::detail::has_table(l_tables, *in_ptr);
+    return doodle::database_n::detail::has_table(l_tables, in_ptr);
   }
 
   std::tuple<std::map<std::int64_t, entt::entity>, std::vector<entt::entity>> split_update_install(
-      doodle::conn_ptr& in_ptr, const std::vector<entt::entity>& in_entts, const registry_ptr& reg_
+      const doodle::sql_connection_ptr& in_ptr, const std::vector<entt::entity>& in_entts, const registry_ptr& reg_
   ) {
     const tables::entity l_table{};
 

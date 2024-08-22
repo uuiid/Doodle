@@ -4,7 +4,9 @@
 
 #include "server_task_info.h"
 namespace doodle::database_n {
-void sql_com<doodle::server_task_info>::insert(doodle::conn_ptr &in_ptr, const std::vector<entt::handle> &in_id) {
+void sql_com<doodle::server_task_info>::insert(
+    const sql_connection_ptr &in_ptr, const std::vector<entt::handle> &in_id
+) {
   auto &l_conn = *in_ptr;
 
   tables::server_task_info l_tabl{};
@@ -39,7 +41,7 @@ void sql_com<doodle::server_task_info>::insert(doodle::conn_ptr &in_ptr, const s
   }
 }
 void sql_com<doodle::server_task_info>::update(
-    doodle::conn_ptr &in_ptr, const std::map<std::int64_t, entt::handle> &in_id
+    const sql_connection_ptr &in_ptr, const std::map<std::int64_t, entt::handle> &in_id
 ) {
   auto &l_conn = *in_ptr;
 
@@ -84,7 +86,7 @@ void sql_com<doodle::server_task_info>::update(
   }
 }
 void sql_com<doodle::server_task_info>::select(
-    doodle::conn_ptr &in_ptr, const std::map<std::int64_t, entt::handle> &in_handle, entt::registry &in_reg
+    const sql_connection_ptr &in_ptr, const std::map<std::int64_t, entt::handle> &in_handle, entt::registry &in_reg
 ) {
   auto &l_conn = *in_ptr;
   tables::server_task_info l_tabl{};
@@ -128,7 +130,9 @@ void sql_com<doodle::server_task_info>::select(
 
   in_reg.insert<server_task_info>(l_entts.begin(), l_entts.end(), l_works.begin());
 }
-void sql_com<doodle::server_task_info>::destroy(doodle::conn_ptr &in_ptr, const std::vector<std::int64_t> &in_handle) {
+void sql_com<doodle::server_task_info>::destroy(
+    const sql_connection_ptr &in_ptr, const std::vector<std::int64_t> &in_handle
+) {
   detail::sql_com_destroy<tables::server_task_info>(in_ptr, in_handle);
 }
 }  // namespace doodle::database_n

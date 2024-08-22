@@ -28,7 +28,7 @@
 
 namespace doodle::database_n {
 
-void sql_com<doodle::business::rules>::create_table(doodle::conn_ptr& in_ptr) {
+void sql_com<doodle::business::rules>::create_table( const sql_connection_ptr& in_ptr) {
   detail::sql_create_table_base<tables::business_rules>::create_table(in_ptr);
   create_table_parent_id<
       tables::business_rules_work_pair, tables::business_rules_work_abs_pair,
@@ -36,7 +36,7 @@ void sql_com<doodle::business::rules>::create_table(doodle::conn_ptr& in_ptr) {
 }
 
 void sql_com<doodle::business::rules>::insert_sub(
-    conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
+    const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
 ) {
   auto& l_conn = *in_ptr;
   {
@@ -104,7 +104,7 @@ void sql_com<doodle::business::rules>::insert_sub(
   }
 }
 
-void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::business::rules>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::business_rules l_table{};
@@ -130,7 +130,7 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
   insert_sub(in_ptr, in_id, l_map_id);
 }
 
-void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::business::rules>::update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::business_rules l_table{};
@@ -168,7 +168,7 @@ void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::map<s
 }
 
 void sql_com<doodle::business::rules>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   std::vector<business::rules> l_assets;
@@ -256,7 +256,7 @@ void sql_com<doodle::business::rules>::select(
 
   in_reg.insert<doodle::business::rules>(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
-void sql_com<doodle::business::rules>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::business::rules>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets>(in_ptr, in_handle);
   detail::sql_com_destroy_parent_id<tables::business_rules_work_pair>(in_ptr, in_handle);
   detail::sql_com_destroy_parent_id<tables::business_rules_work_abs_pair>(in_ptr, in_handle);

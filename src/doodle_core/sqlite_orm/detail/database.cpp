@@ -34,11 +34,11 @@ SQLPP_DECLARE_TABLE(
 
 namespace {
 
-void create_table(const conn_ptr& in_conn) {
+void create_table(const sql_connection_ptr& in_conn) {
   detail::sql_table_base<database_tab::database_tab> l_tab{};
   l_tab.create_table(in_conn);
 }
-std::shared_ptr<void> begin_save(const conn_ptr& in_conn) {
+std::shared_ptr<void> begin_save(const sql_connection_ptr& in_conn) {
   database_tab::database_tab l_entity_tab{};
   auto l_pre =
       in_conn->prepare(sqlpp::sqlite3::insert_into(l_entity_tab)
@@ -50,7 +50,9 @@ std::shared_ptr<void> begin_save(const conn_ptr& in_conn) {
                            .do_update(l_entity_tab.uuid_data = sqlpp::sqlite3::excluded(l_entity_tab.uuid_data)));
   return std::make_shared<decltype(l_pre)>(std::move(l_pre));
 }
-void save(const database& in_com, entt::entity& in_entity, std::shared_ptr<void>& in_pre, const conn_ptr& in_conn) {
+void save(
+    const database& in_com, entt::entity& in_entity, std::shared_ptr<void>& in_pre, const sql_connection_ptr& in_conn
+) {
   database_tab::database_tab l_entity_tab{};
   using pre_type                  = decltype(in_conn->prepare(
       sqlpp::sqlite3::insert_into(l_entity_tab)
@@ -66,11 +68,11 @@ void save(const database& in_com, entt::entity& in_entity, std::shared_ptr<void>
   l_pre->params.uuid_data         = boost::uuids::to_string(in_com.uuid());
   (*in_conn)(*l_pre);
 }
-void destroy(const std::vector<std::int64_t>& in_vector, const conn_ptr& in_conn) {
+void destroy(const std::vector<std::int64_t>& in_vector, const sql_connection_ptr& in_conn) {
   detail::sql_com_destroy<database_tab::database_tab>(in_conn, in_vector);
 }
 
-std::underlying_type_t<entt::entity> get_size(const conn_ptr& in_conn) {
+std::underlying_type_t<entt::entity> get_size(const sql_connection_ptr& in_conn) {
   database_tab::database_tab l_tabl{};
   for (auto&& raw : (*in_conn)(sqlpp::select(sqlpp::count(l_tabl.id)).from(l_tabl).unconditionally())) {
     return raw.count.value();
@@ -85,7 +87,7 @@ using pre_rus_t = decltype(std::declval<sqlpp::sqlite3::connection>()(
         .from(std::declval<database_tab::database_tab>())
         .unconditionally()
 ));
-std::shared_ptr<void> begin_load(const conn_ptr& in_conn) {
+std::shared_ptr<void> begin_load(const sql_connection_ptr& in_conn) {
   database_tab::database_tab l_tabl{};
   auto l_r = (*in_conn)(sqlpp::select(l_tabl.entity_identifier, l_tabl.uuid_data).from(l_tabl).unconditionally());
   return std::make_shared<decltype(l_r)>(std::move(l_r));
@@ -94,7 +96,7 @@ void load_entt(entt::entity& in_entity, std::shared_ptr<void>& in_pre) {
   auto l_pre = std::static_pointer_cast<pre_rus_t>(in_pre);
   in_entity  = num_to_enum<entt::entity>(l_pre->front().entity_identifier.value());
 }
-bool has_table(const conn_ptr& in_conn) {
+bool has_table(const sql_connection_ptr& in_conn) {
   database_tab::database_tab l_tab{};
   detail::sql_table_base<database_tab::database_tab> l_table{};
   return l_table.has_table(in_conn);

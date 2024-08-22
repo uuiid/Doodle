@@ -15,7 +15,7 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
   tag_serialization()  = default;
   ~tag_serialization() = default;
 
-  void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+  void insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
     auto& l_conn = *in_ptr;
 
     const tables::tag_table l_table{};
@@ -28,7 +28,7 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
       l_conn(l_pre);
     }
   }
-  void update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+  void update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
     //    auto& l_conn = *in_ptr;
     //    const tables::tag_table l_table{};
     //
@@ -44,7 +44,7 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
     //      l_conn(l_pre);
     //    }
   }
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg) {
+  void select(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg) {
     auto& l_conn = *in_ptr;
     const tables::tag_table l_table{};
     const tables::entity l_entt_id{};
@@ -69,7 +69,7 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
     }
     in_reg.insert<tag_type>(l_entts.begin(), l_entts.end(), tag_type{});
   }
-  void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+  void destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
     detail::sql_com_destroy<tables::tag_table>(in_ptr, in_handle);
   }
 };

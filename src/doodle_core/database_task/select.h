@@ -15,9 +15,9 @@ class DOODLE_CORE_API select {
 
   virtual ~select();
 
-  bool operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect);
+  bool operator()(entt::registry& in_registry, const FSys::path& in_project_path, const sql_connection_ptr& in_connect);
 
-  bool is_old(const FSys::path& in_project_path, conn_ptr& in_connect);
+  bool is_old(const FSys::path& in_project_path, const sql_connection_ptr& in_connect);
 
   void patch();
 };

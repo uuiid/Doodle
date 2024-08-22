@@ -14,15 +14,15 @@ namespace doodle::database_n {
 template <>
 struct sql_com<doodle::database> : detail::sql_create_table_base<tables::entity> {
   sql_com() = default;
-  void create_table(conn_ptr& in_ptr) override;
-  void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
+  void create_table(const sql_connection_ptr& in_ptr) override;
+  void insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   /**
    *
    * @param in_ptr 数据库连接
    * @param in_handle id与之相对的实体
    * @param in_reg 注册表
    */
-  void select(conn_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg);
-  void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
+  void select(const sql_connection_ptr& in_ptr, std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg);
+  void destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
 };
 }  // namespace doodle::database_n

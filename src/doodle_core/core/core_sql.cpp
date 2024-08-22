@@ -9,7 +9,7 @@
 namespace doodle {
 
 namespace details {
-conn_ptr database_info::get_connection() const {
+sql_connection_ptr database_info::get_connection() const {
   sqlpp::sqlite3::connection_config l_config{};
 #ifdef NDEBUG
   // l_config.debug = false;
@@ -25,7 +25,7 @@ conn_ptr database_info::get_connection() const {
   return std::make_unique<sqlpp::sqlite3::connection>(l_config);
 }
 
-conn_ptr database_info::get_connection_const() const {
+sql_connection_ptr database_info::get_connection_const() const {
   sqlpp::sqlite3::connection_config l_config{};
 #ifdef NDEBUG
   l_config.debug = false;
@@ -45,10 +45,10 @@ void database_pool_info::create_pool(const std::string& in_path) {
   auto l_config              = std::make_shared<sqlpp::sqlite3::connection_config>();
   l_config->path_to_database = l_path.generic_string();
   if (!FSys::exists(l_path))
-    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX;
   else
-    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX;
-  pool_ = std::make_shared<sqlpp::sqlite3::connection_pool>(l_config, 10);
+    l_config->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX;
+  pool_ = std::make_shared<sqlpp::sqlite3::connection_pool>(l_config, 300);
 }
 
 pooled_connection database_pool_info::get_connection() const { return pool_->get(); }

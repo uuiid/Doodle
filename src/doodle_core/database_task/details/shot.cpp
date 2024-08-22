@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace doodle::database_n {
-void sql_com<doodle::shot>::insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
+void sql_com<doodle::shot>::insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::shot l_table{};
@@ -36,7 +36,7 @@ void sql_com<doodle::shot>::insert(conn_ptr& in_ptr, const std::vector<entt::han
   }
 }
 
-void sql_com<doodle::shot>::update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
+void sql_com<doodle::shot>::update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id) {
   auto& l_conn = *in_ptr;
 
   tables::shot l_table{};
@@ -60,7 +60,7 @@ void sql_com<doodle::shot>::update(conn_ptr& in_ptr, const std::map<std::int64_t
   }
 }
 void sql_com<doodle::shot>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg
 ) {
   auto& l_conn = *in_ptr;
   tables::shot l_table{};
@@ -92,7 +92,7 @@ void sql_com<doodle::shot>::select(
   }
   in_reg.insert<doodle::shot>(l_entts.begin(), l_entts.end(), l_shot.begin());
 }
-void sql_com<doodle::shot>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::shot>::destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::shot>(in_ptr, in_handle);
 }
 

@@ -22,7 +22,7 @@
 
 namespace doodle::database_n {
 void sql_com<doodle::business::rules_ns::time_point_info>::insert(
-    conn_ptr& in_ptr, const std::vector<entt::handle>& in_id
+    const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id
 ) {
   auto& l_conn = *in_ptr;
 
@@ -51,7 +51,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::insert(
 }
 
 void sql_com<doodle::business::rules_ns::time_point_info>::update(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id
 ) {
   auto& l_conn = *in_ptr;
 
@@ -85,7 +85,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
   }
 }
 void sql_com<doodle::business::rules_ns::time_point_info>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle,  entt::registry& reg_
+    const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle,  entt::registry& reg_
 ) {
   auto& l_conn = *in_ptr;
   tables::time_point_info l_table{};
@@ -122,7 +122,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::select(
   reg_.insert<doodle::business::rules_ns::time_point_info>(l_entts.begin(), l_entts.end(), l_time.begin());
 }
 void sql_com<doodle::business::rules_ns::time_point_info>::destroy(
-    conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle
+    const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle
 ) {
   detail::sql_com_destroy<tables::time_point_info>(in_ptr, in_handle);
 }

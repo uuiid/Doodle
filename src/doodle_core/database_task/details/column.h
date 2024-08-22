@@ -16,7 +16,7 @@
 namespace doodle::database_n::detail {
 
 template <typename t>
-void sql_com_destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com_destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   t l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
@@ -28,7 +28,7 @@ void sql_com_destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handl
 }
 
 template <typename t>
-void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::map<entt::handle, std::int64_t>& in_handle) {
+void sql_com_destroy_parent_id(const sql_connection_ptr& in_ptr, const std::map<entt::handle, std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   const t l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
@@ -39,7 +39,7 @@ void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::map<entt::handle, st
   }
 }
 template <typename t>
-void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com_destroy_parent_id(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   const t l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
@@ -59,7 +59,7 @@ inline sqlpp::make_traits<t, sqlpp::tag::require_insert> require_insert();
 // template <typename table_t>
 // struct vector_database {
 //   template <typename vector_value_t>
-//   auto insert_prepare(conn_ptr& in_ptr) {
+//   auto insert_prepare(const sql_connection_ptr& in_ptr) {
 //     auto& l_conn = *in_ptr;
 //     const table_t l_table{};
 //

@@ -11,12 +11,12 @@ template <>
 struct sql_com<doodle::season> : detail::sql_create_table_base<tables::season> {
   sql_com() = default;
 
-  void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
+  void insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id);
 
-  void update(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id);
+  void update(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_id);
 
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg);
+  void select(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle, entt::registry& in_reg);
 
-  void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
+  void destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
 };
 }  // namespace doodle::database_n

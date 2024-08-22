@@ -25,20 +25,21 @@ template <typename t>
 struct sql_com {
   static_assert(detail::wrong_v<t>, "sql_com must be specialized");
   /// 创建表
-  void create_table(conn_ptr& in_ptr);
+  void create_table(const sql_connection_ptr& in_ptr);
 
   /// 插入组件
-  void insert(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
+  void insert(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   /// 更新组件
-  void update(conn_ptr& in_ptr, const std::vector<entt::handle>& in_id);
+  void update(const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_id);
   /// 选择组件
-  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle);
+  void select(const sql_connection_ptr& in_ptr, const std::map<std::int64_t, entt::handle>& in_handle);
   /// 销毁组件
-  void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
+  void destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
   /// 区分更新和插入
   std::tuple<std::map<std::int64_t, entt::handle>, std::vector<entt::handle>> split_update_install(
-      doodle::conn_ptr& in_ptr, const std::vector<entt::handle>& in_entts
+      const sql_connection_ptr& in_ptr, const std::vector<entt::handle>& in_entts
   );
+
 };
 
 /**
@@ -51,14 +52,14 @@ struct sql_ctx {
   static_assert(detail::wrong_v<t>, "sql_ctx must be specialized");
 
   /// 创建表
-  void create_table(conn_ptr& in_ptr);
+  void create_table(const sql_connection_ptr& in_ptr);
 
   /// 插入组件
-  void insert(conn_ptr& in_ptr, const t& in_id);
+  void insert(const sql_connection_ptr& in_ptr, const t& in_id);
   /// 更新组件
-  void update(conn_ptr& in_ptr, t& in_id);
+  void update(const sql_connection_ptr& in_ptr, t& in_id);
   /// 选择组件
-  void select(conn_ptr& in_ptr, t& in_handle);
+  void select(const sql_connection_ptr& in_ptr, t& in_handle);
 };
 
 }  // namespace doodle::database_n

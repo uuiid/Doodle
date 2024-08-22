@@ -17,7 +17,7 @@ template <typename... t>
 static constexpr auto wrong_v = detail::wrong<t...>::value_type();
 
 template <typename t>
-void sql_com_destroy(const conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com_destroy(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   t l_tabl{};
   auto l_pre = l_conn.prepare(
@@ -31,7 +31,9 @@ void sql_com_destroy(const conn_ptr& in_ptr, const std::vector<std::int64_t>& in
 }
 
 template <typename t>
-void sql_com_destroy_parent_id(const conn_ptr& in_ptr, const std::map<entt::handle, std::int64_t>& in_handle) {
+void sql_com_destroy_parent_id(
+    const sql_connection_ptr& in_ptr, const std::map<entt::handle, std::int64_t>& in_handle
+) {
   auto& l_conn = *in_ptr;
   const t l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
@@ -42,7 +44,7 @@ void sql_com_destroy_parent_id(const conn_ptr& in_ptr, const std::map<entt::hand
   }
 }
 template <typename t>
-void sql_com_destroy_parent_id(const conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com_destroy_parent_id(const sql_connection_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   const t l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
@@ -180,23 +182,23 @@ template <typename table_t>
 struct sql_table_base {
  private:
   template <typename table_t>
-  bool has_table(const table_t& /*table*/, sqlpp::sqlite3::connection& in_connection) {
+  bool has_table(const table_t& /*table*/, const sql_connection_ptr& in_connection) {
     const sqlite_master::sqlite_master l_table{};
     for (auto&& row :
-         in_connection(sqlpp::select(sqlpp::count(l_table.name))
-                           .from(l_table)
-                           .where(
-                               l_table.name == (sqlpp::name_of<table_t>::template char_ptr<create_table_ctx>()) &&
-                               l_table.type == "table"
-                           ))) {
+         (*in_connection)(sqlpp::select(sqlpp::count(l_table.name))
+                              .from(l_table)
+                              .where(
+                                  l_table.name == (sqlpp::name_of<table_t>::template char_ptr<create_table_ctx>()) &&
+                                  l_table.type == "table"
+                              ))) {
       return row.count.value() > 0;
     }
     return false;
   }
   template <typename column_t>
-  bool has_colume(sqlpp::sqlite3::connection& in_connection, const column_t& in_column) {
+  bool has_colume(const sql_connection_ptr& in_connection, const column_t& in_column) {
     pragma_table::pragma_table l_tab{};
-    for (auto&& row : in_connection(
+    for (auto&& row : (*in_connection)(
              sqlpp::custom_query(
                  sqlpp::select(sqlpp::count(l_tab.name)),
                  sqlpp::verbatim(fmt::format(
@@ -216,7 +218,7 @@ struct sql_table_base {
 
  private:
   template <typename table_sub_t>
-  void impl_create_table_parent_id(doodle::conn_ptr& in_ptr) {
+  void impl_create_table_parent_id(const sql_connection_ptr& in_ptr) {
     const table_sub_t l_table{};
     in_ptr->execute(detail::create_table(l_table).foreign_column(l_table.parent_id, table_t{}.id));
     in_ptr->execute(detail::create_index(l_table.entity_identifier));
@@ -225,33 +227,28 @@ struct sql_table_base {
 
  protected:
   template <typename... table_subs_t>
-  void create_table_parent_id(doodle::conn_ptr& in_ptr) {
+  void create_table_parent_id(const sql_connection_ptr& in_ptr) {
     (impl_create_table_parent_id<table_subs_t>(in_ptr), ...);
   }
   template <typename column_t>
-  void create_table(doodle::conn_ptr& in_ptr, const column_t& in_column) {
+  void create_table(const sql_connection_ptr& in_ptr, const column_t& in_column) {
     if (!has_colume(*in_ptr, in_column)) {
       in_ptr->execute(detail::create_colume(in_column));
     }
   }
 
-  template <typename column_t>
-  bool has_colume(doodle::conn_ptr& in_ptr, const column_t& in_column) {
-    return has_colume(*in_ptr, in_column);
-  }
-
  public:
   sql_table_base() = default;
-  virtual void create_table(const doodle::conn_ptr& in_ptr) {
+  virtual void create_table(const sql_connection_ptr& in_ptr) {
     const table_t l_tables{};
-    if (has_table(l_tables, *in_ptr)) return;
+    if (has_table(l_tables, in_ptr)) return;
     in_ptr->execute(detail::create_table(l_tables).unique_column(l_tables.entity_identifier));
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_identifier));
   };
-  bool has_table(const doodle::conn_ptr& in_ptr) {
+  bool has_table(const sql_connection_ptr& in_ptr) {
     const table_t l_tables{};
-    return has_table(l_tables, *in_ptr);
+    return has_table(l_tables, in_ptr);
   }
 };
 template <typename t>
