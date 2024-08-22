@@ -28,10 +28,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(sess
 
   co_return in_handle->make_msg(std::string{});
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> sy_working_file(session_data_ptr in_handle) {
+  co_return in_handle->make_msg(std::string{});
+}
+
 }  // namespace
 void kitsu_task_reg(http_route& in_http_route) {
-  in_http_route.reg(
-      std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{task_id}", get_task_info)
-  );
+  in_http_route
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{task_id}", get_task_info))
+      .reg(std::make_shared<http_function>(
+          boost::beast::http::verb::get, "api/data/tasks/{task_id}/sy/working_file", sy_working_file
+      ))
+      ;
 }
 }  // namespace doodle::http::kitsu
