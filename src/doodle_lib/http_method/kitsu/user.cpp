@@ -15,11 +15,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   boost::beast::http::request<boost::beast::http::string_body> l_request{
       in_handle->req_header_, std::get<nlohmann::json>(in_handle->body_).dump()
   };
-  auto [l_ec, l_res]  = co_await detail::read_and_write<basic_json_body>(l_client_data, l_request);
+  auto [l_ec, l_res]  = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   auto&& l_kitsu_data = std::any_cast<kitsu_data_t&>(in_handle->user_data_);
   try {
     if (l_res.result() == boost::beast::http::status::ok) {
-      auto& l_json = l_res.body();
+      auto l_json = nlohmann::json::parse(l_res.body());
       for (auto&& l_task : l_json["task_types"]) {
         l_kitsu_data.task_types_[boost::lexical_cast<boost::uuids::uuid>(l_task["id"].get<std::string>())] =
             l_task["name"].get<std::string>();
@@ -35,7 +35,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   g_ctx().get<kitsu_ctx_t>().task_types_ = l_kitsu_data.task_types_;
   DOODLE_TO_SELF();
 
-  co_return l_res;
+  co_return std::move(l_res);
 }
 }  // namespace
 void user_reg(http_route& in_http_route) {
