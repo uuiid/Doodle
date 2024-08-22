@@ -12,9 +12,7 @@ namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
 
-  boost::beast::http::request<boost::beast::http::string_body> l_request{
-      in_handle->req_header_, std::get<nlohmann::json>(in_handle->body_).dump()
-  };
+  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
   auto [l_ec, l_res]  = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   auto&& l_kitsu_data = std::any_cast<kitsu_data_t&>(in_handle->user_data_);
   try {
