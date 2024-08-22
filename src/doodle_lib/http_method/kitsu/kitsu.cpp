@@ -6,6 +6,7 @@
 #include <doodle_lib/core/http/http_route.h>
 namespace doodle::http {
 
+namespace {
 boost::asio::awaitable<tcp_stream_type_ptr> create_kitsu_proxy() {
   using co_executor_type = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
 
@@ -36,7 +37,26 @@ boost::asio::awaitable<tcp_stream_type_ptr> create_kitsu_proxy() {
 
   co_return l_tcp;
 }
+}  // namespace
 
 http_route_ptr create_kitsu_route() { return std::make_shared<http_route>(create_kitsu_proxy); }
+
+
+
+namespace kitsu {
+http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_handle) {
+  detail::http_client_data_base_ptr l_client_data{};
+  if (!in_handle->user_data_.has_value()) {
+    kitsu_data_t l_data{std::make_shared<detail::http_client_data_base>()};
+    l_client_data = l_data.http_kitsu_;
+    l_client_data->init(g_ctx().get<kitsu_ctx_t>().url_);
+    in_handle->user_data_ = l_data;
+  } else {
+    l_client_data = std::any_cast<kitsu_data_t>(in_handle->user_data_).http_kitsu_;
+  }
+  return l_client_data;
+}
+}
+
 
 }  // namespace doodle::http

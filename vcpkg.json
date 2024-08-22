@@ -31,6 +31,7 @@
     "boost-icl",
     "boost-lambda2",
     "boost-units",
+    "boost-lockfree",
     "argh",
     "cmakerc",
     "treehh",

@@ -5,7 +5,7 @@
 #include "task.h"
 
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-namespace doodle::http {
+namespace doodle::http::kitsu {
 
 namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(session_data_ptr in_handle) {
@@ -26,9 +26,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(sess
     l_client_data = std::any_cast<kitsu_data_t>(in_handle->user_data_).http_kitsu_;
   }
 
-
-
-
   co_return in_handle->make_msg(std::string{});
 }
 }  // namespace
@@ -37,4 +34,4 @@ void kitsu_task_reg(http_route& in_http_route) {
       std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{task_id}", get_task_info)
   );
 }
-}  // namespace doodle::http
+}  // namespace doodle::http::kitsu
