@@ -38,7 +38,6 @@
 #include <sqlpp11/sqlpp11.h>
 using namespace doodle;
 using namespace doodle::database_n;
- 
 
 void create_test_database() {
   {
@@ -192,4 +191,38 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
   }
   BOOST_TEST_CHECK(l_list == l_list2);
   BOOST_TEST_CHECK(l_list_s == l_list_s2);
+}
+
+BOOST_AUTO_TEST_CASE(test_sqlite3_multi_thread) {
+  app_command<> l_App{};
+  l_App.use_multithread(true);
+  std::vector<server_task_info> l_list{};
+  for (int i = 0; i < 10000000; ++i) {
+    l_list.emplace_back(server_task_info{core_set::get_set().get_uuid(), "tset.exe", {"dasdas", "daaaa", "adsdasds"}});
+  }
+
+  for (int i = 0; i < 10000000; ++i) {
+    boost::asio::post(g_io_context(), [i, &l_list]() {
+      if (i % 2 == 0) {
+        auto l_conn = g_pool_db().get_connection();
+        server_task_info::insert(l_conn, {l_list[i]});
+      } else {
+        auto l_conn = g_pool_db().get_connection();
+        server_task_info::delete_by_ids(l_conn, {l_list[i].id_});
+      }
+    });
+  }
+
+  for (int i = 0; i < 10000000; ++i) {
+    boost::asio::post(g_io_context(), [i, &l_list]() {
+      if (i % 2 != 0) {
+        auto l_conn = g_pool_db().get_connection();
+        server_task_info::insert(l_conn, {l_list[i]});
+      } else {
+        auto l_conn = g_pool_db().get_connection();
+        server_task_info::delete_by_ids(l_conn, {l_list[i].id_});
+      }
+    });
+  }
+  l_App.run();
 }
