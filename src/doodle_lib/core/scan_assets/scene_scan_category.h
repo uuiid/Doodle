@@ -18,9 +18,6 @@ class scene_scan_category_t : public scan_category_t {
   class scene_scan_category_data_t : public scan_category_data_t {
    public:
     std::int32_t begin_episode_;
-    // 编号
-    std::string number_str_;
-
     FSys::path BG_path_;
   };
 
