@@ -69,7 +69,10 @@ add_executable(
         ../icon.ico
         ../win_exe.rc
 )
-
+target_link_libraries(doodle_updaters
+        PUBLIC
+        Boost::asio
+)
 install(TARGETS doodle_updaters
         RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
