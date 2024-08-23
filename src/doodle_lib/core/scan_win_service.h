@@ -64,8 +64,7 @@ class scan_win_service_t {
 
   void start();
 
-  const std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>& get_scan_data() const {
-    return scan_data_maps_[index_];
-  }
+  const scan_category_data_id_map& get_scan_data() const { return scan_data_maps_[index_]; }
+  const scan_category_data_key_map& get_scan_data_key() const { return scan_data_key_maps_[index_]; }
 };
 }  // namespace doodle
