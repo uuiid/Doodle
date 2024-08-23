@@ -24,30 +24,35 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(sess
   }
 
   auto l_json = nlohmann::json::parse(l_res.body());
+  bool l_file_exist{};
   try {
-    auto l_user_data = l_json["entity"]["data"];
-    scan::scan_key_t l_key{
-        .dep_          = conv_assets_type_enum(l_json["dep"]["name"]),
-        .season_       = season{l_user_data["gui_dang"].get<std::int32_t>()},
-        .project_      = find_project(l_json["project"]["name"]),
-        .number_       = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
-        .name_         = l_user_data["pin_yin_ming_cheng"].get<std::string>(),
-        .version_name_ = l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
-    };
-    FSys::path l_maya_path{};
-    FSys::path l_ue_path{};
-    auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
-    if (l_map.contains(l_key)) {
-      l_maya_path = l_map.at(l_key)->rig_file_.path_;
-      l_ue_path   = l_map.at(l_key)->ue_file_.path_;
+    auto l_task_type_name = l_json["task_type"]["name"];
+    if (l_task_type_name == "角色" || l_task_type_name == "地编模型" || l_task_type_name == "绑定") {
+      auto l_user_data = l_json["entity"]["data"];
+      scan::scan_key_t l_key{
+          .dep_     = conv_assets_type_enum(l_json["dep"]["name"]),
+          .season_  = season{l_user_data["gui_dang"].get<std::int32_t>()},
+          .project_ = find_project(l_json["project"]["name"]),
+          .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
+          .name_    = l_user_data["pin_yin_ming_cheng"].get<std::string>(),
+          .version_name_ = l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
+      };
+      FSys::path l_maya_path{};
+      FSys::path l_ue_path{};
+      auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
+      if (l_map.contains(l_key)) {
+        l_maya_path = l_map.at(l_key)->rig_file_.path_;
+        l_ue_path   = l_map.at(l_key)->ue_file_.path_;
+      }
+      l_file_exist = FSys::exists(l_maya_path) && FSys::exists(l_ue_path);
+    } else {
+      l_file_exist      = true;
     }
-    l_json["file_exist"] = FSys::exists(l_maya_path) && FSys::exists(l_ue_path);
-    l_res.body()         = l_json.dump();
   } catch (...) {
-    l_json["file_exist"] = false;
-    l_res.body()         = l_json.dump();
-    co_return std::move(l_res);
+    l_file_exist = false;
   }
+  l_json["file_exist"] = l_file_exist;
+  l_res.body() = l_json.dump();
   co_return std::move(l_res);
 }
 
