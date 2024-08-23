@@ -46,62 +46,51 @@ FSys::path register_file_type::get_update_path() {
   return l_path;
 }
 
-std::vector<project> register_file_type::get_project_list() {
+const std::vector<project>& register_file_type::get_project_list() {
   winreg::RegKey l_key_root{};
+  static std::vector<project> l_list{
 
-  constexpr auto l_root     = LR"(SOFTWARE\Doodle\MainConfig\ProjectList)";
-  constexpr auto l_root_fmt = LR"(SOFTWARE\Doodle\MainConfig\ProjectList\{})";
-  std::vector<project> l_list{};
-  try {
-    l_key_root.Open(HKEY_LOCAL_MACHINE, l_root, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY);
-    for (auto&& l_sub : l_key_root.EnumSubKeys()) {
-      winreg::RegKey l_key{};
-      l_key.Open(HKEY_LOCAL_MACHINE, fmt::format(l_root_fmt, l_sub.c_str()), KEY_QUERY_VALUE | KEY_WOW64_64KEY);
-      auto l_short  = conv::utf_to_utf<char>(l_sub);
-      auto l_name   = conv::utf_to_utf<char>(l_key.GetStringValue({}));
-      auto l_path   = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(path)"));
-      auto l_en_str = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(en_str)"));
-      auto l_local  = conv::utf_to_utf<char>(l_key.GetStringValue(LR"(local)"));
-      l_list.emplace_back(std::move(l_name), std::move(l_path), std::move(l_en_str), std::move(l_short), l_local, "");
-    }
-  } catch (const winreg::RegException& e) {
-    l_list.emplace_back(
-        "独步逍遥", R"(//192.168.10.250/public/DuBuXiaoYao_3)", "DuBuXiaoYao", "DB", "V:/",
-        R"(\\192.168.10.250\public\HouQi\1-DuBuXiaoYao\1_DBXY_TiJiaoWenJian\)"
-    );
-    l_list.emplace_back(
-        "万古邪帝", R"(//192.168.10.240/public/WGXD)", "WanGuXieDi", "DW", "C:/sy/WGXD",
-        R"(\\192.168.10.240\public\后期\WanGuXieDi\)"
-    );
-    l_list.emplace_back(
-        "龙脉武神", R"(//192.168.10.240/public/LongMaiWuShen)", "LongMaiWuShen", "LM", R"(C:\sy\LongMaiWuShen)", ""
-    );
-    l_list.emplace_back(
-        "炼气十万年", R"(//192.168.10.240/public/LianQiShiWanNian)", "LianQiShiWanNian", "LQ",
-        R"(C:\sy\LianQiShiWanNian_8)", R"(\\192.168.10.240\public\后期\LianQiShiWanNian\)"
-    );
-    l_list.emplace_back(
-        "人间最得意", R"(//192.168.10.240/public/renjianzuideyi)", "RenJianZuiDeYi", "RJ", R"(C:\sy\RenJianZuiDeYi_8)",
-        ""
-    );
-    l_list.emplace_back(
-        "无敌剑魂", R"(//192.168.10.240/public/WuDiJianHun)", "WuDiJianHun", "WD", R"(C:\sy\WuDiJianHun_8)", ""
-    );
-    l_list.emplace_back(
-        "万古神话", R"(//192.168.10.240/public/WanGuShenHua)", "WanGuShenHua", "WG", "R:/",
-        R"(\\192.168.10.240\public\后期\WanGuShenHua\)"
-    );
-    l_list.emplace_back(
-        "无尽神域", R"(//192.168.10.240/public/WuJinShenYu)", "WuJinShenYu", "WJ", R"(C:\sy\WuJinShenYu_8)",
-        R"(\\192.168.10.240\public\后期\WuJinShenYu)"
-    );
-    l_list.emplace_back("万域封神", R"(//192.168.10.218/WanYuFengShen)", "WanYuFengShen", "WY", "U:/", "");
-    l_list.emplace_back("双生武魂", R"(/192.168.10.240/public/SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)", "");
-    l_list.emplace_back(
-        "宗门里除了我都是卧底", R"(//192.168.10.240/public/ZMLCLWDSWD)", "ZMLCLWDSWD", "ZM", R"(C:\sy\ZMLCLWDSWD)",
-        R"(\\192.168.10.240\public\后期\ZMLCLWDSWD\)"
-    );
-  }
+      project{
+          "独步逍遥", R"(//192.168.10.250/public/DuBuXiaoYao_3)", "DuBuXiaoYao", "DB", "V:/",
+          R"(\\192.168.10.250\public\HouQi\1-DuBuXiaoYao\1_DBXY_TiJiaoWenJian\)"
+      },
+
+      project{
+          "万古邪帝", R"(//192.168.10.240/public/WGXD)", "WanGuXieDi", "DW", "C:/sy/WGXD",
+          R"(\\192.168.10.240\public\后期\WanGuXieDi\)"
+      },
+
+      project{
+          "龙脉武神", R"(//192.168.10.240/public/LongMaiWuShen)", "LongMaiWuShen", "LM", R"(C:\sy\LongMaiWuShen)", ""
+      },
+      project{
+          "炼气十万年", R"(//192.168.10.240/public/LianQiShiWanNian)", "LianQiShiWanNian", "LQ",
+          R"(C:\sy\LianQiShiWanNian_8)", R"(\\192.168.10.240\public\后期\LianQiShiWanNian\)"
+      },
+      project{
+          "人间最得意", R"(//192.168.10.240/public/renjianzuideyi)", "RenJianZuiDeYi", "RJ",
+          R"(C:\sy\RenJianZuiDeYi_8)", ""
+      },
+      project{"无敌剑魂", R"(//192.168.10.240/public/WuDiJianHun)", "WuDiJianHun", "WD", R"(C:\sy\WuDiJianHun_8)", ""},
+      project{
+          "万古神话", R"(//192.168.10.240/public/WanGuShenHua)", "WanGuShenHua", "WG", "R:/",
+          R"(\\192.168.10.240\public\后期\WanGuShenHua\)"
+      },
+      project{
+          "无尽神域", R"(//192.168.10.240/public/WuJinShenYu)", "WuJinShenYu", "WJ", R"(C:\sy\WuJinShenYu_8)",
+          R"(\\192.168.10.240\public\后期\WuJinShenYu)"
+      },
+      project{"万域封神", R"(//192.168.10.218/WanYuFengShen)", "WanYuFengShen", "WY", "U:/", ""},
+      project{
+          "双生武魂", R"(/192.168.10.240/public/SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)", ""
+
+      },
+      project{
+          "宗门里除了我都是卧底", R"(//192.168.10.240/public/ZMLCLWDSWD)", "ZMLCLWDSWD", "ZM", R"(C:\sy\ZMLCLWDSWD)",
+          R"(\\192.168.10.240\public\后期\ZMLCLWDSWD\)"
+      }
+
+  };
   return l_list;
 }
 
