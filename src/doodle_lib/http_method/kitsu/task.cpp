@@ -36,7 +36,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(sess
     };
     FSys::path l_maya_path{};
     FSys::path l_ue_path{};
-    auto& l_map = g_ctx().get<scan_win_service_t>().get_scan_data_key();
+    auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
     if (l_map.contains(l_key)) {
       l_maya_path = l_map.at(l_key)->rig_file_.path_;
       l_ue_path   = l_map.at(l_key)->ue_file_.path_;

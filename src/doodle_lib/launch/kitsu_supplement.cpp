@@ -11,7 +11,7 @@
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 #include <doodle_lib/http_method/user_http.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-
+#include <doodle_lib/core/scan_win_service.h>
 namespace doodle::launch {
 struct kitsu_supplement_args_t {
   std::string kitsu_url_;
@@ -56,6 +56,8 @@ struct kitsu_supplement_args_t {
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   auto& l_save = g_ctx().emplace<http::kitsu_backend_sqlite>();
   app_base::Get().use_multithread(true);
+  auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
+  l_scan->start();
 
   kitsu_supplement_args_t l_args{.kitsu_url_ = "http://192.168.40.182", .port_ = 50025};
 
