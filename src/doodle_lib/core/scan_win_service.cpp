@@ -73,7 +73,8 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
     // 同步缓冲区
     std::int32_t l_current_index     = !index_;
-    scan_data_maps_[l_current_index] = scan_data_maps_[index_];
+    scan_data_maps_[l_current_index] = {};
+    scan_data_key_maps_[l_current_index] = {};
     for (auto i : l_index) {
       if (l_ecs[i]) {
         default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {} {}", l_msg[i], l_ecs[i].message());
@@ -113,6 +114,18 @@ void scan_win_service_t::add_handle(
     l_scan_data[l_data->rig_file_.uuid_]   = l_data;
     l_scan_data[l_data->ue_file_.uuid_]    = l_data;
     l_scan_data[l_data->solve_file_.uuid_] = l_data;
+  }
+
+  auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
+  for (auto&& l_data : in_data_vec) {
+    l_scan_key_data[{
+        .dep_          = l_data->assets_type_,
+        .season_       = l_data->season_,
+        .project_      = l_data->project_root_,
+        .name_         = l_data->name_,
+        .number_       = l_data->number_str_,
+        .version_name_ = l_data->version_name_,
+    }] = l_data;
   }
 }
 } // namespace doodle

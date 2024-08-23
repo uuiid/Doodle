@@ -61,6 +61,8 @@ class scan_category_data_t {
   assets file_type_;
   // 类型
   assets_type_enum assets_type_;
+  // 编号
+  std::string number_str_;
 };
 using scan_category_data_ptr = std::shared_ptr<scan_category_data_t>;
 class scan_category_t {
