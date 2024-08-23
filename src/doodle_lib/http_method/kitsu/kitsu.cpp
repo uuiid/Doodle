@@ -3,6 +3,8 @@
 //
 #include "kitsu.h"
 
+#include <doodle_core/platform/win/register_file_type.h>
+
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/kitsu/user.h>
 namespace doodle::http {
@@ -58,6 +60,32 @@ http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_h
     l_client_data = std::any_cast<kitsu_data_t&>(in_handle->user_data_).http_kitsu_;
   }
   return l_client_data;
+}
+
+project find_project(const std::string& in_name) {
+  auto& l_prj = register_file_type::get_project_list();
+  for (auto& l_p : l_prj) {
+    if (l_p.p_name == in_name) {
+      return l_p;
+    }
+  }
+  return project{};
+}
+doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name) {
+  if (in_name == "角色") {
+    return doodle::details::assets_type_enum::character;
+  } else if (in_name == "场景") {
+    return doodle::details::assets_type_enum::scene;
+  } else if (in_name == "道具") {
+    return doodle::details::assets_type_enum::prop;
+  } else if (in_name == "绑定") {
+    return doodle::details::assets_type_enum::rig;
+  } else if (in_name == "动画") {
+    return doodle::details::assets_type_enum::animation;
+  } else if (in_name == "特效") {
+    return doodle::details::assets_type_enum::vfx;
+  }
+  return doodle::details::assets_type_enum::other;
 }
 }  // namespace kitsu
 

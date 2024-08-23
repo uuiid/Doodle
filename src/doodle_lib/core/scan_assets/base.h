@@ -19,8 +19,8 @@ enum class assets_type_enum {
   character,
   rig,
   animation,
-  fvx,
-  fcx,
+  vfx,
+  cfx,
   other,
 };
 class scan_category_data_t {
@@ -83,8 +83,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
         {assets_type_enum::character, "character"},
         {assets_type_enum::rig, "rig"},
         {assets_type_enum::animation, "animation"},
-        {assets_type_enum::fvx, "fvx"},
-        {assets_type_enum::fcx, "fcx"},
+        {assets_type_enum::vfx, "vfx"},
+        {assets_type_enum::cfx, "cfx"},
         {assets_type_enum::other, "other"},
     }
 );

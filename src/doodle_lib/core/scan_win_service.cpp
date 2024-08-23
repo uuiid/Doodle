@@ -122,8 +122,8 @@ void scan_win_service_t::add_handle(
         .dep_          = l_data->assets_type_,
         .season_       = l_data->season_,
         .project_      = l_data->project_root_,
-        .name_         = l_data->name_,
         .number_       = l_data->number_str_,
+        .name_         = l_data->name_,
         .version_name_ = l_data->version_name_,
     }] = l_data;
   }
