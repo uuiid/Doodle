@@ -15,7 +15,7 @@
 #include <boost/asio.hpp>
 namespace doodle {
 namespace scan {
-struct scan_key_t {
+struct scan_key_t : boost::totally_ordered<scan_key_t> {
   details::assets_type_enum dep_;
   season season_;
   episodes episodes_;
@@ -24,6 +24,22 @@ struct scan_key_t {
   std::string number_;
   std::string name_;
   std::string version_name_;
+
+  inline bool operator==(const scan_key_t& other) const {
+    return std::tie(dep_, season_, episodes_, shot_, project_, number_, name_, version_name_) ==
+           std::tie(
+               other.dep_, other.season_, other.episodes_, other.shot_, other.project_, other.number_, other.name_,
+               other.version_name_
+           );
+  }
+
+  inline bool operator<(const scan_key_t& other) const {
+    return std::tie(dep_, season_, episodes_, shot_, project_, number_, name_, version_name_) <
+           std::tie(
+               other.dep_, other.season_, other.episodes_, other.shot_, other.project_, other.number_, other.name_,
+               other.version_name_
+           );
+  }
 };
 
 }  // namespace scan
