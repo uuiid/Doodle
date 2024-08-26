@@ -148,26 +148,24 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
 
   maya_file_io::set_workspace(l_arg.file_path);
   maya_file_io::open_file(l_arg.file_path, l_arg.use_all_ref ? MFileIO::kLoadAllReferences : MFileIO::kLoadDefault);
-  maya_chick(file_info_edit::delete_node_static());
-  maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
-
-  anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
-  g_ctx().emplace<reference_file_factory>();
 
   DOODLE_LOG_INFO("开始导出fbx");
   auto l_s = boost::asio::make_strand(g_io_context());
-  DOODLE_LOG_INFO("保存文件maya文件");
-  boost::asio::post(
-      l_s,
-      [l_target =
-           maya_plug::maya_file_io::work_path(FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()) /
-           l_arg.file_path.filename()]() { maya_file_io::save_file(l_target); }
-  );
   if (l_arg.rig_file_export) {
     DOODLE_LOG_INFO("导出rig文件");
     boost::asio::post(l_s, [this]() { this->rig_file_export(); });
-
   } else {
+    maya_chick(file_info_edit::delete_node_static());
+    maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
+    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
+    g_ctx().emplace<reference_file_factory>();
+    DOODLE_LOG_INFO("保存文件maya文件");
+    boost::asio::post(
+        l_s, [l_target = maya_plug::maya_file_io::work_path(
+                             FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()
+                         ) /
+                         l_arg.file_path.filename()]() { maya_file_io::save_file(l_target); }
+    );
     default_logger_raw()->info("导出动画中的文件");
     boost::asio::post(l_s, [this]() {
       this->create_ref_file();
