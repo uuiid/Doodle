@@ -73,11 +73,11 @@ target_link_libraries(doodle_updaters
         PUBLIC
         Boost::asio
 )
-install(TARGETS doodle_updaters
-        RUNTIME_DEPENDENCIES
-        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
-        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-)
+#install(TARGETS doodle_updaters
+#        RUNTIME_DEPENDENCIES
+#        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
+#        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+#)
 
 list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复
