@@ -25,9 +25,6 @@ class export_file_fbx {
       const std::optional<MDagPath>& in_parent_path = {}
   );
 
-  std::string m_namespace_;
-  std::vector<std::shared_ptr<sequence_to_blend_shape>> blend_list{};
-
  public:
   export_file_fbx() = default;
 
@@ -38,6 +35,8 @@ class export_file_fbx {
   FSys::path export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file);
 
   FSys::path export_cam(const generate_file_path_ptr& in_gen);
+
+  FSys::path export_rig();
 };
 
 }  // namespace doodle::maya_plug

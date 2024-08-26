@@ -19,6 +19,7 @@ class export_fbx_facet final {
 
   void create_ref_file();
   void export_fbx();
+  void rig_file_export();
 
   void play_blast();
   std::shared_ptr<maya_lib_guard> lib_guard_{};

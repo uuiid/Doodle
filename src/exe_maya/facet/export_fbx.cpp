@@ -83,6 +83,38 @@ void export_fbx_facet::export_fbx() {
     log_info(fmt::format("导出文件 {}", l_json.dump(4)));
 }
 
+void export_fbx_facet::rig_file_export() {
+  export_file_fbx l_ex{};
+  maya_exe_ns::maya_out_arg l_out_arg{};
+  auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
+  l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
+  l_out_arg.begin_time  = anim_begin_time_.value();
+  l_out_arg.end_time    = MAnimControl::maxTime().value();
+  for (auto&& i : ref_files_) {
+    if (i.get<reference_file>().export_group_attr()) {
+      auto l_path = l_ex.export_anim(i.get<reference_file>(), l_gen);
+      if (!l_path.empty()) {
+        l_out_arg.out_file_list.emplace_back(l_path, i.get<reference_file>().get_abs_path());
+      }
+    } else {
+      auto l_path = i.get<reference_file>().get_abs_path();
+      if (!l_path.empty()) l_out_arg.out_file_list.emplace_back(FSys::path{}, l_path);
+    }
+  }
+  g_reg()->ctx().emplace<maya_camera>().conjecture();
+  auto l_cam_path = l_ex.export_cam(l_gen);
+
+  l_out_arg.out_file_list.emplace_back(l_cam_path, FSys::path{});
+
+  nlohmann::json l_json = l_out_arg;
+  if (!out_path_file_.empty()) {
+    if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
+    default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
+    FSys::ofstream{out_path_file_} << l_json.dump(4);
+  } else
+    log_info(fmt::format("导出文件 {}", l_json.dump(4)));
+}
+
 void export_fbx_facet::play_blast() {
   DOODLE_LOG_INFO("开始排屏");
   class play_blast l_p {};
@@ -131,11 +163,17 @@ bool export_fbx_facet::post(const FSys::path& in_path) {
            maya_plug::maya_file_io::work_path(FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()) /
            l_arg.file_path.filename()]() { maya_file_io::save_file(l_target); }
   );
+  if (l_arg.rig_file_export) {
+    DOODLE_LOG_INFO("导出rig文件");
+    boost::asio::post(l_s, [this]() { this->rig_file_export(); });
 
-  boost::asio::post(l_s, [this]() {
-    this->create_ref_file();
-    this->export_fbx();
-  });
+  } else {
+    default_logger_raw()->info("导出动画中的文件");
+    boost::asio::post(l_s, [this]() {
+      this->create_ref_file();
+      this->export_fbx();
+    });
+  }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_create_play_blast).any()) {
     DOODLE_LOG_INFO("安排排屏");
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });

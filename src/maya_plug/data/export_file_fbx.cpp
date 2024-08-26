@@ -11,6 +11,7 @@
 #include <maya_plug/abc/alembic_archive_out.h>
 #include <maya_plug/data/fbx_write.h>
 #include <maya_plug/data/maya_camera.h>
+#include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sequence_to_blend_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
@@ -108,7 +109,6 @@ FSys::path export_file_fbx::export_anim(
     l_export_list.push_back(l_path);
   }
 
-  m_namespace_ = in_ref.get_namespace();
   log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));
 
   bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
@@ -120,6 +120,37 @@ FSys::path export_file_fbx::export_anim(
   l_fbx_write.set_path(l_file_path);
   l_fbx_write.write(l_export_list, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
   return l_file_path;
+}
+
+FSys::path export_file_fbx::export_rig() {
+  MSelectionList l_select{};
+  MDagPath l_main_path{};
+  auto& l_cfg = g_reg()->ctx().get<project_config::base_config>();
+  if (auto l_s = l_select.add(d_str{fmt::format(":{}", l_cfg.export_group)}, true); l_s) {
+    l_s = l_select.getDagPath(0, l_main_path);
+    maya_chick(l_s);
+  } else {
+    default_logger_raw()->warn("没有配置中指定的 {} 导出组", l_cfg.export_group);
+    return {};
+  }
+  std::vector<MDagPath> l_export_list{};
+
+  MItDag l_it{};
+  maya_chick(l_it.reset(l_main_path, MItDag::kDepthFirst, MFn::kMesh));
+  MDagPath l_path{};
+  for (; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getPath(l_path));
+    l_path.pop();
+    l_export_list.push_back(l_path);
+  }
+  default_logger_raw()->info("导出选中物体 {}", l_export_list);
+
+  fbx_write l_fbx_write{};
+  auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / maya_file_io::get_current_path().filename();
+  l_file.replace_extension(".fbx");
+  l_fbx_write.set_path(l_file);
+  l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
+  return l_file;
 }
 
 FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file) {
@@ -138,8 +169,6 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
     l_path.pop();
     l_export_list.push_back(l_path);
   }
-
-  m_namespace_     = in_ref.get_namespace();
 
   // bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
 
