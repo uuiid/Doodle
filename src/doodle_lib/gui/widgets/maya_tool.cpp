@@ -151,7 +151,6 @@ bool maya_tool::render() {
     }
   }
 
-  imgui::Checkbox("自动上传", &p_upload_files);
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox(*ptr_attr->replace_ref_file_, &ptr_attr->replace_ref_file_);
     imgui::Checkbox(*ptr_attr->sim_file_, &ptr_attr->sim_file_);
@@ -194,7 +193,6 @@ bool maya_tool::render() {
     for (auto&& i : path_info_) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
       k_arg.file_path        = i.path_;
-      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       if (ptr_attr->replace_ref_file_) k_arg.bitset_ |= maya_exe_ns::flags::k_replace_ref_file;
@@ -226,9 +224,7 @@ bool maya_tool::render() {
       auto k_arg             = maya_exe_ns::export_fbx_arg{};
       k_arg.file_path        = i.path_;
       k_arg.use_all_ref      = this->p_use_all_ref;
-      k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       if (ptr_attr->create_play_blast_) k_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
       auto l_msg_handle = entt::handle{*g_reg(), g_reg()->create()};
       auto&& l_msg      = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
@@ -260,7 +256,6 @@ bool maya_tool::render() {
                             }
                         ) |
                         ranges::to_vector;
-      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
 
@@ -288,9 +283,7 @@ bool maya_tool::render() {
       auto k_arg             = maya_exe_ns::export_fbx_arg{};
       k_arg.file_path        = i.path_;
       k_arg.use_all_ref      = this->p_use_all_ref;
-      k_arg.upload_file      = p_upload_files;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       auto l_msg_handle      = entt::handle{*g_reg(), g_reg()->create()};
       auto&& l_msg           = l_msg_handle.emplace<process_message>(i.path_.filename().generic_string());
       import_and_render_ue_ns::args l_args{};
@@ -318,7 +311,6 @@ bool maya_tool::render() {
     for (auto&& i : path_info_) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
       k_arg.file_path        = i.path_;
-      k_arg.project_         = g_ctx().get<database_n::file_translator_ptr>()->get_project_path();
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
       k_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;

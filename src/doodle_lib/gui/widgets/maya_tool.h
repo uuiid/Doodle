@@ -26,7 +26,6 @@ class DOODLELIB_API maya_tool {
   std::vector<path_info_t> path_info_{};
 
   bool p_use_all_ref{};
-  bool p_upload_files{};
   std::string title_name_{};
   bool open{true};
   class impl;

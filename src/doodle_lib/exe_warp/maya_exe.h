@@ -40,7 +40,6 @@ public:
   arg()          = default;
   virtual ~arg() = default;
   FSys::path file_path{};
-  FSys::path project_{};
   std::int32_t t_post{};
   std::int32_t export_anim_time{};
   std::bitset<8> bitset_;
@@ -50,7 +49,6 @@ public:
 
   friend void to_json(nlohmann::json& in_nlohmann_json_j, const arg& in_nlohmann_json_t) {
     in_nlohmann_json_j["path"]             = in_nlohmann_json_t.file_path.generic_string();
-    in_nlohmann_json_j["project_"]         = in_nlohmann_json_t.project_.generic_string();
     in_nlohmann_json_j["t_post"]           = in_nlohmann_json_t.t_post;
     in_nlohmann_json_j["export_anim_time"] = in_nlohmann_json_t.export_anim_time;
     in_nlohmann_json_j["bitset_"]          = in_nlohmann_json_t.bitset_;
@@ -60,7 +58,6 @@ public:
 
   friend void from_json(const nlohmann::json& in_nlohmann_json_j, arg& in_nlohmann_json_t) {
     in_nlohmann_json_j["path"].get_to(in_nlohmann_json_t.file_path);
-    in_nlohmann_json_j["project_"].get_to(in_nlohmann_json_t.project_);
     in_nlohmann_json_j["t_post"].get_to(in_nlohmann_json_t.t_post);
     in_nlohmann_json_j["export_anim_time"].get_to(in_nlohmann_json_t.export_anim_time);
     in_nlohmann_json_j["bitset_"].get_to(in_nlohmann_json_t.bitset_);
@@ -100,19 +97,16 @@ public:
 class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
 public:
   bool use_all_ref;
-  bool upload_file;
   constexpr static std::string_view k_name{"export_fbx_config"};
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const export_fbx_arg& nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg&>(nlohmann_json_t));
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
-    nlohmann_json_j["upload_file"] = nlohmann_json_t.upload_file;
   };
 
   friend void from_json(const nlohmann::json& in_nlohmann_json_j, export_fbx_arg& in_nlohmann_json_t) {
     from_json(in_nlohmann_json_j, dynamic_cast<arg&>(in_nlohmann_json_t));
     in_nlohmann_json_j["use_all_ref"].get_to(in_nlohmann_json_t.use_all_ref);
-    in_nlohmann_json_j["upload_file"].get_to(in_nlohmann_json_t.upload_file);
   }
 
   std::string to_json_str() const override {
