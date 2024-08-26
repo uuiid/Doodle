@@ -161,9 +161,9 @@ void cloth_sim::touch_sim() {
   ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
     auto l_c     = in_handle.get<cloth_interface>();
     auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->set_cache_folder_read_only(l_ref_h);// 设置缓存为只读
-    l_c->rest(l_ref_h);                     /// 添加rest
     l_c->set_cache_folder(l_ref_h, false);  /// 设置缓存文件夹
+    l_c->rest(l_ref_h);                     /// 添加rest
+    l_c->set_cache_folder_read_only(l_ref_h);// 设置缓存为只读
   });
 
   const MTime k_end_time = MAnimControl::maxTime();
