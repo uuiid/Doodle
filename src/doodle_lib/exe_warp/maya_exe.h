@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <doodle_core/core/wait_op.h>
 #include <doodle_core/core/co_queue.h>
+#include <doodle_core/core/wait_op.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/async_result.hpp>
+
 #include <bitset>
 #include <filesystem>
 #include <nlohmann/json_fwd.hpp>
@@ -28,15 +29,15 @@ static constexpr std::bitset<8> k_export_abc_type{0b1 << 2};
 static constexpr std::bitset<8> k_export_fbx_type{0b1 << 3};
 static constexpr std::bitset<8> k_create_play_blast{0b1 << 4};
 static constexpr std::bitset<8> k_touch_sim_file{0b1 << 5};
-static constexpr std::bitset<8> k_export_anim_file{0b1 << 6}; /// 安排导出动画文件, 针对解算使用
+static constexpr std::bitset<8> k_export_anim_file{0b1 << 6};  /// 安排导出动画文件, 针对解算使用
 // 标准解算 00010111
 // 触摸解算(自动灯光) 01110101
 // 标准导出fbx 00001000
 // static constexpr std::bitset<8> create_ref_file{0b1 << 0};
-} // namespace flags
+}  // namespace flags
 
 class arg {
-public:
+ public:
   arg()          = default;
   virtual ~arg() = default;
   FSys::path file_path{};
@@ -66,14 +67,13 @@ public:
   }
 
   virtual std::string to_json_str() const = 0;
-  virtual std::string get_arg() const = 0;
+  virtual std::string get_arg() const     = 0;
 };
 
 class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
-public:
+ public:
   constexpr static std::string_view k_name{"cloth_sim_config"};
   FSys::path sim_path{};
-
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const qcloth_arg& nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg&>(nlohmann_json_t));
@@ -95,18 +95,21 @@ public:
 };
 
 class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
-public:
+ public:
   bool use_all_ref;
+  bool rig_file_export;
   constexpr static std::string_view k_name{"export_fbx_config"};
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const export_fbx_arg& nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg&>(nlohmann_json_t));
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
+    nlohmann_json_j["rig_file_export"] = nlohmann_json_t.rig_file_export;
   };
 
   friend void from_json(const nlohmann::json& in_nlohmann_json_j, export_fbx_arg& in_nlohmann_json_t) {
     from_json(in_nlohmann_json_j, dynamic_cast<arg&>(in_nlohmann_json_t));
     in_nlohmann_json_j["use_all_ref"].get_to(in_nlohmann_json_t.use_all_ref);
+    in_nlohmann_json_j["rig_file_export"].get_to(in_nlohmann_json_t.rig_file_export);
   }
 
   std::string to_json_str() const override {
@@ -119,7 +122,7 @@ public:
 };
 
 class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
-public:
+ public:
   std::vector<std::pair<FSys::path, FSys::path>> file_list{};
   constexpr static std::string_view k_name{"replace_file_config"};
 
@@ -178,17 +181,17 @@ struct maya_out_arg {
 };
 
 FSys::path find_maya_path();
-} // namespace maya_exe_ns
+}  // namespace maya_exe_ns
 
 class maya_ctx {
-public:
+ public:
   maya_ctx()  = default;
   ~maya_ctx() = default;
-  std::shared_ptr<awaitable_queue_limitation> queue_ = std::make_shared<awaitable_queue_limitation>(
-    core_set::get_set().p_max_thread);
+  std::shared_ptr<awaitable_queue_limitation> queue_ =
+      std::make_shared<awaitable_queue_limitation>(core_set::get_set().p_max_thread);
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
-  std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
+    std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 );
 } // namespace doodle
