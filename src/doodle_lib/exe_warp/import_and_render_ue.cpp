@@ -345,7 +345,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
     };
   }
 
-  static auto g_root{FSys::path{"D:/doodle/cache/ue"}};
+  static auto g_root{FSys::path{doodle_config::g_cache_path}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
   in_logger->warn("排队复制文件");
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
