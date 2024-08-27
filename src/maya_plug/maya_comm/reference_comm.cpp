@@ -85,7 +85,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
         l_status = MStatus::kFailure;
         return l_status;
       }
-      if (l_c->get_namespace() == i_ns) l_c->set_cache_folder(l_ref_map[i_ns], true);
+      if (l_c->get_namespace() == i_ns) l_c->set_cache_folder(l_ref_map[i_ns], false);
     }
   }
 
