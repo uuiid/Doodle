@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
+
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 namespace doodle {
@@ -31,15 +32,15 @@ struct import_data_t {
   FSys::path out_file_dir;
   std::string import_dir;
 
-  std::string original_map; // 地编提供的主场景路径, 我们需要抓取子场景
+  std::string original_map;  // 地编提供的主场景路径, 我们需要抓取子场景
 
-  FSys::path render_map; // 渲染关卡, 这个放置外面, 包含下面两个子关卡
-  std::string create_map; // 创建的关卡(放置骨骼网格体)
-  FSys::path vfx_map; // 特效关卡, 放特效
-  FSys::path level_sequence_import; // 渲染关卡序列(包的路径), 包括下面的子关卡
-  FSys::path level_sequence_vfx; // 额外的特效关卡序列(包的路径)
+  FSys::path render_map;             // 渲染关卡, 这个放置外面, 包含下面两个子关卡
+  std::string create_map;            // 创建的关卡(放置骨骼网格体)
+  FSys::path vfx_map;                // 特效关卡, 放特效
+  FSys::path level_sequence_import;  // 渲染关卡序列(包的路径), 包括下面的子关卡
+  FSys::path level_sequence_vfx;     // 额外的特效关卡序列(包的路径)
 
-  FSys::path movie_pipeline_config; // 渲染配置(包的路径)
+  FSys::path movie_pipeline_config;  // 渲染配置(包的路径)
 
   std::vector<import_files_t> files;
 
@@ -59,19 +60,19 @@ struct import_data_t {
     j["vfx_map"]            = p.vfx_map;
     j["level_sequence_vfx"] = p.level_sequence_vfx;
 
-    auto l_path = p.level_sequence_import;
+    auto l_path             = p.level_sequence_import;
     l_path.replace_extension();
     j["level_sequence"] = l_path;
 
-    auto l_path2 = p.movie_pipeline_config;
+    auto l_path2        = p.movie_pipeline_config;
     l_path2.replace_extension();
     j["movie_pipeline_config"] = l_path2;
   }
 };
 
 struct down_info {
-public:
-  FSys::path render_project_{}; // 渲染工程文件(.project)
+ public:
+  FSys::path render_project_{};  // 渲染工程文件(.project)
   // 场景文件
   FSys::path scene_file_{};
 };
@@ -84,10 +85,12 @@ struct args {
   down_info down_info_{};
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
 };
-}
+void fix_project(const FSys::path& in_project_path);
+void fix_config(const FSys::path& in_project_path);
+}  // namespace import_and_render_ue_ns
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
-  std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
+    std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 );
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(

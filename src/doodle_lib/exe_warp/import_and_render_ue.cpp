@@ -87,19 +87,19 @@ import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render
   l_import_data.original_map = in_args.down_info_.scene_file_.generic_string();
   return l_import_data;
 }
-
-void fix_project(const import_and_render_ue_ns::args& in_args) {
-  auto l_json     = nlohmann::json::parse(FSys::ifstream{in_args.down_info_.render_project_});
+namespace import_and_render_ue_ns {
+void fix_project(const FSys::path& in_project_path) {
+  auto l_json     = nlohmann::json::parse(FSys::ifstream{in_project_path});
   auto&& l_plugin = l_json["Plugins"];
   l_plugin.clear();
   auto&& l_plugin_obj     = l_plugin.emplace_back(nlohmann::json::object());
   l_plugin_obj["Name"]    = "Doodle";
   l_plugin_obj["Enabled"] = true;
-  FSys::ofstream{in_args.down_info_.render_project_} << l_json.dump();
+  FSys::ofstream{in_project_path} << l_json.dump();
 }
 
-void fix_config(const import_and_render_ue_ns::args& in_args) {
-  auto l_file_path = in_args.down_info_.render_project_.parent_path() / "Config" / "DefaultEngine.ini";
+void fix_config(const FSys::path& in_project_path) {
+  auto l_file_path = in_project_path.parent_path() / "Config" / "DefaultEngine.ini";
 
   if (!FSys::exists(l_file_path)) {
     FSys::ofstream{l_file_path} << R"(
@@ -166,6 +166,7 @@ NearClipPlane=0.500000
 
   FSys::ofstream{l_file_path} << l_str;
 }
+}  // namespace import_and_render_ue_ns
 
 struct association_data {
   boost::uuids::uuid id_{};
@@ -425,8 +426,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   }
 
   // 导入文件
-  fix_config(*in_args);
-  fix_project(*in_args);
+  import_and_render_ue_ns::fix_config(in_args->down_info_.render_project_);
+  import_and_render_ue_ns::fix_project(in_args->down_info_.render_project_);
   auto l_import_data = gen_import_config(*in_args);
   nlohmann::json l_json{};
   l_json          = l_import_data;
