@@ -4,10 +4,11 @@
 
 #include "check_files.h"
 
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 namespace doodle {
 namespace {
-void down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
+FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
   static auto g_root{FSys::path{doodle_config::g_cache_path}};
   auto l_local_root = g_root / "check" / in_ue_prject_path.stem();
   in_logger->info("复制UE文件到本机缓存文件夹 {} {}", in_ue_prject_path.string(), l_local_root.string());
@@ -24,7 +25,25 @@ void down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
       FSys::copy_options::recursive | FSys::copy_options::update_existing
   );
   FSys::copy(in_ue_prject_path, l_local_root / in_ue_prject_path.filename(), FSys::copy_options::update_existing);
+  return l_local_root / in_ue_prject_path.filename();
 }
+
+struct run_ue_check_arg_t {
+  import_and_render_ue_ns::import_files_t import_files_;  // 需要导入的文件(可空)
+
+  FSys::path render_map_;  // 渲染地编提供的关卡
+  std::string create_map;  // 创建的关卡(放置骨骼网格体)
+
+  FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
+  FSys::path movie_pipeline_config_;  // 渲染配置(包的路径)
+  friend void to_json(nlohmann::json& j, const run_ue_check_arg_t& p) {
+    j["import_files"]          = p.import_files_;
+    j["render_map"]            = p.render_map_;
+    j["create_map"]            = p.create_map;
+    j["level_sequence_import"] = p.level_sequence_import_;
+    j["movie_pipeline_config"] = p.movie_pipeline_config_;
+  }
+};
 }  // namespace
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
@@ -34,8 +53,9 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::make_tuple(boost::asio::error::make_error_code(boost::asio::error::not_found), "文件不存在");
   }
   // 复制UE文件到本机缓存文件夹
+
   try {
-    down_copy_file(in_args->ue_project_path_, in_logger);
+    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger);
   } catch (const FSys::filesystem_error& error) {
     co_return std::make_tuple(error.code(), error.what());
   }
@@ -60,11 +80,14 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
 
     // 导入UE中, 检查Ue文件
 
-    if(l_out.out_file_list.empty()) {
-
-    }else {
-
+    if (l_out.out_file_list.empty() && in_args->maya_has_export_fbx_) {
+      in_logger->error("运行maya时, 没有导出任何物体, 错误的文件");
+      l_ec = boost::asio::error::make_error_code(boost::asio::error::not_found);
+      co_return std::tuple(l_ec, "maya绑定文件错误");
     }
+    import_and_render_ue_ns::fix_project(in_args->local_ue_project_path_);
+    import_and_render_ue_ns::fix_config(in_args->local_ue_project_path_);
+
 
   }
 
