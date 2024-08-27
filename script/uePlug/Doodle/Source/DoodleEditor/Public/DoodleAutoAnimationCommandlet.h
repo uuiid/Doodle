@@ -10,6 +10,27 @@
 
 #include "DoodleAutoAnimationCommandlet.generated.h"
 
+
+UENUM()
+enum EImportFilesType2
+{
+	Camera,
+	Geometry,
+	Character,
+};
+
+
+USTRUCT()
+struct FImportFiles2
+{
+	GENERATED_BODY()
+	EImportFilesType2 Type;
+	FString Path;
+};
+
+
+
+
 /**
  * 
  */
@@ -29,11 +50,18 @@ private:
 	void OnCreateSequenceWorld();
 	void OnBuildSequence();
 	void OnSaveReanderConfig();
+
+	void ImportCamera(const FString& InFbxPath) const;
+
+	/// 创建几何缓存导入任务
+	UAssetImportTask* CreateGeometryImportTask(const FString& InFbxPath) const;
+	/// 创建角色导入任务
+	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath) const;
 	
 	// 修复材质属性
-	void FixMaterialProperty();
+	static void FixMaterialProperty();
 
-	TSharedPtr<FJsonObject> JsonObject;
+
 	ULevelSequence* TheLevelSequence;
 	FString DestinationPath;
 	TArray<UAssetImportTask*> ImportTasks;
@@ -41,11 +69,15 @@ private:
 	FString SequencePath;
 	FString ImportPath;
 
-	FName OriginalMapPath;
-	FName RenderMapPath;
-	FName CreateMapPath;
-
+    /// 传入的主关卡, 用来拿到主关卡中的子关卡, 不进行渲染
+	FString OriginalMapPath;
+    /// 渲染关卡
+	FString RenderMapPath;
+    /// 导入UE中的文件所在的关卡
+	FString CreateMapPath;
+    /// 渲染配置
 	FString MoviePipelineConfigPath;
+    /// 主要的渲染队列关卡
 	UWorld* TheSequenceWorld;
 
 	FFrameNumber L_Start{1001};
@@ -55,6 +87,7 @@ private:
 	FName EffectMapPath;
 	ULevelSequence* EffectLevelSequence;
 	UWorld* EffectSequenceWorld;
+	TArray<FImportFiles2> ImportFiles;
 	
 	// 辅助光源
 	ADirectionalLight* DirectionalLight1;
