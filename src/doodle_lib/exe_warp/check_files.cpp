@@ -38,12 +38,15 @@ struct run_ue_check_arg_t {
   FSys::path out_file_dir_;           // 输出文件夹
   FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
   FSys::path movie_pipeline_config_;  // 渲染配置(包的路径)
+
+  FSys::path import_dir_;  // 导入文件的位置
   friend void to_json(nlohmann::json& j, const run_ue_check_arg_t& p) {
     j["import_files"]          = p.import_files_;
     j["render_map"]            = p.render_map_;
     j["create_map"]            = p.create_map_;
     j["original_map"]          = p.original_map_;
     j["out_file_dir"]          = p.out_file_dir_;
+    j["import_dir"]            = p.import_dir_;
     j["level_sequence_import"] = p.level_sequence_import_;
     j["movie_pipeline_config"] = p.movie_pipeline_config_;
   }
@@ -59,7 +62,7 @@ run_ue_check_arg_t create_check_arg(
   l_arg.original_map_          = in_args.ue_main_file_;
   l_arg.render_map_            = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
   l_arg.create_map_            = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
-  l_arg.level_sequence_import_ = fmt::format("/{}/check/main_level_sequence", doodle_config::ue4_game);
+  l_arg.level_sequence_import_ = fmt::format("/{}/check/main_level_sequence", doodle_config::ue4_game, in_args.ue_project_path_.stem());
   l_arg.movie_pipeline_config_ = fmt::format("/{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
   l_arg.movie_pipeline_config_.replace_extension(l_arg.movie_pipeline_config_.stem());
