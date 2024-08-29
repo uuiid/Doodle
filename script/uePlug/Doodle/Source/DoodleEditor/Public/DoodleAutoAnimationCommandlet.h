@@ -11,19 +11,24 @@
 #include "DoodleAutoAnimationCommandlet.generated.h"
 
 
-UENUM()
-enum EImportFilesType2
+enum class EImportFilesType2
 {
 	Camera,
 	Geometry,
 	Character,
 };
 
+enum class ECheckFileType
+{
+	Character,
+	Scene,
+};
 
 USTRUCT()
 struct FImportFiles2
 {
 	GENERATED_BODY()
+
 	EImportFilesType2 Type;
 	FString Path;
 };
@@ -44,17 +49,35 @@ public:
 
 
 	void RunAutoLight(const FString& InCondigPath);
+	void RunCheckFiles(const FString& InCondigPath);
 
 private:
-	void OnCreateEffectSequence();
-	void OnCreateSequence();
+	/// 创建特效关卡
 	void OnCreateEffectSequenceWorld();
+	/// 创建特效定序器
+	void OnCreateEffectSequence();
+	/// 创建主关卡
 	void OnCreateSequenceWorld();
+	/// 创建主定序器
+	void OnCreateSequence();
+
+	void OnCreateDirectionalLight();
+	void OnCreateCheckLight();
+	void ClearAllLight();
+
+	/// 主要灯光定序器中的导入数据
 	void OnBuildSequence();
+	/// 创建检查角色的定序器
+	void OnBuildCheckCharacter();
+	/// 创建检查场景的定序器
+	void OnBuildCheckScene();
+
+
+	/// 创建渲染配置
 	void OnSaveReanderConfig();
 
+	/// 导入fbx中的相机
 	void ImportCamera(const FString& InFbxPath) const;
-
 	/// 创建几何缓存导入任务
 	UAssetImportTask* CreateGeometryImportTask(const FString& InFbxPath) const;
 	/// 创建角色导入任务
@@ -94,4 +117,7 @@ private:
 	ADirectionalLight* DirectionalLight1;
 	// 主光源
 	ADirectionalLight* DirectionalLight2;
+
+	// 检查文件类型
+	ECheckFileType CheckFileType;
 };
