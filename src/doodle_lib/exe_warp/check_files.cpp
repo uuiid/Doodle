@@ -58,11 +58,12 @@ run_ue_check_arg_t create_check_arg(
   run_ue_check_arg_t l_arg;
   auto l_out_path = in_maya_out_arg.out_file_list[0].out_file;
   if (FSys::exists(l_out_path))
-    l_arg.import_files_ = {.path_ = l_out_path, .type_ = l_out_path.extension() == ".fbx" ? "char" : "geo"};
-  l_arg.original_map_          = in_args.ue_main_file_;
-  l_arg.render_map_            = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
-  l_arg.create_map_            = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
-  l_arg.level_sequence_import_ = fmt::format("/{}/check/main_level_sequence", doodle_config::ue4_game, in_args.ue_project_path_.stem());
+    l_arg.import_files_ = {.type_ = l_out_path.extension() == ".fbx" ? "char" : "geo", .path_ = l_out_path};
+  l_arg.original_map_ = in_args.ue_main_file_;
+  l_arg.render_map_   = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
+  l_arg.create_map_   = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
+  l_arg.level_sequence_import_ =
+      fmt::format("/{}/check/main_level_sequence", doodle_config::ue4_game, in_args.ue_project_path_.stem());
   l_arg.movie_pipeline_config_ = fmt::format("/{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
   l_arg.movie_pipeline_config_.replace_extension(l_arg.movie_pipeline_config_.stem());
@@ -118,8 +119,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   in_logger->warn("排队导入文件 {} ", in_args->local_ue_project_path_);
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-    in_logger->error(" 用户取消操作");
-    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
+    in_logger->error("用户取消操作");
+    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, std::string{"用户取消操作"});
   }
   // 添加三次重试
   for (int i = 0; i < 3; ++i) {
@@ -133,7 +134,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
     in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
-  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+  if (l_ec) co_return std::tuple(l_ec, std::string{});
   in_logger->warn("导入文件完成");
   in_logger->warn("排队渲染, 输出目录 {}", l_check_arg.out_file_dir_);
   if (exists(l_check_arg.out_file_dir_)) {
@@ -146,7 +147,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     in_logger->error(" 用户取消操作");
-    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
+    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, std::string{});
   }
   for (int i = 0; i < 3; ++i) {
     l_ec = co_await async_run_ue(
@@ -161,6 +162,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
     in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
-  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+  if (l_ec) co_return std::tuple(l_ec, std::string{});
 }
 }
