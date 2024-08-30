@@ -277,7 +277,7 @@ void DoodleVariantCompoundWidget::Construct(const FArguments& InArgs)
                                 if (CurrentObject && CurrentObject->AllVaraint.Num() > 1) 
                                 {
                                     FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &DoodleVariantCompoundWidget::OnVariantDelete), FCanExecuteAction());
-                                    FMenuBuilder MenuBuilder(true, false);
+                                    FMenuBuilder MenuBuilder(true, MakeShareable(new FUICommandList));
                                     MenuBuilder.AddMenuSeparator();
                                     MenuBuilder.AddMenuEntry(FText::FromString(TEXT("删除")), FText::FromString(TEXT("删除变体")),
                                         FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")), ActionDelete);

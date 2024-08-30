@@ -192,7 +192,7 @@ void UDoodleOrganizeCompoundWidget::Construct(const FArguments& InArgs)
                         if (NowSelectItem && NowSelectItem->Path.Len() > 0)
                         {
                             FUIAction ActionDelete(FExecuteAction::CreateRaw(this, &UDoodleOrganizeCompoundWidget::OnRenameTexture), FCanExecuteAction());
-                            FMenuBuilder MenuBuilder(true, false);
+                            FMenuBuilder MenuBuilder(true, MakeShareable(new FUICommandList));
                             MenuBuilder.AddMenuSeparator();
                             MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名贴图")),
                                 FSlateIcon(), ActionDelete);

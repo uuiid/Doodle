@@ -340,7 +340,7 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                                 .OnContextMenuOpening_Lambda([this]()
                                 {
                                     FUIAction ActionCall(FExecuteAction::CreateRaw(this, &UDoodleEffectLibraryWidget::OnEffectExport), FCanExecuteAction());
-                                    FMenuBuilder MenuBuilder(true, false);
+                                    FMenuBuilder MenuBuilder(true, MakeShareable(new FUICommandList));
                                     //--------------------------
                                     if (CurrentItem) 
                                     {
@@ -448,7 +448,7 @@ void UDoodleEffectLibraryWidget::Construct(const FArguments& InArgs)
                                             Row->TheEditableText->SelectAllText();
                                         }
                                     }), FCanExecuteAction());
-                                    FMenuBuilder MenuBuilder(true, false);
+                                    FMenuBuilder MenuBuilder(true, MakeShareable(new FUICommandList));
                                     MenuBuilder.AddMenuSeparator();
                                     MenuBuilder.AddMenuEntry(FText::FromString(TEXT("重命名")), FText::FromString(TEXT("重命名分类")),
                                         FSlateIcon(), RenameAction);

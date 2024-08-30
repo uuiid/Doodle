@@ -878,7 +878,7 @@ void UDoodleEffectLibraryEditWidget::Construct(const FArguments& InArgs)
                                                 }
                                             }
                                         }), FCanExecuteAction());
-                                        FMenuBuilder MenuBuilder(true, false);
+                                        FMenuBuilder MenuBuilder(true, MakeShareable(new FUICommandList));
                                         MenuBuilder.AddMenuSeparator();
                                         MenuBuilder.AddMenuEntry(FText::FromString(TEXT("新建")), FText::FromString(TEXT("新建子分类")),
                                             FSlateIcon(), Action);
