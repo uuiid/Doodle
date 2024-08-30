@@ -53,9 +53,15 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
   PostProcess->Settings.LumenFinalGatherQuality                           = 4.f;
 
   PostProcess->Settings.bOverride_RayTracingGI                            = true;
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 2
+#else
   PostProcess->Settings.RayTracingGIType                                  = ERayTracingGlobalIlluminationType::BruteForce;
-  PostProcess->Settings.bOverride_RayTracingGISamplesPerPixel             = true;
   PostProcess->Settings.RayTracingGISamplesPerPixel                       = 8;
+  PostProcess->Settings.RayTracingReflectionsMaxBounces                   = 3;
+  PostProcess->Settings.RayTracingReflectionsSamplesPerPixel              = 4;
+#endif
+  PostProcess->Settings.bOverride_RayTracingGISamplesPerPixel             = true;
   PostProcess->Settings.bOverride_ReflectionMethod                        = true;
   PostProcess->Settings.ReflectionMethod                                  = EReflectionMethod::Lumen;
   PostProcess->Settings.bOverride_LumenRayLightingMode                    = true;
@@ -65,9 +71,7 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
   PostProcess->Settings.bOverride_ScreenSpaceReflectionIntensity          = true;
   PostProcess->Settings.ScreenSpaceReflectionIntensity                    = 100.f;
   PostProcess->Settings.bOverride_RayTracingReflectionsMaxBounces         = true;
-  PostProcess->Settings.RayTracingReflectionsMaxBounces                   = 3;
   PostProcess->Settings.bOverride_RayTracingReflectionsSamplesPerPixel    = true;
-  PostProcess->Settings.RayTracingReflectionsSamplesPerPixel              = 4;
 
   PostProcess->Settings.bOverride_AmbientOcclusionIntensity               = true;
   PostProcess->Settings.AmbientOcclusionIntensity                         = 0.f;

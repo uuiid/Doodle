@@ -456,6 +456,11 @@ void UDoodleAutoAnimationCommandlet::OnCreateCheckLight()
 	TheSequenceWorld->SpawnActor<ADoodleAssetsPreview>(FVector::ZeroVector, FRotator::ZeroRotator);
 }
 
+void UDoodleAutoAnimationCommandlet::ClearAllLight()
+{
+	
+}
+
 
 void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) const
 {

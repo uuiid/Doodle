@@ -156,7 +156,7 @@ class Doodle_CustomFbxExporter {
 
     if (!Exporter->Initialize(TCHAR_TO_UTF8(*In_FilePath), FileFormat, SdkManager->GetIOSettings())) {
       UE_LOG(LogTemp, Warning, TEXT("Call to KFbxExporter::Initialize() failed.\n"));
-      UE_LOG(LogTemp, Warning, TEXT("Error returned: %s\n\n"), Exporter->GetStatus().GetErrorString());
+      UE_LOG(LogTemp, Warning, TEXT("Error returned: %hs\n\n"), Exporter->GetStatus().GetErrorString());
       return;
     }
     int32 Major, Minor, Revision;

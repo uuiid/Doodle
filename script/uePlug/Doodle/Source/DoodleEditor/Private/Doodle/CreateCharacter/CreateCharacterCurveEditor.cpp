@@ -290,7 +290,7 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
     auto& L_Rot       = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.RotationCurve;
     FString Bone_Name = CreateCharacterConfigConfig->ListConfigNode[L_Key].BoneName.ToString();
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 3
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 4
 #define DOODLE_ADD_CURVE_IMPL(Owner, Index)                                                           \
   {                                                                                                   \
     FRichCurveEditInfo L_Info{                                                                        \
@@ -315,6 +315,7 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
     DOODLE_ADD_CURVE(L_Tran);
     DOODLE_ADD_CURVE(L_Size);
     DOODLE_ADD_CURVE(L_Rot);
+
 
 #undef DOODLE_ADD_CURVE
 #undef DOODLE_ADD_CURVE_IMPL
