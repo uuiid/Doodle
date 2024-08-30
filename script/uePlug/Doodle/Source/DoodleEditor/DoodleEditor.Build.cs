@@ -137,7 +137,8 @@ public class doodleEditor : ModuleRules
                 "NiagaraEditor",
                 "ToolWidgets",
                 "MovieSceneCaptureDialog",
-				"MovieRenderPipelineSettings"// 自动导入设置模块
+				"MovieRenderPipelineSettings",// 自动导入设置模块
+				"SkeletalMeshEditor", /// 获取骨骼网格体信息
 			}
 		);
 
