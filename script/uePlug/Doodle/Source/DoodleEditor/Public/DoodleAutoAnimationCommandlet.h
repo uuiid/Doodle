@@ -107,6 +107,9 @@ private:
 	/// 主要的渲染队列关卡
 	UWorld* TheSequenceWorld;
 
+	/// 渲染关卡
+	UWorld* TheRenderWorld;
+
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
 	//-----------
