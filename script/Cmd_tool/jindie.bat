@@ -5,13 +5,13 @@
 ::YAwzuBVtJxjWCl3EqQJgSA==
 ::ZR4luwNxJguZRRnk
 ::Yhs/ulQjdF+5
-::cxAkpRVqdFKZSDk=
+::cxAkpRVqdFKZSTk=
 ::cBs/ulQjdF+5
 ::ZR41oxFsdFKZSDk=
 ::eBoioBt6dFKZSDk=
-::cRo6pxp7LAbNWATEpCI=
-::egkzugNsPRvcWATEpCI=
-::dAsiuh18IRvcCxnZtBJQ
+::cRo6pxp7LAbNWATEpSI=
+::egkzugNsPRvcWATEpSI=
+::dAsiuh18IRvcCxnZtBNQ
 ::cRYluBh/LU+EWAnk
 ::YxY4rhs+aU+JeA==
 ::cxY6rQJ7JhzQF1fEqQJQ
@@ -31,5 +31,6 @@
 ::
 ::
 ::978f952a14a936cc963da21a135fa983
-MKDIR F:\sy
-MKLINK /D F:\sy\账套备份 \\192.168.0.67\k3bak\账套备份
+chcp 65001
+schtasks /delete /tn 金蝶备份 /f
+schtasks /create /tn 金蝶备份 /tr "robocopy F:\金蝶自动备份20210926 \\192.168.0.67\k3bak\账套备份 /unilog:F:\金蝶自动备份20210926.log" /sc daily /st 03:00 
