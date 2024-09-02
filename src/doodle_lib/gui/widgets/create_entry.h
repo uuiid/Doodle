@@ -33,12 +33,19 @@ class create_entry {
   };
 
  private:
+  struct ass_type_t {
+    entt::handle handle_;
+    std::string asset_type_;
+  };
   std::shared_ptr<init_args> args_{};
   /// 重复的路径
   std::vector<FSys::path> duplicate_paths_{};
   std::vector<entt::handle> duplicate_handles_{};
+  std::vector<ass_type_t> ass_type_list_{};
   enum class sources_file_type { project_open, project_import, other_files };
   sources_file_type sources_file_type_{sources_file_type::project_open};
+
+  void create_ass_type_list();
 
   void switch_sources_file();
   void find_icon(const entt::handle& in_handle, const FSys::path& in_path) const;

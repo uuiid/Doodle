@@ -40,6 +40,15 @@ bool create_entry::render() {
   }
   return true;
 }
+
+void create_entry::create_ass_type_list() {
+  for (auto &&[e, ass] : g_reg()->view<assets>().each()) {
+    if (!ass.get_parent()) {
+      ass_type_list_.emplace_back(entt::handle{*g_reg(), e}, ass.p_path);
+    }
+  }
+}
+
 void create_entry::find_icon(const entt::handle &in_handle, const FSys::path &in_path) const {
   image_loader l_image_load{};
 
@@ -77,6 +86,7 @@ void create_entry::switch_sources_file() {
   else {
     sources_file_type_ = sources_file_type::other_files;
     find_duplicate_file();
+    create_ass_type_list();
   }
 }
 
@@ -113,19 +123,8 @@ void create_entry::render_other_files() {
     dear::Text(fmt::format("库中具有重复类(重复的将不进行添加):\n {}", fmt::join(duplicate_paths_, "\n")));
 
   ImGui::Text("添加文件类别:");
-  for (auto &&i : g_reg()->ctx().get<project_config::base_config>().assets_list) {
-    if (ImGui::Selectable(i.c_str())) {
-      entt::handle l_ass{};
-      for (auto &&[e, ass] : g_reg()->view<assets>().each()) {
-        if (ass.p_path == i) {
-          l_ass = {*g_reg(), e};
-        }
-      }
-      if (!l_ass) {
-        l_ass = {*g_reg(), g_reg()->create()};
-        l_ass.emplace<database>();
-        l_ass.emplace<assets>(i);
-      }
+  for (auto &&i : ass_type_list_) {
+    if (ImGui::Selectable(i.asset_type_.c_str())) {
       if (auto *l_f = g_windows_manage().find_windows<assets_filter_widget>()) {
         l_f->init();
       }
@@ -145,7 +144,7 @@ void create_entry::render_other_files() {
                         }
                         find_icon(l_ent, in_path);
                         l_ent.emplace<database>(FSys::software_flag_file(in_path));
-                        l_ent.emplace<assets_file>(in_path).assets_attr(l_ass);
+                        l_ent.emplace<assets_file>(in_path).assets_attr(i.handle_);
 
                         ue_main_map::find_ue_project_file(l_ent);
                         return l_ent;

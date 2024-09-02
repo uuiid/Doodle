@@ -59,9 +59,6 @@ class project_edit::impl {
 
   gui_cache<std::string> regex_{"后缀名识别(正则表达式)"s, ""s};
   gui_cache<std::string> upload_path{"上传路径"s, ""s};
-  std::string list_name{"分类列表"s};
-  gui_cache_name_id add_list_name_button{"添加"s};
-  std::vector<std::pair<gui_cache<std::string>, gui_cache<bool>>> assets_list;
   std::string err_str;
 
   icon_extensions icon_list;
@@ -101,12 +98,8 @@ class project_edit::impl {
     simple_module_proxy_ = l_config.simple_module_proxy_;
 
     regex_               = l_config.find_icon_regex;
-    assets_list          = l_config.assets_list | ranges::views::transform([](const std::string& in_str) {
-                    return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
-                  }) |
-                  ranges::to_vector;
 
-    icon_list.list = l_config.icon_extensions | ranges::views::transform([](const std::string& in_str) {
+    icon_list.list       = l_config.icon_extensions | ranges::views::transform([](const std::string& in_str) {
                        return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
                      }) |
                      ranges::to_vector;
@@ -142,12 +135,6 @@ class project_edit::impl {
     l_c.cloth_proxy_         = cloth_proxy_;
     l_c.simple_module_proxy_ = simple_module_proxy_;
     l_c.find_icon_regex      = regex_;
-    l_c.assets_list =
-        assets_list |
-        ranges::views::transform([](const decltype(p_i->assets_list)::value_type& in_part) -> std::string {
-          return in_part.first.data;
-        }) |
-        ranges::to_vector;
 
     l_c.icon_extensions =
         icon_list.list |
@@ -262,26 +249,7 @@ bool project_edit::render() {
   if (!p_i->err_str.empty()) {
     dear::Text(p_i->err_str);
   }
-  /// @brief 添加分类编辑
-  dear::Text(p_i->list_name);
-  ImGui::SameLine();
-  if (ImGui::Button(*p_i->add_list_name_button)) {
-    p_i->assets_list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s}, gui_cache<bool>{"删除", false}));
-  }
-  for (auto&& i : p_i->assets_list) {
-    if (ImGui::InputText(*i.first.gui_name, &i.first.data))
-      ;
-    ImGui::SameLine();
-    if (ImGui::Button(*i.second.gui_name)) {
-      i.second.data = true;
-    }
-  }
 
-  const auto l_r =
-      ranges::remove_if(p_i->assets_list, [](const decltype(p_i->assets_list)::value_type& in_part) -> bool {
-        return in_part.second.data;
-      });
-  if (l_r != p_i->assets_list.end()) p_i->assets_list.erase(l_r, p_i->assets_list.end());
   /// @brief 后缀名编辑
   dear::Text(p_i->icon_list.name);
   ImGui::SameLine();
