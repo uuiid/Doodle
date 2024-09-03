@@ -7,6 +7,7 @@
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_core/metadata/time_point_wrap.h>
 namespace doodle {
 namespace {
 FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
@@ -62,8 +63,9 @@ run_ue_check_arg_t create_check_arg(
   l_arg.original_map_ = in_args.ue_main_file_;
   l_arg.render_map_   = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
   l_arg.create_map_   = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
-  l_arg.level_sequence_import_ =
-      fmt::format("/{}/check/main_level_sequence", doodle_config::ue4_game, in_args.ue_project_path_.stem());
+  l_arg.import_dir_ =
+      fmt::format("/{}/check/import_{4:%m_%d_%H_%M}", doodle_config::ue4_game, time_point_wrap{}.get_local_time());
+  l_arg.level_sequence_import_ = fmt::format("/{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
   l_arg.movie_pipeline_config_ = fmt::format("/{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
   l_arg.movie_pipeline_config_.replace_extension(l_arg.movie_pipeline_config_.stem());
@@ -126,7 +128,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   for (int i = 0; i < 3; ++i) {
     l_ec = co_await async_run_ue(
         {in_args->local_ue_project_path_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
-         "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
+         "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Check={}", l_tmp_path)},
         in_logger
     );
     if (!l_ec) break;
