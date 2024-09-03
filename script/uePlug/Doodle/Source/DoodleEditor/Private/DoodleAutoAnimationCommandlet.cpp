@@ -105,14 +105,14 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	//--------------------
 	RenderMapPath = JsonObject->GetStringField(TEXT("render_map"));
 	CreateMapPath = JsonObject->GetStringField(TEXT("create_map"));
-	OriginalMapPath = JsonObject->GetStringField(TEXT("original_map"));
+	OriginalMapPath = JsonObject->HasField(TEXT("original_map")) ? JsonObject->GetStringField(TEXT("original_map")) : FString{};
 	DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
 	ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
 
 	SequencePath = JsonObject->GetStringField(TEXT("level_sequence_import"));
 	MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
 
-	for (TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("import_files")); const TSharedPtr<FJsonValue>& JsonFile : JsonFiles)
+	for (TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("import_files")); const TSharedPtr<FJsonValue>&JsonFile : JsonFiles)
 	{
 		TSharedPtr<FJsonObject> Obj = JsonFile->AsObject();
 		const FString Path = Obj->GetStringField(TEXT("path"));
@@ -122,21 +122,40 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 		if (Type == TEXT("cam")) Type2 = EImportFilesType2::Camera;
 		else if (Type == TEXT("char")) Type2 = EImportFilesType2::Character;
 		else if (Type == TEXT("geo")) Type2 = EImportFilesType2::Geometry;
-		ImportFiles.Add(FImportFiles2{Type2, Path});
+		ImportFiles.Add(FImportFiles2{ Type2, Path });
 	}
 
 	if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("chr")) CheckFileType = ECheckFileType::Character;
 	else if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("scene")) CheckFileType = ECheckFileType::Scene;
 	else CheckFileType = ECheckFileType::Scene;
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 
 
 	// 创建主要的关卡和关卡序列
 	OnCreateSequence();
 	OnCreateSequenceWorld();
 	// 加载渲染关卡
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
-	TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
+	if (!OriginalMapPath.IsEmpty()) {
+		EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
+		TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
+	}
+	else
+	{
+		UWorldFactory* Factory = NewObject<UWorldFactory>();
+		UPackage* Pkg = CreatePackage(*RenderMapPath);
+		Pkg->FullyLoad();
+		Pkg->MarkPackageDirty();
+		const FString PackagePath = FPackageName::GetLongPackagePath(RenderMapPath);
+		const FString BaseFileName = FPaths::GetBaseFilename(RenderMapPath);
+		//---------------
+		const FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+		auto TheRenderWorld = CastChecked<UWorld>(AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory));
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		AssetRegistryModule.Get().AssetCreated(TheRenderWorld);
+		//------------------------
+		TheRenderWorld->Modify();
+		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld);
+	}
 	// 创建标准环境
 	if (CheckFileType == ECheckFileType::Scene) ClearAllLight();
 	OnCreateCheckLight();
@@ -193,7 +212,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 			if (Type == TEXT("cam")) Type2 = EImportFilesType2::Camera;
 			else if (Type == TEXT("char")) Type2 = EImportFilesType2::Character;
 			else if (Type == TEXT("geo")) Type2 = EImportFilesType2::Geometry;
-			ImportFiles.Add(FImportFiles2{Type2, Path});
+			ImportFiles.Add(FImportFiles2{ Type2, Path });
 		}
 	}
 
@@ -244,13 +263,13 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 			LevelNames.Add(StreamingLevel->GetWorldAssetPackageFName());
 		}
 	}
-	LevelNames.Add(FName{RenderMapPath});
+	LevelNames.Add(FName{ RenderMapPath });
 	//-------------
-	LevelNames.Add(FName{EffectMapPath});
+	LevelNames.Add(FName{ EffectMapPath });
 	NewSection->SetLevelNames(LevelNames);
 
 	//NewSection->SetVisibility(ELevelVisibility::Visible);
-	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
+	EditorAssetSubsystem->SaveLoadedAssets({ TheLevelSequence, TheRenderWorld });
 	//-----------------
 	OnSaveReanderConfig();
 }
@@ -279,14 +298,14 @@ void UDoodleAutoAnimationCommandlet::OnCreateEffectSequence()
 	EffectLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - Offset, L_End + 1}, true);
 	EffectLevelSequence->GetMovieScene()->Modify();
 	//----------------
-	for (TArray<FMovieSceneBinding> Bindings = EffectLevelSequence->GetMovieScene()->GetBindings(); const FMovieSceneBinding& Bind : Bindings)
+	for (TArray<FMovieSceneBinding> Bindings = EffectLevelSequence->GetMovieScene()->GetBindings(); const FMovieSceneBinding & Bind : Bindings)
 	{
 		if (!EffectLevelSequence->GetMovieScene()->RemovePossessable(Bind.GetObjectGuid()))
 		{
 			EffectLevelSequence->GetMovieScene()->RemoveSpawnable(Bind.GetObjectGuid());
 		}
 	}
-	for (TArray<UMovieSceneTrack*> Tracks = EffectLevelSequence->GetMovieScene()->GetTracks(); UMovieSceneTrack* Track : Tracks)
+	for (TArray<UMovieSceneTrack*> Tracks = EffectLevelSequence->GetMovieScene()->GetTracks(); UMovieSceneTrack * Track : Tracks)
 	{
 		FString Name = Track->GetClass()->GetName();
 		EffectLevelSequence->GetMovieScene()->RemoveTrack(*Track);
@@ -363,7 +382,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 	TheLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - Offset, L_End + 1}, true);
 	TheLevelSequence->GetMovieScene()->Modify();
 	//----------------
-	for (TArray<FMovieSceneBinding> Bindings = TheLevelSequence->GetMovieScene()->GetBindings(); const FMovieSceneBinding& Bind : Bindings)
+	for (TArray<FMovieSceneBinding> Bindings = TheLevelSequence->GetMovieScene()->GetBindings(); const FMovieSceneBinding & Bind : Bindings)
 	{
 		if (!Bind.GetName().Contains(TEXT("Camera")))
 		{
@@ -556,7 +575,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 				if (TransformSection)
 				{
 					FMovieSceneChannelProxy& SectionChannelProxy = TransformSection->GetChannelProxy();
-					TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")};
+					TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = { SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z") };
 					FMovieSceneDoubleChannel* ChannelX = DoubleChannels[0].Get();
 					FMovieSceneDoubleChannel* ChannelY = DoubleChannels[1].Get();
 					FMovieSceneDoubleChannel* ChannelZ = DoubleChannels[2].Get();
@@ -596,7 +615,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 			L_MovieSceneTranformTrack->AddSection(*L_MovieScene3DTransformSection);
 			L_MovieScene3DTransformSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
 			FMovieSceneChannelProxy& SectionChannelProxy = L_MovieScene3DTransformSection->GetChannelProxy();
-			TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")};
+			TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = { SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z") };
 			FMovieSceneDoubleChannel* ChannelX = DoubleChannels[0].Get();
 			FMovieSceneDoubleChannel* ChannelY = DoubleChannels[1].Get();
 			FMovieSceneDoubleChannel* ChannelZ = DoubleChannels[2].Get();
@@ -607,9 +626,9 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 			for (auto LT = L_Start; LT <= L_End; ++LT)
 			{
 				Times.Add(LT);
-				ValuesX.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Roll});
-				ValuesY.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Pitch});
-				ValuesZ.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Yaw});
+				ValuesX.Add(FMovieSceneDoubleValue{ MainLightRot[(LT - L_Start).Value].Roll });
+				ValuesY.Add(FMovieSceneDoubleValue{ MainLightRot[(LT - L_Start).Value].Pitch });
+				ValuesZ.Add(FMovieSceneDoubleValue{ MainLightRot[(LT - L_Start).Value].Yaw });
 			}
 			ChannelX->AddKeys(Times, ValuesX);
 			ChannelY->AddKeys(Times, ValuesY);
@@ -847,7 +866,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 		}
 		Task->RemoveFromRoot();
 	}
-	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheSequenceWorld});
+	EditorAssetSubsystem->SaveLoadedAssets({ TheLevelSequence, TheSequenceWorld });
 }
 
 void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
@@ -925,7 +944,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 		}
 	}
 
-	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheSequenceWorld});
+	EditorAssetSubsystem->SaveLoadedAssets({ TheLevelSequence, TheSequenceWorld });
 	UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
 
 	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
@@ -1031,26 +1050,26 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 	LFilter.bIncludeOnlyOnDiskAssets = false;
 	LFilter.bRecursivePaths = true;
 	LFilter.bRecursiveClasses = true;
-	LFilter.PackagePaths = TArray<FName>{FName{TEXT("/Game/Character/")}, FName{TEXT("/Game/Prop/")}};
+	LFilter.PackagePaths = TArray<FName>{ FName{TEXT("/Game/Character/")}, FName{TEXT("/Game/Prop/")} };
 	LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
 
 	TArray<UObject*> L_Save{};
 
 	IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
-	{
-		if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Prop/")))
 		{
-			if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset()))
+			if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Prop/")))
 			{
-				bool L_bHasProperty{true};
-				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
-				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
-				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
-				L_Save.Add(L_Mat);
-			};
-		}
-		return true;
-	});
+				if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset()))
+				{
+					bool L_bHasProperty{ true };
+					L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+					L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
+					L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+					L_Save.Add(L_Mat);
+				};
+			}
+			return true;
+		});
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	EditorAssetSubsystem->SaveLoadedAssets(L_Save);
 }
