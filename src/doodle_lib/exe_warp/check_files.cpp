@@ -50,8 +50,12 @@ struct run_ue_check_arg_t {
     j["original_map"]          = p.original_map_;
     j["out_file_dir"]          = p.out_file_dir_;
     j["import_dir"]            = p.import_dir_;
-    j["level_sequence_import"] = p.level_sequence_import_;
-    j["movie_pipeline_config"] = p.movie_pipeline_config_;
+    auto l_level_sequence_path = p.level_sequence_import_;
+    l_level_sequence_path.replace_extension();
+    j["level_sequence_import"] = l_level_sequence_path;
+    auto l_movie_pipeline_path = p.movie_pipeline_config_;
+    l_movie_pipeline_path.replace_extension();
+    j["movie_pipeline_config"] = l_movie_pipeline_path;
     j["check_type"]            = p.check_type_;
   }
 };
