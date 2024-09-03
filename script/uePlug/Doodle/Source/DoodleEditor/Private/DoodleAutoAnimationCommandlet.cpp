@@ -126,7 +126,7 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 		}
 	}
 
-	if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("char")) CheckFileType = ECheckFileType::Character;
+	if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("char_")) CheckFileType = ECheckFileType::Character;
 	else if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("scene")) CheckFileType = ECheckFileType::Scene;
 	else CheckFileType = ECheckFileType::Scene;
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
