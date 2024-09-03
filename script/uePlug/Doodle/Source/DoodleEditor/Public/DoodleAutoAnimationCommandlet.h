@@ -52,6 +52,9 @@ public:
 	void RunCheckFiles(const FString& InCondigPath);
 
 private:
+	/// 删除资产
+	static void DeleteAsseet(const FString& InPath);
+
 	/// 创建特效关卡
 	void OnCreateEffectSequenceWorld();
 	/// 创建特效定序器
