@@ -426,7 +426,8 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
   auto l_size_x = get_plug(dag_path.node(), "scaleX").asDouble();
   auto l_size_y = get_plug(dag_path.node(), "scaleY").asDouble();
   auto l_size_z = get_plug(dag_path.node(), "scaleZ").asDouble();
-  if (l_size_x == 0 && l_size_y == 0 && l_size_z == 0) {
+  if (boost::math::relative_difference(l_size_x, 0.0000001) && boost::math::relative_difference(l_size_y, 0.0000001) &&
+      boost::math::relative_difference(l_size_z, 0.0000001)) {
     default_logger_raw()->error("{} 缩放为 0", dag_path);
     throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
   }
