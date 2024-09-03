@@ -15,7 +15,7 @@ $map_item = @(
 @( "C:\sy\ZMLCLWDSWD", "", "宗门里除了我都是卧底" ),
 @( "C:\sy\WDSXTQL", "", "我的师兄太强了" ),
 @( "C:\sy\WuJinShenYu_8", "", "无尽神域"),
-@( "C:\sy\SSWH", "", "双生武魂"),
+@( "C:\sy\SSWH", "", "双生武魂")
 )
 
 function Add-SyDir
