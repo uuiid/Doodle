@@ -63,8 +63,10 @@ run_ue_check_arg_t create_check_arg(
   l_arg.original_map_ = in_args.ue_main_file_;
   l_arg.render_map_   = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
   l_arg.create_map_   = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
+  // l_arg.import_dir_ =
+  //     fmt::format("/{}/check/import_{4:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time());
   l_arg.import_dir_ =
-      fmt::format("/{}/check/import_{4:%m_%d_%H_%M}", doodle_config::ue4_game, time_point_wrap{}.get_local_time());
+    fmt::format("/{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time());
   l_arg.level_sequence_import_ = fmt::format("/{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
   l_arg.movie_pipeline_config_ = fmt::format("/{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
