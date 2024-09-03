@@ -16,6 +16,14 @@ struct check_files_arg_t {
 
   /// 本地缓存UE项目路径
   FSys::path local_ue_project_path_;
+
+  // 检查类型
+  enum check_type {
+    char_,
+    scene
+  };
+
+  check_type check_type_;
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(

@@ -126,11 +126,18 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 		}
 	}
 
-	if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("chr")) CheckFileType = ECheckFileType::Character;
+	if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("char")) CheckFileType = ECheckFileType::Character;
 	else if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("scene")) CheckFileType = ECheckFileType::Scene;
 	else CheckFileType = ECheckFileType::Scene;
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 
+
+	//--------------------
+	DeleteAsseet(RenderMapPath);
+	DeleteAsseet(CreateMapPath);
+	DeleteAsseet(EffectSequencePath);
+	DeleteAsseet(EffectMapPath);
+	DeleteAsseet(SequencePath);
 
 	// 创建主要的关卡和关卡序列
 	OnCreateSequence();
@@ -1026,4 +1033,5 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 
 
 //"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=D:/test_files/test_ue_auto_main/out.json
+//"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Check=E:/Doodle/build/test_ue_check.json
 //UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json

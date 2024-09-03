@@ -4,10 +4,11 @@
 
 #include "check_files.h"
 
+#include <doodle_core/metadata/time_point_wrap.h>
+
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
-#include <doodle_core/metadata/time_point_wrap.h>
 namespace doodle {
 namespace {
 FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
@@ -39,6 +40,7 @@ struct run_ue_check_arg_t {
   FSys::path out_file_dir_;           // 输出文件夹
   FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
   FSys::path movie_pipeline_config_;  // 渲染配置(包的路径)
+  std::string check_type_;            // 检查类型
 
   FSys::path import_dir_;  // 导入文件的位置
   friend void to_json(nlohmann::json& j, const run_ue_check_arg_t& p) {
@@ -50,6 +52,7 @@ struct run_ue_check_arg_t {
     j["import_dir"]            = p.import_dir_;
     j["level_sequence_import"] = p.level_sequence_import_;
     j["movie_pipeline_config"] = p.movie_pipeline_config_;
+    j["check_type"]            = p.check_type_;
   }
 };
 
@@ -64,9 +67,11 @@ run_ue_check_arg_t create_check_arg(
   l_arg.render_map_   = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
   l_arg.create_map_   = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
   // l_arg.import_dir_ =
-  //     fmt::format("/{}/check/import_{4:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time());
-  l_arg.import_dir_ =
-    fmt::format("/{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time());
+  //     fmt::format("/{}/check/import_{4:%m_%d_%H_%M}", std::string{doodle_config::ue4_game},
+  //     time_point_wrap{}.get_local_time());
+  l_arg.import_dir_   = fmt::format(
+      "/{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time()
+  );
   l_arg.level_sequence_import_ = fmt::format("/{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
   l_arg.movie_pipeline_config_ = fmt::format("/{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
@@ -118,6 +123,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   import_and_render_ue_ns::fix_config(in_args->local_ue_project_path_);
 
   auto l_check_arg                = create_check_arg(*in_args, l_out);
+  l_check_arg.check_type_         = magic_enum::enum_name(in_args->check_type_);
   nlohmann::json l_run_import_arg = l_check_arg;
   auto l_tmp_path                 = FSys::write_tmp_file("ue_check", l_run_import_arg.dump(), ".json");
   in_logger->warn("排队导入文件 {} ", in_args->local_ue_project_path_);
