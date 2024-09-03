@@ -493,10 +493,10 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	TMap<FGuid, FString> L_Map{};
 	L_Map.Add(BindingID.GetGuid(), CameraLabel);
 	//---------------
-	//ALevelSequenceActor* L_LevelSequenceActor{};
-	//ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
-	//L_LevelSequenceActor->InitializePlayer();
-	//L_LevelSequencePlayer->Play();
+	ALevelSequenceActor* L_LevelSequenceActor{};
+	ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
+	L_LevelSequenceActor->InitializePlayer();
+	L_LevelSequencePlayer->Play();
 	//-----------------------
 	FFBXInOutParameters InOutParams;
 	UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
@@ -515,7 +515,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(GWorld, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, L_ImportFBXSettings, InOutParams);
 	//----------------
 	TempActor->Destroy();
-	//L_LevelSequenceActor->Destroy();
+	L_LevelSequenceActor->Destroy();
 	FbxImporter->ReleaseScene();
 	//----------------------------
 	Bindings = TheLevelSequence->GetMovieScene()->GetBindings();
