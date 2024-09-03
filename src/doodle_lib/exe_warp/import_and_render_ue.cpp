@@ -91,9 +91,20 @@ namespace import_and_render_ue_ns {
 void fix_project(const FSys::path& in_project_path) {
   auto l_json     = nlohmann::json::parse(FSys::ifstream{in_project_path});
   auto&& l_plugin = l_json["Plugins"];
-  auto&& l_plugin_obj     = l_plugin.emplace_back(nlohmann::json::object());
-  l_plugin_obj["Name"]    = "Doodle";
-  l_plugin_obj["Enabled"] = true;
+
+  bool l_has{};
+  for (auto&& l_v : l_plugin) {
+    if (l_v.contains("Name") && l_v["Name"] == "Doodle") {
+      l_v["Enabled"] = true;
+      l_has          = true;
+    }
+  }
+
+  if (!l_has) {
+    auto&& l_plugin_obj     = l_plugin.emplace_back(nlohmann::json::object());
+    l_plugin_obj["Name"]    = "Doodle";
+    l_plugin_obj["Enabled"] = true;
+  }
   FSys::ofstream{in_project_path} << l_json.dump();
 }
 
