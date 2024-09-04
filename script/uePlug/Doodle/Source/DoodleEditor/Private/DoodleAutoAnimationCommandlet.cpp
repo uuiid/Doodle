@@ -967,6 +967,37 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 
 void UDoodleAutoAnimationCommandlet::OnBuildCheckScene()
 {
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	// 先添加相机剪裁
+	UMovieSceneTrack* CameraCutTrack = TheLevelSequence->GetMovieScene()->GetCameraCutTrack();
+	if (!CameraCutTrack) CameraCutTrack = TheLevelSequence->GetMovieScene()->AddCameraCutTrack(UMovieSceneCameraCutTrack::StaticClass());
+	int LSize{};
+	for (TActorIterator<ACameraActor> CameraItr{TheRenderWorld}; CameraItr; ++CameraItr) ++LSize;
+	FFrameNumberRange LRange = TheLevelSequence->GetMovieScene()->GetPlaybackRange();
+	FFrameNumber LBegin = LRange.GetLowerBoundValue();
+	FFrameNumber LFrameSize = LRange.Size<FFrameNumber>();
+
+	int LSize2{};
+	for (TActorIterator<ACameraActor> CameraItr{TheRenderWorld}; CameraItr; ++CameraItr)
+	{
+		FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddPossessable(CameraItr->GetActorLabel(), CameraItr->GetClass());
+		TheLevelSequence->BindPossessableObject(CameraGuid, **CameraItr, TheRenderWorld);
+		//---------------
+		UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(CameraGuid);
+		UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+		L_MovieSceneSpawnSection->SetRange(FFrameNumberRange{LBegin + (LFrameSize / LSize) * LSize2, LBegin + (LFrameSize / LSize) * (LSize2 + 1)});
+		L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+
+		//创建相机剪裁切换
+		UMovieSceneCameraCutSection* NewSection = Cast<UMovieSceneCameraCutSection>(CameraCutTrack->CreateNewSection());
+		NewSection->SetRange(FFrameNumberRange{LBegin + (LFrameSize / LSize) * LSize2, LBegin + (LFrameSize / LSize) * (LSize2 + 1)});
+		NewSection->SetCameraGuid(CameraGuid);
+		CameraCutTrack->AddSection(*NewSection);
+		
+		++LSize2;
+	}
+
+	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheSequenceWorld});
 }
 
 void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
