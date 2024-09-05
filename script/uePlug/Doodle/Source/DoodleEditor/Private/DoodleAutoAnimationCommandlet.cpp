@@ -168,7 +168,7 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 		AssetRegistryModule.Get().AssetCreated(TheRenderWorld);
 		//------------------------
 		TheRenderWorld->Modify();
-		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld);
+		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld, false);
 	}
 	// 创建标准环境
 	if (CheckFileType == ECheckFileType::Scene) ClearAllLight();
@@ -186,6 +186,9 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	default:
 		break;
 	}
+
+	AddSequenceWorldToRenderWorld();
+	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheSequenceWorld, TheRenderWorld}, false);
 	// 创建渲染配置
 	OnSaveReanderConfig();
 }
@@ -253,6 +256,15 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	//---------------------
 	EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
 	TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
+	AddSequenceWorldToRenderWorld();
+
+	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
+	//-----------------
+	OnSaveReanderConfig();
+}
+
+void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
+{
 	ULevelStreaming* TempStreamingLevel = NewObject<ULevelStreaming>(TheRenderWorld, ULevelStreamingDynamic::StaticClass(), NAME_None, RF_NoFlags);
 	TempStreamingLevel->SetWorldAsset(TheSequenceWorld);
 	TheRenderWorld->AddStreamingLevel(TempStreamingLevel);
@@ -265,8 +277,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	}
 	NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneLevelVisibilityTrack>();
 	UMovieSceneLevelVisibilitySection* NewSection = CastChecked<UMovieSceneLevelVisibilitySection>(NewTrack->CreateNewSection());
-	const TRange<FFrameNumber> SectionRange = TheLevelSequence->GetMovieScene()->GetPlaybackRange();
-	NewSection->SetRange(SectionRange);
+	NewSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
 	NewTrack->AddSection(*NewSection);
 	//-----------------
 	TArray<FName> LevelNames;
@@ -279,13 +290,8 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	}
 	LevelNames.Add(FName{RenderMapPath});
 	//-------------
-	LevelNames.Add(FName{EffectMapPath});
+	if (!EffectMapPath.IsEmpty()) LevelNames.Add(FName{EffectMapPath});
 	NewSection->SetLevelNames(LevelNames);
-
-	//NewSection->SetVisibility(ELevelVisibility::Visible);
-	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
-	//-----------------
-	OnSaveReanderConfig();
 }
 
 
@@ -448,7 +454,11 @@ void UDoodleAutoAnimationCommandlet::ClearAllLight()
 	for (TActorIterator<ALight> LightItr(TheRenderWorld); LightItr; ++LightItr)
 	{
 		LightItr->Destroy();
+		LightItr->K2_DestroyActor();
+		LightItr->MarkAsGarbage();
 	}
+	GEngine->ForceGarbageCollection(true);
+	CommandletHelpers::TickEngine(TheRenderWorld);
 }
 
 

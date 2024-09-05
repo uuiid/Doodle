@@ -9,59 +9,28 @@
 #include "Engine/SkeletalMesh.h"
 #include "Engine/SkinnedAssetCommon.h"
 // 测试使用
-#include "Doodle/ResizeTexture.h"
 
 // 批量导入
-#include "AssetImportTask.h"
 #include "AssetRegistry/IAssetRegistry.h"
-#include "AssetToolsModule.h"
 #include "DesktopPlatformModule.h"
 #include "Doodle/DoodleImportFbxUI.h"
-#include "Factories/FbxFactory.h"
-#include "Factories/FbxImportUI.h"
-#include "Factories/FbxSkeletalMeshImportData.h"
-#include "HAL/FileManagerGeneric.h"
-#include "IAssetTools.h"
 #include "Internationalization/Regex.h"
 #include "Misc/Paths.h"
-#include "ObjectTools.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
-/// 设置使用
-#include "DoodleEditorSetting.h"
-// 重命名资产
-#include "EditorAssetLibrary.h"
 // 保存包需要
 #include "Editor.h"
-// 自定义abc导入
-// #include "AbcWrap/DoodleAbcFactory.h"
-//  设置粒子系统材质需要
-#include <Particles/ParticleEmitter.h>
-#include <Particles/ParticleSystem.h>
-
-#include "Particles/ParticleModuleRequired.h"
-// 更改材质属性时的委托发布
-#include "EditorSupportDelegates.h"
-
-// 我们在测试时使用
-#include "DoodleCreateLevel.h"
-// 编辑器脚本
-#include "EditorAssetLibrary.h"
 /// 打开exe需要
 #include "GenericPlatform/GenericPlatformProcess.h"
-
 /// <summary>
 /// 测试使用
 /// </summary>
 #include "Rendering/SkeletalMeshModel.h"
 #include "MeshDescription.h"
-#include "SkeletalMeshBuilder.h"
-
 //文件夹整理
 #include "DoodleOrganizeCompoundWidget.h"
 #include "DoodleEffectLibraryWidget.h"
 
-#include "SkeletalMeshEditorSubsystem.h"
 
 
 namespace

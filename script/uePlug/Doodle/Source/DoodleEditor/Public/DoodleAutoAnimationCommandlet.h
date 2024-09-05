@@ -55,6 +55,8 @@ private:
 	/// 删除资产
 	static void DeleteAsseet(const FString& InPath);
 
+	void AddSequenceWorldToRenderWorld();
+
 	/// 创建特效关卡
 	void OnCreateEffectSequenceWorld();
 	/// 创建特效定序器
@@ -90,7 +92,8 @@ private:
 	static void FixMaterialProperty();
 
 	/// 主要的渲染队列
-	ULevelSequence* TheLevelSequence;
+	UPROPERTY()
+	TObjectPtr<ULevelSequence> TheLevelSequence;
 	FString DestinationPath;
 	FString SequencePath;
 	FString ImportPath;
@@ -108,10 +111,12 @@ private:
 	/// 渲染配置
 	FString MoviePipelineConfigPath;
 	/// 主要的渲染队列关卡
-	UWorld* TheSequenceWorld;
+	UPROPERTY()
+	TObjectPtr<UWorld> TheSequenceWorld;
 
 	/// 渲染关卡
-	UWorld* TheRenderWorld;
+	UPROPERTY()
+	TObjectPtr<UWorld>  TheRenderWorld;
 
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
@@ -120,9 +125,11 @@ private:
 	TArray<FImportFiles2> ImportFiles;
 
 	// 辅助光源
-	ADirectionalLight* DirectionalLight1;
+	UPROPERTY()
+	TObjectPtr<ADirectionalLight> DirectionalLight1;
 	// 主光源
-	ADirectionalLight* DirectionalLight2;
+	UPROPERTY()
+	TObjectPtr<ADirectionalLight> DirectionalLight2;
 
 	// 检查文件类型
 	ECheckFileType CheckFileType;
