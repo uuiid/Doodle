@@ -32,7 +32,7 @@ FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
 }
 
 struct run_ue_check_arg_t {
-  import_and_render_ue_ns::import_files_t import_files_;  // 需要导入的文件(可空)
+  std::optional<import_and_render_ue_ns::import_files_t> import_files_;  // 需要导入的文件(可空)
 
   FSys::path render_map_;             // 渲染的关卡
   std::string create_map_;            // 创建的关卡(放置骨骼网格体)
@@ -44,7 +44,7 @@ struct run_ue_check_arg_t {
 
   FSys::path import_dir_;  // 导入文件的位置
   friend void to_json(nlohmann::json& j, const run_ue_check_arg_t& p) {
-    j["import_files"]          = p.import_files_;
+    if (p.import_files_) j["import_files"] = p.import_files_;
     j["render_map"]            = p.render_map_;
     j["create_map"]            = p.create_map_;
     j["original_map"]          = p.original_map_;
@@ -64,9 +64,11 @@ run_ue_check_arg_t create_check_arg(
     const check_files_arg_t& in_args, const maya_exe_ns::maya_out_arg& in_maya_out_arg
 ) {
   run_ue_check_arg_t l_arg;
-  auto l_out_path = in_maya_out_arg.out_file_list[0].out_file;
-  if (FSys::exists(l_out_path))
+
+  if (!in_maya_out_arg.out_file_list.empty() && FSys::exists(in_maya_out_arg.out_file_list.front().out_file)) {
+    auto l_out_path     = in_maya_out_arg.out_file_list.front().out_file;
     l_arg.import_files_ = {.type_ = l_out_path.extension() == ".fbx" ? "char" : "geo", .path_ = l_out_path};
+  }
   l_arg.original_map_ = in_args.ue_main_file_;
   l_arg.render_map_   = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
   l_arg.create_map_   = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);

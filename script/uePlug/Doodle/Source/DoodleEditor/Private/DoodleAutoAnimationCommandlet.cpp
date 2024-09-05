@@ -61,6 +61,7 @@
 #include "MoviePipelineAntiAliasingSetting.h"
 #include "MoviePipelineGameOverrideSetting.h"
 #include "MoviePipelineConsoleVariableSetting.h"
+#include "Kismet/GameplayStatics.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -113,8 +114,9 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	SequencePath = JsonObject->GetStringField(TEXT("level_sequence_import"));
 	MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
 
-	if (const TSharedPtr<FJsonObject>& JsonFiles = JsonObject->GetObjectField(TEXT("import_files")); JsonFiles)
+	if (JsonObject->HasField(TEXT("import_files")))
 	{
+		const TSharedPtr<FJsonObject>& JsonFiles = JsonObject->GetObjectField(TEXT("import_files"));
 		const FString Path = JsonFiles->GetStringField(TEXT("path"));
 		const FString Type = JsonFiles->GetStringField(TEXT("type"));
 		if (FPaths::FileExists(Path))
@@ -136,8 +138,6 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	//--------------------
 	DeleteAsseet(RenderMapPath);
 	DeleteAsseet(CreateMapPath);
-	DeleteAsseet(EffectSequencePath);
-	DeleteAsseet(EffectMapPath);
 	DeleteAsseet(SequencePath);
 
 	// 创建主要的关卡和关卡序列
@@ -148,6 +148,10 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	{
 		EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
 		TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
+		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld);
+
+		UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
+		UGameplayStatics::FlushLevelStreaming(TheRenderWorld);
 	}
 	else
 	{
@@ -441,7 +445,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateCheckLight()
 
 void UDoodleAutoAnimationCommandlet::ClearAllLight()
 {
-	for (TActorIterator<ALight> LightItr(TheSequenceWorld); LightItr; ++LightItr)
+	for (TActorIterator<ALight> LightItr(TheRenderWorld); LightItr; ++LightItr)
 	{
 		LightItr->Destroy();
 	}
@@ -972,7 +976,11 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckScene()
 	UMovieSceneTrack* CameraCutTrack = TheLevelSequence->GetMovieScene()->GetCameraCutTrack();
 	if (!CameraCutTrack) CameraCutTrack = TheLevelSequence->GetMovieScene()->AddCameraCutTrack(UMovieSceneCameraCutTrack::StaticClass());
 	int LSize{};
-	for (TActorIterator<ACameraActor> CameraItr{TheRenderWorld}; CameraItr; ++CameraItr) ++LSize;
+	for (TActorIterator<ACameraActor> CameraItr{TheRenderWorld}; CameraItr; ++CameraItr)
+	{
+		LSize = ++LSize;
+		UE_LOG(LogTemp, Log, TEXT("ca, name %s"), *CameraItr->GetActorLabel())
+	}
 	FFrameNumberRange LRange = TheLevelSequence->GetMovieScene()->GetPlaybackRange();
 	FFrameNumber LBegin = LRange.GetLowerBoundValue();
 	FFrameNumber LFrameSize = LRange.Size<FFrameNumber>();
@@ -993,7 +1001,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckScene()
 		NewSection->SetRange(FFrameNumberRange{LBegin + (LFrameSize / LSize) * LSize2, LBegin + (LFrameSize / LSize) * (LSize2 + 1)});
 		NewSection->SetCameraGuid(CameraGuid);
 		CameraCutTrack->AddSection(*NewSection);
-		
+
 		++LSize2;
 	}
 
@@ -1086,4 +1094,5 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 
 //"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Params=D:/test_files/test_ue_auto_main/out.json
 //"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Check=E:/Doodle/build/test_ue_check.json
+//"D:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "D:/Users/Administrator/Documents/Unreal Projects/MyProject/MyProject.uproject" -skipcompile -run=DoodleAutoAnimation  -Check=E:/Doodle/build/test_ue_check_secen.json
 //UnrealEditor-Cmd.exe D:\\Users\\Administrator\\Documents\\Unreal Projects\\MyProject\\MyProject.uproject -skipcompile -run=DoodleAutoAnimation  -Params=E:/AnimationImport/DBXY_EP360_SC001_AN/out.json
