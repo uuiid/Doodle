@@ -63,6 +63,8 @@
 #include "MoviePipelineConsoleVariableSetting.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "FileHelpers.h"
+
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
 {
@@ -149,8 +151,34 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 		EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
 		TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
 		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld);
+		// FString Filename;
+		// FPackageName::TryConvertLongPackageNameToFilename(RenderMapPath, Filename);
+		UPackage* Package = LoadPackage(NULL, *RenderMapPath, 0);
+		TheRenderWorld = UWorld::FindWorldInPackage(Package);
 
-		UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
+
+		// Clean up any previous world.  The world should have already been saved
+		UWorld* ExistingWorld = GEditor->GetEditorWorldContext().World();
+
+		GEngine->DestroyWorldContext(ExistingWorld);
+		ExistingWorld->DestroyWorld(true, TheRenderWorld);
+
+		GWorld = TheRenderWorld;
+
+		TheRenderWorld->WorldType = EWorldType::Editor;
+
+		FWorldContext& WorldContext = GEngine->CreateNewWorldContext(TheRenderWorld->WorldType);
+		WorldContext.SetCurrentWorld(TheRenderWorld);
+
+		// add the world to the root set so that the garbage collection to delete replaced actors doesn't garbage collect the whole world
+		TheRenderWorld->AddToRoot();
+
+		// initialize the levels in the world
+		TheRenderWorld->InitWorld(UWorld::InitializationValues().AllowAudioPlayback(false));
+		TheRenderWorld->GetWorldSettings()->PostEditChange();
+		TheRenderWorld->UpdateWorldComponents(true, false);
+
+		// UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
 		UGameplayStatics::FlushLevelStreaming(TheRenderWorld);
 	}
 	else
@@ -188,7 +216,18 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	}
 
 	AddSequenceWorldToRenderWorld();
-	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheSequenceWorld, TheRenderWorld}, false);
+	TArray<UObject*> AllLevels{TheLevelSequence, TheSequenceWorld, TheRenderWorld};
+	for (ULevelStreaming* StreamingLevel : TheRenderWorld->GetStreamingLevels())
+	{
+		if (const ULevel* Level = StreamingLevel->GetLoadedLevel(); Level)
+		{
+			AllLevels.Add(StreamingLevel->GetLoadedLevel());
+			Level->GetPackage()->MarkPackageDirty();
+		}
+	}
+
+	EditorAssetSubsystem->SaveLoadedAssets(AllLevels, false);
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 	// 创建渲染配置
 	OnSaveReanderConfig();
 }
@@ -451,14 +490,22 @@ void UDoodleAutoAnimationCommandlet::OnCreateCheckLight()
 
 void UDoodleAutoAnimationCommandlet::ClearAllLight()
 {
+	UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+	TArray<AActor*> Actors;
 	for (TActorIterator<ALight> LightItr(TheRenderWorld); LightItr; ++LightItr)
 	{
-		LightItr->Destroy();
-		LightItr->K2_DestroyActor();
-		LightItr->MarkAsGarbage();
+		// LightItr->Destroy();
+		Actors.Add(*LightItr);
+		// LightItr->MarkAsGarbage();
 	}
-	GEngine->ForceGarbageCollection(true);
-	CommandletHelpers::TickEngine(TheRenderWorld);
+	EditorActorSubsystem->DestroyActors(Actors);
+	for (auto i = 0; i < 5; ++i)
+	{
+		GEngine->ForceGarbageCollection(true);
+		GEngine->PerformGarbageCollectionAndCleanupActors();
+		GEngine->ConditionalCollectGarbage();
+		CommandletHelpers::TickEngine(TheRenderWorld);
+	}
 }
 
 
