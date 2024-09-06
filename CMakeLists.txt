@@ -92,7 +92,8 @@ find_package(CMakeRC CONFIG REQUIRED)
 find_package(implot CONFIG REQUIRED)
 # 寻找反射
 # find_package(rttr CONFIG REQUIRED)
-
+# c23错误向下兼容库
+find_package(tl-expected CONFIG REQUIRED)
 # 压缩库
 find_package(cryptopp CONFIG REQUIRED)
 

@@ -79,6 +79,7 @@ target_link_libraries(
         sqlpp11::sqlite3
         sqlpp11::sqlpp11
         WIL::WIL
+        tl::expected
 
         PRIVATE
         Iphlpapi.lib
