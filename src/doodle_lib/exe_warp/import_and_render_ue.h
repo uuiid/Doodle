@@ -97,8 +97,14 @@ struct association_data {
   details::assets_type_enum type_{};
   FSys::path ue_prj_path_{};
   FSys::path export_file_{};
+  project project_{};
 };
-/// 这个函数不打印错误日志, 返回值测试后, 由调用函数打印
+
+// 清除 1001 以前的帧数
+std::tuple<boost::system::error_code, std::vector<FSys::path>> clean_1001_before_frame(
+    const FSys::path& in_path, std::int32_t in_frame
+);
+/// 这个函数不打印错误日志, 返回值测试后, 由调用函数打印错误日志
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
     std::vector<boost::uuids::uuid> in_uuid, logger_ptr in_logger
 );

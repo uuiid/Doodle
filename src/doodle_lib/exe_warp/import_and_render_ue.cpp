@@ -15,6 +15,8 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <boost/system.hpp>
+
 namespace doodle {
 import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render_ue_ns::args in_args) {
   auto l_maya_out_arg = in_args.maya_out_arg_.out_file_list |
@@ -212,7 +214,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
           .id_        = i,
           .maya_file_ = l_json.at("maya_file").get<std::string>(),
           .ue_file_   = l_json.at("ue_file").get<std::string>(),
-          .type_      = l_json.at("type").get<details::assets_type_enum>()
+          .type_      = l_json.at("type").get<details::assets_type_enum>(),
+          .project_   = l_json.at("project").get<project>(),
       };
       l_out.emplace_back(std::move(l_data));
     }
@@ -494,6 +497,47 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   co_return std::tuple(boost::system::error_code{}, l_import_data.out_file_dir);
 }
 
+std::tuple<boost::system::error_code, std::vector<FSys::path>> clean_1001_before_frame(
+    const FSys::path& in_path, std::int32_t in_frame
+) {
+  std::vector<FSys::path> l_move_paths{};
+  std::vector<FSys::path> l_remove_paths{};
+
+  for (auto&& l_path : FSys::directory_iterator{in_path}) {
+    auto l_ext = l_path.path().extension();
+    if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") {
+      auto l_stem  = l_path.path().stem().generic_string();
+      auto l_begin = l_stem.find('.');
+
+      if (l_begin == std::string::npos) {
+        l_remove_paths.emplace_back(l_path.path());
+        continue;
+      }
+      std::int32_t l_frame_num{};
+      try {
+        auto l_id   = l_stem.substr(l_begin + 1, l_stem.find('.', l_begin + 1) - l_begin - 1);
+        l_frame_num = std::stoi(l_id);
+      } catch (...) {
+        l_remove_paths.emplace_back(l_path.path());
+        continue;
+      }
+
+      if (l_frame_num < in_frame) {
+        l_remove_paths.emplace_back(l_path.path());
+        continue;
+      }
+      l_move_paths.emplace_back(l_path.path());
+    }
+  }
+  if (l_move_paths.empty()) {
+    return { boost::system::errc::make_error_code(boost::system::errc::no_such_file_or_directory), l_move_paths }
+  }
+  std::error_code l_sys_ec{};
+  for (auto&& l_path : l_remove_paths) {
+    FSys::remove(l_path, l_sys_ec);
+  }
+}
+
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
     std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
@@ -528,43 +572,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
       detail::create_out_path(l_ret.parent_path(), in_args->episodes_, in_args->shot_, &in_args->project_);
   {
     std::vector<FSys::path> l_move_paths{};
-    std::vector<FSys::path> l_remove_paths{};
-
-    for (auto&& l_path : FSys::directory_iterator{l_ret}) {
-      auto l_ext = l_path.path().extension();
-      if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") {
-        auto l_stem  = l_path.path().stem().generic_string();
-        auto l_begin = l_stem.find('.');
-
-        if (l_begin == std::string::npos) {
-          l_remove_paths.emplace_back(l_path.path());
-          continue;
-        }
-        std::int32_t l_frame_num{};
-        try {
-          auto l_id   = l_stem.substr(l_begin + 1, l_stem.find('.', l_begin + 1) - l_begin - 1);
-          l_frame_num = std::stoi(l_id);
-        } catch (...) {
-          l_remove_paths.emplace_back(l_path.path());
-          continue;
-        }
-
-        if (l_frame_num < in_args->maya_arg_->export_anim_time) {
-          l_remove_paths.emplace_back(l_path.path());
-          continue;
-        }
-        l_move_paths.emplace_back(l_path.path());
-      }
-    }
-    if (l_move_paths.empty()) {
-      co_return std::tuple(boost::system::error_code{}, l_ret);
-    }
-    std::error_code l_sys_ec{};
-    for (auto&& l_path : l_remove_paths) {
-      FSys::remove(l_path, l_sys_ec);
-    }
-
-    l_ec = detail::create_move(
+    std::tie(l_ec, l_move_paths) = clean_1001_before_frame(l_movie_path, in_args->maya_out_arg_.begin_time);
+    l_ec                         = detail::create_move(
         l_movie_path, in_logger,
         movie::image_attr::make_default_attr(&in_args->episodes_, &in_args->shot_, l_move_paths)
     );
