@@ -26,11 +26,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
   auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
   if (l_map.contains(l_id)) {
     auto l_data = l_map.at(l_id);
-    nlohmann::json l_json;
-    l_json["maya_file"]   = l_data->rig_file_.path_;
-    l_json["ue_file"]     = l_data->ue_file_.path_;
-    l_json["solve_file_"] = l_data->solve_file_.path_;
-    l_json["type"]        = l_data->assets_type_;
+    nlohmann::json l_json{
+        {"maya_file", l_data->rig_file_.path_},
+        {"ue_file", l_data->ue_file_.path_},
+        {"solve_file_", l_data->solve_file_.path_},
+        {"type", l_data->assets_type_},
+        {"project", l_data->project_root_}
+    };
     co_return in_handle->make_msg(l_json.dump());
   }
   l_logger->log(log_loc(), level::info, "file not found");
