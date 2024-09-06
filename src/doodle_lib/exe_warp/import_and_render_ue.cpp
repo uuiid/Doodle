@@ -179,7 +179,7 @@ NearClipPlane=0.500000
 }  // namespace import_and_render_ue_ns
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
-    std::vector<association_data> in_uuid, logger_ptr in_logger
+    std::vector<boost::uuids::uuid> in_uuid, logger_ptr in_logger
 ) {
   std::vector<association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
@@ -188,15 +188,17 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
   try {
     for (auto&& i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{
-          boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", i.id_), 11
+          boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", i), 11
       };
       l_req.set(boost::beast::http::field::host, "192.168.40.181:50026");
       l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
       l_req.set(boost::beast::http::field::accept, "application/json");
       l_req.prepare_payload();
       auto [l_ec, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req);
+
       if (l_res.result() != boost::beast::http::status::ok) {
-        in_logger->log(log_loc(), level::err, "未找到关联数据:{} {}", i.export_file_, i.id_);
+        in_logger->log(log_loc(), level::warn, "未找到关联数据: {}", i);
+        l_out.emplace_back(association_data{.id_ = i});
         co_return std::tuple{
             boost::system::error_code{
                 boost::system::errc::no_such_file_or_directory, boost::system::generic_category()
@@ -206,14 +208,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
       }
 
       auto l_json = nlohmann::json::parse(l_res.body());
-
       association_data l_data{
-          .id_          = i.id_,
-          .maya_file_   = l_json.at("maya_file").get<std::string>(),
-          .ue_file_     = l_json.at("ue_file").get<std::string>(),
-          .type_        = l_json.at("type").get<details::assets_type_enum>(),
-          .ue_prj_path_ = ue_main_map::find_ue_project_file(l_json.at("ue_file").get<std::string>()),
-          .export_file_ = i.export_file_
+          .id_        = i,
+          .maya_file_ = l_json.at("maya_file").get<std::string>(),
+          .ue_file_   = l_json.at("ue_file").get<std::string>(),
+          .type_      = l_json.at("type").get<details::assets_type_enum>()
       };
       l_out.emplace_back(std::move(l_data));
     }
@@ -299,7 +298,8 @@ boost::system::error_code copy_diff(const FSys::path& from, const FSys::path& to
 boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_ue_ns::down_info>> analysis_out_file(
     std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 ) {
-  std::vector<association_data> l_refs_tmp{};
+  std::vector<boost::uuids::uuid> l_uuids_tmp{};
+  std::map<boost::uuids::uuid, FSys::path> l_refs_tmp{};
   import_and_render_ue_ns::down_info l_out{};
 
   for (auto&& i : in_args->maya_out_arg_.out_file_list) {
@@ -308,16 +308,20 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
     auto l_uuid = FSys::software_flag_file(i.ref_file);
     if (l_uuid.is_nil()) continue;
 
-    l_refs_tmp.emplace_back(association_data{.id_ = l_uuid, .export_file_ = i.ref_file});
+    l_uuids_tmp.push_back(l_uuid);
+    l_refs_tmp.emplace(l_uuid, i.ref_file);
   }
 
-  std::sort(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto& l, const auto& r) { return l.id_ < r.id_; });
-  l_refs_tmp.erase(
-      std::unique(l_refs_tmp.begin(), l_refs_tmp.end(), [](const auto& l, const auto& r) { return l.id_ == r.id_; }),
-      l_refs_tmp.end()
+  std::sort(l_uuids_tmp.begin(), l_uuids_tmp.end(), [](const auto& l, const auto& r) { return l < r; });
+  l_uuids_tmp.erase(
+      std::unique(l_uuids_tmp.begin(), l_uuids_tmp.end(), [](const auto& l, const auto& r) { return l == r; }),
+      l_uuids_tmp.end()
   );
-  auto [l_ec, l_refs] = co_await fetch_association_data(l_refs_tmp, in_logger);
-  if (l_ec) co_return std::tuple{l_ec, import_and_render_ue_ns::down_info{}};
+  auto [l_ec, l_refs] = co_await fetch_association_data(l_uuids_tmp, in_logger);
+  if (l_ec) {
+    in_logger->error("获取引用文件失败 {} {}", l_refs_tmp[l_refs.back().id_]);
+    co_return std::tuple{l_ec, import_and_render_ue_ns::down_info{}};
+  }
 
   // 检查文件
 

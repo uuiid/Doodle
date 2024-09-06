@@ -98,9 +98,9 @@ struct association_data {
   FSys::path ue_prj_path_{};
   FSys::path export_file_{};
 };
-
+/// 这个函数不打印错误日志, 返回值测试后, 由调用函数打印
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
-    std::vector<association_data> in_uuid, logger_ptr in_logger
+    std::vector<boost::uuids::uuid> in_uuid, logger_ptr in_logger
 );
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
     std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
