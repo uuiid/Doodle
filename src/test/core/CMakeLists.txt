@@ -19,6 +19,7 @@ target_sources(test_main
         scan_category.cpp
         run_ue.cpp
         modle.cpp
+        run_check.cpp
 )
 
 add_test(NAME test_boost_log COMMAND test_main --log_level=message --color_output=true --run_test=test_boost_log WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
