@@ -245,10 +245,16 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::tuple(l_ec, l_err_msg);
   }
   std::error_code l_ec2{};
+  auto l_target = l_face_data.front().project_.p_path / "03_Workflow" /
+                  magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename();
+  if(!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
   FSys::copy(
-      l_out_file, l_face_data.front().project_.p_path / "03_Workflow" /
-                      magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename(), FSys::copy_options::update_existing, l_ec2 );
-  if(l_ec2) {
+      l_out_file,
+      l_face_data.front().project_.p_path / "03_Workflow" / magic_enum::enum_name(l_face_data.front().type_) /
+          l_out_file.filename(),
+      FSys::copy_options::update_existing, l_ec2
+  );
+  if (l_ec2) {
     in_logger->error("复制文件失败 {}", l_ec2.message());
     co_return std::tuple(l_ec2, l_err_msg);
   }
