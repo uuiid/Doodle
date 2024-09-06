@@ -36,6 +36,7 @@
     "cmakerc",
     "treehh",
     "wil",
+    "tl-expected",
     {
       "name": "fmt",
       "default-features": true,
