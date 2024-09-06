@@ -178,15 +178,6 @@ NearClipPlane=0.500000
 }
 }  // namespace import_and_render_ue_ns
 
-struct association_data {
-  boost::uuids::uuid id_{};
-  FSys::path maya_file_{};
-  FSys::path ue_file_{};
-  details::assets_type_enum type_{};
-  FSys::path ue_prj_path_{};
-  FSys::path export_file_{};
-};
-
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
     std::vector<association_data> in_uuid, logger_ptr in_logger
 ) {
@@ -217,10 +208,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
       auto l_json = nlohmann::json::parse(l_res.body());
 
       association_data l_data{
-          .id_        = i.id_,
-          .maya_file_ = l_json.at("maya_file").get<std::string>(),
-          .ue_file_   = l_json.at("ue_file").get<std::string>(),
-          .type_      = l_json.at("type").get<details::assets_type_enum>(),
+          .id_          = i.id_,
+          .maya_file_   = l_json.at("maya_file").get<std::string>(),
+          .ue_file_     = l_json.at("ue_file").get<std::string>(),
+          .type_        = l_json.at("type").get<details::assets_type_enum>(),
+          .ue_prj_path_ = ue_main_map::find_ue_project_file(l_json.at("ue_file").get<std::string>()),
+          .export_file_ = i.export_file_
       };
       l_out.emplace_back(std::move(l_data));
     }

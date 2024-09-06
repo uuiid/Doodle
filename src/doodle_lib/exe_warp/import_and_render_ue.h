@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
 
+#include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 namespace doodle {
@@ -89,6 +90,18 @@ void fix_project(const FSys::path& in_project_path);
 void fix_config(const FSys::path& in_project_path);
 }  // namespace import_and_render_ue_ns
 
+struct association_data {
+  boost::uuids::uuid id_{};
+  FSys::path maya_file_{};
+  FSys::path ue_file_{};
+  details::assets_type_enum type_{};
+  FSys::path ue_prj_path_{};
+  FSys::path export_file_{};
+};
+
+boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
+    std::vector<association_data> in_uuid, logger_ptr in_logger
+);
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
     std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 );
