@@ -494,9 +494,11 @@ void UDoodleAutoAnimationCommandlet::ClearAllLight()
 	TArray<AActor*> Actors;
 	for (TActorIterator<ALight> LightItr(TheRenderWorld); LightItr; ++LightItr)
 	{
-		// LightItr->Destroy();
 		Actors.Add(*LightItr);
-		// LightItr->MarkAsGarbage();
+	}
+	for (TActorIterator<APostProcessVolume> PoseItr(TheRenderWorld); PoseItr; ++PoseItr)
+	{
+		Actors.Add(*PoseItr);
 	}
 	EditorActorSubsystem->DestroyActors(Actors);
 	for (auto i = 0; i < 5; ++i)
