@@ -9,6 +9,8 @@
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/long_task/image_to_move.h>
+
 namespace doodle {
 namespace {
 FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
@@ -180,4 +182,85 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   if (l_ec) co_return std::tuple(l_ec, std::string{});
 }
+
+boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
+    const boost::uuids::uuid& in_check_path, logger_ptr in_logger
+) {
+  if (in_check_path.is_nil())
+    co_return std::tuple(
+        boost::asio::error::make_error_code(boost::asio::error::not_found), std::string{"错误的空文件id"}
+    );
+
+  boost::system::error_code l_ec{};
+  std::vector<association_data> l_face_data{};
+  std::string l_err_msg{};
+  std::tie(l_ec, l_face_data) = co_await fetch_association_data({in_check_path}, in_logger);
+  if (l_ec) {
+    in_logger->error("获取关联数据失败 {}", l_ec.message());
+    co_return std::tuple(l_ec, std::string{"错误的关联数据"});
+  }
+  auto l_arg              = std::make_shared<check_files_arg_t>();
+  l_arg->maya_rig_file_   = l_face_data.front().maya_file_;
+  l_arg->ue_project_path_ = l_face_data.front().ue_prj_path_;
+  auto l_ue_dir           = l_arg->ue_project_path_.parent_path();
+  l_arg->ue_main_file_    = fmt::format(
+      "/{}/", doodle_config::ue4_game,
+      l_face_data.front().ue_file_.lexically_relative(l_ue_dir / doodle_config::ue4_content).replace_extension()
+  );
+  l_arg->out_files_dir_ =
+      l_ue_dir / doodle_config::ue4_saved / doodle_config::ue4_movie_renders / l_arg->ue_project_path_.stem();
+  if (FSys::exists(l_arg->out_files_dir_)) {
+    try {
+      FSys::remove_all(l_arg->out_files_dir_);
+    } catch (FSys::filesystem_error& err) {
+      in_logger->warn("渲染删除上次输出错误 error:{}", err.what());
+    }
+  }
+  std::tie(l_ec, l_err_msg) = co_await check_files(l_arg, in_logger);
+  if (l_ec) {
+    in_logger->error("检查文件失败 {}", l_ec.message());
+    co_return std::tuple(l_ec, l_err_msg);
+  }
+  std::vector<FSys::path> l_move_paths{};
+  std::tie(l_ec, l_move_paths) = clean_1001_before_frame(l_arg->out_files_dir_, 1001);
+  if (l_ec) {
+    in_logger->error("检查文件失败, 无法获取到渲染输出的文件 {}", l_ec.message());
+    co_return std::tuple(l_ec, l_err_msg);
+  }
+
+  std::vector<movie::image_attr> l_attr{};
+  auto l_t = chrono::floor<chrono::seconds>(time_point_wrap{}.get_local_time());
+  for (auto l_p : l_move_paths) {
+    movie::image_attr l_attribute{};
+    l_attribute.path_attr = l_p;
+    l_attribute.watermarks_attr.emplace_back(
+        fmt::format("{:%Y-%m-%d %H:%M:%S}", l_t), 0.8, 0.1, movie::image_watermark::rgb_default
+    );
+  }
+  movie::image_attr::extract_num(l_attr);
+  auto l_out_file = l_arg->out_files_dir_.parent_path() / fmt::format("{}.mp4", l_arg->out_files_dir_.stem());
+  l_ec            = detail::create_move(l_arg->out_files_dir_, in_logger, l_attr);
+  if (l_ec) {
+    in_logger->error("检查文件失败, 无法获取到渲染输出的文件 {}", l_ec.message());
+    co_return std::tuple(l_ec, l_err_msg);
+  }
+  std::error_code l_ec2{};
+  FSys::copy(
+      l_out_file, l_face_data.front().project_.p_path / "03_Workflow" /
+                      magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename(), FSys::copy_options::update_existing, l_ec2 );
+  if(l_ec2) {
+    in_logger->error("复制文件失败 {}", l_ec2.message());
+    co_return std::tuple(l_ec2, l_err_msg);
+  }
+  co_return std::tuple(boost::system::error_code{}, std::string{});
+
+}
+
+boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
+    const FSys::path& in_check_path, logger_ptr in_logger
+) {
+  return check_files(FSys::software_flag_file(in_check_path), in_logger);
+}
+
+
 }

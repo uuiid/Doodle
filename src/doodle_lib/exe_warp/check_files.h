@@ -18,16 +18,21 @@ struct check_files_arg_t {
   FSys::path local_ue_project_path_;
 
   // 检查类型
-  enum check_type {
-    char_,
-    scene
-  };
+  enum check_type { char_, scene };
 
   check_type check_type_;
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
     std::shared_ptr<check_files_arg_t> in_args, logger_ptr in_logger
+);
+
+boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
+    const boost::uuids::uuid& in_check_path, logger_ptr in_logger
+);
+
+boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
+    const FSys::path& in_check_path, logger_ptr in_logger
 );
 
 }  // namespace doodle
