@@ -322,7 +322,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
   );
   auto [l_ec, l_refs] = co_await fetch_association_data(l_uuids_tmp, in_logger);
   if (l_ec) {
-    in_logger->error("获取引用文件失败 {} {}", l_refs_tmp[l_refs.back().id_]);
+    in_logger->error("获取引用文件失败 {} {}", l_refs_tmp[l_refs.back().id_], l_refs.back().id_);
     co_return std::tuple{l_ec, import_and_render_ue_ns::down_info{}};
   }
 
@@ -530,7 +530,7 @@ std::tuple<boost::system::error_code, std::vector<FSys::path>> clean_1001_before
     }
   }
   if (l_move_paths.empty()) {
-    return { boost::system::errc::make_error_code(boost::system::errc::no_such_file_or_directory), l_move_paths }
+    return {boost::system::errc::make_error_code(boost::system::errc::no_such_file_or_directory), l_move_paths};
   }
   std::error_code l_sys_ec{};
   for (auto&& l_path : l_remove_paths) {
