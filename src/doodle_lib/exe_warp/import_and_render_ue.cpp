@@ -186,7 +186,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
   std::vector<association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
   auto l_c = std::make_shared<http::detail::http_client_data_base>(co_await boost::asio::this_coro::executor);
-  l_c->init("http://192.168.40.181:50026");
+  l_c->init(core_set::get_set().server_ip);
   try {
     for (auto&& i : in_uuid) {
       boost::beast::http::request<boost::beast::http::empty_body> l_req{

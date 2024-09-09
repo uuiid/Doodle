@@ -71,6 +71,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   /// 欢迎窗口的变量
   bool next_time_{};
 
+
  private:
   // 用户名称
   boost::uuids::uuid user_id;

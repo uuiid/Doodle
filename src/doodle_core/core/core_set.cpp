@@ -51,6 +51,8 @@ core_set::core_set()
       maya_version(2020),
       assets_file_widgets_size(5),
       json_data(std::make_shared<nlohmann::json>()),
+      p_uuid_gen(boost::uuids::random_generator{}),
+      server_ip("http://192.168.40.181:50026"),
 #ifdef NDEBUG
       depot_ip{"\\\\192.168.10.218\\Doodletemp"}
 #else
