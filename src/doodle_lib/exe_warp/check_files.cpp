@@ -204,7 +204,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   l_arg->ue_project_path_ = l_face_data.front().ue_prj_path_;
   auto l_ue_dir           = l_arg->ue_project_path_.parent_path();
   l_arg->ue_main_file_    = fmt::format(
-      "/{}/", doodle_config::ue4_game,
+      "{}/{}", doodle_config::ue4_game,
       l_face_data.front().ue_file_.lexically_relative(l_ue_dir / doodle_config::ue4_content).replace_extension()
   );
   l_arg->out_files_dir_ =
