@@ -141,6 +141,7 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	DeleteAsseet(RenderMapPath);
 	DeleteAsseet(CreateMapPath);
 	DeleteAsseet(SequencePath);
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
 	// 创建主要的关卡和关卡序列
 	OnCreateSequence();
