@@ -28,7 +28,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
 );
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
-    const boost::uuids::uuid& in_check_path, logger_ptr in_logger
+    boost::uuids::uuid in_check_path, logger_ptr in_logger
 );
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(

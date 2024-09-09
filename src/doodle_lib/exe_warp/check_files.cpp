@@ -184,7 +184,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
-    const boost::uuids::uuid& in_check_path, logger_ptr in_logger
+    boost::uuids::uuid in_check_path, logger_ptr in_logger
 ) {
   if (in_check_path.is_nil())
     co_return std::tuple(
@@ -247,7 +247,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   std::error_code l_ec2{};
   auto l_target = l_face_data.front().project_.p_path / "03_Workflow" /
                   magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename();
-  if(!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
+  if (!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
   FSys::copy(
       l_out_file,
       l_face_data.front().project_.p_path / "03_Workflow" / magic_enum::enum_name(l_face_data.front().type_) /

@@ -18,6 +18,7 @@ target_sources(test_main
         async_reg.cpp
         scan_category.cpp
         run_ue.cpp
+        run_check.cpp
         modle.cpp
         run_check.cpp
 )
