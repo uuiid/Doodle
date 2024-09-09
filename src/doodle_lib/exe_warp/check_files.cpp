@@ -13,9 +13,9 @@
 
 namespace doodle {
 namespace {
-FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger) {
+FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger, const project& in_project) {
   static auto g_root{FSys::path{doodle_config::g_cache_path}};
-  auto l_local_root = g_root / "check" / in_ue_prject_path.stem();
+  auto l_local_root = g_root / "check" / in_project.p_shor_str / in_ue_prject_path.stem();
   in_logger->info("复制UE文件到本机缓存文件夹 {} {}", in_ue_prject_path.string(), l_local_root.string());
   if (!FSys::exists(l_local_root)) {
     FSys::create_directories(l_local_root);
@@ -98,7 +98,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   // 复制UE文件到本机缓存文件夹
   try {
-    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger);
+    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger, in_args->project_);
   } catch (const FSys::filesystem_error& error) {
     co_return std::make_tuple(error.code(), error.what());
   }
@@ -202,8 +202,14 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   auto l_arg              = std::make_shared<check_files_arg_t>();
   l_arg->maya_rig_file_   = l_face_data.front().maya_file_;
   l_arg->ue_project_path_ = l_face_data.front().ue_prj_path_;
-  auto l_ue_dir           = l_arg->ue_project_path_.parent_path();
-  l_arg->ue_main_file_    = fmt::format(
+  l_arg->project_         = l_face_data.front().project_;
+  if (auto l_type = l_face_data.front().type_;
+      l_type == details::assets_type_enum::character || l_type == details::assets_type_enum::prop) {
+    l_arg->maya_has_export_fbx_ = true;
+  }
+
+  auto l_ue_dir        = l_arg->ue_project_path_.parent_path();
+  l_arg->ue_main_file_ = fmt::format(
       "{}/{}", doodle_config::ue4_game,
       l_face_data.front().ue_file_.lexically_relative(l_ue_dir / doodle_config::ue4_content).replace_extension()
   );

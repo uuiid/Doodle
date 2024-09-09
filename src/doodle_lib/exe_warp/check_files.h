@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/project.h>
 namespace doodle {
 
 struct check_files_arg_t {
@@ -21,6 +22,8 @@ struct check_files_arg_t {
   enum check_type { char_, scene };
 
   check_type check_type_;
+
+  project project_;
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
