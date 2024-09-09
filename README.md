@@ -1,16 +1,105 @@
 # Doodle  
 这是一个项目文件管理软件
 
-<a href="file/Doodle-3.4.1-win64.msi">下载稳定版(  Doodle-3.4.1-win64.msi )</a>  
-<a href="file/@doodle_exe_file.msi">下载开发版-安装包(  @doodle_exe_file.msi )</a>  
-<a href="file/@doodle_exe_file.7z">下载开发版-7z存档(  @doodle_exe_file.7z )</a>
-
-[描述](doc/schedule.md)
-
-## 主要窗口
-
-![exe程序](doc/doodle_image/new_prj.gif)  
-
-
-## 安装步骤
-![install](doc/doodle_image/install.gif)
+* [xgen 导入ue4](docs/xgen_to_ue/README.md)
+* [ue4人群制作](docs/crowd/README.md)
+    * [ue人群制作要求](docs/crowd/要求.md)
+    * [ue4人群制作2](docs/crowd/create_ai.md)
+* [导入ue4 fbx和abc面板](docs/Ue4_import_fbx/README.md)
+* [ue4优化](docs/Ue4_/README.md)
+* [ue4groom影子](docs/ue5_groom_hair_shadow/README.md)
+* [maya解算流程](docs/sim_cloth/README.md)
+* [ue5捏脸](docs/pinch_face/README.md)
+* [自动灯光](docs/lighting/README.md)
+## ue模块
+### ue4 导入模块
+- 自动导入人物
+- 识别骨骼物体， 简化导入
+- 导入abc时自动化开始帧和结束帧
+### ue4 灯光模块
+- 火光工具
+- 天空球工具
+- 灯光预设保持工具
+- ue4眼睛高光材质
+- 后期处理材质(通道输出)
+### ue4 工具模块
+- ue4 材质名称检查
+- ue4 材质名称修复
+- ue4 材质属性修复
+## maya插件模块
+### maya插件解算模块
+- maya内部手动导出(多个导出)fbx和abc
+- 创建解算布料, 并在创建布料前进行规范化检查, 不通过检查时, 不去创建布料
+- 创建引用文件元数据列表, 指定是否解算
+- 创建引用文件元数据列表, 在解算时自动添加碰撞体
+- 修复abc材质错误
+- 自动将解算体修改为不同的颜色, 用于区分和查找穿插
+- 创建引用文件元数据列表, 指定自动解算时的精度
+### maya插件动画模块
+- 内部手动导出fbx和相机
+- hud 创建, 简化审批流程, 加快审批速度
+### maya插件绑定模块
+- 删除多余的混合变形节点
+### maya插件特效模块
+- 生成特效使用的简模
+- 生成单帧简模
+### maya插件模型模块
+- 检查所有
+- 解锁法线
+- 检查重名
+- 检查大于四边面
+- 检查UV集
+- 去除大纲错误
+- 去除onModelChange3dc错误
+- 去除CgAbBlastPanelOptChangeCallback错误
+- 去除贼健康错误
+## 软件
+- 项目解算总配置
+- 项目输出配置
+- 多进程解算池大小配置
+- hud 水印配置
+- 解算maya使用版本自动解析
+- 注册 doodle_db 文件类型, 可双击打开
+- 授权使用版本(使用软件时间授权)
+### 后期字幕模块
+- 将剧本中的对话转为字幕
+- 自动去除剧本中的()内部的内容
+- 去除剧本中的标点符号
+- 将剧本中的长句改为短句
+- 在保持时间点的情况下, 切割长句为短句
+### 软件解算模块
+- 自动批量解算
+- 解算时设置缓存文件夹和碰撞体
+- 导出abc和fbx以及相机
+- 导出abc时修复材质名称
+- 导出拍屏文件
+- 将所有导出文件进行归类整理 并上传到服务器
+- 产生log日志和进度反馈以及时间统计
+- 无gui解算, 加速运行
+- 产生拍屏文件后自动合成hud , 简化审批流程
+- fbx 相同角色判断
+- maya fbx按钮添加解算效果
+- 拍屏的摄像机 近裁剪平面设置数值 默认修改成1
+- 加一个 一件添加风场的工具
+- fbx输出正则替换
+### 软件动画模块
+- 自动批量导出
+- 导出时使用权重方式推测相机, 最大程度的导出正确的相机
+- 将所有导出文件进行归类整理
+- 产生log日志和进度反馈以及时间统计
+- 无gui解算, 加速运行
+- 产生拍屏文件后自动合成hud , 简化审批流程
+### 模型库
+- 软件截图生成图标
+- 属性标签修改和添加
+- 相对路径绝对路径解析
+- 模型库快速搜素
+- 模型库时间排列和搜素
+- 双击图标打开图标
+### 工具模块
+- 安装maya插件
+- 安装ue4 插件
+- 删除ue4 缓存
+- 修改ue4 缓存位置
+ 
+ 
