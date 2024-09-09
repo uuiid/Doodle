@@ -208,11 +208,13 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     l_arg->maya_has_export_fbx_ = true;
   }
 
-  auto l_ue_dir        = l_arg->ue_project_path_.parent_path();
-  l_arg->ue_main_file_ = fmt::format(
-      "{}/{}", doodle_config::ue4_game,
-      l_face_data.front().ue_file_.lexically_relative(l_ue_dir / doodle_config::ue4_content).replace_extension()
-  );
+  auto l_ue_dir = l_arg->ue_project_path_.parent_path();
+  if (auto l_type = l_face_data.front().type_; l_type == details::assets_type_enum::scene) {
+    l_arg->ue_main_file_ = fmt::format(
+        "{}/{}", doodle_config::ue4_game,
+        l_face_data.front().ue_file_.lexically_relative(l_ue_dir / doodle_config::ue4_content).replace_extension()
+    );
+  }
   l_arg->out_files_dir_ =
       l_ue_dir / doodle_config::ue4_saved / doodle_config::ue4_movie_renders / l_arg->ue_project_path_.stem();
   if (FSys::exists(l_arg->out_files_dir_)) {
