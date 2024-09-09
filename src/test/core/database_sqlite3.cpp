@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_multi_thread) {
   for (int i = 0; i < 1000000; ++i) {
     boost::asio::post(l_s, [i, &l_list]() {
       auto l_conn = g_pool_db().get_connection();
-      auto l_c    = sqlpp::start_transaction(l_conn);
+      auto l_c    = sqlpp::start_transaction(*l_conn);
       if (i % 2 == 0) {
         server_task_info::insert(l_conn, {l_list[i]});
       } else {
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_multi_thread) {
   for (int i = 0; i < 1000000; ++i) {
     boost::asio::post(l_s, [i, &l_list]() {
       auto l_conn = g_pool_db().get_connection();
-      auto l_c    = sqlpp::start_transaction(l_conn);
+      auto l_c    = sqlpp::start_transaction(*l_conn);
 
       if (i % 2 != 0) {
         server_task_info::insert(l_conn, {l_list[i]});
