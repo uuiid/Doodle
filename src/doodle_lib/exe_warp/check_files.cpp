@@ -46,7 +46,7 @@ struct run_ue_check_arg_t {
 
   FSys::path import_dir_;  // 导入文件的位置
   friend void to_json(nlohmann::json& j, const run_ue_check_arg_t& p) {
-    if (p.import_files_) j["import_files"] = p.import_files_;
+    if (p.import_files_) j["import_files"] = *p.import_files_;
     j["render_map"]            = p.render_map_;
     j["create_map"]            = p.create_map_;
     j["original_map"]          = p.original_map_;
@@ -72,16 +72,16 @@ run_ue_check_arg_t create_check_arg(
     l_arg.import_files_ = {.type_ = l_out_path.extension() == ".fbx" ? "char" : "geo", .path_ = l_out_path};
   }
   l_arg.original_map_ = in_args.ue_main_file_;
-  l_arg.render_map_   = fmt::format("/{}/check/main_map", doodle_config::ue4_game);
-  l_arg.create_map_   = fmt::format("/{}/check/sub_import_map", doodle_config::ue4_game);
+  l_arg.render_map_   = fmt::format("{}/check/main_map", doodle_config::ue4_game);
+  l_arg.create_map_   = fmt::format("{}/check/sub_import_map", doodle_config::ue4_game);
   // l_arg.import_dir_ =
-  //     fmt::format("/{}/check/import_{4:%m_%d_%H_%M}", std::string{doodle_config::ue4_game},
+  //     fmt::format("{}/check/import_{4:%m_%d_%H_%M}", std::string{doodle_config::ue4_game},
   //     time_point_wrap{}.get_local_time());
   l_arg.import_dir_   = fmt::format(
-      "/{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time()
+      "{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time()
   );
-  l_arg.level_sequence_import_ = fmt::format("/{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
-  l_arg.movie_pipeline_config_ = fmt::format("/{}/check/main_level_sequence_config", doodle_config::ue4_game);
+  l_arg.level_sequence_import_ = fmt::format("{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
+  l_arg.movie_pipeline_config_ = fmt::format("{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
   l_arg.movie_pipeline_config_.replace_extension(l_arg.movie_pipeline_config_.stem());
   l_arg.level_sequence_import_.replace_extension(l_arg.level_sequence_import_.stem());
