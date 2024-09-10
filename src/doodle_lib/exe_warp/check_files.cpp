@@ -180,7 +180,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
     in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
-  if (l_ec) co_return std::tuple(l_ec, std::string{});
+  co_return std::tuple(l_ec, std::string{});
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
