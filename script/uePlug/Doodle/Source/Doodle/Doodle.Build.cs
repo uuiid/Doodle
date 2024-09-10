@@ -8,6 +8,8 @@ public class doodle : ModuleRules
     public doodle(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
         AddEngineThirdPartyPrivateStaticDependencies(Target,
             "Eigen"
         );

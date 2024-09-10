@@ -24,7 +24,7 @@ enum class EDoodleAssetsPreviewLightModel : uint8 {
 };
 
 UCLASS()
-class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
+class DOODLE_API ADoodleAssetsPreview : public AActor {
  public:
   GENERATED_BODY()
   ADoodleAssetsPreview();

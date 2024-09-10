@@ -17,6 +17,7 @@
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "HAL/FileManager.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 const FName UDoodleOrganizeCompoundWidget::Name{ TEXT("DoodleOrganizeCompoundWidget") };
 

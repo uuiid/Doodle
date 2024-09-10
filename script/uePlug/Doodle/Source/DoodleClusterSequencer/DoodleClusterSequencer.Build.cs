@@ -8,7 +8,8 @@ public class DoodleClusterSequencer : ModuleRules
     public DoodleClusterSequencer(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
         PublicIncludePaths.AddRange(
             new string[] {
                 // ... add public include paths required here ...

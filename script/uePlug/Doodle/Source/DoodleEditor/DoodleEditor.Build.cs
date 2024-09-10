@@ -11,6 +11,8 @@ public class doodleEditor : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		CppStandard = CppStandardVersion.Cpp20;
+		DefaultBuildSettings = BuildSettingsVersion.Latest;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 		/// 启用rtti, 用来使用 std::dynamic_pointer_cast
 		//bForceEnableRTTI = true;
 
