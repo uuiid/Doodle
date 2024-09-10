@@ -19,6 +19,8 @@
 
 #include <boost/asio/experimental/parallel_group.hpp>
 
+#include <wil/com.h>
+
 namespace doodle {
 void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
@@ -72,8 +74,8 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
     );
 
     // 同步缓冲区
-    std::int32_t l_current_index     = !index_;
-    scan_data_maps_[l_current_index] = {};
+    std::int32_t l_current_index         = !index_;
+    scan_data_maps_[l_current_index]     = {};
     scan_data_key_maps_[l_current_index] = {};
     for (auto i : l_index) {
       if (l_ecs[i]) {
@@ -102,7 +104,14 @@ void scan_win_service_t::add_handle(
   static auto l_id_is_nil = [](boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
     if (in_uuid.is_nil()) {
       in_uuid = core_set::get_set().get_uuid();
-      FSys::software_flag_file(in_path, in_uuid);
+      for (auto i = 0; i < 3; ++i) {
+        try {
+          FSys::software_flag_file(in_path, in_uuid);
+          break;
+        } catch (const wil::ResultException& in) {
+          default_logger_raw()->error("生成uuid失败 {}", in.what());
+        }
+      }
     }
   };
 
