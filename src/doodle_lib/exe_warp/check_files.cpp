@@ -80,6 +80,7 @@ run_ue_check_arg_t create_check_arg(
   l_arg.import_dir_   = fmt::format(
       "{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time()
   );
+  l_arg.out_file_dir_          = in_args.out_files_dir_;
   l_arg.level_sequence_import_ = fmt::format("{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
   l_arg.movie_pipeline_config_ = fmt::format("{}/check/main_level_sequence_config", doodle_config::ue4_game);
 
@@ -129,6 +130,16 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   import_and_render_ue_ns::fix_project(in_args->local_ue_project_path_);
   import_and_render_ue_ns::fix_config(in_args->local_ue_project_path_);
+  // 调整输出目录
+  in_args->out_files_dir_ = in_args->local_ue_project_path_.parent_path() / doodle_config::ue4_saved /
+                            doodle_config::ue4_movie_renders / in_args->ue_project_path_.stem();
+  if (FSys::exists(in_args->out_files_dir_)) {
+    try {
+      FSys::remove_all(in_args->out_files_dir_);
+    } catch (FSys::filesystem_error& err) {
+      in_logger->warn("渲染删除上次输出错误 error:{}", err.what());
+    }
+  }
 
   auto l_check_arg                = create_check_arg(*in_args, l_out);
   l_check_arg.check_type_         = magic_enum::enum_name(in_args->check_type_);
@@ -215,15 +226,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
         l_face_data.front().ue_file_.lexically_relative(l_ue_dir / doodle_config::ue4_content).replace_extension()
     );
   }
-  l_arg->out_files_dir_ =
-      l_ue_dir / doodle_config::ue4_saved / doodle_config::ue4_movie_renders / l_arg->ue_project_path_.stem();
-  if (FSys::exists(l_arg->out_files_dir_)) {
-    try {
-      FSys::remove_all(l_arg->out_files_dir_);
-    } catch (FSys::filesystem_error& err) {
-      in_logger->warn("渲染删除上次输出错误 error:{}", err.what());
-    }
-  }
+
   std::tie(l_ec, l_err_msg) = co_await check_files(l_arg, in_logger);
   if (l_ec) {
     in_logger->error("检查文件失败 {}", l_ec.message());
@@ -244,10 +247,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     l_attribute.watermarks_attr.emplace_back(
         fmt::format("{:%Y-%m-%d %H:%M:%S}", l_t), 0.8, 0.1, movie::image_watermark::rgb_default
     );
+    l_attr.emplace_back(std::move(l_attribute));
   }
   movie::image_attr::extract_num(l_attr);
   auto l_out_file = l_arg->out_files_dir_.parent_path() / fmt::format("{}.mp4", l_arg->out_files_dir_.stem());
-  l_ec            = detail::create_move(l_arg->out_files_dir_, in_logger, l_attr);
+  l_ec            = detail::create_move(l_out_file, in_logger, l_attr);
   if (l_ec) {
     in_logger->error("检查文件失败, 无法获取到渲染输出的文件 {}", l_ec.message());
     co_return std::tuple(l_ec, l_err_msg);

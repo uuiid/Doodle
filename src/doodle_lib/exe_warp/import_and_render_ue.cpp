@@ -502,6 +502,8 @@ std::tuple<boost::system::error_code, std::vector<FSys::path>> clean_1001_before
 ) {
   std::vector<FSys::path> l_move_paths{};
   std::vector<FSys::path> l_remove_paths{};
+  if (!FSys::is_directory(in_path))
+    return std::make_tuple(boost::system::errc::make_error_code(boost::system::errc::not_a_directory), l_move_paths);
 
   for (auto&& l_path : FSys::directory_iterator{in_path}) {
     auto l_ext = l_path.path().extension();
@@ -536,6 +538,7 @@ std::tuple<boost::system::error_code, std::vector<FSys::path>> clean_1001_before
   for (auto&& l_path : l_remove_paths) {
     FSys::remove(l_path, l_sys_ec);
   }
+  return {boost::system::errc::make_error_code(boost::system::errc::success), l_move_paths};
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
