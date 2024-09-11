@@ -37,6 +37,7 @@
     "treehh",
     "wil",
     "tl-expected",
+    "sqlite-orm",
     {
       "name": "fmt",
       "default-features": true,

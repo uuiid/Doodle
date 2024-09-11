@@ -87,8 +87,7 @@ target_link_libraries(doodle_lib
         doodle_holidaycn
         Alembic::Alembic # abc文件读写
         xlnt::xlnt #表格库
-
-
+        sqlite_orm::sqlite_orm
 )
 
 target_compile_definitions(doodle_lib

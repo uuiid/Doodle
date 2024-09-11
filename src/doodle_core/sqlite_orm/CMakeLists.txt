@@ -4,6 +4,7 @@ target_sources(
         sqlite_snapshot.h
         sqlite_base.h
         observer.h
+        uuid_to_blob.h
         PRIVATE
         sqlite_snapshot.cpp
         observer.cpp

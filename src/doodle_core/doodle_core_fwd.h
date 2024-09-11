@@ -87,23 +87,28 @@ struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
     return *this;
   }
 };
-using maya_file_id      = entt::tag<"maya_file"_hs>;
-using ue_file_id        = entt::tag<"ue_file"_hs>;
-using maya_rig_file_id  = entt::tag<"maya_rig_file"_hs>;
-using ue_file_preset_id = entt::tag<"ue_file_preset"_hs>;
+using maya_file_id            = entt::tag<"maya_file"_hs>;
+using ue_file_id              = entt::tag<"ue_file"_hs>;
+using maya_rig_file_id        = entt::tag<"maya_rig_file"_hs>;
+using ue_file_preset_id       = entt::tag<"ue_file_preset"_hs>;
 
 // 场景id
-using scene_id          = entt::tag<"scene"_hs>;
+using scene_id                = entt::tag<"scene"_hs>;
 // 人物id
-using character_id      = entt::tag<"character"_hs>;
+using character_id            = entt::tag<"character"_hs>;
 // 道具id
-using prop_id           = entt::tag<"prop"_hs>;
+using prop_id                 = entt::tag<"prop"_hs>;
 // rig id
-using rig_id            = entt::tag<"rig"_hs>;
+using rig_id                  = entt::tag<"rig"_hs>;
 // 动画id
-using animation_id      = entt::tag<"animation"_hs>;
+using animation_id            = entt::tag<"animation"_hs>;
 // 解算id
-using simulation_id     = entt::tag<"simulation"_hs>;
+using simulation_id           = entt::tag<"simulation"_hs>;
+constexpr auto ue_path_id     = "ue_path.id"_hs;
+constexpr auto maya_path_id   = "maya_path.id"_hs;
+constexpr auto rig_path_id    = "rig_path.id"_hs;
+constexpr auto solve_path_id  = "solve_path.id"_hs;
+constexpr auto project_ref_id = "project.ref.id"_hs;
 
 class connect_video_interface;
 
