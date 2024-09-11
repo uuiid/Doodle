@@ -4,7 +4,6 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
-#include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/main_map.h>
 
 #include <doodle_app/app/app_command.h>

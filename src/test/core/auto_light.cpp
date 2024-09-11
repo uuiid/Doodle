@@ -6,7 +6,6 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
-#include <doodle_core/metadata/file_association.h>
 #include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>

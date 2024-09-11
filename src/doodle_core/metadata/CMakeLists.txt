@@ -23,7 +23,7 @@ target_sources(
         attendance.h
         work_xlsx_task_info.h
         kitsu_file_path.h
-        file_association.h
+        scan_data_t.h
 
 
         PRIVATE
@@ -49,7 +49,7 @@ target_sources(
         attendance.cpp
         work_xlsx_task_info.cpp
         kitsu_file_path.cpp
-        file_association.cpp
+        scan_data_t.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
