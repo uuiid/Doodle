@@ -5,6 +5,7 @@
 #include "scan_data_t.h"
 
 #include <sqlite_orm/sqlite_orm.h>
+#include <sqlite_orm/uuid_to_blob.h>
 namespace doodle {
 
 void scan_data_t::ue_path(const FSys::path& in_path) {
