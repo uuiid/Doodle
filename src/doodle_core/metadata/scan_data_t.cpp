@@ -86,7 +86,7 @@ void scan_data_t::version(const std::string& in_version) {
     handle_.emplace<additional_data>().version_ = in_version;
   }
 }
-
+void scan_data_t::destroy() {}
 void scan_data_t::seed_to_sql() {
   if (handle_) {
     database_t l_ret{};
