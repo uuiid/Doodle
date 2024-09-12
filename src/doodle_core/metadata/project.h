@@ -1,7 +1,6 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <boost/lexical_cast.hpp>
 namespace doodle {
 namespace project_config {
 class base_config;
@@ -69,6 +68,28 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
     p.init_name();
   }
 };
+
+class project_helper {
+ public:
+  entt::handle handle_;
+
+  struct database_t {
+    std::int32_t id_{};
+    uuid uuid_id_{};
+
+    std::string name_{};
+    std::string path_{};
+    std::string en_str_{};
+    std::string shor_str_{};
+    std::string local_path_{};
+    std::string auto_upload_path_{};
+  };
+
+  static void load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
+  void seed_to_sql();
+  void destroy();
+};
+
 namespace project_config {
 void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);
 void DOODLE_CORE_API from_json(const nlohmann::json& j, base_config& p);

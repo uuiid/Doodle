@@ -4,6 +4,7 @@
 
 #include "scan_data_t.h"
 
+#include "sqlite_orm/sqlite_database.h"
 #include <sqlite_orm/sqlite_orm.h>
 #include <sqlite_orm/uuid_to_blob.h>
 namespace doodle {
@@ -88,13 +89,13 @@ void scan_data_t::version(const std::string& in_version) {
 }
 void scan_data_t::destroy() {
   BOOST_ASSERT(handle_);
-
+  if (auto& l_s = handle_.registry()->storage<std::int32_t>(detail::sql_id); l_s.contains(handle_))
+    g_ctx().get<sqlite_database>().destroy<scan_data_t>(l_s.get(handle_));
   handle_.destroy();
 }
 void scan_data_t::seed_to_sql() {
   if (handle_) {
     database_t l_ret{};
-
     if (auto& l_s = handle_.registry()->storage<uuid>(detail::ue_path_id); l_s.contains(handle_)) {
       l_ret.ue_uuid_ = l_s.get(handle_);
     }
@@ -118,6 +119,11 @@ void scan_data_t::seed_to_sql() {
     l_ret.num_        = l_a.num_;
     l_ret.name_       = l_a.name_;
     l_ret.version_    = l_a.version_;
+
+    if (auto& l_s = handle_.registry()->storage<std::int32_t>(detail::sql_id); l_s.contains(handle_)) {
+      l_ret.id_ = l_s.get(handle_);
+    }
+    g_ctx().get<sqlite_database>()(std::move(l_ret));
   }
 }
 
@@ -143,6 +149,13 @@ void scan_data_t::load_from_sql(entt::registry& in_registry, const std::vector<d
     auto& l_s = in_registry.storage<uuid>(detail::solve_path_id);
     std::vector<uuid> l_vec =
         in_data | ranges::views::transform([](const auto& in_db) { return in_db.solve_uuid_; }) | ranges::to_vector;
+    l_s.insert(l_create.begin(), l_create.end(), l_vec.begin());
+  }
+  {
+    auto& l_s = in_registry.storage<entt::id_type>(detail::sql_id);
+    std::vector<entt::id_type> l_vec =
+        in_data | ranges::views::transform([](const auto& in_db) -> entt::id_type { return in_db.id_; }) |
+        ranges::to_vector;
     l_s.insert(l_create.begin(), l_create.end(), l_vec.begin());
   }
   {

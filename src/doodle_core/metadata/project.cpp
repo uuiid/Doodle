@@ -3,6 +3,7 @@
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/pin_yin/convert.h>
+#include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
@@ -69,6 +70,61 @@ FSys::path project::make_path(const FSys::path& in_path) const {
   auto path = p_path / in_path;
   if (!exists(path)) create_directories(path);
   return path;
+}
+
+void project_helper::load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data) {
+  std::vector<entt::entity> l_create{};
+  reg.create(l_create.begin(), l_create.end());
+  {
+    auto& l_s = reg.storage<uuid>(detail::project_id);
+    std::vector<uuid> l_uuids =
+        in_data | ranges::views::transform([](const auto& in_db) { return in_db.uuid_id_; }) | ranges::to_vector;
+
+    l_s.insert(l_create.begin(), l_create.end(), l_uuids.begin());
+  }
+  {
+    auto& l_s = reg.storage<entt::id_type>(detail::sql_id);
+    std::vector<entt::id_type> l_vec =
+        in_data | ranges::views::transform([](const auto& in_db) -> entt::id_type { return in_db.id_; }) |
+        ranges::to_vector;
+    l_s.insert(l_create.begin(), l_create.end(), l_vec.begin());
+  }
+  {
+    std::vector<project> l_projects = in_data | ranges::views::transform([](const database_t& in_db) {
+                                        return project{in_db.name_,     in_db.path_,       in_db.en_str_,
+                                                       in_db.shor_str_, in_db.local_path_, in_db.auto_upload_path_};
+                                      }) |
+                                      ranges::to_vector;
+    reg.insert<project>(l_create.begin(), l_create.end(), l_projects.begin());
+  }
+}
+
+void project_helper::seed_to_sql() {
+  if (handle_) {
+    auto& l_p = handle_.get<project>();
+    database_t l_r{
+        .name_             = l_p.p_name,
+        .en_str_           = l_p.p_en_str,
+        .shor_str_         = l_p.p_shor_str,
+        .path_             = l_p.p_path.generic_string(),
+        .local_path_       = l_p.p_local_path.generic_string(),
+        .auto_upload_path_ = l_p.p_auto_upload_path.generic_string()
+    };
+    l_r.uuid_id_ = handle_.registry()->storage<uuid>(detail::project_id).get(handle_);
+    auto& l_s    = handle_.registry()->storage<std::int32_t>(detail::sql_id);
+    if (l_s.contains(handle_)) {
+      l_r.id_ = l_s.get(handle_);
+    }
+
+    g_ctx().get<sqlite_database>()(std::move(l_r));
+  }
+}
+void project_helper::destroy() {
+  if (handle_) {
+    if (auto& l_s = handle_.registry()->storage<std::int32_t>(detail::sql_id); l_s.contains(handle_))
+      g_ctx().get<sqlite_database>().destroy<project_helper>(l_s.get(handle_));
+    handle_.destroy();
+  }
 }
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {

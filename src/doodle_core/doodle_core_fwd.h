@@ -110,6 +110,7 @@ constexpr auto rig_path_id    = "rig_path.id"_hs;
 constexpr auto solve_path_id  = "solve_path.id"_hs;
 constexpr auto project_ref_id = "project.ref.id"_hs;
 constexpr auto project_id     = "project.id"_hs;
+constexpr auto sql_id         = "sql.id"_hs;
 
 class connect_video_interface;
 
