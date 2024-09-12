@@ -5,8 +5,10 @@ target_sources(
         sqlite_base.h
         observer.h
         uuid_to_blob.h
+        sqlite_database.h
         PRIVATE
         sqlite_snapshot.cpp
         observer.cpp
+        sqlite_database.cpp
 )
 add_subdirectory(detail)

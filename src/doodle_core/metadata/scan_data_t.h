@@ -58,8 +58,6 @@ class scan_data_t {
   void seed_to_sql();
   void destroy();
   static void load_from_sql(entt::registry& in_registry, const std::vector<database_t>& in_data);
-
-  operator database_t();
 };
 
 }  // namespace doodle

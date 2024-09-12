@@ -86,7 +86,11 @@ void scan_data_t::version(const std::string& in_version) {
     handle_.emplace<additional_data>().version_ = in_version;
   }
 }
-void scan_data_t::destroy() {}
+void scan_data_t::destroy() {
+  BOOST_ASSERT(handle_);
+
+  handle_.destroy();
+}
 void scan_data_t::seed_to_sql() {
   if (handle_) {
     database_t l_ret{};
@@ -165,36 +169,6 @@ void scan_data_t::load_from_sql(entt::registry& in_registry, const std::vector<d
                                        }) |
                                        ranges::to_vector;
   in_registry.insert<additional_data>(l_create.begin(), l_create.end(), l_vec.begin());
-}
-
-scan_data_t::operator database_t() {
-  BOOST_ASSERT(handle_);
-  database_t l_ret{};
-
-  if (auto& l_s = handle_.registry()->storage<uuid>(detail::ue_path_id); l_s.contains(handle_)) {
-    l_ret.ue_uuid_ = l_s.get(handle_);
-  }
-  if (auto& l_s = handle_.registry()->storage<uuid>(detail::rig_path_id); l_s.contains(handle_)) {
-    l_ret.rig_uuid_ = l_s.get(handle_);
-  }
-  if (auto& l_s = handle_.registry()->storage<uuid>(detail::solve_path_id); l_s.contains(handle_)) {
-    l_ret.solve_uuid_ = l_s.get(handle_);
-  }
-  if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::project_ref_id); l_s.contains(handle_)) {
-    entt::entity l_prj_ett{l_s.get(handle_)};
-    if (auto& l_prj_s = handle_.registry()->storage<uuid>(detail::project_id);
-        l_prj_ett != entt::null && l_prj_s.contains(l_prj_ett)) {
-      l_ret.project_ = l_prj_s.get(l_prj_ett);
-    }
-  }
-  auto& l_a         = handle_.get<additional_data>();
-  l_ret.ue_path_    = l_a.ue_path_.generic_string();
-  l_ret.rig_path_   = l_a.rig_path_.generic_string();
-  l_ret.solve_path_ = l_a.solve_path_.generic_string();
-  l_ret.num_        = l_a.num_;
-  l_ret.name_       = l_a.name_;
-  l_ret.version_    = l_a.version_;
-  return l_ret;
 }
 
 namespace {
