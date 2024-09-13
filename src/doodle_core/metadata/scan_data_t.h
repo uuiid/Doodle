@@ -17,6 +17,8 @@ class scan_data_t {
     FSys::path ue_path_;
     FSys::path rig_path_;
     FSys::path solve_path_;
+  };
+  struct additional_data2 {
     std::string name_;
     std::string version_;
     std::string num_;
@@ -44,7 +46,6 @@ class scan_data_t {
   explicit scan_data_t(entt::registry& in_registry) : handle_(in_registry, in_registry.create()) {
     in_registry.storage<entt::id_type>(detail::sql_id).emplace(handle_);
   }
-
 
   void ue_path(const FSys::path& in_path);
 

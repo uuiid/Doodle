@@ -65,26 +65,26 @@ void scan_data_t::project(entt::entity in_project) {
 
 void scan_data_t::num_str(const std::string& in_num) {
   BOOST_ASSERT(handle_);
-  if (handle_.any_of<additional_data>()) {
-    handle_.patch<additional_data>().num_ = in_num;
+  if (handle_.any_of<additional_data2>()) {
+    handle_.patch<additional_data2>().num_ = in_num;
   } else {
-    handle_.emplace<additional_data>().num_ = in_num;
+    handle_.emplace<additional_data2>().num_ = in_num;
   }
 }
 void scan_data_t::name(const std::string& in_name) {
   BOOST_ASSERT(handle_);
-  if (handle_.any_of<additional_data>()) {
-    handle_.patch<additional_data>().name_ = in_name;
+  if (handle_.any_of<additional_data2>()) {
+    handle_.patch<additional_data2>().name_ = in_name;
   } else {
-    handle_.emplace<additional_data>().name_ = in_name;
+    handle_.emplace<additional_data2>().name_ = in_name;
   }
 }
 void scan_data_t::version(const std::string& in_version) {
   BOOST_ASSERT(handle_);
-  if (handle_.any_of<additional_data>()) {
-    handle_.patch<additional_data>().version_ = in_version;
+  if (handle_.any_of<additional_data2>()) {
+    handle_.patch<additional_data2>().version_ = in_version;
   } else {
-    handle_.emplace<additional_data>().version_ = in_version;
+    handle_.emplace<additional_data2>().version_ = in_version;
   }
 }
 void scan_data_t::destroy() {
@@ -114,12 +114,13 @@ void scan_data_t::seed_to_sql() {
       }
     }
     auto& l_a         = handle_.get<additional_data>();
+    auto& l_a2        = handle_.get<additional_data2>();
     l_ret.ue_path_    = l_a.ue_path_.generic_string();
     l_ret.rig_path_   = l_a.rig_path_.generic_string();
     l_ret.solve_path_ = l_a.solve_path_.generic_string();
-    l_ret.num_        = l_a.num_;
-    l_ret.name_       = l_a.name_;
-    l_ret.version_    = l_a.version_;
+    l_ret.num_        = l_a2.num_;
+    l_ret.name_       = l_a2.name_;
+    l_ret.version_    = l_a2.version_;
 
     if (auto& l_s = handle_.registry()->storage<std::int32_t>(detail::sql_id); l_s.contains(handle_)) {
       l_ret.id_ = l_s.get(handle_);
