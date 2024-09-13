@@ -87,23 +87,7 @@ struct entt_handle_ref : entt::basic_handle<Registry, Scope...> {
     return *this;
   }
 };
-using maya_file_id            = entt::tag<"maya_file"_hs>;
-using ue_file_id              = entt::tag<"ue_file"_hs>;
-using maya_rig_file_id        = entt::tag<"maya_rig_file"_hs>;
-using ue_file_preset_id       = entt::tag<"ue_file_preset"_hs>;
 
-// 场景id
-using scene_id                = entt::tag<"scene"_hs>;
-// 人物id
-using character_id            = entt::tag<"character"_hs>;
-// 道具id
-using prop_id                 = entt::tag<"prop"_hs>;
-// rig id
-using rig_id                  = entt::tag<"rig"_hs>;
-// 动画id
-using animation_id            = entt::tag<"animation"_hs>;
-// 解算id
-using simulation_id           = entt::tag<"simulation"_hs>;
 constexpr auto ue_path_id     = "ue_path.id"_hs;
 constexpr auto rig_path_id    = "rig_path.id"_hs;
 constexpr auto solve_path_id  = "solve_path.id"_hs;
@@ -126,22 +110,12 @@ class user;
 class project;
 class comment;
 class assets;
-using maya_file      = detail::one_file_base<detail::maya_file_id>;
-using ue_file        = detail::one_file_base<detail::ue_file_id>;
-using maya_rig_file  = detail::one_file_base<detail::maya_rig_file_id>;
-using ue_file_preset = detail::one_file_base<detail::ue_file_preset_id>;
 
-using computer_ref   = detail::entt_handle_ref<entt::tag<"computer"_hs>>;
-using task_ref       = detail::entt_handle_ref<entt::tag<"task"_hs>>;
-using main_project   = entt::tag<"main_project"_hs>;
+using computer_ref = detail::entt_handle_ref<entt::tag<"computer"_hs>>;
+using task_ref     = detail::entt_handle_ref<entt::tag<"task"_hs>>;
+
 class ue_main_map;
 
-using scene_id      = detail::scene_id;
-using character_id  = detail::character_id;
-using prop_id       = detail::prop_id;
-using rig_id        = detail::rig_id;
-using animation_id  = detail::animation_id;
-using simulation_id = detail::simulation_id;
 using connect_video = std::shared_ptr<detail::connect_video_interface>;
 
 using namespace std::literals;

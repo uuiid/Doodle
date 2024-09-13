@@ -93,7 +93,10 @@ class impl_obs {
     obs_create_.clear();
   }
 
-  void open(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+  void open(
+      entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn,
+      std::map<std::int64_t, entt::handle>& in_handle
+  ) {
     database_n::sql_com<type_t> l_table{};
     if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
   };
@@ -102,7 +105,9 @@ class impl_obs {
         in_handles | ranges::views::filter([](const entt::handle& in_h) { return in_h && in_h.any_of<type_t>(); })
     );
   }
-  void save(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+  void save(
+      entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, const std::vector<std::int64_t>& in_handle
+  ) {
     std::set<entt::entity> l_create{};
 
     for (auto&& i : obs_create_) {
@@ -131,7 +136,9 @@ class impl_obs {
     if (!l_install.empty()) l_orm.insert(in_conn, l_install);
     if (!in_handle.empty()) l_orm.destroy(in_conn, in_handle);
   }
-  void save_all(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+  void save_all(
+      entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, const std::vector<std::int64_t>& in_handle
+  ) {
     boost::ignore_unused(in_handle);
 
     auto l_v       = in_registry_ptr.view<database, type_t>();
@@ -185,7 +192,10 @@ class impl_obs<database> {
     destroy_ids_.clear();
   }
 
-  void open(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::map<std::int64_t, entt::handle>& in_handle) {
+  void open(
+      entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn,
+      std::map<std::int64_t, entt::handle>& in_handle
+  ) {
     boost::ignore_unused(this);
     database_n::sql_com<database> l_table{};
     if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle, in_registry_ptr);
@@ -224,7 +234,9 @@ class impl_obs<database> {
     if (!destroy_ids_.empty()) l_orm.destroy(in_conn, destroy_ids_);
   }
 
-  void save_all(entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+  void save_all(
+      entt::registry& in_registry_ptr, const sql_connection_ptr& in_conn, std::vector<std::int64_t>& in_handle
+  ) {
     auto l_v       = in_registry_ptr.view<database>();
     auto l_handles = l_v | ranges::views::transform([&](const entt::entity& in_e) -> entt::handle {
                        return {in_registry_ptr, in_e};
@@ -356,6 +368,5 @@ using obs_all = obs_main<
     std::tuple<
         doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap,
         doodle::comment, doodle::image_icon, doodle::importance, doodle::business::rules, doodle::user, doodle::project,
-        doodle::project_config::base_config, main_project, scene_id, character_id, prop_id, rig_id, animation_id,
-        simulation_id>>;
+        doodle::project_config::base_config>>;
 }  // namespace doodle::database_n

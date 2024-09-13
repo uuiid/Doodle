@@ -74,18 +74,5 @@ class tag_serialization : public detail::sql_create_table_base<tables::tag_table
   }
 };
 
-template <>
-struct sql_com<doodle::main_project> : public tag_serialization<doodle::main_project> {};
-template <>
-struct sql_com<doodle::scene_id> : public tag_serialization<doodle::scene_id> {};
-template <>
-struct sql_com<doodle::character_id> : public tag_serialization<doodle::character_id> {};
-template <>
-struct sql_com<doodle::prop_id> : public tag_serialization<doodle::prop_id> {};
-template <>
-struct sql_com<doodle::rig_id> : public tag_serialization<doodle::rig_id> {};
-template <>
-struct sql_com<doodle::animation_id> : public tag_serialization<doodle::animation_id> {};
-template <>
-struct sql_com<doodle::simulation_id> : public tag_serialization<doodle::simulation_id> {};
+
 }  // namespace doodle::database_n
