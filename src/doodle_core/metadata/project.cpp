@@ -98,7 +98,7 @@ void project_helper::seed_to_sql() {
   if (handle_) {
     auto& l_p = handle_.get<project>();
     database_t l_r{
-        .id_               = boost::numeric_cast<std::int32_t>(entt::to_integral(handle_)),
+        .id_               = boost::numeric_cast<std::int32_t>(entt::to_integral(handle_.entity())),
         .name_             = l_p.p_name,
         .path_             = l_p.p_path.generic_string(),
         .en_str_           = l_p.p_en_str,

@@ -157,9 +157,6 @@ void scan_win_service_t::add_handle(
       l_scan_data.rig_path(l_data->rig_file_.path_);
       l_scan_data.solve_path(l_data->solve_file_.path_);
 
-      l_scan_data.num_str(l_data->number_str_);
-      l_scan_data.name(l_data->name_);
-      l_scan_data.version(l_data->version_name_);
       l_scan_data.seed_to_sql();
     }
   }

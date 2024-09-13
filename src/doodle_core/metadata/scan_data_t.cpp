@@ -93,7 +93,7 @@ entt::entity scan_data_t::project() const {
   BOOST_ASSERT(handle_);
   if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::project_ref_id);
       l_s.contains(handle_) && handle_.all_of<additional_data>()) {
-    return l_s.get(handle_);
+    return entt::entity{l_s.get(handle_)};
   }
   return entt::null;
 }

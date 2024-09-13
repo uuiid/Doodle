@@ -70,9 +70,4 @@ class file_one_edit_t {
 
 }  // namespace detail
 
-using maya_file_edit_t      = detail::file_one_edit_t<doodle::maya_file>;
-using ue_file_edit_t        = detail::file_one_edit_t<doodle::ue_file>;
-using maya_rig_file_edit_t  = detail::file_one_edit_t<doodle::maya_rig_file>;
-using ue_file_preset_edit_t = detail::file_one_edit_t<doodle::ue_file_preset>;
-
 }  // namespace doodle::gui::render

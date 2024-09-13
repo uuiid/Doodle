@@ -101,7 +101,7 @@ void sqlite_database::save() {
   {                                                                                           \
     clas_::database_t l_out{};                                                                \
     while ((method_).pop(l_out)) {                                                            \
-      entt::entity l_entt{l_out.id_};                                                         \
+      entt::entity l_entt{boost::numeric_cast<entt::id_type>(l_out.id_)};                     \
       if (l_storage.get(l_entt) == 0) {                                                       \
         l_storage.patch(l_entt) = boost::numeric_cast<entt::id_type>(l_sqlite.insert(l_out)); \
       } else {                                                                                \
