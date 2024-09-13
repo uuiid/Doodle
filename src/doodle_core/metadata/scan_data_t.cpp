@@ -11,6 +11,7 @@ namespace doodle {
 
 void scan_data_t::ue_path(const FSys::path& in_path) {
   BOOST_ASSERT(handle_);
+
   auto l_uuid = FSys::software_flag_file(in_path);
   if (handle_.any_of<additional_data>()) {
     handle_.patch<additional_data>().ue_path_ = in_path;
