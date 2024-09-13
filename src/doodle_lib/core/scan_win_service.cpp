@@ -8,6 +8,7 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/scan_data_t.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_app/app/app_command.h>
@@ -41,6 +42,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   if (!g_ctx().contains<details::scan_category_service_t>()) {
     g_ctx().emplace<details::scan_category_service_t>();
   }
+  create_project_map();
   std::vector<std::string> l_msg{};
   for (auto&& l_root : project_roots_)
     for (auto&& l_data : {
@@ -98,6 +100,16 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   }
 }
 
+void scan_win_service_t::create_project_map() {
+  for (auto&& l_root : project_roots_) {
+    for (auto&& [l_e, p] : g_reg()->view<project>().each()) {
+      if (p == l_root) {
+        project_map_[l_root] = {*g_reg(), l_e};
+      }
+    }
+  }
+}
+
 void scan_win_service_t::add_handle(
     const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
 ) {
@@ -114,6 +126,43 @@ void scan_win_service_t::add_handle(
       }
     }
   };
+  auto& l_storage_ue      = g_reg()->storage<uuid>(detail::ue_path_id);
+  auto& l_storage_rig     = g_reg()->storage<uuid>(detail::rig_path_id);
+  auto& l_storage_solve   = g_reg()->storage<uuid>(detail::solve_path_id);
+  auto& l_storage_project = g_reg()->storage<uuid>(detail::project_ref_id);
+  std::map<uuid, entt::entity> l_uuid_entity_map{};
+
+  for (auto&& [e, ue, rig, solve] : entt::basic_view{l_storage_ue, l_storage_rig, l_storage_solve}.each()) {
+    l_uuid_entity_map[ue]    = e;
+    l_uuid_entity_map[rig]   = e;
+    l_uuid_entity_map[solve] = e;
+  }
+
+  for (auto&& l_data : in_data_vec) {
+    l_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
+    l_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
+    l_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
+    if (l_uuid_entity_map.contains(l_data->rig_file_.uuid_) || l_uuid_entity_map.contains(l_data->ue_file_.uuid_) ||
+        l_uuid_entity_map.contains(l_data->solve_file_.uuid_)) {
+      entt::entity l_e{};
+      if (l_uuid_entity_map.contains(l_data->rig_file_.uuid_))
+        l_e = l_uuid_entity_map[l_data->rig_file_.uuid_];
+      else if (l_uuid_entity_map.contains(l_data->ue_file_.uuid_))
+        l_e = l_uuid_entity_map[l_data->ue_file_.uuid_];
+      else if (l_uuid_entity_map.contains(l_data->solve_file_.uuid_))
+        l_e = l_uuid_entity_map[l_data->solve_file_.uuid_];
+
+      scan_data_t l_scan_data{entt::handle{*g_reg(), l_e}};
+      l_scan_data.ue_path(l_data->ue_file_.path_);
+      l_scan_data.rig_path(l_data->rig_file_.path_);
+      l_scan_data.solve_path(l_data->solve_file_.path_);
+
+      l_scan_data.num_str(l_data->number_str_);
+      l_scan_data.name(l_data->name_);
+      l_scan_data.version(l_data->version_name_);
+      l_scan_data.seed_to_sql();
+    }
+  }
 
   auto& l_scan_data = scan_data_maps_[in_current_index];
   for (auto&& l_data : in_data_vec) {

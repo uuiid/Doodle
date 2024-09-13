@@ -105,7 +105,6 @@ using animation_id            = entt::tag<"animation"_hs>;
 // 解算id
 using simulation_id           = entt::tag<"simulation"_hs>;
 constexpr auto ue_path_id     = "ue_path.id"_hs;
-constexpr auto maya_path_id   = "maya_path.id"_hs;
 constexpr auto rig_path_id    = "rig_path.id"_hs;
 constexpr auto solve_path_id  = "solve_path.id"_hs;
 constexpr auto project_ref_id = "project.ref.id"_hs;

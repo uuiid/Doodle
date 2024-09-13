@@ -48,18 +48,19 @@ class scan_data_t {
   }
 
   void ue_path(const FSys::path& in_path);
-
+  std::tuple<uuid, FSys::path> ue_path() const;
   void rig_path(const FSys::path& in_path);
-
+  std::tuple<uuid, FSys::path> rig_path() const;
   void solve_path(const FSys::path& in_path);
+  std::tuple<uuid, FSys::path> solve_path() const;
 
   void project(entt::entity in_project);
+  entt::entity project() const;
 
-  void num_str(const std::string& in_num);
 
-  void name(const std::string& in_name);
 
-  void version(const std::string& in_version);
+  void set_other(const additional_data2& in_other);
+  const scan_data_t::additional_data2& get_other() const;
 
   void seed_to_sql();
   void destroy();

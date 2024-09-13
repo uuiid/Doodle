@@ -61,6 +61,8 @@ class scan_win_service_t {
   std::map<uuid, entt::handle> handle_map_;
   std::map<FSys::path, entt::handle> path_map_;
 
+  std::map<project, entt::handle> project_map_;
+
   using scan_category_data_id_map = std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>;
   std::array<scan_category_data_id_map, 2> scan_data_maps_;
 
@@ -70,6 +72,8 @@ class scan_win_service_t {
   std::atomic_int index_{};
 
   boost::asio::awaitable<void> begin_scan();
+  void create_project_map();
+
   void add_handle(
       const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
   );

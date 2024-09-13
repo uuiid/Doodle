@@ -23,6 +23,14 @@ void scan_data_t::ue_path(const FSys::path& in_path) {
     l_s.emplace(handle_, l_uuid);
   }
 }
+std::tuple<uuid, FSys::path> scan_data_t::ue_path() const {
+  BOOST_ASSERT(handle_);
+  if (auto& l_s = handle_.registry()->storage<uuid>(detail::ue_path_id);
+      l_s.contains(handle_) && handle_.all_of<additional_data>()) {
+    return std::make_tuple(l_s.get(handle_), handle_.get<additional_data>().ue_path_);
+  }
+  return std::make_tuple(uuid{}, FSys::path{});
+}
 
 void scan_data_t::rig_path(const FSys::path& in_path) {
   BOOST_ASSERT(handle_);
@@ -37,6 +45,15 @@ void scan_data_t::rig_path(const FSys::path& in_path) {
   } else {
     l_s.emplace(handle_, l_uuid);
   }
+}
+
+std::tuple<uuid, FSys::path> scan_data_t::rig_path() const {
+  BOOST_ASSERT(handle_);
+  if (auto& l_s = handle_.registry()->storage<uuid>(detail::rig_path_id);
+      l_s.contains(handle_) && handle_.all_of<additional_data>()) {
+    return std::make_tuple(l_s.get(handle_), handle_.get<additional_data>().rig_path_);
+  }
+  return std::make_tuple(uuid{}, FSys::path{});
 }
 
 void scan_data_t::solve_path(const FSys::path& in_path) {
@@ -54,6 +71,15 @@ void scan_data_t::solve_path(const FSys::path& in_path) {
   }
 }
 
+std::tuple<uuid, FSys::path> scan_data_t::solve_path() const {
+  BOOST_ASSERT(handle_);
+  if (auto& l_s = handle_.registry()->storage<uuid>(detail::solve_path_id);
+      l_s.contains(handle_) && handle_.all_of<additional_data>()) {
+    return std::make_tuple(l_s.get(handle_), handle_.get<additional_data>().solve_path_);
+  }
+  return std::make_tuple(uuid{}, FSys::path{});
+}
+
 void scan_data_t::project(entt::entity in_project) {
   BOOST_ASSERT(handle_);
   if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::project_ref_id); l_s.contains(handle_)) {
@@ -63,30 +89,33 @@ void scan_data_t::project(entt::entity in_project) {
   }
 }
 
-void scan_data_t::num_str(const std::string& in_num) {
+entt::entity scan_data_t::project() const {
+  BOOST_ASSERT(handle_);
+  if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::project_ref_id);
+      l_s.contains(handle_) && handle_.all_of<additional_data>()) {
+    return l_s.get(handle_);
+  }
+  return entt::null;
+}
+
+void scan_data_t::set_other(const additional_data2& in_other) {
   BOOST_ASSERT(handle_);
   if (handle_.any_of<additional_data2>()) {
-    handle_.patch<additional_data2>().num_ = in_num;
+    handle_.patch<additional_data2>() = in_other;
   } else {
-    handle_.emplace<additional_data2>().num_ = in_num;
+    handle_.emplace<additional_data2>() = in_other;
   }
 }
-void scan_data_t::name(const std::string& in_name) {
+
+const scan_data_t::additional_data2& scan_data_t::get_other() const {
   BOOST_ASSERT(handle_);
   if (handle_.any_of<additional_data2>()) {
-    handle_.patch<additional_data2>().name_ = in_name;
+    return handle_.get<additional_data2>();
   } else {
-    handle_.emplace<additional_data2>().name_ = in_name;
+    return handle_.emplace<additional_data2>();
   }
 }
-void scan_data_t::version(const std::string& in_version) {
-  BOOST_ASSERT(handle_);
-  if (handle_.any_of<additional_data2>()) {
-    handle_.patch<additional_data2>().version_ = in_version;
-  } else {
-    handle_.emplace<additional_data2>().version_ = in_version;
-  }
-}
+
 void scan_data_t::destroy() {
   BOOST_ASSERT(handle_);
   if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::sql_id);
