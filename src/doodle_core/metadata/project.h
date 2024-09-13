@@ -85,7 +85,7 @@ class project_helper {
     std::string auto_upload_path_{};
   };
 
-  static void load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
+  static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
   void seed_to_sql();
   void destroy();
 };

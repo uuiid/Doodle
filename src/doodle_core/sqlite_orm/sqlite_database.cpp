@@ -37,7 +37,6 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &project_helper::database_t::id_, primary_key()),  //
           make_column("uuid_id", &project_helper::database_t::uuid_id_, unique()),
           make_column("name", &project_helper::database_t::name_),      //
-          make_column("name", &project_helper::database_t::name_),      //
           make_column("en_str", &project_helper::database_t::en_str_),  //
           make_column("shor_str", &project_helper::database_t::shor_str_),
           make_column("local_path", &project_helper::database_t::local_path_),
@@ -58,17 +57,21 @@ void sqlite_database::set_path(const FSys::path& in_path) {
 void sqlite_database::load(const FSys::path& in_path) {
   set_path(in_path);
 
+#define DOODLE_CREATE_ID(clas_)                                                                           \
+  if (auto l_data = l_storage.get_all<clas_::database_t>(); !l_data.empty()) {                            \
+    auto l_create = clas_::load_from_sql(*g_reg(), l_data);                                               \
+    std::vector<entt::id_type> l_vec =                                                                    \
+        l_data | ranges::views::transform([](const auto& in_db) -> entt::id_type { return in_db.id_; }) | \
+        ranges::to_vector;                                                                                \
+    l_s.insert(l_create.begin(), l_create.end(), l_vec.begin());                                          \
+  }
+
   auto l_storage = std::any_cast<sqlite_orm_type&>(storage_any_);
+  auto& l_s      = g_reg()->storage<entt::id_type>(detail::sql_id);
+  DOODLE_CREATE_ID(project_helper);
+  DOODLE_CREATE_ID(scan_data_t);
 
-  {
-    auto l_data = l_storage.get_all<project_helper::database_t>();
-    project_helper::load_from_sql(*g_reg(), l_data);
-  }
-
-  {
-    auto l_data = l_storage.get_all<scan_data_t::database_t>();
-    scan_data_t::load_from_sql(*g_reg(), l_data);
-  }
+#undef DOODLE_CREATE_ID
 }
 
 void sqlite_database::run() {
@@ -109,13 +112,13 @@ void sqlite_database::save() {
   {
     std::int32_t l_uuid{};
     while (queue_project_helper_uuid_.pop(l_uuid)) {
-      l_sqlite.remove<project_helper>(l_uuid);
+      l_sqlite.remove<project_helper::database_t>(l_uuid);
     }
   }
   {
     std::int32_t l_uuid{};
     while (queue_scan_data_uuid_.pop(l_uuid)) {
-      l_sqlite.remove<scan_data_t>(l_uuid);
+      l_sqlite.remove<scan_data_t::database_t>(l_uuid);
     }
   }
 }

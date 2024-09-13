@@ -27,6 +27,7 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_snapshot.h>
+#include <doodle_core/sqlite_orm/uuid_to_blob.h>
 
 #include "doodle_app/app/app_command.h"
 
@@ -34,6 +35,7 @@
 
 #include "sqlpp11/all_of.h"
 #include "sqlpp11/select.h"
+#include <sqlite_orm/sqlite_orm.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 using namespace doodle;
@@ -193,46 +195,51 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
   BOOST_TEST_CHECK(l_list_s == l_list_s2);
 }
 
-BOOST_AUTO_TEST_CASE(test_sqlite3_multi_thread) {
-  app_command<> l_App{};
-  l_App.use_multithread(true);
-  g_pool_db().set_path("D:/test.db");
-  {
-    auto L_con = g_pool_db().get_connection();
-    server_task_info::create_table(L_con);
-  }
-  std::vector<server_task_info> l_list{};
-  l_list.reserve(1000000);
-  for (int i = 0; i < 1000000; ++i) {
-    l_list.emplace_back(server_task_info{core_set::get_set().get_uuid(), "tset.exe", {"dasdas", "daaaa", "adsdasds"}});
-  }
-  auto l_s = boost::asio::make_strand(g_io_context());
-  for (int i = 0; i < 1000000; ++i) {
-    boost::asio::post(l_s, [i, &l_list]() {
-      auto l_conn = g_pool_db().get_connection();
-      auto l_c    = sqlpp::start_transaction(*l_conn);
-      if (i % 2 == 0) {
-        server_task_info::insert(l_conn, {l_list[i]});
-      } else {
-        server_task_info::delete_by_ids(l_conn, {l_list[i].id_});
-      }
-      l_c.commit();
-    });
-  }
+BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
+  using namespace sqlite_orm;
+  auto l_s = make_storage(
+      "D:/test.db",  //
+      make_table(
+          "project_tab",                                                       //
+          make_column("id", &project_helper::database_t::id_, primary_key()),  //
+          make_column("uuid_id", &project_helper::database_t::uuid_id_, unique()),
+          make_column("name", &project_helper::database_t::name_),      //
+          make_column("en_str", &project_helper::database_t::en_str_),  //
+          make_column("shor_str", &project_helper::database_t::shor_str_),
+          make_column("local_path", &project_helper::database_t::local_path_),
+          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
+      )
+  );
+  l_s.sync_schema(true);
 
-  for (int i = 0; i < 1000000; ++i) {
-    boost::asio::post(l_s, [i, &l_list]() {
-      auto l_conn = g_pool_db().get_connection();
-      auto l_c    = sqlpp::start_transaction(*l_conn);
+  project_helper::database_t l_d1{
+      .id_               = 6,
+      .uuid_id_          = core_set::get_set().get_uuid(),
+      .name_             = "test",
+      .en_str_           = "test",
+      .shor_str_         = "test",
+      .local_path_       = "test",
+      .auto_upload_path_ = "test"
+  };
+  project_helper::database_t l_d2{
+      .uuid_id_          = core_set::get_set().get_uuid(),
+      .name_             = "test2",
+      .en_str_           = "test2",
+      .shor_str_         = "test2",
+      .local_path_       = "test2",
+      .auto_upload_path_ = "test2"
+  };
 
-      if (i % 2 != 0) {
-        server_task_info::insert(l_conn, {l_list[i]});
-      } else {
-        server_task_info::delete_by_ids(l_conn, {l_list[i].id_});
-      }
-      l_c.commit();
-    });
-  }
-  boost::asio::post(l_s, []() { app_base::Get().stop_app(); });
-  l_App.run();
+  project_helper::database_t l_d3{
+      .id_               = 6,
+      .uuid_id_          = core_set::get_set().get_uuid(),
+      .name_             = "test3",
+      .en_str_           = "test3",
+      .shor_str_         = "test3",
+      .local_path_       = "test3",
+      .auto_upload_path_ = "test3"
+  };
+  l_s.replace(l_d3);
+  l_d3.name_ = "test4";
+  l_s.replace(l_d3);
 }

@@ -72,7 +72,7 @@ FSys::path project::make_path(const FSys::path& in_path) const {
   return path;
 }
 
-void project_helper::load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data) {
+std::vector<entt::entity> project_helper::load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data) {
   std::vector<entt::entity> l_create{};
   reg.create(l_create.begin(), l_create.end());
   {
@@ -83,13 +83,6 @@ void project_helper::load_from_sql(entt::registry& reg, const std::vector<databa
     l_s.insert(l_create.begin(), l_create.end(), l_uuids.begin());
   }
   {
-    auto& l_s = reg.storage<entt::id_type>(detail::sql_id);
-    std::vector<entt::id_type> l_vec =
-        in_data | ranges::views::transform([](const auto& in_db) -> entt::id_type { return in_db.id_; }) |
-        ranges::to_vector;
-    l_s.insert(l_create.begin(), l_create.end(), l_vec.begin());
-  }
-  {
     std::vector<project> l_projects = in_data | ranges::views::transform([](const database_t& in_db) {
                                         return project{in_db.name_,     in_db.path_,       in_db.en_str_,
                                                        in_db.shor_str_, in_db.local_path_, in_db.auto_upload_path_};
@@ -97,25 +90,22 @@ void project_helper::load_from_sql(entt::registry& reg, const std::vector<databa
                                       ranges::to_vector;
     reg.insert<project>(l_create.begin(), l_create.end(), l_projects.begin());
   }
+  return l_create;
 }
 
 void project_helper::seed_to_sql() {
   if (handle_) {
     auto& l_p = handle_.get<project>();
     database_t l_r{
+        .id_               = boost::numeric_cast<std::int32_t>(entt::to_integral(handle_)),
         .name_             = l_p.p_name,
+        .path_             = l_p.p_path.generic_string(),
         .en_str_           = l_p.p_en_str,
         .shor_str_         = l_p.p_shor_str,
-        .path_             = l_p.p_path.generic_string(),
         .local_path_       = l_p.p_local_path.generic_string(),
         .auto_upload_path_ = l_p.p_auto_upload_path.generic_string()
     };
     l_r.uuid_id_ = handle_.registry()->storage<uuid>(detail::project_id).get(handle_);
-    auto& l_s    = handle_.registry()->storage<std::int32_t>(detail::sql_id);
-    if (l_s.contains(handle_)) {
-      l_r.id_ = l_s.get(handle_);
-    }
-
     g_ctx().get<sqlite_database>()(std::move(l_r));
   }
 }

@@ -127,9 +127,9 @@ void scan_data_t::seed_to_sql() {
   }
 }
 
-void scan_data_t::load_from_sql(entt::registry& in_registry, const std::vector<database_t>& in_data) {
-  if (in_data.empty()) return;
+std::vector<entt::entity> scan_data_t::load_from_sql(entt::registry& in_registry, const std::vector<database_t>& in_data) {
   std::vector<entt::entity> l_create{};
+  if (in_data.empty()) return l_create;
 
   in_registry.create(l_create.begin(), l_create.end());
 
@@ -182,6 +182,7 @@ void scan_data_t::load_from_sql(entt::registry& in_registry, const std::vector<d
                                        }) |
                                        ranges::to_vector;
   in_registry.insert<additional_data>(l_create.begin(), l_create.end(), l_vec.begin());
+  return l_create;
 }
 
 namespace {
