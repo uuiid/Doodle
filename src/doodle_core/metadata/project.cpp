@@ -93,6 +93,7 @@ std::vector<entt::entity> project_helper::load_from_sql(entt::registry& reg, con
   return l_create;
 }
 
+
 void project_helper::seed_to_sql() {
   if (handle_) {
     auto& l_p = handle_.get<project>();
@@ -111,7 +112,8 @@ void project_helper::seed_to_sql() {
 }
 void project_helper::destroy() {
   if (handle_) {
-    if (auto& l_s = handle_.registry()->storage<std::int32_t>(detail::sql_id); l_s.contains(handle_))
+    if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::sql_id);
+        l_s.contains(handle_) && l_s.get(handle_) != 0)
       g_ctx().get<sqlite_database>().destroy<project_helper>(l_s.get(handle_));
     handle_.destroy();
   }

@@ -94,33 +94,39 @@ boost::asio::awaitable<void> sqlite_database::run_impl() {
 }
 
 void sqlite_database::save() {
-  auto& l_sqlite = std::any_cast<sqlite_orm_type&>(storage_any_);
-  {
-    std::vector<project_helper::database_t> l_out{queue_project_helper_.read_available()};
-    while (queue_project_helper_.pop(l_out.emplace_back())) {
-    }
-    l_sqlite.insert_range(l_out.begin(), l_out.end());
+  auto& l_sqlite  = std::any_cast<sqlite_orm_type&>(storage_any_);
+  auto& l_storage = g_reg()->storage<entt::id_type>(detail::sql_id);
+
+#define DOODLE_SAVE_ID(clas_, method_)                                                        \
+  {                                                                                           \
+    clas_::database_t l_out{};                                                                \
+    while ((method_).pop(l_out)) {                                                            \
+      entt::entity l_entt{l_out.id_};                                                         \
+      if (l_storage.get(l_entt) == 0) {                                                       \
+        l_storage.patch(l_entt) = boost::numeric_cast<entt::id_type>(l_sqlite.insert(l_out)); \
+      } else {                                                                                \
+        l_out.id_ = l_storage.get(l_entt);                                                    \
+        l_sqlite.update(l_out);                                                               \
+      }                                                                                       \
+    }                                                                                         \
+  }
+  DOODLE_SAVE_ID(project_helper, queue_project_helper_);
+  DOODLE_SAVE_ID(scan_data_t, queue_scan_data_);
+
+#undef DOODLE_SAVE_ID
+
+#define DOODLE_SAVE_UUID(clas_, method_)          \
+  {                                               \
+    std::int32_t l_uuid{};                        \
+    while ((method_).pop(l_uuid)) {               \
+      l_sqlite.remove<clas_::database_t>(l_uuid); \
+    }                                             \
   }
 
-  {
-    std::vector<scan_data_t::database_t> l_out{queue_scan_data_.read_available()};
-    while (queue_scan_data_.pop(l_out.emplace_back())) {
-    }
-    l_sqlite.insert_range(l_out.begin(), l_out.end());
-  }
+  DOODLE_SAVE_UUID(project_helper, queue_project_helper_uuid_);
+  DOODLE_SAVE_UUID(scan_data_t, queue_scan_data_uuid_);
+#undef DOODLE_SAVE_UUID
 
-  {
-    std::int32_t l_uuid{};
-    while (queue_project_helper_uuid_.pop(l_uuid)) {
-      l_sqlite.remove<project_helper::database_t>(l_uuid);
-    }
-  }
-  {
-    std::int32_t l_uuid{};
-    while (queue_scan_data_uuid_.pop(l_uuid)) {
-      l_sqlite.remove<scan_data_t::database_t>(l_uuid);
-    }
-  }
-}
+}  // namespace doodle
 
 }  // namespace doodle

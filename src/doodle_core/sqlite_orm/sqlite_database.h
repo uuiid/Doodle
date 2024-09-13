@@ -40,7 +40,12 @@ class sqlite_database {
   ~sqlite_database() = default;
 
   void run();
-
+  /**
+   * 这回调函数用于加载数据库,  并且将数据库中的id分配到 sql_id 池中,  以便后续操作,
+   * @warning 只有这里会分配id,  之后的操作不会分配, 只会查找id是否为 0 作为插入和更新的依据,
+   * 并且在插入id的时候会自动更新为实际id
+   * @param in_path 输入的数据库路径
+   */
   void load(const FSys::path& in_path);
 
   void operator()(scan_data_t::database_t&& in_data) { queue_scan_data_.push(in_data); }

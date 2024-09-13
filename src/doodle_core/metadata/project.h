@@ -1,6 +1,6 @@
 #pragma once
+#include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
-
 namespace doodle {
 namespace project_config {
 class base_config;
@@ -84,6 +84,13 @@ class project_helper {
     std::string local_path_{};
     std::string auto_upload_path_{};
   };
+
+  project_helper() = default;
+  explicit project_helper(entt::handle in_handle) : handle_(in_handle) {}
+  explicit project_helper(entt::registry& reg) : handle_(reg, reg.create()) {
+    reg.storage<entt::id_type>().emplace(handle_);
+    handle_.registry()->storage<uuid>(detail::project_id).emplace(handle_, core_set::get_set().get_uuid());
+  }
 
   static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
   void seed_to_sql();

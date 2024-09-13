@@ -89,7 +89,8 @@ void scan_data_t::version(const std::string& in_version) {
 }
 void scan_data_t::destroy() {
   BOOST_ASSERT(handle_);
-  if (auto& l_s = handle_.registry()->storage<std::int32_t>(detail::sql_id); l_s.contains(handle_))
+  if (auto& l_s = handle_.registry()->storage<entt::id_type>(detail::sql_id);
+      l_s.contains(handle_) && l_s.get(handle_) != 0)
     g_ctx().get<sqlite_database>().destroy<scan_data_t>(l_s.get(handle_));
   handle_.destroy();
 }
@@ -127,7 +128,9 @@ void scan_data_t::seed_to_sql() {
   }
 }
 
-std::vector<entt::entity> scan_data_t::load_from_sql(entt::registry& in_registry, const std::vector<database_t>& in_data) {
+std::vector<entt::entity> scan_data_t::load_from_sql(
+    entt::registry& in_registry, const std::vector<database_t>& in_data
+) {
   std::vector<entt::entity> l_create{};
   if (in_data.empty()) return l_create;
 

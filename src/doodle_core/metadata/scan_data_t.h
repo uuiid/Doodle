@@ -39,7 +39,12 @@ class scan_data_t {
   };
 
   scan_data_t() = default;
+  /// 获取函数
   explicit scan_data_t(const entt::handle& in_h) : handle_(in_h) {}
+  explicit scan_data_t(entt::registry& in_registry) : handle_(in_registry, in_registry.create()) {
+    in_registry.storage<entt::id_type>(detail::sql_id).emplace(handle_);
+  }
+
 
   void ue_path(const FSys::path& in_path);
 
