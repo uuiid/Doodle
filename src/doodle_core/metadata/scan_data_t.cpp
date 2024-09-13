@@ -181,36 +181,16 @@ std::vector<entt::entity> scan_data_t::load_from_sql(
     l_s.insert(l_create.begin(), l_create.end(), l_vec.begin());
   }
   std::vector<additional_data> l_vec = in_data | ranges::views::transform([](const database_t& in_db) {
-                                         return additional_data{in_db.ue_path_, in_db.rig_path_, in_db.solve_path_,
-                                                                in_db.num_,     in_db.version_,  in_db.name_};
+                                         return additional_data{in_db.ue_path_, in_db.rig_path_, in_db.solve_path_};
                                        }) |
                                        ranges::to_vector;
+  std::vector l_vec2 = in_data | ranges::views::transform([](const database_t& in_db) {
+                         return additional_data2{in_db.num_, in_db.name_, in_db.version_};
+                       }) |
+                       ranges::to_vector;
   in_registry.insert<additional_data>(l_create.begin(), l_create.end(), l_vec.begin());
+  in_registry.insert<additional_data2>(l_create.begin(), l_create.end(), l_vec2.begin());
   return l_create;
 }
-
-namespace {
-void scan_data_save() {
-  using namespace sqlite_orm;
-  auto l_storage = make_storage(
-      "", make_table(
-              "scan_data", make_column("id", &scan_data_t::database_t::id_, primary_key()),
-              make_column("ue_uuid", &scan_data_t::database_t::ue_uuid_),
-              make_column("rig_uuid", &scan_data_t::database_t::rig_uuid_),
-              make_column("solve_uuid", &scan_data_t::database_t::solve_uuid_),
-
-              make_column("ue_path", &scan_data_t::database_t::ue_path_),
-              make_column("rig_path", &scan_data_t::database_t::rig_path_),
-              make_column("solve_path", &scan_data_t::database_t::solve_path_),
-
-              make_column("project", &scan_data_t::database_t::project_),
-              make_column("num", &scan_data_t::database_t::num_),  //
-              make_column("name", &scan_data_t::database_t::name_),
-              make_column("version", &scan_data_t::database_t::version_)
-          )
-  );
-  l_storage.sync_schema(true);
-}
-}  // namespace
 
 }  // namespace doodle
