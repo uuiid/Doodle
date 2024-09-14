@@ -20,8 +20,8 @@
 
 #include <boost/asio/experimental/parallel_group.hpp>
 
+#include <tl/expected.hpp>
 #include <wil/com.h>
-
 namespace doodle {
 
 namespace {
@@ -31,29 +31,26 @@ auto to_scan_data(
     boost::asio::thread_pool& in_pool, const details::scan_category_data_t::project_root_t& in_project_root,
     const std::shared_ptr<details::scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
 ) {
+  using expected_t              = tl::expected<std::vector<details::scan_category_data_ptr>, std::string>;
   in_scan_category_ptr->logger_ = spdlog::default_logger();
-  return boost::asio::async_initiate<
-      CompletionHandler, void(std::vector<details::scan_category_data_ptr>, boost::system::error_code)>(
+  return boost::asio::async_initiate<CompletionHandler, void(expected_t)>(
       [&in_project_root, &in_scan_category_ptr, &in_pool](auto&& in_completion_handler) {
-        auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)> >(
+        auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)>>(
             std::forward<decltype(in_completion_handler)>(in_completion_handler)
         );
         boost::asio::post(in_pool, [in_project_root, in_scan_category_ptr, l_f]() {
-          boost::system::error_code l_err{};
-          std::vector<details::scan_category_data_ptr> l_list;
+          expected_t l_expected{};
           try {
-            l_list = in_scan_category_ptr->scan(in_project_root);
+            std::vector<details::scan_category_data_ptr> l_list = in_scan_category_ptr->scan(in_project_root);
             for (auto&& l_ : l_list) {
               in_scan_category_ptr->scan_file_hash(l_);
             }
-          } catch (const FSys::filesystem_error& e) {
-            in_scan_category_ptr->logger_->log(log_loc(), level::err, e.what());
-            l_err = e.code();
+            l_expected = std::move(l_list);
           } catch (...) {
-            l_err = boost::system::errc::make_error_code(boost::system::errc::not_supported);
+            l_expected = tl::make_unexpected(boost::current_exception_diagnostic_information());
           }
 
-          boost::asio::post(boost::asio::prepend(std::move(*l_f), l_list, l_err));
+          boost::asio::post(boost::asio::prepend(std::move(*l_f), l_expected));
         });
       },
       in_completion
@@ -100,7 +97,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       }
     }
 
-    auto [l_index, l_v, l_ecs] = co_await boost::asio::experimental::make_parallel_group(l_opts).async_wait(
+    auto [l_index, l_v] = co_await boost::asio::experimental::make_parallel_group(l_opts).async_wait(
         boost::asio::experimental::wait_for_all(),
         boost::asio::bind_executor(executor_, boost::asio::as_tuple(boost::asio::use_awaitable))
     );
@@ -110,11 +107,11 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
     scan_data_maps_[l_current_index]     = {};
     scan_data_key_maps_[l_current_index] = {};
     for (auto i : l_index) {
-      if (l_ecs[i]) {
-        default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {} {}", l_msg[i], l_ecs[i].message());
+      if (!l_v[i]) {
+        default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {} {}", l_msg[i], l_v[i].error());
         continue;
       }
-      add_handle(l_v[i], l_current_index);
+      add_handle(l_v[i].value(), l_current_index);
     }
     // 交换缓冲区
     index_ = l_current_index;
@@ -171,7 +168,7 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_reg(
     l_uuid_entity_map[solve] = e;
   }
 
-  std::vector<std::function<void()> > l_set_info{};
+  std::vector<std::function<void()>> l_set_info{};
 
   for (auto&& l_data : in_data_vec) {
     scan_win_service_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
