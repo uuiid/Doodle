@@ -110,22 +110,25 @@ void scan_win_service_t::create_project_map() {
   }
 }
 
-void scan_win_service_t::add_handle(
-    const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
-) {
-  static auto l_id_is_nil = [](boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
-    if (in_uuid.is_nil() && FSys::exists(in_path)) {
-      in_uuid = core_set::get_set().get_uuid();
-      for (auto i = 0; i < 3; ++i) {
-        try {
-          FSys::software_flag_file(in_path, in_uuid);
-          break;
-        } catch (const wil::ResultException& in) {
-          default_logger_raw()->error("生成uuid失败 {}", in.what());
-        }
+namespace {
+void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
+  if (in_uuid.is_nil() && FSys::exists(in_path)) {
+    in_uuid = core_set::get_set().get_uuid();
+    for (auto i = 0; i < 3; ++i) {
+      try {
+        FSys::software_flag_file(in_path, in_uuid);
+        break;
+      } catch (const wil::ResultException& in) {
+        default_logger_raw()->error("生成uuid失败 {}", in.what());
       }
     }
-  };
+  }
+}
+}  // namespace
+
+boost::asio::awaitable<void> scan_win_service_t::seed_to_reg(
+    std::vector<doodle::details::scan_category_data_ptr> in_data_vec
+) {
   auto& l_storage_ue      = g_reg()->storage<uuid>(detail::ue_path_id);
   auto& l_storage_rig     = g_reg()->storage<uuid>(detail::rig_path_id);
   auto& l_storage_solve   = g_reg()->storage<uuid>(detail::solve_path_id);
@@ -141,9 +144,9 @@ void scan_win_service_t::add_handle(
   std::vector<std::function<void()> > l_set_info{};
 
   for (auto&& l_data : in_data_vec) {
-    l_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
-    l_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
-    l_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
+    scan_win_service_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
+    scan_win_service_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
+    scan_win_service_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
     if (l_uuid_entity_map.contains(l_data->rig_file_.uuid_) || l_uuid_entity_map.contains(l_data->ue_file_.uuid_) ||
         l_uuid_entity_map.contains(l_data->solve_file_.uuid_)) {
       entt::entity l_e{};
@@ -180,33 +183,43 @@ void scan_win_service_t::add_handle(
           l_s.seed_to_sql();
         });
       }
-      if (auto& l_other = l_scan_data.get_other(); l_other.name_ != l_data->name_ ||
-                                                   l_other.num_ != l_data->number_str_ ||
-                                                   l_other.version_ != l_data->version_name_) {
-        l_set_info.emplace_back([l_scan_data, l_data]() {
-          auto l_s = l_scan_data;
-          l_s.set_other(scan_data_t::additional_data2{l_data->name_, l_data->version_name_, l_data->number_str_});
-          l_s.seed_to_sql();
-        });
-      }
+
+      l_set_info.emplace_back([l_scan_data, l_data, this]() {
+        auto l_s = l_scan_data;
+        l_s.set_other(scan_data_t::additional_data2{l_data->name_, l_data->version_name_, l_data->number_str_});
+        l_s.project(project_map_[l_data->project_root_]);
+        l_s.seed_to_sql();
+      });
     } else {
-      if (!l_data->ue_file_.uuid_.is_nil() || !l_data->rig_file_.uuid_.is_nil() || !l_data->solve_file_.uuid_.is_nil())
-        l_set_info.emplace_back([l_data]() {
-          auto l_s = scan_data_t{*g_reg()};
-          if (!l_data->ue_file_.uuid_.is_nil()) l_s.ue_path(l_data->ue_file_.path_);
-          if (!l_data->rig_file_.uuid_.is_nil()) l_s.rig_path(l_data->rig_file_.path_);
-          if (!l_data->solve_file_.uuid_.is_nil()) l_s.solve_path(l_data->solve_file_.path_);
-          l_s.set_other(scan_data_t::additional_data2{l_data->name_, l_data->version_name_, l_data->number_str_});
-          l_s.seed_to_sql();
-        });
+      // if (!l_data->ue_file_.uuid_.is_nil() || !l_data->rig_file_.uuid_.is_nil() ||
+      // !l_data->solve_file_.uuid_.is_nil())
+      l_set_info.emplace_back([l_data, this]() {
+        auto l_s = scan_data_t{*g_reg()};
+        if (!l_data->ue_file_.uuid_.is_nil()) l_s.ue_path(l_data->ue_file_.path_);
+        if (!l_data->rig_file_.uuid_.is_nil()) l_s.rig_path(l_data->rig_file_.path_);
+        if (!l_data->solve_file_.uuid_.is_nil()) l_s.solve_path(l_data->solve_file_.path_);
+        l_s.set_other(scan_data_t::additional_data2{l_data->name_, l_data->version_name_, l_data->number_str_});
+        l_s.project(project_map_[l_data->project_root_]);
+        l_s.seed_to_sql();
+      });
     }
   }
 
+  DOODLE_TO_MAIN_THREAD();
+  for (auto&& l_func : l_set_info) {
+    l_func();
+  }
+  DOODLE_TO_SELF();
+}
+
+void scan_win_service_t::add_handle(
+    const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
+) {
   auto& l_scan_data = scan_data_maps_[in_current_index];
   for (auto&& l_data : in_data_vec) {
-    l_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
-    l_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
-    l_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
+    scan_win_service_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
+    scan_win_service_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
+    scan_win_service_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
     l_scan_data[l_data->rig_file_.uuid_]   = l_data;
     l_scan_data[l_data->ue_file_.uuid_]    = l_data;
     l_scan_data[l_data->solve_file_.uuid_] = l_data;

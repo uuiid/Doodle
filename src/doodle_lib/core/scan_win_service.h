@@ -73,6 +73,7 @@ class scan_win_service_t {
 
   boost::asio::awaitable<void> begin_scan();
   void create_project_map();
+  boost::asio::awaitable<void> seed_to_reg(std::vector<doodle::details::scan_category_data_ptr> in_data_vec);
 
   void add_handle(
       const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index

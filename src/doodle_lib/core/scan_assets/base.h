@@ -26,8 +26,7 @@ enum class assets_type_enum {
 class scan_category_data_t {
  private:
  public:
-
-  using assets_type_enum = assets_type_enum;
+  using assets_type_enum          = assets_type_enum;
 
   virtual ~scan_category_data_t() = default;
   // uuid和文件路径的类
@@ -51,6 +50,7 @@ class scan_category_data_t {
 
   // 项目根目录
   project_root_t project_root_;
+  entt::entity project_id{};
   // 季数
   season season_;
   // 名称
