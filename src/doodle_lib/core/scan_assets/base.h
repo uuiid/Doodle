@@ -63,6 +63,9 @@ class scan_category_data_t {
   assets_type_enum assets_type_;
   // 编号
   std::string number_str_;
+
+  // 文件hash(包含 ue(工程, 配置),rig,解算文件) 所有文件的文件名称, 大小, 修改时间 的hash
+  std::string file_hash_;
 };
 using scan_category_data_ptr = std::shared_ptr<scan_category_data_t>;
 class scan_category_t {
@@ -73,6 +76,10 @@ class scan_category_t {
   scan_category_t() {}
   virtual ~scan_category_t()                                                            = default;
   virtual std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const = 0;
+
+  virtual void scan_file_hash(const scan_category_data_ptr& in_data);
+  // 计算hash
+  std::string file_hash(const std::string& in_data);
 };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
