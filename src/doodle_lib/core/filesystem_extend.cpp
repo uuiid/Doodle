@@ -19,8 +19,6 @@ std::tuple<std::uint64_t, std::uint64_t> find_path_frame(const path& in_path) {
   return k_tup;
 }
 
-
-
 std::string file_hash_sha224(const path& in_file) {
   (FSys::exists(in_file) && FSys::is_regular_file(in_file))
       ? void()

@@ -47,7 +47,7 @@ class scan_category_service_t {
             } catch (...) {
               l_err = boost::system::errc::make_error_code(boost::system::errc::not_supported);
             }
-            boost::asio::post(boost::asio::prepend(std::move(*l_f), l_list, l_err));
+            boost::asio::post(boost::asio::prepend(std::  move(*l_f), l_list, l_err));
           });
         },
         in_completion

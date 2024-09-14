@@ -23,6 +23,44 @@
 #include <wil/com.h>
 
 namespace doodle {
+
+namespace {
+template <typename CompletionHandler>
+
+auto to_scan_data(
+    boost::asio::thread_pool& in_pool, const details::scan_category_data_t::project_root_t& in_project_root,
+    const std::shared_ptr<details::scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
+) {
+  in_scan_category_ptr->logger_ = spdlog::default_logger();
+  return boost::asio::async_initiate<
+      CompletionHandler, void(std::vector<details::scan_category_data_ptr>, boost::system::error_code)>(
+      [&in_project_root, &in_scan_category_ptr, &in_pool](auto&& in_completion_handler) {
+        auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)> >(
+            std::forward<decltype(in_completion_handler)>(in_completion_handler)
+        );
+        boost::asio::post(in_pool, [in_project_root, in_scan_category_ptr, l_f]() {
+          boost::system::error_code l_err{};
+          std::vector<details::scan_category_data_ptr> l_list;
+          try {
+            l_list = in_scan_category_ptr->scan(in_project_root);
+            for (auto&& l_ : l_list) {
+              in_scan_category_ptr->scan_file_hash(l_);
+            }
+          } catch (const FSys::filesystem_error& e) {
+            in_scan_category_ptr->logger_->log(log_loc(), level::err, e.what());
+            l_err = e.code();
+          } catch (...) {
+            l_err = boost::system::errc::make_error_code(boost::system::errc::not_supported);
+          }
+
+          boost::asio::post(boost::asio::prepend(std::move(*l_f), l_list, l_err));
+        });
+      },
+      in_completion
+  );
+};
+}  // namespace
+
 void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
   timer_    = std::make_shared<timer_t>(executor_);
@@ -39,9 +77,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
       std::make_shared<details::prop_scan_category_t>()
   };
-  if (!g_ctx().contains<details::scan_category_service_t>()) {
-    g_ctx().emplace<details::scan_category_service_t>();
-  }
+
   create_project_map();
   std::vector<std::string> l_msg{};
   for (auto&& l_root : project_roots_)
@@ -54,19 +90,13 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // if (app_base::GetPtr()->is_stop()) co_return;
-    using opt_t = decltype(g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
-        project_roots_[0], scan_categories_[0], boost::asio::deferred
-    ));
+    using opt_t = decltype(to_scan_data(thread_pool_, project_roots_[0], scan_categories_[0], boost::asio::deferred));
     std::vector<opt_t> l_opts{};
     default_logger_raw()->log(log_loc(), level::info, "开始扫描");
     // 添加扫瞄操作
     for (auto&& l_root : project_roots_) {
       for (auto&& l_data : scan_categories_) {
-        l_opts.emplace_back(g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
-            l_root, l_data, boost::asio::deferred
-        )
-
-        );
+        l_opts.emplace_back(to_scan_data(thread_pool_, l_root, l_data, boost::asio::deferred));
       }
     }
 

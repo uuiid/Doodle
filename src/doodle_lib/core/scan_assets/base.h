@@ -78,6 +78,8 @@ class scan_category_t {
   virtual std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const = 0;
 
   virtual void scan_file_hash(const scan_category_data_ptr& in_data);
+
+ private:
   // 计算hash
   std::string file_hash(const std::string& in_data);
 };

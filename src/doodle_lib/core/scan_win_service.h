@@ -55,6 +55,8 @@ class scan_win_service_t {
   signal_ptr_t signal_;
   boost::asio::any_io_executor executor_{};
 
+  boost::asio::thread_pool thread_pool_{};
+
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
   std::vector<details::scan_category_t::project_root_t> project_roots_;
   std::vector<bool> scan_categories_is_scan_;
