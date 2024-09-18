@@ -309,7 +309,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
     if (!FSys::exists(i.ref_file)) continue;
     in_logger->warn("引用文件:{}", i.ref_file);
     auto l_uuid = FSys::software_flag_file(i.ref_file);
-    if (l_uuid.is_nil()) continue;
+    if (l_uuid.is_nil()) {
+      in_logger->error("获取引用文件失败 {}", i.ref_file);
+      co_return std::tuple<boost::system::error_code, import_and_render_ue_ns::down_info>{
+          boost::system::errc::make_error_code(boost::system::errc::not_supported), import_and_render_ue_ns::down_info{}
+      };
+    }
 
     l_uuids_tmp.push_back(l_uuid);
     l_refs_tmp.emplace(l_uuid, i.ref_file);
