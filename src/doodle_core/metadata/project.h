@@ -29,6 +29,8 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
   void init_name();
 
  public:
+  /// 添加entt指示, 用于保持指针稳定性
+  static constexpr bool in_place_delete{true};
   project();
   explicit project(FSys::path in_path, std::string in_name);
   explicit project(

@@ -17,11 +17,11 @@ class scan_data_t {
     FSys::path ue_path_;
     FSys::path rig_path_;
     FSys::path solve_path_;
-  };
-  struct additional_data2 {
     std::string name_;
     std::string version_;
     std::string num_;
+
+    project* project_;
   };
 
   struct database_t {
@@ -53,14 +53,6 @@ class scan_data_t {
   std::tuple<uuid, FSys::path> rig_path() const;
   void solve_path(const FSys::path& in_path);
   std::tuple<uuid, FSys::path> solve_path() const;
-
-  void project(entt::entity in_project);
-  entt::entity project() const;
-
-
-
-  void set_other(const additional_data2& in_other);
-  const scan_data_t::additional_data2& get_other() const;
 
   void seed_to_sql();
   void destroy();
