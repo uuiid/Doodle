@@ -14,8 +14,6 @@ class scan_data_t {
   static void on_destroy(entt::registry& in_reg, entt::entity in_entity);
 
  public:
-  entt::handle handle_{};
-
   struct scan_data_ctx_t {
     std::array<entt::scoped_connection, 3> conn_;
   };

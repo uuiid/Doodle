@@ -44,9 +44,11 @@ void scan_data_t::dependent_uuid(entt::registry& in_reg, entt::entity in_entity)
     l_uuid.rig_uuid_   = FSys::software_flag_file(l_data.rig_path_);
     l_uuid.ue_uuid_    = FSys::software_flag_file(l_data.ue_path_);
     l_uuid.solve_uuid_ = FSys::software_flag_file(l_data.solve_path_);
+
   } catch (...) {
     default_logger_raw()->error(boost::current_exception_diagnostic_information());
   }
+  if (!in_reg.all_of<project_ptr>(in_entity)) in_reg.emplace<project_ptr>(in_entity);
 }
 void scan_data_t::on_destroy(entt::registry& in_reg, entt::entity in_entity) {
   g_ctx().get<sqlite_database>().destroy<scan_data_t>(in_reg.storage<entt::id_type>(detail::sql_id).get(in_entity));
