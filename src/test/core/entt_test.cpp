@@ -4,6 +4,7 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/metadata/metadata.h"
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/test/unit_test.hpp>
@@ -13,6 +14,7 @@
 #include <memory>
 
 using namespace doodle;
+BOOST_AUTO_TEST_SUITE(entt_test)
 
 BOOST_AUTO_TEST_CASE(test_entt_obs) {
   doodle_lib l_lib{};
@@ -163,3 +165,18 @@ BOOST_AUTO_TEST_CASE(save) {
     BOOST_TEST_MESSAGE("保存string结束");
   }
 }
+
+BOOST_AUTO_TEST_CASE(destroy) {
+  entt::registry l_reg{};
+
+  entt::handle l_h1{l_reg, l_reg.create()};
+  l_h1.emplace<std::int32_t>(1);
+  l_reg.storage<entt::id_type>(12322).emplace(l_h1, 1);
+  auto* l_prj = &l_h1.emplace<project>("D:/path", "test");
+  l_h1.destroy();
+  BOOST_TEST(l_prj == nullptr);
+
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
