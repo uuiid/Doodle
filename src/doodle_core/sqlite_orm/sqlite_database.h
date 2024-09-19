@@ -31,7 +31,7 @@ class sqlite_database {
   strand_type_ptr strand_;
   timer_type_ptr timer_;
   boost::asio::awaitable<void> run_impl();
-  void save();
+  boost::asio::awaitable<void> save();
 
   void set_path(const FSys::path& in_path);
 

@@ -83,7 +83,7 @@ void sqlite_database::run() {
 }
 boost::asio::awaitable<void> sqlite_database::run_impl() {
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    save();
+    co_await save();
     timer_->expires_after(1s);
     auto [l_ec] = co_await timer_->async_wait();
     if (l_ec) {
@@ -93,22 +93,26 @@ boost::asio::awaitable<void> sqlite_database::run_impl() {
   co_return;
 }
 
-void sqlite_database::save() {
+boost::asio::awaitable<void> sqlite_database::save() {
   auto& l_sqlite  = std::any_cast<sqlite_orm_type&>(storage_any_);
   auto& l_storage = g_reg()->storage<entt::id_type>(detail::sql_id);
 
-#define DOODLE_SAVE_ID(clas_, method_)                                                        \
-  {                                                                                           \
-    clas_::database_t l_out{};                                                                \
-    while ((method_).pop(l_out)) {                                                            \
-      entt::entity l_entt{boost::numeric_cast<entt::id_type>(l_out.id_)};                     \
-      if (!l_storage.contains(l_entt) || l_storage.get(l_entt) == 0) {                        \
-        l_storage.patch(l_entt) = boost::numeric_cast<entt::id_type>(l_sqlite.insert(l_out)); \
-      } else {                                                                                \
-        l_out.id_ = l_storage.get(l_entt);                                                    \
-        l_sqlite.update(l_out);                                                               \
-      }                                                                                       \
-    }                                                                                         \
+#define DOODLE_SAVE_ID(clas_, method_)                                                         \
+  {                                                                                            \
+    clas_::database_t l_out{};                                                                 \
+    while ((method_).pop(l_out)) {                                                             \
+      entt::entity l_entt{boost::numeric_cast<entt::id_type>(l_out.id_)};                      \
+      if (!l_storage.contains(l_entt)) {                                                       \
+        DOODLE_TO_MAIN_THREAD()                                                                \
+        l_storage.emplace(l_entt, boost::numeric_cast<entt::id_type>(l_sqlite.insert(l_out))); \
+        DOODLE_TO_SELF()                                                                       \
+      } else if (l_storage.get(l_entt) == 0) {                                                 \
+        l_storage.patch(l_entt) = boost::numeric_cast<entt::id_type>(l_sqlite.insert(l_out));  \
+      } else {                                                                                 \
+        l_out.id_ = l_storage.get(l_entt);                                                     \
+        l_sqlite.update(l_out);                                                                \
+      }                                                                                        \
+    }                                                                                          \
   }
   DOODLE_SAVE_ID(project_helper, queue_project_helper_);
   DOODLE_SAVE_ID(scan_data_t, queue_scan_data_);
