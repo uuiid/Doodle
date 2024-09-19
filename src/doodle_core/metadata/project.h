@@ -71,9 +71,19 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
   }
 };
 
+struct project_ptr {
+  project* project_;
+};
+
 class project_helper {
+  static void dependent_uuid(entt::registry& in_reg, entt::entity in_entity);
+  static void on_destroy(entt::registry& in_reg, entt::entity in_entity);
+
  public:
-  entt::handle handle_;
+
+  struct project_ctx_t {
+    std::array<entt::scoped_connection, 3> conn_;
+  };
 
   struct database_t {
     std::int32_t id_{};
@@ -87,16 +97,8 @@ class project_helper {
     std::string auto_upload_path_{};
   };
 
-  project_helper() = default;
-  explicit project_helper(entt::handle in_handle) : handle_(in_handle) {}
-  explicit project_helper(entt::registry& reg) : handle_(reg, reg.create()) {
-    reg.storage<entt::id_type>().emplace(handle_);
-    handle_.registry()->storage<uuid>(detail::project_id).emplace(handle_, core_set::get_set().get_uuid());
-  }
-
   static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
-  void seed_to_sql();
-  void destroy();
+  static void seed_to_sql(const entt::registry& in_registry, const std::vector<entt::entity>& in_entity);
 };
 
 namespace project_config {
