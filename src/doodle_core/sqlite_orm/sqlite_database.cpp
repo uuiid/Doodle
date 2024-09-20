@@ -64,16 +64,6 @@ void sqlite_database::set_path(const FSys::path& in_path) {
   l_storage->open_forever();
   l_storage->sync_schema(true);
   default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
-
-  for (auto&& [id, l_uid] :
-       l_storage->select(sqlite_orm::columns(&scan_data_t::database_t::id_, &scan_data_t::database_t::uuid_id_))) {
-    uuid_id_map_[l_uid] = id;
-  }
-  for (auto&& [id, l_uid] :
-       l_storage->select(sqlite_orm::columns(&project_helper::database_t::id_, &project_helper::database_t::uuid_id_)
-       )) {
-    uuid_id_map_[l_uid] = id;
-  }
 }
 
 template <>
@@ -121,7 +111,6 @@ boost::asio::awaitable<tl::expected<std::int64_t, std::string>> sqlite_database:
     if (l_id == 0)
       l_id = l_storage->insert<project_helper::database_t>(in_data);
     else {
-      in_data.id_ = uuid_id_map_[in_data.uuid_id_];
       l_storage->replace<project_helper::database_t>(in_data);
     }
     l_g.commit();
