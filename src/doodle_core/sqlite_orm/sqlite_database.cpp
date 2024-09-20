@@ -89,11 +89,9 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       l_storage->replace<scan_data_t::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<std::int64_t, std::string>{};
+    co_return tl::expected<void, std::string>{};
   } catch (...) {
-    co_return tl::expected<std::int64_t, std::string>{
-        tl::make_unexpected(boost::current_exception_diagnostic_information())
-    };
+    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
   }
 }
 
@@ -113,11 +111,9 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       l_storage->replace<project_helper::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<std::int64_t, std::string>{};
+    co_return tl::expected<void, std::string>{};
   } catch (...) {
-    co_return tl::expected<std::int64_t, std::string>{
-        tl::make_unexpected(boost::current_exception_diagnostic_information())
-    };
+    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
   }
 }
 
@@ -129,9 +125,9 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
           in_data->begin(), in_data->end(),
           [](scan_data_t::database_t& in_r, scan_data_t::database_t& in_l) { return in_r.id_ < in_l.id_; }
       ))
-    co_return tl::expected<std::int64_t, std::string>{
-        tl::make_unexpected("未排序的数据, 不可优化使用, 请使用 install 或者排序id后插入")
-    };
+    std::sort(in_data->begin(), in_data->end(), [](scan_data_t::database_t& in_r, scan_data_t::database_t& in_l) {
+      return in_r.id_ < in_l.id_;
+    });
 
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
   try {
@@ -169,11 +165,9 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       );
       if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
     }
-    co_return tl::expected<std::vector<std::int64_t>, std::string>{};
+    co_return tl::expected<void, std::string>{};
   } catch (...) {
-    co_return tl::expected<std::int64_t, std::string>{
-        tl::make_unexpected(boost::current_exception_diagnostic_information())
-    };
+    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
   }
 }
 

@@ -281,10 +281,13 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
 
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
         .get();
-    for (auto&& i : l_list) {
-      boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(i), boost::asio::detached);
+    for (auto&& i : *l_list) {
+      boost::asio::co_spawn(
+          g_io_context(), g_ctx().get<sqlite_database>().install(std::make_shared<scan_data_t::database_t>(i)),
+          boost::asio::detached
+      );
     }
-    for (auto&& i : l_list)
+    for (auto&& i : *l_list)
       boost::asio::post(g_io_context(), [id_ = i.ue_uuid_]() {
         g_ctx().get<sqlite_database>().get_by_uuid<scan_data_t::database_t>(id_);
       });

@@ -57,7 +57,7 @@ class sqlite_database {
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data);
   /**
-   * @warning 注意, 传入是必须排序id, 以符合插入和修正的方法
+   *
    * @tparam T 任意优化类别
    * @param in_data 传入的数据
    * @return 插入的id(不包含更新的id)
