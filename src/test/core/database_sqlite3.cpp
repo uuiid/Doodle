@@ -239,9 +239,7 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
   l_app.use_multithread(true);
 
   project_helper::database_t l_data{
-
       .uuid_id_          = core_set::get_set().get_uuid(),
-
       .name_             = "das",
       .path_             = "122",
       .en_str_           = "333",
@@ -271,11 +269,22 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
     i.solve_uuid_ = core_set::get_set().get_uuid();
   }
   g_ctx().emplace<sqlite_database>().load("D:/test2.db");
-  boost::asio::post(g_io_context(), [&]() {
-    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_data), boost::asio::use_future)
-        .get();
-    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
-        .get();
+  boost::asio::post(g_io_context(), [&]() mutable {
+    auto l_prj_id =
+        boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_data), boost::asio::use_future)
+            .get();
+    for (auto&& i : l_list) {
+      i.project_id_ = l_prj_id.value();
+    }
+
+    auto l_ids = boost::asio::co_spawn(
+                     g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future
+    )
+                     .get();
+    auto l_ids_v = l_ids.value();
+    for (int i = 0; i < l_list.size(); ++i) {
+      l_list[i].id_ = l_ids_v[i];
+    }
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
         .get();
     for (auto&& i : l_list) {
