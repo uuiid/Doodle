@@ -276,7 +276,8 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
         .get();
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
         .get();
-
+    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
+        .get();
     for (auto&& i : l_list) {
       boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(i), boost::asio::detached);
     }
