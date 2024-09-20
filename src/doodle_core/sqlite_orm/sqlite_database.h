@@ -34,7 +34,6 @@ class sqlite_database {
   boost::asio::awaitable<void> run_impl();
   boost::asio::awaitable<void> save();
 
-
   void set_path(const FSys::path& in_path);
 
  public:
@@ -56,7 +55,7 @@ class sqlite_database {
   std::vector<T> get_by_uuid(const uuid& in_uuid);
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<std::int64_t, std::string>> install(T in_data);
+  boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data);
   /**
    * @warning 注意, 传入是必须排序id, 以符合插入和修正的方法
    * @tparam T 任意优化类别
@@ -64,7 +63,7 @@ class sqlite_database {
    * @return 插入的id(不包含更新的id)
    */
   template <typename T>
-  boost::asio::awaitable<tl::expected<std::vector<std::int64_t>, std::string>> install_range(std::vector<T> in_data);
+  boost::asio::awaitable<tl::expected<void, std::string>> install_range(std::shared_ptr<std::vector<T>> in_data);
 
   template <typename T>
   void destroy(const std::int32_t& in_uuid);

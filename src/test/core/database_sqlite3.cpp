@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
   app_command<> l_app{};
   l_app.use_multithread(true);
 
-  project_helper::database_t l_data{
+  auto l_data = std::make_shared<project_helper::database_t>(project_helper::database_t{
       .uuid_id_          = core_set::get_set().get_uuid(),
       .name_             = "das",
       .path_             = "122",
@@ -246,11 +246,11 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
       .shor_str_         = "323",
       .local_path_       = "dddd",
       .auto_upload_path_ = "323"
-  };
-  std::vector<scan_data_t::database_t> l_list{
+  });
+  auto l_list = std::make_shared<std::vector<scan_data_t::database_t>>(
       100,
       scan_data_t::database_t{
-          .project_    = l_data.uuid_id_,
+          .project_    = l_data->uuid_id_,
           .ue_path_    = "das",
           .rig_path_   = "das",
           .solve_path_ = "dsadssa",
@@ -258,8 +258,8 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
           .version_    = "sda",
           .num_        = "das"
       }
-  };
-  for (auto&& i : l_list) {
+  );
+  for (auto&& i : *l_list) {
     i.uuid_id_    = core_set::get_set().get_uuid();
     i.ue_uuid_    = core_set::get_set().get_uuid();
     i.ue_path_    = "test";
@@ -273,18 +273,12 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
     auto l_prj_id =
         boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_data), boost::asio::use_future)
             .get();
-    for (auto&& i : l_list) {
-      i.project_id_ = l_prj_id.value();
-    }
 
     auto l_ids = boost::asio::co_spawn(
                      g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future
     )
                      .get();
-    auto l_ids_v = l_ids.value();
-    for (int i = 0; i < l_list.size(); ++i) {
-      l_list[i].id_ = l_ids_v[i];
-    }
+
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
         .get();
     for (auto&& i : l_list) {

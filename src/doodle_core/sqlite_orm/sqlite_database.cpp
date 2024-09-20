@@ -76,20 +76,20 @@ std::vector<scan_data_t::database_t> sqlite_database::get_by_uuid<scan_data_t::d
   ));
 }
 template <>
-boost::asio::awaitable<tl::expected<std::int64_t, std::string>> sqlite_database::install(scan_data_t::database_t in_data
+boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
+    std::shared_ptr<scan_data_t::database_t> in_data
 ) {
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
   auto l_storage = get_cast_storage(storage_any_);
   try {
     auto l_g = l_storage->transaction_guard();
-    std::int64_t l_id{in_data.id_};
-    if (in_data.id_ == 0)
-      l_id = l_storage->insert<scan_data_t::database_t>(in_data);
+    if (in_data->id_ == 0)
+      in_data->id_ = l_storage->insert<scan_data_t::database_t>(*in_data);
     else {
-      l_storage->replace<scan_data_t::database_t>(in_data);
+      l_storage->replace<scan_data_t::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<std::int64_t, std::string>{l_id};
+    co_return tl::expected<std::int64_t, std::string>{};
   } catch (...) {
     co_return tl::expected<std::int64_t, std::string>{
         tl::make_unexpected(boost::current_exception_diagnostic_information())
@@ -98,23 +98,22 @@ boost::asio::awaitable<tl::expected<std::int64_t, std::string>> sqlite_database:
 }
 
 template <>
-boost::asio::awaitable<tl::expected<std::int64_t, std::string>> sqlite_database::install(
-    project_helper::database_t in_data
+boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
+    std::shared_ptr<project_helper::database_t> in_data
 ) {
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
 
   try {
     auto l_storage = get_cast_storage(storage_any_);
     auto l_g       = l_storage->transaction_guard();
-    std::int64_t l_id{in_data.id_};
 
-    if (l_id == 0)
-      l_id = l_storage->insert<project_helper::database_t>(in_data);
+    if (in_data->id_ == 0)
+      in_data->id_ = l_storage->insert<project_helper::database_t>(*in_data);
     else {
-      l_storage->replace<project_helper::database_t>(in_data);
+      l_storage->replace<project_helper::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<std::int64_t, std::string>{l_id};
+    co_return tl::expected<std::int64_t, std::string>{};
   } catch (...) {
     co_return tl::expected<std::int64_t, std::string>{
         tl::make_unexpected(boost::current_exception_diagnostic_information())
@@ -123,23 +122,25 @@ boost::asio::awaitable<tl::expected<std::int64_t, std::string>> sqlite_database:
 }
 
 template <>
-boost::asio::awaitable<tl::expected<std::vector<std::int64_t>, std::string>> sqlite_database::install_range(
-    std::vector<scan_data_t::database_t> in_data
+boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install_range(
+    std::shared_ptr<std::vector<scan_data_t::database_t>> in_data
 ) {
-  if (!std::is_sorted(in_data.begin(), in_data.end(), [](scan_data_t::database_t& in_r, scan_data_t::database_t& in_l) {
-        return in_r.id_ < in_l.id_;
-      }))
+  if (!std::is_sorted(
+          in_data->begin(), in_data->end(),
+          [](scan_data_t::database_t& in_r, scan_data_t::database_t& in_l) { return in_r.id_ < in_l.id_; }
+      ))
     co_return tl::expected<std::int64_t, std::string>{
         tl::make_unexpected("未排序的数据, 不可优化使用, 请使用 install 或者排序id后插入")
     };
 
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
   try {
-    auto l_storage      = get_cast_storage(storage_any_);
+    auto l_storage = get_cast_storage(storage_any_);
 
-    std::size_t l_split = std::distance(
-        in_data.begin(), std::ranges::find_if(in_data, [](const scan_data_t::database_t& in_) { return in_.id_ != 0; })
-    );
+    std::size_t l_split =
+        std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const scan_data_t::database_t& in_) {
+                        return in_.id_ != 0;
+                      }));
 
     {
       // 步进大小
@@ -148,26 +149,27 @@ boost::asio::awaitable<tl::expected<std::vector<std::int64_t>, std::string>> sql
       // 每500次步进(插入步进)
       for (std::size_t i = 0; i < l_split;) {
         auto l_end = std::min(i + g_step_size, l_split);
-        l_storage->insert_range<scan_data_t::database_t>(in_data.begin() + i, in_data.begin() + l_end);
+        l_storage->insert_range<scan_data_t::database_t>(in_data->begin() + i, in_data->begin() + l_end);
         i = l_end;
       }
       // 替换步进
-      for (std::size_t i = l_split; i < in_data.size();) {
-        auto l_end = std::min(i + g_step_size, in_data.size());
-        l_storage->replace_range<scan_data_t::database_t>(in_data.begin() + i, in_data.begin() + l_end);
+      for (std::size_t i = l_split; i < in_data->size();) {
+        auto l_end = std::min(i + g_step_size, in_data->size());
+        l_storage->replace_range<scan_data_t::database_t>(in_data->begin() + i, in_data->begin() + l_end);
         i = l_end;
       }
       l_g.commit();
     }
-    std::vector<std::int64_t> l_ids{};
+
     for (std::size_t i = 0; i < l_split; ++i) {
       using namespace sqlite_orm;
       auto l_v = l_storage->select(
-          &scan_data_t::database_t::id_, sqlite_orm::where(c(&scan_data_t::database_t::uuid_id_) == in_data[i].uuid_id_)
+          &scan_data_t::database_t::id_,
+          sqlite_orm::where(c(&scan_data_t::database_t::uuid_id_) == (*in_data)[i].uuid_id_)
       );
-      if (!l_v.empty()) l_ids.emplace_back(l_v.front());
+      if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
     }
-    co_return tl::expected<std::vector<std::int64_t>, std::string>{l_ids};
+    co_return tl::expected<std::vector<std::int64_t>, std::string>{};
   } catch (...) {
     co_return tl::expected<std::int64_t, std::string>{
         tl::make_unexpected(boost::current_exception_diagnostic_information())
