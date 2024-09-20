@@ -7,6 +7,7 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/database_task/sqlite_client.h"
+#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
@@ -21,6 +22,7 @@
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/rules.h>
+#include <doodle_core/metadata/scan_data_t.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>
@@ -40,6 +42,8 @@
 #include <sqlpp11/sqlpp11.h>
 using namespace doodle;
 using namespace doodle::database_n;
+
+BOOST_AUTO_TEST_SUITE(sql_)
 
 void create_test_database() {
   {
@@ -150,21 +154,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
-  app_command<> l_App{};
-
-  g_ctx().get<file_translator_ptr>()->async_open(
-      "D:/test_file/test_db/10_texiao.doodle_db", false, true, g_reg(), [](auto&&) {}
-  );
-
-  for (auto&& [e, i] : g_reg()->view<database>().each()) {
-    BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
-  }
-  g_ctx().get<file_translator_ptr>()->async_open(
-      "D:/test_file/cloth_test/JG2.doodle_db", false, true, g_reg(), [](auto&&) {}
-  );
-}
-
 BOOST_AUTO_TEST_CASE(test_sqlite3_snapshot) {
   app_command<> l_App{};
   create_test_database();
@@ -243,3 +232,58 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
   l_d3.name_ = "test4";
   l_s.replace(l_d3);
 }
+
+// 多线程测试
+BOOST_AUTO_TEST_CASE(multi_threaded) {
+  app_command<> l_app{};
+  l_app.use_multithread(true);
+
+  project_helper::database_t l_data{
+
+      .uuid_id_          = core_set::get_set().get_uuid(),
+
+      .name_             = "das",
+      .path_             = "122",
+      .en_str_           = "333",
+      .shor_str_         = "323",
+      .local_path_       = "dddd",
+      .auto_upload_path_ = "323"
+  };
+  std::vector<scan_data_t::database_t> l_list{
+      100000,
+      scan_data_t::database_t{
+          .project_    = l_data.uuid_id_,
+          .ue_path_    = "das",
+          .rig_path_   = "das",
+          .solve_path_ = "dsadssa",
+          .name_       = "name",
+          .version_    = "sda",
+          .num_        = "das"
+      }
+  };
+  for (auto&& i : l_list) {
+    i.uuid_id_    = core_set::get_set().get_uuid();
+    i.ue_uuid_    = core_set::get_set().get_uuid();
+    i.ue_path_    = "test";
+    i.rig_path_   = "test";
+    i.rig_uuid_   = core_set::get_set().get_uuid();
+    i.solve_path_ = "test";
+    i.solve_uuid_ = core_set::get_set().get_uuid();
+  }
+  g_ctx().emplace<sqlite_database>().load("D:/test2.db");
+  boost::asio::post(g_io_context(), [&]() {
+    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_data), boost::asio::use_future).get();
+    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::detached);
+
+    for (auto&& i : l_list) {
+      boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(i), boost::asio::detached);
+    }
+    for (auto&& i : l_list)
+      boost::asio::post(g_io_context(), [id_ = i.ue_uuid_]() {
+        g_ctx().get<sqlite_database>().get_by_uuid<scan_data_t::database_t>(id_);
+      });
+  });
+  l_app.run();
+}
+
+BOOST_AUTO_TEST_SUITE_END()

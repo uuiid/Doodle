@@ -34,10 +34,13 @@ class scan_data_t {
   };
 
   struct database_t {
+    uuid uuid_id_;
+
     uuid ue_uuid_;
     uuid rig_uuid_;
     uuid solve_uuid_;
     uuid project_;
+    std::int32_t project_id_;
 
     std::string ue_path_;
     std::string rig_path_;
@@ -46,7 +49,7 @@ class scan_data_t {
     std::string version_;
     std::string num_;
 
-    std::int32_t id_{};
+    std::int32_t id_;
   };
 
   scan_data_t() = default;

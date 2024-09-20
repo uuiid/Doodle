@@ -21,17 +21,19 @@ class sqlite_database {
   using timer_type      = executor_type::as_default_on_t<boost::asio::steady_timer>;
   using timer_type_ptr  = std::shared_ptr<timer_type>;
 
-  boost::lockfree::spsc_queue<scan_data_t::database_t> queue_scan_data_;
-  boost::lockfree::spsc_queue<project_helper::database_t> queue_project_helper_;
+  boost::lockfree::spsc_queue<scan_data_t::database_t> queue_scan_data_{1024};
+  boost::lockfree::spsc_queue<project_helper::database_t> queue_project_helper_{1024};
 
-  boost::lockfree::spsc_queue<std::int32_t> queue_scan_data_uuid_;
-  boost::lockfree::spsc_queue<std::int32_t> queue_project_helper_uuid_;
+  boost::lockfree::spsc_queue<std::int32_t> queue_scan_data_uuid_{1024};
+  boost::lockfree::spsc_queue<std::int32_t> queue_project_helper_uuid_{1024};
 
-  std::any storage_any_;
+  std::shared_ptr<void> storage_any_;
   strand_type_ptr strand_;
   timer_type_ptr timer_;
   boost::asio::awaitable<void> run_impl();
   boost::asio::awaitable<void> save();
+
+  std::unordered_map<uuid, std::size_t> uuid_id_map_;
 
   void set_path(const FSys::path& in_path);
 
@@ -50,6 +52,14 @@ class sqlite_database {
 
   void operator()(scan_data_t::database_t&& in_data) { queue_scan_data_.push(in_data); }
   void operator()(project_helper::database_t&& in_data) { queue_project_helper_.push(in_data); }
+  template <typename T>
+  std::vector<T> get_by_uuid(const uuid& in_uuid);
+
+  template <typename T>
+  boost::asio::awaitable<void> install(T in_data);
+  template <typename T>
+  boost::asio::awaitable<void> install_range(std::vector<T> in_data);
+
   template <typename T>
   void destroy(const std::int32_t& in_uuid);
 
