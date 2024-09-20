@@ -11,6 +11,7 @@
 
 #include <boost/lockfree/spsc_queue.hpp>
 
+#include <tl/expected.hpp>
 namespace doodle {
 class sqlite_database {
   using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
@@ -56,9 +57,15 @@ class sqlite_database {
   std::vector<T> get_by_uuid(const uuid& in_uuid);
 
   template <typename T>
-  boost::asio::awaitable<void> install(T in_data);
+  boost::asio::awaitable<tl::expected<std::int64_t, std::string>> install(T in_data);
+  /**
+   * @warning 注意, 传入是必须排序id, 以符合插入和修正的方法
+   * @tparam T 任意优化类别
+   * @param in_data 传入的数据
+   * @return 插入的id(不包含更新的id)
+   */
   template <typename T>
-  boost::asio::awaitable<void> install_range(std::vector<T> in_data);
+  boost::asio::awaitable<tl::expected<std::vector<std::int64_t>, std::string>> install_range(std::vector<T> in_data);
 
   template <typename T>
   void destroy(const std::int32_t& in_uuid);
