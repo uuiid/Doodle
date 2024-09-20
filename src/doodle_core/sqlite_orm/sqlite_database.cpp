@@ -153,16 +153,18 @@ boost::asio::awaitable<void> sqlite_database::install_range(std::vector<scan_dat
   );
 
   {
+    // 步进大小
+    constexpr std::size_t g_step_size{5000};
     auto l_g = l_storage->transaction_guard();
     // 每500次步进(插入步进)
     for (std::size_t i = 0; i < l_split;) {
-      auto l_end = std::min(i + 500, l_split);
+      auto l_end = std::min(i + g_step_size, l_split);
       l_storage->insert_range<scan_data_t::database_t>(in_data.begin() + i, in_data.begin() + l_end);
       i = l_end;
     }
     // 替换步进
     for (std::size_t i = l_split; i < in_data.size();) {
-      auto l_end = std::min(i + 500, in_data.size());
+      auto l_end = std::min(i + g_step_size, in_data.size());
       l_storage->replace_range<scan_data_t::database_t>(in_data.begin() + i, in_data.begin() + l_end);
       i = l_end;
     }
@@ -171,8 +173,7 @@ boost::asio::awaitable<void> sqlite_database::install_range(std::vector<scan_dat
   for (std::size_t i = 0; i < l_split; ++i) {
     using namespace sqlite_orm;
     auto l_v = l_storage->select(
-        &scan_data_t::database_t::id_,
-        sqlite_orm::where(c(&scan_data_t::database_t::uuid_id_) == in_data[i].uuid_id_)
+        &scan_data_t::database_t::id_, sqlite_orm::where(c(&scan_data_t::database_t::uuid_id_) == in_data[i].uuid_id_)
     );
     if (!l_v.empty()) uuid_id_map_[in_data[i].uuid_id_] = l_v.front();
   }
