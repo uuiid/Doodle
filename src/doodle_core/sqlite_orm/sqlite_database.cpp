@@ -85,13 +85,22 @@ std::vector<scan_data_t::database_t> sqlite_database::get_by_uuid<scan_data_t::d
       sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_uuid || c(&scan_data_t::database_t::solve_uuid_)
   ));
 }
-
 template <>
 boost::asio::awaitable<void> sqlite_database::install(scan_data_t::database_t in_data) {
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  auto l_storage = get_cast_storage(storage_any_);
+
+  // if (uuid_id_map_[in_data.uuid_id_] == 0) {
+  //   using namespace sqlite_orm;
+  //   auto l_row = l_storage->select(
+  //       &scan_data_t::database_t::id_, sqlite_orm::where(c(&scan_data_t::database_t::uuid_id_) == in_data.uuid_id_)
+  //   );
+  //   if (!l_row.empty()) uuid_id_map_[in_data.uuid_id_] = l_row.front();
+  // }
+  if (!uuid_id_map_.contains(in_data.project_)) co_return;
 
   in_data.project_id_ = uuid_id_map_[in_data.project_];
-  auto l_storage      = get_cast_storage(storage_any_);
+
   auto l_g            = l_storage->transaction_guard();
   if (uuid_id_map_[in_data.uuid_id_] == 0)
     uuid_id_map_[in_data.uuid_id_] = l_storage->insert<scan_data_t::database_t>(in_data);
@@ -107,6 +116,15 @@ boost::asio::awaitable<void> sqlite_database::install(project_helper::database_t
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
 
   auto l_storage = get_cast_storage(storage_any_);
+  // if (uuid_id_map_[in_data.uuid_id_] == 0) {
+  //   using namespace sqlite_orm;
+  //   auto l_row = l_storage->select(
+  //       &project_helper::database_t::id_,
+  //       sqlite_orm::where(c(&project_helper::database_t::uuid_id_) == in_data.uuid_id_)
+  //   );
+  //   if (!l_row.empty()) uuid_id_map_[in_data.uuid_id_] = l_row.front();
+  // }
+
   auto l_g       = l_storage->transaction_guard();
   if (uuid_id_map_[in_data.uuid_id_] == 0)
     uuid_id_map_[in_data.uuid_id_] = l_storage->insert<project_helper::database_t>(in_data);
@@ -150,10 +168,13 @@ boost::asio::awaitable<void> sqlite_database::install_range(std::vector<scan_dat
     }
     l_g.commit();
   }
-
-  for (auto&& [id, l_uid] :
-       l_storage->select(sqlite_orm::columns(&scan_data_t::database_t::id_, &scan_data_t::database_t::uuid_id_))) {
-    if (!uuid_id_map_.contains(l_uid)) uuid_id_map_[l_uid] = id;
+  for (std::size_t i = 0; i < l_split; ++i) {
+    using namespace sqlite_orm;
+    auto l_v = l_storage->select(
+        &scan_data_t::database_t::id_,
+        sqlite_orm::where(c(&project_helper::database_t::uuid_id_) == in_data[i].uuid_id_)
+    );
+    if (!l_v.empty()) uuid_id_map_[in_data[i].uuid_id_] = l_v.front();
   }
 }
 
