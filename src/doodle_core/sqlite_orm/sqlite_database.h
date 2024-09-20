@@ -34,7 +34,6 @@ class sqlite_database {
   boost::asio::awaitable<void> run_impl();
   boost::asio::awaitable<void> save();
 
-  std::unordered_map<uuid, std::size_t> uuid_id_map_;
 
   void set_path(const FSys::path& in_path);
 
