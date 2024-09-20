@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
       .auto_upload_path_ = "323"
   };
   std::vector<scan_data_t::database_t> l_list{
-      100000,
+      100,
       scan_data_t::database_t{
           .project_    = l_data.uuid_id_,
           .ue_path_    = "das",

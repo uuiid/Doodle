@@ -172,7 +172,7 @@ boost::asio::awaitable<void> sqlite_database::install_range(std::vector<scan_dat
     using namespace sqlite_orm;
     auto l_v = l_storage->select(
         &scan_data_t::database_t::id_,
-        sqlite_orm::where(c(&project_helper::database_t::uuid_id_) == in_data[i].uuid_id_)
+        sqlite_orm::where(c(&scan_data_t::database_t::uuid_id_) == in_data[i].uuid_id_)
     );
     if (!l_v.empty()) uuid_id_map_[in_data[i].uuid_id_] = l_v.front();
   }
