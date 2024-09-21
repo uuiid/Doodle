@@ -29,7 +29,7 @@ struct type_printer<boost::uuids::uuid> : public blob_printer {};
  */
 template <>
 struct statement_binder<boost::uuids::uuid> {
-  int bind(sqlite3_stmt* stmt, int index, const boost::uuids::uuid& value) {
+  int bind(sqlite3_stmt* stmt, int index, const boost::uuids::uuid& value) const {
     if (!value.is_nil()) {
       return sqlite3_bind_blob(stmt, index, value.begin(), boost::uuids::uuid::static_size(), SQLITE_TRANSIENT);
     }
