@@ -32,6 +32,9 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("rig_path", &scan_data_t::database_t::rig_path_),
           make_column("solve_path", &scan_data_t::database_t::solve_path_),
 
+          make_column("season", &scan_data_t::database_t::season_),
+          make_column("assets_type_enum", &scan_data_t::database_t::dep_),
+
           make_column("project", &scan_data_t::database_t::project_id_),
           make_column("num", &scan_data_t::database_t::num_),  //
           make_column("name", &scan_data_t::database_t::name_),

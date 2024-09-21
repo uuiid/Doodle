@@ -11,6 +11,19 @@
 #include "entt/entity/fwd.hpp"
 #include <entt/entt.hpp>
 namespace doodle {
+
+namespace  details {
+enum class assets_type_enum {
+  scene,
+  prop,
+  character,
+  rig,
+  animation,
+  vfx,
+  cfx,
+  other,
+};
+}
 /**
  * @brief 资产类, 这个时候资产分类
  *

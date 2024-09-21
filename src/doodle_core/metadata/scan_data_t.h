@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/project.h>
-
+#include <doodle_core/metadata/assets.h>
 #include <entt/entt.hpp>
 namespace doodle {
 
@@ -45,6 +45,9 @@ class scan_data_t {
     std::filesystem::path ue_path_;
     std::filesystem::path rig_path_;
     std::filesystem::path solve_path_;
+    std::int32_t season_;
+    details::assets_type_enum dep_{};
+
     std::string name_;
     std::string version_;
     std::string num_;

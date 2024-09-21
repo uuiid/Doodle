@@ -12,17 +12,7 @@
 #include <map>
 
 namespace doodle::details {
-class scan_category_data_t;
-enum class assets_type_enum {
-  scene,
-  prop,
-  character,
-  rig,
-  animation,
-  vfx,
-  cfx,
-  other,
-};
+
 class scan_category_data_t {
  private:
  public:
@@ -75,7 +65,8 @@ class scan_category_t {
   logger_ptr logger_;
   scan_category_t() {}
   virtual ~scan_category_t() = default;
-  virtual std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_helper::database_t>&in_root) const = 0;
+  virtual std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_helper::database_t>& in_root
+  ) const                    = 0;
 
   virtual void scan_file_hash(const scan_category_data_ptr& in_data);
 
