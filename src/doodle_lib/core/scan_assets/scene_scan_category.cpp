@@ -9,8 +9,10 @@
 
 namespace doodle::details {
 
-std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_root_t& in_root) const {
-  const FSys::path l_scene_path = in_root.p_path / "6-moxing/BG";
+std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
+    const std::shared_ptr<project_helper::database_t>& in_root
+) const {
+  const FSys::path l_scene_path = FSys::path{in_root->path_} / "6-moxing/BG";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
   const std::regex l_BG_regex{R"(BG(\d+[a-zA-Z]\d*))"};
 
@@ -38,7 +40,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
         // 直接创建, 有空的, 但是也要在这里创建
         auto l_ptr            = std::make_shared<scene_scan_category_data_t>();
         l_ptr->season_        = l_season;
-        l_ptr->project_root_  = in_root;
+        l_ptr->project_database_ptr  = in_root;
         l_ptr->begin_episode_ = l_begin_episode;
         l_ptr->name_          = l_s3.path().filename().generic_string();
         l_ptr->BG_path_       = l_s2.path();
@@ -61,7 +63,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(const project_ro
           if (!l_version_str.empty()) {
             l_ptr                 = std::make_shared<scene_scan_category_data_t>();
             l_ptr->season_        = l_season;
-            l_ptr->project_root_  = in_root;
+            l_ptr->project_database_ptr  = in_root;
             l_ptr->begin_episode_ = l_begin_episode;
             l_ptr->name_          = l_s3.path().filename().generic_string();
             l_ptr->BG_path_       = l_s2.path();

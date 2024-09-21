@@ -38,7 +38,7 @@ class scan_sink_t : public spdlog::sinks::base_sink<Mutex> {
 // }  // namespace
 using scan_assets_scan_sink_t = scan_sink_t<std::mutex>;
 void scan_assets_t::init_scan_categories() {
-  logger_data_ = std::make_shared<logger_data_t>();
+  logger_data_   = std::make_shared<logger_data_t>();
   auto l_list    = register_file_type::get_project_list();
   project_roots_ = l_list | ranges::views::transform([](const project& in_project) -> project_root_gui_t {
                      project_root_gui_t l_root{};
@@ -163,7 +163,7 @@ void scan_assets_t::start_scan() {
     for (auto&& l_data : scan_categories_) {
       auto l_end_ptr = scan_categories_is_scan_.emplace_back(std::make_shared<std::atomic_bool>(false));
       g_ctx().get<doodle::details::scan_category_service_t>().async_scan_files(
-          l_root, l_data,
+          std::make_shared<project_helper::database_t>(static_cast<project_helper::database_t>(l_root)), l_data,
           boost::asio::bind_executor(
               g_io_context(),
               [l_end_ptr, l_root = l_root.p_path,

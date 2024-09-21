@@ -26,9 +26,8 @@ class character_scan_category_t : public scan_category_t {
    public:
     std::int32_t begin_episode_;
 
-
     FSys::path Ch_path_;
   };
-  std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const override;
+  std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_helper::database_t>&in_root) const override;
 };
 }  // namespace doodle::gui::details

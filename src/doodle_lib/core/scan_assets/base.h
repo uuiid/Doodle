@@ -50,7 +50,8 @@ class scan_category_data_t {
 
   // 项目根目录
   project_root_t project_root_;
-  entt::entity project_id{};
+  std::shared_ptr<project_helper::database_t> project_database_ptr;
+
   // 季数
   season season_;
   // 名称
@@ -74,8 +75,8 @@ class scan_category_t {
 
   logger_ptr logger_;
   scan_category_t() {}
-  virtual ~scan_category_t()                                                            = default;
-  virtual std::vector<scan_category_data_ptr> scan(const project_root_t& in_root) const = 0;
+  virtual ~scan_category_t() = default;
+  virtual std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_helper::database_t>&in_root) const = 0;
 
   virtual void scan_file_hash(const scan_category_data_ptr& in_data);
 

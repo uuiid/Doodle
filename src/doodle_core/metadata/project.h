@@ -6,6 +6,9 @@ namespace project_config {
 class base_config;
 
 }  // namespace project_config
+namespace project_helper {
+struct database_t;
+}
 
 /**
  * 项目信息类
@@ -43,6 +46,7 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
         p_shor_str(std::move(in_shor_str)),
         p_local_path(std::move(in_local_path)),
         p_auto_upload_path(std::move(in_auto_upload_path)) {}
+  explicit project(const project_helper::database_t& in);
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& Name) noexcept;
@@ -58,6 +62,8 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
 
   bool operator<(const project& in_rhs) const;
   bool operator==(const project& in_rhs) const;
+
+  operator project_helper::database_t() const;
 
  private:
   friend void to_json(nlohmann::json& j, const project& p) {
@@ -75,31 +81,29 @@ struct project_ptr {
   project* project_;
 };
 
-class project_helper {
-  static void dependent_uuid(entt::registry& in_reg, entt::entity in_entity);
-  static void on_destroy(entt::registry& in_reg, entt::entity in_entity);
+namespace project_helper {
+static void dependent_uuid(entt::registry& in_reg, entt::entity in_entity);
+static void on_destroy(entt::registry& in_reg, entt::entity in_entity);
 
- public:
-
-  struct project_ctx_t {
-    std::array<entt::scoped_connection, 3> conn_;
-  };
-
-  struct database_t {
-    std::int32_t id_{};
-    uuid uuid_id_{};
-
-    std::string name_{};
-    std::string path_{};
-    std::string en_str_{};
-    std::string shor_str_{};
-    std::string local_path_{};
-    std::string auto_upload_path_{};
-  };
-
-  static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
-  static void seed_to_sql(const entt::registry& in_registry, const std::vector<entt::entity>& in_entity);
+struct project_ctx_t {
+  std::array<entt::scoped_connection, 3> conn_;
 };
+
+struct database_t {
+  std::int32_t id_{};
+  uuid uuid_id_{};
+
+  std::string name_{};
+  std::string path_{};
+  std::string en_str_{};
+  std::string shor_str_{};
+  std::string local_path_{};
+  std::string auto_upload_path_{};
+};
+
+static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
+static void seed_to_sql(const entt::registry& in_registry, const std::vector<entt::entity>& in_entity);
+};  // namespace project_helper
 
 namespace project_config {
 void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);

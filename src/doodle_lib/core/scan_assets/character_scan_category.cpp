@@ -5,8 +5,10 @@
 #include "character_scan_category.h"
 namespace doodle::details {
 
-std::vector<scan_category_data_ptr> character_scan_category_t::scan(const project_root_t &in_root) const {
-  const FSys::path l_character_path_root = in_root.p_path / "6-moxing/Ch";
+std::vector<scan_category_data_ptr> character_scan_category_t::scan(
+    const std::shared_ptr<project_helper::database_t> &in_root
+) const {
+  const FSys::path l_character_path_root = FSys::path{in_root->path_} / "6-moxing/Ch";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
   const std::regex l_Ch_regex{R"(Ch(\d+[A-Z]))"};
   std::regex l_Ue_regex{R"((\w+)_UE\d)"};
@@ -38,18 +40,18 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
         auto l_ch_name_ue_path = l_s3.path();
         auto l_ch_name_ue_name = l_ch_name_ue_path.filename().generic_string();
         if (!std::regex_match(l_ch_name_ue_name, l_match, l_Ue_regex)) continue;
-        auto l_ch_name          = l_match[1].str();
-        auto l_ch_ue_asset_path = l_ch_name_ue_path / "Content" / "Character" / l_ch_name / "Meshs";
+        auto l_ch_name              = l_match[1].str();
+        auto l_ch_ue_asset_path     = l_ch_name_ue_path / "Content" / "Character" / l_ch_name / "Meshs";
 
         // 在这里就创建,有空的, 但是也要在这里创建
-        auto l_ptr              = std::make_shared<character_scan_category_data_t>();
-        l_ptr->project_root_    = in_root;
-        l_ptr->season_          = l_season;
-        l_ptr->name_            = fmt::format("Ch_{}", l_number_str);
-        l_ptr->Ch_path_         = l_ChNum_path;
-        l_ptr->base_path_       = l_ch_name_ue_path;
-        l_ptr->begin_episode_   = l_begin_episode;
-        l_ptr->number_str_      = l_number_str;
+        auto l_ptr                  = std::make_shared<character_scan_category_data_t>();
+        l_ptr->project_database_ptr = in_root;
+        l_ptr->season_              = l_season;
+        l_ptr->name_                = fmt::format("Ch_{}", l_number_str);
+        l_ptr->Ch_path_             = l_ChNum_path;
+        l_ptr->base_path_           = l_ch_name_ue_path;
+        l_ptr->begin_episode_       = l_begin_episode;
+        l_ptr->number_str_          = l_number_str;
         l_ptr->file_type_.set_path("角色");
         l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
         l_out.emplace_back(l_ptr);
@@ -107,7 +109,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(const projec
 
   // 添加Solve文件
   for (auto &&l_ptr : l_out) {
-    auto l_solve_path = in_root.p_path / "6-moxing" / "CFX";
+    auto l_solve_path = FSys::path{in_root->path_} / "6-moxing" / "CFX";
     if (!FSys::exists(l_ptr->rig_file_.path_)) continue;
     l_solve_path /= fmt::format("{}_cloth.ma", l_ptr->rig_file_.path_.stem().generic_string());
     if (!FSys::exists(l_solve_path)) continue;

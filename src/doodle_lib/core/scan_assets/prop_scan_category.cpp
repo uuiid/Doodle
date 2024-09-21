@@ -8,8 +8,10 @@
 #include <doodle_core/metadata/season.h>
 namespace doodle::details {
 
-std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_root_t &in_root) const {
-  const FSys::path l_prop_path_root = in_root.p_path / "6-moxing/Prop";
+std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
+    const std::shared_ptr<project_helper::database_t> &in_root
+) const {
+  const FSys::path l_prop_path_root = FSys::path{in_root->path_} / "6-moxing/Prop";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 
   if (!FSys::exists(l_prop_path_root)) {
@@ -32,17 +34,17 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
     if (!FSys::is_directory(l_prop_path)) continue;
     for (auto &&l_s2 : FSys::directory_iterator{l_prop_path}) {  // 迭代二级目录
       if (!l_s2.is_directory()) continue;
-      const auto l_name_str = l_s2.path().filename().generic_string();
+      const auto l_name_str       = l_s2.path().filename().generic_string();
 
       // 直接创建, 有空的, 但是也要在这里创建
-      auto l_ptr            = std::make_shared<prop_scan_category_data_t>();
-      l_ptr->project_root_  = in_root;
-      l_ptr->season_        = l_season;
-      l_ptr->begin_episode_ = l_begin_episode;
-      l_ptr->name_          = l_name_str;
-      l_ptr->JD_path_       = l_s.path();
-      l_ptr->base_path_     = l_s2.path();
-      l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::prop;
+      auto l_ptr                  = std::make_shared<prop_scan_category_data_t>();
+      l_ptr->project_database_ptr = in_root;
+      l_ptr->season_              = l_season;
+      l_ptr->begin_episode_       = l_begin_episode;
+      l_ptr->name_                = l_name_str;
+      l_ptr->JD_path_             = l_s.path();
+      l_ptr->base_path_           = l_s2.path();
+      l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::prop;
       l_ptr->file_type_.set_path("道具");
       l_out.emplace_back(l_ptr);
 
@@ -64,14 +66,14 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const project_roo
 
         // 不同版本的显示
         if (!l_version_str.empty()) {
-          l_ptr                 = std::make_shared<prop_scan_category_data_t>();
-          l_ptr->project_root_  = in_root;
-          l_ptr->season_        = l_season;
-          l_ptr->begin_episode_ = l_begin_episode;
-          l_ptr->name_          = l_name_str;
-          l_ptr->JD_path_       = l_s.path();
-          l_ptr->base_path_     = l_s2.path();
-          l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::prop;
+          l_ptr                       = std::make_shared<prop_scan_category_data_t>();
+          l_ptr->project_database_ptr = in_root;
+          l_ptr->season_              = l_season;
+          l_ptr->begin_episode_       = l_begin_episode;
+          l_ptr->name_                = l_name_str;
+          l_ptr->JD_path_             = l_s.path();
+          l_ptr->base_path_           = l_s2.path();
+          l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::prop;
           l_ptr->file_type_.set_path("道具");
           l_out.emplace_back(l_ptr);
           l_ptr->version_name_ = l_version_str;

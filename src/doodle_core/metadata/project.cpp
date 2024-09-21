@@ -20,6 +20,27 @@ project::project(FSys::path in_path, std::string in_name) : project() {
   p_path = std::move(in_path);
   init_name();
 }
+project::project(const project_helper::database_t& in)
+    : p_name(in.name_),
+      p_path(in.path_),
+      p_en_str(in.en_str_),
+      p_shor_str(in.shor_str_),
+      p_local_path(in.local_path_),
+      p_auto_upload_path(in.auto_upload_path_) {}
+
+project::operator project_helper::database_t() const {
+  project_helper::database_t l_ret{
+      .id_               = 0,
+      .uuid_id_          = core_set::get_set().get_uuid(),
+      .name_             = p_name,
+      .path_             = p_path.generic_string(),
+      .en_str_           = p_en_str,
+      .shor_str_         = p_shor_str,
+      .local_path_       = p_local_path.generic_string(),
+      .auto_upload_path_ = p_auto_upload_path.generic_string()
+  };
+  return l_ret;
+}
 
 void project::set_name(const std::string& Name) noexcept {
   if (Name == p_name) return;
@@ -75,8 +96,6 @@ FSys::path project::make_path(const FSys::path& in_path) const {
 void project_helper::dependent_uuid(entt::registry& in_reg, entt::entity in_entity) {
   auto& l_s = in_reg.storage<uuid>(detail::project_id);
   if (!l_s.contains(in_entity)) l_s.emplace(in_entity, core_set::get_set().get_uuid());
-
-
 }
 void project_helper::on_destroy(entt::registry& in_reg, entt::entity in_entity) {
   // g_ctx().get<sqlite_database>().destroy<scan_data_t>(in_reg.storage<entt::id_type>(detail::sql_id).get(in_entity));
