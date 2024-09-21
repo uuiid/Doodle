@@ -49,8 +49,10 @@ class scan_data_t {
     details::assets_type_enum dep_{};
 
     std::string name_;
-    std::string version_;
-    std::string num_;
+    std::optional<std::string> version_;
+    std::optional<std::string> num_;
+
+    std::string hash_;
 
     std::int32_t id_;
   };
