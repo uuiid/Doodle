@@ -54,28 +54,22 @@ class scan_win_service_t {
   timer_ptr_t timer_;
   signal_ptr_t signal_;
   boost::asio::any_io_executor executor_{};
-
   boost::asio::thread_pool thread_pool_{};
 
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
   std::vector<std::shared_ptr<project_helper::database_t>> project_roots_;
-  std::vector<bool> scan_categories_is_scan_;
-  std::map<uuid, entt::handle> handle_map_;
-  std::map<FSys::path, entt::handle> path_map_;
 
-  std::map<project, entt::handle> project_map_;
-
-  using scan_category_data_id_map = std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>;
+  using scan_category_data_id_map = std::unordered_map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>;
   std::array<scan_category_data_id_map, 2> scan_data_maps_;
 
-  using scan_category_data_key_map = std::map<scan::scan_key_t, doodle::details::scan_category_data_ptr>;
+  using scan_category_data_key_map = std::unordered_map<scan::scan_key_t, doodle::details::scan_category_data_ptr>;
   std::array<scan_category_data_key_map, 2> scan_data_key_maps_;
 
   std::atomic_int index_{};
 
   boost::asio::awaitable<void> begin_scan();
   void create_project_map();
-  boost::asio::awaitable<void> seed_to_reg(std::vector<doodle::details::scan_category_data_ptr> in_data_vec);
+  boost::asio::awaitable<void> seed_to_sql(std::int32_t in_current_index);
 
   void add_handle(
       const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index

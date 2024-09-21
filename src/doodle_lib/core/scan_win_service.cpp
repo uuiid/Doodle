@@ -57,6 +57,19 @@ auto to_scan_data(
       in_completion
   );
 };
+void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
+  if (in_uuid.is_nil() && FSys::exists(in_path)) {
+    in_uuid = core_set::get_set().get_uuid();
+    for (auto i = 0; i < 3; ++i) {
+      try {
+        FSys::software_flag_file(in_path, in_uuid);
+        break;
+      } catch (const wil::ResultException& in) {
+        default_logger_raw()->error("生成uuid失败 {}", in.what());
+      }
+    }
+  }
+}
 }  // namespace
 
 void scan_win_service_t::start() {
@@ -118,6 +131,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       }
       add_handle(l_v[i].value(), l_current_index);
     }
+    co_await seed_to_sql(l_current_index);
     // 交换缓冲区
     index_ = l_current_index;
 
@@ -134,49 +148,60 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
 void scan_win_service_t::create_project_map() {}
 
-namespace {
-void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
-  if (in_uuid.is_nil() && FSys::exists(in_path)) {
-    in_uuid = core_set::get_set().get_uuid();
-    for (auto i = 0; i < 3; ++i) {
-      try {
-        FSys::software_flag_file(in_path, in_uuid);
-        break;
-      } catch (const wil::ResultException& in) {
-        default_logger_raw()->error("生成uuid失败 {}", in.what());
+boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
+  auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
+  auto l_new_key        = l_scan_key_data | ranges::views::keys | ranges::to<std::unordered_set<scan::scan_key_t>>();
+  auto l_data           = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
+  std::unordered_map<scan::scan_key_t, std::size_t> l_old_map{};
+  l_old_map.reserve(l_data.size());
+
+  for (std::size_t i = 0; i < l_data.size(); ++i) {
+    auto& l_d = l_data[i];
+    l_old_map[{
+        .dep_          = l_d.dep_,
+        .season_       = season{l_d.season_},
+        .project_      = l_d.project_,
+        .number_       = l_d.num_ ? *l_d.num_ : std::string{},
+        .name_         = l_d.name_,
+        .version_name_ = l_d.version_ ? *l_d.version_ : std::string{},
+    }]        = i;
+  }
+
+  // 开始查询更改
+  auto l_install = std::make_shared<std::vector<scan_data_t::database_t>>();
+  for (auto&& [l_key, l_val] : l_scan_key_data) {
+    if (l_old_map.contains(l_key)) {
+      auto& l_old = l_data[l_old_map[l_key]];
+      if (l_old.ue_uuid_ != l_val->ue_file_.uuid_ || l_old.rig_uuid_ != l_val->rig_file_.uuid_ ||
+          l_old.solve_uuid_ != l_val->solve_file_.uuid_ || l_old.hash_ != l_val->file_hash_) {
+        auto&& l_new   = l_install->emplace_back(scan_data_t::database_t{static_cast<scan_data_t::database_t>(*l_val)});
+        l_new.id_      = l_old.id_;
+        l_new.uuid_id_ = l_old.uuid_id_;
       }
-    }
-  }
-}
-}  // namespace
 
-boost::asio::awaitable<void> scan_win_service_t::seed_to_reg(
-    std::vector<doodle::details::scan_category_data_ptr> in_data_vec
-) {
-  std::map<uuid, entt::entity> l_uuid_entity_map{};
-
-  for (auto&& [e, id] : g_reg()->view<scan_data_t::path_uuid>().each()) {
-    l_uuid_entity_map[id.rig_uuid_]   = e;
-    l_uuid_entity_map[id.ue_uuid_]    = e;
-    l_uuid_entity_map[id.solve_uuid_] = e;
-  }
-
-  std::vector<std::function<void()>> l_set_info{};
-
-  for (auto&& l_data : in_data_vec) {
-    scan_win_service_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
-    scan_win_service_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
-    scan_win_service_id_is_nil(l_data->solve_file_.uuid_, l_data->solve_file_.path_);
-    if (l_uuid_entity_map.contains(l_data->rig_file_.uuid_) || l_uuid_entity_map.contains(l_data->ue_file_.uuid_) ||
-        l_uuid_entity_map.contains(l_data->solve_file_.uuid_)) {
+    } else {
+      l_install->emplace_back(scan_data_t::database_t{static_cast<scan_data_t::database_t>(*l_val)}).uuid_id_ =
+          core_set::get_set().get_uuid();
     }
   }
 
-  DOODLE_TO_MAIN_THREAD();
-  for (auto&& l_func : l_set_info) {
-    l_func();
+  // 此次开始删除旧的
+  auto l_rem_ids = std::make_shared<std::vector<std::int64_t>>();
+  {
+    std::unordered_set<scan::scan_key_t> l_old_key =
+        l_old_map | ranges::views::keys | ranges::to<std::unordered_set<scan::scan_key_t>>();
+    l_old_key.merge(l_new_key);
+
+    std::vector<scan::scan_key_t> l_set_rem{};
+    l_set_rem.reserve(1000);
+    std::set_difference(
+        l_old_key.begin(), l_old_key.end(), l_new_key.begin(), l_new_key.end(), std::back_inserter(l_set_rem)
+    );
+    l_rem_ids->reserve(l_set_rem.size());
+    for (auto&& i : l_set_rem) {
+      l_rem_ids->emplace_back(l_data[l_old_map[i]].id_);
+    }
   }
-  DOODLE_TO_SELF();
 }
 
 void scan_win_service_t::add_handle(
