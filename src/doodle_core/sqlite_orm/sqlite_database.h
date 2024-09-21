@@ -50,6 +50,7 @@ class sqlite_database {
   std::vector<T> get_by_uuid(const uuid& in_uuid);
 
   std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id);
+  std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
 
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data);

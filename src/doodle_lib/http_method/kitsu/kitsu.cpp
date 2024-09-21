@@ -3,6 +3,7 @@
 //
 #include "kitsu.h"
 
+#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_lib/core/http/http_route.h>
@@ -62,14 +63,10 @@ http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_h
   return l_client_data;
 }
 
-project find_project(const std::string& in_name) {
-  auto& l_prj = register_file_type::get_project_list();
-  for (auto& l_p : l_prj) {
-    if (l_p.p_name == in_name) {
-      return l_p;
-    }
-  }
-  return project{};
+project_helper::database_t find_project(const std::string& in_name) {
+  auto l_prj = g_ctx().get<sqlite_database>().find_project_by_name(in_name);
+  if(l_prj.empty()) return {};
+  return l_prj.front();
 }
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name) {
   if (in_name == "角色") {

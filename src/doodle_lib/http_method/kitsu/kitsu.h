@@ -27,7 +27,7 @@ http_route_ptr create_kitsu_route();
 namespace kitsu {
 http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_handle);
 
-project find_project(const std::string& in_name);
+project_helper::database_t find_project(const std::string& in_name);
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name);
 }  // namespace kitsu
 

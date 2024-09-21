@@ -4,6 +4,7 @@
 
 #include "task.h"
 
+#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
@@ -32,7 +33,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(sess
       scan::scan_key_t l_key{
           .dep_     = conv_assets_type_enum(l_json["dep"]["name"]),
           .season_  = season{l_user_data["gui_dang"].get<std::int32_t>()},
-          .project_ = find_project(l_json["project"]["name"]),
+          .project_ = find_project(l_json["project"]["name"]).uuid_id_,
           .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
           .name_    = l_user_data["pin_yin_ming_cheng"].get<std::string>(),
           .version_name_ = l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
@@ -46,13 +47,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info(sess
       }
       l_file_exist = FSys::exists(l_maya_path) && FSys::exists(l_ue_path);
     } else {
-      l_file_exist      = true;
+      l_file_exist = true;
     }
   } catch (...) {
     l_file_exist = false;
   }
   l_json["file_exist"] = l_file_exist;
-  l_res.body() = l_json.dump();
+  l_res.body()         = l_json.dump();
   co_return std::move(l_res);
 }
 
