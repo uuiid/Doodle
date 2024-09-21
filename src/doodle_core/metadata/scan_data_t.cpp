@@ -32,7 +32,7 @@ void scan_data_t::seed_to_sql(const entt::registry& in_registry, const std::vect
     l_ret.version_    = l_a.version_;
     l_ret.id_         = to_entity(l_entity);
 
-    g_ctx().get<sqlite_database>()(std::move(l_ret));
+    // g_ctx().get<sqlite_database>()(std::move(l_ret));
   }
 }
 
@@ -51,7 +51,7 @@ void scan_data_t::dependent_uuid(entt::registry& in_reg, entt::entity in_entity)
   if (!in_reg.all_of<project_ptr>(in_entity)) in_reg.emplace<project_ptr>(in_entity);
 }
 void scan_data_t::on_destroy(entt::registry& in_reg, entt::entity in_entity) {
-  g_ctx().get<sqlite_database>().destroy<scan_data_t>(in_reg.storage<entt::id_type>(detail::sql_id).get(in_entity));
+  // g_ctx().get<sqlite_database>().destroy<scan_data_t>(in_reg.storage<entt::id_type>(detail::sql_id).get(in_entity));
 }
 
 std::vector<entt::entity> scan_data_t::load_from_sql(

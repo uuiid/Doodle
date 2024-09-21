@@ -79,7 +79,7 @@ void project_helper::dependent_uuid(entt::registry& in_reg, entt::entity in_enti
 
 }
 void project_helper::on_destroy(entt::registry& in_reg, entt::entity in_entity) {
-  g_ctx().get<sqlite_database>().destroy<scan_data_t>(in_reg.storage<entt::id_type>(detail::sql_id).get(in_entity));
+  // g_ctx().get<sqlite_database>().destroy<scan_data_t>(in_reg.storage<entt::id_type>(detail::sql_id).get(in_entity));
 }
 
 std::vector<entt::entity> project_helper::load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data) {
@@ -118,7 +118,7 @@ void project_helper::seed_to_sql(const entt::registry& in_registry, const std::v
         .auto_upload_path_ = l_p.p_auto_upload_path.generic_string()
     };
     l_r.uuid_id_ = in_registry.storage<uuid>(detail::project_id)->get(l_handle);
-    g_ctx().get<sqlite_database>()(std::move(l_r));
+    // g_ctx().get<sqlite_database>()(std::move(l_r));
   }
 }
 
