@@ -69,11 +69,26 @@ template <>
 std::vector<scan_data_t::database_t> sqlite_database::get_by_uuid<scan_data_t::database_t>(const uuid& in_uuid) {
   using namespace sqlite_orm;
   auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<scan_data_t::database_t>(
+      sqlite_orm::where(sqlite_orm::c(&scan_data_t::database_t::uuid_id_) == in_uuid)
+  );
+}
+
+template <>
+std::vector<project_helper::database_t> sqlite_database::get_all() {
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<project_helper::database_t>();
+}
+
+std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid& in_id) {
+  using namespace sqlite_orm;
+  auto l_storage = get_cast_storage(storage_any_);
   return l_storage->get_all<scan_data_t::database_t>(sqlite_orm::where(
-      sqlite_orm::c(&scan_data_t::database_t::ue_uuid_) == in_uuid ||
-      sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_uuid || c(&scan_data_t::database_t::solve_uuid_)
+      sqlite_orm::c(&scan_data_t::database_t::ue_uuid_) == in_id ||
+      sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_id || c(&scan_data_t::database_t::solve_uuid_) == in_id
   ));
 }
+
 template <>
 boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
     std::shared_ptr<scan_data_t::database_t> in_data
