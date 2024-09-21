@@ -146,34 +146,30 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
     std::sort(in_data->begin(), in_data->end(), [](scan_data_t::database_t& in_r, scan_data_t::database_t& in_l) {
       return in_r.id_ < in_l.id_;
     });
+  std::size_t l_split = std::distance(
+      in_data->begin(), std::ranges::find_if(*in_data, [](const scan_data_t::database_t& in_) { return in_.id_ != 0; })
+  );
 
   co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
   try {
     auto l_storage = get_cast_storage(storage_any_);
 
-    std::size_t l_split =
-        std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const scan_data_t::database_t& in_) {
-                        return in_.id_ != 0;
-                      }));
-
-    {
-      // 步进大小
-      constexpr std::size_t g_step_size{5000};
-      auto l_g = l_storage->transaction_guard();
-      // 每500次步进(插入步进)
-      for (std::size_t i = 0; i < l_split;) {
-        auto l_end = std::min(i + g_step_size, l_split);
-        l_storage->insert_range<scan_data_t::database_t>(in_data->begin() + i, in_data->begin() + l_end);
-        i = l_end;
-      }
-      // 替换步进
-      for (std::size_t i = l_split; i < in_data->size();) {
-        auto l_end = std::min(i + g_step_size, in_data->size());
-        l_storage->replace_range<scan_data_t::database_t>(in_data->begin() + i, in_data->begin() + l_end);
-        i = l_end;
-      }
-      l_g.commit();
+    // 步进大小
+    constexpr std::size_t g_step_size{5000};
+    auto l_g = l_storage->transaction_guard();
+    // 每500次步进(插入步进)
+    for (std::size_t i = 0; i < l_split;) {
+      auto l_end = std::min(i + g_step_size, l_split);
+      l_storage->insert_range<scan_data_t::database_t>(in_data->begin() + i, in_data->begin() + l_end);
+      i = l_end;
     }
+    // 替换步进
+    for (std::size_t i = l_split; i < in_data->size();) {
+      auto l_end = std::min(i + g_step_size, in_data->size());
+      l_storage->replace_range<scan_data_t::database_t>(in_data->begin() + i, in_data->begin() + l_end);
+      i = l_end;
+    }
+    l_g.commit();
 
     for (std::size_t i = 0; i < l_split; ++i) {
       using namespace sqlite_orm;
@@ -185,6 +181,22 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
     }
     co_return tl::expected<void, std::string>{};
   } catch (...) {
+    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+  }
+}
+
+template <>
+boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<scan_data_t::database_t>(
+    std::shared_ptr<std::vector<std::int64_t>> in_data
+) {
+  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  try {
+    auto l_storage = get_cast_storage(storage_any_);
+    auto l_g       = l_storage->transaction_guard();
+    for (auto&& i : *in_data) {
+      l_storage->remove<scan_data_t::database_t>(i);
+    }
+  }catch (...) {
     co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
   }
 }

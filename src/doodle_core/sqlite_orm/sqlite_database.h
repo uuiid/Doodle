@@ -33,8 +33,6 @@ class sqlite_database {
  public:
   sqlite_database()  = default;
   ~sqlite_database() = default;
-
-  void run();
   /**
    * 这回调函数用于加载数据库,  并且将数据库中的id分配到 sql_id 池中,  以便后续操作,
    * @warning 只有这里会分配id,  之后的操作不会分配, 只会查找id是否为 0 作为插入和更新的依据,
@@ -63,7 +61,8 @@ class sqlite_database {
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install_range(std::shared_ptr<std::vector<T>> in_data);
 
-
+  template <typename T>
+  boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<std::vector<std::int64_t>> in_data);
 
 };
 }  // namespace doodle

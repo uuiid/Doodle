@@ -16,9 +16,8 @@ namespace doodle::details {
 class scan_category_data_t {
  private:
  public:
-  using assets_type_enum          = assets_type_enum;
+  using assets_type_enum = assets_type_enum;
 
-  virtual ~scan_category_data_t() = default;
   // uuid和文件路径的类
   struct uuid_path_t {
     uuid uuid_;
