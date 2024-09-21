@@ -42,9 +42,9 @@ class scan_data_t {
     uuid project_;
     std::int32_t project_id_;
 
-    std::string ue_path_;
-    std::string rig_path_;
-    std::string solve_path_;
+    std::filesystem::path ue_path_;
+    std::filesystem::path rig_path_;
+    std::filesystem::path solve_path_;
     std::string name_;
     std::string version_;
     std::string num_;

@@ -7,6 +7,7 @@
 #include <doodle_core/core/app_base.h>
 
 #include <sqlite_orm/sqlite_orm.h>
+#include <sqlite_orm/std_filesystem_path_orm.h>
 #include <sqlite_orm/uuid_to_blob.h>
 namespace doodle {
 
