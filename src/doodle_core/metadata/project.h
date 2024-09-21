@@ -94,11 +94,15 @@ struct database_t {
   uuid uuid_id_{};
 
   std::string name_{};
-  std::string path_{};
+  std::filesystem::path path_{};
   std::string en_str_{};
   std::string shor_str_{};
-  std::string local_path_{};
+  std::filesystem::path local_path_{};
   std::string auto_upload_path_{};
+  friend void to_json(nlohmann::json& j, const database_t& p) {
+    j["name"] = p.name_;
+    j["path"] = p.path_;
+  }
 };
 
 static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);

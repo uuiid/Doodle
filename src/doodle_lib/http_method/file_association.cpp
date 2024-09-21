@@ -31,7 +31,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
         {"ue_file", l_data->ue_file_.path_},
         {"solve_file_", l_data->solve_file_.path_},
         {"type", l_data->assets_type_},
-        {"project", l_data->project_root_}
+        {"project", *l_data->project_database_ptr}
     };
     co_return in_handle->make_msg(l_json.dump());
   }

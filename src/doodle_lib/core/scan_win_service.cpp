@@ -4,6 +4,7 @@
 
 #include "scan_win_service.h"
 
+#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -28,7 +29,7 @@ namespace {
 template <typename CompletionHandler>
 
 auto to_scan_data(
-    boost::asio::thread_pool& in_pool, const details::scan_category_data_t::project_root_t& in_project_root,
+    boost::asio::thread_pool& in_pool, const std::shared_ptr<project_helper::database_t>& in_project_root,
     const std::shared_ptr<details::scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
 ) {
   using expected_t              = tl::expected<std::vector<details::scan_category_data_ptr>, std::string>;
@@ -69,7 +70,11 @@ void scan_win_service_t::start() {
 }
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
-  project_roots_   = register_file_type::get_project_list();
+  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
+  project_roots_.reserve(l_prjs.size());
+  for (auto&& l_prj : l_prjs) {
+    project_roots_.emplace_back(std::make_shared<project_helper::database_t>(std::move(l_prj)));
+  }
   scan_categories_ = {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
       std::make_shared<details::prop_scan_category_t>()
@@ -83,7 +88,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
              "scene",
              "prop",
          })
-      l_msg.emplace_back(fmt::format("扫根目录瞄 {} 中 {} ", l_root.p_local_path, l_data));
+      l_msg.emplace_back(fmt::format("扫根目录瞄 {} 中 {} ", l_root->local_path_, l_data));
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // if (app_base::GetPtr()->is_stop()) co_return;
@@ -127,15 +132,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   }
 }
 
-void scan_win_service_t::create_project_map() {
-  for (auto&& l_root : project_roots_) {
-    for (auto&& [l_e, p] : g_reg()->view<project>().each()) {
-      if (p == l_root) {
-        project_map_[l_root] = {*g_reg(), l_e};
-      }
-    }
-  }
-}
+void scan_win_service_t::create_project_map() {}
 
 namespace {
 void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
@@ -200,7 +197,7 @@ void scan_win_service_t::add_handle(
     l_scan_key_data[{
         .dep_          = l_data->assets_type_,
         .season_       = l_data->season_,
-        .project_      = l_data->project_root_,
+        .project_      = l_data->project_database_ptr->uuid_id_,
         .number_       = l_data->number_str_,
         .name_         = l_data->name_,
         .version_name_ = l_data->version_name_,

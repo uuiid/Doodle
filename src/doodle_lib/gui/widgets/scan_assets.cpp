@@ -130,23 +130,23 @@ void scan_assets_t::append_assets_table_data(const std::vector<doodle::details::
     l_gui_data.version_name_ = l_data->version_name_;
     l_gui_data.base_path_    = l_data->base_path_;
     l_gui_data.base_path_show =
-        gui_cache_name_id{l_data->base_path_.lexically_proximate(l_data->project_root_.p_path).generic_string()};
+        gui_cache_name_id{l_data->base_path_.lexically_proximate(l_data->project_database_ptr->path_).generic_string()};
     if (l_data->ue_file_.path_.empty()) {
       l_gui_data.ue_path_       = "未找到路径";
       l_gui_data.ue_path_color_ = ImVec4{1.0f, 0.0f, 0.0f, 1.0f};
     } else {
-      l_gui_data.ue_path_ = l_data->ue_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
+      l_gui_data.ue_path_ = l_data->ue_file_.path_.lexically_proximate(l_data->project_database_ptr->path_).generic_string();
     }
     if (l_data->rig_file_.path_.empty()) {
       l_gui_data.maya_rig_path_       = "未找到路径";
       l_gui_data.maya_rig_path_color_ = ImVec4{1.0f, 0.0f, 0.0f, 1.0f};
     } else {
       l_gui_data.maya_rig_path_ =
-          l_data->rig_file_.path_.lexically_proximate(l_data->project_root_.p_path).generic_string();
+          l_data->rig_file_.path_.lexically_proximate(l_data->project_database_ptr->path_).generic_string();
     }
 
-    l_gui_data.project_root_ = l_data->project_root_.p_path.generic_string();
-    l_gui_data.info_         = fmt::format("{}/{}", l_data->project_root_.p_name, l_data->file_type_);
+    l_gui_data.project_root_ = l_data->project_database_ptr->path_.generic_string();
+    l_gui_data.info_         = fmt::format("{}/{}", l_data->project_database_ptr->name_, l_data->file_type_);
     assets_table_data_.emplace_back(std::move(l_gui_data));
   }
   assets_table_data_ |=

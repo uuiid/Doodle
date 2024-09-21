@@ -20,7 +20,7 @@ struct scan_key_t : boost::totally_ordered<scan_key_t> {
   season season_;
   episodes episodes_;
   shot shot_;
-  project project_;
+  uuid project_;
   std::string number_;
   std::string name_;
   std::string version_name_;
@@ -58,7 +58,7 @@ class scan_win_service_t {
   boost::asio::thread_pool thread_pool_{};
 
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
-  std::vector<details::scan_category_t::project_root_t> project_roots_;
+  std::vector<std::shared_ptr<project_helper::database_t>> project_roots_;
   std::vector<bool> scan_categories_is_scan_;
   std::map<uuid, entt::handle> handle_map_;
   std::map<FSys::path, entt::handle> path_map_;

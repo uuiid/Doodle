@@ -49,7 +49,6 @@ class scan_category_data_t {
   FSys::path base_path_;
 
   // 项目根目录
-  project_root_t project_root_;
   std::shared_ptr<project_helper::database_t> project_database_ptr;
 
   // 季数
