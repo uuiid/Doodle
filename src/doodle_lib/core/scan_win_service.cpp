@@ -178,7 +178,6 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
         l_new.id_      = l_old.id_;
         l_new.uuid_id_ = l_old.uuid_id_;
       }
-
     } else {
       l_install->emplace_back(scan_data_t::database_t{static_cast<scan_data_t::database_t>(*l_val)}).uuid_id_ =
           core_set::get_set().get_uuid();
@@ -202,6 +201,11 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
       l_rem_ids->emplace_back(l_data[l_old_map[i]].id_);
     }
   }
+  auto& l_data_base = g_ctx().get<sqlite_database>();
+  if (auto l_r = co_await l_data_base.install_range<scan_data_t::database_t>(l_install); !l_r)
+    default_logger_raw()->error(l_r.error());
+  if (auto l_r = co_await l_data_base.remove<scan_data_t::database_t>(l_rem_ids); !l_r)
+    default_logger_raw()->error(l_r.error());
 }
 
 void scan_win_service_t::add_handle(

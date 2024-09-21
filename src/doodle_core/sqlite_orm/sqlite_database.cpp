@@ -36,9 +36,10 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("assets_type_enum", &scan_data_t::database_t::dep_),
 
           make_column("project", &scan_data_t::database_t::project_id_),
-          make_column("num", &scan_data_t::database_t::num_),  //
           make_column("name", &scan_data_t::database_t::name_),
           make_column("version", &scan_data_t::database_t::version_),
+          make_column("num", &scan_data_t::database_t::num_),  //
+          make_column("file_hash", &scan_data_t::database_t::hash_),
           foreign_key(&scan_data_t::database_t::project_id_).references(&project_helper::database_t::id_)
       ),  //
       make_table(
@@ -196,7 +197,7 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<
     for (auto&& i : *in_data) {
       l_storage->remove<scan_data_t::database_t>(i);
     }
-  }catch (...) {
+  } catch (...) {
     co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
   }
 }
