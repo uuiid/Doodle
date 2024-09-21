@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "doodle_core/metadata/scan_data_t.h"
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/assets.h>
@@ -55,6 +56,8 @@ class scan_category_data_t {
 
   // 文件hash(包含 ue(工程, 配置),rig,解算文件) 所有文件的文件名称, 大小, 修改时间 的hash
   std::string file_hash_;
+
+  explicit operator scan_data_t::database_t() const;
 };
 using scan_category_data_ptr = std::shared_ptr<scan_category_data_t>;
 class scan_category_t {
