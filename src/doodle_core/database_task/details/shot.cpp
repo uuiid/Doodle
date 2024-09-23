@@ -79,7 +79,6 @@ void sql_com<doodle::shot>::select(
                               .where(l_table.entity_id.is_not_null()))) {
     shot l_s{};
     l_s.p_shot      = row.shot_int.value();
-    l_s.p_shot_ab   = row.shot_ab.value();
     l_s.p_shot_enum = magic_enum::enum_cast<shot::shot_ab_enum>(row.shot_ab.value()).value_or(shot::shot_ab_enum::None);
     auto l_id       = row.entity_id.value();
     if (in_handle.find(l_id) != in_handle.end()) {

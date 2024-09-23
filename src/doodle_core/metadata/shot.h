@@ -14,7 +14,6 @@ class DOODLE_CORE_API shot {
   shot_ab_enum p_shot_enum;
 
  public:
-  std::string p_shot_ab;
   shot();
   explicit shot(std::int32_t in_shot, shot_ab_enum in_ab);
   explicit shot(std::int32_t in_shot, std::string in_ab);

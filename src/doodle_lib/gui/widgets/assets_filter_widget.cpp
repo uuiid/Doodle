@@ -136,16 +136,18 @@ class assets_filter_widget::impl {
     gui_cache_name_id name{"镜头"};
     gui_cache_name_id name_ab{"Ab镜头"};
     shot shot_{};
+    std::string shot_ab_string_{};
     bool render() {
       bool result{false};
       if (ImGui::InputInt(*name, &shot_.p_shot)) {
         result = true;
       }
-      if (auto l_com_box = dear::Combo{*name_ab, shot_.p_shot_ab.c_str()}) {
+      if (auto l_com_box = dear::Combo{*name_ab, shot_ab_string_.c_str()}) {
         static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
         for (auto& i : shot_enum) {
-          if (imgui::Selectable(i.data(), i == shot_.p_shot_ab)) {
-            shot_.p_shot_ab = i;
+          if (imgui::Selectable(i.data(), i == shot_ab_string_)) {
+            shot_ab_string_ = i;
+            shot_.set_shot_ab(std::string{i});
             result          = true;
           }
         }

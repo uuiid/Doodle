@@ -51,7 +51,7 @@ struct import_data_t {
     j["end_time"]           = p.end_time;
     j["episode"]            = p.episode.p_episodes;
     j["shot"]               = p.shot.p_shot;
-    j["shot_ab"]            = p.shot.p_shot_ab;
+    j["shot_ab"]            = p.shot.get_shot_ab();
     j["out_file_dir"]       = p.out_file_dir.generic_string();
     j["original_map"]       = p.original_map;
     j["render_map"]         = p.render_map;
