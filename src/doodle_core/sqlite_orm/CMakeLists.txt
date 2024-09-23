@@ -7,6 +7,7 @@ target_sources(
         uuid_to_blob.h
         sqlite_database.h
         std_filesystem_path_orm.h
+        assets_type_enum.h
         PRIVATE
         sqlite_snapshot.cpp
         observer.cpp
