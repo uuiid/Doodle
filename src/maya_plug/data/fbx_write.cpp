@@ -1202,17 +1202,12 @@ void fbx_write::write(
     l_post->SetIsBindPose(true);
     std::vector<fbx_node_ptr> post_add{};
 
-    std::function<bool(fbx_tree_t::iterator)> l_iter{};
-    l_iter = [&](fbx_tree_t::iterator in_parent) -> bool {
-      bool l_r{};
+    std::function<void(fbx_tree_t::iterator)> l_iter{};
+    l_iter = [&](fbx_tree_t::iterator in_parent) {
       for (auto l_it = in_parent.begin(); l_it != in_parent.end(); ++l_it) {
-        auto l_sub_has = l_iter(l_it);
-        if (l_sub_has) {
-          l_r |= true;
-          l_post->Add((*l_it)->node, (*l_it)->node->EvaluateGlobalTransform());
-        }
+        l_post->Add((*l_it)->node, (*l_it)->node->EvaluateGlobalTransform());
+        l_iter(l_it);
       }
-      return l_r;
     };
     l_iter(tree_.begin());
     scene_->AddPose(l_post);
