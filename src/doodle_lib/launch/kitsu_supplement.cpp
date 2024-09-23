@@ -1,5 +1,6 @@
 #include "kitsu_supplement.h"
 
+#include <doodle_core/sqlite_orm/detail/init_project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_app/app/app_command.h>
@@ -78,7 +79,10 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   in_vector.emplace_back(l_ssl_ctx);
 
   // 初始化数据库
-  g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+  {
+    g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+    doodle::details::init_project();
+  }
   {
     // 初始化 kitsu 客户端
     auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
