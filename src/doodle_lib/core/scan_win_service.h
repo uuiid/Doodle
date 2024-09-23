@@ -90,7 +90,7 @@ class scan_win_service_t {
   std::atomic_int index_{};
 
   boost::asio::awaitable<void> begin_scan();
-  void create_project_map();
+  void create_project();
   boost::asio::awaitable<void> seed_to_sql(std::int32_t in_current_index);
 
   void add_handle(

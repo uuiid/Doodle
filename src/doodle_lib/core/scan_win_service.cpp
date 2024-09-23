@@ -48,7 +48,10 @@ auto to_scan_data(
             // }
             l_expected                                          = std::move(l_list);
           } catch (...) {
-            l_expected = tl::make_unexpected(boost::current_exception_diagnostic_information());
+            l_expected = tl::make_unexpected(fmt::format(
+                "项目 {} 路径{} 错误 {}", in_project_root->name_, in_project_root->local_path_,
+                boost::current_exception_diagnostic_information()
+            ));
           }
 
           boost::asio::post(boost::asio::prepend(std::move(*l_f), l_expected));
@@ -85,28 +88,14 @@ void scan_win_service_t::start() {
 }
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
-  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
-  project_roots_.reserve(l_prjs.size());
-  for (auto&& l_prj : l_prjs) {
-    project_roots_.emplace_back(std::make_shared<project_helper::database_t>(std::move(l_prj)));
-  }
   scan_categories_ = {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
       std::make_shared<details::prop_scan_category_t>()
   };
   for (auto&& i : scan_categories_) i->logger_ = logger_;
 
-  create_project_map();
-  std::vector<std::string> l_msg{};
-  for (auto&& l_root : project_roots_)
-    for (auto&& l_data : {
-             "character",
-             "scene",
-             "prop",
-         })
-      l_msg.emplace_back(fmt::format("扫根目录瞄 {} 中 {} ", l_root->local_path_, l_data));
-
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    create_project();
     // if (app_base::GetPtr()->is_stop()) co_return;
     using opt_t = decltype(to_scan_data(thread_pool_, project_roots_[0], scan_categories_[0], boost::asio::deferred));
     std::vector<opt_t> l_opts{};
@@ -129,7 +118,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
     scan_data_key_maps_[l_current_index].clear();
     for (auto i : l_index) {
       if (!l_v[i]) {
-        default_logger_raw()->log(log_loc(), level::info, "扫描取消错误 {} {}", l_msg[i], l_v[i].error());
+        default_logger_raw()->info(l_v[i].error());
         continue;
       }
       add_handle(l_v[i].value(), l_current_index);
@@ -149,7 +138,13 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   }
 }
 
-void scan_win_service_t::create_project_map() {}
+void scan_win_service_t::create_project() {
+  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
+  project_roots_.reserve(l_prjs.size());
+  for (auto&& l_prj : l_prjs) {
+    project_roots_.emplace_back(std::make_shared<project_helper::database_t>(std::move(l_prj)));
+  }
+}
 
 boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
   auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
