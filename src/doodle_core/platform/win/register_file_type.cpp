@@ -61,17 +61,9 @@ const std::vector<project>& register_file_type::get_project_list() {
       },
 
       project{
-          "龙脉武神", R"(//192.168.10.240/public/LongMaiWuShen)", "LongMaiWuShen", "LM", R"(C:\sy\LongMaiWuShen)", ""
-      },
-      project{
           "炼气十万年", R"(//192.168.10.240/public/LianQiShiWanNian)", "LianQiShiWanNian", "LQ",
           R"(C:\sy\LianQiShiWanNian_8)", R"(\\192.168.10.240\public\后期\LianQiShiWanNian\)"
       },
-      project{
-          "人间最得意", R"(//192.168.10.240/public/renjianzuideyi)", "RenJianZuiDeYi", "RJ",
-          R"(C:\sy\RenJianZuiDeYi_8)", ""
-      },
-      project{"无敌剑魂", R"(//192.168.10.240/public/WuDiJianHun)", "WuDiJianHun", "WD", R"(C:\sy\WuDiJianHun_8)", ""},
       project{
           "万古神话", R"(//192.168.10.240/public/WanGuShenHua)", "WanGuShenHua", "WG", "R:/",
           R"(\\192.168.10.240\public\后期\WanGuShenHua\)"
@@ -79,11 +71,6 @@ const std::vector<project>& register_file_type::get_project_list() {
       project{
           "无尽神域", R"(//192.168.10.240/public/WuJinShenYu)", "WuJinShenYu", "WJ", R"(C:\sy\WuJinShenYu_8)",
           R"(\\192.168.10.240\public\后期\WuJinShenYu)"
-      },
-      project{"万域封神", R"(//192.168.10.218/WanYuFengShen)", "WanYuFengShen", "WY", "U:/", ""},
-      project{
-          "双生武魂", R"(/192.168.10.240/public/SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)", ""
-
       },
       project{
           "宗门里除了我都是卧底", R"(//192.168.10.240/public/ZMLCLWDSWD)", "ZMLCLWDSWD", "ZM", R"(C:\sy\ZMLCLWDSWD)",
