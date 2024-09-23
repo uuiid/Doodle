@@ -62,7 +62,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
   l_scan->start();
 
-  kitsu_supplement_args_t l_args{.kitsu_url_ = "http://192.168.40.182", .port_ = 50025};
+  kitsu_supplement_args_t l_args{.kitsu_url_ = "http://192.168.40.182", .port_ = 50025, .db_path_ = "D:/kitsu.db"};
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
