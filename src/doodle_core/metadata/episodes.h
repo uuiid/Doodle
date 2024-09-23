@@ -25,9 +25,8 @@ class DOODLE_CORE_API episodes {
   static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
   static bool conjecture_season(const entt::handle &in_handle);
-  friend std::size_t hash_value(episodes const& value) {
-    return std::hash<std::int32_t>{}(value.p_episodes);
-  }
+  friend std::size_t hash_value(episodes const &value) { return std::hash<std::int32_t>{}(value.p_episodes); }
+
  private:
   friend void to_json(nlohmann::json &j, const episodes &p) { j["episodes"] = p.p_episodes; }
   friend void from_json(const nlohmann::json &j, episodes &p) { j.at("episodes").get_to(p.p_episodes); }
@@ -52,7 +51,7 @@ struct formatter<::doodle::episodes> : formatter<std::string> {
 namespace std {
 template <>
 struct hash<doodle::episodes> : hash<std::int32_t> {
-  std::size_t operator()(const doodle::episodes& value) const noexcept {
+  std::size_t operator()(const doodle::episodes &value) const noexcept {
     return hash<std::int32_t>::operator()(value.p_episodes);
   }
 };

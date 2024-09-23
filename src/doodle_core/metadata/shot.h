@@ -42,6 +42,15 @@ class DOODLE_CORE_API shot {
 
   static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
+  friend std::size_t hash_value(const shot &value) {
+    std::size_t seed = 0;
+
+    boost::hash_combine(seed, value.p_shot);
+    boost::hash_combine(seed, value.p_shot_enum);
+
+    return seed;
+  }
+
  private:
   friend void to_json(nlohmann::json &j, const shot &p) {
     j["shot"]      = p.p_shot;
