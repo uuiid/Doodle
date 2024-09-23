@@ -43,9 +43,9 @@ auto to_scan_data(
           expected_t l_expected{};
           try {
             std::vector<details::scan_category_data_ptr> l_list = in_scan_category_ptr->scan(in_project_root);
-            for (auto&& l_ : l_list) {
-              in_scan_category_ptr->scan_file_hash(l_);
-            }
+            // for (auto&& l_ : l_list) {
+            //   in_scan_category_ptr->scan_file_hash(l_);
+            // }
             l_expected = std::move(l_list);
           } catch (...) {
             l_expected = tl::make_unexpected(boost::current_exception_diagnostic_information());
@@ -75,6 +75,8 @@ void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& i
 void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
   timer_    = std::make_shared<timer_t>(executor_);
+  logger_   = std::make_shared<spdlog::logger>("scan_category");
+  logger_->sinks().emplace_back(g_logger_ctrl().rotating_file_sink_);
 
   boost::asio::co_spawn(
       executor_, begin_scan(),
@@ -92,6 +94,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
       std::make_shared<details::prop_scan_category_t>()
   };
+  for (auto&& i : scan_categories_) i->logger_ = logger_;
 
   create_project_map();
   std::vector<std::string> l_msg{};

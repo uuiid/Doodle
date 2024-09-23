@@ -76,6 +76,8 @@ class scan_win_service_t {
   boost::asio::any_io_executor executor_{};
   boost::asio::thread_pool thread_pool_{};
 
+  logger_ptr logger_;
+
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
   std::vector<std::shared_ptr<project_helper::database_t>> project_roots_;
 
