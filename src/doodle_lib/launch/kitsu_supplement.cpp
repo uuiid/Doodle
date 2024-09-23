@@ -60,7 +60,6 @@ struct kitsu_supplement_args_t {
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
-  l_scan->start();
 
   kitsu_supplement_args_t l_args{
       .kitsu_url_ = "http://192.168.40.182", .port_ = 50025, .db_path_ = "D:/kitsu.database"
@@ -111,6 +110,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
           .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
     }
   }
+  l_scan->start();
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route();
   http::reg_computing_time(*l_rout_ptr);

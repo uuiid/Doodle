@@ -91,8 +91,8 @@ void init_project() {
             }
           }
         },
-        boost::asio::use_future
-    ).get();
+        boost::asio::detached
+    ) ;
   }
 }
 

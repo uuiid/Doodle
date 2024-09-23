@@ -40,7 +40,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("name", &scan_data_t::database_t::name_),
           make_column("version", &scan_data_t::database_t::version_),
           make_column("num", &scan_data_t::database_t::num_),  //
-          make_column("file_hash", &scan_data_t::database_t::hash_),
+          // make_column("file_hash", &scan_data_t::database_t::hash_),
           foreign_key(&scan_data_t::database_t::project_id_).references(&project_helper::database_t::id_)
       ),  //
       make_table(
@@ -172,7 +172,7 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
     auto l_storage = get_cast_storage(storage_any_);
 
     // 步进大小
-    constexpr std::size_t g_step_size{5000};
+    constexpr std::size_t g_step_size{500};
     auto l_g = l_storage->transaction_guard();
     // 每500次步进(插入步进)
     for (std::size_t i = 0; i < l_split;) {

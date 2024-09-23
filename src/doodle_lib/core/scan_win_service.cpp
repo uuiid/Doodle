@@ -46,7 +46,7 @@ auto to_scan_data(
             // for (auto&& l_ : l_list) {
             //   in_scan_category_ptr->scan_file_hash(l_);
             // }
-            l_expected = std::move(l_list);
+            l_expected                                          = std::move(l_list);
           } catch (...) {
             l_expected = tl::make_unexpected(boost::current_exception_diagnostic_information());
           }
@@ -153,7 +153,6 @@ void scan_win_service_t::create_project_map() {}
 
 boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
   auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
-  auto l_new_key        = l_scan_key_data | ranges::views::keys | ranges::to<std::unordered_set<scan::scan_key_t>>();
   auto l_data           = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
   std::unordered_map<scan::scan_key_t, std::size_t> l_old_map{};
   l_old_map.reserve(l_data.size());
@@ -190,15 +189,18 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
   // 此次开始删除旧的
   auto l_rem_ids = std::make_shared<std::vector<std::int64_t>>();
   {
-    std::unordered_set<scan::scan_key_t> l_old_key =
-        l_old_map | ranges::views::keys | ranges::to<std::unordered_set<scan::scan_key_t>>();
-    l_old_key.merge(l_new_key);
+    auto l_new_key = l_scan_key_data | ranges::views::keys | ranges::to<std::set<scan::scan_key_t>>();
+    auto l_old_key = l_old_map | ranges::views::keys | ranges::to<std::set<scan::scan_key_t>>();
+    {
+      // ranges::;
+      auto l_tmp = l_new_key;
+      l_old_key.merge(l_tmp);
+    }
 
-    std::vector<scan::scan_key_t> l_set_rem{};
-    l_set_rem.reserve(1000);
-    std::set_difference(
-        l_old_key.begin(), l_old_key.end(), l_new_key.begin(), l_new_key.end(), std::back_inserter(l_set_rem)
-    );
+    std::vector<scan::scan_key_t> l_set_rem{l_old_key.size() + l_new_key.size()};
+
+    auto [old_orders_end, cut_orders_last] = std::ranges::set_difference(l_old_key, l_new_key, l_set_rem.begin());
+    l_set_rem.erase(cut_orders_last, l_set_rem.end());
     l_rem_ids->reserve(l_set_rem.size());
     for (auto&& i : l_set_rem) {
       l_rem_ids->emplace_back(l_data[l_old_map[i]].id_);
