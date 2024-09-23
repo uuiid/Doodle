@@ -73,16 +73,7 @@ auto create_prj() {
           .shor_str_         = "WD",
           .local_path_       = R"(C:\sy\WDSXTQL)",
           .auto_upload_path_ = R"(\\192.168.10.240\public\后期\WDSXTQL\)"
-      }),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
-      std::make_shared<project_helper::database_t>(),
+      })
   };
 }
 }  // namespace
@@ -95,11 +86,13 @@ void init_project() {
         []() -> boost::asio::awaitable<void> {
           auto& l_data = g_ctx().get<sqlite_database>();
           for (auto l_project : create_prj()) {
-            co_await l_data.install(l_project);
+            if (auto l_v = co_await l_data.install(l_project); !l_v) {
+              default_logger_raw()->error(l_v.error());
+            }
           }
         },
-        boost::asio::detached
-    );
+        boost::asio::use_future
+    ).get();
   }
 }
 
