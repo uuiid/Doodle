@@ -57,42 +57,7 @@ void scan_data_t::on_destroy(entt::registry& in_reg, entt::entity in_entity) {
 std::vector<entt::entity> scan_data_t::load_from_sql(
     entt::registry& in_registry, const std::vector<database_t>& in_data
 ) {
-  std::vector<entt::entity> l_create{};
-  if (in_data.empty()) return l_create;
-
-  in_registry.create(l_create.begin(), l_create.end());
-  g_ctx().erase<scan_data_ctx_t>();
-  {
-    std::vector<path_uuid> l_vec = in_data | ranges::views::transform([](const database_t& in_db) {
-                                     return path_uuid{in_db.ue_uuid_, in_db.rig_uuid_, in_db.solve_uuid_};
-                                   }) |
-                                   ranges::to_vector;
-    in_registry.insert<path_uuid>(l_create.begin(), l_create.end(), l_vec.begin());
-  }
-  std::map<uuid, entt::entity> l_prj_map{};
-  for (auto&& [l_e, l_id] : entt::view<entt::get_t<uuid>>{in_registry.storage<uuid>(detail::project_id)}.each()) {
-    l_prj_map.emplace(l_id, l_e);
-  }
-  {
-    std::vector<project_ptr> l_vec = in_data | ranges::views::transform([&](const database_t& in_db) {
-                                       return project_ptr{in_registry.try_get<project>(l_prj_map[in_db.project_])};
-                                     }) |
-                                     ranges::to_vector;
-    in_registry.insert<project_ptr>(l_create.begin(), l_create.end(), l_vec.begin());
-  }
-
-  std::vector<additional_data> l_vec = in_data | ranges::views::transform([&](const database_t& in_db) {
-                                         return additional_data{in_db.ue_path_, in_db.rig_path_, in_db.solve_path_,
-                                                                in_db.num_,     in_db.name_,     in_db.version_};
-                                       }) |
-                                       ranges::to_vector;
-  in_registry.insert<additional_data>(l_create.begin(), l_create.end(), l_vec.begin());
-  auto& l_ctx    = g_ctx().emplace<scan_data_ctx_t>();
-  l_ctx.conn_[0] = in_registry.on_construct<additional_data>().connect<&dependent_uuid>();
-  l_ctx.conn_[1] = in_registry.on_update<additional_data>().connect<&dependent_uuid>();
-  l_ctx.conn_[2] = in_registry.storage<entt::id_type>(detail::sql_id).on_destroy().connect<&on_destroy>();
-
-  return l_create;
+  return {};
 }
 
 }  // namespace doodle

@@ -3,7 +3,6 @@
 //
 
 #pragma once
-
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/season.h>
@@ -13,8 +12,10 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio.hpp>
-namespace doodle {
-namespace scan {
+#include <boost/describe/class.hpp>
+#include <boost/describe/operators.hpp>
+
+namespace doodle::scan {
 struct scan_key_t : boost::totally_ordered<scan_key_t> {
   details::assets_type_enum dep_;
   season season_;
@@ -41,8 +42,27 @@ struct scan_key_t : boost::totally_ordered<scan_key_t> {
            );
   }
 };
+}  // namespace doodle::scan
 
-}  // namespace scan
+namespace std {
+template <>
+struct hash<doodle::scan::scan_key_t> {
+  std::size_t operator()(const doodle::scan::scan_key_t& value) const noexcept {
+    std::size_t seed = 0;
+
+    boost::hash_combine(seed, value.dep_);
+    boost::hash_combine(seed, value.season_);
+    boost::hash_combine(seed, value.episodes_);
+    boost::hash_combine(seed, value.shot_);
+    boost::hash_combine(seed, value.project_);
+    boost::hash_combine(seed, value.number_);
+    boost::hash_combine(seed, value.name_);
+    boost::hash_combine(seed, value.version_name_);
+    return seed;
+  }
+};
+}  // namespace std
+namespace doodle {
 
 class scan_win_service_t {
   using timer_t      = boost::asio::steady_timer;

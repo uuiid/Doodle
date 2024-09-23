@@ -50,3 +50,12 @@ struct formatter<::doodle::season> : formatter<std::string> {
   }
 };
 }  // namespace fmt
+
+namespace std {
+template <>
+struct hash<doodle::season> : hash<std::int32_t> {
+  std::size_t operator()(const doodle::season& value) const noexcept {
+    return hash<std::int32_t>::operator()(value.p_int);
+  }
+};
+}

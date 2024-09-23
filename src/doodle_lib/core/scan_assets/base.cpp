@@ -24,8 +24,8 @@ scan_category_data_t::operator scan_data_t::database_t() const {
       .season_     = season_.p_int,
       .dep_        = assets_type_,
       .name_       = name_,
-      .version_    = version_name_.empty() ? std::nullopt : version_name_,
-      .num_        = number_str_.empty() ? std::nullopt : number_str_
+      .version_    = version_name_.empty() ? std::nullopt : std::optional{version_name_},
+      .num_        = number_str_.empty() ? std::nullopt : std::optional{number_str_}
   };
 }
 

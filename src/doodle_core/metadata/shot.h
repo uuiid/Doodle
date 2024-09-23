@@ -90,3 +90,14 @@ struct formatter<::doodle::shot> : formatter<std::string> {
 };
 
 }  // namespace fmt
+namespace std {
+template <>
+struct hash<doodle::shot> {
+  std::size_t operator()(const doodle::shot &value) const noexcept {
+    std::size_t seed = 0;
+    boost::hash_combine(seed, value.p_shot);
+    boost::hash_combine(seed, value.p_shot_enum);
+    return  seed;
+  }
+};
+}
