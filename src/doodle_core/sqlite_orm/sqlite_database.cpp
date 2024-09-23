@@ -47,7 +47,8 @@ auto make_storage_doodle(const std::string& in_path) {
           "project_tab",                                                       //
           make_column("id", &project_helper::database_t::id_, primary_key()),  //
           make_column("uuid_id", &project_helper::database_t::uuid_id_, unique()),
-          make_column("name", &project_helper::database_t::name_),      //
+          make_column("name", &project_helper::database_t::name_),  //
+          make_column("path", &project_helper::database_t::path_),
           make_column("en_str", &project_helper::database_t::en_str_),  //
           make_column("shor_str", &project_helper::database_t::shor_str_),
           make_column("local_path", &project_helper::database_t::local_path_),
