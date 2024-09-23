@@ -10,7 +10,7 @@ namespace doodle::details {
 
 namespace {
 auto create_prj() {
-  return {
+  return std::vector{
       std::make_shared<project_helper::database_t>(project_helper::database_t{
           .uuid_id_          = core_set::get_set().get_uuid(),
           .name_             = "独步逍遥",
