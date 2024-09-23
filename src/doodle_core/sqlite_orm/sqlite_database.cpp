@@ -86,6 +86,12 @@ std::vector<project_helper::database_t> sqlite_database::get_all() {
   return l_storage->get_all<project_helper::database_t>();
 }
 
+template <>
+std::vector<scan_data_t::database_t> sqlite_database::get_all() {
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<scan_data_t::database_t>();
+}
+
 std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid& in_id) {
   using namespace sqlite_orm;
   auto l_storage = get_cast_storage(storage_any_);
@@ -93,6 +99,14 @@ std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid
       sqlite_orm::c(&scan_data_t::database_t::ue_uuid_) == in_id ||
       sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_id || c(&scan_data_t::database_t::solve_uuid_) == in_id
   ));
+}
+
+std::vector<project_helper::database_t> sqlite_database::find_project_by_name(const std::string& in_name) {
+  using namespace sqlite_orm;
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<project_helper::database_t>(
+      sqlite_orm::where(sqlite_orm::c(&project_helper::database_t::name_) == in_name)
+  );
 }
 
 template <>
