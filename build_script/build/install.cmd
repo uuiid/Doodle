@@ -15,8 +15,8 @@ mkdir %my_pwd%\build\html\file
 
 echo -----------------copy file--------------------
 
-robocopy %my_pwd%\build\Ninja_release \\192.168.0.67\soft\TD软件\doodle *.exe /ndl /np /njh /njs /ns /nc /nfl /m
-robocopy %my_pwd%\build\Ninja_release \\192.168.0.67\soft\TD软件\doodle *.7z /ndl /np /njh /njs /ns /nc /nfl /m
+robocopy %my_pwd%\build\Ninja_release \\192.168.0.67\soft\TD软件\doodle *.exe /ndl /np /njh /njs /ns /nc /nfl
+robocopy %my_pwd%\build\Ninja_release \\192.168.0.67\soft\TD软件\doodle *.7z /ndl /np /njh /njs /ns /nc /nfl
 @REM robocopy %my_pwd%\build\Ninja_release\src\html %my_pwd%\build\html /s /ndl /np /njh /njs /ns /nc /nfl
 @REM python %my_pwd%/docs/generate_directory_index_caddystyle.py %my_pwd%/build/html/file
 python %my_pwd%/docs/generate_updata_log.py %my_pwd%/build/html/update.html
