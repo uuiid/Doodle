@@ -2,7 +2,9 @@ target_sources(
         doodle_core
         PUBLIC
         all.h
+        init_project.h
         PRIVATE
         database.cpp
         server_task_info.cpp
+        init_project.cpp
 )
