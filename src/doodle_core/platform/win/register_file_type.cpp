@@ -77,7 +77,7 @@ const std::vector<project>& register_file_type::get_project_list() {
           R"(\\192.168.10.240\public\后期\ZMLCLWDSWD\)"
       },
       project{
-          "我的师兄太强了", R"(//192.168.10.240/public/WDSXTQL)", "WDSXTQL", "WD", R"(C:\sy\WDSXTQL)",
+          "我的师兄太强了", R"(\\192.168.10.242\public\WDSXTQL)", "WDSXTQL", "WD", R"(C:\sy\WDSXTQL)",
           R"(\\192.168.10.240\public\后期\WDSXTQL\)"
       }
 

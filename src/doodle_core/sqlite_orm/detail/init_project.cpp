@@ -68,7 +68,7 @@ auto create_prj() {
       std::make_shared<project_helper::database_t>(project_helper::database_t{
           .uuid_id_          = core_set::get_set().get_uuid(),
           .name_             = "我的师兄太强了",
-          .path_             = R"(//192.168.10.240/public/WDSXTQL)",
+          .path_             = R"(\\192.168.10.242\public\WDSXTQL)",
           .en_str_           = "WDSXTQL",
           .shor_str_         = "WD",
           .local_path_       = R"(C:\sy\WDSXTQL)",
