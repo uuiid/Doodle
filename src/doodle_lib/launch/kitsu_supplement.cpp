@@ -1,17 +1,19 @@
 #include "kitsu_supplement.h"
 
+#include <doodle_core/sqlite_orm/sqlite_database.h>
+
 #include <doodle_app/app/app_command.h>
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
+#include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 #include <doodle_lib/http_method/user_http.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
-#include <doodle_lib/core/scan_win_service.h>
 namespace doodle::launch {
 struct kitsu_supplement_args_t {
   std::string kitsu_url_;
@@ -42,8 +44,9 @@ struct kitsu_supplement_args_t {
   // form json
   friend void from_json(const nlohmann::json& in_json, kitsu_supplement_args_t& out_obj) {
     if (in_json.contains("kitsu_ip") && in_json.contains("kitsu_port")) {
-      out_obj.kitsu_url_ = fmt::format("http://{}:{}", in_json.at("kitsu_ip").get<std::string>(),
-                                       in_json.at("kitsu_port").get<std::string>());
+      out_obj.kitsu_url_ = fmt::format(
+          "http://{}:{}", in_json.at("kitsu_ip").get<std::string>(), in_json.at("kitsu_port").get<std::string>()
+      );
     }
     if (in_json.contains("kitsu_url")) in_json.at("kitsu_url").get_to(out_obj.kitsu_url_);
     in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
@@ -54,7 +57,6 @@ struct kitsu_supplement_args_t {
 };
 
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
-  auto& l_save = g_ctx().emplace<http::kitsu_backend_sqlite>();
   app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
   l_scan->start();
@@ -76,17 +78,12 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   in_vector.emplace_back(l_ssl_ctx);
 
   // 初始化数据库
-  {
-    g_pool_db().set_path(l_args.db_path_);
-    auto l_db_conn = g_pool_db().get_connection();
-    l_save.init(l_db_conn);
-  }
+  g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
   {
     // 初始化 kitsu 客户端
-    auto l_client =
-        g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
-          std::make_shared<kitsu::kitsu_client>(g_io_context(), l_args.kitsu_url_)
-        );
+    auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
+        std::make_shared<kitsu::kitsu_client>(g_io_context(), l_args.kitsu_url_)
+    );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_url_, l_args.kitsu_token_);
 
@@ -95,17 +92,17 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
     for (auto&& l_c : l_args.dingding_company_list_) {
       l_d.company_info_map_
-         .emplace(
-           l_c.id_,
-           dingding::dingding_company::company_info{
-               .corp_id = l_c.id_,
-               .app_key = l_c.app_key_,
-               .app_secret = l_c.app_secret_,
-               .name = l_c.name_,
-               .client_ptr = std::make_shared<dingding::client>(*l_ssl_ctx)
-           }
-         )
-         .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
+          .emplace(
+              l_c.id_,
+              dingding::dingding_company::company_info{
+                  .corp_id    = l_c.id_,
+                  .app_key    = l_c.app_key_,
+                  .app_secret = l_c.app_secret_,
+                  .name       = l_c.name_,
+                  .client_ptr = std::make_shared<dingding::client>(*l_ssl_ctx)
+              }
+          )
+          .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
     }
   }
   // 初始化路由
@@ -116,7 +113,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
-  l_save.run();
 
   return false;
 }

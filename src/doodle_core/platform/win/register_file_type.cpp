@@ -88,6 +88,10 @@ const std::vector<project>& register_file_type::get_project_list() {
       project{
           "宗门里除了我都是卧底", R"(//192.168.10.240/public/ZMLCLWDSWD)", "ZMLCLWDSWD", "ZM", R"(C:\sy\ZMLCLWDSWD)",
           R"(\\192.168.10.240\public\后期\ZMLCLWDSWD\)"
+      },
+      project{
+          "我的师兄太强了", R"(//192.168.10.240/public/WDSXTQL)", "WDSXTQL", "WD", R"(C:\sy\WDSXTQL)",
+          R"(\\192.168.10.240\public\后期\WDSXTQL\)"
       }
 
   };
