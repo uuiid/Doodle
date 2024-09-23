@@ -25,9 +25,9 @@ auto make_storage_doodle(const std::string& in_path) {
           "scan_data",  //
           make_column("id", &scan_data_t::database_t::id_, primary_key()),
           make_column("uuid_id", &scan_data_t::database_t::uuid_id_, unique()),
-          make_column("ue_uuid", &scan_data_t::database_t::ue_uuid_, unique()),
-          make_column("rig_uuid", &scan_data_t::database_t::rig_uuid_, unique()),
-          make_column("solve_uuid", &scan_data_t::database_t::solve_uuid_, unique()),
+          make_column("ue_uuid", &scan_data_t::database_t::ue_uuid_),
+          make_column("rig_uuid", &scan_data_t::database_t::rig_uuid_),
+          make_column("solve_uuid", &scan_data_t::database_t::solve_uuid_),
 
           make_column("ue_path", &scan_data_t::database_t::ue_path_),
           make_column("rig_path", &scan_data_t::database_t::rig_path_),
