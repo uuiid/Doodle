@@ -10,6 +10,8 @@ target_sources(
         assets_type_enum.h
         std_chrono_zoned_time.h
         std_chrono_duration.h
+        std_chrono_time_point.h
+
         PRIVATE
         sqlite_snapshot.cpp
         observer.cpp
