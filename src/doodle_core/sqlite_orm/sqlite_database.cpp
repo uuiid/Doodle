@@ -6,9 +6,13 @@
 
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/work_xlsx_task_info.h>
 
 #include <sqlite_orm/assets_type_enum.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <sqlite_orm/std_chrono_duration.h>
+#include <sqlite_orm/std_chrono_time_point.h>
+#include <sqlite_orm/std_chrono_zoned_time.h>
 #include <sqlite_orm/std_filesystem_path_orm.h>
 #include <sqlite_orm/uuid_to_blob.h>
 namespace doodle {
@@ -16,17 +20,32 @@ namespace doodle {
 namespace {
 auto make_storage_doodle(const std::string& in_path) {
   using namespace sqlite_orm;
-
   return std::move(make_storage(
       in_path,  //
-
+      make_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_),
+      make_index("work_xlsx_task_info_tab_user_index", &work_xlsx_task_info_helper::database_t::user_id_),
+      make_table(
+          "work_xlsx_task_info_tab",                                                       //
+          make_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key()),  //
+          make_column("uuid_id", &work_xlsx_task_info_helper::database_t::uuid_id_, unique()),
+          make_column("start_time", &work_xlsx_task_info_helper::database_t::start_time_),
+          make_column("end_time", &work_xlsx_task_info_helper::database_t::end_time_),
+          make_column("duration", &work_xlsx_task_info_helper::database_t::duration_),
+          make_column("remark", &work_xlsx_task_info_helper::database_t::remark_),
+          make_column("user_remark", &work_xlsx_task_info_helper::database_t::user_remark_),
+          make_column("year_month", &work_xlsx_task_info_helper::database_t::year_month_),
+          make_column("user_id", &work_xlsx_task_info_helper::database_t::user_id_),
+          make_column("kitsu_task_ref_id", &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_),
+          foreign_key(&work_xlsx_task_info_helper::database_t::user_id_).references(&user_helper::database_t::id_)
+      ),
+      make_index("user_tab_dingding_index", &user_helper::database_t::dingding_id_),
       make_table(
           "user_tab",                                                       //
           make_column("id", &user_helper::database_t::id_, primary_key()),  //
           make_column("uuid_id", &user_helper::database_t::uuid_id_, unique()),
-          make_column("name", &user_helper::database_t::mobile_),  //
-          make_column("path", &user_helper::database_t::dingding_id_),
-          make_column("en_str", &user_helper::database_t::dingding_company_id_)
+          make_column("mobile", &user_helper::database_t::mobile_),  //
+          make_column("dingding_id", &user_helper::database_t::dingding_id_),
+          make_column("dingding_company_id", &user_helper::database_t::dingding_company_id_)
       ),
 
       make_index("scan_data_ue_uuid", &scan_data_t::database_t::ue_uuid_),
