@@ -93,6 +93,10 @@ auto get_cast_storage(const std::shared_ptr<void>& in_storage) {
 }
 }  // namespace
 
+#define DOODLE_TO_SQLITE_THREAD()                                 \
+  auto this_executor = co_await boost::asio::this_coro::executor; \
+  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+
 void sqlite_database::set_path(const FSys::path& in_path) {
   strand_        = std::make_shared<strand_type>(boost::asio::make_strand(g_io_context()));
   storage_any_   = std::make_shared<sqlite_orm_type>(std::move(make_storage_doodle(in_path.generic_string())));
@@ -150,27 +154,31 @@ template <>
 boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
     std::shared_ptr<scan_data_t::database_t> in_data
 ) {
-  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
-  auto l_storage = get_cast_storage(storage_any_);
+  DOODLE_TO_SQLITE_THREAD();
+  tl::expected<void, std::string> l_ret{};
+
   try {
-    auto l_g = l_storage->transaction_guard();
+    auto l_storage = get_cast_storage(storage_any_);
+    auto l_g       = l_storage->transaction_guard();
     if (in_data->id_ == 0)
       in_data->id_ = l_storage->insert<scan_data_t::database_t>(*in_data);
     else {
       l_storage->replace<scan_data_t::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<void, std::string>{};
   } catch (...) {
-    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+    l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
   }
+  DOODLE_TO_SELF();
+  co_return l_ret;
 }
 
 template <>
 boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
     std::shared_ptr<project_helper::database_t> in_data
 ) {
-  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  DOODLE_TO_SQLITE_THREAD();
+  tl::expected<void, std::string> l_ret{};
 
   try {
     auto l_storage = get_cast_storage(storage_any_);
@@ -182,16 +190,18 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       l_storage->replace<project_helper::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<void, std::string>{};
   } catch (...) {
-    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+    l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
   }
+  DOODLE_TO_SELF();
+  co_return l_ret;
 }
 template <>
 boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
     std::shared_ptr<user_helper::database_t> in_data
 ) {
-  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  DOODLE_TO_SQLITE_THREAD();
+  tl::expected<void, std::string> l_ret{};
 
   try {
     auto l_storage = get_cast_storage(storage_any_);
@@ -203,10 +213,11 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       l_storage->replace<user_helper::database_t>(*in_data);
     }
     l_g.commit();
-    co_return tl::expected<void, std::string>{};
   } catch (...) {
-    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+    l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
   }
+  DOODLE_TO_SELF();
+  co_return l_ret;
 }
 
 template <>
@@ -224,7 +235,9 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       in_data->begin(), std::ranges::find_if(*in_data, [](const scan_data_t::database_t& in_) { return in_.id_ != 0; })
   );
 
-  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  DOODLE_TO_SQLITE_THREAD();
+  tl::expected<void, std::string> l_ret{};
+
   try {
     auto l_storage = get_cast_storage(storage_any_);
 
@@ -253,17 +266,21 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       );
       if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
     }
-    co_return tl::expected<void, std::string>{};
+
   } catch (...) {
-    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+    l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
   }
+  DOODLE_TO_SELF();
+  co_return l_ret;
 }
 
 template <>
 boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<scan_data_t::database_t>(
     std::shared_ptr<std::vector<std::int64_t>> in_data
 ) {
-  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  DOODLE_TO_SQLITE_THREAD();
+  tl::expected<void, std::string> l_ret{};
+
   try {
     auto l_storage = get_cast_storage(storage_any_);
     auto l_g       = l_storage->transaction_guard();
@@ -271,8 +288,10 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<
       l_storage->remove<scan_data_t::database_t>(i);
     }
   } catch (...) {
-    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+    l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
   }
+  DOODLE_TO_SELF();
+  co_return l_ret;
 }
 
 void sqlite_database::load(const FSys::path& in_path) { set_path(in_path); }
