@@ -105,6 +105,20 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
 };
 
+namespace user_helper {
+struct database_t {
+  std::int32_t id_{};
+  uuid uuid_id_{};
+
+  // 手机号
+  std::string mobile_;
+  // 钉钉id
+  std::string dingding_id_;
+  // 钉钉对应公司的 uuid
+  boost::uuids::uuid dingding_company_id_;
+};
+}  // namespace user_helper
+
 }  // namespace doodle
 namespace fmt {
 /**

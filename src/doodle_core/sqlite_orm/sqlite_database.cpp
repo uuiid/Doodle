@@ -5,6 +5,7 @@
 #include "sqlite_database.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/user.h>
 
 #include <sqlite_orm/assets_type_enum.h>
 #include <sqlite_orm/sqlite_orm.h>
@@ -18,6 +19,16 @@ auto make_storage_doodle(const std::string& in_path) {
 
   return std::move(make_storage(
       in_path,  //
+
+      make_table(
+          "user_tab",                                                       //
+          make_column("id", &user_helper::database_t::id_, primary_key()),  //
+          make_column("uuid_id", &user_helper::database_t::uuid_id_, unique()),
+          make_column("name", &user_helper::database_t::mobile_),  //
+          make_column("path", &user_helper::database_t::dingding_id_),
+          make_column("en_str", &user_helper::database_t::dingding_company_id_)
+      ),
+
       make_index("scan_data_ue_uuid", &scan_data_t::database_t::ue_uuid_),
       make_index("scan_data_rig_uuid", &scan_data_t::database_t::rig_uuid_),
       make_index("scan_data_solve_uuid", &scan_data_t::database_t::solve_uuid_),
