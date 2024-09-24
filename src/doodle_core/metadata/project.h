@@ -82,12 +82,6 @@ struct project_ptr {
 };
 
 namespace project_helper {
-static void dependent_uuid(entt::registry& in_reg, entt::entity in_entity);
-static void on_destroy(entt::registry& in_reg, entt::entity in_entity);
-
-struct project_ctx_t {
-  std::array<entt::scoped_connection, 3> conn_;
-};
 
 struct database_t {
   std::int32_t id_{};
@@ -105,8 +99,6 @@ struct database_t {
   }
 };
 
-static std::vector<entt::entity> load_from_sql(entt::registry& reg, const std::vector<database_t>& in_data);
-static void seed_to_sql(const entt::registry& in_registry, const std::vector<entt::entity>& in_entity);
 };  // namespace project_helper
 
 namespace project_config {
