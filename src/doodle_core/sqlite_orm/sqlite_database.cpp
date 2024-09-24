@@ -104,6 +104,12 @@ std::vector<scan_data_t::database_t> sqlite_database::get_all() {
   return l_storage->get_all<scan_data_t::database_t>();
 }
 
+template <>
+std::vector<user_helper::database_t> sqlite_database::get_all() {
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<user_helper::database_t>();
+}
+
 std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid& in_id) {
   using namespace sqlite_orm;
   auto l_storage = get_cast_storage(storage_any_);
@@ -155,6 +161,27 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install
       in_data->id_ = l_storage->insert<project_helper::database_t>(*in_data);
     else {
       l_storage->replace<project_helper::database_t>(*in_data);
+    }
+    l_g.commit();
+    co_return tl::expected<void, std::string>{};
+  } catch (...) {
+    co_return tl::expected<void, std::string>{tl::make_unexpected(boost::current_exception_diagnostic_information())};
+  }
+}
+template <>
+boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(
+    std::shared_ptr<user_helper::database_t> in_data
+) {
+  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+
+  try {
+    auto l_storage = get_cast_storage(storage_any_);
+    auto l_g       = l_storage->transaction_guard();
+
+    if (in_data->id_ == 0)
+      in_data->id_ = l_storage->insert<user_helper::database_t>(*in_data);
+    else {
+      l_storage->replace<user_helper::database_t>(*in_data);
     }
     l_g.commit();
     co_return tl::expected<void, std::string>{};
