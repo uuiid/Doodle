@@ -16,7 +16,6 @@ scan_category_data_t::operator scan_data_t::database_t() const {
       .ue_uuid_    = ue_file_.uuid_.is_nil() ? std::nullopt : std::optional{ue_file_.uuid_},
       .rig_uuid_   = rig_file_.uuid_.is_nil() ? std::nullopt : std::optional{rig_file_.uuid_},
       .solve_uuid_ = solve_file_.uuid_.is_nil() ? std::nullopt : std::optional{solve_file_.uuid_},
-      .project_    = project_database_ptr->uuid_id_,
       .project_id_ = project_database_ptr->id_,
       .ue_path_    = ue_file_.uuid_.is_nil() ? std::nullopt : std::optional{ue_file_.path_},
       .rig_path_   = rig_file_.uuid_.is_nil() ? std::nullopt : std::optional{rig_file_.path_},

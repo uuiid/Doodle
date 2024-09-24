@@ -252,7 +252,6 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
   auto l_list = std::make_shared<std::vector<scan_data_t::database_t>>(
       100,
       scan_data_t::database_t{
-          .project_    = l_data->uuid_id_,
           .ue_path_    = "das",
           .rig_path_   = "das",
           .solve_path_ = "dsadssa",

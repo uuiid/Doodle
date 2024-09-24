@@ -26,22 +26,25 @@ struct scan_key_t : boost::totally_ordered<scan_key_t> {
   std::string name_;
   std::string version_name_;
 
-  inline bool operator==(const scan_key_t& other) const {
-    return std::tie(dep_, season_, episodes_, shot_, project_, number_, name_, version_name_) ==
+  friend bool operator==(const scan_key_t& lhs, const scan_key_t& rhs) {
+    return std::tie(
+               lhs.dep_, lhs.season_, lhs.episodes_, lhs.shot_, lhs.project_, lhs.number_, lhs.name_, lhs.version_name_
+           ) ==
            std::tie(
-               other.dep_, other.season_, other.episodes_, other.shot_, other.project_, other.number_, other.name_,
-               other.version_name_
+               rhs.dep_, rhs.season_, rhs.episodes_, rhs.shot_, rhs.project_, rhs.number_, rhs.name_, rhs.version_name_
            );
   }
-
-  inline bool operator<(const scan_key_t& other) const {
-    return std::tie(dep_, season_, episodes_, shot_, project_, number_, name_, version_name_) <
+  friend bool operator<(const scan_key_t& lhs, const scan_key_t& rhs) {
+    return std::tie(
+               lhs.dep_, lhs.season_, lhs.episodes_, lhs.shot_, lhs.project_, lhs.number_, lhs.name_, lhs.version_name_
+           ) <
            std::tie(
-               other.dep_, other.season_, other.episodes_, other.shot_, other.project_, other.number_, other.name_,
-               other.version_name_
+               rhs.dep_, rhs.season_, rhs.episodes_, rhs.shot_, rhs.project_, rhs.number_, rhs.name_, rhs.version_name_
            );
   }
 };
+// template <>
+// struct boost::totally_ordered<scan_key_t>;
 }  // namespace doodle::scan
 
 namespace std {
@@ -81,10 +84,10 @@ class scan_win_service_t {
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 3> scan_categories_;
   std::vector<std::shared_ptr<project_helper::database_t>> project_roots_;
 
-  using scan_category_data_id_map = std::unordered_map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>;
+  using scan_category_data_id_map = std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>;
   std::array<scan_category_data_id_map, 2> scan_data_maps_;
 
-  using scan_category_data_key_map = std::unordered_map<scan::scan_key_t, doodle::details::scan_category_data_ptr>;
+  using scan_category_data_key_map = std::map<scan::scan_key_t, doodle::details::scan_category_data_ptr>;
   std::array<scan_category_data_key_map, 2> scan_data_key_maps_;
 
   std::atomic_int index_{};

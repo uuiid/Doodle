@@ -106,26 +106,27 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
         l_opts.emplace_back(to_scan_data(thread_pool_, l_root, l_data, boost::asio::deferred));
       }
     }
+    if (!l_opts.empty()) {
+      auto [l_index, l_v] = co_await boost::asio::experimental::make_parallel_group(l_opts).async_wait(
+          boost::asio::experimental::wait_for_all(),
+          boost::asio::bind_executor(executor_, boost::asio::as_tuple(boost::asio::use_awaitable))
+      );
 
-    auto [l_index, l_v] = co_await boost::asio::experimental::make_parallel_group(l_opts).async_wait(
-        boost::asio::experimental::wait_for_all(),
-        boost::asio::bind_executor(executor_, boost::asio::as_tuple(boost::asio::use_awaitable))
-    );
-
-    // 同步缓冲区
-    std::int32_t l_current_index = !index_;
-    scan_data_maps_[l_current_index].clear();
-    scan_data_key_maps_[l_current_index].clear();
-    for (auto i : l_index) {
-      if (!l_v[i]) {
-        default_logger_raw()->info(l_v[i].error());
-        continue;
+      // 同步缓冲区
+      std::int32_t l_current_index = !index_;
+      scan_data_maps_[l_current_index].clear();
+      scan_data_key_maps_[l_current_index].clear();
+      for (auto i : l_index) {
+        if (!l_v[i]) {
+          default_logger_raw()->info(l_v[i].error());
+          continue;
+        }
+        add_handle(l_v[i].value(), l_current_index);
       }
-      add_handle(l_v[i].value(), l_current_index);
+      co_await seed_to_sql(l_current_index);
+      // 交换缓冲区
+      index_ = l_current_index;
     }
-    co_await seed_to_sql(l_current_index);
-    // 交换缓冲区
-    index_ = l_current_index;
 
     default_logger_raw()->log(log_loc(), level::info, "扫描完成");
 
@@ -139,6 +140,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 }
 
 void scan_win_service_t::create_project() {
+  project_roots_.clear();
   auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
   project_roots_.reserve(l_prjs.size());
   for (auto&& l_prj : l_prjs) {
@@ -148,16 +150,21 @@ void scan_win_service_t::create_project() {
 
 boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
   auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
-  auto l_data           = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
-  std::unordered_map<scan::scan_key_t, std::size_t> l_old_map{};
-  l_old_map.reserve(l_data.size());
+
+  std::map<std::int32_t, std::size_t> l_prj_map{};
+  for (auto i = 0; i < project_roots_.size(); ++i) {
+    l_prj_map[project_roots_[i]->id_] = i;
+  }
+
+  auto l_data = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
+  std::map<scan::scan_key_t, std::size_t> l_old_map{};
 
   for (std::size_t i = 0; i < l_data.size(); ++i) {
     auto& l_d = l_data[i];
     l_old_map[{
         .dep_          = l_d.dep_,
         .season_       = season{l_d.season_},
-        .project_      = l_d.project_,
+        .project_      = project_roots_[l_prj_map[l_d.project_id_]]->uuid_id_,
         .number_       = l_d.num_ ? *l_d.num_ : std::string{},
         .name_         = l_d.name_,
         .version_name_ = l_d.version_ ? *l_d.version_ : std::string{},
@@ -184,17 +191,21 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
   // 此次开始删除旧的
   auto l_rem_ids = std::make_shared<std::vector<std::int64_t>>();
   {
-    auto l_new_key = l_scan_key_data | ranges::views::keys | ranges::to<std::set<scan::scan_key_t>>();
-    auto l_old_key = l_old_map | ranges::views::keys | ranges::to<std::set<scan::scan_key_t>>();
+    auto l_new_key = l_scan_key_data | ranges::views::keys | ranges::to_vector;
+    auto l_old_key = l_old_map | ranges::views::keys | ranges::to_vector;
+    l_new_key |= ranges::actions::sort;
+    l_old_key |= ranges::actions::sort;
+    std::vector<scan::scan_key_t> l_out{l_old_key.size() + l_new_key.size()};
     {
       // ranges::;
-      auto l_tmp = l_new_key;
-      l_old_key.merge(l_tmp);
+      // auto l_tmp = l_new_key;
+      // l_old_key.merge(l_tmp);
+      auto&& [l_, l_1, l_end] = std::ranges::set_union(l_old_key, l_new_key, l_out.begin());
+      l_out.erase(l_end, std::end(l_out));
     }
 
     std::vector<scan::scan_key_t> l_set_rem{l_old_key.size() + l_new_key.size()};
-
-    auto [old_orders_end, cut_orders_last] = std::ranges::set_difference(l_old_key, l_new_key, l_set_rem.begin());
+    auto [old_orders_end, cut_orders_last] = std::ranges::set_difference(l_out, l_new_key, l_set_rem.begin());
     l_set_rem.erase(cut_orders_last, l_set_rem.end());
     l_rem_ids->reserve(l_set_rem.size());
     for (auto&& i : l_set_rem) {

@@ -20,9 +20,6 @@ void scan_data_t::seed_to_sql(const entt::registry& in_registry, const std::vect
     l_ret.rig_uuid_   = l_id.rig_uuid_;
     l_ret.solve_uuid_ = l_id.solve_uuid_;
 
-    if (auto l_h = entt::to_entity(*in_registry.storage<project>(), *l_handle.get<project_ptr>().project_);
-        l_h != entt::null)
-      l_ret.project_ = in_registry.storage<uuid>(detail::project_id)->get(l_h);
     auto& l_a         = l_handle.get<additional_data>();
     l_ret.ue_path_    = l_a.ue_path_.generic_string();
     l_ret.rig_path_   = l_a.rig_path_.generic_string();

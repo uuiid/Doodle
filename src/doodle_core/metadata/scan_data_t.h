@@ -40,7 +40,6 @@ class scan_data_t {
     std::optional<uuid> ue_uuid_;
     std::optional<uuid> rig_uuid_;
     std::optional<uuid> solve_uuid_;
-    uuid project_;
     std::int32_t project_id_;
 
     std::optional<std::filesystem::path> ue_path_;
