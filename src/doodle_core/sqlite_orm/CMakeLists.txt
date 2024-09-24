@@ -9,6 +9,7 @@ target_sources(
         std_filesystem_path_orm.h
         assets_type_enum.h
         std_chrono_zoned_time.h
+        std_chrono_duration.h
         PRIVATE
         sqlite_snapshot.cpp
         observer.cpp
