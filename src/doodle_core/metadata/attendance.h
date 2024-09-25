@@ -51,7 +51,7 @@ struct database_t {
   chrono::zoned_time<chrono::microseconds> end_time_;
   std::optional<std::string> remark_;
   att_enum type_{att_enum::overtime};
-  chrono::year_month_day create_date_{};                    //
+  chrono::local_days create_date_{};                        //
   chrono::zoned_time<chrono::microseconds> update_time_{};  // 更新时间
 
   std::optional<std::string> dingding_id_{};  // 钉钉id

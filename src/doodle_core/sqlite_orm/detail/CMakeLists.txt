@@ -8,6 +8,7 @@ target_sources(
         std_chrono_zoned_time.h
         std_filesystem_path_orm.h
         uuid_to_blob.h
+        attendance_enum.h
 
         PRIVATE
         init_project.cpp
