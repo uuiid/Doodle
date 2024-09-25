@@ -4,13 +4,7 @@ target_sources(
         sqlite_snapshot.h
         sqlite_base.h
         observer.h
-        uuid_to_blob.h
         sqlite_database.h
-        std_filesystem_path_orm.h
-        assets_type_enum.h
-        std_chrono_zoned_time.h
-        std_chrono_duration.h
-        std_chrono_time_point.h
 
         PRIVATE
         sqlite_snapshot.cpp

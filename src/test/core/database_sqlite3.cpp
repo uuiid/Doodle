@@ -28,10 +28,10 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/sqlite_orm/assets_type_enum.h>
+#include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
 #include <doodle_core/sqlite_orm/sqlite_snapshot.h>
-#include <doodle_core/sqlite_orm/std_filesystem_path_orm.h>
-#include <doodle_core/sqlite_orm/uuid_to_blob.h>
+#include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
+#include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
 #include "doodle_app/app/app_command.h"
 

@@ -7,14 +7,14 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
+#include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
+#include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
+#include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
+#include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
+#include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
+#include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
-#include <sqlite_orm/assets_type_enum.h>
 #include <sqlite_orm/sqlite_orm.h>
-#include <sqlite_orm/std_chrono_duration.h>
-#include <sqlite_orm/std_chrono_time_point.h>
-#include <sqlite_orm/std_chrono_zoned_time.h>
-#include <sqlite_orm/std_filesystem_path_orm.h>
-#include <sqlite_orm/uuid_to_blob.h>
 namespace doodle {
 
 namespace {

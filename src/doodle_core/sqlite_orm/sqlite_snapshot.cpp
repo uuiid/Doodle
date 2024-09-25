@@ -5,7 +5,6 @@
 #include "sqlite_snapshot.h"
 
 #include <doodle_core/lib_warp/sqlite3/sqlite3.h>
-#include <doodle_core/sqlite_orm/detail/all.h>
 #include <doodle_core/sqlite_orm/sqlite_base.h>
 
 #include <sqlpp11/ppgen.h>
@@ -42,7 +41,9 @@ std::shared_ptr<void> begin_save_entt(const sql_connection_ptr& in_conn) {
                            .do_nothing());
   return std::make_shared<decltype(l_pre)>(std::move(l_pre));
 }
-void save_entt(entt::entity&, entt::entity& in_entity, std::shared_ptr<void>& in_pre, const sql_connection_ptr& in_conn) {
+void save_entt(
+    entt::entity&, entt::entity& in_entity, std::shared_ptr<void>& in_pre, const sql_connection_ptr& in_conn
+) {
   auto l_pre                      = std::static_pointer_cast<entt_pie_sql_t>(in_pre);
   l_pre->params.entity_identifier = enum_to_num(in_entity);
   (*in_conn)(*l_pre);
@@ -95,11 +96,7 @@ void reg_entt() {
 }
 
 struct init_meta {
-  init_meta() {
-    reg_entt();
-    reg_database();
-    reg_server_task_info();
-  }
+  init_meta() { reg_entt(); }
 };
 }  // namespace
 
