@@ -109,7 +109,7 @@ FSys::path export_file_fbx::export_anim(
     l_export_list.push_back(l_path);
   }
 
-  log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));
+  // log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));
 
   bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
 
