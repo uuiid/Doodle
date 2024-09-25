@@ -65,7 +65,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
 
   // 查询缓存
-  auto l_attends = l_sqlite.get_attendance(l_user.id_, l_date);
+  auto l_attends = l_sqlite.get_attendance(l_user.id_, chrono::local_days{l_date});
   if (!l_attends.empty()) {
     auto& l_att = l_attends.front();
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
@@ -116,7 +116,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
           );
           l_it != std::end(l_attends)) {
         l_it->remark_ = fmt::format("{}-{}", l_obj.tag_name_, l_obj.sub_type_), l_it->type_ = l_type;
-        l_it->create_date_ = l_date;
+        l_it->create_date_ = chrono::local_days{l_date};
         l_it->update_time_ = chrono::zoned_time<chrono::microseconds>{
             chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
         };
@@ -129,7 +129,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
             .end_time_    = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.end_time_},
             .remark_      = fmt::format("{}-{}", l_obj.tag_name_, l_obj.sub_type_),
             .type_        = l_type,
-            .create_date_ = l_date,
+            .create_date_ = chrono::local_days{l_date},
             .update_time_ =
                 chrono::zoned_time<chrono::microseconds>{
                     chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
@@ -147,7 +147,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
           .start_time_  = chrono::zoned_time<chrono::microseconds>{},
           .end_time_    = chrono::zoned_time<chrono::microseconds>{},
           .type_        = attendance_helper::att_enum::max,
-          .create_date_ = l_date,
+          .create_date_ = chrono::local_days{l_date},
           .update_time_ =
               chrono::zoned_time<chrono::microseconds>{
                   chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
@@ -194,7 +194,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
 
-  std::vector<chrono::sys_days> l_date_list{};
+  std::vector<chrono::local_days> l_date_list{};
   boost::uuids::uuid l_user_uuid{};
   try {
     auto l_date    = in_handle->capture_->get("date");
@@ -207,8 +207,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       l_date_stream >> chrono::parse("%Y-%m-%d", l_ymd);
       l_date_list.emplace_back(l_ymd);
     } else {
-      auto l_end = chrono::sys_days{chrono::year_month_day{l_ym / chrono::last}};
-      for (auto l_day = chrono::sys_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end; l_day += chrono::days{1}) {
+      auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
+      for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end; l_day += chrono::days{1}) {
         l_date_list.emplace_back(l_day);
       }
     }

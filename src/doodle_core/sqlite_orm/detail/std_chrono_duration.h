@@ -21,7 +21,7 @@ struct statement_binder<std::chrono::duration<Rep, Period>> : statement_binder<R
 
 template <typename Rep, typename Period>
 struct field_printer<std::chrono::duration<Rep, Period>> : field_printer<Rep> {
-  Rep operator()(const std::chrono::duration<Rep, Period>& value) const {
+  auto operator()(const std::chrono::duration<Rep, Period>& value) const {
     return field_printer<Rep>::operator()(value.count());
   }
 };

@@ -8,12 +8,14 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
+#include <doodle_core/sqlite_orm/detail/attendance_enum.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
+#include "metadata/attendance.h"
 #include <sqlite_orm/sqlite_orm.h>
 namespace doodle {
 
@@ -22,6 +24,22 @@ auto make_storage_doodle(const std::string& in_path) {
   using namespace sqlite_orm;
   return std::move(make_storage(
       in_path,  //
+
+      make_table(
+          "attendance_tab",                                                       //
+          make_column("id", &attendance_helper::database_t::id_, primary_key()),  //
+          make_column("uuid_id", &attendance_helper::database_t::uuid_id_, unique()),
+          make_column("start_time", &attendance_helper::database_t::start_time_),
+          make_column("end_time", &attendance_helper::database_t::end_time_),
+          make_column("remark", &attendance_helper::database_t::remark_),
+          make_column("att_enum", &attendance_helper::database_t::type_),
+          make_column("create_date", &attendance_helper::database_t::create_date_),
+          make_column("update_time", &attendance_helper::database_t::update_time_),
+          make_column("dingding_id", &attendance_helper::database_t::dingding_id_),
+          make_column("user_id", &attendance_helper::database_t::user_ref),
+          foreign_key(&attendance_helper::database_t::user_ref).references(&user_helper::database_t::id_)
+      ),
+
       make_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_),
       make_index("work_xlsx_task_info_tab_user_index", &work_xlsx_task_info_helper::database_t::user_id_),
       make_table(
@@ -114,6 +132,14 @@ std::vector<scan_data_t::database_t> sqlite_database::get_by_uuid<scan_data_t::d
       sqlite_orm::where(sqlite_orm::c(&scan_data_t::database_t::uuid_id_) == in_uuid)
   );
 }
+template <>
+std::vector<user_helper::database_t> sqlite_database::get_by_uuid(const uuid& in_uuid) {
+  using namespace sqlite_orm;
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<user_helper::database_t>(
+      sqlite_orm::where(sqlite_orm::c(&scan_data_t::database_t::uuid_id_) == in_uuid)
+  );
+}
 
 template <>
 std::vector<project_helper::database_t> sqlite_database::get_all() {
@@ -148,6 +174,28 @@ std::vector<project_helper::database_t> sqlite_database::find_project_by_name(co
   return l_storage->get_all<project_helper::database_t>(
       sqlite_orm::where(sqlite_orm::c(&project_helper::database_t::name_) == in_name)
   );
+}
+
+std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
+    const std::int64_t& in_ref_id, const chrono::local_days& in_data
+) {
+  using namespace sqlite_orm;
+  auto l_storage = get_cast_storage(storage_any_);
+
+  return l_storage->get_all<attendance_helper::database_t>(where(
+      c(&attendance_helper::database_t::user_ref) == in_ref_id &&
+      c(&attendance_helper::database_t::create_date_) == in_data
+  ));
+}
+std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
+    const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
+) {
+  using namespace sqlite_orm;
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<attendance_helper::database_t>(where(
+      c(&attendance_helper::database_t::user_ref) == in_ref_id &&
+      in(c(&attendance_helper::database_t::create_date_), in_data)
+  ));
 }
 
 template <>
@@ -286,6 +334,26 @@ boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<
     auto l_g       = l_storage->transaction_guard();
     for (auto&& i : *in_data) {
       l_storage->remove<scan_data_t::database_t>(i);
+    }
+  } catch (...) {
+    l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+  }
+  DOODLE_TO_SELF();
+  co_return l_ret;
+}
+
+template <>
+boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<attendance_helper::database_t>(
+    std::shared_ptr<std::vector<std::int64_t>> in_data
+) {
+  DOODLE_TO_SQLITE_THREAD();
+  tl::expected<void, std::string> l_ret{};
+
+  try {
+    auto l_storage = get_cast_storage(storage_any_);
+    auto l_g       = l_storage->transaction_guard();
+    for (auto&& i : *in_data) {
+      l_storage->remove<attendance_helper::database_t>(i);
     }
   } catch (...) {
     l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());

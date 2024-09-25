@@ -15,14 +15,14 @@ struct type_printer<std::chrono::time_point<Clock, Duration>>
 template <typename Clock, typename Duration>
 struct statement_binder<std::chrono::time_point<Clock, Duration>> : statement_binder<typename Duration::rep> {
   int bind(sqlite3_stmt* stmt, int index, const std::chrono::time_point<Clock, Duration>& value) const {
-    return statement_binder<typename Duration::rep>::bind(stmt, index, value.count());
+    return statement_binder<typename Duration::rep>::bind(stmt, index, value.time_since_epoch().count());
   }
 };
 
 template <typename Clock, typename Duration>
 struct field_printer<std::chrono::time_point<Clock, Duration>> : field_printer<typename Duration::rep> {
-  typename Duration::rep operator()(const std::chrono::time_point<Clock, Duration>& value) const {
-    return field_printer<typename Duration::rep>::operator()(value.count());
+  auto operator()(const std::chrono::time_point<Clock, Duration>& value) const {
+    return field_printer<typename Duration::rep>::operator()(value.time_since_epoch().count());
   }
 };
 
@@ -31,7 +31,7 @@ struct row_extractor<std::chrono::time_point<Clock, Duration>> : row_extractor<t
   std::chrono::time_point<Clock, Duration> extract(sqlite3_stmt* stmt, int columnIndex) const {
     // static std::locale g_utf_8_locale{"UTF-8"};
     const auto l_value = row_extractor<typename Duration::rep>::extract(stmt, columnIndex);
-    return {l_value};
+    return std::chrono::time_point<Clock, Duration>{Duration{l_value}};
   }
 };
 }  // namespace sqlite_orm

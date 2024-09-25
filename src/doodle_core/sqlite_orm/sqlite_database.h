@@ -50,14 +50,11 @@ class sqlite_database {
   template <typename T>
   std::vector<T> get_by_uuid(const uuid& in_uuid);
 
-  template <typename T>
-  std::vector<T> get_by_ref(const std::int64_t& in_ref_id);
-
   std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const chrono::sys_days& in_data
+      const std::int64_t& in_ref_id, const chrono::local_days& in_data
   );
   std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const std::vector<chrono::sys_days>& in_data
+      const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
   );
 
   std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id);
