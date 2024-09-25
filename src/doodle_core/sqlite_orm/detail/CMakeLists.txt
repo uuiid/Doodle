@@ -9,6 +9,7 @@ target_sources(
         std_filesystem_path_orm.h
         uuid_to_blob.h
         attendance_enum.h
+        macro.h
 
         PRIVATE
         init_project.cpp
