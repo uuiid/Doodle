@@ -69,16 +69,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (!l_attends.empty()) {
     auto& l_att = l_attends.front();
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
-      boost::beast::http::response<boost::beast::http::string_body> l_response{
-          boost::beast::http::status::ok, in_handle->version_
-      };
-      l_response.keep_alive(in_handle->keep_alive_);
-      l_response.set(boost::beast::http::field::content_type, "application/json");
       nlohmann::json l_json{};
       if (l_att.type_ != attendance_helper::att_enum::max) l_json = l_attends;
-      l_response.body() = l_json.dump();
-      l_response.prepare_payload();
-      co_return l_response;
+      co_return in_handle->make_msg(l_json.dump());
     }
   }
 
@@ -193,16 +186,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   }
 
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_response.keep_alive(in_handle->keep_alive_);
-  l_response.set(boost::beast::http::field::content_type, "application/json");
   nlohmann::json l_json{};
-  l_json            = *l_attendance_list;
-  l_response.body() = l_json.dump();
-  l_response.prepare_payload();
-  co_return l_response;
+  l_json = *l_attendance_list;
+  co_return in_handle->make_msg(l_json.dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
@@ -242,16 +228,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   l_list |= ranges::actions::remove_if([](const attendance_helper::database_t& in_) {
     return in_.type_ == attendance_helper::att_enum::max;
   });
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, in_handle->version_
-  };
+
   nlohmann::json l_json{};
-  l_json            = l_list;
-  l_response.body() = l_json.dump();
-  l_response.keep_alive(in_handle->keep_alive_);
-  l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.prepare_payload();
-  co_return std::move(l_response);
+  l_json = l_list;
+  co_return in_handle->make_msg(l_json.dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_get(session_data_ptr in_handle) {
@@ -262,14 +242,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_g
   for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
     l_json.emplace_back(l_value);
   }
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_response.keep_alive(in_handle->keep_alive_);
-  l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_json.dump();
-  l_response.prepare_payload();
-  co_return std::move(l_response);
+  co_return in_handle->make_msg(l_json.dump());
 }
 
 void reg_dingding_attendance(http_route& in_route) {
