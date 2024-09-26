@@ -39,13 +39,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   std::string mobile_;
   // 钉钉id
   std::string dingding_id_;
-  // 钉钉对应公司的 uuid
-  boost::uuids::uuid dingding_company_id_;
-
-  // 引用的task
-  std::map<chrono::year_month, entt::entity> task_block_;
-  // 引用的 attendance_block
-  std::map<chrono::year_month_day, entt::entity> attendance_block_;
 
   user();
 

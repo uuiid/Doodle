@@ -16,6 +16,10 @@ namespace doodle {
 namespace attendance_helper {
 struct database_t;
 }
+
+namespace work_xlsx_task_info_helper {
+struct database_t;
+}
 class sqlite_database {
   using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
 
@@ -55,6 +59,9 @@ class sqlite_database {
   );
   std::vector<attendance_helper::database_t> get_attendance(
       const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
+  );
+  std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
+      const std::int64_t& in_ref_id, const chrono::local_days& in_data
   );
 
   std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id);
