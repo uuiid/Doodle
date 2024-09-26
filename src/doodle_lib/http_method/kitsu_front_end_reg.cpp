@@ -30,11 +30,24 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".tif") return "image/tiff";
   if (in_ext == ".svg") return "image/svg+xml";
   if (in_ext == ".svgz") return "image/svg+xml";
+  if (in_ext == ".map") return "application/json";
 }
+
+FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost::urls::segments_ref& in_) {
+  auto l_path = *in_root;
+  for (auto&& i : in_) {
+    l_path /= i;
+  }
+  if (in_.size() == 0) {
+    l_path /= "index.html";
+  }
+  return l_path;
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> get_files(
     std::shared_ptr<FSys::path> in_root, http::session_data_ptr in_handle
 ) {
-  auto l_path = *in_root / std::string{in_handle->url_.segments().buffer()};
+  auto l_path = make_doc_path(in_root, in_handle->url_.segments());
   auto l_ext  = l_path.extension();
   boost::system::error_code l_code{};
   boost::beast::http::response<boost::beast::http::file_body> l_res{
@@ -53,7 +66,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files(
 boost::asio::awaitable<boost::beast::http::message_generator> get_files_head(
     std::shared_ptr<FSys::path> in_root, http::session_data_ptr in_handle
 ) {
-  auto l_path = *in_root / std::string{in_handle->url_.segments().buffer()};
+  auto l_path = make_doc_path(in_root, in_handle->url_.segments());
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };
