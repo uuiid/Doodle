@@ -18,7 +18,7 @@
 
 namespace doodle::http {
 namespace detail {
-
+constexpr auto g_body_limit{500 * 1024 * 1024};  // 500M
 boost::asio::awaitable<void> async_websocket_session(
     tcp_stream_type in_socket, boost::beast::http::request<boost::beast::http::empty_body> in_req,
     websocket_route_ptr in_websocket_route, logger_ptr in_logger
@@ -87,7 +87,7 @@ boost::asio::awaitable<boost::system::error_code> async_relay(
   co_return l_ec;
 }
 
-boost::asio::awaitable<boost::system::error_code> proxy_relay(
+boost::asio::awaitable<boost::system::error_code> proxy_http_relay(
     tcp_stream_type_ptr in_source_stream, tcp_stream_type_ptr in_target_stream, request_parser_ptr in_request_parser,
     boost::beast::flat_buffer& in_flat_buffer, logger_ptr in_logger
 ) {
@@ -129,6 +129,7 @@ boost::asio::awaitable<boost::system::error_code> proxy_relay(
 
   {  // 开始转发回复
     buffer_response_type_ptr l_response_parser{std::make_shared<buffer_response_type>()};
+    l_response_parser->body_limit(g_body_limit);
     buffer_response_serializer_type_ptr l_response_serializer{
         std::make_shared<buffer_response_serializer_type>(l_response_parser->get())
     };
@@ -177,9 +178,13 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
 
   boost::beast::flat_buffer buffer_;
   auto l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
+  l_request_parser->body_limit(g_body_limit);
   std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::string_body>> l_request_parser_string;
 
-  auto [l_ec, bytes_transferred] =
+  boost::system::error_code l_ec{};
+  // std::size_t l_bytes_transferred{};
+
+  std::tie(l_ec, std::ignore) =
       co_await boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser);
   if (l_ec) {
     l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec);
@@ -207,7 +212,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         l_stream->close();
         co_return;
       }
-      l_ec = co_await proxy_relay(l_stream, l_proxy_relay_stream, l_request_parser, buffer_, l_session->logger_);
+      l_ec = co_await proxy_http_relay(l_stream, l_proxy_relay_stream, l_request_parser, buffer_, l_session->logger_);
       if (l_ec) {
         l_session->logger_->error("代理失败 {}", l_ec);
         l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
@@ -216,6 +221,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
       }
       // 读取下一次头
       l_request_parser = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
+      l_request_parser->body_limit(g_body_limit);
       l_stream->expires_after(30s);
       std::tie(l_ec, std::ignore) =
           co_await boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser);
