@@ -2,11 +2,12 @@
 // Created by TD on 24-9-26.
 //
 
-#include "kitsu_front_end.h"
+#include "kitsu_front_end_reg.h"
 
-#include <doodle_lib/core/http/http_session_data.h>
-namespace doodle::kitsu {
+#include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
+namespace doodle::http {
 namespace {
+
 std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".htm") return "text/html";
   if (in_ext == ".html") return "text/html";
@@ -30,11 +31,10 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".svg") return "image/svg+xml";
   if (in_ext == ".svgz") return "image/svg+xml";
 }
-}  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get_files(
-    http::session_data_ptr in_handle
-) const {
-  auto l_path = root_path_ / std::string{in_handle->url_.segments().buffer()};
+boost::asio::awaitable<boost::beast::http::message_generator> get_files(
+    std::shared_ptr<FSys::path> in_root, http::session_data_ptr in_handle
+) {
+  auto l_path = *in_root / std::string{in_handle->url_.segments().buffer()};
   auto l_ext  = l_path.extension();
   boost::system::error_code l_code{};
   boost::beast::http::response<boost::beast::http::file_body> l_res{
@@ -50,16 +50,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::g
   co_return std::move(l_res);
 }
 
-std::tuple<bool, http::capture_t> kitsu_front_end::set_match_url(boost::urls::segments_ref in_segments_ref) const {
-  if (FSys::exists(*root_path_ / std::string{in_segments_ref.buffer()})) {
-    return {true, http::capture_t{}};
-  }
-  return {false, http::capture_t{}};
-}
-boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end_head::get_files(
-    http::session_data_ptr in_handle
-) const {
-  auto l_path = root_path_ / std::string{in_handle->url_.segments().buffer()};
+boost::asio::awaitable<boost::beast::http::message_generator> get_files_head(
+    std::shared_ptr<FSys::path> in_root, http::session_data_ptr in_handle
+) {
+  auto l_path = *in_root / std::string{in_handle->url_.segments().buffer()};
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };
@@ -76,5 +70,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end_he
   l_res.prepare_payload();
   co_return std::move(l_res);
 }
+}  // namespace
 
-}  // namespace doodle::kitsu
+void reg_kitsu_front_end_http(http_route& in_route, const FSys::path& in_root) {
+  auto l_path = std::make_shared<FSys::path>(in_root);
+  kitsu::kitsu_front_end l_end{FSys::path{in_root}, boost::beast::http::verb::get, std::bind_front(get_files, l_path)};
+  in_route
+      .reg(std::make_shared<kitsu::kitsu_front_end>(
+          FSys::path{in_root}, boost::beast::http::verb::get, std::bind_front(get_files, l_path)
+      ))
+      .reg(std::make_shared<kitsu::kitsu_front_end>(
+          FSys::path{in_root}, boost::beast::http::verb::head, std::bind_front(get_files_head, l_path)
+      ));
+}
+}  // namespace doodle::http

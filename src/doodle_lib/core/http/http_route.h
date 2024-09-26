@@ -11,7 +11,8 @@
 
 namespace doodle::http {
 class http_function;
-using http_function_ptr = std::shared_ptr<http_function>;
+class http_function_base_t;
+using http_function_ptr = std::shared_ptr<http_function_base_t>;
 class websocket_route;
 using websocket_route_ptr = std::shared_ptr<websocket_route>;
 

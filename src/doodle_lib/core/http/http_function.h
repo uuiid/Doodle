@@ -107,5 +107,5 @@ class http_function : public http_function_base_t {
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
 
-using http_function_ptr = std::shared_ptr<http_function>;
+using http_function_ptr = std::shared_ptr<http_function_base_t>;
 }  // namespace doodle::http
