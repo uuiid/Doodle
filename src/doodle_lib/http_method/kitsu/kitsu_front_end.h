@@ -13,7 +13,9 @@ class kitsu_front_end : public doodle::http::http_function_base_t {
 
  public:
   explicit kitsu_front_end(FSys::path&& in_root)
-      : http::http_function_base_t(boost::beast::http::verb::get, std::bind_front(&get_files, this), nullptr),
+      : http::http_function_base_t(
+            boost::beast::http::verb::get, std::bind_front(&kitsu_front_end::get_files, this), nullptr
+        ),
         root_path_(std::move(in_root)) {}
   ~kitsu_front_end() override = default;
   std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
@@ -27,4 +29,5 @@ class kitsu_front_end_head : public kitsu_front_end {
     verb_ = boost::beast::http::verb::head;
   }
 };
+
 }  // namespace doodle::kitsu

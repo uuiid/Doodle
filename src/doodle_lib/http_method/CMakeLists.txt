@@ -13,6 +13,7 @@ target_sources(
         file_association.h
         share_fun.h
         model_base.h
+        kitsu_front_end.h
 
         PRIVATE
         computer.cpp
@@ -26,6 +27,7 @@ target_sources(
         share_fun.cpp
         computer_reg_data.cpp
         model_base.cpp
+        kitsu_front_end.cpp
 
 )
 
