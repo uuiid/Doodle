@@ -41,7 +41,7 @@ auto make_storage_doodle(const std::string& in_path) {
       ),
 
       make_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_),
-      make_index("work_xlsx_task_info_tab_user_index", &work_xlsx_task_info_helper::database_t::user_id_),
+      make_index("work_xlsx_task_info_tab_user_index", &work_xlsx_task_info_helper::database_t::user_ref_),
       make_table(
           "work_xlsx_task_info_tab",                                                       //
           make_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key()),  //
@@ -52,9 +52,9 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("remark", &work_xlsx_task_info_helper::database_t::remark_),
           make_column("user_remark", &work_xlsx_task_info_helper::database_t::user_remark_),
           make_column("year_month", &work_xlsx_task_info_helper::database_t::year_month_),
-          make_column("user_id", &work_xlsx_task_info_helper::database_t::user_id_),
+          make_column("user_id", &work_xlsx_task_info_helper::database_t::user_ref_),
           make_column("kitsu_task_ref_id", &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_),
-          foreign_key(&work_xlsx_task_info_helper::database_t::user_id_).references(&user_helper::database_t::id_)
+          foreign_key(&work_xlsx_task_info_helper::database_t::user_ref_).references(&user_helper::database_t::id_)
       ),
       make_index("user_tab_dingding_index", &user_helper::database_t::dingding_id_),
       make_table(
@@ -125,23 +125,6 @@ void sqlite_database::set_path(const FSys::path& in_path) {
   default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
 }
 
-template <>
-std::vector<scan_data_t::database_t> sqlite_database::get_by_uuid<scan_data_t::database_t>(const uuid& in_uuid) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-  return l_storage->get_all<scan_data_t::database_t>(
-      sqlite_orm::where(sqlite_orm::c(&scan_data_t::database_t::uuid_id_) == in_uuid)
-  );
-}
-template <>
-std::vector<user_helper::database_t> sqlite_database::get_by_uuid(const uuid& in_uuid) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-  return l_storage->get_all<user_helper::database_t>(
-      sqlite_orm::where(sqlite_orm::c(&scan_data_t::database_t::uuid_id_) == in_uuid)
-  );
-}
-
 std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid& in_id) {
   using namespace sqlite_orm;
   auto l_storage = get_cast_storage(storage_any_);
@@ -180,13 +163,35 @@ std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
       in(&attendance_helper::database_t::create_date_, in_data)
   ));
 }
+std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xlsx_task_info(
+    const std::int64_t& in_ref_id, const chrono::local_days& in_data
+) {
+  using namespace sqlite_orm;
+  auto l_storage = get_cast_storage(storage_any_);
+  return l_storage->get_all<work_xlsx_task_info_helper::database_t>(where(
+      c(&work_xlsx_task_info_helper::database_t::user_ref_) == in_ref_id &&
+      c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
+  ));
+}
+
+#define DOODLE_GET_BY_UUID_SQL(class_name)                                                                     \
+  template <>                                                                                                  \
+  std::vector<class_name> sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) {         \
+    using namespace sqlite_orm;                                                                                \
+    auto l_storage = get_cast_storage(storage_any_);                                                           \
+    return l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::uuid_id_) == in_uuid)); \
+  }
+
+DOODLE_GET_BY_UUID_SQL(scan_data_t::database_t);
+DOODLE_GET_BY_UUID_SQL(user_helper::database_t);
+DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t);
 
 #define DOODLE_GET_ALL_SQL(class_name)                 \
-template <>                                          \
-std::vector<class_name> sqlite_database::get_all() { \
-auto l_storage = get_cast_storage(storage_any_);   \
-return l_storage->get_all<class_name>();           \
-}
+  template <>                                          \
+  std::vector<class_name> sqlite_database::get_all() { \
+    auto l_storage = get_cast_storage(storage_any_);   \
+    return l_storage->get_all<class_name>();           \
+  }
 
 DOODLE_GET_ALL_SQL(project_helper::database_t);
 DOODLE_GET_ALL_SQL(scan_data_t::database_t);
@@ -267,6 +272,7 @@ DOODLE_INSTALL_SQL(user_helper::database_t);
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(scan_data_t::database_t)
+DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
 
 #define DOODLE_REMOVE_RANGE(class_name)                                                        \
   template <>                                                                                  \
@@ -291,6 +297,7 @@ DOODLE_INSTALL_RANGE(scan_data_t::database_t)
 
 DOODLE_REMOVE_RANGE(scan_data_t::database_t);
 DOODLE_REMOVE_RANGE(attendance_helper::database_t);
+DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t);
 
 void sqlite_database::load(const FSys::path& in_path) { set_path(in_path); }
 
