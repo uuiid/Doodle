@@ -24,7 +24,8 @@ auto make_storage_doodle(const std::string& in_path) {
   using namespace sqlite_orm;
   return std::move(make_storage(
       in_path,  //
-
+      make_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_),
+      make_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_),
       make_table(
           "attendance_tab",                                                       //
           make_column("id", &attendance_helper::database_t::id_, primary_key()),  //
@@ -176,7 +177,7 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
 
 #define DOODLE_GET_BY_UUID_SQL(class_name)                                                                     \
   template <>                                                                                                  \
-  std::vector<class_name> sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) {         \
+  std::vector<class_name> sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) {                      \
     using namespace sqlite_orm;                                                                                \
     auto l_storage = get_cast_storage(storage_any_);                                                           \
     return l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::uuid_id_) == in_uuid)); \
