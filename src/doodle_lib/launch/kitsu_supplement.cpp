@@ -13,6 +13,7 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 #include <doodle_lib/http_method/user_http.h>
 namespace doodle::launch {
@@ -22,6 +23,7 @@ struct kitsu_supplement_args_t {
   FSys::path db_path_{};
 
   std::string kitsu_token_{};
+  FSys::path kitsu_front_end_path_{};
 
   // 公司
   struct dingding_company_t {
@@ -53,6 +55,7 @@ struct kitsu_supplement_args_t {
     in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
+    in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
     in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
   }
 };
@@ -62,7 +65,10 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
 
   kitsu_supplement_args_t l_args{
-      .kitsu_url_ = "http://192.168.40.182", .port_ = 50025, .db_path_ = "D:/kitsu.database"
+      .kitsu_url_            = "http://192.168.40.182",
+      .port_                 = 50025,
+      .db_path_              = "D:/kitsu.database",
+      .kitsu_front_end_path_ = "D:/doodle/kitsu"
   };
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
@@ -116,7 +122,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   http::reg_computing_time(*l_rout_ptr);
   http::reg_dingding_attendance(*l_rout_ptr);
   http::reg_user_http(*l_rout_ptr);
-
+  http::reg_kitsu_front_end_http(*l_rout_ptr, l_args.kitsu_front_end_path_);
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
 
