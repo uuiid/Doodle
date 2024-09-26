@@ -31,7 +31,7 @@ struct row_extractor<std::chrono::duration<Rep, Period>> : row_extractor<Rep> {
   std::chrono::duration<Rep, Period> extract(sqlite3_stmt* stmt, int columnIndex) const {
     // static std::locale g_utf_8_locale{"UTF-8"};
     const auto l_value = row_extractor<Rep>::extract(stmt, columnIndex);
-    return {l_value};
+    return std::chrono::duration<Rep, Period>{l_value};
   }
 };
 
