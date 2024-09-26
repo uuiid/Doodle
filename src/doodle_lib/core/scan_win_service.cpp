@@ -99,7 +99,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
     // if (app_base::GetPtr()->is_stop()) co_return;
     using opt_t = decltype(to_scan_data(thread_pool_, project_roots_[0], scan_categories_[0], boost::asio::deferred));
     std::vector<opt_t> l_opts{};
-    default_logger_raw()->log(log_loc(), level::info, "开始扫描");
+    logger_->log(log_loc(), level::info, "开始扫描");
     // 添加扫瞄操作
     for (auto&& l_root : project_roots_) {
       for (auto&& l_data : scan_categories_) {
@@ -118,7 +118,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       scan_data_key_maps_[l_current_index].clear();
       for (auto i : l_index) {
         if (!l_v[i]) {
-          default_logger_raw()->info(l_v[i].error());
+          logger_->info(l_v[i].error());
           continue;
         }
         add_handle(l_v[i].value(), l_current_index);
@@ -128,12 +128,12 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       index_ = l_current_index;
     }
 
-    default_logger_raw()->log(log_loc(), level::info, "扫描完成");
+    logger_->log(log_loc(), level::info, "扫描完成");
 
     timer_->expires_after(30s);
     auto [l_ec] = co_await timer_->async_wait(boost::asio::as_tuple(boost::asio::use_awaitable));
     if (l_ec) {
-      default_logger_raw()->log(log_loc(), level::info, "定时器取消 {}", l_ec.message());
+      logger_->log(log_loc(), level::info, "定时器取消 {}", l_ec.message());
       co_return;
     }
   }
@@ -214,9 +214,9 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
   }
   auto& l_data_base = g_ctx().get<sqlite_database>();
   if (auto l_r = co_await l_data_base.install_range<scan_data_t::database_t>(l_install); !l_r)
-    default_logger_raw()->error(l_r.error());
+    logger_->error(l_r.error());
   if (auto l_r = co_await l_data_base.remove<scan_data_t::database_t>(l_rem_ids); !l_r)
-    default_logger_raw()->error(l_r.error());
+    logger_->error(l_r.error());
 }
 
 void scan_win_service_t::add_handle(
