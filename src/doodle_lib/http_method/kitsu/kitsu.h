@@ -29,6 +29,8 @@ http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_h
 
 project_helper::database_t find_project(const std::string& in_name);
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name);
+
+uuid get_url_project_id(const boost::urls::url& in_url);
 }  // namespace kitsu
 
 }  // namespace doodle::http

@@ -65,8 +65,15 @@ http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_h
 
 project_helper::database_t find_project(const std::string& in_name) {
   auto l_prj = g_ctx().get<sqlite_database>().find_project_by_name(in_name);
-  if(l_prj.empty()) return {};
+  if (l_prj.empty()) return {};
   return l_prj.front();
+}
+uuid get_url_project_id(const boost::urls::url& in_url) {
+  auto l_q = in_url.query();
+  if (auto l_it = l_q.find("project_id"); l_it != l_q.npos) {
+    return boost::lexical_cast<uuid>(l_q.substr(l_it + 10, l_q.find('&', l_it) - l_it - 10));
+  }
+  return {};
 }
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name) {
   if (in_name == "角色") {
