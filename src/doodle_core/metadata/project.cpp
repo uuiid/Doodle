@@ -92,6 +92,20 @@ FSys::path project::make_path(const FSys::path& in_path) const {
   if (!exists(path)) create_directories(path);
   return path;
 }
+namespace project_helper {
+void database_t::generate_names() {
+  en_str_         = boost::algorithm::to_lower_copy(convert::Get().toEn(name_));
+  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(name_);
+  auto& k_pingYin = convert::Get();
+  std::string str{};
+  for (auto s : wstr) {
+    auto k_s_front = k_pingYin.toEn(s).front();
+    str.append(&k_s_front, 1);
+  }
+  shor_str_ = boost::algorithm::to_upper_copy(str.substr(0, 2));
+}
+
+}  // namespace project_helper
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]                   = p.find_icon_regex;

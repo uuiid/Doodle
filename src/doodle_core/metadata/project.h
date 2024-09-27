@@ -94,6 +94,10 @@ struct database_t {
   std::filesystem::path local_path_{};
   std::string auto_upload_path_{};
   uuid kitsu_uuid_{};
+
+  /// 根据 name 生成拼音名称和短名称
+  void generate_names();
+
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["name"] = p.name_;
     j["path"] = p.path_;
