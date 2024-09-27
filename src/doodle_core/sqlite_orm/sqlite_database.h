@@ -53,6 +53,8 @@ class sqlite_database {
 
   template <typename T>
   std::vector<T> get_by_uuid(const uuid& in_uuid);
+  template <typename T>
+  std::vector<T> get_by_kitsu_uuid(const uuid& in_uuid);
 
   std::vector<attendance_helper::database_t> get_attendance(
       const std::int64_t& in_ref_id, const chrono::local_days& in_data
