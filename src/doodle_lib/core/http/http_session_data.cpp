@@ -158,6 +158,66 @@ boost::asio::awaitable<boost::system::error_code> proxy_http_relay(
   }
   co_return l_ec;
 }
+boost::asio::awaitable<boost::system::error_code> proxy_websocket_relay(
+    tcp_stream_type_ptr in_source_stream, tcp_stream_type_ptr in_target_stream, request_parser_ptr in_request_parser,
+    boost::beast::flat_buffer& in_flat_buffer, logger_ptr in_logger
+) {
+  boost::system::error_code l_ec{};
+  l_ec = co_await proxy_http_relay(in_source_stream, in_target_stream, in_request_parser, in_flat_buffer, in_logger);
+  if (l_ec) co_return l_ec;
+
+  in_logger->warn("开始代理 websocket");
+  auto& l_source_tcp      = in_source_stream->socket();
+  auto& l_target_tcp      = in_target_stream->socket();
+
+  auto l_source_to_target = [&]() -> boost::asio::awaitable<boost::system::error_code> {
+    char l_buffer[1024 * 4];
+    std::size_t l_bytes_transferred;
+    do {
+      std::tie(l_ec, l_bytes_transferred) =
+          co_await boost::asio::async_read(l_source_tcp, boost::asio::buffer(l_buffer));
+      if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
+      if (l_ec) {
+        in_logger->error("无法读取请求体 {}", l_ec.message());
+        co_return l_ec;
+      }
+
+      std::tie(l_ec, l_bytes_transferred) =
+          co_await boost::asio::async_write(l_target_tcp, boost::asio::buffer(l_buffer));
+    } while (l_ec);
+    co_return l_ec;
+  };
+  auto l_target_to_source = [&]() -> boost::asio::awaitable<boost::system::error_code> {
+    char l_buffer[1024 * 4];
+    std::size_t l_bytes_transferred;
+    do {
+      std::tie(l_ec, l_bytes_transferred) =
+          co_await boost::asio::async_read(l_target_tcp, boost::asio::buffer(l_buffer));
+      if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
+      if (l_ec) {
+        in_logger->error("无法读取请求体 {}", l_ec.message());
+        co_return l_ec;
+      }
+
+      std::tie(l_ec, l_bytes_transferred) =
+          co_await boost::asio::async_write(l_source_tcp, boost::asio::buffer(l_buffer));
+    } while (l_ec);
+    co_return l_ec;
+  };
+  auto&& [l_arr, l_ptr1, l_e1, l_ptr2, l_e2] =
+      co_await boost::asio::experimental::make_parallel_group(
+          boost::asio::co_spawn(l_source_tcp.get_executor(), l_source_to_target, boost::asio::deferred),
+          boost::asio::co_spawn(l_source_tcp.get_executor(), l_target_to_source, boost::asio::deferred)
+      )
+          .async_wait(
+              boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
+          );
+  /// 直接转发原始数据
+  // co_await boost::beast::http::async_read_some(*in_source_stream, in_flat_buffer, *in_request_parser);
+  if (l_e1) l_ec = l_e1;
+  if (l_e2) l_ec = l_e2;
+  co_return l_ec;
+}
 
 boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr) {
   tcp_stream_type_ptr l_stream = std::make_shared<tcp_stream_type>(std::move(in_socket));
@@ -184,8 +244,7 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
   boost::system::error_code l_ec{};
   // std::size_t l_bytes_transferred{};
 
-  std::tie(l_ec, std::ignore) =
-      co_await boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser);
+  std::tie(l_ec, std::ignore) = co_await boost::beast::http::async_read_header(*l_stream, buffer_, *l_request_parser);
   if (l_ec) {
     l_session->logger_->log(log_loc(), level::err, "读取头部失败 {}", l_ec);
     l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
@@ -212,7 +271,18 @@ boost::asio::awaitable<void> async_session(boost::asio::ip::tcp::socket in_socke
         l_stream->close();
         co_return;
       }
-      l_ec = co_await proxy_http_relay(l_stream, l_proxy_relay_stream, l_request_parser, buffer_, l_session->logger_);
+      if (boost::beast::websocket::is_upgrade(l_request_parser->get())) {
+        l_ec = co_await proxy_websocket_relay(
+            l_stream, l_proxy_relay_stream, l_request_parser, buffer_, l_session->logger_
+        );
+        if (l_ec) {
+          l_session->logger_->error("代理失败 {}", l_ec);
+          l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
+          l_stream->close();
+          co_return;
+        }
+      } else
+        l_ec = co_await proxy_http_relay(l_stream, l_proxy_relay_stream, l_request_parser, buffer_, l_session->logger_);
       if (l_ec) {
         l_session->logger_->error("代理失败 {}", l_ec);
         l_stream->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, l_ec);
