@@ -92,6 +92,8 @@ auto make_storage_doodle(const std::string& in_path) {
           // make_column("file_hash", &scan_data_t::database_t::hash_),
           foreign_key(&scan_data_t::database_t::project_id_).references(&project_helper::database_t::id_)
       ),  //
+      make_index("project_tab_uuid", &project_helper::database_t::uuid_id_),
+      make_index("project_tab_kitsu_uuid", &project_helper::database_t::kitsu_uuid_),
       make_table(
           "project_tab",                                                       //
           make_column("id", &project_helper::database_t::id_, primary_key()),  //
@@ -101,7 +103,8 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("en_str", &project_helper::database_t::en_str_),  //
           make_column("shor_str", &project_helper::database_t::shor_str_),
           make_column("local_path", &project_helper::database_t::local_path_),
-          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
+          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),
+          make_column("kitsu_uuid", &project_helper::database_t::kitsu_uuid_)
       )
   ));
 }

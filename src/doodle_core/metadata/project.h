@@ -93,6 +93,7 @@ struct database_t {
   std::string shor_str_{};
   std::filesystem::path local_path_{};
   std::string auto_upload_path_{};
+  uuid kitsu_uuid_{};
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["name"] = p.name_;
     j["path"] = p.path_;
