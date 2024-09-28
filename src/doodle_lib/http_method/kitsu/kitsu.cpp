@@ -56,35 +56,22 @@ http_route_ptr create_kitsu_route() {
 namespace kitsu {
 namespace {
 boost::asio::awaitable<void> init_context_impl() {
-  auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_user_ctx();
-  if (!l_c) default_logger_raw()->error(l_c.error());
-  auto l_json = l_c.value();
-
   {
+    auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_project();
+    if (!l_c) default_logger_raw()->error(l_c.error());
     std::map<std::string, project_helper::database_t> l_prj_maps{};
     {
       auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
       for (auto&& l : l_prjs) l_prj_maps.emplace(l.name_, l);
     }
     auto l_prj_install = std::make_shared<std::vector<project_helper::database_t>>();
-    for (auto&& l_prj : l_json["projects"]) {
-      auto l_name = l_prj["name"].get<std::string>();
-      auto l_id   = boost::lexical_cast<uuid>(l_prj["id"].get<std::string>());
-      if (!l_prj_maps.contains(l_name)) {
-        l_prj_install
-            ->emplace_back(project_helper::database_t{
-                .uuid_id_          = core_set::get_set().get_uuid(),
-                .name_             = l_name,
-                .path_             = "C:/sy/doodle",
-                .local_path_       = "C:/sy/doodle",
-                .auto_upload_path_ = "C:/sy/doodle",
-                .kitsu_uuid_       = l_id
-            })
-            .generate_names();
+    for (auto&& l_prj : l_c.value()) {
+      if (!l_prj_maps.contains(l_prj.name_)) {
+        l_prj_install->emplace_back(l_prj).generate_names();
 
-      } else if (l_prj_maps[l_name].kitsu_uuid_ != l_id) {
-        l_prj_maps[l_name].kitsu_uuid_ = l_id;
-        l_prj_install->emplace_back(l_prj_maps[l_name]);
+      } else if (l_prj_maps[l_prj.name_].kitsu_uuid_ != l_prj.kitsu_uuid_) {
+        l_prj_maps[l_prj.name_].kitsu_uuid_ = l_prj.kitsu_uuid_;
+        l_prj_install->emplace_back(l_prj_maps[l_prj.name_]);
       }
     }
     if (!l_prj_install->empty())
@@ -93,27 +80,22 @@ boost::asio::awaitable<void> init_context_impl() {
   }
 
   {
+    auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_task_type();
+    if (!l_c) default_logger_raw()->error(l_c.error());
     std::map<std::string, metadata::kitsu::task_type_t> l_task_maps{};
     {
       auto l_ts = g_ctx().get<sqlite_database>().get_all<metadata::kitsu::task_type_t>();
       for (auto&& l : l_ts) l_task_maps.emplace(l.name_, l);
     }
     auto l_install = std::make_shared<std::vector<metadata::kitsu::task_type_t>>();
-    for (auto&& l_prj : l_json["task_types"]) {
-      auto l_name = l_prj["name"].get<std::string>();
-      auto l_id   = boost::lexical_cast<uuid>(l_prj["id"].get<std::string>());
-      if (!l_task_maps.contains(l_name)) {
-        auto& lv = l_install->emplace_back(metadata::kitsu::task_type_t{
-            .uuid_id_        = core_set::get_set().get_uuid(),
-            .kitsu_uuid_     = l_id,
-            .name_           = l_name,
-            .use_chick_files = false,
-        });
-        if (l_name == "角色" || l_name == "地编模型" || l_name == "绑定") lv.use_chick_files = true;
+    for (auto&& l_ : l_c.value()) {
+      if (!l_task_maps.contains(l_.name_)) {
+        if (l_.name_ == "角色" || l_.name_ == "地编模型" || l_.name_ == "绑定") l_.use_chick_files = true;
+        l_install->emplace_back(l_);
 
-      } else if (l_task_maps[l_name].kitsu_uuid_ != l_id) {
-        l_task_maps[l_name].kitsu_uuid_ = l_id;
-        l_install->emplace_back(l_task_maps[l_name]);
+      } else if (l_task_maps[l_.name_].kitsu_uuid_ != l_.kitsu_uuid_) {
+        l_task_maps[l_.name_].kitsu_uuid_ = l_.kitsu_uuid_;
+        l_install->emplace_back(l_task_maps[l_.name_]);
       }
     }
     if (!l_install->empty())
