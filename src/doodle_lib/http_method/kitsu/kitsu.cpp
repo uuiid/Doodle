@@ -8,6 +8,7 @@
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/kitsu/user.h>
+#include <doodle_lib/http_method/kitsu/task.h>
 namespace doodle::http {
 
 namespace {
@@ -46,6 +47,7 @@ boost::asio::awaitable<tcp_stream_type_ptr> create_kitsu_proxy() {
 http_route_ptr create_kitsu_route() {
   auto l_router = std::make_shared<http_route>(create_kitsu_proxy);
   kitsu::user_reg(*l_router);
+  kitsu::task_reg(*l_router);
   return l_router;
 }
 

@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
+#include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
@@ -68,7 +69,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
   auto l_json = nlohmann::json::parse(l_res.body());
   try {
     auto l_prj_id = get_url_project_id(in_handle->url_);
-    auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
+    auto& l_map   = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
     for (auto&& l_json_entt : l_json) {
       auto l_user_data = l_json_entt["data"];
       for (auto&& l_json_task : l_json_entt["tasks"]) {
@@ -80,9 +81,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
       //       .dep_     = conv_assets_type_enum(l_json_sub["dep"]["name"]),
       //       .season_  = season{l_user_data["gui_dang"].get<std::int32_t>()},
       //       .project_ = find_project(l_json_sub["project"]["name"]).uuid_id_,
-      //       .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
-      //       .name_    = l_user_data["pin_yin_ming_cheng"].get<std::string>(),
-      //       .version_name_ =
+      //       .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() :
+      //       std::string{}, .name_    = l_user_data["pin_yin_ming_cheng"].get<std::string>(), .version_name_ =
       //           l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
       //   };
       //   FSys::path l_maya_path{};
