@@ -5,6 +5,7 @@
 #include "task.h"
 
 #include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
@@ -79,7 +80,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
       auto l_asset_type_name = l_json_entt["asset_type_name"];
       for (auto&& l_json_task : l_json_entt["tasks"]) {
         bool l_file_exist{};
-        if (l_task_type_name == "角色" || l_task_type_name == "地编模型" || l_task_type_name == "绑定") {
+        if (auto l_p = g_ctx().get<sqlite_database>().get_by_kitsu_uuid<metadata::kitsu::task_type_t>(
+                l_json_task["task_type_id"].get<uuid>()
+            );
+            !l_p.empty() && l_p.front().use_chick_files) {
           scan::scan_key_t l_key{
               .dep_     = conv_assets_type_enum(l_asset_type_name),
               .season_  = season{l_user_data["gui_dang"].get<std::int32_t>()},
