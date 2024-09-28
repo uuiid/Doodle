@@ -86,6 +86,27 @@ boost::asio::awaitable<boost::system::error_code> async_relay(
 
   co_return l_ec;
 }
+template <typename SyncWriteStream, typename SyncReadStream>
+boost::asio::awaitable<boost::system::error_code> async_relay_raw(
+    SyncWriteStream& in_sync_write_stream, SyncReadStream& in_sync_read_stream, logger_ptr in_logger
+) {
+  boost::system::error_code l_ec{};
+  char l_buffer[1024 * 4];
+  std::size_t l_bytes_transferred;
+  do {
+    std::tie(l_ec, l_bytes_transferred) =
+        co_await boost::asio::async_read(in_sync_read_stream, boost::asio::buffer(l_buffer));
+    if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
+    if (l_ec) {
+      in_logger->error("无法读取请求体 {}", l_ec.message());
+      co_return l_ec;
+    }
+
+    std::tie(l_ec, l_bytes_transferred) =
+        co_await boost::asio::async_write(in_sync_write_stream, boost::asio::buffer(l_buffer));
+  } while (!l_ec);
+  co_return l_ec;
+}
 
 boost::asio::awaitable<boost::system::error_code> proxy_http_relay(
     tcp_stream_type_ptr in_source_stream, tcp_stream_type_ptr in_target_stream, request_parser_ptr in_request_parser,
@@ -167,47 +188,17 @@ boost::asio::awaitable<boost::system::error_code> proxy_websocket_relay(
   if (l_ec) co_return l_ec;
 
   in_logger->warn("开始代理 websocket");
-  auto& l_source_tcp      = in_source_stream->socket();
-  auto& l_target_tcp      = in_target_stream->socket();
+  auto& l_source_tcp = in_source_stream->socket();
+  auto& l_target_tcp = in_target_stream->socket();
 
-  auto l_source_to_target = [&]() -> boost::asio::awaitable<boost::system::error_code> {
-    char l_buffer[1024 * 4];
-    std::size_t l_bytes_transferred;
-    do {
-      std::tie(l_ec, l_bytes_transferred) =
-          co_await boost::asio::async_read(l_source_tcp, boost::asio::buffer(l_buffer));
-      if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
-      if (l_ec) {
-        in_logger->error("无法读取请求体 {}", l_ec.message());
-        co_return l_ec;
-      }
-
-      std::tie(l_ec, l_bytes_transferred) =
-          co_await boost::asio::async_write(l_target_tcp, boost::asio::buffer(l_buffer));
-    } while (l_ec);
-    co_return l_ec;
-  };
-  auto l_target_to_source = [&]() -> boost::asio::awaitable<boost::system::error_code> {
-    char l_buffer[1024 * 4];
-    std::size_t l_bytes_transferred;
-    do {
-      std::tie(l_ec, l_bytes_transferred) =
-          co_await boost::asio::async_read(l_target_tcp, boost::asio::buffer(l_buffer));
-      if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
-      if (l_ec) {
-        in_logger->error("无法读取请求体 {}", l_ec.message());
-        co_return l_ec;
-      }
-
-      std::tie(l_ec, l_bytes_transferred) =
-          co_await boost::asio::async_write(l_source_tcp, boost::asio::buffer(l_buffer));
-    } while (l_ec);
-    co_return l_ec;
-  };
   auto&& [l_arr, l_ptr1, l_e1, l_ptr2, l_e2] =
       co_await boost::asio::experimental::make_parallel_group(
-          boost::asio::co_spawn(l_source_tcp.get_executor(), l_source_to_target, boost::asio::deferred),
-          boost::asio::co_spawn(l_source_tcp.get_executor(), l_target_to_source, boost::asio::deferred)
+          boost::asio::co_spawn(
+              l_source_tcp.get_executor(), async_relay_raw(l_target_tcp, l_source_tcp, in_logger), boost::asio::deferred
+          ),
+          boost::asio::co_spawn(
+              l_source_tcp.get_executor(), async_relay_raw(l_source_tcp, l_target_tcp, in_logger), boost::asio::deferred
+          )
       )
           .async_wait(
               boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
