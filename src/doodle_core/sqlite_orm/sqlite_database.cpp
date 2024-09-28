@@ -5,10 +5,12 @@
 #include "sqlite_database.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
 #include <doodle_core/sqlite_orm/detail/attendance_enum.h>
+#include <doodle_core/sqlite_orm/detail/macro.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
@@ -24,6 +26,16 @@ auto make_storage_doodle(const std::string& in_path) {
   using namespace sqlite_orm;
   return std::move(make_storage(
       in_path,  //
+
+      make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
+      make_index("kitsu_task_type_tab_kitsu_uuid_index", &metadata::kitsu::task_type_t::kitsu_uuid_),
+      make_table(
+          "kitsu_task_type_tab",                                                 //
+          make_column("id", &metadata::kitsu::task_type_t::id_, primary_key()),  //
+          make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique()),
+          make_column("kitsu_uuid", &metadata::kitsu::task_type_t::kitsu_uuid_),
+          make_column("name", &metadata::kitsu::task_type_t::name_)
+      ),
       make_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_),
       make_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_),
       make_table(
@@ -178,139 +190,32 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
   ));
 }
 
-#define DOODLE_GET_BY_KITSU_UUID_SQL(class_name)                                                                  \
-  template <>                                                                                                     \
-  std::vector<class_name> sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) {                         \
-    using namespace sqlite_orm;                                                                                   \
-    auto l_storage = get_cast_storage(storage_any_);                                                              \
-    return l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::kitsu_uuid_) == in_uuid)); \
-  }
 DOODLE_GET_BY_KITSU_UUID_SQL(project_helper::database_t);
-
-#define DOODLE_GET_BY_UUID_SQL(class_name)                                                                     \
-  template <>                                                                                                  \
-  std::vector<class_name> sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) {                      \
-    using namespace sqlite_orm;                                                                                \
-    auto l_storage = get_cast_storage(storage_any_);                                                           \
-    return l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::uuid_id_) == in_uuid)); \
-  }
+DOODLE_GET_BY_KITSU_UUID_SQL(metadata::kitsu::task_type_t);
 
 DOODLE_GET_BY_UUID_SQL(scan_data_t::database_t);
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t);
 DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t);
 
-#define DOODLE_GET_ALL_SQL(class_name)                 \
-  template <>                                          \
-  std::vector<class_name> sqlite_database::get_all() { \
-    auto l_storage = get_cast_storage(storage_any_);   \
-    return l_storage->get_all<class_name>();           \
-  }
-
 DOODLE_GET_ALL_SQL(project_helper::database_t);
 DOODLE_GET_ALL_SQL(scan_data_t::database_t);
 DOODLE_GET_ALL_SQL(user_helper::database_t);
-
-#define DOODLE_INSTALL_SQL(class_type)                                                                                 \
-  template <>                                                                                                          \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install(std::shared_ptr<class_type> in_data \
-  ) {                                                                                                                  \
-    DOODLE_TO_SQLITE_THREAD();                                                                                         \
-    tl::expected<void, std::string> l_ret{};                                                                           \
-    try {                                                                                                              \
-      auto l_storage = get_cast_storage(storage_any_);                                                                 \
-      auto l_g       = l_storage->transaction_guard();                                                                 \
-      if (in_data->id_ == 0)                                                                                           \
-        in_data->id_ = l_storage->insert<class_type>(*in_data);                                                        \
-      else {                                                                                                           \
-        l_storage->replace<class_type>(*in_data);                                                                      \
-      }                                                                                                                \
-      l_g.commit();                                                                                                    \
-    } catch (...) {                                                                                                    \
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());                                  \
-    }                                                                                                                  \
-    DOODLE_TO_SELF();                                                                                                  \
-    co_return l_ret;                                                                                                   \
-  }
+DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t);
 
 DOODLE_INSTALL_SQL(scan_data_t::database_t);
 DOODLE_INSTALL_SQL(project_helper::database_t);
 DOODLE_INSTALL_SQL(user_helper::database_t);
-
-#define DOODLE_INSTALL_RANGE(class_name)                                                                               \
-  template <>                                                                                                          \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install_range(                              \
-      std::shared_ptr<std::vector<class_name>> in_data                                                                 \
-  ) {                                                                                                                  \
-    if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {                     \
-          return in_r.id_ < in_l.id_;                                                                                  \
-        }))                                                                                                            \
-      std::sort(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {                             \
-        return in_r.id_ < in_l.id_;                                                                                    \
-      });                                                                                                              \
-    std::size_t l_split =                                                                                              \
-        std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const auto& in_) { return in_.id_ != 0; })); \
-                                                                                                                       \
-    DOODLE_TO_SQLITE_THREAD();                                                                                         \
-    tl::expected<void, std::string> l_ret{};                                                                           \
-    try {                                                                                                              \
-      auto l_storage = get_cast_storage(storage_any_);                                                                 \
-      auto l_g       = l_storage->transaction_guard();                                                                 \
-      for (std::size_t i = 0; i < l_split;) {                                                                          \
-        auto l_end = std::min(i + g_step_size, l_split);                                                               \
-        l_storage->insert_range<class_name>(in_data->begin() + i, in_data->begin() + l_end);                           \
-        i = l_end;                                                                                                     \
-      }                                                                                                                \
-                                                                                                                       \
-      for (std::size_t i = l_split; i < in_data->size();) {                                                            \
-        auto l_end = std::min(i + g_step_size, in_data->size());                                                       \
-        l_storage->replace_range<class_name>(in_data->begin() + i, in_data->begin() + l_end);                          \
-        i = l_end;                                                                                                     \
-      }                                                                                                                \
-      l_g.commit();                                                                                                    \
-                                                                                                                       \
-      for (std::size_t i = 0; i < l_split; ++i) {                                                                      \
-        using namespace sqlite_orm;                                                                                    \
-        auto l_v = l_storage->select(                                                                                  \
-            &class_name::id_, sqlite_orm::where(c(&class_name::uuid_id_) == (*in_data)[i].uuid_id_)                    \
-        );                                                                                                             \
-        if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();                                                             \
-      }                                                                                                                \
-                                                                                                                       \
-    } catch (...) {                                                                                                    \
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());                                  \
-    }                                                                                                                  \
-    DOODLE_TO_SELF();                                                                                                  \
-    co_return l_ret;                                                                                                   \
-  }
+DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t);
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(scan_data_t::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
-
-#define DOODLE_REMOVE_RANGE(class_name)                                                        \
-  template <>                                                                                  \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<class_name>( \
-      std::shared_ptr<std::vector<std::int64_t>> in_data                                       \
-  ) {                                                                                          \
-    DOODLE_TO_SQLITE_THREAD();                                                                 \
-    tl::expected<void, std::string> l_ret{};                                                   \
-                                                                                               \
-    try {                                                                                      \
-      auto l_storage = get_cast_storage(storage_any_);                                         \
-      auto l_g       = l_storage->transaction_guard();                                         \
-      for (auto&& i : *in_data) {                                                              \
-        l_storage->remove<class_name>(i);                                                      \
-      }                                                                                        \
-    } catch (...) {                                                                            \
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());          \
-    }                                                                                          \
-    DOODLE_TO_SELF();                                                                          \
-    co_return l_ret;                                                                           \
-  }
+DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)
 
 DOODLE_REMOVE_RANGE(scan_data_t::database_t);
 DOODLE_REMOVE_RANGE(attendance_helper::database_t);
 DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t);
+DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t);
 
 void sqlite_database::load(const FSys::path& in_path) { set_path(in_path); }
 
