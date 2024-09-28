@@ -53,3 +53,4 @@ target_sources(
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
+add_subdirectory(kitsu)
