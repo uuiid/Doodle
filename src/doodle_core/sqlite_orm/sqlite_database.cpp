@@ -190,32 +190,33 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
   ));
 }
 
-DOODLE_GET_BY_KITSU_UUID_SQL(project_helper::database_t);
-DOODLE_GET_BY_KITSU_UUID_SQL(metadata::kitsu::task_type_t);
+DOODLE_GET_BY_KITSU_UUID_SQL(project_helper::database_t)
+DOODLE_GET_BY_KITSU_UUID_SQL(metadata::kitsu::task_type_t)
 
-DOODLE_GET_BY_UUID_SQL(scan_data_t::database_t);
-DOODLE_GET_BY_UUID_SQL(user_helper::database_t);
-DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t);
+DOODLE_GET_BY_UUID_SQL(scan_data_t::database_t)
+DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
+DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t)
 
-DOODLE_GET_ALL_SQL(project_helper::database_t);
-DOODLE_GET_ALL_SQL(scan_data_t::database_t);
-DOODLE_GET_ALL_SQL(user_helper::database_t);
-DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t);
+DOODLE_GET_ALL_SQL(project_helper::database_t)
+DOODLE_GET_ALL_SQL(scan_data_t::database_t)
+DOODLE_GET_ALL_SQL(user_helper::database_t)
+DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
 
-DOODLE_INSTALL_SQL(scan_data_t::database_t);
-DOODLE_INSTALL_SQL(project_helper::database_t);
-DOODLE_INSTALL_SQL(user_helper::database_t);
-DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t);
+DOODLE_INSTALL_SQL(scan_data_t::database_t)
+DOODLE_INSTALL_SQL(project_helper::database_t)
+DOODLE_INSTALL_SQL(user_helper::database_t)
+DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t)
 
+DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(scan_data_t::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)
 
-DOODLE_REMOVE_RANGE(scan_data_t::database_t);
-DOODLE_REMOVE_RANGE(attendance_helper::database_t);
-DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t);
-DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t);
+DOODLE_REMOVE_RANGE(scan_data_t::database_t)
+DOODLE_REMOVE_RANGE(attendance_helper::database_t)
+DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
+DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t)
 
 void sqlite_database::load(const FSys::path& in_path) { set_path(in_path); }
 

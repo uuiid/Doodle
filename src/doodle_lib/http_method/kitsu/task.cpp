@@ -114,7 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
   co_return std::move(l_res);
 }
 }  // namespace
-void kitsu_task_reg(http_route& in_http_route) {
+void task_reg(http_route& in_http_route) {
   in_http_route
 
       .reg(std::make_shared<http_function>(
