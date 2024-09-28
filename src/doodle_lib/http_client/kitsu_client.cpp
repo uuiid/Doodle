@@ -50,11 +50,19 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
 }
 
 boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> kitsu_client::get_user_ctx() {
-  boost::beast::http::request<boost::beast::http::empty_body> req{
-      boost::beast::http::verb::get, "api/data/user/context", 11
-  };
   tl::expected<nlohmann::json, std::string> l_ret{};
-  auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
+  boost::system::error_code l_ec{};
+  std::tie(l_ec, std::ignore) = co_await http::detail::read_and_write<boost::beast::http::string_body>(
+      http_client_core_ptr_, header_operator_req(boost::beast::http::request<boost::beast::http::empty_body>{
+                                 boost::beast::http::verb::get, "/api/auth/authenticated", 11
+                             })
+  );
+  if (l_ec) l_ret = tl::make_unexpected(l_ec.what());
+
+  boost::beast::http::request<boost::beast::http::empty_body> req{
+      boost::beast::http::verb::get, "/api/data/user/context", 11
+  };
+  auto&& [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
       http_client_core_ptr_, header_operator_req(std::move(req))
   );
   if (l_e)
