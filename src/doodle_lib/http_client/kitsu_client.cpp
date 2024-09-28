@@ -53,9 +53,9 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
 boost::asio::awaitable<tl::expected<std::vector<project_helper::database_t>, std::string>>
 kitsu_client::get_all_project() {
   auto&& [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
-      http_client_core_ptr_, header_operator_req(std::move(boost::beast::http::request<boost::beast::http::empty_body>{
+      http_client_core_ptr_, header_operator_req(boost::beast::http::request<boost::beast::http::empty_body>{
                                  boost::beast::http::verb::get, "/api/data/projects/all", 11
-                             }))
+                             })
   );
   tl::expected<std::vector<project_helper::database_t>, std::string> l_ret{};
   if (l_e)
@@ -82,9 +82,9 @@ kitsu_client::get_all_project() {
 boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::task_type_t>, std::string>>
 kitsu_client::get_all_task_type() {
   auto&& [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
-      http_client_core_ptr_, header_operator_req(std::move(boost::beast::http::request<boost::beast::http::empty_body>{
+      http_client_core_ptr_, header_operator_req(boost::beast::http::request<boost::beast::http::empty_body>{
                                  boost::beast::http::verb::get, "/api/data/task-types", 11
-                             }))
+                             })
   );
   tl::expected<std::vector<metadata::kitsu::task_type_t>, std::string> l_ret{};
   if (l_e)
@@ -95,8 +95,8 @@ kitsu_client::get_all_task_type() {
     for (auto&& l_prj : nlohmann::json::parse(l_res.body())) {
       l_list.emplace_back(metadata::kitsu::task_type_t{
           .uuid_id_    = core_set::get_set().get_uuid(),
-          .name_       = l_prj["name"].get<std::string>(),
           .kitsu_uuid_ = l_prj["id"].get<uuid>(),
+          .name_       = l_prj["name"].get<std::string>(),
       });
     }
     l_ret = std::move(l_list);
