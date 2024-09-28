@@ -104,7 +104,7 @@ boost::asio::awaitable<void> init_context_impl() {
       auto l_id   = boost::lexical_cast<uuid>(l_prj["id"].get<std::string>());
       if (!l_task_maps.contains(l_name)) {
         auto& lv = l_install->emplace_back(metadata::kitsu::task_type_t{
-            .uuid_id_ = core_set::get_set().get_uuid(), .name_ = l_name, .kitsu_uuid_ = l_id, .use_chick_files = false
+            .uuid_id_ = core_set::get_set().get_uuid(), .use_chick_files = false, .name_ = l_name, .kitsu_uuid_ = l_id
         });
         if (l_name == "角色" || l_name == "地编模型" || l_name == "绑定") lv.use_chick_files = true;
 
