@@ -75,7 +75,7 @@ boost::asio::awaitable<void> init_context_impl() {
       }
     }
     if (!l_prj_install->empty())
-      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_prj_install))
+      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_prj_install); !l_r)
         default_logger_raw()->error("初始化检查 项目后插入数据库失败 {}", l_r.error());
   }
 
@@ -99,7 +99,7 @@ boost::asio::awaitable<void> init_context_impl() {
       }
     }
     if (!l_install->empty())
-      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install))
+      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
         default_logger_raw()->error("初始化检查 task_type 后插入数据库失败 {}", l_r.error());
   }
 }
