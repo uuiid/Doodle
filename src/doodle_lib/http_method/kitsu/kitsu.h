@@ -31,6 +31,11 @@ project_helper::database_t find_project(const std::string& in_name);
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name);
 
 uuid get_url_project_id(const boost::urls::url& in_url);
+
+/**
+ * @brief 初始化上下文, 项目, 任务类别
+ */
+void init_context();
 }  // namespace kitsu
 
 }  // namespace doodle::http
