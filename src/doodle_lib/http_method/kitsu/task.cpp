@@ -4,10 +4,9 @@
 
 #include "task.h"
 
-#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>

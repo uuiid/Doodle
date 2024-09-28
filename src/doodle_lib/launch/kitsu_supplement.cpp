@@ -88,7 +88,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   // 初始化数据库
   {
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
-    doodle::details::init_project();
+    // doodle::details::init_project();
   }
   {
     // 初始化 kitsu 客户端
