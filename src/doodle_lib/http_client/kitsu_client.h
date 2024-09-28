@@ -1,11 +1,13 @@
 #pragma once
 
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/core/http_client_core.h>
 
 #include <doodle_lib/core/http/json_body.h>
 
 #include <boost/algorithm/string.hpp>
 
+#include <tl/expected.hpp>
 namespace doodle::kitsu {
 class kitsu_client;
 
@@ -46,10 +48,10 @@ class kitsu_client {
     }
   }
 
-public:
+ public:
   template <typename ExecutorType>
   explicit kitsu_client(ExecutorType&& in_executor, std::string in_url)
-    : http_client_core_ptr_(std::make_shared<http_client_core>(in_executor)) {
+      : http_client_core_ptr_(std::make_shared<http_client_core>(in_executor)) {
     http_client_core_ptr_->init(in_url);
   }
 
@@ -59,8 +61,7 @@ public:
 
   struct task {
     // form json
-    friend void from_json(const nlohmann::json& j, task& p) {
-    }
+    friend void from_json(const nlohmann::json& j, task& p) {}
   };
 
   boost::asio::awaitable<std::tuple<boost::system::error_code, task>> get_task(const boost::uuids::uuid& in_uuid);
@@ -72,8 +73,9 @@ public:
   };
 
   boost::asio::awaitable<std::tuple<boost::system::error_code, user_t>> get_user(const boost::uuids::uuid& in_uuid);
+  boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> get_user_ctx();
 };
 
 using kitsu_client_ptr = std::shared_ptr<kitsu_client>;
 
-} // namespace doodle::kitsu
+}  // namespace doodle::kitsu

@@ -2,14 +2,14 @@
 
 namespace doodle::kitsu {
 boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::task>> kitsu_client::get_task(
-  const boost::uuids::uuid& in_uuid
+    const boost::uuids::uuid& in_uuid
 ) {
   boost::beast::http::request<boost::beast::http::empty_body> req{
       boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_uuid), 11
   };
 
   auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
-    http_client_core_ptr_, header_operator_req(std::move(req))
+      http_client_core_ptr_, header_operator_req(std::move(req))
   );
   if (l_e) {
     co_return std::make_tuple(l_e, task{});
@@ -26,7 +26,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::task>
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_t>> kitsu_client::get_user(
-  const boost::uuids::uuid& in_uuid
+    const boost::uuids::uuid& in_uuid
 ) {
   boost::beast::http::request<boost::beast::http::empty_body> req{
       boost::beast::http::verb::get, fmt::format("/api/data/persons/{}", in_uuid), 11
@@ -34,7 +34,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
 
   user_t l_user;
   auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
-    http_client_core_ptr_, header_operator_req(std::move(req))
+      http_client_core_ptr_, header_operator_req(std::move(req))
   );
   if (l_e) {
     co_return std::make_tuple(l_e, l_user);
@@ -48,4 +48,20 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
   }
   co_return std::make_tuple(l_e, l_user);
 }
-} // namespace doodle::kitsu
+
+boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> kitsu_client::get_user_ctx() {
+  boost::beast::http::request<boost::beast::http::empty_body> req{
+      boost::beast::http::verb::get, "api/data/user/context", 11
+  };
+  tl::expected<nlohmann::json, std::string> l_ret{};
+  auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
+      http_client_core_ptr_, header_operator_req(std::move(req))
+  );
+  if (l_e)
+    l_ret = tl::make_unexpected(l_e.what());
+  else
+    l_ret = nlohmann::json::parse(l_res.body());
+  co_return l_ret;
+}
+
+}  // namespace doodle::kitsu
