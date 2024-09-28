@@ -98,9 +98,17 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
 };
 template <>
 struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
-  static void to_json(json& j, const boost::uuids::uuid& in_uuid) { j["uuid"] = boost::uuids::to_string(in_uuid); }
+  static void to_json(json& j, const boost::uuids::uuid& in_uuid) { j = boost::uuids::to_string(in_uuid); }
 
   static void from_json(const json& j, boost::uuids::uuid& in_uuid) {
+    if (j.is_string()) {
+      try {
+        in_uuid = boost::lexical_cast<boost::uuids::uuid>(j.get<std::string>());
+      } catch (const boost::bad_lexical_cast& in_err) {
+        throw nlohmann::json::parse_error::create(116, {}, in_err.what(), &j);
+      }
+      return;
+    }
     if (j["uuid"].is_string()) {
       in_uuid = boost::lexical_cast<boost::uuids::uuid>(j["uuid"].get<std::string>());
     } else {
