@@ -11,11 +11,21 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http::kitsu {
 namespace {
+
+/// 上下文检查时间
+
+struct context_helper {
+  using time_point_t = std::chrono::time_point<std::chrono::system_clock>;
+  std::atomic<time_point_t> start_time{};
+};
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
 
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
+  if (g_ctx().get<context_helper>().start_time.load() - std::chrono::system_clock::now() < std::chrono::seconds(5))
+    goto end;
+
   try {
     if (l_res.result() == boost::beast::http::status::ok) {
       auto l_json = nlohmann::json::parse(l_res.body());
@@ -80,13 +90,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
             in_handle->logger_->error("初始化检查 task_type 后插入数据库失败 {}", l_r.error());
       }
     }
+    g_ctx().get<context_helper>().start_time = std::chrono::system_clock::now();
   } catch (...) {
     in_handle->logger_->warn("user_context error: {}", boost::current_exception_diagnostic_information());
   }
+end:
   co_return std::move(l_res);
 }
 }  // namespace
 void user_reg(http_route& in_http_route) {
+  g_ctx().emplace<context_helper>().start_time = chrono::system_clock::now();
   in_http_route.reg(
       std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context)
   );
