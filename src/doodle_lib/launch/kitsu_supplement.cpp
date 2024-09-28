@@ -97,6 +97,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_url_, l_args.kitsu_token_);
+    http::kitsu::init_context();
 
     // 初始化钉钉客户端
     auto& l_d = g_ctx().emplace<dingding::dingding_company>();
