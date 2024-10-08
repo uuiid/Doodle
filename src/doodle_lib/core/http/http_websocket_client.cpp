@@ -89,8 +89,7 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
     std::string l_call_fun_name{};
     try {
       l_data->body_ =
-          nlohmann::json::parse(std::string_view{reinterpret_cast<const char*>(l_buffer.data().data()), l_buffer.size()}
-          );
+          nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
       l_call_fun_name = l_data->body_["type"].get<std::string>();
     } catch (const nlohmann::json::exception& in_e) {
       logger_->error(in_e.what());
