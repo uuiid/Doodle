@@ -74,6 +74,14 @@ class async_session_t {
       proxy_relay_stream_->close();
     }
   }
+  void set_session() {
+    auto& l_req           = request_parser_->get();
+    session_->version_    = l_req.version();
+    session_->keep_alive_ = l_req.keep_alive();
+    session_->url_        = boost::url{l_req.target()};
+    method_verb_          = l_req.method();
+    callback_.reset();
+  }
 
   template <bool isRequest, typename SyncWriteStream, typename SyncReadStream>
   boost::asio::awaitable<boost::system::error_code> async_relay(
@@ -321,10 +329,7 @@ class async_session_t {
     stream_->expires_after(30s);
 
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      session_->version_    = request_parser_->get().version();
-      session_->keep_alive_ = request_parser_->keep_alive();
-      session_->url_        = boost::url{request_parser_->get().target()};
-      method_verb_          = request_parser_->get().method();
+      set_session();
       session_->logger_->info("开始解析 url {} {}", request_parser_->get().method(), session_->url_);
       callback_ = (*route_ptr_)(method_verb_, session_->url_.segments(), session_);
       if (!callback_) {
