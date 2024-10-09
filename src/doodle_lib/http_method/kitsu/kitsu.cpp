@@ -127,7 +127,8 @@ project_helper::database_t find_project(const std::string& in_name) {
 uuid get_url_project_id(const boost::urls::url& in_url) {
   auto l_q = in_url.query();
   if (auto l_it = l_q.find("project_id"); l_it != l_q.npos) {
-    return boost::lexical_cast<uuid>(l_q.substr(l_it + 10, l_q.find('&', l_it) - l_it - 10));
+    auto l_str = l_q.substr(l_it + 11, l_q.find('&', l_it) - l_it - 11);
+    return boost::lexical_cast<uuid>(l_str);
   }
   return {};
 }
