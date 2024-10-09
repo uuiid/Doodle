@@ -103,6 +103,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
         } else {
           l_file_exist = true;
         }
+
+        l_json_entt["file_exist"] = l_file_exist;
       }
     }
   } catch (...) {
