@@ -84,8 +84,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
             );
             !l_p.empty() && l_p.front().use_chick_files) {
           scan::scan_key_t l_key{
-              .dep_     = conv_assets_type_enum(l_asset_type_name),
-              .season_  = season{l_user_data.contains("gui_dang") ? l_user_data["gui_dang"].get<std::int32_t>() : 0},
+              .dep_ = conv_assets_type_enum(l_asset_type_name),
+              .season_ =
+                  season{l_user_data.contains("gui_dang") ? std::stoi(l_user_data["gui_dang"].get<std::string>()) : 0},
               .project_ = l_prj_uuid,
               .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
               .name_ = l_user_data.contains("pin_yin_ming_cheng") ? l_user_data["pin_yin_ming_cheng"].get<std::string>()
