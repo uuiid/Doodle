@@ -63,8 +63,8 @@ class async_session_t {
   }
 
  private:
-  void do_close(const std::string& in_str) {
-    session_->logger_->error("{} {}", in_str, ec_);
+  void do_close(const std::string& in_str = {}) {
+    if (ec_) session_->logger_->error("{} {}", in_str, ec_);
     if (stream_) {
       stream_->socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec_);
       stream_->close();
@@ -405,7 +405,7 @@ class async_session_t {
     request_parser_ = std::make_shared<empty_request_parser_type>();
     request_parser_->body_limit(g_body_limit);
     std::tie(ec_, std::ignore) = co_await boost::beast::http::async_read_header(*stream_, buffer_, *request_parser_);
-    if (ec_) co_return do_close("头读取错误");
+    if (ec_) co_return do_close("头读取错误_1");
     stream_->expires_after(30s);
 
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
@@ -419,10 +419,11 @@ class async_session_t {
       co_await parse_body();
       auto l_gen = ec_ ? session_->make_error_code_msg(boost::beast::http::status::bad_request, ec_)
                        : co_await callback_->callback_(session_);
-
+      session_->logger_->info("回复 url {} {}", request_parser_->get().method(), session_->url_);
       if (!session_->keep_alive_) {
         std::tie(ec_, std::ignore) = co_await boost::beast::async_write(*stream_, std::move(l_gen));
         if (ec_) co_return do_close("发送错误");
+        co_return do_close();
       }
       // 初始化新的 parser
       request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
