@@ -64,11 +64,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
 
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   if (l_ec) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
+    co_return std::move(l_res);
   }
-
-  auto l_json = nlohmann::json::parse(l_res.body());
   try {
+    auto l_json   = nlohmann::json::parse(std::as_const(l_res).body());
     auto l_prj_id = get_url_project_id(in_handle->url_);
     uuid l_prj_uuid{};
     if (auto l_p = g_ctx().get<sqlite_database>().get_by_kitsu_uuid<project_helper::database_t>(l_prj_id); !l_p.empty())
@@ -108,12 +107,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
         l_json_task["file_exist"] = l_file_exist;
       }
     }
+    l_res.body() = l_json.dump();
+    l_res.prepare_payload();
   } catch (...) {
     in_handle->logger_->error("api/data/assets/with-tasks {}", boost::current_exception_diagnostic_information());
   }
-
-  l_res.body() = l_json.dump();
-  l_res.prepare_payload();
   co_return std::move(l_res);
 }
 }  // namespace
