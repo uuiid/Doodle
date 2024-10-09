@@ -4,9 +4,9 @@
 
 #include "task.h"
 
-#include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -55,6 +55,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info_full
   }
   l_json["file_exist"] = l_file_exist;
   l_res.body()         = l_json.dump();
+  l_res.prepare_payload();
   co_return std::move(l_res);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_tasks(session_data_ptr in_handle) {
@@ -85,10 +86,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
             !l_p.empty() && l_p.front().use_chick_files) {
           scan::scan_key_t l_key{
               .dep_     = conv_assets_type_enum(l_asset_type_name),
-              .season_  = season{l_user_data["gui_dang"].get<std::int32_t>()},
+              .season_  = season{l_user_data.contains("gui_dang") ? l_user_data["gui_dang"].get<std::int32_t>() : 0},
               .project_ = l_prj_uuid,
               .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
-              .name_    = l_user_data["pin_yin_ming_cheng"].get<std::string>(),
+              .name_ = l_user_data.contains("pin_yin_ming_cheng") ? l_user_data["pin_yin_ming_cheng"].get<std::string>()
+                                                                  : std::string{},
               .version_name_ =
                   l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
           };
@@ -103,8 +105,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
         } else {
           l_file_exist = true;
         }
-
-        l_json_entt["file_exist"] = l_file_exist;
+        l_json_task["file_exist"] = l_file_exist;
       }
     }
   } catch (...) {
@@ -112,6 +113,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
   }
 
   l_res.body() = l_json.dump();
+  l_res.prepare_payload();
   co_return std::move(l_res);
 }
 }  // namespace
