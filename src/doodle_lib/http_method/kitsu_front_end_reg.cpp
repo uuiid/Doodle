@@ -41,6 +41,9 @@ FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost
   if (in_.size() == 0) {
     l_path /= "index.html";
   }
+  if (!FSys::exists(l_path)) {
+    l_path = *in_root / "index.html";
+  }
   return l_path;
 }
 

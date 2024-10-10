@@ -19,4 +19,22 @@ class kitsu_front_end : public doodle::http::http_function_base_t {
   std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
 
+class kitsu_proxy_url : public doodle::http::http_function_base_t {
+  std::vector<std::string> url_segments_{};
+  static std::vector<std::string> split_url(const std::string& in_url) {
+    std::vector<std::string> l_result;
+    boost::split(l_result, in_url, boost::is_any_of("/"));
+    std::erase_if(l_result, [](const std::string& in_str) { return in_str.empty(); });
+    return l_result;
+  }
+
+ public:
+  explicit kitsu_proxy_url(
+      const std::string& in_url
+  )
+      : http::http_function_base_t(), url_segments_(split_url(in_url)) {}
+  ~kitsu_proxy_url() override = default;
+  std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+};
+
 }  // namespace doodle::kitsu

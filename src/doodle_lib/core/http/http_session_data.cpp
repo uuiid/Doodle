@@ -411,7 +411,8 @@ class async_session_t {
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       set_session();
       callback_ = (*route_ptr_)(method_verb_, session_->url_.segments(), session_);
-      if (!callback_) {
+      // 空回调直接运行代理
+      if (!callback_->callback_) {
         if (co_await proxy_run()) co_return;
         continue;
       }
