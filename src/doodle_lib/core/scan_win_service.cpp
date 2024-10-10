@@ -118,7 +118,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       scan_data_key_maps_[l_current_index].clear();
       for (auto i : l_index) {
         if (!l_v[i]) {
-          logger_->info(l_v[i].error());
+          logger_->debug(l_v[i].error());
           continue;
         }
         add_handle(l_v[i].value(), l_current_index);
