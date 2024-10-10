@@ -79,7 +79,7 @@ void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
   timer_    = std::make_shared<timer_t>(executor_);
   logger_   = std::make_shared<spdlog::logger>("scan_category");
-  logger_->sinks().emplace_back(g_logger_ctrl().rotating_file_sink_);
+  logger_->sinks().emplace_back(g_logger_ctrl().make_file_sink_mt("scan_win_service"));
 
   boost::asio::co_spawn(
       executor_, begin_scan(),

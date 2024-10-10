@@ -42,6 +42,7 @@ class DOODLE_CORE_API logger_ctrl {
   async_logger_ptr make_log(const FSys::path& in_path, const std::string& in_name, bool out_console);
   async_logger_ptr make_log_file(const FSys::path& in_path, const std::string& in_name, bool out_console = false);
 
+  file_sink_mt_ptr make_file_sink_mt(const std::string& in_name);
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 };
 }  // namespace details

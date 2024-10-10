@@ -142,6 +142,15 @@ void rotating_file_sink<Mutex>::rotate_() {
 
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
 
+logger_ctrl::file_sink_mt_ptr logger_ctrl::make_file_sink_mt(const std::string& in_name) {
+  auto l_path = p_log_path / fmt::format("{}.txt", in_name);
+  if (FSys::exists(l_path)) {
+    l_path.replace_filename(fmt::format("{}_{}.txt", in_name, core_set::get_set().get_uuid()));
+  }
+  auto l_rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 512ull);
+  return l_rotating_file_sink_;
+}
+
 logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
   spdlog::init_thread_pool(8192, 1);
   init_temp_log();
