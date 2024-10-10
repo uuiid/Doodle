@@ -87,6 +87,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files_head(
 
 void reg_kitsu_front_end_http(http_route& in_route, const FSys::path& in_root) {
   auto l_path = std::make_shared<FSys::path>(in_root);
+  default_logger_raw()->warn("初始化前端路径 {}", in_root);
   kitsu::kitsu_front_end l_end{FSys::path{in_root}, boost::beast::http::verb::get, std::bind_front(get_files, l_path)};
   in_route
       .reg(std::make_shared<kitsu::kitsu_front_end>(
