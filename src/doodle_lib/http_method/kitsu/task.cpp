@@ -101,7 +101,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
             l_ue_path   = l_map.at(l_key)->ue_file_.path_;
           }
           // l_file_exist = FSys::exists(l_maya_path) && FSys::exists(l_ue_path);
-          l_file_exist = true;
+          l_file_exist = l_map.contains(l_key);
         } else {
           l_file_exist = true;
         }
