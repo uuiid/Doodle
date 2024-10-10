@@ -69,11 +69,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
   try {
     auto l_json   = nlohmann::json::parse(std::as_const(l_res).body());
     auto l_prj_id = get_url_project_id(in_handle->url_);
-    uuid l_prj_uuid{};
-    if (auto l_p = g_ctx().get<sqlite_database>().get_by_kitsu_uuid<project_helper::database_t>(l_prj_id); !l_p.empty())
-      l_prj_uuid = l_p.front().uuid_id_;
 
-    auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
+    auto& l_map   = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
     for (auto&& l_json_entt : l_json) {
       auto l_user_data       = l_json_entt["data"];
       auto l_asset_type_name = l_json_entt["asset_type_name"];
@@ -87,7 +84,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
               .dep_ = conv_assets_type_enum(l_asset_type_name),
               .season_ =
                   season{l_user_data.contains("gui_dang") ? std::stoi(l_user_data["gui_dang"].get<std::string>()) : 0},
-              .project_ = l_prj_uuid,
+              .project_ = l_prj_id,
               .number_  = l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
               .name_ = l_user_data.contains("pin_yin_ming_cheng") ? l_user_data["pin_yin_ming_cheng"].get<std::string>()
                                                                   : std::string{},

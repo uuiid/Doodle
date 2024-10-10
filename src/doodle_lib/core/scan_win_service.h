@@ -21,6 +21,7 @@ struct scan_key_t : boost::totally_ordered<scan_key_t> {
   season season_;
   episodes episodes_;
   shot shot_;
+  /// 特别指定为 kitsu_uuid_
   uuid project_;
   std::string number_;
   std::string name_;
@@ -100,6 +101,7 @@ class scan_win_service_t {
       const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
   );
 
+  void init_all_map();
  public:
   scan_win_service_t()  = default;
   ~scan_win_service_t() = default;

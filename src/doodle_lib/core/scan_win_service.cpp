@@ -86,6 +86,42 @@ void scan_win_service_t::start() {
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
   );
 }
+void scan_win_service_t::init_all_map() {
+  create_project();
+  auto& l_scan_key_data = scan_data_key_maps_[index_];
+  auto& l_scan_data     = scan_data_maps_[index_];
+  auto l_data           = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
+  auto l_prjs           = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
+  auto l_prj_maps = project_roots_ | ranges::views::transform([](const std::shared_ptr<project_helper::database_t>& l) {
+                      return std::make_pair(l->id_, l);
+                    }) |
+                    ranges::to<std::map<std::int32_t, std::shared_ptr<project_helper::database_t>>>();
+  for (auto&& l_d : l_data) {
+    auto l_d_t                            = std::make_shared<details::scan_category_data_t>();
+    l_d_t->rig_file_.uuid_                = l_d.rig_uuid_.value_or(uuid{});
+    l_d_t->rig_file_.path_                = l_d.rig_path_.value_or(FSys::path{});
+    l_d_t->ue_file_.uuid_                 = l_d.ue_uuid_.value_or(uuid{});
+    l_d_t->ue_file_.path_                 = l_d.ue_path_.value_or(FSys::path{});
+    l_d_t->solve_file_.uuid_              = l_d.solve_uuid_.value_or(uuid{});
+    l_d_t->solve_file_.path_              = l_d.solve_path_.value_or(FSys::path{});
+    l_d_t->season_                        = season{l_d.season_};
+    l_d_t->project_database_ptr           = l_prj_maps[l_d.project_id_];
+    l_d_t->number_str_                    = l_d.num_.value_or(std::string{});
+    l_d_t->name_                          = l_d.name_;
+    l_d_t->version_name_                  = l_d.version_.value_or(std::string{});
+    l_scan_key_data[{
+        .dep_          = l_d.dep_,
+        .season_       = season{l_d.season_},
+        .project_      = l_prj_maps[l_d.project_id_]->kitsu_uuid_,
+        .number_       = l_d.num_ ? *l_d.num_ : std::string{},
+        .name_         = l_d.name_,
+        .version_name_ = l_d.version_ ? *l_d.version_ : std::string{},
+    }]                                    = l_d_t;
+    l_scan_data[l_d_t->ue_file_.uuid_]    = l_d_t;
+    l_scan_data[l_d_t->rig_file_.uuid_]   = l_d_t;
+    l_scan_data[l_d_t->solve_file_.uuid_] = l_d_t;
+  }
+}
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   scan_categories_ = {
@@ -93,6 +129,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
       std::make_shared<details::prop_scan_category_t>()
   };
   for (auto&& i : scan_categories_) i->logger_ = logger_;
+  init_all_map();
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     create_project();
@@ -164,7 +201,7 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
     l_old_map[{
         .dep_          = l_d.dep_,
         .season_       = season{l_d.season_},
-        .project_      = project_roots_[l_prj_map[l_d.project_id_]]->uuid_id_,
+        .project_      = project_roots_[l_prj_map[l_d.project_id_]]->kitsu_uuid_,
         .number_       = l_d.num_ ? *l_d.num_ : std::string{},
         .name_         = l_d.name_,
         .version_name_ = l_d.version_ ? *l_d.version_ : std::string{},
@@ -215,8 +252,7 @@ boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_cur
   auto& l_data_base = g_ctx().get<sqlite_database>();
   if (auto l_r = co_await l_data_base.install_range<scan_data_t::database_t>(l_install); !l_r)
     logger_->error(l_r.error());
-  if (auto l_r = co_await l_data_base.remove<scan_data_t::database_t>(l_rem_ids); !l_r)
-    logger_->error(l_r.error());
+  if (auto l_r = co_await l_data_base.remove<scan_data_t::database_t>(l_rem_ids); !l_r) logger_->error(l_r.error());
 }
 
 void scan_win_service_t::add_handle(
@@ -237,7 +273,7 @@ void scan_win_service_t::add_handle(
     l_scan_key_data[{
         .dep_          = l_data->assets_type_,
         .season_       = l_data->season_,
-        .project_      = l_data->project_database_ptr->uuid_id_,
+        .project_      = l_data->project_database_ptr->kitsu_uuid_,
         .number_       = l_data->number_str_,
         .name_         = l_data->name_,
         .version_name_ = l_data->version_name_,
