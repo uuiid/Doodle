@@ -10,18 +10,25 @@ namespace doodle::http::kitsu {
 http_function_ptr http_route_proxy::operator()(
     boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
 ) const {
-  for (const auto& i : proxy_urls) {
-    if (auto&& [l_m, l_cat] = i->set_match_url(in_segment); l_m) {
-      return i;
+  auto l_ptr = http_route::operator()(in_verb, in_segment, in_handle);
+  if (l_ptr == nullptr) {
+    for (const auto& i : proxy_urls) {
+      if (auto&& [l_m, l_cat] = i->set_match_url(in_segment); l_m) {
+        return i;
+      }
     }
+    return in_verb == boost::beast::http::verb::head ? head_file_ : get_file_;
   }
-
-  return http_route::operator()(in_verb, in_segment, in_handle);
+  return l_ptr;
 }
 
 http_route_proxy& http_route_proxy::reg_proxy(const http_function_ptr in_function) {
   proxy_urls.emplace_back(in_function);
   return *this;
+}
+void http_route_proxy::reg_front_end(const http_function_ptr in_get_index, const http_function_ptr in_head_file) {
+  get_file_  = in_get_index;
+  head_file_ = in_head_file;
 }
 
 boost::asio::awaitable<tcp_stream_type_ptr> http_route_proxy::create_proxy() const {

@@ -88,16 +88,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files_head(
 }
 }  // namespace
 
-void reg_kitsu_front_end_http(http_route& in_route, const FSys::path& in_root) {
+void reg_kitsu_front_end_http(kitsu::http_route_proxy& in_route, const FSys::path& in_root) {
   auto l_path = std::make_shared<FSys::path>(in_root);
   default_logger_raw()->warn("初始化前端路径 {}", in_root);
-  kitsu::kitsu_front_end l_end{FSys::path{in_root}, boost::beast::http::verb::get, std::bind_front(get_files, l_path)};
-  in_route
-      .reg(std::make_shared<kitsu::kitsu_front_end>(
+  doodle::kitsu::kitsu_front_end l_end{
+      FSys::path{in_root}, boost::beast::http::verb::get, std::bind_front(get_files, l_path)
+  };
+  in_route.reg_front_end(
+      std::make_shared<doodle::kitsu::kitsu_front_end>(
           FSys::path{in_root}, boost::beast::http::verb::get, std::bind_front(get_files, l_path)
-      ))
-      .reg(std::make_shared<kitsu::kitsu_front_end>(
+      ),
+      std::make_shared<doodle::kitsu::kitsu_front_end>(
           FSys::path{in_root}, boost::beast::http::verb::head, std::bind_front(get_files_head, l_path)
-      ));
+      )
+  );
 }
 }  // namespace doodle::http
