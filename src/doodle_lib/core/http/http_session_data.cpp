@@ -314,7 +314,7 @@ class async_session_t {
     session_->logger_->info(
         "转发请求 {} {}{}", request_parser_->get().method(), l_is_websocket ? "ws:/"s : "http:/"s, session_->url_
     );
-    if (!proxy_relay_stream_) proxy_relay_stream_ = co_await route_ptr_->create_proxy_factory_();
+    if (!proxy_relay_stream_) proxy_relay_stream_ = co_await route_ptr_->create_proxy();
     if (!proxy_relay_stream_) co_return do_close("代理打开失败"), true;
 
     if (l_is_websocket)

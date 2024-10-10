@@ -5,10 +5,12 @@ target_sources(
         kitsu.h
         user.h
         kitsu_front_end.h
+        http_route_proxy.h
 
         PRIVATE
         task.cpp
         kitsu.cpp
         user.cpp
         kitsu_front_end.cpp
+        http_route_proxy.cpp
 )
