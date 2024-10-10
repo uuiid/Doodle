@@ -58,7 +58,8 @@ namespace {
 boost::asio::awaitable<void> init_context_impl() {
   {
     auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_project();
-    if (!l_c) default_logger_raw()->error(l_c.error());
+    if (!l_c) co_return default_logger_raw()->error(l_c.error());
+
     std::map<std::string, project_helper::database_t> l_prj_maps{};
     {
       auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
