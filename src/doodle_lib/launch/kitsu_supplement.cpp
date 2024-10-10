@@ -119,7 +119,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   }
   l_scan->start();
   // 初始化路由
-  auto l_rout_ptr = http::create_kitsu_route();
+  auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);
   http::reg_computing_time(*l_rout_ptr);
   http::reg_dingding_attendance(*l_rout_ptr);
   http::reg_user_http(*l_rout_ptr);

@@ -22,7 +22,7 @@ struct kitsu_ctx_t {
   std::map<boost::uuids::uuid, std::string> task_types_;
 };
 
-http_route_ptr create_kitsu_route();
+http_route_ptr create_kitsu_route(const FSys::path& in_root);
 
 namespace kitsu {
 http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_handle);

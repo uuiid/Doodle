@@ -11,17 +11,18 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
-#include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
+#include <doodle_lib/http_method/kitsu_front_end_reg.h>
 namespace doodle::http {
 
-http_route_ptr create_kitsu_route() {
+http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   auto l_router = std::make_shared<kitsu::http_route_proxy>();
   l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
       .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
   kitsu::user_reg(*l_router);
   kitsu::task_reg(*l_router);
+  reg_kitsu_front_end_http(*l_router, in_root);
   return l_router;
 }
 
