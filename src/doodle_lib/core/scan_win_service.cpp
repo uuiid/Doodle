@@ -32,8 +32,7 @@ auto to_scan_data(
     boost::asio::thread_pool& in_pool, const std::shared_ptr<project_helper::database_t>& in_project_root,
     const std::shared_ptr<details::scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
 ) {
-  using expected_t              = tl::expected<std::vector<details::scan_category_data_ptr>, std::string>;
-  in_scan_category_ptr->logger_ = spdlog::default_logger();
+  using expected_t = tl::expected<std::vector<details::scan_category_data_ptr>, std::string>;
   return boost::asio::async_initiate<CompletionHandler, void(expected_t)>(
       [&in_project_root, &in_scan_category_ptr, &in_pool](auto&& in_completion_handler) {
         auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)>>(
@@ -78,8 +77,10 @@ void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& i
 void scan_win_service_t::start() {
   executor_ = boost::asio::make_strand(g_io_context());
   timer_    = std::make_shared<timer_t>(executor_);
-  logger_   = std::make_shared<spdlog::logger>("scan_category");
-  logger_->sinks().emplace_back(g_logger_ctrl().make_file_sink_mt("scan_win_service"));
+  logger_   = std::make_shared<spdlog::async_logger>(
+      "scan_category", g_logger_ctrl().make_file_sink_mt("scan_win_service"), spdlog::thread_pool()
+  );
+  logger_->set_level(level::debug);
 
   boost::asio::co_spawn(
       executor_, begin_scan(),
