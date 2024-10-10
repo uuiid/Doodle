@@ -182,20 +182,20 @@ server {
         proxy_pass http://localhost:5001;
     }
 
-    location /api/file_exists {
-        proxy_pass http://192.168.40.181:50021;
-    }
-    
-    location /api/doodle {
-        proxy_pass http://192.168.40.181:50025;
-    }
+    # location /api/file_exists {
+    #     proxy_pass http://192.168.40.181:50021;
+    # }
+    #
+    # location /api/doodle {
+    #     proxy_pass http://192.168.40.181:50025;
+    # }
 
 
-    location / {
-        autoindex on;
-        root  /opt/kitsu/dist;
-        try_files $uri $uri/ /index.html;
-    }
+    # location / {
+    #     autoindex on;
+    #     root  /opt/kitsu/dist;
+    #     try_files $uri $uri/ /index.html;
+    # }
 }
 
 "
