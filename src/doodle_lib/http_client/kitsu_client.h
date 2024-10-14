@@ -77,7 +77,7 @@ class kitsu_client {
     friend void from_json(const nlohmann::json& j, user_t& p) { j.at("phone").get_to(p.phone_); }
   };
 
-  boost::asio::awaitable<std::tuple<boost::system::error_code, user_t>> get_user(const boost::uuids::uuid& in_uuid);
+  boost::asio::awaitable<tl::expected<user_t, std::string>> get_user(const boost::uuids::uuid& in_uuid);
   boost::asio::awaitable<tl::expected<std::vector<project_helper::database_t>, std::string>> get_all_project();
   boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::task_type_t>, std::string>> get_all_task_type();
 };

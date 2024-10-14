@@ -30,7 +30,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
     l_user_id             = boost::lexical_cast<boost::uuids::uuid>(l_user_id_str);
   } catch (...) {
     co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found, boost::current_exception_diagnostic_information()
+        boost::beast::http::status::service_unavailable, boost::current_exception_diagnostic_information()
     );
   }
   if (!g_ctx().get<dingding::dingding_company>().company_info_map_.contains(l_company_id))
@@ -47,9 +47,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
   bool l_need_save{l_users.empty()};
   if (l_user->dingding_id_.empty()) {
     auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
-    auto [l_e2, l_m]    = co_await l_kitsu_client->get_user(l_user_id);
-    if (l_e2) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e2.what());
-    l_user->mobile_              = l_m.phone_;
+    auto l_m    = co_await l_kitsu_client->get_user(l_user_id);
+    if (!l_m) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_m.error());
+    l_user->mobile_              = l_m.value().phone_;
     auto [l_e3, l_dingding_user] = co_await l_dingding_client->get_user_by_mobile(l_user->mobile_);
     if (l_e3) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e3.what());
 

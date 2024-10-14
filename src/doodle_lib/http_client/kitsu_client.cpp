@@ -26,7 +26,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::task>
   co_return std::make_tuple(l_e, l_task);
 }
 
-boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_t>> kitsu_client::get_user(
+boost::asio::awaitable<tl::expected<kitsu_client::user_t, std::string>> kitsu_client::get_user(
     const boost::uuids::uuid& in_uuid
 ) {
   boost::beast::http::request<boost::beast::http::empty_body> req{
@@ -38,16 +38,18 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::user_
       http_client_core_ptr_, header_operator_req(std::move(req))
   );
   if (l_e) {
-    co_return std::make_tuple(l_e, l_user);
+    co_return tl::make_unexpected(fmt::format("无法获取到用户电话号码 {}", l_e));
   }
   header_operator_resp(l_res);
   try {
-    auto l_user = nlohmann::json::parse(l_res.body()).get<user_t>();
+    l_user = nlohmann::json::parse(l_res.body()).get<user_t>();
   } catch (const nlohmann::json::exception& e) {
     http_client_core_ptr_->logger_->log(log_loc(), level::err, "get user failed: {}", e.what());
-    co_return std::make_tuple(boost::system::errc::make_error_code(boost::system::errc::invalid_argument), l_user);
+    co_return tl::make_unexpected(fmt::format("无法获取到用户电话号码 {}", e.what()));
   }
-  co_return std::make_tuple(l_e, l_user);
+  co_return l_user.phone_.empty()
+      ? tl::expected<kitsu_client::user_t, std::string>{tl::make_unexpected("用户电话号码为空")}
+      : tl::expected<kitsu_client::user_t, std::string>{l_user};
 }
 
 boost::asio::awaitable<tl::expected<std::vector<project_helper::database_t>, std::string>>

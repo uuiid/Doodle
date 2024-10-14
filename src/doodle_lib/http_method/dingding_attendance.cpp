@@ -78,9 +78,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   bool l_modify_user{};
   if (l_user.mobile_.empty()) {
     auto l_kitsu_client   = g_ctx().get<kitsu::kitsu_client_ptr>();
-    auto [l_e2, l_mobile] = co_await l_kitsu_client->get_user(l_user_id);
-    if (l_e2) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e2.message());
-    l_user.mobile_ = l_mobile.phone_;
+    auto l_mobile = co_await l_kitsu_client->get_user(l_user_id);
+    if (!l_mobile) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_mobile.error());
+    l_user.mobile_ = l_mobile.value().phone_;
     l_modify_user  = true;
   }
 
