@@ -20,7 +20,7 @@ struct database_t {
   boost::uuids::uuid kitsu_task_ref_id_;
   // to json
   friend void to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]         = fmt::to_string(p.id_);
+    j["id"]         = fmt::to_string(p.uuid_id_);
     j["start_time"] = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
     j["end_time"]   = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
     j["duration"]   = p.duration_.count();
