@@ -100,7 +100,7 @@ struct database_t {
   boost::uuids::uuid dingding_company_id_;
 
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]          = fmt::to_string(p.id_);
+    j["id"]          = fmt::to_string(p.uuid_id_);
     j["mobile"]      = p.mobile_;
     j["dingding_id"] = p.dingding_id_;
     j["company"]     = fmt::to_string(p.dingding_company_id_);
