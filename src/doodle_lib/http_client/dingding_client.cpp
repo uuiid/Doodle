@@ -84,7 +84,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> clien
     l_ret = l_json["result"]["userid"].get<std::string>();
   } catch (const nlohmann::json::exception& e) {
     l_e = boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()};
-    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "get_user_by_mobile error: {}", e.what());
+    http_client_core_ptr_old_->logger_->log(log_loc(), level::warn, "get_user_by_mobile error: {}", l_json.dump());
     co_return std::make_tuple(l_e, l_ret);
   }
   co_return std::make_tuple(l_e, l_ret);
