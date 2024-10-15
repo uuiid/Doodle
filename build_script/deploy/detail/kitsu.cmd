@@ -1,12 +1,12 @@
 set DoodleName=%1
-set DoodleSource=//192.168.20.89/Doodle2/build/Ninja_release/_CPack_Packages/win64/7Z/%DoodleName%
+set DoodleSource=//192.168.20.89/Doodle2/build/Ninja_release/_CPack_Packages/win64/7Z/%DoodleName%/bin
 
 
-@REM 鍋滄鏈嶅姟
+@REM 停止服务
 net stop doodle_kitsu_supplement
-@REM 澶嶅埗鏂囦欢
-robocopy %DoodleSource% D:/doodle_exe/ /MIR
-@REM 鍚姩鏈嶅姟
+@REM 复制文件
+robocopy %DoodleSource% D:/kitsu/bin /MIR /xd dist
+@REM 启动服务
 net start doodle_kitsu_supplement
-@REM 澶嶅埗鍓嶇鐣岄潰
-robocopy \\192.168.20.89\kitsu\dist D:/doodle_exe/ /MIR
+@REM 复制前端界面
+robocopy //192.168.20.89/kitsu/dist D:/kitsu/dist /MIR
