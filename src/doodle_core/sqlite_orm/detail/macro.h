@@ -121,23 +121,22 @@
     co_return l_ret;                                                                                                   \
   }
 
-#define DOODLE_REMOVE_RANGE(class_name)                                                        \
-  template <>                                                                                  \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<class_name>( \
-      std::shared_ptr<std::vector<std::int64_t>> in_data                                       \
-  ) {                                                                                          \
-    DOODLE_TO_SQLITE_THREAD();                                                                 \
-    tl::expected<void, std::string> l_ret{};                                                   \
-                                                                                               \
-    try {                                                                                      \
-      auto l_storage = get_cast_storage(storage_any_);                                         \
-      auto l_g       = l_storage->transaction_guard();                                         \
-      for (auto&& i : *in_data) {                                                              \
-        l_storage->remove<class_name>(i);                                                      \
-      }                                                                                        \
-    } catch (...) {                                                                            \
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());          \
-    }                                                                                          \
-    DOODLE_TO_SELF();                                                                          \
-    co_return l_ret;                                                                           \
+#define DOODLE_REMOVE_RANGE(class_name)                                                                 \
+  template <>                                                                                           \
+  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<class_name>(          \
+      std::shared_ptr<std::vector<std::int64_t>> in_data                                                \
+  ) {                                                                                                   \
+    DOODLE_TO_SQLITE_THREAD();                                                                          \
+    tl::expected<void, std::string> l_ret{};                                                            \
+                                                                                                        \
+    try {                                                                                               \
+      auto l_storage = get_cast_storage(storage_any_);                                                  \
+      auto l_g       = l_storage->transaction_guard();                                                  \
+      l_storage->remove_all<class_name>(sqlite_orm::where(sqlite_orm::in(&class_name::id_, *in_data))); \
+      l_g.commit();                                                                                     \
+    } catch (...) {                                                                                     \
+      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());                   \
+    }                                                                                                   \
+    DOODLE_TO_SELF();                                                                                   \
+    co_return l_ret;                                                                                    \
   }

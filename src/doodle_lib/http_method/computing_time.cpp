@@ -383,7 +383,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   auto l_rem = g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
   if (!l_rem.empty()) {
     if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(
-            std::make_shared<std::vector<std::int64_t>>(l_rem.front().id_)
+            std::make_shared<std::vector<std::int64_t>>(std::vector<std::int64_t>{l_rem.front().id_})
         );
         !l_r) {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
