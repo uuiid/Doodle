@@ -12,7 +12,7 @@
 #include <entt/entt.hpp>
 namespace doodle {
 
-namespace  details {
+namespace details {
 enum class assets_type_enum {
   scene,
   prop,
@@ -87,6 +87,17 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
    */
   friend void from_json(const nlohmann::json& j, assets& p) { j.at("path").get_to(p.p_path); }
 };
+
+namespace assets_helper {
+struct database_t {
+  std::int32_t id_{};
+  uuid uuid_id_{};
+  std::string label_{};
+  std::optional<std::int32_t> parent_id_{};
+  /// 这个数据不在数据库中
+  uuid uuid_parent_{};
+};
+}  // namespace assets_helper
 }  // namespace doodle
 namespace fmt {
 /**

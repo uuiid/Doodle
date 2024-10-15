@@ -79,6 +79,18 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, assets_file& p);
 };
 
+namespace assets_file_helper {
+struct database_t {
+  std::int32_t id_{};
+  uuid uuid_id_{};
+  std::string label_{};
+  std::optional<std::int32_t> parent_id_{};
+  FSys::path path_{};
+  std::string notes_{};
+  /// 这个数据不在数据库中
+  uuid uuid_parent_{};
+};
+}  // namespace assets_file_helper
 }  // namespace doodle
 namespace fmt {
 /**
