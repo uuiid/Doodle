@@ -444,7 +444,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
     }
-
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    }
     l_json_res["data"] = *l_block_ptr;
   }
   co_return in_handle->make_msg(l_json_res.dump());
