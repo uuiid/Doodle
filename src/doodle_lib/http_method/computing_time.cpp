@@ -48,9 +48,7 @@ struct computing_time_post_req_data {
   }
 };
 
-business::work_clock2 create_time_clock(
-    const chrono::year_month& in_year_month, const user_helper::database_t& in_user
-) {
+business::work_clock2 create_time_clock(const chrono::year_month& in_year_month, const std::int64_t& in_user_id) {
   business::work_clock2 l_time_clock_{};
   auto l_rules_ = business::rules::get_default();
   chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
@@ -70,7 +68,7 @@ business::work_clock2 create_time_clock(
   auto& l_sql = g_ctx().get<sqlite_database>();
   std::vector<chrono::local_days> l_days{};
   for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) l_days.emplace_back(l_it);
-  for (auto&& l_att : l_sql.get_attendance(in_user.id_, l_days)) {
+  for (auto&& l_att : l_sql.get_attendance(in_user_id, l_days)) {
     l_time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_.value_or(std::string{}));
   }
 
@@ -118,7 +116,7 @@ void computing_time_run(
       });
     }
 
-    chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}};
+    chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
     for (auto i = 0; i < in_data.data.size(); ++i) {
       auto l_end           = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
 
@@ -147,6 +145,50 @@ void computing_time_run(
         });
       }
       l_begin_time = l_end;
+    }
+  }
+}
+
+// 重新计算时间
+void recomputing_time_run(
+    const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock,
+    std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
+) {
+  auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+  auto l_all_works = in_time_clock(chrono::local_days{in_year_month / chrono::day{1}}, l_end_time);
+
+  // 进行排序
+  std::ranges::sort(in_out_data, [](auto&& l_left, auto&& l_right) {
+    return l_left.start_time_.get_sys_time() < l_right.start_time_.get_sys_time();
+  });
+  // });
+
+  {
+    // 计算时间比例
+    std::vector<std::int64_t> l_woeks1{};
+    for (auto&& l_task : in_out_data) {
+      l_woeks1.push_back((l_task.start_time_.get_sys_time() - l_task.end_time_.get_sys_time()).count() + 1);
+    }
+    auto l_works_accumulate = ranges::accumulate(l_woeks1, std::int64_t{});
+    std::vector<chrono::seconds> l_woeks2{};
+    using rational_int = boost::rational<std::int64_t>;
+    for (auto i = 0; i < l_woeks1.size(); ++i) {
+      l_woeks2.push_back(chrono::seconds{
+          boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
+      });
+    }
+
+    chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
+    for (auto i = 0; i < in_out_data.size(); ++i) {
+      auto l_end                 = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
+      auto l_info                = in_time_clock.get_time_info(l_begin_time, l_end);
+      std::string l_remark       = fmt::format("{}", fmt::join(l_info, ", "));
+      in_out_data[i].start_time_ = {chrono::current_zone(), l_begin_time};
+      in_out_data[i].end_time_   = {chrono::current_zone(), l_end};
+      in_out_data[i].duration_   = chrono::duration_cast<chrono::seconds>(l_woeks2[i]);
+      in_out_data[i].remark_     = l_remark;
+      in_out_data[i].year_month_ = chrono::local_days{in_year_month / 1};
+      l_begin_time               = l_end;
     }
   }
 }
@@ -237,7 +279,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
 
-  auto l_time_clock = create_time_clock(l_data.year_month_, l_user);
+  auto l_time_clock = create_time_clock(l_data.year_month_, l_user.id_);
   computing_time_run(l_data.year_month_, l_time_clock, l_user, l_data, *l_block_ptr);
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
@@ -347,7 +389,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     );
   }
 
-  auto l_timer_clock = create_time_clock(l_year_month, l_user);
+  auto l_timer_clock = create_time_clock(l_year_month, l_user.id_);
   if (patch_time(l_timer_clock, *l_block_ptr, l_task_id, l_duration, in_handle->logger_)) {
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
@@ -381,15 +423,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   }
 
   auto l_rem = g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
+  nlohmann::json l_json_res{};
   if (!l_rem.empty()) {
+    auto& l_task = l_rem.front();
     if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(
-            std::make_shared<std::vector<std::int64_t>>(std::vector<std::int64_t>{l_rem.front().id_})
+            std::make_shared<std::vector<std::int64_t>>(std::vector<std::int64_t>{l_task.id_})
         );
         !l_r) {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
     }
+    chrono::year_month_day l_year_month_day{l_task.year_month_};
+    chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
+
+    auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+    *l_block_ptr      = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_task.user_ref_, l_task.year_month_);
+
+    auto l_time_clock = create_time_clock(l_year_month, l_task.user_ref_);
+    recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
+
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    }
+
+    l_json_res["data"] = *l_block_ptr;
   }
-  co_return in_handle->make_msg("{}"s);
+  co_return in_handle->make_msg(l_json_res.dump());
 }
 
 void reg_computing_time(http_route& in_route) {
