@@ -31,6 +31,7 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".svg") return "image/svg+xml";
   if (in_ext == ".svgz") return "image/svg+xml";
   if (in_ext == ".map") return "application/json";
+  return "application/octet-stream";
 }
 
 FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost::urls::segments_ref& in_) {
