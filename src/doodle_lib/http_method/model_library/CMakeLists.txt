@@ -1,0 +1,9 @@
+target_sources(
+        doodle_lib
+        PUBLIC
+        assets.h
+        assets_tree.h
+        PRIVATE
+        assets.cpp
+        assets_tree.cpp
+)

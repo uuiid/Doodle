@@ -32,3 +32,4 @@ target_sources(
 )
 
 add_subdirectory(kitsu)
+add_subdirectory(model_library)
