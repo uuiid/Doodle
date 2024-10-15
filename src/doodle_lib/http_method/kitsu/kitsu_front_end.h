@@ -29,10 +29,9 @@ class kitsu_proxy_url : public doodle::http::http_function_base_t {
   }
 
  public:
-  explicit kitsu_proxy_url(
-      const std::string& in_url
-  )
-      : http::http_function_base_t(), url_segments_(split_url(in_url)) {}
+  explicit kitsu_proxy_url(const std::string& in_url) : http::http_function_base_t(), url_segments_(split_url(in_url)) {
+    is_proxy_ = true;
+  }
   ~kitsu_proxy_url() override = default;
   std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };

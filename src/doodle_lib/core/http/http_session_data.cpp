@@ -412,7 +412,7 @@ class async_session_t {
       set_session();
       callback_ = (*route_ptr_)(method_verb_, session_->url_.segments(), session_);
       // 空回调直接运行代理
-      if (!callback_->callback_) {
+      if (callback_->is_proxy()) {
         if (co_await proxy_run()) co_return;
         continue;
       }
