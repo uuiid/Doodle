@@ -96,6 +96,11 @@ struct database_t {
   std::optional<std::int32_t> parent_id_{};
   /// 这个数据不在数据库中
   uuid uuid_parent_{};
+  friend void to_json(nlohmann::json& j, const database_t& v) {
+    j["id"]  = v.uuid_id_;
+    j["label"] = v.label_;
+    if (!v.uuid_parent_.is_nil()) j["parent_id"] = v.uuid_parent_;
+  }
 };
 }  // namespace assets_helper
 }  // namespace doodle
