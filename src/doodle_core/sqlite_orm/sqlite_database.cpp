@@ -38,6 +38,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("parent_id", &assets_file_helper::database_t::parent_id_),
           make_column("path", &assets_file_helper::database_t::path_),
           make_column("notes", &assets_file_helper::database_t::notes_),
+          make_column("active", &assets_file_helper::database_t::active_),
           foreign_key(&assets_file_helper::database_t::parent_id_).references(&assets_helper::database_t::id_)
       ),
 

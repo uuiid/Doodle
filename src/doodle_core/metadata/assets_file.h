@@ -87,6 +87,8 @@ struct database_t {
   std::optional<std::int32_t> parent_id_{};
   FSys::path path_{};
   std::string notes_{};
+  // 激活
+  bool active_{};
   /// 这个数据不在数据库中
   uuid uuid_parent_{};
 };
