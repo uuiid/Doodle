@@ -249,7 +249,7 @@ DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_RANGE(assets_file_helper::database_t)
 DOODLE_REMOVE_RANGE(assets_helper::database_t)
+DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 
 void sqlite_database::load(const FSys::path& in_path) { set_path(in_path); }
-
 }  // namespace doodle

@@ -103,7 +103,10 @@ struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
   static void from_json(const json& j, boost::uuids::uuid& in_uuid) {
     if (j.is_string()) {
       try {
-        in_uuid = boost::lexical_cast<boost::uuids::uuid>(j.get<std::string>());
+        if (auto l_str = j.get<std::string>(); !l_str.empty())
+          in_uuid = boost::lexical_cast<boost::uuids::uuid>(l_str);
+        else
+          in_uuid = boost::uuids::nil_uuid();
       } catch (const boost::bad_lexical_cast& in_err) {
         throw nlohmann::json::parse_error::create(116, {}, in_err.what(), &j);
       }

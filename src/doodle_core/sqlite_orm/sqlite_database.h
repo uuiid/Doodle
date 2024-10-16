@@ -82,6 +82,7 @@ class sqlite_database {
 
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<std::vector<std::int64_t>> in_data);
-
+  template <typename T>
+  boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<uuid> in_data);
 };
 }  // namespace doodle
