@@ -31,6 +31,7 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".svg") return "image/svg+xml";
   if (in_ext == ".svgz") return "image/svg+xml";
   if (in_ext == ".map") return "application/json";
+  if (in_ext == ".exe") return "application/octet-stream";
   return "application/octet-stream";
 }
 
