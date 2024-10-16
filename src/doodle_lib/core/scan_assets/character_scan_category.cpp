@@ -47,7 +47,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
         auto l_ptr                  = std::make_shared<character_scan_category_data_t>();
         l_ptr->project_database_ptr = in_root;
         l_ptr->season_              = l_season;
-        l_ptr->name_                = fmt::format("Ch_{}", l_number_str);
+        l_ptr->name_                = l_ch_name;
         l_ptr->Ch_path_             = l_ChNum_path;
         l_ptr->base_path_           = l_ch_name_ue_path;
         l_ptr->begin_episode_       = l_begin_episode;
