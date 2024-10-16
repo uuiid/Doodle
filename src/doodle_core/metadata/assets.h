@@ -101,6 +101,11 @@ struct database_t {
     j["label"] = v.label_;
     if (!v.uuid_parent_.is_nil()) j["parent_id"] = v.uuid_parent_;
   }
+
+  friend void from_json(const nlohmann::json& j, database_t& v) {
+    j.at("label").get_to(v.label_);
+    if (j.contains("parent_id")) j.at("parent_id").get_to(v.uuid_parent_);
+  }
 };
 }  // namespace assets_helper
 }  // namespace doodle

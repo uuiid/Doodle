@@ -140,3 +140,23 @@
     DOODLE_TO_SELF();                                                                                   \
     co_return l_ret;                                                                                    \
   }
+
+#define DOODLE_REMOVE_BY_UUID(class_name)                                                                              \
+  template <>                                                                                                          \
+  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<class_name>(                         \
+      std::shared_ptr<uuid> in_data                                                                                    \
+  ) {                                                                                                                  \
+    DOODLE_TO_SQLITE_THREAD();                                                                                         \
+    tl::expected<void, std::string> l_ret{};                                                                           \
+                                                                                                                       \
+    try {                                                                                                              \
+      auto l_storage = get_cast_storage(storage_any_);                                                                 \
+      auto l_g       = l_storage->transaction_guard();                                                                 \
+      l_storage->remove_all<class_name>(sqlite_orm::where(sqlite_orm::c(&assets_helper::database_t::id_) = *in_data)); \
+      l_g.commit();                                                                                                    \
+    } catch (...) {                                                                                                    \
+      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());                                  \
+    }                                                                                                                  \
+    DOODLE_TO_SELF();                                                                                                  \
+    co_return l_ret;                                                                                                   \
+  }
