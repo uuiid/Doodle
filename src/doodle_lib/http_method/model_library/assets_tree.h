@@ -2,7 +2,11 @@
 // Created by TD on 24-10-15.
 //
 
-#ifndef ASSETS_TREE_H
-#define ASSETS_TREE_H
+#pragma once
 
-#endif //ASSETS_TREE_H
+#include <doodle_lib/core/http/http_route.h>
+
+namespace doodle::http::kitsu {
+void assets_tree_reg(http_route& in_http_route);
+
+}
