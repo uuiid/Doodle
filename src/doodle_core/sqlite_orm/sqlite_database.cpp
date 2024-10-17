@@ -214,6 +214,9 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
   ));
 }
 
+DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
+DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
+
 DOODLE_UUID_TO_ID(scan_data_t::database_t)
 DOODLE_UUID_TO_ID(project_helper::database_t)
 DOODLE_UUID_TO_ID(user_helper::database_t)

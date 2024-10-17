@@ -16,7 +16,9 @@ namespace doodle {
 namespace attendance_helper {
 struct database_t;
 }
-
+namespace assets_file_helper {
+struct database_t;
+}
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
@@ -59,19 +61,6 @@ class sqlite_database {
   template <typename T>
   std::vector<T> get_by_kitsu_uuid(const uuid& in_uuid);
 
-  std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const chrono::local_days& in_data
-  );
-  std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
-  );
-  std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
-      const std::int64_t& in_ref_id, const chrono::local_days& in_data
-  );
-
-  std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id);
-  std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
-
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data);
   /**
@@ -87,5 +76,24 @@ class sqlite_database {
   boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<std::vector<std::int64_t>> in_data);
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<uuid> in_data);
+
+  template <typename T>
+  std::vector<T> get_by_parent_id(const uuid& in_id);
+
+
+  std::vector<attendance_helper::database_t> get_attendance(
+    const std::int64_t& in_ref_id, const chrono::local_days& in_data
+);
+  std::vector<attendance_helper::database_t> get_attendance(
+      const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
+  );
+  std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
+      const std::int64_t& in_ref_id, const chrono::local_days& in_data
+  );
+
+  std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id);
+  std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
+
+
 };
 }  // namespace doodle

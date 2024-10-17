@@ -37,6 +37,23 @@
     return l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::kitsu_uuid_) == in_uuid)); \
   }
 
+#define DOODLE_GET_BY_PARENT_ID_SQL(class_name)                                                                    \
+  template <>                                                                                                      \
+  std::vector<class_name> sqlite_database::get_by_parent_id<class_name>(const uuid& in_uuid) {                     \
+    using namespace sqlite_orm;                                                                                    \
+    auto l_storage = get_cast_storage(storage_any_);                                                               \
+    return l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::uuid_parent_) == in_uuid)); \
+  }
+
+#define DOODLE_UUID_TO_ID(class_name)                                                                                    \
+  template <>                                                                                                            \
+  std::int64_t sqlite_database::uuid_to_id<class_name>(const uuid& in_uuid) {                                            \
+    using namespace sqlite_orm;                                                                                          \
+    auto l_storage = get_cast_storage(storage_any_);                                                                     \
+    auto l_v       = l_storage->get_all<class_name>(sqlite_orm::where(sqlite_orm::c(&class_name::uuid_id_) == in_uuid)); \
+    return l_v.empty() ? 0 : l_v[0].id_;                                                                                 \
+  }
+
 #define DOODLE_GET_BY_UUID_SQL(class_name)                                                                     \
   template <>                                                                                                  \
   std::vector<class_name> sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) {                      \
