@@ -89,6 +89,22 @@ struct database_t {
   // 激活
   bool active_{};
   uuid uuid_parent_{};
+
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
+    j["id"]          = p.uuid_id_;
+    j["label"]       = p.label_;
+    j["path"]        = p.path_;
+    j["notes"]       = p.notes_;
+    j["active"]      = p.active_;
+    j["parent_id"] = p.uuid_parent_;
+  }
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, database_t& p) {
+    j.at("label").get_to(p.label_);
+    j.at("path").get_to(p.path_);
+    j.at("notes").get_to(p.notes_);
+    j.at("active").get_to(p.active_);
+    j.at("parent_id").get_to(p.uuid_parent_);
+  }
 };
 }  // namespace assets_file_helper
 }  // namespace doodle
