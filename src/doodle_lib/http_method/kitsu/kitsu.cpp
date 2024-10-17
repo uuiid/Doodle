@@ -14,6 +14,8 @@
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
+#include <doodle_lib/http_method/model_library/assets.h>
+#include <doodle_lib/http_method/model_library/assets_tree.h>
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
@@ -22,6 +24,8 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
   kitsu::user_reg(*l_router);
   kitsu::task_reg(*l_router);
+  kitsu::assets_reg(*l_router);
+  kitsu::assets_tree_reg(*l_router);
   reg_kitsu_front_end_http(*l_router, in_root);
   return l_router;
 }

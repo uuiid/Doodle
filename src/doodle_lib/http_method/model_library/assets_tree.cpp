@@ -42,7 +42,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
 
-  co_return in_handle->make_msg(nlohmann::json{*l_ptr}.dump());
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_modify(session_data_ptr in_handle) {
   uuid l_uuid{};
@@ -57,7 +57,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id 或者 无效的数据");
   }
-  if (auto l_r = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_uuid); l_r != 0)
+  if (auto l_r = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_uuid); l_r == 0)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::internal_server_error, "无效的id, 未能再库中查找到实体"
     );
@@ -75,6 +75,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
     }
     auto l_parent_uuid = l_value->uuid_parent_.value_or(uuid{});
     for (int i = 0; i < 101; ++i) {
+      if (l_parent_uuid.is_nil()) break;
       if (!l_map.contains(l_parent_uuid))
         co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
       l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
@@ -88,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_value); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
 
-  co_return in_handle->make_msg(nlohmann::json{*l_value}.dump());
+  co_return in_handle->make_msg((nlohmann::json{} = *l_value).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete(session_data_ptr in_handle) {
@@ -112,7 +113,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
   if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
 
-  co_return in_handle->make_msg("");
+  co_return in_handle->make_msg("{}");
 }
 }  // namespace
 void assets_tree_reg(http_route& in_http_route) {
