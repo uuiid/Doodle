@@ -35,11 +35,11 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique()),
           make_column("label", &assets_file_helper::database_t::label_),
-          make_column("parent_id", &assets_file_helper::database_t::parent_id_),
+          make_column("parent_uuid", &assets_file_helper::database_t::uuid_parent_),
           make_column("path", &assets_file_helper::database_t::path_),
           make_column("notes", &assets_file_helper::database_t::notes_),
           make_column("active", &assets_file_helper::database_t::active_),
-          foreign_key(&assets_file_helper::database_t::parent_id_).references(&assets_helper::database_t::id_)
+          foreign_key(&assets_file_helper::database_t::uuid_parent_).references(&assets_helper::database_t::id_)
       ),
 
       make_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_),
@@ -48,7 +48,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &assets_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_helper::database_t::uuid_id_),
           make_column("label", &assets_helper::database_t::label_),
-          make_column("parent_id", &assets_helper::database_t::parent_id_)
+          make_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
       ),
       make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
       make_index("kitsu_task_type_tab_kitsu_uuid_index", &metadata::kitsu::task_type_t::kitsu_uuid_),
@@ -213,6 +213,13 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
       c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
   ));
 }
+
+DOODLE_UUID_TO_ID(scan_data_t::database_t)
+DOODLE_UUID_TO_ID(project_helper::database_t)
+DOODLE_UUID_TO_ID(user_helper::database_t)
+DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
+DOODLE_UUID_TO_ID(assets_file_helper::database_t)
+DOODLE_UUID_TO_ID(assets_helper::database_t)
 
 DOODLE_GET_BY_KITSU_UUID_SQL(project_helper::database_t)
 DOODLE_GET_BY_KITSU_UUID_SQL(metadata::kitsu::task_type_t)

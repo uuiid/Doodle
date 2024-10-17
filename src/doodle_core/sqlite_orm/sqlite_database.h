@@ -52,6 +52,9 @@ class sqlite_database {
   std::vector<T> get_all();
 
   template <typename T>
+  std::int64_t uuid_to_id(const uuid& in_uuid);
+
+  template <typename T>
   std::vector<T> get_by_uuid(const uuid& in_uuid);
   template <typename T>
   std::vector<T> get_by_kitsu_uuid(const uuid& in_uuid);
