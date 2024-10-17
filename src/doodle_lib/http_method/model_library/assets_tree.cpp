@@ -9,16 +9,13 @@
 #include "doodle_lib/core/http/http_function.h"
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
+
+#include <treehh/tree.hh>
 namespace doodle::http::kitsu {
 namespace {
+
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get(session_data_ptr in_handle) {
   auto l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
-
-  std::map<std::int64_t, assets_helper::database_t*> l_map{};
-  for (auto&& l : l_list) l_map[l.id_] = &l;
-
-  for (auto&& l : l_list)
-    if (l.parent_id_) l.uuid_parent_ = l_map[*l.parent_id_]->uuid_id_;
 
   nlohmann::json l_json{};
   l_json = l_list;
@@ -35,12 +32,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
         boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
     );
   }
-  if (!l_ptr->uuid_parent_.is_nil()) {
-    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(l_ptr->uuid_parent_);
-        l_list.empty())
+  if (l_ptr->uuid_parent_) {
+    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_ptr->uuid_parent_);
+        l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
-    else
-      l_ptr->parent_id_ = l_list.front().id_;
   }
   l_ptr->uuid_id_ = core_set::get_set().get_uuid();
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
@@ -56,15 +51,35 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
 
   auto l_value = std::make_shared<assets_helper::database_t>();
   try {
-    l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
+    l_uuid   = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
     *l_value = std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>();
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id 或者 无效的数据");
   }
-  if (auto l_r = g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(l_uuid); l_r.empty())
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "无效的id, 未能再库中查找到实体");
-  else
-    l_value->id_ = l_r.front().id_;
+  if (auto l_r = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_uuid); l_r != 0)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::internal_server_error, "无效的id, 未能再库中查找到实体"
+    );
+  else {
+    l_value->id_ = l_r;
+    l_value->uuid_id_ = l_uuid;
+  }
+
+  {
+    /// 检查是否存在循环引用
+    const auto& l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
+    std::map<uuid, const assets_helper::database_t*> l_map{};
+    for (const auto& l_item : l_list) {
+      l_map[l_item.uuid_id_] = &l_item;
+    }
+    auto l_parent_uuid = l_value->uuid_parent_.value_or(uuid{});
+    for (int i = 0; i < 101; ++i) {
+      if (!l_map.contains(l_parent_uuid))
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+      l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
+      if (i == 100) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "节点存在循环引用或者达到最大的深度");
+    }
+  }
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_value); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
@@ -78,6 +93,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
     *l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
+  }
+
+  if (auto l_e = g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(*l_uuid); !l_e.empty()) {
+    auto& l_uuid_ = l_e.front().uuid_id_;
+    if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_helper::database_t>(l_uuid_); !l_r.empty())
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
+
+    if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(l_uuid_);
+        !l_r.empty())
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
   }
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid); !l_r)
