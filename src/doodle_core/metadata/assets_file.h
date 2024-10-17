@@ -84,12 +84,10 @@ struct database_t {
   std::int32_t id_{};
   uuid uuid_id_{};
   std::string label_{};
-  std::optional<std::int32_t> parent_id_{};
   FSys::path path_{};
   std::string notes_{};
   // 激活
   bool active_{};
-  /// 这个数据不在数据库中
   uuid uuid_parent_{};
 };
 }  // namespace assets_file_helper
