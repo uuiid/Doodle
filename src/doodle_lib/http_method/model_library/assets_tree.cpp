@@ -4,6 +4,7 @@
 #include "assets_tree.h"
 
 #include <doodle_core/metadata/assets.h>
+#include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include "doodle_lib/core/http/http_function.h"
@@ -61,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
         boost::beast::http::status::internal_server_error, "无效的id, 未能再库中查找到实体"
     );
   else {
-    l_value->id_ = l_r;
+    l_value->id_      = l_r;
     l_value->uuid_id_ = l_uuid;
   }
 
@@ -77,7 +78,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
       if (!l_map.contains(l_parent_uuid))
         co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
       l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
-      if (i == 100) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "节点存在循环引用或者达到最大的深度");
+      if (i == 100)
+        co_return in_handle->make_error_code_msg(
+            boost::beast::http::status::not_found, "节点存在循环引用或者达到最大的深度"
+        );
     }
   }
 

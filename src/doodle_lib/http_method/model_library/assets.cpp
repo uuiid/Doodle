@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
+#include "boost/lexical_cast.hpp"
 
 #include "core/http/http_function.h"
 
@@ -45,7 +46,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
 
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
+  std::shared_ptr<assets_file_helper::database_t> const l_ptr = std::make_shared<assets_file_helper::database_t>();
   try {
     *l_ptr = std::get<nlohmann::json>(in_handle->body_).get<assets_file_helper::database_t>();
     l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
