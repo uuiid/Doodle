@@ -33,8 +33,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
         boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
     );
   }
-  if (l_ptr->uuid_parent_) {
-    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_ptr->uuid_parent_);
+  if (!l_ptr->uuid_parent_.is_nil()) {
+    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
         l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
   }
@@ -73,12 +73,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
     for (const auto& l_item : l_list) {
       l_map[l_item.uuid_id_] = &l_item;
     }
-    auto l_parent_uuid = l_value->uuid_parent_.value_or(uuid{});
+    auto l_parent_uuid = l_value->uuid_parent_;
     for (int i = 0; i < 101; ++i) {
       if (l_parent_uuid.is_nil()) break;
       if (!l_map.contains(l_parent_uuid))
         co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
-      l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
+      l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_;
       if (i == 100)
         co_return in_handle->make_error_code_msg(
             boost::beast::http::status::not_found, "节点存在循环引用或者达到最大的深度"

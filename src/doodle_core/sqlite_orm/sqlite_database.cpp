@@ -37,7 +37,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("label", &assets_file_helper::database_t::label_),
           make_column("parent_uuid", &assets_file_helper::database_t::uuid_parent_),
           make_column("path", &assets_file_helper::database_t::path_),
-          make_column("notes", &assets_file_helper::database_t::notes_),
+          make_column("notes", &assets_file_helper::database_t::notes_, null()),
           make_column("active", &assets_file_helper::database_t::active_),
           make_column("parent_id", &assets_file_helper::database_t::parent_id_),
           foreign_key(&assets_file_helper::database_t::parent_id_).references(&assets_helper::database_t::id_)
@@ -49,7 +49,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &assets_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_helper::database_t::uuid_id_, unique()),
           make_column("label", &assets_helper::database_t::label_),
-          make_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
+          make_column("parent_uuid", &assets_helper::database_t::uuid_parent_, null())
       ),
       make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
       make_index("kitsu_task_type_tab_kitsu_uuid_index", &metadata::kitsu::task_type_t::kitsu_uuid_),
