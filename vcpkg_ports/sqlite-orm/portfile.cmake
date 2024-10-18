@@ -20,8 +20,8 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
-        -DSQLITE_ORM_ENABLE_CXX_17=OFF
-        -DSQLITE_ORM_ENABLE_CXX_20=OFF
+        -DSQLITE_ORM_ENABLE_CXX_17=ON
+        -DSQLITE_ORM_ENABLE_CXX_20=ON
 )
 
 vcpkg_cmake_install()
