@@ -98,7 +98,7 @@ struct database_t {
   friend void to_json(nlohmann::json& j, const database_t& v) {
     j["id"]    = v.uuid_id_;
     j["label"] = v.label_;
-    if (v.uuid_parent_.is_nil()) j["parent_id"] = v.uuid_parent_;
+    if (!v.uuid_parent_.is_nil()) j["parent_id"] = v.uuid_parent_;
   }
 
   friend void from_json(const nlohmann::json& j, database_t& v) {
