@@ -459,7 +459,7 @@ boost::beast::http::message_generator session_data::make_error_code_msg(
   l_response.set(boost::beast::http::field::accept, "application/json");
   l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
   l_response.keep_alive(keep_alive_);
-  l_response.body() = nlohmann::json{{"error", in_str}, {"core", in_msg_code}}.dump();
+  l_response.body() = nlohmann::json{{"error", in_str}, {"code", in_msg_code}}.dump();
   l_response.prepare_payload();
   return l_response;
 }
