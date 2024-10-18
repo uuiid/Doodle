@@ -61,6 +61,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
   if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
       l_list == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+  else
+    l_ptr->parent_id_ = l_list;
+
+  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_file_helper::database_t>(l_uuid); l_list == 0)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到节点");
+  else
+    l_ptr->id_ = l_list;
 
   l_ptr->uuid_id_ = l_uuid;
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
@@ -83,7 +90,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  co_return in_handle->make_msg("");
+  co_return in_handle->make_msg("{}");
 }
 
 void assets_reg(http_route& in_http_route) {
