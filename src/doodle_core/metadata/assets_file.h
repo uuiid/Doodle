@@ -89,6 +89,7 @@ struct database_t {
   // 激活
   bool active_{};
   uuid uuid_parent_{};
+  std::int32_t parent_id_{};
 
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
     j["id"]          = p.uuid_id_;

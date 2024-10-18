@@ -31,14 +31,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post(sessio
         boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
     );
   }
-  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_file_helper::database_t>(l_ptr->uuid_parent_);
+  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
       l_list == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+  else
+    l_ptr->parent_id_ = l_list;
 
   l_ptr->uuid_id_ = core_set::get_set().get_uuid();
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  co_return in_handle->make_msg(nlohmann::json{*l_ptr}.dump());
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify(session_data_ptr in_handle) {
@@ -56,14 +58,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
     );
   }
 
-  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_file_helper::database_t>(l_ptr->uuid_parent_);
+  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
       l_list == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
 
   l_ptr->uuid_id_ = l_uuid;
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  co_return in_handle->make_msg(nlohmann::json{*l_ptr}.dump());
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(session_data_ptr in_handle) {

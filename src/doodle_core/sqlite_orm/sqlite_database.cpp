@@ -39,14 +39,15 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("path", &assets_file_helper::database_t::path_),
           make_column("notes", &assets_file_helper::database_t::notes_),
           make_column("active", &assets_file_helper::database_t::active_),
-          foreign_key(&assets_file_helper::database_t::uuid_parent_).references(&assets_helper::database_t::id_)
+          make_column("parent_id", &assets_file_helper::database_t::parent_id_),
+          foreign_key(&assets_file_helper::database_t::parent_id_).references(&assets_helper::database_t::id_)
       ),
 
       make_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_),
       make_table(
           "assets_tab",  //
           make_column("id", &assets_helper::database_t::id_, primary_key()),
-          make_column("uuid_id", &assets_helper::database_t::uuid_id_),
+          make_column("uuid_id", &assets_helper::database_t::uuid_id_, unique()),
           make_column("label", &assets_helper::database_t::label_),
           make_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
       ),
@@ -259,7 +260,6 @@ DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_RANGE(assets_file_helper::database_t)
 DOODLE_REMOVE_RANGE(assets_helper::database_t)
-
 
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
