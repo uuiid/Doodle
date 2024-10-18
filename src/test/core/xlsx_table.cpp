@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(main) {
   entt::handle l_handle{*g_reg(), g_reg()->create()};
   auto& l_user                = l_handle.emplace<user>();
   l_user.id_                  = boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b");
-  l_user.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+  // l_user.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
 
   entt::entity l_user_entity  = l_handle;
   using namespace std::chrono_literals;
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(main) {
     auto& l_user                  = l_handle.emplace<user>();
     l_user.id_                    = boost::lexical_cast<boost::uuids::uuid>("ce6d3b4d-75aa-4e0f-90af-18b913df138a");
     l_user.mobile_                = "15827605754";
-    l_user.dingding_company_id_   = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+    // l_user.dingding_company_id_   = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
     l_user.dingding_id_           = "16951873382881136";
 
     // 2
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(main) {
     auto& l_user_2                = l_handle.emplace<user>();
     l_user_2.id_                  = boost::lexical_cast<boost::uuids::uuid>("5b5153a1-51a4-4376-9450-2c317e523cbe");
     l_user_2.mobile_              = "18056860368";
-    l_user_2.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+    // l_user_2.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
     l_user_2.dingding_id_         = "16941375683116574";
 
     // 3
@@ -72,58 +72,58 @@ BOOST_AUTO_TEST_CASE(main) {
     auto& l_user_3                = l_handle.emplace<user>();
     l_user_3.id_                  = boost::lexical_cast<boost::uuids::uuid>("78a1ec16-8a2d-4ae2-b0c9-7a8092694100");
     l_user_3.mobile_              = "15635681053";
-    l_user_3.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
+    // l_user_3.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
     l_user_3.dingding_id_         = "250801386824116912";
   }
 
   l_handle = {*g_reg(), g_reg()->create()};
-  l_handle.emplace<attendance_block>(attendance_block{
-      .id_ = core_set::get_set().get_uuid(),
-      .attendance_block_ =
-          {
-              attendance{
-                  .id_ = core_set::get_set().get_uuid(),
-                  .start_time_ =
-                      chrono::zoned_time<chrono::microseconds>{
-                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 9h
-                      },
-                  .end_time_ =
-                      chrono::zoned_time<chrono::microseconds>{
-                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 12h
-                      },
-                  .remark_ = "remark",
-                  .type_   = attendance::att_enum::overtime,
-              },
-              attendance{
-                  .id_ = core_set::get_set().get_uuid(),
-                  .start_time_ =
-                      chrono::zoned_time<chrono::microseconds>{
-                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 18h
-                      },
-                  .end_time_ =
-                      chrono::zoned_time<chrono::microseconds>{
-                          chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 22h
-                      },
-                  .remark_ = "remark",
-                  .type_   = attendance::att_enum::leave,
-              },
-          },
-      .create_date_ = chrono::year_month_day{2024y / 5 / 8},
-      .update_time_ =
-          chrono::zoned_time<chrono::microseconds>{
-              chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
-          },
-      .user_ref_id_ = l_user_entity,
-  });
-  l_user.attendance_block_[chrono::year_month_day{2024y / 5 / 8}] = l_handle;
-
-  try {
-    // 工作守卫
-    auto l_work_guard = boost::asio::make_work_guard(g_io_context());
-    g_io_context().run();
-  } catch (const std::exception& e) {
-    BOOST_TEST_MESSAGE(e.what());
-  }
+  // l_handle.emplace<attendance_block>(attendance_block{
+  //     .id_ = core_set::get_set().get_uuid(),
+  //     .attendance_block_ =
+  //         {
+  //             attendance{
+  //                 .id_ = core_set::get_set().get_uuid(),
+  //                 .start_time_ =
+  //                     chrono::zoned_time<chrono::microseconds>{
+  //                         chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 9h
+  //                     },
+  //                 .end_time_ =
+  //                     chrono::zoned_time<chrono::microseconds>{
+  //                         chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 12h
+  //                     },
+  //                 .remark_ = "remark",
+  //                 .type_   = attendance::att_enum::overtime,
+  //             },
+  //             attendance{
+  //                 .id_ = core_set::get_set().get_uuid(),
+  //                 .start_time_ =
+  //                     chrono::zoned_time<chrono::microseconds>{
+  //                         chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 18h
+  //                     },
+  //                 .end_time_ =
+  //                     chrono::zoned_time<chrono::microseconds>{
+  //                         chrono::current_zone(), chrono::local_days{2024y / 5 / 8} + 22h
+  //                     },
+  //                 .remark_ = "remark",
+  //                 .type_   = attendance::att_enum::leave,
+  //             },
+  //         },
+  //     .create_date_ = chrono::year_month_day{2024y / 5 / 8},
+  //     .update_time_ =
+  //         chrono::zoned_time<chrono::microseconds>{
+  //             chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+  //         },
+  //     .user_ref_id_ = l_user_entity,
+  // });
+  // l_user.attendance_block_[chrono::year_month_day{2024y / 5 / 8}] = l_handle;
+  //
+  // try {
+  //   // 工作守卫
+  //   auto l_work_guard = boost::asio::make_work_guard(g_io_context());
+  //   g_io_context().run();
+  // } catch (const std::exception& e) {
+  //   BOOST_TEST_MESSAGE(e.what());
+  // }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

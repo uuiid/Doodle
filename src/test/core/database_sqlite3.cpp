@@ -296,4 +296,44 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
   l_app.run();
 }
 
+struct test_1 {
+  std::int32_t id_{};
+  std::int32_t id_fk_{};
+};
+
+struct test_2 {
+  std::int32_t id_{};
+  std::string tt1{};
+};
+
+auto l_mk() {
+  using namespace sqlite_orm;
+  return make_storage(
+      "C:/tes.db",  //
+      make_table(
+          "test_tab2",  //
+          make_column("id", &test_1::id_, primary_key()), make_column("fk", &test_1::id_fk_),
+          foreign_key(&test_1::id_fk_).references(&test_2::id_)
+      ),
+
+      make_table(
+          "test_tab",  //
+          make_column("id", &test_2::id_, primary_key()),
+          make_column("tt1", &test_2::tt1, null())
+      )
+  );
+}
+
+BOOST_AUTO_TEST_CASE(tset_null) {
+  {
+    auto l_s = l_mk();
+    l_s.sync_schema(true);
+    auto l_id = l_s.insert(test_2{});
+    l_s.insert(test_1{.id_fk_ = l_id});
+  }
+  auto l_s = l_mk();
+  l_s.sync_schema(true);  // 这里出现错误
+
+}
+
 BOOST_AUTO_TEST_SUITE_END()
