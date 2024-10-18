@@ -88,11 +88,14 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
     }
   }
   static void from_json(const json& j, opt& in_opt) {
-    if (j["nullopt"].template get<bool>()) {
-      in_opt = std::nullopt;
-    } else {
-      in_opt.emplace();
-      *in_opt = j["data"].template get<T>();
+    if (j.contains("nullopt"))
+      if (j["nullopt"].get<bool>()) {
+        in_opt = std::nullopt;
+      } else {
+        in_opt.emplace(j["data"].get<T>());
+      }
+    else {
+      in_opt.emplace(j.get<T>());
     }
   }
 };
