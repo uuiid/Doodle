@@ -3,7 +3,10 @@ target_sources(
         PUBLIC
         assets.h
         assets_tree.h
+        thumbnail.h
+
         PRIVATE
         assets.cpp
         assets_tree.cpp
+        thumbnail.cpp
 )
