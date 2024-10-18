@@ -14,7 +14,7 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
   const FSys::path l_prop_path_root = FSys::path{in_root->path_} / "6-moxing/Prop";
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 
-  if (!FSys::exists(l_prop_path_root)) {
+  if (std::error_code l_core_code{}; !FSys::exists(l_prop_path_root, l_core_code) || l_core_code) {
     logger_->log(log_loc(), level::err, "路径不存在:{}", l_prop_path_root);
     return {};
   }

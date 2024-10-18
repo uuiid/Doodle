@@ -16,7 +16,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
   const std::regex l_BG_regex{R"(BG(\d+[a-zA-Z]\d*))"};
 
-  if (!FSys::exists(l_scene_path)) {
+  if (std::error_code l_core_code{}; !FSys::exists(l_scene_path, l_core_code) || l_core_code) {
     logger_->log(log_loc(), level::err, "路径不存在:{}", l_scene_path);
     return {};
   }
@@ -38,14 +38,14 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
         if (!FSys::exists(l_s3.path() / "Content")) continue;
 
         // 直接创建, 有空的, 但是也要在这里创建
-        auto l_ptr            = std::make_shared<scene_scan_category_data_t>();
-        l_ptr->season_        = l_season;
-        l_ptr->project_database_ptr  = in_root;
-        l_ptr->begin_episode_ = l_begin_episode;
-        l_ptr->name_          = l_s3.path().filename().generic_string();
-        l_ptr->BG_path_       = l_s2.path();
-        l_ptr->base_path_     = l_s3.path();
-        l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::scene;
+        auto l_ptr                  = std::make_shared<scene_scan_category_data_t>();
+        l_ptr->season_              = l_season;
+        l_ptr->project_database_ptr = in_root;
+        l_ptr->begin_episode_       = l_begin_episode;
+        l_ptr->name_                = l_s3.path().filename().generic_string();
+        l_ptr->BG_path_             = l_s2.path();
+        l_ptr->base_path_           = l_s3.path();
+        l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::scene;
         l_ptr->file_type_.set_path("场景");
         l_out.emplace_back(l_ptr);
 
@@ -61,14 +61,14 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
             l_version_str = l_version_str.substr(1);
           }
           if (!l_version_str.empty()) {
-            l_ptr                 = std::make_shared<scene_scan_category_data_t>();
-            l_ptr->season_        = l_season;
-            l_ptr->project_database_ptr  = in_root;
-            l_ptr->begin_episode_ = l_begin_episode;
-            l_ptr->name_          = l_s3.path().filename().generic_string();
-            l_ptr->BG_path_       = l_s2.path();
-            l_ptr->base_path_     = l_s3.path();
-            l_ptr->assets_type_   = scan_category_data_t::assets_type_enum::scene;
+            l_ptr                       = std::make_shared<scene_scan_category_data_t>();
+            l_ptr->season_              = l_season;
+            l_ptr->project_database_ptr = in_root;
+            l_ptr->begin_episode_       = l_begin_episode;
+            l_ptr->name_                = l_s3.path().filename().generic_string();
+            l_ptr->BG_path_             = l_s2.path();
+            l_ptr->base_path_           = l_s3.path();
+            l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::scene;
             l_ptr->file_type_.set_path("场景");
             l_out.emplace_back(l_ptr);
             l_ptr->version_name_ = l_version_str;

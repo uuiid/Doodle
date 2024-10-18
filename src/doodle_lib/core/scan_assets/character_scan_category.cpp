@@ -13,7 +13,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
   const std::regex l_Ch_regex{R"(Ch(\d+[A-Z]))"};
   std::regex l_Ue_regex{R"((\w+)_UE\d)"};
 
-  if (!FSys::exists(l_character_path_root)) {
+  if (std::error_code l_core_code{}; !FSys::exists(l_character_path_root, l_core_code) || l_core_code) {
     logger_->log(log_loc(), level::err, "路径不存在:{}", l_character_path_root);
     return {};
   }
