@@ -171,7 +171,7 @@
       auto l_storage = get_cast_storage(storage_any_);                                         \
       auto l_g       = l_storage->transaction_guard();                                         \
       l_storage->remove_all<class_name>(                                                       \
-          sqlite_orm::where(sqlite_orm::c(&assets_helper::database_t::uuid_id_) = *in_data)    \
+          sqlite_orm::where(sqlite_orm::c(&class_name::uuid_id_) = *in_data)    \
       );                                                                                       \
       l_g.commit();                                                                            \
     } catch (...) {                                                                            \
