@@ -44,13 +44,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
     if (!FSys::exists(l_path / "previews")) FSys::create_directories(l_path / "previews");
 
     cv::imwrite((l_path / "thumbnails" / (l_name + ".jpg")).generic_string(), l_image);
-    if (l_image.cols > 192 || l_image.rows > 108) cv::resize(l_image, l_image, cv::Size{192, 108});
+    if (l_image.cols > 192 || l_image.rows > 108) {
+      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+    }
     cv::imwrite((l_path / "previews" / (l_name + ".jpg")).generic_string(), l_image);
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
   }
 
-  co_return in_handle->make_msg("{}");
+  co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", in_handle->capture_->get("id")));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
     std::shared_ptr<FSys::path> in_root, session_data_ptr in_handle
