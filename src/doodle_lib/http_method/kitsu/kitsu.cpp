@@ -126,6 +126,34 @@ doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_na
   }
   return doodle::details::assets_type_enum::other;
 }
+
+std::string_view mime_type(const FSys::path& in_ext) {
+  if (in_ext == ".htm") return "text/html";
+  if (in_ext == ".html") return "text/html";
+  if (in_ext == ".php") return "text/html";
+  if (in_ext == ".css") return "text/css";
+  if (in_ext == ".txt") return "text/plain";
+  if (in_ext == ".js") return "application/javascript";
+  if (in_ext == ".json") return "application/json";
+  if (in_ext == ".xml") return "application/xml";
+  if (in_ext == ".swf") return "application/x-shockwave-flash";
+  if (in_ext == ".flv") return "video/x-flv";
+  if (in_ext == ".png") return "image/png";
+  if (in_ext == ".jpe") return "image/jpeg";
+  if (in_ext == ".jpeg") return "image/jpeg";
+  if (in_ext == ".jpg") return "image/jpeg";
+  if (in_ext == ".gif") return "image/gif";
+  if (in_ext == ".bmp") return "image/bmp";
+  if (in_ext == ".ico") return "image/vnd.microsoft.icon";
+  if (in_ext == ".tiff") return "image/tiff";
+  if (in_ext == ".tif") return "image/tiff";
+  if (in_ext == ".svg") return "image/svg+xml";
+  if (in_ext == ".svgz") return "image/svg+xml";
+  if (in_ext == ".map") return "application/json";
+  if (in_ext == ".exe") return "application/octet-stream";
+  return "application/octet-stream";
+}
+
 }  // namespace kitsu
 
 }  // namespace doodle::http

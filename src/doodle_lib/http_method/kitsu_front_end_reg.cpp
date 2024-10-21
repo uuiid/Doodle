@@ -4,36 +4,10 @@
 
 #include "kitsu_front_end_reg.h"
 
+#include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 namespace doodle::http {
 namespace {
-
-std::string_view mime_type(const FSys::path& in_ext) {
-  if (in_ext == ".htm") return "text/html";
-  if (in_ext == ".html") return "text/html";
-  if (in_ext == ".php") return "text/html";
-  if (in_ext == ".css") return "text/css";
-  if (in_ext == ".txt") return "text/plain";
-  if (in_ext == ".js") return "application/javascript";
-  if (in_ext == ".json") return "application/json";
-  if (in_ext == ".xml") return "application/xml";
-  if (in_ext == ".swf") return "application/x-shockwave-flash";
-  if (in_ext == ".flv") return "video/x-flv";
-  if (in_ext == ".png") return "image/png";
-  if (in_ext == ".jpe") return "image/jpeg";
-  if (in_ext == ".jpeg") return "image/jpeg";
-  if (in_ext == ".jpg") return "image/jpeg";
-  if (in_ext == ".gif") return "image/gif";
-  if (in_ext == ".bmp") return "image/bmp";
-  if (in_ext == ".ico") return "image/vnd.microsoft.icon";
-  if (in_ext == ".tiff") return "image/tiff";
-  if (in_ext == ".tif") return "image/tiff";
-  if (in_ext == ".svg") return "image/svg+xml";
-  if (in_ext == ".svgz") return "image/svg+xml";
-  if (in_ext == ".map") return "application/json";
-  if (in_ext == ".exe") return "application/octet-stream";
-  return "application/octet-stream";
-}
 
 FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost::urls::segments_ref& in_) {
   auto l_path = *in_root;
@@ -59,7 +33,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files(
       boost::beast::http::status::ok, in_handle->version_
   };
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::content_type, mime_type(l_ext));
+  l_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_ext));
   l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
   if (l_code)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
@@ -76,7 +50,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files_head(
       boost::beast::http::status::ok, in_handle->version_
   };
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::content_type, mime_type(l_path.extension()));
+  l_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_path.extension()));
   try {
     l_res.content_length(FSys::file_size(l_path));
   } catch (...) {

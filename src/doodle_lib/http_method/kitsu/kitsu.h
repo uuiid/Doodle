@@ -36,6 +36,8 @@ uuid get_url_project_id(const boost::urls::url& in_url);
  * @brief 初始化上下文, 项目, 任务类别
  */
 void init_context();
+
+std::string_view mime_type(const FSys::path& in_ext);
 }  // namespace kitsu
 
 }  // namespace doodle::http
