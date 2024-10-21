@@ -36,8 +36,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
         cv::imdecode(cv::InputArray{l_data.data(), boost::numeric_cast<int>(l_data.size())}, cv::IMREAD_UNCHANGED);
     if (l_image.empty())
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
-    if (!FSys::exists(l_path / "thumbnails")) FSys::create_directories(l_path / "thumbnails");
-    if (!FSys::exists(l_path / "previews")) FSys::create_directories(l_path / "previews");
 
     cv::imwrite((l_path / "previews" / (l_name + ".png")).generic_string(), l_image);
     if (l_image.cols > 192 || l_image.rows > 108) {
@@ -85,6 +83,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
 void thumbnail_reg(http_route& route) {
   auto l_thumbnails_root = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "thumbnails");
   auto l_previews_root   = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "previews");
+  if (!FSys::exists(*l_thumbnails_root)) FSys::create_directories(*l_thumbnails_root);
+  if (!FSys::exists(*l_previews_root)) FSys::create_directories(*l_previews_root);
   route.reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/pictures/{id}", thumbnail_post))
       .reg(
           std::make_shared<http_function>(
