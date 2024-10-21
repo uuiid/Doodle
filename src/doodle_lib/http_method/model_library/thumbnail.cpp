@@ -18,6 +18,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
     // case detail::content_type::image_gif:
     case detail::content_type::image_jpeg:
     case detail::content_type::image_png:
+      break;
     default:
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
       break;
