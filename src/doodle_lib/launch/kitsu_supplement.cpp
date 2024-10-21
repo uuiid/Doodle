@@ -25,6 +25,8 @@ struct kitsu_supplement_args_t {
   std::string kitsu_token_{};
   FSys::path kitsu_front_end_path_{};
 
+  FSys::path kitsu_thumbnails_path_{};
+
   // 公司
   struct dingding_company_t {
     boost::uuids::uuid id_;
@@ -57,6 +59,7 @@ struct kitsu_supplement_args_t {
     in_json.at("db_path").get_to(out_obj.db_path_);
     in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
     in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
+    in_json.at("kitsu_thumbnails_path").get_to(out_obj.kitsu_thumbnails_path_);
   }
 };
 
@@ -65,10 +68,11 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
 
   kitsu_supplement_args_t l_args{
-      .kitsu_url_            = "http://192.168.40.182",
-      .port_                 = 50025,
-      .db_path_              = "D:/kitsu.database",
-      .kitsu_front_end_path_ = "D:/doodle/kitsu"
+      .kitsu_url_             = "http://192.168.40.182",
+      .port_                  = 50025,
+      .db_path_               = "D:/kitsu.database",
+      .kitsu_front_end_path_  = "D:/doodle/kitsu",
+      .kitsu_thumbnails_path_ = "D:/doodle/kitsu/images"
   };
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
@@ -96,7 +100,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
         std::make_shared<kitsu::kitsu_client>(g_io_context(), l_args.kitsu_url_)
     );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
-    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_url_, l_args.kitsu_token_);
+    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_);
     http::kitsu::init_context();
 
     // 初始化钉钉客户端
