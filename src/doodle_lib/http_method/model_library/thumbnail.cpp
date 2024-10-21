@@ -39,12 +39,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
     if (!FSys::exists(l_path / "thumbnails")) FSys::create_directories(l_path / "thumbnails");
     if (!FSys::exists(l_path / "previews")) FSys::create_directories(l_path / "previews");
 
-    cv::imwrite((l_path / "thumbnails" / (l_name + ".png")).generic_string(), l_image);
+    cv::imwrite((l_path / "previews" / (l_name + ".png")).generic_string(), l_image);
     if (l_image.cols > 192 || l_image.rows > 108) {
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
       cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
     }
-    cv::imwrite((l_path / "previews" / (l_name + ".png")).generic_string(), l_image);
+    cv::imwrite((l_path / "thumbnails" / (l_name + ".png")).generic_string(), l_image);
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
   }
@@ -85,22 +85,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
 void thumbnail_reg(http_route& route) {
   auto l_thumbnails_root = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "thumbnails");
   auto l_previews_root   = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "previews");
-  route
+  route.reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/pictures/{id}", thumbnail_post))
       .reg(
           std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/pictures/previews/{id}", thumbnail_post
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/pictures/thumbnails/preview-files/{id}",
+              boost::beast::http::verb::get, "api/doodle/pictures/thumbnails/{id}",
               std::bind_front(thumbnail_get, l_thumbnails_root)
           )
       )
       .reg(
           std::make_shared<http_function>(
-              boost::beast::http::verb::get, "/api/pictures/previews/preview-files/{id}",
-              std::bind_front(thumbnail_get, l_previews_root)
+              boost::beast::http::verb::get, "api/doodle/pictures/{id}", std::bind_front(thumbnail_get, l_previews_root)
           )
       )
 
