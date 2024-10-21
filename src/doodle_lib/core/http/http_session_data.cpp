@@ -198,8 +198,9 @@ class async_session_t {
 
     boost::beast::websocket::stream<tcp_stream_type> l_proxy_stream{std::move(*proxy_relay_stream_)};
     {
-      l_proxy_stream.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client
-      ));
+      l_proxy_stream.set_option(
+          boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client)
+      );
       l_proxy_stream.set_option(
           boost::beast::websocket::stream_base::decorator(websocket_relay_decorator_t{*this, l_res_ptr})
       );
@@ -340,10 +341,11 @@ class async_session_t {
     boost::beast::websocket::stream<tcp_stream_type> l_stream{std::move(*stream_)};
     stream_.reset();
     l_stream.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
-    l_stream.set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res
-                                                                        ) {
-      res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle-server");
-    }));
+    l_stream.set_option(
+        boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
+          res.set(boost::beast::http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " doodle-server");
+        })
+    );
     std::tie(ec_) = co_await l_stream.async_accept(request_parser_->get());
     if (ec_) {
       l_stream.close(ec_.value(), ec_);
@@ -391,6 +393,12 @@ class async_session_t {
             co_return;
           }
         } else {
+          if (l_content_type.starts_with("image/jpeg"))
+            session_->content_type_ = content_type::image_jpeg;
+          else if (l_content_type.starts_with("image/png"))
+            session_->content_type_ = content_type::image_png;
+          else if (l_content_type.starts_with("image/gif"))
+            session_->content_type_ = content_type::image_gif;
           session_->body_ = string_request_parser_->get().body();
         }
         session_->req_header_ = std::move(string_request_parser_->release().base());
