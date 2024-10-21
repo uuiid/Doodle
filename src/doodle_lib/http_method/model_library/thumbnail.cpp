@@ -14,7 +14,7 @@ namespace {
 
 boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle) {
   switch (in_handle->content_type_) {
-    case detail::content_type::image_gif:
+    // case detail::content_type::image_gif:
     case detail::content_type::image_jpeg:
     case detail::content_type::image_png:
       break;
@@ -22,8 +22,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
       break;
   }
+  FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
+  std::string l_name{};
+  try {
+    l_name = in_handle->capture_->get("id");
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::not_found, boost::current_exception_diagnostic_information()
+    );
+  }
 
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "not found");
+  auto& l_data    = std::get<std::string&>(in_handle->body_);
+  cv::Mat l_image = cv::imdecode(cv::InputArray{l_data.data(), l_data.size()}, cv::IMREAD_UNCHANGED);
+  if (l_image.empty())
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
+
+  if (!FSys::exists(l_path / "thumbnails")) FSys::create_directories(l_path / "thumbnails");
+  if (!FSys::exists(l_path / "previews")) FSys::create_directories(l_path / "previews");
+
+  cv::imwrite(l_path / "thumbnails" / (l_name + ".jpg"), l_image);
+  if (l_image.cols > 192 || l_image.rows > 108) cv::resize(l_image, l_image, cv::Size{192, 108});
+  cv::imwrite(l_path / "previews" / (l_name + ".jpg"), l_image);
+
+  co_return in_handle->make_msg("{}");
 }
 boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
     std::shared_ptr<FSys::path> in_root, session_data_ptr in_handle
