@@ -19,7 +19,7 @@ struct kitsu_data_t {
 struct kitsu_ctx_t {
   std::string url_;
   std::string access_token_;
-  std::map<boost::uuids::uuid, std::string> task_types_;
+  std::filesystem::path root_;
 };
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root);

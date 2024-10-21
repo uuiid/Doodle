@@ -2,7 +2,10 @@
 // Created by TD on 24-10-18.
 //
 
-#ifndef THUMBNAIL_H
-#define THUMBNAIL_H
+#pragma once
 
-#endif //THUMBNAIL_H
+#include <doodle_lib/core/http/http_route.h>
+
+namespace doodle::http::kitsu {
+void thumbnail_reg(http_route& route);
+}
