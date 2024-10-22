@@ -78,7 +78,6 @@ class sqlite_database {
       const std::int64_t& in_ref_id, const chrono::local_days& in_data
   );
 
-  std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id);
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
 
 

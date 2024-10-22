@@ -75,6 +75,8 @@ class scan_win_service_t {
   using signal_t     = boost::asio::signal_set;
   using signal_ptr_t = std::shared_ptr<signal_t>;
 
+  static constexpr std::string_view jaon_file_name_{"scan_win_service"};
+
   timer_ptr_t timer_;
   signal_ptr_t signal_;
   boost::asio::any_io_executor executor_{};
@@ -95,13 +97,14 @@ class scan_win_service_t {
 
   boost::asio::awaitable<void> begin_scan();
   void create_project();
-  boost::asio::awaitable<void> seed_to_sql(std::int32_t in_current_index);
+  void seed_to_sql(std::int32_t in_current_index);
 
   void add_handle(
       const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
   );
 
   void init_all_map();
+
  public:
   scan_win_service_t()  = default;
   ~scan_win_service_t() = default;

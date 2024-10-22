@@ -29,9 +29,9 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
-#include <doodle_core/sqlite_orm/sqlite_snapshot.h>
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
+#include <doodle_core/sqlite_orm/sqlite_snapshot.h>
 
 #include "doodle_app/app/app_command.h"
 
@@ -239,61 +239,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
 BOOST_AUTO_TEST_CASE(multi_threaded) {
   app_command<> l_app{};
   l_app.use_multithread(true);
-
-  auto l_data = std::make_shared<project_helper::database_t>(project_helper::database_t{
-      .uuid_id_          = core_set::get_set().get_uuid(),
-      .name_             = "das",
-      .path_             = "122",
-      .en_str_           = "333",
-      .shor_str_         = "323",
-      .local_path_       = "dddd",
-      .auto_upload_path_ = "323"
-  });
-  auto l_list = std::make_shared<std::vector<scan_data_t::database_t>>(
-      100,
-      scan_data_t::database_t{
-          .ue_path_    = "das",
-          .rig_path_   = "das",
-          .solve_path_ = "dsadssa",
-          .name_       = "name",
-          .version_    = "sda",
-          .num_        = "das"
-      }
-  );
-  for (auto&& i : *l_list) {
-    i.uuid_id_    = core_set::get_set().get_uuid();
-    i.ue_uuid_    = core_set::get_set().get_uuid();
-    i.ue_path_    = "test";
-    i.rig_path_   = "test";
-    i.rig_uuid_   = core_set::get_set().get_uuid();
-    i.solve_path_ = "test";
-    i.solve_uuid_ = core_set::get_set().get_uuid();
-  }
-  g_ctx().emplace<sqlite_database>().load("D:/test2.db");
-  boost::asio::post(g_io_context(), [&]() mutable {
-    auto l_prj_id =
-        boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_data), boost::asio::use_future)
-            .get();
-
-    auto l_ids = boost::asio::co_spawn(
-                     g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future
-    )
-                     .get();
-
-    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install_range(l_list), boost::asio::use_future)
-        .get();
-    for (auto&& i : *l_list) {
-      boost::asio::co_spawn(
-          g_io_context(), g_ctx().get<sqlite_database>().install(std::make_shared<scan_data_t::database_t>(i)),
-          boost::asio::detached
-      );
-    }
-    for (auto&& i : *l_list)
-      boost::asio::post(g_io_context(), [id_ = i.ue_uuid_]() {
-        g_ctx().get<sqlite_database>().get_by_uuid<scan_data_t::database_t>(*id_);
-      });
-  });
-  l_app.run();
 }
 
 struct test_1 {
@@ -318,8 +263,7 @@ auto l_mk() {
 
       make_table(
           "test_tab",  //
-          make_column("id", &test_2::id_, primary_key()),
-          make_column("tt1", &test_2::tt1, null())
+          make_column("id", &test_2::id_, primary_key()), make_column("tt1", &test_2::tt1, null())
       )
   );
 }
@@ -333,7 +277,6 @@ BOOST_AUTO_TEST_CASE(tset_null) {
   }
   auto l_s = l_mk();
   l_s.sync_schema(true);  // 这里出现错误
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()

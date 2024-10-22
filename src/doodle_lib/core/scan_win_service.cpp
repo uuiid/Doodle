@@ -47,10 +47,12 @@ auto to_scan_data(
             // }
             l_expected                                          = std::move(l_list);
           } catch (...) {
-            l_expected = tl::make_unexpected(fmt::format(
-                "项目 {} 路径{} 错误 {}", in_project_root->name_, in_project_root->local_path_,
-                boost::current_exception_diagnostic_information()
-            ));
+            l_expected = tl::make_unexpected(
+                fmt::format(
+                    "项目 {} 路径{} 错误 {}", in_project_root->name_, in_project_root->local_path_,
+                    boost::current_exception_diagnostic_information()
+                )
+            );
           }
 
           boost::asio::post(boost::asio::prepend(std::move(*l_f), l_expected));
@@ -88,40 +90,12 @@ void scan_win_service_t::start() {
   );
 }
 void scan_win_service_t::init_all_map() {
-  create_project();
-  auto& l_scan_key_data = scan_data_key_maps_[index_];
-  auto& l_scan_data     = scan_data_maps_[index_];
-  auto l_data           = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
-  auto l_prjs           = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
-  auto l_prj_maps = project_roots_ | ranges::views::transform([](const std::shared_ptr<project_helper::database_t>& l) {
-                      return std::make_pair(l->id_, l);
-                    }) |
-                    ranges::to<std::map<std::int32_t, std::shared_ptr<project_helper::database_t>>>();
-  for (auto&& l_d : l_data) {
-    auto l_d_t                            = std::make_shared<details::scan_category_data_t>();
-    l_d_t->rig_file_.uuid_                = l_d.rig_uuid_.value_or(uuid{});
-    l_d_t->rig_file_.path_                = l_d.rig_path_.value_or(FSys::path{});
-    l_d_t->ue_file_.uuid_                 = l_d.ue_uuid_.value_or(uuid{});
-    l_d_t->ue_file_.path_                 = l_d.ue_path_.value_or(FSys::path{});
-    l_d_t->solve_file_.uuid_              = l_d.solve_uuid_.value_or(uuid{});
-    l_d_t->solve_file_.path_              = l_d.solve_path_.value_or(FSys::path{});
-    l_d_t->season_                        = season{l_d.season_};
-    l_d_t->project_database_ptr           = l_prj_maps[l_d.project_id_];
-    l_d_t->number_str_                    = l_d.num_.value_or(std::string{});
-    l_d_t->name_                          = l_d.name_;
-    l_d_t->version_name_                  = l_d.version_.value_or(std::string{});
-    l_scan_key_data[{
-        .dep_          = l_d.dep_,
-        .season_       = season{l_d.season_},
-        .project_      = l_prj_maps[l_d.project_id_]->kitsu_uuid_,
-        .number_       = l_d.num_ ? *l_d.num_ : std::string{},
-        .name_         = l_d.name_,
-        .version_name_ = l_d.version_ ? *l_d.version_ : std::string{},
-    }]                                    = l_d_t;
-    l_scan_data[l_d_t->ue_file_.uuid_]    = l_d_t;
-    l_scan_data[l_d_t->rig_file_.uuid_]   = l_d_t;
-    l_scan_data[l_d_t->solve_file_.uuid_] = l_d_t;
+  nlohmann::json l_json = nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
+  std::vector<doodle::details::scan_category_data_ptr> l_data_vec{};
+  for (auto&& l_v : l_json) {
+    l_data_vec.emplace_back(std::make_shared<details::scan_category_data_t>(l_v.get<details::scan_category_data_t>()));
   }
+  add_handle(l_data_vec, index_);
 }
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
@@ -161,7 +135,7 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
         }
         add_handle(l_v[i].value(), l_current_index);
       }
-      co_await seed_to_sql(l_current_index);
+      seed_to_sql(l_current_index);
       // 交换缓冲区
       index_ = l_current_index;
     }
@@ -186,74 +160,14 @@ void scan_win_service_t::create_project() {
   }
 }
 
-boost::asio::awaitable<void> scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
-  auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
+void scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
+  nlohmann::json l_json{};
 
-  std::map<std::int32_t, std::size_t> l_prj_map{};
-  for (auto i = 0; i < project_roots_.size(); ++i) {
-    l_prj_map[project_roots_[i]->id_] = i;
+  auto& l_scan_data = scan_data_maps_[in_current_index];
+  for (auto&& [l_k, l_v] : l_scan_data) {
+    l_json.emplace_back(*l_v);
   }
-
-  auto l_data = g_ctx().get<sqlite_database>().get_all<scan_data_t::database_t>();
-  std::map<scan::scan_key_t, std::size_t> l_old_map{};
-
-  for (std::size_t i = 0; i < l_data.size(); ++i) {
-    auto& l_d = l_data[i];
-    l_old_map[{
-        .dep_          = l_d.dep_,
-        .season_       = season{l_d.season_},
-        .project_      = project_roots_[l_prj_map[l_d.project_id_]]->kitsu_uuid_,
-        .number_       = l_d.num_ ? *l_d.num_ : std::string{},
-        .name_         = l_d.name_,
-        .version_name_ = l_d.version_ ? *l_d.version_ : std::string{},
-    }]        = i;
-  }
-
-  // 开始查询更改
-  auto l_install = std::make_shared<std::vector<scan_data_t::database_t>>();
-  for (auto&& [l_key, l_val] : l_scan_key_data) {
-    if (l_old_map.contains(l_key)) {
-      auto& l_old = l_data[l_old_map[l_key]];
-      if (l_old.ue_uuid_ != l_val->ue_file_.uuid_ || l_old.rig_uuid_ != l_val->rig_file_.uuid_ ||
-          l_old.solve_uuid_ != l_val->solve_file_.uuid_ || l_old.hash_ != l_val->file_hash_) {
-        auto&& l_new   = l_install->emplace_back(scan_data_t::database_t{static_cast<scan_data_t::database_t>(*l_val)});
-        l_new.id_      = l_old.id_;
-        l_new.uuid_id_ = l_old.uuid_id_;
-      }
-    } else {
-      l_install->emplace_back(scan_data_t::database_t{static_cast<scan_data_t::database_t>(*l_val)}).uuid_id_ =
-          core_set::get_set().get_uuid();
-    }
-  }
-
-  // 此次开始删除旧的
-  auto l_rem_ids = std::make_shared<std::vector<std::int64_t>>();
-  {
-    auto l_new_key = l_scan_key_data | ranges::views::keys | ranges::to_vector;
-    auto l_old_key = l_old_map | ranges::views::keys | ranges::to_vector;
-    l_new_key |= ranges::actions::sort;
-    l_old_key |= ranges::actions::sort;
-    std::vector<scan::scan_key_t> l_out{l_old_key.size() + l_new_key.size()};
-    {
-      // ranges::;
-      // auto l_tmp = l_new_key;
-      // l_old_key.merge(l_tmp);
-      auto&& [l_, l_1, l_end] = std::ranges::set_union(l_old_key, l_new_key, l_out.begin());
-      l_out.erase(l_end, std::end(l_out));
-    }
-
-    std::vector<scan::scan_key_t> l_set_rem{l_old_key.size() + l_new_key.size()};
-    auto [old_orders_end, cut_orders_last] = std::ranges::set_difference(l_out, l_new_key, l_set_rem.begin());
-    l_set_rem.erase(cut_orders_last, l_set_rem.end());
-    l_rem_ids->reserve(l_set_rem.size());
-    for (auto&& i : l_set_rem) {
-      l_rem_ids->emplace_back(l_data[l_old_map[i]].id_);
-    }
-  }
-  auto& l_data_base = g_ctx().get<sqlite_database>();
-  if (auto l_r = co_await l_data_base.install_range<scan_data_t::database_t>(l_install); !l_r)
-    logger_->error(l_r.error());
-  if (auto l_r = co_await l_data_base.remove<scan_data_t::database_t>(l_rem_ids); !l_r) logger_->error(l_r.error());
+  FSys::ofstream{core_set::get_set().get_cache_root() / jaon_file_name_} << l_json.dump();
 }
 
 void scan_win_service_t::add_handle(

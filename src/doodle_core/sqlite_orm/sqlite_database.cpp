@@ -104,31 +104,6 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("dingding_company_id", &user_helper::database_t::dingding_company_id_)
       ),
 
-      make_index("scan_data_ue_uuid", &scan_data_t::database_t::ue_uuid_),
-      make_index("scan_data_rig_uuid", &scan_data_t::database_t::rig_uuid_),
-      make_index("scan_data_solve_uuid", &scan_data_t::database_t::solve_uuid_),
-      make_table(
-          "scan_data",  //
-          make_column("id", &scan_data_t::database_t::id_, primary_key()),
-          make_column("uuid_id", &scan_data_t::database_t::uuid_id_, unique()),
-          make_column("ue_uuid", &scan_data_t::database_t::ue_uuid_),
-          make_column("rig_uuid", &scan_data_t::database_t::rig_uuid_),
-          make_column("solve_uuid", &scan_data_t::database_t::solve_uuid_),
-
-          make_column("ue_path", &scan_data_t::database_t::ue_path_),
-          make_column("rig_path", &scan_data_t::database_t::rig_path_),
-          make_column("solve_path", &scan_data_t::database_t::solve_path_),
-
-          make_column("season", &scan_data_t::database_t::season_),
-          make_column("assets_type_enum", &scan_data_t::database_t::dep_),
-
-          make_column("project", &scan_data_t::database_t::project_id_),
-          make_column("name", &scan_data_t::database_t::name_),
-          make_column("version", &scan_data_t::database_t::version_),
-          make_column("num", &scan_data_t::database_t::num_),  //
-          // make_column("file_hash", &scan_data_t::database_t::hash_),
-          foreign_key(&scan_data_t::database_t::project_id_).references(&project_helper::database_t::id_)
-      ),  //
       make_index("project_tab_uuid", &project_helper::database_t::uuid_id_),
       make_index("project_tab_kitsu_uuid", &project_helper::database_t::kitsu_uuid_),
       make_table(
@@ -164,13 +139,6 @@ struct sqlite_database_impl {
     default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
   }
 
-  std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<scan_data_t::database_t>(sqlite_orm::where(
-        sqlite_orm::c(&scan_data_t::database_t::ue_uuid_) == in_id ||
-        sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_id || c(&scan_data_t::database_t::solve_uuid_) == in_id
-    ));
-  }
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name) {
     using namespace sqlite_orm;
     return storage_any_.get_all<project_helper::database_t>(
@@ -210,12 +178,10 @@ struct sqlite_database_impl {
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
 
-
   template <typename T>
   std::vector<T> get_all() {
     using namespace sqlite_orm;
     return storage_any_.get_all<T>();
-
   }
 
   template <typename T>
@@ -302,9 +268,7 @@ struct sqlite_database_impl {
   }
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> remove(
-      std::shared_ptr<std::vector<std::int64_t>> in_data
-  ) {
+  boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<std::vector<std::int64_t>> in_data) {
     DOODLE_TO_SQLITE_THREAD();
     tl::expected<void, std::string> l_ret{};
 
@@ -343,10 +307,6 @@ struct sqlite_database_impl {
 
 void sqlite_database::load(const FSys::path& in_path) { impl_ = std::make_shared<sqlite_database_impl>(in_path); }
 
-std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid& in_id) {
-  return impl_->find_by_path_id(in_id);
-}
-
 std::vector<project_helper::database_t> sqlite_database::find_project_by_name(const std::string& in_name) {
   return impl_->find_project_by_name(in_name);
 }
@@ -370,7 +330,6 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
-DOODLE_UUID_TO_ID(scan_data_t::database_t)
 DOODLE_UUID_TO_ID(project_helper::database_t)
 DOODLE_UUID_TO_ID(user_helper::database_t)
 DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
@@ -380,20 +339,17 @@ DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_GET_BY_KITSU_UUID_SQL(project_helper::database_t)
 DOODLE_GET_BY_KITSU_UUID_SQL(metadata::kitsu::task_type_t)
 
-DOODLE_GET_BY_UUID_SQL(scan_data_t::database_t)
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(assets_file_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(assets_helper::database_t)
 
 DOODLE_GET_ALL_SQL(project_helper::database_t)
-DOODLE_GET_ALL_SQL(scan_data_t::database_t)
 DOODLE_GET_ALL_SQL(user_helper::database_t)
 DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_ALL_SQL(assets_file_helper::database_t)
 DOODLE_GET_ALL_SQL(assets_helper::database_t)
 
-DOODLE_INSTALL_SQL(scan_data_t::database_t)
 DOODLE_INSTALL_SQL(project_helper::database_t)
 DOODLE_INSTALL_SQL(user_helper::database_t)
 DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t)
@@ -402,11 +358,9 @@ DOODLE_INSTALL_SQL(assets_helper::database_t)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
-DOODLE_INSTALL_RANGE(scan_data_t::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)
 
-DOODLE_REMOVE_RANGE(scan_data_t::database_t)
 DOODLE_REMOVE_RANGE(attendance_helper::database_t)
 DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t)

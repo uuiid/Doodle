@@ -11,23 +11,6 @@
 #include <cryptopp/sha.h>
 namespace doodle::details {
 
-scan_category_data_t::operator scan_data_t::database_t() const {
-  return scan_data_t::database_t{
-      .ue_uuid_    = ue_file_.uuid_.is_nil() ? std::nullopt : std::optional{ue_file_.uuid_},
-      .rig_uuid_   = rig_file_.uuid_.is_nil() ? std::nullopt : std::optional{rig_file_.uuid_},
-      .solve_uuid_ = solve_file_.uuid_.is_nil() ? std::nullopt : std::optional{solve_file_.uuid_},
-      .project_id_ = project_database_ptr->id_,
-      .ue_path_    = ue_file_.uuid_.is_nil() ? std::nullopt : std::optional{ue_file_.path_},
-      .rig_path_   = rig_file_.uuid_.is_nil() ? std::nullopt : std::optional{rig_file_.path_},
-      .solve_path_ = solve_file_.uuid_.is_nil() ? std::nullopt : std::optional{solve_file_.path_},
-      .season_     = season_.p_int,
-      .dep_        = assets_type_,
-      .name_       = name_,
-      .version_    = version_name_.empty() ? std::nullopt : std::optional{version_name_},
-      .num_        = number_str_.empty() ? std::nullopt : std::optional{number_str_}
-  };
-}
-
 std::string scan_category_t::file_hash(const std::string& in_data) {
   CryptoPP::SHA224 k_sha_224;
   std::string l_str{};
