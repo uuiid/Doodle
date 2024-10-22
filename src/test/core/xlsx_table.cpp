@@ -10,7 +10,6 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
-#include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 #include <doodle_lib/launch/kitsu_supplement.h>
 
 #include <boost/test/tools/interface.hpp>

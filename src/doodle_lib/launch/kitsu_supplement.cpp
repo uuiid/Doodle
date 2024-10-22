@@ -14,7 +14,6 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
-#include <doodle_lib/http_method/sqlite/kitsu_backend_sqlite.h>
 #include <doodle_lib/http_method/user_http.h>
 namespace doodle::launch {
 struct kitsu_supplement_args_t {
