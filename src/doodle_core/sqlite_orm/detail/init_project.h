@@ -5,5 +5,4 @@
 #pragma once
 
 namespace doodle::details {
-void init_project();
 }

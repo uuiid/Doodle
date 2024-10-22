@@ -40,16 +40,34 @@ boost::asio::awaitable<void> init_context_impl() {
     if (!l_c) co_return default_logger_raw()->error(l_c.error());
 
     std::map<std::string, project_helper::database_t> l_prj_maps{};
+    std::map<std::string, project> l_prj_maps2{};
     {
       auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
       for (auto&& l : l_prjs) l_prj_maps.emplace(l.name_, l);
+      for (auto&& l_v : register_file_type::get_project_list()) {
+        l_prj_maps2.emplace(l_v.p_name, l_v);
+      }
     }
     auto l_prj_install = std::make_shared<std::vector<project_helper::database_t>>();
     for (auto&& l_prj : l_c.value()) {
       if (!l_prj_maps.contains(l_prj.name_)) {
-        l_prj_install->emplace_back(l_prj).generate_names();
-
-      } else if (l_prj_maps[l_prj.name_].kitsu_uuid_ != l_prj.kitsu_uuid_) {
+        if (l_prj_maps2.contains(l_prj.name_))
+          l_prj_install->emplace_back(
+              project_helper::database_t{
+                  .uuid_id_          = l_prj.uuid_id_,
+                  .name_             = l_prj_maps2[l_prj.name_].p_name,
+                  .path_             = l_prj_maps2[l_prj.name_].p_path,
+                  .en_str_           = l_prj_maps2[l_prj.name_].p_en_str,
+                  .shor_str_         = l_prj_maps2[l_prj.name_].p_shor_str,
+                  .local_path_       = l_prj_maps2[l_prj.name_].p_local_path,
+                  .auto_upload_path_ = l_prj_maps2[l_prj.name_].p_auto_upload_path.generic_string(),
+                  .kitsu_uuid_       = l_prj.kitsu_uuid_,
+              }
+          );
+        else
+          l_prj_install->emplace_back(l_prj).generate_names();
+      }
+      if (l_prj_maps[l_prj.name_].kitsu_uuid_ != l_prj.kitsu_uuid_) {
         l_prj_maps[l_prj.name_].kitsu_uuid_ = l_prj.kitsu_uuid_;
         l_prj_install->emplace_back(l_prj_maps[l_prj.name_]);
       }
