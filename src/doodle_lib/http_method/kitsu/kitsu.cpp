@@ -66,8 +66,7 @@ boost::asio::awaitable<void> init_context_impl() {
           );
         else
           l_prj_install->emplace_back(l_prj).generate_names();
-      }
-      if (l_prj_maps[l_prj.name_].kitsu_uuid_ != l_prj.kitsu_uuid_) {
+      } else if (l_prj_maps[l_prj.name_].kitsu_uuid_ != l_prj.kitsu_uuid_) {
         l_prj_maps[l_prj.name_].kitsu_uuid_ = l_prj.kitsu_uuid_;
         l_prj_install->emplace_back(l_prj_maps[l_prj.name_]);
       }
