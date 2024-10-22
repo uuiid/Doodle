@@ -90,6 +90,7 @@ void scan_win_service_t::start() {
   );
 }
 void scan_win_service_t::init_all_map() {
+  if (!FSys::exists(core_set::get_set().get_cache_root() / jaon_file_name_)) return;
   nlohmann::json l_json = nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
   std::vector<doodle::details::scan_category_data_ptr> l_data_vec{};
   for (auto&& l_v : l_json) {

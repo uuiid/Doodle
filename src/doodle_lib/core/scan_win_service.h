@@ -75,7 +75,7 @@ class scan_win_service_t {
   using signal_t     = boost::asio::signal_set;
   using signal_ptr_t = std::shared_ptr<signal_t>;
 
-  static constexpr std::string_view jaon_file_name_{"scan_win_service"};
+  static constexpr std::string_view jaon_file_name_{"scan_win_service.json"};
 
   timer_ptr_t timer_;
   signal_ptr_t signal_;

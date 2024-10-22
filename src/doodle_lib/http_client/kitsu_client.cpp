@@ -59,6 +59,7 @@ kitsu_client::get_all_project() {
                                  boost::beast::http::verb::get, "/api/data/projects/all", 11
                              })
   );
+
   tl::expected<std::vector<project_helper::database_t>, std::string> l_ret{};
   if (l_e)
     l_ret = tl::make_unexpected(l_e.what());
