@@ -22,22 +22,10 @@ struct database_t;
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
+
+struct sqlite_database_impl;
 class sqlite_database {
-  using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-
-  using strand_type     = boost::asio::strand<boost::asio::io_context::executor_type>;
-  using strand_type_ptr = std::shared_ptr<strand_type>;
-
-  using timer_type      = executor_type::as_default_on_t<boost::asio::steady_timer>;
-  using timer_type_ptr  = std::shared_ptr<timer_type>;
-
-  std::shared_ptr<void> storage_any_;
-  strand_type_ptr strand_;
-
-  boost::asio::awaitable<void> run_impl();
-  boost::asio::awaitable<void> save();
-
-  void set_path(const FSys::path& in_path);
+  std::shared_ptr<sqlite_database_impl> impl_;
 
  public:
   sqlite_database()  = default;
@@ -80,10 +68,9 @@ class sqlite_database {
   template <typename T>
   std::vector<T> get_by_parent_id(const uuid& in_id);
 
-
   std::vector<attendance_helper::database_t> get_attendance(
-    const std::int64_t& in_ref_id, const chrono::local_days& in_data
-);
+      const std::int64_t& in_ref_id, const chrono::local_days& in_data
+  );
   std::vector<attendance_helper::database_t> get_attendance(
       const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
   );

@@ -147,72 +147,224 @@ auto make_storage_doodle(const std::string& in_path) {
 }
 using sqlite_orm_type = decltype(make_storage_doodle(""));
 
-auto get_cast_storage(const std::shared_ptr<void>& in_storage) {
-  return std::static_pointer_cast<sqlite_orm_type>(in_storage);
-}
 constexpr std::size_t g_step_size{500};
 }  // namespace
+struct sqlite_database_impl {
+  using executor_type   = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using strand_type     = boost::asio::strand<boost::asio::io_context::executor_type>;
+  using strand_type_ptr = std::shared_ptr<strand_type>;
+  strand_type strand_;
+  sqlite_orm_type storage_any_;
 
+  explicit sqlite_database_impl(const FSys::path& in_path)
+      : strand_(boost::asio::make_strand(g_io_context())),
+        storage_any_(std::move(make_storage_doodle(in_path.generic_string()))) {
+    storage_any_.open_forever();
+    storage_any_.sync_schema(true);
+    default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
+  }
+
+  std::vector<scan_data_t::database_t> find_by_path_id(const uuid& in_id) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<scan_data_t::database_t>(sqlite_orm::where(
+        sqlite_orm::c(&scan_data_t::database_t::ue_uuid_) == in_id ||
+        sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_id || c(&scan_data_t::database_t::solve_uuid_) == in_id
+    ));
+  }
+  std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<project_helper::database_t>(
+        sqlite_orm::where(sqlite_orm::c(&project_helper::database_t::name_) == in_name)
+    );
+  }
+  std::vector<attendance_helper::database_t> get_attendance(
+      const std::int64_t& in_ref_id, const chrono::local_days& in_data
+  ) {
+    using namespace sqlite_orm;
+
+    return storage_any_.get_all<attendance_helper::database_t>(where(
+        c(&attendance_helper::database_t::user_ref) == in_ref_id &&
+        c(&attendance_helper::database_t::create_date_) == in_data
+    ));
+  }
+
+  std::vector<attendance_helper::database_t> get_attendance(
+      const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
+  ) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<attendance_helper::database_t>(where(
+        c(&attendance_helper::database_t::user_ref) == in_ref_id &&
+        in(&attendance_helper::database_t::create_date_, in_data)
+    ));
+  }
+  std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
+      const std::int64_t& in_ref_id, const chrono::local_days& in_data
+  ) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<work_xlsx_task_info_helper::database_t>(where(
+        c(&work_xlsx_task_info_helper::database_t::user_ref_) == in_ref_id &&
+        c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
+    ));
+  }
 #define DOODLE_TO_SQLITE_THREAD()                                 \
   auto this_executor = co_await boost::asio::this_coro::executor; \
-  co_await boost::asio::post(boost::asio::bind_executor(*strand_, boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
 
-void sqlite_database::set_path(const FSys::path& in_path) {
-  strand_        = std::make_shared<strand_type>(boost::asio::make_strand(g_io_context()));
-  storage_any_   = std::make_shared<sqlite_orm_type>(std::move(make_storage_doodle(in_path.generic_string())));
-  auto l_storage = get_cast_storage(storage_any_);
-  l_storage->open_forever();
-  l_storage->sync_schema(true);
-  default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
-}
+
+  template <typename T>
+  std::vector<T> get_all() {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<T>();
+
+  }
+
+  template <typename T>
+  std::vector<T> get_all(const uuid& in_uuid) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::kitsu_uuid_) == in_uuid));
+  }
+
+  template <typename T>
+  std::int64_t uuid_to_id(const uuid& in_uuid) {
+    using namespace sqlite_orm;
+    auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
+    return l_v.empty() ? 0 : l_v[0];
+  }
+
+  template <typename T>
+  std::vector<T> get_by_uuid(const uuid& in_uuid) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
+  }
+  template <typename T>
+  std::vector<T> get_by_kitsu_uuid(const uuid& in_uuid) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::kitsu_uuid_) == in_uuid));
+  }
+
+  template <typename T>
+  boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+    tl::expected<void, std::string> l_ret{};
+    try {
+      auto l_g = storage_any_.transaction_guard();
+      if (in_data->id_ == 0)
+        in_data->id_ = storage_any_.insert<T>(*in_data);
+      else {
+        storage_any_.replace<T>(*in_data);
+      }
+      l_g.commit();
+    } catch (...) {
+      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+    }
+    DOODLE_TO_SELF();
+    co_return l_ret;
+  }
+  template <typename T>
+  boost::asio::awaitable<tl::expected<void, std::string>> install_range(std::shared_ptr<std::vector<T>> in_data) {
+    if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
+          return in_r.id_ < in_l.id_;
+        }))
+      std::sort(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
+        return in_r.id_ < in_l.id_;
+      });
+    std::size_t l_split =
+        std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const auto& in_) { return in_.id_ != 0; }));
+
+    DOODLE_TO_SQLITE_THREAD();
+    tl::expected<void, std::string> l_ret{};
+    try {
+      auto l_g = storage_any_.transaction_guard();
+      for (std::size_t i = 0; i < l_split;) {
+        auto l_end = std::min(i + g_step_size, l_split);
+        storage_any_.insert_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+        i = l_end;
+      }
+
+      for (std::size_t i = l_split; i < in_data->size();) {
+        auto l_end = std::min(i + g_step_size, in_data->size());
+        storage_any_.replace_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+        i = l_end;
+      }
+      l_g.commit();
+
+      for (std::size_t i = 0; i < l_split; ++i) {
+        using namespace sqlite_orm;
+        auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(c(&T::uuid_id_) == (*in_data)[i].uuid_id_));
+        if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
+      }
+
+    } catch (...) {
+      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+    }
+    DOODLE_TO_SELF();
+    co_return l_ret;
+  }
+
+  template <typename T>
+  boost::asio::awaitable<tl::expected<void, std::string>> remove(
+      std::shared_ptr<std::vector<std::int64_t>> in_data
+  ) {
+    DOODLE_TO_SQLITE_THREAD();
+    tl::expected<void, std::string> l_ret{};
+
+    try {
+      auto l_g = storage_any_.transaction_guard();
+      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, *in_data)));
+      l_g.commit();
+    } catch (...) {
+      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+    }
+    DOODLE_TO_SELF();
+    co_return l_ret;
+  }
+  template <typename T>
+  boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<uuid> in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+    tl::expected<void, std::string> l_ret{};
+
+    try {
+      auto l_g = storage_any_.transaction_guard();
+      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) = *in_data));
+      l_g.commit();
+    } catch (...) {
+      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+    }
+    DOODLE_TO_SELF();
+    co_return l_ret;
+  }
+
+  template <typename T>
+  std::vector<T> get_by_parent_id(const uuid& in_id) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_parent_) == in_id));
+  }
+};
+
+void sqlite_database::load(const FSys::path& in_path) { impl_ = std::make_shared<sqlite_database_impl>(in_path); }
 
 std::vector<scan_data_t::database_t> sqlite_database::find_by_path_id(const uuid& in_id) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-  return l_storage->get_all<scan_data_t::database_t>(sqlite_orm::where(
-      sqlite_orm::c(&scan_data_t::database_t::ue_uuid_) == in_id ||
-      sqlite_orm::c(&scan_data_t::database_t::rig_uuid_) == in_id || c(&scan_data_t::database_t::solve_uuid_) == in_id
-  ));
+  return impl_->find_by_path_id(in_id);
 }
 
 std::vector<project_helper::database_t> sqlite_database::find_project_by_name(const std::string& in_name) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-  return l_storage->get_all<project_helper::database_t>(
-      sqlite_orm::where(sqlite_orm::c(&project_helper::database_t::name_) == in_name)
-  );
+  return impl_->find_project_by_name(in_name);
 }
 
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const std::int64_t& in_ref_id, const chrono::local_days& in_data
 ) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-
-  return l_storage->get_all<attendance_helper::database_t>(where(
-      c(&attendance_helper::database_t::user_ref) == in_ref_id &&
-      c(&attendance_helper::database_t::create_date_) == in_data
-  ));
+  return impl_->get_attendance(in_ref_id, in_data);
 }
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
 ) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-  return l_storage->get_all<attendance_helper::database_t>(where(
-      c(&attendance_helper::database_t::user_ref) == in_ref_id &&
-      in(&attendance_helper::database_t::create_date_, in_data)
-  ));
+  return impl_->get_attendance(in_ref_id, in_data);
 }
 std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xlsx_task_info(
     const std::int64_t& in_ref_id, const chrono::local_days& in_data
 ) {
-  using namespace sqlite_orm;
-  auto l_storage = get_cast_storage(storage_any_);
-  return l_storage->get_all<work_xlsx_task_info_helper::database_t>(where(
-      c(&work_xlsx_task_info_helper::database_t::user_ref_) == in_ref_id &&
-      c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
-  ));
+  return impl_->get_work_xlsx_task_info(in_ref_id, in_data);
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
@@ -264,5 +416,4 @@ DOODLE_REMOVE_RANGE(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 
-void sqlite_database::load(const FSys::path& in_path) { set_path(in_path); }
 }  // namespace doodle
