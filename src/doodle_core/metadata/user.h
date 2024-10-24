@@ -18,12 +18,12 @@ class user;
  */
 enum class power_enum : std::uint32_t {
   none       = 0,
-  admin      = 1,
-  manager    = 2,
-  supervisor = 3,
+  user       = 1,
+  supervisor = 2,
+  manager    = 3,
   client     = 4,
   vendor     = 5,
-  user       = 6,
+  admin      = 6,
 };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(

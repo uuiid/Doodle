@@ -38,6 +38,7 @@
     "wil",
     "tl-expected",
     "sqlite-orm",
+    "jwt-cpp",
     {
       "name": "fmt",
       "default-features": true,

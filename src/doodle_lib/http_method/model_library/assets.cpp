@@ -6,11 +6,14 @@
 
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
+
+#include "doodle_lib/core/http/http_function.h"
+
 #include "boost/lexical_cast.hpp"
 
-#include "core/http/http_function.h"
-
+#include <jwt-cpp/jwt.h>
 namespace doodle::http::kitsu {
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_get(session_data_ptr in_handle) {
@@ -87,6 +90,35 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
   if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(*l_uuid);
       !l_list.empty() && l_list.front().active_)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "节点正在使用中, 无法删除");
+  try {
+    uuid l_user_uuid{};
+    if (in_handle->req_header_.count(boost::beast::http::field::authorization) > 0)
+      l_user_uuid =
+          boost::lexical_cast<uuid>(jwt::decode(in_handle->req_header_.at(boost::beast::http::field::authorization))
+                                        .get_payload_json()["sub"]
+                                        .to_str());
+    else if (in_handle->req_header_.count(boost::beast::http::field::cookie) > 0) {
+      auto l_cookie = in_handle->req_header_.at(boost::beast::http::field::cookie);
+      auto l_begin  = l_cookie.find("access_token_cookie=");
+      l_user_uuid   = boost::lexical_cast<uuid>(l_cookie.substr(l_begin, l_cookie.find(';', l_begin) - l_begin));
+    }
+    if (l_user_uuid.is_nil())
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, "请先登录");
+
+    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_uuid); l_list.empty())
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, "无效的token");
+    else {
+      switch (l_list.front().power_) {
+        case power_enum::admin:
+        case power_enum::manager:
+          break;
+        default:
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "权限不足");
+      }
+    }
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的token");
+  }
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
@@ -95,17 +127,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
 
 void assets_reg(http_route& in_http_route) {
   in_http_route
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/model_library/assets", assets_get)
+      .reg(
+          std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/model_library/assets", assets_get)
       )
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/model_library/assets", assets_post
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/model_library/assets/{id}", assets_post_modify
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::delete_, "api/doodle/model_library/assets/{id}", assets_delete
-      ));
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/model_library/assets", assets_post
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/model_library/assets/{id}", assets_post_modify
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::delete_, "api/doodle/model_library/assets/{id}", assets_delete
+          ));
 }
 
 }  // namespace doodle::http::kitsu
