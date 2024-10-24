@@ -45,7 +45,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
   l_user->dingding_company_id_ = l_company_id;
   l_user->uuid_id_             = l_user_id;
   bool l_need_save{l_users.empty()};
-  if (l_user->dingding_id_.empty()) {
+  if (!l_user->dingding_id_) {
     auto l_kitsu_client = g_ctx().get<kitsu::kitsu_client_ptr>();
     auto l_m    = co_await l_kitsu_client->get_user(l_user_id);
     if (!l_m) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_m.error());

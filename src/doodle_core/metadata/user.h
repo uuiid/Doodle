@@ -113,17 +113,16 @@ struct database_t {
   std::string mobile_;
   // 权限
   power_enum power_{power_enum::none};
-
   // 钉钉id
-  std::string dingding_id_;
+  std::optional<std::string> dingding_id_;
   // 钉钉对应公司的 uuid
-  boost::uuids::uuid dingding_company_id_;
+  std::optional<uuid> dingding_company_id_;
 
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]          = fmt::to_string(p.uuid_id_);
-    j["mobile"]      = p.mobile_;
-    j["dingding_id"] = p.dingding_id_;
-    j["company"]     = fmt::to_string(p.dingding_company_id_);
+    j["id"]     = fmt::to_string(p.uuid_id_);
+    j["mobile"] = p.mobile_;
+    if (p.dingding_id_) j["dingding_id"] = *p.dingding_id_;
+    if (p.dingding_company_id_) j["company"] = fmt::to_string(*p.dingding_company_id_);
   }
 };
 }  // namespace user_helper

@@ -61,7 +61,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (l_users.empty()) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有用户");
   auto l_user = l_users.front();
   auto& l_d   = g_ctx().get<const dingding::dingding_company>();
-  if (!l_d.company_info_map_.contains(l_user.dingding_company_id_))
+  if (l_user.dingding_company_id_ && !l_d.company_info_map_.contains(*l_user.dingding_company_id_))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
 
   // 查询缓存
@@ -85,8 +85,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   }
 
   auto l_dingding_client =
-      g_ctx().get<const dingding::dingding_company>().company_info_map_.at(l_user.dingding_company_id_).client_ptr;
-  if (l_user.dingding_id_.empty()) {
+      g_ctx().get<const dingding::dingding_company>().company_info_map_.at(*l_user.dingding_company_id_).client_ptr;
+  if (!l_user.dingding_id_) {
     auto [l_e3, l_dingding_id] = co_await l_dingding_client->get_user_by_mobile(l_user.mobile_);
     if (l_e3) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e3.message());
     l_user.dingding_id_ = l_dingding_id;
@@ -94,7 +94,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   }
 
   auto [l_e4, l_attend] =
-      co_await l_dingding_client->get_attendance_updatedata(l_user.dingding_id_, chrono::local_days{l_date});
+      co_await l_dingding_client->get_attendance_updatedata(*l_user.dingding_id_, chrono::local_days{l_date});
 
   if (l_e4) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e4.message());
   auto l_attendance_list = std::make_shared<std::vector<attendance_helper::database_t>>();
