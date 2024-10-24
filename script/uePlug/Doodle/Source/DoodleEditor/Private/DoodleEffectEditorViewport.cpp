@@ -19,6 +19,7 @@
 #include "NiagaraSystem.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Engine/SimpleConstructionScript.h"
+#include "Engine/TextureCube.h"
 
 DoodleEffectEditorPreviewScene::DoodleEffectEditorPreviewScene()
  : FAdvancedPreviewScene(FAdvancedPreviewScene::ConstructionValues{}.SetCreatePhysicsScene(false).ShouldSimulatePhysics(false)) 

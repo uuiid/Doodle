@@ -7,6 +7,7 @@
 #include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "GeometryCache.h"
 #include "Materials/Material.h"
+#include "MaterialDomain.h"
 
 void FAbcUtilities::GetFrameMeshData(
     FAbcFile& AbcFile, int32 FrameIndex, FGeometryCacheMeshData& OutMeshData, int32 ConcurrencyIndex

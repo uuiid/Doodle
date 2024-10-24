@@ -4,6 +4,8 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
 
+#include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+
 class SCharacterEditorViewport;
 struct FDoodleCreateCharacterConfigNode;
 class UDoodleCreateCharacterConfig;

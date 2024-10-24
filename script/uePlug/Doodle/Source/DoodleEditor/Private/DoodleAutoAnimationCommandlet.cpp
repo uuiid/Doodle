@@ -54,7 +54,7 @@
 #include "Components/LightComponent.h"
 #include "Doodle/DoodleAssetsPreview.h"
 #include "Rendering/SkeletalMeshLODImporterData.h"
-
+#include "Animation/AnimBoneCompressionSettings.h"
 //---
 
 #include "Components/DirectionalLightComponent.h"

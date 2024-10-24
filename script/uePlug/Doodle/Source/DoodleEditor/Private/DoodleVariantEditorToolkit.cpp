@@ -4,6 +4,7 @@
 #include "DoodleVariantEditorToolkit.h"
 #include "DoodleVariantCompoundWidget.h"
 #include "DoodleVariantEditorViewport.h"
+#include "Engine/SkinnedAssetCommon.h"
 
 void UDoodleVariantEditorToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) 
 {

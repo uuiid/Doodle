@@ -43,6 +43,8 @@ enum class EFrameReadFlags : uint8 {
 
 ENUM_CLASS_FLAGS(EFrameReadFlags);
 
+class UDoodleAbcImportSettings;
+
 class FAbcFile {
  public:
   FAbcFile(const FString& InFilePath);

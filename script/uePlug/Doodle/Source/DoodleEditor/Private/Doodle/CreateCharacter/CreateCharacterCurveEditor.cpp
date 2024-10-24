@@ -21,7 +21,7 @@
 #include "CreateCharacterTree.h"
 #include "FrameNumberNumericInterface.h"
 #include "Preferences/PersonaOptions.h"
-
+#include "MovieSceneFwd.h"
 #include "CreateCharacterSliderController.h"
 
 #include "CreateCharacterTree.h"
@@ -199,7 +199,7 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
     TimeSliderArgs.DisplayRate          = G_FrameRate;
     TimeSliderArgs.TickResolution       = G_FrameRate;
 
-    TimeSliderArgs.PlaybackStatus       = EMovieScenePlayerStatus::Stopped;
+    TimeSliderArgs.PlaybackStatus       = EMovieScenePlayerStatus::Type::Stopped;
     TimeSliderArgs.NumericTypeInterface = NumericTypeInterface;
   }
   // 时间时间控制器渲染

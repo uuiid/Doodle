@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "ISequencer.h"
 
+#include "DoodleVariantAssetUserData.h"
+
 /**
  * 
  */

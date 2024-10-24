@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "NavigationSystem.h"
 #include "DoodleAiDownToComponent.h"
+#include "DoodleAiMoveToComponent.h"
 
 // Sets default values
 ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {

@@ -14,6 +14,7 @@
 #include "EditorViewportCommands.h"
 #include "Rendering/SkeletalMeshRenderData.h"
 #include "Rendering/SkeletalMeshLODRenderData.h"
+#include "Engine/SkinnedAssetCommon.h"
 
 DoodleVariantEditorPreviewScene::DoodleVariantEditorPreviewScene()
     : FAdvancedPreviewScene(FAdvancedPreviewScene::ConstructionValues{}.SetCreatePhysicsScene(false).ShouldSimulatePhysics(false)) {

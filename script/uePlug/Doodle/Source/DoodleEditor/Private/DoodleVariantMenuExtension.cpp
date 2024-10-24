@@ -5,6 +5,7 @@
 
 #include "DoodleVariantAssetUserData.h"
 #include "Animation/SkeletalMeshActor.h"
+#include "Engine/SkinnedAssetCommon.h"
 
 FDoodleVariantMenuExtension::FDoodleVariantMenuExtension()
 {

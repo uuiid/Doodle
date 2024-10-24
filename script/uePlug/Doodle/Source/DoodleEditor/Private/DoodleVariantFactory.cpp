@@ -10,6 +10,7 @@
 #include "IContentBrowserSingleton.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "Engine/SkinnedAssetCommon.h"
 
 class SCreateVariantDialog : public SCompoundWidget {
 public:

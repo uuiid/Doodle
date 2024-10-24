@@ -34,6 +34,8 @@ THIRD_PARTY_INCLUDES_END
 
 #include "MaterialShared.h"
 #include "Rendering/SkeletalMeshLODModel.h"
+#include "MaterialDomain.h"
+
 
 #define LOCTEXT_NAMESPACE "AbcImporterUtilities"
 

@@ -3,13 +3,13 @@
 #include "CoreMinimal.h"
 
 // #include "DoodleCreateLevel.generated.h"
+#include "Doodle/DoodleImportFbxUI.h"
 
 class USkeletalMesh;
 class UGeometryCache;
 class UAnimSequence;
 struct FDoodleUSkeletonData_1;
 class UDoodleBaseImportData;
-
 class FDoodleCreateLevel : public FGCObject {
   TArray<FDoodleUSkeletonData_1> AllSkinObjs;
   void ImportCamera(const FString& InFbxpath);
