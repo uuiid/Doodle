@@ -13,6 +13,9 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
+
+
 ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
   PrimaryActorTick.bCanEverTick = true;
   SplineComponent               = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));

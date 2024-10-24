@@ -12,6 +12,8 @@
 
 #include "Runtime/Launch/Resources/Version.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
+#include "Materials/Material.h"
 
 #if WITH_EDITOR
 #include "Misc/MessageDialog.h"

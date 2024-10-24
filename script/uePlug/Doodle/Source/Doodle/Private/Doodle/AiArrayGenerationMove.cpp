@@ -15,6 +15,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Materials/Material.h"
+#include "Engine/StaticMesh.h"
 
 ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   PrimaryActorTick.bCanEverTick = true;

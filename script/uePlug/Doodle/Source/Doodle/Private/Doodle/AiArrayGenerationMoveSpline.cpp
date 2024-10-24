@@ -19,6 +19,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Materials/Material.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
 
 ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
   PrimaryActorTick.bCanEverTick = true;
