@@ -17,9 +17,13 @@ class user;
  *
  */
 enum class power_enum : std::uint32_t {
-  none               = 0,
-  modify_other_users = 1,
-
+  none       = 0,
+  admin      = 1,
+  manager    = 2,
+  supervisor = 3,
+  client     = 4,
+  vendor     = 5,
+  user       = 6,
 };
 
 class DOODLE_CORE_API user : boost::equality_comparable<user> {
@@ -94,6 +98,9 @@ struct database_t {
 
   // 手机号
   std::string mobile_;
+  // 权限
+  power_enum power_{power_enum::none};
+
   // 钉钉id
   std::string dingding_id_;
   // 钉钉对应公司的 uuid
