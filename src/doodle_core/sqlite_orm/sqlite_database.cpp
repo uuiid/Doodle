@@ -21,6 +21,10 @@
 
 #include "metadata/attendance.h"
 #include <sqlite_orm/sqlite_orm.h>
+namespace sqlite_orm {
+DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
+}
+
 namespace doodle {
 
 namespace {
@@ -101,7 +105,8 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("uuid_id", &user_helper::database_t::uuid_id_, unique()),
           make_column("mobile", &user_helper::database_t::mobile_),  //
           make_column("dingding_id", &user_helper::database_t::dingding_id_),
-          make_column("dingding_company_id", &user_helper::database_t::dingding_company_id_)
+          make_column("dingding_company_id", &user_helper::database_t::dingding_company_id_),
+          make_column("power", &user_helper::database_t::power_)
       ),
 
       make_index("project_tab_uuid", &project_helper::database_t::uuid_id_),
