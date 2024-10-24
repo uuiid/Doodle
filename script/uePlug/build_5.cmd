@@ -1,4 +1,4 @@
-set UE_VERSION=5.2
+set UE_VERSION=5.4
 set UE_5="D:\Program Files\Epic Games\UE_%UE_VERSION%\Engine\Build\BatchFiles\RunUAT.bat"
 set work_dir=%~dp0
 set l_time=%DATE:/=_%%TIME::=_%
