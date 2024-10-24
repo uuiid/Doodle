@@ -80,23 +80,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
                 l_json_task["task_type_id"].get<uuid>()
             );
             !l_p.empty() && l_p.front().use_chick_files) {
-          if (l_user_data.contains("gui_dang") &&            //
-              l_user_data.contains("bian_hao") &&            //
-              l_user_data.contains("pin_yin_ming_cheng") &&  //
-              l_user_data.contains("ban_ben") &&             //
-              !l_user_data["gui_dang"].get<std::string>().empty()
-          )
-            l_file_exist = l_map.contains(
+          if (l_user_data.contains("gui_dang") &&  //
+              l_user_data.contains("pin_yin_ming_cheng")) {
+            std::int32_t l_gui_dang{};
+            if (l_user_data["gui_dang"].is_number())
+              l_gui_dang = l_user_data["gui_dang"].get<std::int32_t>();
+            else if (l_user_data["gui_dang"].is_string())
+              l_gui_dang = std::stoi(l_user_data["gui_dang"].get<std::string>());
+            auto l_pin_yin_ming_cheng = l_user_data["pin_yin_ming_cheng"].get<std::string>();
+            l_file_exist              = l_map.contains(
                 scan::scan_key_t{
-                    .dep_          = conv_assets_type_enum(l_asset_type_name),
-                    .season_       = season{std::stoi(l_user_data["gui_dang"].get<std::string>())},
-                    .project_      = l_prj_id,
-                    .number_       = l_user_data["bian_hao"].get<std::string>(),
-                    .name_         = l_user_data["pin_yin_ming_cheng"].get<std::string>(),
-                    .version_name_ = l_user_data["ban_ben"].get<std::string>(),
+                                 .dep_     = conv_assets_type_enum(l_asset_type_name),
+                                 .season_  = season{l_gui_dang},
+                                 .project_ = l_prj_id,
+                                 .number_ =
+                        l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
+                                 .name_ = l_pin_yin_ming_cheng,
+                                 .version_name_ =
+                        l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
                 }
             );
-          else
+          } else
             l_file_exist = false;
         } else
           l_file_exist = true;
