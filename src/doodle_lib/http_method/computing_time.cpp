@@ -381,11 +381,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   if (l_block_ptr->empty()) {
     auto l_year_month_str_1 =
         fmt::format("{}-{}", std::int32_t{l_year_month.year()}, std::uint32_t{l_year_month.month()});
-    l_logger->log(log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_, l_year_month_str_1);
+    l_logger->log(log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_.value_or(std::string{}), l_year_month_str_1);
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::not_found,
         boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
-        fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_, l_year_month_str_1)
+        fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_.value_or(std::string{}), l_year_month_str_1)
     );
   }
 

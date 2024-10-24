@@ -83,6 +83,7 @@ class scan_category_data_t {
     j["assets_type"]  = p.assets_type_;
     j["number_str"]   = p.number_str_;
     j["file_hash"]    = p.file_hash_;
+    j["project_database_ptr"] = p.project_database_ptr->kitsu_uuid_;
   }
   // from_json
   friend void from_json(const nlohmann::json& j, scan_category_data_t& p) {
