@@ -30,10 +30,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
     auto l_user_ptr = std::make_shared<user_helper::database_t>();
     if (!l_users.empty()) *l_user_ptr = l_users.front();
 
-    if (l_user_ptr->mobile_ != l_user["phone"].get<std::string>() ||
+    if (l_user_ptr->mobile_.value_or(std::string{}) != l_user["phone"].get<std::string>() ||
         l_user_ptr->power_ != l_user["role"].get<power_enum>()) {
-      l_user_ptr->mobile_ = l_user["phone"].get<std::string>();
-      l_user_ptr->power_  = l_user["role"].get<power_enum>();
+      l_user_ptr->mobile_  = l_user["phone"].get<std::string>();
+      l_user_ptr->power_   = l_user["role"].get<power_enum>();
       l_user_ptr->uuid_id_ = l_user_id;
       if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_user_ptr); !l_e) {
         co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());

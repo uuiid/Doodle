@@ -76,7 +76,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   }
 
   bool l_modify_user{};
-  if (l_user.mobile_.empty()) {
+  if (!l_user.mobile_) {
     auto l_kitsu_client   = g_ctx().get<kitsu::kitsu_client_ptr>();
     auto l_mobile = co_await l_kitsu_client->get_user(l_user_id);
     if (!l_mobile) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_mobile.error());
@@ -87,7 +87,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_dingding_client =
       g_ctx().get<const dingding::dingding_company>().company_info_map_.at(*l_user.dingding_company_id_).client_ptr;
   if (!l_user.dingding_id_) {
-    auto [l_e3, l_dingding_id] = co_await l_dingding_client->get_user_by_mobile(l_user.mobile_);
+    auto [l_e3, l_dingding_id] = co_await l_dingding_client->get_user_by_mobile(*l_user.mobile_);
     if (l_e3) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e3.message());
     l_user.dingding_id_ = l_dingding_id;
     l_modify_user       = true;

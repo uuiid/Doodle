@@ -50,7 +50,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_post(session_
     auto l_m    = co_await l_kitsu_client->get_user(l_user_id);
     if (!l_m) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_m.error());
     l_user->mobile_              = l_m.value().phone_;
-    auto [l_e3, l_dingding_user] = co_await l_dingding_client->get_user_by_mobile(l_user->mobile_);
+    auto [l_e3, l_dingding_user] = co_await l_dingding_client->get_user_by_mobile(*l_user->mobile_);
     if (l_e3) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e3.what());
 
     l_user->dingding_id_ = l_dingding_user;
