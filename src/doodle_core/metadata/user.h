@@ -26,6 +26,19 @@ enum class power_enum : std::uint32_t {
   user       = 6,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    power_enum,
+    {
+        {power_enum::none, "none"},
+        {power_enum::admin, "admin"},
+        {power_enum::manager, "manager"},
+        {power_enum::supervisor, "supervisor"},
+        {power_enum::client, "client"},
+        {power_enum::vendor, "vendor"},
+        {power_enum::user, "user"},
+    }
+)
+
 class DOODLE_CORE_API user : boost::equality_comparable<user> {
  private:
   std::string p_string_;

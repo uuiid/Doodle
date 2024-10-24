@@ -25,8 +25,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info_full
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
   }
 
-  auto l_json = nlohmann::json::parse(l_res.body());
   bool l_file_exist{};
+  auto l_json = nlohmann::json::parse(l_res.body());
   try {
     auto l_task_type_name = l_json["task_type"]["name"];
     if (l_task_type_name == "角色" || l_task_type_name == "地编模型" || l_task_type_name == "绑定") {
