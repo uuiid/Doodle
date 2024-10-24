@@ -4,7 +4,7 @@
 
 #include "Components/PointLightComponent.h"
 #include "Components/SpotLightComponent.h"
-
+#include "Runtime/Launch/Resources/Version.h"
 // Sets default values
 AfireLight::AfireLight() {
   // Set this actor to call Tick() every frame.  You can turn this off to
@@ -47,7 +47,7 @@ void AfireLight::Tick(float DeltaTime) {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
   noise = FMath::GetMappedRangeValueClamped({0.0f, 1.0f}, {tmp_min, tmp_max}, noise) *
           tmp_max;
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 2) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 4)
   noise = FMath::GetMappedRangeValueClamped(UE::Math::TVector2{0.0f, 1.0f}, UE::Math::TVector2{tmp_min, tmp_max}, noise) *
           tmp_max;
 #endif

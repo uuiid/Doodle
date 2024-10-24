@@ -7,8 +7,10 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "HAL/IConsoleManager.h"
-
+#include "Components/StaticMeshComponent.h"
 #include "EngineUtils.h"
+
+#include "Runtime/Launch/Resources/Version.h"
 
 #if WITH_EDITOR
 #include "Misc/MessageDialog.h"

@@ -1,5 +1,8 @@
 #include "DoodleAiDownToComponent.h"
 #include "DoodleAnimInstance.h"
+#include "Engine/World.h"
+#include "Components/SkeletalMeshComponent.h"
+
 UDoodleAiDownToComponent::UDoodleAiDownToComponent(const FObjectInitializer& ObjectInitializer)
     : UActorComponent(ObjectInitializer) {
   PrimaryComponentTick.bCanEverTick = true;

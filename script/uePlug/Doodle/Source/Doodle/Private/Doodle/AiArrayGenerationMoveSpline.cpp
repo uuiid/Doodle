@@ -14,6 +14,9 @@
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "Kismet/KismetSystemLibrary.h"
 #include "NavigationSystem.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Components/SkeletalMeshComponent.h"
 
 ADoodleAiArrayGenerationMoveSpline::ADoodleAiArrayGenerationMoveSpline() {
   PrimaryActorTick.bCanEverTick = true;

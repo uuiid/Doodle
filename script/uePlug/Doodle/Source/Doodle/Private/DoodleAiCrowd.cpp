@@ -12,6 +12,7 @@
 #include "NavigationSystem.h"
 #include "DoodleAiDownToComponent.h"
 #include "DoodleAiMoveToComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {

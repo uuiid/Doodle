@@ -3,6 +3,8 @@
 #include "Animation/AnimSingleNodeInstance.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+
 ADoodleAiSplineCrowd::ADoodleAiSplineCrowd() {
   SplineMoveToComponent = CreateDefaultSubobject<UDoodleAiSplineMoveToComponent>("DoodleAiSplineMoveToComponent");
   SplineMoveToComponent->SplineCurve->AttachToComponent(

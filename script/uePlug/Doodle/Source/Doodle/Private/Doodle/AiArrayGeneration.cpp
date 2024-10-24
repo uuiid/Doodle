@@ -8,9 +8,11 @@
 #include "Animation/SkeletalMeshActor.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Materials/Material.h"
-
+#include "UObject/ConstructorHelpers.h"
 #include "Doodle/DoodleEigenHelper.h"
-
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
   PrimaryActorTick.bCanEverTick = true;
   SplineComponent               = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
