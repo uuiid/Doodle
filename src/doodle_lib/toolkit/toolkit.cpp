@@ -114,12 +114,12 @@ void toolkit::modifyUeCachePath() {
 
   auto l_path = core_set::get_set().ue4_path / "Engine" / "Config" / "BaseEngine.ini";
   if (!FSys::is_regular_file(l_path)) return;
-  FSys::backup_file(l_path);
   std::string l_file{};
   {
     FSys::ifstream l_f{l_path};
     l_file = {std::istreambuf_iterator<char>(l_f), std::istreambuf_iterator<char>()};
   }
+  FSys::backup_file(l_path);
   boost::replace_all(l_file, "ENGINEVERSIONAGNOSTICUSERDIR", "GAMEDIR");
   boost::replace_all(
       l_file, "/ACLPlugin/ACLAnimBoneCompressionSettings", "/Engine/Animation/DefaultRecorderBoneCompression"
