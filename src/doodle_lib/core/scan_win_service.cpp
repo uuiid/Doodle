@@ -107,6 +107,7 @@ void scan_win_service_t::init_all_map() {
   } catch (...) {
     default_logger_raw()->error("加载扫描数据失败 {}", boost::current_exception_diagnostic_information());
   }
+  add_handle(l_data_vec, index_);
 }
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
