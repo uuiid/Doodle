@@ -9,6 +9,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http::kitsu {
 namespace {
@@ -74,6 +75,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
       } else
         l_person["dingding_company_id"] = "";
     }
+    auto l_cs = g_ctx().get<dingding::dingding_company>();
+    for (auto& l_v : l_cs.company_info_map_ | std::views::values) {
+      l_json["dingding_companys"].emplace_back(l_v);
+    }
+
     l_res.body() = l_json.dump();
     l_res.prepare_payload();
   } catch (...) {
