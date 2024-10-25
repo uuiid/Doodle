@@ -1,6 +1,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
+#include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
 #include <winreg/WinReg.hpp>
@@ -100,15 +101,33 @@ void toolkit::installUePath(const FSys::path &path) {
 }
 
 void toolkit::modifyUeCachePath() {
-  winreg::RegKey l_key{};
-  l_key.Create(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Session Manager\\Environment");
-  l_key.SetStringValue(L"UE-LocalDataCachePath", L"%GAMEDIR%DerivedDataCache");
-  l_key.SetStringValue(
-      L"UE-SharedDataCachePath",
-      fmt::format(L"{}\\UE\\DerivedDataCache", conv::utf_to_utf<wchar_t>(core_set::get_set().depot_ip))
+  // winreg::RegKey l_key{};
+  // l_key.Create(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Session Manager\\Environment");
+  // l_key.SetStringValue(L"UE-LocalDataCachePath", L"%GAMEDIR%DerivedDataCache");
+  // l_key.SetStringValue(
+  //     L"UE-SharedDataCachePath",
+  //     fmt::format(L"{}\\UE\\DerivedDataCache", conv::utf_to_utf<wchar_t>(core_set::get_set().depot_ip))
+  // );
+  // constexpr static const auto *L_Param = L"Environment";
+  // ::SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, reinterpret_cast<LPARAM>(L_Param), SMTO_BLOCK, 100,
+  // NULL);
+
+  auto l_path = core_set::get_set().ue4_path / "Engine" / "Config" / "BaseEngine.ini";
+  if (!FSys::is_regular_file(l_path)) return;
+  FSys::backup_file(l_path);
+  std::string l_file{};
+  {
+    FSys::ifstream l_f{l_path};
+    l_file = {std::istreambuf_iterator<char>(l_f), std::istreambuf_iterator<char>()};
+  }
+  boost::replace_all(l_file, "ENGINEVERSIONAGNOSTICUSERDIR", "GAMEDIR");
+  boost::replace_all(
+      l_file, "/ACLPlugin/ACLAnimBoneCompressionSettings", "/Engine/Animation/DefaultRecorderBoneCompression"
   );
-  constexpr static const auto *L_Param = L"Environment";
-  ::SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, reinterpret_cast<LPARAM>(L_Param), SMTO_BLOCK, 100, NULL);
+  {
+    FSys::ofstream l_f{l_path};
+    l_f << l_file;
+  }
 }
 
 bool toolkit::deleteUeCache() {
