@@ -15,7 +15,10 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/user_http.h>
+
+#include <winreg/WinReg.hpp>
 namespace doodle::launch {
+
 struct kitsu_supplement_args_t {
   std::string kitsu_url_;
   std::uint16_t port_;
@@ -62,16 +65,46 @@ struct kitsu_supplement_args_t {
   }
 };
 
+void get_register_info(kitsu_supplement_args_t& in_args) {
+  try {
+    winreg::RegKey l_key{};
+    l_key.Open(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+    for (auto&& l_sub : l_key.EnumSubKeys()) {
+      winreg::RegKey l_sub_key{};
+      l_sub_key.Open(
+          HKEY_LOCAL_MACHINE, fmt::format(LR"(SOFTWARE\Doodle\MainConfig\{})", l_sub), KEY_QUERY_VALUE | KEY_WOW64_64KEY
+      );
+      auto l_id         = boost::lexical_cast<uuid>(conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"id")));
+      auto l_app_key    = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_key"));
+      auto l_app_secret = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_secret"));
+      auto l_name       = conv::utf_to_utf<char>(l_sub);
+
+      in_args.dingding_company_list_.emplace_back(
+          kitsu_supplement_args_t::dingding_company_t{
+              .id_ = l_id, .app_key_ = l_app_key, .app_secret_ = l_app_secret, .name_ = l_name
+          }
+      );
+    }
+  } catch (...) {
+    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+  }
+}
+
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
 
   kitsu_supplement_args_t l_args{
-      .kitsu_url_             = "http://192.168.40.182",
-      .port_                  = 50025,
-      .db_path_               = "D:/kitsu.database",
-      .kitsu_front_end_path_  = "D:/doodle/kitsu",
-      .kitsu_thumbnails_path_ = "D:/doodle/kitsu/images"
+      .kitsu_url_ = "http://192.168.40.182",
+      .port_      = 80,
+      .db_path_   = "D:/kitsu.database",
+      .kitsu_token_ =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+          "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlw"
+          "ZSI6ImFjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjox"
+          "NzY0NjMzNjAwLCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684",
+      .kitsu_front_end_path_  = "D:/kitsu/dist",
+      .kitsu_thumbnails_path_ = "D:/kitsu/images"
   };
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
@@ -83,6 +116,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       return true;
     }
   }
+  get_register_info(l_args);
 
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
