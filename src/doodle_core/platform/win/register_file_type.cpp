@@ -81,9 +81,14 @@ const std::vector<project>& register_file_type::get_project_list() {
           R"(\\192.168.10.240\public\后期\WDSXTQL\)"
       },
       project{
-        "医妃", R"(\\192.168.10.242\public\DJ_PV)", "DJ_PV", "YF", R"(C:\sy\DJ_PV)",
-        R"(\\192.168.10.240\public\后期\DJ_PV\)"
-    }
+          "医妃", R"(\\192.168.10.242\public\DJ_PV)", "DJ_PV", "YF", R"(C:\sy\DJ_PV)",
+          R"(\\192.168.10.240\public\后期\DJ_PV\)"
+      },
+
+      project{
+          "双生武魂", R"(\\192.168.10.240\public\SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)",
+          R"(\\192.168.10.240\public\后期\SSWH\)"
+      }
 
   };
   return l_list;
