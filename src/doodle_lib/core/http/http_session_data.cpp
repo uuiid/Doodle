@@ -399,6 +399,10 @@ class async_session_t {
             session_->content_type_ = content_type::image_png;
           else if (l_content_type.starts_with("image/gif"))
             session_->content_type_ = content_type::image_gif;
+
+          if (l_content_type.starts_with("multipart/form-data"))
+            session_->content_type_ = content_type::form_data;
+
           session_->body_ = string_request_parser_->get().body();
         }
         session_->req_header_ = std::move(string_request_parser_->release().base());

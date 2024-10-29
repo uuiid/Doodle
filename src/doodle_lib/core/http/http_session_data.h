@@ -35,6 +35,7 @@ enum class content_type {
   image_jpeg,
   image_png,
   image_gif,
+  form_data,
 };
 
 class session_data {
