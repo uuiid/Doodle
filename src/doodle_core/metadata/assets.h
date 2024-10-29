@@ -104,7 +104,7 @@ struct database_t {
 
   friend void from_json(const nlohmann::json& j, database_t& v) {
     j.at("label").get_to(v.label_);
-    if (j.contains("parent_id")) j.at("parent_id").get_to(v.uuid_parent_);
+    if (j.contains("parent_id") && j["parent_id"].is_string()) j.at("parent_id").get_to(v.uuid_parent_);
   }
 };
 }  // namespace assets_helper

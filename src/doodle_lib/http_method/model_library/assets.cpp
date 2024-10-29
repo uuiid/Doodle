@@ -92,15 +92,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "节点正在使用中, 无法删除");
   try {
     uuid l_user_uuid{};
-    if (in_handle->req_header_.count(boost::beast::http::field::authorization) > 0)
-      l_user_uuid =
-          boost::lexical_cast<uuid>(jwt::decode(in_handle->req_header_.at(boost::beast::http::field::authorization))
-                                        .get_payload_json()["sub"]
-                                        .to_str());
-    else if (in_handle->req_header_.count(boost::beast::http::field::cookie) > 0) {
+    if (in_handle->req_header_.count(boost::beast::http::field::authorization) > 0) {
+      auto l_token_str = in_handle->req_header_.at(boost::beast::http::field::authorization);
+      if (l_token_str.starts_with("Bearer ")) l_token_str = l_token_str.substr(7);
+      l_user_uuid = boost::lexical_cast<uuid>(jwt::decode(l_token_str).get_payload_json()["sub"].to_str());
+    } else if (in_handle->req_header_.count(boost::beast::http::field::cookie) > 0) {
       auto l_cookie = in_handle->req_header_.at(boost::beast::http::field::cookie);
       auto l_begin  = l_cookie.find("access_token_cookie=");
-      l_user_uuid   = boost::lexical_cast<uuid>(l_cookie.substr(l_begin, l_cookie.find(';', l_begin) - l_begin));
+      if (l_begin != std::string::npos) {
+        l_cookie      = l_cookie.substr(l_begin, l_cookie.find(';', l_begin) - l_begin);
+        l_user_uuid   = boost::lexical_cast<uuid>(jwt::decode(l_cookie).get_payload_json()["sub"].to_str());
+      }
     }
     if (l_user_uuid.is_nil())
       co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, "请先登录");

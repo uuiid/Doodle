@@ -67,6 +67,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
   }
 
   {
+    /// 检查是否存在引用自身
+    if (l_value->uuid_parent_ && l_uuid == *l_value->uuid_parent_)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不能引用自身");
+
     /// 检查是否存在循环引用
     const auto& l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
     std::map<uuid, const assets_helper::database_t*> l_map{};
@@ -118,17 +122,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
 }  // namespace
 void assets_tree_reg(http_route& in_http_route) {
   in_http_route
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/model_library/assets_tree", assets_tree_get
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/model_library/assets_tree", assets_tree_post
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/model_library/assets_tree/{id}", assets_tree_post_modify
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::delete_, "api/doodle/model_library/assets_tree/{id}", assets_tree_delete
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/model_library/assets_tree", assets_tree_get
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/model_library/assets_tree", assets_tree_post
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/model_library/assets_tree/{id}", assets_tree_post_modify
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::delete_, "api/doodle/model_library/assets_tree/{id}", assets_tree_delete
       )
 
       );
