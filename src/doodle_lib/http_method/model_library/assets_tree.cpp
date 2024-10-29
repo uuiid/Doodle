@@ -33,7 +33,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
         boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
     );
   }
-  if (l_ptr->uuid_parent_) {
+  if (l_ptr->uuid_parent_ && !l_ptr->uuid_parent_->is_nil()) {
     if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_ptr->uuid_parent_);
         l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
