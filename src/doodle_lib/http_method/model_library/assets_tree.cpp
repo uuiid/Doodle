@@ -25,24 +25,48 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get(se
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(session_data_ptr in_handle) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>();
-  try {
-    *l_ptr = std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>();
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-    );
+  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
+  if (l_json.is_object()) {
+    std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>();
+    try {
+      *l_ptr = std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>();
+    } catch (...) {
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+      );
+    }
+    if (l_ptr->uuid_parent_ && !l_ptr->uuid_parent_->is_nil()) {
+      if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_ptr->uuid_parent_);
+          l_list == 0)
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+    }
+    l_ptr->uuid_id_ = core_set::get_set().get_uuid();
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  } else if (l_json.is_array()) {
+    std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
+        std::make_shared<std::vector<assets_helper::database_t>>();
+    try {
+      *l_ptr = l_json.get<std::vector<assets_helper::database_t>>();
+    } catch (...) {
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+      );
+    }
+    for (auto& l_item : *l_ptr) {
+      if (l_item.uuid_parent_ && !l_item.uuid_parent_->is_nil()) {
+        if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_item.uuid_parent_);
+            l_list == 0)
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+      }
+      l_item.uuid_id_ = core_set::get_set().get_uuid();
+    }
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr); !l_r)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
-  if (l_ptr->uuid_parent_ && !l_ptr->uuid_parent_->is_nil()) {
-    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_ptr->uuid_parent_);
-        l_list == 0)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
-  }
-  l_ptr->uuid_id_ = core_set::get_set().get_uuid();
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
 }
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_modify(session_data_ptr in_handle) {
   uuid l_uuid{};

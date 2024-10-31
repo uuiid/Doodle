@@ -26,24 +26,51 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_get(session
 boost::asio::awaitable<boost::beast::http::message_generator> assets_post(session_data_ptr in_handle) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
-  try {
-    *l_ptr = std::get<nlohmann::json>(in_handle->body_).get<assets_file_helper::database_t>();
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-    );
-  }
-  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
-      l_list == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
-  else
-    l_ptr->parent_id_ = l_list;
 
-  l_ptr->uuid_id_ = core_set::get_set().get_uuid();
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
+  if (l_json.is_object()) {
+    std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
+    try {
+      *l_ptr = l_json.get<assets_file_helper::database_t>();
+    } catch (...) {
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+      );
+    }
+    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
+        l_list == 0)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+    else
+      l_ptr->parent_id_ = l_list;
+
+    l_ptr->uuid_id_ = core_set::get_set().get_uuid();
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  } else if (l_json.is_array()) {
+    std::shared_ptr<std::vector<assets_file_helper::database_t>> l_ptr =
+        std::make_shared<std::vector<assets_file_helper::database_t>>();
+    try {
+      *l_ptr = l_json.get<std::vector<assets_file_helper::database_t>>();
+    } catch (...) {
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+      );
+    }
+    for (auto& i : *l_ptr) {
+      if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(i.uuid_parent_);
+          l_list == 0)
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+      else
+        i.parent_id_ = l_list;
+
+      i.uuid_id_ = core_set::get_set().get_uuid();
+    }
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::database_t>(l_ptr); !l_r)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_return in_handle->make_msg((nlohmann::json{*l_ptr}).dump());
+  }
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求格式");
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify(session_data_ptr in_handle) {
@@ -100,8 +127,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
       auto l_cookie = in_handle->req_header_.at(boost::beast::http::field::cookie);
       auto l_begin  = l_cookie.find("access_token_cookie=");
       if (l_begin != std::string::npos) {
-        l_cookie      = l_cookie.substr(l_begin, l_cookie.find(';', l_begin) - l_begin);
-        l_user_uuid   = boost::lexical_cast<uuid>(jwt::decode(l_cookie).get_payload_json()["sub"].to_str());
+        l_cookie    = l_cookie.substr(l_begin, l_cookie.find(';', l_begin) - l_begin);
+        l_user_uuid = boost::lexical_cast<uuid>(jwt::decode(l_cookie).get_payload_json()["sub"].to_str());
       }
     }
     if (l_user_uuid.is_nil())
