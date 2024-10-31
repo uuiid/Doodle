@@ -104,7 +104,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
           "ZSI6ImFjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjox"
           "NzY0NjMzNjAwLCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684",
       .kitsu_front_end_path_  = "D:/kitsu/dist",
-      .kitsu_thumbnails_path_ = "D:/kitsu/images"
+      .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data"
   };
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
