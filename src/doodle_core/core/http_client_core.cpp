@@ -11,7 +11,10 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
   resolver_  = std::make_shared<resolver_t>(executor_);
   timer_ptr_ = std::make_shared<boost::asio::steady_timer>(executor_);
   boost::urls::url l_url{in_server_url};
-  logger_    = g_logger_ctrl().make_log(fmt::format("{}_{}", "http_client", l_url.host()));
+  logger_ = std::make_shared<spdlog::async_logger>(
+      fmt::format("{}_{}", "http_client", l_url.host()), spdlog::sinks_init_list{g_logger_ctrl().rotating_file_sink_},
+      spdlog::thread_pool(), spdlog::async_overflow_policy::block
+  );
   server_ip_ = l_url.host();
 
   if (l_url.has_port())
@@ -129,15 +132,17 @@ void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
       socket_
   );
 
-  timer_ptr_->async_wait(boost::asio::bind_cancellation_slot(
-      app_base::Get().on_cancel.slot(),
-      [this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
-        if (in_ec) {
-          return;
-        }
-        do_close();
-      }
-  ));
+  timer_ptr_->async_wait(
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(),
+          [this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
+            if (in_ec) {
+              return;
+            }
+            do_close();
+          }
+      )
+  );
 }
 
 http_client_data_base::socket_t& http_client_data_base::socket() {
