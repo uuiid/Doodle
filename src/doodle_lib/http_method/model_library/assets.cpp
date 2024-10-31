@@ -105,6 +105,47 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify_batch(session_data_ptr in_handle) {
+  uuid l_uuid{};
+
+  if (in_handle->content_type_ != detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+
+  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
+  std::shared_ptr<std::vector<assets_file_helper::database_t>> l_ptr =
+      std::make_shared<std::vector<assets_file_helper::database_t>>();
+  std::vector<uuid> l_uuid_list{};
+  try {
+    *l_ptr = l_json.get<std::vector<assets_file_helper::database_t>>();
+    for (auto&& l_obj : l_json) {
+      l_uuid_list.emplace_back(l_obj["id"].get<uuid>());
+    }
+    for (int i = 0; i < l_ptr->size(); ++i) (*l_ptr)[i].uuid_id_ = l_uuid_list[i];
+
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+    );
+  }
+
+  for (auto& i : *l_ptr) {
+    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(i.uuid_parent_); l_list == 0)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+    else
+      i.parent_id_ = l_list;
+    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_file_helper::database_t>(i.uuid_id_);
+        l_list == 0)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到节点");
+    else
+      i.id_ = l_list;
+  }
+
+  if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::database_t>(l_ptr); !l_r)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>();
 
@@ -172,7 +213,15 @@ void assets_reg(http_route& in_http_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::delete_, "api/doodle/model_library/assets/{id}", assets_delete
-          ));
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::patch, "api/doodle/model_library/assets", assets_post_modify_batch
+  ))
+
+
+  ;
 }
 
 }  // namespace doodle::http::kitsu
