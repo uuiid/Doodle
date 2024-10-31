@@ -64,7 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
     }
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-    co_return in_handle->make_msg((nlohmann::json{*l_ptr}).dump());
+    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
 }
