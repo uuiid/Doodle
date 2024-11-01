@@ -127,20 +127,27 @@ class async_session_t {
     co_return l_ec;
   }
 
-  boost::asio::awaitable<boost::system::error_code> async_relay_websocket(
-      boost::beast::websocket::stream<tcp_stream_type>& in_sync_write_stream,
-      boost::beast::websocket::stream<tcp_stream_type>& in_sync_read_stream
+  template <typename SyncWriteStream, typename SyncReadStream, typename Handle>
+  auto async_relay_websocket(
+      SyncWriteStream& in_sync_write_stream, SyncReadStream& in_sync_read_stream, Handle&& in_handle
   ) {
-    boost::system::error_code l_ec{};
-    do {
-      boost::beast::flat_buffer l_flat_buffer{};
-      std::tie(l_ec, std::ignore) = co_await in_sync_read_stream.async_read(l_flat_buffer);
-      if (l_ec) co_return l_ec;
-      // auto l_str = boost::beast::buffers_to_string(l_flat_buffer.data());
-      // l_flat_buffer.consume(l_str.size());
-      std::tie(l_ec, std::ignore) = co_await in_sync_write_stream.async_write(l_flat_buffer.data());
-    } while (!l_ec);
-    co_return l_ec;
+    auto l_flat_buffer = std::make_shared<boost::beast::flat_buffer>();
+    return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
+        [&in_sync_write_stream, &in_sync_read_stream, l_flat_buffer,
+         coro = boost::asio::coroutine{}](auto& self, boost::system::error_code in_ec = {}, std::size_t = 0) mutable {
+          BOOST_ASIO_CORO_REENTER(coro) {
+            while (!in_ec) {
+              BOOST_ASIO_CORO_YIELD in_sync_read_stream.async_read(*l_flat_buffer, std::move(self));
+              if (in_ec) break;
+              BOOST_ASIO_CORO_YIELD in_sync_write_stream.async_write(l_flat_buffer->data(), std::move(self));
+              if (in_ec) break;
+              l_flat_buffer->clear();
+            }
+            self.complete(in_ec);
+          }
+        },
+        in_handle, in_sync_write_stream, in_sync_read_stream
+    );
   }
 
   struct websocket_relay_decorator_t {
@@ -218,40 +225,24 @@ class async_session_t {
       if (ec_) co_return co_await close_websocket(l_stream, "无法接受请求");
     }
 
-    auto&& [l_arr, l_ptr1, l_e1, l_ptr2, l_e2] =
+    auto&& [l_arr, l_e1, l_e2] =
         co_await boost::asio::experimental::make_parallel_group(
-            boost::asio::co_spawn(
-                l_stream.get_executor(), async_relay_websocket(l_proxy_stream, l_stream), boost::asio::deferred
-            ),
-            boost::asio::co_spawn(
-                l_stream.get_executor(), async_relay_websocket(l_stream, l_proxy_stream), boost::asio::deferred
-            )
+            async_relay_websocket(l_proxy_stream, l_stream, boost::asio::deferred),
+            async_relay_websocket(l_stream, l_proxy_stream, boost::asio::deferred)
         )
             .async_wait(
                 boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
             );
     /// 测试取消
-    if (l_e1) {
-      // session_->logger_->log(log_loc(), level::err, l_e1);
-      if (l_e1 == boost::beast::websocket::error::closed) {
-        // co_await l_proxy_stream.async_read(buffer_);
-        co_await close_websocket(l_proxy_stream, "开始关闭代理");
-      } else
-        ec_ = l_e1;
-    }
-    if (l_e2) {
-      // session_->logger_->log(log_loc(), level::err, l_e2);
-      if (l_e2 == boost::beast::websocket::error::closed) {
-        // co_await l_stream.async_read(buffer_);
-        co_await close_websocket(l_stream, "开始关闭流");
-      } else
-        ec_ = l_e2;
-    }
-    if (ec_ == boost::beast::websocket::error::closed) {
-      // co_await close_websocket(l_stream, l_is_close ? "开始关闭" : "转发失败");
-      // co_await close_websocket(l_proxy_stream, l_is_close ? "开始关闭" : "转发失败");
-      ec_ = {};
-    }
+
+    if (l_e1 == boost::beast::websocket::error::closed) {
+      co_await close_websocket(l_proxy_stream, "开始关闭代理");
+    } else if (l_e1)
+      ec_ = l_e1;
+    if (l_e2 == boost::beast::websocket::error::closed) {
+      co_await close_websocket(l_stream, "开始关闭流");
+    } else if (l_e2)
+      ec_ = l_e2;
     co_return;
   }
 
@@ -400,8 +391,7 @@ class async_session_t {
           else if (l_content_type.starts_with("image/gif"))
             session_->content_type_ = content_type::image_gif;
 
-          if (l_content_type.starts_with("multipart/form-data"))
-            session_->content_type_ = content_type::form_data;
+          if (l_content_type.starts_with("multipart/form-data")) session_->content_type_ = content_type::form_data;
 
           session_->body_ = string_request_parser_->get().body();
         }
