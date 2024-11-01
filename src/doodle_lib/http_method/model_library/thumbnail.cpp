@@ -17,6 +17,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
   switch (in_handle->content_type_) {
     // case detail::content_type::image_gif:
     case detail::content_type::image_jpeg:
+    case detail::content_type::image_jpg:
     case detail::content_type::image_png:
       break;
     default:
@@ -51,7 +52,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
     }
     cv::imwrite((l_path / "thumbnails" / (l_name + ".png")).generic_string(), l_image);
   } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request,
+        fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information())
+    );
   }
 
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", in_handle->capture_->get("id")));

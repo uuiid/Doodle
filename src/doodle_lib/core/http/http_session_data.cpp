@@ -386,6 +386,8 @@ class async_session_t {
         } else {
           if (l_content_type.starts_with("image/jpeg"))
             session_->content_type_ = content_type::image_jpeg;
+          else if (l_content_type.starts_with("image/jpg"))
+            session_->content_type_ = content_type::image_jpg;
           else if (l_content_type.starts_with("image/png"))
             session_->content_type_ = content_type::image_png;
           else if (l_content_type.starts_with("image/gif"))

@@ -33,6 +33,7 @@ enum class content_type {
   text_javascript,
   text_xml,
   image_jpeg,
+  image_jpg,
   image_png,
   image_gif,
   form_data,
