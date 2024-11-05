@@ -130,12 +130,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
 
   if (auto l_e = g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(*l_uuid); !l_e.empty()) {
     auto& l_uuid_ = l_e.front().uuid_id_;
-    if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_helper::database_t>(l_uuid_); !l_r.empty())
+    if (const auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_helper::database_t>(l_uuid_);
+        !l_r.empty())
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
 
     if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(l_uuid_);
-        !l_r.empty())
+        !l_r.empty() &&
+        std::ranges::any_of(l_r, [](const assets_file_helper::database_t& l_item) -> bool { return l_item.active_; }))
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
+    else if (!l_r.empty()) {
+      auto l_rem = std::make_shared<std::vector<std::int64_t>>();
+      l_rem->reserve(l_r.size());
+      for (const auto& l_item : l_r) {
+        l_rem->push_back(l_item.id_);
+      }
+      if (auto l_rr = co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_rem); !l_rr)
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_rr.error());
+    }
   }
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid); !l_r)

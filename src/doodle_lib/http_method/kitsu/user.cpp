@@ -88,6 +88,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   }
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
+  l_request.body() = l_body_str;
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   if (l_ec) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
