@@ -85,7 +85,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
             std::int32_t l_gui_dang{};
             if (l_user_data["gui_dang"].is_number())
               l_gui_dang = l_user_data["gui_dang"].get<std::int32_t>();
-            else if (l_user_data["gui_dang"].is_string())
+            else if (l_user_data["gui_dang"].is_string() && !l_user_data["gui_dang"].get<std::string>().empty())
               l_gui_dang = std::stoi(l_user_data["gui_dang"].get<std::string>());
             auto l_pin_yin_ming_cheng = l_user_data["pin_yin_ming_cheng"].get<std::string>();
             l_file_exist              = l_map.contains(
