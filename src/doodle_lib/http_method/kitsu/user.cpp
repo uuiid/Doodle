@@ -64,21 +64,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   }
 
-  auto& l_body_str = std::get<std::string>(in_handle->body_);
+  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
   try {
-    auto l_json = nlohmann::json::parse(l_body_str);
     auto l_user = std::make_shared<user_helper::database_t>();
 
     if (auto l_user_t = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_uuid);
         !l_user_t.empty()) {
       *l_user = l_user_t.front();
-    }else {
+    } else {
       l_user->uuid_id_ = l_uuid;
     }
     if (l_json["mobile"].is_string()) l_user->mobile_ = l_json["mobile"].get<std::string>();
     l_user->power_ = l_json["power"].get<power_enum>();
     if (l_json["dingding_company_id"].is_string())
       l_user->dingding_company_id_ = l_json["dingding_company_id"].get<uuid>();
+
+    l_json.erase("dingding_company_id");
 
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_user); !l_e)
       co_return in_handle->logger_->error("api/user/persons_post {}", l_e.error()),
@@ -88,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   }
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
-  l_request.body() = l_body_str;
+  l_request.body()   = l_json.dump();
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   if (l_ec) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
