@@ -72,7 +72,7 @@ class session_data {
   template <typename T = boost::beast::http::string_body, typename Value>
   boost::beast::http::response<T> make_msg(Value&& in_body) {
     boost::beast::http::response<T> l_res{boost::beast::http::status::ok, version_};
-    l_res.set(boost::beast::http::field::content_type, "application/json");
+    l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
     l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     l_res.keep_alive(keep_alive_);
     l_res.body() = std::move(in_body);
