@@ -79,7 +79,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
     if (l_json["dingding_company_id"].is_string())
       l_user->dingding_company_id_ = l_json["dingding_company_id"].get<uuid>();
 
-    l_json.erase("dingding_company_id");
+    // l_json.erase("dingding_company_id");
 
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_user); !l_e)
       co_return in_handle->logger_->error("api/user/persons_post {}", l_e.error()),
@@ -90,6 +90,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
   l_request.body()   = l_json.dump();
+  l_request.prepare_payload();
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   if (l_ec) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
@@ -136,7 +137,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
 void user_reg(http_route& in_http_route) {
   in_http_route
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", user_authenticated))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/persons/{id}", user_persons_post))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/persons/{id}", user_persons_post))
       .reg(
           std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context)
 
