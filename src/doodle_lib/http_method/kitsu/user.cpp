@@ -54,6 +54,46 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
   }
   co_return std::move(l_res);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+  uuid l_uuid{};
+  try {
+    l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+  }
+
+  auto& l_body_str = std::get<std::string>(in_handle->body_);
+  try {
+    auto l_json = nlohmann::json::parse(l_body_str);
+    auto l_user = std::make_shared<user_helper::database_t>();
+
+    if (auto l_user_t = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_uuid);
+        !l_user_t.empty()) {
+      *l_user = l_user_t.front();
+    }else {
+      l_user->uuid_id_ = l_uuid;
+    }
+    if (l_json["mobile"].is_string()) l_user->mobile_ = l_json["mobile"].get<std::string>();
+    l_user->power_ = l_json["power"].get<power_enum>();
+    if (l_json["dingding_company_id"].is_string())
+      l_user->dingding_company_id_ = l_json["dingding_company_id"].get<uuid>();
+
+    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_user); !l_e)
+      co_return in_handle->logger_->error("api/user/persons_post {}", l_e.error()),
+          in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+  } catch (...) {
+    in_handle->logger_->error("api/user/persons_post {}", boost::current_exception_diagnostic_information());
+  }
+  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
+  auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
+  if (l_ec) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
+  }
+  co_return std::move(l_res);
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
@@ -94,6 +134,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
 void user_reg(http_route& in_http_route) {
   in_http_route
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", user_authenticated))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/persons/{id}", user_persons_post))
       .reg(
           std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context)
 
