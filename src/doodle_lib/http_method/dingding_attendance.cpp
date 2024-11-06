@@ -254,7 +254,6 @@ void reg_dingding_attendance(http_route& in_route) {
               boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
           )
       )
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/company", dingding_company_get
-      ));
+       ;
 }
 } // namespace doodle::http

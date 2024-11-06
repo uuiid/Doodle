@@ -76,8 +76,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
     }
     if (l_json["mobile"].is_string()) l_user->mobile_ = l_json["mobile"].get<std::string>();
     l_user->power_ = l_json["power"].get<power_enum>();
-    if (l_json["dingding_company_id"].is_string())
-      l_user->dingding_company_id_ = l_json["dingding_company_id"].get<uuid>();
+    if (l_json["dingding_company_id"].is_string()) {
+      if (auto l_company_id = l_json["dingding_company_id"].get<uuid>();
+          !g_ctx().get<dingding::dingding_company>().company_info_map_.contains(l_company_id))
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "该公司不存在");
+      else
+        l_user->dingding_company_id_ = l_company_id;
+    }
 
     // l_json.erase("dingding_company_id");
 
@@ -89,7 +94,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   }
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
-  l_request.body()   = l_json.dump();
+  l_request.body() = l_json.dump();
   l_request.prepare_payload();
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
   if (l_ec) {
