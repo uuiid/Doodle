@@ -160,7 +160,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);
   http::reg_computing_time(*l_rout_ptr);
   http::reg_dingding_attendance(*l_rout_ptr);
-  http::reg_user_http(*l_rout_ptr);
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
 
