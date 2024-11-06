@@ -122,7 +122,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   // 初始化数据库
   {
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
-    // doodle::details::init_project();
   }
 
   // 初始化 ssl
@@ -136,7 +135,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_);
-    http::kitsu::init_context();
 
     // 初始化钉钉客户端
     auto& l_d = g_ctx().emplace<dingding::dingding_company>();

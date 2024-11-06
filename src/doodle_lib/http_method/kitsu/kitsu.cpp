@@ -3,6 +3,7 @@
 //
 #include "kitsu.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -99,6 +100,7 @@ boost::asio::awaitable<void> init_context_impl() {
       if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
         default_logger_raw()->error("初始化检查 task_type 后插入数据库失败 {}", l_r.error());
   }
+  app_base::Get().stop_app();
 }
 }  // namespace
 void init_context() { boost::asio::co_spawn(g_strand(), init_context_impl(), boost::asio::detached); }

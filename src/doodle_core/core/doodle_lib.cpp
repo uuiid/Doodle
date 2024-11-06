@@ -57,7 +57,7 @@ void doodle_lib::init() {
       default_logger_raw()->log(level::warn, boost::locale::conv::utf_to_utf<char>(logMessage));
     }
   });
-  ptr->ctx_p.emplace<detail::crash_reporting_thread>();
+  // ptr->ctx_p.emplace<detail::crash_reporting_thread>();
   ptr->ctx_p.emplace<database_info>();
   ptr->ctx_p.emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));
   ptr->ctx_p.emplace<status_info>();
