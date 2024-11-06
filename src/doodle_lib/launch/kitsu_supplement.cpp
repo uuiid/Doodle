@@ -119,15 +119,16 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   }
   get_register_info(l_args);
 
-  // 初始化 ssl
-  auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
-  in_vector.emplace_back(l_ssl_ctx);
-
   // 初始化数据库
   {
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // doodle::details::init_project();
   }
+
+  // 初始化 ssl
+  auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
+  in_vector.emplace_back(l_ssl_ctx);
+
   {
     // 初始化 kitsu 客户端
     auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
@@ -155,6 +156,11 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
           .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
     }
   }
+
+  if (in_arh["init"]) {
+    return http::kitsu::init_context(), false;
+  }
+
   l_scan->start();
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);
