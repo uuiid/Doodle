@@ -22,8 +22,8 @@
       ""
     ],
     "timeout": 3600,
-    "ue4_path": "C:/Program Files/Epic Games/UE_5.2",
-    "ue4_version": "5.2",
+    "ue4_path": "C:/Program Files/Epic Games/UE_5.4",
+    "ue4_version": "5.4",
     "user_id": {
       "uuid": "824dbc3d-be8f-4693-aa06-bdc3e37ee118"
     },
