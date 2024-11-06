@@ -76,13 +76,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   }
 
   bool l_modify_user{};
-  if (!l_user.mobile_) {
-    auto l_kitsu_client   = g_ctx().get<kitsu::kitsu_client_ptr>();
-    auto l_mobile = co_await l_kitsu_client->get_user(l_user_id);
-    if (!l_mobile) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_mobile.error());
-    l_user.mobile_ = l_mobile.value().phone_;
-    l_modify_user  = true;
-  }
+  if (!l_user.mobile_)
+    co_return in_handle->logger_->error("/api/dingding/attendance {} {}", l_user.id_, "没有手机号"),
+        in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有手机号");
 
   auto l_dingding_client =
       g_ctx().get<const dingding::dingding_company>().company_info_map_.at(*l_user.dingding_company_id_).client_ptr;
@@ -208,7 +204,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       l_date_list.emplace_back(l_ymd);
     } else {
       auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
-      for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end; l_day += chrono::days{1}) {
+      for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end;
+           l_day += chrono::days{1}) {
         l_date_list.emplace_back(l_day);
       }
     }
@@ -247,12 +244,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_g
 
 void reg_dingding_attendance(http_route& in_route) {
   in_route
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/attendance/{user_id}", dingding_attendance_post
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
-      ))
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/attendance/{user_id}", dingding_attendance_post
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
+          )
+      )
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/company", dingding_company_get
       ));
 }

@@ -9,7 +9,6 @@ target_sources(
         file_exists.h
         computing_time.h
         dingding_attendance.h
-        user_http.h
         file_association.h
         share_fun.h
         model_base.h
@@ -22,7 +21,6 @@ target_sources(
         file_exists.cpp
         computing_time.cpp
         dingding_attendance.cpp
-        user_http.cpp
         file_association.cpp
         share_fun.cpp
         computer_reg_data.cpp
