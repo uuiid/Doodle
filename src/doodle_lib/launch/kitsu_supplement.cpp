@@ -95,7 +95,7 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
-
+  l_scan->use_cache();
   kitsu_supplement_args_t l_args{
       .kitsu_url_ = "http://192.168.40.182",
       .port_      = 80,

@@ -173,6 +173,7 @@ void scan_win_service_t::create_project() {
 }
 
 void scan_win_service_t::seed_to_sql(std::int32_t in_current_index) {
+  if (!use_cache_) return;
   nlohmann::json l_json{};
 
   auto& l_scan_data = scan_data_maps_[in_current_index];

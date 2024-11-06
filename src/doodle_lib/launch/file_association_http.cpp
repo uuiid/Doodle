@@ -33,7 +33,6 @@ struct file_association_http_args_t {
 bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
   app_base::Get().use_multithread(true);
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
-  l_scan->start();
 
   file_association_http_args_t l_args{.db_path_ = "D:/file.database", .port_ = 50026};
 
@@ -49,6 +48,7 @@ bool file_association_http_t::operator()(const argh::parser& in_arh, std::vector
   default_logger_raw()->log(log_loc(), level::warn, "开始服务器");
 
   g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+  l_scan->start();
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
   default_logger_raw()->log(log_loc(), level::warn, "开始路由");

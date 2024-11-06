@@ -104,12 +104,14 @@ class scan_win_service_t {
   );
 
   void init_all_map();
+  bool use_cache_{};
 
  public:
   scan_win_service_t()  = default;
   ~scan_win_service_t() = default;
 
   void start();
+  void use_cache(bool in_cache = true) { use_cache_ = in_cache; };
 
   const scan_category_data_id_map& get_scan_data() const { return scan_data_maps_[index_]; }
   const scan_category_data_key_map& get_scan_data_key() const { return scan_data_key_maps_[index_]; }
