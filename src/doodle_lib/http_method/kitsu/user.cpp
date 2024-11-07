@@ -113,7 +113,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   }
   try {
     auto l_json   = nlohmann::json::parse(l_res.body());
-    auto l_user_s = g_ctx().get<sqlite_database>().get_all<user_helper::database_t>();
+    auto& l_database = g_ctx().get<sqlite_database>();
+    auto l_user_s = l_database.get_all<user_helper::database_t>();
     std::map<uuid, user_helper::database_t*> l_user_maps{};
     for (auto&& l_user : l_user_s) {
       l_user_maps[l_user.uuid_id_] = &l_user;
@@ -129,6 +130,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
     for (auto& l_v : l_cs.company_info_map_ | std::views::values) {
       l_json["dingding_companys"].emplace_back(l_v);
     }
+
+    for (auto&& l_project : l_json["projects"]) {
+      auto l_id = l_project["id"].get<uuid>();
+      if (auto l_prj = l_database.get_by_uuid<project_helper::database_t>(l_id); l_prj.empty()) {
+        l_project["path"] = nlohmann::json::value_t::null;
+        l_project["en_str"] = nlohmann::json::value_t::null;
+        l_project["auto_upload_path"] = nlohmann::json::value_t::null;
+      }else {
+        l_project["path"] = l_prj.front().path_;
+        l_project["en_str"] = l_prj.front().en_str_;
+        l_project["auto_upload_path"] = l_prj.front().auto_upload_path_;
+      }
+    }
+
 
     l_res.body() = l_json.dump();
     l_res.prepare_payload();
