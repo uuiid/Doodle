@@ -6,6 +6,7 @@ target_sources(
         user.h
         kitsu_front_end.h
         http_route_proxy.h
+        project.h
 
         PRIVATE
         task.cpp
@@ -13,4 +14,5 @@ target_sources(
         user.cpp
         kitsu_front_end.cpp
         http_route_proxy.cpp
+        project.cpp
 )
