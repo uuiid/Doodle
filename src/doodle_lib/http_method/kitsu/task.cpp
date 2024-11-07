@@ -76,6 +76,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
       auto l_asset_type_name = l_json_entt["asset_type_name"];
       for (auto&& l_json_task : l_json_entt["tasks"]) {
         bool l_file_exist{};
+        FSys::path l_path{};
         if (auto l_p = g_ctx().get<sqlite_database>().get_by_uuid<metadata::kitsu::task_type_t>(
                 l_json_task["task_type_id"].get<uuid>()
             );
@@ -88,23 +89,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
             else if (l_user_data["gui_dang"].is_string() && !l_user_data["gui_dang"].get<std::string>().empty())
               l_gui_dang = std::stoi(l_user_data["gui_dang"].get<std::string>());
             auto l_pin_yin_ming_cheng = l_user_data["pin_yin_ming_cheng"].get<std::string>();
-            l_file_exist              = l_map.contains(
-                scan::scan_key_t{
-                                 .dep_     = conv_assets_type_enum(l_asset_type_name),
-                                 .season_  = season{l_gui_dang},
-                                 .project_ = l_prj_id,
-                                 .number_ =
-                        l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
-                                 .name_ = l_pin_yin_ming_cheng,
-                                 .version_name_ =
-                        l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
-                }
-            );
+            scan::scan_key_t l_key{
+                .dep_     = conv_assets_type_enum(l_asset_type_name),
+                .season_  = season{l_gui_dang},
+                .project_ = l_prj_id,
+                .number_ =
+                    l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
+                .name_ = l_pin_yin_ming_cheng,
+                .version_name_ =
+                    l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
+            };
+            l_file_exist = l_map.contains(l_key);
+            if (l_p.front().name_ == "绑定")
+              l_path = l_map.at(l_key)->rig_file_.path_;
+            else
+              l_path = l_map.at(l_key)->ue_file_.path_;
           } else
             l_file_exist = false;
         } else
           l_file_exist = true;
+
         l_json_task["file_exist"] = l_file_exist;
+        l_json_task["path"]       = l_path;
       }
     }
     l_res.body() = l_json.dump();
