@@ -73,8 +73,7 @@ kitsu_client::get_all_project() {
               .name_             = l_prj["name"].get<std::string>(),
               .path_             = "C:/sy",
               .local_path_       = "C:/sy",
-              .auto_upload_path_ = "C:/sy",
-              .kitsu_uuid_       = l_prj["id"].get<uuid>(),
+              .auto_upload_path_ = "C:/sy"
           })
           .generate_names();
     }
@@ -97,8 +96,7 @@ kitsu_client::get_all_task_type() {
     std::vector<metadata::kitsu::task_type_t> l_list{};
     for (auto&& l_prj : nlohmann::json::parse(l_res.body())) {
       l_list.emplace_back(metadata::kitsu::task_type_t{
-          .uuid_id_    = core_set::get_set().get_uuid(),
-          .kitsu_uuid_ = l_prj["id"].get<uuid>(),
+          .uuid_id_    = l_prj["id"].get<uuid>(),
           .name_       = l_prj["name"].get<std::string>(),
       });
     }

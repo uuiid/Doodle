@@ -76,7 +76,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
       auto l_asset_type_name = l_json_entt["asset_type_name"];
       for (auto&& l_json_task : l_json_entt["tasks"]) {
         bool l_file_exist{};
-        if (auto l_p = g_ctx().get<sqlite_database>().get_by_kitsu_uuid<metadata::kitsu::task_type_t>(
+        if (auto l_p = g_ctx().get<sqlite_database>().get_by_uuid<metadata::kitsu::task_type_t>(
                 l_json_task["task_type_id"].get<uuid>()
             );
             !l_p.empty() && l_p.front().use_chick_files) {

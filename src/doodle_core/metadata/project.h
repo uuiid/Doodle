@@ -93,7 +93,6 @@ struct database_t {
   std::string shor_str_{};
   std::filesystem::path local_path_{};
   std::string auto_upload_path_{};
-  uuid kitsu_uuid_{};
 
   /// 根据 name 生成拼音名称和短名称
   void generate_names();

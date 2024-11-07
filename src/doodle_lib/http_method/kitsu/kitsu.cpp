@@ -61,14 +61,13 @@ boost::asio::awaitable<void> init_context_impl() {
                   .en_str_           = l_prj_maps2[l_prj.name_].p_en_str,
                   .shor_str_         = l_prj_maps2[l_prj.name_].p_shor_str,
                   .local_path_       = l_prj_maps2[l_prj.name_].p_local_path,
-                  .auto_upload_path_ = l_prj_maps2[l_prj.name_].p_auto_upload_path.generic_string(),
-                  .kitsu_uuid_       = l_prj.kitsu_uuid_,
+                  .auto_upload_path_ = l_prj_maps2[l_prj.name_].p_auto_upload_path.generic_string()
               }
           );
         else
           l_prj_install->emplace_back(l_prj).generate_names();
-      } else if (l_prj_maps[l_prj.name_].kitsu_uuid_ != l_prj.kitsu_uuid_) {
-        l_prj_maps[l_prj.name_].kitsu_uuid_ = l_prj.kitsu_uuid_;
+      } else if (l_prj_maps[l_prj.name_].uuid_id_ != l_prj.uuid_id_) {
+        l_prj_maps[l_prj.name_].uuid_id_ = l_prj.uuid_id_;
         l_prj_install->emplace_back(l_prj_maps[l_prj.name_]);
       }
     }
@@ -91,8 +90,8 @@ boost::asio::awaitable<void> init_context_impl() {
         if (l_.name_ == "角色" || l_.name_ == "地编模型" || l_.name_ == "绑定") l_.use_chick_files = true;
         l_install->emplace_back(l_);
 
-      } else if (l_task_maps[l_.name_].kitsu_uuid_ != l_.kitsu_uuid_) {
-        l_task_maps[l_.name_].kitsu_uuid_ = l_.kitsu_uuid_;
+      } else if (l_task_maps[l_.name_].uuid_id_ != l_.uuid_id_) {
+        l_task_maps[l_.name_].uuid_id_ = l_.uuid_id_;
         l_install->emplace_back(l_task_maps[l_.name_]);
       }
     }

@@ -56,12 +56,10 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
       ),
       make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
-      make_index("kitsu_task_type_tab_kitsu_uuid_index", &metadata::kitsu::task_type_t::kitsu_uuid_),
       make_table(
           "kitsu_task_type_tab",                                                 //
           make_column("id", &metadata::kitsu::task_type_t::id_, primary_key()),  //
           make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique()),
-          make_column("kitsu_uuid", &metadata::kitsu::task_type_t::kitsu_uuid_),
           make_column("name", &metadata::kitsu::task_type_t::name_),
           make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files)
       ),
@@ -110,7 +108,6 @@ auto make_storage_doodle(const std::string& in_path) {
       ),
 
       make_index("project_tab_uuid", &project_helper::database_t::uuid_id_),
-      make_index("project_tab_kitsu_uuid", &project_helper::database_t::kitsu_uuid_),
       make_table(
           "project_tab",                                                       //
           make_column("id", &project_helper::database_t::id_, primary_key()),  //
@@ -120,8 +117,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("en_str", &project_helper::database_t::en_str_),  //
           make_column("shor_str", &project_helper::database_t::shor_str_),
           make_column("local_path", &project_helper::database_t::local_path_),
-          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),
-          make_column("kitsu_uuid", &project_helper::database_t::kitsu_uuid_)
+          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
       )
   ));
 }
@@ -189,11 +185,11 @@ struct sqlite_database_impl {
     return storage_any_.get_all<T>();
   }
 
-  template <typename T>
-  std::vector<T> get_all(const uuid& in_uuid) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::kitsu_uuid_) == in_uuid));
-  }
+  // template <typename T>
+  // std::vector<T> get_all(const uuid& in_uuid) {
+  //   using namespace sqlite_orm;
+  //   return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::kitsu_uuid_) == in_uuid));
+  // }
 
   template <typename T>
   std::int64_t uuid_to_id(const uuid& in_uuid) {
@@ -207,11 +203,7 @@ struct sqlite_database_impl {
     using namespace sqlite_orm;
     return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
   }
-  template <typename T>
-  std::vector<T> get_by_kitsu_uuid(const uuid& in_uuid) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::kitsu_uuid_) == in_uuid));
-  }
+
 
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data) {
@@ -341,11 +333,11 @@ DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 
-DOODLE_GET_BY_KITSU_UUID_SQL(project_helper::database_t)
-DOODLE_GET_BY_KITSU_UUID_SQL(metadata::kitsu::task_type_t)
 
-DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
+
 DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t)
+DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
+DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_BY_UUID_SQL(assets_file_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(assets_helper::database_t)
 

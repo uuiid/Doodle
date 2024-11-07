@@ -29,11 +29,7 @@
     }                                                                                                                \
   };
 
-#define DOODLE_GET_BY_KITSU_UUID_SQL(class_name)                                                \
-  template <>                                                                                   \
-  std::vector<class_name> sqlite_database::get_by_kitsu_uuid<class_name>(const uuid& in_uuid) { \
-    return impl_->get_by_kitsu_uuid<class_name>(in_uuid);                                       \
-  }
+
 
 #define DOODLE_GET_BY_PARENT_ID_SQL(class_name)                                                \
   template <>                                                                                  \

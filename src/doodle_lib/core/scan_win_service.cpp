@@ -94,7 +94,7 @@ void scan_win_service_t::init_all_map() {
   create_project();
   std::map<uuid, std::shared_ptr<project_helper::database_t>> l_pro_map{};
   for (auto&& i : project_roots_) {
-    l_pro_map.emplace(i->kitsu_uuid_, i);
+    l_pro_map.emplace(i->uuid_id_, i);
   }
   nlohmann::json l_json = nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
   std::vector<doodle::details::scan_category_data_ptr> l_data_vec{};
@@ -201,7 +201,7 @@ void scan_win_service_t::add_handle(
     l_scan_key_data[{
         .dep_          = l_data->assets_type_,
         .season_       = l_data->season_,
-        .project_      = l_data->project_database_ptr ? l_data->project_database_ptr->kitsu_uuid_ : uuid{},
+        .project_      = l_data->project_database_ptr ? l_data->project_database_ptr->uuid_id_ : uuid{},
         .number_       = l_data->number_str_,
         .name_         = l_data->name_,
         .version_name_ = l_data->version_name_,

@@ -46,8 +46,6 @@ class sqlite_database {
 
   template <typename T>
   std::vector<T> get_by_uuid(const uuid& in_uuid);
-  template <typename T>
-  std::vector<T> get_by_kitsu_uuid(const uuid& in_uuid);
 
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data);
