@@ -33,7 +33,8 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\WDSXTQL"; source = "\\192.168.10.242\public\WDSXTQL"; name = "我的师兄太强了_240" },
     [map_dir]@{link = "C:\sy\ZMLCLWDSWD"; source = "\\192.168.10.240\public\ZMLCLWDSWD"; name = "宗门里除了我都是卧底_240" },
     [map_dir]@{link = "C:\sy\WSMSHWDL"; source = "\\192.168.10.242\public\WSMSHWDL"; name = "我什么时候无敌了_242" },
-    [map_dir]@{link = "C:\sy\DJ_PV"; source = "\\192.168.10.242\public\DJ_PV"; name = "DJ_PV" }
+    [map_dir]@{link = "C:\sy\DJ_PV"; source = "\\192.168.10.242\public\DJ_PV"; name = "DJ_PV" },
+    [map_dir]@{link = "C:\sy\JJ_DJ"; source = "\\192.168.10.242\public\JJ_DJ"; name = "JJ_DJ" },
 )
 function Add-SyDir {
     $main_ini = @"
@@ -140,4 +141,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.13.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.14.exe -requireAdmin
