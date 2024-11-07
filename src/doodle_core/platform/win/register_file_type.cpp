@@ -88,6 +88,10 @@ const std::vector<project>& register_file_type::get_project_list() {
       project{
           "双生武魂", R"(\\192.168.10.240\public\SSWH)", "SSWH", "SS", R"(C:\sy\SSWH)",
           R"(\\192.168.10.240\public\后期\SSWH\)"
+      },
+
+      project{  "镜·界", R"(\\192.168.10.242\public\JJ_DJ)", "JingJie", "JJ", R"(C:\sy\JJ_DJ)",
+        R"(\\192.168.10.240\public\后期\JJ_DJ\)"
       }
 
   };
