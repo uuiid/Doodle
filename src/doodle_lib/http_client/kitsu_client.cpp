@@ -69,7 +69,7 @@ kitsu_client::get_all_project() {
     for (auto&& l_prj : nlohmann::json::parse(l_res.body())) {
       l_list
           .emplace_back(project_helper::database_t{
-              .uuid_id_          = core_set::get_set().get_uuid(),
+              .uuid_id_          = l_prj["id"].get<uuid>(),
               .name_             = l_prj["name"].get<std::string>(),
               .path_             = "C:/sy",
               .local_path_       = "C:/sy",
