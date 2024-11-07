@@ -26,6 +26,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info_full
   }
 
   bool l_file_exist{};
+  FSys::path l_path{};
   auto l_json = nlohmann::json::parse(l_res.body());
   try {
     auto l_task_type_name = l_json["task_type"]["name"];
@@ -45,6 +46,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info_full
         };
         auto& l_map  = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data_key();
         l_file_exist = l_map.contains(l_key);
+        if (l_file_exist)
+          if (l_task_type_name == "绑定")
+            l_path = l_map.at(l_key)->rig_file_.path_;
+          else
+            l_path = l_map.at(l_key)->ue_file_.path_;
       } else
         l_file_exist = false;
     } else {
@@ -54,6 +60,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_info_full
     l_file_exist = false;
   }
   l_json["file_exist"] = l_file_exist;
+  l_json["path"]       = l_path;
   l_res.body()         = l_json.dump();
   l_res.prepare_payload();
   co_return std::move(l_res);
@@ -100,10 +107,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
                     l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
             };
             l_file_exist = l_map.contains(l_key);
-            if (l_p.front().name_ == "绑定")
-              l_path = l_map.at(l_key)->rig_file_.path_;
-            else
-              l_path = l_map.at(l_key)->ue_file_.path_;
+            if (l_file_exist)
+              if (l_p.front().name_ == "绑定")
+                l_path = l_map.at(l_key)->rig_file_.path_;
+              else
+                l_path = l_map.at(l_key)->ue_file_.path_;
           } else
             l_file_exist = false;
         } else
