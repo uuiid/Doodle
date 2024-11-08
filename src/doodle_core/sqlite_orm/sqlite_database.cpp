@@ -115,8 +115,6 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("name", &project_helper::database_t::name_),  //
           make_column("path", &project_helper::database_t::path_),
           make_column("en_str", &project_helper::database_t::en_str_),  //
-          make_column("shor_str", &project_helper::database_t::shor_str_),
-          make_column("local_path", &project_helper::database_t::local_path_),
           make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
       )
   ));
@@ -136,7 +134,13 @@ struct sqlite_database_impl {
       : strand_(boost::asio::make_strand(g_io_context())),
         storage_any_(std::move(make_storage_doodle(in_path.generic_string()))) {
     storage_any_.open_forever();
-    storage_any_.sync_schema(true);
+    try{
+      auto l_g = storage_any_.transaction_guard();
+      storage_any_.sync_schema(true);
+      l_g.commit();
+    } catch (...) {
+      default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
+    }
     default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
   }
 
