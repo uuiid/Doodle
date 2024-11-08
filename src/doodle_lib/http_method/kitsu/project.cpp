@@ -55,10 +55,49 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
   }
   co_return std::move(l_res);
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> get_project_all(session_data_ptr in_handle) {
+  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
+  auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
+  if (l_ec) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
+  }
+
+  try {
+    auto l_json = nlohmann::json::parse(l_res.body());
+    if (!l_json.is_array()) {
+      co_return std::move(l_res);
+    }
+    for (auto& l_item : l_json) {
+      uuid l_id = l_item["id"].get<uuid>();
+      if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_id); l_list.empty()) {
+        l_item["path"]             = nlohmann::json::value_t::null;
+        l_item["en_str"]           = nlohmann::json::value_t::null;
+        l_item["auto_upload_path"] = nlohmann::json::value_t::null;
+      } else {
+        l_item["path"]             = l_list.front().path_.string();
+        l_item["en_str"]           = l_list.front().en_str_;
+        l_item["auto_upload_path"] = l_list.front().auto_upload_path_;
+      }
+    }
+
+    l_res.body() = l_json.dump();
+    l_res.prepare_payload();
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
+  }
+
+  co_return std::move(l_res);
+}
+
 }  // namespace
 void project_reg(http_route& in_http_route) {
-  in_http_route.reg(
-      std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/projects/{id}", put_project)
-  );
+  in_http_route
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/projects/{id}", put_project))
+      .reg(
+          std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/projects", get_project_all)
+
+      );
 }
 }  // namespace doodle::http::kitsu
