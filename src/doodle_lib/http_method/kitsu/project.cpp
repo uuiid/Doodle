@@ -40,10 +40,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
       l_prj->auto_upload_path_ = l_json["auto_upload_path"].get<std::string>();
 
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_prj); !l_e)
-      co_return in_handle->logger_->error("api/data/projects/{id} {}", l_e.error()),
+      co_return in_handle->logger_->error("api/data/projects/id {}", l_e.error()),
           in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
   } catch (...) {
-    in_handle->logger_->error("api/data/projects/{id} {}", boost::current_exception_diagnostic_information());
+    in_handle->logger_->error("api/data/projects/id {}", boost::current_exception_diagnostic_information());
   }
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
