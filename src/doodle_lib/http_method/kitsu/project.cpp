@@ -35,9 +35,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
     }
 
     if (l_json.contains("path") && l_json["path"].is_string()) l_prj->path_ = l_json["path"].get<FSys::path>();
-    if (l_json.contains("en_str") && l_json["en_str"].is_string()) l_prj->path_ = l_json["en_str"].get<std::string>();
+    if (l_json.contains("en_str") && l_json["en_str"].is_string()) l_prj->en_str_ = l_json["en_str"].get<std::string>();
     if (l_json.contains("auto_upload_path") && l_json["auto_upload_path"].is_string())
-      l_prj->path_ = l_json["auto_upload_path"].get<FSys::path>();
+      l_prj->auto_upload_path_ = l_json["auto_upload_path"].get<std::string>();
 
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_prj); !l_e)
       co_return in_handle->logger_->error("api/data/projects/{id} {}", l_e.error()),
