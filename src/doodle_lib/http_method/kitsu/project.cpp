@@ -33,6 +33,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
     } else {
       l_prj->uuid_id_ = l_uuid;
     }
+
     bool l_modified{};
     if (l_json.contains("path") && l_json["path"].is_string())
       l_modified = true, l_prj->path_ = l_json["path"].get<FSys::path>();
