@@ -23,6 +23,7 @@
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
+// DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
 }
 
 namespace doodle {
@@ -61,7 +62,8 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &metadata::kitsu::task_type_t::id_, primary_key()),  //
           make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique()),
           make_column("name", &metadata::kitsu::task_type_t::name_),
-          make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files)
+          make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files),
+          make_column("asset_type",&metadata::kitsu::task_type_t::type_)
       ),
       make_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_),
       make_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_),

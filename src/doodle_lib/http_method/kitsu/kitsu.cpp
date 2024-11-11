@@ -12,9 +12,9 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
+#include <doodle_lib/http_method/kitsu/project.h>
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
-#include <doodle_lib/http_method/kitsu/project.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
@@ -90,6 +90,7 @@ boost::asio::awaitable<void> init_context_impl() {
     for (auto&& l_ : l_c.value()) {
       if (!l_task_maps.contains(l_.name_)) {
         if (l_.name_ == "角色" || l_.name_ == "地编模型" || l_.name_ == "绑定") l_.use_chick_files = true;
+        l_.type_ = conv_assets_type_enum(l_.name_);
         l_install->emplace_back(l_);
 
       } else if (l_task_maps[l_.name_].uuid_id_ != l_.uuid_id_) {
