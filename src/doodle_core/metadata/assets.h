@@ -44,7 +44,7 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
 
   assets() = default;
 
-  explicit assets(std::string in_name) : p_path(std::move(in_name)){};
+  explicit assets(std::string in_name) : p_path(std::move(in_name)) {};
 
   assets(const assets& in_other)            = default;
   assets(assets&& in_other)                 = default;
@@ -95,16 +95,21 @@ struct database_t {
   std::string label_{};
   /// 这个数据不在数据库中
   std::optional<uuid> uuid_parent_{};
+  std::int32_t order_{};
   friend void to_json(nlohmann::json& j, const database_t& v) {
     j["id"]    = v.uuid_id_;
     j["label"] = v.label_;
-    if (v.uuid_parent_ && !v.uuid_parent_->is_nil()) j["parent_id"] = *v.uuid_parent_;
-    else j["parent_id"] = nlohmann::json::value_t::null;
+    if (v.uuid_parent_ && !v.uuid_parent_->is_nil())
+      j["parent_id"] = *v.uuid_parent_;
+    else
+      j["parent_id"] = nlohmann::json::value_t::null;
+    j["order"] = v.order_;
   }
 
   friend void from_json(const nlohmann::json& j, database_t& v) {
     j.at("label").get_to(v.label_);
     if (j.contains("parent_id") && j["parent_id"].is_string()) j.at("parent_id").get_to(v.uuid_parent_);
+    if (j.contains("order")) j.at("order").get_to(v.order_);
   }
 };
 }  // namespace assets_helper
