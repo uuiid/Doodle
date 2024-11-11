@@ -77,7 +77,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
     l_json.emplace_back(
         nlohmann::json{
             {"project_id", l_val->project_database_ptr->uuid_id_},
-            {"season", l_val->season_},
+            {"season", l_val->season_.p_int},
             {"number", l_val->number_str_},
             {"name", l_val->name_},
             {"base_path", l_val->base_path_},
