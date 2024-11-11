@@ -358,6 +358,7 @@ DOODLE_GET_ALL_SQL(project_helper::database_t)
 DOODLE_GET_ALL_SQL(user_helper::database_t)
 DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_ALL_SQL(assets_file_helper::database_t)
+DOODLE_GET_ALL_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_ALL_SQL(assets_helper::database_t)
 
 DOODLE_INSTALL_SQL(project_helper::database_t)

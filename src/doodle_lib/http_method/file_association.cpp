@@ -81,7 +81,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
             {"season", l_val->season_.p_int},
             {"number", l_val->number_str_},
             {"name", l_val->name_},
-            {"base_path", l_val->base_path_},
+            {"base_path", l_val->base_path_.lexically_proximate(l_val->project_database_ptr->path_)},
             {"version_name", l_val->version_name_},
             {"maya_file", l_val->rig_file_.path_},
             {"ue_file", l_val->ue_file_.path_},
