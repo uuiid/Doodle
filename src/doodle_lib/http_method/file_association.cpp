@@ -68,24 +68,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
     }
   }
 
-  for (auto& l_data : l_map) {
+  for (auto& l_val : l_map | std::views::values) {
     bool l_match{l_project_id.empty() && l_assets_id.empty()};
-    if (!l_project_id.empty()) l_match = l_project_id.contains(l_data.second->project_database_ptr->uuid_id_);
-    if (!l_assets_id.empty()) l_match &= l_type.contains(l_data.second->assets_type_);
+    if (!l_project_id.empty()) l_match = l_project_id.contains(l_val->project_database_ptr->uuid_id_);
+    if (!l_assets_id.empty()) l_match &= l_type.contains(l_val->assets_type_);
     if (!l_match) continue;
 
     l_json.emplace_back(
         nlohmann::json{
-            {"project_id", l_data.second->project_database_ptr->uuid_id_},
-            {"season", l_data.second->season_},
-            {"number", l_data.second->number_str_},
-            {"name", l_data.second->name_},
-            {"base_path", l_data.second->base_path_},
-            {"version_name", l_data.second->version_name_},
-            {"maya_file", l_data.second->rig_file_.path_},
-            {"ue_file", l_data.second->ue_file_.path_},
-            {"solve_file_", l_data.second->solve_file_.path_},
-            {"assets_type", l_type_map[l_data.second->assets_type_]},
+            {"project_id", l_val->project_database_ptr->uuid_id_},
+            {"season", l_val->season_},
+            {"number", l_val->number_str_},
+            {"name", l_val->name_},
+            {"base_path", l_val->base_path_},
+            {"version_name", l_val->version_name_},
+            {"maya_file", l_val->rig_file_.path_},
+            {"ue_file", l_val->ue_file_.path_},
+            {"solve_file_", l_val->solve_file_.path_},
+            {"assets_type", l_type_map[l_val->assets_type_]},
         }
     );
   }
