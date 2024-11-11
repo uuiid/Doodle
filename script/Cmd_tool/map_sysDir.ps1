@@ -22,7 +22,7 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\WanGuShenHua_8"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
     [map_dir]@{link = "C:\sy\LianQiShiWanNian_8"; source = "\\192.168.10.240\public\LianQiShiWanNian"; name = "炼气十万年_240" },
     [map_dir]@{link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
-    [map_dir]@{link = "C:\sy\WGXD"; source = "\\192.168.10.240\public\WGXD"; name = "万古邪帝_240" },
+    [map_dir]@{link = "C:\sy\WGXD"; source = "\\192.168.10.242\public\WGXD"; name = "万古邪帝_240" },
     [map_dir]@{link = "C:\sy\LongMaiWuShen"; source = "\\192.168.10.240\public\LongMaiWuShen"; name = "龙脉武神_240" },
     [map_dir]@{ link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" },
 
@@ -142,4 +142,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.15.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.16.exe -requireAdmin
