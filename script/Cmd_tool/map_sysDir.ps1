@@ -35,7 +35,7 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\WSMSHWDL"; source = "\\192.168.10.242\public\WSMSHWDL"; name = "我什么时候无敌了_242" },
     [map_dir]@{link = "C:\sy\DJ_PV"; source = "\\192.168.10.242\public\DJ_PV"; name = "DJ_PV" },
     [map_dir]@{link = "C:\sy\JJ_DJ"; source = "\\192.168.10.242\public\JJ_DJ"; name = "JJ_DJ" },
-    [map_dir]@{link = "C:\sy\AssetLibrary"; source = "\\192.168.10.242\public\AssetLibrary"; name = "AssetLibrary" },
+    [map_dir]@{link = "C:\sy\AssetLibrary"; source = "\\192.168.10.242\public\AssetLibrary"; name = "AssetLibrary" }
 )
 function Add-SyDir {
     $main_ini = @"
