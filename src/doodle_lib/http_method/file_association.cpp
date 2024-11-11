@@ -45,20 +45,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
   auto l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
   nlohmann::json l_json;
 
-  uuid l_project_id, l_assets_id;
-  details::assets_type_enum l_type{details::assets_type_enum::other};
+  std::set<uuid> l_project_id, l_assets_id;
+  std::set<details::assets_type_enum> l_type{};
   try {
-    auto l_q = in_handle->url_.query();
-    if (auto l_it = l_q.find("project_id"); l_it != l_q.npos) {
-      auto l_str   = l_q.substr(l_it + 11, l_q.find('&', l_it) - l_it - 11);
-      l_project_id = boost::lexical_cast<uuid>(l_str);
-    }
-    if (auto l_it = l_q.find("assets_id"); l_it != l_q.npos) {
-      auto l_str  = l_q.substr(l_it + 9, l_q.find('&', l_it) - l_it - 9);
-      l_assets_id = boost::lexical_cast<uuid>(l_str);
-      if (auto l_t = g_ctx().get<sqlite_database>().get_by_uuid<doodle::metadata::kitsu::task_type_t>(l_assets_id);
-          !l_t.empty()) {
-        l_type = l_t.front().type_;
+    for (auto&& l_q : in_handle->url_.params()) {
+      if (l_q.has_value && l_q.key == "project_id") {
+        l_project_id.emplace(boost::lexical_cast<uuid>(l_q.value));
+      } else if (l_q.has_value && l_q.key == "assets_id") {
+        l_assets_id.emplace(boost::lexical_cast<uuid>(l_q.value));
       }
     }
   } catch (...) {
@@ -70,13 +64,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
   if (auto l_list = g_ctx().get<sqlite_database>().get_all<doodle::metadata::kitsu::task_type_t>(); !l_list.empty()) {
     for (auto& l_data : l_list) {
       l_type_map[l_data.type_] = l_data.uuid_id_;
+      if (l_assets_id.contains(l_data.uuid_id_)) l_type.emplace(l_data.type_);
     }
   }
 
   for (auto& l_data : l_map) {
-    bool l_match{l_project_id.is_nil() && l_assets_id.is_nil()};
-    if (!l_project_id.is_nil()) l_match = l_data.second->project_database_ptr->uuid_id_ == l_project_id;
-    if (!l_assets_id.is_nil()) l_match &= l_data.second->assets_type_ == l_type;
+    bool l_match{l_project_id.empty() && l_assets_id.empty()};
+    if (!l_project_id.empty()) l_match = l_project_id.contains(l_data.second->project_database_ptr->uuid_id_);
+    if (!l_assets_id.empty()) l_match &= l_type.contains(l_data.second->assets_type_);
     if (!l_match) continue;
 
     l_json.emplace_back(
@@ -94,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
         }
     );
   }
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found");
+  co_return in_handle->make_msg(l_json.dump());
 }
 
 void reg_file_association_http(http_route& in_route) {
