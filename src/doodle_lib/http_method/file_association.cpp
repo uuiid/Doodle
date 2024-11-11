@@ -38,10 +38,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
   l_logger->log(log_loc(), level::info, "file not found");
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found");
 }
+boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found");
+}
 
 void reg_file_association_http(http_route& in_route) {
-  in_route.reg(std::make_shared<http_function>(
-      boost::beast::http::verb::get, "api/doodle/file_association/{uuid}", file_association_get
-  ));
+  in_route
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/file_association/{uuid}", file_association_get
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/file", file_list_get)
+      );
 }
 }  // namespace doodle::http
