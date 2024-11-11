@@ -142,4 +142,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.16.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.17.exe -requireAdmin
