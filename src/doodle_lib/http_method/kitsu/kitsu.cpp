@@ -4,18 +4,19 @@
 #include "kitsu.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/project.h>
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
-#include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
@@ -91,8 +92,16 @@ boost::asio::awaitable<void> init_context_impl() {
     auto l_install = std::make_shared<std::vector<metadata::kitsu::task_type_t>>();
     for (auto&& l_ : l_c.value()) {
       if (!l_task_maps.contains(l_.name_)) {
-        if (l_.name_ == "角色" || l_.name_ == "地编模型" || l_.name_ == "绑定") l_.use_chick_files = true;
-        l_.type_ = conv_assets_type_enum(l_.name_);
+        auto l_type_ = conv_assets_type_enum(l_.name_);
+        switch (l_type_) {
+          case details::assets_type_enum::scene:
+          case details::assets_type_enum::character:
+          case details::assets_type_enum::rig:
+            l_.use_chick_files = true;
+            break;
+          default:
+            break;
+        }
         l_install->emplace_back(l_);
 
       } else if (l_task_maps[l_.name_].uuid_id_ != l_.uuid_id_) {
@@ -103,6 +112,27 @@ boost::asio::awaitable<void> init_context_impl() {
     if (!l_install->empty())
       if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
         default_logger_raw()->error("初始化检查 task_type 后插入数据库失败 {}", l_r.error());
+  }
+  {
+    auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_assets_type();
+    if (!l_c) default_logger_raw()->error(l_c.error());
+    std::map<uuid, metadata::kitsu::assets_type_t> l_assets_maps{};
+    {
+      auto l_ts = g_ctx().get<sqlite_database>().get_all<metadata::kitsu::assets_type_t>();
+      for (auto&& l : l_ts) l_assets_maps.emplace(l.uuid_id_, l);
+    }
+    auto l_install = std::make_shared<std::vector<metadata::kitsu::assets_type_t>>();
+    for (auto&& l_ : l_c.value()) {
+      if (l_assets_maps.contains(l_.uuid_id_)) {
+        l_.id_      = l_assets_maps[l_.uuid_id_].id_;
+        l_.uuid_id_ = l_assets_maps[l_.uuid_id_].uuid_id_;
+      }
+      l_.type_ = conv_assets_type_enum(l_.name_);
+      l_install->emplace_back(l_);
+    }
+    if (!l_install->empty())
+      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
+        default_logger_raw()->error("初始化检查 assets_type 后插入数据库失败 {}", l_r.error());
   }
   app_base::Get().stop_app();
 }
@@ -148,6 +178,10 @@ doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_na
     return doodle::details::assets_type_enum::animation;
   } else if (in_name == "特效") {
     return doodle::details::assets_type_enum::vfx;
+  } else if (in_name == "地编模型") {
+    return doodle::details::assets_type_enum::scene;
+  } else if (in_name == "地编") {
+    return doodle::details::assets_type_enum::scene;
   }
   return doodle::details::assets_type_enum::other;
 }

@@ -1,6 +1,7 @@
 #include "file_association.h"
 
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
@@ -61,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
     );
   }
   std::map<details::assets_type_enum, uuid> l_type_map{};
-  if (auto l_list = g_ctx().get<sqlite_database>().get_all<doodle::metadata::kitsu::task_type_t>(); !l_list.empty()) {
+  if (auto l_list = g_ctx().get<sqlite_database>().get_all<doodle::metadata::kitsu::assets_type_t>(); !l_list.empty()) {
     for (auto& l_data : l_list) {
       l_type_map[l_data.type_] = l_data.uuid_id_;
       if (l_assets_id.contains(l_data.uuid_id_)) l_type.emplace(l_data.type_);

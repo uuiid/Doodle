@@ -7,6 +7,7 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
@@ -24,7 +25,7 @@
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
-}
+}  // namespace sqlite_orm
 
 namespace doodle {
 
@@ -34,6 +35,14 @@ auto make_storage_doodle(const std::string& in_path) {
 
   return std::move(make_storage(
       in_path,  //
+      make_index("kitsu_assets_type_tab_uuid_id_index", &metadata::kitsu::assets_type_t::uuid_id_),
+      make_table(
+          "kitsu_assets_type_tab",                                                 //
+          make_column("id", &metadata::kitsu::assets_type_t::id_, primary_key()),  //
+          make_column("uuid_id", &metadata::kitsu::assets_type_t::uuid_id_, unique()),
+          make_column("name", &metadata::kitsu::assets_type_t::name_),
+          make_column("asset_type", &metadata::kitsu::assets_type_t::type_)
+      ),
       make_index("assets_file_tab_uuid_id_index", &assets_file_helper::database_t::uuid_id_),
       make_table(
           "assets_file_tab",  //
@@ -62,8 +71,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &metadata::kitsu::task_type_t::id_, primary_key()),  //
           make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique()),
           make_column("name", &metadata::kitsu::task_type_t::name_),
-          make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files),
-          make_column("asset_type",&metadata::kitsu::task_type_t::type_)
+          make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files)
       ),
       make_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_),
       make_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_),
@@ -136,7 +144,7 @@ struct sqlite_database_impl {
       : strand_(boost::asio::make_strand(g_io_context())),
         storage_any_(std::move(make_storage_doodle(in_path.generic_string()))) {
     storage_any_.open_forever();
-    try{
+    try {
       auto l_g = storage_any_.transaction_guard();
       storage_any_.sync_schema(true);
       l_g.commit();
@@ -209,7 +217,6 @@ struct sqlite_database_impl {
     using namespace sqlite_orm;
     return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
   }
-
 
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data) {
@@ -339,14 +346,13 @@ DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 
-
-
 DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_BY_UUID_SQL(assets_file_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(assets_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(project_helper::database_t)
+DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 
 DOODLE_GET_ALL_SQL(project_helper::database_t)
 DOODLE_GET_ALL_SQL(user_helper::database_t)
@@ -366,6 +372,7 @@ DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_RANGE(assets_helper::database_t)
 DOODLE_INSTALL_RANGE(assets_file_helper::database_t)
+DOODLE_INSTALL_RANGE(metadata::kitsu::assets_type_t)
 
 DOODLE_REMOVE_RANGE(attendance_helper::database_t)
 DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)

@@ -1,6 +1,7 @@
 #include "kitsu_client.h"
 
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/kitsu/assets_type.h>
 namespace doodle::kitsu {
 boost::asio::awaitable<std::tuple<boost::system::error_code, kitsu_client::task>> kitsu_client::get_task(
     const boost::uuids::uuid& in_uuid
@@ -96,6 +97,29 @@ kitsu_client::get_all_task_type() {
     std::vector<metadata::kitsu::task_type_t> l_list{};
     for (auto&& l_prj : nlohmann::json::parse(l_res.body())) {
       l_list.emplace_back(metadata::kitsu::task_type_t{
+          .uuid_id_    = l_prj["id"].get<uuid>(),
+          .name_       = l_prj["name"].get<std::string>(),
+      });
+    }
+    l_ret = std::move(l_list);
+  }
+  co_return l_ret;
+}
+boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::assets_type_t>, std::string>>
+kitsu_client::get_all_assets_type(){
+  auto&& [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
+      http_client_core_ptr_, header_operator_req(boost::beast::http::request<boost::beast::http::empty_body>{
+          boost::beast::http::verb::get, "/api/data/asset-types", 11
+      })
+  );
+  tl::expected<std::vector<metadata::kitsu::assets_type_t>, std::string> l_ret{};
+  if (l_e)
+    l_ret = tl::make_unexpected(l_e.what());
+  else {
+    header_operator_resp(l_res);
+    std::vector<metadata::kitsu::assets_type_t> l_list{};
+    for (auto&& l_prj : nlohmann::json::parse(l_res.body())) {
+      l_list.emplace_back(metadata::kitsu::assets_type_t{
           .uuid_id_    = l_prj["id"].get<uuid>(),
           .name_       = l_prj["name"].get<std::string>(),
       });

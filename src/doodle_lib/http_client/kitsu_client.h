@@ -11,7 +11,9 @@
 
 namespace doodle::metadata::kitsu {
 struct task_type_t;
-}
+
+struct assets_type_t;
+}  // namespace doodle::metadata::kitsu
 
 namespace doodle::kitsu {
 class kitsu_client;
@@ -80,6 +82,7 @@ class kitsu_client {
   boost::asio::awaitable<tl::expected<user_t, std::string>> get_user(const boost::uuids::uuid& in_uuid);
   boost::asio::awaitable<tl::expected<std::vector<project_helper::database_t>, std::string>> get_all_project();
   boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::task_type_t>, std::string>> get_all_task_type();
+  boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::assets_type_t>, std::string>> get_all_assets_type();
 };
 
 using kitsu_client_ptr = std::shared_ptr<kitsu_client>;
