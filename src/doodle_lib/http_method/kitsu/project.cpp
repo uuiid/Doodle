@@ -59,17 +59,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
   }
 
   try {
-    auto l_json = nlohmann::json::parse(l_res.body());
+    auto l_json_r = nlohmann::json::parse(l_res.body());
     if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); l_list.empty()) {
-      l_json["path"]             = nlohmann::json::value_t::null;
-      l_json["en_str"]           = nlohmann::json::value_t::null;
-      l_json["auto_upload_path"] = nlohmann::json::value_t::null;
+      l_json_r["path"]             = nlohmann::json::value_t::null;
+      l_json_r["en_str"]           = nlohmann::json::value_t::null;
+      l_json_r["auto_upload_path"] = nlohmann::json::value_t::null;
     } else {
-      l_json["path"]             = l_list.front().path_;
-      l_json["en_str"]           = l_list.front().en_str_;
-      l_json["auto_upload_path"] = l_list.front().auto_upload_path_;
+      l_json_r["path"]             = l_list.front().path_;
+      l_json_r["en_str"]           = l_list.front().en_str_;
+      l_json_r["auto_upload_path"] = l_list.front().auto_upload_path_;
     }
-    l_res.body() = l_json.dump();
+    l_res.body() = l_json_r.dump();
     l_res.prepare_payload();
   } catch (...) {
     in_handle->logger_->error("api/data/projects/id {}", boost::current_exception_diagnostic_information());
