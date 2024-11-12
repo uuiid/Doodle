@@ -44,7 +44,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
-  } else if (l_json.is_array()) {
+  }
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
+  {
     std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
         std::make_shared<std::vector<assets_helper::database_t>>();
     try {
@@ -68,6 +76,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
 }
+
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_modify(session_data_ptr in_handle) {
   uuid l_uuid{};
 
@@ -175,8 +184,16 @@ void assets_tree_reg(http_route& in_http_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::delete_, "api/doodle/model_library/assets_tree/{id}", assets_tree_delete
+          )
+
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::patch, "api/doodle/model_library/assets_tree", assets_tree_patch
+      )
       )
 
-      );
+
+  ;
 }
 }  // namespace doodle::http::kitsu
