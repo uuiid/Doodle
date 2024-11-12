@@ -11,6 +11,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
 
+#include <tl/expected.hpp>
 #include <treehh/tree.hh>
 namespace doodle::http::kitsu {
 namespace {
@@ -22,6 +23,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get(se
   l_json = l_list;
   co_return in_handle->make_msg(l_json.dump());
 }
+
+tl::expected<void, std::string> check_data(const assets_helper::database_t& in_data) {
+  /// 检查是否存在引用自身
+  if (in_data.uuid_parent_ && in_data.uuid_id_ == *in_data.uuid_parent_)
+    return tl::make_unexpected(fmt::format(" {} 不能引用自身", in_data.uuid_id_));
+
+  /// 检查是否存在循环引用
+  const auto& l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
+  std::map<uuid, const assets_helper::database_t*> l_map{};
+  for (const auto& l_item : l_list) {
+    l_map[l_item.uuid_id_] = &l_item;
+  }
+  auto l_parent_uuid = in_data.uuid_parent_.value_or(uuid{});
+  for (int i = 0; i < 101; ++i) {
+    if (l_parent_uuid.is_nil()) break;
+    if (!l_map.contains(l_parent_uuid))
+      return tl::make_unexpected(fmt::format("{} 未找到父节点", in_data.uuid_id_));
+    l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
+    if (i == 100) return tl::make_unexpected(fmt::format(" {} 节点存在循环引用或者达到最大的深度", in_data.uuid_id_));
+  }
+  return {};
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(session_data_ptr in_handle) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
@@ -63,12 +87,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(
       );
     }
     for (auto& l_item : *l_ptr) {
-      if (l_item.uuid_parent_ && !l_item.uuid_parent_->is_nil()) {
-        if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_item.uuid_parent_);
-            l_list == 0)
-          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
-      }
-      l_item.uuid_id_ = core_set::get_set().get_uuid();
+      if (auto l_r = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_item.uuid_id_); l_r == 0)
+        co_return in_handle->make_error_code_msg(
+            boost::beast::http::status::internal_server_error, "无效的id, 未能再库中查找到实体"
+        );
+      else
+        l_item.id_ = l_r;
+
+      if (auto l_c = check_data(l_item); !l_c)
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_c.error());
     }
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
@@ -98,30 +125,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
     l_value->id_      = l_r;
     l_value->uuid_id_ = l_uuid;
   }
-
-  {
-    /// 检查是否存在引用自身
-    if (l_value->uuid_parent_ && l_uuid == *l_value->uuid_parent_)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不能引用自身");
-
-    /// 检查是否存在循环引用
-    const auto& l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
-    std::map<uuid, const assets_helper::database_t*> l_map{};
-    for (const auto& l_item : l_list) {
-      l_map[l_item.uuid_id_] = &l_item;
-    }
-    auto l_parent_uuid = l_value->uuid_parent_.value_or(uuid{});
-    for (int i = 0; i < 101; ++i) {
-      if (l_parent_uuid.is_nil()) break;
-      if (!l_map.contains(l_parent_uuid))
-        co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
-      l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
-      if (i == 100)
-        co_return in_handle->make_error_code_msg(
-            boost::beast::http::status::not_found, "节点存在循环引用或者达到最大的深度"
-        );
-    }
-  }
+  if (auto l_c = check_data(*l_value); !l_c)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_c.error());
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_value); !l_r)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
