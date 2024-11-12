@@ -64,7 +64,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("uuid_id", &assets_helper::database_t::uuid_id_, unique()),
           make_column("label", &assets_helper::database_t::label_),
           make_column("parent_uuid", &assets_helper::database_t::uuid_parent_),
-          make_column("order", &assets_helper::database_t::order_)
+          make_column("order", &assets_helper::database_t::order_, default_value(0))
       ),
       make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
       make_table(
