@@ -67,7 +67,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
-  } else if (l_json.is_array()) {
+  }
+  if (l_json.is_array()) {
     std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
         std::make_shared<std::vector<assets_helper::database_t>>();
     try {
@@ -101,6 +102,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(
         std::make_shared<std::vector<assets_helper::database_t>>();
     try {
       *l_ptr = l_json.get<std::vector<assets_helper::database_t>>();
+      for (int i = 0; i < l_ptr->size(); ++i) {
+        (*l_ptr)[i].uuid_id_ = l_json[i]["id"].get<uuid>();
+      }
     } catch (...) {
       co_return in_handle->make_error_code_msg(
           boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
