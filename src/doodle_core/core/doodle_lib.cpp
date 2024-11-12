@@ -7,19 +7,15 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
-#include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
 
-#include "core/doodle_lib.h"
-
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
 
 #include <core/status_info.h>
-#include <exception/exception.h>
 #include <logger/logger.h>
 #include <memory>
 #include <utility>
