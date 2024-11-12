@@ -38,8 +38,7 @@ tl::expected<void, std::string> check_data(const assets_helper::database_t& in_d
   auto l_parent_uuid = in_data.uuid_parent_.value_or(uuid{});
   for (int i = 0; i < 101; ++i) {
     if (l_parent_uuid.is_nil()) break;
-    if (!l_map.contains(l_parent_uuid))
-      return tl::make_unexpected(fmt::format("{} 未找到父节点", in_data.uuid_id_));
+    if (!l_map.contains(l_parent_uuid)) return tl::make_unexpected(fmt::format("{} 未找到父节点", in_data.uuid_id_));
     l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
     if (i == 100) return tl::make_unexpected(fmt::format(" {} 节点存在循环引用或者达到最大的深度", in_data.uuid_id_));
   }
@@ -66,6 +65,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
     }
     l_ptr->uuid_id_ = core_set::get_set().get_uuid();
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  } else if (l_json.is_array()) {
+    std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
+        std::make_shared<std::vector<assets_helper::database_t>>();
+    try {
+      *l_ptr = l_json.get<std::vector<assets_helper::database_t>>();
+    } catch (...) {
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+      );
+    }
+    for (auto& l_item : *l_ptr) {
+      if (l_item.uuid_parent_ && !l_item.uuid_parent_->is_nil()) {
+        if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_item.uuid_parent_);
+            l_list == 0)
+          co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+      }
+      l_item.uuid_id_ = core_set::get_set().get_uuid();
+    }
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
