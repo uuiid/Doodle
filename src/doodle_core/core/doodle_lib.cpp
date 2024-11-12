@@ -34,6 +34,7 @@ class doodle_lib::impl {
   logger_ctr_ptr p_log{};
   registry_ptr reg{};
   entt::registry::context ctx_p{std::allocator<entt::entity>{}};
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(io_context_)};
 
   inline static doodle_lib* self;
 };
@@ -94,7 +95,6 @@ details::database_pool_info& g_pool_db() {
 }
 
 boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() {
-  static auto strand = boost::asio::make_strand(g_io_context());
-  return strand;
+  return doodle_lib::Get().ptr->strand_;
 }
 }  // namespace doodle

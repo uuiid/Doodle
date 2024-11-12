@@ -23,6 +23,7 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   friend registry_ptr& g_reg();
   friend entt::registry::context& g_ctx();
   friend details::logger_ctrl& g_logger_ctrl();
+  friend boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
 
  private:
   class impl;
