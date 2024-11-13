@@ -29,8 +29,8 @@ struct database_t {
     j["id"]         = fmt::to_string(p.id_);
     j["start_time"] = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
     j["end_time"]   = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
-    j["remark"]     = p.remark_;
-    j["type"]       = static_cast<std::uint32_t>(p.type_);
+    if (p.remark_) j["remark"] = *p.remark_;
+    j["type"] = static_cast<std::uint32_t>(p.type_);
   }
 };
 }  // namespace attendance_helper
