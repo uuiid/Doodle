@@ -43,13 +43,7 @@ bool open_project::render() {
   ImGui::Dummy(ImVec2{30, 30});
 
   if (auth_ptr_->is_expire()) {
-    if (ImGui::Button("主项目", ImVec2{-FLT_MIN, 0})) {
-      g_ctx().get<database_n::file_translator_ptr>()->async_open(
-          register_file_type::get_main_project(), false, false, g_reg(), [](auto&&) {}
-      );
-      open = false;
-    }
-    if (ImGui::Button("外包", ImVec2{-FLT_MIN, 0})) {
+    if (ImGui::Button("临时项目(不会保存!!)", ImVec2{-FLT_MIN, 0})) {
       core_set::get_set().next_time_ = true;
       core_set_init{}.write_file();
       open = false;
