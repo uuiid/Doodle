@@ -378,7 +378,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
         );
         std::tie(ec_, std::ignore) =
             co_await boost::beast::http::async_read(*stream_, buffer_, *string_request_parser_);
-        if (ec_) co_return do_close("请求体读取失败"), true;
+        if (ec_) co_return false;
 
         stream_->expires_after(30s);
 
@@ -389,7 +389,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           } catch (const nlohmann::json::exception& e) {
             session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
             ec_ = error_enum::bad_json_string;
-            co_return do_close("json 解析错误"), true;
+            co_return false;
           }
         } else {
           if (l_content_type.starts_with("image/jpeg"))
@@ -430,7 +430,9 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
         continue;
       }
       session_->logger_->info("开始解析 url {} {}", request_parser_->get().method(), session_->url_);
-      co_await parse_body();
+      // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
+      if (co_await parse_body()) co_return;
+
       auto l_gen = ec_ ? session_->make_error_code_msg(boost::beast::http::status::bad_request, ec_)
                        : co_await callback_->callback_(session_);
       session_->logger_->info("回复 url {} {}", request_parser_->get().method(), session_->url_);
