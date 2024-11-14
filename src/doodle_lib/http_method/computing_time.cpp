@@ -111,9 +111,11 @@ void computing_time_run(
     std::vector<chrono::seconds> l_woeks2{};
     using rational_int = boost::rational<std::int64_t>;
     for (auto i = 0; i < l_woeks1.size(); ++i) {
-      l_woeks2.push_back(chrono::seconds{
-          boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
-      });
+      l_woeks2.push_back(
+          chrono::seconds{
+              boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
+          }
+      );
     }
 
     chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
@@ -132,17 +134,19 @@ void computing_time_run(
         in_out_data[i].user_ref_          = in_user.id_;
         in_out_data[i].kitsu_task_ref_id_ = in_data.data[i].task_id;
       } else {
-        in_out_data.emplace_back(work_xlsx_task_info_helper::database_t{
-            .uuid_id_           = core_set::get_set().get_uuid(),
-            // .task_info_  = std::vector<work_xlsx_task_info>{},
-            .start_time_        = {chrono::current_zone(), l_begin_time},
-            .end_time_          = {chrono::current_zone(), l_end},
-            .duration_          = chrono::duration_cast<chrono::seconds>(l_woeks2[i]),
-            .remark_            = l_remark,
-            .year_month_        = chrono::local_days{in_year_month / 1},
-            .user_ref_          = in_user.id_,
-            .kitsu_task_ref_id_ = in_data.data[i].task_id
-        });
+        in_out_data.emplace_back(
+            work_xlsx_task_info_helper::database_t{
+                .uuid_id_           = core_set::get_set().get_uuid(),
+                // .task_info_  = std::vector<work_xlsx_task_info>{},
+                .start_time_        = {chrono::current_zone(), l_begin_time},
+                .end_time_          = {chrono::current_zone(), l_end},
+                .duration_          = chrono::duration_cast<chrono::seconds>(l_woeks2[i]),
+                .remark_            = l_remark,
+                .year_month_        = chrono::local_days{in_year_month / 1},
+                .user_ref_          = in_user.id_,
+                .kitsu_task_ref_id_ = in_data.data[i].task_id
+            }
+        );
       }
       l_begin_time = l_end;
     }
@@ -173,9 +177,11 @@ void recomputing_time_run(
     std::vector<chrono::seconds> l_woeks2{};
     using rational_int = boost::rational<std::int64_t>;
     for (auto i = 0; i < l_woeks1.size(); ++i) {
-      l_woeks2.push_back(chrono::seconds{
-          boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
-      });
+      l_woeks2.push_back(
+          chrono::seconds{
+              boost::rational_cast<std::int64_t>(rational_int{l_woeks1[i], l_works_accumulate} * l_all_works.count())
+          }
+      );
     }
 
     chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
@@ -193,19 +199,26 @@ void recomputing_time_run(
   }
 }
 
-bool patch_time(
+std::string patch_time(
     const business::work_clock2& in_time_clock, std::vector<work_xlsx_task_info_helper::database_t>& in_block,
     const boost::uuids::uuid& in_task_id_, const chrono::microseconds& in_duration, const logger_ptr& in_logger_ptr
 ) {
   auto l_task_it =
       std::ranges::find_if(in_block, [&in_task_id_](const auto& l_task) { return l_task.uuid_id_ == in_task_id_; });
   if (l_task_it == std::end(in_block)) {
-    in_logger_ptr->log(log_loc(), level::err, "task {} not found", in_task_id_);
-    return false;
+    return fmt::format("task {} not found", in_task_id_);
   }
 
   // 只有一个任务, 不可以调整
-  if (in_block.size() == 1) return false;
+  if (in_block.size() == 1) return {};
+  auto l_time_begin = chrono::local_time_pos{in_block[0].year_month_};
+  auto l_time_end   = chrono::local_time_pos{in_block[0].year_month_ + chrono::months{1}} - chrono::seconds{1};
+  auto l_max        = in_time_clock(l_time_begin, l_time_end);
+  if (in_duration >= l_max)
+    return fmt::format(
+        "大于最大时长 {} {} ", boost::numeric_cast<std::double_t>(in_duration.count() / 60ull * 60ull * 8ull),
+        boost::numeric_cast<std::double_t>(l_max.count() / 60ull * 60ull * 8ull)
+    );
 
   {
     using rational_int = boost::rational<std::int64_t>;
@@ -229,7 +242,7 @@ bool patch_time(
       l_begin_time            = l_end;
     }
   }
-  return true;
+  return {};
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post(session_data_ptr in_handle) {
@@ -364,6 +377,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
         boost::current_exception_diagnostic_information()
     );
   }
+  if (l_duration.count() <= 0) {
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request,
+        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "参数错误"
+    );
+  }
+
   user_helper::database_t l_user{};
 
   if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
@@ -381,7 +401,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   if (l_block_ptr->empty()) {
     auto l_year_month_str_1 =
         fmt::format("{}-{}", std::int32_t{l_year_month.year()}, std::uint32_t{l_year_month.month()});
-    l_logger->log(log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_.value_or(std::string{}), l_year_month_str_1);
+    l_logger->log(
+        log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_.value_or(std::string{}), l_year_month_str_1
+    );
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::not_found,
         boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
@@ -390,9 +412,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   }
 
   auto l_timer_clock = create_time_clock(l_year_month, l_user.id_);
-  if (patch_time(l_timer_clock, *l_block_ptr, l_task_id, l_duration, in_handle->logger_)) {
+  if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, l_task_id, l_duration, in_handle->logger_); l_err.empty()) {
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  } else {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
   }
   nlohmann::json l_json_res{};
   l_json_res["data"] = *l_block_ptr;
@@ -454,18 +478,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 
 void reg_computing_time(http_route& in_route) {
   in_route
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_post
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_get
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::patch, "api/doodle/computing_time/{user_id}/{year_month}/{task_id}",
-          computing_time_patch
-      ))
-      .reg(std::make_shared<http_function>(
-          boost::beast::http::verb::delete_, "api/doodle/computing_time/{computing_time_id}",
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_post
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_get
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::patch, "api/doodle/computing_time/{user_id}/{year_month}/{task_id}",
+              computing_time_patch
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::delete_, "api/doodle/computing_time/{computing_time_id}",
         computing_time_patch_delete
       ));
 }
