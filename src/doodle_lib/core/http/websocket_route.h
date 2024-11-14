@@ -5,8 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <boost/asio/prepend.hpp>
-
+#include <boost/signals2.hpp>
 namespace doodle::http {
 namespace detail {
 class http_websocket_data;
@@ -23,7 +22,8 @@ class websocket_route {
     call_t call{};
     // call_fun_type() = default;
     // explicit call_fun_type(call_t in_call) : call{std::move(in_call)} {}
-    // explicit call_fun_type(call_t in_call, void* in_user_data) : call{std::move(in_call)}, user_data_{in_user_data} {}
+    // explicit call_fun_type(call_t in_call, void* in_user_data) : call{std::move(in_call)}, user_data_{in_user_data}
+    // {}
   };
 
  private:
@@ -31,6 +31,8 @@ class websocket_route {
 
   call_fun_type not_function_;
   static boost::asio::awaitable<std::string> not_function(http_websocket_data_ptr in_data);
+  // 关闭事件
+  boost::signals2::signal<void(const http_websocket_data_ptr&)> close_signal_;
 
  public:
   websocket_route() : not_function_{not_function}, actions_{} {}
@@ -42,5 +44,14 @@ class websocket_route {
 
   // 路由分发
   call_fun_type operator()(const std::string& in_name) const;
+
+  /// 发出关闭事件
+  void emit_close(const http_websocket_data_ptr& in_data) { return close_signal_(in_data); }
+
+  // 链接关闭事件
+  template <typename Slot>
+  auto connect_close_signal(Slot&& in_slot) {
+    return close_signal_.connect(in_slot);
+  }
 };
 }  // namespace doodle::http

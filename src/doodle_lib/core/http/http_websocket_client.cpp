@@ -37,10 +37,11 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
   }
   boost::beast::get_lowest_layer(*web_stream_).expires_never();
   web_stream_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client));
-  web_stream_->set_option(boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req
-                                                                          ) {
-    req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
-  }));
+  web_stream_->set_option(
+      boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
+        req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
+      })
+  );
 
   auto [l_ec_h] = co_await web_stream_->async_handshake(url_.host(), url_.encoded_target());
   if (l_ec_h) {
@@ -59,20 +60,20 @@ void http_websocket_client::init(
   websocket_route_        = in_websocket_route;
   logger_                 = in_logger;
   write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
-}
+  data_->client_          = weak_from_this();
+  data_->logger_          = logger_;
 
-boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
-  auto l_data     = std::make_shared<detail::http_websocket_data>();
-  l_data->client_ = weak_from_this();
-  l_data->logger_ = logger_;
   {
     boost::system::error_code l_code{};
     auto l_rem_ep = boost::beast::get_lowest_layer(*web_stream_).socket().remote_endpoint(l_code);
     if (!l_code)
-      l_data->remote_endpoint_ = l_rem_ep.address().to_string();
+      data_->remote_endpoint_ = l_rem_ep.address().to_string();
     else
       logger_->error("错误的远程端点获取 {}", l_code);
   }
+}
+
+boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     boost::beast::flat_buffer l_buffer{};
     auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
@@ -81,6 +82,7 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
         co_return;
       }
       logger_->error(l_ec_r.what());
+      websocket_route_->emit_close(data_);
       auto [l_ec_close] = co_await web_stream_->async_close(boost::beast::websocket::close_code::normal);
       if (l_ec_close) logger_->error(l_ec_close.what());
       co_return;
@@ -88,9 +90,9 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
 
     std::string l_call_fun_name{};
     try {
-      l_data->body_ =
+      data_->body_ =
           nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
-      l_call_fun_name = l_data->body_["type"].get<std::string>();
+      l_call_fun_name = data_->body_["type"].get<std::string>();
     } catch (const nlohmann::json::exception& in_e) {
       logger_->error(in_e.what());
       continue;
@@ -98,7 +100,7 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
     web_stream_->text(true);
 
     auto l_call_fun   = (*websocket_route_)(l_call_fun_name);
-    std::string l_str = co_await l_call_fun.call(l_data);
+    std::string l_str = co_await l_call_fun.call(data_);
     if (l_str.empty()) continue;
 
     // co_await async_write_websocket(l_str);
@@ -111,6 +113,7 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::async_w
   auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(in_data));
   if (l_ec_w) {
     logger_->error(l_ec_w.what());
+    websocket_route_->emit_close(data_);
     auto [l_ec_close] = co_await web_stream_->async_close(boost::beast::websocket::close_code::normal);
     if (l_ec_close) {
       logger_->error(l_ec_close.what());
