@@ -14,9 +14,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 );
 class computer {
  public:
-  computer() = default;
-  explicit computer(std::string in_name, std::string in_ip) : name_(std::move(in_name)), ip_(std::move(in_ip)) {}
-  ~computer() = default;
+  std::int32_t id_{};
+  uuid uuid_id_{};
 
   std::string name_;
   std::string ip_;
@@ -30,11 +29,7 @@ class computer {
     j["name"]   = p.name_;
     j["ip"]     = p.ip_;
     j["status"] = p.server_status_;
-  }
-  // from json
-  friend void from_json(const nlohmann::json& j, computer& p) {
-    j.at("name").get_to(p.name_);
-    j.at("ip").get_to(p.ip_);
+    j["id"]     = p.uuid_id_;
   }
 };
 
