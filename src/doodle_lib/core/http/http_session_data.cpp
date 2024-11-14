@@ -20,7 +20,7 @@
 
 namespace doodle::http {
 namespace detail {
-class async_session_t {
+class async_session_t : public std::enable_shared_from_this<async_session_t> {
   static constexpr auto g_body_limit{500 * 1024 * 1024};  // 500M
   using executor_type              = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
   using tcp_stream_type            = executor_type::as_default_on_t<boost::beast::tcp_stream>;
@@ -310,7 +310,11 @@ class async_session_t {
     if (!proxy_relay_stream_) co_return do_close("代理打开失败"), true;
 
     if (l_is_websocket)
-      co_return co_await proxy_websocket_relay(), true;
+      co_return boost::asio::co_spawn(
+          stream_->get_executor(), proxy_websocket_relay(),
+          boost::asio::consign(boost::asio::detached, shared_from_this())
+      ),
+          true;
     else
       co_await proxy_http_relay();
 
@@ -349,12 +353,16 @@ class async_session_t {
     co_return;
   }
 
-  boost::asio::awaitable<void> parse_body() {
+  boost::asio::awaitable<bool> parse_body() {
     std::string l_content_type = request_parser_->get()[boost::beast::http::field::content_type];
     switch (method_verb_) {
       case boost::beast::http::verb::get:
         if (boost::beast::websocket::is_upgrade(request_parser_->get()) && callback_->has_websocket()) {
-          co_return co_await async_websocket_session();
+          co_return boost::asio::co_spawn(
+              stream_->get_executor(), async_websocket_session(),
+              boost::asio::consign(boost::asio::detached, shared_from_this())
+          ),
+              true;
         }
       case boost::beast::http::verb::head:
       case boost::beast::http::verb::options:
@@ -370,7 +378,7 @@ class async_session_t {
         );
         std::tie(ec_, std::ignore) =
             co_await boost::beast::http::async_read(*stream_, buffer_, *string_request_parser_);
-        if (ec_) co_return;
+        if (ec_) co_return do_close("请求体读取失败"), true;
 
         stream_->expires_after(30s);
 
@@ -381,7 +389,7 @@ class async_session_t {
           } catch (const nlohmann::json::exception& e) {
             session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
             ec_ = error_enum::bad_json_string;
-            co_return;
+            co_return do_close("json 解析错误"), true;
           }
         } else {
           if (l_content_type.starts_with("image/jpeg"))
@@ -400,8 +408,9 @@ class async_session_t {
         session_->req_header_ = std::move(string_request_parser_->release().base());
         break;
       default:
-        co_return;
+        co_return false;
     }
+    co_return false;
   }
 
  public:
@@ -415,7 +424,7 @@ class async_session_t {
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       set_session();
       callback_ = (*route_ptr_)(method_verb_, session_->url_.segments(), session_);
-      // 空回调直接运行代理
+      // 检查代理
       if (callback_->is_proxy()) {
         if (co_await proxy_run()) co_return;
         continue;
