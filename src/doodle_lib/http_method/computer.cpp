@@ -71,32 +71,9 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
   co_return std::string{};
 }
 
-boost::asio::awaitable<std::string> web_set_task_fun(http_websocket_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
-  if (!in_handle->user_data_) {
-    l_logger->log(log_loc(), level::err, "用户数据为空");
-    co_return std::string{};
-  }
 
-  auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
-  if (!l_computer->task_info_) {
-    l_logger->log(log_loc(), level::err, "task_info is null");
-    co_return std::string{};
-  }
-  auto l_task     = l_computer->task_info_;
-  l_task->status_ = magic_enum::enum_cast<server_task_info_status>(in_handle->body_["status"].get<std::string>())
-                        .value_or(server_task_info_status::unknown);
-  if (l_task->status_ == server_task_info_status::completed || l_task->status_ == server_task_info_status::failed) {
-    l_task->end_time_ = std::chrono::system_clock::now();
-  }
-  {
-    g_reg()->patch<doodle::server_task_info>(
-        l_computer->task_info_entity_, [l_task](doodle::server_task_info& in_task) { in_task = *l_task; }
-    );
-  }
-  l_computer->computer_data_.server_status_ = doodle::computer_status::free;
-  co_return std::string{};
-}
+
+boost::asio::awaitable<void> close_event(http_websocket_data_ptr in_data) { co_return; }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_computers(session_data_ptr in_handle) {
   std::vector<doodle::computer> l_computers = g_ctx().get<sqlite_database>().get_all<computer>();
@@ -105,8 +82,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_computers(ses
 
 void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_ptr& in_handle) {
   in_web_socket->reg("set_state", websocket_route::call_fun_type(web_set_tate_fun))
-      .reg("logger", websocket_route::call_fun_type(web_logger_fun))
-      .reg("set_task", websocket_route::call_fun_type(web_set_task_fun));
+      .reg("logger", websocket_route::call_fun_type(web_logger_fun));
+
+  in_web_socket->connect_close_signal([](const http_websocket_data_ptr& in_data) {
+    boost::asio::co_spawn(g_io_context(), close_event(in_data), boost::asio::detached);
+  });
 }
 }  // namespace
 
