@@ -64,7 +64,8 @@ class http_function_base_t {
   explicit http_function_base_t(
       boost::beast::http::verb in_verb,
       std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
-      std::function<void(const websocket_route_ptr&)> in_callback_websocket, bool in_is_proxy = false
+      std::function<void(const websocket_route_ptr&, const session_data_ptr&)> in_callback_websocket,
+      bool in_is_proxy = false
   )
       : verb_{in_verb},
         callback_{std::move(in_callback)},
@@ -79,7 +80,7 @@ class http_function_base_t {
   virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const = 0;
 
   std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
-  std::function<void(const websocket_route_ptr&)> websocket_callback_;
+  std::function<void(const websocket_route_ptr&, const session_data_ptr&)> websocket_callback_;
 };
 
 class http_function : public http_function_base_t {
@@ -104,7 +105,7 @@ class http_function : public http_function_base_t {
   explicit http_function(
       boost::beast::http::verb in_verb, std::string in_url,
       std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
-      std::function<void(const websocket_route_ptr&)> in_callback_websocket
+      std::function<void(const websocket_route_ptr&, const session_data_ptr&)> in_callback_websocket
   )
       : http_function_base_t(in_verb, std::move(in_callback), std::move(in_callback_websocket)),
         capture_vector_(set_cap_bit(in_url)) {}

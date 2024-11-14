@@ -331,7 +331,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
   boost::asio::awaitable<void> async_websocket_session() {
     boost::beast::get_lowest_layer(*stream_).expires_never();
     auto l_websocket_route = std::make_shared<websocket_route>();
-    callback_->websocket_callback_(l_websocket_route);
+    callback_->websocket_callback_(l_websocket_route, session_);
 
     boost::beast::websocket::stream<tcp_stream_type> l_stream{std::move(*stream_)};
     stream_.reset();

@@ -4,6 +4,7 @@
 
 #include "computer.h"
 
+#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/server_task_info.h>
@@ -98,24 +99,11 @@ boost::asio::awaitable<std::string> web_set_task_fun(http_websocket_data_ptr in_
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_computers(session_data_ptr in_handle) {
-  std::vector<doodle::computer> l_computers{};
-  for (auto&& l_web_ : computer_reg_data_manager::get().list()) {
-    l_computers.emplace_back(l_web_->computer_data_);
-  }
-
-  nlohmann::json l_json = l_computers;
-  boost::beast::http::response<boost::beast::http::string_body> l_response{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_response.result(boost::beast::http::status::ok);
-  l_response.keep_alive(in_handle->keep_alive_);
-  l_response.set(boost::beast::http::field::content_type, "application/json");
-  l_response.body() = l_json.dump();
-  l_response.prepare_payload();
-  co_return std::move(l_response);
+  std::vector<doodle::computer> l_computers = g_ctx().get<sqlite_database>().get_all<computer>();
+  co_return in_handle->make_msg((nlohmann::json{} = l_computers).dump());
 }
 
-void reg_computer(const websocket_route_ptr& in_web_socket) {
+void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_ptr& in_handle) {
   in_web_socket->reg("set_state", websocket_route::call_fun_type(web_set_tate_fun))
       .reg("logger", websocket_route::call_fun_type(web_logger_fun))
       .reg("set_task", websocket_route::call_fun_type(web_set_task_fun));
