@@ -25,6 +25,7 @@
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
+DOODLE_SQLITE_ENUM_TYPE_(doodle::computer_status)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
 }  // namespace sqlite_orm
 
