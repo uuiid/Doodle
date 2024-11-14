@@ -7,6 +7,7 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
@@ -35,6 +36,16 @@ auto make_storage_doodle(const std::string& in_path) {
 
   return std::move(make_storage(
       in_path,  //
+      make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
+      make_table(
+          "computer_tab",                                           //
+          make_column("id", &computer::id_, primary_key()),         //
+          make_column("uuid_id", &computer::uuid_id_, unique()),    //
+          make_column("name", &computer::name_),                    //
+          make_column("ip", &computer::ip_),                        //
+          make_column("server_status", &computer::server_status_),  //
+          make_column("client_status", &computer::client_status_)
+      ),
       make_index("kitsu_assets_type_tab_uuid_id_index", &metadata::kitsu::assets_type_t::uuid_id_),
       make_table(
           "kitsu_assets_type_tab",                                                 //
