@@ -8,6 +8,7 @@ target_sources(
         json_body.h
         websocket_route.h
         http_websocket_client.h
+        zlib_deflate_file_body.h
 
 
         PRIVATE
@@ -18,4 +19,5 @@ target_sources(
         json_body.cpp
         websocket_route.cpp
         http_websocket_client.cpp
+        zlib_deflate_file_body.cpp
 )
