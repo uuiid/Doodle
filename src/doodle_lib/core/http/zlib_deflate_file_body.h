@@ -17,10 +17,11 @@ struct zlib_deflate_file_body {
 
   class value_type {
    public:
-    boost::iostreams::file_source source_;
+    std::shared_ptr<boost::iostreams::file_source> source_;
+    value_type() {}
     void open(const std::filesystem::path& path, std::ios::openmode mode, boost::system::error_code& ec) {
-      source_.open(path.generic_string(), mode);
-      if (!source_.is_open()) {
+      source_ = std::make_shared<boost::iostreams::file_source>(path.generic_string(), mode);
+      if (!source_->is_open()) {
         ec = boost::system::errc::make_error_code(boost::system::errc::no_such_file_or_directory);
       }
     }
@@ -37,25 +38,26 @@ struct zlib_deflate_file_body {
     using const_buffers_type = boost::asio::const_buffer;
     template <bool isRequest, class Fields>
     explicit writer(boost::beast::http::header<isRequest, Fields> const& in_h, value_type& b) : body_(b) {
-      BOOST_ASSERT(body_.source_.is_open());
+      BOOST_ASSERT(body_.source_->is_open());
       stream_.push(boost::iostreams::zlib_compressor{});
-      stream_.push(b.source_);
+      stream_.push(*b.source_);
     }
 
     void init(boost::system::error_code& ec) {
-      BOOST_ASSERT(body_.source_.is_open());
+      BOOST_ASSERT(body_.source_->is_open());
       ec.clear();
     }
 
     boost::optional<std::pair<const_buffers_type, bool>> get(boost::system::error_code& ec) {
-      std::size_t const n = stream_.readsome(buf_, BOOST_BEAST_FILE_BUFFER_SIZE);
+      if (!stream_) return boost::none;
+      std::size_t const n = stream_.read(buf_, BOOST_BEAST_FILE_BUFFER_SIZE).gcount();
       if (n == 0) {
         ec = {};
         return boost::none;
       }
       BOOST_ASSERT(n != 0);
       ec = {};
-      return {{boost::asio::const_buffer(buf_, n), true}};
+      return {{boost::asio::const_buffer(buf_, n), !!stream_}};
     }
   };
 
@@ -66,13 +68,13 @@ struct zlib_deflate_file_body {
    public:
     template <bool isRequest, class Fields>
     explicit reader(boost::beast::http::header<isRequest, Fields>&, value_type& b) : body_(b) {
-      stream_.push(body_.source_);
+      stream_.push(*body_.source_);
     }
 
     void init(boost::optional<std::uint64_t> const& content_length, boost::system::error_code& ec) {
       // VFALCO We could reserve space in the file
       boost::ignore_unused(content_length);
-      BOOST_ASSERT(body_.source_.is_open());
+      BOOST_ASSERT(body_.source_->is_open());
       ec = {};
     }
 

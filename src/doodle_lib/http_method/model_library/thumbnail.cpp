@@ -4,7 +4,8 @@
 
 #include "thumbnail.h"
 
-#include "doodle_lib/core/http/http_function.h"
+#include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include <opencv2/opencv.hpp>
@@ -77,16 +78,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
 
   auto l_ext = l_path.extension();
   boost::system::error_code l_code{};
+  auto l_set_handle = [&l_ext, &in_handle](auto&& in_res) {
+    in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+    in_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_ext));
+    in_res.keep_alive(in_handle->keep_alive_);
+    in_res.prepare_payload();
+  };
+
+  if (in_handle->req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
+    boost::beast::http::response<http::zlib_deflate_file_body> l_res{
+        boost::beast::http::status::ok, in_handle->version_
+    };
+    l_res.body().open(l_path, std::ios::in | std::ios::binary, l_code);
+    l_res.set(boost::beast::http::field::content_encoding, "deflate");
+    l_set_handle(l_res);
+    if (l_code)
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
+    co_return std::move(l_res);
+  }
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_ext));
   l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
+  l_set_handle(l_res);
   if (l_code)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
-  l_res.keep_alive(in_handle->keep_alive_);
-  l_res.prepare_payload();
   co_return std::move(l_res);
 }
 }  // namespace

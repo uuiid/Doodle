@@ -12,6 +12,11 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/launch/kitsu_supplement.h>
 
+#include <boost/iostreams/categories.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
@@ -29,6 +34,17 @@ BOOST_AUTO_TEST_CASE(msg_body) {
   default_logger_raw()->info(l_str.str());
 }
 
+BOOST_AUTO_TEST_CASE(file_s) {
+  boost::iostreams::filtering_stream<boost::iostreams::input> stream_{};
+  stream_.push(boost::iostreams::file_source{"E:/1.txt"});
+  char l_str[2048]{};
+  BOOST_ASSERT(stream_);
+  stream_.sync();
+  stream_.read(l_str, 2048);
+  std::cout << "读取文件: \n" << l_str << std::endl;
+  // std::cout << "读取文件asdsa2: \n" << stream_.rdbuf() << std::endl;
+}
+
 constexpr static std::string_view g_token{
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
     "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlwZSI6Im"
@@ -43,36 +59,36 @@ BOOST_AUTO_TEST_CASE(main) {
   // 创建基本的测试数据
 
   entt::handle l_handle{*g_reg(), g_reg()->create()};
-  auto& l_user                = l_handle.emplace<user>();
-  l_user.id_                  = boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b");
+  auto& l_user               = l_handle.emplace<user>();
+  l_user.id_                 = boost::lexical_cast<boost::uuids::uuid>("69a8d093-dcab-4890-8f9d-c51ef065d03b");
   // l_user.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
 
-  entt::entity l_user_entity  = l_handle;
+  entt::entity l_user_entity = l_handle;
   using namespace std::chrono_literals;
 
   {  // 创建虚拟user, 用以检查调休等数据从钉钉中获取是否正常
-    l_handle                      = {*g_reg(), g_reg()->create()};
-    auto& l_user                  = l_handle.emplace<user>();
-    l_user.id_                    = boost::lexical_cast<boost::uuids::uuid>("ce6d3b4d-75aa-4e0f-90af-18b913df138a");
-    l_user.mobile_                = "15827605754";
+    l_handle              = {*g_reg(), g_reg()->create()};
+    auto& l_user          = l_handle.emplace<user>();
+    l_user.id_            = boost::lexical_cast<boost::uuids::uuid>("ce6d3b4d-75aa-4e0f-90af-18b913df138a");
+    l_user.mobile_        = "15827605754";
     // l_user.dingding_company_id_   = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
-    l_user.dingding_id_           = "16951873382881136";
+    l_user.dingding_id_   = "16951873382881136";
 
     // 2
-    l_handle                      = {*g_reg(), g_reg()->create()};
-    auto& l_user_2                = l_handle.emplace<user>();
-    l_user_2.id_                  = boost::lexical_cast<boost::uuids::uuid>("5b5153a1-51a4-4376-9450-2c317e523cbe");
-    l_user_2.mobile_              = "18056860368";
+    l_handle              = {*g_reg(), g_reg()->create()};
+    auto& l_user_2        = l_handle.emplace<user>();
+    l_user_2.id_          = boost::lexical_cast<boost::uuids::uuid>("5b5153a1-51a4-4376-9450-2c317e523cbe");
+    l_user_2.mobile_      = "18056860368";
     // l_user_2.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
-    l_user_2.dingding_id_         = "16941375683116574";
+    l_user_2.dingding_id_ = "16941375683116574";
 
     // 3
-    l_handle                      = {*g_reg(), g_reg()->create()};
-    auto& l_user_3                = l_handle.emplace<user>();
-    l_user_3.id_                  = boost::lexical_cast<boost::uuids::uuid>("78a1ec16-8a2d-4ae2-b0c9-7a8092694100");
-    l_user_3.mobile_              = "15635681053";
+    l_handle              = {*g_reg(), g_reg()->create()};
+    auto& l_user_3        = l_handle.emplace<user>();
+    l_user_3.id_          = boost::lexical_cast<boost::uuids::uuid>("78a1ec16-8a2d-4ae2-b0c9-7a8092694100");
+    l_user_3.mobile_      = "15635681053";
     // l_user_3.dingding_company_id_ = boost::lexical_cast<boost::uuids::uuid>("fd3eb038-7cd5-46bf-88f6-c8e6097d9325");
-    l_user_3.dingding_id_         = "250801386824116912";
+    l_user_3.dingding_id_ = "250801386824116912";
   }
 
   l_handle = {*g_reg(), g_reg()->create()};
