@@ -15,9 +15,13 @@
 #include <doodle_lib/core/http/websocket_route.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/iostreams/categories.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
 
 #include <tl/expected.hpp>
-
 namespace doodle::http {
 namespace detail {
 class async_session_t : public std::enable_shared_from_this<async_session_t> {
@@ -478,5 +482,16 @@ boost::beast::http::message_generator session_data::make_error_code_msg(
   l_response.prepare_payload();
   return l_response;
 }
+
+std::string session_data::zlib_compress(const std::string& in_str) {
+  std::stringstream compressed{};
+  std::stringstream original{in_str};
+  boost::iostreams::filtering_streambuf<boost::iostreams::input> out;
+  out.push(boost::iostreams::zlib_compressor{});
+  out.push(original);
+  boost::iostreams::copy(out, compressed);
+  return compressed.str();
+}
+
 } // namespace detail
 } // namespace doodle::http

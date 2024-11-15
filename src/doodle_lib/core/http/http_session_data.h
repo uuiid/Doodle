@@ -19,11 +19,11 @@ class http_route;
 using http_route_ptr = std::shared_ptr<http_route>;
 class http_session_data;
 using http_session_data_ptr = std::shared_ptr<http_session_data>;
-using executor_type       = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-using endpoint_type       = boost::asio::ip::tcp::endpoint;
-using tcp_stream_type     = executor_type::as_default_on_t<boost::beast::tcp_stream>;
-using tcp_stream_type_ptr = std::shared_ptr<tcp_stream_type>;
-using request_parser_ptr  = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
+using executor_type         = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+using endpoint_type         = boost::asio::ip::tcp::endpoint;
+using tcp_stream_type       = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+using tcp_stream_type_ptr   = std::shared_ptr<tcp_stream_type>;
+using request_parser_ptr    = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
 namespace detail {
 enum class content_type {
   text_plain,
@@ -40,6 +40,8 @@ enum class content_type {
 };
 
 class session_data {
+  std::string zlib_compress(const std::string& in_str);
+
  public:
   session_data()  = default;
   ~session_data() = default;
@@ -58,7 +60,6 @@ class session_data {
   // 每次连接自定义数据
   std::any user_data_;
 
-
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
   ) {
@@ -75,7 +76,12 @@ class session_data {
     l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
     l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     l_res.keep_alive(keep_alive_);
-    l_res.body() = std::move(in_body);
+    if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
+      l_res.body() = zlib_compress(std::move(in_body));
+      l_res.set(boost::beast::http::field::content_encoding, "deflate");
+    } else
+      l_res.body() = std::move(in_body);
+
     l_res.prepare_payload();
     return l_res;
   }
