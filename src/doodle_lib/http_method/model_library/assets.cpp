@@ -21,7 +21,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_get(session
   auto l_list       = g_ctx().get<sqlite_database>().get_all<assets_file_helper::database_t>();
   FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
   for (auto&& l_obj : l_list) {
-    l_obj.has_thumbnail_ &= FSys::exists(l_path / "thumbnails" / fmt::to_string(l_obj.uuid_id_) / ".png");
+    l_obj.has_thumbnail_ &= FSys::exists(l_path / "thumbnails" / (fmt::to_string(l_obj.uuid_id_) + ".png"));
   }
   nlohmann::json l_json{};
   l_json = l_list;
