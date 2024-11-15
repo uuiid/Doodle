@@ -66,6 +66,7 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("notes", &assets_file_helper::database_t::notes_),
           make_column("active", &assets_file_helper::database_t::active_),
           make_column("parent_id", &assets_file_helper::database_t::parent_id_),
+          make_column("has_thumbnail", &assets_file_helper::database_t::has_thumbnail_, default_value(false)),
           foreign_key(&assets_file_helper::database_t::parent_id_).references(&assets_helper::database_t::id_)
       ),
 

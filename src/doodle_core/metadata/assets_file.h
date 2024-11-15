@@ -90,14 +90,16 @@ struct database_t {
   bool active_{};
   uuid uuid_parent_{};
   std::int32_t parent_id_{};
+  bool has_thumbnail_{};
 
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]          = p.uuid_id_;
-    j["label"]       = p.label_;
-    j["path"]        = p.path_;
-    j["notes"]       = p.notes_;
-    j["active"]      = p.active_;
-    j["parent_id"] = p.uuid_parent_;
+    j["id"]            = p.uuid_id_;
+    j["label"]         = p.label_;
+    j["path"]          = p.path_;
+    j["notes"]         = p.notes_;
+    j["active"]        = p.active_;
+    j["parent_id"]     = p.uuid_parent_;
+    j["has_thumbnail"] = p.has_thumbnail_;
   }
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, database_t& p) {
     j.at("label").get_to(p.label_);
@@ -105,6 +107,7 @@ struct database_t {
     j.at("notes").get_to(p.notes_);
     j.at("active").get_to(p.active_);
     j.at("parent_id").get_to(p.uuid_parent_);
+    if (j.contains("has_thumbnail")) j.at("has_thumbnail").get_to(p.has_thumbnail_);
   }
 };
 }  // namespace assets_file_helper
