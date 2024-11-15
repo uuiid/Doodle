@@ -4,6 +4,7 @@
 #include "kitsu.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/platform/win/register_file_type.h>
@@ -133,6 +134,16 @@ boost::asio::awaitable<void> init_context_impl() {
     if (!l_install->empty())
       if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
         default_logger_raw()->error("初始化检查 assets_type 后插入数据库失败 {}", l_r.error());
+  }
+  {
+    auto l_list_ptr   = std::make_shared<std::vector<assets_file_helper::database_t>>();
+    *l_list_ptr       = g_ctx().get<sqlite_database>().get_all<assets_file_helper::database_t>();
+    FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
+    for (auto&& l_obj : *l_list_ptr) {
+      l_obj.has_thumbnail_ &= FSys::exists(l_path / "thumbnails" / (fmt::to_string(l_obj.uuid_id_) + ".png"));
+    }
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_list_ptr); !l_r)
+      default_logger_raw()->error("初始化检查 assets 后插入数据库失败 {}", l_r.error());
   }
   app_base::Get().stop_app();
 }

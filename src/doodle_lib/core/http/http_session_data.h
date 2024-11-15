@@ -76,11 +76,11 @@ class session_data {
     l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
     l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     l_res.keep_alive(keep_alive_);
-    if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
-      l_res.body() = zlib_compress(std::move(in_body));
-      l_res.set(boost::beast::http::field::content_encoding, "deflate");
-    } else
-      l_res.body() = std::move(in_body);
+    // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
+    //   l_res.body() = zlib_compress(std::move(in_body));
+    //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
+    // } else
+    l_res.body() = std::move(in_body);
 
     l_res.prepare_payload();
     return l_res;
