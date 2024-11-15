@@ -40,7 +40,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
     // cv::Mat l_image = cv::imdecode(cv::InputArray{l_buff}, cv::IMREAD_UNCHANGED);
     cv::Mat l_image = cv::imdecode(
         cv::InputArray{reinterpret_cast<uchar*>(l_data.data()), boost::numeric_cast<int>(l_data.size())},
-        cv::IMREAD_UNCHANGED
+        cv::IMREAD_COLOR
     );
     if (l_image.empty())
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
