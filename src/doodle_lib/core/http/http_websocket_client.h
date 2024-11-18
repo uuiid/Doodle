@@ -9,6 +9,7 @@
 #include <boost/url/url.hpp>
 
 #include "http_route.h"
+#include <tl/expected.hpp>
 
 namespace doodle::http {
 
@@ -50,5 +51,15 @@ class http_websocket_client : public std::enable_shared_from_this<http_websocket
 
   boost::asio::awaitable<void> async_read_websocket();
   boost::asio::awaitable<boost::system::error_code> async_write_websocket(std::string in_data);
+  boost::asio::awaitable<tl::expected<void, std::string>> async_ping() const {
+    auto [l_ec] = co_await web_stream_->async_ping({});
+    if (l_ec) co_return tl::make_unexpected(l_ec.what());
+    co_return tl::expected<void, std::string>{};
+  }
+  boost::asio::awaitable<tl::expected<void, std::string>> async_pong() const {
+    auto [l_ec] = co_await web_stream_->async_pong({});
+    if (l_ec) co_return tl::make_unexpected(l_ec.what());
+    co_return tl::expected<void, std::string>{};
+  }
 };
 }
