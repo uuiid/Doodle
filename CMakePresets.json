@@ -187,7 +187,7 @@
       "description": "package_7z_debug",
       "configurePreset": "Ninja_debug",
       "generators": [
-        "7Z",
+        "ZIP",
         "NSIS"
       ]
     },
@@ -197,7 +197,7 @@
       "description": "package_release",
       "configurePreset": "Ninja_release",
       "generators": [
-        "7Z",
+        "ZIP",
         "NSIS"
       ]
     }
