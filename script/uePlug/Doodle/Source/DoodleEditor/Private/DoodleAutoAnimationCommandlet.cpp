@@ -1094,8 +1094,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
 
 	// 设置抗拒齿方法
-	UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass()));
-	if (AntiAliasing)
+	if (UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())))
 	{
 		AntiAliasing->SpatialSampleCount = 1;
 		AntiAliasing->TemporalSampleCount = 1;
@@ -1107,6 +1106,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())); GameOver)
 	{
 		GameOver->bCinematicQualitySettings = false;
+		GameOver->TextureStreaming = EMoviePipelineTextureStreamingMethod::None;
 	}
 	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())))
 	{
