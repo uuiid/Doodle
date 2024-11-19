@@ -48,8 +48,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   // 部门
   std::string organization_name;
 
-  std::shared_ptr<nlohmann::json> json_data;
-
   FSys::path p_root;
   FSys::path _root_cache;
   FSys::path p_doc;
@@ -93,7 +91,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
 void to_json(nlohmann::json &j, const core_set &p);
 void from_json(const nlohmann::json &j, core_set &p);
-
 
 namespace win {
 /// FOLDERID_Fonts

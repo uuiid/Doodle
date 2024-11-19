@@ -69,13 +69,7 @@ void session::start(std::shared_ptr<rpc_server> in_server) {
         std::getline(l_istream, l_ine);
         if (l_ine.empty()) continue;
 
-        // ptr->parser_rpc_.json_data_attr(l_ine);
-        // auto l_result_string = ptr->parser_rpc_(*ptr->rpc_server_);
-        // if (ptr->parser_rpc_) {  /// \brief 如果传入的是关闭函数就直接关闭
-        //   ptr->session_manager_->stop(this->shared_from_this());
-        // } else {
-        //   boost::asio::async_write(ptr->socket_, boost::asio::buffer(l_result_string + end_string), yield);
-        // }
+
       } else {
         break;
       }
