@@ -5,6 +5,7 @@
 #include "EditorAssetLibrary.h"
 #include "GeometryCache.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialInterface.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/SkinnedAssetCommon.h"
@@ -30,7 +31,6 @@
 //文件夹整理
 #include "DoodleOrganizeCompoundWidget.h"
 #include "DoodleEffectLibraryWidget.h"
-
 
 
 namespace
@@ -164,7 +164,29 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 				SNew(STextBlock).Text(FText::FromString(TEXT("特效资源库")))
 			]
 			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类特效资源库")); })
-		]];
+		]
+		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{1.f, 1.f})
+		[
+			SNew(SButton).OnClicked_Lambda([this]() -> FReply
+			{
+				FARFilter LFilter{};
+				LFilter.bIncludeOnlyOnDiskAssets = false;
+				LFilter.bRecursivePaths = true;
+				LFilter.bRecursiveClasses = true;
+				LFilter.ClassPaths.Add(UMaterialParameterCollection::StaticClass()->GetClassPathName());
+				IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
+				{
+					UObject* LObj =	InAss.GetAsset();
+				    return true;
+				});
+				return FReply::Handled();
+			})
+			[
+				SNew(STextBlock).Text(FText::FromString(TEXT("修复崩溃")))
+			]
+			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("修复5.4 材质参数集崩溃")); })
+		]
+	];
 	/// clang-format on
 }
 
