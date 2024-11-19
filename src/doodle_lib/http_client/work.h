@@ -44,6 +44,7 @@ class http_work {
 
   std::string host_name_{};
   std::string url_{};
+  uuid uuid_id_{};
 
   boost::asio::awaitable<void> async_run();
 
@@ -61,6 +62,6 @@ class http_work {
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const std::string& in_url);
+  void run(const std::string& in_url, const uuid& in_uuid = uuid{});
 };
 }  // namespace doodle::http

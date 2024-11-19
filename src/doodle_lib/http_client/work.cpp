@@ -45,14 +45,12 @@ boost::asio::awaitable<std::string> websocket_run_task_fun_launch(
   co_return std::string{};
 }
 
-// 根据硬件生成 uuid
-// Generate UUID based on hardware
-uuid generate_uuid_hardware() {}
-
-void http_work::run(const std::string& in_url) {
-  executor_         = boost::asio::make_strand(g_io_context());
-  timer_            = std::make_shared<timer>(executor_);
-  url_              = in_url;
+void http_work::run(const std::string& in_url, const uuid& in_uuid) {
+  executor_ = boost::asio::make_strand(g_io_context());
+  timer_    = std::make_shared<timer>(executor_);
+  url_      = in_url;
+  uuid_id_  = in_uuid;
+  if (uuid_id_.is_nil()) uuid_id_ = core_set::get_set().user_id;
 
   websocket_client_ = std::make_shared<http_websocket_client>();
   logger_           = g_logger_ctrl().make_log("http_work");
@@ -212,7 +210,9 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
 
 boost::asio::awaitable<void> http_work::async_set_status(computer_status in_status) {
   if (auto l_ec = co_await websocket_client_->async_write_websocket(
-          nlohmann::json{{"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}}.dump()
+          nlohmann::json{
+              {"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}, {"user_id", uuid_id_}
+          }.dump()
       );
       l_ec) {
     logger_->error("写入错误 {}", l_ec);
