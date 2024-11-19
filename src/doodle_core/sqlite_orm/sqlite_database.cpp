@@ -383,6 +383,7 @@ DOODLE_INSTALL_SQL(user_helper::database_t)
 DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_SQL(assets_file_helper::database_t)
 DOODLE_INSTALL_SQL(assets_helper::database_t)
+DOODLE_INSTALL_SQL(computer)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
