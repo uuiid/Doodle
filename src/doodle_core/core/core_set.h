@@ -9,7 +9,6 @@
 
 namespace doodle {
 
-class core_set_init;
 class user;
 class doodle_lib;
 
@@ -20,7 +19,6 @@ class doodle_lib;
  */
 
 class DOODLE_CORE_API core_set : public details::no_copy {
-  friend class core_set_init;
   friend class user;
   friend class doodle_lib;
 
@@ -71,6 +69,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   /// 欢迎窗口的变量
   bool next_time_{};
 
+  void save();
 
  private:
   // 用户名称
@@ -94,16 +93,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
 void to_json(nlohmann::json &j, const core_set &p);
 void from_json(const nlohmann::json &j, core_set &p);
-class DOODLE_CORE_API core_set_init {
-  core_set &p_set;
 
- public:
-  core_set_init();
-
-  void read_file();
-  bool write_file();
-  bool config_to_user();
-};
 
 namespace win {
 /// FOLDERID_Fonts

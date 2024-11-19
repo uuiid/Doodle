@@ -16,12 +16,6 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
   static constexpr auto export_fbx_config{"export_fbx_config"};
   static constexpr auto replace_file_config{"replace_file_config"};
 
-  default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
-  core_set_init k_init{};
-  default_logger_raw()->log(log_loc(), level::warn, "寻找用户配置文件目录");
-  k_init.config_to_user();
-  default_logger_raw()->log(log_loc(), level::warn, "读取配置文件");
-  k_init.read_file();
   default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", register_file_type::program_location());
 
   if (auto l_str = in_arh(cloth_sim_config); l_str) {

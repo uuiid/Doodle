@@ -85,6 +85,7 @@ void user::current_user::user_name_attr(const std::string& in_name) {
   if (!*this) get_handle();
   user_handle.patch<user>().set_name(in_name);
   core_set::get_set().user_name = in_name;
+  core_set::get_set().save();
 }
 
 void user::current_user::set_user(const entt::handle& in) {

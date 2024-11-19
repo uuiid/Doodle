@@ -19,8 +19,6 @@ BOOST_AUTO_TEST_CASE(base) {
   FSys::path l_check{boost::unit_test::framework::master_test_suite().argv[1]};
   // 将测试的服务器地址改为测试ip
   core_set::get_set().server_ip = "http://192.168.40.180:50026";
-  core_set_init{}.config_to_user();
-  core_set_init{}.read_file();
   g_ctx().emplace<maya_ctx>();
   g_ctx().emplace<ue_ctx>();
   boost::asio::co_spawn(

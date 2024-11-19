@@ -43,7 +43,7 @@ core_set &core_set::get_set() {
 
 core_set::core_set()
     : user_id(),
-      p_doc(FSys::current_path()),
+      p_doc(win::get_pwd()),
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
@@ -58,8 +58,10 @@ core_set::core_set()
 #else
       depot_ip{"\\\\192.168.20.89\\UE_Config\\Doodletemp"}
 #endif
-
 {
+  p_doc /= "doodle";
+  if (!FSys::exists(p_doc)) FSys::create_directories(p_doc);
+
   auto l_short_path = FSys::temp_directory_path().generic_wstring();
   auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
   std::unique_ptr<wchar_t[]> const p_buff{new wchar_t[k_buff_size]};
@@ -69,9 +71,25 @@ core_set::core_set()
   } else {
     set_root(FSys::path{p_buff.get()} / "Doodle");
   }
+
+  if (!FSys::exists(get_cache_root())) {
+    FSys::create_directories(get_cache_root());
+  }
   utf8_locale = boost::locale::generator().generate("zh_CN.UTF-8");
 
-  user_id     = get_uuid();
+  if (FSys::path l_k_setting_file_name = get_doc() / doodle_config::config_name; FSys::exists(l_k_setting_file_name)) {
+    default_logger_raw()->log(log_loc(), level::warn, "读取配置文件 {}", l_k_setting_file_name);
+    try {
+      FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
+      auto l_data = nlohmann::json::parse(l_in_josn);
+      l_data.at("setting").get_to(*this);
+    } catch (const nlohmann::json::parse_error &err) {
+      DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
+    }
+  }
+  if (user_id.is_nil()) {
+    user_id = get_uuid();
+  }
 }
 
 boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }
@@ -101,57 +119,14 @@ FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
 
 std::string core_set::get_uuid_str() { return boost::uuids::to_string(get_uuid()); }
 
-/// ----------------------------------------------------------------------------
-/// ----------------------------------------------------------------------------
-/// ----------------------------------------------------------------------------
-
-core_set_init::core_set_init() : p_set(core_set::get_set()) {
-  if (!FSys::exists(p_set.p_doc)) FSys::create_directories(p_set.p_doc);
-  if (!FSys::exists(p_set.get_cache_root())) {
-    FSys::create_directories(p_set.get_cache_root());
+void core_set::save() {
+  try {
+    auto l_k_setting_file_name = get_doc() / doodle_config::config_name;
+    FSys::ofstream l_out_josn{l_k_setting_file_name, std::ifstream::binary};
+    l_out_josn << nlohmann::json{{"setting", *this}}.dump();
+  } catch (...) {
+    default_logger_raw()->error("保存配置文件错误 {}", boost::current_exception_diagnostic_information());
   }
-
-  DOODLE_LOG_INFO("设置缓存目录 {}", p_set.p_root);
-}
-
-void core_set_init::read_file() {
-  FSys::path l_k_setting_file_name = p_set.get_doc() / doodle_config::config_name;
-  DOODLE_LOG_INFO("读取配置文件 {}", l_k_setting_file_name);
-  if (FSys::exists(l_k_setting_file_name)) {
-    FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
-    try {
-      *p_set.json_data = nlohmann::json::parse(l_in_josn);
-      p_set.json_data->at("setting").get_to(p_set);
-
-    } catch (const nlohmann::json::parse_error &err) {
-      DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
-    }
-  }
-  p_set.json_data = std::make_shared<nlohmann::json>();
-  if (p_set.user_id.is_nil()) {
-    p_set.user_id = p_set.get_uuid();
-  }
-  g_reg()->ctx().get<user::current_user>().uuid = p_set.user_id;
-}
-bool core_set_init::write_file() {
-  if (p_set.p_doc.empty()) return false;
-  DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / doodle_config::config_name);
-
-  FSys::ofstream l_ofstream{p_set.p_doc / doodle_config::config_name, std::ios::out | std::ios::binary};
-  (*p_set.json_data)["setting"] = p_set;
-
-  l_ofstream << p_set.json_data->dump();
-  return true;
-}
-
-bool core_set_init::config_to_user() {
-  auto l_pwd = win::get_pwd();
-  if (l_pwd.empty()) return false;
-  p_set.p_doc = l_pwd / "doodle";
-  if (!FSys::exists(p_set.p_doc)) {
-    FSys::create_directories(p_set.p_doc);
-  }
-  return true;
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {

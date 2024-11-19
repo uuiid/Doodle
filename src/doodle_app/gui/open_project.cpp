@@ -45,7 +45,7 @@ bool open_project::render() {
   if (auth_ptr_->is_expire()) {
     if (ImGui::Button("临时项目(不会保存!!)", ImVec2{-FLT_MIN, 0})) {
       core_set::get_set().next_time_ = true;
-      core_set_init{}.write_file();
+      core_set::get_set().save();
       open = false;
     }
     if (!cmd_path_.empty()) {

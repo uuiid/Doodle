@@ -45,6 +45,10 @@ boost::asio::awaitable<std::string> websocket_run_task_fun_launch(
   co_return std::string{};
 }
 
+// 根据硬件生成 uuid
+// Generate UUID based on hardware
+uuid generate_uuid_hardware() {}
+
 void http_work::run(const std::string& in_url) {
   executor_         = boost::asio::make_strand(g_io_context());
   timer_            = std::make_shared<timer>(executor_);
@@ -52,8 +56,7 @@ void http_work::run(const std::string& in_url) {
 
   websocket_client_ = std::make_shared<http_websocket_client>();
   logger_           = g_logger_ctrl().make_log("http_work");
-  core_set_init{}.config_to_user();
-  host_name_ = boost::asio::ip::host_name();
+  host_name_        = boost::asio::ip::host_name();
   boost::asio::co_spawn(
       executor_, async_run(),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
