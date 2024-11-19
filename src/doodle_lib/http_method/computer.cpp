@@ -21,22 +21,29 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
 
   if (!l_computer) {
-    l_computer                                = std::make_shared<computer_reg_data>();
-    in_handle->user_data_                     = l_computer;
-    l_computer->computer_data_.server_status_ = computer_status::free;
-    l_computer->client                        = in_handle->client_;
-    computer_reg_data_manager::get().reg(l_computer);
+    l_computer            = std::make_shared<computer_reg_data>();
+    in_handle->user_data_ = l_computer;
+
+    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(in_handle->body_["user_id"].get<uuid>());
+        !l_list.empty())
+      *l_computer->computer_data_ptr_ = l_list.front();
+    l_computer->computer_data_ptr_->server_status_ = computer_status::free;
+    l_computer->client                             = in_handle->client_;
   }
 
-  if (!in_handle->body_.contains("state") || !in_handle->body_["state"].is_string()) co_return std::string{};
-  l_computer->computer_data_.client_status_ =
-      magic_enum::enum_cast<doodle::computer_status>(in_handle->body_["state"].get<std::string>())
-          .value_or(doodle::computer_status::unknown);
+  if (in_handle->body_.contains("state") && in_handle->body_["state"].is_string())
+    l_computer->computer_data_ptr_->client_status_ =
+        magic_enum::enum_cast<doodle::computer_status>(in_handle->body_["state"].get<std::string>())
+            .value_or(doodle::computer_status::unknown);
 
   if (in_handle->body_.contains("host_name") && in_handle->body_["host_name"].is_string()) {
-    l_computer->computer_data_.name_ = in_handle->body_["host_name"].get<std::string>();
+    l_computer->computer_data_ptr_->name_ = in_handle->body_["host_name"].get<std::string>();
   }
-  l_computer->computer_data_.ip_ = in_handle->remote_endpoint_;
+  l_computer->computer_data_ptr_->ip_ = in_handle->remote_endpoint_;
+
+  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
+    l_logger->log(log_loc(), level::err, "保存失败:{}", fmt::format("{}", l_e));
+  computer_reg_data_manager::get().reg(l_computer);
 
   co_return std::string{};
 }
@@ -48,32 +55,12 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
     co_return std::string{};
   }
   auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
-  if (!l_computer->task_info_) {
-    l_logger->log(log_loc(), level::err, "task_info is null");
-    co_return std::string{};
-  }
-  auto l_task    = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
-  auto l_level   = in_handle->body_["level"].get<level::level_enum>();
-  auto l_log_str = in_handle->body_["msg"].get<std::string>();
-  l_task->write_log(l_level, l_log_str);
-  switch (l_level) {
-    case level::warn:
-    case level::err: {
-      auto l_this_exe = co_await boost::asio::this_coro::executor;
-      co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
-      l_computer->task_info_->end_log = l_log_str;
-      co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
-      break;
-    }
-    default:
-      break;
-  }
+
+  auto l_task     = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
+  auto l_log_str  = in_handle->body_["msg"].get<std::string>();
+  l_task->write_log(l_log_str);
   co_return std::string{};
 }
-
-
-
-boost::asio::awaitable<void> close_event(http_websocket_data_ptr in_data) { co_return; }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_computers(session_data_ptr in_handle) {
   std::vector<doodle::computer> l_computers = g_ctx().get<sqlite_database>().get_all<computer>();
@@ -85,7 +72,14 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
       .reg("logger", websocket_route::call_fun_type(web_logger_fun));
 
   in_web_socket->connect_close_signal([](const http_websocket_data_ptr& in_data) {
-    boost::asio::co_spawn(g_io_context(), close_event(in_data), boost::asio::detached);
+    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_data->user_data_);
+    if (!l_computer) {
+      computer_reg_data_manager::get().clear(l_computer);
+      l_computer->computer_data_ptr_->server_status_ = computer_status::online;
+      boost::asio::co_spawn(
+          g_io_context(), g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_), boost::asio::detached
+      );
+    }
   });
 }
 }  // namespace
