@@ -44,14 +44,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 );
 class server_task_info : boost::equality_comparable<server_task_info> {
  public:
-  server_task_info() = default;
-  explicit server_task_info(boost::uuids::uuid in_uuid) : id_(std::move(in_uuid)) {}
-  explicit server_task_info(boost::uuids::uuid in_uuid, std::string in_exe, std::vector<std::string> in_command)
-      : id_(std::move(in_uuid)), exe_(std::move(in_exe)), command_(std::move(in_command)) {}
-  ~server_task_info() = default;
-
+  std::int32_t id_{};
   // 唯一id
-  boost::uuids::uuid id_{};
+  boost::uuids::uuid uuid_id_{};
   // 执行程序
   std::string exe_{};
   // 任务命令
@@ -85,20 +80,10 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   boost::uuids::uuid ref_id_{};
   std::string end_log{};
 
-  std::string read_log(level::level_enum in_level) const;
-  FSys::path get_log_path(level::level_enum in_level) const;
-  void write_log(level::level_enum in_level, std::string_view in_msg);
+  std::string read_log() const;
+  FSys::path get_log_path() const;
+  void write_log(std::string_view in_msg);
   bool operator==(const server_task_info& in_rhs) const;
-
- public:
-  static std::vector<server_task_info> select_all(const sql_connection_ptr& in_comm);
-  static void create_table(const sql_connection_ptr& in_comm);
-
-  // 过滤已经存在的任务
-  static std::vector<bool> filter_exist(const sql_connection_ptr& in_comm, const std::vector<server_task_info>& in_task);
-  static void insert(const sql_connection_ptr& in_comm, const std::vector<server_task_info>& in_task);
-  static void update(const sql_connection_ptr& in_comm, const std::vector<server_task_info>& in_task);
-  static void delete_by_ids(const sql_connection_ptr& in_comm, const std::vector<boost::uuids::uuid>& in_ids);
 
  private:
   // to json
@@ -120,9 +105,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
-    std::string l_uuid_str{};
-    j.at("id").get_to(l_uuid_str);
-    p.id_ = boost::lexical_cast<uuid>(l_uuid_str);
+    j.at("id").get_to(p.uuid_id_);
     j.at("exe").get_to(p.exe_);
     j.at("command").get_to(p.command_);
     j.at("status").get_to(p.status_);
@@ -141,8 +124,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j.at("end_time").get_to(l_time_str);
     l_time_ss = std::istringstream{l_time_str};
     l_time_ss >> chrono::parse("%F %T", p.end_time_);
-    j.at("ref_id").get_to(l_uuid_str);
-    p.ref_id_ = boost::lexical_cast<uuid>(l_uuid_str);
+    j.at("ref_id").get_to(p.ref_id_);
     j.at("end_log").get_to(p.end_log);
   }
 };
