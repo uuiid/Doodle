@@ -22,26 +22,6 @@
 
 namespace doodle::http {
 
-level::level_enum log_level(const std::string& in_msg, level::level_enum in_def = level::info) {
-  level::level_enum l_level = in_def;
-  if (in_msg.size() > 2 && in_msg.front() == '[') {
-    if (in_msg[1] == 'i') {
-      l_level = level::info;
-    } else if (in_msg[1] == 'w') {
-      l_level = level::warn;
-    } else if (in_msg[1] == 'e') {
-      l_level = level::err;
-    } else if (in_msg[1] == 'c') {
-      l_level = level::critical;
-    } else if (in_msg[1] == 't') {
-      l_level = level::trace;
-    } else if (in_msg[1] == 'd') {
-      l_level = level::debug;
-    }
-  }
-  return l_level;
-}
-
 boost::asio::awaitable<std::string> websocket_run_task_fun_launch(
     http_work* in_work, http_websocket_data_ptr in_handle
 ) {
@@ -88,13 +68,11 @@ boost::asio::awaitable<void> http_work::async_run() {
       continue;
     }
     status_ = computer_status::online;
-    if (auto l_ec_1 = co_await websocket_client_->async_write_websocket(
-            nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
-        );
-        l_ec_1) {
-      logger_->error("写入错误 {}", l_ec_1);
+    if (auto l_e = co_await websocket_client_->async_ping(); !l_e) {
+      logger_->error(l_e.error());
       continue;
     }
+    co_await async_set_status(status_.load());
     boost::asio::co_spawn(
         executor_, websocket_client_->async_read_websocket(),
         boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
@@ -106,13 +84,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         logger_->error("定时器错误 {}", l_tec);
         break;
       }
-      if (auto l_ec = co_await websocket_client_->async_write_websocket(
-              nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
-          );
-          l_ec) {
-        logger_->error("写入错误 {}", l_ec);
-        break;
-      }
+      co_await async_set_status(status_.load());
     }
   }
 }
@@ -121,13 +93,9 @@ boost::asio::awaitable<void> http_work::async_run_task(
 ) {
   task_id_ = in_id;
   status_  = computer_status::busy;
-  if (auto l_ec = co_await websocket_client_->async_write_websocket(
-          nlohmann::json{{"type", "set_state"}, {"state", status_.load()}, {"host_name", host_name_}}.dump()
-      );
-      l_ec) {
-    logger_->error("写入错误 {}", l_ec);
-    co_return;
-  }
+  if (auto l_e = co_await websocket_client_->async_ping(); !l_e) co_return logger_->error(l_e.error());
+
+  co_await async_set_status(status_.load());
 
   auto l_timer      = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
   auto l_out_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
@@ -163,16 +131,51 @@ boost::asio::awaitable<void> http_work::async_run_task(
     default:
       break;
   }
-  auto l_sec = co_await websocket_client_->async_write_websocket(nlohmann::json{
-      {"type", computer_websocket_fun::set_task},
-      {"status", l_ec ? server_task_info_status::failed : server_task_info_status::completed}
-  }.dump());
-  status_    = computer_status::free;
-  l_sec      = co_await websocket_client_->async_write_websocket(
-      nlohmann::json{{"type", "set_state"}, {"state", computer_status::free}, {"host_name", host_name_}}.dump()
-  );
+  status_ = computer_status::free;
+  co_await async_set_status(status_);
   co_return;
 }
+
+// template <typename Handle>
+// auto http_work::async_relay_websocket(std::shared_ptr<boost::asio::readable_pipe> in_pipe, Handle&& in_handle) {
+//   auto l_flat_buffer = std::make_shared<boost::asio::streambuf>();
+//   return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
+//       [l_flat_buffer, in_pipe, this,
+//        coro = boost::asio::coroutine{}](auto& self, boost::system::error_code in_ec = {}, std::size_t = 0) mutable {
+//         BOOST_ASIO_CORO_REENTER(coro) {
+//           while (!in_ec) {
+//             BOOST_ASIO_CORO_YIELD boost::asio::async_read_until(*in_pipe, l_flat_buffer, '\n', std::move(self));
+//
+//             if (in_ec) {
+//               if (in_ec == boost::asio::error::operation_aborted || in_ec == boost::asio::error::broken_pipe) {
+//                 goto end_complete;
+//               }
+//               logger_->warn(in_ec.what());
+//               goto end_complete;
+//             }
+//
+//             std::string l_line{};
+//             std::istream l_is{&*l_flat_buffer};
+//             std::getline(l_is, l_line);
+//             while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale))
+//             l_line.pop_back(); if (!l_line.empty()) {
+//               try {
+//                 l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", l_line}}.dump();
+//               } catch (const nlohmann::json::exception& e) {
+//                 logger_->warn("json parse error: {}", e.what());
+//                 l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", "日志解码错误"}}.dump();
+//               }
+//               l_ec = co_await websocket_client_->async_write_websocket(std::move(l_line));
+//             }
+//           }
+//         end_complete:
+//           self.complete(in_ec);
+//         }
+//       },
+//       in_handle
+//   );
+// }
+
 boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe) {
   boost::asio::streambuf l_buffer{};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
@@ -194,18 +197,25 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
     while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
     if (!l_line.empty()) {
       try {
-        l_line = nlohmann::json{
-            {"type", "logger"}, {"level", log_level(l_line)}, {"task_id", task_id_}, {"msg", l_line}
-        }.dump();
+        l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", l_line}}.dump();
       } catch (const nlohmann::json::exception& e) {
         logger_->warn("json parse error: {}", e.what());
-        l_line = nlohmann::json{
-            {"type", "logger"}, {"level", log_level(l_line)}, {"task_id", task_id_}, {"msg", "日志解码错误"}
-        }.dump();
+        l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", "日志解码错误"}}.dump();
       }
       l_ec = co_await websocket_client_->async_write_websocket(std::move(l_line));
     }
   }
 }
+
+boost::asio::awaitable<void> http_work::async_set_status(computer_status in_status) {
+  if (auto l_ec = co_await websocket_client_->async_write_websocket(
+          nlohmann::json{{"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}}.dump()
+      );
+      l_ec) {
+    logger_->error("写入错误 {}", l_ec);
+  }
+  co_return;
+}
+
 
 }  // namespace doodle::http

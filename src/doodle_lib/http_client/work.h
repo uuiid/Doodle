@@ -51,6 +51,10 @@ class http_work {
       std::string in_id, std::string in_exe, std::vector<std::string> in_command_line
   );
 
+  template <typename Handle>
+  auto async_relay_websocket(std::shared_ptr<boost::asio::readable_pipe> in_pipe, Handle&& in_handle);
+
+  boost::asio::awaitable<void> async_set_status(computer_status in_status);
   boost::asio::awaitable<void> async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe);
 
  public:
