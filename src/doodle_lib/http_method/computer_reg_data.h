@@ -1,7 +1,6 @@
 #include <doodle_core/metadata/computer.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
-
 #include <doodle_lib/core/http/http_websocket_client.h>
 namespace doodle {
 class server_task_info;
@@ -13,13 +12,11 @@ class computer_reg_data {
   friend class computer_reg_data_manager;
 
  public:
-  computer_reg_data() = default;
-  explicit computer_reg_data(const doodle::computer& in_data) : computer_data_(in_data) {}
+  computer_reg_data() : computer_data_ptr_(std::make_shared<doodle::computer>()) {};
   ~computer_reg_data() = default;
 
-  doodle::computer computer_data_;
+  std::shared_ptr<doodle::computer> computer_data_ptr_;
   std::shared_ptr<doodle::server_task_info> task_info_;
-  entt::entity task_info_entity_{};
   std::weak_ptr<http_websocket_client> client;
 };
 using computer_reg_data_ptr      = std::shared_ptr<computer_reg_data>;
@@ -35,6 +32,7 @@ class computer_reg_data_manager {
 
   void reg(computer_reg_data_ptr in_data);
   std::vector<computer_reg_data_ptr> list();
+  void clear(const computer_reg_data_ptr& in_data);
   static computer_reg_data_manager& get();
 };
 }  // namespace doodle::http

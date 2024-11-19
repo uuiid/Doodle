@@ -4,8 +4,6 @@
 #include "computer_reg_data.h"
 
 namespace doodle::http {
-
-
 computer_reg_data_manager& computer_reg_data_manager::get() {
   static computer_reg_data_manager l_manager;
   return l_manager;
@@ -32,5 +30,14 @@ void computer_reg_data_manager::clear_old() {
     }
   }
 }
-
+void computer_reg_data_manager::clear(const computer_reg_data_ptr& in_data) {
+  std::lock_guard l_lock(mutex_);
+  for (auto it = computer_reg_datas_.begin(); it != computer_reg_datas_.end();) {
+    if (it->lock() == in_data) {
+      it = computer_reg_datas_.erase(it);
+      return;
+    }
+    ++it;
+  }
 }
+}  // namespace doodle::http
