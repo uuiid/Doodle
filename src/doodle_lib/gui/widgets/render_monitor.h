@@ -10,7 +10,6 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/http_client/render_client.h>
 
 #include <boost/asio.hpp>
 
@@ -55,8 +54,6 @@ class render_monitor {
   using timer_ptr_t       = std::shared_ptr<timer_t>;
   using strand_t          = boost::asio::strand<boost::asio::io_context::executor_type>;
   using strand_ptr_t      = std::shared_ptr<strand_t>;
-  using client_t          = render_client::client;
-  using http_client_ptr_t = std::shared_ptr<client_t>;
 
   struct impl {
     gui_cache_name_id component_collapsing_header_id_{"渲染注册"};
@@ -93,7 +90,6 @@ class render_monitor {
     logger_ptr logger_ptr_{};
 
     // 客户端
-    http_client_ptr_t http_client_ptr_{};
     boost::asio::cancellation_signal signal_{};
   };
   std::shared_ptr<impl> p_i;
