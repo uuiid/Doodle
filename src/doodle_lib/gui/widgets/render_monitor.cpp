@@ -186,12 +186,12 @@ bool render_monitor::render() {
   return open_;
 }
 
-boost::asio::awaitable<void> render_monitor::async_refresh() {}
-boost::asio::awaitable<void> render_monitor::async_refresh_task() {}
+boost::asio::awaitable<void> render_monitor::async_refresh() { co_return; }
+boost::asio::awaitable<void> render_monitor::async_refresh_task() { co_return; }
 
-boost::asio::awaitable<void> render_monitor::async_refresh_logger() {}
+boost::asio::awaitable<void> render_monitor::async_refresh_logger() { co_return; }
 
-boost::asio::awaitable<void> render_monitor::async_delete_task(uuid in_id) {}
+boost::asio::awaitable<void> render_monitor::async_delete_task(uuid in_id) { co_return; }
 
 std::string render_monitor::conv_time(const nlohmann::json& in_json) {
   if (in_json.is_null()) return {};

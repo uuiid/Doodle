@@ -5,53 +5,9 @@
 #include <boost/asio.hpp>
 namespace doodle::http {
 
-class task_sqlite_server_fun {
- public:
-  using executor_type = boost::asio::any_io_executor;
-  boost::asio::any_io_executor executor_;
-  boost::asio::any_io_executor get_executor() const { return executor_; }
+void task_sqlite_server::init(const sql_connection_ptr& in_conn) {}
 
-  std::vector<server_task_info> task_list_{};
-  std::vector<boost::uuids::uuid> destroy_ids_{};
-
-  explicit task_sqlite_server_fun(
-      const std::vector<server_task_info>& in_task_list, const std::vector<boost::uuids::uuid>& in_destroy_ids
-  )
-      : task_list_(in_task_list), destroy_ids_(in_destroy_ids), executor_(g_strand()) {}
-
-  void operator()() const {
-    auto l_db_conn = g_pool_db().get_connection();
-    auto l_tx      = sqlpp::start_transaction(*l_db_conn);
-    auto l_indexs  = server_task_info::filter_exist(l_db_conn, task_list_);
-    std::vector<server_task_info> l_insert_list{};
-    std::vector<server_task_info> l_update_list{};
-    for (auto i = 0; i < task_list_.size(); ++i) {
-      if (l_indexs[i]) {
-        l_update_list.emplace_back(task_list_[i]);
-      } else {
-        l_insert_list.emplace_back(task_list_[i]);
-      }
-    }
-    server_task_info::insert(l_db_conn, l_insert_list);
-    server_task_info::update(l_db_conn, l_update_list);
-    server_task_info::delete_by_ids(l_db_conn, destroy_ids_);
-    l_tx.commit();
-  }
-};
-
-void task_sqlite_server::init(const sql_connection_ptr& in_conn) {
-  server_task_info::create_table(in_conn);
-  auto l_tasks = server_task_info::select_all(in_conn);
-
-  std::vector<entt::entity> l_entities{l_tasks.size()};
-  g_reg()->create(l_entities.begin(), l_entities.end());
-  g_reg()->insert<server_task_info>(l_entities.begin(), l_entities.end(), l_tasks.begin());
-  connect(*g_reg());
-}
-
-void task_sqlite_server::on_destroy(entt::registry& in_reg, entt::entity in_entt) {
-  destroy_ids_.emplace_back(in_reg.get<server_task_info>(in_entt).id_);
-}
+void task_sqlite_server::on_destroy(entt::registry& in_reg, entt::entity in_entt) {}
 
 void task_sqlite_server::connect(entt::registry& in_registry_ptr) {
   obs_update_.connect(in_registry_ptr, entt::collector.update<server_task_info>());
@@ -110,7 +66,6 @@ void task_sqlite_server::save() {
   std::ranges::transform(l_save, std::back_inserter(l_save_list), [](auto in_entt) {
     return g_reg()->get<server_task_info>(in_entt);
   });
-  boost::asio::post(task_sqlite_server_fun{l_save_list, l_del});
 }
 
 }  // namespace doodle::http

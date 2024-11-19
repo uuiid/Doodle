@@ -42,7 +42,7 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   l_computer->computer_data_ptr_->ip_ = in_handle->remote_endpoint_;
 
   if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
-    l_logger->log(log_loc(), level::err, "保存失败:{}", fmt::format("{}", l_e));
+    l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
   computer_reg_data_manager::get().reg(l_computer);
 
   co_return std::string{};

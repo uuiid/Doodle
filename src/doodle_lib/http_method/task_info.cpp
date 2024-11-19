@@ -29,10 +29,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
       !l_json["exe"].is_string()) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "请求缺失必要参数");
   }
-  server_task_info l_task_handle{
-      core_set::get_set().get_uuid(), l_json["exe"].get<std::string>(),
-      l_json["command"].get<std::vector<std::string>>()
-  };
+  server_task_info l_task_handle{};
+  l_task_handle.uuid_id_ = core_set::get_set().get_uuid();
+  l_task_handle.exe_     = l_json["exe"].get<std::string>();
+  l_task_handle.command_ = l_json["command"].get<std::vector<std::string>>();
   if (l_json.contains("source_computer") && l_json["source_computer"].is_string()) {
     l_task_handle.source_computer_ = l_json["source_computer"];
   }
@@ -86,7 +86,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
   {
     auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
     for (auto&& [e, l_ptr] : l_view.each()) {
-      if (l_ptr.id_ == l_uuid) {
+      if (l_ptr.uuid_id_ == l_uuid) {
         l_task_handle = l_ptr;
         is_db         = true;
         break;
@@ -127,7 +127,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
     in_handle->logger_->error("错误的分页参数:{}", e.what());
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的分页参数");
   }
-  l_page = l_page > 0 ? l_page - 1 : 0;
+  l_page          = l_page > 0 ? l_page - 1 : 0;
 
   auto l_this_exe = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
@@ -168,16 +168,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
 
-  server_task_info l_task_handle{l_uuid};
+  server_task_info l_task_handle{};
+  l_task_handle.uuid_id_ = l_uuid;
 
-  level::level_enum l_level{level::err};
-  auto l_query = in_handle->url_.query();
-  if (auto l_it = l_query.find("level"); l_it != l_query.npos) {
-    l_level = magic_enum::enum_cast<level::level_enum>(l_query.substr(l_it + 6, l_query.find('&', l_it) - l_it - 6))
-                  .value_or(level::err);
-  }
-
-  auto l_this_exe = co_await boost::asio::this_coro::executor;
+  auto l_this_exe        = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_view = std::as_const(*g_reg()).view<const server_task_info>();
   for (auto&& [e, l_ptr] : l_view.each()) {
@@ -188,7 +182,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   }
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-  auto l_log_path = l_task_handle.get_log_path(l_level);
+  auto l_log_path = l_task_handle.get_log_path();
   if (!FSys::exists(l_log_path)) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志文件不存在");
   }
@@ -201,7 +195,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   boost::system::error_code l_code{};
   l_response.body().open(l_log_path.string().c_str(), boost::beast::file_mode::scan, l_code);
   if (l_code) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_code.what(),l_code.value());
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::internal_server_error, l_code.what(), l_code.value()
+    );
   }
   l_response.prepare_payload();
   co_return std::move(l_response);
@@ -221,7 +217,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   {
     for (auto&& [e, l_ptr] : g_reg()->view<server_task_info>().each()) {
-      if (l_ptr.id_ == l_uuid) {
+      if (l_ptr.uuid_id_ == l_uuid) {
         g_reg()->destroy(e);
         break;
       }
