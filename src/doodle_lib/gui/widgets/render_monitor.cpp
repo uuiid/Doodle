@@ -45,7 +45,6 @@ void render_monitor::init() {
 
   p_i->progress_message_ = "正在查找服务器";
   p_i->logger_ptr_       = g_logger_ctrl().make_log("render_monitor");
-  p_i->http_client_ptr_  = std::make_shared<client_t>(core_set::get_render_url());
   boost::asio::co_spawn(
       *p_i->strand_ptr_, async_refresh(),
       boost::asio::bind_cancellation_slot(p_i->signal_.slot(), boost::asio::detached)
@@ -187,73 +186,12 @@ bool render_monitor::render() {
   return open_;
 }
 
-boost::asio::awaitable<void> render_monitor::async_refresh() {
-  auto l_self = p_i;
+boost::asio::awaitable<void> render_monitor::async_refresh() {}
+boost::asio::awaitable<void> render_monitor::async_refresh_task() {}
 
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    auto l_c = co_await l_self->http_client_ptr_->get_computers();
-    l_self->computers_.clear();
-    for (auto& l_computer : l_c) {
-      l_self->computers_.push_back(computer_gui{
-          .name_   = l_computer.name_,
-          .ip_     = l_computer.ip_,
-          .status_ = std::string{magic_enum::enum_name(l_computer.client_status_)}
-      });
-    }
-    co_await async_refresh_task();
-    if (l_self->current_select_logger_) {
-      co_await async_refresh_logger();
-    }
+boost::asio::awaitable<void> render_monitor::async_refresh_logger() {}
 
-    l_self->timer_ptr_->expires_after(3s);
-    auto [l_ec] = co_await l_self->timer_ptr_->async_wait();
-    if (l_ec) {
-      log_info(l_self->logger_ptr_, fmt::format("{}", l_ec));
-      l_self->progress_message_ = "获取数据失败";
-    }
-  }
-}
-boost::asio::awaitable<void> render_monitor::async_refresh_task() {
-  auto l_self            = p_i;
-  auto [l_tasks, l_size] = co_await l_self->http_client_ptr_->get_task(l_self->page_index_, 50);
-  l_self->render_tasks_.clear();
-  std::int64_t l_size_t = l_size;
-  l_self->max_page_num_ = l_size_t / 50 + (l_size_t % 50 == 0 ? 0 : 1);
-  std::size_t l_index{};
-  for (auto& l_task : l_tasks) {
-    l_self->render_tasks_.push_back(task_t_gui{
-        .id_               = l_task.id_,
-        .id_str_           = fmt::to_string(l_task.id_),
-        .name_             = l_task.name_,
-        .status_           = conv_state((l_task.status_)),
-        .source_computer_  = l_task.source_computer_,
-        .submitter_        = l_task.submitter_,
-        .submit_time_      = fmt::to_string(l_task.submit_time_),
-        .run_computer_     = l_task.run_computer_,
-        .run_computer_ip_  = l_task.run_computer_ip_,
-        .run_time_         = fmt::to_string(l_task.run_time_),
-        .delete_button_id_ = fmt::format("删除任务##{}", ++l_index)
-    });
-  }
-}
-
-boost::asio::awaitable<void> render_monitor::async_refresh_logger() {
-  auto l_self = p_i;
-  if (!l_self->current_select_logger_) {
-    l_self->logger_data = {};
-    co_return;
-  }
-  l_self->logger_data = co_await l_self->http_client_ptr_->get_logger(
-      *l_self->current_select_logger_,
-      magic_enum::enum_cast<level::level_enum>(l_self->logger_level_.data).value_or(level::err)
-  );
-}
-
-boost::asio::awaitable<void> render_monitor::async_delete_task(uuid in_id) {
-  auto l_self = p_i;
-  co_await l_self->http_client_ptr_->delete_task(in_id);
-  co_await async_refresh_task();
-}
+boost::asio::awaitable<void> render_monitor::async_delete_task(uuid in_id) {}
 
 std::string render_monitor::conv_time(const nlohmann::json& in_json) {
   if (in_json.is_null()) return {};
