@@ -72,9 +72,6 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   });
   in_vector.emplace_back(signal_);
   g_logger_ctrl().add_log_sink(l_sink, "auto_light_process");
-  core_set_init l_core_set_init{};
-  l_core_set_init.config_to_user();
-  l_core_set_init.read_file();
 
   // 开始映射网络驱动器
   std::vector<std::pair<std::string, std::string>> l_drive_list{
