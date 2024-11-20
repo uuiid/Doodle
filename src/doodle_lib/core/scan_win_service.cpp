@@ -90,15 +90,18 @@ void scan_win_service_t::start() {
   );
 }
 void scan_win_service_t::init_all_map() {
-  if (!FSys::exists(core_set::get_set().get_cache_root() / jaon_file_name_)) return;
+  auto l_path = core_set::get_set().get_cache_root() / jaon_file_name_;
+  if (!FSys::exists(l_path) || FSys::file_size(l_path) == 0) return;
+
   create_project();
   std::map<uuid, std::shared_ptr<project_helper::database_t>> l_pro_map{};
   for (auto&& i : project_roots_) {
     l_pro_map.emplace(i->uuid_id_, i);
   }
-  nlohmann::json l_json = nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
   std::vector<doodle::details::scan_category_data_ptr> l_data_vec{};
   try {
+    nlohmann::json l_json =
+        nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
     for (auto&& l_v : l_json) {
       l_data_vec
           .emplace_back(std::make_shared<details::scan_category_data_t>(l_v.get<details::scan_category_data_t>()))
