@@ -7,10 +7,10 @@
 namespace doodle {
 enum class computer_status { online, busy, free, unknown };
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    computer_status, {{computer_status::online, "online"},
+    computer_status, {{computer_status::unknown, "unknown"},
+                      {computer_status::online, "online"},
                       {computer_status::busy, "busy"},
-                      {computer_status::free, "free"},
-                      {computer_status::unknown, "unknown"}}
+                      {computer_status::free, "free"}}
 );
 class computer {
  public:
