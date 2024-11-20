@@ -48,6 +48,9 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
     logger_->error("handshake error {}", l_ec_h.what());
     co_return l_ec_h;
   }
+  data_                   = std::make_shared<detail::http_websocket_data>();
+  data_->client_          = weak_from_this();
+  data_->logger_          = logger_;
   co_return boost::system::error_code{};
 }
 
@@ -60,6 +63,7 @@ void http_websocket_client::init(
   websocket_route_        = in_websocket_route;
   logger_                 = in_logger;
   write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
+  data_                   = std::make_shared<detail::http_websocket_data>();
   data_->client_          = weak_from_this();
   data_->logger_          = logger_;
 
