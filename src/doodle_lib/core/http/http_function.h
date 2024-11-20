@@ -100,14 +100,14 @@ class http_function : public http_function_base_t {
       boost::beast::http::verb in_verb, std::string in_url,
       std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
   )
-      : http_function_base_t(in_verb, std::move(in_callback), {}), capture_vector_(set_cap_bit(in_url)) {}
+      : http_function_base_t(in_verb, std::move(in_callback), {}, false), capture_vector_(set_cap_bit(in_url)) {}
 
   explicit http_function(
       boost::beast::http::verb in_verb, std::string in_url,
       std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
       std::function<void(const websocket_route_ptr&, const session_data_ptr&)> in_callback_websocket
   )
-      : http_function_base_t(in_verb, std::move(in_callback), std::move(in_callback_websocket)),
+      : http_function_base_t(in_verb, std::move(in_callback), std::move(in_callback_websocket), false),
         capture_vector_(set_cap_bit(in_url)) {}
 
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
