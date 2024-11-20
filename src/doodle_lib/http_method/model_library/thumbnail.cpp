@@ -56,12 +56,7 @@ tl::expected<void, std::string> create_thumbnail_gif(
       }
       cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
     }
-    FSys::copy_file(in_data_path, in_path / "previews" / (in_name + ".gif"));
-    try {
-      FSys::remove(in_data_path);
-    } catch (...) {
-      default_logger_raw()->error("删除临时文件失败 {}", boost::current_exception_diagnostic_information());
-    }
+    FSys::rename(in_data_path, in_path / "previews" / (in_name + ".gif"));
   } catch (...) {
     return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
   }
