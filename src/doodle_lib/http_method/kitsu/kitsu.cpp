@@ -221,6 +221,16 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".svgz") return "image/svg+xml";
   if (in_ext == ".map") return "application/json";
   if (in_ext == ".exe") return "application/octet-stream";
+  if (in_ext == "m3u8") return "application/vnd.apple.mpegurl";
+  if (in_ext == ".mp4") return "video/mp4";
+  if (in_ext == ".webm") return "video/webm";
+  if (in_ext == ".mkv") return "video/x-matroska";
+  if (in_ext == ".ts") return "video/mp2t";
+  if (in_ext == ".pdf") return "application/pdf";
+  if (in_ext == ".zip") return "application/zip";
+  if (in_ext == ".rar") return "application/x-rar-compressed";
+  if (in_ext == ".7z") return "application/x-7z-compressed";
+  if (in_ext == ".tar") return "application/x-tar";
   return "application/octet-stream";
 }
 
