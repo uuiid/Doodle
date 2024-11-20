@@ -62,6 +62,32 @@ tl::expected<void, std::string> create_thumbnail_gif(
   }
   return {};
 }
+tl::expected<void, std::string> create_thumbnail_mp4(
+    const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
+) {
+  try {
+    {
+      cv::VideoCapture l_video{};
+      l_video.open(in_data_path.generic_string());
+      if (!l_video.isOpened()) return tl::make_unexpected("mp4 打开失败");
+
+      auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
+      cv::Mat l_image{};
+      l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
+      l_video >> l_image;
+      if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+
+      if (l_image.cols > 192 || l_image.rows > 108) {
+        auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+        cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+      }
+      cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+    }
+  } catch (...) {
+    return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
+  }
+  return {};
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle) {
   std::string l_name{};

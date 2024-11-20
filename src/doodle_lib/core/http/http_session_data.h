@@ -36,6 +36,7 @@ enum class content_type {
   image_jpg,
   image_png,
   image_gif,
+  video_mp4,
   form_data,
   unknown
 };

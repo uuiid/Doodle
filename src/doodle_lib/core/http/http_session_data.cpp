@@ -374,8 +374,22 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       session_->content_type_ = content_type::image_png;
     else if (l_content_type.starts_with("image/gif"))
       session_->content_type_ = content_type::image_gif;
+    else if (l_content_type.starts_with("video/mp4"))
+      session_->content_type_ = content_type::video_mp4;
     else
       session_->content_type_ = content_type::unknown;
+  }
+  boost::asio::awaitable<bool> save_bode_file(const std::string& in_ext) {
+    auto l_file_request_parser_ =
+        std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(std::move(*request_parser_)
+        );
+    auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + in_ext);
+    l_file_request_parser_->get().body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, ec_);
+    if (ec_) co_return false;
+    std::tie(ec_, std::ignore) = co_await boost::beast::http::async_read(*stream_, buffer_, *l_file_request_parser_);
+    if (ec_) co_return false;
+    session_->body_       = l_path;
+    session_->req_header_ = std::move(l_file_request_parser_->release().base());
   }
 
   boost::asio::awaitable<bool> parse_body() {
@@ -413,22 +427,13 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
             if (ec_) co_return false;
             break;
           }
-          case content_type::image_gif: {
-            auto l_file_request_parser_ =
-                std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(
-                    std::move(*request_parser_)
-                );
-            auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".gif");
-            l_file_request_parser_->get().body().open(
-                l_path.generic_string().c_str(), boost::beast::file_mode::write, ec_
-            );
-            if (ec_) co_return false;
-            std::tie(ec_, std::ignore) =
-                co_await boost::beast::http::async_read(*stream_, buffer_, *l_file_request_parser_);
-            if (ec_) co_return false;
-            session_->body_ = l_path;
+          case content_type::image_gif:
+            if (!co_await save_bode_file(".gif")) co_return false;
             break;
-          }
+          case content_type::video_mp4:
+            if (!co_await save_bode_file(".mp4")) co_return false;
+            break;
+
           case content_type::unknown:
             break;
           default:
@@ -446,7 +451,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
             break;
           case content_type::application_json:
             try {
-              session_->body_ = nlohmann::json::parse(string_request_parser_->get().body());
+              session_->body_       = nlohmann::json::parse(string_request_parser_->get().body());
               session_->req_header_ = std::move(string_request_parser_->release().base());
             } catch (const nlohmann::json::exception& e) {
               session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
