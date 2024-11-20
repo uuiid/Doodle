@@ -10,6 +10,7 @@
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
@@ -26,6 +27,7 @@
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
 DOODLE_SQLITE_ENUM_TYPE_(doodle::computer_status)
+DOODLE_SQLITE_ENUM_TYPE_(doodle::server_task_info_status)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
 }  // namespace sqlite_orm
 
@@ -37,6 +39,25 @@ auto make_storage_doodle(const std::string& in_path) {
 
   return std::move(make_storage(
       in_path,  //
+      make_index("server_task_info_tab_uuid_id_idx", &server_task_info::uuid_id_),
+      make_table(
+          "server_task_info_tab",  //
+          make_column("id", &server_task_info::id_, primary_key()),
+          make_column("uuid_id", &server_task_info::uuid_id_, unique()),  //
+          make_column("exe", &server_task_info::exe_),                    //
+          make_column(
+              "command", static_cast<void (server_task_info::*)(const std::string&)>(&server_task_info::sql_command),
+              static_cast<const std::string& (server_task_info::*)() const>(&server_task_info::sql_command)
+          ),                                                                    //
+          make_column("status", &server_task_info::status_),                    //
+          make_column("name", &server_task_info::name_),                        //
+          make_column("source_computer", &server_task_info::source_computer_),  //
+          make_column("submitter", &server_task_info::submitter_),              //
+          make_column("submit_time", &server_task_info::submit_time_),          //
+          make_column("run_time", &server_task_info::run_time_),                //
+          make_column("end_time", &server_task_info::end_time_),                //
+          make_column("run_computer_id", &server_task_info::run_computer_id_)   //
+      ),
       make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
       make_table(
           "computer_tab",                                           //
