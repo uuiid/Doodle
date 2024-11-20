@@ -31,11 +31,9 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
       l_computer->client                             = in_handle->client_;
     }
 
-    l_computer->computer_data_ptr_->client_status_ =
-        magic_enum::enum_cast<doodle::computer_status>(in_handle->body_["state"].get<std::string>())
-            .value_or(doodle::computer_status::unknown);
-    l_computer->computer_data_ptr_->name_ = in_handle->body_["host_name"].get<std::string>();
-    l_computer->computer_data_ptr_->ip_ = in_handle->remote_endpoint_;
+    l_computer->computer_data_ptr_->client_status_ = in_handle->body_["state"].get<computer_status>();
+    l_computer->computer_data_ptr_->name_          = in_handle->body_["host_name"].get<std::string>();
+    l_computer->computer_data_ptr_->ip_            = in_handle->remote_endpoint_;
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
       l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
     computer_reg_data_manager::get().reg(l_computer);
