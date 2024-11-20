@@ -71,7 +71,7 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
 
   in_web_socket->connect_close_signal([](const http_websocket_data_ptr& in_data) {
     auto l_computer = std::static_pointer_cast<computer_reg_data>(in_data->user_data_);
-    if (!l_computer) {
+    if (l_computer) {
       computer_reg_data_manager::get().clear(l_computer);
       l_computer->computer_data_ptr_->server_status_ = computer_status::offline;
       l_computer->computer_data_ptr_->client_status_ = computer_status::offline;
