@@ -50,15 +50,15 @@ tl::expected<void, std::string> create_thumbnail_gif(
       l_video >> l_image;
       if (l_image.empty()) return tl::make_unexpected("图片解码失败");
 
-      cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
       if (l_image.cols > 192 || l_image.rows > 108) {
         auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
         cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
       }
+      cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
     }
-    FSys::copy_file(in_data_path, in_path / "thumbnails" / (in_name + ".gif"));
+    FSys::copy_file(in_data_path, in_path / "previews" / (in_name + ".gif"));
     try {
-      FSys::remove(in_path);
+      FSys::remove(in_data_path);
     } catch (...) {
       default_logger_raw()->error("删除临时文件失败 {}", boost::current_exception_diagnostic_information());
     }
@@ -86,6 +86,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
       create_thumbnail_image(std::get<std::string>(in_handle->body_), l_path, l_name);
       break;
     case detail::content_type::image_gif:
+      create_thumbnail_gif(std::get<FSys::path>(in_handle->body_), l_path, l_name);
       break;
     default:
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
