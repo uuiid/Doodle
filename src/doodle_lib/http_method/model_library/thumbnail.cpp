@@ -9,22 +9,58 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include <opencv2/opencv.hpp>
+#include <tl/expected.hpp>
 namespace doodle::http::kitsu {
 
 namespace {
 
+tl::expected<void, std::string> create_thumbnail_image(
+    const std::string& in_data, const FSys::path& in_path, const std::string& in_name
+) {
+  try {
+    cv::Mat l_image = cv::imdecode(
+        cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
+        cv::IMREAD_COLOR
+    );
+    if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+
+    cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
+    if (l_image.cols > 192 || l_image.rows > 108) {
+      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+    }
+    cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+  } catch (...) {
+    return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
+  }
+  return {};
+}
+tl::expected<void, std::string> create_thumbnail_gif(
+    const std::string& in_data, const FSys::path& in_path, const std::string& in_name
+) {
+  try {
+    cv::VideoCapture l_video{};
+
+    cv::Mat l_image = cv::imdecode(
+        cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
+        cv::IMREAD_COLOR
+    );
+    if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+
+    cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
+    if (l_image.cols > 192 || l_image.rows > 108) {
+      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+    }
+    cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+  } catch (...) {
+    return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
+  }
+  return {};
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle) {
   std::string l_name{};
-  switch (in_handle->content_type_) {
-    // case detail::content_type::image_gif:
-    case detail::content_type::image_jpeg:
-    case detail::content_type::image_jpg:
-    case detail::content_type::image_png:
-      break;
-    default:
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-      break;
-  }
   FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
   try {
     l_name = in_handle->capture_->get("id");
@@ -33,30 +69,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
         boost::beast::http::status::not_found, boost::current_exception_diagnostic_information()
     );
   }
-  try {
-    auto& l_data    = std::get<std::string>(in_handle->body_);
-    // std::vector<uchar> l_buff{};
-    // l_buff.reserve(l_data.size());
-    // l_buff.insert(l_buff.end(), l_data.begin(), l_data.end());
-    // cv::Mat l_image = cv::imdecode(cv::InputArray{l_buff}, cv::IMREAD_UNCHANGED);
-    cv::Mat l_image = cv::imdecode(
-        cv::InputArray{reinterpret_cast<uchar*>(l_data.data()), boost::numeric_cast<int>(l_data.size())},
-        cv::IMREAD_COLOR
-    );
-    if (l_image.empty())
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "图片解码失败");
-
-    cv::imwrite((l_path / "previews" / (l_name + ".png")).generic_string(), l_image);
-    if (l_image.cols > 192 || l_image.rows > 108) {
-      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
-    }
-    cv::imwrite((l_path / "thumbnails" / (l_name + ".png")).generic_string(), l_image);
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information())
-    );
+  switch (in_handle->content_type_) {
+    // case detail::content_type::image_gif:
+    case detail::content_type::image_jpeg:
+    case detail::content_type::image_jpg:
+    case detail::content_type::image_png:
+      create_thumbnail_image(std::get<std::string>(in_handle->body_), l_path, l_name);
+      break;
+    case detail::content_type::image_gif:
+      break;
+    default:
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+      break;
   }
 
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", in_handle->capture_->get("id")));

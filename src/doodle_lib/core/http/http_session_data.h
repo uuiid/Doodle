@@ -37,6 +37,7 @@ enum class content_type {
   image_png,
   image_gif,
   form_data,
+  unknown
 };
 
 class session_data {
@@ -53,7 +54,7 @@ class session_data {
   bool keep_alive_{};
 
   content_type content_type_{content_type::text_plain};
-  std::variant<std::string, nlohmann::json> body_;  // std::variant<std::string, nlohmann::json>
+  std::variant<std::string, nlohmann::json, FSys::path> body_;  // std::variant<std::string, nlohmann::json>
   // 请求头
   boost::beast::http::request_header<> req_header_;
 

@@ -4,6 +4,7 @@
 
 #include "http_session_data.h"
 
+#include "doodle_core/core/core_set.h"
 #include <doodle_core/lib_warp/boost_fmt_beast.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/lib_warp/boost_fmt_url.h>
@@ -32,15 +33,19 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
   using empty_body_type            = boost::beast::http::empty_body;
   using empty_request_parser_type  = boost::beast::http::request_parser<empty_body_type>;
   using string_request_parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
+  using file_request_parser_type   = boost::beast::http::request_parser<boost::beast::http::file_body>;
+
   using empty_request_parser_ptr   = std::shared_ptr<empty_request_parser_type>;
   using string_request_parser_ptr  = std::shared_ptr<string_request_parser_type>;
-
+  using file_request_parser_ptr    = std::shared_ptr<file_request_parser_type>;
   std::shared_ptr<tcp_stream_type> stream_;
   std::shared_ptr<tcp_stream_type> proxy_relay_stream_;
 
   http_route_ptr route_ptr_;
   empty_request_parser_ptr request_parser_;
   string_request_parser_ptr string_request_parser_;
+  file_request_parser_ptr file_request_parser_;
+
   std::shared_ptr<session_data> session_;
 
   http_function_ptr callback_;
@@ -357,6 +362,22 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
     co_return;
   }
 
+  void parse_content_type() {
+    std::string_view l_content_type = request_parser_->get()[boost::beast::http::field::content_type];
+    if (l_content_type.starts_with("application/json"))
+      session_->content_type_ = content_type::application_json;
+    else if (l_content_type.starts_with("image/jpeg"))
+      session_->content_type_ = content_type::image_jpeg;
+    else if (l_content_type.starts_with("image/jpg"))
+      session_->content_type_ = content_type::image_jpg;
+    else if (l_content_type.starts_with("image/png"))
+      session_->content_type_ = content_type::image_png;
+    else if (l_content_type.starts_with("image/gif"))
+      session_->content_type_ = content_type::image_gif;
+    else
+      session_->content_type_ = content_type::unknown;
+  }
+
   boost::asio::awaitable<bool> parse_body() {
     std::string l_content_type = request_parser_->get()[boost::beast::http::field::content_type];
     switch (method_verb_) {
@@ -377,39 +398,62 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       case boost::beast::http::verb::put:
       case boost::beast::http::verb::delete_:
       case boost::beast::http::verb::patch:
-        string_request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>(
-            std::move(*request_parser_)
-        );
-        std::tie(ec_, std::ignore) =
-            co_await boost::beast::http::async_read(*stream_, buffer_, *string_request_parser_);
-        if (ec_) co_return false;
-
+        parse_content_type();
+        switch (session_->content_type_) {
+          case content_type::image_jpeg:
+          case content_type::image_jpg:
+          case content_type::image_png:
+          case content_type::application_json: {
+            string_request_parser_ =
+                std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>(
+                    std::move(*request_parser_)
+                );
+            std::tie(ec_, std::ignore) =
+                co_await boost::beast::http::async_read(*stream_, buffer_, *string_request_parser_);
+            if (ec_) co_return false;
+            break;
+          }
+          case content_type::image_gif: {
+            file_request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(
+                std::move(*request_parser_)
+            );
+            auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".gif");
+            file_request_parser_->get().body().open(
+                l_path.generic_string().c_str(), boost::beast::file_mode::write, ec_
+            );
+            if (ec_) co_return false;
+            std::tie(ec_, std::ignore) =
+                co_await boost::beast::http::async_read(*stream_, buffer_, *file_request_parser_);
+            if (ec_) co_return false;
+            session_->body_ = l_path;
+            break;
+          }
+          case content_type::unknown:
+            break;
+          default:
+            break;
+        }
         stream_->expires_after(30s);
 
-        if (l_content_type.find("application/json") != std::string::npos) {
-          session_->content_type_ = content_type::application_json;
-          try {
-            session_->body_ = nlohmann::json::parse(string_request_parser_->get().body());
-          } catch (const nlohmann::json::exception& e) {
-            session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
-            ec_ = error_enum::bad_json_string;
-            co_return false;
-          }
-        } else {
-          if (l_content_type.starts_with("image/jpeg"))
-            session_->content_type_ = content_type::image_jpeg;
-          else if (l_content_type.starts_with("image/jpg"))
-            session_->content_type_ = content_type::image_jpg;
-          else if (l_content_type.starts_with("image/png"))
-            session_->content_type_ = content_type::image_png;
-          else if (l_content_type.starts_with("image/gif"))
-            session_->content_type_ = content_type::image_gif;
-
-          if (l_content_type.starts_with("multipart/form-data")) session_->content_type_ = content_type::form_data;
-
-          session_->body_ = string_request_parser_->get().body();
+        switch (session_->content_type_) {
+          case content_type::image_jpeg:
+          case content_type::image_jpg:
+          case content_type::image_png:
+            session_->body_ = string_request_parser_->get().body();
+          case content_type::application_json:
+            try {
+              session_->body_ = nlohmann::json::parse(string_request_parser_->get().body());
+            } catch (const nlohmann::json::exception& e) {
+              session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
+              ec_ = error_enum::bad_json_string;
+              co_return false;
+            }
+            break;
+          default:
+            break;
         }
         session_->req_header_ = std::move(string_request_parser_->release().base());
+
         break;
       default:
         co_return false;
