@@ -63,29 +63,25 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 提交时间
   chrono::sys_time_pos submit_time_{};
 
-  // 运行任务的计算机名称
-  std::string run_computer_{};
-  // 运行任务的计算机ip
-  std::string run_computer_ip_{};
+  uuid run_computer_id_{};
 
   // 开始运行任务的时间
   chrono::sys_time_pos run_time_{};
   // 结束运行任务的时间
   chrono::sys_time_pos end_time_{};
 
-  // 任务日志储存
-  FSys::path log_path_{};
-
-  // 引用其他info 的id
-  boost::uuids::uuid ref_id_{};
-  std::string end_log{};
+  static constexpr auto logger_category = "server_task";
 
   std::string read_log() const;
   FSys::path get_log_path() const;
   void write_log(std::string_view in_msg);
   bool operator==(const server_task_info& in_rhs) const;
 
+  void sql_command(const std::string& in_str);
+  const std::string& sql_command() const;
+
  private:
+  mutable std::string sql_command_cache_;
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
     j["id"]              = fmt::to_string(p.id_);
@@ -96,12 +92,9 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
     j["submit_time"]     = fmt::to_string(p.submit_time_);
-    j["run_computer"]    = p.run_computer_;
-    j["run_computer_ip"] = p.run_computer_ip_;
     j["run_time"]        = fmt::to_string(p.run_time_);
     j["end_time"]        = fmt::to_string(p.end_time_);
-    j["ref_id"]          = fmt::to_string(p.ref_id_);
-    j["end_log"]         = p.end_log;
+    j["run_computer_id"] = fmt::to_string(p.run_computer_id_);
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
@@ -112,20 +105,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
     j.at("submitter").get_to(p.submitter_);
-    std::string l_time_str{};
-    j.at("submit_time").get_to(l_time_str);
-    std::istringstream l_time_ss{l_time_str};
-    l_time_ss >> chrono::parse("%F %T", p.submit_time_);
-    j.at("run_computer").get_to(p.run_computer_);
-    j.at("run_computer_ip").get_to(p.run_computer_ip_);
-    j.at("run_time").get_to(l_time_str);
-    l_time_ss = std::istringstream{l_time_str};
-    l_time_ss >> chrono::parse("%F %T", p.run_time_);
-    j.at("end_time").get_to(l_time_str);
-    l_time_ss = std::istringstream{l_time_str};
-    l_time_ss >> chrono::parse("%F %T", p.end_time_);
-    j.at("ref_id").get_to(p.ref_id_);
-    j.at("end_log").get_to(p.end_log);
+    j.at("run_computer_id").get_to(p.run_computer_id_);
   }
 };
 }  // namespace doodle

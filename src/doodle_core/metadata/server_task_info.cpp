@@ -19,17 +19,14 @@
 
 namespace doodle {
 
-std::string server_task_info::read_log() const {
-  auto l_path = get_log_path();
-  if (!FSys::exists(l_path)) return "";
-  FSys::ifstream l_file{l_path};
-  return std::string{std::istream_iterator<char>{l_file}, std::istream_iterator<char>{}};
+const std::string& server_task_info::sql_command() const {
+  sql_command_cache_ = (nlohmann::json{} = command_).dump();
+  return sql_command_cache_;
 }
-FSys::path server_task_info::get_log_path() const {
-  return core_set::get_set().get_cache_root(log_path_).replace_extension(".log.txt");
+void server_task_info::sql_command(const std::string& in_str) {
+  sql_command_cache_ = in_str;
+  nlohmann::json::parse(sql_command_cache_).get_to(command_);
 }
-void server_task_info::write_log(std::string_view in_msg) {
-  FSys::ofstream{get_log_path(), std::ios::app | std::ios::binary} << in_msg;
-}
+
 bool server_task_info::operator==(const doodle::server_task_info& in_rhs) const { return uuid_id_ == in_rhs.uuid_id_; }
 }  // namespace doodle

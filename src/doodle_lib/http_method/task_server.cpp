@@ -81,7 +81,7 @@ boost::asio::awaitable<void> task_server::confirm_task() {
         );
         l_computer == l_computers.end()) {
       l_task->status_ = server_task_info_status::submitted;
-      l_task->run_computer_.clear();
+      // l_task->run_computer_.clear();
       l_task->run_time_ = std::chrono::system_clock::time_point{};
       {
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
@@ -104,9 +104,9 @@ boost::asio::awaitable<void> task_server::assign_task() {
 
       l_computer->computer_data_ptr_->server_status_ = computer_status::busy;
       l_task->status_                           = server_task_info_status::assigned;
-      l_task->run_computer_                     = l_computer->computer_data_ptr_->name_;
+      // l_task->run_computer_                     = l_computer->computer_data_ptr_->name_;
       l_task->run_time_                         = std::chrono::system_clock::now();
-      l_task->run_computer_ip_                  = l_computer->computer_data_ptr_->ip_;
+      // l_task->run_computer_ip_                  = l_computer->computer_data_ptr_->ip_;
       {
         co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
         g_reg()->patch<doodle::server_task_info>(task_entity_map_[id_]) = *l_task;

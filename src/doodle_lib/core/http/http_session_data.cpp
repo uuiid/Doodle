@@ -14,6 +14,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_websocket_client.h>
 #include <doodle_lib/core/http/websocket_route.h>
+#include <doodle_lib/core/http/zlib_deflate_file_body.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/iostreams/categories.hpp>
@@ -547,6 +548,46 @@ std::string session_data::zlib_compress(const std::string& in_str) {
   boost::iostreams::copy(out, compressed);
   return compressed.str();
 }
+tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::string> session_data::make_msg(
+    const FSys::path& in_path, const std::string_view& mine_type
+) {
+  auto l_set_handle = [&mine_type, this](auto&& in_res) {
+    in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+    in_res.set(boost::beast::http::field::content_type, mine_type);
+    in_res.keep_alive(keep_alive_);
+    in_res.prepare_payload();
+  };
+  boost::system::error_code l_code{};
+  if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
+    boost::beast::http::response<http::zlib_deflate_file_body> l_res{boost::beast::http::status::ok, version_};
+    l_res.body().open(in_path, std::ios::in | std::ios::binary, l_code);
+    l_res.set(boost::beast::http::field::content_encoding, "deflate");
+    l_set_handle(l_res);
+    if (l_code) return tl::make_unexpected(l_code.message());
+    return tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::string>{std::move(l_res)};
+  }
+  boost::beast::http::response<boost::beast::http::file_body> l_res{boost::beast::http::status::ok, version_};
+  l_res.body().open(in_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
+  l_set_handle(l_res);
+  if (l_code) return tl::make_unexpected(l_code.message());
+  return tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::string>{std::move(l_res)};
+}
+boost::beast::http::response<boost::beast::http::string_body> session_data::make_msg(std::string&& in_body) {
+  boost::beast::http::response<boost::beast::http::string_body> l_res{boost::beast::http::status::ok, version_};
+  l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
+  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+  l_res.keep_alive(keep_alive_);
+  // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
+  //   l_res.body() = zlib_compress(std::move(in_body));
+  //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
+  // } else
+  l_res.body() = std::move(in_body);
+
+  l_res.prepare_payload();
+  return l_res;
+}}
+
+
 
 } // namespace detail
 } // namespace doodle::http
