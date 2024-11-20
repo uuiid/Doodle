@@ -22,7 +22,6 @@ target_sources(doodle_core
         load_save_impl.h
         entt_handle_ref.h
         tag.h
-        server_task_info.h
 
 
         PRIVATE
@@ -50,5 +49,4 @@ target_sources(doodle_core
         load_save_impl.cpp
         entt_handle_ref.cpp
         tag.cpp
-        server_task_info.cpp
 )
