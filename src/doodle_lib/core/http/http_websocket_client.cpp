@@ -83,6 +83,7 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
     auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
     if (l_ec_r) {
       if (l_ec_r == boost::beast::websocket::error::closed) {
+        websocket_route_->emit_close(data_);
         co_return;
       }
       logger_->error(l_ec_r.what());
