@@ -19,31 +19,29 @@ namespace {
 boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_handle) {
   auto l_logger   = in_handle->logger_;
   auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+  try {
+    if (!l_computer) {
+      l_computer            = std::make_shared<computer_reg_data>();
+      in_handle->user_data_ = l_computer;
 
-  if (!l_computer) {
-    l_computer            = std::make_shared<computer_reg_data>();
-    in_handle->user_data_ = l_computer;
+      if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(in_handle->body_["user_id"].get<uuid>());
+          !l_list.empty())
+        *l_computer->computer_data_ptr_ = l_list.front();
+      l_computer->computer_data_ptr_->server_status_ = computer_status::free;
+      l_computer->client                             = in_handle->client_;
+    }
 
-    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(in_handle->body_["user_id"].get<uuid>());
-        !l_list.empty())
-      *l_computer->computer_data_ptr_ = l_list.front();
-    l_computer->computer_data_ptr_->server_status_ = computer_status::free;
-    l_computer->client                             = in_handle->client_;
-  }
-
-  if (in_handle->body_.contains("state") && in_handle->body_["state"].is_string())
     l_computer->computer_data_ptr_->client_status_ =
         magic_enum::enum_cast<doodle::computer_status>(in_handle->body_["state"].get<std::string>())
             .value_or(doodle::computer_status::unknown);
-
-  if (in_handle->body_.contains("host_name") && in_handle->body_["host_name"].is_string()) {
     l_computer->computer_data_ptr_->name_ = in_handle->body_["host_name"].get<std::string>();
+    l_computer->computer_data_ptr_->ip_ = in_handle->remote_endpoint_;
+    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
+      l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
+    computer_reg_data_manager::get().reg(l_computer);
+  } catch (...) {
+    in_handle->logger_->error("设置状态出错 {}", boost::diagnostic_information(std::current_exception()));
   }
-  l_computer->computer_data_ptr_->ip_ = in_handle->remote_endpoint_;
-
-  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
-    l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
-  computer_reg_data_manager::get().reg(l_computer);
 
   co_return std::string{};
 }
@@ -86,7 +84,9 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
 
 void computer_reg(doodle::http::http_route& in_route) {
   in_route.reg(
-      std::make_shared<http_function>(boost::beast::http::verb::get, "v1/computer", list_computers, reg_computer)
+      std::make_shared<http_function>(
+          boost::beast::http::verb::get, "api/doodle/computer", list_computers, reg_computer
+      )
   );
 }
 }  // namespace doodle::http
