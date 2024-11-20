@@ -36,23 +36,32 @@ tl::expected<void, std::string> create_thumbnail_image(
   return {};
 }
 tl::expected<void, std::string> create_thumbnail_gif(
-    const std::string& in_data, const FSys::path& in_path, const std::string& in_name
+    const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
 ) {
   try {
-    cv::VideoCapture l_video{};
+    {
+      cv::VideoCapture l_video{};
+      l_video.open(in_data_path.generic_string());
+      if (!l_video.isOpened()) return tl::make_unexpected("gif 打开失败");
 
-    cv::Mat l_image = cv::imdecode(
-        cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
-        cv::IMREAD_COLOR
-    );
-    if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+      auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
+      cv::Mat l_image{};
+      l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
+      l_video >> l_image;
+      if (l_image.empty()) return tl::make_unexpected("图片解码失败");
 
-    cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
-    if (l_image.cols > 192 || l_image.rows > 108) {
-      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+      cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
+      if (l_image.cols > 192 || l_image.rows > 108) {
+        auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+        cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+      }
     }
-    cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+    FSys::copy_file(in_data_path, in_path / "thumbnails" / (in_name + ".gif"));
+    try {
+      FSys::remove(in_path);
+    } catch (...) {
+      default_logger_raw()->error("删除临时文件失败 {}", boost::current_exception_diagnostic_information());
+    }
   } catch (...) {
     return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
   }

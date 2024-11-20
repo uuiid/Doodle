@@ -414,16 +414,17 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
             break;
           }
           case content_type::image_gif: {
-            file_request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(
-                std::move(*request_parser_)
-            );
+            auto l_file_request_parser_ =
+                std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(
+                    std::move(*request_parser_)
+                );
             auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".gif");
-            file_request_parser_->get().body().open(
+            l_file_request_parser_->get().body().open(
                 l_path.generic_string().c_str(), boost::beast::file_mode::write, ec_
             );
             if (ec_) co_return false;
             std::tie(ec_, std::ignore) =
-                co_await boost::beast::http::async_read(*stream_, buffer_, *file_request_parser_);
+                co_await boost::beast::http::async_read(*stream_, buffer_, *l_file_request_parser_);
             if (ec_) co_return false;
             session_->body_ = l_path;
             break;
@@ -448,6 +449,8 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
               ec_ = error_enum::bad_json_string;
               co_return false;
             }
+            break;
+          case content_type::image_gif:
             break;
           default:
             break;
