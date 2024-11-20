@@ -17,21 +17,23 @@
 namespace doodle::http {
 namespace {
 boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_handle) {
-  auto l_logger   = in_handle->logger_;
-  auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
+  auto l_logger = in_handle->logger_;
   try {
+    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
     if (!l_computer) {
       l_computer            = std::make_shared<computer_reg_data>();
       in_handle->user_data_ = l_computer;
-
-      if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(in_handle->body_["user_id"].get<uuid>());
-          !l_list.empty())
+      auto l_uuid           = in_handle->body_["user_id"].get<uuid>();
+      if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(l_uuid); !l_list.empty())
         *l_computer->computer_data_ptr_ = l_list.front();
       l_computer->computer_data_ptr_->server_status_ = computer_status::free;
       l_computer->client                             = in_handle->client_;
+      l_computer->computer_data_ptr_->uuid_id_       = l_uuid;
     }
 
     l_computer->computer_data_ptr_->client_status_ = in_handle->body_["state"].get<computer_status>();
+    l_computer->computer_data_ptr_->server_status_ = in_handle->body_["state"].get<computer_status>();
+
     l_computer->computer_data_ptr_->name_          = in_handle->body_["host_name"].get<std::string>();
     l_computer->computer_data_ptr_->ip_            = in_handle->remote_endpoint_;
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
@@ -71,7 +73,8 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
     auto l_computer = std::static_pointer_cast<computer_reg_data>(in_data->user_data_);
     if (!l_computer) {
       computer_reg_data_manager::get().clear(l_computer);
-      l_computer->computer_data_ptr_->server_status_ = computer_status::online;
+      l_computer->computer_data_ptr_->server_status_ = computer_status::offline;
+      l_computer->computer_data_ptr_->client_status_ = computer_status::offline;
       boost::asio::co_spawn(
           g_io_context(), g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_), boost::asio::detached
       );
