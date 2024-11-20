@@ -17,7 +17,7 @@ std::vector<computer_reg_data_ptr> computer_reg_data_manager::list() {
   std::lock_guard l_lock(mutex_);
   std::vector<computer_reg_data_ptr> l_out{};
   for (auto& it : computer_reg_datas_) {
-    l_out.emplace_back(it);
+    if (auto l_ptr = it.lock(); l_ptr) l_out.emplace_back(it);
   }
   return l_out;
 }
