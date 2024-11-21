@@ -37,6 +37,15 @@ constexpr std::string_view hello_world_doodle_server{R"(hello world! doodle serv
 constexpr std::string_view g_cache_path{"D:/doodle/cache/ue"};
 constexpr std::uint16_t udp_port{50022};
 constexpr std::uint16_t http_port{50021};
+
+namespace work_websocket_event {
+constexpr std::string_view post_task{R"(post_task)"};
+constexpr std::string_view list_task{R"(get_task)"};
+}  // namespace work_websocket_event
+namespace server_websocket_event {
+constexpr std::string_view set_state{R"(set_state)"};
+constexpr std::string_view logger{R"(logger)"};
+}  // namespace server_websocket_event
 }  // namespace doodle_config
 namespace gui::config::menu_w {
 constexpr std::string_view project_widget{"项目"};
