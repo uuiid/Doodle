@@ -95,7 +95,6 @@
         "test_main",
         "file_association_http",
         "doodle_auto_light_process",
-        "doodle_file_exists",
         "doodle_kitsu_supplement",
         "Doxygen"
       ]
@@ -130,11 +129,9 @@
       "targets": [
         "DoodleExe",
         "generate_token",
-        "doodle_auto_light_server",
         "doodle_auto_light_client",
         "file_association_http",
         "doodle_auto_light_process",
-        "doodle_file_exists",
         "doodle_kitsu_supplement",
         "Doxygen"
       ]
