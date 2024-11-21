@@ -29,14 +29,12 @@ class scan_category_data_t {
     friend void to_json(nlohmann::json& j, const uuid_path_t& p) {
       j["uuid"]       = p.uuid_;
       j["path"]       = p.path_;
-      j["last_write"] = p.last_write_time_;
     }
 
     // from_json
     friend void from_json(const nlohmann::json& j, uuid_path_t& p) {
       j.at("uuid").get_to(p.uuid_);
       j.at("path").get_to(p.path_);
-      j.at("last_write").get_to(p.last_write_time_);
     }
   };
   using project_root_t = project;

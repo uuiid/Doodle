@@ -92,14 +92,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
     j["submit_time"]     = fmt::to_string(p.submit_time_);
-    if (p.run_time_.time_since_epoch().count() > 0)
-      j["run_time"] = fmt::to_string(p.run_time_);
-    else
-      j["run_time"] = nlohmann::json::value_t::null;
-    if (p.end_time_.time_since_epoch().count() > 0)
-      j["end_time"] = fmt::to_string(p.end_time_);
-    else
-      j["end_time"] = nlohmann::json::value_t::null;
+    j["run_time"]        = p.run_time_;
+    j["end_time"]        = p.end_time_;
     j["run_computer_id"] = fmt::to_string(p.run_computer_id_);
   }
   // from json
