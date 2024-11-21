@@ -23,7 +23,9 @@ boost::asio::awaitable<void> list_tast_to(
   if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info(in_computer->uuid_id_);
       !l_list.empty() && in_client) {
     std::vector<uuid> l_ids{};
-    for (const auto& l_item : l_list) l_ids.emplace_back(l_item.uuid_id_);
+    for (const auto& l_item : l_list)
+      if (l_item.status_ == server_task_info_status::submitted || l_item.status_ == server_task_info_status::assigned)
+        l_ids.emplace_back(l_item.uuid_id_);
     co_await in_client->async_write_websocket(
         nlohmann::json{{"type", doodle_config::work_websocket_event::list_task}, {"ids", l_ids}}.dump()
     );
