@@ -143,7 +143,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["maya_version"]             = p.maya_version;
   j["layout_config"]            = p.layout_config;
   j["assets_file_widgets_size"] = p.assets_file_widgets_size;
-  j["depot_ip"]                 = p.depot_ip;
   j["next_time_"]               = p.next_time_;
 }
 
@@ -171,7 +170,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
   if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
   if (j.contains("assets_file_widgets_size")) j.at("assets_file_widgets_size").get_to(p.assets_file_widgets_size);
-  if (j.contains("depot_ip")) j.at("depot_ip").get_to(p.depot_ip);
   if (j.contains("next_time_")) j.at("next_time_").get_to(p.next_time_);
 }
 void core_set::add_recent_project(const FSys::path &in) {

@@ -61,7 +61,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
   std::string server_ip{};
   /// 保管库的地址
-  std::string depot_ip{};
 
   std::uint8_t assets_file_widgets_size;
   /// 欢迎窗口的变量

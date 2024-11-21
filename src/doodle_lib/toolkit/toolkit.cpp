@@ -104,10 +104,6 @@ void toolkit::modifyUeCachePath() {
   // winreg::RegKey l_key{};
   // l_key.Create(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Session Manager\\Environment");
   // l_key.SetStringValue(L"UE-LocalDataCachePath", L"%GAMEDIR%DerivedDataCache");
-  // l_key.SetStringValue(
-  //     L"UE-SharedDataCachePath",
-  //     fmt::format(L"{}\\UE\\DerivedDataCache", conv::utf_to_utf<wchar_t>(core_set::get_set().depot_ip))
-  // );
   // constexpr static const auto *L_Param = L"Environment";
   // ::SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, reinterpret_cast<LPARAM>(L_Param), SMTO_BLOCK, 100,
   // NULL);
