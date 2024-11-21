@@ -116,10 +116,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
 }  // namespace
 
 void task_info_reg(doodle::http::http_route& in_route) {
-  in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "v1/task", list_task))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "v1/task/{id}", get_task))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "v1/task/{id}/log", get_task_logger))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "v1/task", post_task))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "v1/task/{id}", delete_task));
+  in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task", list_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/task", post_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));
 }
 }  // namespace doodle::http
