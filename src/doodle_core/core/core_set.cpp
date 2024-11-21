@@ -106,6 +106,7 @@ std::string core_set::get_render_url() {
 void core_set::set_root(const FSys::path &in_root) {
   p_root      = in_root;
   _root_cache = p_root / "cache";
+  if (!FSys::exists(_root_cache)) FSys::create_directories(_root_cache);
 }
 
 FSys::path core_set::get_cache_root() const { return _root_cache; }
