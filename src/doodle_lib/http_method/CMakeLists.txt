@@ -5,7 +5,6 @@ target_sources(
         PUBLIC
         computer.h
         task_info.h
-        task_server.h
         file_exists.h
         computing_time.h
         dingding_attendance.h
@@ -17,7 +16,6 @@ target_sources(
         PRIVATE
         computer.cpp
         task_info.cpp
-        task_server.cpp
         file_exists.cpp
         computing_time.cpp
         dingding_attendance.cpp

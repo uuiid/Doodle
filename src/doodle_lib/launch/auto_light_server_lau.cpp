@@ -13,7 +13,6 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/task_info.h>
-#include <doodle_lib/http_method/task_server.h>
 #include <doodle_lib/http_method/sqlite/task_sqlite_server.h>
 
 namespace doodle::launch {

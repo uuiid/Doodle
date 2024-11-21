@@ -24,7 +24,6 @@
 #include <doodle_lib/http_client/work.h>
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/task_info.h>
-#include <doodle_lib/http_method/task_server.h>
 
 #include <boost/asio.hpp>
 #include <boost/log/trivial.hpp>
