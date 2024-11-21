@@ -66,9 +66,9 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   uuid run_computer_id_{};
 
   // 开始运行任务的时间
-  chrono::sys_time_pos run_time_{};
+  std::optional<chrono::sys_time_pos> run_time_{};
   // 结束运行任务的时间
-  chrono::sys_time_pos end_time_{};
+  std::optional<chrono::sys_time_pos> end_time_{};
 
   static constexpr auto logger_category = "server_task";
 
@@ -84,21 +84,20 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   mutable std::string sql_command_cache_;
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
-    j["id"]              = fmt::to_string(p.id_);
+    j["id"]              = p.uuid_id_;
     j["exe"]             = p.exe_;
     j["command"]         = p.command_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
-    j["submit_time"]     = fmt::to_string(p.submit_time_);
+    j["submit_time"]     = p.submit_time_;
     j["run_time"]        = p.run_time_;
     j["end_time"]        = p.end_time_;
-    j["run_computer_id"] = fmt::to_string(p.run_computer_id_);
+    j["run_computer_id"] = p.run_computer_id_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
-    j.at("id").get_to(p.uuid_id_);
     j.at("exe").get_to(p.exe_);
     j.at("command").get_to(p.command_);
     if (j.contains("status")) j.at("status").get_to(p.status_);

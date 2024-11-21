@@ -60,6 +60,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
   if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
 
+  boost::asio::co_spawn(g_io_context(), task_emit(l_ptr), boost::asio::consign(boost::asio::detached, l_ptr));
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
