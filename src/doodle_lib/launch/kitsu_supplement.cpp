@@ -116,7 +116,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     }
   }
   get_register_info(l_args);
-  core_set::get_set().p_root = l_args.kitsu_thumbnails_path_;
+  core_set::get_set().set_root(l_args.kitsu_thumbnails_path_);
 
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
   l_scan->use_cache();
