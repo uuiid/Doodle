@@ -70,7 +70,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
-  auto l_path = core_set::get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_uuid);
+  auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_uuid);
   if (!FSys::exists(l_path))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
   auto l_ex = in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));

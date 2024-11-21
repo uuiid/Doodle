@@ -585,7 +585,7 @@ boost::beast::http::response<boost::beast::http::string_body> session_data::make
 
   l_res.prepare_payload();
   return l_res;
-}}
+}
 
 
 
