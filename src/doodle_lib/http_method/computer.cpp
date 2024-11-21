@@ -54,10 +54,9 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
   }
   auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
 
-  auto l_task     = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_)->task_info_;
-  FSys::ofstream{
-      core_set::get_set().get_cache_root(server_task_info::logger_category) / fmt::format("{}.txt", l_task->id_)
-  } << in_handle->body_["msg"].get<std::string>();
+  auto l_id       = in_handle->body_["id"].get<uuid>();
+  auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_id);
+  FSys::ofstream{l_path} << in_handle->body_["msg"].get<std::string>();
   co_return std::string{};
 }
 
@@ -85,6 +84,7 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
 }  // namespace
 
 void computer_reg(doodle::http::http_route& in_route) {
+  default_logger_raw()->info("任务日志目录 {}", core_set::get_set().get_cache_root(server_task_info::logger_category));
   in_route.reg(
       std::make_shared<http_function>(
           boost::beast::http::verb::get, "api/doodle/computer", list_computers, reg_computer

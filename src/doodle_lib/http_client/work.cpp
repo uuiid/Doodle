@@ -161,10 +161,10 @@ boost::asio::awaitable<void> http_work::async_run_task(
 //             while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale))
 //             l_line.pop_back(); if (!l_line.empty()) {
 //               try {
-//                 l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", l_line}}.dump();
+//                 l_line = nlohmann::json{{"type", "logger"}, {"id", task_id_}, {"msg", l_line}}.dump();
 //               } catch (const nlohmann::json::exception& e) {
 //                 logger_->warn("json parse error: {}", e.what());
-//                 l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", "日志解码错误"}}.dump();
+//                 l_line = nlohmann::json{{"type", "logger"}, {"id", task_id_}, {"msg", "日志解码错误"}}.dump();
 //               }
 //               l_ec = co_await websocket_client_->async_write_websocket(std::move(l_line));
 //             }
@@ -198,10 +198,10 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
     while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
     if (!l_line.empty()) {
       try {
-        l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", l_line}}.dump();
+        l_line = nlohmann::json{{"type", "logger"}, {"id", task_id_}, {"msg", l_line}}.dump();
       } catch (const nlohmann::json::exception& e) {
         logger_->warn("json parse error: {}", e.what());
-        l_line = nlohmann::json{{"type", "logger"}, {"task_id", task_id_}, {"msg", "日志解码错误"}}.dump();
+        l_line = nlohmann::json{{"type", "logger"}, {"id", task_id_}, {"msg", "日志解码错误"}}.dump();
       }
       l_ec = co_await websocket_client_->async_write_websocket(std::move(l_line));
     }
