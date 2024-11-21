@@ -1,5 +1,5 @@
 set DoodleName=%1
-set DoodleSource=//192.168.20.89/Doodle2/build/Ninja_release/_CPack_Packages/win64/7Z/%DoodleName%/bin
+set DoodleSource=//192.168.20.89/Doodle2/build/Ninja_release/_CPack_Packages/win64/ZIP/%DoodleName%/bin
 
 
 @REM Í£Ö¹·þÎñ
