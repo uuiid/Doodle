@@ -26,7 +26,7 @@ boost::asio::awaitable<void> task_emit(const std::shared_ptr<server_task_info>& 
   for (auto&& l_com : l_computer_list) {
     if (l_com->computer_data_ptr_->uuid_id_ == in_ptr->run_computer_id_)
       if (auto l_c = l_com->client.lock(); l_c) {
-        co_await l_c->async_write_websocket(nlohmann::json{}.dump());
+        co_await l_c->async_write_websocket(nlohmann::json{{"type", "post_task"}, {"id", in_ptr->uuid_id_}}.dump());
         co_return;
       }
   }
