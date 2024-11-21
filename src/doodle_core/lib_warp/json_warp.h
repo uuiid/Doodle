@@ -55,11 +55,11 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
   using time_duration = std::chrono::duration<Rep, Period>;
   static void to_json(json& j, const time_duration& in_duration) {
     auto count = in_duration.count();
-    j["count"] = count;
+    j          = count;
   }
   static void from_json(const json& j, time_duration& in_duration) {
     Rep count{};
-    j.at("count").get_to(count);
+    j.get_to(count);
     in_duration = time_duration{count};
   }
 };
@@ -67,12 +67,11 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
 template <class Clock, class Duration>
 struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>> {
   using time_point = std::chrono::time_point<Clock, Duration>;
-  static void to_json(json& j, const time_point& in_time) { j["time_since_epoch"] = in_time.time_since_epoch(); }
+  static void to_json(json& j, const time_point& in_time) { j = fmt::to_string(in_time); }
 
   static void from_json(const json& j, time_point& in_time) {
-    Duration time_since_epoch;
-    time_since_epoch = j.at("time_since_epoch").get<Duration>();
-    in_time          = time_point{time_since_epoch};
+    std::istringstream l_stream(j.get<std::string>());
+    l_stream >> std::chrono::parse("%F %T", in_time);
   }
 };
 
@@ -81,10 +80,9 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
   using opt = std::optional<T>;
   static void to_json(json& j, const opt& in_opt) {
     if (!in_opt) {
-      j["nullopt"] = true;
+      j = nlohmann::json::value_t::null;
     } else {
-      j["nullopt"] = false;
-      j["data"]    = *in_opt;
+      j = *in_opt;
     }
   }
   static void from_json(const json& j, opt& in_opt) {

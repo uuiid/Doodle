@@ -92,8 +92,14 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
     j["submit_time"]     = fmt::to_string(p.submit_time_);
-    j["run_time"]        = fmt::to_string(p.run_time_);
-    j["end_time"]        = fmt::to_string(p.end_time_);
+    if (p.run_time_.time_since_epoch().count() > 0)
+      j["run_time"] = fmt::to_string(p.run_time_);
+    else
+      j["run_time"] = nlohmann::json::value_t::null;
+    if (p.end_time_.time_since_epoch().count() > 0)
+      j["end_time"] = fmt::to_string(p.end_time_);
+    else
+      j["end_time"] = nlohmann::json::value_t::null;
     j["run_computer_id"] = fmt::to_string(p.run_computer_id_);
   }
   // from json
@@ -101,7 +107,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j.at("id").get_to(p.uuid_id_);
     j.at("exe").get_to(p.exe_);
     j.at("command").get_to(p.command_);
-    j.at("status").get_to(p.status_);
+    if (j.contains("status")) j.at("status").get_to(p.status_);
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
     j.at("submitter").get_to(p.submitter_);

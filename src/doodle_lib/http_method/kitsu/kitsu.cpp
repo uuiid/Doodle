@@ -19,6 +19,7 @@
 #include <doodle_lib/http_method/kitsu/project.h>
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
+#include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
@@ -38,6 +39,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   reg_file_association_http(*l_router);
   reg_kitsu_front_end_http(*l_router, in_root);
   computer_reg(*l_router);
+  task_info_reg(*l_router);
   return l_router;
 }
 
