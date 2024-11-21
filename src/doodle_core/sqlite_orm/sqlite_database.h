@@ -13,6 +13,9 @@
 
 #include <tl/expected.hpp>
 namespace doodle {
+class server_task_info;
+}
+namespace doodle {
 namespace attendance_helper {
 struct database_t;
 }
@@ -59,7 +62,9 @@ class sqlite_database {
   boost::asio::awaitable<tl::expected<void, std::string>> install_range(const std::shared_ptr<std::vector<T>>& in_data);
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> remove(const std::shared_ptr<std::vector<std::int64_t>>& in_data);
+  boost::asio::awaitable<tl::expected<void, std::string>> remove(
+      const std::shared_ptr<std::vector<std::int64_t>>& in_data
+  );
   template <typename T>
   boost::asio::awaitable<tl::expected<void, std::string>> remove(const std::shared_ptr<uuid>& in_data);
 
@@ -75,6 +80,7 @@ class sqlite_database {
   std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
       const std::int64_t& in_ref_id, const chrono::local_days& in_data
   );
+  std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id);
 
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
 

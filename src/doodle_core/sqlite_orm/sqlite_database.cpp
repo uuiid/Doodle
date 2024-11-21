@@ -189,6 +189,11 @@ struct sqlite_database_impl {
     }
     default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
   }
+  std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id) {
+    return storage_any_.get_all<server_task_info>(
+        sqlite_orm::where(sqlite_orm::c(&server_task_info::run_computer_id_) == in_computer_id)
+    );
+  }
 
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name) {
     using namespace sqlite_orm;
@@ -355,6 +360,9 @@ void sqlite_database::load(const FSys::path& in_path) { impl_ = std::make_shared
 
 std::vector<project_helper::database_t> sqlite_database::find_project_by_name(const std::string& in_name) {
   return impl_->find_project_by_name(in_name);
+}
+std::vector<server_task_info> sqlite_database::get_server_task_info(const uuid& in_computer_id) {
+  return impl_->get_server_task_info(in_computer_id);
 }
 
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
