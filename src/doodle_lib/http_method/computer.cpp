@@ -66,8 +66,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_computers(ses
 }
 
 void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_ptr& in_handle) {
-  in_web_socket->reg("set_state", websocket_route::call_fun_type(web_set_tate_fun))
-      .reg("logger", websocket_route::call_fun_type(web_logger_fun));
+  in_web_socket
+      ->reg(
+          std::string{doodle_config::server_websocket_event::set_state},
+          websocket_route::call_fun_type(web_set_tate_fun)
+      )
+      .reg(std::string{doodle_config::server_websocket_event::logger}, websocket_route::call_fun_type(web_logger_fun));
 
   in_web_socket->connect_close_signal([](const http_websocket_data_ptr& in_data) {
     auto l_computer = std::static_pointer_cast<computer_reg_data>(in_data->user_data_);
