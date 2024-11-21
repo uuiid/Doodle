@@ -6,8 +6,8 @@
 
 #include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
-#include <doodle_core/lib_warp/enum_template_tool.h>
 #include <doodle_core/lib_warp/chrono_fmt.h>
+#include <doodle_core/lib_warp/enum_template_tool.h>
 
 #include <boost/rational.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -94,7 +94,7 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
         in_opt.emplace(j["data"].get<T>());
       }
     else {
-      in_opt.emplace(j.get<T>());
+      if (!j.is_null()) in_opt.emplace(j.get<T>());
     }
   }
 };
