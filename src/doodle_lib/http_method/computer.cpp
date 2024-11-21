@@ -16,10 +16,24 @@
 
 namespace doodle::http {
 namespace {
+
+boost::asio::awaitable<void> list_tast_to(
+    std::shared_ptr<computer> in_computer, std::shared_ptr<http_websocket_client> in_client
+) {
+  if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info(in_computer->uuid_id_);
+      !l_list.empty() && in_client) {
+    std::vector<uuid> l_ids{};
+    for (const auto& l_item : l_list) l_ids.emplace_back(l_item.uuid_id_);
+    co_await in_client->async_write_websocket(
+        nlohmann::json{{"type", doodle_config::work_websocket_event::list_task}, {"ids", l_ids}}.dump()
+    );
+  }
+}
+
 boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
+  auto l_logger   = in_handle->logger_;
+  auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
   try {
-    auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
     if (!l_computer) {
       l_computer            = std::make_shared<computer_reg_data>();
       in_handle->user_data_ = l_computer;
@@ -42,6 +56,10 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   } catch (...) {
     in_handle->logger_->error("设置状态出错 {}", boost::diagnostic_information(std::current_exception()));
   }
+  boost::asio::co_spawn(
+      g_io_context(), list_tast_to(l_computer->computer_data_ptr_, in_handle->client_.lock()),
+      boost ::asio::consign(boost::asio::detached, l_computer->computer_data_ptr_, in_handle->client_.lock())
+  );
 
   co_return std::string{};
 }
