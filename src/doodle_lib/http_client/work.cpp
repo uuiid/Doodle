@@ -23,12 +23,22 @@
 namespace doodle::http {
 
 boost::asio::awaitable<std::string> http_work::websocket_run_task_fun_launch(http_websocket_data_ptr in_handle) {
-  if (!in_handle->body_.contains("id")) {
-    in_handle->logger_->log(log_loc(), level::err, "json parse error: {}", in_handle->body_.dump());
-    co_return std::string{};
+  try {
+    DOODLE_TO_EXECUTOR(executor_);
+    run_task_ids_.emplace_back(in_handle->body_["id"].get<uuid>());
+  } catch (...) {
+    default_logger_raw()->error("worker run task error {}", boost::current_exception_diagnostic_information());
   }
-  run_task_ids_.emplace_back(in_handle->body_["id"].get<uuid>());
 
+  co_return std::string{};
+}
+boost::asio::awaitable<std::string> http_work::websocket_list_task_fun_launch(http_websocket_data_ptr in_handle) {
+  try {
+    DOODLE_TO_EXECUTOR(executor_);
+    run_task_ids_ = in_handle->body_["ids"].get<std::vector<uuid>>();
+  } catch (...) {
+    default_logger_raw()->error("worker list task error {}", boost::current_exception_diagnostic_information());
+  }
   co_return std::string{};
 }
 
@@ -51,7 +61,13 @@ void http_work::run(const std::string& in_url, const uuid& in_uuid) {
 boost::asio::awaitable<void> http_work::async_run() {
   auto l_web_route = std::make_shared<websocket_route>();
   l_web_route->reg(
-      "run_task", websocket_route::call_fun_type{std::bind_front(&http_work::websocket_run_task_fun_launch, this)}
+      std::string{doodle_config::work_websocket_event::post_task},
+      websocket_route::call_fun_type{std::bind_front(&http_work::websocket_run_task_fun_launch, this)}
+  );
+  l_web_route->reg(
+      std::string{doodle_config::work_websocket_event::list_task},
+      websocket_route::call_fun_type{std::bind_front(&http_work::websocket_list_task_fun_launch, this)}
+
   );
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     if (auto l_ec = co_await websocket_client_->init(url_, l_web_route); l_ec) {
@@ -62,7 +78,7 @@ boost::asio::awaitable<void> http_work::async_run() {
       logger_->error(l_e.error());
       continue;
     }
-    co_await async_set_status(status_.load());
+    co_await async_set_status(status_);
     boost::asio::co_spawn(
         executor_, websocket_client_->async_read_websocket(),
         boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
@@ -78,7 +94,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         status_ = computer_status::busy;
         boost::asio::co_spawn(executor_, async_run_task(), boost::asio::detached);
       }
-      co_await async_set_status(status_.load());
+      co_await async_set_status(status_);
     }
   }
 }
@@ -86,11 +102,11 @@ boost::asio::awaitable<void> http_work::async_run_task() {
   task_id_ = run_task_ids_.front();
   if (auto l_e = co_await websocket_client_->async_ping(); !l_e) co_return logger_->error(l_e.error());
 
-  co_await async_set_status(status_.load());
+  co_await async_set_status(status_);
 
-  auto l_timer      = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  auto l_out_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  auto l_err_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_timer    = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
   // FSys::path l_path = in_exe;
   // if (!l_path.has_root_name()) l_path = boost::process::v2::environment::find_executable(in_exe);
   // auto l_process_maya = boost::process::v2::process{

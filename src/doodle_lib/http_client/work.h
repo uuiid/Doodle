@@ -29,6 +29,7 @@ class http_work {
   using timer_ptr     = std::shared_ptr<timer>;
 
   boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket_data_ptr in_handle);
+  boost::asio::awaitable<std::string> websocket_list_task_fun_launch(http_websocket_data_ptr in_handle);
   boost::asio::any_io_executor executor_{};
   // 自动连接定时器
   timer_ptr timer_{};
@@ -36,7 +37,7 @@ class http_work {
   std::shared_ptr<http_websocket_client> websocket_client_{};
 
   logger_ptr logger_{};
-  std::atomic<computer_status> status_{computer_status::online};
+  computer_status status_{computer_status::online};
 
   uuid task_id_{};
 
