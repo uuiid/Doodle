@@ -37,9 +37,11 @@ SPDLOG_API spdlog::logger* default_logger_raw();
 namespace level {}  // namespace level
 }  // namespace spdlog
 
-#define DOODLE_TO_MAIN_THREAD()                                   \
+#define DOODLE_TO_EXECUTOR(executor_)                             \
   auto this_executor = co_await boost::asio::this_coro::executor; \
-  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
+  co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
+
+#define DOODLE_TO_MAIN_THREAD() DOODLE_TO_EXECUTOR(g_strand())
 
 #define DOODLE_TO_SELF() \
   co_await boost::asio::post(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
