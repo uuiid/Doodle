@@ -1,7 +1,6 @@
 {
   "setting": {
     "assets_file_widgets_size": 5,
-    "depot_ip": "\\\\192.168.10.218\\Doodletemp",
     "layout_config": "",
     "max_thread": 3,
     "maya_force_resolve_link": false,
@@ -24,9 +23,6 @@
     "timeout": 3600,
     "ue4_path": "C:/Program Files/Epic Games/UE_5.4",
     "ue4_version": "5.4",
-    "user_id": {
-      "uuid": "824dbc3d-be8f-4693-aa06-bdc3e37ee118"
-    },
     "user_name": ""
   }
 }
