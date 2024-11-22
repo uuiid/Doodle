@@ -56,8 +56,10 @@ boost::asio::awaitable<tl::expected<http_work::run_task_info, std::string>> http
     co_return tl::make_unexpected(l_ec.message());
   }
   auto l_json     = l_res.body();
+
   l_info.run_args = l_json["command"].get<std::vector<std::string>>();
   l_info.run_exe  = l_json["exe"].get<std::string>();
+  l_info.status   = l_json["status"].get<server_task_info_status>();
   co_return tl::expected<http_work::run_task_info, std::string>{l_info};
 }
 
@@ -137,6 +139,10 @@ boost::asio::awaitable<void> http_work::async_run_task() {
   if (!l_task_info) {
     co_await async_set_task_status(server_task_info_status::failed);
     logger_->error("获取任务数据失败 {}", l_task_info.error());
+    co_return;
+  }
+  if (l_task_info->status == server_task_info_status::canceled) {
+    logger_->warn("任务已取消 {}", task_id_);
     co_return;
   }
   co_await async_set_task_status(server_task_info_status::running);

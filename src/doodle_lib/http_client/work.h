@@ -52,6 +52,7 @@ class http_work {
   struct run_task_info {
     std::string run_exe{};
     std::vector<std::string> run_args{};
+    server_task_info_status status{};
   };
 
   boost::asio::awaitable<void> async_run();
