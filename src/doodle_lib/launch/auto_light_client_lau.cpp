@@ -20,11 +20,9 @@ bool auto_light_client_lau::operator()(const argh::parser& in_arh, std::vector<s
     l_ip = l_ip_str.str();
   } else {
     default_logger_raw()->log(log_loc(), level::warn, "未指定地址");
-    return false;
+    return true;
   }
-
-  http_client_service_ptr_->run(l_ip);
-
+  http_client_service_ptr_->run(fmt::format("ws://{}/api/doodle/computer", l_ip), fmt::format("http://{}", l_ip));
   return false;
 }
 }  // namespace doodle::launch
