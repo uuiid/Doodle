@@ -45,6 +45,7 @@ constexpr std::string_view list_task{R"(get_task)"};
 namespace server_websocket_event {
 constexpr std::string_view set_state{R"(set_state)"};
 constexpr std::string_view logger{R"(logger)"};
+constexpr std::string_view set_task_state{R"(set_task_state)"};
 }  // namespace server_websocket_event
 }  // namespace doodle_config
 namespace gui::config::menu_w {
