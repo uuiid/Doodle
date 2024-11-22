@@ -241,6 +241,7 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
     std::getline(l_is, l_line);
     while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
     if (!l_line.empty()) {
+      if (l_line.back() != '\n') l_line += '\n';
       try {
         l_line = nlohmann::json{
             {"type", doodle_config::server_websocket_event::logger}, {"id", task_id_}, {"msg", l_line}
