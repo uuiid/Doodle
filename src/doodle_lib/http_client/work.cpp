@@ -111,7 +111,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         logger_->error("定时器错误 {}", l_tec);
         break;
       }
-      if (status_ == computer_status::free) {
+      if (status_ == computer_status::free && !run_task_ids_.empty()) {
         status_ = computer_status::busy;
         boost::asio::co_spawn(
             executor_, async_run_task(),
