@@ -12,7 +12,6 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-#include <doodle_lib/http_method/task_server.h>
 
 #include "computer_reg_data.h"
 #include <sqlpp11/sqlite3/sqlite3.h>
@@ -47,6 +46,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
     l_json.get_to(*l_ptr);
     l_ptr->uuid_id_     = core_set::get_set().get_uuid();
     l_ptr->submit_time_ = chrono::sys_time_pos::clock::now();
+
+    if (l_ptr->exe_.empty())
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
 
     if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<computer>(l_ptr->run_computer_id_); l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到计算机");
