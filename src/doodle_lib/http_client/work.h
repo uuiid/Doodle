@@ -3,8 +3,10 @@
 //
 
 #pragma once
+#include <doodle_core/core/http_client_core.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/http/http_websocket_client.h>
 
@@ -35,6 +37,7 @@ class http_work {
   timer_ptr timer_{};
 
   std::shared_ptr<http_websocket_client> websocket_client_{};
+  detail::http_client_data_base_ptr client_data_{};
 
   logger_ptr logger_{};
   computer_status status_{computer_status::online};
@@ -46,22 +49,27 @@ class http_work {
   uuid uuid_id_{};
   std::vector<uuid> run_task_ids_{};
 
+  struct run_task_info {
+    std::string run_exe{};
+    std::vector<std::string> run_args{};
+  };
+
   boost::asio::awaitable<void> async_run();
 
-  boost::asio::awaitable<void> async_run_task(
-
-  );
+  boost::asio::awaitable<void> async_run_task();
+  boost::asio::awaitable<tl::expected<run_task_info, std::string>> get_task_data();
 
   template <typename Handle>
   auto async_relay_websocket(std::shared_ptr<boost::asio::readable_pipe> in_pipe, Handle&& in_handle);
 
   boost::asio::awaitable<void> async_set_status(computer_status in_status);
+  boost::asio::awaitable<void> async_set_task_status(server_task_info_status in_status);
   boost::asio::awaitable<void> async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe);
 
  public:
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const std::string& in_url, const uuid& in_uuid = uuid{});
+  void run(const std::string& in_web_socket_url, const std::string& in_http_url, const uuid& in_uuid = uuid{});
 };
 }  // namespace doodle::http

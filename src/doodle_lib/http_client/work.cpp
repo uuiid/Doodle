@@ -18,6 +18,7 @@
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/process/v2.hpp>
 
+#include "core/http/json_body.h"
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
@@ -42,11 +43,31 @@ boost::asio::awaitable<std::string> http_work::websocket_list_task_fun_launch(ht
   co_return std::string{};
 }
 
-void http_work::run(const std::string& in_url, const uuid& in_uuid) {
-  executor_ = boost::asio::make_strand(g_io_context());
-  timer_    = std::make_shared<timer>(executor_);
-  url_      = in_url;
-  uuid_id_  = in_uuid;
+boost::asio::awaitable<tl::expected<http_work::run_task_info, std::string>> http_work::get_task_data() {
+  run_task_info l_info{};
+
+  auto&& [l_ec, l_res] = co_await detail::read_and_write<basic_json_body>(
+      client_data_,
+      boost::beast::http::request<boost::beast::http::empty_body>{
+          boost::beast::http::verb::get, fmt::format("/api/doodle/task/{}", task_id_), 11
+      }
+  );
+  if (l_ec) {
+    co_return tl::make_unexpected(l_ec.message());
+  }
+  auto l_json     = l_res.body();
+  l_info.run_args = l_json["command"].get<std::vector<std::string>>();
+  l_info.run_exe  = l_json["exe"].get<std::string>();
+  co_return tl::expected<http_work::run_task_info, std::string>{l_info};
+}
+
+void http_work::run(const std::string& in_url, const std::string& in_http_url, const uuid& in_uuid) {
+  executor_    = boost::asio::make_strand(g_io_context());
+  timer_       = std::make_shared<timer>(executor_);
+  url_         = in_url;
+  uuid_id_     = in_uuid;
+  client_data_ = std::make_shared<detail::http_client_data_base>(executor_);
+  client_data_->init(in_http_url);
   if (uuid_id_.is_nil()) uuid_id_ = core_set::get_set().user_id;
 
   websocket_client_ = std::make_shared<http_websocket_client>();
@@ -92,55 +113,68 @@ boost::asio::awaitable<void> http_work::async_run() {
       }
       if (status_ == computer_status::free) {
         status_ = computer_status::busy;
-        boost::asio::co_spawn(executor_, async_run_task(), boost::asio::detached);
+        boost::asio::co_spawn(
+            executor_, async_run_task(),
+            boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+        );
       }
       co_await async_set_status(status_);
     }
   }
 }
 boost::asio::awaitable<void> http_work::async_run_task() {
-  task_id_ = run_task_ids_.front();
   if (auto l_e = co_await websocket_client_->async_ping(); !l_e) co_return logger_->error(l_e.error());
 
-  co_await async_set_status(status_);
+  task_id_ = run_task_ids_.front();
+  std::ranges::rotate(run_task_ids_, run_task_ids_.begin() + 1);
+  run_task_ids_.pop_back();
 
-  auto l_timer    = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  // FSys::path l_path = in_exe;
-  // if (!l_path.has_root_name()) l_path = boost::process::v2::environment::find_executable(in_exe);
-  // auto l_process_maya = boost::process::v2::process{
-  //     g_io_context(), l_path, in_command, boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
-  //     details::hide_and_not_create_windows
-  // };
-  // boost::asio::co_spawn(executor_, async_read_pip(l_out_pipe), boost::asio::detached);
-  // boost::asio::co_spawn(executor_, async_read_pip(l_err_pipe), boost::asio::detached);
-  // l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
-  // auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t] =
-  //     co_await boost::asio::experimental::make_parallel_group(
-  //         boost::process::v2::async_execute(std::move(l_process_maya), boost::asio::deferred),
-  //         l_timer->async_wait(boost::asio::deferred)
-  //     )
-  //         .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
-  //
-  // switch (l_array_completion_order[0]) {
-  //   case 0: {
-  //     if (l_exit_code != 0 || l_ec) {
-  //       if (!l_ec) l_ec = {l_exit_code, exit_code_category::get()};
-  //       logger_->error("进程返回值错误 {}", l_exit_code);
-  //     }
-  //   } break;
-  //   case 1:
-  //     if (l_ec) {
-  //       logger_->error("maya 运行超时: {}", l_ec.message());
-  //     }
-  //     break;
-  //   default:
-  //     break;
-  // }
-  // status_ = computer_status::free;
-  // co_await async_set_status(status_);
-  // co_return;
+  auto l_task_info = co_await get_task_data();
+  if (!l_task_info) {
+    co_await async_set_task_status(server_task_info_status::failed);
+    logger_->error("获取任务数据失败 {}", l_task_info.error());
+    co_return;
+  }
+  co_await async_set_task_status(server_task_info_status::running);
+  auto l_timer      = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  auto l_out_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_err_pipe   = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  FSys::path l_path = l_task_info->run_exe;
+  if (!l_path.has_root_name()) l_path = boost::process::v2::environment::find_executable(l_task_info->run_exe);
+  auto l_process_maya = boost::process::v2::process{
+      g_io_context(), l_path, l_task_info->run_args,
+      boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe}, details::hide_and_not_create_windows
+  };
+  boost::asio::co_spawn(executor_, async_read_pip(l_out_pipe), boost::asio::detached);
+  boost::asio::co_spawn(executor_, async_read_pip(l_err_pipe), boost::asio::detached);
+  l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
+  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t] =
+      co_await boost::asio::experimental::make_parallel_group(
+          boost::process::v2::async_execute(std::move(l_process_maya), boost::asio::deferred),
+          l_timer->async_wait(boost::asio::deferred)
+      )
+          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
+
+  switch (l_array_completion_order[0]) {
+    case 0: {
+      if (l_exit_code != 0 || l_ec) {
+        logger_->error("进程返回值错误 {}", l_exit_code);
+      }
+      co_await async_set_task_status(
+          l_exit_code == 0 ? server_task_info_status::completed : server_task_info_status::failed
+      );
+    } break;
+    case 1:
+      if (l_ec) {
+        logger_->error("运行超时: {}", l_ec.message());
+      }
+      co_await async_set_task_status(server_task_info_status::failed);
+      break;
+    default:
+      break;
+  }
+  status_ = computer_status::free;
+  co_return;
 }
 
 // template <typename Handle>
@@ -204,10 +238,16 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
     while (!l_line.empty() && std::iscntrl(l_line.back(), core_set::get_set().utf8_locale)) l_line.pop_back();
     if (!l_line.empty()) {
       try {
-        l_line = nlohmann::json{{"type", "logger"}, {"id", task_id_}, {"msg", l_line}}.dump();
+        l_line = nlohmann::json{
+            {"type", doodle_config::server_websocket_event::logger}, {"id", task_id_}, {"msg", l_line}
+        }.dump();
       } catch (const nlohmann::json::exception& e) {
         logger_->warn("json parse error: {}", e.what());
-        l_line = nlohmann::json{{"type", "logger"}, {"id", task_id_}, {"msg", "日志解码错误"}}.dump();
+        l_line =
+            nlohmann::json{
+                {"type", doodle_config::server_websocket_event::logger}, {"id", task_id_}, {"msg", "日志解码错误"}
+            }
+                .dump();
       }
       l_ec = co_await websocket_client_->async_write_websocket(std::move(l_line));
     }
@@ -217,7 +257,21 @@ boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::as
 boost::asio::awaitable<void> http_work::async_set_status(computer_status in_status) {
   if (auto l_ec = co_await websocket_client_->async_write_websocket(
           nlohmann::json{
-              {"type", "set_state"}, {"state", in_status}, {"host_name", host_name_}, {"user_id", uuid_id_}
+              {"type", doodle_config::server_websocket_event::set_state},
+              {"state", in_status},
+              {"host_name", host_name_},
+              {"user_id", uuid_id_}
+          }.dump()
+      );
+      l_ec) {
+    logger_->error("写入错误 {}", l_ec);
+  }
+  co_return;
+}
+boost::asio::awaitable<void> http_work::async_set_task_status(server_task_info_status in_status) {
+  if (auto l_ec = co_await websocket_client_->async_write_websocket(
+          nlohmann::json{
+              {"type", doodle_config::server_websocket_event::set_task_state}, {"id", task_id_}, {"state", in_status}
           }.dump()
       );
       l_ec) {
