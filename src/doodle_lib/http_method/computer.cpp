@@ -92,6 +92,18 @@ boost::asio::awaitable<std::string> web_set_task_state_fun(http_websocket_data_p
     auto l_task     = std::make_shared<server_task_info>();
     *l_task         = l_list.front();
     l_task->status_ = in_handle->body_["state"].get<server_task_info_status>();
+    switch (l_task->status_) {
+      case server_task_info_status::running:
+        l_task->run_time_ = std::chrono::system_clock::now();
+        break;
+      case server_task_info_status::completed:
+      case server_task_info_status::canceled:
+      case server_task_info_status::failed:
+        l_task->end_time_ = std::chrono::system_clock::now();
+        break;
+      default:
+        break;
+    }
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_task); !l_e)
       l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
   }
