@@ -22,6 +22,8 @@ enum class server_task_info_status {
   submitted,
   // 任务已经分配
   assigned,
+  // 任务正在执行
+  running,
   // 任务已经被完成
   completed,
   // 任务已经被取消
@@ -100,7 +102,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
     j.at("exe").get_to(p.exe_);
     j.at("command").get_to(p.command_);
-    if (j.contains("status")) j.at("status").get_to(p.status_);
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
     j.at("submitter").get_to(p.submitter_);
