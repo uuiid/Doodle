@@ -3,18 +3,14 @@ target_sources(
         PUBLIC
         main_gui.h
         file_association_http.h
-        auto_light_server_lau.h
         auto_light_client_lau.h
         auto_light_process.h
-        file_exists_launch.h
         kitsu_supplement.h
 
         PRIVATE
         main_gui.cpp
         file_association_http.cpp
-        auto_light_server_lau.cpp
         auto_light_client_lau.cpp
         auto_light_process.cpp
-        file_exists_launch.cpp
         kitsu_supplement.cpp
 )
