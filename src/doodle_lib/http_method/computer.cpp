@@ -24,11 +24,13 @@ boost::asio::awaitable<void> list_tast_to(
       !l_list.empty() && in_client) {
     std::vector<uuid> l_ids{};
     for (const auto& l_item : l_list)
-      if (l_item.status_ == server_task_info_status::submitted || l_item.status_ == server_task_info_status::assigned)
+      if (l_item.status_ == server_task_info_status::submitted || l_item.status_ == server_task_info_status::assigned ||
+          l_item.status_ == server_task_info_status::running)
         l_ids.emplace_back(l_item.uuid_id_);
-    co_await in_client->async_write_websocket(
-        nlohmann::json{{"type", doodle_config::work_websocket_event::list_task}, {"ids", l_ids}}.dump()
-    );
+    if (!l_ids.empty())
+      co_await in_client->async_write_websocket(
+          nlohmann::json{{"type", doodle_config::work_websocket_event::list_task}, {"ids", l_ids}}.dump()
+      );
   }
 }
 
@@ -45,6 +47,10 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
       l_computer->computer_data_ptr_->server_status_ = computer_status::free;
       l_computer->client                             = in_handle->client_;
       l_computer->computer_data_ptr_->uuid_id_       = l_uuid;
+      boost::asio::co_spawn(
+          g_io_context(), list_tast_to(l_computer->computer_data_ptr_, in_handle->client_.lock()),
+          boost ::asio::consign(boost::asio::detached, l_computer->computer_data_ptr_, in_handle->client_.lock())
+      );
     }
 
     l_computer->computer_data_ptr_->client_status_ = in_handle->body_["state"].get<computer_status>();
@@ -58,10 +64,6 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
   } catch (...) {
     in_handle->logger_->error("设置状态出错 {}", boost::diagnostic_information(std::current_exception()));
   }
-  boost::asio::co_spawn(
-      g_io_context(), list_tast_to(l_computer->computer_data_ptr_, in_handle->client_.lock()),
-      boost ::asio::consign(boost::asio::detached, l_computer->computer_data_ptr_, in_handle->client_.lock())
-  );
 
   co_return std::string{};
 }
@@ -76,7 +78,7 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
 
   auto l_id       = in_handle->body_["id"].get<uuid>();
   auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_id);
-  FSys::ofstream{l_path} << in_handle->body_["msg"].get<std::string>();
+  FSys::ofstream{l_path, std::ios::binary | std::ios::out | std::ios::app } << in_handle->body_["msg"].get<std::string>();
   co_return std::string{};
 }
 
@@ -107,6 +109,7 @@ boost::asio::awaitable<std::string> web_set_task_state_fun(http_websocket_data_p
     if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_task); !l_e)
       l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
   }
+  co_return std::string{};
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_computers(session_data_ptr in_handle) {
