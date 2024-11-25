@@ -57,7 +57,6 @@ class http_work {
 
   boost::asio::awaitable<void> async_run();
 
-  boost::asio::awaitable<void> async_run_task();
   boost::asio::awaitable<tl::expected<run_task_info, std::string>> get_task_data();
 
   template <typename Handle>
@@ -66,6 +65,9 @@ class http_work {
   boost::asio::awaitable<void> async_set_status(computer_status in_status);
   boost::asio::awaitable<void> async_set_task_status(server_task_info_status in_status);
   boost::asio::awaitable<void> async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe);
+
+ protected:
+  virtual boost::asio::awaitable<void> async_run_task();
 
  public:
   http_work()  = default;
