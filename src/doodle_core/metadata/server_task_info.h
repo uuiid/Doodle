@@ -61,7 +61,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 提交任务的计算机
   std::string source_computer_{};
   // 提交人
-  std::string submitter_{};
+  uuid submitter_{};
   // 提交时间
   chrono::sys_time_pos submit_time_{};
 
