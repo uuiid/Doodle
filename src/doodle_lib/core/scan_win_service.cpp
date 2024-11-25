@@ -39,7 +39,7 @@ auto to_scan_data(
             std::forward<decltype(in_completion_handler)>(in_completion_handler)
         );
         in_scan_category_ptr->cancellation_state_ =
-            std::make_shared<boost::asio::cancellation_state>(boost::asio::get_associated_cancellation_slot(*l_f));
+            std::make_shared<boost::asio::cancellation_state>(boost ::asio::get_associated_cancellation_slot(*l_f));
         boost::asio::post(in_pool, [in_project_root, in_scan_category_ptr, l_f]() {
           expected_t l_expected{};
           try {
@@ -47,7 +47,11 @@ auto to_scan_data(
             // for (auto&& l_ : l_list) {
             //   in_scan_category_ptr->scan_file_hash(l_);
             // }
-            l_expected                                          = std::move(l_list);
+            if (in_scan_category_ptr->cancellation_state_ &&
+                in_scan_category_ptr->cancellation_state_->cancelled() != boost::asio::cancellation_type::none)
+              l_expected = tl::make_unexpected("用户取消"s);
+            else
+              l_expected = std::move(l_list);
           } catch (...) {
             l_expected = tl::make_unexpected(
                 fmt::format(
