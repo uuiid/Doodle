@@ -78,7 +78,8 @@ boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_ha
 
   auto l_id       = in_handle->body_["id"].get<uuid>();
   auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_id);
-  FSys::ofstream{l_path, std::ios::binary | std::ios::out | std::ios::app } << in_handle->body_["msg"].get<std::string>();
+  FSys::ofstream{l_path, std::ios::binary | std::ios::out | std::ios::app}
+      << in_handle->body_["msg"].get<std::string>();
   co_return std::string{};
 }
 
@@ -141,14 +142,34 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
     }
   });
 }
+boost::asio::awaitable<boost::beast::http::message_generator> delete_computers(session_data_ptr in_handle) {
+  auto l_id = std::make_shared<uuid>();
+  try {
+    *l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的用户id");
+  }
+  if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<computer>(l_id); !l_r) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  }
+  co_return in_handle->make_msg("{}");
+}
 }  // namespace
 
 void computer_reg(doodle::http::http_route& in_route) {
   default_logger_raw()->info("任务日志目录 {}", core_set::get_set().get_cache_root(server_task_info::logger_category));
-  in_route.reg(
-      std::make_shared<http_function>(
-          boost::beast::http::verb::get, "api/doodle/computer", list_computers, reg_computer
+  in_route
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/computer", list_computers, reg_computer
+          )
       )
-  );
+      .reg(
+
+          std::make_shared<http_function>(
+              boost::beast::http::verb::delete_, "api/doodle/computer/{user_id}", delete_computers
+          )
+      );
 }
 }  // namespace doodle::http
