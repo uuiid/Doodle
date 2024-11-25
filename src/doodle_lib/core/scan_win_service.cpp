@@ -38,6 +38,8 @@ auto to_scan_data(
         auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)>>(
             std::forward<decltype(in_completion_handler)>(in_completion_handler)
         );
+        in_scan_category_ptr->cancellation_state_ =
+            std::make_shared<boost::asio::cancellation_state>(boost::asio::get_associated_cancellation_slot(*l_f));
         boost::asio::post(in_pool, [in_project_root, in_scan_category_ptr, l_f]() {
           expected_t l_expected{};
           try {

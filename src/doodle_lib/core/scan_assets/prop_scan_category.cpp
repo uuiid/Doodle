@@ -32,6 +32,7 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
                              "Prop";  // 生成目标路径
     if (!FSys::exists(l_prop_path)) continue;
     if (!FSys::is_directory(l_prop_path)) continue;
+    if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
     for (auto &&l_s2 : FSys::directory_iterator{l_prop_path}) {  // 迭代二级目录
       if (!l_s2.is_directory()) continue;
       const auto l_name_str       = l_s2.path().filename().generic_string();
@@ -90,6 +91,8 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
 
   // 继续扫描道具rig和maya文件
   for (auto &&l_ptr : l_out) {
+    if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
+
     auto l_rig_path = l_ptr->JD_path_ / l_ptr->name_ / "Rig";
     std::string l_rig_file_name;
     if (l_ptr->version_name_.empty())

@@ -35,6 +35,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
 
       auto l_number_str       = l_match[1].str();
       auto l_Sk_ch_number_str = fmt::format("SK_Ch{}", l_number_str);
+      if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
       for (auto &&l_s3 : FSys::directory_iterator{l_ChNum_path}) {  // 迭代Ue项目路径
         if (!FSys::is_directory(l_s3.path())) continue;
         auto l_ch_name_ue_path = l_s3.path();
@@ -76,6 +77,8 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
 
   // 添加rig文件
   for (auto &&l_ptr : l_out) {
+    if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
+
     auto l_rig_path = l_ptr->Ch_path_ / "Rig";
     auto l_rig_name = fmt::format("Ch{}_rig", l_ptr->number_str_);
     if (!FSys::exists(l_rig_path)) continue;
@@ -109,6 +112,8 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
 
   // 添加Solve文件
   for (auto &&l_ptr : l_out) {
+    if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
+
     auto l_solve_path = FSys::path{in_root->path_} / "6-moxing" / "CFX";
     if (!FSys::exists(l_ptr->rig_file_.path_)) continue;
     l_solve_path /= fmt::format("{}_cloth.ma", l_ptr->rig_file_.path_.stem().generic_string());

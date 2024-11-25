@@ -104,6 +104,7 @@ class scan_category_t {
   using project_root_t = scan_category_data_t::project_root_t;
 
   logger_ptr logger_;
+  std::shared_ptr<boost::asio::cancellation_state> cancellation_state_;
   scan_category_t() {}
   virtual ~scan_category_t() = default;
   virtual std::vector<scan_category_data_ptr> scan(

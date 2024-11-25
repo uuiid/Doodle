@@ -33,6 +33,8 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
       auto l_name2_str = l_s2.path().filename().generic_string();
       if (!(l_s2.is_directory() && std::regex_match(l_name2_str, l_match, l_BG_regex))) continue;  // 检查二级目录
       auto l_number_str = l_match[1].str();                                                        // 获取编号
+      if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
+
       for (auto&& l_s3 : FSys::directory_iterator{l_s2.path()}) {                                  // 迭代三级目录
         if (!l_s3.is_directory()) continue;
         if (!FSys::exists(l_s3.path() / "Content")) continue;
@@ -86,6 +88,8 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
   }
   // 开始确认maya文件
   for (auto&& l_ptr : l_out) {
+    if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
+
     auto l_rig_path = l_ptr->BG_path_ / "Mod";
     if (l_ptr->version_name_.empty())
       l_rig_path /= fmt::format("{}_Low.ma", l_ptr->name_);
