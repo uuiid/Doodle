@@ -13,7 +13,6 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-#include <doodle_lib/http_method/kitsu_front_end_reg.h>
 
 #include <winreg/WinReg.hpp>
 namespace doodle::launch {
