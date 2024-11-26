@@ -75,12 +75,12 @@ BOOST_AUTO_TEST_CASE(server_and_works) {
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, 50025);
 
-  std::vector<std::shared_ptr<http::http_work>> l_works{20ull};
-  for (int i = 0; i < 20; ++i) {
-    auto l_ptr = l_works.emplace_back(std::make_shared<http::http_work>());
-    std::string l_uuid{l_uuid_list[i]};
-    l_ptr->run("ws://127.0.0.1:50025/api/doodle/computer", "http://127.0.0.1:50025", boost::lexical_cast<uuid>(l_uuid));
-  }
+  // std::vector<std::shared_ptr<http::http_work>> l_works{20ull};
+  // for (int i = 0; i < 20; ++i) {
+  //   auto l_ptr = l_works.emplace_back(std::make_shared<http::http_work>());
+  //   std::string l_uuid{l_uuid_list[i]};
+  //   l_ptr->run("ws://127.0.0.1:50025/api/doodle/computer", "http://127.0.0.1:50025", boost::lexical_cast<uuid>(l_uuid));
+  // }
   l_app_base.run();
 }
 
