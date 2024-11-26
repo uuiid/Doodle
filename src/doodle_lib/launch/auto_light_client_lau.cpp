@@ -12,6 +12,7 @@
 
 namespace doodle::launch {
 bool auto_light_client_lau::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+  app_base::Get().use_multithread(true);
   auto http_client_service_ptr_ = std::make_shared<http::http_work>();
   in_vector.emplace_back(http_client_service_ptr_);
 
