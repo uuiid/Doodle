@@ -85,6 +85,7 @@ class awaitable_queue_limitation {
     std::recursive_mutex lock_;
     std::atomic_int limit_{1};
     std::atomic_int run_task_;
+    std::atomic_int await_task_count_;
 
     awaitable_queue_impl()  = default;
 
