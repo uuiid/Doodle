@@ -2,6 +2,7 @@
 // Created by TD on 2023/11/23.
 //
 
+#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -63,7 +64,10 @@ constexpr std::array<const char*, 20> l_uuid_list = {
 
 BOOST_AUTO_TEST_CASE(server_and_works) {
   app_base l_app_base{};
+  l_app_base.use_multithread(true);
   core_set::get_set().set_root("D:/kitsu/images");
+  g_ctx().emplace<sqlite_database>().load("D:/kitsu_test.db");
+  g_ctx().emplace<http::kitsu_ctx_t>("", "", "D:/kitsu/images");
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route("E:/source/kitsu/dist");
   http::reg_computing_time(*l_rout_ptr);
