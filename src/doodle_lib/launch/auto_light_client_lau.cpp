@@ -22,7 +22,13 @@ bool auto_light_client_lau::operator()(const argh::parser& in_arh, std::vector<s
     default_logger_raw()->log(log_loc(), level::warn, "未指定地址");
     return true;
   }
-  http_client_service_ptr_->run(fmt::format("ws://{}/api/doodle/computer", l_ip), fmt::format("http://{}", l_ip));
+  uuid l_uuid{};
+  if (auto l_uuid_str = in_arh({"--uuid", "-u"}); l_uuid_str) {
+    l_uuid = boost::lexical_cast<uuid>(l_uuid_str.str());
+  }
+  http_client_service_ptr_->run(
+      fmt::format("ws://{}/api/doodle/computer", l_ip), fmt::format("http://{}", l_ip), l_uuid
+  );
   return false;
 }
 }  // namespace doodle::launch
