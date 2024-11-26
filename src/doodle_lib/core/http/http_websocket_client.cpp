@@ -19,8 +19,17 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
   executor_        = boost::asio::make_strand(g_io_context());
   web_stream_ =
       std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(boost::asio::make_strand(g_io_context()));
-  logger_ =
-      g_logger_ctrl().make_log(fmt::format("websocket_{}_{}", std::string{url_.host()}, std::string{url_.port()}));
+  logger_ = std::make_shared<spdlog::async_logger>(
+      fmt::format("websocket_{}_{}", std::string{url_.host()}, std::string{url_.port()}),
+      spdlog::sinks_init_list{
+          g_logger_ctrl().rotating_file_sink_
+#ifndef NDEBUG
+          ,
+          g_logger_ctrl().debug_sink_
+#endif
+      },
+      spdlog::thread_pool(), spdlog::async_overflow_policy::block
+  );
   write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
 
   using resolver_type     = executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
@@ -48,9 +57,9 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
     logger_->error("handshake error {}", l_ec_h.what());
     co_return l_ec_h;
   }
-  data_                   = std::make_shared<detail::http_websocket_data>();
-  data_->client_          = weak_from_this();
-  data_->logger_          = logger_;
+  data_          = std::make_shared<detail::http_websocket_data>();
+  data_->client_ = weak_from_this();
+  data_->logger_ = logger_;
   co_return boost::system::error_code{};
 }
 
