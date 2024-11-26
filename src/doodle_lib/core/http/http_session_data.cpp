@@ -548,7 +548,7 @@ std::string session_data::zlib_compress(const std::string& in_str) {
   boost::iostreams::copy(out, compressed);
   return compressed.str();
 }
-tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::string> session_data::make_msg(
+tl::expected<boost::beast::http::message_generator, std::string> session_data::make_msg(
     const FSys::path& in_path, const std::string_view& mine_type
 ) {
   auto l_set_handle = [&mine_type, this](auto&& in_res) {
@@ -564,13 +564,13 @@ tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::s
     l_res.set(boost::beast::http::field::content_encoding, "deflate");
     l_set_handle(l_res);
     if (l_code) return tl::make_unexpected(l_code.message());
-    return tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::string>{std::move(l_res)};
+    return tl::expected<boost::beast::http::message_generator, std::string>{std::move(l_res)};
   }
   boost::beast::http::response<boost::beast::http::file_body> l_res{boost::beast::http::status::ok, version_};
   l_res.body().open(in_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
   l_set_handle(l_res);
   if (l_code) return tl::make_unexpected(l_code.message());
-  return tl::expected<boost::beast::http::response<boost::beast::http::file_body>, std::string>{std::move(l_res)};
+  return tl::expected<boost::beast::http::message_generator, std::string>{std::move(l_res)};
 }
 boost::beast::http::response<boost::beast::http::string_body> session_data::make_msg(std::string&& in_body) {
   boost::beast::http::response<boost::beast::http::string_body> l_res{boost::beast::http::status::ok, version_};

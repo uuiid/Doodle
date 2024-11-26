@@ -12,18 +12,18 @@
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/computer.h>
+#include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/project.h>
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
-#include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
 #include <doodle_lib/http_method/model_library/thumbnail.h>
+#include <doodle_lib/http_method/task_info.h>
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
@@ -235,6 +235,7 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (in_ext == ".rar") return "application/x-rar-compressed";
   if (in_ext == ".7z") return "application/x-7z-compressed";
   if (in_ext == ".tar") return "application/x-tar";
+  if (in_ext == ".log") return "text/plain";
   return "application/octet-stream";
 }
 

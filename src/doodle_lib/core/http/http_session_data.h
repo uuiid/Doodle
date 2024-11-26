@@ -74,7 +74,7 @@ class session_data {
   );
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body);
-  tl::expected<boost::beast::http::response<boost::beast::http::file_body>,std::string> make_msg(
+  tl::expected<boost::beast::http::message_generator,std::string> make_msg(
       const FSys::path& in_path, const std::string_view& mine_type
   );
 };
