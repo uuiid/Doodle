@@ -89,12 +89,12 @@ MStatus initializePlugin(MObject obj) {
   if (status)
     maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
       // 这一部分是删除菜单项的
-      MStatus status{};
+      MStatus l_status{};
       MStringArray menuItems{};
       menuItems.append(doodle_windows.data());
-      status = in_plug.removeMenuItem(menuItems);
-      CHECK_MSTATUS(status);
-      return status;
+      l_status = in_plug.removeMenuItem(menuItems);
+      CHECK_MSTATUS(l_status);
+      return l_status;
     });
   else
     DOODLE_LOG_ERROR(status);
