@@ -1,5 +1,3 @@
-add_subdirectory(sqlite)
-
 target_sources(
         doodle_lib
         PUBLIC
