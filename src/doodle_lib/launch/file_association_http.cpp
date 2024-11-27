@@ -5,7 +5,6 @@
 #include "file_association_http.h"
 
 #include <doodle_core/core/app_service.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 

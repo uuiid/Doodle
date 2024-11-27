@@ -6,7 +6,6 @@
 
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/program_info.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/scan_data_t.h>

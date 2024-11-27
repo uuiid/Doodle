@@ -4,7 +4,6 @@
 
 #include "app_service.h"
 
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_locale_warp.h>
 #include <doodle_core/platform/win/register_file_type.h>
 

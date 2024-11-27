@@ -8,7 +8,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/logger/logger.h>
 

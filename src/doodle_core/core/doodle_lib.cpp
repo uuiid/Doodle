@@ -7,7 +7,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
@@ -56,7 +55,6 @@ void doodle_lib::init() {
   });
   // ptr->ctx_p.emplace<detail::crash_reporting_thread>();
   ptr->ctx_p.emplace<database_info>();
-  ptr->ctx_p.emplace<database_n::file_translator_ptr>(std::make_shared<database_n::file_translator>(ptr->reg));
   ptr->ctx_p.emplace<status_info>();
 
   // boost::locale::generator k_gen{};

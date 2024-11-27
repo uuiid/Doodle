@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sql.h>
-#include <doodle_core/database_task/details/column.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/sqlite3/sqlite3.h>
 

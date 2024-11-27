@@ -3,7 +3,6 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
-#include "doodle_core/database_task/sqlite_client.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>

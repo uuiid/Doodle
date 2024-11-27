@@ -3,7 +3,6 @@
 //
 
 #include "doodle_core/sqlite_orm/sqlite_database.h"
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>

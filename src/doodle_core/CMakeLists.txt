@@ -44,7 +44,6 @@ target_compile_definitions(doodle_core PUBLIC BOOST_FILESYSTEM_VERSION=4)
 # 添加子目录
 add_subdirectory(configure)
 add_subdirectory(core)
-add_subdirectory(database_task)
 add_subdirectory(exception)
 add_subdirectory(gui_template)
 add_subdirectory(json_rpc)

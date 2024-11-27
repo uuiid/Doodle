@@ -3,7 +3,6 @@
 //
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/database_task/details/column.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/sqlite3/sqlite3.h>
 #include <doodle_core/metadata/detail/user_set_data.h>

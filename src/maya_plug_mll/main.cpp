@@ -2,7 +2,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <maya_plug/data/maya_register_main.h>

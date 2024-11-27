@@ -8,7 +8,6 @@
 #endif
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/logger/logger.h>
 
 

@@ -1,7 +1,6 @@
 //
 // Created by TD on 2023/12/1.
 //
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/main_map.h>

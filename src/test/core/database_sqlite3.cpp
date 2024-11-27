@@ -11,8 +11,6 @@
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
-#include <doodle_core/database_task/details/tool.h>
-#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>
