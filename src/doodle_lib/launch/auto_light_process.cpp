@@ -7,7 +7,6 @@
 #include "doodle_core/configure/static_value.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets.h>

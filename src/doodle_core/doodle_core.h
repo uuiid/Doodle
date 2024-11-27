@@ -12,7 +12,6 @@
 #include <doodle_core/lib_warp/cmrcWarp.h>
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/project.h>
