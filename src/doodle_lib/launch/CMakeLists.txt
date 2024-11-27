@@ -1,14 +1,12 @@
 target_sources(
         doodle_lib
         PUBLIC
-        main_gui.h
         file_association_http.h
         auto_light_client_lau.h
         auto_light_process.h
         kitsu_supplement.h
 
         PRIVATE
-        main_gui.cpp
         file_association_http.cpp
         auto_light_client_lau.cpp
         auto_light_process.cpp

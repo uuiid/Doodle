@@ -11,9 +11,7 @@
 namespace doodle {
 class authorization;
 
-namespace details {
-class program_options;
-}  // namespace details
+
 
 namespace gui {
 
@@ -24,6 +22,5 @@ class main_proc_handle;
 using main_proc_handle = gui::details::main_proc_handle;
 }  // namespace gui
 
-using program_options = details::program_options;
 
 }  // namespace doodle
