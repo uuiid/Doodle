@@ -11,7 +11,7 @@ set_target_properties(doodle_maya PROPERTIES
 target_link_libraries(doodle_maya
         PRIVATE
         doodle_core
-        doodle_app
+        doodle_lib
         doodle_maya_lib
 
         maya::maya_all
