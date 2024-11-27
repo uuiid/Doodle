@@ -15,7 +15,6 @@
 
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/http_method/share_fun.h>
 
 namespace doodle::http {
 struct computing_time_post_req_data {

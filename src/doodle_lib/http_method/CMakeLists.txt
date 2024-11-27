@@ -7,7 +7,6 @@ target_sources(
         computing_time.h
         dingding_attendance.h
         file_association.h
-        share_fun.h
         kitsu_front_end_reg.h
 
         PRIVATE
@@ -17,7 +16,6 @@ target_sources(
         computing_time.cpp
         dingding_attendance.cpp
         file_association.cpp
-        share_fun.cpp
         computer_reg_data.cpp
         kitsu_front_end_reg.cpp
 
