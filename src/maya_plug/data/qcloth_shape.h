@@ -52,20 +52,7 @@ class qcloth_shape : public cloth_interface::element_type {
     MObject deformBase_grp;
   };
 
-  static cloth_group get_cloth_group();
 
-  /**
-   * @brief 获取传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇
-   * @param in_anim_node 动画[绑定]网格体或者变换节点
-   * @return 寻找到的皮肤簇(不为空)
-   * @throw 为空时抛出异常 maya_error
-   */
-  static MObject get_skin_custer(const MObject& in_anim_node);
-  /**
-   * @brief 重置传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇属性
-   * @param in_anim_node 动画[绑定]网格体或者变换节点
-   */
-  static void rest_skin_custer_attr(const MObject& in_anim_node);
 
  private:
   /**
@@ -107,37 +94,12 @@ class qcloth_shape : public cloth_interface::element_type {
   [[nodiscard]] MDagPath cloth_mesh() const;
 
   /**
-   * @brief 从传入的实体创建一个绑定节点
-   * @param in_handle 传入的一个实体,
-   * 必须具备 qcloth_shape_n::maya_mesh, qcloth_shape_n::high_shape_list组件
-   * 可选的具备 qcloth_shape_n::collision_shape_list组件
-   *
-   *
-   * @note
-   * * 创建一个空的mesh 节点作为绑定动画的输出;（将动画 outMesh 链接到 inMesh ） \n
-   * * 从新的的网格体创建布料 \n
-   * * 创建一个高模的复制体, 将低模和高模进行包裹变形 \n
-   * * 将复制出来的高模物体链接到绑定文件中（这个以后做  中间需要插入一个切换表达式节点用来切换动画和解算） \n
-   *
-   *  需要读取配置文件中的各个属性, 进行标准的重命名
-   */
-  static std::vector<entt::handle> create_sim_cloth(const entt::handle& in_handle);
-
-  /**
-   * @brief 重置maya高模皮肤簇节点为权重为1
-   * @param in_handle 传入的句柄 需要具备 qcloth_shape_n::shape_list 组件
-   */
-  static void reset_create_node_attribute(const entt::handle& in_handle);
-  /**
    * @brief 检查所有传入的简模是否进行了蒙皮
    * @param in_handle 传入的一个实体,
    * 必须具备 qcloth_shape_n::maya_mesh
    * @return 具有蒙皮
    */
   static bool chick_low_skin(const entt::handle& in_handle);
-
-  static void add_collider(const entt::handle& in_handle);
-  static void sort_group();
 
   /**
    * @brief 根据引用文件创建布料句柄
