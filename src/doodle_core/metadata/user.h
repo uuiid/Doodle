@@ -78,23 +78,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   /**
    * @brief 在打开数据库后, 注册表中保存的所有用户中寻找到当前用户,  如果未寻找到将创建一个新段用户
    */
-  class DOODLE_CORE_API current_user {
-   public:
-    current_user();
-    virtual ~current_user();
-    entt::handle user_handle;
-    boost::uuids::uuid uuid;
 
-    explicit operator entt::handle();
-    entt::handle get_handle();
-    std::string user_name_attr();
-    void user_name_attr(const std::string& in_name);
-
-    void create_user();
-    void set_user(const entt::handle& in);
-
-    explicit operator bool() const;
-  };
 
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);

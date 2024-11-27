@@ -4,7 +4,6 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
-
 #include <doodle_core/metadata/detail/user_set_data.h>
 #include <doodle_core/metadata/user.h>
 
@@ -51,62 +50,6 @@ entt::handle user::find_by_user_name(const std::string& in_name) {
     }
   }
   return l_r;
-}
-
-user::current_user::operator entt::handle() { return get_handle(); }
-entt::handle user::current_user::get_handle() {
-  if (!user_handle) {
-    user_handle = database::find_by_uuid(uuid);
-  }
-
-  if (!*this) {
-    auto l_create_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_create_h.emplace<user>(core_set::get_set().user_name);
-    l_create_h.emplace<business::rules>(business::rules::get_default());
-    uuid        = l_create_h.emplace<database>(uuid).uuid();
-    user_handle = l_create_h;
-  }
-
-  //  DOODLE_CHICK(
-  //      user_handle && user_handle.any_of<database>() && user_handle.get<database>() == uuid,
-  //      doodle_error{"缺失用户实体{}", user_handle}
-  //  );
-  return user_handle;
-}
-
-std::string user::current_user::user_name_attr() {
-  if (!*this) get_handle();
-  return user_handle.get<user>().get_name();
-}
-void user::current_user::user_name_attr(const std::string& in_name) {
-  if (!*this) get_handle();
-  user_handle.patch<user>().set_name(in_name);
-  core_set::get_set().user_name = in_name;
-  core_set::get_set().save();
-}
-
-void user::current_user::set_user(const entt::handle& in) {
-  if (!in.all_of<user, database>()) throw_exception(doodle_error{"句柄缺失"});
-  const auto& [l_user, l_d]     = in.get<const user, const database>();
-  core_set::get_set().user_id   = l_d.uuid();
-  core_set::get_set().user_name = l_user.get_name();
-  user_handle                   = in;
-  uuid                          = l_d.uuid();
-}
-
-user::current_user::operator bool() const {
-  return user_handle && user_handle.all_of<database, user>() && user_handle.get<database>() == uuid;
-}
-user::current_user::current_user() : uuid(core_set::get_set().user_id) {}
-
-user::current_user::~current_user() = default;
-void user::current_user::create_user() {
-  auto l_create_h = entt::handle{*g_reg(), g_reg()->create()};
-  l_create_h.emplace<user>(core_set::get_set().user_name);
-  l_create_h.emplace<business::rules>(business::rules::get_default());
-  uuid                        = l_create_h.emplace<database>().uuid();
-  core_set::get_set().user_id = uuid;
-  user_handle                 = l_create_h;
 }
 
 }  // namespace doodle

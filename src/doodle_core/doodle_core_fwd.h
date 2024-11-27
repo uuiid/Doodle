@@ -102,7 +102,6 @@ using identifier    = details::identifier;
 
 class convert;
 class doodle_error;
-class user_ref;
 class user;
 class project;
 class comment;

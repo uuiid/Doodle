@@ -36,19 +36,12 @@ void to_json(nlohmann::json& j, const assets_file& p) {
   j["organization_p"] = p.p_i->organization_p;
   j["version"]        = p.p_i->p_version;
   j["path"]           = p.p_i->path;
-  j["user_ref2"]      = p.user_ref;
 }
 void from_json(const nlohmann::json& j, assets_file& p) {
   j.at("name").get_to(p.p_i->p_name);
   j.at("version").get_to(p.p_i->p_version);
   if (j.contains("organization_p")) j.at("organization_p").get_to(p.p_i->organization_p);
   if (j.contains("path")) j.at("path").get_to(p.p_i->path);
-  if (j.contains("user_ref2")) {
-    j.at("user_ref2").get_to(p.user_ref);
-  } else {
-    if (j.contains("user")) j.at("user").get_to(p.user_ref.cache_name);
-    if (j.contains("user_ref")) p.user_ref.set_uuid(j.at("user_ref").at("uuid").get<boost::uuids::uuid>());
-  }
 }
 
 assets_file::assets_file() : p_i(std::make_unique<impl>()){};
@@ -56,7 +49,6 @@ assets_file::assets_file() : p_i(std::make_unique<impl>()){};
 assets_file::assets_file(const FSys::path& in_path) : assets_file() {
   p_i->path   = in_path;
   p_i->p_name = in_path.stem().generic_string();
-  user_attr(g_reg()->ctx().get<user::current_user>().get_handle());
   p_i->organization_p = core_set::get_set().organization_name;
 }
 
@@ -65,7 +57,6 @@ assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::ui
   p_i->p_name         = std::move(in_name);
   p_i->p_version      = in_version;
   p_i->organization_p = core_set::get_set().organization_name;
-  user_attr(g_reg()->ctx().get<user::current_user>().get_handle());
 }
 
 std::string assets_file::str() const { return p_i->p_name; }
@@ -81,7 +72,6 @@ entt::handle assets_file::user_attr() const { return user_ref.user_attr(); }
 entt::handle assets_file::user_attr() { return user_ref.user_attr(); }
 void assets_file::user_attr(const entt::handle& in_user) {
   DOODLE_CHICK(in_user.any_of<user>(), doodle_error{"句柄 {} 缺失必要组件 user", in_user});
-  user_ref.user_attr(in_user);
 }
 
 const std::uint32_t& assets_file::version_attr() const noexcept { return p_i->p_version; }

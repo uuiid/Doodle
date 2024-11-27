@@ -125,9 +125,7 @@ std::vector<image_attr> image_attr::make_default_attr(
                image_watermark::rgb_default
              );
 
-           l_attribute.watermarks_attr.emplace_back(
-             g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.22, 0.1, image_watermark::rgb_default
-           );
+
            l_attribute.watermarks_attr.emplace_back(
              core_set::get_set().organization_name, 0.28, 0.1, image_watermark::rgb_default
            );
