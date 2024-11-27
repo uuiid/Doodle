@@ -12,7 +12,6 @@
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
 
-#include <core/status_info.h>
 #include <logger/logger.h>
 #include <memory>
 #include <utility>
