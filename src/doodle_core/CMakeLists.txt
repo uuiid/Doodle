@@ -61,8 +61,6 @@ add_subdirectory(sqlite_orm)
 target_link_libraries(
         doodle_core
         PUBLIC
-        date::date
-        date::date-tz
         DoodleLibResource
         magic_enum::magic_enum
         Boost::locale
@@ -75,13 +73,10 @@ target_link_libraries(
         spdlog::spdlog
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp::cryptopp
-        sqlpp11::sqlite3
-        sqlpp11::sqlpp11
         WIL::WIL
         tl::expected
 
         PRIVATE
-        Iphlpapi.lib
         windowsapp.lib
 )
 

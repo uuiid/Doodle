@@ -53,18 +53,6 @@
         "freetype"
       ]
     },
-    {
-      "name": "imgui",
-      "default-features": false,
-      "features": [
-        "win32-binding",
-        "dx11-binding",
-        "docking-experimental",
-        "wchar32",
-        "freetype"
-      ]
-    },
-    "xlnt",
     "magic-enum",
     "nlohmann-json",
     "spdlog",
@@ -73,17 +61,9 @@
       "default-features": true,
       "version>=": "3.12.2"
     },
-    {
-      "name": "sqlpp11",
-      "default-features": false,
-      "features": [
-        "sqlite3"
-      ]
-    },
     "eigen3",
     "range-v3",
     "wil",
-    "implot",
     "cryptopp",
     "alembic",
     {
@@ -94,7 +74,6 @@
       ]
     },
     "dem-bones",
-    "cppzmq",
     "winreg"
   ],
   "vcpkg-configuration": {

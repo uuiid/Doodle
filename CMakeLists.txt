@@ -68,31 +68,21 @@ find_package(Doxygen)
 
 # 寻找 opencv
 find_package(OpenCV CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
 
 # 寻找 openssl
 find_package(OpenSSL REQUIRED)
-# 寻找 表格库
-find_package(Xlnt CONFIG REQUIRED)
 
 # 仅头库
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(date CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
-find_package(Sqlpp11 CONFIG REQUIRED
-        COMPONENTS
-        sqlite3)
 find_package(SqliteOrm CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(wil CONFIG REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
-# this is heuristically generated, and may not be correct
-find_package(implot CONFIG REQUIRED)
 # 寻找反射
-# find_package(rttr CONFIG REQUIRED)
 # c23错误向下兼容库
 find_package(tl-expected CONFIG REQUIRED)
 # 压缩库

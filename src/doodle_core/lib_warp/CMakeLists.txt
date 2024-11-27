@@ -5,7 +5,6 @@ target_sources(doodle_core
         entt_warp.h
         json_warp.h
         std_warp.h
-        sqlppWarp.h
         enum_template_tool.h
         boost_icl_warp.h
         std_fmt_bitset.h

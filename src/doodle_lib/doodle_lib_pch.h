@@ -42,7 +42,6 @@
 #include <doodle_core/lib_warp/boost_locale_warp.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
-#include <doodle_core/lib_warp/sqlppWarp.h>
 #include <doodle_core/lib_warp/std_warp.h>
 
 #include <doodle_lib/configure/doodle_lib_export.h>

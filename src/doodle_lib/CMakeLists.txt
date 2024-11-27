@@ -65,24 +65,17 @@ target_link_libraries(doodle_lib
         opencv_ml opencv_dnn opencv_core opencv_flann
         EnTT::EnTT
         spdlog::spdlog
-        sqlpp11::sqlite3
-        sqlpp11::sqlpp11
-        imgui::imgui
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp::cryptopp
         #        msgpack-cxx
 
         PRIVATE
-        d3d11.lib
-        dxgi.lib
         netapi32.lib # NetUserGetLocalGroups
         Mpr.lib
         #        Microsoft::DirectXTK
-        implot::implot
         Eigen3::Eigen
         doodle_holidaycn
         Alembic::Alembic # abc文件读写
-        xlnt::xlnt #表格库
         sqlite_orm::sqlite_orm
         ${OPENSSL_LIBRARIES}
 )
