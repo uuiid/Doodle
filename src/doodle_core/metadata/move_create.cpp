@@ -5,7 +5,6 @@
 #include "move_create.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/details/json_macro.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/episodes.h>
@@ -25,7 +24,6 @@
 #include <range/v3/view/transform.hpp>
 
 namespace doodle::movie {
-DOODLE_JSON_CPP(image_watermark, text_attr, width_proportion_attr, height_proportion_attr, rgba_attr)
 
 image_watermark::image_watermark(
   std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion,
@@ -37,7 +35,6 @@ image_watermark::image_watermark(
     rgba_attr(in_rgba) {
 }
 
-DOODLE_JSON_CPP(image_attr, path_attr, watermarks_attr, num_attr)
 
 namespace {
 class image_attr_auxiliary {

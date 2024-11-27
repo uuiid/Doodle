@@ -11,10 +11,6 @@
 
 namespace doodle::movie {
 class DOODLE_CORE_API image_watermark {
-private:
-  friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const image_watermark& nlohmann_json_t);
-  friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, image_watermark& nlohmann_json_t);
-
 public:
   using rgba_t = std::array<std::double_t, 4>;
   image_watermark() = default;
@@ -29,9 +25,6 @@ public:
 };
 
 class DOODLE_CORE_API image_attr : boost::totally_ordered<image_attr> {
-private:
-  friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const image_attr& nlohmann_json_t);
-  friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, image_attr& nlohmann_json_t);
 
 public:
   image_attr() = default;

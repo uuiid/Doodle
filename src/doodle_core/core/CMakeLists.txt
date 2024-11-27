@@ -5,7 +5,6 @@ target_sources(
         core_help_impl.h
         doodle_lib.h
         template_util.h
-        status_info.h
         file_sys.h
         chrono_.h
         app_base.h
@@ -18,7 +17,6 @@ target_sources(
         PRIVATE
         core_set.cpp
         doodle_lib.cpp
-        status_info.cpp
         file_sys.cpp
         app_base.cpp
         wait_op.cpp

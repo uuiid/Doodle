@@ -53,7 +53,6 @@ void doodle_lib::init() {
   });
   // ptr->ctx_p.emplace<detail::crash_reporting_thread>();
 
-  ptr->ctx_p.emplace<status_info>();
 
   // boost::locale::generator k_gen{};
   // k_gen.categories(
