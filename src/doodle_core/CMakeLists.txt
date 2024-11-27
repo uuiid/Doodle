@@ -51,7 +51,6 @@ add_subdirectory(metadata)
 add_subdirectory(pin_yin)
 add_subdirectory(platform)
 add_subdirectory(thread_pool)
-add_subdirectory(details)
 add_subdirectory(time_tool)
 add_subdirectory(sqlite_orm)
 
