@@ -2,8 +2,7 @@
 add_subdirectory(resource)
 cmrc_add_resource_library(
         DoodleLibResource
-        ${DOODLE_RE_FILES_LIST}
-        core/sql_file.sql
+        resource/zhtopy.txt
 )
 
 # 添加配置
