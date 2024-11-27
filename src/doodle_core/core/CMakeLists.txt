@@ -9,7 +9,6 @@ target_sources(
         file_sys.h
         chrono_.h
         app_base.h
-        util.h
         global_function.h
         wait_op.h
         app_service.h
@@ -22,7 +21,6 @@ target_sources(
         status_info.cpp
         file_sys.cpp
         app_base.cpp
-        util.cpp
         wait_op.cpp
         app_service.cpp
         http_client_core.cpp
