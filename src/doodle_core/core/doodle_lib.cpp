@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_core/core/core_sql.h>
 #include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
@@ -54,7 +53,7 @@ void doodle_lib::init() {
     }
   });
   // ptr->ctx_p.emplace<detail::crash_reporting_thread>();
-  ptr->ctx_p.emplace<database_info>();
+
   ptr->ctx_p.emplace<status_info>();
 
   // boost::locale::generator k_gen{};
@@ -78,17 +77,5 @@ boost::asio::io_context& g_io_context() { return doodle_lib::Get().ptr->io_conte
 boost::asio::thread_pool& g_thread() { return doodle_lib::Get().ptr->thread_pool_attr; }
 details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }
 entt::registry::context& g_ctx() { return doodle_lib::Get().ptr->ctx_p; }
-details::database_info& g_db() {
-  static details::database_info db;
-  return db;
-}
-
-details::database_pool_info& g_pool_db() {
-  static details::database_pool_info db{};
-  return db;
-}
-
-boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() {
-  return doodle_lib::Get().ptr->strand_;
-}
+boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() { return doodle_lib::Get().ptr->strand_; }
 }  // namespace doodle

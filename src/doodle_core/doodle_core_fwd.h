@@ -64,7 +64,6 @@ namespace http::detail {
 // class http_client_core;
 }
 namespace details {
-class database_info;
 class program_info;
 class identifier;
 class logger_ctrl;
@@ -100,7 +99,6 @@ class connect_video_interface;
 
 }  // namespace detail
 
-using database_info = details::database_info;
 using program_info  = details::program_info;
 using identifier    = details::identifier;
 
