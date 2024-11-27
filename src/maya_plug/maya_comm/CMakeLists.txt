@@ -3,7 +3,6 @@ target_sources(doodle_maya_lib
         find_duplicate_poly_comm.h
         create_qcloth_assets.h
         dem_bones_add_weight.h
-        open_doodle_main.h
         clear_scene_comm.h
         reference_comm.h
         dem_bones_comm.h
@@ -16,7 +15,6 @@ target_sources(doodle_maya_lib
         export_abc_file.h
 
         PRIVATE
-        open_doodle_main.cpp
         afterimage_comm.cpp
         reference_comm.cpp
         dem_bones_add_weight.cpp
