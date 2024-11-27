@@ -90,7 +90,6 @@
       "displayName": "调试 doodle exe",
       "inherits": "debug",
       "targets": [
-        "DoodleExe",
         "generate_token",
         "test_main",
         "file_association_http",
@@ -116,7 +115,6 @@
       "configurePreset": "Ninja_RelWithDebInfo",
       "inherits": "debug",
       "targets": [
-        "DoodleExe",
         "doodle_maya_exe",
         "doodle_maya",
         "test_main"
@@ -127,7 +125,6 @@
       "configurePreset": "Ninja_release",
       "jobs": 10,
       "targets": [
-        "DoodleExe",
         "generate_token",
         "doodle_auto_light_client",
         "file_association_http",

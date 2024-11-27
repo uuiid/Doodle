@@ -1,27 +1,25 @@
 add_executable(
-        DoodleExe
-        WIN32
-        main_gui.cpp
+        doodle_kitsu_supplement
+        kitsu_supplement_main.cpp
         ../DoodleExe.manifest
         ../icon.ico
         ../win_exe.rc
 )
 
-set_target_properties(DoodleExe
+set_target_properties(doodle_kitsu_supplement
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-target_link_libraries(DoodleExe
+target_link_libraries(doodle_kitsu_supplement
         PUBLIC
         doodle_lib
 )
-# target_link_options(DoodleExe PUBLIC /MAP:test.txt)
-target_link_options(DoodleExe PUBLIC /ENTRY:mainCRTStartup)
+target_link_options(doodle_kitsu_supplement PUBLIC /ENTRY:mainCRTStartup)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
 
 
-install(TARGETS DoodleExe
+install(TARGETS doodle_kitsu_supplement
         RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
@@ -58,24 +56,7 @@ endmacro()
 add_doodle_exe(doodle_auto_light_client auto_light_client.cpp)
 add_doodle_exe(file_association_http file_association_http_main.cpp)
 add_doodle_exe(doodle_auto_light_process auto_light_process.cpp)
-add_doodle_exe(doodle_kitsu_supplement kitsu_supplement_main.cpp)
 
-add_executable(
-        doodle_updaters
-        doodle_updaters.cpp
-        ../DoodleExe.manifest
-        ../icon.ico
-        ../win_exe.rc
-)
-target_link_libraries(doodle_updaters
-        PUBLIC
-        Boost::asio
-)
-#install(TARGETS doodle_updaters
-#        RUNTIME_DEPENDENCIES
-#        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
-#        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-#)
 
 list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复
@@ -83,7 +64,7 @@ install(CODE
         "
 # 修复dll
 include(BundleUtilities)
-fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:DoodleExe>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\"
+fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:doodle_kitsu_supplement>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\"
         IGNORE_ITEM
         ${DOODLE_INSTALL_IGNORE_ITEM}
 )
