@@ -1,10 +1,9 @@
+#include "doodle_core/core/app_base.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/platform/win/register_file_type.h>
-
-#include <doodle_app/app/program_options.h>
 
 #include <maya_plug/data/maya_register_main.h>
 #include <maya_plug/gui/maya_plug_app.h>
@@ -66,40 +65,6 @@ HWND find_windows() {
   //  return l_data.maya_wnd;
 }
 
-class maya_gui_launcher_t {
- public:
-  maya_gui_launcher_t()  = default;
-  ~maya_gui_launcher_t() = default;
-
-  bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
-    default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
-
-    default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", register_file_type::program_location());
-
-    switch (MGlobal::mayaState()) {
-      case MGlobal::MMayaState::kBaseUIMode:
-      case MGlobal::MMayaState::kInteractive: {
-        g_ctx().get<program_info>().handle_attr(::MhInstPlugin);
-        auto l_gui_facet = std::make_shared<maya_facet>();
-        in_vector.emplace_back(l_gui_facet);
-        HWND win_id = find_windows();
-        g_ctx().get<program_info>().parent_windows_attr(win_id);
-        l_gui_facet->post();
-
-        /// 在这里我们加载项目
-        g_ctx().get<doodle::database_n::file_translator_ptr>()->set_only_ctx(true);
-
-        break;
-      }
-      case MGlobal::MMayaState::kBatch:
-      case MGlobal::MMayaState::kLibraryApp:
-      default:
-        break;
-    }
-    return false;
-  }
-};
-
 }  // namespace doodle::maya_plug
 
 MStatus initializePlugin(MObject obj) {
@@ -111,12 +76,10 @@ MStatus initializePlugin(MObject obj) {
       obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()
   };
 
-  maya_reg           = std::make_shared<::doodle::maya_plug::maya_register>();
-
-  using maya_gui_app = doodle::app_plug<doodle::maya_plug::maya_gui_launcher_t>;
-  p_doodle_app       = std::make_shared<maya_gui_app>();
+  maya_reg     = std::make_shared<::doodle::maya_plug::maya_register>();
+  p_doodle_app = std::make_shared<app_base>();
   // 注册命令
-  status             = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
+  status       = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
   CHECK_MSTATUS(status);
 
   // 添加菜单项
@@ -136,28 +99,31 @@ MStatus initializePlugin(MObject obj) {
   else
     DOODLE_LOG_ERROR(status);
 
-  maya_reg->register_callback(MSceneMessage::addCallback(
-      MSceneMessage::Message::kMayaExiting,
-      [](void* in) {
-        if (auto l_doodle_app = static_cast<app_base*>(in)) {
-          l_doodle_app->stop_app();
-        }
-      },
-      p_doodle_app.get(), &status
-  ));
+  maya_reg->register_callback(
+      MSceneMessage::addCallback(
+          MSceneMessage::Message::kMayaExiting,
+          [](void* in) {
+            if (auto l_doodle_app = static_cast<app_base*>(in); l_doodle_app) {
+            }
+          },
+          p_doodle_app.get(), &status
+      )
+  );
   CHECK_MSTATUS(status);
 
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
 
-  maya_reg->register_callback(MTimerMessage::addTimerCallback(
-      0.001,
-      [](float elapsedTime, float lastTime, void* clientData) {
-        if (auto l_doodle_app = static_cast<app_base*>(clientData)) {
-          l_doodle_app->poll_one();
-        }
-      },
-      p_doodle_app.get(), &status
-  ));
+  maya_reg->register_callback(
+      MTimerMessage::addTimerCallback(
+          0.001,
+          [](float elapsedTime, float lastTime, void* clientData) {
+            if (auto l_doodle_app = static_cast<app_base*>(clientData)) {
+              l_doodle_app->poll_one();
+            }
+          },
+          p_doodle_app.get(), &status
+      )
+  );
   CHECK_MSTATUS(status);
 
   CHECK_MSTATUS(status);
@@ -218,13 +184,11 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
 )");
   });
 
-  if (!::doodle::core_set::get_set().maya_force_resolve_link) {
-    status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
-    CHECK_MSTATUS(status);
-    maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
-      return MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
-    });
-  }
+  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
+  CHECK_MSTATUS(status);
+  maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
+    return MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
+  });
   return status;
 }
 
@@ -232,14 +196,8 @@ MStatus uninitializePlugin(MObject obj) {
   MStatus status{};
 
   MFnPlugin k_plugin{obj};
-  // 这里要停止app
-  if (p_doodle_app) {
-    p_doodle_app->stop_app();
-    p_doodle_app->run();
-  }
   status = maya_reg->unregister(k_plugin);
   CHECK_MSTATUS(status);
-  p_doodle_app.reset();
   maya_reg.reset();
   return status;
 }
