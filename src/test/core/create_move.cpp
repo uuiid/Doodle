@@ -5,8 +5,6 @@
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core.h>
 
-#include <doodle_app/app/app_command.h>
-#include <doodle_app/app/facet/gui_facet.h>
 
 #include <doodle_lib/facet/main_facet.h>
 #include <doodle_lib/long_task/image_to_move.h>

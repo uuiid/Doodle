@@ -11,8 +11,8 @@
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/platform/win/register_file_type.h>
+#include <doodle_core/core/app_base.h>
 
-#include <doodle_app/app/app_command.h>
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>

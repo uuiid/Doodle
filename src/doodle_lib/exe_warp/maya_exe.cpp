@@ -13,7 +13,8 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
+
 
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/exe_warp/async_read_pipe.h>

@@ -1,7 +1,8 @@
 //
 // Created by TD on 24-9-6.
 //
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
+
 
 #include "doodle_lib/exe_warp/maya_exe.h"
 #include "doodle_lib/exe_warp/ue_exe.h"

@@ -32,8 +32,8 @@
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 #include <doodle_core/sqlite_orm/sqlite_snapshot.h>
+#include <doodle_core/core/app_base.h>
 
-#include "doodle_app/app/app_command.h"
 
 #include <boost/test/unit_test.hpp>
 

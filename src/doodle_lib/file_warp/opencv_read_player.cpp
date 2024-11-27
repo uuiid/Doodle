@@ -6,7 +6,7 @@
 
 #include <doodle_core/exception/exception.h>
 
-#include <doodle_app/platform/win/windows_proc.h>
+
 
 #include <d3d11.h>
 #include <opencv2/opencv.hpp>

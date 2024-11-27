@@ -29,7 +29,6 @@ set_target_properties(doodle_maya_lib PROPERTIES
 target_link_libraries(doodle_maya_lib
         PRIVATE
         doodle_core
-        doodle_app
 
         maya::maya_all
         DemBones::dem-bones

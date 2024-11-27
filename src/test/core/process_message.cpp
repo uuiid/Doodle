@@ -6,7 +6,8 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/main_map.h>
 
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
+
 
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/maya_exe.h>

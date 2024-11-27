@@ -1,4 +1,5 @@
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
+
 
 #include <doodle_lib/core/thread_copy_io.h>
 

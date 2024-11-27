@@ -15,7 +15,6 @@ set_target_properties(doodle_maya_exe
 target_link_libraries(doodle_maya_exe
         PUBLIC
         doodle_lib
-        doodle_app
         doodle_maya_lib
 
         maya::maya_all

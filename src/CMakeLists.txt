@@ -46,7 +46,6 @@ set(DOXYGEN_HTML_EXTRA_STYLESHEET ${doxygenawesomecss_SOURCE_DIR}/doxygen-awesom
 
 doxygen_add_docs(Doxygen
         doodle_core
-        doodle_app
         doodle_lib
         maya_plug
         exe_maya
@@ -54,7 +53,6 @@ doxygen_add_docs(Doxygen
         maya_plug_mll
 )
 
-add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
 

@@ -4,7 +4,7 @@
 
 #include "http_listener.h"
 
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>

@@ -12,7 +12,6 @@
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/project.h>
 
-#include <doodle_app/platform/win/windows_proc.h>
 
 #include <boost/asio.hpp>
 

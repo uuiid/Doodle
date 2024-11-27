@@ -12,7 +12,7 @@
 #include <doodle_core/metadata/scan_data_t.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
 
 #include <doodle_lib/core/scan_assets/character_scan_category.h>
 #include <doodle_lib/core/scan_assets/prop_scan_category.h>
