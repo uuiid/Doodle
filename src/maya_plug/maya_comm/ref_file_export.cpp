@@ -5,7 +5,6 @@
 #include "ref_file_export.h"
 
 #include "doodle_core/core/core_help_impl.h"
-#include "doodle_core/metadata/project.h"
 
 #include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
