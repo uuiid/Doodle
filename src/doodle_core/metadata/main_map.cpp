@@ -4,7 +4,6 @@
 
 #include "main_map.h"
 
-#include <doodle_core/metadata/assets_file.h>
 namespace doodle {
 
 namespace {

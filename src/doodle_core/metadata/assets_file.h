@@ -49,8 +49,6 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   [[nodiscard]] const std::string& name_attr() const;
   void name_attr(const std::string& in_name) const;
 
-  [[nodiscard]] entt::handle user_attr() const;
-  [[nodiscard]] entt::handle user_attr();
   void user_attr(const entt::handle& in_user);
 
   [[nodiscard]] const FSys::path& path_attr() const;

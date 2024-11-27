@@ -69,7 +69,7 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
   bool operator<(const assets& in_rhs) const;
   bool operator!=(const assets& in_rhs) const;
 
-  static void merge_assets_tree(const registry_ptr& in_registry_ptr);
+
 
  private:
   /**

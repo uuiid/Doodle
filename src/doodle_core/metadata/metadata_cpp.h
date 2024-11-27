@@ -5,7 +5,6 @@
 
 #include <doodle_core/metadata/assets.h>
 
-#include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>
 
 #include <doodle_core/metadata/project.h>
