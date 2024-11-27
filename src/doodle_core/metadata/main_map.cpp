@@ -24,15 +24,4 @@ FSys::path find_u_pej(const FSys::path& in_path) {
 
 }  // namespace
 
-void ue_main_map::find_ue_project_file(const entt::handle_view<assets_file, ue_main_map>& in_handle_view) {
-  auto& l_path = in_handle_view.get<assets_file>().path_attr();
-  if (l_path.empty()) return;
-  auto l_upej = find_u_pej(l_path);
-  if (!l_upej.empty()) in_handle_view.emplace_or_replace<ue_main_map>(l_upej);
-}
-FSys::path ue_main_map::find_ue_project_file(const FSys::path& in_path) {
-  if (in_path.empty()) return {};
-  return find_u_pej(in_path);
-}
-
 }  // namespace doodle

@@ -17,12 +17,10 @@ target_sources(
         move_create.h
         rules.h
         file_one_path.h
-        main_map.h
         computer.h
         server_task_info.h
         attendance.h
         work_xlsx_task_info.h
-        kitsu_file_path.h
         scan_data_t.h
 
 
@@ -43,12 +41,10 @@ target_sources(
         move_create.cpp
         rules.cpp
         file_one_path.cpp
-        main_map.cpp
         computer.cpp
         server_task_info.cpp
         attendance.cpp
         work_xlsx_task_info.cpp
-        kitsu_file_path.cpp
         scan_data_t.cpp
 )
 add_subdirectory(bvh)

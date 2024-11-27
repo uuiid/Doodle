@@ -111,8 +111,6 @@ class assets;
 using computer_ref = detail::entt_handle_ref<entt::tag<"computer"_hs>>;
 using task_ref     = detail::entt_handle_ref<entt::tag<"task"_hs>>;
 
-class ue_main_map;
-
 using connect_video = std::shared_ptr<detail::connect_video_interface>;
 
 using namespace std::literals;
