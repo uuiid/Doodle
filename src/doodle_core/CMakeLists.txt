@@ -1,5 +1,4 @@
 # 添加资源
-add_subdirectory(resource)
 cmrc_add_resource_library(
         DoodleLibResource
         resource/zhtopy.txt
