@@ -5,7 +5,6 @@
 #include "doodle_lib.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/core/core_sig.h>
 #include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
@@ -64,8 +63,6 @@ void doodle_lib::init() {
 
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
-  ptr->reg->ctx().emplace<user::current_user>();
-  ptr->ctx_p.emplace<core_sig>();
 }
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }

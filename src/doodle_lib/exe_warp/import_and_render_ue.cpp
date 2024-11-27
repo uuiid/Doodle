@@ -226,7 +226,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
     };
   }
   for (auto&& i : l_out) {
-    i.ue_prj_path_ = ue_main_map::find_ue_project_file(i.ue_file_);
+    i.ue_prj_path_ = ue_exe_ns::find_ue_project_file(i.ue_file_);
   }
   co_return std::tuple{boost::system::error_code{}, l_out};
 }

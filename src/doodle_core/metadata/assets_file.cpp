@@ -92,11 +92,9 @@ assets_file::assets_file(assets_file&&) noexcept            = default;
 assets_file& assets_file::operator=(assets_file&&) noexcept = default;
 
 assets_file::assets_file(const assets_file& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {
-  user_ref = in.user_ref;
 }
 assets_file& assets_file::operator=(const assets_file& in) noexcept {
   *p_i     = *in.p_i;
-  user_ref = in.user_ref;
   return *this;
 }
 const std::string& assets_file::organization_attr() const noexcept { return p_i->organization_p; }
