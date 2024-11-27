@@ -5,7 +5,7 @@
 #pragma once
 
 #include <atomic>
-
+#include <doodle_core/doodle_core.h>
 namespace doodle::details {
 /**
  * @brief 标识符生成器， 线程安全

@@ -6,12 +6,12 @@
 
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/platform/win/register_file_type.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/logger/logger.h>
-#include <doodle_lib/exe_warp/windows_hide.h>
-#include <doodle_lib/exe_warp/async_read_pipe.h>
 
-#include <doodle_lib/toolkit/toolkit.h>
+#include <doodle_lib/exe_warp/async_read_pipe.h>
+#include <doodle_lib/exe_warp/windows_hide.h>
 
 #include "boost/asio/readable_pipe.hpp"
 #include "boost/locale/encoding.hpp"
@@ -26,6 +26,7 @@
 #include <string>
 
 namespace doodle {
+
 std::tuple<boost::system::error_code, std::string> get_file_version_impl(const FSys::path& in_path) {
   auto l_version_path = in_path.parent_path() / "UnrealEditor.version";
 
@@ -36,10 +37,65 @@ std::tuple<boost::system::error_code, std::string> get_file_version_impl(const F
   nlohmann::json const l_json = nlohmann::json::parse(l_ifstream);
 
   return {
-      {}, fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>())};
+      {}, fmt::format("{}.{}", l_json["MajorVersion"].get<std::int32_t>(), l_json["MinorVersion"].get<std::int32_t>())
+  };
 }
 
 namespace {
+
+void install_SideFX_Labs(const FSys::path& path) {
+  if (FSys::exists(path)) {
+    FSys::remove_all(path);
+  } else {
+    FSys::create_directories(path);
+  }
+
+  auto sourePath = register_file_type::program_location().parent_path() / "SideFX_Labs";
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
+  copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+}
+
+void install_UnrealEngine5VLC(const FSys::path& path) {
+  if (FSys::exists(path)) {
+    FSys::remove_all(path);
+  } else {
+    FSys::create_directories(path);
+  }
+
+  auto sourePath = register_file_type::program_location().parent_path() / "UnrealEngine5VLC";
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
+  copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+}
+
+void installUePath(const FSys::path& path) {
+  try {
+    /// \brief 安装我们自己的插件
+    auto& set      = core_set::get_set();
+    auto sourePath = register_file_type::program_location().parent_path();
+    auto l_name{set.ue4_version};
+    if (auto l_f = l_name.find('.'); l_f != std::string::npos) {
+      l_name.erase(l_f, 1);
+    }
+    sourePath /= fmt::format("ue{}_Plug", l_name);
+    auto targetPath = path / "Plugins" / "Doodle";
+
+    if (FSys::exists(targetPath)) {
+      FSys::remove_all(targetPath);
+    } else {
+      FSys::create_directories(targetPath);
+    }
+
+    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
+    copy(sourePath, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+    /// \brief 安装houdini labs 插件
+    install_SideFX_Labs(targetPath.parent_path() / "SideFX_Labs");
+    install_UnrealEngine5VLC(targetPath.parent_path() / "UnrealEngine5VLC");
+  } catch (FSys::filesystem_error& error) {
+    DOODLE_LOG_ERROR(boost::diagnostic_information(error));
+    throw;
+  }
+}
+
 boost::system::error_code chick_ue_plug() {
   auto l_doodle_path = core_set::get_set().ue4_path / "Engine" / "Plugins" / "Doodle" / "Doodle.uplugin";
   std::string l_version{};
@@ -49,14 +105,14 @@ boost::system::error_code chick_ue_plug() {
   }
   if (l_version != version::build_info::get().version_str) {
     try {
-      toolkit::installUePath(core_set::get_set().ue4_path / "Engine");
+      installUePath(core_set::get_set().ue4_path / "Engine");
     } catch (const FSys::filesystem_error& error) {
       return error.code();
     }
   }
   return {};
 }
-}
+}  // namespace
 
 namespace ue_exe_ns {
 std::string get_file_version(const FSys::path& in_path) {
@@ -66,9 +122,11 @@ std::string get_file_version(const FSys::path& in_path) {
   }
   return l_str;
 }
-}
+}  // namespace ue_exe_ns
 
-boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector<std::string>& in_arg, logger_ptr in_logger) {
+boost::asio::awaitable<boost::system::error_code> async_run_ue(
+    const std::vector<std::string>& in_arg, logger_ptr in_logger
+) {
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
 
   in_logger->info(" 开始检查 UE 版本");
@@ -80,8 +138,9 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector
   auto l_ue_path = core_set::get_set().ue4_path / doodle_config::ue_path_obj;
   if (l_ue_path.empty()) {
     in_logger->error("ue_exe 路径为空, 无法启动UE");
-    co_return boost::system::error_code{boost::system::errc::no_such_file_or_directory,
-                                        boost::system::system_category()};
+    co_return boost::system::error_code{
+        boost::system::errc::no_such_file_or_directory, boost::system::system_category()
+    };
   }
   in_logger->info("开始运行 ue_exe: {} {}", l_ue_path, in_arg);
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(co_await boost::asio::this_coro::executor);
@@ -89,27 +148,33 @@ boost::asio::awaitable<boost::system::error_code> async_run_ue(const std::vector
   for (auto&& l_it : boost::process::v2::environment::current()) {
     l_env.emplace(l_it.key(), l_it.value());
   }
-  l_env[L"UE-LocalDataCachePath"]  = std::wstring{L"%GAMEDIR%DerivedDataCache"};
+  l_env[L"UE-LocalDataCachePath"] = std::wstring{L"%GAMEDIR%DerivedDataCache"};
 
-  auto l_out_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
-  auto l_err_pipe = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
+  auto l_out_pipe   = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
+  auto l_err_pipe   = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
 
   auto l_process_ue = boost::process::v2::process{
-      co_await boost::asio::this_coro::executor, l_ue_path,
+      co_await boost::asio::this_coro::executor,
+      l_ue_path,
       in_arg,
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
       details::hide_and_not_create_windows
   };
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info, "utf-8"), boost::asio::detached);
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info, "utf-8"), boost::asio::detached);
+  boost::asio::co_spawn(
+      g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info, "utf-8"), boost::asio::detached
+  );
+  boost::asio::co_spawn(
+      g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info, "utf-8"), boost::asio::detached
+  );
 
   l_timer->expires_after(chrono::seconds{core_set::get_set().timeout * 5});
-  auto [l_array_completion_order,l_ec,l_exit_code, l_ec_t] = co_await boost::asio::experimental::make_parallel_group(
-    boost::process::v2::async_execute(
-      std::move(l_process_ue), boost::asio::deferred),
-    l_timer->async_wait(boost::asio::deferred)
-  ).async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
+  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t] =
+      co_await boost::asio::experimental::make_parallel_group(
+          boost::process::v2::async_execute(std::move(l_process_ue), boost::asio::deferred),
+          l_timer->async_wait(boost::asio::deferred)
+      )
+          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
 
   switch (l_array_completion_order[0]) {
     case 0:
