@@ -14,8 +14,6 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include "computer_reg_data.h"
-#include <sqlpp11/sqlite3/sqlite3.h>
-#include <sqlpp11/sqlpp11.h>
 
 namespace doodle::http {
 namespace {
