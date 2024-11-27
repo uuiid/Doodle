@@ -4,7 +4,6 @@
 
 #include "app_base.h"
 
-#include <doodle_core/core/app_facet.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/logger/logger.h>
