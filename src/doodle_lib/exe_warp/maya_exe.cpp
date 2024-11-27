@@ -9,7 +9,6 @@
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/configure/config.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/core/program_info.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/platform/win/register_file_type.h>
 

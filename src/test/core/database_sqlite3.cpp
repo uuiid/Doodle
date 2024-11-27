@@ -8,7 +8,6 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/core/program_info.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>

@@ -12,7 +12,6 @@ target_sources(
         app_base.h
         util.h
         app_facet.h
-        program_info.h
         global_function.h
         wait_op.h
         app_service.h
@@ -29,7 +28,6 @@ target_sources(
         app_base.cpp
         util.cpp
         app_facet.cpp
-        program_info.cpp
         wait_op.cpp
         app_service.cpp
         http_client_core.cpp

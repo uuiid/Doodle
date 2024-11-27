@@ -2,7 +2,6 @@
 // Created by TD on 2022/10/8.
 //
 
-#include <doodle_core/core/program_info.h>
 #include <doodle_core/doodle_core.h>
 
 
@@ -24,7 +23,6 @@ struct loop_ {
 BOOST_FIXTURE_TEST_SUITE(move, loop_, *boost::unit_test::disabled())
 
 BOOST_AUTO_TEST_CASE(create) {
-  g_ctx().emplace<program_info>();
   g_reg()->ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   auto l_h = entt::handle{*g_reg(), g_reg()->create()};
   FSys::path l_image_path{R"(D:\tmp\image_test_ep002_sc001)"};
