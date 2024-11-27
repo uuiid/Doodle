@@ -20,8 +20,6 @@ target_sources(
 
 add_subdirectory(app)
 add_subdirectory(configure)
-add_subdirectory(platform)
-add_subdirectory(lib_warp)
 
 
 # 连接库
