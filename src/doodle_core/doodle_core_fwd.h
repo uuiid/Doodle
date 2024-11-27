@@ -140,22 +140,6 @@ class image_attr;
 class image_watermark;
 }  // namespace movie
 
-namespace database_n {
-
-class select;
-
-template <typename>
-struct sql_com;
-
-template <typename>
-class impl_obs;
-template <typename>
-struct sql_ctx;
-}  // namespace database_n
-
-using sql_connection     = sqlpp::sqlite3::common_connection;
-using sql_connection_ptr = std::shared_ptr<sql_connection>;
-
 namespace json_rpc {
 class server;
 class parser_rpc;

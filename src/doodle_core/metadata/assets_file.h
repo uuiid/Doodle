@@ -23,8 +23,6 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   std::unique_ptr<impl> p_i;
   user_ref user_ref{};
 
-  template <typename T>
-  friend struct database_n::sql_com;
 
  public:
   /**

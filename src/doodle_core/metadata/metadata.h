@@ -60,12 +60,7 @@ void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 class DOODLE_CORE_API database : boost::totally_ordered<database>,
                                  boost::equality_comparable<boost::uuids::uuid>,
                                  boost::equality_comparable<database_ns::ref_data> {
-  template <typename T>
-  friend struct database_n::sql_com;
 
-  template <typename>
-  friend class database_n::impl_obs;
-  friend class database_n::select;
   friend void ::doodle::snapshot::load_com(database &in_entity, std::shared_ptr<void> &in_pre);
 
  private:

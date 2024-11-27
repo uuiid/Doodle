@@ -45,8 +45,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
 
   template <typename T1, typename Char, typename Enable>
   friend struct fmt::formatter;
-  template <typename T>
-  friend struct database_n::sql_com;
 
  public:
   // 对应 kitsu 中的 user
