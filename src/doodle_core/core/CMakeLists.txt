@@ -15,7 +15,6 @@ target_sources(
         wait_op.h
         app_service.h
         http_client_core.h
-        async_reg.h
         co_queue.h
 
         PRIVATE
