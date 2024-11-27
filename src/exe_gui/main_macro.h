@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/app_base.h>
 
 #include <tchar.h>
 #include <windows.h>

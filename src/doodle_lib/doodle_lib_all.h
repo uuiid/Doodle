@@ -13,7 +13,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/doodle_lib_pch.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
-#include <doodle_lib/file_warp/opencv_read_player.h>
 
 #include <doodle_lib/long_task/image_to_move.h>
 

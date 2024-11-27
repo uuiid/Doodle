@@ -84,6 +84,7 @@ target_link_libraries(doodle_lib
         Alembic::Alembic # abc文件读写
         xlnt::xlnt #表格库
         sqlite_orm::sqlite_orm
+        ${OPENSSL_LIBRARIES}
 )
 
 target_compile_definitions(doodle_lib
