@@ -10,7 +10,6 @@ target_sources(
         file_sys.h
         chrono_.h
         app_base.h
-        core_sql.h
         util.h
         app_facet.h
         program_info.h
@@ -28,7 +27,6 @@ target_sources(
         status_info.cpp
         file_sys.cpp
         app_base.cpp
-        core_sql.cpp
         util.cpp
         app_facet.cpp
         program_info.cpp
