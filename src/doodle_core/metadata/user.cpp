@@ -4,7 +4,7 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/lib_warp/sqlite3/sqlite3.h>
+
 #include <doodle_core/metadata/detail/user_set_data.h>
 #include <doodle_core/metadata/user.h>
 
@@ -14,9 +14,7 @@
 #include "metadata/metadata.h"
 #include <entt/entt.hpp>
 #include <pin_yin/convert.h>
-#include <sqlpp11/ppgen.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
-#include <sqlpp11/sqlpp11.h>
+
 namespace doodle {
 
 void to_json(nlohmann::json& j, const user& p) {
