@@ -11,7 +11,6 @@ target_sources(
         chrono_.h
         app_base.h
         util.h
-        app_facet.h
         global_function.h
         wait_op.h
         app_service.h
@@ -27,7 +26,6 @@ target_sources(
         file_sys.cpp
         app_base.cpp
         util.cpp
-        app_facet.cpp
         wait_op.cpp
         app_service.cpp
         http_client_core.cpp

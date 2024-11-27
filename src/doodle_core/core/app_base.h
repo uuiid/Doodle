@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <doodle_core/core/app_facet.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/platform/win/windows_alias.h>
