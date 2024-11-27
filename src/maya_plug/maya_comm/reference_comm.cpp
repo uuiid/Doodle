@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/user.h>
 
-#include <doodle_app/app/app_command.h>
+// #include <doodle_core/core/app_base.h>
 
 #include <boost/asio/use_future.hpp>
 

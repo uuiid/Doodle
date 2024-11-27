@@ -6,7 +6,6 @@
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <maya_plug/data/maya_register_main.h>
-#include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
 #include <maya_plug/maya_comm/afterimage_comm.h>
