@@ -78,26 +78,6 @@ MStatus initializePlugin(MObject obj) {
 
   maya_reg     = std::make_shared<::doodle::maya_plug::maya_register>();
   p_doodle_app = std::make_shared<app_base>();
-  // 注册命令
-  status       = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
-  CHECK_MSTATUS(status);
-
-  // 添加菜单项
-  k_plugin.addMenuItem(
-      doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status
-  );
-  if (status)
-    maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
-      // 这一部分是删除菜单项的
-      MStatus l_status{};
-      MStringArray menuItems{};
-      menuItems.append(doodle_windows.data());
-      l_status = in_plug.removeMenuItem(menuItems);
-      CHECK_MSTATUS(l_status);
-      return l_status;
-    });
-  else
-    DOODLE_LOG_ERROR(status);
 
   maya_reg->register_callback(
       MSceneMessage::addCallback(
