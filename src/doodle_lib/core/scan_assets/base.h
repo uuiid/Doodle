@@ -27,8 +27,8 @@ class scan_category_data_t {
     FSys::file_time_type last_write_time_;
     // to_json
     friend void to_json(nlohmann::json& j, const uuid_path_t& p) {
-      j["uuid"]       = p.uuid_;
-      j["path"]       = p.path_;
+      j["uuid"] = p.uuid_;
+      j["path"] = p.path_;
     }
 
     // from_json
@@ -58,8 +58,7 @@ class scan_category_data_t {
   std::string name_;
   // 版本名称
   std::string version_name_;
-  // 所属类别
-  assets file_type_;
+
   // 类型
   assets_type_enum assets_type_;
   // 编号
@@ -70,17 +69,16 @@ class scan_category_data_t {
 
   // to_json
   friend void to_json(nlohmann::json& j, const scan_category_data_t& p) {
-    j["ue_file"]      = p.ue_file_;
-    j["rig_file"]     = p.rig_file_;
-    j["solve_file"]   = p.solve_file_;
-    j["base_path"]    = p.base_path_;
-    j["season"]       = p.season_;
-    j["name"]         = p.name_;
-    j["version_name"] = p.version_name_;
-    j["file_type"]    = p.file_type_;
-    j["assets_type"]  = p.assets_type_;
-    j["number_str"]   = p.number_str_;
-    j["file_hash"]    = p.file_hash_;
+    j["ue_file"]              = p.ue_file_;
+    j["rig_file"]             = p.rig_file_;
+    j["solve_file"]           = p.solve_file_;
+    j["base_path"]            = p.base_path_;
+    j["season"]               = p.season_;
+    j["name"]                 = p.name_;
+    j["version_name"]         = p.version_name_;
+    j["assets_type"]          = p.assets_type_;
+    j["number_str"]           = p.number_str_;
+    j["file_hash"]            = p.file_hash_;
     j["project_database_ptr"] = p.project_database_ptr->uuid_id_;
   }
   // from_json
@@ -92,7 +90,6 @@ class scan_category_data_t {
     j.at("season").get_to(p.season_);
     j.at("name").get_to(p.name_);
     j.at("version_name").get_to(p.version_name_);
-    j.at("file_type").get_to(p.file_type_);
     j.at("assets_type").get_to(p.assets_type_);
     j.at("number_str").get_to(p.number_str_);
     j.at("file_hash").get_to(p.file_hash_);

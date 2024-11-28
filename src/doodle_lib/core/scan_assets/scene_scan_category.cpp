@@ -35,7 +35,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
       auto l_number_str = l_match[1].str();                                                        // 获取编号
       if (cancellation_state_ && cancellation_state_->cancelled() != boost::asio::cancellation_type::none) return {};
 
-      for (auto&& l_s3 : FSys::directory_iterator{l_s2.path()}) {                                  // 迭代三级目录
+      for (auto&& l_s3 : FSys::directory_iterator{l_s2.path()}) {  // 迭代三级目录
         if (!l_s3.is_directory()) continue;
         if (!FSys::exists(l_s3.path() / "Content")) continue;
 
@@ -49,7 +49,7 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
         l_ptr->base_path_           = l_s3.path();
         l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::scene;
         l_ptr->number_str_          = l_number_str;
-        l_ptr->file_type_.set_path("场景");
+
         l_out.emplace_back(l_ptr);
 
         auto l_dis_path = l_s3.path() / "Content" / l_s3.path().filename() / "Map";  // 确认目标路径
@@ -73,7 +73,6 @@ std::vector<scan_category_data_ptr> scene_scan_category_t::scan(
             l_ptr->base_path_           = l_s3.path();
             l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::scene;
             l_ptr->number_str_          = l_number_str;
-            l_ptr->file_type_.set_path("场景");
             l_out.emplace_back(l_ptr);
             l_ptr->version_name_ = l_version_str;
           }

@@ -5,7 +5,6 @@ target_sources(doodle_lib
         filesystem_extend.h
         observable_container.h
         holidaycn_time.h
-        erase_handle_component.h
         scan_win_service.h
         thread_copy_io.h
         up_auto_light_file.h

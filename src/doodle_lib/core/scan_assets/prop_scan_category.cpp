@@ -46,7 +46,6 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
       l_ptr->JD_path_             = l_s.path();
       l_ptr->base_path_           = l_s2.path();
       l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::prop;
-      l_ptr->file_type_.set_path("道具");
       l_out.emplace_back(l_ptr);
 
       auto l_mesh_path = l_s2.path() / "Mesh";  // 确认目标路径
@@ -75,7 +74,6 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
           l_ptr->JD_path_             = l_s.path();
           l_ptr->base_path_           = l_s2.path();
           l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::prop;
-          l_ptr->file_type_.set_path("道具");
           l_out.emplace_back(l_ptr);
           l_ptr->version_name_ = l_version_str;
         }

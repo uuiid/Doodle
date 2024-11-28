@@ -7,6 +7,7 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -27,89 +28,11 @@
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
-#include <doodle_core/core/app_base.h>
-
-
 #include <boost/test/unit_test.hpp>
-
 
 using namespace doodle;
 
-
 BOOST_AUTO_TEST_SUITE(sql_)
-
-void create_test_database() {
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::project>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::episodes>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::shot>(100, shot::shot_ab_enum::A);
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::season>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::assets>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::assets_file>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::time_point_wrap>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::comment>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::image_icon>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::importance>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::business::rules>();
-  }
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::user>("test_user");
-  }
-  for (int l = 0; l < 10; ++l)
-
-  {
-    auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-    l_h.emplace<doodle::database>();
-    auto& l_s            = l_h.emplace<doodle::server_task_info>();
-    l_s.name_            = fmt::format("name_{}", l);
-    l_s.source_computer_ = fmt::format("source_computer_{}", l);
-  }
-}
-
 
 BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
   using namespace sqlite_orm;
