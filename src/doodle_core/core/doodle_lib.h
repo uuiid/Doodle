@@ -15,7 +15,7 @@ class thread_pool;
 
 namespace doodle {
 
-class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comparable<doodle_lib> {
+class DOODLE_CORE_API doodle_lib : public boost::noncopyable, boost::equality_comparable<doodle_lib> {
  public:
   using logger_ctr_ptr = std::shared_ptr<details::logger_ctrl>;
   friend boost::asio::io_context& g_io_context();

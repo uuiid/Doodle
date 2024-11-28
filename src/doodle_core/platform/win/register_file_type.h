@@ -17,8 +17,6 @@ class register_file_type {
 
   void register_type();
 
-  std::optional<database::ref_data> get_ref_uuid();
-
   static FSys::path get_main_project();
   static FSys::path get_update_path();
   static const std::vector<project>& get_project_list();

@@ -17,43 +17,6 @@
 
 namespace doodle {
 
-namespace database_ns {
-ref_data::ref_data() = default;
-
-ref_data::ref_data(const database &in) : uuid(in.uuid()) {}
-bool ref_data::operator==(const database::ref_data &in_rhs) const { return uuid == in_rhs.uuid; }
-
-void from_json(const nlohmann::json &j, database::ref_data &p) {
-  if (j.contains("uuid")) j["uuid"].get_to(p.uuid);
-}
-void to_json(nlohmann::json &j, const database::ref_data &p) { j["uuid"] = p.uuid; }
-ref_data::operator bool() const {
-  bool l_r{false};
-
-  //  ranges::make_subrange(g_reg()->view<database>().each());
-
-  for (auto &&[e, d] : g_reg()->view<database>().each())
-    if (d == uuid) {
-      l_r = true;
-      break;
-    }
-  return l_r;
-}
-
-entt::handle ref_data::handle() const {
-  entt::handle l_r{};
-
-  //  ranges::make_subrange(g_reg()->view<database>().each());
-  if (!uuid.is_nil())
-    for (auto &&[e, d] : g_reg()->view<database>().each())
-      if (d == uuid) {
-        l_r = entt::handle{*g_reg(), e};
-        break;
-      }
-  return l_r;
-}
-}  // namespace database_ns
-
 database::database() : p_id(0), p_uuid_(core_set::get_set().get_uuid()) {}
 database::database(const boost::uuids::uuid &in_uuid)
     : p_id(0), p_uuid_(in_uuid.is_nil() ? core_set::get_set().get_uuid() : in_uuid) {}
@@ -73,7 +36,6 @@ bool database::operator==(const database &in_rhs) const {
 }
 bool database::operator<(const database &in_rhs) const { return p_id < in_rhs.p_id; }
 bool database::operator==(const boost::uuids::uuid &in_rhs) const { return p_uuid_ == in_rhs; }
-bool database::operator==(const database_ns::ref_data &in_rhs) const { return p_uuid_ == in_rhs.uuid; }
 
 void database::set_id(std::uint64_t in_id) const { p_id = in_id; }
 const boost::uuids::uuid &database::uuid() const { return p_uuid_; }

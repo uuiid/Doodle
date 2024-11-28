@@ -182,25 +182,6 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
   //  }
 };
 
-template <typename Entt, typename... Arg>
-struct [[maybe_unused]] adl_serializer<entt::basic_handle<Entt, Arg...>> {
-  using handle = entt::basic_handle<Entt, Arg...>;
-  static void to_json(json& j, const handle& in_h) { j = doodle::enum_to_num(in_h.entity()); }
-  static void from_json(const json& j, handle& in_h) {
-    in_h = handle{*doodle::g_reg(), j.get<entt::entt_traits<Entt>::value_type>()};
-  }
-};
-
-template <>
-struct [[maybe_unused]] adl_serializer<entt::entity> {
-  using entt_type       = entt::entity;
-  using entt_type_value = typename entt::entt_traits<entt::entity>::entity_type;
-  static void to_json(json& j, const entt_type& in_h) { j = doodle::enum_to_num(in_h); }
-  static void from_json(const json& j, entt_type& in_h) {
-    in_h = doodle::num_to_enum<entt_type>(j.get<entt_type_value>());
-  }
-};
-
 }  // namespace nlohmann
 
 #include <doodle_core/lib_warp/detail/bit_set.h>

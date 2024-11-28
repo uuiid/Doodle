@@ -18,7 +18,7 @@ class doodle_lib;
  * @warning 这个类本身的初始化极为基本和简单， 初始化请使用 core_set_init 分步调用
  */
 
-class DOODLE_CORE_API core_set : public details::no_copy {
+class DOODLE_CORE_API core_set : public boost::noncopyable {
   friend class user;
   friend class doodle_lib;
 

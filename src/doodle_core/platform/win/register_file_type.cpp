@@ -21,10 +21,6 @@ void register_file_type::register_type() {
   l_key.Create(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Classes\\doodle.main.1\\shell\\open\\command");
   l_key.SetStringValue({}, L"");
 }
-std::optional<database::ref_data> register_file_type::get_ref_uuid() {
-  winreg::RegKey l_key{HKEY_LOCAL_MACHINE, L""};
-  return std::optional<database::ref_data>();
-}
 
 FSys::path register_file_type::get_main_project() {
   try {
@@ -90,8 +86,9 @@ const std::vector<project>& register_file_type::get_project_list() {
           R"(\\192.168.10.240\public\后期\SSWH\)"
       },
 
-      project{  "镜·界", R"(\\192.168.10.242\public\JJ_DJ)", "JingJie", "JJ", R"(C:\sy\JJ_DJ)",
-        R"(\\192.168.10.240\public\后期\JJ_DJ\)"
+      project{
+          "镜·界", R"(\\192.168.10.242\public\JJ_DJ)", "JingJie", "JJ", R"(C:\sy\JJ_DJ)",
+          R"(\\192.168.10.240\public\后期\JJ_DJ\)"
       }
 
   };
