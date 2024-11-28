@@ -139,10 +139,6 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())), 0.1, 0.91,
       movie::image_watermark::rgba_t{25, 220, 2}
   );
-  /// \brief 制作人姓名
-  l_image.watermarks_attr.emplace_back(
-      g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.5, 0.91, movie::image_watermark::rgba_t{25, 220, 2}
-  );
 
   //  k_s = MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
   //  colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");

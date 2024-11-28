@@ -11,7 +11,6 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/doodle_core.h>
 
-#include <doodle_app/app/program_options.h>
 #include "doodle_lib/exe_warp/maya_exe.h"
 
 #include <fmt/format.h>

@@ -37,6 +37,11 @@ public:
 
   static void extract_num(std::vector<image_attr>& in_image_list);
 
+
+  static std::vector<image_attr> make_default_attr(
+    const episodes* in_episodes, const shot* in_shot, const std::vector<FSys::path>& in_path_list
+  );
+
   bool operator<(const image_attr& in_rhs) const noexcept;
   bool operator==(const image_attr& in_rhs) const noexcept;
 };
