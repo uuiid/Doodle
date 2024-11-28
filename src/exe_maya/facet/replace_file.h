@@ -2,6 +2,8 @@
 // Created by td_main on 2023/7/6.
 //
 #pragma once
+#include <doodle_core/core/app_base.h>
+
 #include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
@@ -23,7 +25,7 @@ class replace_file_facet {
   replace_file_facet()  = default;
   ~replace_file_facet() = default;
 
-  bool post(const FSys::path& in_path);
+  bool post(const argh::parser& in_argh);
 };
 
 }  // namespace doodle::maya_plug

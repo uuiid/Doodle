@@ -8,12 +8,10 @@
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/configure/config.h>
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/platform/win/register_file_type.h>
-
-#include <doodle_core/core/app_base.h>
-
 
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/exe_warp/async_read_pipe.h>
@@ -142,14 +140,17 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   }
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-  in_arg->maya_path      = l_maya_path;
-  in_arg->out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
-                           fmt::format("{}.json", core_set::get_set().get_uuid());
-  if (!FSys::exists(in_arg->out_path_file_.parent_path()))
-    FSys::create_directories(in_arg->out_path_file_.parent_path());
-  auto l_arg_path = FSys::write_tmp_file("maya/arg", in_arg->to_json_str(), ".json");
+  auto l_args = in_arg->get_arg_list();
+  l_args.emplace_back(fmt::format("--maya_path={}", l_maya_path.generic_string()));
+  auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
+                          fmt::format("{}.json", core_set::get_set().get_uuid());
+  l_args.emplace_back() = fmt::format("--out_path_file={}", l_out_path_file_.generic_string());
 
-  in_logger->warn("开始写入配置文件 {}", l_arg_path);
+  l_out_path_file_      = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
+                     fmt::format("{}.json", core_set::get_set().get_uuid());
+  if (!FSys::exists(l_out_path_file_.parent_path())) FSys::create_directories(l_out_path_file_.parent_path());
+
+  in_logger->warn("配置命令行", l_args);
 
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
 
@@ -169,7 +170,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   auto l_process_maya = boost::process::v2::process{
       g_io_context(),
       l_run_path,
-      {fmt::format("--{}={}", in_arg->get_arg(), l_arg_path)},
+      l_args,
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
       boost::process::v2::process_start_dir{l_maya_path / "bin"},
@@ -211,7 +212,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
         }
         co_return std::make_tuple(boost::system::error_code{l_ec}, maya_exe_ns::maya_out_arg{});
       }
-      co_return std::tuple{std::move(l_ec), get_out_arg(in_arg->out_path_file_)};
+      co_return std::tuple{std::move(l_ec), get_out_arg(l_out_path_file_)};
     case 1:
       if (l_ec) {
         in_logger->error("maya 运行超时: {}", l_ec.message());

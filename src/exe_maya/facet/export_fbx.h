@@ -2,6 +2,7 @@
 // Created by td_main on 2023/4/25.
 //
 #pragma once
+#include <doodle_core/core/app_base.h>
 
 #include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
@@ -32,7 +33,7 @@ class export_fbx_facet final {
   export_fbx_facet()  = default;
   ~export_fbx_facet() = default;
 
-  bool post(const FSys::path& in_path);
+  bool post(const argh::parser& in_argh);
 };
 
 }  // namespace doodle::maya_plug

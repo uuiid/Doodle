@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include <doodle_core/core/app_base.h>
+
 #include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
@@ -45,7 +47,7 @@ class cloth_sim final {
   cloth_sim()  = default;
   ~cloth_sim() = default;
 
-  bool post(const FSys::path& in_path);
+  bool post(const argh::parser& in_argh);
 };
 
 }  // namespace doodle::maya_plug

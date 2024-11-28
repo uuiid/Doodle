@@ -32,17 +32,12 @@
 
 namespace doodle::maya_plug {
 
-bool replace_file_facet::post(const FSys::path& in_path) {
+bool replace_file_facet::post(const argh::parser& in_argh) {
   bool l_ret = false;
 
-  DOODLE_LOG_INFO("开始初始化配置文件 {}", in_path);
   maya_exe_ns::replace_file_arg l_arg{};
-  try {
-    l_arg = nlohmann::json::parse(FSys::ifstream{in_path}).get<maya_exe_ns::replace_file_arg>();
-  } catch (const nlohmann::json::exception& e) {
-    DOODLE_LOG_ERROR("解析配置失败 {}", e.what());
-    return l_ret;
-  }
+  l_arg.parse_args(in_argh);
+
 
   if (l_arg.file_path.empty()) return l_ret;
 

@@ -114,7 +114,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     }
   }
 
-  if (in_arh["--local"]) {
+  if (in_arh["local"]) {
     l_args.port_ = 0;
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(":memory:");

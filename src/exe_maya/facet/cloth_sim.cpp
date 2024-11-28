@@ -40,17 +40,10 @@
 
 namespace doodle::maya_plug {
 
-bool cloth_sim::post(const FSys::path& in_path) {
+bool cloth_sim::post(const argh::parser& in_argh) {
   bool l_ret = false;
-  DOODLE_LOG_INFO("开始初始化配置文件 {}", in_path);
   maya_exe_ns::qcloth_arg l_arg{};
-
-  try {
-    l_arg = nlohmann::json::parse(FSys::ifstream{in_path}).get<maya_exe_ns::qcloth_arg>();
-  } catch (const nlohmann::json::exception& e) {
-    DOODLE_LOG_ERROR("解析配置失败 {}", e.what());
-    return l_ret;
-  }
+  l_arg.parse_args(in_argh);
 
   if (l_arg.file_path.empty()) return l_ret;
 
@@ -76,51 +69,50 @@ bool cloth_sim::post(const FSys::path& in_path) {
   maya_file_io::open_file(l_arg.file_path);
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
 
-  anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
-  t_post_time_     = MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()};
+  anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
+  t_post_time_     = MTime{boost::numeric_cast<std::double_t>(950), MTime::uiUnit()};
   DOODLE_LOG_INFO("tpost 开始时间 {}", t_post_time_);
   maya_chick(MAnimControl::setMinTime(t_post_time_));
   maya_chick(MAnimControl::setAnimationStartTime(t_post_time_));
 
   g_ctx().emplace<reference_file_factory>();
 
-  maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()}));
+  maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(950), MTime::uiUnit()}));
 
   auto l_s = boost::asio::make_strand(g_io_context());
 
   boost::asio::post(l_s, [l_s, this]() { this->create_ref_file(); });
 
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_replace_ref_file).any()) {
+  if (l_arg.replace_ref_file) {
     DOODLE_LOG_INFO("安排替换引用");
     boost::asio::post(l_s, [l_s, this]() { this->replace_ref_file(); });
   }
 
   boost::asio::post(l_s, [l_s, this]() { this->create_cloth(); });
 
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_replace_ref_file).any()) {
+  if (l_arg.replace_ref_file) {
     boost::asio::post(l_s, [l_s, this]() { this->set_cloth_attr(); });
   }
 
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_sim_file).any()) {
+  if (l_arg.sim_file) {
     DOODLE_LOG_INFO("安排解算布料");
     boost::asio::post(l_s, [l_s, this]() { this->sim(); });
-  } else if ((l_arg.bitset_ & maya_exe_ns::flags::k_touch_sim_file).any()) {
+  } else if (l_arg.touch_sim) {
     DOODLE_LOG_INFO("安排touch布料");
     boost::asio::post(l_s, [l_s, this]() { this->touch_sim(); });
   }
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_create_play_blast).any()) {
+  if (l_arg.create_play_blast_) {
     DOODLE_LOG_INFO("安排排屏");
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_fbx_type).any()) {
+  if (l_arg.export_file) {
     DOODLE_LOG_INFO("安排导出fbx");
     boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
-  }
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_abc_type).any()) {
     DOODLE_LOG_INFO("安排导出abc");
     boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
   }
-  if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_anim_file).any()) {
+
+  if (l_arg.export_anim_file) {
     DOODLE_LOG_INFO("安排导出动画文件");
     boost::asio::post(l_s, [l_s, this]() { this->export_anim_file(); });
   }
