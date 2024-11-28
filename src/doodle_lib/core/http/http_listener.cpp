@@ -4,6 +4,7 @@
 
 #include "http_listener.h"
 
+#include "doodle_core/core/core_set.h"
 #include <doodle_core/core/app_base.h>
 
 #include <doodle_lib/core/http/http_route.h>
@@ -28,6 +29,10 @@ boost::asio::awaitable<void> detail::run_http_listener(
   auto& l_date          = g_ctx().get<http_listener_data>();
   l_date.address_       = l_local_endpoint.address().to_string();
   l_date.port_          = l_local_endpoint.port();
+  if (in_port == 0) {
+    auto l_path = core_set::get_set().get_cache_root("http") / fmt::format("{}.txt", boost::this_process::get_id());
+    FSys::ofstream{l_path} << l_date.port_ << std::endl;
+  }
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
     if (l_ec) {

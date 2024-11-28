@@ -1,10 +1,8 @@
 #include "kitsu_supplement.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/sqlite_orm/detail/init_project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
-
-#include <doodle_core/core/app_base.h>
-
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
@@ -115,15 +113,25 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       return true;
     }
   }
+
+  if (in_arh["--local"]) {
+    l_args.port_ = 0;
+    // 打开内存数据库
+    g_ctx().emplace<sqlite_database>().load(":memory:");
+    // 初始化路由
+    auto l_rout_ptr = std::make_shared<http::http_route>();
+    // 开始运行服务器
+    http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
+    return false;
+  }
+
   get_register_info(l_args);
   core_set::get_set().set_root(l_args.kitsu_thumbnails_path_);
 
   auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
   l_scan->use_cache();
   // 初始化数据库
-  {
-    g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
-  }
+  g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
 
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
