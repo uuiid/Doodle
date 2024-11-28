@@ -207,6 +207,6 @@ BOOST_AUTO_TEST_CASE(test_holidaycn) {
 }
 
 BOOST_AUTO_TEST_CASE(test_port, *boost::unit_test::disabled()) {
-  BOOST_TEST(win::has_tcp_port(80));
+  // BOOST_TEST(win::has_tcp_port(80));
   //  BOOST_TEST(!win::has_tcp_port(23333));
 }
