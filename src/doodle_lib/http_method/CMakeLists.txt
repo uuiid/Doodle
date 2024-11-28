@@ -8,6 +8,7 @@ target_sources(
         dingding_attendance.h
         file_association.h
         kitsu_front_end_reg.h
+        tool_version.h
 
         PRIVATE
         computer.cpp
@@ -18,6 +19,7 @@ target_sources(
         file_association.cpp
         computer_reg_data.cpp
         kitsu_front_end_reg.cpp
+        tool_version.cpp
 
 )
 
