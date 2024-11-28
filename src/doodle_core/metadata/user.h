@@ -69,15 +69,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   bool operator==(const user& in_rhs) const;
   bool operator<(const user& in_rhs) const;
 
-  /**
-   * @brief 按名称寻找user
-   * @param in_name 用户名称
-   * @return 句柄(可能无效)
-   */
-  static entt::handle find_by_user_name(const std::string& in_name);
-  /**
-   * @brief 在打开数据库后, 注册表中保存的所有用户中寻找到当前用户,  如果未寻找到将创建一个新段用户
-   */
+
 
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);

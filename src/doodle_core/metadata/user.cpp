@@ -25,7 +25,7 @@ void from_json(const nlohmann::json& j, user& p) {
   if (j.contains("power")) j.at("power").get_to(p.power);
 }
 
-user::user() : p_string_(), p_ENUS() {}
+user::user() {}
 
 user::user(const std::string& in_string) : user() { set_name(in_string); }
 
@@ -38,17 +38,5 @@ void user::set_name(const std::string& in_string) {
 const std::string& user::get_enus() const { return p_ENUS; }
 bool user::operator==(const user& in_rhs) const { return p_string_ == in_rhs.p_string_; }
 bool user::operator<(const user& in_rhs) const { return p_string_ < in_rhs.p_string_; }
-
-entt::handle user::find_by_user_name(const std::string& in_name) {
-  entt::handle l_r{};
-  for (auto&& [e, u] : g_reg()->view<user>().each()) {
-    if (u.get_name() == in_name) {
-      l_r = entt::handle{*g_reg(), e};
-      break;
-      DOODLE_LOG_WARN("找到用户名称 {} 的句柄 {}", in_name, l_r);
-    }
-  }
-  return l_r;
-}
 
 }  // namespace doodle

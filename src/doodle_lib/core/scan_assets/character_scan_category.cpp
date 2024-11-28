@@ -53,7 +53,6 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
         l_ptr->base_path_           = l_ch_name_ue_path;
         l_ptr->begin_episode_       = l_begin_episode;
         l_ptr->number_str_          = l_number_str;
-        l_ptr->file_type_.set_path("角色");
         l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
         l_out.emplace_back(l_ptr);
 

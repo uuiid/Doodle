@@ -48,16 +48,3 @@ struct database_t {
 };
 }  // namespace assets_file_helper
 }  // namespace doodle
-namespace fmt {
-/**
- * @brief 格式化资产文件, 使用name属性
- *
- */
-template <>
-struct formatter<::doodle::assets_file> : formatter<std::string_view> {
-  template <typename FormatContext>
-  auto format(const ::doodle::assets_file& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string_view>::format(in_.name_attr(), ctx);
-  }
-};
-}  // namespace fmt
