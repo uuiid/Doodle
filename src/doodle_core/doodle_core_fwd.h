@@ -104,7 +104,6 @@ class convert;
 class doodle_error;
 class user;
 class project;
-class comment;
 class assets;
 
 using computer_ref = detail::entt_handle_ref<entt::tag<"computer"_hs>>;

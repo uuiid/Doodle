@@ -45,7 +45,6 @@ class shot;
 class assets;
 class assets_file;
 class time_point_wrap;
-class comment;
 class season;
 
 class core_sig;
