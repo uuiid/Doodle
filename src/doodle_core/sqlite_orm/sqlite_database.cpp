@@ -29,6 +29,15 @@ DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
 DOODLE_SQLITE_ENUM_TYPE_(doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(doodle::server_task_info_status)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
+
+template <>
+struct type_is_nullable<std::string> : std::true_type {
+  bool operator()(const std::string& t) const { return t.empty(); }
+};
+template <>
+struct type_is_nullable<boost::uuids::uuid> : std::true_type {
+  bool operator()(const boost::uuids::uuid& t) const { return t.is_nil(); }
+};
 }  // namespace sqlite_orm
 
 namespace doodle {
@@ -56,7 +65,8 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("submit_time", &server_task_info::submit_time_),          //
           make_column("run_time", &server_task_info::run_time_),                //
           make_column("end_time", &server_task_info::end_time_),                //
-          make_column("run_computer_id", &server_task_info::run_computer_id_)   //
+          make_column("run_computer_id", &server_task_info::run_computer_id_),  //
+          make_column("kitsu_task_id", &server_task_info::kitsu_task_id_)
       ),
       make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
       make_table(

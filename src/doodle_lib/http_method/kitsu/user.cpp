@@ -33,8 +33,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
     std::string l_phone{};
     if (l_user["phone"].is_string()) l_phone = l_user["phone"].get<std::string>();
 
-    if (l_user_ptr->mobile_.value_or(std::string{}) != l_phone ||
-        l_user_ptr->power_ != l_user["role"].get<power_enum>()) {
+    if (l_user_ptr->mobile_ != l_phone || l_user_ptr->power_ != l_user["role"].get<power_enum>()) {
       l_user_ptr->mobile_  = l_phone;
       l_user_ptr->power_   = l_user["role"].get<power_enum>();
       l_user_ptr->uuid_id_ = l_user_id;
@@ -42,8 +41,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
         co_return in_handle->logger_->error("api/auth/authenticated {}", l_e.error()),
             in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
     }
-    if (l_user_ptr->dingding_company_id_)
-      l_user["dingding_company_id"] = *l_user_ptr->dingding_company_id_;
+    if (!l_user_ptr->dingding_company_id_.is_nil())
+      l_user["dingding_company_id"] = l_user_ptr->dingding_company_id_;
     else
       l_user["dingding_company_id"] = "";
     l_res.body() = l_json.dump();
@@ -112,17 +111,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
   }
   try {
-    auto l_json   = nlohmann::json::parse(l_res.body());
+    auto l_json      = nlohmann::json::parse(l_res.body());
     auto& l_database = g_ctx().get<sqlite_database>();
-    auto l_user_s = l_database.get_all<user_helper::database_t>();
+    auto l_user_s    = l_database.get_all<user_helper::database_t>();
     std::map<uuid, user_helper::database_t*> l_user_maps{};
     for (auto&& l_user : l_user_s) {
       l_user_maps[l_user.uuid_id_] = &l_user;
     }
     for (auto&& l_person : l_json["persons"]) {
       auto l_id = l_person["id"].get<uuid>();
-      if (l_user_maps.contains(l_id) && l_user_maps[l_id]->dingding_company_id_) {
-        l_person["dingding_company_id"] = *l_user_maps[l_id]->dingding_company_id_;
+      if (l_user_maps.contains(l_id) && !l_user_maps[l_id]->dingding_company_id_.is_nil()) {
+        l_person["dingding_company_id"] = l_user_maps[l_id]->dingding_company_id_;
       } else
         l_person["dingding_company_id"] = "";
     }
@@ -134,16 +133,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
     for (auto&& l_project : l_json["projects"]) {
       auto l_id = l_project["id"].get<uuid>();
       if (auto l_prj = l_database.get_by_uuid<project_helper::database_t>(l_id); l_prj.empty()) {
-        l_project["path"] = nlohmann::json::value_t::null;
-        l_project["en_str"] = nlohmann::json::value_t::null;
+        l_project["path"]             = nlohmann::json::value_t::null;
+        l_project["en_str"]           = nlohmann::json::value_t::null;
         l_project["auto_upload_path"] = nlohmann::json::value_t::null;
-      }else {
-        l_project["path"] = l_prj.front().path_;
-        l_project["en_str"] = l_prj.front().en_str_;
+      } else {
+        l_project["path"]             = l_prj.front().path_;
+        l_project["en_str"]           = l_prj.front().en_str_;
         l_project["auto_upload_path"] = l_prj.front().auto_upload_path_;
       }
     }
-
 
     l_res.body() = l_json.dump();
     l_res.prepare_payload();

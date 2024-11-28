@@ -69,8 +69,6 @@ class DOODLE_CORE_API assets : boost::totally_ordered<assets> {
   bool operator<(const assets& in_rhs) const;
   bool operator!=(const assets& in_rhs) const;
 
-
-
  private:
   /**
    * @brief 序列化函数
@@ -94,16 +92,13 @@ struct database_t {
   uuid uuid_id_{};
   std::string label_{};
   /// 这个数据不在数据库中
-  std::optional<uuid> uuid_parent_{};
+  uuid uuid_parent_{};
   std::int32_t order_{};
   friend void to_json(nlohmann::json& j, const database_t& v) {
-    j["id"]    = v.uuid_id_;
-    j["label"] = v.label_;
-    if (v.uuid_parent_ && !v.uuid_parent_->is_nil())
-      j["parent_id"] = *v.uuid_parent_;
-    else
-      j["parent_id"] = nlohmann::json::value_t::null;
-    j["order"] = v.order_;
+    j["id"]        = v.uuid_id_;
+    j["label"]     = v.label_;
+    j["parent_id"] = v.uuid_parent_;
+    j["order"]     = v.order_;
   }
 
   friend void from_json(const nlohmann::json& j, database_t& v) {

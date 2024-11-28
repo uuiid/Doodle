@@ -48,7 +48,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  public:
   std::int32_t id_{};
   // 唯一id
-  boost::uuids::uuid uuid_id_{};
+  uuid uuid_id_{};
   // 执行程序
   std::string exe_{};
   // 任务命令
@@ -72,12 +72,11 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 结束运行任务的时间
   std::optional<chrono::sys_time_pos> end_time_{};
 
+  uuid kitsu_task_id_{};
+
   static constexpr auto logger_category = "server_task";
 
-  std::string read_log() const;
-  FSys::path get_log_path() const;
-  void write_log(std::string_view in_msg);
-  bool operator==(const server_task_info& in_rhs) const;
+  bool operator==(const server_task_info& in_rhs) const { return uuid_id_ == in_rhs.uuid_id_; }
 
   void sql_command(const std::string& in_str);
   const std::string& sql_command() const;

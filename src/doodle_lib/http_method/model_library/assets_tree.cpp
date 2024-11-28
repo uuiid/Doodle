@@ -26,7 +26,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get(se
 
 tl::expected<void, std::string> check_data(const assets_helper::database_t& in_data) {
   /// 检查是否存在引用自身
-  if (in_data.uuid_parent_ && in_data.uuid_id_ == *in_data.uuid_parent_)
+  if (!in_data.uuid_parent_.is_nil() && in_data.uuid_id_ == in_data.uuid_parent_)
     return tl::make_unexpected(fmt::format(" {} 不能引用自身", in_data.uuid_id_));
 
   /// 检查是否存在循环引用
@@ -35,11 +35,11 @@ tl::expected<void, std::string> check_data(const assets_helper::database_t& in_d
   for (const auto& l_item : l_list) {
     l_map[l_item.uuid_id_] = &l_item;
   }
-  auto l_parent_uuid = in_data.uuid_parent_.value_or(uuid{});
+  auto l_parent_uuid = in_data.uuid_parent_;
   for (int i = 0; i < 101; ++i) {
     if (l_parent_uuid.is_nil()) break;
     if (!l_map.contains(l_parent_uuid)) return tl::make_unexpected(fmt::format("{} 未找到父节点", in_data.uuid_id_));
-    l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_.value_or(uuid{});
+    l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_;
     if (i == 100) return tl::make_unexpected(fmt::format(" {} 节点存在循环引用或者达到最大的深度", in_data.uuid_id_));
   }
   return {};
@@ -58,8 +58,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
           boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
       );
     }
-    if (l_ptr->uuid_parent_ && !l_ptr->uuid_parent_->is_nil()) {
-      if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_ptr->uuid_parent_);
+    if (!l_ptr->uuid_parent_.is_nil()) {
+      if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
           l_list == 0)
         co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
     }
@@ -79,8 +79,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
       );
     }
     for (auto& l_item : *l_ptr) {
-      if (l_item.uuid_parent_ && !l_item.uuid_parent_->is_nil()) {
-        if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(*l_item.uuid_parent_);
+      if (!l_item.uuid_parent_.is_nil()) {
+        if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_item.uuid_parent_);
             l_list == 0)
           co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
       }

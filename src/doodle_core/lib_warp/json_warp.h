@@ -100,7 +100,12 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
 };
 template <>
 struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
-  static void to_json(json& j, const boost::uuids::uuid& in_uuid) { j = boost::uuids::to_string(in_uuid); }
+  static void to_json(json& j, const boost::uuids::uuid& in_uuid) {
+    if (in_uuid.is_nil())
+      j = nlohmann::json::value_t::null;
+    else
+      j = boost::uuids::to_string(in_uuid);
+  }
 
   static void from_json(const json& j, boost::uuids::uuid& in_uuid) {
     if (j.is_string()) {

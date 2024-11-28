@@ -79,7 +79,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
    * @brief 在打开数据库后, 注册表中保存的所有用户中寻找到当前用户,  如果未寻找到将创建一个新段用户
    */
 
-
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
@@ -91,19 +90,19 @@ struct database_t {
   uuid uuid_id_{};
 
   // 手机号
-  std::optional<std::string> mobile_;
+  std::string mobile_;
   // 权限
   power_enum power_{power_enum::none};
   // 钉钉id
-  std::optional<std::string> dingding_id_;
+  std::string dingding_id_;
   // 钉钉对应公司的 uuid
-  std::optional<uuid> dingding_company_id_;
+  uuid dingding_company_id_;
 
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
-    j["id"] = fmt::to_string(p.uuid_id_);
-    if (p.mobile_) j["mobile"] = *p.mobile_;
-    if (p.dingding_id_) j["dingding_id"] = *p.dingding_id_;
-    if (p.dingding_company_id_) j["company"] = fmt::to_string(*p.dingding_company_id_);
+    j["id"]          = fmt::to_string(p.uuid_id_);
+    j["mobile"]      = p.mobile_;
+    j["dingding_id"] = p.dingding_id_;
+    j["company"]     = p.dingding_company_id_;
   }
 };
 }  // namespace user_helper

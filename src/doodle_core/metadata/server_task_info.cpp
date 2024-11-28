@@ -22,5 +22,4 @@ void server_task_info::sql_command(const std::string& in_str) {
   nlohmann::json::parse(sql_command_cache_).get_to(command_);
 }
 
-bool server_task_info::operator==(const doodle::server_task_info& in_rhs) const { return uuid_id_ == in_rhs.uuid_id_; }
 }  // namespace doodle

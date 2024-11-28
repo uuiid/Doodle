@@ -68,7 +68,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
   std::vector<chrono::local_days> l_days{};
   for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) l_days.emplace_back(l_it);
   for (auto&& l_att : l_sql.get_attendance(in_user_id, l_days)) {
-    l_time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_.value_or(std::string{}));
+    l_time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_);
   }
 
   // #ifndef NDEBUG
@@ -401,12 +401,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     auto l_year_month_str_1 =
         fmt::format("{}-{}", std::int32_t{l_year_month.year()}, std::uint32_t{l_year_month.month()});
     l_logger->log(
-        log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_.value_or(std::string{}), l_year_month_str_1
+        log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.mobile_, l_year_month_str_1
     );
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::not_found,
         boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
-        fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_.value_or(std::string{}), l_year_month_str_1)
+        fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_, l_year_month_str_1)
     );
   }
 

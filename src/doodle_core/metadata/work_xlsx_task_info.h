@@ -11,8 +11,8 @@ struct database_t {
   zoned_time start_time_;
   zoned_time end_time_;
   chrono::microseconds duration_;
-  std::optional<std::string> remark_;       // 程序标注
-  std::optional<std::string> user_remark_;  // 用户备注
+  std::string remark_;       // 程序标注
+  std::string user_remark_;  // 用户备注
 
   chrono::local_days year_month_;
   std::int32_t user_ref_;
@@ -20,12 +20,12 @@ struct database_t {
   boost::uuids::uuid kitsu_task_ref_id_;
   // to json
   friend void to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]         = fmt::to_string(p.uuid_id_);
-    j["start_time"] = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
-    j["end_time"]   = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
-    j["duration"]   = p.duration_.count();
-    if (p.remark_) j["remark"] = *p.remark_;
-    if (p.user_remark_) j["user_remark"] = *p.user_remark_;
+    j["id"]                = fmt::to_string(p.uuid_id_);
+    j["start_time"]        = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
+    j["end_time"]          = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
+    j["duration"]          = p.duration_.count();
+    j["remark"]            = p.remark_;
+    j["user_remark"]       = p.user_remark_;
     j["kitsu_task_ref_id"] = fmt::to_string(p.kitsu_task_ref_id_);
   }
 };

@@ -18,19 +18,19 @@ struct database_t {
 
   chrono::zoned_time<chrono::microseconds> start_time_;
   chrono::zoned_time<chrono::microseconds> end_time_;
-  std::optional<std::string> remark_;
+  std::string remark_;
   att_enum type_{att_enum::overtime};
   chrono::local_days create_date_{};                        //
   chrono::zoned_time<chrono::microseconds> update_time_{};  // 更新时间
 
-  std::optional<std::string> dingding_id_{};  // 钉钉id
+  std::string dingding_id_{};  // 钉钉id
   std::int64_t user_ref{};
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["id"]         = fmt::to_string(p.id_);
     j["start_time"] = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
     j["end_time"]   = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
-    if (p.remark_)
-      j["remark"] = *p.remark_;
+    if (!p.remark_.empty())
+      j["remark"] = p.remark_;
     else
       j["remark"] = nlohmann::json::value_t::null;
     j["type"] = static_cast<std::uint32_t>(p.type_);
