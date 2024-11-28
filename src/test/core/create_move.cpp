@@ -5,7 +5,6 @@
 #include <doodle_core/doodle_core.h>
 
 
-#include <doodle_lib/facet/main_facet.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/test/unit_test.hpp>

@@ -54,10 +54,7 @@ FSys::path find_u_pej(const FSys::path& in_path) {
   return find_u_pej(in_path.parent_path());
 }
 
-FSys::path find_ue_project_file(const FSys::path& in_path) {
-  if (in_path.empty()) return {};
-  return find_u_pej(in_path);
-}
+
 
 namespace {
 
@@ -139,6 +136,10 @@ std::string get_file_version(const FSys::path& in_path) {
     throw_error(l_ec);
   }
   return l_str;
+}
+FSys::path find_ue_project_file(const FSys::path& in_path) {
+  if (in_path.empty()) return {};
+  return find_u_pej(in_path);
 }
 }  // namespace ue_exe_ns
 

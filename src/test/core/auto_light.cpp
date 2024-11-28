@@ -28,7 +28,6 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-#include <doodle_lib/http_method/sqlite/task_sqlite_server.h>
 #include <doodle_lib/http_method/task_info.h>
 
 #include <boost/asio.hpp>
