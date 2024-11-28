@@ -80,9 +80,13 @@ class sqlite_database {
   std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
       const std::int64_t& in_ref_id, const chrono::local_days& in_data
   );
+
   std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id);
+  std::vector<server_task_info> get_server_task_info_by_user(const uuid& in_user_id);
 
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
+
+
 
 
 };
