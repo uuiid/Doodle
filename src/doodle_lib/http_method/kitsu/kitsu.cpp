@@ -13,6 +13,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computer.h>
+#include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
@@ -40,6 +41,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   reg_kitsu_front_end_http(*l_router, in_root);
   computer_reg(*l_router);
   task_info_reg(*l_router);
+  tool_version_reg(*l_router);
   return l_router;
 }
 
