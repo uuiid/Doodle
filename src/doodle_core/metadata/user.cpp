@@ -4,7 +4,6 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/metadata/detail/user_set_data.h>
 #include <doodle_core/metadata/user.h>
 
 #include <boost/preprocessor.hpp>
