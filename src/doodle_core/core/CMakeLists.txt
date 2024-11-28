@@ -13,6 +13,7 @@ target_sources(
         app_service.h
         http_client_core.h
         co_queue.h
+        authorization.h
 
         PRIVATE
         core_set.cpp
@@ -23,4 +24,5 @@ target_sources(
         app_service.cpp
         http_client_core.cpp
         co_queue.cpp
+        authorization.cpp
 )

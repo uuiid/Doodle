@@ -3,7 +3,7 @@
 //
 
 #include <doodle_core/core/doodle_lib.h>
-
+#include <doodle_core/core/authorization.h>
 
 
 int main(int argc, char *argv[]) {

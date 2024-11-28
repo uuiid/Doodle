@@ -6,6 +6,7 @@ add_executable(generate_token
 target_link_libraries(generate_token
         PUBLIC
         doodle_lib
+        doodle_core
         )
 
 install(
