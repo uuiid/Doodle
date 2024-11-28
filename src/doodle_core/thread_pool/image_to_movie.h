@@ -36,43 +36,6 @@ class DOODLE_CORE_API image_to_movie_interface {
   virtual boost::system::error_code create_move(
       const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<image_attr> &in_vector
   ) = 0;
-
-  template <typename CompletionHandler>
-  auto async_create_move(
-      const entt::handle &in_handle, const std::vector<FSys::path> &in_vector, CompletionHandler &&in_completion
-  ) {
-    return async_create_move(
-        in_handle, image_attr::make_default_attr(in_handle, in_vector),
-        std::forward<decltype(in_completion)>(in_completion)
-    );
-  }
-
-  template <typename CompletionHandler>
-  auto async_create_move(
-      const entt::handle &in_handle, const std::vector<image_attr> &in_vector, CompletionHandler &&in_completion
-  ) {
-    in_handle.any_of<out_file_path>() ? void() : throw_exception(doodle_error{"缺失输出文件路径"});
-    std::for_each(std::begin(in_vector), std::end(in_vector), [](const image_attr &in) {
-      exists(in.path_attr) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
-    });
-    !in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
-    if (!in_handle.all_of<process_message>())
-      in_handle.emplace<process_message>(in_handle.get<out_file_path>().path.filename().string());
-    auto l_logger   = in_handle.get<process_message>().logger();
-    auto l_out_path = this->create_out_path(in_handle);
-    return boost::asio::async_initiate<CompletionHandler, void(FSys::path, boost::system::error_code)>(
-        [this, in_vector, l_out_path = std::move(l_out_path), in_handle, l_logger](auto &&in_completion_handler) {
-          auto l_f = std::make_shared<std::decay_t<decltype(in_completion_handler)>>(
-              std::forward<decltype(in_completion_handler)>(in_completion_handler)
-          );
-          boost::asio::post(g_thread(), [this, l_f, in_vector, l_out_path, in_handle, l_logger]() {
-            auto l_ec = this->create_move(l_out_path, l_logger, in_vector);
-            boost::asio::post(boost::asio::prepend(std::move(*l_f), l_out_path, l_ec));
-          });
-        },
-        in_completion
-    );
-  };
 };
 }  // namespace detail
 

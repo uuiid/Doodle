@@ -26,19 +26,17 @@
 namespace doodle::movie {
 
 image_watermark::image_watermark(
-  std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion,
-  image_watermark::rgba_t in_rgba
+    std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion,
+    image_watermark::rgba_t in_rgba
 )
-  : text_attr(std::move(in_p_text)),
-    width_proportion_attr(in_p_width_proportion),
-    height_proportion_attr(in_p_height_proportion),
-    rgba_attr(in_rgba) {
-}
-
+    : text_attr(std::move(in_p_text)),
+      width_proportion_attr(in_p_width_proportion),
+      height_proportion_attr(in_p_height_proportion),
+      rgba_attr(in_rgba) {}
 
 namespace {
 class image_attr_auxiliary {
-public:
+ public:
   explicit image_attr_auxiliary(image_attr& in_image) : image(&in_image) { extract_num_list(); };
 
   std::vector<std::int32_t> num_list;
@@ -50,7 +48,7 @@ public:
 
     auto k_name = image->path_attr.filename().generic_string();
 
-    auto k_b = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
+    auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
 
     for (auto it = k_b; it != std::sregex_iterator{}; ++it) {
       k_match = *it;
@@ -58,10 +56,9 @@ public:
     }
   }
 };
-} // namespace
+}  // namespace
 
-image_attr::image_attr(FSys::path in_path) : path_attr(std::move(in_path)) {
-}
+image_attr::image_attr(FSys::path in_path) : path_attr(std::move(in_path)) {}
 
 void image_attr::extract_num(std::vector<image_attr>& in_image_list) {
   auto l_list =
@@ -71,8 +68,8 @@ void image_attr::extract_num(std::vector<image_attr>& in_image_list) {
   const auto k_size = l_list.front().num_list.size();
 
   ranges::all_of(l_list, [k_size](const image_attr_auxiliary& in) -> bool { return in.num_list.size() == k_size; })
-    ? void()
-    : throw_exception(doodle_error{"序列不匹配"s});
+      ? void()
+      : throw_exception(doodle_error{"序列不匹配"s});
 
   if (l_list.size() < 2) {
     default_logger_raw()->log(log_loc(), level::warn, "传入的序列只有一个，无法进行比较");
@@ -98,50 +95,4 @@ void image_attr::extract_num(std::vector<image_attr>& in_image_list) {
 bool image_attr::operator<(const image_attr& in_rhs) const noexcept { return num_attr < in_rhs.num_attr; }
 bool image_attr::operator==(const image_attr& in_rhs) const noexcept { return path_attr == in_rhs.path_attr; }
 
-std::vector<image_attr> image_attr::make_default_attr(
-  const entt::handle& in_handle, const std::vector<FSys::path>& in_path_list
-) {
-  return make_default_attr(in_handle.try_get<episodes>(), in_handle.try_get<shot>(), in_path_list);
-}
-
-std::vector<image_attr> image_attr::make_default_attr(
-  const episodes* in_episodes, const shot* in_shot, const std::vector<FSys::path>& in_path_list
-) {
-  std::vector<image_attr> list{};
-  list = in_path_list | ranges::views::transform([&](const FSys::path& in_path) -> image_attr {
-           image_attr l_attribute{};
-           l_attribute.path_attr = in_path;
-           if (in_episodes)
-             l_attribute.watermarks_attr.emplace_back(
-               fmt::format("ep{:04}", in_episodes->p_episodes), 0.08, 0.1, image_watermark::rgb_default
-             );
-
-           if (in_shot)
-             l_attribute.watermarks_attr.emplace_back(
-               fmt::format("sc{:04}{}", in_shot->p_shot, in_shot->p_shot_enum), 0.15, 0.1,
-               image_watermark::rgb_default
-             );
-
-
-           l_attribute.watermarks_attr.emplace_back(
-             core_set::get_set().organization_name, 0.28, 0.1, image_watermark::rgb_default
-           );
-           return l_attribute;
-         }) |
-         ranges::to_vector;
-  image_attr::extract_num(list);
-  const auto l_size = in_path_list.size();
-  ranges::for_each(list, [&](image_attr& in_attribute) {
-    in_attribute.watermarks_attr.emplace_back(
-      fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.7, 0.1, image_watermark::rgb_default
-    );
-
-    in_attribute.watermarks_attr.emplace_back(
-      fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::seconds>(time_point_wrap{}.get_local_time())), 0.8,
-      0.1, image_watermark::rgb_default
-    );
-  });
-
-  return list;
-}
 } // namespace doodle::movie
