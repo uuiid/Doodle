@@ -128,19 +128,17 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   l_args.shot_     = l_shot;
 
   if (in_arh[g_animation]) {
-    auto l_arg             = maya_exe_ns::export_fbx_arg{};
-    l_arg.file_path        = l_file;
-    l_arg.export_anim_time = l_export_anim_time;
-    l_args.maya_arg_       = std::make_shared<maya_exe_ns::export_fbx_arg>(l_arg);
+    auto l_arg       = maya_exe_ns::export_fbx_arg{};
+    l_arg.file_path  = l_file;
+    l_args.maya_arg_ = std::make_shared<maya_exe_ns::export_fbx_arg>(l_arg);
   } else if (in_arh[g_cfx]) {
-    auto l_arg             = maya_exe_ns::qcloth_arg{};
-    l_arg.file_path        = l_file;
-    l_arg.export_anim_time = l_export_anim_time;
-    l_arg.bitset_ |= maya_exe_ns::flags::k_export_abc_type;
-    l_arg.bitset_ |= maya_exe_ns::flags::k_touch_sim_file;
-    l_arg.bitset_ |= maya_exe_ns::flags::k_create_play_blast;
-    l_arg.bitset_ |= maya_exe_ns::flags::k_export_anim_file;
-    l_args.maya_arg_ = std::make_shared<maya_exe_ns::qcloth_arg>(l_arg);
+    auto l_arg               = maya_exe_ns::qcloth_arg{};
+    l_arg.file_path          = l_file;
+    l_arg.export_file        = true;
+    l_arg.export_anim_file   = true;
+    l_arg.touch_sim          = true;
+    l_arg.create_play_blast_ = true;
+    l_args.maya_arg_         = std::make_shared<maya_exe_ns::qcloth_arg>(l_arg);
   } else {
     default_logger_raw()->error("必须有参数");
     return true;

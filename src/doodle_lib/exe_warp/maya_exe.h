@@ -94,6 +94,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
  public:
   bool create_play_blast_{};
   FSys::path out_path_file_{};
+  bool rig_file_export_{};
 
   constexpr static std::string_view k_name{"export_fbx"};
 
@@ -103,11 +104,13 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
         fmt::format("--path={}", file_path.generic_string())
     };
     if (create_play_blast_) l_args.emplace_back("--create_play_blast");
+    if (rig_file_export_) l_args.emplace_back("--rig_file_export");
     return l_args;
   }
   virtual void parse_args(const argh::parser& in_argh) {
     file_path          = in_argh({"path"}).str();
     create_play_blast_ = in_argh[{"create_play_blast"}];
+    rig_file_export_   = in_argh[{"rig_file_export"}];
   }
 };
 

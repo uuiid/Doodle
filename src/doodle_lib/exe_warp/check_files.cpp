@@ -108,9 +108,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   // 开始导出maya文件, 并进行检查
   auto l_arg = std::make_shared<maya_exe_ns::export_fbx_arg>();
   maya_exe_ns::maya_out_arg l_out{};
-  l_arg->rig_file_export = true;
+  l_arg->rig_file_export_ = true;
   l_arg->file_path       = in_args->maya_rig_file_;
-  l_arg->bitset_ |= maya_exe_ns::flags::k_export_fbx_type;
   for (int i = 0; i < 3; ++i) {
     std::tie(l_ec, l_out) = co_await async_run_maya(l_arg, in_logger);
     if (!l_ec) {
