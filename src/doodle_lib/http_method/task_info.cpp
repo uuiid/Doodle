@@ -125,7 +125,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
-
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid);
+      !l_list.empty() && l_list.front().status_ == server_task_info_status::running) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除");
+  }
   if (auto l_list = co_await g_ctx().get<sqlite_database>().remove<server_task_info>(l_uuid); !l_list) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_list.error());
   }
@@ -271,6 +274,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
   } else {
     *l_server_task_info = l_list[0];
   }
+  auto l_sr = l_server_task_info->status_;
   try {
     auto l_json = std::get<nlohmann::json>(in_handle->body_);
     l_json["status"].get_to(l_server_task_info->status_);
@@ -281,7 +285,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
   if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_server_task_info); !l_e) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
   }
-  if (l_server_task_info->status_ == server_task_info_status::canceled)
+  if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
 }
