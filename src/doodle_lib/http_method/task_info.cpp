@@ -127,7 +127,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
   }
   if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid);
       !l_list.empty() && l_list.front().status_ == server_task_info_status::running) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除");
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
+    );
   }
   if (auto l_list = co_await g_ctx().get<sqlite_database>().remove<server_task_info>(l_uuid); !l_list) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_list.error());
@@ -191,6 +193,8 @@ boost::asio::awaitable<void> run_post_task_local_impl(
   in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
   auto [l_e, l_r] = co_await async_run_maya(in_arg, in_logger);
   if (l_e) {
+    // 用户取消
+    if (l_e == boost::system::errc::operation_canceled) co_return;
     in_task_info->status_ = server_task_info_status::failed;
   } else
     in_task_info->status_ = server_task_info_status::completed;
