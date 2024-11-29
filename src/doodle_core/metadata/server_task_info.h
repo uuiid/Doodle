@@ -86,8 +86,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
     j["id"]              = p.uuid_id_;
-    j["exe"]             = p.exe_;
-    j["command"]         = p.command_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;
@@ -99,8 +97,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
-    j.at("exe").get_to(p.exe_);
-    j.at("command").get_to(p.command_);
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
     j.at("submitter").get_to(p.submitter_);
