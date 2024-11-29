@@ -23,19 +23,6 @@ namespace doodle {
 class maya_exe;
 
 namespace maya_exe_ns {
-namespace flags {
-static constexpr std::bitset<8> k_replace_ref_file{0b1 << 0};
-static constexpr std::bitset<8> k_sim_file{0b1 << 1};
-static constexpr std::bitset<8> k_export_abc_type{0b1 << 2};
-static constexpr std::bitset<8> k_export_fbx_type{0b1 << 3};
-static constexpr std::bitset<8> k_create_play_blast{0b1 << 4};
-static constexpr std::bitset<8> k_touch_sim_file{0b1 << 5};
-static constexpr std::bitset<8> k_export_anim_file{0b1 << 6};  /// 安排导出动画文件, 针对解算使用
-// 标准解算 00010111
-// 触摸解算(自动灯光) 01110101
-// 标准导出fbx 00001000
-// static constexpr std::bitset<8> create_ref_file{0b1 << 0};
-}  // namespace flags
 
 class arg {
  public:
@@ -199,4 +186,4 @@ class maya_ctx {
 boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
     std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 );
-} // namespace doodle
+}  // namespace doodle

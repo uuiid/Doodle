@@ -14,6 +14,8 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include "computer_reg_data.h"
+#include "exe_warp/maya_exe.h"
+#include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
 namespace {
@@ -138,26 +140,52 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
         "不是json请求"
     );
   auto l_ptr = std::make_shared<server_task_info>();
+  std::shared_ptr<maya_exe_ns::arg> l_arg{};
+  logger_ptr l_logger_ptr{};
   try {
     auto l_json = std::get<nlohmann::json>(in_handle->body_);
     l_json.get_to(*l_ptr);
-    l_ptr->uuid_id_     = core_set::get_set().get_uuid();
-    l_ptr->submit_time_ = chrono::sys_time_pos::clock::now();
+    l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+    l_ptr->submit_time_     = chrono::sys_time_pos::clock::now();
     l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+    if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+
+    auto& l_task = l_json["task_data"];
+    if (l_task.contains("replace_ref_file")) {
+      auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
+      l_task.get_to(*l_arg_t);
+      l_arg = l_arg_t;
+    } else if (l_task.contains("file_list")) {
+      auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
+      l_task.get_to(*l_arg_t);
+      l_arg = l_arg_t;
+    } else {
+      auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
+      l_task.get_to(*l_arg_t);
+      l_arg = l_arg_t;
+    }
 
     if (l_ptr->exe_.empty())
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
-
+    auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                         fmt::format("{}.log", l_ptr->uuid_id_);
+    l_logger_ptr = std::make_shared<spdlog::async_logger>(
+        l_ptr->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+        spdlog::thread_pool()
+    );
   } catch (...) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
     );
   }
+  if (!l_arg) co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的参数");
 
   if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
 
-  boost::asio::co_spawn(g_io_context(), task_emit(l_ptr), boost::asio::consign(boost::asio::detached, l_ptr));
+  boost::asio::co_spawn(
+      g_io_context(), async_run_maya(l_arg, l_logger_ptr), boost::asio::consign(boost::asio::detached, l_arg)
+  );
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
@@ -171,6 +199,7 @@ void task_info_reg(doodle::http::http_route& in_route) {
       .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));
 }
 void task_info_reg_local(doodle::http::http_route& in_route) {
+  if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
   in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task", list_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
