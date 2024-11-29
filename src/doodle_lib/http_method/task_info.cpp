@@ -132,6 +132,33 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
   co_return in_handle->make_msg("{}");
 }
 
+template <class Mutex>
+class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
+  std::shared_ptr<server_task_info> task_info_{};
+  std::once_flag flag_;
+
+ public:
+  explicit run_post_task_local_impl_sink(std::shared_ptr<server_task_info> in_task_info) : task_info_(in_task_info) {}
+  void sink_it_(const spdlog::details::log_msg& msg) override { std::call_once(flag_, set_state); }
+  void flush_() override {}
+  void set_state() {
+    task_info_->status_ = server_task_info_status::running;
+    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached);
+  }
+};
+using run_post_task_local_impl_sink_mt = run_post_task_local_impl_sink<std::mutex>;
+
+boost::asio::awaitable<void> run_post_task_local_impl(
+    std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
+) {
+  in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
+  auto [l_e, l_r] = co_await async_run_maya(in_arg, in_logger);
+  if (l_e) {
+    in_task_info->status_ = server_task_info_status::failed;
+  } else
+    in_task_info->status_ = server_task_info_status::completed;
+  auto l_t = co_await g_ctx().get<sqlite_database>().install(in_task_info);
+}
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
   if (in_handle->content_type_ != http::detail::content_type::application_json)
@@ -184,7 +211,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
 
   boost::asio::co_spawn(
-      g_io_context(), async_run_maya(l_arg, l_logger_ptr), boost::asio::consign(boost::asio::detached, l_arg)
+      g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
+      boost::asio::consign(boost::asio::detached, l_arg)
   );
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
