@@ -4,6 +4,7 @@
 
 #include "task_info.h"
 
+#include "doodle_core/core/app_base.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
@@ -148,6 +149,39 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
 };
 using run_post_task_local_impl_sink_mt = run_post_task_local_impl_sink<std::mutex>;
 
+class run_post_task_local_cancel_manager {
+  std::map<uuid, std::size_t> sigs_index;
+  std::vector<boost::asio::cancellation_signal> sigs_{};
+  std::recursive_mutex mtx_;
+
+ public:
+  run_post_task_local_cancel_manager() = default;
+
+  boost::asio::cancellation_slot add(uuid in_id) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    auto itr = std::find_if(sigs_.begin(), sigs_.end(), [](boost::asio::cancellation_signal& sig) {
+      return !sig.slot().has_handler();
+    });
+    if (itr != sigs_.end()) {
+      sigs_index[in_id] = std::distance(sigs_.begin(), itr);
+      return itr->slot();
+    } else {
+      sigs_index[in_id] = sigs_.size();
+      return sigs_.emplace_back().slot();
+    }
+  }
+
+  void cancel(uuid in_id) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    if (auto itr = sigs_index.find(in_id); itr != sigs_index.end())
+      sigs_[itr->second].emit(boost::asio::cancellation_type::all);
+  }
+  void cancel_all() {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    for (auto& sig : sigs_) sig.emit(boost::asio::cancellation_type::all);
+  }
+};
+
 boost::asio::awaitable<void> run_post_task_local_impl(
     std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 ) {
@@ -228,6 +262,9 @@ void task_info_reg(doodle::http::http_route& in_route) {
 }
 void task_info_reg_local(doodle::http::http_route& in_route) {
   if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
+  g_ctx().emplace<run_post_task_local_cancel_manager>();
+  app_base::Get().on_stop.connect([]() { g_ctx().get<run_post_task_local_cancel_manager>().cancel_all(); });
+
   in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task", list_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
