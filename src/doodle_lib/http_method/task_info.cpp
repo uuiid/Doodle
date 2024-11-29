@@ -118,7 +118,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
-  auto l_id   = in_handle->capture_->get("id");
   auto l_uuid = std::make_shared<uuid>();
   try {
     auto l_id = in_handle->capture_->get("id");
@@ -173,7 +172,8 @@ class run_post_task_local_cancel_manager {
 
   void cancel(uuid in_id) {
     std::lock_guard<std::recursive_mutex> _(mtx_);
-    if (auto itr = sigs_index.find(in_id); itr != sigs_index.end())
+    if (auto itr = sigs_index.find(in_id);
+        itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second].slot().has_handler())
       sigs_[itr->second].emit(boost::asio::cancellation_type::all);
   }
   void cancel_all() {
@@ -246,9 +246,44 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
 
   boost::asio::co_spawn(
       g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
-      boost::asio::consign(boost::asio::detached, l_arg)
+      boost::asio::bind_cancellation_slot(
+          g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
+
+          boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
+
+      )
   );
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(session_data_ptr in_handle) {
+  auto l_uuid             = std::make_shared<uuid>();
+  auto l_server_task_info = std::make_shared<server_task_info>();
+  try {
+    auto l_id = in_handle->capture_->get("id");
+    *l_uuid   = boost::lexical_cast<boost::uuids::uuid>(l_id);
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
+  }
+
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid); l_list.empty()) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "任务不存在");
+  } else {
+    *l_server_task_info = l_list[0];
+  }
+  try {
+    auto l_json = std::get<nlohmann::json>(in_handle->body_);
+    l_json["status"].get_to(l_server_task_info->status_);
+    l_json["name"].get_to(l_server_task_info->name_);
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务数据");
+  }
+  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_server_task_info); !l_e) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+  }
+  if (l_server_task_info->status_ == server_task_info_status::canceled)
+    g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
+  co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
 }
 
 }  // namespace
@@ -269,6 +304,7 @@ void task_info_reg_local(doodle::http::http_route& in_route) {
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/task", post_task_local))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::patch, "api/doodle/task/{id}", patch_task_local))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));
 }
 }  // namespace doodle::http
