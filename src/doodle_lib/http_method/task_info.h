@@ -10,4 +10,6 @@
 namespace doodle::http {
 
 void task_info_reg(http_route& in_route);
+void task_info_reg_local(http_route& in_route);
+
 }  // namespace doodle::http

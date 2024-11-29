@@ -25,7 +25,7 @@ class replace_file_facet {
   replace_file_facet()  = default;
   ~replace_file_facet() = default;
 
-  bool post(const argh::parser& in_argh);
+  bool post(const nlohmann::json& in_argh);
 };
 
 }  // namespace doodle::maya_plug

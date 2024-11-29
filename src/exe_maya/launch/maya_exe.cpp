@@ -19,6 +19,15 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
   static constexpr auto replace_file_config{"replace_file"};
 
   default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", register_file_type::program_location());
+  nlohmann::json l_json;
+  if (auto l_str = in_arh({"config"}); l_str) {
+    try {
+      l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_str.str())});
+    } catch (...) {
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+      return true;
+    }
+  }
 
   if (in_arh[cloth_sim_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::cloth_sim>();

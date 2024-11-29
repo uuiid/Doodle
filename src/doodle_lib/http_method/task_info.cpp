@@ -129,6 +129,38 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
   }
   co_return in_handle->make_msg("{}");
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
+  auto l_logger = in_handle->logger_;
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "不是json请求"
+    );
+  auto l_ptr = std::make_shared<server_task_info>();
+  try {
+    auto l_json = std::get<nlohmann::json>(in_handle->body_);
+    l_json.get_to(*l_ptr);
+    l_ptr->uuid_id_     = core_set::get_set().get_uuid();
+    l_ptr->submit_time_ = chrono::sys_time_pos::clock::now();
+    l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+    if (l_ptr->exe_.empty())
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
+
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
+    );
+  }
+
+  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+
+  boost::asio::co_spawn(g_io_context(), task_emit(l_ptr), boost::asio::consign(boost::asio::detached, l_ptr));
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
 }  // namespace
 
 void task_info_reg(doodle::http::http_route& in_route) {
@@ -136,6 +168,13 @@ void task_info_reg(doodle::http::http_route& in_route) {
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/task", post_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));
+}
+void task_info_reg_local(doodle::http::http_route& in_route) {
+  in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task", list_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/task", post_task_local))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));
 }
 }  // namespace doodle::http

@@ -47,7 +47,7 @@ class cloth_sim final {
   cloth_sim()  = default;
   ~cloth_sim() = default;
 
-  bool post(const argh::parser& in_argh);
+  bool post(const nlohmann::json& in_argh);
 };
 
 }  // namespace doodle::maya_plug

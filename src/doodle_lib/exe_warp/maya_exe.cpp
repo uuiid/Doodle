@@ -140,17 +140,18 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   }
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-  auto l_args = in_arg->get_arg_list();
-  l_args.emplace_back(fmt::format("--maya_path={}", l_maya_path.generic_string()));
+  in_arg->maya_path     = l_maya_path;
+  auto [l_key, l_args]  = in_arg->get_json_str();
+
   auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
                           fmt::format("{}.json", core_set::get_set().get_uuid());
-  l_args.emplace_back() = fmt::format("--out_path_file={}", l_out_path_file_.generic_string());
 
-  l_out_path_file_      = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
-                     fmt::format("{}.json", core_set::get_set().get_uuid());
+  in_arg->out_path_file_ = l_out_path_file_;
   if (!FSys::exists(l_out_path_file_.parent_path())) FSys::create_directories(l_out_path_file_.parent_path());
 
-  in_logger->warn("配置命令行", l_args);
+  auto l_arg_path = FSys::write_tmp_file("maya/arg", l_args, ".json");
+
+  in_logger->warn("配置命令行 {}", l_arg_path);
 
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
 
@@ -170,7 +171,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   auto l_process_maya = boost::process::v2::process{
       g_io_context(),
       l_run_path,
-      l_args,
+      {fmt::format("--{}", l_key), fmt::format("--config={}", l_arg_path)},
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
       boost::process::v2::process_start_dir{l_maya_path / "bin"},

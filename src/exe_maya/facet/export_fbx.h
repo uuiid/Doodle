@@ -33,7 +33,7 @@ class export_fbx_facet final {
   export_fbx_facet()  = default;
   ~export_fbx_facet() = default;
 
-  bool post(const argh::parser& in_argh);
+  bool post(const nlohmann::json& in_argh);
 };
 
 }  // namespace doodle::maya_plug

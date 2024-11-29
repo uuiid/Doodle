@@ -44,9 +44,21 @@ class arg {
 
   FSys::path file_path{};
   FSys::path maya_path{};
+  FSys::path out_path_file_{};
 
-  virtual std::vector<std::string> get_arg_list()      = 0;
-  virtual void parse_args(const argh::parser& in_argh) = 0;
+  // form json
+  friend void from_json(const nlohmann::json& in_json, arg& out_obj) {
+    if (in_json.contains("path")) in_json.at("path").get_to(out_obj.file_path);
+    if (in_json.contains("maya_path")) in_json.at("maya_path").get_to(out_obj.maya_path);
+    if (in_json.contains("out_path_file")) in_json.at("out_path_file").get_to(out_obj.out_path_file_);
+  }
+  // to json
+  friend void to_json(nlohmann::json& in_json, const arg& out_obj) {
+    in_json["path"]          = out_obj.file_path.generic_string();
+    in_json["maya_path"]     = out_obj.maya_path.generic_string();
+    in_json["out_path_file"] = out_obj.out_path_file_.generic_string();
+  }
+  virtual std::tuple<std::string, std::string> get_json_str() = 0;
 };
 
 class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
@@ -59,58 +71,60 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
   bool touch_sim;
   bool export_anim_file;
   bool create_play_blast_{};
-  FSys::path out_path_file_{};
 
-  std::vector<std::string> get_arg_list() {
-    std::vector<std::string> l_args{
-        fmt::format("--{}", k_name),                           //
-        fmt::format("--path={}", file_path.generic_string()),  //
-        fmt::format("--sim_path={}", sim_path.generic_string())
-    };
-    if (replace_ref_file) l_args.emplace_back("--replace_ref_file");
-    if (create_play_blast_) l_args.emplace_back("--create_play_blast");
-    if (sim_file) l_args.emplace_back("--sim_file");
-    if (export_file) l_args.emplace_back("--export_file");
-    if (touch_sim) l_args.emplace_back("--touch_sim");
-    if (export_anim_file) l_args.emplace_back("--export_anim_file");
-
-    return l_args;
+  // form json
+  friend void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
+    from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+    if (in_json.contains("sim_path")) in_json.at("sim_path").get_to(out_obj.sim_path);
+    if (in_json.contains("replace_ref_file")) in_json.at("replace_ref_file").get_to(out_obj.replace_ref_file);
+    if (in_json.contains("sim_file")) in_json.at("sim_file").get_to(out_obj.sim_file);
+    if (in_json.contains("export_file")) in_json.at("export_file").get_to(out_obj.export_file);
+    if (in_json.contains("touch_sim")) in_json.at("touch_sim").get_to(out_obj.touch_sim);
+    if (in_json.contains("export_anim_file")) in_json.at("export_anim_file").get_to(out_obj.export_anim_file);
+    if (in_json.contains("create_play_blast")) in_json.at("create_play_blast").get_to(out_obj.create_play_blast_);
   }
-  virtual void parse_args(const argh::parser& in_argh) {
-    file_path          = in_argh({"path"}).str();
-    sim_path           = in_argh({"sim_path"}).str();
-    sim_file           = in_argh[{"sim_file"}];
-    export_file        = in_argh[{"export_file"}];
-    touch_sim          = in_argh[{"touch_sim"}];
-    export_anim_file   = in_argh[{"export_anim_file"}];
-    create_play_blast_ = in_argh[{"create_play_blast"}];
-    maya_path          = in_argh({"maya_path"}).str();
-    out_path_file_     = in_argh({"out_path_file"}).str();
-    replace_ref_file   = in_argh[{"replace_ref_file"}];
+  // to json
+  friend void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
+    to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+    in_json["sim_path"]          = out_obj.sim_path.generic_string();
+    in_json["replace_ref_file"]  = out_obj.replace_ref_file;
+    in_json["sim_file"]          = out_obj.sim_file;
+    in_json["export_file"]       = out_obj.export_file;
+    in_json["touch_sim"]         = out_obj.touch_sim;
+    in_json["export_anim_file"]  = out_obj.export_anim_file;
+    in_json["create_play_blast"] = out_obj.create_play_blast_;
+  }
+
+  std::tuple<std::string, std::string> get_json_str() override {
+    return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
   }
 };
 
 class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
  public:
   bool create_play_blast_{};
-  FSys::path out_path_file_{};
   bool rig_file_export_{};
 
   constexpr static std::string_view k_name{"export_fbx"};
 
-  std::vector<std::string> get_arg_list() {
-    std::vector<std::string> l_args{
-        fmt::format("--{}", k_name),  //
-        fmt::format("--path={}", file_path.generic_string())
-    };
-    if (create_play_blast_) l_args.emplace_back("--create_play_blast");
-    if (rig_file_export_) l_args.emplace_back("--rig_file_export");
-    return l_args;
+  // form json
+  friend void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
+    from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+
+    if (in_json.contains("create_play_blast")) in_json.at("create_play_blast").get_to(out_obj.create_play_blast_);
+    if (in_json.contains("out_path_file")) in_json.at("out_path_file").get_to(out_obj.out_path_file_);
+    if (in_json.contains("rig_file_export")) in_json.at("rig_file_export").get_to(out_obj.rig_file_export_);
   }
-  virtual void parse_args(const argh::parser& in_argh) {
-    file_path          = in_argh({"path"}).str();
-    create_play_blast_ = in_argh[{"create_play_blast"}];
-    rig_file_export_   = in_argh[{"rig_file_export"}];
+  // to json
+  friend void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
+    to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+
+    in_json["create_play_blast"] = out_obj.create_play_blast_;
+    in_json["out_path_file"]     = out_obj.out_path_file_.generic_string();
+    in_json["rig_file_export"]   = out_obj.rig_file_export_;
+  }
+  std::tuple<std::string, std::string> get_json_str() override {
+    return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
   }
 };
 
@@ -119,16 +133,20 @@ class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
   std::vector<std::pair<FSys::path, FSys::path>> file_list{};
   constexpr static std::string_view k_name{"replace_file"};
 
-  std::vector<std::string> get_arg_list() {
-    std::vector<std::string> l_args{
-        fmt::format("--{}", k_name),  //
-        fmt::format("--path={}", file_path.generic_string())
-    };
-    return l_args;
+  // form json
+  friend void from_json(const nlohmann::json& in_json, replace_file_arg& out_obj) {
+    from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+
+    if (in_json.contains("file_list")) in_json.at("file_list").get_to(out_obj.file_list);
   }
-  virtual void parse_args(const argh::parser& in_argh) {
-    file_path = in_argh({"path"}).str();
-    maya_path = in_argh({"maya_path"}).str();
+  // to json
+  friend void to_json(nlohmann::json& in_json, const replace_file_arg& out_obj) {
+    to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+
+    in_json["file_list"] = out_obj.file_list;
+  }
+  std::tuple<std::string, std::string> get_json_str() override {
+    return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
   }
 };
 

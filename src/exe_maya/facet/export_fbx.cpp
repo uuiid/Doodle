@@ -110,10 +110,9 @@ void export_fbx_facet::play_blast() {
   l_p.play_blast_(anim_begin_time_, k_end_time);
 }
 
-bool export_fbx_facet::post(const argh::parser& in_argh) {
-  bool l_ret = false;
-  maya_exe_ns::export_fbx_arg l_arg{};
-  l_arg.parse_args(in_argh);
+bool export_fbx_facet::post(const nlohmann::json& in_argh) {
+  bool l_ret                        = false;
+  maya_exe_ns::export_fbx_arg l_arg = in_argh.get<maya_exe_ns::export_fbx_arg>();
 
   if (l_arg.file_path.empty()) return l_ret;
   out_path_file_ = l_arg.out_path_file_;

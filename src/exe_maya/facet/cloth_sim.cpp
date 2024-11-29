@@ -40,10 +40,9 @@
 
 namespace doodle::maya_plug {
 
-bool cloth_sim::post(const argh::parser& in_argh) {
+bool cloth_sim::post(const nlohmann::json& in_argh) {
   bool l_ret = false;
-  maya_exe_ns::qcloth_arg l_arg{};
-  l_arg.parse_args(in_argh);
+  maya_exe_ns::qcloth_arg l_arg = in_argh.get<maya_exe_ns::qcloth_arg>();
 
   if (l_arg.file_path.empty()) return l_ret;
 

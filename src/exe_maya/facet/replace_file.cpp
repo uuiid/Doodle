@@ -10,8 +10,6 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/logger/logger.h>
 
-
-
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <boost/asio.hpp>
@@ -32,12 +30,10 @@
 
 namespace doodle::maya_plug {
 
-bool replace_file_facet::post(const argh::parser& in_argh) {
-  bool l_ret = false;
+bool replace_file_facet::post(const nlohmann::json& in_argh) {
+  bool l_ret                          = false;
 
-  maya_exe_ns::replace_file_arg l_arg{};
-  l_arg.parse_args(in_argh);
-
+  maya_exe_ns::replace_file_arg l_arg = in_argh.get<maya_exe_ns::replace_file_arg>();
 
   if (l_arg.file_path.empty()) return l_ret;
 
