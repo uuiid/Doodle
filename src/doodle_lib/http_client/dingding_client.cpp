@@ -4,10 +4,10 @@
 #include <doodle_core/lib_warp/boost_fmt_beast.h>
 
 namespace doodle::dingding {
-boost::asio::awaitable<void> client::begin_refresh_token() {
-  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-    co_return;
-  }
+
+bool client::token_is_valid() { return chrono::system_clock::now() > token_time_; }
+
+boost::asio::awaitable<void> client::refresh_token() {
 
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, "/v1.0/oauth2/accessToken", 11
@@ -30,25 +30,10 @@ boost::asio::awaitable<void> client::begin_refresh_token() {
   auto& l_json              = l_res.body();
   access_token_             = l_json["accessToken"].get<std::string>();
   chrono::seconds l_seconds = chrono::seconds(l_json["expireIn"].get<int>());
-
-  boost::asio::co_spawn(
-      http_client_core_ptr_->get_executor(), clear_token(l_seconds),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-  );
+  token_time_               = chrono::system_clock::now() + l_seconds;
 }
 
-boost::asio::awaitable<void> client::clear_token(chrono::seconds in_seconds) {
-  timer_ptr_->expires_after(in_seconds);
-  // 防止析构
-  auto l_     = shared_from_this();
-  auto [l_ex] = co_await timer_ptr_->async_wait();
-  access_token_.clear();
-  if (l_ex) {
-    http_client_core_ptr_->logger_->log(log_loc(), level::warn, "timer_ptr_ error: {}", l_ex);
-    co_return;
-  }
-  co_return;
-}
+
 
 void client::access_token(const std::string& in_app_key, const std::string& in_app_secret) {
   app_key    = in_app_key;
@@ -58,7 +43,7 @@ void client::access_token(const std::string& in_app_key, const std::string& in_a
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> client::get_user_by_mobile(
     const std::string& in_mobile
 ) {
-  if (access_token_.empty()) co_await begin_refresh_token();
+  if (token_is_valid()) co_await refresh_token();
 
   std::string l_ret{};
   boost::beast::http::request<boost::beast::http::string_body> req{
@@ -95,7 +80,7 @@ client::get_attendance_updatedata(
     const std::string& in_userid, const chrono::local_time_pos& in_work_date
 
 ) {
-  if (access_token_.empty()) co_await begin_refresh_token();
+  if (token_is_valid()) co_await refresh_token();
 
   std::vector<attendance_update> l_ret{};
   boost::beast::http::request<boost::beast::http::string_body> req{

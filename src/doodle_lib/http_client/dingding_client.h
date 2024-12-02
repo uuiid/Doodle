@@ -15,8 +15,8 @@ class client : public std::enable_shared_from_this<client> {
   using timer_t = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::steady_timer>;
   using timer_ptr_t = std::shared_ptr<timer_t>;
 
-  https_client_core_ptr http_client_core_ptr_{}; // 新版本api
-  https_client_core_ptr http_client_core_ptr_old_{}; // 旧版本api
+  https_client_core_ptr http_client_core_ptr_{};      // 新版本api
+  https_client_core_ptr http_client_core_ptr_old_{};  // 旧版本api
   timer_ptr_t timer_ptr_{};
   timer_ptr_t timer_ptr_rest_ssl{};
 
@@ -24,12 +24,12 @@ class client : public std::enable_shared_from_this<client> {
 
   std::string app_key;
   std::string app_secret;
+  chrono::sys_time_pos token_time_;
 
   bool auto_expire_;
 
-  boost::asio::awaitable<void> begin_refresh_token();
-
-  boost::asio::awaitable<void> clear_token(chrono::seconds in_seconds);
+  boost::asio::awaitable<void> refresh_token();
+  bool token_is_valid();
 
   template <typename Req>
   std::decay_t<Req> header_operator_req(Req&& in_req) {
@@ -42,14 +42,13 @@ class client : public std::enable_shared_from_this<client> {
   }
 
   template <typename Resp>
-  void header_operator_resp(Resp& in_resp) {
-  }
+  void header_operator_resp(Resp& in_resp) {}
 
-public:
+ public:
   explicit client(boost::asio::ssl::context& in_ctx)
-    : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
-      http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
-      timer_ptr_{std::make_shared<timer_t>(g_io_context())} {
+      : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
+        http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
+        timer_ptr_{std::make_shared<timer_t>(g_io_context())} {
     http_client_core_ptr_->init("https://api.dingtalk.com/", &in_ctx);
     http_client_core_ptr_old_->init("https://oapi.dingtalk.com/", &in_ctx);
   };
@@ -59,7 +58,7 @@ public:
   void access_token(const std::string& in_app_key, const std::string& in_app_secret);
 
   boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> get_user_by_mobile(
-    const std::string& in_mobile
+      const std::string& in_mobile
   );
 
   struct attendance_update {
@@ -71,18 +70,16 @@ public:
     std::string prcoInst_id_;
     // form json
     friend void from_json(const nlohmann::json& j, attendance_update& p) {
-      std::istringstream l_time_stream{};
-
-      l_time_stream.str(j.at("begin_time").get<std::string>());
+      std::istringstream l_time_stream{j.at("begin_time").get<std::string>()};
       l_time_stream >> chrono::parse("%F %T", p.begin_time_);
 
-      l_time_stream.str(j.at("end_time").get<std::string>());
+      l_time_stream = std::istringstream{j.at("end_time").get<std::string>()};
       l_time_stream >> chrono::parse("%F %T", p.end_time_);
 
       p.biz_type_    = j.at("biz_type").get<std::int32_t>();
       p.tag_name_    = j.at("tag_name").get<std::string>();
       p.sub_type_    = j.at("sub_type").get<std::string>();
-      p.prcoInst_id_ = j.at("prcoInst_id").get<std::string>();
+      p.prcoInst_id_ = j.at("procInst_id").get<std::string>();
     }
   };
 
@@ -94,9 +91,8 @@ public:
 using client_ptr = std::shared_ptr<client>;
 
 class dingding_company {
-public:
-  explicit dingding_company() {
-  }
+ public:
+  explicit dingding_company() {}
 
   ~dingding_company() = default;
 
@@ -115,6 +111,6 @@ public:
 
   std::map<boost::uuids::uuid, company_info> company_info_map_;
 
-private:
+ private:
 };
 } // namespace doodle::dingding
