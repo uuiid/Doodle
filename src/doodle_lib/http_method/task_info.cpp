@@ -144,7 +144,10 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
 
  public:
   explicit run_post_task_local_impl_sink(std::shared_ptr<server_task_info> in_task_info) : task_info_(in_task_info) {}
-  void sink_it_(const spdlog::details::log_msg& msg) override { std::call_once(flag_, set_state); }
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    // std::call_once(flag_, &set_state, this);
+    std::call_once(flag_, [this]() { set_state(); });
+  }
   void flush_() override {}
   void set_state() {
     task_info_->status_ = server_task_info_status::running;
@@ -155,7 +158,7 @@ using run_post_task_local_impl_sink_mt = run_post_task_local_impl_sink<std::mute
 
 class run_post_task_local_cancel_manager {
   std::map<uuid, std::size_t> sigs_index;
-  std::vector<boost::asio::cancellation_signal> sigs_{};
+  std::vector<std::shared_ptr<boost::asio::cancellation_signal>> sigs_{};
   std::recursive_mutex mtx_;
 
  public:
@@ -163,27 +166,27 @@ class run_post_task_local_cancel_manager {
 
   boost::asio::cancellation_slot add(uuid in_id) {
     std::lock_guard<std::recursive_mutex> _(mtx_);
-    auto itr = std::find_if(sigs_.begin(), sigs_.end(), [](boost::asio::cancellation_signal& sig) {
-      return !sig.slot().has_handler();
+    auto itr = std::find_if(sigs_.begin(), sigs_.end(), [](std::shared_ptr<boost::asio::cancellation_signal>& sig) {
+      return !sig->slot().has_handler();
     });
     if (itr != sigs_.end()) {
       sigs_index[in_id] = std::distance(sigs_.begin(), itr);
-      return itr->slot();
+      return (*itr)->slot();
     } else {
       sigs_index[in_id] = sigs_.size();
-      return sigs_.emplace_back().slot();
+      return sigs_.emplace_back(std::make_shared<boost::asio::cancellation_signal>())->slot();
     }
   }
 
   void cancel(uuid in_id) {
     std::lock_guard<std::recursive_mutex> _(mtx_);
     if (auto itr = sigs_index.find(in_id);
-        itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second].slot().has_handler())
-      sigs_[itr->second].emit(boost::asio::cancellation_type::all);
+        itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second]->slot().has_handler())
+      sigs_[itr->second]->emit(boost::asio::cancellation_type::all);
   }
   void cancel_all() {
     std::lock_guard<std::recursive_mutex> _(mtx_);
-    for (auto& sig : sigs_) sig.emit(boost::asio::cancellation_type::all);
+    for (auto& sig : sigs_) sig->emit(boost::asio::cancellation_type::all);
   }
 };
 
