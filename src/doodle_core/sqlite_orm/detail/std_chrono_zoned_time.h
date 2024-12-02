@@ -58,7 +58,7 @@ struct row_extractor<std::chrono::zoned_time<std::chrono::microseconds>> : row_e
     std::istringstream l_istr{l_str};
     std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds> l_value{};
     l_istr >> parse("%F %T", l_value);
-    return std::chrono::zoned_time{l_value};
+    return std::chrono::zoned_time{std::chrono::current_zone(), l_value};
   }
 };
 }  // namespace sqlite_orm
