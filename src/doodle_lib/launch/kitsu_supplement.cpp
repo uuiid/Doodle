@@ -10,9 +10,10 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
-#include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/local_setting.h>
+#include <doodle_lib/http_method/task_info.h>
 
 #include <winreg/WinReg.hpp>
 namespace doodle::launch {
@@ -122,6 +123,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     // 初始化路由
     auto l_rout_ptr = std::make_shared<http::http_route>();
     http::task_info_reg_local(*l_rout_ptr);
+    http::local_setting_reg(*l_rout_ptr);
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return false;
