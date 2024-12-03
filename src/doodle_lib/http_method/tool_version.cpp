@@ -18,7 +18,7 @@ namespace doodle::http {
 namespace {
 
 boost::asio::awaitable<boost::beast::http::message_generator> get_tool_version(session_data_ptr in_handle) {
-  auto l_kitsu_version = g_ctx().get<kitsu_ctx_t>().root_ / "version.txt";
+  auto l_kitsu_version = g_ctx().get<kitsu_ctx_t>().front_end_root_ / "version.txt";
 
   if (FSys::exists(l_kitsu_version)) {
     FSys::ifstream l_version_file(l_kitsu_version);

@@ -19,7 +19,10 @@ struct kitsu_data_t {
 struct kitsu_ctx_t {
   std::string url_;
   std::string access_token_;
+  /// 产生的资产储存位置
   std::filesystem::path root_;
+  /// 前端部署的问价所在位置
+  std::filesystem::path front_end_root_;
 };
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root);

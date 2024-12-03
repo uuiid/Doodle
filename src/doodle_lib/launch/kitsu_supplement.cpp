@@ -147,7 +147,9 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
         std::make_shared<kitsu::kitsu_client>(g_io_context(), l_args.kitsu_url_)
     );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
-    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_);
+    g_ctx().emplace<http::kitsu_ctx_t>(
+        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
+    );
 
     // 初始化钉钉客户端
     auto& l_d = g_ctx().emplace<dingding::dingding_company>();
