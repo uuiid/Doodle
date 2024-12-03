@@ -194,12 +194,13 @@ void recomputing_time_run(
 
     chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
     for (auto i = 0; i < in_out_data.size(); ++i) {
-      auto l_end                 = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
+      auto l_end = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
+      if (i + 1 == in_out_data.size()) l_end = l_end_time;
       auto l_info                = in_time_clock.get_time_info(l_begin_time, l_end);
       std::string l_remark       = fmt::format("{}", fmt::join(l_info, ", "));
       in_out_data[i].start_time_ = {chrono::current_zone(), l_begin_time};
       in_out_data[i].end_time_   = {chrono::current_zone(), l_end};
-      in_out_data[i].duration_   = chrono::duration_cast<chrono::seconds>(l_woeks2[i]);
+      in_out_data[i].duration_   = in_time_clock(l_begin_time, l_end);
       in_out_data[i].remark_     = l_remark;
       in_out_data[i].year_month_ = chrono::local_days{in_year_month / 1};
       l_begin_time               = l_end;
