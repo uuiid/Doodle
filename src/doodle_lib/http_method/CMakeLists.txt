@@ -3,7 +3,6 @@ target_sources(
         PUBLIC
         computer.h
         task_info.h
-        file_exists.h
         computing_time.h
         dingding_attendance.h
         file_association.h
@@ -14,7 +13,6 @@ target_sources(
         PRIVATE
         computer.cpp
         task_info.cpp
-        file_exists.cpp
         computing_time.cpp
         dingding_attendance.cpp
         file_association.cpp
