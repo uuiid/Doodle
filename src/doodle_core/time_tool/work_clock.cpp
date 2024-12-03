@@ -179,7 +179,7 @@ work_clock2::time_type work_clock2::next_time(const time_type& in_begin, const d
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::upper(l_i) - boost::icl::lower(l_i);
     if ((l_en_t + l_len) >= in_du) {
-      return boost::icl::lower(l_i) + (in_du - l_len);
+      return boost::icl::first(l_i) + doodle::chrono::round<doodle::chrono::seconds>(in_du - l_len);
     } else {
       l_len += l_en_t;
     }

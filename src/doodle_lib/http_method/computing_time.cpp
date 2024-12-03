@@ -136,7 +136,7 @@ void computing_time_run(
       if (i < in_out_data.size()) {
         in_out_data[i].start_time_        = {chrono::current_zone(), l_begin_time};
         in_out_data[i].end_time_          = {chrono::current_zone(), l_end};
-        in_out_data[i].duration_          = chrono::duration_cast<chrono::seconds>(l_woeks2[i]);
+        in_out_data[i].duration_          = in_time_clock(l_begin_time, l_end);
         in_out_data[i].remark_            = l_remark;
         in_out_data[i].year_month_        = chrono::local_days{in_year_month / 1};
         in_out_data[i].user_ref_          = in_user.id_;
@@ -148,7 +148,7 @@ void computing_time_run(
                 // .task_info_  = std::vector<work_xlsx_task_info>{},
                 .start_time_        = {chrono::current_zone(), l_begin_time},
                 .end_time_          = {chrono::current_zone(), l_end},
-                .duration_          = chrono::duration_cast<chrono::seconds>(l_woeks2[i]),
+                .duration_          = in_time_clock(l_begin_time, l_end),
                 .remark_            = l_remark,
                 .year_month_        = chrono::local_days{in_year_month / 1},
                 .user_ref_          = in_user.id_,
@@ -305,6 +305,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
 
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  }
+  {
+    std::chrono::microseconds l_duration = std::chrono::microseconds{0};
+    for (auto&& l_time : *l_block_ptr) {
+      l_duration += l_time.duration_;
+    }
+    auto l_t = chrono::floor<std::chrono::hours>(l_duration);
+    auto l_end_time =
+        chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+    chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} + chrono::seconds{1}};
+
+    auto l_t2 = chrono::floor<std::chrono::hours>(l_time_clock(l_begin_time, l_end_time));
+    default_logger_raw()->info("duration: {} {}", l_t, l_t2);
   }
 
   nlohmann::json l_json_res{};
