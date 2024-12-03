@@ -221,8 +221,9 @@ std::string patch_time(
   // 只有一个任务, 不可以调整
   if (in_block.size() == 1) return {};
   auto l_time_begin = chrono::local_time_pos{in_block[0].year_month_};
-  auto l_time_end   = chrono::local_time_pos{in_block[0].year_month_ + chrono::months{1}} - chrono::seconds{1};
-  auto l_max        = in_time_clock(l_time_begin, l_time_end);
+  auto l_time_end   = chrono::local_time_pos{chrono::local_days{chrono::year_month_day{in_block[0].year_month_} + chrono::months{1}}} - chrono::seconds{1};
+  // default_logger_raw()->info("{} {}", l_time_begin, l_time_end);
+  auto l_max = in_time_clock(l_time_begin, l_time_end);
   if (in_duration >= l_max)
     return fmt::format(
         "大于最大时长 {} {} ", boost::numeric_cast<std::double_t>(in_duration.count() / 60ull * 60ull * 8ull),
@@ -248,11 +249,14 @@ std::string patch_time(
     chrono::local_time_pos l_begin_time{in_block[0].year_month_};
     for (auto i = 0; i < in_block.size(); ++i) {
       auto l_end = in_time_clock.next_time(l_begin_time, in_block[i].duration_);
+      if (l_end >= l_time_end) l_end = l_time_end;
       if (i + 1 == in_block.size()) l_end = l_time_end;
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
-      in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
-      l_begin_time            = l_end;
+      // default_logger_raw()->info("{} {}", in_block[i].start_time_.get_sys_time(), in_block[i].end_time_.get_sys_time());
+
+      in_block[i].duration_ = in_time_clock(l_begin_time, l_end);
+      l_begin_time          = l_end;
     }
   }
   return {};
