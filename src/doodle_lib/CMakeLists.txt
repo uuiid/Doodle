@@ -32,7 +32,6 @@ generate_export_header(doodle_lib
         EXPORT_MACRO_NAME DOODLELIB_API
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 
-add_subdirectory(attendance)
 add_subdirectory(core)
 # add_subdirectory(dem_bones)
 add_subdirectory(exe_warp)

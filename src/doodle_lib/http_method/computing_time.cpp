@@ -306,19 +306,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   }
-  {
-    std::chrono::microseconds l_duration = std::chrono::microseconds{0};
-    for (auto&& l_time : *l_block_ptr) {
-      l_duration += l_time.duration_;
-    }
-    auto l_t = chrono::floor<std::chrono::hours>(l_duration);
-    auto l_end_time =
-        chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
-    chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} + chrono::seconds{1}};
-
-    auto l_t2 = chrono::floor<std::chrono::hours>(l_time_clock(l_begin_time, l_end_time));
-    default_logger_raw()->info("duration: {} {}", l_t, l_t2);
-  }
+  // {
+  //   std::chrono::microseconds l_duration = std::chrono::microseconds{0};
+  //   for (auto&& l_time : *l_block_ptr) {
+  //     l_duration += l_time.duration_;
+  //   }
+  //   auto l_t = chrono::floor<std::chrono::hours>(l_duration);
+  //   auto l_end_time =
+  //       chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+  //   chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} + chrono::seconds{1}};
+  //
+  //   auto l_t2 = chrono::floor<std::chrono::hours>(l_time_clock(l_begin_time, l_end_time));
+  //   default_logger_raw()->info("duration: {} {}", l_t, l_t2);
+  // }
 
   nlohmann::json l_json_res{};
   l_json_res["data"] = *l_block_ptr;
