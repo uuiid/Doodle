@@ -3,3 +3,48 @@
 //
 
 #include "local_setting.h"
+
+#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/lib_warp/boost_uuid_warp.h>
+#include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/metadata/server_task_info.h>
+
+#include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/http_method/kitsu/kitsu.h>
+namespace doodle::http {
+
+namespace {
+boost::asio::awaitable<boost::beast::http::message_generator> get_local_setting(session_data_ptr in_handle) {
+  co_return in_handle->make_msg(nlohmann::json{"maya_parallel_quantity", core_set::get_set().p_max_thread}.dump());
+}
+boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不是json请求");
+  }
+  try {
+    auto& l_json                     = std::get<nlohmann::json>(in_handle->body_);
+    core_set::get_set().p_max_thread = l_json["maya_parallel_quantity"];
+    core_set::get_set().save();
+  } catch (...) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的json");
+  }
+
+  co_return in_handle->make_msg(nlohmann::json{"maya_parallel_quantity", core_set::get_set().p_max_thread}.dump());
+}
+}  // namespace
+void local_setting_reg(http_route& in_route) {
+
+  in_route
+      .reg(
+          std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/local_setting", get_local_setting)
+      )
+      .reg(
+          std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/local_setting", set_local_setting)
+
+      )
+
+      ;
+}
+}  // namespace doodle::http
