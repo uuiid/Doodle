@@ -247,6 +247,7 @@ std::string patch_time(
       auto l_end              = in_time_clock.next_time(l_begin_time, in_block[i].duration_);
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
+      in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
       l_begin_time            = l_end;
     }
   }
