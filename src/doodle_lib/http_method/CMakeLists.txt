@@ -9,6 +9,7 @@ target_sources(
         file_association.h
         kitsu_front_end_reg.h
         tool_version.h
+        local_setting.h
 
         PRIVATE
         computer.cpp
@@ -20,6 +21,7 @@ target_sources(
         computer_reg_data.cpp
         kitsu_front_end_reg.cpp
         tool_version.cpp
+        local_setting.cpp
 
 )
 
