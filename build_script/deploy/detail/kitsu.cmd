@@ -9,4 +9,4 @@ robocopy %DoodleSource% D:/kitsu/bin /MIR /xd dist
 @REM 启动服务
 net start doodle_kitsu_supplement
 @REM 复制前端界面
-robocopy //192.168.20.89/kitsu/dist D:/kitsu/dist /MIR /xf Doodle* version.txt
+robocopy //192.168.20.89/kitsu/dist D:/kitsu/dist /MIR /xf Doodle*.zip version.txt
