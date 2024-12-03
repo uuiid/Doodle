@@ -228,6 +228,7 @@ std::string patch_time(
         "大于最大时长 {} {} ", boost::numeric_cast<std::double_t>(in_duration.count() / 60ull * 60ull * 8ull),
         boost::numeric_cast<std::double_t>(l_max.count() / 60ull * 60ull * 8ull)
     );
+  if (in_duration <= chrono::microseconds{}) return "时间不可小于0";
 
   {
     using rational_int = boost::rational<std::int64_t>;
@@ -239,6 +240,7 @@ std::string patch_time(
     for (auto&& l_task : in_block) {
       if (l_task.uuid_id_ != in_task_id_) {
         l_task.duration_ += chrono::microseconds{boost::rational_cast<std::int64_t>(l_duration_int)};
+        l_task.duration_ = std::clamp(l_task.duration_, chrono::microseconds{0}, chrono::microseconds{l_max});
       }
     }
 
