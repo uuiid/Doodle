@@ -245,6 +245,7 @@ std::string patch_time(
     chrono::local_time_pos l_begin_time{in_block[0].year_month_};
     for (auto i = 0; i < in_block.size(); ++i) {
       auto l_end              = in_time_clock.next_time(l_begin_time, in_block[i].duration_);
+      if (l_end > l_time_end) l_end = l_time_end;
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
       in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
