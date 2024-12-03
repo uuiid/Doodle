@@ -11,6 +11,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/computing_time.h>
 
 namespace doodle::http {
 namespace {
@@ -181,6 +182,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   }
 
+  if (auto l_r = co_await recomputing_time(
+          std::make_shared<user_helper::database_t>(l_user), chrono::year_month{l_date.year(), l_date.month()}
+      );
+      !l_r) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  }
   nlohmann::json l_json{};
   l_json = *l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());

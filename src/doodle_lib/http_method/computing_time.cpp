@@ -314,7 +314,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   //   auto l_t = chrono::floor<std::chrono::hours>(l_duration);
   //   auto l_end_time =
   //       chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
-  //   chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} + chrono::seconds{1}};
+  //   chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} +
+  //   chrono::seconds{1}};
   //
   //   auto l_t2 = chrono::floor<std::chrono::hours>(l_time_clock(l_begin_time, l_end_time));
   //   default_logger_raw()->info("duration: {} {}", l_t, l_t2);
@@ -487,12 +488,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
     }
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-    }
+
     l_json_res["data"] = *l_block_ptr;
   }
   co_return in_handle->make_msg(l_json_res.dump());
+}
+
+boost::asio::awaitable<tl::expected<void, std::string>> recomputing_time(
+    const std::shared_ptr<user_helper::database_t>& in_user, const chrono::year_month& in_year_month
+) {
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(in_user->id_, chrono::local_days{in_year_month / 1});
+  auto l_timer_clock = create_time_clock(in_year_month, in_user->id_);
+  recomputing_time_run(in_year_month, l_timer_clock, *l_block_ptr);
+  co_return co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 }
 
 void reg_computing_time(http_route& in_route) {
