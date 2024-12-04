@@ -275,6 +275,10 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
       l_q.target(fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_));
       l_q.erase(boost::beast::http::field::content_length);
       l_q.erase(boost::beast::http::field::content_type);
+      l_q.keep_alive(in_handle->keep_alive_ == false ? in_block_ptr->size() != 1 : true);
+      std::ostringstream l_os;
+      l_os << l_q;
+      default_logger_raw()->warn("请求数据 {}", l_os.str());
       auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
       if (l_e) co_return tl::make_unexpected(l_e.message());
       try {
