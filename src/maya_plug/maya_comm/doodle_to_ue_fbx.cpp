@@ -107,7 +107,7 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
     CHECK_MSTATUS_AND_RETURN_IT(l_status);
     if(l_cam_dag_path.hasFn(MFn::kCamera)) {
       l_fbx_write.set_path(l_path);
-      l_fbx_write.write(l_cam_dag_path, l_begin_time, l_end_time);
+      l_fbx_write.write(l_cam_dag_path, l_begin_time, l_end_time, 1.78);
       return MS::kSuccess;
     }
   }
