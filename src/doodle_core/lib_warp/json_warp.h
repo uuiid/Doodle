@@ -93,15 +93,7 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
     }
   }
   static void from_json(const json& j, opt& in_opt) {
-    if (j.contains("nullopt"))
-      if (j["nullopt"].get<bool>()) {
-        in_opt = std::nullopt;
-      } else {
-        in_opt.emplace(j["data"].get<T>());
-      }
-    else {
-      if (!j.is_null()) in_opt.emplace(j.get<T>());
-    }
+    if (!j.is_null()) in_opt.emplace(j.get<T>());
   }
 };
 template <>
@@ -114,22 +106,13 @@ struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
   }
 
   static void from_json(const json& j, boost::uuids::uuid& in_uuid) {
-    if (j.is_string()) {
-      try {
-        if (auto l_str = j.get<std::string>(); !l_str.empty())
-          in_uuid = boost::lexical_cast<boost::uuids::uuid>(l_str);
-        else
-          in_uuid = boost::uuids::nil_uuid();
-      } catch (const boost::bad_lexical_cast& in_err) {
-        throw nlohmann::json::parse_error::create(116, {}, in_err.what(), &j);
-      }
-      return;
-    }
-    if (j["uuid"].is_string()) {
-      in_uuid = boost::lexical_cast<boost::uuids::uuid>(j["uuid"].get<std::string>());
-    } else {
-      auto k_arr = j["uuid"].get<std::array<std::uint8_t, boost::uuids::uuid::static_size()>>();
-      std::copy(k_arr.begin(), k_arr.end(), std::begin(in_uuid.data));
+    try {
+      if (auto l_str = j.get<std::string>(); !l_str.empty())
+        in_uuid = boost::lexical_cast<boost::uuids::uuid>(l_str);
+      else
+        in_uuid = boost::uuids::nil_uuid();
+    } catch (const boost::bad_lexical_cast& in_err) {
+      throw nlohmann::json::parse_error::create(116, {}, in_err.what(), &j);
     }
   }
 };
