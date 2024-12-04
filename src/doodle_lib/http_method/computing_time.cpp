@@ -275,9 +275,8 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
         }
     );
     if (l_e) co_return tl::make_unexpected(l_e.message());
-    auto& l_json_v = l_json_res["data"].emplace_back();
-    l_json_v       = l_d;
-    l_json_v.update(l_r.body());
+    auto& l_json_v = l_json_res["data"].emplace_back(l_r.body());
+    l_json_v["computing_time"]       = l_d;
   }
   co_return tl::expected<nlohmann::json, std::string>{std::move(l_json_res)};
 }
