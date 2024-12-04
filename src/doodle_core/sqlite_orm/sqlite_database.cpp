@@ -52,8 +52,8 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "server_task_info_tab",  //
           make_column("id", &server_task_info::id_, primary_key()),
-          make_column("uuid_id", &server_task_info::uuid_id_, unique()),  //
-          make_column("exe", &server_task_info::exe_),                    //
+          make_column("uuid_id", &server_task_info::uuid_id_, unique(), not_null()),  //
+          make_column("exe", &server_task_info::exe_),                                //
           make_column(
               "command", static_cast<void (server_task_info::*)(const std::string&)>(&server_task_info::sql_command),
               static_cast<const std::string& (server_task_info::*)() const>(&server_task_info::sql_command)
@@ -70,19 +70,19 @@ auto make_storage_doodle(const std::string& in_path) {
       ),
       make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
       make_table(
-          "computer_tab",                                           //
-          make_column("id", &computer::id_, primary_key()),         //
-          make_column("uuid_id", &computer::uuid_id_, unique()),    //
-          make_column("name", &computer::name_),                    //
-          make_column("ip", &computer::ip_),                        //
-          make_column("server_status", &computer::server_status_),  //
+          "computer_tab",                                                     //
+          make_column("id", &computer::id_, primary_key()),                   //
+          make_column("uuid_id", &computer::uuid_id_, unique(), not_null()),  //
+          make_column("name", &computer::name_),                              //
+          make_column("ip", &computer::ip_),                                  //
+          make_column("server_status", &computer::server_status_),            //
           make_column("client_status", &computer::client_status_)
       ),
       make_index("kitsu_assets_type_tab_uuid_id_index", &metadata::kitsu::assets_type_t::uuid_id_),
       make_table(
           "kitsu_assets_type_tab",                                                 //
           make_column("id", &metadata::kitsu::assets_type_t::id_, primary_key()),  //
-          make_column("uuid_id", &metadata::kitsu::assets_type_t::uuid_id_, unique()),
+          make_column("uuid_id", &metadata::kitsu::assets_type_t::uuid_id_, unique(), not_null()),
           make_column("name", &metadata::kitsu::assets_type_t::name_),
           make_column("asset_type", &metadata::kitsu::assets_type_t::type_)
       ),
@@ -90,7 +90,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "assets_file_tab",  //
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
-          make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique()),
+          make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("label", &assets_file_helper::database_t::label_),
           make_column("parent_uuid", &assets_file_helper::database_t::uuid_parent_),
           make_column("path", &assets_file_helper::database_t::path_),
@@ -106,16 +106,16 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "assets_tab",  //
           make_column("id", &assets_helper::database_t::id_, primary_key()),
-          make_column("uuid_id", &assets_helper::database_t::uuid_id_, unique()),
-          make_column("label", &assets_helper::database_t::label_),
+          make_column("uuid_id", &assets_helper::database_t::uuid_id_, unique(), not_null()),
+          make_column("label", &assets_helper::database_t::label_, not_null()),
           make_column("parent_uuid", &assets_helper::database_t::uuid_parent_),
-          make_column("order", &assets_helper::database_t::order_, default_value(0))
+          make_column("order", &assets_helper::database_t::order_, default_value(0), not_null())
       ),
       make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
       make_table(
           "kitsu_task_type_tab",                                                 //
           make_column("id", &metadata::kitsu::task_type_t::id_, primary_key()),  //
-          make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique()),
+          make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique(), not_null()),
           make_column("name", &metadata::kitsu::task_type_t::name_),
           make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files)
       ),
@@ -124,7 +124,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "attendance_tab",                                                       //
           make_column("id", &attendance_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &attendance_helper::database_t::uuid_id_, unique()),
+          make_column("uuid_id", &attendance_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("start_time", &attendance_helper::database_t::start_time_),
           make_column("end_time", &attendance_helper::database_t::end_time_),
           make_column("remark", &attendance_helper::database_t::remark_),
@@ -141,7 +141,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "work_xlsx_task_info_tab",                                                       //
           make_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &work_xlsx_task_info_helper::database_t::uuid_id_, unique()),
+          make_column("uuid_id", &work_xlsx_task_info_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("start_time", &work_xlsx_task_info_helper::database_t::start_time_),
           make_column("end_time", &work_xlsx_task_info_helper::database_t::end_time_),
           make_column("duration", &work_xlsx_task_info_helper::database_t::duration_),
@@ -156,7 +156,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "user_tab",                                                       //
           make_column("id", &user_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &user_helper::database_t::uuid_id_, unique()),
+          make_column("uuid_id", &user_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("mobile", &user_helper::database_t::mobile_),  //
           make_column("dingding_id", &user_helper::database_t::dingding_id_),
           make_column("dingding_company_id", &user_helper::database_t::dingding_company_id_),
@@ -167,7 +167,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "project_tab",                                                       //
           make_column("id", &project_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &project_helper::database_t::uuid_id_, unique()),
+          make_column("uuid_id", &project_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("name", &project_helper::database_t::name_),  //
           make_column("path", &project_helper::database_t::path_),
           make_column("en_str", &project_helper::database_t::en_str_),  //
