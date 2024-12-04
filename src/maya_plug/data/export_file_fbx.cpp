@@ -202,7 +202,7 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
   return l_file_path;
 }
 
-FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
+FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen, std::double_t in_film_aperture) {
   auto l_cam = maya_camera::conjecture();
   l_cam.unlock_attr();
   l_cam.back_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
@@ -212,7 +212,7 @@ FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen) {
   {
     fbx_write l_fbx_write{};
     l_fbx_write.set_path(l_path);
-    l_fbx_write.write(get_dag_path(l_cam.p_path.transform()), in_gen->begin_end_time.first, in_gen->begin_end_time.second);
+    l_fbx_write.write(get_dag_path(l_cam.p_path.transform()), in_gen->begin_end_time.first, in_gen->begin_end_time.second,in_film_aperture);
   }
 
   return l_path;

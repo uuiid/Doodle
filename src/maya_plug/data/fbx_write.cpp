@@ -210,8 +210,9 @@ void fbx_node_cam::build_data() {
   camera_->SetApertureHeight(l_fn_cam.verticalFilmAperture());
   camera_->SetApertureMode(FbxCamera::eFocalLength);
 
-  if (boost::math::relative_difference(l_fn_cam.horizontalFilmAperture() / l_fn_cam.verticalFilmAperture(), 1.78) >
-      0.005) {
+  if (boost::math::relative_difference(
+          l_fn_cam.horizontalFilmAperture() / l_fn_cam.verticalFilmAperture(), film_aperture_
+      ) > 0.005) {
     throw_error(::doodle::maya_enum::maya_error_t::camera_aspect_error);
   }
 
@@ -917,10 +918,12 @@ void fbx_node_mesh::build_blend_shape() {
       }
 
       if (l_point_data.length() != l_point_index_main.size()) {
-        log_error(fmt::format(
-            "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
-            l_point_index_main.size()
-        ));
+        log_error(
+            fmt::format(
+                "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
+                l_point_index_main.size()
+            )
+        );
         continue;
       }
 
@@ -1215,7 +1218,7 @@ void fbx_write::write(
   logger_->flush();
 }
 
-void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end) {
+void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture) {
   if (!logger_)
     if (!g_ctx().contains<fbx_logger>())
       logger_ =
@@ -1242,8 +1245,10 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
   auto l_fbx_cam = std::make_shared<fbx_write_ns::fbx_node_cam>(
       in_cam_path, FbxNode::Create(scene_, get_node_name(in_cam_path).c_str())
   );
+
   scene_->GetRootNode()->AddChild(l_fbx_cam->node);
   l_fbx_cam->extra_data_.logger_ = logger_;
+  l_fbx_cam->film_aperture_ = in_film_aperture;
   l_fbx_cam->build_data();
   logger_->info("开始导出camera动画 {}", in_cam_path);
 

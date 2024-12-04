@@ -235,7 +235,7 @@ void cloth_sim::export_anim_file() {
   );
   // 导出相机
   g_reg()->ctx().emplace<maya_camera>().conjecture();
-  camera_path_ = l_ex.export_cam(l_gen);
+  camera_path_ = l_ex.export_cam(l_gen, film_aperture_);
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");

@@ -69,7 +69,7 @@ void export_fbx_facet::export_fbx() {
     }
   }
   g_reg()->ctx().emplace<maya_camera>().conjecture();
-  auto l_cam_path = l_ex.export_cam(l_gen);
+  auto l_cam_path = l_ex.export_cam(l_gen, film_aperture_);
 
   l_out_arg.out_file_list.emplace_back(l_cam_path, FSys::path{});
 
@@ -116,6 +116,7 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
 
   if (l_arg.file_path.empty()) return l_ret;
   out_path_file_ = l_arg.out_path_file_;
+  film_aperture_ = l_arg.film_aperture_;
 
   lib_guard_     = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 

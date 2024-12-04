@@ -58,6 +58,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
   bool touch_sim;
   bool export_anim_file;
   bool create_play_blast_{};
+  std::double_t film_aperture_{};
 
   // form json
   friend void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
@@ -69,6 +70,10 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
     if (in_json.contains("touch_sim")) in_json.at("touch_sim").get_to(out_obj.touch_sim);
     if (in_json.contains("export_anim_file")) in_json.at("export_anim_file").get_to(out_obj.export_anim_file);
     if (in_json.contains("create_play_blast")) in_json.at("create_play_blast").get_to(out_obj.create_play_blast_);
+    if (in_json.contains("film_aperture"))
+      in_json.at("film_aperture").get_to(out_obj.film_aperture_);
+    else
+      out_obj.film_aperture_ = 1.78;
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
@@ -80,6 +85,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
     in_json["touch_sim"]         = out_obj.touch_sim;
     in_json["export_anim_file"]  = out_obj.export_anim_file;
     in_json["create_play_blast"] = out_obj.create_play_blast_;
+    in_json["film_aperture"]     = out_obj.film_aperture_;
   }
 
   std::tuple<std::string, std::string> get_json_str() override {
@@ -91,6 +97,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
  public:
   bool create_play_blast_{};
   bool rig_file_export_{};
+  std::double_t film_aperture_{};
 
   constexpr static std::string_view k_name{"export_fbx"};
 
@@ -101,6 +108,10 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
     if (in_json.contains("create_play_blast")) in_json.at("create_play_blast").get_to(out_obj.create_play_blast_);
     if (in_json.contains("out_path_file")) in_json.at("out_path_file").get_to(out_obj.out_path_file_);
     if (in_json.contains("rig_file_export")) in_json.at("rig_file_export").get_to(out_obj.rig_file_export_);
+    if (in_json.contains("film_aperture"))
+      in_json.at("film_aperture").get_to(out_obj.film_aperture_);
+    else
+      out_obj.film_aperture_ = 1.78;
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
@@ -109,6 +120,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
     in_json["create_play_blast"] = out_obj.create_play_blast_;
     in_json["out_path_file"]     = out_obj.out_path_file_.generic_string();
     in_json["rig_file_export"]   = out_obj.rig_file_export_;
+    in_json["film_aperture"]     = out_obj.film_aperture_;
   }
   std::tuple<std::string, std::string> get_json_str() override {
     return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};

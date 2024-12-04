@@ -45,6 +45,7 @@ bool cloth_sim::post(const nlohmann::json& in_argh) {
   maya_exe_ns::qcloth_arg l_arg = in_argh.get<maya_exe_ns::qcloth_arg>();
 
   if (l_arg.file_path.empty()) return l_ret;
+  film_aperture_ = l_arg.film_aperture_;
 
   lib_guard_     = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 

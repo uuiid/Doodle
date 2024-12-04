@@ -19,6 +19,7 @@ class cloth_sim final {
 
   MTime anim_begin_time_{};
   MTime t_post_time_{};
+  std::double_t film_aperture_{};
 
   void create_ref_file();
   void replace_ref_file();

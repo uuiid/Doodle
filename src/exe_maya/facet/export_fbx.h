@@ -17,6 +17,7 @@ class export_fbx_facet final {
   static constexpr auto config{"export_fbx_config"};
 
   MTime anim_begin_time_{};
+  std::double_t film_aperture_{};
 
   void create_ref_file();
   void export_fbx();

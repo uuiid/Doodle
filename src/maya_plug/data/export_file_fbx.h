@@ -34,7 +34,7 @@ class export_file_fbx {
 
   FSys::path export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file);
 
-  FSys::path export_cam(const generate_file_path_ptr& in_gen);
+  FSys::path export_cam(const generate_file_path_ptr& in_gen, std::double_t in_film_aperture);
 
   FSys::path export_rig();
 };

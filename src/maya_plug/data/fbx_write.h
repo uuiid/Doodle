@@ -70,6 +70,7 @@ struct fbx_node_transform : public fbx_node {
 struct fbx_node_cam : public fbx_node_transform {
   fbx_node_cam() = default;
   FbxCamera *camera_{};
+  std::double_t film_aperture_{};
 
   explicit fbx_node_cam(const MDagPath& in_dag_path, FbxNode* in_node) : fbx_node_transform(in_dag_path, in_node) {
   }
@@ -197,7 +198,7 @@ public:
   }
 
   // 写出相机
-  void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end);
+  void write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture);
 
   // 只寻找mesh节点
   fbx_write_ns::fbx_node* find_node(const MDagPath& in_path) const;
