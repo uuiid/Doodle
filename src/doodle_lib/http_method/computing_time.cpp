@@ -15,6 +15,7 @@
 
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/kitsu/kitsu.h>
 
 namespace doodle::http {
 struct computing_time_post_req_data {
@@ -221,8 +222,9 @@ std::string patch_time(
   // 只有一个任务, 不可以调整
   if (in_block.size() == 1) return {};
   auto l_time_begin = chrono::local_time_pos{in_block[0].year_month_};
-  auto l_time_end   = chrono::local_time_pos{chrono::local_days{chrono::year_month_day{in_block[0].year_month_} + chrono::months{1}}} - chrono::seconds{1};
-  // default_logger_raw()->info("{} {}", l_time_begin, l_time_end);
+  auto l_time_end =
+      chrono::local_time_pos{chrono::local_days{chrono::year_month_day{in_block[0].year_month_} + chrono::months{1}}} -
+      chrono::seconds{1};
   auto l_max = in_time_clock(l_time_begin, l_time_end);
   if (in_duration >= l_max)
     return fmt::format(
@@ -253,15 +255,32 @@ std::string patch_time(
       if (i + 1 == in_block.size()) l_end = l_time_end;
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
-      // default_logger_raw()->info("{} {}", in_block[i].start_time_.get_sys_time(), in_block[i].end_time_.get_sys_time());
-
-      in_block[i].duration_ = in_time_clock(l_begin_time, l_end);
-      l_begin_time          = l_end;
+      in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
+      l_begin_time            = l_end;
     }
   }
   return {};
 }
 
+boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_task(
+    session_data_ptr in_handle, std::shared_ptr<std::vector<work_xlsx_task_info_helper::database_t>> in_block_ptr
+) {
+  auto l_c = kitsu::create_kitsu_proxy(in_handle);
+  nlohmann::json l_json_res{};
+  for (auto&& l_d : *in_block_ptr) {
+    auto [l_e, l_r] = co_await detail::read_and_write<basic_json_body>(
+        l_c,
+        boost::beast::http::request<boost::beast::http::empty_body>{
+            boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_), 11
+        }
+    );
+    if (l_e) co_return tl::make_unexpected(l_e.message());
+    auto& l_json_v = l_json_res["data"].emplace_back();
+    l_json_v       = l_d;
+    l_json_v.update(l_r.body());
+  }
+  co_return tl::expected<nlohmann::json, std::string>{std::move(l_json_res)};
+}
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
 
@@ -315,24 +334,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   }
-  // {
-  //   std::chrono::microseconds l_duration = std::chrono::microseconds{0};
-  //   for (auto&& l_time : *l_block_ptr) {
-  //     l_duration += l_time.duration_;
-  //   }
-  //   auto l_t = chrono::floor<std::chrono::hours>(l_duration);
-  //   auto l_end_time =
-  //       chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
-  //   chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} +
-  //   chrono::seconds{1}};
-  //
-  //   auto l_t2 = chrono::floor<std::chrono::hours>(l_time_clock(l_begin_time, l_end_time));
-  //   default_logger_raw()->info("duration: {} {}", l_t, l_t2);
-  // }
 
-  nlohmann::json l_json_res{};
-  l_json_res["data"] = *l_block_ptr;
-  co_return in_handle->make_msg(l_json_res.dump());
+  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  } else
+    co_return in_handle->make_msg(l_r->dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get(session_data_ptr in_handle) {
@@ -370,12 +376,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
     );
   else
     l_user = std::move(*l_users.begin());
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
 
-  auto l_v = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
 
-  nlohmann::json l_json{};
-  l_json["data"] = l_v;
-  co_return in_handle->make_msg(l_json.dump());
+  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  } else
+    co_return in_handle->make_msg(l_r->dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch(session_data_ptr in_handle) {
