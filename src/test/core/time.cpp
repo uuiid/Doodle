@@ -11,7 +11,6 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/pin_yin/convert.h>
 
-#include "doodle_lib/attendance/attendance_rule.h"
 
 #include <boost/system/detail/error_code.hpp>
 #include <boost/test/unit_test.hpp>
