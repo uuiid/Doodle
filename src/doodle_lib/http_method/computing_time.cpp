@@ -273,6 +273,8 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
       boost::beast::http::request<boost::beast::http::empty_body> l_q{in_handle->req_header_};
       l_q.method(boost::beast::http::verb::get);
       l_q.target(fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_));
+      l_q.erase(boost::beast::http::field::content_length);
+      l_q.erase(boost::beast::http::field::content_type);
       auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
       if (l_e) co_return tl::make_unexpected(l_e.message());
       try {
