@@ -267,18 +267,21 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
 ) {
   auto l_c = kitsu::create_kitsu_proxy(in_handle);
   nlohmann::json l_json_res{};
+
   for (auto&& l_d : *in_block_ptr) {
     if (!l_d.kitsu_task_ref_id_.is_nil()) {
-      auto [l_e, l_r] = co_await detail::read_and_write<basic_json_body>(
-          l_c,
-          boost::beast::http::request<boost::beast::http::empty_body>{
-              boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_), 11
-          }
-      );
+      boost::beast::http::request<boost::beast::http::empty_body> l_q{in_handle->req_header_};
+      l_q.method(boost::beast::http::verb::get);
+      l_q.target(fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_));
+      auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
       if (l_e) co_return tl::make_unexpected(l_e.message());
-      auto& l_json_v             = l_json_res["data"].emplace_back(l_r.body());
-      l_json_v["computing_time"] = l_d;
-    }else
+      try {
+        auto& l_json_v             = l_json_res["data"].emplace_back(nlohmann::json::parse(l_r.body()));
+        l_json_v["computing_time"] = l_d;
+      } catch (...) {
+        co_return tl::make_unexpected(boost::current_exception_diagnostic_information());
+      }
+    } else
       l_json_res["data"].emplace_back()["computing_time"] = l_d;
   }
   co_return tl::expected<nlohmann::json, std::string>{std::move(l_json_res)};
