@@ -68,7 +68,13 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
 template <class Clock, class Duration>
 struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>> {
   using time_point = std::chrono::time_point<Clock, Duration>;
-  static void to_json(json& j, const time_point& in_time) { j = fmt::to_string(in_time); }
+  static void to_json(json& j, const time_point& in_time) {
+    try {
+      j = fmt::to_string(in_time);
+    } catch (const fmt::format_error& in_err) {
+      throw nlohmann::json::other_error::create(502, in_err.what(), &j);
+    }
+  }
 
   static void from_json(const json& j, time_point& in_time) {
     std::istringstream l_stream(j.get<std::string>());
