@@ -188,6 +188,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   }
+  std::erase_if(*l_attendance_list, [](const auto& l_attendance) {
+    return l_attendance.type_ == attendance_helper::att_enum::max;
+  });
   nlohmann::json l_json{};
   l_json = *l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());

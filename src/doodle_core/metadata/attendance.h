@@ -26,9 +26,14 @@ struct database_t {
   std::string dingding_id_{};  // 钉钉id
   std::int64_t user_ref{};
   friend void to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]         = fmt::to_string(p.id_);
-    j["start_time"] = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
-    j["end_time"]   = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
+    j["id"] = fmt::to_string(p.id_);
+    try {
+      j["start_time"] = fmt::format("{:%FT%T}", p.start_time_.get_local_time());
+      j["end_time"]   = fmt::format("{:%FT%T}", p.end_time_.get_local_time());
+    } catch (const fmt::format_error& e) {
+      j["start_time"] = nlohmann::json::value_t::null;
+      j["end_time"]   = nlohmann::json::value_t::null;
+    }
     if (!p.remark_.empty())
       j["remark"] = p.remark_;
     else
