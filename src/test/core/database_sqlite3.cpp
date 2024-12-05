@@ -8,23 +8,12 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/app_base.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/metadata/assets.h>
-#include <doodle_core/metadata/assets_file.h>
-#include <doodle_core/metadata/comment.h>
-#include <doodle_core/metadata/episodes.h>
-#include <doodle_core/metadata/image_icon.h>
-#include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/scan_data_t.h>
-#include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/server_task_info.h>
-#include <doodle_core/metadata/shot.h>
-#include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 

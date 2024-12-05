@@ -50,17 +50,6 @@ void doodle_lib::init() {
       default_logger_raw()->log(level::warn, boost::locale::conv::utf_to_utf<char>(logMessage));
     }
   });
-  // ptr->ctx_p.emplace<detail::crash_reporting_thread>();
-
-
-  // boost::locale::generator k_gen{};
-  // k_gen.categories(
-  //     boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
-  //);
-  // FSys::path::imbue(k_gen("zh_CN.UTF-8"));
-
-  ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
-  ptr->reg->ctx().emplace<project_config::base_config>(project_config::base_config::get_default());
 }
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
