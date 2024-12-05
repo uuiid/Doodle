@@ -5,7 +5,6 @@ target_sources(test_main
         bvh.cpp
         create_move.cpp
         boost_log.cpp
-        range.cpp
         database_sqlite3.cpp
         entt_test.cpp
         regex.cpp
