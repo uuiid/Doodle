@@ -18,9 +18,9 @@ namespace doodle {
 namespace detail {
 namespace {
 // 计算baseline大小
-void watermark_add_image(cv::Mat& in_image, const std::vector<image_to_move::image_watermark>& in_watermark) {
+void watermark_add_image(cv::Mat& in_image, const std::vector<::doodle::movie::image_watermark>& in_watermark) {
   auto l_string_s = in_watermark |
-                    ranges::views::transform([](const image_to_move::image_watermark& in) { return in.text_attr; }) |
+                    ranges::views::transform([](const ::doodle::movie::image_watermark& in) { return in.text_attr; }) |
                     ranges::to_vector;
   cv::Ptr<cv::freetype::FreeType2> const l_ft2{cv::freetype::createFreeType2()};
   l_ft2->loadFontData(std::string{doodle_config::font_default}, 0);
@@ -81,18 +81,6 @@ auto create_gamma_LUT_table(const std::double_t& in_gamma) {
   return lookupTable;
 }
 }  // namespace
-
-FSys::path image_to_move::create_out_path(const entt::handle& in_handle) {
-  boost::ignore_unused(this);
-
-  FSys::path l_out = in_handle.get<out_file_path>().path;
-  l_out            = detail::create_out_path(
-      l_out, in_handle.all_of<episodes>() ? in_handle.get<episodes>() : episodes{},
-      in_handle.all_of<shot>() ? in_handle.get<shot>() : shot{}, in_handle.try_get<project>()
-  );
-  in_handle.replace<out_file_path>(l_out);
-  return l_out;
-}
 
 FSys::path create_out_path(
     const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot, const project* in_project

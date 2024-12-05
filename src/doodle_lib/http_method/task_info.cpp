@@ -230,6 +230,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
       l_task.get_to(*l_arg_t);
       l_arg = l_arg_t;
+    } else if (l_task.contains("is_sim")) {
+
     } else {
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       l_task.get_to(*l_arg_t);
@@ -249,7 +251,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
         boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
     );
   }
-  if (!l_arg) co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的参数");
 
   if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
@@ -258,7 +259,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
       boost::asio::bind_cancellation_slot(
           g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
-
           boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
 
       )
