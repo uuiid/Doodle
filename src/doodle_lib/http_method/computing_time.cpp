@@ -103,8 +103,9 @@ void computing_time_run(
     const user_helper::database_t& in_user, computing_time_post_req_data& in_data,
     std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
-  auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
-  auto l_all_works = in_time_clock(chrono::local_days{in_year_month / chrono::day{1}}, l_end_time);
+  auto l_end_time = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+  chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
+  auto l_all_works = in_time_clock(l_begin_time, l_end_time);
 
   // 进行排序
   std::ranges::sort(in_data.data, [](auto&& l_left, auto&& l_right) { return l_left.start_time < l_right.start_time; });
@@ -127,9 +128,9 @@ void computing_time_run(
       );
     }
 
-    chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
     for (auto i = 0; i < in_data.data.size(); ++i) {
-      auto l_end           = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
+      auto l_end = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
+      if (i + 1 == in_data.data.size()) l_end = l_end_time;
 
       auto l_info          = in_time_clock.get_time_info(l_begin_time, l_end);
       std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
