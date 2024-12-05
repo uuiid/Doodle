@@ -530,8 +530,7 @@ boost::beast::http::message_generator session_data::make_error_code_msg(
   if (in_msg_code == -1) in_msg_code = enum_to_num(in_code);
 
   boost::beast::http::response<boost::beast::http::string_body> l_response{in_code, version_};
-  l_response.set(boost::beast::http::field::content_type, "plain/text");
-  l_response.set(boost::beast::http::field::accept, "application/json; charset=utf-8");
+  l_response.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
   l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
   l_response.keep_alive(keep_alive_);
   l_response.body() = nlohmann::json{{"error", in_str}, {"code", in_msg_code}}.dump();
