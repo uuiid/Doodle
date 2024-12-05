@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
   using namespace sqlite_orm;
 
   auto storage = make_storage(
-      "",
+      "D:/test.db",
       make_table(
           "Emp", make_column("empno", &Employee::m_empno, primary_key().autoincrement()),
           make_column("ename", &Employee::m_ename), make_column("job", &Employee::m_job),
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
       ),
       make_table(
           "Dept", make_column("deptno", &Department::m_deptno, primary_key().autoincrement()),
-          make_column("deptname", &Department::m_deptname), make_column("loc", &Department::m_loc)
+          make_column("deptname", &Department::m_deptname), make_column("loc", &Department::m_loc, null())
       )
   );
   storage.sync_schema(true);
