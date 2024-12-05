@@ -1,8 +1,3 @@
-# 添加资源
-cmrc_add_resource_library(
-        DoodleLibResource
-        resource/zhtopy.txt
-)
 
 # 添加配置
 add_library(doodle_core
@@ -46,7 +41,6 @@ add_subdirectory(exception)
 add_subdirectory(lib_warp)
 add_subdirectory(logger)
 add_subdirectory(metadata)
-add_subdirectory(pin_yin)
 add_subdirectory(platform)
 add_subdirectory(time_tool)
 add_subdirectory(sqlite_orm)
@@ -55,7 +49,6 @@ add_subdirectory(sqlite_orm)
 target_link_libraries(
         doodle_core
         PUBLIC
-        DoodleLibResource
         magic_enum::magic_enum
         Boost::locale
         Boost::contract

@@ -28,9 +28,6 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
   // 自动灯光上传路径
   FSys::path p_auto_upload_path;
 
- private:
-  void init_name();
-
  public:
   /// 添加entt指示, 用于保持指针稳定性
   static constexpr bool in_place_delete{true};
@@ -73,7 +70,6 @@ class DOODLE_CORE_API project : boost::totally_ordered<project> {
   friend void from_json(const nlohmann::json& j, project& p) {
     j.at("name").get_to(p.p_name);
     j.at("path").get_to(p.p_path);
-    p.init_name();
   }
 };
 
@@ -93,9 +89,6 @@ struct database_t {
   std::string shor_str_{};
   std::filesystem::path local_path_{};
   std::string auto_upload_path_{};
-
-  /// 根据 name 生成拼音名称和短名称
-  void generate_names();
 
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["name"] = p.name_;

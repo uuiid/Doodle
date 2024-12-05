@@ -8,7 +8,6 @@
 
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/static_value.h>
-#include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
 
 #include <doodle_core/core/core_set.h>

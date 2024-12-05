@@ -2,7 +2,6 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <boost/algorithm/string.hpp>
@@ -74,38 +73,14 @@ bool project::operator==(const project& in_rhs) const {
 
 const std::string& project::get_name() const { return p_name; }
 
-void project::init_name() {
-  p_en_str        = boost::algorithm::to_lower_copy(convert::Get().toEn(this->p_name));
-  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
-  auto& k_pingYin = convert::Get();
-  std::string str{};
-  for (auto s : wstr) {
-    auto k_s_front = k_pingYin.toEn(s).front();
-    str.append(&k_s_front, 1);
-  }
-  DOODLE_LOG_INFO(str);
-  p_shor_str = boost::algorithm::to_upper_copy(str.substr(0, 2));
-}
+
 
 FSys::path project::make_path(const FSys::path& in_path) const {
   auto path = p_path / in_path;
   if (!exists(path)) create_directories(path);
   return path;
 }
-namespace project_helper {
-void database_t::generate_names() {
-  en_str_         = boost::algorithm::to_lower_copy(convert::Get().toEn(name_));
-  auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(name_);
-  auto& k_pingYin = convert::Get();
-  std::string str{};
-  for (auto s : wstr) {
-    auto k_s_front = k_pingYin.toEn(s).front();
-    str.append(&k_s_front, 1);
-  }
-  shor_str_ = boost::algorithm::to_upper_copy(str.substr(0, 2));
-}
 
-}  // namespace project_helper
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]                   = p.find_icon_regex;

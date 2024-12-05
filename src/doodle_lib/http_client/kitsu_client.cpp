@@ -75,8 +75,7 @@ kitsu_client::get_all_project() {
               .path_             = "C:/sy",
               .local_path_       = "C:/sy",
               .auto_upload_path_ = "C:/sy"
-          })
-          .generate_names();
+          }) ;
     }
     l_ret = std::move(l_list);
   }
