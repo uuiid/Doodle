@@ -17,7 +17,6 @@ project::project() : p_name("none"), p_path("C:/") {}
 project::project(FSys::path in_path, std::string in_name) : project() {
   p_name = std::move(in_name);
   p_path = std::move(in_path);
-  init_name();
 }
 project::project(const project_helper::database_t& in)
     : p_name(in.name_),
@@ -44,7 +43,6 @@ project::operator project_helper::database_t() const {
 void project::set_name(const std::string& Name) noexcept {
   if (Name == p_name) return;
   p_name = Name;
-  init_name();
 }
 
 const FSys::path& project::get_path() const noexcept { return p_path; }

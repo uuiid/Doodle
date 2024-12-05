@@ -9,7 +9,6 @@
 #include "doodle_core/time_tool/work_clock.h"
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/time_point_wrap.h>
-#include <doodle_core/pin_yin/convert.h>
 
 
 #include <boost/system/detail/error_code.hpp>
