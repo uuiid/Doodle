@@ -1,6 +1,5 @@
 target_sources(test_main
         PRIVATE
-        pinyin.cpp
         time.cpp
         bvh.cpp
         create_move.cpp
