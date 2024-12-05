@@ -116,7 +116,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
       break;
     }
     in_logger->warn("运行maya错误, 开始第{}次重试", i + 1);
-    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, "maya绑定文件错误");
 
@@ -145,7 +144,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   nlohmann::json l_run_import_arg = l_check_arg;
   auto l_tmp_path                 = FSys::write_tmp_file("ue_check", l_run_import_arg.dump(), ".json");
   in_logger->warn("排队导入文件 {} ", in_args->local_ue_project_path_);
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     in_logger->error("用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, std::string{"用户取消操作"});
@@ -160,7 +158,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     if (!l_ec) break;
     in_logger->warn("导入文件失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
-    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, std::string{});
   in_logger->warn("导入文件完成");
@@ -172,7 +169,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
       in_logger->error("渲染删除上次输出错误 error:{}", err.what());
     }
   }
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     in_logger->error(" 用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, std::string{});
@@ -188,7 +184,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     if (!l_ec) break;
     in_logger->warn("渲染失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
-    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   co_return std::tuple(l_ec, std::string{});
 }

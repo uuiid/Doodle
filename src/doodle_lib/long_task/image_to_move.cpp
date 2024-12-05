@@ -136,7 +136,6 @@ boost::system::error_code create_move(
       } catch (const FSys::filesystem_error& err) {
         in_logger->error("合成视频主动删除失败 {} ", boost::diagnostic_information(err));
       }
-      in_logger->log(level::off, magic_enum::enum_name(process_message::state::fail));
       l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
       BOOST_ASIO_ASSERT(l_ec);
       return l_ec;
@@ -161,7 +160,6 @@ boost::system::error_code create_move(
   }
 
   in_logger->info("成功完成任务");
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::success));
   return l_ec;
 }
 } // namespace detail

@@ -364,7 +364,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
   static auto g_root{FSys::path{doodle_config::g_cache_path}};
   std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
   in_logger->warn("排队复制文件");
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   // 开始复制文件
   // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
@@ -420,13 +419,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
             l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", in_logger
         );
         // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
-        if (l_ec_copy) in_logger->log(level::off, magic_enum::enum_name(process_message::state::run));
       } break;
       default:
         break;
     }
   }
-  in_logger->log(log_loc(), level::off, magic_enum::enum_name(process_message::state::pause));
   co_return std::tuple{boost::system::error_code{}, l_out};
 }
 
@@ -448,7 +445,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   in_logger->warn("排队导入文件 {} ", in_args->down_info_.render_project_);
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     in_logger->error(" 用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
@@ -465,7 +461,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     if (!l_ec) break;
     in_logger->warn("导入文件失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
-    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
@@ -478,7 +473,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
       in_logger->error("渲染删除上次输出错误 error:{}", err.what());
     }
   }
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     in_logger->error(" 用户取消操作");
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
@@ -494,7 +488,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     if (!l_ec) break;
     in_logger->warn("渲染失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
-    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
@@ -562,17 +555,14 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
       break;
     }
     in_logger->warn("运行maya错误, 开始第{}次重试", i + 1);
-    in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   }
   if (l_ec) co_return std::tuple(l_ec, FSys::path{});
 
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
   in_args->maya_out_arg_ = l_out;
   auto [l_ec2, l_ret]    = co_await async_import_and_render_ue(in_args, in_logger);
   if (l_ec2) {
     co_return std::tuple(l_ec2, FSys::path{});
   }
-  in_logger->log(level::off, magic_enum::enum_name(process_message::state::pause));
 
   // 合成视屏
   in_logger->warn("开始合成视屏 :{}", l_ret);
