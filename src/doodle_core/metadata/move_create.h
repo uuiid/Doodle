@@ -5,17 +5,16 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-
-#include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/shot.h>
 
 namespace doodle::movie {
 class DOODLE_CORE_API image_watermark {
-public:
-  using rgba_t = std::array<std::double_t, 4>;
+ public:
+  using rgba_t      = std::array<std::double_t, 4>;
   image_watermark() = default;
   image_watermark(
-    std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, rgba_t in_rgba
+      std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, rgba_t in_rgba
   );
   std::string text_attr{};
   std::double_t width_proportion_attr{};
@@ -25,8 +24,7 @@ public:
 };
 
 class DOODLE_CORE_API image_attr : boost::totally_ordered<image_attr> {
-
-public:
+ public:
   image_attr() = default;
   explicit image_attr(FSys::path in_path);
 
@@ -37,12 +35,11 @@ public:
 
   static void extract_num(std::vector<image_attr>& in_image_list);
 
-
   static std::vector<image_attr> make_default_attr(
-    const episodes* in_episodes, const shot* in_shot, const std::vector<FSys::path>& in_path_list
+      const episodes* in_episodes, const shot* in_shot, const std::vector<FSys::path>& in_path_list
   );
 
   bool operator<(const image_attr& in_rhs) const noexcept;
   bool operator==(const image_attr& in_rhs) const noexcept;
 };
-} // namespace doodle::movie
+}  // namespace doodle::movie
