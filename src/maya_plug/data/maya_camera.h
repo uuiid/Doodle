@@ -34,7 +34,6 @@ class maya_camera {
     bool operator>=(const camera& in_rhs) const;
   };
 
- public:
   /**
    * @brief 这个路径是相机形状的路径而不是相机变换的路径
    */
@@ -42,6 +41,7 @@ class maya_camera {
   maya_camera();
   explicit maya_camera(const MDagPath& in_path);
 
+ public:
   /**
    * @brief 烘培动画关键帧
    * @param in_start 开始时间
