@@ -41,7 +41,7 @@
 namespace doodle::maya_plug {
 
 bool cloth_sim::post(const nlohmann::json& in_argh) {
-  bool l_ret = false;
+  bool l_ret                    = false;
   maya_exe_ns::qcloth_arg l_arg = in_argh.get<maya_exe_ns::qcloth_arg>();
 
   if (l_arg.file_path.empty()) return l_ret;
@@ -60,7 +60,6 @@ bool cloth_sim::post(const nlohmann::json& in_argh) {
     }
   }
 
-  g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
   (MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)}));

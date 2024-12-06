@@ -120,7 +120,6 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
   lib_guard_     = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 
   l_ret          = true;
-  g_ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
   maya_file_io::set_workspace(l_arg.file_path);
