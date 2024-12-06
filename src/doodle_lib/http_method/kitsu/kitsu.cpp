@@ -13,7 +13,6 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computer.h>
-#include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
@@ -25,6 +24,7 @@
 #include <doodle_lib/http_method/model_library/assets_tree.h>
 #include <doodle_lib/http_method/model_library/thumbnail.h>
 #include <doodle_lib/http_method/task_info.h>
+#include <doodle_lib/http_method/tool_version.h>
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
@@ -47,41 +47,15 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
 
 namespace kitsu {
 namespace {
+
 boost::asio::awaitable<void> init_context_impl() {
   {
     auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_project();
     if (!l_c) co_return default_logger_raw()->error(l_c.error());
 
-    std::map<std::string, project_helper::database_t> l_prj_maps{};
-    std::map<std::string, project> l_prj_maps2{};
-    {
-      auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
-      for (auto&& l : l_prjs) l_prj_maps.emplace(l.name_, l);
-      for (auto&& l_v : register_file_type::get_project_list()) {
-        l_prj_maps2.emplace(l_v.p_name, l_v);
-      }
-    }
     auto l_prj_install = std::make_shared<std::vector<project_helper::database_t>>();
     for (auto&& l_prj : l_c.value()) {
-      if (!l_prj_maps.contains(l_prj.name_)) {
-        if (l_prj_maps2.contains(l_prj.name_))
-          l_prj_install->emplace_back(
-              project_helper::database_t{
-                  .uuid_id_          = l_prj.uuid_id_,
-                  .name_             = l_prj_maps2[l_prj.name_].p_name,
-                  .path_             = l_prj_maps2[l_prj.name_].p_path,
-                  .en_str_           = l_prj_maps2[l_prj.name_].p_en_str,
-                  .shor_str_         = l_prj_maps2[l_prj.name_].p_shor_str,
-                  .local_path_       = l_prj_maps2[l_prj.name_].p_local_path,
-                  .auto_upload_path_ = l_prj_maps2[l_prj.name_].p_auto_upload_path.generic_string()
-              }
-          );
-        else
-          l_prj_install->emplace_back(l_prj);
-      } else if (l_prj_maps[l_prj.name_].uuid_id_ != l_prj.uuid_id_) {
-        l_prj_maps[l_prj.name_].uuid_id_ = l_prj.uuid_id_;
-        l_prj_install->emplace_back(l_prj_maps[l_prj.name_]);
-      }
+      l_prj_install->emplace_back(l_prj);
     }
     if (!l_prj_install->empty())
       if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_prj_install); !l_r)

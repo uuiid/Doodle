@@ -110,14 +110,6 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   project l_project{};
   l_episodes.analysis(l_file);
   l_shot.analysis(l_file);
-  auto l_prj_list = register_file_type::get_project_list();
-  auto l_it = ranges::find_if(l_prj_list, [&](const project& in_prj) { return l_strm.starts_with(in_prj.p_shor_str); });
-  if (l_it != l_prj_list.end()) {
-    l_project = *l_it;
-  } else {
-    default_logger_raw()->error("未找到项目: {}", l_strm);
-    return true;
-  }
 
   entt::handle l_msg{*g_reg(), g_reg()->create()};
 

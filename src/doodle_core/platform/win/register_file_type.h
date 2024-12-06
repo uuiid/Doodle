@@ -15,18 +15,7 @@ class register_file_type {
  public:
   register_file_type();
 
-  void register_type();
-
-  static FSys::path get_main_project();
-  static FSys::path get_update_path();
-  static const std::vector<project>& get_project_list();
   static FSys::path program_location();
-
-  // 获取服务器地址
-  static std::string get_server_address();
-
-  // 获取服务器快照保存位置
-  static FSys::path get_server_snapshot_path();
 };
 
 }  // namespace doodle
