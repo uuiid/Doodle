@@ -39,9 +39,8 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
 
-  std::array<FSys::path, 10> project_root;
   std::locale utf8_locale;
-  void add_recent_project(const FSys::path &in);
+
 
   static std::string get_render_url();
 

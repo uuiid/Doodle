@@ -127,7 +127,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["organization_name"]        = p.organization_name;
   j["max_thread"]               = p.p_max_thread;
   j["timeout"]                  = p.timeout;
-  j["project_root"]             = p.project_root;
   j["ue4_path"]                 = p.ue4_path;
   j["ue4_version"]              = p.ue4_version;
   j["maya_replace_save_dialog"] = p.maya_replace_save_dialog;
@@ -151,7 +150,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.count("ue4_version")) j["ue4_version"].get_to(p.ue4_version);
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("timeout").get_to(p.timeout);
-  if (j.contains("project_root")) j.at("project_root").get_to(p.project_root);
   if (j.contains("maya_replace_save_dialog")) j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
   if (j.contains("maya_force_resolve_link")) j.at("maya_force_resolve_link").get_to(p.maya_force_resolve_link);
   if (j.contains("user_id"))
@@ -168,15 +166,7 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("next_time_")) j.at("next_time_").get_to(p.next_time_);
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
 }
-void core_set::add_recent_project(const FSys::path &in) {
-  auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
-  if (k_find_root != project_root.end())
-    std::swap(project_root[0], *k_find_root);
-  else {
-    std::rotate(project_root.rbegin(), project_root.rbegin() + 1, project_root.rend());
-    project_root[0] = in;
-  }
-}
+
 std::string core_set::get_uuid_str(const std::string &in_add) { return get_uuid_str() + in_add; }
 
 }  // namespace doodle
