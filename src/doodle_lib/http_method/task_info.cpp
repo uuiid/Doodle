@@ -151,6 +151,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
   void flush_() override {}
   void set_state() {
     task_info_->status_ = server_task_info_status::running;
+    task_info_->run_time_ = std::chrono::system_clock::now();
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached);
   }
 };
@@ -194,7 +195,8 @@ boost::asio::awaitable<void> run_post_task_local_impl(
     std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 ) {
   in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
-  auto [l_e, l_r] = co_await async_run_maya(in_arg, in_logger);
+  auto [l_e, l_r]         = co_await async_run_maya(in_arg, in_logger);
+  in_task_info->end_time_ = std::chrono::system_clock::now();
   if (l_e) {
     // 用户取消
     if (l_e == boost::system::errc::operation_canceled) co_return;
@@ -231,7 +233,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       l_task.get_to(*l_arg_t);
       l_arg = l_arg_t;
     } else if (l_task.contains("is_sim")) {
-
     } else {
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       l_task.get_to(*l_arg_t);
