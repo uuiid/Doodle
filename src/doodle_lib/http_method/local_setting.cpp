@@ -26,8 +26,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_local_setting(
           {"maya_parallel_quantity", core_set::get_set().p_max_thread},
           {"authorize", l_a},
           {"maya_path", maya_exe_ns::find_maya_path()},
-          {"UE_path", core_set::get_set().ue4_path}
-      }.dump()
+          {"UE_path", core_set::get_set().ue4_path},
+          {"UE_version", core_set::get_set().ue4_version},
+      }
+          .dump()
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(session_data_ptr in_handle) {
@@ -42,6 +44,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
       if (auto& l_a = l_json["authorize"]; l_a.is_string() && authorization{l_a.get<std::string>()}.is_expire())
         core_set::get_set().authorize_ = l_a.get<std::string>();
 
+    if (l_json.contains("UE_path")) core_set::get_set().ue4_path = l_json["UE_path"].get<std::string>();
+    if (l_json.contains("UE_version")) core_set::get_set().ue4_version = l_json["UE_version"].get<std::string>();
     core_set::get_set().save();
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的json");
@@ -53,9 +57,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
           {"maya_parallel_quantity", core_set::get_set().p_max_thread},
           {"authorize", l_a},
           {"maya_path", maya_exe_ns::find_maya_path()},
-          {"UE_path", core_set::get_set().ue4_path}
+          {"UE_path", core_set::get_set().ue4_path},
+          {"UE_version", core_set::get_set().ue4_version},
 
-      }.dump()
+      }
+          .dump()
   );
 }
 }  // namespace
