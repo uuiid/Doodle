@@ -9,7 +9,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/thread_pool/image_to_movie.h>
 
 #include <doodle_lib/long_task/image_to_move.h>
 
