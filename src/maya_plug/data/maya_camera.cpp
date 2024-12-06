@@ -40,43 +40,6 @@ void maya_camera::chick() const {
   DOODLE_MAYA_CHICK(k_s);
 }
 
-std::tuple<bool, FSys::path> maya_camera::export_file(
-    const MTime& in_start, const MTime& in_end,
-    const std::shared_ptr<reference_file_ns::generate_fbx_file_path>& in_name
-) {
-  chick();
-
-  MStatus k_s{};
-  MSelectionList k_select{};
-  k_s = k_select.add(p_path);
-  DOODLE_MAYA_CHICK(k_s);
-  k_s = MGlobal::setActiveSelectionList(k_select);
-  DOODLE_MAYA_CHICK(k_s);
-  /// \brief 开始创建路径并进行导出
-  in_name->is_camera(true);
-  auto k_file_path = (*in_name)({});
-  auto k_comm      = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
-  k_s              = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = std::string{"FBXExportConstraints -v false;"};
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  return {true, k_file_path};
-}
 bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
   chick();
   MStatus k_s{};
@@ -159,7 +122,12 @@ bool maya_camera::unlock_attr() {
 maya_camera maya_camera::conjecture() {
   {
     default_logger_raw()->warn("先旧版本相机测试");
-    auto l_list = project_config::base_config::get_default().maya_camera_select;
+    static auto l_list = std::vector{
+        {std::make_pair(R"(front|persp|side|top|camera)"s, -1000), std::make_pair(R"(ep\d+_sc\d+)"s, 30),
+         std::make_pair(R"(ep\d+)"s, 10), std::make_pair(R"(sc\d+)"s, 10), std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
+         std::make_pair(R"(ep_\d+)"s, 5), std::make_pair(R"(sc_\d+)"s, 5), std::make_pair(R"(^[A-Z]+_)"s, 2),
+         std::make_pair(R"(_\d+_\d+)"s, 2)}
+    };
     auto l_reg_list =
         l_list |
         ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
@@ -198,12 +166,6 @@ maya_camera maya_camera::conjecture() {
     }
   }
   default_logger_raw()->warn("新版本相机测试");
-  auto l_prj_list = register_file_type::get_project_list();
-  std::set<std::string> l_prj_set{};
-  for (const auto& l_prj : l_prj_list) {
-    l_prj_set.insert(l_prj.p_shor_str);
-  }
-
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
   DOODLE_MAYA_CHICK(k_s);
@@ -221,9 +183,6 @@ maya_camera maya_camera::conjecture() {
 
     auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1) - 1);
     default_logger_raw()->warn("获取场景名称 {}, 并开始测试相机 {}", l_s_name, l_sub);
-    if (!l_prj_set.contains(k_path_str.substr(1, 2))) {
-      continue;
-    }
     if (std::regex_search(l_sub, l_re) && l_sub == l_s_name) {
       l_cam_dag_path = k_path;
       break;

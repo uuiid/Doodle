@@ -41,15 +41,7 @@ class maya_camera {
   MDagPath p_path;
   maya_camera();
   explicit maya_camera(const MDagPath& in_path);
-  /**
-   * @brief 将相机导出到文件中,
-   * @return 如果dag path 无效则返回false
-   * @throw maya_error maya返回值错误
-   */
-  std::tuple<bool, FSys::path> export_file(
-      const MTime& in_start, const MTime& in_end,
-      const std::shared_ptr<reference_file_ns::generate_fbx_file_path>& in_name
-  );
+
   /**
    * @brief 烘培动画关键帧
    * @param in_start 开始时间

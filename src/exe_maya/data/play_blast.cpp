@@ -109,11 +109,7 @@ FSys::path play_blast::get_out_path() const {
   return p_save_path;
 }
 
-bool play_blast::conjecture_camera() {
-  auto& k_cam = g_reg()->ctx().emplace<maya_camera>();
-  k_cam.conjecture();
-  return true;
-}
+
 
 MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   p_uuid = core_set::get_set().get_uuid_str();

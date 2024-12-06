@@ -68,7 +68,6 @@ void export_fbx_facet::export_fbx() {
       if (!l_path.empty()) l_out_arg.out_file_list.emplace_back(FSys::path{}, l_path);
     }
   }
-  g_reg()->ctx().emplace<maya_camera>().conjecture();
   auto l_cam_path = l_ex.export_cam(l_gen, film_aperture_);
 
   l_out_arg.out_file_list.emplace_back(l_cam_path, FSys::path{});

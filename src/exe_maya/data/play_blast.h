@@ -42,7 +42,6 @@ class play_blast {
 
   MStatus play_blast_(const MTime& in_start, const MTime& in_end);
 
-  bool conjecture_camera();
   bool conjecture_ep_sc();
 
   FSys::path set_save_path(const FSys::path& in_save_path);

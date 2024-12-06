@@ -180,7 +180,6 @@ void cloth_sim::play_blast() {
   class play_blast l_p {};
 
   const MTime k_end_time = MAnimControl::maxTime();
-  l_p.conjecture_camera();
   l_p.set_save_dir(maya_file_io::work_path() / "mov");
   l_p.conjecture_ep_sc();
   l_p.play_blast_(anim_begin_time_, k_end_time);
@@ -234,7 +233,6 @@ void cloth_sim::export_anim_file() {
       }
   );
   // 导出相机
-  g_reg()->ctx().emplace<maya_camera>().conjecture();
   camera_path_ = l_ex.export_cam(l_gen, film_aperture_);
 }
 void cloth_sim::write_config() {
