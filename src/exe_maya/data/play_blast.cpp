@@ -17,14 +17,12 @@
 #include "maya_plug/main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 
-#include "maya/MApiNamespace.h"
 #include "maya/MRenderTargetManager.h"
 #include "maya/MStatus.h"
 #include "maya/MString.h"
 #include "maya/MTextureManager.h"
 #include <cstdint>
 #include <fmt/chrono.h>
-#include <fmt/ostream.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDrawContext.h>
