@@ -8,7 +8,7 @@
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-$DoodleSource = Convert-Path "$PWD/../../build/Ninja_release/_CPack_Packages/win64/ZIP"
+$DoodleSource = Convert-Path "$PWD/../build/Ninja_release/_CPack_Packages/win64/ZIP"
 $DoodleName = (Get-ChildItem $DoodleSource -Directory)[0].Name
 
 Write-Host "从 "$DoodleSource\$DoodleName\bin" 复制到 192.168.40.181\tmp"
