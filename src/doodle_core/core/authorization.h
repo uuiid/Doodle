@@ -19,6 +19,7 @@ class DOODLE_CORE_API authorization {
   explicit authorization(const std::string& in_data);
   virtual ~authorization();
 
+  /// 检查授权是否过期
   [[nodiscard]] bool is_expire() const;
   void save(const FSys::path& in_path) const;
   void save() const;
