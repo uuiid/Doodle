@@ -13,9 +13,11 @@
 
 namespace doodle {
 namespace {
-FSys::path down_copy_file(FSys::path in_ue_prject_path, logger_ptr in_logger, const project& in_project) {
+FSys::path down_copy_file(
+    FSys::path in_ue_prject_path, logger_ptr in_logger, const std::string& in_project_short_string
+) {
   static auto g_root{FSys::path{doodle_config::g_cache_path}};
-  auto l_local_root = g_root / "check" / in_project.p_shor_str / in_ue_prject_path.stem();
+  auto l_local_root = g_root / "check" / in_project_short_string / in_ue_prject_path.stem();
   in_logger->info("复制UE文件到本机缓存文件夹 {} {}", in_ue_prject_path.string(), l_local_root.string());
   if (!FSys::exists(l_local_root)) {
     FSys::create_directories(l_local_root);
@@ -99,7 +101,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   // 复制UE文件到本机缓存文件夹
   try {
-    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger, in_args->project_);
+    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger, in_args->project_.shor_str_);
   } catch (const FSys::filesystem_error& error) {
     co_return std::make_tuple(error.code(), error.what());
   }
@@ -109,7 +111,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   auto l_arg = std::make_shared<maya_exe_ns::export_fbx_arg>();
   maya_exe_ns::maya_out_arg l_out{};
   l_arg->rig_file_export_ = true;
-  l_arg->file_path       = in_args->maya_rig_file_;
+  l_arg->file_path        = in_args->maya_rig_file_;
   for (int i = 0; i < 3; ++i) {
     std::tie(l_ec, l_out) = co_await async_run_maya(l_arg, in_logger);
     if (!l_ec) {
@@ -251,12 +253,12 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::tuple(l_ec, l_err_msg);
   }
   std::error_code l_ec2{};
-  auto l_target = l_face_data.front().project_.p_path / "03_Workflow" /
+  auto l_target = l_face_data.front().project_.path_ / "03_Workflow" /
                   magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename();
   if (!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
   FSys::copy(
       l_out_file,
-      l_face_data.front().project_.p_path / "03_Workflow" / magic_enum::enum_name(l_face_data.front().type_) /
+      l_face_data.front().project_.path_ / "03_Workflow" / magic_enum::enum_name(l_face_data.front().type_) /
           l_out_file.filename(),
       FSys::copy_options::update_existing, l_ec2
   );

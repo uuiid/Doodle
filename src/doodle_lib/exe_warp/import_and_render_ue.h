@@ -24,7 +24,7 @@ struct import_files_t {
 };
 
 struct import_data_t {
-  project project_;
+  project_helper::database_t project_;
   std::int32_t begin_time;
   std::int32_t end_time;
   episodes episode;
@@ -46,7 +46,7 @@ struct import_data_t {
   std::vector<import_files_t> files;
 
   friend void to_json(nlohmann::json& j, const import_data_t& p) {
-    j["project"]            = p.project_.p_shor_str;
+    j["project"]            = p.project_.shor_str_;
     j["begin_time"]         = p.begin_time;
     j["end_time"]           = p.end_time;
     j["episode"]            = p.episode.p_episodes;
@@ -81,7 +81,7 @@ struct down_info {
 struct args {
   episodes episodes_{};
   shot shot_{};
-  project project_{};
+  project_helper::database_t project_{};
   maya_exe_ns::maya_out_arg maya_out_arg_{};
   down_info down_info_{};
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
@@ -97,7 +97,7 @@ struct association_data {
   details::assets_type_enum type_{};
   FSys::path ue_prj_path_{};
   FSys::path export_file_{};
-  project project_{};
+  project_helper::database_t project_{};
 };
 
 // 清除 1001 以前的帧数

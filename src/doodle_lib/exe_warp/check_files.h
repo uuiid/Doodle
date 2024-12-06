@@ -23,7 +23,7 @@ struct check_files_arg_t {
 
   check_type check_type_;
 
-  project project_;
+  project_helper::database_t project_;
 };
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(

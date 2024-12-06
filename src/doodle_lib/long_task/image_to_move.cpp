@@ -83,17 +83,17 @@ auto create_gamma_LUT_table(const std::double_t& in_gamma) {
 }  // namespace
 
 FSys::path create_out_path(
-    const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot, const project* in_project
+    const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot, const std::string& in_project_short_string
 ) {
   FSys::path l_out = in_dir;
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
   if (!l_out.has_extension()) {
-    if (!in_project)
+    if (in_project_short_string.empty())
       l_out /= fmt::format("EP{:03}_SC{:03}{}.mp4", in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum);
     else
       l_out /= fmt::format(
-          "{}_EP{:03}_SC{:03}{}.mp4", in_project->p_shor_str, in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum
+          "{}_EP{:03}_SC{:03}{}.mp4", in_project_short_string, in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum
       );
   } else
     l_out.extension().replace_extension(".mp4");

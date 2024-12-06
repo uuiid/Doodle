@@ -106,8 +106,6 @@ FSys::path play_blast::get_out_path() const {
   return p_save_path;
 }
 
-
-
 MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   p_uuid = core_set::get_set().get_uuid_str();
   MStatus k_s{};
@@ -227,7 +225,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     renderer->unsetOutputTargetOverrideSize();
   }
 
-  auto l_out_path = detail::create_out_path(get_out_path(), p_eps, p_shot, nullptr);
+  auto l_out_path = detail::create_out_path(get_out_path(), p_eps, p_shot);
   detail::create_move(l_out_path, spdlog::default_logger(), l_handle_list);
   auto k_f = get_file_dir();
   default_logger_raw()->log(log_loc(), spdlog::level::info, "完成视频合成 {} , 并删除图片 {}", l_out_path, k_f);
