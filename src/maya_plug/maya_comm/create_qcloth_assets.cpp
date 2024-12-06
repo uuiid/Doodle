@@ -443,7 +443,6 @@ cloth_group get_cloth_group() {
  *  需要读取配置文件中的各个属性, 进行标准的重命名
  */
 std::vector<entt::handle> create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list) {
-  auto& k_ref = g_reg()->ctx().get<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 

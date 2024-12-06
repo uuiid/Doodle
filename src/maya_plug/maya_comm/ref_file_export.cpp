@@ -46,9 +46,7 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
 
   auto l_gen               = std::make_shared<reference_file_ns::generate_abc_file_path>();
 
-  auto l_config_export     = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
-
-  const MTime l_begin_time = MTime{boost::numeric_cast<std::double_t>(l_config_export), MTime::uiUnit()};
+  const MTime l_begin_time = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
   const MTime l_end_time   = MAnimControl::maxTime();
   l_gen->begin_end_time    = std::make_pair(l_begin_time, l_end_time);
 
