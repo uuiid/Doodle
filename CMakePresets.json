@@ -176,23 +176,12 @@
   ],
   "packagePresets": [
     {
-      "name": "package_7z_debug",
-      "displayName": "package_7z_debug",
-      "description": "package_7z_debug",
-      "configurePreset": "Ninja_debug",
-      "generators": [
-        "ZIP",
-        "NSIS"
-      ]
-    },
-    {
       "name": "package_release",
       "displayName": "package_release",
       "description": "package_release",
       "configurePreset": "Ninja_release",
       "generators": [
-        "ZIP",
-        "NSIS"
+        "ZIP"
       ]
     }
   ],
@@ -223,19 +212,19 @@
     {
       "name": "build_debug",
       "displayName": "build_debug",
-      "description": "构建debug工作流",
+      "description": "所有的构建一遍进行测试",
       "steps": [
         {
           "type": "configure",
-          "name": "Ninja_debug"
+          "name": "Ninja_release"
         },
         {
           "type": "build",
-          "name": "debug_doodle"
+          "name": "Release_Exe"
         },
         {
-          "type": "package",
-          "name": "package_7z_debug"
+          "type": "build",
+          "name": "Release_Maya"
         }
       ]
     }
