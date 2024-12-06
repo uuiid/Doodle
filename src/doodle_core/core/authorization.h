@@ -8,7 +8,7 @@
 namespace doodle {
 class DOODLE_CORE_API authorization {
   class impl;
-  std::unique_ptr<impl> p_i;
+  std::shared_ptr<impl> p_i;
 
   bool is_build_near();
 

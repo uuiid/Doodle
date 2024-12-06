@@ -66,7 +66,7 @@ void authorization::load_authorization_data(const std::string& in_data) {
   *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
 }
 
-authorization::authorization(const std::string& in_data) : p_i(std::make_unique<impl>()) {
+authorization::authorization(const std::string& in_data) : p_i(std::make_shared<impl>()) {
   if (is_build_near()) {
     default_logger_raw()->info("使用构建时间授权");
     return;
