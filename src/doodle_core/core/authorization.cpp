@@ -22,7 +22,6 @@ class authorization::impl {
 
  public:
   time_point_wrap l_time{2020, 1, 1};
-  std::string ciphertext_data{};
 };
 
 bool authorization::is_build_near() {
@@ -40,7 +39,7 @@ bool authorization::is_build_near() {
 }
 
 void authorization::load_authorization_data(const std::string& in_data) {
-  DOODLE_LOG_INFO("开始检查授权文件内容");
+  default_logger_raw()->info("使用构建时间授权");
 
   std::string decryptedtext{};
 
@@ -64,65 +63,17 @@ void authorization::load_authorization_data(const std::string& in_data) {
     return;
   }
 
-  *p_i                 = nlohmann::json::parse(decryptedtext).get<impl>();
-  p_i->ciphertext_data = in_data;
-}
-
-void authorization::load_authorization_data(std::istream& in_path) {
-  DOODLE_LOG_INFO("开始检查授权文件内容");
-
-  std::string decryptedtext{};
-
-  try {
-    CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
-    l_decryption.SetKeyWithIV(
-        doodle_config::cryptopp_key.data(), doodle_config::cryptopp_key.size(), doodle_config::cryptopp_iv.data(),
-        doodle_config::cryptopp_iv.size()
-    );
-
-    CryptoPP::FileSource l_file{
-        in_path, true,
-        new CryptoPP::HexDecoder{new CryptoPP::AuthenticatedDecryptionFilter{
-            l_decryption, new CryptoPP::StringSink{decryptedtext},
-            CryptoPP::AuthenticatedDecryptionFilter::DEFAULT_FLAGS, doodle_config::cryptopp_tag_size
-        }}
-    };
-    //    l_file.Flush(true);
-  } catch (const CryptoPP::Exception& error) {
-    log_error(fmt::format("解析授权码错误 : {}", error.what()));
-    return;
-  }
   *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
-  in_path.clear();
-  in_path.seekg(0, std::ios::beg);
-  p_i->ciphertext_data = std::string{std::istreambuf_iterator<char>{in_path}, std::istreambuf_iterator<char>{}};
 }
 
 authorization::authorization(const std::string& in_data) : p_i(std::make_unique<impl>()) {
+  if (is_build_near()) {
+    default_logger_raw()->info("使用构建时间授权");
+    return;
+  }
   load_authorization_data(in_data);
 }
 
-authorization::authorization() : p_i(std::make_unique<impl>()) {
-  auto l_p  = register_file_type::program_location() / doodle_config::token_name.data();
-  auto l_p1 = core_set::get_set().get_doc() / doodle_config::token_name.data();
-
-  if (FSys::exists(l_p) && FSys::exists(l_p1))
-    l_p = FSys::last_write_time_point(l_p) < FSys::last_write_time_point(l_p1) ? l_p1 : l_p;
-  else
-    l_p = FSys::exists(l_p) ? l_p : l_p1;
-
-  if (is_build_near()) {
-    DOODLE_LOG_INFO("近期构建不检查授权内容");
-    return;
-  }
-
-  if (FSys::exists(l_p)) {
-    FSys::ifstream ifstream{l_p, std::ifstream::binary};
-    //    std::string l_s{std::istream_iterator<char>{ifstream}, std::istream_iterator<char>{}};
-    load_authorization_data(ifstream);
-  }
-}
-authorization::~authorization() { save(); }
 bool authorization::is_expire() const { return p_i->l_time > time_point_wrap::now(); }
 void authorization::generate_token(const FSys::path& in_path) {
   DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
@@ -150,14 +101,8 @@ void authorization::generate_token(const FSys::path& in_path) {
     };
   }
 }
-void authorization::save(const FSys::path& in_path) const {
-  if (p_i->ciphertext_data.empty()) return;
-  if (!exists(in_path.parent_path())) create_directories(in_path.parent_path());
-  FSys::ofstream{in_path, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc} << p_i->ciphertext_data;
-}
 
 time_point_wrap::time_duration authorization::get_expire_time() const { return p_i->l_time - time_point_wrap::now(); }
 
-void authorization::save() const { save(core_set::get_set().get_doc() / FSys::path{doodle_config::token_name.data()}); }
 
 }  // namespace doodle

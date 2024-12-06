@@ -67,6 +67,7 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   bool next_time_{};
   boost::uuids::uuid user_id;
 
+  std::string authorize_{};
   void save();
 
  private:
