@@ -11,12 +11,10 @@ echo -----------------set env--------------------
 
 cd %~dp0/../..
 set my_pwd=%cd%
-set cache_file=%my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
 
 call %my_pwd%/.venv/Scripts/activate.bat
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 
-@REM if exist "%my_pwd%/CMakeUserPresets.json" (set Doodle_suffix=_DD)
 
 :end
 
