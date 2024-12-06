@@ -99,7 +99,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
-    j.at("submitter").get_to(p.submitter_);
+    if (j.contains("submitter")) j.at("submitter").get_to(p.submitter_);
+    if (j.contains("run_computer_id"))
     j.at("run_computer_id").get_to(p.run_computer_id_);
   }
 };
