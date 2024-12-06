@@ -22,7 +22,7 @@ namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> get_local_setting(session_data_ptr in_handle) {
   auto l_a = authorization{}.is_expire();
   co_return in_handle->make_msg(
-      nlohmann::json{{"maya_parallel_quantity", core_set::get_set().p_max_thread}, {"authorize", l_a}}.dump()
+      nlohmann::json{{"maya_parallel_quantity", core_set::get_set().p_max_thread}, {"authorize", !l_a}}.dump()
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(session_data_ptr in_handle) {
@@ -40,7 +40,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
   auto l_a = authorization{}.is_expire();
 
   co_return in_handle->make_msg(
-      nlohmann::json{{"maya_parallel_quantity", core_set::get_set().p_max_thread}, {"authorize", l_a}}.dump()
+      nlohmann::json{{"maya_parallel_quantity", core_set::get_set().p_max_thread}, {"authorize", !l_a}}.dump()
   );
 }
 }  // namespace

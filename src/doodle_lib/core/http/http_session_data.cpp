@@ -575,6 +575,7 @@ boost::beast::http::response<boost::beast::http::string_body> session_data::make
   boost::beast::http::response<boost::beast::http::string_body> l_res{boost::beast::http::status::ok, version_};
   l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
   l_res.keep_alive(keep_alive_);
   // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
   //   l_res.body() = zlib_compress(std::move(in_body));
