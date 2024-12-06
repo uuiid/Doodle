@@ -94,8 +94,7 @@
         "test_main",
         "file_association_http",
         "doodle_auto_light_process",
-        "doodle_kitsu_supplement",
-        "Doxygen"
+        "doodle_kitsu_supplement"
       ]
     },
     {
@@ -129,8 +128,7 @@
         "doodle_auto_light_client",
         "file_association_http",
         "doodle_auto_light_process",
-        "doodle_kitsu_supplement",
-        "Doxygen"
+        "doodle_kitsu_supplement"
       ]
     },
     {

@@ -4,11 +4,6 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 include(ExternalProject)
 include(FetchContent)
 
-FetchContent_Declare(
-        doxygenAwesomeCss
-        GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
-        GIT_TAG main
-)
 
 FetchContent_Declare(
         holidaycn
@@ -16,42 +11,8 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-FetchContent_MakeAvailable(doxygenAwesomeCss holidaycn)
+FetchContent_MakeAvailable(holidaycn)
 
-# =====================文档过程===============================
-# 添加文档生成
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-    set(DOXYGEN_WARNINGS YES)
-else ()
-    set(DOXYGEN_EXTRACT_ALL YES)
-    set(DOXYGEN_WARNINGS NO)
-    set(DOXYGEN_QUIET YES)
-endif ()
-set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
-set(DOXYGEN_WARN_IF_DOC_ERROR YES)
-set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
-set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
-
-# set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
-
-# set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
-# set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
-set(DOXYGEN_NUM_PROC_THREADS 0)
-
-# 创建 css 必须的一部份设置
-set(DOXYGEN_GENERATE_TREEVIEW YES)
-set(DOXYGEN_DISABLE_INDEX NO)
-set(DOXYGEN_FULL_SIDEBAR NO)
-set(DOXYGEN_HTML_EXTRA_STYLESHEET ${doxygenawesomecss_SOURCE_DIR}/doxygen-awesome.css)
-
-doxygen_add_docs(Doxygen
-        doodle_core
-        doodle_lib
-        maya_plug
-        exe_maya
-        exe_gui
-        maya_plug_mll
-)
 
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
