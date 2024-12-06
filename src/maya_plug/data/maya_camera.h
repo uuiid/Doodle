@@ -37,11 +37,11 @@ class maya_camera {
   /**
    * @brief 这个路径是相机形状的路径而不是相机变换的路径
    */
-  MDagPath p_path;
   maya_camera();
   explicit maya_camera(const MDagPath& in_path);
 
  public:
+  MDagPath p_path;
   /**
    * @brief 烘培动画关键帧
    * @param in_start 开始时间
