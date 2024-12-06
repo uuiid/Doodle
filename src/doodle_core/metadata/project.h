@@ -2,10 +2,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 namespace doodle {
-namespace project_config {
-class base_config;
 
-}  // namespace project_config
 namespace project_helper {
 struct database_t;
 }

@@ -42,21 +42,7 @@ bool episodes::analysis(const std::string& in_path) {
   }
   return k_r;
 }
-bool episodes::conjecture_season(const entt::handle& in_handle) {
-  if (in_handle.all_of<season>()) return true;
 
-  if (!g_reg()->ctx().contains<project_config::base_config>()) throw_exception(doodle_error{"缺失上下文组件"s});
-
-  if (in_handle.all_of<episodes>()) {
-    auto l_count  = g_reg()->ctx().get<project_config::base_config>().season_count;
-    auto l_eps    = in_handle.get<episodes>().p_episodes;
-    auto l_season = boost::numeric_cast<std::float_t>(l_eps) / boost::numeric_cast<std::float_t>(l_count);
-    in_handle.emplace<season>(std::ceil(l_season));
-    return true;
-  }
-
-  return false;
-}
 bool episodes::analysis_static(const entt::handle& in_handle, const FSys::path& in_path) {
   episodes k_eps{};
   if (k_eps.analysis(in_path)) {

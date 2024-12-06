@@ -24,7 +24,6 @@ class DOODLE_CORE_API episodes {
 
   static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
-  static bool conjecture_season(const entt::handle &in_handle);
   friend std::size_t hash_value(episodes const &value) { return std::hash<std::int32_t>{}(value.p_episodes); }
 
  private:
