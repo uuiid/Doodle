@@ -37,7 +37,6 @@ class scan_category_data_t {
       j.at("path").get_to(p.path_);
     }
   };
-  using project_root_t = project;
 
   // ue文件
   uuid_path_t ue_file_;
@@ -98,8 +97,6 @@ class scan_category_data_t {
 using scan_category_data_ptr = std::shared_ptr<scan_category_data_t>;
 class scan_category_t {
  public:
-  using project_root_t = scan_category_data_t::project_root_t;
-
   logger_ptr logger_;
   std::shared_ptr<boost::asio::cancellation_state> cancellation_state_;
   scan_category_t() {}
