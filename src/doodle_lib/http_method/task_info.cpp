@@ -238,8 +238,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       l_arg = l_arg_t;
     }
 
-    if (l_ptr->exe_.empty())
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
     auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                          fmt::format("{}.log", l_ptr->uuid_id_);
     l_logger_ptr = std::make_shared<spdlog::async_logger>(
