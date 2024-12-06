@@ -1,20 +1,18 @@
-#Set-Item WSMan:\localhost\Client\TrustedHosts -Value '*'
+﻿#Set-Item WSMan:\localhost\Client\TrustedHosts -Value '*'
 #Set-Item WSMan:\localhost\Client\Auth\Basic -Value True
 #Set-Item WSMan:\localhost\Service\Auth\Basic -Value True
 #Set-Item WSMan:\localhost\Client\AllowUnencrypted -Value True
 #Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value True
 # Get-ExecutionPolicy
 # Set-ExecutionPolicy RemoteSigned
-$DoodleSource = Convert-Path "$PWD/../../build/Ninja_release/_CPack_Packages/win64/ZIP"
-$DoodleName = ""
-$DoodleBin = ""
-Get-ChildItem $DoodleSource -Directory | ForEach-Object {
-    $DoodleName = $_.Name
-    $DoodleBin = "$DoodleSource\$DoodleName\bin"
-}
 
-Write-Host "从 $DoodleBin 复制到 192.168.40.181\tmp"
-&robocopy $DoodleBin "\\192.168.40.181\tmp\bin" /MIR
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+$DoodleSource = Convert-Path "$PWD/../../build/Ninja_release/_CPack_Packages/win64/ZIP"
+$DoodleName = (Get-ChildItem $DoodleSource -Directory)[0].Name
+
+Write-Host "从 "$DoodleSource\$DoodleName\bin" 复制到 192.168.40.181\tmp"
+&robocopy "$DoodleSource\$DoodleName\bin" "\\192.168.40.181\tmp\bin" /MIR
 &robocopy "E:\source\kitsu\dist" "\\192.168.40.181\tmp\dist" /MIR
 
 Copy-Item "$DoodleSource/$DoodleName.zip" -Destination "\\192.168.40.181\tmp\dist"
