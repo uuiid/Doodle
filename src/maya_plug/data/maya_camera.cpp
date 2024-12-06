@@ -123,16 +123,23 @@ maya_camera maya_camera::conjecture() {
   {
     default_logger_raw()->warn("先旧版本相机测试");
     static auto l_list = std::vector{
-        {std::make_pair(R"(front|persp|side|top|camera)"s, -1000), std::make_pair(R"(ep\d+_sc\d+)"s, 30),
-         std::make_pair(R"(ep\d+)"s, 10), std::make_pair(R"(sc\d+)"s, 10), std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
-         std::make_pair(R"(ep_\d+)"s, 5), std::make_pair(R"(sc_\d+)"s, 5), std::make_pair(R"(^[A-Z]+_)"s, 2),
-         std::make_pair(R"(_\d+_\d+)"s, 2)}
+        std::make_pair(R"(front|persp|side|top|camera)"s, -1000),
+        std::make_pair(R"(ep\d+_sc\d+)"s, 30),
+        std::make_pair(R"(ep\d+)"s, 10),
+        std::make_pair(R"(sc\d+)"s, 10),
+        std::make_pair(R"(ep_\d+_sc_\d+)"s, 10),
+        std::make_pair(R"(ep_\d+)"s, 5),
+        std::make_pair(R"(sc_\d+)"s, 5),
+        std::make_pair(R"(^[A-Z]+_)"s, 2),
+        std::make_pair(R"(_\d+_\d+)"s, 2)
     };
     auto l_reg_list =
         l_list |
-        ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
-          return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
-        }) |
+        ranges::views::transform(
+            [](const std::pair<std::string, std::int32_t>& in_camera_judge) -> regex_priority_pair {
+              return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
+            }
+        ) |
         ranges::to_vector;
 
     MStatus k_s;

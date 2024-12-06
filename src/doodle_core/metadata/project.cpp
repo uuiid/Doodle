@@ -174,9 +174,9 @@ project_config::base_config project_config::base_config::get_default() {
   };
   l_config.icon_extensions         = {".png", ".jpg", ".jpeg", ".tif"};
   l_config.export_group            = "UE4";
-  l_config.cloth_proxy_            = "_cloth_proxy";
+  l_config.cloth_proxy_            = "";
   l_config.use_only_sim_cloth      = true;
-  l_config.simple_module_proxy_    = "_proxy";
+  l_config.simple_module_proxy_    = "";
   l_config.maya_camera_suffix      = "camera";
   l_config.maya_out_put_abc_suffix = "_output_abc";
   l_config.season_count            = 20;

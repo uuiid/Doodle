@@ -138,50 +138,23 @@ std::vector<FSys::path> export_file_abc::export_sim(
   if (!l_root) {
     return {};
   }
-  begin_time  = l_arg->begin_end_time.first;
-  end_time    = l_arg->begin_end_time.second;
-  m_name      = L_ref.get_namespace();
-
-  auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
+  begin_time = l_arg->begin_end_time.first;
+  end_time   = l_arg->begin_end_time.second;
+  m_name     = L_ref.get_namespace();
 
   std::map<reference_file_ns::generate_abc_file_path, MSelectionList> export_map{};
   std::vector<MDagPath> export_path{};
 
-  if (k_cfg.use_divide_group_export) {
-    ranges::for_each(export_path, [](MDagPath& in) { in.pop(); });
-
-    auto l_suffix = g_reg()->ctx().get<project_config::base_config>().maya_out_put_abc_suffix;
-    export_path   = find_out_group_child_suffix_node(*l_root, l_suffix);
-    export_path |=
-        ranges::actions::unique([](const MDagPath& in_r, const MDagPath& in_l) -> bool { return in_r == in_l; });
-    DOODLE_LOG_INFO("按组划分导出收集完成 {}", fmt::join(export_path, " "));
-    for (auto&& i : export_path) {
-      reference_file_ns::generate_abc_file_path l_name{*g_reg()};
-      auto l_node_name = get_node_name_strip_name_space(i);
-      if (auto l_it = l_node_name.find(l_suffix); l_it != std::string::npos) {
-        l_node_name.erase(l_it, l_suffix.length());
-      }
-
-      l_name.add_external_string = l_node_name;
-      l_name.begin_end_time      = l_arg->begin_end_time;
-      export_map[l_name].add(i, MObject::kNullObj, true);
-    }
-  } else {
-    if (k_cfg.use_only_sim_cloth) {
-      DOODLE_LOG_INFO("只导出解算物体");
-      export_path = L_ref.get_alll_cloth_obj();
-    } else {
-      export_path = child_export_model(*l_root);
-    }
-    DOODLE_LOG_INFO("导出收集完成 {}", fmt::join(export_path, " "));
-    MSelectionList l_list{};
-    for (auto&& i : export_path) {
-      maya_chick(l_list.add(i));
-    }
-    reference_file_ns::generate_abc_file_path l_name{*g_reg()};
-    l_name.begin_end_time = l_arg->begin_end_time;
-    export_map[l_name]    = l_list;
+  DOODLE_LOG_INFO("只导出解算物体");
+  export_path = L_ref.get_alll_cloth_obj();
+  DOODLE_LOG_INFO("导出收集完成 {}", fmt::join(export_path, " "));
+  MSelectionList l_list{};
+  for (auto&& i : export_path) {
+    maya_chick(l_list.add(i));
   }
+  reference_file_ns::generate_abc_file_path l_name{*g_reg()};
+  l_name.begin_end_time = l_arg->begin_end_time;
+  export_map[l_name]    = l_list;
   DOODLE_LOG_INFO("导出划分完成 {}", fmt::join(export_map, " "));
   l_current_export_list.clear();
   std::vector<FSys::path> l_path_ret{};

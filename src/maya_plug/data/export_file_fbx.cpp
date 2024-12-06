@@ -125,12 +125,11 @@ FSys::path export_file_fbx::export_anim(
 FSys::path export_file_fbx::export_rig() {
   MSelectionList l_select{};
   MDagPath l_main_path{};
-  auto& l_cfg = g_reg()->ctx().get<project_config::base_config>();
-  if (auto l_s = l_select.add(d_str{fmt::format(":{}", l_cfg.export_group)}, true); l_s) {
+  if (auto l_s = l_select.add(d_str{fmt::format(":{}", "UE4")}, true); l_s) {
     l_s = l_select.getDagPath(0, l_main_path);
     maya_chick(l_s);
   } else {
-    default_logger_raw()->warn("没有配置中指定的 {} 导出组", l_cfg.export_group);
+    default_logger_raw()->warn("没有配置中指定的 {} 导出组", "UE4");
     return {};
   }
   std::vector<MDagPath> l_export_list{};

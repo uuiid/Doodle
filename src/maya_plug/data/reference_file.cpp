@@ -96,13 +96,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
 }
 
 generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in) : generate_file_path_base() {
-  auto &l_cong           = in.ctx().get<project_config::base_config>();
-  camera_suffix          = l_cong.maya_camera_suffix;
-  extract_reference_name = l_cong.abc_export_extract_reference_name;
-  format_reference_name  = l_cong.abc_export_format_reference_name;
-  extract_scene_name     = l_cong.abc_export_extract_scene_name;
-  format_scene_name      = l_cong.abc_export_format_scene_name;
-  use_add_range          = l_cong.abc_export_add_frame_range;
+  camera_suffix = "camera"s;
 }
 
 FSys::path generate_fbx_file_path::get_path() const {
@@ -273,7 +267,6 @@ bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::p
     return false;
   }
 
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   FSys::path k_m_str{get_abs_path()};
   DOODLE_MAYA_CHICK(k_s);
   auto k_vfx_path = fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
@@ -401,15 +394,14 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
 
   DOODLE_MAYA_CHICK(k_s);
   MSelectionList k_select{};
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   MDagPath l_path;
 
-  k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
+  k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), "UE4")}, true);
   if (k_s) {
     k_s = k_select.getDagPath(0, l_path);
     DOODLE_MAYA_CHICK(k_s);
   } else {
-    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
+    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), "UE4");
   }
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
 }
@@ -484,7 +476,9 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       reference_file k_ref{l_it.thisNode()};
       if (!k_ref.get_namespace().empty()) {
-        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {} {}", k_ref.get_abs_path(), k_ref.get_namespace());
+        default_logger_raw()->log(
+            log_loc(), spdlog::level::info, "获得引用文件 {} {}", k_ref.get_abs_path(), k_ref.get_namespace()
+        );
         auto l_h = entt::handle{*g_reg(), g_reg()->create()};
         l_h.emplace<reference_file>(k_ref);
         l_ret.emplace_back(l_h);

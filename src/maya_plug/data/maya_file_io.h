@@ -23,6 +23,5 @@ class maya_file_io {
       const FSys::path& in_file_path, MFileIO::ReferenceMode in_mode = MFileIO::ReferenceMode::kLoadDefault
   );
 
-  static bool upload_file(const FSys::path& in_source_path, const FSys::path& in_prefix);
 };
 }  // namespace doodle::maya_plug

@@ -193,8 +193,8 @@ void qcloth_shape::add_collision(const entt::handle& in_handle) const {
 }
 void qcloth_shape::rest(const entt::handle& in_handle) const {
   MSelectionList l_list{};
-  auto l_simple_module_proxy_ = g_reg()->ctx().get<project_config::base_config>().simple_module_proxy_;
-  auto l_proxy_               = g_reg()->ctx().get<project_config::base_config>().cloth_proxy_;
+  auto l_simple_module_proxy_ = std::string{"_proxy"};
+  auto l_proxy_               = "_cloth_proxy"s;
   maya_chick(l_list.add(obj));
 
   auto k_plug = get_plug(obj, "outputMesh");
@@ -283,8 +283,8 @@ void qcloth_shape::set_cache_folder_read_only(const entt::handle& in_handle) con
   // DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
   auto k_path         = maya_file_io::work_path(l_cache_folder);
   DOODLE_LOG_WARN("发现缓存路径 {}", k_path);
-  if(!FSys::exists(k_path))
-  throw_error(maya_enum::maya_error_t::cache_path_error, fmt::format("缓存路径 {} 不存在", k_path));
+  if (!FSys::exists(k_path))
+    throw_error(maya_enum::maya_error_t::cache_path_error, fmt::format("缓存路径 {} 不存在", k_path));
   // if (need_clear && FSys::exists(k_path)) {
   // DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
   // FSys::remove_all(k_path);
