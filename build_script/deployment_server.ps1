@@ -29,7 +29,9 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     $Tmp = "D:\tmp"
     if ((Get-FileHash "$Target\bin\file_association_http.exe").Hash -ne (Get-FileHash "$Tmp\bin\file_association_http.exe").Hash)
     {
+        Stop-Service -Force -Name doodle_kitsu_supplement
         &robocopy "$Tmp\bin" "$Target\bin" /MIR
+        Start-Service -Name doodle_kitsu_supplement
     }
     &robocopy "$Tmp\dist" "$Target\dist" /MIR
 }
