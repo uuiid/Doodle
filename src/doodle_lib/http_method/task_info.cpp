@@ -201,7 +201,7 @@ boost::asio::awaitable<void> run_post_task_local_impl(
   in_task_info->end_time_ = std::chrono::system_clock::now();
   if (l_e) {
     // 用户取消
-    if (l_e == boost::system::errc::operation_canceled)
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
       in_task_info->status_ = server_task_info_status::canceled;
     else
       in_task_info->status_ = server_task_info_status::failed;
