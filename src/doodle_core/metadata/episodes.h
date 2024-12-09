@@ -27,8 +27,8 @@ class DOODLE_CORE_API episodes {
   friend std::size_t hash_value(episodes const &value) { return std::hash<std::int32_t>{}(value.p_episodes); }
 
  private:
-  friend void to_json(nlohmann::json &j, const episodes &p) { j["episodes"] = p.p_episodes; }
-  friend void from_json(const nlohmann::json &j, episodes &p) { j.at("episodes").get_to(p.p_episodes); }
+  friend void to_json(nlohmann::json &j, const episodes &p) { j = p.p_episodes; }
+  friend void from_json(const nlohmann::json &j, episodes &p) { j.get_to(p.p_episodes); }
 };
 
 }  // namespace doodle
