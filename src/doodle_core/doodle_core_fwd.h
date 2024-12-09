@@ -99,7 +99,6 @@ class connect_video_interface;
 
 using identifier    = details::identifier;
 
-class convert;
 class doodle_error;
 class user;
 class project;
