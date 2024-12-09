@@ -114,7 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
   auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
   l_mime += "; charset=utf-8";
-  auto l_ex   = in_handle->make_msg(l_path, l_mime);
+  auto l_ex = in_handle->make_msg(l_path, l_mime);
   if (!l_ex) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_ex.error());
   co_return std::move(*l_ex);
 }
@@ -207,8 +207,13 @@ boost::asio::awaitable<void> run_post_task_local_impl(
       in_task_info->status_ = server_task_info_status::failed;
   } else
     in_task_info->status_ = server_task_info_status::completed;
-  auto l_t = co_await g_ctx().get<sqlite_database>().install(in_task_info);
-  if (!l_t) co_return default_logger_raw()->error(l_t.error());
+  boost::asio::co_spawn(
+      g_io_context(), g_ctx().get<sqlite_database>().install(in_task_info),
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::detached
+
+      )
+  );
   co_return;
 }
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
