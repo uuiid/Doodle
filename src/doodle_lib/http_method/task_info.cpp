@@ -216,6 +216,28 @@ boost::asio::awaitable<void> run_post_task_local_impl(
   );
   co_return;
 }
+boost::asio::awaitable<void> run_post_task_local_impl(
+    std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<import_and_render_ue_ns::args> in_arg, logger_ptr in_logger
+) {
+  in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
+  auto [l_e, l_r]         = co_await async_auto_loght(in_arg, in_logger);
+  in_task_info->end_time_ = std::chrono::system_clock::now();
+  // 用户取消
+  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+    in_task_info->status_ = server_task_info_status::canceled;
+  else if (l_e) {
+    in_task_info->status_ = server_task_info_status::failed;
+  } else
+    in_task_info->status_ = server_task_info_status::completed;
+  boost::asio::co_spawn(
+      g_io_context(), g_ctx().get<sqlite_database>().install(in_task_info),
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::detached
+
+      )
+  );
+  co_return;
+}
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
   if (in_handle->content_type_ != http::detail::content_type::application_json)
@@ -239,7 +261,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     if (l_task.contains("replace_ref_file")) {
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
       l_task.get_to(*l_arg_t);
-      l_arg = l_arg_t;
+      l_arg_t->sim_path = l_import_and_render_args->project_.local_path_ / "6-moxing" / "CFX";
+
+      l_arg             = l_arg_t;
     } else if (l_task.contains("file_list")) {
       auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
       l_task.get_to(*l_arg_t);
@@ -247,6 +271,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     } else if (l_task.contains("is_sim")) {
       l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
       l_task.get_to(*l_import_and_render_args);
+      if (l_task["is_sim"].get<bool>()) {
+        auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
+        l_task.get_to(*l_arg_t);
+        l_arg_t->sim_path           = l_import_and_render_args->project_.local_path_ / "6-moxing" / "CFX";
+        l_arg_t->export_file        = true;
+        l_arg_t->touch_sim          = true;
+        l_arg_t->export_anim_file   = true;
+        l_arg_t->create_play_blast_ = true;
+        l_arg                       = l_arg_t;
+      } else {
+        auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
+        l_task.get_to(*l_arg_t);
+        l_arg_t->create_play_blast_ = true;
+      }
+      l_import_and_render_args->maya_arg_ = l_arg;
     } else {
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       l_task.get_to(*l_arg_t);
@@ -268,14 +307,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
 
-  boost::asio::co_spawn(
-      g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
-      boost::asio::bind_cancellation_slot(
-          g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
-          boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
+  if (l_import_and_render_args) {
+    boost::asio::co_spawn(
+    g_io_context(), run_post_task_local_impl(l_ptr, l_import_and_render_args, l_logger_ptr),
+    boost::asio::bind_cancellation_slot(
+        g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
+        boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
 
-      )
-  );
+    )
+);
+  } else {
+    boost::asio::co_spawn(
+        g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
+        boost::asio::bind_cancellation_slot(
+            g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
+            boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
+
+        )
+    );
+  }
+
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
