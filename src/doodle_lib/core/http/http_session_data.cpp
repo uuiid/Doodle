@@ -553,6 +553,7 @@ tl::expected<boost::beast::http::message_generator, std::string> session_data::m
   auto l_set_handle = [&mine_type, this](auto&& in_res) {
     in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     in_res.set(boost::beast::http::field::content_type, mine_type);
+    in_res.set(boost::beast::http::field::access_control_allow_origin, "*");
     in_res.keep_alive(keep_alive_);
     in_res.prepare_payload();
   };

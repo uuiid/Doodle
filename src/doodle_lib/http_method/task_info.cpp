@@ -112,7 +112,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
       core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_uuid);
   if (!FSys::exists(l_path))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
-  auto l_ex = in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
+  l_mime += "; charset=utf-8";
+  auto l_ex   = in_handle->make_msg(l_path, l_mime);
   if (!l_ex) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_ex.error());
   co_return std::move(*l_ex);
 }
@@ -150,7 +152,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
   }
   void flush_() override {}
   void set_state() {
-    task_info_->status_ = server_task_info_status::running;
+    task_info_->status_   = server_task_info_status::running;
     task_info_->run_time_ = std::chrono::system_clock::now();
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached);
   }
@@ -199,11 +201,15 @@ boost::asio::awaitable<void> run_post_task_local_impl(
   in_task_info->end_time_ = std::chrono::system_clock::now();
   if (l_e) {
     // 用户取消
-    if (l_e == boost::system::errc::operation_canceled) co_return;
-    in_task_info->status_ = server_task_info_status::failed;
+    if (l_e == boost::system::errc::operation_canceled)
+      in_task_info->status_ = server_task_info_status::canceled;
+    else
+      in_task_info->status_ = server_task_info_status::failed;
   } else
     in_task_info->status_ = server_task_info_status::completed;
   auto l_t = co_await g_ctx().get<sqlite_database>().install(in_task_info);
+  if (!l_t) co_return default_logger_raw()->error(l_t.error());
+  co_return;
 }
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
