@@ -199,12 +199,11 @@ boost::asio::awaitable<void> run_post_task_local_impl(
   in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
   auto [l_e, l_r]         = co_await async_run_maya(in_arg, in_logger);
   in_task_info->end_time_ = std::chrono::system_clock::now();
-  if (l_e) {
-    // 用户取消
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-      in_task_info->status_ = server_task_info_status::canceled;
-    else
-      in_task_info->status_ = server_task_info_status::failed;
+  // 用户取消
+  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+    in_task_info->status_ = server_task_info_status::canceled;
+  else if (l_e) {
+    in_task_info->status_ = server_task_info_status::failed;
   } else
     in_task_info->status_ = server_task_info_status::completed;
   boost::asio::co_spawn(
