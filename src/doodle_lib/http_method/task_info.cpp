@@ -15,6 +15,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include "computer_reg_data.h"
+#include "exe_warp/import_and_render_ue.h"
 #include "exe_warp/maya_exe.h"
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -224,6 +225,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     );
   auto l_ptr = std::make_shared<server_task_info>();
   std::shared_ptr<maya_exe_ns::arg> l_arg{};
+  std::shared_ptr<import_and_render_ue_ns::args> l_import_and_render_args{};
   logger_ptr l_logger_ptr{};
   try {
     auto l_json = std::get<nlohmann::json>(in_handle->body_);
@@ -243,6 +245,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       l_task.get_to(*l_arg_t);
       l_arg = l_arg_t;
     } else if (l_task.contains("is_sim")) {
+      l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
+      l_task.get_to(*l_import_and_render_args);
     } else {
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       l_task.get_to(*l_arg_t);

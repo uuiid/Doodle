@@ -85,6 +85,12 @@ struct args {
   maya_exe_ns::maya_out_arg maya_out_arg_{};
   down_info down_info_{};
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
+  // from json
+  friend void from_json(const nlohmann::json& j, args& p) {
+    j["episodes"].get_to(p.episodes_);
+    j["shot"].get_to(p.shot_);
+    j["project"].get_to(p.project_);
+  }
 };
 void fix_project(const FSys::path& in_project_path);
 void fix_config(const FSys::path& in_project_path);
