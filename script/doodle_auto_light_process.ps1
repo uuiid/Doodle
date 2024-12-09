@@ -40,8 +40,8 @@
 "[2024-12-06 13:36:49.604] [LQ_EP230_SC002A.ma] [info] Successfully imported python module 'arnold'",
 "[2024-12-06 13:36:49.620] [LQ_EP230_SC002A.ma] [info] Successfully imported python module 'mtoa'",
 "[2024-12-06 13:36:49.966] [LQ_EP230_SC002A.ma] [info] Successfully registered renderer 'arnold'",
-"[2024-12-06 13:36:50.028] [LQ_EP230_SC002A.ma] [info] [2024-12-06 13:36:49.982] [maya_plug] [info] [maya_lib_guard.cpp:44] env MAYA_MODULE_PATH D:/doodle_exe/maya;C:/Program Files/Autodesk/Maya2020//modules;C:/Users/Administrator/Documents/maya/2020/modules";C:/Users/Administrator/Documents/maya/modules;C:/Program Files/Common Files/Autodesk Shared/Modules/maya/2020
-"[2024-12-06 13:36:50.043] [LQ_EP230_SC002A.ma] [info] 鏃ュ織鍒濆鍖栧け璐ynamic exception type: class spdlog::spdlog_ex",
+"[2024-12-06 13:36:50.028] [LQ_EP230_SC002A.ma] [info] [2024-12-06 13:36:49.982] [maya_plug] [info] [maya_lib_guard.cpp:44] env MAYA_MODULE_PATH D:/doodle_exe/maya;C:/Program Files/Autodesk/Maya2020//modules;C:/Users/Administrator/Documents/maya/2020/modules",
+"[2024-12-06 13:36:50.043] [LQ_EP230_SC002A.ma] [info] ynamic exception type: class spdlog::spdlog_ex",
 "[2024-12-06 13:36:50.043] [LQ_EP230_SC002A.ma] [info] std::exception::what: logger with name 'maya_plug' already exists",
 "[2024-12-06 13:36:51.386] [LQ_EP230_SC002A.ma] [info] pymel.internal.startup : ERROR : could not initialize user preferences: C:/Users/Administrator/Documents/maya\2020\prefs does not exist",
 "[2024-12-06 13:36:51.402] [LQ_EP230_SC002A.ma] [info] pymel.internal.startup : WARNING : Maya startup file C:/Users/Administrator/Documents/maya\2020\prefs\userPrefs.mel does not exist",
