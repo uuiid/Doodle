@@ -17,7 +17,6 @@ struct database_t {
   std::filesystem::path path_{};
   std::string en_str_{};
   std::string shor_str_{};
-  std::filesystem::path local_path_{};
   std::string auto_upload_path_{};
 
   friend void to_json(nlohmann::json& j, const database_t& p) {
@@ -29,7 +28,6 @@ struct database_t {
     if (j.contains("path")) j.at("path").get_to(p.path_);
     if (j.contains("en_str")) j.at("en_str").get_to(p.en_str_);
     if (j.contains("code")) j.at("code").get_to(p.shor_str_);
-    if (j.contains("local_path")) j.at("local_path").get_to(p.local_path_);
     if (j.contains("auto_upload_path")) j.at("auto_upload_path").get_to(p.auto_upload_path_);
   }
 };

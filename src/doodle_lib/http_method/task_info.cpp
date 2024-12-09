@@ -275,7 +275,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       if (l_task["is_sim"].get<bool>()) {
         auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
         l_task.get_to(*l_arg_t);
-        l_arg_t->sim_path           = l_import_and_render_args->project_.local_path_ / "6-moxing" / "CFX";
+        l_arg_t->sim_path           = l_import_and_render_args->project_.path_ / "6-moxing" / "CFX";
         l_arg_t->export_file        = true;
         l_arg_t->touch_sim          = true;
         l_arg_t->export_anim_file   = true;

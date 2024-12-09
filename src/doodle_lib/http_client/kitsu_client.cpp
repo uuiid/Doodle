@@ -73,7 +73,6 @@ kitsu_client::get_all_project() {
               .uuid_id_          = l_prj["id"].get<uuid>(),
               .name_             = l_prj["name"].get<std::string>(),
               .path_             = "C:/sy",
-              .local_path_       = "C:/sy",
               .auto_upload_path_ = "C:/sy"
           }) ;
     }

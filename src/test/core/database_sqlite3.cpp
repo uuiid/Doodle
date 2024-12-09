@@ -34,7 +34,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
           make_column("name", &project_helper::database_t::name_),      //
           make_column("en_str", &project_helper::database_t::en_str_),  //
           make_column("shor_str", &project_helper::database_t::shor_str_),
-          make_column("local_path", &project_helper::database_t::local_path_),
           make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
       )
   );
@@ -46,7 +45,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
       .name_             = "test",
       .en_str_           = "test",
       .shor_str_         = "test",
-      .local_path_       = "test",
       .auto_upload_path_ = "test"
   };
   project_helper::database_t l_d2{
@@ -54,7 +52,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
       .name_             = "test2",
       .en_str_           = "test2",
       .shor_str_         = "test2",
-      .local_path_       = "test2",
       .auto_upload_path_ = "test2"
   };
 
@@ -64,7 +61,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
       .name_             = "test3",
       .en_str_           = "test3",
       .shor_str_         = "test3",
-      .local_path_       = "test3",
       .auto_upload_path_ = "test3"
   };
   l_s.replace(l_d3);

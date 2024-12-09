@@ -53,7 +53,7 @@ auto to_scan_data(
           } catch (...) {
             l_expected = tl::make_unexpected(
                 fmt::format(
-                    "项目 {} 路径{} 错误 {}", in_project_root->name_, in_project_root->local_path_,
+                    "项目 {} 路径{} 错误 {}", in_project_root->name_, in_project_root->path_,
                     boost::current_exception_diagnostic_information()
                 )
             );
