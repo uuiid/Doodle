@@ -136,10 +136,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
         l_project["path"]             = nlohmann::json::value_t::null;
         l_project["en_str"]           = nlohmann::json::value_t::null;
         l_project["auto_upload_path"] = nlohmann::json::value_t::null;
+        l_project["local_path"]       = nlohmann::json::value_t::null;
       } else {
         l_project["path"]             = l_prj.front().path_;
         l_project["en_str"]           = l_prj.front().en_str_;
         l_project["auto_upload_path"] = l_prj.front().auto_upload_path_;
+        l_project["local_path"]       = l_prj.front().local_path_;
       }
     }
 

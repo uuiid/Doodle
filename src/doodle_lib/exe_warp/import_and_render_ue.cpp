@@ -214,8 +214,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<associa
           .id_        = i,
           .maya_file_ = l_json.at("maya_file").get<std::string>(),
           .ue_file_   = l_json.at("ue_file").get<std::string>(),
-          .type_      = l_json.at("type").get<details::assets_type_enum>(),
-          .project_   = l_json.at("project").get<project_helper::database_t>(),
+          .type_      = l_json.at("type").get<details::assets_type_enum>()
       };
       l_out.emplace_back(std::move(l_data));
     }

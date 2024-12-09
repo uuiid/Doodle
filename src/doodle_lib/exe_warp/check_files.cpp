@@ -209,7 +209,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   auto l_arg              = std::make_shared<check_files_arg_t>();
   l_arg->maya_rig_file_   = l_face_data.front().maya_file_;
   l_arg->ue_project_path_ = l_face_data.front().ue_prj_path_;
-  l_arg->project_         = l_face_data.front().project_;
   if (auto l_type = l_face_data.front().type_;
       l_type == details::assets_type_enum::character || l_type == details::assets_type_enum::prop) {
     l_arg->maya_has_export_fbx_ = true;
@@ -253,15 +252,15 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::tuple(l_ec, l_err_msg);
   }
   std::error_code l_ec2{};
-  auto l_target = l_face_data.front().project_.path_ / "03_Workflow" /
-                  magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename();
-  if (!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
-  FSys::copy(
-      l_out_file,
-      l_face_data.front().project_.path_ / "03_Workflow" / magic_enum::enum_name(l_face_data.front().type_) /
-          l_out_file.filename(),
-      FSys::copy_options::update_existing, l_ec2
-  );
+  // auto l_target = l_face_data.front().project_.path_ / "03_Workflow" /
+  //                 magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename();
+  // if (!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
+  // FSys::copy(
+  //     l_out_file,
+  //     l_face_data.front().project_.path_ / "03_Workflow" / magic_enum::enum_name(l_face_data.front().type_) /
+  //         l_out_file.filename(),
+  //     FSys::copy_options::update_existing, l_ec2
+  // );
   if (l_ec2) {
     in_logger->error("复制文件失败 {}", l_ec2.message());
     co_return std::tuple(l_ec2, l_err_msg);

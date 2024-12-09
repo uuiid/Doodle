@@ -103,7 +103,6 @@ struct association_data {
   details::assets_type_enum type_{};
   FSys::path ue_prj_path_{};
   FSys::path export_file_{};
-  project_helper::database_t project_{};
 };
 
 // 清除 1001 以前的帧数
