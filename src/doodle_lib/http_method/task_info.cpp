@@ -217,7 +217,8 @@ boost::asio::awaitable<void> run_post_task_local_impl(
   co_return;
 }
 boost::asio::awaitable<void> run_post_task_local_impl(
-    std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<import_and_render_ue_ns::args> in_arg, logger_ptr in_logger
+    std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<import_and_render_ue_ns::args> in_arg,
+    logger_ptr in_logger
 ) {
   in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
   auto [l_e, l_r]         = co_await async_auto_loght(in_arg, in_logger);
@@ -261,7 +262,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     if (l_task.contains("replace_ref_file")) {
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
       l_task.get_to(*l_arg_t);
-      l_arg_t->sim_path = l_import_and_render_args->project_.local_path_ / "6-moxing" / "CFX";
+      l_arg_t->sim_path = FSys::path{l_task["project"]["local_path"].get<std::string>()} / "6-moxing" / "CFX";
 
       l_arg             = l_arg_t;
     } else if (l_task.contains("file_list")) {
@@ -309,13 +310,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
 
   if (l_import_and_render_args) {
     boost::asio::co_spawn(
-    g_io_context(), run_post_task_local_impl(l_ptr, l_import_and_render_args, l_logger_ptr),
-    boost::asio::bind_cancellation_slot(
-        g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
-        boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
+        g_io_context(), run_post_task_local_impl(l_ptr, l_import_and_render_args, l_logger_ptr),
+        boost::asio::bind_cancellation_slot(
+            g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
+            boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
 
-    )
-);
+        )
+    );
   } else {
     boost::asio::co_spawn(
         g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
