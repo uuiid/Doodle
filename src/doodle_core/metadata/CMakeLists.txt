@@ -46,5 +46,4 @@ target_sources(
         scan_data_t.cpp
 )
 add_subdirectory(bvh)
-add_subdirectory(detail)
 add_subdirectory(kitsu)

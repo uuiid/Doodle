@@ -18,27 +18,11 @@ namespace doodle::business {
 void to_json(nlohmann::json& j, const rules& p) {
   j["work_weekdays"]      = p.work_weekdays_p;
   j["work_pair"]          = p.work_pair_p;
-  j["extra_p"]            = p.extra_p;
   j["absolute_deduction"] = p.absolute_deduction;
 }
 void from_json(const nlohmann::json& j, rules& p) {
   j.at("work_weekdays").get_to(p.work_weekdays_p);
   j.at("work_pair").get_to(p.work_pair_p);
-  if (j.contains("extra_p")) {
-    j.at("extra_p").get_to(p.extra_p);
-  }
-  if (j.contains("extra_work")) {
-    std::vector<rules::time_point_info> l_tmp{};
-    j.at("extra_work").get_to(l_tmp);
-    ranges::for_each(l_tmp, [](rules::time_point_info& in) { in.is_extra_work = true; });
-    p.extra_p |= ranges::actions::push_back(l_tmp);
-  }
-  if (j.contains("extra_rest")) {
-    std::vector<rules::time_point_info> l_tmp{};
-    j.at("extra_rest").get_to(l_tmp);
-    ranges::for_each(l_tmp, [](rules::time_point_info& in) { in.is_extra_work = false; });
-    p.extra_p |= ranges::actions::push_back(l_tmp);
-  }
 
   if (j.contains("absolute_deduction"))
     j.at("absolute_deduction").get_to(p.absolute_deduction);

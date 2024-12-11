@@ -77,16 +77,4 @@ class DOODLE_CORE_API rules {
 };
 
 }  // namespace doodle::business
-namespace fmt {
-/**
- * @brief 季数格式化程序
- *
- */
-template <>
-struct formatter<::doodle::business::rules> : formatter<string_view> {
-  template <typename FormatContext>
-  auto format(const ::doodle::business::rules& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<string_view>::format(in_.fmt_str(), ctx);
-  }
-};
-}  // namespace fmt
+
