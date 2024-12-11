@@ -75,7 +75,8 @@ target_link_libraries(doodle_lib
         doodle_holidaycn
         Alembic::Alembic # abc文件读写
         sqlite_orm::sqlite_orm
-        ${OPENSSL_LIBRARIES}
+        OpenSSL::SSL
+#        OpenSSL::applink
 )
 
 target_compile_definitions(doodle_lib
