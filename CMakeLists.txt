@@ -52,7 +52,7 @@ option(BUILD_USD "构建usd相关" OFF)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 # 寻找包
-find_package(Boost REQUIRED COMPONENTS
+find_package(Boost CONFIGS REQUIRED COMPONENTS
         locale
         iostreams
         contract
