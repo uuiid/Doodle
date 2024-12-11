@@ -37,7 +37,6 @@ bool replace_file_facet::post(const nlohmann::json& in_argh) {
 
   if (l_arg.file_path.empty()) return l_ret;
 
-  lib_guard_ = std::make_shared<maya_lib_guard>(l_arg.maya_path);
   g_ctx().emplace<reference_file_factory>();
   l_ret = true;
 

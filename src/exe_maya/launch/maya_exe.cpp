@@ -7,7 +7,7 @@
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_lib/exe_warp/maya_exe.h>
-
+#include <exe_maya/core/maya_lib_guard.h>
 #include <exe_maya/facet/cloth_sim.h>
 #include <exe_maya/facet/export_fbx.h>
 #include <exe_maya/facet/replace_file.h>
@@ -28,6 +28,8 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
       return true;
     }
   }
+
+  in_vector.emplace_back(std::make_shared<maya_plug::maya_lib_guard>());
 
   if (in_arh[cloth_sim_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::cloth_sim>();

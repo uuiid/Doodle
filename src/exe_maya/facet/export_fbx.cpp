@@ -117,7 +117,6 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
   out_path_file_ = l_arg.out_path_file_;
   film_aperture_ = l_arg.film_aperture_;
 
-  lib_guard_     = std::make_shared<maya_lib_guard>(l_arg.maya_path);
 
   l_ret          = true;
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));

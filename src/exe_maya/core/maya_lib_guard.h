@@ -9,7 +9,7 @@ namespace maya_plug {
 
 class maya_lib_guard {
  public:
-  explicit maya_lib_guard(const FSys::path& p_path);
+  explicit maya_lib_guard();
   ~maya_lib_guard();
 
  private:

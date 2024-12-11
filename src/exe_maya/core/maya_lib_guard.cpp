@@ -23,11 +23,12 @@
 
 #include <doodle_core/platform/win/register_file_type.h>
 
+#include "../../../build/Ninja_debug/vcpkg_installed/x64-windows/include/boost/process/v2/environment.hpp"
 #include <boost/process.hpp>
 
 namespace doodle::maya_plug {
 
-maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
+maya_lib_guard::maya_lib_guard() {
   MLibrary::initialize(true, "maya_doodle");
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
@@ -48,8 +49,9 @@ maya_lib_guard::maya_lib_guard(const FSys::path& p_path) {
 
   if (MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer()) {
     if (auto* l_f = renderer->getFragmentManager()) {
-      l_f->addFragmentPath(maya_plug::conv::to_ms((p_path / "bin" / "ScriptFragment").generic_string()));
-      l_f->addFragmentPath(maya_plug::conv::to_ms((p_path / "bin" / "ShadeFragment").generic_string()));
+      FSys::path l_path = boost::this_process::environment()["MAYA_LOCATION"].to_string();
+      l_f->addFragmentPath(maya_plug::conv::to_ms((l_path / "bin" / "ScriptFragment").generic_string()));
+      l_f->addFragmentPath(maya_plug::conv::to_ms((l_path / "bin" / "ShadeFragment").generic_string()));
     }
   }
   maya_chick(MGlobal::executePythonCommand(R"(import maya.cmds as cmds)"));

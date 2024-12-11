@@ -24,7 +24,6 @@ class export_fbx_facet final {
   void rig_file_export();
 
   void play_blast();
-  std::shared_ptr<maya_lib_guard> lib_guard_{};
   std::vector<entt::handle> ref_files_{};
   std::vector<entt::handle> cloth_lists_{};
   // 输出结果路径

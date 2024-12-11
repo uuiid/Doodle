@@ -35,7 +35,6 @@ class cloth_sim final {
   void play_blast();
   void export_anim_file();
   void write_config();
-  std::shared_ptr<maya_lib_guard> lib_guard_{};
   std::vector<entt::handle> ref_files_{};
   std::vector<entt::handle> all_ref_files_{};
   std::vector<entt::handle> cloth_lists_{};
