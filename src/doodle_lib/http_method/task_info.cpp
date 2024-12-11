@@ -83,21 +83,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_data_ptr in_handle) {
-  uuid l_user_uuid{};
+  std::optional<server_task_info_type> l_type{};
   try {
     for (auto&& i : in_handle->url_.params()) {
-      if (i.has_value && i.key == "user_id") {
-        l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(i.value);
+      if (i.has_value && i.key == "type") {
+        l_type = magic_enum::enum_cast<server_task_info_type>(i.value);
       }
     }
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
-  if (!l_user_uuid.is_nil()) {
-    if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info_by_user(l_user_uuid); !l_list.empty())
+  if (l_type) {
+    if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info_by_type(*l_type); !l_list.empty())
       co_return in_handle->make_msg((nlohmann::json{} = l_list[0]).dump());
     co_return in_handle->make_msg("[]"s);
   }
+
+
+
+
   co_return in_handle->make_msg((nlohmann::json{} = g_ctx().get<sqlite_database>().get_all<server_task_info>()).dump());
 }
 

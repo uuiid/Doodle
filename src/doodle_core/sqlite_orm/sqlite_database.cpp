@@ -28,6 +28,7 @@ namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
 DOODLE_SQLITE_ENUM_TYPE_(doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(doodle::server_task_info_status)
+DOODLE_SQLITE_ENUM_TYPE_(doodle::server_task_info_type)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
 
 template <>
@@ -66,7 +67,8 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("run_time", &server_task_info::run_time_),                //
           make_column("end_time", &server_task_info::end_time_),                //
           make_column("run_computer_id", &server_task_info::run_computer_id_),  //
-          make_column("kitsu_task_id", &server_task_info::kitsu_task_id_)
+          make_column("kitsu_task_id", &server_task_info::kitsu_task_id_),      //
+          make_column("type", &server_task_info::type_)
       ),
       make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
       make_table(
@@ -245,7 +247,10 @@ struct sqlite_database_impl {
     using namespace sqlite_orm;
     return storage_any_.get_all<server_task_info>(where(c(&server_task_info::submitter_) == in_user_id));
   }
-
+  std::vector<server_task_info> get_server_task_info_by_type(const server_task_info_type& in_user_id) {
+    using namespace sqlite_orm;
+    return storage_any_.get_all<server_task_info>(where(c(&server_task_info::type_) == in_user_id));
+  }
 #define DOODLE_TO_SQLITE_THREAD()                                 \
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
@@ -398,6 +403,9 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
 }
 std::vector<server_task_info> sqlite_database::get_server_task_info_by_user(const uuid& in_user_id) {
   return impl_->get_server_task_info_by_user(in_user_id);
+}
+std::vector<server_task_info> sqlite_database::get_server_task_info_by_type(const server_task_info_type& in_user_id) {
+  return impl_->get_server_task_info_by_type(in_user_id);
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);

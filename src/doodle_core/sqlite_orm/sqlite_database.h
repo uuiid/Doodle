@@ -13,6 +13,9 @@
 
 #include <tl/expected.hpp>
 namespace doodle {
+enum server_task_info_type : int;
+}
+namespace doodle {
 class server_task_info;
 }
 namespace doodle {
@@ -83,6 +86,7 @@ class sqlite_database {
 
   std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id);
   std::vector<server_task_info> get_server_task_info_by_user(const uuid& in_user_id);
+  std::vector<server_task_info> get_server_task_info_by_type(const server_task_info_type& in_user_id);
 
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
 
