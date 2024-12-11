@@ -79,12 +79,17 @@ struct down_info {
 };
 
 struct args {
+  /// 需要填写
   episodes episodes_{};
   shot shot_{};
   project_helper::database_t project_{};
+  std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
+
+
+
+  // 不需要填写
   maya_exe_ns::maya_out_arg maya_out_arg_{};
   down_info down_info_{};
-  std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
   // from json
   friend void from_json(const nlohmann::json& j, args& p) {
     j["episodes"].get_to(p.episodes_);
