@@ -4,35 +4,17 @@
 
 #include "rules.h"
 
-#include <doodle_core/lib_warp/std_fmt_bitset.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
 #include <array>
 #include <mutex>
-#include <utility>
 #include <vector>
 
 namespace doodle::business {
 
-void to_json(nlohmann::json& j, const rules& p) {
-  j["work_weekdays"]      = p.work_weekdays_p;
-  j["work_pair"]          = p.work_pair_p;
-  j["absolute_deduction"] = p.absolute_deduction;
-}
-void from_json(const nlohmann::json& j, rules& p) {
-  j.at("work_weekdays").get_to(p.work_weekdays_p);
-  j.at("work_pair").get_to(p.work_pair_p);
-
-  if (j.contains("absolute_deduction"))
-    j.at("absolute_deduction").get_to(p.absolute_deduction);
-  else
-    p.absolute_deduction = rules::get_default().absolute_deduction;
-}
-
 rules::rules() = default;
-void rules::work_weekdays(const rules::work_day_type& in_work_weekdays) { work_weekdays_p = in_work_weekdays; }
-const rules::work_day_type& rules::work_weekdays() const { return work_weekdays_p; }
 bool rules::is_work_day(const chrono::weekday& in_time) const { return work_weekdays_p[in_time.c_encoding()]; }
+
 const rules& rules::get_default() {
   static rules l_rules{};
   static std::once_flag l_f1;
@@ -68,14 +50,6 @@ const rules& rules::get_default() {
   return l_rules;
 }
 
-rules::work_day_type& rules::work_weekdays() { return work_weekdays_p; }
-
-std::string rules::fmt_str() const {
-  return fmt::format(
-      "规则 周六日规则 {} 每日规则 {} 额外规则 {} ", work_weekdays_p, fmt::join(work_pair_p, ", "),
-      fmt::join(extra_p, ", ")
-  );
-}
 rules::~rules() = default;
 
 }  // namespace doodle::business

@@ -4,6 +4,7 @@
 
 #include "holidaycn_time.h"
 
+#include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/time_tool/work_clock.h>
 
 #include <doodle_lib/lib_warp/cmrc.h>
