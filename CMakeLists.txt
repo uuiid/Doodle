@@ -64,7 +64,6 @@ find_package(Boost CONFIGS REQUIRED COMPONENTS
         url
 )
 
-find_package(Doxygen)
 
 # 寻找 opencv
 find_package(OpenCV CONFIG REQUIRED)
