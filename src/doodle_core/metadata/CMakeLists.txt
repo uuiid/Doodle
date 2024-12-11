@@ -21,6 +21,7 @@ target_sources(
         attendance.h
         work_xlsx_task_info.h
         scan_data_t.h
+        image_size.h
 
 
         PRIVATE

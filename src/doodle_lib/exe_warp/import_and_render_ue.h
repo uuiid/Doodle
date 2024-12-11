@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
 
@@ -78,14 +79,20 @@ struct down_info {
   FSys::path scene_file_{};
 };
 
+enum class output_quality_type { low, medium, high };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    output_quality_type,
+    {{output_quality_type::low, "low"}, {output_quality_type::medium, "medium"}, {output_quality_type::high, "high"}}
+)
+
 struct args {
   /// 需要填写
   episodes episodes_{};
   shot shot_{};
   project_helper::database_t project_{};
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
-
-
+  image_size size_{};
+  output_quality_type output_quality_{};
 
   // 不需要填写
   maya_exe_ns::maya_out_arg maya_out_arg_{};
@@ -95,6 +102,8 @@ struct args {
     j["episodes"].get_to(p.episodes_);
     j["shot"].get_to(p.shot_);
     j["project"].get_to(p.project_);
+    j["image_size"].get_to(p.size_);
+    j["output_quality"].get_to(p.output_quality_);
   }
 };
 void fix_project(const FSys::path& in_project_path);
