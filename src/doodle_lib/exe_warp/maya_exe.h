@@ -30,19 +30,16 @@ class arg {
   virtual ~arg() = default;
 
   FSys::path file_path{};
-  FSys::path maya_path{};
   FSys::path out_path_file_{};
 
   // form json
   friend void from_json(const nlohmann::json& in_json, arg& out_obj) {
     if (in_json.contains("path")) in_json.at("path").get_to(out_obj.file_path);
-    if (in_json.contains("maya_path")) in_json.at("maya_path").get_to(out_obj.maya_path);
     if (in_json.contains("out_path_file")) in_json.at("out_path_file").get_to(out_obj.out_path_file_);
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const arg& out_obj) {
     in_json["path"]          = out_obj.file_path.generic_string();
-    in_json["maya_path"]     = out_obj.maya_path.generic_string();
     in_json["out_path_file"] = out_obj.out_path_file_.generic_string();
   }
   virtual std::tuple<std::string, std::string> get_json_str() = 0;

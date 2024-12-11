@@ -140,7 +140,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   }
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-  in_arg->maya_path     = l_maya_path;
   auto [l_key, l_args]  = in_arg->get_json_str();
 
   auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
