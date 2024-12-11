@@ -7,7 +7,6 @@
 #include <doodle_core/lib_warp/boost_fmt_icl.h>
 #include <doodle_core/lib_warp/std_fmt_set.h>
 #include <doodle_core/metadata/comment.h>
-#include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <boost/contract.hpp>
 #include <boost/icl/concept/interval.hpp>

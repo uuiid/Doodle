@@ -4,7 +4,6 @@
 #pragma once
 
 #include <doodle_core/doodle_core.h>
-#include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <bitset>
 #include <chrono>
