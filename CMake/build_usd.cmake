@@ -74,5 +74,5 @@ if (DEFINED PXR_USD_ROOT)
     endif ()
     find_package(pxr CONFIG HINTS ${PXR_USD_ROOT})
     # $<$<CONFIG:Debug>:/debug>
-    message("find pxr ${PXR_LIBRARIES}")
+    #    message("find pxr ${PXR_LIBRARIES}")
 endif ()
