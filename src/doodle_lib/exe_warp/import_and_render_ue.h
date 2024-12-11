@@ -14,6 +14,13 @@
 
 namespace doodle {
 namespace import_and_render_ue_ns {
+enum class output_quality_type { low, medium, high };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    output_quality_type,
+    {{output_quality_type::low, "low"}, {output_quality_type::medium, "medium"}, {output_quality_type::high, "high"}}
+)
+
+
 struct import_files_t {
   std::string type_;
   FSys::path path_;
@@ -46,6 +53,10 @@ struct import_data_t {
 
   std::vector<import_files_t> files;
 
+  image_size size_; // 渲染的尺寸
+
+  output_quality_type output_quality_;
+
   friend void to_json(nlohmann::json& j, const import_data_t& p) {
     j["project"]            = p.project_.shor_str_;
     j["begin_time"]         = p.begin_time;
@@ -69,6 +80,9 @@ struct import_data_t {
     auto l_path2        = p.movie_pipeline_config;
     l_path2.replace_extension();
     j["movie_pipeline_config"] = l_path2;
+
+    j["size"]               = p.size_;
+    j["output_quality"]     = p.output_quality_;
   }
 };
 
@@ -79,11 +93,7 @@ struct down_info {
   FSys::path scene_file_{};
 };
 
-enum class output_quality_type { low, medium, high };
-NLOHMANN_JSON_SERIALIZE_ENUM(
-    output_quality_type,
-    {{output_quality_type::low, "low"}, {output_quality_type::medium, "medium"}, {output_quality_type::high, "high"}}
-)
+
 
 struct args {
   /// 需要填写
