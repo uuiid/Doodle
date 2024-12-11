@@ -31,15 +31,15 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
 
   if (in_arh[cloth_sim_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::cloth_sim>();
-    l_ptr->post(in_arh);
+    l_ptr->post(l_json);
     in_vector.emplace_back(l_ptr);
   } else if (in_arh[export_fbx_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::export_fbx_facet>();
-    l_ptr->post(in_arh);
+    l_ptr->post(l_json);
     in_vector.emplace_back(l_ptr);
   } else if (in_arh[replace_file_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::replace_file_facet>();
-    l_ptr->post(in_arh);
+    l_ptr->post(l_json);
     in_vector.emplace_back(l_ptr);
   } else {
     default_logger_raw()->error("没有寻找到正确的指示标帜");
