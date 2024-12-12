@@ -38,6 +38,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {
         {server_task_info_status::submitted, "submitted"},
         {server_task_info_status::assigned, "assigned"},
+        {server_task_info_status::running, "running"},
         {server_task_info_status::completed, "completed"},
         {server_task_info_status::canceled, "canceled"},
         {server_task_info_status::failed, "failed"},
