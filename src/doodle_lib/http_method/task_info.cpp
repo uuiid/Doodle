@@ -263,7 +263,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     if (l_task.contains("replace_ref_file")) {
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
       l_task.get_to(*l_arg_t);
-      l_arg_t->sim_path = FSys::path{l_task["project"]["local_path"].get<std::string>()} / "6-moxing" / "CFX";
+      l_arg_t->sim_path = FSys::path{l_task["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
 
       l_arg             = l_arg_t;
     } else if (l_task.contains("file_list")) {
