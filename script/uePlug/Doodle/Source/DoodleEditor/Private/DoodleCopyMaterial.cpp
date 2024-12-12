@@ -40,7 +40,7 @@ namespace
 #if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
 		auto L_Lod = In_Obj->GetImportedModel();
 		FSkeletalMeshImportData L_Data{};
-		In_Obj->LoadLODImportedData(0, L_Data);
+		// In_Obj->LoadLODImportedData(0, L_Data);
 		GetTargetPlatformManagerRef().GetRunningTargetPlatform();
 
 		// FSkeletalMeshBuilder{}.Build(FSkeletalMeshBuildParameters{nullptr, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 0, true});

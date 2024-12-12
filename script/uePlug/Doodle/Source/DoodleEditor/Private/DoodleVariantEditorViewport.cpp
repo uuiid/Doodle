@@ -22,7 +22,7 @@ DoodleVariantEditorPreviewScene::DoodleVariantEditorPreviewScene()
     GetWorld()->GetWorldSettings()->NotifyBeginPlay();
     GetWorld()->GetWorldSettings()->NotifyMatchStarted();
     GetWorld()->GetWorldSettings()->SetActorHiddenInGame(false);
-    GetWorld()->bBegunPlay = true;
+    GetWorld()->SetBegunPlay(true);
 }
 
 void DoodleVariantEditorPreviewScene::Tick(float InDeltaTime) {

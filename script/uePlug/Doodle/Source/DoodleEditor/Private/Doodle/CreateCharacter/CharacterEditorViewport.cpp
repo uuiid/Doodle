@@ -29,7 +29,7 @@ FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
   GetWorld()->GetWorldSettings()->NotifyBeginPlay();
   GetWorld()->GetWorldSettings()->NotifyMatchStarted();
   GetWorld()->GetWorldSettings()->SetActorHiddenInGame(false);
-  GetWorld()->bBegunPlay = true;
+  GetWorld()->SetBegunPlay(true);
   // 创建预览场景描述
 
   // UClass* L_Sk = LoadClass<AActor>(NULL,
