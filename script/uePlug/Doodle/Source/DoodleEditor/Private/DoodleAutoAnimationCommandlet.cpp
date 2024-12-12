@@ -64,6 +64,8 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "FileHelpers.h"
+#include "MoviePipelineCameraSetting.h"
+#include "MoviePipelineEXROutput.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -257,6 +259,12 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	L_End = FFrameNumber(JsonObject->GetIntegerField(TEXT("end_time")));
 	DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
 	MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
+	if (const auto L_Size = JsonObject->GetObjectField(TEXT("size")); L_Size.IsValid())
+	{
+		ImageSize.Height = L_Size->GetIntegerField(TEXT("height"));
+		ImageSize.Width = L_Size->GetIntegerField(TEXT("width"));
+	}
+	Layering = JsonObject->GetBoolField(TEXT("layering"));
 
 	for (TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("files")); const TSharedPtr<FJsonValue>& JsonFile : JsonFiles)
 	{
@@ -288,6 +296,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	OnCreateSequence();
 	OnCreateSequenceWorld();
 	OnCreateDirectionalLight();
+
 	/// 创建特效关卡和关卡序列
 	OnCreateEffectSequenceWorld();
 	OnCreateEffectSequence();
@@ -297,6 +306,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
 	TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
 	AddSequenceWorldToRenderWorld();
+	PostProcessVolumeConfig();
 
 	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
 	//-----------------
@@ -509,6 +519,48 @@ void UDoodleAutoAnimationCommandlet::ClearAllLight()
 		GEngine->ConditionalCollectGarbage();
 		CommandletHelpers::TickEngine(TheRenderWorld);
 	}
+}
+
+void UDoodleAutoAnimationCommandlet::PostProcessVolumeConfig()
+{
+	APostProcessVolume* L_PostProcessVolume{};
+	for (TActorIterator<APostProcessVolume> PoseItr(TheRenderWorld); PoseItr; ++PoseItr)
+	{
+		L_PostProcessVolume = *PoseItr;
+	}
+	if (!L_PostProcessVolume)
+	{
+		L_PostProcessVolume = TheRenderWorld->SpawnActor<APostProcessVolume>(FVector::ZeroVector, FRotator::ZeroRotator);
+		L_PostProcessVolume->bEnabled = true;
+		L_PostProcessVolume->bUnbound = true;
+	}
+
+	L_PostProcessVolume->Settings.bOverride_BloomIntensity = true;
+	L_PostProcessVolume->Settings.bOverride_AutoExposureMinBrightness = true;
+	L_PostProcessVolume->Settings.bOverride_AutoExposureMaxBrightness = true;
+	L_PostProcessVolume->Settings.bOverride_AutoExposureBias = true;
+	L_PostProcessVolume->Settings.bOverride_LocalExposureDetailStrength = true;
+	L_PostProcessVolume->Settings.bOverride_Sharpen = true;
+	L_PostProcessVolume->Settings.bOverride_ReflectionMethod = true;
+	L_PostProcessVolume->Settings.bOverride_LumenReflectionQuality = true;
+	L_PostProcessVolume->Settings.bOverride_DynamicGlobalIlluminationMethod = true;
+	L_PostProcessVolume->Settings.bOverride_LumenSceneLightingQuality = true;
+	L_PostProcessVolume->Settings.bOverride_LumenSceneDetail = true;
+	L_PostProcessVolume->Settings.bOverride_LumenFinalGatherQuality = true;
+	L_PostProcessVolume->Settings.bOverride_LumenRayLightingMode = true;
+	L_PostProcessVolume->Settings.bOverride_LumenMaxReflectionBounces = true;
+	L_PostProcessVolume->Settings.BloomIntensity = 0.000000;
+	L_PostProcessVolume->Settings.LumenSceneLightingQuality = 2.000000;
+	L_PostProcessVolume->Settings.LumenSceneDetail = 2.000000;
+	L_PostProcessVolume->Settings.LumenFinalGatherQuality = 4.000000;
+	L_PostProcessVolume->Settings.LumenReflectionQuality = 2.000000;
+	L_PostProcessVolume->Settings.LumenRayLightingMode = ELumenRayLightingModeOverride::HitLighting;
+	L_PostProcessVolume->Settings.LumenMaxReflectionBounces = 3;
+	L_PostProcessVolume->Settings.AutoExposureBias = 0.000000;
+	L_PostProcessVolume->Settings.AutoExposureMinBrightness = 1.000000;
+	L_PostProcessVolume->Settings.AutoExposureMaxBrightness = 1.000000;
+	L_PostProcessVolume->Settings.LocalExposureDetailStrength = 1.100000;
+	L_PostProcessVolume->Settings.Sharpen = 1.500000;
 }
 
 
@@ -1083,36 +1135,97 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		Package->Modify();
 	}
 
-	//----------------------
+	// 基本设置 ----------------------
 	UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
 	OutputSetting->OutputDirectory.Path = DestinationPath;
+	OutputSetting->OutputResolution.X = ImageSize.Width;
+	OutputSetting->OutputResolution.Y = ImageSize.Height;
+	OutputSetting->bUseCustomFrameRate = true;
+	OutputSetting->OutputFrameRate = Rate;
+
 	if (UMoviePipelineImageSequenceOutput_JPG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_JPG>())
 	{
 		Config->RemoveSetting(FormatSetting);
 	}
-	Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
-	Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
+	UMoviePipelineDeferredPassBase* L_DeferredPass = Cast<UMoviePipelineDeferredPassBase>(Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass()));
+	if (Layering)
+	{
+		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_EXR::StaticClass());
+		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(nullptr, TEXT("/Doodle/tongdao/景深_Inst.景深_Inst"));
+		L_DeferredPass->AdditionalPostProcessMaterials.Emplace(true, L_CraneBaseMaterial);
+		// 添加object ID layer(这个只能从反射中寻找, 无法直接引入头文件)
+		for (TObjectIterator<UClass> It{}; It; ++It)
+		{
+			if (It->IsChildOf(UFactory::StaticClass()))
+			{
+				if (It->GetName() == "MoviePipelineObjectIdRenderPass")
+				{
+					Config->FindOrAddSettingByClass(*It);
+				}
+			}
+		}
+	}
+	else { Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()); }
+
+	// 设置控制台变量
+	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())))
+	{
+		ConsoleVar->AddOrUpdateConsoleVariable("r.ScreenPercentage", 100.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusion.Denoiser", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusion.Denoiser.TemporalAccumulation", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.DiffuseIndirect.Denoiser", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Reflections.Denoiser", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Reflections.Denoiser.ReconstructionSamples", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.Denoiser", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.Denoiser.TemporalAccumulation", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.GlobalIllumination.Denoiser.TemporalAccumulation", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurQuality", 4.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurSeparable", 1.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.DepthOfFieldQuality", 4.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.BloomQuality", 5.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Tonemapper.Quality", 5.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.RayTracing.Shadows.SamplesPerPixel", 64.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Tonemapper.Sharpen", 1.500000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.TemporalAASamples", 32.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.TemporalAACurrentFrameWeight", 0.100000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.SSR.Quality", 4.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.SSR.HalfResSceneColor", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.ShadowQuality", 5.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.MaxResolution", 4096.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.DistanceScale", 2.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusionLevels", 3.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusionRadiusScale", 2.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Streaming.MipBias", -3.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.MaxAnisotropy", 16.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.HZBOcclusion", 1.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.VolumetricFog", 1.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.DepthOfFieldQuality", 4.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurQuality", 4.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.VT.TileSize", 128.000000);
+	}
 
 	// 设置抗拒齿方法
-	if (UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())))
+	if (UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())); AntiAliasing)
 	{
-		AntiAliasing->SpatialSampleCount = 1;
+		AntiAliasing->SpatialSampleCount = 7;
 		AntiAliasing->TemporalSampleCount = 1;
 		AntiAliasing->bOverrideAntiAliasing = true;
 		AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
 		AntiAliasing->bRenderWarmUpFrames = true;
 		AntiAliasing->EngineWarmUpCount = 64;
+		AntiAliasing->RenderWarmUpCount = 64;
 	}
 	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())); GameOver)
 	{
-		GameOver->bCinematicQualitySettings = false;
+		GameOver->bCinematicQualitySettings = true;
 		GameOver->TextureStreaming = EMoviePipelineTextureStreamingMethod::None;
 	}
-	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())))
+	// 摄像机
+	if (UMoviePipelineCameraSetting* Camera = Cast<UMoviePipelineCameraSetting>(Config->FindOrAddSettingByClass(UMoviePipelineCameraSetting::StaticClass())); Camera)
 	{
-		Config->RemoveSetting(ConsoleVar);
+		Camera->ShutterTiming = EMoviePipelineShutterTiming::FrameClose;
+		Camera->OverscanPercentage = 0.0;
 	}
-
 	//-------------------------Save
 	Config->SetFlags(RF_Public | RF_Transactional | RF_Standalone);
 	Config->MarkPackageDirty();

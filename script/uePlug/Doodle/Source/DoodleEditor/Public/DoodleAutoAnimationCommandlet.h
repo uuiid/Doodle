@@ -24,6 +24,7 @@ enum class ECheckFileType
 	Scene,
 };
 
+
 USTRUCT()
 struct FImportFiles2
 {
@@ -33,6 +34,13 @@ struct FImportFiles2
 	FString Path;
 };
 
+USTRUCT()
+struct FImageSize
+{
+	GENERATED_BODY()
+
+	int32 Width = 0, Height = 0;
+};
 
 /**
  * 
@@ -80,6 +88,8 @@ private:
 
 	/// 创建渲染配置
 	void OnSaveReanderConfig();
+	/// 修改后处理框
+	void PostProcessVolumeConfig();
 
 	/// 导入fbx中的相机
 	void ImportCamera(const FString& InFbxPath) const;
@@ -116,7 +126,7 @@ private:
 
 	/// 渲染关卡
 	UPROPERTY()
-	TObjectPtr<UWorld>  TheRenderWorld;
+	TObjectPtr<UWorld> TheRenderWorld;
 
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
@@ -133,4 +143,8 @@ private:
 
 	// 检查文件类型
 	ECheckFileType CheckFileType;
+
+	// 输出大小
+	FImageSize ImageSize;
+	bool  Layering;
 };
