@@ -14,12 +14,6 @@
 
 namespace doodle {
 namespace import_and_render_ue_ns {
-enum class output_quality_type { low, medium, high };
-NLOHMANN_JSON_SERIALIZE_ENUM(
-    output_quality_type,
-    {{output_quality_type::low, "low"}, {output_quality_type::medium, "medium"}, {output_quality_type::high, "high"}}
-)
-
 
 struct import_files_t {
   std::string type_;
@@ -53,9 +47,9 @@ struct import_data_t {
 
   std::vector<import_files_t> files;
 
-  image_size size_; // 渲染的尺寸
+  image_size size_;  // 渲染的尺寸
 
-  output_quality_type output_quality_;
+  bool layering_;
 
   friend void to_json(nlohmann::json& j, const import_data_t& p) {
     j["project"]            = p.project_.shor_str_;
@@ -81,8 +75,8 @@ struct import_data_t {
     l_path2.replace_extension();
     j["movie_pipeline_config"] = l_path2;
 
-    j["size"]               = p.size_;
-    j["output_quality"]     = p.output_quality_;
+    j["size"]                  = p.size_;
+    j["layering"]              = p.layering_;
   }
 };
 
@@ -93,8 +87,6 @@ struct down_info {
   FSys::path scene_file_{};
 };
 
-
-
 struct args {
   /// 需要填写
   episodes episodes_{};
@@ -102,7 +94,7 @@ struct args {
   project_helper::database_t project_{};
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
   image_size size_{};
-  output_quality_type output_quality_{};
+  bool layering_{};
 
   // 不需要填写
   maya_exe_ns::maya_out_arg maya_out_arg_{};
@@ -113,7 +105,7 @@ struct args {
     j["shot"].get_to(p.shot_);
     j["project"].get_to(p.project_);
     j["image_size"].get_to(p.size_);
-    j["output_quality"].get_to(p.output_quality_);
+    j["layering"].get_to(p.layering_);
   }
 };
 void fix_project(const FSys::path& in_project_path);
