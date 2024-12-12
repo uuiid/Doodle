@@ -100,6 +100,8 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 
 void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 {
+	FixMaterialParameterCollection();
+
 	//--------------------
 	TSharedPtr<FJsonObject> JsonObject;
 	if (FString JsonString; FFileHelper::LoadFileToString(JsonString, *InCondigPath))
@@ -239,6 +241,7 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 {
 	FixMaterialProperty();
+	FixMaterialParameterCollection();
 
 	//--------------------
 	TSharedPtr<FJsonObject> JsonObject;
@@ -1262,6 +1265,20 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 	});
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	EditorAssetSubsystem->SaveLoadedAssets(L_Save);
+}
+
+void UDoodleAutoAnimationCommandlet::FixMaterialParameterCollection()
+{
+	FARFilter LFilter{};
+	LFilter.bIncludeOnlyOnDiskAssets = false;
+	LFilter.bRecursivePaths = true;
+	LFilter.bRecursiveClasses = true;
+	LFilter.ClassPaths.Add(UMaterialParameterCollection::StaticClass()->GetClassPathName());
+	IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
+	{
+		UObject* LObj = InAss.GetAsset();
+		return true;
+	});
 }
 
 

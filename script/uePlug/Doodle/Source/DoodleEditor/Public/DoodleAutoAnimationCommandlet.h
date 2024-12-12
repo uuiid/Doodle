@@ -100,7 +100,8 @@ private:
 
 	// 修复材质属性
 	static void FixMaterialProperty();
-
+	/// 修复5.4版本的材质参数集问题
+	static void FixMaterialParameterCollection();
 	/// 主要的渲染队列
 	UPROPERTY()
 	TObjectPtr<ULevelSequence> TheLevelSequence;
