@@ -1,6 +1,7 @@
 #include "kitsu_supplement.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/detail/init_project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -15,6 +16,7 @@
 #include <doodle_lib/http_method/local_setting.h>
 #include <doodle_lib/http_method/task_info.h>
 
+#include <doodle_lib/http_method/file_association.h>
 #include <winreg/WinReg.hpp>
 namespace doodle::launch {
 
@@ -131,7 +133,22 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return false;
   }
-
+  if (in_arh["epiboly"]) {
+    if (auto l_str = in_arh({"port"}); l_str)
+      l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
+    else
+      l_args.port_ = 0;
+    l_args.db_path_ = register_file_type::program_location() / "epiboly.database";
+    // 打开内存数据库
+    g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+    // 初始化路由
+    auto l_rout_ptr = std::make_shared<http::http_route>();
+    http::task_info_reg_local(*l_rout_ptr);
+    http::local_setting_reg(*l_rout_ptr);
+    // 开始运行服务器
+    http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
+    return false;
+  }
   get_register_info(l_args);
   core_set::get_set().set_root(l_args.kitsu_thumbnails_path_);
 
