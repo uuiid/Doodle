@@ -32,8 +32,8 @@ boost::asio::awaitable<void> detail::run_http_listener(
   if (in_port == 0) {
     auto l_path = core_set::get_set().get_cache_root("http") / fmt::format("{}.txt", boost::this_process::get_id());
     FSys::ofstream{l_path} << l_date.port_ << std::endl;
-    std::cout << l_date.port_ << std::endl;
   }
+  std::cout << l_date.port_ << std::endl;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
     if (l_ec) {
