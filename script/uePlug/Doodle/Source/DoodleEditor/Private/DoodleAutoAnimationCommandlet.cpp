@@ -648,6 +648,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
 	L_LevelSequenceActor->InitializePlayer();
 	L_LevelSequencePlayer->Play();
+	L_LevelSequencePlayer->Stop();
 	//-----------------------
 	FFBXInOutParameters InOutParams;
 	UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
@@ -743,6 +744,14 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 			ChannelZ->AddKeys(Times, ValuesZ);
 		}
 	}
+	// L_LevelSequencePlayer->
+	EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
+	L_LevelSequencePlayer->ConditionalBeginDestroy();
+
+	GEngine->ForceGarbageCollection(true);
+	GEngine->PerformGarbageCollectionAndCleanupActors();
+	GEngine->ConditionalCollectGarbage();
+	CommandletHelpers::TickEngine(TheRenderWorld);
 }
 
 UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const FString& InFbxPath) const
