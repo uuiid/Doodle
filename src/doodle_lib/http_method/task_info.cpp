@@ -95,12 +95,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
   }
   if (l_type) {
     if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info_by_type(*l_type); !l_list.empty())
-      co_return in_handle->make_msg((nlohmann::json{} = l_list[0]).dump());
+      co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
     co_return in_handle->make_msg("[]"s);
   }
-
-
-
 
   co_return in_handle->make_msg((nlohmann::json{} = g_ctx().get<sqlite_database>().get_all<server_task_info>()).dump());
 }
