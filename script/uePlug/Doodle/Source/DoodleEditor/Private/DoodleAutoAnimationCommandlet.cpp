@@ -345,6 +345,31 @@ void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
 	//-------------
 	if (!EffectMapPath.IsEmpty()) LevelNames.Add(FName{EffectMapPath});
 	NewSection->SetLevelNames(LevelNames);
+
+	// Clean up any previous world.  The world should have already been saved
+	UWorld* ExistingWorld = GEditor->GetEditorWorldContext().World();
+
+	GEngine->DestroyWorldContext(ExistingWorld);
+	ExistingWorld->DestroyWorld(true, TheRenderWorld);
+
+	GWorld = TheRenderWorld;
+
+	TheRenderWorld->WorldType = EWorldType::Editor;
+
+	FWorldContext& WorldContext = GEngine->CreateNewWorldContext(TheRenderWorld->WorldType);
+	WorldContext.SetCurrentWorld(TheRenderWorld);
+
+	// add the world to the root set so that the garbage collection to delete replaced actors doesn't garbage collect the whole world
+	TheRenderWorld->AddToRoot();
+
+	// initialize the levels in the world
+	TheRenderWorld->InitWorld(UWorld::InitializationValues().AllowAudioPlayback(false));
+	TheRenderWorld->GetWorldSettings()->PostEditChange();
+	TheRenderWorld->UpdateWorldComponents(true, false);
+
+	// UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
+	UGameplayStatics::FlushLevelStreaming(TheRenderWorld);
+	CommandletHelpers::TickEngine(TheRenderWorld);
 }
 
 
@@ -526,44 +551,50 @@ void UDoodleAutoAnimationCommandlet::ClearAllLight()
 
 void UDoodleAutoAnimationCommandlet::PostProcessVolumeConfig()
 {
+	auto G_SetPostProcessVolume = [](APostProcessVolume* In_PostProcessVolume)
+	{
+		In_PostProcessVolume->Settings.bOverride_BloomIntensity = true;
+		In_PostProcessVolume->Settings.bOverride_AutoExposureMinBrightness = true;
+		In_PostProcessVolume->Settings.bOverride_AutoExposureMaxBrightness = true;
+		In_PostProcessVolume->Settings.bOverride_AutoExposureBias = true;
+		In_PostProcessVolume->Settings.bOverride_LocalExposureDetailStrength = true;
+		In_PostProcessVolume->Settings.bOverride_Sharpen = true;
+		In_PostProcessVolume->Settings.bOverride_ReflectionMethod = true;
+		In_PostProcessVolume->Settings.bOverride_LumenReflectionQuality = true;
+		In_PostProcessVolume->Settings.bOverride_DynamicGlobalIlluminationMethod = true;
+		In_PostProcessVolume->Settings.bOverride_LumenSceneLightingQuality = true;
+		In_PostProcessVolume->Settings.bOverride_LumenSceneDetail = true;
+		In_PostProcessVolume->Settings.bOverride_LumenFinalGatherQuality = true;
+		In_PostProcessVolume->Settings.bOverride_LumenRayLightingMode = true;
+		In_PostProcessVolume->Settings.bOverride_LumenMaxReflectionBounces = true;
+		In_PostProcessVolume->Settings.BloomIntensity = 0.000000;
+		In_PostProcessVolume->Settings.LumenSceneLightingQuality = 2.000000;
+		In_PostProcessVolume->Settings.LumenSceneDetail = 2.000000;
+		In_PostProcessVolume->Settings.LumenFinalGatherQuality = 4.000000;
+		In_PostProcessVolume->Settings.LumenReflectionQuality = 2.000000;
+		In_PostProcessVolume->Settings.LumenRayLightingMode = ELumenRayLightingModeOverride::HitLighting;
+		In_PostProcessVolume->Settings.LumenMaxReflectionBounces = 3;
+		In_PostProcessVolume->Settings.AutoExposureBias = 0.000000;
+		In_PostProcessVolume->Settings.AutoExposureMinBrightness = 1.000000;
+		In_PostProcessVolume->Settings.AutoExposureMaxBrightness = 1.000000;
+		In_PostProcessVolume->Settings.LocalExposureDetailStrength = 1.100000;
+		In_PostProcessVolume->Settings.Sharpen = 1.500000;
+	};
+
+
 	APostProcessVolume* L_PostProcessVolume{};
 	for (TActorIterator<APostProcessVolume> PoseItr(TheRenderWorld); PoseItr; ++PoseItr)
 	{
 		L_PostProcessVolume = *PoseItr;
+		G_SetPostProcessVolume(L_PostProcessVolume);
 	}
 	if (!L_PostProcessVolume)
 	{
 		L_PostProcessVolume = TheRenderWorld->SpawnActor<APostProcessVolume>(FVector::ZeroVector, FRotator::ZeroRotator);
 		L_PostProcessVolume->bEnabled = true;
 		L_PostProcessVolume->bUnbound = true;
+		G_SetPostProcessVolume(L_PostProcessVolume);
 	}
-
-	L_PostProcessVolume->Settings.bOverride_BloomIntensity = true;
-	L_PostProcessVolume->Settings.bOverride_AutoExposureMinBrightness = true;
-	L_PostProcessVolume->Settings.bOverride_AutoExposureMaxBrightness = true;
-	L_PostProcessVolume->Settings.bOverride_AutoExposureBias = true;
-	L_PostProcessVolume->Settings.bOverride_LocalExposureDetailStrength = true;
-	L_PostProcessVolume->Settings.bOverride_Sharpen = true;
-	L_PostProcessVolume->Settings.bOverride_ReflectionMethod = true;
-	L_PostProcessVolume->Settings.bOverride_LumenReflectionQuality = true;
-	L_PostProcessVolume->Settings.bOverride_DynamicGlobalIlluminationMethod = true;
-	L_PostProcessVolume->Settings.bOverride_LumenSceneLightingQuality = true;
-	L_PostProcessVolume->Settings.bOverride_LumenSceneDetail = true;
-	L_PostProcessVolume->Settings.bOverride_LumenFinalGatherQuality = true;
-	L_PostProcessVolume->Settings.bOverride_LumenRayLightingMode = true;
-	L_PostProcessVolume->Settings.bOverride_LumenMaxReflectionBounces = true;
-	L_PostProcessVolume->Settings.BloomIntensity = 0.000000;
-	L_PostProcessVolume->Settings.LumenSceneLightingQuality = 2.000000;
-	L_PostProcessVolume->Settings.LumenSceneDetail = 2.000000;
-	L_PostProcessVolume->Settings.LumenFinalGatherQuality = 4.000000;
-	L_PostProcessVolume->Settings.LumenReflectionQuality = 2.000000;
-	L_PostProcessVolume->Settings.LumenRayLightingMode = ELumenRayLightingModeOverride::HitLighting;
-	L_PostProcessVolume->Settings.LumenMaxReflectionBounces = 3;
-	L_PostProcessVolume->Settings.AutoExposureBias = 0.000000;
-	L_PostProcessVolume->Settings.AutoExposureMinBrightness = 1.000000;
-	L_PostProcessVolume->Settings.AutoExposureMaxBrightness = 1.000000;
-	L_PostProcessVolume->Settings.LocalExposureDetailStrength = 1.100000;
-	L_PostProcessVolume->Settings.Sharpen = 1.500000;
 }
 
 
@@ -1155,12 +1186,14 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	{
 		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_EXR::StaticClass());
 		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(nullptr, TEXT("/Doodle/tongdao/景深_Inst.景深_Inst"));
+		L_DeferredPass->AdditionalPostProcessMaterials.Empty();
 		L_DeferredPass->AdditionalPostProcessMaterials.Emplace(true, L_CraneBaseMaterial);
 		// 添加object ID layer(这个只能从反射中寻找, 无法直接引入头文件)
 		for (TObjectIterator<UClass> It{}; It; ++It)
 		{
-			if (It->IsChildOf(UFactory::StaticClass()))
+			if (It->IsChildOf(UMoviePipelineSetting::StaticClass()))
 			{
+				UE_LOG(LogTemp, Log, TEXT("Find MoviePipelineObjectIdRenderPass %s"), *It->GetName());
 				if (It->GetName() == "MoviePipelineObjectIdRenderPass")
 				{
 					Config->FindOrAddSettingByClass(*It);
