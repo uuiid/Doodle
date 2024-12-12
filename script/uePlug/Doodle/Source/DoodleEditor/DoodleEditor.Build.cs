@@ -129,18 +129,29 @@ public class doodleEditor : ModuleRules
 				"SequencerWidgets", // 曲线编辑器
 				//---------
 				"MovieRenderPipelineRenderPasses",
-                "EditorWidgets",
-                "Niagara",
-                "AVIWriter",
-                "MovieSceneCapture",
-                "MediaAssets",
-                "MediaPlayerEditor",
+				"EditorWidgets",
+				"Niagara",
+				"AVIWriter",
+				"MovieSceneCapture",
+				"MediaAssets",
+				"MediaPlayerEditor",
 				"Media",
-                "NiagaraEditor",
-                "ToolWidgets",
-                "MovieSceneCaptureDialog",
-				"MovieRenderPipelineSettings",// 自动导入设置模块
+				"NiagaraEditor",
+				"ToolWidgets",
+				"MovieSceneCaptureDialog",
+				"MovieRenderPipelineSettings", // 自动导入设置模块
 				"SkeletalMeshEditor", /// 获取骨骼网格体信息
+				/// ----------- 这些是使用exr的需要的包
+				"Imath",
+				"UEOpenExr",
+				"UEOpenExrRTTI",
+				"ImageWrapper",
+				"CinematicCamera",
+				"MovieRenderPipelineSettings",
+				"ColorManagement",
+				"SlateCore",
+				"ImageCore",
+				"OpenColorIOWrapper",
 			}
 		);
 
