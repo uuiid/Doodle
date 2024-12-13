@@ -286,6 +286,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
         auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
         l_task.get_to(*l_arg_t);
         l_arg_t->create_play_blast_ = true;
+        l_arg                       = l_arg_t;
       }
       l_import_and_render_args->maya_arg_ = l_arg;
     } else {
