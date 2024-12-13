@@ -48,7 +48,6 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   std::string organization_name;
 
   FSys::path p_root;
-  FSys::path _root_cache;
   FSys::path p_doc;
 
   FSys::path ue4_path;

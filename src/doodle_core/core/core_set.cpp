@@ -46,7 +46,6 @@ core_set::core_set()
       p_doc(win::get_pwd()),
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
-      _root_cache(p_root / "cache"),
       timeout(3600),
       maya_version(2020),
       assets_file_widgets_size(5),
@@ -97,13 +96,9 @@ std::string core_set::get_render_url() {
 #endif
 }
 
-void core_set::set_root(const FSys::path &in_root) {
-  p_root      = in_root;
-  _root_cache = p_root / "cache";
-  if (!FSys::exists(_root_cache)) FSys::create_directories(_root_cache);
-}
+void core_set::set_root(const FSys::path &in_root) { p_root = in_root; }
 
-FSys::path core_set::get_cache_root() const { return _root_cache; }
+FSys::path core_set::get_cache_root() const { return p_root; }
 
 FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
   auto path = get_cache_root() / in_path;
