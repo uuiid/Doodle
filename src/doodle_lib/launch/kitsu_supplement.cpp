@@ -138,7 +138,8 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
-    l_args.db_path_ = register_file_type::program_location() / "epiboly.database";
+    l_args.db_path_              = register_file_type::program_location().parent_path() / "epiboly.database";
+    l_args.kitsu_front_end_path_ = register_file_type::program_location().parent_path() / "dist";
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // 初始化路由
