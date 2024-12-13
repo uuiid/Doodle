@@ -37,23 +37,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated(sess
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   nlohmann::json l_json{};
   try {
-    auto& l_database = g_ctx().get<sqlite_database>();
-    auto l_all_prj = l_database.get_all<project_helper::database_t>();
-
-
-    for (auto&& l_project : l_json["projects"]) {
-      auto l_id = l_project["id"].get<uuid>();
-      if (auto l_prj = l_database.get_by_uuid<project_helper::database_t>(l_id); l_prj.empty()) {
-        l_project["path"]             = nlohmann::json::value_t::null;
-        l_project["en_str"]           = nlohmann::json::value_t::null;
-        l_project["auto_upload_path"] = nlohmann::json::value_t::null;
-      } else {
-        l_project["path"]             = l_prj.front().path_;
-        l_project["en_str"]           = l_prj.front().en_str_;
-        l_project["auto_upload_path"] = l_prj.front().auto_upload_path_;
-      }
-    }
-
+    auto& l_database   = g_ctx().get<sqlite_database>();
+    auto l_all_prj     = l_database.get_all<project_helper::database_t>();
+    l_json["projects"] = l_all_prj;
   } catch (...) {
     in_handle->logger_->error("api/data/user/context {}", boost::current_exception_diagnostic_information());
   }
