@@ -51,7 +51,8 @@
         "ffmpeg",
         "contrib",
         "freetype",
-        "openexr"
+        "openexr",
+        "tbb"
       ]
     },
     "magic-enum",

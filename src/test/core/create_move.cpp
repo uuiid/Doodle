@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(create) {
 
   std::vector<movie::image_attr> l_image_list{};
   for (auto& it : l_list) {
-    l_image_list.emplace_back(it);
+    l_image_list.emplace_back(it).gamma_t = 0.9;
   }
   movie::image_attr::extract_num(l_image_list);
 
