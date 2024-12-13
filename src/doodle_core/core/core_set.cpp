@@ -101,7 +101,7 @@ void core_set::set_root(const FSys::path &in_root) { p_root = in_root; }
 FSys::path core_set::get_cache_root() const { return p_root; }
 
 FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
-  auto path = get_cache_root() / in_path;
+  auto path = p_root / in_path;
   if (!FSys::exists(path)) FSys::create_directories(path);
   return path;
 }
