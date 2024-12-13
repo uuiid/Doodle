@@ -118,6 +118,9 @@ Environment="DOMAIN_NAME=192.168.40.182"
 
 Environment="USER_LIMIT=400"
 
+Environment="DEFAULT_LOCALE=zh_CN"
+Environment="DEFAULT_TIMEZONE=Asia/Shanghai"
+
 RuntimeDirectory=zou
 ExecStart=/opt/zou/env/bin/gunicorn -p /run/zou/zou.pid -c /etc/zou/gunicorn.conf -b 127.0.0.1:5000 zou.app:app
 
