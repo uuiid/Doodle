@@ -50,7 +50,8 @@
       "features": [
         "ffmpeg",
         "contrib",
-        "freetype"
+        "freetype",
+        "openexr"
       ]
     },
     "magic-enum",

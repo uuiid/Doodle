@@ -144,6 +144,9 @@ boost::system::error_code create_move(
     in_logger->info("开始读取图片 {}", l_image.path_attr);
 
     k_image = cv::imread(l_image.path_attr.generic_string());
+    if (l_image.path_attr.extension() == ".exr") {
+      cv::normalize(k_image, k_image, 0, 255, cv::NORM_MINMAX, CV_8U);
+    }
     if (k_image.empty()) {
       DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.path_attr);
       continue;
