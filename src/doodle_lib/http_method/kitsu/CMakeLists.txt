@@ -7,6 +7,7 @@ target_sources(
         kitsu_front_end.h
         http_route_proxy.h
         project.h
+        epiboly.h
 
         PRIVATE
         task.cpp
@@ -15,4 +16,5 @@ target_sources(
         kitsu_front_end.cpp
         http_route_proxy.cpp
         project.cpp
+        epiboly.cpp
 )
