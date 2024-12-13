@@ -132,15 +132,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
 
     for (auto&& l_project : l_json["projects"]) {
       auto l_id = l_project["id"].get<uuid>();
+      nlohmann::json l_j{};
       if (auto l_prj = l_database.get_by_uuid<project_helper::database_t>(l_id); l_prj.empty()) {
-        l_project["path"]             = nlohmann::json::value_t::null;
-        l_project["en_str"]           = nlohmann::json::value_t::null;
-        l_project["auto_upload_path"] = nlohmann::json::value_t::null;
+        l_j = project_helper::database_t{};
       } else {
-        l_project["path"]             = l_prj.front().path_;
-        l_project["en_str"]           = l_prj.front().en_str_;
-        l_project["auto_upload_path"] = l_prj.front().auto_upload_path_;
+        l_j = l_prj.front();
       }
+      l_j.update(l_project);
+      l_project = l_j;
     }
 
     l_res.body() = l_json.dump();
