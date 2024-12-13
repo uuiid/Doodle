@@ -20,8 +20,12 @@ struct database_t {
   std::string auto_upload_path_{};
 
   friend void to_json(nlohmann::json& j, const database_t& p) {
-    j["name"] = p.name_;
-    j["path"] = p.path_;
+    j["name"]             = p.name_;
+    j["id"]               = p.id_;
+    j["path"]             = p.path_;
+    j["en_str"]           = p.en_str_;
+    j["code"]             = p.shor_str_;
+    j["auto_upload_path"] = p.auto_upload_path_;
   }
   friend void from_json(const nlohmann::json& j, database_t& p) {
     if (j.contains("name")) j.at("name").get_to(p.name_);

@@ -25,6 +25,7 @@
 #include <doodle_lib/http_method/model_library/thumbnail.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/tool_version.h>
+#include <doodle_lib/http_method/kitsu/epiboly.h>
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
@@ -42,6 +43,14 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   computer_reg(*l_router);
   task_info_reg(*l_router);
   tool_version_reg(*l_router);
+  return l_router;
+}
+
+http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
+  auto l_router = std::make_shared<kitsu::http_route_proxy>();
+  l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
+      .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
+  kitsu::epiboly_reg(*l_router);
   return l_router;
 }
 
