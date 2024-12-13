@@ -172,8 +172,9 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("uuid_id", &project_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("name", &project_helper::database_t::name_),  //
           make_column("path", &project_helper::database_t::path_),
-          make_column("en_str", &project_helper::database_t::en_str_),  //
-          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
+          make_column("en_str", &project_helper::database_t::en_str_),                      //
+          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),  //
+          make_column("code", &project_helper::database_t::code_)
       )
   ));
 }

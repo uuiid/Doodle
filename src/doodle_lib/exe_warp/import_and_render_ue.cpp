@@ -34,33 +34,33 @@ import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render
   l_import_data.out_file_dir =
       in_args.down_info_.render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
       fmt::format(
-          "{}_EP{:03}_SC{:03}{}", l_import_data.project_.shor_str_, l_import_data.episode.p_episodes,
+          "{}_EP{:03}_SC{:03}{}", l_import_data.project_.code_, l_import_data.episode.p_episodes,
           l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
       );
 
   // 渲染配置
   {
     l_import_data.movie_pipeline_config = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_import_data.project_.shor_str_,
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_import_data.project_.code_,
         l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
     l_import_data.movie_pipeline_config.replace_extension(l_import_data.movie_pipeline_config.stem());
 
     l_import_data.level_sequence_import = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}", l_import_data.project_.shor_str_,
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}", l_import_data.project_.code_,
         l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
     l_import_data.level_sequence_vfx = l_import_data.level_sequence_import.generic_string() + "_Vfx";
     l_import_data.level_sequence_import.replace_extension(l_import_data.level_sequence_import.stem());
 
     l_import_data.create_map = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_import_data.project_.shor_str_,
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_import_data.project_.code_,
         l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
     l_import_data.vfx_map    = l_import_data.create_map + "_Vfx_LV";
 
     l_import_data.import_dir = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", l_import_data.project_.shor_str_,
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", l_import_data.project_.code_,
         l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum,
         time_point_wrap{}.get_local_time()
     );
@@ -369,7 +369,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
   for (auto&& h : l_refs) {
     auto l_down_path  = h.ue_prj_path_.parent_path();
     auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
-    auto l_local_path = g_root / in_args->project_.shor_str_ / l_down_path_file_name;
+    auto l_local_path = g_root / in_args->project_.code_ / l_down_path_file_name;
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
       in_logger->error(" 用户取消操作");
       co_return std::tuple(
@@ -566,7 +566,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   // 合成视屏
   in_logger->warn("开始合成视屏 :{}", l_ret);
   auto l_movie_path =
-      detail::create_out_path(l_ret.parent_path(), in_args->episodes_, in_args->shot_, in_args->project_.shor_str_);
+      detail::create_out_path(l_ret.parent_path(), in_args->episodes_, in_args->shot_, in_args->project_.code_);
   {
     std::vector<FSys::path> l_move_paths{};
     std::tie(l_ec, l_move_paths) = clean_1001_before_frame(l_ret, in_args->maya_out_arg_.begin_time);

@@ -101,7 +101,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   // 复制UE文件到本机缓存文件夹
   try {
-    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger, in_args->project_.shor_str_);
+    in_args->local_ue_project_path_ = down_copy_file(in_args->ue_project_path_, in_logger, in_args->project_.code_);
   } catch (const FSys::filesystem_error& error) {
     co_return std::make_tuple(error.code(), error.what());
   }

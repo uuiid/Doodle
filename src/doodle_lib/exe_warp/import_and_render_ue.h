@@ -52,7 +52,7 @@ struct import_data_t {
   bool layering_;
 
   friend void to_json(nlohmann::json& j, const import_data_t& p) {
-    j["project"]            = p.project_.shor_str_;
+    j["project"]            = p.project_.code_;
     j["begin_time"]         = p.begin_time;
     j["end_time"]           = p.end_time;
     j["episode"]            = p.episode.p_episodes;

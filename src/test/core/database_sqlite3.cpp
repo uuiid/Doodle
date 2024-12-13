@@ -33,7 +33,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
           make_column("uuid_id", &project_helper::database_t::uuid_id_, unique()),
           make_column("name", &project_helper::database_t::name_),      //
           make_column("en_str", &project_helper::database_t::en_str_),  //
-          make_column("shor_str", &project_helper::database_t::shor_str_),
           make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
       )
   );
@@ -44,14 +43,12 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
       .uuid_id_          = core_set::get_set().get_uuid(),
       .name_             = "test",
       .en_str_           = "test",
-      .shor_str_         = "test",
       .auto_upload_path_ = "test"
   };
   project_helper::database_t l_d2{
       .uuid_id_          = core_set::get_set().get_uuid(),
       .name_             = "test2",
       .en_str_           = "test2",
-      .shor_str_         = "test2",
       .auto_upload_path_ = "test2"
   };
 
@@ -60,7 +57,6 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
       .uuid_id_          = core_set::get_set().get_uuid(),
       .name_             = "test3",
       .en_str_           = "test3",
-      .shor_str_         = "test3",
       .auto_upload_path_ = "test3"
   };
   l_s.replace(l_d3);
