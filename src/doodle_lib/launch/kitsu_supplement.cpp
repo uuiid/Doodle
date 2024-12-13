@@ -142,7 +142,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // 初始化路由
-    auto l_rout_ptr = std::make_shared<http::http_route>();
+    auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);
     http::task_info_reg_local(*l_rout_ptr);
     http::local_setting_reg(*l_rout_ptr);
     // 开始运行服务器
