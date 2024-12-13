@@ -118,7 +118,7 @@ Environment="DOMAIN_NAME=192.168.40.182"
 
 Environment="USER_LIMIT=400"
 
-Environment="DEFAULT_LOCALE=zh_CN"
+Environment="DEFAULT_LOCALE=zh"
 Environment="DEFAULT_TIMEZONE=Asia/Shanghai"
 
 RuntimeDirectory=zou
