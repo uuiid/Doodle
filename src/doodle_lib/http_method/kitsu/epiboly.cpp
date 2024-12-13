@@ -23,8 +23,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> config(session_dat
     "indexer_configured": true,
     "saml_enabled": false,
     "saml_idp_name": "",
-    "default_locale": "en_US",
-    "default_timezone": "Europe/Paris"
+    "default_locale": "zh",
+    "default_timezone": "Asia/Shanghai"
 }
 )"s);
 }
