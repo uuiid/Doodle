@@ -58,7 +58,8 @@ class DOODLE_CORE_API shot {
   }
   friend void from_json(const nlohmann::json &j, shot &p) {
     j.at("shot").get_to(p.p_shot);
-    if (j.contains("shot_enum") && j.at("shot_enum").is_string() && !j.at("shot_enum").get<std::string>().empty())
+    if (j.contains("shot_enum") && j.at("shot_enum").is_string() &&
+        !j.at("shot_enum").get_ptr<const std::string *>()->empty())
       p.p_shot_enum =
           magic_enum::enum_cast<shot_ab_enum>(j.at("shot_enum").get<std::string>()).value_or(shot_ab_enum::A);
   }
