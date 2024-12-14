@@ -127,7 +127,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(":memory:");
     // 初始化授权上下文
-    g_ctx().emplace<authorization>();
+    g_ctx().emplace<authorization>(core_set::get_set().authorize_);
     // 初始化路由
     auto l_rout_ptr = std::make_shared<http::http_route>();
     http::local_setting_reg(*l_rout_ptr);

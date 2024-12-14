@@ -44,6 +44,7 @@ bool authorization::is_build_near() {
 }
 
 void authorization::load_authorization_data(const std::string& in_data) {
+  if (in_data.empty()) return;
   std::string decryptedtext{};
   try {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};

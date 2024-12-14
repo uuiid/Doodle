@@ -42,7 +42,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
     auto& l_au = g_ctx().get<authorization>();
     if (l_json.contains("authorize") && l_json["authorize"].is_string())
       if (auto& l_a = l_json["authorize"];
-          l_a.is_string() && l_au.load_authorization_data(l_a.get<std::string>()), l_au.is_expire())
+          l_a.is_string() && (l_au.load_authorization_data(l_a.get<std::string>()), l_au.is_expire()))
         core_set::get_set().authorize_ = l_a.get<std::string>();
 
     if (l_json.contains("UE_path")) core_set::get_set().ue4_path = l_json["UE_path"].get<std::string>();
