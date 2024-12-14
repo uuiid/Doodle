@@ -17,7 +17,12 @@
 
 namespace doodle {
 class authorization::impl {
-  friend void to_json(nlohmann::json& j, const impl& p) { j["time"] = p.l_time; }
+  friend void to_json(nlohmann::json& j, const impl& p) {
+    j["time"]  = p.l_time;
+    j["uuid1"] = core_set::get_set().get_uuid();
+    j["uuid2"] = core_set::get_set().get_uuid();
+    j["uuid3"] = core_set::get_set().get_uuid();
+  }
   friend void from_json(const nlohmann::json& j, impl& p) { p.l_time = j.at("time").get<time_point_wrap>(); }
 
  public:
