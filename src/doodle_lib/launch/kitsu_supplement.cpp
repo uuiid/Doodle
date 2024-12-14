@@ -1,6 +1,7 @@
 #include "kitsu_supplement.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/core/authorization.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/detail/init_project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -125,10 +126,12 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       l_args.port_ = 0;
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(":memory:");
+    // 初始化授权上下文
+    g_ctx().emplace<authorization>();
     // 初始化路由
     auto l_rout_ptr = std::make_shared<http::http_route>();
-    http::task_info_reg_local(*l_rout_ptr);
     http::local_setting_reg(*l_rout_ptr);
+    if (g_ctx().get<authorization>().is_expire()) http::task_info_reg_local(*l_rout_ptr);
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return false;
@@ -144,8 +147,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);
-    http::task_info_reg_local(*l_rout_ptr);
-    http::local_setting_reg(*l_rout_ptr);
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return false;
