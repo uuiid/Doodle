@@ -378,6 +378,11 @@ sudo nano /etc/postgresql/14/main/pg_hba.conf
 host    all             all             192.168.20.89/32         md5
 sudo service postgresql restart
 
+重置索引器
+DB_PASSWORD=euQVpMXeFz8k0A3lD0aj INDEXER_KEY=QrcnaU9ZXCDJYjrt /opt/zou/env/bin/zou reset-search-index
+
+
+
 
 "迁移数据库"
 
