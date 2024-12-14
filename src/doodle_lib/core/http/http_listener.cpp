@@ -26,14 +26,7 @@ boost::asio::awaitable<void> detail::run_http_listener(
   };
   l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
   auto l_local_endpoint = l_acceptor.local_endpoint();
-  auto& l_date          = g_ctx().get<http_listener_data>();
-  l_date.address_       = l_local_endpoint.address().to_string();
-  l_date.port_          = l_local_endpoint.port();
-  if (in_port == 0) {
-    auto l_path = core_set::get_set().get_cache_root("http") / fmt::format("{}.txt", boost::this_process::get_id());
-    FSys::ofstream{l_path} << l_date.port_ << std::endl;
-  }
-  std::cout << l_date.port_ << std::endl;
+  std::cout << l_local_endpoint.port() << std::endl;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
     if (l_ec) {
@@ -50,7 +43,6 @@ boost::asio::awaitable<void> detail::run_http_listener(
   }
 }
 void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port) {
-  g_ctx().emplace<detail::http_listener_data>();
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)

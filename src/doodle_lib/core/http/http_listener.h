@@ -17,11 +17,6 @@ using http_route_ptr = std::shared_ptr<http_route>;
 
 namespace detail {
 
-struct http_listener_data {
-  std::string address_;
-  std::uint16_t port_;
-};
-
 boost::asio::awaitable<void> run_http_listener(
     boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr,
     std::uint16_t in_port = doodle_config::http_port
