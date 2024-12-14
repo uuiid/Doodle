@@ -351,8 +351,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
   auto l_sr = l_server_task_info->status_;
   try {
     auto l_json = std::get<nlohmann::json>(in_handle->body_);
-    l_json["status"].get_to(l_server_task_info->status_);
-    l_json["name"].get_to(l_server_task_info->name_);
+    if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
+    if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务数据");
   }
