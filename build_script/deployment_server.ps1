@@ -16,7 +16,7 @@ Write-Host "从 "$DoodleSource\$DoodleName\bin" 复制到 192.168.40.181\tmp"
 &robocopy "E:\source\kitsu\dist" "\\192.168.40.181\tmp\dist" /MIR
 
 Copy-Item "$DoodleSource/$DoodleName.zip" -Destination "\\192.168.40.181\tmp\dist"
-Set-Content -Path "\\192.168.40.181\tmp\dist\version.txt" -Value $DoodleName.Split("-")[1]
+Set-Content -Path "\\192.168.40.181\tmp\dist\version.txt" -Value $DoodleName.Split("-")[1] -NoNewline
 
 Copy-Item "E:\source\doodle\dist\doodle.exe" -Destination "\\192.168.40.181\tmp\dist"
 
