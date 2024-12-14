@@ -44,10 +44,7 @@ bool authorization::is_build_near() {
 }
 
 void authorization::load_authorization_data(const std::string& in_data) {
-  default_logger_raw()->info("使用构建时间授权");
-
   std::string decryptedtext{};
-
   try {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
     l_decryption.SetKeyWithIV(
@@ -67,8 +64,11 @@ void authorization::load_authorization_data(const std::string& in_data) {
     log_error(fmt::format("解析授权码错误 : {}", error.what()));
     return;
   }
-
-  *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
+  try {
+    *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
+  } catch (...) {
+    default_logger_raw()->error("解析授权码错误 : {}", boost::current_exception_diagnostic_information());
+  }
 }
 
 authorization::authorization(const std::string& in_data) : p_i(std::make_shared<impl>()) {
