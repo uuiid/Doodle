@@ -10,7 +10,7 @@ namespace doodle {
 namespace doodle_config {
 constexpr std::string_view doodle_db_name{R"(.doodle_db)"};
 constexpr std::string_view doodle_flag_name{R"(.doodle_flag)"};
-constexpr std::string_view config_name{R"(doodle_config_v2)"};
+constexpr std::string_view config_name{R"(doodle_config_v3)"};
 constexpr std::string_view doodle_json_extension{".json_doodle"};
 constexpr std::string_view token_name{"token.doodle_token"};
 constexpr std::string_view authorization_data{"doodle"};
