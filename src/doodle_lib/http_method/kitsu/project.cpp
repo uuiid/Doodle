@@ -34,15 +34,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
       l_prj->uuid_id_ = l_uuid;
     }
 
-    bool l_modified{};
-    if (l_json.contains("path") && l_json["path"].is_string())
-      l_modified = true, l_prj->path_ = l_json["path"].get<FSys::path>();
-    if (l_json.contains("en_str") && l_json["en_str"].is_string())
-      l_modified = true, l_prj->en_str_ = l_json["en_str"].get<std::string>();
-    if (l_json.contains("auto_upload_path") && l_json["auto_upload_path"].is_string())
-      l_modified = true, l_prj->auto_upload_path_ = l_json["auto_upload_path"].get<std::string>();
-
-    if (l_modified)
+    bool l_modified{l_json.contains("path") || l_json.contains("en_str") || l_json.contains("auto_upload_path")};
+    l_json.get_to(*l_prj);
+    static project_helper::database_t g_prj{};
+    if (g_prj != *l_prj)
       if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_prj); !l_e)
         co_return in_handle->logger_->error("api/data/projects/id {}", l_e.error()),
             in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
@@ -60,16 +55,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
 
   try {
     auto l_json_r = nlohmann::json::parse(l_res.body());
+    nlohmann::json l_j{};
     if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); l_list.empty()) {
-      l_json_r["path"]             = nlohmann::json::value_t::null;
-      l_json_r["en_str"]           = nlohmann::json::value_t::null;
-      l_json_r["auto_upload_path"] = nlohmann::json::value_t::null;
+      l_j = project_helper::database_t{};
     } else {
-      l_json_r["path"]             = l_list.front().path_;
-      l_json_r["en_str"]           = l_list.front().en_str_;
-      l_json_r["auto_upload_path"] = l_list.front().auto_upload_path_;
+      l_j = l_list.front();
     }
-    l_res.body() = l_json_r.dump();
+    l_j.update(l_json_r);
+    l_res.body() = l_j.dump();
     l_res.prepare_payload();
   } catch (...) {
     in_handle->logger_->error("api/data/projects/id {}", boost::current_exception_diagnostic_information());
@@ -92,15 +85,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_project_all(se
     }
     for (auto& l_item : l_json) {
       uuid l_id = l_item["id"].get<uuid>();
+      nlohmann::json l_j{};
       if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_id); l_list.empty()) {
-        l_item["path"]             = nlohmann::json::value_t::null;
-        l_item["en_str"]           = nlohmann::json::value_t::null;
-        l_item["auto_upload_path"] = nlohmann::json::value_t::null;
+        l_j = project_helper::database_t{};
       } else {
-        l_item["path"]             = l_list.front().path_.string();
-        l_item["en_str"]           = l_list.front().en_str_;
-        l_item["auto_upload_path"] = l_list.front().auto_upload_path_;
+        l_j = l_list.front();
       }
+      l_j.update(l_item);
+      l_item = l_j;
     }
 
     l_res.body() = l_json.dump();

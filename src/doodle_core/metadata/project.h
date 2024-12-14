@@ -9,7 +9,7 @@ struct database_t;
 
 namespace project_helper {
 
-struct database_t {
+struct database_t : boost::equality_comparable<database_t> {
   std::int32_t id_{};
   uuid uuid_id_{};
 
@@ -18,6 +18,11 @@ struct database_t {
   std::string en_str_{};
   std::string auto_upload_path_{};
   std::string code_{};
+
+  bool operator==(const database_t& p) const {
+    return std::tie(uuid_id_, name_, id_, path_, en_str_, auto_upload_path_, code_) ==
+           std::tie(p.uuid_id_, p.name_, p.id_, p.path_, p.en_str_, p.auto_upload_path_, p.code_);
+  }
 
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["name"]             = p.name_;
