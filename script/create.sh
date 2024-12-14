@@ -67,7 +67,7 @@ After=network.target
 User=meilisearch
 Group=meilisearch
 WorkingDirectory=/opt/meilisearch
-ExecStart=/usr/bin/meilisearch --master-key="QrcnaU9ZXCDJYjrt"
+ExecStart=/usr/bin/meilisearch --master-key="QrcnaU9ZXCDJYjrt" --http-addr "127.0.0.1:7700"
 
 [Install]
 WantedBy=multi-user.target
