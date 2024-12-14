@@ -155,7 +155,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
   void flush_() override {}
   void set_state() {
     task_info_->status_   = server_task_info_status::running;
-    task_info_->run_time_ = std::chrono::system_clock::now();
+    task_info_->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached);
   }
 };
@@ -200,7 +200,7 @@ boost::asio::awaitable<void> run_post_task_local_impl(
 ) {
   in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
   auto [l_e, l_r]         = co_await async_run_maya(in_arg, in_logger);
-  in_task_info->end_time_ = std::chrono::system_clock::now();
+  in_task_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   // 用户取消
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     in_task_info->status_ = server_task_info_status::canceled;
@@ -223,7 +223,7 @@ boost::asio::awaitable<void> run_post_task_local_impl(
 ) {
   in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
   auto [l_e, l_r]         = co_await async_auto_loght(in_arg, in_logger);
-  in_task_info->end_time_ = std::chrono::system_clock::now();
+  in_task_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   // 用户取消
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     in_task_info->status_ = server_task_info_status::canceled;
@@ -255,7 +255,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     auto l_json = std::get<nlohmann::json>(in_handle->body_);
     l_json.get_to(*l_ptr);
     l_ptr->uuid_id_         = core_set::get_set().get_uuid();
-    l_ptr->submit_time_     = chrono::sys_time_pos::clock::now();
+    l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
     if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 

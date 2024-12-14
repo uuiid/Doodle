@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/json_warp.h>
 
 #include <magic_enum.hpp>
 #include <nlohmann/json.hpp>
@@ -61,6 +62,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 );
 class server_task_info : boost::equality_comparable<server_task_info> {
  public:
+  using zoned_time = chrono::zoned_time<chrono::system_clock::duration>;
   std::int32_t id_{};
   // 唯一id
   uuid uuid_id_{};
@@ -78,14 +80,14 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 提交人
   uuid submitter_{};
   // 提交时间
-  chrono::sys_time_pos submit_time_{};
+  zoned_time submit_time_{};
 
   uuid run_computer_id_{};
 
   // 开始运行任务的时间
-  std::optional<chrono::sys_time_pos> run_time_{};
+  std::optional<zoned_time> run_time_{};
   // 结束运行任务的时间
-  std::optional<chrono::sys_time_pos> end_time_{};
+  std::optional<zoned_time> end_time_{};
 
   uuid kitsu_task_id_{};
 
@@ -117,7 +119,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
-    j["submit_time"]     = p.submit_time_;
+    j["submit_time"]     = p.submit_time_.get_local_time();
     j["run_time"]        = p.run_time_;
     j["end_time"]        = p.end_time_;
     j["run_computer_id"] = p.run_computer_id_;

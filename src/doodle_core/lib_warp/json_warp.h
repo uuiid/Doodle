@@ -81,7 +81,22 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
     l_stream >> std::chrono::parse("%F %T", in_time);
   }
 };
+template <class Duration>
+struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
+  using time_point = std::chrono::zoned_time<Duration>;
+  static void to_json(json& j, const time_point& in_time) {
+    try {
+      j = in_time.get_local_time();
+    } catch (const fmt::format_error& in_err) {
+      throw nlohmann::json::other_error::create(502, in_err.what(), &j);
+    }
+  }
 
+  static void from_json(const json& j, time_point& in_time) {
+    std::chrono::local_time<Duration> l_local_time = j.get<std::chrono::local_time<Duration>>();
+    in_time = std::chrono::zoned_time<Duration>{std::chrono::current_zone(), l_local_time};
+  }
+};
 template <class T>
 struct [[maybe_unused]] adl_serializer<std::optional<T>> {
   using opt = std::optional<T>;
