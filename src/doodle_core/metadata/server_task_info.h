@@ -93,7 +93,17 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   static constexpr auto logger_category = "server_task";
 
-  bool operator==(const server_task_info& in_rhs) const { return uuid_id_ == in_rhs.uuid_id_; }
+  bool operator==(const server_task_info& in_rhs) const {
+    return std::tie(
+               id_, uuid_id_, exe_, command_, status_, name_, source_computer_, submitter_, submit_time_,
+               run_computer_id_, run_time_, end_time_, kitsu_task_id_, type_
+           ) ==
+           std::tie(
+               in_rhs.id_, in_rhs.uuid_id_, in_rhs.exe_, in_rhs.command_, in_rhs.status_, in_rhs.name_,
+               in_rhs.source_computer_, in_rhs.submitter_, in_rhs.submit_time_, in_rhs.run_computer_id_,
+               in_rhs.run_time_, in_rhs.end_time_, in_rhs.kitsu_task_id_, in_rhs.type_
+           );
+  }
 
   void sql_command(const std::string& in_str);
   const std::string& sql_command() const;

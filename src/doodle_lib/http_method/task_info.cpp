@@ -342,11 +342,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
-
+  server_task_info l_server_task_info_org{};
   if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid); l_list.empty()) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "任务不存在");
   } else {
-    *l_server_task_info = l_list[0];
+    *l_server_task_info    = l_list[0];
+    l_server_task_info_org = l_list[0];
   }
   auto l_sr = l_server_task_info->status_;
   try {
@@ -356,9 +357,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务数据");
   }
-  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_server_task_info); !l_e) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
-  }
+  if (*l_server_task_info != l_server_task_info_org)
+    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_server_task_info); !l_e) {
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+    }
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
