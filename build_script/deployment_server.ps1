@@ -27,7 +27,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
 #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
-    if ((Get-FileHash "$Target\bin\file_association_http.exe").Hash -ne (Get-FileHash "$Tmp\bin\file_association_http.exe").Hash)
+    if ((Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash)
     {
         Stop-Service -Force -Name doodle_kitsu_supplement
         &robocopy "$Tmp\bin" "$Target\bin" /MIR
