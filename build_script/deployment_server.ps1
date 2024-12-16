@@ -20,11 +20,23 @@ Set-Content -Path "\\192.168.40.181\tmp\dist\version.txt" -Value $DoodleName.Spl
 
 Copy-Item "E:\source\doodle\dist\doodle.exe" -Destination "\\192.168.40.181\tmp\dist"
 
+# 从github 下载网络资源
+# 先查看标签, 再组合下载url
+$tag = (Invoke-WebRequest -Uri https://api.github.com/repos/NateScarlet/holiday-cn/tags -Headers @{ "accept" = "application/json" } |
+        ConvertFrom-Json)[0].name
+# 检查文件是否存在
+if (-not (Test-Path "E:\doodle\build\holiday-cn-$tag.zip"))
+{
+    Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "E:\doodle\build\holiday-cn-$tag.zip"
+    Expand-Archive -Path "E:\doodle\build\holiday-cn-$tag.zip" -DestinationPath "E:\source\kitsu\dist\time"
+}
+&robocopy "E:\source\kitsu\dist\time" "\\192.168.40.181\tmp\dist\time" /MIR
+
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList auto_light,$RootPassword
 #Enter-PSSession -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic
 Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
-#    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
+    #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
     if ((Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash)
