@@ -91,22 +91,28 @@ import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render
 }
 namespace import_and_render_ue_ns {
 void fix_project(const FSys::path& in_project_path) {
-  auto l_json     = nlohmann::json::parse(FSys::ifstream{in_project_path});
-  auto&& l_plugin = l_json["Plugins"];
+  auto l_json                = nlohmann::json::parse(FSys::ifstream{in_project_path});
+  auto&& l_plugin            = l_json["Plugins"];
 
-  bool l_has{};
-  for (auto&& l_v : l_plugin) {
-    if (l_v.contains("Name") && l_v["Name"] == "Doodle") {
-      l_v["Enabled"] = true;
-      l_has          = true;
+  static auto l_enabled_plug = [](nlohmann::json& in_json, const std::string& in_plug_name) {
+    bool l_has{};
+    for (auto&& l_v : in_json) {
+      if (l_v.contains("Name") && l_v["Name"] == in_plug_name) {
+        l_v["Enabled"] = true;
+        l_has          = true;
+      }
     }
-  }
 
-  if (!l_has) {
-    auto&& l_plugin_obj     = l_plugin.emplace_back(nlohmann::json::object());
-    l_plugin_obj["Name"]    = "Doodle";
-    l_plugin_obj["Enabled"] = true;
-  }
+    if (!l_has) {
+      auto&& l_plugin_obj     = in_json.emplace_back(nlohmann::json::object());
+      l_plugin_obj["Name"]    = in_plug_name;
+      l_plugin_obj["Enabled"] = true;
+    }
+  };
+
+  l_enabled_plug(l_plugin, "Doodle");
+  l_enabled_plug(l_plugin, "MoviePipelineMaskRenderPass");
+  l_enabled_plug(l_plugin, "MovieRenderPipeline");
   FSys::ofstream{in_project_path} << l_json.dump();
 }
 
@@ -122,7 +128,11 @@ r.AllowStaticLighting=True
 r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
-r.Nanite.ProjectEnabled=False
+r.Nanite.ProjectEnabled=True
+r.DefaultFeature.AutoExposure=False
+r.AllowOcclusionQueries=False
+r.DefaultFeature.MotionBlur=False
+r.CustomDepth=3
 
 [/Script/Engine.Engine]
 NearClipPlane=0.500000
@@ -142,7 +152,12 @@ r.AllowStaticLighting=True
 r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
-r.Nanite.ProjectEnabled=False
+r.Nanite.ProjectEnabled=True
+r.DefaultFeature.AutoExposure=False
+r.AllowOcclusionQueries=False
+r.DefaultFeature.MotionBlur=False
+r.CustomDepth=3
+
 )";
     FSys::ofstream{l_file_path} << l_str;
   } else {
@@ -160,7 +175,11 @@ r.Nanite.ProjectEnabled=False
     l_set_data("r.Streaming.PoolSize", "16384");
     l_set_data("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject", "False");
     l_set_data("r.Lumen.HardwareRayTracing", "False");
-    l_set_data("r.Nanite.ProjectEnabled", "False");
+    l_set_data("r.Nanite.ProjectEnabled", "True");
+    l_set_data("r.DefaultFeature.AutoExposure", "False");  // 自动曝光
+    l_set_data("r.AllowOcclusionQueries", "False");        // 遮蔽剔除
+    l_set_data("r.DefaultFeature.MotionBlur", "False");    // 移动模糊
+    l_set_data("r.CustomDepth", "3");                      // 自定义深度 3(启用模板)
   }
 
   if (auto l_find_engine = l_str.find("[/Script/Engine.Engine]"); l_find_engine == std::string::npos) {
