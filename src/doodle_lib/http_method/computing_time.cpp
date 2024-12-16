@@ -63,7 +63,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
     }
   }
   // 调整节假日
-  holidaycn_time2{l_rules_.work_pair_p}.set_clock(l_time_clock_);
+  holidaycn_time2{l_rules_.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"}.set_clock(l_time_clock_);
 
   auto& l_sql = g_ctx().get<sqlite_database>();
   std::vector<chrono::local_days> l_days{};

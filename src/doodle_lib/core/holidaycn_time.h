@@ -17,7 +17,7 @@ class holidaycn_time2 {
   std::vector<std::tuple<chrono::local_days, chrono::local_days, std::string>> holidaycn_list_rest;
   std::vector<std::tuple<chrono::local_time_pos, chrono::local_time_pos, std::string>> holidaycn_list_work;
 
-  void load_year(chrono::year in_year);
+  void load_year(  const FSys::path &in_path);
   time_duration_vector work_time{};
 
  public:
@@ -31,7 +31,7 @@ class holidaycn_time2 {
     friend void from_json(const nlohmann::json &in_j, info &in_p);
   };
 
-  explicit holidaycn_time2(time_duration_vector in_work_time);
+  explicit holidaycn_time2(time_duration_vector in_work_time, const FSys::path &in_path);
   virtual ~holidaycn_time2();
 
   void set_clock(business::work_clock2 &in_work_clock) const;
