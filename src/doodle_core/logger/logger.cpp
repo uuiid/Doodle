@@ -255,7 +255,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
 }
 
 logger_ctrl::~logger_ctrl() {
-  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
+  // spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   spdlog::shutdown();
 }
 
