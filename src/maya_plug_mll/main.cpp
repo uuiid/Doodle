@@ -81,6 +81,7 @@ MStatus initializePlugin(MObject obj) {
           MSceneMessage::Message::kMayaExiting,
           [](void* in) {
             if (auto l_doodle_app = static_cast<app_base*>(in); l_doodle_app) {
+              l_doodle_app->stop_app();
             }
           },
           p_doodle_app.get(), &status
