@@ -29,4 +29,12 @@ DOODLE_CORE_API registry_ptr &g_reg();
 DOODLE_CORE_API details::logger_ctrl &g_logger_ctrl();
 
 DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
+template <class... Ts>
+struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+// explicit deduction guide (not needed as of C++20)
+template <class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
 }  // namespace doodle
