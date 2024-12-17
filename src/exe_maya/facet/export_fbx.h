@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/image_size.h>
 
 #include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
