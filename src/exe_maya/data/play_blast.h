@@ -5,6 +5,7 @@
 
 #pragma once
 #include "doodle_core/metadata/episodes.h"
+#include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/shot.h"
 
 #include "doodle_lib/doodle_lib_fwd.h"
@@ -40,7 +41,7 @@ class play_blast {
  public:
   play_blast();
 
-  MStatus play_blast_(const MTime& in_start, const MTime& in_end);
+  MStatus play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size);
 
   bool conjecture_ep_sc();
 

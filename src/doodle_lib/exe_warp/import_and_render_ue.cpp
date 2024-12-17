@@ -591,7 +591,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
     std::tie(l_ec, l_move_paths) = clean_1001_before_frame(l_ret, in_args->maya_out_arg_.begin_time);
     l_ec                         = detail::create_move(
         l_movie_path, in_logger,
-        movie::image_attr::make_default_attr(&in_args->episodes_, &in_args->shot_, l_move_paths)
+        movie::image_attr::make_default_attr(&in_args->episodes_, &in_args->shot_, l_move_paths), in_args->size_
     );
   }
   if (l_ec) {

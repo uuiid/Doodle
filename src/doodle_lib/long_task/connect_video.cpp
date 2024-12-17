@@ -15,7 +15,8 @@
 namespace doodle::detail {
 
 boost::system::error_code connect_video(
-    const FSys::path &in_out_path, doodle::logger_ptr in_logger, const std::vector<FSys::path> &in_vector
+    const FSys::path &in_out_path, doodle::logger_ptr in_logger, const std::vector<FSys::path> &in_vector,
+    const image_size &in_size
 ) {
   in_logger->log(log_loc(), level::info, "开始创建视频 {}", in_out_path);
   in_logger->log(log_loc(), level::info, "获得视屏路径 {}", in_vector);
@@ -32,7 +33,7 @@ boost::system::error_code connect_video(
     }
   }
 
-  const static cv::Size k_size{1920, 1080};
+  const cv::Size k_size{in_size.width, in_size.height};
   auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto l_video_cap       = cv::VideoCapture{};
   const auto &k_size_len = in_vector.size();

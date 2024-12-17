@@ -103,7 +103,9 @@ FSys::path create_out_path(
 }
 
 boost::system::error_code create_move(
-    const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector
+    const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector,
+    const image_size& in_image_size
+
 ) {
   /// \brief 这里排序组件
   auto l_vector = in_vector;
@@ -123,7 +125,7 @@ boost::system::error_code create_move(
     }
   }
 
-  const static cv::Size k_size{1920, 1080};
+  const cv::Size k_size{in_image_size.width, in_image_size.height};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image = cv::Mat{};
   const auto& k_size_len = l_vector.size();

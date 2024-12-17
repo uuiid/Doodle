@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(create) {
   }
   movie::image_attr::extract_num(l_image_list);
 
-  detail::create_move(l_out_file, spdlog::default_logger(), l_image_list);
+  detail::create_move(l_out_file, spdlog::default_logger(), l_image_list, {1920, 1080});
 }
 
 BOOST_AUTO_TEST_SUITE_END()

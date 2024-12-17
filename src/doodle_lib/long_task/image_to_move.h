@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include "doodle_core/metadata/image_size.h"
 #include <doodle_core/metadata/move_create.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -14,7 +15,8 @@ FSys::path create_out_path(
     const std::string& in_project_short_string = {}
 );
 boost::system::error_code create_move(
-    const FSys::path& in_out_path, logger_ptr in_msg, const std::vector<movie::image_attr>& in_vector
+    const FSys::path& in_out_path, logger_ptr in_msg, const std::vector<movie::image_attr>& in_vector,
+    const image_size& in_image_size
 );
 
 }  // namespace detail

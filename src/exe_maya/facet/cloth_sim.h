@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include "doodle_core/metadata/image_size.h"
 #include <doodle_core/core/app_base.h>
 
 #include "entt/entity/fwd.hpp"
@@ -20,7 +21,7 @@ class cloth_sim final {
   MTime anim_begin_time_{};
   MTime t_post_time_{};
   std::double_t film_aperture_{};
-
+  image_size size_{};
   void create_ref_file();
   void replace_ref_file();
   void create_cloth();

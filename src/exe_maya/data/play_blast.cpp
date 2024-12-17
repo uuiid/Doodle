@@ -106,7 +106,7 @@ FSys::path play_blast::get_out_path() const {
   return p_save_path;
 }
 
-MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
+MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size) {
   p_uuid = core_set::get_set().get_uuid_str();
   MStatus k_s{};
 
@@ -148,7 +148,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     //        MHWRender::MPassContext::kEndRenderSemantic, reinterpret_cast<void*>(this)
     //    );
 
-    renderer->setOutputTargetOverrideSize(1920, 1080);
+    renderer->setOutputTargetOverrideSize(in_size.width, in_size.height);
     renderer->setPresentOnScreen(false);
     const auto l_cam_path  = k_cam.get_full_name();
 
@@ -159,7 +159,10 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     auto* l_tex_manager    = renderer->getTextureManager();
     auto* l_target_manager = renderer->getRenderTargetManager();
     MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTarget(
-        MRenderTargetDescription{k_play_blast_tex, 1920, 1080, 1, ::MHWRender::MRasterFormat ::kB8G8R8A8, 1, false}
+        MRenderTargetDescription{
+            k_play_blast_tex, boost::numeric_cast<std::uint32_t>(in_size.width),
+            boost::numeric_cast<std::uint32_t>(in_size.height), 1, ::MHWRender::MRasterFormat ::kB8G8R8A8, 1, false
+        }
     )};
     target_ptr_t const l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
                              if (in_target) l_target_manager->releaseRenderTarget(in_target);
@@ -226,7 +229,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   }
 
   auto l_out_path = detail::create_out_path(get_out_path(), p_eps, p_shot);
-  detail::create_move(l_out_path, spdlog::default_logger(), l_handle_list);
+  detail::create_move(l_out_path, spdlog::default_logger(), l_handle_list, in_size);
   auto k_f = get_file_dir();
   default_logger_raw()->log(log_loc(), spdlog::level::info, "完成视频合成 {} , 并删除图片 {}", l_out_path, k_f);
   try {

@@ -46,7 +46,7 @@ bool cloth_sim::post(const nlohmann::json& in_argh) {
 
   if (l_arg.file_path.empty()) return l_ret;
   film_aperture_ = l_arg.film_aperture_;
-
+  size_          = l_arg.size_;
   l_ret          = true;
   out_path_file_ = l_arg.out_path_file_;
 

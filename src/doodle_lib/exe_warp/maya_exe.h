@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/co_queue.h>
 #include <doodle_core/core/wait_op.h>
+#include <doodle_core/metadata/image_size.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -56,6 +57,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
   bool export_anim_file;
   bool create_play_blast_{};
   std::double_t film_aperture_{};
+  image_size size_{};
 
   // form json
   friend void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
@@ -71,6 +73,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
       in_json.at("film_aperture").get_to(out_obj.film_aperture_);
     else
       out_obj.film_aperture_ = 1.78;
+    if (in_json.contains("image_size")) in_json.get_to(out_obj.size_);
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
@@ -83,6 +86,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
     in_json["export_anim_file"]  = out_obj.export_anim_file;
     in_json["create_play_blast"] = out_obj.create_play_blast_;
     in_json["film_aperture"]     = out_obj.film_aperture_;
+    in_json["image_size"]        = out_obj.size_;
   }
 
   std::tuple<std::string, std::string> get_json_str() override {
@@ -95,6 +99,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   bool create_play_blast_{};
   bool rig_file_export_{};
   std::double_t film_aperture_{};
+  image_size size_{};
 
   constexpr static std::string_view k_name{"export_fbx"};
 
@@ -109,6 +114,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
       in_json.at("film_aperture").get_to(out_obj.film_aperture_);
     else
       out_obj.film_aperture_ = 1.78;
+    if (in_json.contains("image_size")) in_json.get_to(out_obj.size_);
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
@@ -118,6 +124,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
     in_json["out_path_file"]     = out_obj.out_path_file_.generic_string();
     in_json["rig_file_export"]   = out_obj.rig_file_export_;
     in_json["film_aperture"]     = out_obj.film_aperture_;
+    in_json["image_size"]        = out_obj.size_;
   }
   std::tuple<std::string, std::string> get_json_str() override {
     return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};

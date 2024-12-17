@@ -18,6 +18,7 @@ class export_fbx_facet final {
 
   MTime anim_begin_time_{};
   std::double_t film_aperture_{};
+  image_size size_{};
 
   void create_ref_file();
   void export_fbx();

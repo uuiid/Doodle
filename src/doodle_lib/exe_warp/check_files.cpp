@@ -246,7 +246,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   movie::image_attr::extract_num(l_attr);
   auto l_out_file = l_arg->out_files_dir_.parent_path() / fmt::format("{}.mp4", l_arg->out_files_dir_.stem());
-  l_ec            = detail::create_move(l_out_file, in_logger, l_attr);
+  l_ec            = detail::create_move(l_out_file, in_logger, l_attr, {1920, 1080});
   if (l_ec) {
     in_logger->error("检查文件失败, 无法获取到渲染输出的文件 {}", l_ec.message());
     co_return std::tuple(l_ec, l_err_msg);
