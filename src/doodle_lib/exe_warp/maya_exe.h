@@ -73,7 +73,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
       in_json.at("film_aperture").get_to(out_obj.film_aperture_);
     else
       out_obj.film_aperture_ = 1.78;
-    if (in_json.contains("image_size")) in_json.get_to(out_obj.size_);
+    if (in_json.contains("image_size")) in_json.at("image_size").get_to(out_obj.size_);
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
@@ -114,7 +114,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
       in_json.at("film_aperture").get_to(out_obj.film_aperture_);
     else
       out_obj.film_aperture_ = 1.78;
-    if (in_json.contains("image_size")) in_json.get_to(out_obj.size_);
+    if (in_json.contains("image_size")) in_json.at("image_size").get_to(out_obj.size_);
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
