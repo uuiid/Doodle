@@ -140,12 +140,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_o
   }
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-  auto [l_key, l_args]  = in_arg->get_json_str();
-
   auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
                           fmt::format("{}.json", core_set::get_set().get_uuid());
 
   in_arg->out_path_file_ = l_out_path_file_;
+  auto [l_key, l_args]   = in_arg->get_json_str();
   if (!FSys::exists(l_out_path_file_.parent_path())) FSys::create_directories(l_out_path_file_.parent_path());
 
   auto l_arg_path = FSys::write_tmp_file("maya/arg", l_args, ".json");
