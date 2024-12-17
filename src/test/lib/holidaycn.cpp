@@ -20,7 +20,6 @@ using namespace doodle;
 // struct stop {};
 // struct pause {};
 // struct open_file {
-//   entt::entity p_ent;
 // };
 //
 // struct player_ : public msm::front::state_machine_def<player_> {

@@ -89,7 +89,7 @@ bool http_client_data_base::is_open() {
 void http_client_data_base::do_close() {
   is_open_and_cond_ = false;
   std::visit(
-      entt::overloaded{
+      overloaded{
           [this](socket_ptr& in_socket) {
             boost::system::error_code ec;
             in_socket->socket().close(ec);
@@ -121,7 +121,7 @@ void http_client_data_base::do_close() {
 void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
   timer_ptr_->expires_after(in_seconds);
   std::visit(
-      entt::overloaded{
+      overloaded{
           [&](socket_ptr& in_socket) {
             if (in_socket) in_socket->expires_after(in_seconds);
           },
@@ -147,7 +147,7 @@ void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
 
 http_client_data_base::socket_t& http_client_data_base::socket() {
   return std::visit(
-      entt::overloaded{
+      overloaded{
           [](socket_ptr& in_socket) -> socket_t& { return *in_socket; },
           [](ssl_socket_ptr& in_socket) -> socket_t& { return in_socket->next_layer(); }
       },
