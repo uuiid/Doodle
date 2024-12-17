@@ -51,12 +51,5 @@ bool season::analysis(const std::string& in_path) {
   }
   return k_r;
 }
-bool season::analysis_static(const entt::handle& in_handle, const FSys::path& in_path) {
-  season l_season{};
-  if (l_season.analysis(in_path.generic_string())) {
-    in_handle.emplace_or_replace<season>(l_season);
-    return true;
-  }
-  return false;
-}
+
 }  // namespace doodle

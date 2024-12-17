@@ -22,7 +22,6 @@ class DOODLE_CORE_API episodes {
   inline bool analysis(const FSys::path &in_path) { return analysis(in_path.generic_string()); };
   bool analysis(const std::string &in_path);
 
-  static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
   friend std::size_t hash_value(episodes const &value) { return std::hash<std::int32_t>{}(value.p_episodes); }
 

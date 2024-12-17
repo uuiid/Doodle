@@ -27,7 +27,6 @@ class DOODLE_CORE_API season {
 
   bool analysis(const std::string& in_path);
 
-  static bool analysis_static(const entt::handle& in_handle, const FSys::path& in_path);
   friend std::size_t hash_value(season const& value) { return std::hash<std::int32_t>{}(value.p_int); }
 
  private:

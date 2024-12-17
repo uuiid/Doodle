@@ -111,8 +111,6 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   l_episodes.analysis(l_file);
   l_shot.analysis(l_file);
 
-  entt::handle l_msg{*g_reg(), g_reg()->create()};
-
   spdlog::default_logger()->sinks().emplace_back(l_sink);
   import_and_render_ue_ns::args l_args{};
   l_args.episodes_ = l_episodes;

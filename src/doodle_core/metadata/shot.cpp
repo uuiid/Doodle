@@ -48,14 +48,7 @@ bool shot::analysis(const std::string& in_path) {
   return k_r;
 }
 
-bool shot::analysis_static(const entt::handle& in_handle, const FSys::path& in_path) {
-  shot l_shot{};
-  if (l_shot.analysis(in_path)) {
-    in_handle.emplace_or_replace<shot>(l_shot);
-    return true;
-  }
-  return false;
-}
+
 
 bool shot::operator==(const shot& in_rhs) const { return p_shot == in_rhs.p_shot && p_shot_enum == in_rhs.p_shot_enum; }
 bool shot::operator!=(const shot& in_rhs) const { return !(in_rhs == *this); }
