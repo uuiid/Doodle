@@ -33,7 +33,7 @@ if (-not (Test-Path "E:\doodle\build\holiday-cn-$tag.zip"))
 {
     Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "E:\doodle\build\holiday-cn-$tag.zip"
 }
-Expand-Archive -Path "E:\doodle\build\holiday-cn-$tag.zip" -DestinationPath "E:\source\kitsu\dist\time"
+Expand-Archive -Path "E:\doodle\build\holiday-cn-$tag.zip" -DestinationPath "E:\source\kitsu\dist\time" -Force
 &robocopy "E:\source\kitsu\dist\time" "\\192.168.40.181\tmp\dist\time" /MIR
 
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
