@@ -4,7 +4,6 @@
 
 #include "metadata.h"
 
-#include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata_cpp.h>

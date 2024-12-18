@@ -4,7 +4,6 @@
 #include "reference_comm.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/user.h>
 

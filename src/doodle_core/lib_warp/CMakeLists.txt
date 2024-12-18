@@ -1,7 +1,6 @@
 target_sources(doodle_core
         PUBLIC
         boost_uuid_warp.h
-        entt_warp.h
         json_warp.h
         std_warp.h
         enum_template_tool.h
@@ -17,7 +16,5 @@ target_sources(doodle_core
         boost_fmt_beast.h
         boost_locale_warp.h
 
-        PRIVATE
-        entt_warp.cpp
 )
 add_subdirectory(detail)
