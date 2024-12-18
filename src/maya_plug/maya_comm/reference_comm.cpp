@@ -73,7 +73,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
     //      if (l_name_space[0] == ':') l_name_space = l_name_space.substr(1);
     l_set_list.emplace(l_name_space);
   }
-  DOODLE_LOG_INFO("获取引用 {} 获取选中 {}", l_ref_map, l_set_list);
+  DOODLE_LOG_INFO("获取引用 {} 获取选中 {}", fmt::join(l_ref_map, "\n"), fmt::join(l_set_list, "\n"));
 
   for (auto&& i_ns : l_set_list) {
     for (auto l_h : l_cloth) {

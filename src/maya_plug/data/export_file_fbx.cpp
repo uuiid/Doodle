@@ -142,7 +142,7 @@ FSys::path export_file_fbx::export_rig() {
     l_path.pop();
     l_export_list.push_back(l_path);
   }
-  default_logger_raw()->info("导出选中物体 {}", l_export_list);
+  default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
   fbx_write l_fbx_write{};
   auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / maya_file_io::get_current_path().filename();
