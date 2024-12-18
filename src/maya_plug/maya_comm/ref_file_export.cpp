@@ -6,7 +6,6 @@
 
 #include "doodle_core/core/core_help_impl.h"
 
-#include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/reference_file.h>

@@ -10,11 +10,9 @@
 #include <boost/lambda2.hpp>
 
 #include "maya_plug/data/cloth_interface.h"
-#include "maya_plug/data/export_file_abc.h"
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/data/qcloth_factory.h"
 #include "maya_plug/maya_plug_fwd.h"
-#include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/ncloth_factory.h>
