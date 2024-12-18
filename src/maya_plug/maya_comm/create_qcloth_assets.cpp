@@ -51,7 +51,6 @@ MSyntax syntax() {
   l_syntax.enableEdit(false);
   return l_syntax;
 }
-
 class cloth_group {
  public:
   MObject cfx_grp;
@@ -63,6 +62,7 @@ class cloth_group {
   MObject export_grp;
   MObject deformBase_grp;
 };
+void sort_group(cloth_group& in_group);
 
 /**
  * @brief 获取传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇
@@ -388,11 +388,6 @@ cloth_group get_cloth_group() {
   cloth_group k_r{};
   MFnDagNode k_node{};
 
-  auto k_reg = g_reg();
-  if (k_reg->ctx().contains<cloth_group>()) {
-    return k_reg->ctx().get<cloth_group>();
-  }
-
   for (MItDag i{MItDag::kDepthFirst, MFn::Type::kTransform, &k_s}; !i.isDone(); i.next()) {
     DOODLE_MAYA_CHICK(k_s);
     k_s = k_node.setObject(i.currentItem());
@@ -422,8 +417,7 @@ cloth_group get_cloth_group() {
   if (k_r.export_grp.isNull()) k_r.export_grp = make_group(k_m, "export_grp", k_r.cfx_grp);
 
   if (k_r.deformBase_grp.isNull()) k_r.deformBase_grp = make_group(k_m, "deformBase_grp", k_r.deform_grp);
-
-  k_reg->ctx().emplace<cloth_group>(k_r);
+  sort_group(k_r);
   return k_r;
 }
 
@@ -442,9 +436,8 @@ cloth_group get_cloth_group() {
  *
  *  需要读取配置文件中的各个属性, 进行标准的重命名
  */
-void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list) {
+void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list, const cloth_group& in_group) {
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
-  auto l_group = get_cloth_group();
 
   MStatus k_s{};
   MFnDagNode l_node{};
@@ -459,11 +452,11 @@ void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list
     }
   }
   /// \brief 主要的输入节点
-  auto k_proxy_node_input  = make_low_node(in_obj, l_group.anim_grp, "input");
+  auto k_proxy_node_input  = make_low_node(in_obj, in_group.anim_grp, "input");
   /// \brief 主要的输出节点
-  auto k_proxy_node_output = make_low_node(in_obj, l_group.deform_grp, "output");
+  auto k_proxy_node_output = make_low_node(in_obj, in_group.deform_grp, "output");
   /// \brief 动画高模
-  auto l_high_mesh         = make_high_node(in_list, l_group.export_grp);
+  auto l_high_mesh         = make_high_node(in_list, in_group.export_grp);
 
   MDagPath l_path{};
 
@@ -483,7 +476,7 @@ void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list
   {  /// 整理层级关系
     auto l_ql_tran       = get_transform(l_ql);
     auto l_mesh_out_tran = get_transform(l_mesh_out);
-    add_child(l_group.solver_grp, l_ql_tran);
+    add_child(in_group.solver_grp, l_ql_tran);
     add_child(l_ql_tran, l_mesh_out_tran);
   }
   {  /// 将解算的输出网格连接到代理输出中去
@@ -494,7 +487,7 @@ void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list
   }
   /// \brief 使用低模包裹高模
   auto k_warp = warp_model(k_proxy_node_output, l_high_mesh);
-  add_child(l_group.deformBase_grp, k_warp);
+  add_child(in_group.deformBase_grp, k_warp);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
     DOODLE_CHICK(l_high_mesh.size() == in_list.size(), doodle_error{"节点数量不一致"s});
@@ -504,46 +497,44 @@ void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list
   }
 }
 
-void add_collider(const std::vector<MObject>& in_coll_list) {
-  auto l_group   = get_cloth_group();
+void add_collider(const std::vector<MObject>& in_coll_list, const cloth_group& in_group) {
   auto l_ql      = qcloth_shape::get_ql_solver();
   auto l_ql_tran = get_transform(l_ql);
 
   /// \brief 鉴于有些文件会锁定默认着色组, 我们需要进行解锁
   auto k_s       = MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"});
   DOODLE_MAYA_CHICK(k_s);
-  add_child(l_group.cfx_grp, l_ql_tran);
+  add_child(in_group.cfx_grp, l_ql_tran);
 
   for (auto& l_item : in_coll_list) {
     auto [l_col, l_col_off] = _add_collider_(l_item);
     auto l_col_tran         = get_transform(l_col);
     auto l_col_off_tran     = get_transform(l_col_off);
-    add_child(l_group.collider_grp, l_col_tran);
-    add_child(l_group.collider_grp, l_col_off_tran);
+    add_child(in_group.collider_grp, l_col_tran);
+    add_child(in_group.collider_grp, l_col_off_tran);
   }
 }
 
-void sort_group() {
-  auto l_group = get_cloth_group();
+void sort_group(cloth_group& in_group) {
   MStatus k_s{};
   auto l_ql = get_transform(qcloth_shape::get_ql_solver());
   {  /// \brief 开始排序
     MFnDagNode l_p{};
-    k_s = l_p.setObject(l_group.cfx_grp);
+    k_s = l_p.setObject(in_group.cfx_grp);
     DOODLE_MAYA_CHICK(k_s);
 
     /// \brief 必须先取消掉父物体
     k_s = l_p.removeChild(l_ql);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.removeChild(l_group.anim_grp);
+    k_s = l_p.removeChild(in_group.anim_grp);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.removeChild(l_group.solver_grp);
+    k_s = l_p.removeChild(in_group.solver_grp);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.removeChild(l_group.constraint_grp);
+    k_s = l_p.removeChild(in_group.constraint_grp);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.removeChild(l_group.deform_grp);
+    k_s = l_p.removeChild(in_group.deform_grp);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.removeChild(l_group.export_grp);
+    k_s = l_p.removeChild(in_group.export_grp);
     DOODLE_MAYA_CHICK(k_s);
 
     /**
@@ -565,15 +556,15 @@ void sort_group() {
 
     k_s = l_p.addChild(l_ql, 0);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.addChild(l_group.anim_grp, 1);
+    k_s = l_p.addChild(in_group.anim_grp, 1);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.addChild(l_group.solver_grp, 2);
+    k_s = l_p.addChild(in_group.solver_grp, 2);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.addChild(l_group.constraint_grp, 3);
+    k_s = l_p.addChild(in_group.constraint_grp, 3);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.addChild(l_group.deform_grp, 4);
+    k_s = l_p.addChild(in_group.deform_grp, 4);
     DOODLE_MAYA_CHICK(k_s);
-    k_s = l_p.addChild(l_group.export_grp, 5);
+    k_s = l_p.addChild(in_group.export_grp, 5);
     DOODLE_MAYA_CHICK(k_s);
   }
 }
@@ -609,6 +600,7 @@ class create_qcloth_assets::impl {
   std::vector<MObject> coll_list{};
 
   std::vector<MObject> create_nodes{};
+  create_qcloth_assets_ns::cloth_group cfx{};
 };
 
 create_qcloth_assets::create_qcloth_assets() : p_i(std::make_unique<impl>()) {}
@@ -677,19 +669,16 @@ MStatus create_qcloth_assets::undoIt() {
   delete_node();
   // 更新所有的属性
   reset_properties();
-  if (g_reg()->ctx().contains<qcloth_shape::cloth_group>()) {
-    g_reg()->ctx().erase<qcloth_shape::cloth_group>();
-  }
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {
   try {
+    p_i->cfx = create_qcloth_assets_ns::get_cloth_group();
     for (auto& l_h : p_i->cloth_list) {
-      create_qcloth_assets_ns::create_sim_cloth(l_h.low_obj_, l_h.high_obj_list_);
+      create_qcloth_assets_ns::create_sim_cloth(l_h.low_obj_, l_h.high_obj_list_, p_i->cfx);
     }
-    if (!p_i->cloth_list.empty()) create_qcloth_assets_ns::add_collider(p_i->coll_list);
+    if (!p_i->cloth_list.empty()) create_qcloth_assets_ns::add_collider(p_i->coll_list, p_i->cfx);
 
-    create_qcloth_assets_ns::sort_group();
   } catch (const std::runtime_error& in_err) {
     delete_node();
     return {MStatus::kFailure};
@@ -710,7 +699,7 @@ std::vector<MObject> create_qcloth_assets::get_all_node() {
 
 bool create_qcloth_assets::isUndoable() const { return true; }
 void create_qcloth_assets::delete_node() {
-  MGlobal::deleteNode(g_reg()->ctx().get<qcloth_shape::cloth_group>().cfx_grp);
+  MGlobal::deleteNode(p_i->cfx.cfx_grp);
 }
 
 void create_qcloth_assets::reset_properties() {

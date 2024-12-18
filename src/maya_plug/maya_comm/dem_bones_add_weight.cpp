@@ -4,7 +4,6 @@
 
 #include "dem_bones_add_weight.h"
 
-
 #include <maya_plug/data/dem_bones_ex.h>
 #include <maya_plug/data/maya_tool.h>
 
@@ -39,7 +38,7 @@ MSyntax dem_bones_add_weight_ns::syntax() {
 
 class dem_bones_add_weight::impl {
  public:
-  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {}
+  impl() : dem() {}
 
   void init() {
     MStatus k_s;
@@ -53,13 +52,14 @@ class dem_bones_add_weight::impl {
     auto l_obj = get_shape(skin_mesh_obj);
     for (MItDependencyGraph l_it_dependency_graph{
              l_obj, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
-             MItDependencyGraph::kNodeLevel, nullptr};
+             MItDependencyGraph::kNodeLevel, nullptr
+         };
          !l_it_dependency_graph.isDone(); l_it_dependency_graph.next()) {
       skin_obj = l_it_dependency_graph.currentItem();
       break;
     }
   }
-  dem_bones_ex& dem;
+  dem_bones_ex dem;
   MSelectionList select_list;
   MObject skin_mesh_obj{};
   MObject skin_obj{};

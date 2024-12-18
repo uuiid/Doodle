@@ -4,7 +4,6 @@
 
 #include "dem_bones_comm.h"
 
-
 #include <maya_plug/data/dem_bones_ex.h>
 #include <maya_plug/data/maya_tool.h>
 
@@ -95,8 +94,8 @@ MSyntax syntax() {
 }  // namespace dem_bones_comm_ns
 class dem_bones_comm::impl {
  public:
-  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {}
-  dem_bones_ex& dem;
+  impl() : dem() {}
+  dem_bones_ex dem;
   void set_parm() {
     dem.nB                = nBones_p;
     dem.nIters            = nIters_p;
@@ -278,10 +277,7 @@ class dem_bones_comm::impl {
   }
 };
 
-dem_bones_comm::dem_bones_comm() : p_i() {
-  g_reg()->ctx().erase<dem_bones_ex>();
-  p_i = std::make_unique<impl>();
-}
+dem_bones_comm::dem_bones_comm() : p_i() { p_i = std::make_unique<impl>(); }
 void dem_bones_comm::get_arg(const MArgList& in_arg) {
   MStatus k_s;
   MArgDatabase k_prase{syntax(), in_arg};
@@ -319,8 +315,11 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
 
   p_i->startFrame_p <= p_i->bindFrame_p && p_i->bindFrame_p < p_i->endFrame_p
       ? void()
-      : throw_exception(doodle_error{
-            "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内"s, p_i->bindFrame_p, p_i->startFrame_p, p_i->endFrame_p});
+      : throw_exception(
+            doodle_error{
+                "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内"s, p_i->bindFrame_p, p_i->startFrame_p, p_i->endFrame_p
+            }
+        );
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::nBones_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
