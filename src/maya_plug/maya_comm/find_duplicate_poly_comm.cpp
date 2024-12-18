@@ -37,10 +37,10 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
 
   auto l_refs  = reference_file_factory{}.create_ref();
   auto l_cloth = qcloth_factory{}.create_cloth();
-  std::map<std::string, entt::handle> l_ref_map{};
+  std::map<std::string, reference_file> l_ref_map{};
   l_ref_map = l_refs |
-              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
-                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
+                return {in_handle.get_namespace(), in_handle};
               }) |
               ranges::to<decltype(l_ref_map)>;
   if (l_list.isEmpty()) {
@@ -63,8 +63,7 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
 
   for (auto&& i_ns : l_set_list) {
     for (auto l_h : l_cloth) {
-      auto l_c = l_h.get<cloth_interface>();
-      if (l_c->get_namespace() == i_ns) l_c->rest(l_ref_map[i_ns]);
+      if (l_h->get_namespace() == i_ns) l_h->rest();
     }
   }
 

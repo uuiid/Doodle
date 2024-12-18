@@ -12,6 +12,9 @@
 #include <vector>
 
 namespace doodle::maya_plug {
+class reference_file;
+}
+namespace doodle::maya_plug {
 /**
  * @brief 寻找maya obj 对
  *
@@ -22,7 +25,7 @@ class find_duplicate_poly {
 
  public:
   find_duplicate_poly() = default;
-  explicit find_duplicate_poly(const entt::handle& in_handle);
+  explicit find_duplicate_poly(const reference_file& in_handle);
   /**
    * @brief 将 传入的obj列表中寻找符合条件的maya obj mesh 对
    * @param in_array 传入要寻找的范围

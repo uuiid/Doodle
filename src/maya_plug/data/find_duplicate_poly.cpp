@@ -22,8 +22,8 @@
 
 namespace doodle::maya_plug {
 
-find_duplicate_poly::find_duplicate_poly(const entt::handle& in_handle) {
-  auto l_list = m_namespace::get_namespace_objects(in_handle.get<reference_file>().get_namespace());
+find_duplicate_poly::find_duplicate_poly(const reference_file& in_handle) {
+  auto l_list = m_namespace::get_namespace_objects(in_handle.get_namespace());
   (*this)(l_list);
 }
 

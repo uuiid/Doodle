@@ -52,8 +52,6 @@ class qcloth_shape : public cloth_interface::element_type {
     MObject deformBase_grp;
   };
 
-
-
  private:
   /**
    * @brief qlClothShape 类型 节点
@@ -72,15 +70,15 @@ class qcloth_shape : public cloth_interface::element_type {
   explicit qcloth_shape(const MObject& in_object);
 
   void sim_cloth() const override;
-  void add_field(const entt::handle& in_handle) const override;
-  void add_collision(const entt::handle& in_handle) const override;
-  void rest(const entt::handle& in_handle) const override;
+  void add_field(const reference_file& in_handle) const override;
+  void add_collision(const reference_file& in_handle) const override;
+  void rest() const override;
   [[nodiscard]] MObject get_solver() const override;
-  void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path, bool need_clear) const override;
+  void set_cache_folder(const reference_file& in_handle, const FSys::path& in_path, bool need_clear) const override;
   [[nodiscard]] std::string get_namespace() const override;
-  void cover_cloth_attr(const entt::handle& in_handle) const override;
+  void cover_cloth_attr(const reference_file& in_handle) const override;
   [[nodiscard]] MDagPath get_shape() const override;
-  void set_cache_folder_read_only(const entt::handle& in_handle) const override;
+  void set_cache_folder_read_only() const override;
 
   /**
    * @brief 获取布料形状（这个是一个tran）
@@ -99,7 +97,7 @@ class qcloth_shape : public cloth_interface::element_type {
    * 必须具备 qcloth_shape_n::maya_mesh
    * @return 具有蒙皮
    */
-  static bool chick_low_skin(const entt::handle& in_handle);
+  static bool chick_low_skin(const qcloth_shape_n::maya_obj& in_handle);
 
   /**
    * @brief 根据引用文件创建布料句柄

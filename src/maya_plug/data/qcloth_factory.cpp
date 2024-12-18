@@ -32,18 +32,16 @@ bool qcloth_factory::has_cloth() {
   }
   return false;
 }
-std::vector<entt::handle> qcloth_factory::create_cloth() const {
-  g_reg()->clear<cloth_interface>();
+std::vector<cloth_interface> qcloth_factory::create_cloth() const {
   MStatus l_status{};
   MObject l_object{};
-  std::vector<entt::handle> l_ret{};
+  std::vector<cloth_interface> l_ret{};
   for (MItDependencyNodes i{MFn::kPluginLocatorNode, &l_status}; !i.isDone(); i.next()) {
     l_object = i.thisNode(&l_status);
     MFnDependencyNode const k_dep{l_object};
     if (k_dep.typeName(&l_status) == qcloth_shape::qlClothShape) {
-      auto l_h = l_ret.emplace_back(entt::handle{*g_reg(), g_reg()->create()});
-      DOODLE_LOG_INFO("获取布料 {}", get_node_name(l_object));
-      l_h.emplace<cloth_interface>(std::make_shared<qcloth_shape>(l_object));
+      l_ret.emplace_back(std::make_shared<qcloth_shape>(l_object));
+      default_logger_raw()->info("获取布料 {}", get_node_name(l_object));
     }
   }
   return l_ret;

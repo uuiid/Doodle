@@ -82,7 +82,7 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
  * 这样我们可以在文件中创建出一个类似的引用, 但不是引用,
  * 并且具有一定引用概念的类
  */
-class reference_file {
+class reference_file : public boost::totally_ordered<reference_file> {
  public:
  private:
   std::string get_file_namespace() const;
@@ -143,6 +143,13 @@ class reference_file {
   MSelectionList get_all_object() const;
 
   std::vector<MDagPath> get_alll_cloth_obj() const;
+
+  friend bool operator==(const reference_file &lhs, const reference_file &rhs) {
+    return lhs.file_info_node_ == rhs.file_info_node_;
+  }
+  friend bool operator<(const reference_file &lhs, const reference_file &rhs) {
+    return lhs.get_file_namespace() < rhs.get_file_namespace();
+  }
 };
 
 class reference_file_factory {
@@ -150,8 +157,8 @@ class reference_file_factory {
   reference_file_factory()  = default;
   ~reference_file_factory() = default;
 
-  [[nodiscard]] std::vector<entt::handle> create_ref() const;
-  [[nodiscard]] std::vector<entt::handle> create_ref(const MSelectionList &in_list) const;
+  [[nodiscard]] std::vector<reference_file> create_ref() const;
+  [[nodiscard]] std::vector<reference_file> create_ref(const MSelectionList &in_list) const;
 };
 
 }  // namespace doodle::maya_plug
@@ -172,4 +179,16 @@ struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path
     );
   }
 };
+
+template <>
+struct formatter< ::doodle::maya_plug::reference_file> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const ::doodle::maya_plug::reference_file &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
+    return fmt::format_to(
+        ctx.out(),"{}", in_.get_namespace()
+    );
+  }
+};
+
+
 }  // namespace fmt

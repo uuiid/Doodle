@@ -40,22 +40,21 @@ namespace doodle::maya_plug {
 void cloth_sim::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
   all_ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-  ref_files_     = all_ref_files_ | ranges::views::filter([this](const entt::handle& in_handle) -> bool {
-                 auto&& l_ref = in_handle.get<reference_file>();
-                 if (l_ref.export_group_attr() && l_ref.get_use_sim() && l_ref.has_sim_assets_file(sim_file_map_)) {
-                   return true;
-                 } else {
-                   default_logger_raw()->log(log_loc(), level::info, "引用文件{}不解算", l_ref.get_abs_path());
-                 }
-                 return false;
-               }) |
-               ranges::to<decltype(ref_files_)>;
+  ref_files_ =
+      all_ref_files_ | ranges::views::filter([this](const reference_file& in_handle) -> bool {
+        if (in_handle.export_group_attr() && in_handle.get_use_sim() && in_handle.has_sim_assets_file(sim_file_map_)) {
+          return true;
+        } else {
+          default_logger_raw()->log(log_loc(), level::info, "引用文件{}不解算", in_handle.get_abs_path());
+        }
+        return false;
+      }) |
+      ranges::to<decltype(ref_files_)>;
 }
 void cloth_sim::replace_ref_file() {
   DOODLE_LOG_INFO("开始替换引用");
-  ref_files_ = ref_files_ | ranges::views::filter([this](const entt::handle& in_handle) -> bool {
-                 auto&& l_ref = in_handle.get<reference_file>();
-                 return l_ref.replace_sim_assets_file(sim_file_map_);
+  ref_files_ = ref_files_ | ranges::views::filter([this](reference_file& in_handle) -> bool {
+                 return in_handle.replace_sim_assets_file(sim_file_map_);
                }) |
                ranges::to<decltype(ref_files_)>;
 }
@@ -72,55 +71,53 @@ void cloth_sim::create_cloth() {
   if (!l_cf) return;
 
   cloth_lists_ = l_cf->create_cloth();
-  std::map<std::string, entt::handle> l_ref_map{};
+  std::map<std::string, reference_file> l_ref_map{};
   l_ref_map = ref_files_ |
-              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
-                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
+                return {in_handle.get_namespace(), in_handle};
               }) |
               ranges::to<decltype(l_ref_map)>;
 
-  cloth_lists_ |= ranges::actions::remove_if([&](const entt::handle& in_handle) -> bool {
-    auto l_c = in_handle.get<cloth_interface>();
-    if (l_ref_map.contains(l_c->get_namespace())) {
+  cloth_lists_ |= ranges::actions::remove_if([&](const cloth_interface& in_handle) -> bool {
+    if (l_ref_map.contains(in_handle->get_namespace())) {
       return false;
     }
     default_logger_raw()->log(
-        log_loc(), level::info, "布料{}未找到对应的引用文件, 无法导出, 不进行解算, 请查找对应的引用", l_c->get_shape()
+        log_loc(), level::info, "布料{}未找到对应的引用文件, 无法导出, 不进行解算, 请查找对应的引用",
+        in_handle->get_shape()
     );
     return true;
   });
 }
 void cloth_sim::set_cloth_attr() {
-  std::map<std::string, entt::handle> l_ref_map{};
+  std::map<std::string, reference_file> l_ref_map{};
   l_ref_map = ref_files_ |
-              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
-                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
+                return {in_handle.get_namespace(), in_handle};
               }) |
               ranges::to<decltype(l_ref_map)>;
 
-  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-    auto l_c     = in_handle.get<cloth_interface>();
-    auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->add_collision(l_ref_h);     /// 添加碰撞
-    l_c->rest(l_ref_h);              /// 添加rest
-    l_c->cover_cloth_attr(l_ref_h);  /// 添加布料属性
-    l_c->add_field(l_ref_h);         /// 添加场力
+  ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) {
+    auto l_ref_h = l_ref_map[in_handle->get_namespace()];
+    in_handle->add_collision(l_ref_h);     /// 添加碰撞
+    in_handle->rest();                     /// 添加rest
+    in_handle->cover_cloth_attr(l_ref_h);  /// 添加布料属性
+    in_handle->add_field(l_ref_h);         /// 添加场力
   });
 }
 void cloth_sim::sim() {
   DOODLE_LOG_INFO("开始解算");
 
-  std::map<std::string, entt::handle> l_ref_map{};
+  std::map<std::string, reference_file> l_ref_map{};
   l_ref_map = ref_files_ |
-              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
-                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
+                return {in_handle.get_namespace(), in_handle};
               }) |
               ranges::to<decltype(l_ref_map)>;
 
-  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-    auto l_c     = in_handle.get<cloth_interface>();
-    auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->set_cache_folder(l_ref_h, true);  /// 设置缓存文件夹
+  ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) {
+    auto l_ref_h = l_ref_map[in_handle->get_namespace()];
+    in_handle->set_cache_folder(l_ref_h, true);  /// 设置缓存文件夹
   });
 
   /// \brief 在这里我们保存引用
@@ -140,44 +137,36 @@ void cloth_sim::sim() {
   for (auto&& i = t_post_time_; i <= k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
     DOODLE_LOG_INFO("解算帧 {}", i);
-    ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-      auto l_c = in_handle.get<cloth_interface>();
-      l_c->sim_cloth();
-    });
+    ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) { in_handle->sim_cloth(); });
   }
 }
 
 void cloth_sim::touch_sim() {
   DOODLE_LOG_INFO("开始触摸解算");
-  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) { auto l_c = in_handle.get<cloth_interface>(); });
 
-  std::map<std::string, entt::handle> l_ref_map{};
+  std::map<std::string, reference_file> l_ref_map{};
   l_ref_map = ref_files_ |
-              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
-                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
+                return {in_handle.get_namespace(), in_handle};
               }) |
               ranges::to<decltype(l_ref_map)>;
 
-  ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-    auto l_c     = in_handle.get<cloth_interface>();
-    auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->set_cache_folder_read_only(l_ref_h);// 设置缓存为只读
+  ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) {
+    auto l_ref_h = l_ref_map[in_handle->get_namespace()];
+    in_handle->set_cache_folder_read_only();  // 设置缓存为只读
   });
 
   const MTime k_end_time = MAnimControl::maxTime();
   for (auto&& i = t_post_time_; i <= k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
     DOODLE_LOG_INFO("测试解算帧 {}", i);
-    ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-      auto l_c = in_handle.get<cloth_interface>();
-      l_c->sim_cloth();
-    });
+    ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) { in_handle->sim_cloth(); });
   }
 }
 
 void cloth_sim::play_blast() {
   DOODLE_LOG_INFO("开始排屏");
-  class play_blast l_p {};
+  class play_blast l_p{};
 
   const MTime k_end_time = MAnimControl::maxTime();
   l_p.set_save_dir(maya_file_io::work_path() / "mov");
@@ -192,9 +181,9 @@ void cloth_sim::export_abc() {
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
 
   export_file_fbx l_ex_fbx{};
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
+  ranges::for_each(ref_files_, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
-    auto l_path = l_ex_fbx.export_sim(in_handle.get<reference_file>(), l_gen);
+    auto l_path = l_ex_fbx.export_sim(in_handle, l_gen);
     if (!l_path.empty()) {
       l_path.replace_extension(".abc");
       out_and_ref_file_map_[in_handle].emplace_back(l_path);
@@ -210,7 +199,6 @@ void cloth_sim::export_fbx() {
   auto l_gen             = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   const MTime k_end_time = MAnimControl::maxTime();
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { in_handle.emplace<generate_file_path_ptr>(l_gen); });
 }
 void cloth_sim::export_anim_file() {
   DOODLE_LOG_INFO("开始导出动画文件");
@@ -220,18 +208,18 @@ void cloth_sim::export_anim_file() {
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
   l_gen->set_fbx_path(true);
   ranges::for_each(
-      all_ref_files_ | ranges::views::filter([&](const entt::handle& in_handle) -> bool {
+      all_ref_files_ | ranges::views::filter([&](const reference_file& in_handle) -> bool {
         return ranges::find(ref_files_, in_handle) == ref_files_.end();
       }),
-      [&](entt::handle& in_handle) {
-        auto& l_ref = in_handle.get<reference_file>();
-        if (!l_ref.is_loaded()) l_ref.load_file();
-        auto l_path = l_ex.export_anim(l_ref, l_gen);
+      [&](reference_file& in_handle) {
+        if (!in_handle.is_loaded()) in_handle.load_file();
+        auto l_path = l_ex.export_anim(in_handle, l_gen);
         if (!l_path.empty()) {
           out_and_ref_file_map_[in_handle].emplace_back(l_path);
         }
       }
   );
+
   // 导出相机
   camera_path_ = l_ex.export_cam(l_gen, film_aperture_);
 }
@@ -245,10 +233,10 @@ void cloth_sim::write_config() {
   for (auto&& i : all_ref_files_) {
     if (out_and_ref_file_map_.contains(i)) {
       for (auto&& l_p : out_and_ref_file_map_[i]) {
-        l_out_arg.out_file_list.emplace_back(l_p, i.get<reference_file>().get_abs_path());
+        l_out_arg.out_file_list.emplace_back(l_p, i.get_abs_path());
       }
     } else {
-      l_out_arg.out_file_list.emplace_back(FSys::path{}, i.get<reference_file>().get_abs_path());
+      l_out_arg.out_file_list.emplace_back(FSys::path{}, i.get_abs_path());
     }
   }
   l_out_arg.out_file_list.emplace_back(camera_path_, FSys::path{});  // 导出相机

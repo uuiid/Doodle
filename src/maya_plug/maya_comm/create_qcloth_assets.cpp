@@ -442,7 +442,7 @@ cloth_group get_cloth_group() {
  *
  *  需要读取配置文件中的各个属性, 进行标准的重命名
  */
-std::vector<entt::handle> create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list) {
+void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list) {
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 
@@ -502,7 +502,6 @@ std::vector<entt::handle> create_sim_cloth(const MObject& in_obj, const std::vec
       transfer_dynamic(l_high_mesh[l_i], in_list[l_i]);
     }
   }
-  return {};
 }
 
 void add_collider(const std::vector<MObject>& in_coll_list) {

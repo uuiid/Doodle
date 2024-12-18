@@ -5,6 +5,8 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/image_size.h>
 
+#include <maya_plug/data/reference_file.h>
+
 #include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
@@ -26,7 +28,7 @@ class export_fbx_facet final {
   void rig_file_export();
 
   void play_blast();
-  std::vector<entt::handle> ref_files_{};
+  std::vector<reference_file> ref_files_{};
   std::vector<entt::handle> cloth_lists_{};
   // 输出结果路径
   FSys::path out_path_file_{};

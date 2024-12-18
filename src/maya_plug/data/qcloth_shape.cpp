@@ -60,8 +60,8 @@ maya_obj::maya_obj(const MObject& in_object) {
 qcloth_shape::qcloth_shape() = default;
 qcloth_shape::qcloth_shape(const MObject& in_object) : obj(in_object) {};
 
-void qcloth_shape::set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path, bool need_clear) const {
-  std::string k_namespace = in_handle.get<reference_file>().get_namespace();
+void qcloth_shape::set_cache_folder(const reference_file& in_handle, const FSys::path& in_path, bool need_clear) const {
+  std::string k_namespace = in_handle.get_namespace();
   std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
 
   auto k_cache            = get_plug(obj, "cacheFolder");
@@ -79,10 +79,9 @@ void qcloth_shape::set_cache_folder(const entt::handle& in_handle, const FSys::p
   set_attribute(obj, "cacheName", k_node_name);
 }
 
-bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
-  in_handle.any_of<qcloth_shape_n::maya_obj>() ? void() : throw_exception(doodle_error{"缺失组件"s});
+bool qcloth_shape::chick_low_skin(const qcloth_shape_n::maya_obj& in_handle) {
   MStatus l_s{};
-  auto l_shape = maya_plug::get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
+  auto l_shape = maya_plug::get_shape(in_handle.obj);
   /// 寻找高模的皮肤簇
   for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
        i.next()) {
@@ -155,8 +154,8 @@ void qcloth_shape::sim_cloth() const {
   k_plug.asMObject(&k_s).isNull();
   maya_chick(k_s);
 }
-void qcloth_shape::add_field(const entt::handle& in_handle) const {
-  auto l_f = in_handle.get<reference_file>().get_field_dag();
+void qcloth_shape::add_field(const reference_file& in_handle) const {
+  auto l_f = in_handle.get_field_dag();
   if (l_f) {
     auto l_mesh = cloth_mesh();
     DOODLE_LOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
@@ -179,9 +178,9 @@ void qcloth_shape::add_field(const entt::handle& in_handle) const {
     l_status = MGlobal::executeCommand(d_str{"qlConnectField;"});
   }
 }
-void qcloth_shape::add_collision(const entt::handle& in_handle) const {
+void qcloth_shape::add_collision(const reference_file& in_handle) const {
   MStatus k_s{};
-  auto l_item = in_handle.get<reference_file>().get_collision_model();
+  auto l_item = in_handle.get_collision_model();
   if (l_item.isEmpty()) return;
 
   k_s = l_item.add(get_solver(), true);
@@ -191,7 +190,7 @@ void qcloth_shape::add_collision(const entt::handle& in_handle) const {
   k_s = MGlobal::executeCommand(d_str{"qlCreateCollider;"});
   maya_chick(k_s);
 }
-void qcloth_shape::rest(const entt::handle& in_handle) const {
+void qcloth_shape::rest() const {
   MSelectionList l_list{};
   auto l_simple_module_proxy_ = std::string{"_proxy"};
   auto l_proxy_               = "_cloth_proxy"s;
@@ -247,11 +246,9 @@ MDagPath qcloth_shape::get_shape() const {
 
 std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
 
-void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
-  reference_file l_file = in_handle.get<reference_file>();
-
-  auto l_node           = l_file.get_file_info_node();
-  auto l_ql_core        = get_ql_solver();
+void qcloth_shape::cover_cloth_attr(const reference_file& in_handle) const {
+  auto l_node    = in_handle.get_file_info_node();
+  auto l_ql_core = get_ql_solver();
   if (l_ql_core.isNull()) {
     default_logger_raw()->warn("{} 没有找到解算核心", get_node_full_name(obj));
     return;
@@ -272,7 +269,7 @@ void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
   set_attribute(l_ql_core, "gravity2", get_attribute<std::double_t>(l_node, "gravityz"));
 }
 
-void qcloth_shape::set_cache_folder_read_only(const entt::handle& in_handle) const {
+void qcloth_shape::set_cache_folder_read_only() const {
   // std::string k_namespace = in_handle.get<reference_file>().get_namespace();
   // std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
   auto l_cache_folder = conv::to_s(get_attribute<MString>(obj, "cacheFolder"));

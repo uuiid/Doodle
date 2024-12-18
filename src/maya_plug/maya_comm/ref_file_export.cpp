@@ -51,9 +51,9 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
   l_gen->begin_end_time    = std::make_pair(l_begin_time, l_end_time);
 
   export_file_fbx l_ex_fbx{};
-  ranges::for_each(l_refs, [&](entt::handle& in_handle) {
+  ranges::for_each(l_refs, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
-    l_ex_fbx.export_sim(in_handle.get<reference_file>(), l_gen);
+    l_ex_fbx.export_sim(in_handle, l_gen);
   });
 
   return MStatus{};

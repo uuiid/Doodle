@@ -6,6 +6,9 @@
 #include "doodle_core/metadata/image_size.h"
 #include <doodle_core/core/app_base.h>
 
+#include <maya_plug/data/cloth_interface.h>
+#include <maya_plug/data/reference_file.h>
+
 #include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
@@ -36,11 +39,11 @@ class cloth_sim final {
   void play_blast();
   void export_anim_file();
   void write_config();
-  std::vector<entt::handle> ref_files_{};
-  std::vector<entt::handle> all_ref_files_{};
-  std::vector<entt::handle> cloth_lists_{};
+  std::vector<reference_file> ref_files_{};
+  std::vector<reference_file> all_ref_files_{};
+  std::vector<cloth_interface> cloth_lists_{};
   std::map<std::string, FSys::path> sim_file_map_{};
-  std::map<entt::handle, std::vector<FSys::path>> out_and_ref_file_map_{};
+  std::map<reference_file, std::vector<FSys::path>> out_and_ref_file_map_{};
   FSys::path camera_path_{};
   FSys::path out_path_file_;
 

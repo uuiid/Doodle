@@ -58,13 +58,13 @@ void export_fbx_facet::export_fbx() {
   l_out_arg.begin_time  = anim_begin_time_.value();
   l_out_arg.end_time    = MAnimControl::maxTime().value();
   for (auto&& i : ref_files_) {
-    if (i.get<reference_file>().export_group_attr()) {
-      auto l_path = l_ex.export_anim(i.get<reference_file>(), l_gen);
+    if (i.export_group_attr()) {
+      auto l_path = l_ex.export_anim(i, l_gen);
       if (!l_path.empty()) {
-        l_out_arg.out_file_list.emplace_back(l_path, i.get<reference_file>().get_abs_path());
+        l_out_arg.out_file_list.emplace_back(l_path, i.get_abs_path());
       }
     } else {
-      auto l_path = i.get<reference_file>().get_abs_path();
+      auto l_path = i.get_abs_path();
       if (!l_path.empty()) l_out_arg.out_file_list.emplace_back(FSys::path{}, l_path);
     }
   }

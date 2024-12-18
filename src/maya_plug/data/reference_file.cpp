@@ -464,33 +464,26 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
   return l_export_path;
 }
 
-std::vector<entt::handle> reference_file_factory::create_ref() const {
-  std::vector<entt::handle> l_ret{};
-  g_reg()->clear<reference_file>();
-  g_reg()->clear<qcloth_shape>();
-
+std::vector<reference_file> reference_file_factory::create_ref() const {
   MStatus l_status{};
+  std::vector<reference_file> l_ret{};
   for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
     MFnDependencyNode l_fn_node{l_it.thisNode(), &l_status};
     maya_chick(l_status);
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
-      reference_file k_ref{l_it.thisNode()};
-      if (!k_ref.get_namespace().empty()) {
+      reference_file l_ref{l_it.thisNode()};
+      if (!l_ref.get_namespace().empty()) {
         default_logger_raw()->log(
-            log_loc(), spdlog::level::info, "获得引用文件 {} {}", k_ref.get_abs_path(), k_ref.get_namespace()
+            log_loc(), spdlog::level::info, "获得引用文件 {} {}", l_ref.get_abs_path(), l_ref.get_namespace()
         );
-        auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-        l_h.emplace<reference_file>(k_ref);
-        l_ret.emplace_back(l_h);
+        l_ret.emplace_back(l_ref);
       }
     }
   }
   return l_ret;
 }
-std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionList &in_list) const {
-  std::vector<entt::handle> l_ret{};
-  g_reg()->clear<reference_file>();
-  g_reg()->clear<qcloth_shape>();
+std::vector<reference_file> reference_file_factory::create_ref(const MSelectionList &in_list) const {
+  std::vector<reference_file> l_ret{};
 
   MStatus l_status{};
   for (MItDependencyNodes l_it{MFn::kPluginDependNode, &l_status}; !l_it.isDone(); l_it.next()) {
@@ -501,9 +494,7 @@ std::vector<entt::handle> reference_file_factory::create_ref(const MSelectionLis
       MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
       if (!l_ref.get_namespace().empty() && l_ref.has_node(in_list)) {
         default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", l_ref.get_abs_path());
-        auto l_h = entt::handle{*g_reg(), g_reg()->create()};
-        l_h.emplace<reference_file>(l_ref);
-        l_ret.emplace_back(l_h);
+        l_ret.emplace_back(l_ref);
       }
     }
   }
