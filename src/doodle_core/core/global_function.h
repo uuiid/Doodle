@@ -17,7 +17,6 @@ class thread_pool;
 namespace doodle {
 
 namespace details {
-class identifier;
 class logger_ctrl;
 }  // namespace details
 

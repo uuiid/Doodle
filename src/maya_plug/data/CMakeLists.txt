@@ -17,7 +17,6 @@ target_sources(doodle_maya_lib
         sequence_to_blend_shape.h
         ncloth_factory.h
         qcloth_factory.h
-        export_file_abc.h
         export_file_fbx.h
         maya_conv_str.h
         dagpath_cmp.h
@@ -40,7 +39,6 @@ target_sources(doodle_maya_lib
         ncloth_factory.cpp
         qcloth_factory.cpp
         export_file_fbx.cpp
-        export_file_abc.cpp
         dagpath_cmp.cpp
         fbx_write.cpp
         )

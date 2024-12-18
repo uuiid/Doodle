@@ -95,9 +95,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
   return l_out_name;
 }
 
-generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in) : generate_file_path_base() {
-  camera_suffix = "camera"s;
-}
+generate_fbx_file_path::generate_fbx_file_path() : generate_file_path_base() { camera_suffix = "camera"s; }
 
 FSys::path generate_fbx_file_path::get_path() const {
   auto k_path = maya_file_io::work_path(FSys::path{"fbx"} / maya_file_io::get_current_path().stem());
@@ -124,7 +122,7 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
   return l_path;
 }
 
-generate_abc_file_path::generate_abc_file_path(const entt::registry &in) : generate_fbx_file_path() {}
+generate_abc_file_path::generate_abc_file_path() : generate_fbx_file_path() {}
 
 FSys::path generate_abc_file_path::get_path() const {
   auto k_path = maya_file_io::work_path(FSys::path{"abc"} / maya_file_io::get_current_path().stem());

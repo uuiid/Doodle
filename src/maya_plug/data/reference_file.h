@@ -53,7 +53,7 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
   [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
 
  public:
-  explicit generate_fbx_file_path(const entt::registry &in = *g_reg());
+  explicit generate_fbx_file_path();
 
   void is_camera(bool in_is_camera);
 
@@ -68,7 +68,7 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
   bool export_fbx{};
 
  public:
-  explicit generate_abc_file_path(const entt::registry &in = *g_reg());
+  explicit generate_abc_file_path();
   virtual ~generate_abc_file_path();
 
   inline void set_fbx_path(bool is_export_fbx = true) { export_fbx = is_export_fbx; };

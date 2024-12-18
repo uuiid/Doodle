@@ -38,20 +38,6 @@ struct capture_t {
     }
     return {};
   }
-
-  template <typename T>
-    requires std::is_same_v<T, entt::entity>
-  std::optional<T> get(const std::string& in_str) const {
-    if (capture_map_.find(in_str) != capture_map_.end()) {
-      try {
-        return num_to_enum<entt::entity>(std::stoi(capture_map_.at(in_str)));
-      } catch (const std::invalid_argument& e) {
-        default_logger_raw()->log(log_loc(), level::err, "get entt::entity error: {}", e.what());
-        return {};
-      }
-    }
-    return {};
-  }
 };
 
 class http_function_base_t {
