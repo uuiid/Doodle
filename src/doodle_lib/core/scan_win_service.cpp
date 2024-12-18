@@ -14,7 +14,6 @@
 
 #include <doodle_lib/core/scan_assets/character_scan_category.h>
 #include <doodle_lib/core/scan_assets/prop_scan_category.h>
-#include <doodle_lib/core/scan_assets/scan_category_service.h>
 #include <doodle_lib/core/scan_assets/scene_scan_category.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
