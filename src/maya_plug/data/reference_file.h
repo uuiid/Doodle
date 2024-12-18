@@ -2,6 +2,7 @@
 // Created by TD on 2021/11/30.
 //
 #pragma once
+#include <maya_plug/data/cloth_interface.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
@@ -142,7 +143,7 @@ class reference_file : public boost::totally_ordered<reference_file> {
    */
   MSelectionList get_all_object() const;
 
-  std::vector<MDagPath> get_alll_cloth_obj() const;
+  std::vector<MDagPath> get_alll_cloth_obj(const std::vector<cloth_interface> &in_cloth) const;
 
   friend bool operator==(const reference_file &lhs, const reference_file &rhs) {
     return lhs.file_info_node_ == rhs.file_info_node_;

@@ -152,7 +152,9 @@ FSys::path export_file_fbx::export_rig() {
   return l_file;
 }
 
-FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file) {
+FSys::path export_file_fbx::export_sim(
+    const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const std::vector<cloth_interface>& in_cloth
+) {
   std::vector<MDagPath> l_export_list{};
   auto l_export_group = in_ref.export_group_attr();
   if (!l_export_group) {
@@ -174,7 +176,7 @@ FSys::path export_file_fbx::export_sim(const reference_file& in_ref, const gener
   auto l_file_path = (*in_gen_file)(in_ref);
   log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
 
-  std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj();
+  std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj(in_cloth);
   // 排除 export_sim 中的物体
   std::erase_if(l_export_list, [&](const MDagPath& in) {
     return std::ranges::find(l_export_sim, in) != l_export_sim.end();

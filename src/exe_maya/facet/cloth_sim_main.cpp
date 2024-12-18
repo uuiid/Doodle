@@ -181,7 +181,7 @@ void cloth_sim::export_abc() {
   export_file_fbx l_ex_fbx{};
   ranges::for_each(ref_files_, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
-    auto l_path = l_ex_fbx.export_sim(in_handle, l_gen);
+    auto l_path = l_ex_fbx.export_sim(in_handle, l_gen, cloth_lists_);
     if (!l_path.empty()) {
       l_path.replace_extension(".abc");
       out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());

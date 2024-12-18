@@ -52,7 +52,7 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
   export_file_fbx l_ex_fbx{};
   ranges::for_each(l_refs, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
-    l_ex_fbx.export_sim(in_handle, l_gen);
+    l_ex_fbx.export_sim(in_handle, l_gen, l_cloth);
   });
 
   return MStatus{};

@@ -428,7 +428,7 @@ std::optional<MDagPath> reference_file::get_field_dag() const {
   return {};
 }
 
-std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
+std::vector<MDagPath> reference_file::get_alll_cloth_obj(const std::vector<cloth_interface> &in_cloth) const {
   std::vector<MDagPath> l_export_path{};
   MStatus l_status{};
   MFnDagNode l_child_dag{};
@@ -437,7 +437,7 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
 
   MObject l_export_group{l_root->node(&l_status)};
   maya_chick(l_status);
-  for (auto &&[e, l_cloth] : g_reg()->view<cloth_interface>().each()) {
+  for (auto &&l_cloth : in_cloth) {
     if (l_cloth->get_namespace() == get_namespace()) {
       auto l_obj = l_cloth->get_shape().node();
       for (MItDependencyGraph l_it{
