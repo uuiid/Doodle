@@ -36,7 +36,6 @@ class cloth_sim final {
   void sim();
   /// 有解算就使用, 没有解算就生成, 并且不保存文件
   void touch_sim();
-  void export_fbx();
   void export_abc();
   void play_blast();
   void export_anim_file();

@@ -103,9 +103,7 @@ bool cloth_sim::post(const nlohmann::json& in_argh) {
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
   if (l_arg.export_file) {
-    DOODLE_LOG_INFO("安排导出fbx");
-    boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
-    DOODLE_LOG_INFO("安排导出abc");
+    DOODLE_LOG_INFO("安排导出abc和fbx");
     boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
   }
 

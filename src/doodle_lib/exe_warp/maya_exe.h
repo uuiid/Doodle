@@ -52,7 +52,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
   FSys::path sim_path{};
   bool replace_ref_file;
   bool sim_file;
-  bool export_file;
+  bool export_file;  // 导出abc文件
   bool touch_sim;
   bool export_anim_file;
   bool create_play_blast_{};
@@ -78,15 +78,15 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
   // to json
   friend void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
     to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
-    in_json["sim_path"]          = out_obj.sim_path.generic_string();
-    in_json["replace_ref_file"]  = out_obj.replace_ref_file;
-    in_json["sim_file"]          = out_obj.sim_file;
-    in_json["export_file"]       = out_obj.export_file;
-    in_json["touch_sim"]         = out_obj.touch_sim;
-    in_json["export_anim_file"]  = out_obj.export_anim_file;
-    in_json["create_play_blast"] = out_obj.create_play_blast_;
-    in_json["camera_film_aperture"]     = out_obj.film_aperture_;
-    in_json["image_size"]        = out_obj.size_;
+    in_json["sim_path"]             = out_obj.sim_path.generic_string();
+    in_json["replace_ref_file"]     = out_obj.replace_ref_file;
+    in_json["sim_file"]             = out_obj.sim_file;
+    in_json["export_file"]          = out_obj.export_file;
+    in_json["touch_sim"]            = out_obj.touch_sim;
+    in_json["export_anim_file"]     = out_obj.export_anim_file;
+    in_json["create_play_blast"]    = out_obj.create_play_blast_;
+    in_json["camera_film_aperture"] = out_obj.film_aperture_;
+    in_json["image_size"]           = out_obj.size_;
   }
 
   std::tuple<std::string, std::string> get_json_str() override {
@@ -120,11 +120,11 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   friend void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
     to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
 
-    in_json["create_play_blast"] = out_obj.create_play_blast_;
-    in_json["out_path_file"]     = out_obj.out_path_file_.generic_string();
-    in_json["rig_file_export"]   = out_obj.rig_file_export_;
-    in_json["camera_film_aperture"]     = out_obj.film_aperture_;
-    in_json["image_size"]        = out_obj.size_;
+    in_json["create_play_blast"]    = out_obj.create_play_blast_;
+    in_json["out_path_file"]        = out_obj.out_path_file_.generic_string();
+    in_json["rig_file_export"]      = out_obj.rig_file_export_;
+    in_json["camera_film_aperture"] = out_obj.film_aperture_;
+    in_json["image_size"]           = out_obj.size_;
   }
   std::tuple<std::string, std::string> get_json_str() override {
     return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
