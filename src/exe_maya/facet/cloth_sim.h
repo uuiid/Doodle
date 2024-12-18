@@ -6,6 +6,8 @@
 #include "doodle_core/metadata/image_size.h"
 #include <doodle_core/core/app_base.h>
 
+#include <doodle_lib/exe_warp/maya_exe.h>
+
 #include <maya_plug/data/cloth_interface.h>
 #include <maya_plug/data/reference_file.h>
 
@@ -46,6 +48,7 @@ class cloth_sim final {
   std::map<reference_file, std::vector<FSys::path>> out_and_ref_file_map_{};
   FSys::path camera_path_{};
   FSys::path out_path_file_;
+  maya_exe_ns::maya_out_arg out_arg_{};
 
  public:
   cloth_sim()  = default;

@@ -186,9 +186,9 @@ void cloth_sim::export_abc() {
     auto l_path = l_ex_fbx.export_sim(in_handle, l_gen);
     if (!l_path.empty()) {
       l_path.replace_extension(".abc");
-      out_and_ref_file_map_[in_handle].emplace_back(l_path);
+      out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());
       l_path.replace_extension(".fbx");
-      out_and_ref_file_map_[in_handle].emplace_back(l_path);
+      out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());
     }
   });
 }
@@ -214,9 +214,7 @@ void cloth_sim::export_anim_file() {
       [&](reference_file& in_handle) {
         if (!in_handle.is_loaded()) in_handle.load_file();
         auto l_path = l_ex.export_anim(in_handle, l_gen);
-        if (!l_path.empty()) {
-          out_and_ref_file_map_[in_handle].emplace_back(l_path);
-        }
+        out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());
       }
   );
 
@@ -229,16 +227,6 @@ void cloth_sim::write_config() {
   maya_exe_ns::maya_out_arg l_out_arg{};
   l_out_arg.begin_time = anim_begin_time_.value();
   l_out_arg.end_time   = MAnimControl::maxTime().value();
-
-  for (auto&& i : all_ref_files_) {
-    if (out_and_ref_file_map_.contains(i)) {
-      for (auto&& l_p : out_and_ref_file_map_[i]) {
-        l_out_arg.out_file_list.emplace_back(l_p, i.get_abs_path());
-      }
-    } else {
-      l_out_arg.out_file_list.emplace_back(FSys::path{}, i.get_abs_path());
-    }
-  }
   l_out_arg.out_file_list.emplace_back(camera_path_, FSys::path{});  // 导出相机
 
   nlohmann::json l_json = l_out_arg;
