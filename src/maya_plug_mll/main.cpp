@@ -76,32 +76,8 @@ MStatus initializePlugin(MObject obj) {
   maya_reg     = std::make_shared<::doodle::maya_plug::maya_register>();
   p_doodle_app = std::make_shared<app_base>();
 
-  maya_reg->register_callback(
-      MSceneMessage::addCallback(
-          MSceneMessage::Message::kMayaExiting,
-          [](void* in) {
-            if (auto l_doodle_app = static_cast<app_base*>(in); l_doodle_app) {
-              l_doodle_app->stop_app();
-            }
-          },
-          p_doodle_app.get(), &status
-      )
-  );
-  CHECK_MSTATUS(status);
-
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
 
-  maya_reg->register_callback(
-      MTimerMessage::addTimerCallback(
-          0.001,
-          [](float elapsedTime, float lastTime, void* clientData) {
-            if (auto l_doodle_app = static_cast<app_base*>(clientData)) {
-              l_doodle_app->poll_one();
-            }
-          },
-          p_doodle_app.get(), &status
-      )
-  );
   CHECK_MSTATUS(status);
 
   CHECK_MSTATUS(status);
