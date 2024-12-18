@@ -29,7 +29,6 @@ class export_fbx_facet final {
 
   void play_blast();
   std::vector<reference_file> ref_files_{};
-  std::vector<entt::handle> cloth_lists_{};
   // 输出结果路径
   FSys::path out_path_file_{};
 
