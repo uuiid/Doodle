@@ -54,7 +54,6 @@ bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_r
 doodle_lib::~doodle_lib() = default;
 
 boost::asio::io_context& g_io_context() { return doodle_lib::Get().ptr->io_context_; }
-boost::asio::thread_pool& g_thread() { return doodle_lib::Get().ptr->thread_pool_attr; }
 details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }
 entt::registry::context& g_ctx() { return doodle_lib::Get().ptr->ctx_p; }
 boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() { return doodle_lib::Get().ptr->strand_; }

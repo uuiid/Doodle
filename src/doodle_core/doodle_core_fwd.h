@@ -76,7 +76,6 @@ using spdlog::default_logger_raw;
 using namespace std::literals;
 
 DOODLE_CORE_API boost::asio::io_context& g_io_context();
-DOODLE_CORE_API boost::asio::thread_pool& g_thread();
 DOODLE_CORE_API entt::registry::context& g_ctx();
 
 namespace movie {

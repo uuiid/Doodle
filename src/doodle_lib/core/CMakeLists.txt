@@ -6,14 +6,12 @@ target_sources(doodle_lib
         observable_container.h
         holidaycn_time.h
         scan_win_service.h
-        thread_copy_io.h
         up_auto_light_file.h
 
         PRIVATE
         filesystem_extend.cpp
         holidaycn_time.cpp
         scan_win_service.cpp
-        thread_copy_io.cpp
         up_auto_light_file.cpp
 
 )
