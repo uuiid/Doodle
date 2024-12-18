@@ -69,7 +69,6 @@ class user;
 class doodle_lib;
 
 using doodle_lib_ptr = std::shared_ptr<doodle_lib>;
-using registry_ptr   = std::shared_ptr<entt::registry>;
 
 using uuid           = boost::uuids::uuid;
 using spdlog::default_logger_raw;

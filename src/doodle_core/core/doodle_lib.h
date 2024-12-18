@@ -20,7 +20,6 @@ class DOODLE_CORE_API doodle_lib : public boost::noncopyable, boost::equality_co
   using logger_ctr_ptr = std::shared_ptr<details::logger_ctrl>;
   friend boost::asio::io_context& g_io_context();
   friend boost::asio::thread_pool& g_thread();
-  friend registry_ptr& g_reg();
   friend entt::registry::context& g_ctx();
   friend details::logger_ctrl& g_logger_ctrl();
   friend boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();

@@ -23,11 +23,10 @@ class doodle_lib::impl {
  public:
   boost::asio::io_context io_context_{};
   boost::asio::thread_pool thread_pool_attr{std::thread::hardware_concurrency() * 2};
-  logger_ctr_ptr p_log{};
-  registry_ptr reg{};
   entt::registry::context ctx_p{std::allocator<entt::entity>{}};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(io_context_)};
 
+  logger_ctr_ptr p_log{std::make_shared<logger_ctr_ptr::element_type>()};
   inline static doodle_lib* self;
 };
 
@@ -40,8 +39,6 @@ doodle_lib::doodle_lib() : ptr() {
 doodle_lib& doodle_lib::Get() { return *impl::self; }
 void doodle_lib::init() {
   /// @brief 初始化其他
-  ptr->reg   = std::make_shared<entt::registry>();
-  ptr->p_log = std::make_shared<logger_ctr_ptr::element_type>();
   wil::SetResultLoggingCallback([](wil::FailureInfo const& failure) noexcept {
     constexpr std::size_t sizeOfLogMessageWithNul = 2048;
 
@@ -56,7 +53,6 @@ bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_r
 
 doodle_lib::~doodle_lib() = default;
 
-registry_ptr& g_reg() { return doodle_lib::Get().ptr->reg; }
 boost::asio::io_context& g_io_context() { return doodle_lib::Get().ptr->io_context_; }
 boost::asio::thread_pool& g_thread() { return doodle_lib::Get().ptr->thread_pool_attr; }
 details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }

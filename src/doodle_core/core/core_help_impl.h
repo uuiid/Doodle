@@ -9,7 +9,5 @@
 #include <entt/entt.hpp>
 
 namespace doodle {
-using registry_ptr = std::shared_ptr<entt::registry>;
-DOODLE_CORE_API registry_ptr &g_reg();
 
 }  // namespace doodle
