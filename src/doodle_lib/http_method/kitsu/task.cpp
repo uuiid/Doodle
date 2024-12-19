@@ -8,12 +8,11 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-
-#include <doodle_lib/core/cache_manger.h>
 namespace doodle::http::kitsu {
 
 namespace {
@@ -131,6 +130,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
   }
   co_return std::move(l_res);
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> create_task(session_data_ptr in_handle) {
+  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
+
+  auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
+
+  if (l_ec) {
+    co_return std::move(l_res);
+  }
+  try {
+    if (auto l_json = nlohmann::json::parse(l_res.body()); l_json.contains("id"))
+      g_ctx().get<cache_manger>().erase(l_json["id"].get<uuid>());
+  } catch (...) {
+    default_logger_raw()->error("api/data/tasks {}", boost::current_exception_diagnostic_information());
+  }
+  co_return std::move(l_res);
+}
+
 }  // namespace
 void task_reg(http_route& in_http_route) {
   in_http_route
@@ -145,6 +163,7 @@ void task_reg(http_route& in_http_route) {
               boost::beast::http::verb::get, "api/data/assets/with-tasks", get_task_with_tasks
           )
       )
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/tasks", get_task_with_tasks))
 
       ;
 }
