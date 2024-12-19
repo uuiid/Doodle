@@ -148,7 +148,7 @@ Group=www-data
 WorkingDirectory=/opt/zou
 # Append DB_USERNAME=username DB_HOST=server when default values aren't used
 Environment="PATH=/opt/zou/env/bin"
-Environment="SECRET_KEY=yourrandomsecretkey" # Same one than zou.service
+Environment="SECRET_KEY=22T0iwSHK7qkhdI6" # Same one than zou.service
 
 RuntimeDirectory=zou
 ExecStart=/opt/zou/env/bin/gunicorn -p /run/zou/zou-events.pid -c /etc/zou/gunicorn-events.conf -b 127.0.0.1:5001 zou.event_stream:app
