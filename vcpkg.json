@@ -39,6 +39,7 @@
     "tl-expected",
     "sqlite-orm",
     "jwt-cpp",
+    "vpetrigo-caches",
     {
       "name": "fmt",
       "default-features": true,

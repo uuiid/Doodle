@@ -3,9 +3,9 @@
 //
 #pragma once
 
-namespace doodle
-{
-class cache_manger
-{
+namespace doodle {
+class cache_manger {
+ public:
+  cache_manger() {};
 };
-}
+}  // namespace doodle

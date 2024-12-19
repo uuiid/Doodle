@@ -1,0 +1,20 @@
+From 1f1946529c15584b0e29a0797b5b1bf48c41a2ca Mon Sep 17 00:00:00 2001
+From: uuiid <957714080@qq.com>
+Date: Thu, 19 Dec 2024 11:41:17 +0800
+Subject: [PATCH] fix: cmake install target
+
+---
+ cmake/caches-config.cmake.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmake/caches-config.cmake.in b/cmake/caches-config.cmake.in
+index 98d87df..bd2f543 100644
+--- a/cmake/caches-config.cmake.in
++++ b/cmake/caches-config.cmake.in
+@@ -1,2 +1,2 @@
+ @PACKAGE_INIT@
+-include("@PACKAGE_CMAKE_INSTALL_LIBDIR@/@PROJECT_NAME@/caches-targets.cmake")
++include("${CMAKE_CURRENT_LIST_DIR}/caches-targets.cmake")
+-- 
+2.47.0.windows.2
+
