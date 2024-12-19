@@ -24,6 +24,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
   }
   auto l_json = nlohmann::json::parse(l_res.body());
   try {
+    if (l_res.result() != boost::beast::http::status::ok) co_return std::move(l_res);
+    if (!(l_json.contains("user") && l_json["user"].contains("id"))) co_return std::move(l_res);
+
     auto& l_user    = l_json["user"];
     auto l_user_id  = l_user["id"].get<uuid>();
 
