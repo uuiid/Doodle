@@ -12,6 +12,8 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+
+#include <doodle_lib/core/cache_manger.h>
 namespace doodle::http::kitsu {
 
 namespace {
@@ -82,6 +84,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
       auto l_user_data       = l_json_entt["data"];
       auto l_asset_type_name = l_json_entt["asset_type_name"];
       for (auto&& l_json_task : l_json_entt["tasks"]) {
+        // g_ctx().get<cache_manger>().set(l_json_task["id"].get<uuid>(), l_json_task);
         bool l_file_exist{};
         FSys::path l_path{};
         if (auto l_p = g_ctx().get<sqlite_database>().get_by_uuid<metadata::kitsu::task_type_t>(

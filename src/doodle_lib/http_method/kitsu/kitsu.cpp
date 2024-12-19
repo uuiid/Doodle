@@ -10,10 +10,12 @@
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/file_association.h>
+#include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/project.h>
@@ -25,7 +27,6 @@
 #include <doodle_lib/http_method/model_library/thumbnail.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/tool_version.h>
-#include <doodle_lib/http_method/kitsu/epiboly.h>
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
@@ -43,6 +44,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   computer_reg(*l_router);
   task_info_reg(*l_router);
   tool_version_reg(*l_router);
+  g_ctx().emplace<cache_manger>();
   return l_router;
 }
 

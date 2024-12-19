@@ -13,6 +13,7 @@
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/time_tool/work_clock.h>
 
+#include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
@@ -271,22 +272,30 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
 
   for (auto&& l_d : *in_block_ptr) {
     if (!l_d.kitsu_task_ref_id_.is_nil()) {
-      boost::beast::http::request<boost::beast::http::empty_body> l_q{in_handle->req_header_};
-      l_q.method(boost::beast::http::verb::get);
-      l_q.target(fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_));
-      l_q.erase(boost::beast::http::field::content_length);
-      l_q.erase(boost::beast::http::field::content_type);
-      l_q.keep_alive(in_handle->keep_alive_ == false ? in_block_ptr->size() != 1 : true);
-      std::ostringstream l_os;
-      l_os << l_q;
-      default_logger_raw()->warn("请求数据 {}", l_os.str());
-      auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
-      if (l_e) co_return tl::make_unexpected(l_e.message());
-      try {
-        auto& l_json_v             = l_json_res["data"].emplace_back(nlohmann::json::parse(l_r.body()));
+      auto l_cache_json = g_ctx().get<cache_manger>().get(l_d.kitsu_task_ref_id_);
+      if (l_cache_json) {
+        auto& l_json_v             = l_json_res["data"].emplace_back(*l_cache_json);
         l_json_v["computing_time"] = l_d;
-      } catch (...) {
-        co_return tl::make_unexpected(boost::current_exception_diagnostic_information());
+      } else {
+        boost::beast::http::request<boost::beast::http::empty_body> l_q{in_handle->req_header_};
+        l_q.method(boost::beast::http::verb::get);
+        l_q.target(fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_));
+        l_q.erase(boost::beast::http::field::content_length);
+        l_q.erase(boost::beast::http::field::content_type);
+        l_q.keep_alive(in_handle->keep_alive_ == false ? in_block_ptr->size() != 1 : true);
+        std::ostringstream l_os;
+        l_os << l_q;
+        default_logger_raw()->warn("请求数据 {}", l_os.str());
+        auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
+        if (l_e) co_return tl::make_unexpected(l_e.message());
+        try {
+          auto l_json = nlohmann::json::parse(l_r.body());
+          auto& l_json_v = l_json_res["data"].emplace_back(l_json);
+          g_ctx().get<cache_manger>().set(l_d.kitsu_task_ref_id_, l_json);
+          l_json_v["computing_time"] = l_d;
+        } catch (...) {
+          co_return tl::make_unexpected(boost::current_exception_diagnostic_information());
+        }
       }
     } else
       l_json_res["data"].emplace_back()["computing_time"] = l_d;
