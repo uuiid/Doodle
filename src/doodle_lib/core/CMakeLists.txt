@@ -7,6 +7,7 @@ target_sources(doodle_lib
         holidaycn_time.h
         scan_win_service.h
         up_auto_light_file.h
+        cache_manger.h
 
         PRIVATE
         filesystem_extend.cpp
