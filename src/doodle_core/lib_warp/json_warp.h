@@ -72,8 +72,8 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
     try {
       j = fmt::to_string(in_time);
     } catch (const fmt::format_error& in_err) {
-      j = nlohmann::json::value_t::null;
-      // throw nlohmann::json::other_error::create(502, in_err.what(), &j);
+      // j = nlohmann::json::value_t::null;
+      throw nlohmann::json::other_error::create(502, in_err.what(), &j);
     }
   }
 
