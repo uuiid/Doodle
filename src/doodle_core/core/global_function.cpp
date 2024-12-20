@@ -5,7 +5,7 @@
 #include <boost/uuid/uuid_io.hpp>
 namespace doodle {
 
-tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str) {
+tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str) noexcept {
   try {
     boost::uuids::uuid uuid;
     std::istringstream l_uuid_stream(uuid_str);

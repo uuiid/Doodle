@@ -35,5 +35,5 @@ struct overloaded : Ts... {
 template <class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 
-DOODLE_CORE_API tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str);
+DOODLE_CORE_API tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str) noexcept;
 }  // namespace doodle
