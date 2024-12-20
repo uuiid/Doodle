@@ -34,6 +34,14 @@ struct overloaded : Ts... {
 // explicit deduction guide (not needed as of C++20)
 template <class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
+/**
+ * Converts a UUID string to a boost::uuids::uuid object.
+ *
+ * @param uuid_str The UUID string to be converted.
+ * @return A tl::expected containing the boost::uuids::uuid object if successful,
+ *         or an error message as a std::string if the conversion fails.
+ * @note This function does not throw exceptions and uses noexcept.
+ */
 
 DOODLE_CORE_API tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str) noexcept;
 }  // namespace doodle
