@@ -442,7 +442,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
     if (l_json.contains("duration") && l_json["duration"].is_number_integer())
       l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
-    if (l_json.contains("comment") && l_json["comment"].is_string()) l_comment = l_json["comment"].get<std::string>();
+    if (l_json.contains("user_remark") && l_json["user_remark"].is_string()) l_comment = l_json["user_remark"].get<std::string>();
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
