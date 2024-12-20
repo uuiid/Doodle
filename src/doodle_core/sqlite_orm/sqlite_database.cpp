@@ -13,8 +13,6 @@
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
-#include <doodle_core/sqlite_orm/detail/assets_type_enum.h>
-#include <doodle_core/sqlite_orm/detail/attendance_enum.h>
 #include <doodle_core/sqlite_orm/detail/macro.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
@@ -25,11 +23,13 @@
 #include "metadata/attendance.h"
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
-DOODLE_SQLITE_ENUM_TYPE_(doodle::power_enum)
-DOODLE_SQLITE_ENUM_TYPE_(doodle::computer_status)
-DOODLE_SQLITE_ENUM_TYPE_(doodle::server_task_info_status)
-DOODLE_SQLITE_ENUM_TYPE_(doodle::server_task_info_type)
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::power_enum)
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_status)
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_type)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::details::assets_type_enum);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::attendance_helper::att_enum);
 
 template <>
 struct type_is_nullable<std::string> : std::true_type {
