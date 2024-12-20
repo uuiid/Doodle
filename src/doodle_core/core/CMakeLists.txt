@@ -25,4 +25,5 @@ target_sources(
         http_client_core.cpp
         co_queue.cpp
         authorization.cpp
+        global_function.cpp
 )

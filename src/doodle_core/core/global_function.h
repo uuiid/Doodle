@@ -7,8 +7,11 @@
 #include <doodle_core/configure/doodle_core_export.h>
 
 #include <boost/asio.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <entt/entt.hpp>
+#include <tl/expected.hpp>
+
 namespace boost::asio {
 class io_context;
 class thread_pool;
@@ -32,4 +35,5 @@ struct overloaded : Ts... {
 template <class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 
+DOODLE_CORE_API tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str);
 }  // namespace doodle

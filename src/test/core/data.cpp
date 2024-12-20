@@ -21,4 +21,10 @@ BOOST_AUTO_TEST_CASE(scan_key_t) {
   BOOST_TEST(l_k1 == l_k2);
 }
 
+BOOST_AUTO_TEST_CASE(uuid) {
+  BOOST_TEST(from_uuid_str("69a8d093-dcab-4890-8f9d-c51ef065d03b").has_value());
+
+  BOOST_TEST(!from_uuid_str("69a8d093dcab48908f9dc51ef065d03b").has_value());
+  BOOST_TEST(!from_uuid_str("69a8d093dcab48908f9dc51e").has_value());
+}
 BOOST_AUTO_TEST_SUITE_END()

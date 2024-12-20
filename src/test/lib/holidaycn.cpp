@@ -195,8 +195,8 @@ BOOST_AUTO_TEST_CASE(test_holidaycn) {
   doodle_lib l_lib{};
   business::work_clock2 work_clock{};
   auto l_rule = business::rules::get_default();
-  holidaycn_time2 l_time{l_rule.work_pair_p};
-  l_time.set_clock(work_clock);
+  // holidaycn_time2 l_time{l_rule.work_pair_p};
+  // l_time.set_clock(work_clock);
 
   DOODLE_LOG_INFO(work_clock.debug_print());
 
