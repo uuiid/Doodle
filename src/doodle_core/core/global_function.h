@@ -10,6 +10,7 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <entt/entt.hpp>
+#include <nlohmann/json.hpp>
 #include <tl/expected.hpp>
 
 namespace boost::asio {
@@ -44,4 +45,26 @@ overloaded(Ts...) -> overloaded<Ts...>;
  */
 
 DOODLE_CORE_API tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str) noexcept;
+
+template <typename InputType>
+tl::expected<nlohmann::json, std::string> parse_json(
+    InputType &&i, const nlohmann::json::parser_callback_t cb = nullptr, const bool ignore_comments = false
+) {
+  try {
+    return nlohmann::json::parse(std::forward<InputType>(i), cb, true, ignore_comments);
+  } catch (const std::exception &e) {
+    return tl::make_unexpected<std::string>(e.what());
+  }
+}
+template <typename IteratorType>
+tl::expected<nlohmann::json, std::string> parse_json(
+    IteratorType first, IteratorType last, const nlohmann::json::parser_callback_t cb = nullptr,
+    const bool ignore_comments = false
+) {
+  try {
+    return nlohmann::json::parse(first, last, cb, true, ignore_comments);
+  } catch (const std::exception &e) {
+    return tl::make_unexpected<std::string>(e.what());
+  }
+}
 }  // namespace doodle
