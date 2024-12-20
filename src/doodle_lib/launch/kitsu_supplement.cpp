@@ -3,7 +3,6 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/authorization.h>
 #include <doodle_core/platform/win/register_file_type.h>
-#include <doodle_core/sqlite_orm/detail/init_project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_listener.h>
