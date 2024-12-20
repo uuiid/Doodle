@@ -15,9 +15,9 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $DoodleSource = Convert-Path "$PSScriptRoot/../build/Ninja_release/_CPack_Packages/win64/ZIP"
 $DoodleName = (Get-ChildItem $DoodleSource -Directory)[0].Name
 
-Write-Host "从 "$DoodleSource\$DoodleName\bin" 复制到 192.168.40.181\tmp"
-&robocopy "$DoodleSource\$DoodleName\bin" "\\192.168.40.181\tmp\bin" /MIR
-&robocopy "E:\source\kitsu\dist" "\\192.168.40.181\tmp\dist" /MIR
+Write-Host "开始复制文件"
+&robocopy "$DoodleSource\$DoodleName\bin" "\\192.168.40.181\tmp\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+&robocopy "E:\source\kitsu\dist" "\\192.168.40.181\tmp\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
 
 Copy-Item "$DoodleSource/$DoodleName.zip" -Destination "\\192.168.40.181\tmp\dist"
 Set-Content -Path "\\192.168.40.181\tmp\dist\version.txt" -Value $DoodleName.Split("-")[1] -NoNewline
@@ -34,7 +34,7 @@ if (-not (Test-Path "E:\doodle\build\holiday-cn-$tag.zip"))
     Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "E:\doodle\build\holiday-cn-$tag.zip"
 }
 Expand-Archive -Path "E:\doodle\build\holiday-cn-$tag.zip" -DestinationPath "E:\source\kitsu\dist\time" -Force
-&robocopy "E:\source\kitsu\dist\time" "\\192.168.40.181\tmp\dist\time" /MIR
+&robocopy "E:\source\kitsu\dist\time" "\\192.168.40.181\tmp\dist\time" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
 
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList auto_light,$RootPassword
@@ -43,12 +43,13 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
-    if ($CopyServer -and (Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash)
+    if ($Using:CopyServer -and ((Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash))
     {
+        Write-Host "更新服务"
         Stop-Service -Force -Name doodle_kitsu_supplement
-        &robocopy "$Tmp\bin" "$Target\bin" /MIR
+        &robocopy "$Tmp\bin" "$Target\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
         Start-Service -Name doodle_kitsu_supplement
     }
-    &robocopy "$Tmp\dist" "$Target\dist" /MIR
+    &robocopy "$Tmp\dist" "$Target\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
 }
 
