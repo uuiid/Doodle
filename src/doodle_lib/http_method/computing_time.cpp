@@ -316,7 +316,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   computing_time_post_req_data l_data{};
 
   try {
-    l_data         = l_json.get<computing_time_post_req_data>();
+    l_data = l_json.get<computing_time_post_req_data>();
+    {  // 检查除空以外的id是否重复
+      std::map<uuid, std::size_t> l_map;
+      for (auto&& l_task : l_data.data) {
+        l_map[l_task.task_id]++;
+      }
+      if (l_map.contains(uuid{})) l_map.erase(uuid{});
+      if (std::ranges::any_of(l_map, [](const auto& p) { return p.second > 1; }))
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
+    }
+
     l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
     std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
     l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
