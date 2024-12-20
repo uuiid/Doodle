@@ -430,7 +430,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 
   boost::uuids::uuid l_user_id{}, l_task_id{};
   chrono::year_month l_year_month{};
-  chrono::microseconds l_duration{};
+  std::optional<chrono::microseconds> l_duration{};
+  std::optional<std::string> l_comment{};
   try {
     auto l_user_str       = in_handle->capture_->get("user_id");
     auto l_year_month_str = in_handle->capture_->get("year_month");
@@ -439,7 +440,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     l_user_id             = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
     std::istringstream l_year_month_stream{l_year_month_str};
     l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
-    l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
+    if (l_json.contains("duration") && l_json["duration"].is_number_integer())
+      l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
+    if (l_json.contains("comment") && l_json["comment"].is_string()) l_comment = l_json["comment"].get<std::string>();
   } catch (...) {
     l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     co_return in_handle->make_error_code_msg(
@@ -448,7 +451,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
         boost::current_exception_diagnostic_information()
     );
   }
-  if (l_duration.count() <= 0) {
+  if (l_duration && l_duration->count() <= 0) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request,
         boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "参数错误"
@@ -479,13 +482,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
         fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.mobile_, l_year_month_str_1)
     );
   }
-
-  auto l_timer_clock = create_time_clock(l_year_month, l_user.id_);
-  if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, l_task_id, l_duration, in_handle->logger_); l_err.empty()) {
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r)
+  if (l_duration) {
+    auto l_timer_clock = create_time_clock(l_year_month, l_user.id_);
+    if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, l_task_id, *l_duration, in_handle->logger_);
+        l_err.empty()) {
+      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr); !l_r)
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    } else {
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
+    }
+  } else if (l_comment) {
+    auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
+    for (auto&& l_b : *l_block_ptr) {
+      if (l_b.uuid_id_ == l_task_id) {
+        l_b.user_remark_ = *l_comment;
+        *l_block_ptr_value = l_b;
+        break;
+      }
+    }
+    if (auto l_r = co_await g_ctx().get<sqlite_database>().install(l_block_ptr_value); !l_r)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  } else {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
   }
   nlohmann::json l_json_res{};
   l_json_res["data"] = *l_block_ptr;
