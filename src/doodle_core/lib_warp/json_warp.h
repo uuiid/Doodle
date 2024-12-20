@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/chrono_fmt.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>

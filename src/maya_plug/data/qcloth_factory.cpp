@@ -4,7 +4,6 @@
 
 #include "qcloth_factory.h"
 
-#include "doodle_core/core/core_help_impl.h"
 
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/main/maya_plug_fwd.h>

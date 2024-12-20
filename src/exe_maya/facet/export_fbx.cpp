@@ -1,6 +1,5 @@
 #include "export_fbx.h"
 
-#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/logger/logger.h"

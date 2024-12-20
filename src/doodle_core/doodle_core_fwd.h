@@ -6,7 +6,6 @@
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/core/chrono_.h>
-#include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_pch.h>

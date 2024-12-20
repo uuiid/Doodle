@@ -2,7 +2,6 @@ target_sources(
         doodle_core
         PUBLIC
         core_set.h
-        core_help_impl.h
         doodle_lib.h
         template_util.h
         file_sys.h

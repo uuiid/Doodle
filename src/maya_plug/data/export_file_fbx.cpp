@@ -4,7 +4,6 @@
 
 #include "export_file_fbx.h"
 
-#include "doodle_core/core/core_help_impl.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include "maya_plug_fwd.h"

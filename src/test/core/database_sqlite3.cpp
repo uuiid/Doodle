@@ -5,7 +5,6 @@
 // Created by TD on 2022/8/26.
 //
 
-#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/metadata.h>

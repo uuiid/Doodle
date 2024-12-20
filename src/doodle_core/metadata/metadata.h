@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "doodle_core/core/core_help_impl.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include "boost/lexical_cast.hpp"

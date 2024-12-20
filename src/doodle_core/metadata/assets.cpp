@@ -7,7 +7,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "core/core_help_impl.h"
 #include "entt/entity/entity.hpp"
 #include "entt/entity/fwd.hpp"
 #include <treehh/tree.hh>

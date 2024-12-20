@@ -1,7 +1,6 @@
 //
 // Created by TD on 2023/1/14.
 //
-#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/project.h"

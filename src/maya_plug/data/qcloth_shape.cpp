@@ -4,7 +4,6 @@
 
 #include "qcloth_shape.h"
 
-#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/logger/logger.h"
 
 #include <boost/algorithm/string.hpp>

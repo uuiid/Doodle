@@ -2,7 +2,6 @@
 // Created by TD on 2022/9/20.
 //
 
-#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/metadata/rules.h"
 #include "doodle_core/metadata/user.h"

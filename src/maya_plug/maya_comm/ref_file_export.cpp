@@ -4,7 +4,6 @@
 
 #include "ref_file_export.h"
 
-#include "doodle_core/core/core_help_impl.h"
 
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/qcloth_factory.h>
