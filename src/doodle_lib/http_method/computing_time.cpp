@@ -230,8 +230,8 @@ std::string patch_time(
   auto l_max = in_time_clock(l_time_begin, l_time_end);
   if (in_duration >= l_max)
     return fmt::format(
-        "大于最大时长 {} {} ", boost::numeric_cast<std::double_t>(in_duration.count() / 60ull * 60ull * 8ull),
-        boost::numeric_cast<std::double_t>(l_max.count() / 60ull * 60ull * 8ull)
+        "大于最大时长 {} {} ", boost::numeric_cast<std::double_t>(in_duration.count() / (60ull * 60ull * 8ull)),
+        boost::numeric_cast<std::double_t>(l_max.count() / (60ull * 60ull * 8ull))
     );
   if (in_duration <= chrono::microseconds{}) return "时间不可小于0";
 
@@ -245,7 +245,7 @@ std::string patch_time(
     for (auto&& l_task : in_block) {
       if (l_task.uuid_id_ != in_task_id_) {
         l_task.duration_ += chrono::microseconds{boost::rational_cast<std::int64_t>(l_duration_int)};
-        l_task.duration_ = std::clamp(l_task.duration_, chrono::microseconds{0}, chrono::microseconds{l_max});
+        l_task.duration_ = std::clamp(l_task.duration_, chrono::microseconds{60s}, chrono::microseconds{l_max});
       }
     }
 
@@ -283,13 +283,13 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
         l_q.erase(boost::beast::http::field::content_length);
         l_q.erase(boost::beast::http::field::content_type);
         l_q.keep_alive(in_handle->keep_alive_ == false ? in_block_ptr->size() != 1 : true);
-        std::ostringstream l_os;
-        l_os << l_q;
-        default_logger_raw()->warn("请求数据 {}", l_os.str());
+        // std::ostringstream l_os;
+        // l_os << l_q;
+        // default_logger_raw()->warn("请求数据 {}", l_os.str());
         auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
         if (l_e) co_return tl::make_unexpected(l_e.message());
         try {
-          auto l_json = nlohmann::json::parse(l_r.body());
+          auto l_json    = nlohmann::json::parse(l_r.body());
           auto& l_json_v = l_json_res["data"].emplace_back(l_json);
           g_ctx().get<cache_manger>().set(l_d.kitsu_task_ref_id_, l_json);
           l_json_v["computing_time"] = l_d;
