@@ -493,11 +493,37 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
       if (co_await parse_body()) co_return;
 
-      auto l_gen = ec_ ? session_->make_error_code_msg(boost::beast::http::status::bad_request, ec_)
-                       : co_await callback_->callback_(session_);
+      std::unique_ptr<boost::beast::http::message_generator> l_gen{};
+      if (ec_)
+        l_gen = std::make_unique<boost::beast::http::message_generator>(
+            session_->make_error_code_msg(boost::beast::http::status::bad_request, ec_)
+        );
+      else {
+        try {
+          l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback_(session_));
+        } catch (const boost::bad_lexical_cast& e) {
+          session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
+          l_gen = std::make_unique<boost::beast::http::message_generator>(
+              session_->make_error_code_msg(boost::beast::http::status::bad_request, e.what())
+          );
+        } catch (const nlohmann::json::exception& e) {
+          session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
+          l_gen = std::make_unique<boost::beast::http::message_generator>(
+              session_->make_error_code_msg(boost::beast::http::status::bad_request, e.what())
+          );
+        } catch (...) {
+          session_->logger_->log(
+              log_loc(), level::err, "回复错误 {}", boost::current_exception_diagnostic_information()
+          );
+          l_gen = std::make_unique<boost::beast::http::message_generator>(session_->make_error_code_msg(
+              boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+          ));
+        }
+      }
+
       session_->logger_->info("回复 url {} {}", request_parser_->get().method(), session_->url_);
       if (!session_->keep_alive_) {
-        std::tie(ec_, std::ignore) = co_await boost::beast::async_write(*stream_, std::move(l_gen));
+        std::tie(ec_, std::ignore) = co_await boost::beast::async_write(*stream_, std::move(*l_gen));
         if (ec_) co_return do_close("发送错误");
         co_return do_close();
       }
@@ -507,7 +533,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       auto [_, l_ec_r, l_sz_r, l_ec_w, l_sz_w] =
           co_await boost::asio::experimental::make_parallel_group(
               boost::beast::http::async_read_header(*stream_, buffer_, *request_parser_, boost::asio::deferred),
-              boost::beast::async_write(*stream_, std::move(l_gen), boost::asio::deferred)
+              boost::beast::async_write(*stream_, std::move(*l_gen), boost::asio::deferred)
           )
               .async_wait(
                   boost::asio::experimental::wait_for_all(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
