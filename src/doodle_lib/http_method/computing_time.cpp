@@ -288,14 +288,10 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
         // default_logger_raw()->warn("请求数据 {}", l_os.str());
         auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
         if (l_e) co_return tl::make_unexpected(l_e.message());
-        try {
-          auto l_json    = nlohmann::json::parse(l_r.body());
-          auto& l_json_v = l_json_res["data"].emplace_back(l_json);
-          g_ctx().get<cache_manger>().set(l_d.kitsu_task_ref_id_, l_json);
-          l_json_v["computing_time"] = l_d;
-        } catch (...) {
-          co_return tl::make_unexpected(boost::current_exception_diagnostic_information());
-        }
+        auto l_json    = nlohmann::json::parse(l_r.body());
+        auto& l_json_v = l_json_res["data"].emplace_back(l_json);
+        g_ctx().get<cache_manger>().set(l_d.kitsu_task_ref_id_, l_json);
+        l_json_v["computing_time"] = l_d;
       }
     } else
       l_json_res["data"].emplace_back()["computing_time"] = l_d;
@@ -311,39 +307,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
         "不是json请求"
     );
 
-  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json                         = std::get<nlohmann::json>(in_handle->body_);
 
-  computing_time_post_req_data l_data{};
-
-  try {
-    l_data = l_json.get<computing_time_post_req_data>();
-    {  // 检查除空以外的id是否重复
-      std::map<uuid, std::size_t> l_map;
-      for (auto&& l_task : l_data.data) {
-        l_map[l_task.task_id]++;
-      }
-      if (l_map.contains(uuid{})) l_map.erase(uuid{});
-      if (std::ranges::any_of(l_map, [](const auto& p) { return p.second > 1; }))
-        co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
+  computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
+  {  // 检查除空以外的id是否重复
+    std::map<uuid, std::size_t> l_map;
+    for (auto&& l_task : l_data.data) {
+      l_map[l_task.task_id]++;
     }
-
-    l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
-    std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
-    l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
-  } catch (const std::exception& e) {
-    l_logger->log(log_loc(), level::err, "error: {}", e.what());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
-    );
-  } catch (...) {
-    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
-    );
+    if (l_map.contains(uuid{})) l_map.erase(uuid{});
+    if (std::ranges::any_of(l_map, [](const auto& p) { return p.second > 1; }))
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
   }
+
+  l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
+  l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
 
   user_helper::database_t l_user{};
 
@@ -371,30 +350,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
+  auto l_logger                   = in_handle->logger_;
 
-  boost::uuids::uuid l_user_id{};
-  chrono::year_month l_year_month{};
-  try {
-    auto l_user_str       = in_handle->capture_->get("user_id");
-    auto l_year_month_str = in_handle->capture_->get("year_month");
-    l_user_id             = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
-    std::istringstream l_year_month_stream{l_year_month_str};
-    l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
-  } catch (const std::exception& e) {
-    l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
-    );
-  } catch (...) {
-    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
-    );
-  }
+  boost::uuids::uuid l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  chrono::year_month l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
 
   user_helper::database_t l_user{};
 
@@ -426,30 +385,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     );
   auto& l_json = std::get<nlohmann::json>(in_handle->body_);
 
-  boost::uuids::uuid l_user_id{}, l_task_id{};
-  chrono::year_month l_year_month{};
-  std::optional<chrono::microseconds> l_duration{};
-  std::optional<std::string> l_comment{};
-  try {
-    auto l_user_str       = in_handle->capture_->get("user_id");
-    auto l_year_month_str = in_handle->capture_->get("year_month");
-    auto l_task_id_str    = in_handle->capture_->get("task_id");
-    l_task_id             = boost::lexical_cast<boost::uuids::uuid>(l_task_id_str);
-    l_user_id             = boost::lexical_cast<boost::uuids::uuid>(l_user_str);
-    std::istringstream l_year_month_stream{l_year_month_str};
-    l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
-    if (l_json.contains("duration") && l_json["duration"].is_number_integer())
-      l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
-    if (l_json.contains("user_remark") && l_json["user_remark"].is_string())
-      l_comment = l_json["user_remark"].get<std::string>();
-  } catch (...) {
-    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
-    );
-  }
+  boost::uuids::uuid l_user_id{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"))},
+      l_task_id{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("task_id"))};
+
+  chrono::year_month l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
+  std::optional<chrono::microseconds> l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
+  std::optional<std::string> l_comment           = l_json["user_remark"].get<std::string>();
+
   if (l_duration && l_duration->count() <= 0) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request,
@@ -509,24 +451,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch_delete(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
 
-  boost::uuids::uuid l_computing_time_id{};
-  try {
-    auto l_computing_time_id_str = in_handle->capture_->get("computing_time_id");
-    l_computing_time_id          = boost::lexical_cast<boost::uuids::uuid>(l_computing_time_id_str);
-  } catch (const std::exception& e) {
-    l_logger->log(log_loc(), level::err, "url parse error: {}", e.what());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, e.what()
-    );
-  } catch (...) {
-    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::internal_server_error,
-        boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        boost::current_exception_diagnostic_information()
-    );
-  }
+  boost::uuids::uuid l_computing_time_id =
+      boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("computing_time_id"));
 
   auto l_rem = g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
   nlohmann::json l_json_res{};

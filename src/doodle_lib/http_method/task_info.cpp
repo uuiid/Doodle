@@ -42,24 +42,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
         "不是json请求"
     );
-  auto l_ptr = std::make_shared<server_task_info>();
-  try {
-    auto l_json = std::get<nlohmann::json>(in_handle->body_);
-    l_json.get_to(*l_ptr);
-    l_ptr->uuid_id_     = core_set::get_set().get_uuid();
-    l_ptr->submit_time_ = chrono::sys_time_pos::clock::now();
+  auto l_ptr  = std::make_shared<server_task_info>();
 
-    if (l_ptr->exe_.empty())
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
+  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  l_json.get_to(*l_ptr);
+  l_ptr->uuid_id_     = core_set::get_set().get_uuid();
+  l_ptr->submit_time_ = chrono::sys_time_pos::clock::now();
 
-    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<computer>(l_ptr->run_computer_id_); l_list == 0)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到计算机");
+  if (l_ptr->exe_.empty())
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
 
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
-    );
-  }
+  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<computer>(l_ptr->run_computer_id_); l_list == 0)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到计算机");
 
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
@@ -68,13 +62,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_data_ptr in_handle) {
-  uuid l_uuid{};
-  try {
-    auto l_id = in_handle->capture_->get("id");
-    l_uuid    = boost::lexical_cast<boost::uuids::uuid>(l_id);
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
-  }
+  uuid l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
+
   if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid); !l_list.empty())
     co_return in_handle->make_msg((nlohmann::json{} = l_list[0]).dump());
 
@@ -83,14 +72,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_d
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_data_ptr in_handle) {
   std::optional<server_task_info_type> l_type{};
-  try {
-    for (auto&& i : in_handle->url_.params()) {
-      if (i.has_value && i.key == "type") {
-        l_type = magic_enum::enum_cast<server_task_info_type>(i.value);
-      }
+  for (auto&& i : in_handle->url_.params()) {
+    if (i.has_value && i.key == "type") {
+      l_type = magic_enum::enum_cast<server_task_info_type>(i.value);
     }
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
   }
   if (l_type) {
     if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info_by_type(*l_type); !l_list.empty())
@@ -102,13 +87,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(session_data_ptr in_handle) {
-  boost::uuids::uuid l_uuid{};
-  try {
-    auto l_id = in_handle->capture_->get("id");
-    l_uuid    = boost::lexical_cast<boost::uuids::uuid>(l_id);
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
-  }
+  boost::uuids::uuid l_uuid{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"))};
+
   auto l_path =
       core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_uuid);
   if (!FSys::exists(l_path))
@@ -121,13 +101,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
-  auto l_uuid = std::make_shared<uuid>();
-  try {
-    auto l_id = in_handle->capture_->get("id");
-    *l_uuid   = boost::lexical_cast<boost::uuids::uuid>(l_id);
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
-  }
+  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
+
   if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid);
       !l_list.empty() && l_list.front().status_ == server_task_info_status::running) {
     co_return in_handle->make_error_code_msg(
@@ -248,61 +223,56 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   std::shared_ptr<maya_exe_ns::arg> l_arg{};
   std::shared_ptr<import_and_render_ue_ns::args> l_import_and_render_args{};
   logger_ptr l_logger_ptr{};
-  try {
-    auto l_json = std::get<nlohmann::json>(in_handle->body_);
-    l_json.get_to(*l_ptr);
-    l_ptr->uuid_id_         = core_set::get_set().get_uuid();
-    l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-    l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
-    if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
-    auto& l_task = l_json["task_data"];
-    if (l_task.contains("replace_ref_file")) {
+  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  l_json.get_to(*l_ptr);
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+
+  auto& l_task = l_json["task_data"];
+  if (l_task.contains("replace_ref_file")) {
+    auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
+    l_task.get_to(*l_arg_t);
+    l_arg_t->sim_path = FSys::path{l_task["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
+
+    l_arg             = l_arg_t;
+  } else if (l_task.contains("file_list")) {
+    auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
+    l_task.get_to(*l_arg_t);
+    l_arg = l_arg_t;
+  } else if (l_task.contains("is_sim")) {
+    l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
+    l_task.get_to(*l_import_and_render_args);
+    if (l_task["is_sim"].get<bool>()) {
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
       l_task.get_to(*l_arg_t);
-      l_arg_t->sim_path = FSys::path{l_task["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
-
-      l_arg             = l_arg_t;
-    } else if (l_task.contains("file_list")) {
-      auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
-      l_task.get_to(*l_arg_t);
-      l_arg = l_arg_t;
-    } else if (l_task.contains("is_sim")) {
-      l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
-      l_task.get_to(*l_import_and_render_args);
-      if (l_task["is_sim"].get<bool>()) {
-        auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
-        l_task.get_to(*l_arg_t);
-        l_arg_t->sim_path           = l_import_and_render_args->project_.path_ / "6-moxing" / "CFX";
-        l_arg_t->export_file        = true;
-        l_arg_t->touch_sim          = true;
-        l_arg_t->export_anim_file   = true;
-        l_arg_t->create_play_blast_ = true;
-        l_arg                       = l_arg_t;
-      } else {
-        auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
-        l_task.get_to(*l_arg_t);
-        l_arg_t->create_play_blast_ = true;
-        l_arg                       = l_arg_t;
-      }
-      l_import_and_render_args->maya_arg_ = l_arg;
+      l_arg_t->sim_path           = l_import_and_render_args->project_.path_ / "6-moxing" / "CFX";
+      l_arg_t->export_file        = true;
+      l_arg_t->touch_sim          = true;
+      l_arg_t->export_anim_file   = true;
+      l_arg_t->create_play_blast_ = true;
+      l_arg                       = l_arg_t;
     } else {
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       l_task.get_to(*l_arg_t);
-      l_arg = l_arg_t;
+      l_arg_t->create_play_blast_ = true;
+      l_arg                       = l_arg_t;
     }
-
-    auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
-                         fmt::format("{}.log", l_ptr->uuid_id_);
-    l_logger_ptr = std::make_shared<spdlog::async_logger>(
-        l_ptr->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
-        spdlog::thread_pool()
-    );
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
-    );
+    l_import_and_render_args->maya_arg_ = l_arg;
+  } else {
+    auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
+    l_task.get_to(*l_arg_t);
+    l_arg = l_arg_t;
   }
+
+  auto l_logger_path =
+      core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_ptr->uuid_id_);
+  l_logger_ptr = std::make_shared<spdlog::async_logger>(
+      l_ptr->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+      spdlog::thread_pool()
+  );
 
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
   if (l_import_and_render_args) {
@@ -329,14 +299,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(session_data_ptr in_handle) {
-  auto l_uuid             = std::make_shared<uuid>();
+  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
   auto l_server_task_info = std::make_shared<server_task_info>();
-  try {
-    auto l_id = in_handle->capture_->get("id");
-    *l_uuid   = boost::lexical_cast<boost::uuids::uuid>(l_id);
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
-  }
+
   server_task_info l_server_task_info_org{};
   if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid); l_list.empty()) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "任务不存在");
@@ -344,14 +309,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
     *l_server_task_info    = l_list[0];
     l_server_task_info_org = l_list[0];
   }
-  auto l_sr = l_server_task_info->status_;
-  try {
-    auto l_json = std::get<nlohmann::json>(in_handle->body_);
-    if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
-    if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务数据");
-  }
+  auto l_sr   = l_server_task_info->status_;
+  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
+  if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
   if (*l_server_task_info != l_server_task_info_org)
     co_await g_ctx().get<sqlite_database>().install(l_server_task_info);
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)

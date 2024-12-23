@@ -35,22 +35,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
   if (in_handle->content_type_ != http::detail::content_type::application_json) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不是json请求");
   }
-  try {
-    auto& l_json                     = std::get<nlohmann::json>(in_handle->body_);
-    core_set::get_set().p_max_thread = l_json["maya_parallel_quantity"];
-    g_ctx().get<maya_ctx>().queue_->set_limit(core_set::get_set().p_max_thread);
-    auto& l_au = g_ctx().get<authorization>();
-    if (l_json.contains("authorize") && l_json["authorize"].is_string())
-      if (auto& l_a = l_json["authorize"];
-          l_a.is_string() && (l_au.load_authorization_data(l_a.get<std::string>()), l_au.is_expire()))
-        core_set::get_set().authorize_ = l_a.get<std::string>();
 
-    if (l_json.contains("UE_path")) core_set::get_set().ue4_path = l_json["UE_path"].get<std::string>();
-    if (l_json.contains("UE_version")) core_set::get_set().ue4_version = l_json["UE_version"].get<std::string>();
-    core_set::get_set().save();
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的json");
-  }
+  auto& l_json                     = std::get<nlohmann::json>(in_handle->body_);
+  core_set::get_set().p_max_thread = l_json["maya_parallel_quantity"];
+  g_ctx().get<maya_ctx>().queue_->set_limit(core_set::get_set().p_max_thread);
+  auto& l_au = g_ctx().get<authorization>();
+  if (l_json.contains("authorize") && l_json["authorize"].is_string())
+    if (auto& l_a = l_json["authorize"];
+        l_a.is_string() && (l_au.load_authorization_data(l_a.get<std::string>()), l_au.is_expire()))
+      core_set::get_set().authorize_ = l_a.get<std::string>();
+
+  if (l_json.contains("UE_path")) core_set::get_set().ue4_path = l_json["UE_path"].get<std::string>();
+  if (l_json.contains("UE_version")) core_set::get_set().ue4_version = l_json["UE_version"].get<std::string>();
+  core_set::get_set().save();
 
   co_return in_handle->make_msg(
       nlohmann::json{

@@ -1,7 +1,7 @@
 #include "file_association.h"
 
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
+#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
@@ -11,23 +11,9 @@
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> file_association_get(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
-
-  auto l_id_str = in_handle->capture_->get("uuid");
-  boost::uuids::uuid l_id;
-  try {
-    l_id = boost::lexical_cast<boost::uuids::uuid>(l_id_str);
-  } catch (const std::exception& e) {
-    l_logger->log(log_loc(), level::err, "error: {}", e.what());
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, e.what());
-  } catch (...) {
-    l_logger->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
-    );
-  }
-
-  auto& l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
+  auto l_logger           = in_handle->logger_;
+  boost::uuids::uuid l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("uuid"));
+  auto& l_map             = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
   if (l_map.contains(l_id)) {
     auto l_data = l_map.at(l_id);
     nlohmann::json l_json{
@@ -48,19 +34,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
 
   std::set<uuid> l_project_id, l_assets_id;
   std::set<details::assets_type_enum> l_type{};
-  try {
-    for (auto&& l_q : in_handle->url_.params()) {
-      if (l_q.has_value && l_q.key == "project_id") {
-        l_project_id.emplace(boost::lexical_cast<uuid>(l_q.value));
-      } else if (l_q.has_value && l_q.key == "assets_id") {
-        l_assets_id.emplace(boost::lexical_cast<uuid>(l_q.value));
-      }
+  for (auto&& l_q : in_handle->url_.params()) {
+    if (l_q.has_value && l_q.key == "project_id") {
+      l_project_id.emplace(boost::lexical_cast<uuid>(l_q.value));
+    } else if (l_q.has_value && l_q.key == "assets_id") {
+      l_assets_id.emplace(boost::lexical_cast<uuid>(l_q.value));
     }
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::current_exception_diagnostic_information()
-    );
   }
+
   std::map<details::assets_type_enum, uuid> l_type_map{};
   if (auto l_list = g_ctx().get<sqlite_database>().get_all<doodle::metadata::kitsu::assets_type_t>(); !l_list.empty()) {
     for (auto& l_data : l_list) {

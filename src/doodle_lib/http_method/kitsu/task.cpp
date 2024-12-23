@@ -163,7 +163,7 @@ void task_reg(http_route& in_http_route) {
               boost::beast::http::verb::get, "api/data/assets/with-tasks", get_task_with_tasks
           )
       )
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/tasks", get_task_with_tasks))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/tasks", create_task))
 
       ;
 }

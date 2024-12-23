@@ -37,32 +37,28 @@ boost::asio::awaitable<void> list_tast_to(
 boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_handle) {
   auto l_logger   = in_handle->logger_;
   auto l_computer = std::static_pointer_cast<computer_reg_data>(in_handle->user_data_);
-  try {
-    if (!l_computer) {
-      l_computer            = std::make_shared<computer_reg_data>();
-      in_handle->user_data_ = l_computer;
-      auto l_uuid           = in_handle->body_["user_id"].get<uuid>();
-      if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(l_uuid); !l_list.empty())
-        *l_computer->computer_data_ptr_ = l_list.front();
-      l_computer->computer_data_ptr_->server_status_ = computer_status::free;
-      l_computer->client                             = in_handle->client_;
-      l_computer->computer_data_ptr_->uuid_id_       = l_uuid;
-      boost::asio::co_spawn(
-          g_io_context(), list_tast_to(l_computer->computer_data_ptr_, in_handle->client_.lock()),
-          boost ::asio::consign(boost::asio::detached, l_computer->computer_data_ptr_, in_handle->client_.lock())
-      );
-    }
-
-    l_computer->computer_data_ptr_->client_status_ = in_handle->body_["state"].get<computer_status>();
-    l_computer->computer_data_ptr_->server_status_ = in_handle->body_["state"].get<computer_status>();
-
-    l_computer->computer_data_ptr_->name_          = in_handle->body_["host_name"].get<std::string>();
-    l_computer->computer_data_ptr_->ip_            = in_handle->remote_endpoint_;
-    co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_);
-    computer_reg_data_manager::get().reg(l_computer);
-  } catch (...) {
-    in_handle->logger_->error("设置状态出错 {}", boost::diagnostic_information(std::current_exception()));
+  if (!l_computer) {
+    l_computer            = std::make_shared<computer_reg_data>();
+    in_handle->user_data_ = l_computer;
+    auto l_uuid           = in_handle->body_["user_id"].get<uuid>();
+    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<computer>(l_uuid); !l_list.empty())
+      *l_computer->computer_data_ptr_ = l_list.front();
+    l_computer->computer_data_ptr_->server_status_ = computer_status::free;
+    l_computer->client                             = in_handle->client_;
+    l_computer->computer_data_ptr_->uuid_id_       = l_uuid;
+    boost::asio::co_spawn(
+        g_io_context(), list_tast_to(l_computer->computer_data_ptr_, in_handle->client_.lock()),
+        boost ::asio::consign(boost::asio::detached, l_computer->computer_data_ptr_, in_handle->client_.lock())
+    );
   }
+
+  l_computer->computer_data_ptr_->client_status_ = in_handle->body_["state"].get<computer_status>();
+  l_computer->computer_data_ptr_->server_status_ = in_handle->body_["state"].get<computer_status>();
+
+  l_computer->computer_data_ptr_->name_          = in_handle->body_["host_name"].get<std::string>();
+  l_computer->computer_data_ptr_->ip_            = in_handle->remote_endpoint_;
+  co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_);
+  computer_reg_data_manager::get().reg(l_computer);
 
   co_return std::string{};
 }
@@ -141,13 +137,8 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
   });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> delete_computers(session_data_ptr in_handle) {
-  auto l_id = std::make_shared<uuid>();
-  try {
-    *l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
-
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的用户id");
-  }
+  auto l_id = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id")));
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的用户id");
   co_await g_ctx().get<sqlite_database>().remove<computer>(l_id);
   co_return in_handle->make_msg("{}");
 }

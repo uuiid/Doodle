@@ -16,32 +16,21 @@ namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> put_project(session_data_ptr in_handle) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  uuid l_uuid{};
-  try {
-    l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  }
+  uuid l_uuid  = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
   auto& l_json = std::get<nlohmann::json>(in_handle->body_);
-  try {
-    auto l_prj = std::make_shared<project_helper::database_t>();
 
-    if (auto l_prj_t = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid);
-        !l_prj_t.empty()) {
-      *l_prj = l_prj_t.front();
-    } else {
-      l_prj->uuid_id_ = l_uuid;
-    }
+  auto l_prj   = std::make_shared<project_helper::database_t>();
 
-    bool l_modified{l_json.contains("path") || l_json.contains("en_str") || l_json.contains("auto_upload_path")};
-    l_json.get_to(*l_prj);
-    static project_helper::database_t g_prj{};
-    if (g_prj != *l_prj)
-      co_await g_ctx().get<sqlite_database>().install(l_prj);
-  } catch (...) {
-    in_handle->logger_->error("api/data/projects/id {}", boost::current_exception_diagnostic_information());
+  if (auto l_prj_t = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); !l_prj_t.empty()) {
+    *l_prj = l_prj_t.front();
+  } else {
+    l_prj->uuid_id_ = l_uuid;
   }
+  l_json.get_to(*l_prj);
+  static project_helper::database_t g_prj{};
+  if (g_prj != *l_prj) co_await g_ctx().get<sqlite_database>().install(l_prj);
+
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
   l_request.body() = l_json.dump();
@@ -51,20 +40,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
   }
 
-  try {
-    auto l_json_r = nlohmann::json::parse(l_res.body());
-    nlohmann::json l_j{};
-    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); l_list.empty()) {
-      l_j = project_helper::database_t{};
-    } else {
-      l_j = l_list.front();
-    }
-    l_j.update(l_json_r);
-    l_res.body() = l_j.dump();
-    l_res.prepare_payload();
-  } catch (...) {
-    in_handle->logger_->error("api/data/projects/id {}", boost::current_exception_diagnostic_information());
+  auto l_json_r = nlohmann::json::parse(l_res.body());
+  nlohmann::json l_j{};
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); l_list.empty()) {
+    l_j = project_helper::database_t{};
+  } else {
+    l_j = l_list.front();
   }
+  l_j.update(l_json_r);
+  l_res.body() = l_j.dump();
+  l_res.prepare_payload();
+
   co_return std::move(l_res);
 }
 
@@ -76,28 +62,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_project_all(se
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
   }
 
-  try {
-    auto l_json = nlohmann::json::parse(l_res.body());
-    if (!l_json.is_array()) {
-      co_return std::move(l_res);
-    }
-    for (auto& l_item : l_json) {
-      uuid l_id = l_item["id"].get<uuid>();
-      nlohmann::json l_j{};
-      if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_id); l_list.empty()) {
-        l_j = project_helper::database_t{};
-      } else {
-        l_j = l_list.front();
-      }
-      l_j.update(l_item);
-      l_item = l_j;
-    }
-
-    l_res.body() = l_json.dump();
-    l_res.prepare_payload();
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
+  auto l_json = nlohmann::json::parse(l_res.body());
+  if (!l_json.is_array()) {
+    co_return std::move(l_res);
   }
+  for (auto& l_item : l_json) {
+    uuid l_id = l_item["id"].get<uuid>();
+    nlohmann::json l_j{};
+    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_id); l_list.empty()) {
+      l_j = project_helper::database_t{};
+    } else {
+      l_j = l_list.front();
+    }
+    l_j.update(l_item);
+    l_item = l_j;
+  }
+
+  l_res.body() = l_json.dump();
+  l_res.prepare_payload();
 
   co_return std::move(l_res);
 }

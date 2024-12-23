@@ -68,13 +68,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files_head(
   };
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_path.extension()));
-  try {
-    l_res.content_length(FSys::file_size(l_path));
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::service_unavailable, boost::current_exception_diagnostic_information()
-    );
-  }
+  l_res.content_length(FSys::file_size(l_path));
   l_res.keep_alive(in_handle->keep_alive_);
   l_res.prepare_payload();
   co_return std::move(l_res);

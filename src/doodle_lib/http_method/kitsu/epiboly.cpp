@@ -36,13 +36,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated(sess
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   nlohmann::json l_json{};
-  try {
-    auto& l_database   = g_ctx().get<sqlite_database>();
-    auto l_all_prj     = l_database.get_all<project_helper::database_t>();
-    l_json["projects"] = l_all_prj;
-  } catch (...) {
-    in_handle->logger_->error("api/data/user/context {}", boost::current_exception_diagnostic_information());
-  }
+  auto& l_database   = g_ctx().get<sqlite_database>();
+  auto l_all_prj     = l_database.get_all<project_helper::database_t>();
+  l_json["projects"] = l_all_prj;
   co_return in_handle->make_msg(l_json.dump());
 }
 }  // namespace
