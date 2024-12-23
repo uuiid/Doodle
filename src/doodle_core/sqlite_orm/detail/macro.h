@@ -53,34 +53,30 @@
     return impl_->get_all<class_name>();               \
   }
 
-#define DOODLE_INSTALL_SQL(class_name)                                              \
-  template <>                                                                       \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install( \
-      const std::shared_ptr<class_name>& in_data                                    \
-  ) {                                                                               \
-    return impl_->install<class_name>(in_data);                                     \
+#define DOODLE_INSTALL_SQL(class_name)                                                                \
+  template <>                                                                                         \
+  boost::asio::awaitable<void> sqlite_database::install(const std::shared_ptr<class_name>& in_data) { \
+    return impl_->install<class_name>(in_data);                                                       \
   }
 
-#define DOODLE_INSTALL_RANGE(class_name)                                                  \
-  template <>                                                                             \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::install_range( \
-      const std::shared_ptr<std::vector<class_name>>& in_data                             \
-  ) {                                                                                     \
-    return impl_->install_range<class_name>(in_data);                                     \
+#define DOODLE_INSTALL_RANGE(class_name)                       \
+  template <>                                                  \
+  boost::asio::awaitable<void> sqlite_database::install_range( \
+      const std::shared_ptr<std::vector<class_name>>& in_data  \
+  ) {                                                          \
+    return impl_->install_range<class_name>(in_data);          \
   }
 
-#define DOODLE_REMOVE_RANGE(class_name)                                                        \
-  template <>                                                                                  \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<class_name>( \
-      const std::shared_ptr<std::vector<std::int64_t>>& in_data                                \
-  ) {                                                                                          \
-    return impl_->remove<class_name>(in_data);                                                 \
+#define DOODLE_REMOVE_RANGE(class_name)                             \
+  template <>                                                       \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>( \
+      const std::shared_ptr<std::vector<std::int64_t>>& in_data     \
+  ) {                                                               \
+    return impl_->remove<class_name>(in_data);                      \
   }
 
-#define DOODLE_REMOVE_BY_UUID(class_name)                                                      \
-  template <>                                                                                  \
-  boost::asio::awaitable<tl::expected<void, std::string>> sqlite_database::remove<class_name>( \
-      const std::shared_ptr<uuid>& in_data                                                     \
-  ) {                                                                                          \
-    return impl_->remove<class_name>(in_data);                                                 \
+#define DOODLE_REMOVE_BY_UUID(class_name)                                                                  \
+  template <>                                                                                              \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const std::shared_ptr<uuid>& in_data) { \
+    return impl_->remove<class_name>(in_data);                                                             \
   }

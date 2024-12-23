@@ -282,25 +282,20 @@ struct sqlite_database_impl {
   }
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> install(std::shared_ptr<T> in_data) {
+  boost::asio::awaitable<void> install(std::shared_ptr<T> in_data) {
     DOODLE_TO_SQLITE_THREAD();
-    tl::expected<void, std::string> l_ret{};
-    try {
-      auto l_g = storage_any_.transaction_guard();
-      if (in_data->id_ == 0)
-        in_data->id_ = storage_any_.insert<T>(*in_data);
-      else {
-        storage_any_.replace<T>(*in_data);
-      }
-      l_g.commit();
-    } catch (...) {
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+
+    auto l_g = storage_any_.transaction_guard();
+    if (in_data->id_ == 0)
+      in_data->id_ = storage_any_.insert<T>(*in_data);
+    else {
+      storage_any_.replace<T>(*in_data);
     }
+    l_g.commit();
     DOODLE_TO_SELF();
-    co_return l_ret;
   }
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> install_range(std::shared_ptr<std::vector<T>> in_data) {
+  boost::asio::awaitable<void> install_range(std::shared_ptr<std::vector<T>> in_data) {
     if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
           return in_r.id_ < in_l.id_;
         }))
@@ -311,64 +306,46 @@ struct sqlite_database_impl {
         std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const auto& in_) { return in_.id_ != 0; }));
 
     DOODLE_TO_SQLITE_THREAD();
-    tl::expected<void, std::string> l_ret{};
-    try {
-      auto l_g = storage_any_.transaction_guard();
-      for (std::size_t i = 0; i < l_split;) {
-        auto l_end = std::min(i + g_step_size, l_split);
-        storage_any_.insert_range<T>(in_data->begin() + i, in_data->begin() + l_end);
-        i = l_end;
-      }
 
-      for (std::size_t i = l_split; i < in_data->size();) {
-        auto l_end = std::min(i + g_step_size, in_data->size());
-        storage_any_.replace_range<T>(in_data->begin() + i, in_data->begin() + l_end);
-        i = l_end;
-      }
-      l_g.commit();
+    auto l_g = storage_any_.transaction_guard();
+    for (std::size_t i = 0; i < l_split;) {
+      auto l_end = std::min(i + g_step_size, l_split);
+      storage_any_.insert_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+      i = l_end;
+    }
 
-      for (std::size_t i = 0; i < l_split; ++i) {
-        using namespace sqlite_orm;
-        auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(c(&T::uuid_id_) == (*in_data)[i].uuid_id_));
-        if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
-      }
+    for (std::size_t i = l_split; i < in_data->size();) {
+      auto l_end = std::min(i + g_step_size, in_data->size());
+      storage_any_.replace_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+      i = l_end;
+    }
+    l_g.commit();
 
-    } catch (...) {
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
+    for (std::size_t i = 0; i < l_split; ++i) {
+      using namespace sqlite_orm;
+      auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(c(&T::uuid_id_) == (*in_data)[i].uuid_id_));
+      if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
     }
     DOODLE_TO_SELF();
-    co_return l_ret;
   }
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<std::vector<std::int64_t>> in_data) {
+  boost::asio::awaitable<void> remove(std::shared_ptr<std::vector<std::int64_t>> in_data) {
     DOODLE_TO_SQLITE_THREAD();
-    tl::expected<void, std::string> l_ret{};
 
-    try {
-      auto l_g = storage_any_.transaction_guard();
-      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, *in_data)));
-      l_g.commit();
-    } catch (...) {
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
-    }
+    auto l_g = storage_any_.transaction_guard();
+    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, *in_data)));
+    l_g.commit();
     DOODLE_TO_SELF();
-    co_return l_ret;
   }
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> remove(std::shared_ptr<uuid> in_data) {
+  boost::asio::awaitable<void> remove(std::shared_ptr<uuid> in_data) {
     DOODLE_TO_SQLITE_THREAD();
-    tl::expected<void, std::string> l_ret{};
 
-    try {
-      auto l_g = storage_any_.transaction_guard();
-      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) = *in_data));
-      l_g.commit();
-    } catch (...) {
-      l_ret = tl::make_unexpected(boost::current_exception_diagnostic_information());
-    }
+    auto l_g = storage_any_.transaction_guard();
+    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) = *in_data));
+    l_g.commit();
     DOODLE_TO_SELF();
-    co_return l_ret;
   }
 
   template <typename T>

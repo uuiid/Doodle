@@ -54,7 +54,7 @@ class sqlite_database {
   std::vector<T> get_by_uuid(const uuid& in_uuid);
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> install(const std::shared_ptr<T>& in_data);
+  boost::asio::awaitable<void> install(const std::shared_ptr<T>& in_data);
   /**
    *
    * @tparam T 任意优化类别
@@ -62,14 +62,12 @@ class sqlite_database {
    * @return 插入的id(不包含更新的id)
    */
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> install_range(const std::shared_ptr<std::vector<T>>& in_data);
+  boost::asio::awaitable<void> install_range(const std::shared_ptr<std::vector<T>>& in_data);
 
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> remove(
-      const std::shared_ptr<std::vector<std::int64_t>>& in_data
-  );
+  boost::asio::awaitable<void> remove(const std::shared_ptr<std::vector<std::int64_t>>& in_data);
   template <typename T>
-  boost::asio::awaitable<tl::expected<void, std::string>> remove(const std::shared_ptr<uuid>& in_data);
+  boost::asio::awaitable<void> remove(const std::shared_ptr<uuid>& in_data);
 
   template <typename T>
   std::vector<T> get_by_parent_id(const uuid& in_id);
