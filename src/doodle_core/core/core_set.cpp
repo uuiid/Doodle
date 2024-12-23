@@ -50,7 +50,7 @@ core_set::core_set()
       maya_version(2020),
       assets_file_widgets_size(5),
       p_uuid_gen(boost::uuids::random_generator{}),
-      server_ip("http://192.168.40.181:50026") {
+      server_ip("http://192.168.40.182") {
   p_doc /= "doodle";
   if (!FSys::exists(p_doc)) FSys::create_directories(p_doc);
 
