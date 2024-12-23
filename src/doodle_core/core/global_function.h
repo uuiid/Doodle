@@ -11,6 +11,7 @@
 
 #include <entt/entt.hpp>
 #include <nlohmann/json.hpp>
+#include <sstream>
 #include <tl/expected.hpp>
 
 namespace boost::asio {
@@ -44,27 +45,14 @@ overloaded(Ts...) -> overloaded<Ts...>;
  * @note This function does not throw exceptions and uses noexcept.
  */
 
-DOODLE_CORE_API tl::expected<boost::uuids::uuid, std::string> from_uuid_str(const std::string &uuid_str) noexcept;
+DOODLE_CORE_API boost::uuids::uuid from_uuid_str(const std::string &uuid_str);
 
-template <typename InputType>
-tl::expected<nlohmann::json, std::string> parse_json(
-    InputType &&i, const nlohmann::json::parser_callback_t cb = nullptr, const bool ignore_comments = false
-) {
-  try {
-    return nlohmann::json::parse(std::forward<InputType>(i), cb, true, ignore_comments);
-  } catch (const std::exception &e) {
-    return tl::make_unexpected<std::string>(e.what());
-  }
-}
-template <typename IteratorType>
-tl::expected<nlohmann::json, std::string> parse_json(
-    IteratorType first, IteratorType last, const nlohmann::json::parser_callback_t cb = nullptr,
-    const bool ignore_comments = false
-) {
-  try {
-    return nlohmann::json::parse(first, last, cb, true, ignore_comments);
-  } catch (const std::exception &e) {
-    return tl::make_unexpected<std::string>(e.what());
-  }
+template <typename T>
+T parse_time(const std::string &time_str, const std::string &format) {
+  std::istringstream l_year_month_stream{time_str};
+  T l_time{};
+  l_year_month_stream >> std::chrono::parse(format, l_time);
+  if (!l_year_month_stream) throw std::runtime_error{fmt::format("Invalid time: {}", time_str)};
+  return l_time;
 }
 }  // namespace doodle
