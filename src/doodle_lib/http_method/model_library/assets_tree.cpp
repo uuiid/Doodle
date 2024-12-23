@@ -50,14 +50,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   auto& l_json = std::get<nlohmann::json>(in_handle->body_);
   if (l_json.is_object()) {
-    std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>();
-    try {
-      *l_ptr = std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>();
-    } catch (...) {
-      co_return in_handle->make_error_code_msg(
-          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-      );
-    }
+    std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>(
+        std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>()
+    );
+
     if (!l_ptr->uuid_parent_.is_nil()) {
       if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
           l_list == 0)
@@ -69,14 +65,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
   }
   if (l_json.is_array()) {
     std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
-        std::make_shared<std::vector<assets_helper::database_t>>();
-    try {
-      *l_ptr = l_json.get<std::vector<assets_helper::database_t>>();
-    } catch (...) {
-      co_return in_handle->make_error_code_msg(
-          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-      );
-    }
+        std::make_shared<std::vector<assets_helper::database_t>>(l_json.get<std::vector<assets_helper::database_t>>());
+
     for (auto& l_item : *l_ptr) {
       if (!l_item.uuid_parent_.is_nil()) {
         if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_item.uuid_parent_);
@@ -97,16 +87,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(
   auto& l_json = std::get<nlohmann::json>(in_handle->body_);
   {
     std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
-        std::make_shared<std::vector<assets_helper::database_t>>();
-    try {
-      *l_ptr = l_json.get<std::vector<assets_helper::database_t>>();
-      for (int i = 0; i < l_ptr->size(); ++i) {
-        (*l_ptr)[i].uuid_id_ = l_json[i]["id"].get<uuid>();
-      }
-    } catch (...) {
-      co_return in_handle->make_error_code_msg(
-          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-      );
+        std::make_shared<std::vector<assets_helper::database_t>>(l_json.get<std::vector<assets_helper::database_t>>());
+    for (int i = 0; i < l_ptr->size(); ++i) {
+      (*l_ptr)[i].uuid_id_ = l_json[i]["id"].get<uuid>();
     }
     for (auto& l_item : *l_ptr) {
       if (auto l_r = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_item.uuid_id_); l_r == 0)
@@ -126,18 +109,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_modify(session_data_ptr in_handle) {
-  uuid l_uuid{};
+  uuid l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
 
-  auto l_value = std::make_shared<assets_helper::database_t>();
-  try {
-    l_uuid   = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
-    *l_value = std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>();
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id 或者 无效的数据");
-  }
+  auto l_value = std::make_shared<assets_helper::database_t>(
+      std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>()
+  );
+
   if (auto l_r = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_uuid); l_r == 0)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::internal_server_error, "无效的id, 未能再库中查找到实体"
@@ -155,12 +135,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete(session_data_ptr in_handle) {
-  auto l_uuid = std::make_shared<uuid>();
-  try {
-    *l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务id");
-  }
+  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
 
   if (auto l_e = g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(*l_uuid); !l_e.empty()) {
     auto& l_uuid_ = l_e.front().uuid_id_;

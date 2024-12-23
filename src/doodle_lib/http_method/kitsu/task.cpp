@@ -140,12 +140,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> create_task(sessio
   if (l_ec) {
     co_return std::move(l_res);
   }
-  try {
-    if (auto l_json = nlohmann::json::parse(l_res.body()); l_json.contains("id"))
-      g_ctx().get<cache_manger>().erase(l_json["id"].get<uuid>());
-  } catch (...) {
-    default_logger_raw()->error("api/data/tasks {}", boost::current_exception_diagnostic_information());
-  }
+  if (auto l_json = nlohmann::json::parse(l_res.body()); l_json.contains("id"))
+    g_ctx().get<cache_manger>().erase(l_json["id"].get<uuid>());
   co_return std::move(l_res);
 }
 

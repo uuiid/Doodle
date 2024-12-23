@@ -17,88 +17,70 @@ namespace {
 tl::expected<void, std::string> create_thumbnail_image(
     const std::string& in_data, const FSys::path& in_path, const std::string& in_name
 ) {
-  try {
-    cv::Mat l_image = cv::imdecode(
-        cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
-        cv::IMREAD_COLOR
-    );
-    if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+  cv::Mat l_image = cv::imdecode(
+      cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
+      cv::IMREAD_COLOR
+  );
+  if (l_image.empty()) return tl::make_unexpected("图片解码失败");
 
-    cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
-    if (l_image.cols > 192 || l_image.rows > 108) {
-      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
-    }
-    cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
-  } catch (...) {
-    return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
+  cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
+  if (l_image.cols > 192 || l_image.rows > 108) {
+    auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+    cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
+  cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+
   return {};
 }
 tl::expected<void, std::string> create_thumbnail_gif(
     const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
 ) {
-  try {
-    {
-      cv::VideoCapture l_video{};
-      l_video.open(in_data_path.generic_string());
-      if (!l_video.isOpened()) return tl::make_unexpected("gif 打开失败");
+  {
+    cv::VideoCapture l_video{};
+    l_video.open(in_data_path.generic_string());
+    if (!l_video.isOpened()) return tl::make_unexpected("gif 打开失败");
 
-      auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
-      cv::Mat l_image{};
-      l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
-      l_video >> l_image;
-      if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+    auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
+    cv::Mat l_image{};
+    l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
+    l_video >> l_image;
+    if (l_image.empty()) return tl::make_unexpected("图片解码失败");
 
-      if (l_image.cols > 192 || l_image.rows > 108) {
-        auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-        cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
-      }
-      cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+    if (l_image.cols > 192 || l_image.rows > 108) {
+      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
     }
-    FSys::rename(in_data_path, in_path / "previews" / (in_name + ".gif"));
-  } catch (...) {
-    return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
+    cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
   }
+  FSys::rename(in_data_path, in_path / "previews" / (in_name + ".gif"));
+
   return {};
 }
 tl::expected<void, std::string> create_thumbnail_mp4(
     const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
 ) {
-  try {
-    {
-      cv::VideoCapture l_video{};
-      l_video.open(in_data_path.generic_string());
-      if (!l_video.isOpened()) return tl::make_unexpected("mp4 打开失败");
+  cv::VideoCapture l_video{};
+  l_video.open(in_data_path.generic_string());
+  if (!l_video.isOpened()) return tl::make_unexpected("mp4 打开失败");
 
-      auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
-      cv::Mat l_image{};
-      l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
-      l_video >> l_image;
-      if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+  auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
+  cv::Mat l_image{};
+  l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
+  l_video >> l_image;
+  if (l_image.empty()) return tl::make_unexpected("图片解码失败");
 
-      if (l_image.cols > 192 || l_image.rows > 108) {
-        auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-        cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
-      }
-      cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
-    }
-  } catch (...) {
-    return tl::make_unexpected(fmt::format("图片解码失败 {} ", boost::current_exception_diagnostic_information()));
+  if (l_image.cols > 192 || l_image.rows > 108) {
+    auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+    cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
+  cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
   return {};
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle) {
-  std::string l_name{};
+  std::string l_name{in_handle->capture_->get("id")};
   FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
-  try {
-    l_name = in_handle->capture_->get("id");
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found, boost::current_exception_diagnostic_information()
-    );
-  }
+
   switch (in_handle->content_type_) {
     // case detail::content_type::image_gif:
     case detail::content_type::image_jpeg:
@@ -120,15 +102,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
     std::shared_ptr<FSys::path> in_root, session_data_ptr in_handle
 ) {
   FSys::path l_path = *in_root;
-  try {
-    l_path /= in_handle->capture_->get("id");
-    if (!FSys::exists(l_path)) {
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
-    }
-  } catch (...) {
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found, boost::current_exception_diagnostic_information()
-    );
+
+  l_path /= in_handle->capture_->get("id");
+  if (!FSys::exists(l_path)) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
   }
 
   auto l_ext = l_path.extension();
