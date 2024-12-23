@@ -417,7 +417,6 @@ cloth_group get_cloth_group() {
   if (k_r.export_grp.isNull()) k_r.export_grp = make_group(k_m, "export_grp", k_r.cfx_grp);
 
   if (k_r.deformBase_grp.isNull()) k_r.deformBase_grp = make_group(k_m, "deformBase_grp", k_r.deform_grp);
-  sort_group(k_r);
   return k_r;
 }
 
@@ -678,7 +677,7 @@ MStatus create_qcloth_assets::redoIt() {
       create_qcloth_assets_ns::create_sim_cloth(l_h.low_obj_, l_h.high_obj_list_, p_i->cfx);
     }
     if (!p_i->cloth_list.empty()) create_qcloth_assets_ns::add_collider(p_i->coll_list, p_i->cfx);
-
+    create_qcloth_assets_ns::sort_group(p_i->cfx);
   } catch (const std::runtime_error& in_err) {
     delete_node();
     return {MStatus::kFailure};
