@@ -23,6 +23,7 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 
+#include "../../../../build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include/sqlite_orm/sqlite_orm.h"
 #include <tl/expected.hpp>
 namespace doodle::http {
 namespace detail {
@@ -510,6 +511,11 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
           l_gen = std::make_unique<boost::beast::http::message_generator>(
               session_->make_error_code_msg(boost::beast::http::status::bad_request, e.what())
+          );
+        } catch (const std::system_error& e) {  // 暂时是捕获sql错的
+          session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
+          l_gen = std::make_unique<boost::beast::http::message_generator>(
+              session_->make_error_code_msg(boost::beast::http::status::internal_server_error, e.what())
           );
         } catch (...) {
           session_->logger_->log(
