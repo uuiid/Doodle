@@ -45,8 +45,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post(sessio
       l_ptr->parent_id_ = l_list;
 
     l_ptr->uuid_id_ = core_set::get_set().get_uuid();
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   } else if (l_json.is_array()) {
     std::shared_ptr<std::vector<assets_file_helper::database_t>> l_ptr =
@@ -67,8 +66,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post(sessio
 
       i.uuid_id_ = core_set::get_set().get_uuid();
     }
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::database_t>(l_ptr); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::database_t>(l_ptr);
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求格式");
@@ -101,8 +99,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
     l_ptr->id_ = l_list;
 
   l_ptr->uuid_id_ = l_uuid;
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
@@ -141,8 +138,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
       i.id_ = l_list;
   }
 
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::database_t>(l_ptr); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::database_t>(l_ptr);
 
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
@@ -191,8 +187,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的token");
   }
 
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid);
   co_return in_handle->make_msg("{}");
 }
 

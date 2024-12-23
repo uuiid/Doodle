@@ -64,8 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
         co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
     }
     l_ptr->uuid_id_ = core_set::get_set().get_uuid();
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr);
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
   if (l_json.is_array()) {
@@ -86,8 +85,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
       }
       l_item.uuid_id_ = core_set::get_set().get_uuid();
     }
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr);
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
@@ -121,8 +119,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(
       if (auto l_c = check_data(l_item); !l_c)
         co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_c.error());
     }
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr);
     co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
@@ -152,8 +149,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
   if (auto l_c = check_data(*l_value); !l_c)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_c.error());
 
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_value); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_value);
 
   co_return in_handle->make_msg((nlohmann::json{} = *l_value).dump());
 }
@@ -182,13 +178,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
       for (const auto& l_item : l_r) {
         l_rem->push_back(l_item.id_);
       }
-      if (auto l_rr = co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_rem); !l_rr)
-        co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_rr.error());
+      co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_rem);
     }
   }
-
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid); !l_r)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid);
 
   co_return in_handle->make_msg("{}");
 }

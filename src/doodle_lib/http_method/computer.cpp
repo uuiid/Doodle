@@ -58,8 +58,7 @@ boost::asio::awaitable<std::string> web_set_tate_fun(http_websocket_data_ptr in_
 
     l_computer->computer_data_ptr_->name_          = in_handle->body_["host_name"].get<std::string>();
     l_computer->computer_data_ptr_->ip_            = in_handle->remote_endpoint_;
-    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_); !l_e)
-      l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
+    co_await g_ctx().get<sqlite_database>().install(l_computer->computer_data_ptr_);
     computer_reg_data_manager::get().reg(l_computer);
   } catch (...) {
     in_handle->logger_->error("设置状态出错 {}", boost::diagnostic_information(std::current_exception()));
@@ -107,8 +106,7 @@ boost::asio::awaitable<std::string> web_set_task_state_fun(http_websocket_data_p
       default:
         break;
     }
-    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_task); !l_e)
-      l_logger->log(log_loc(), level::err, "保存失败:{}", l_e.error());
+    co_await g_ctx().get<sqlite_database>().install(l_task);
   }
   co_return std::string{};
 }
@@ -150,9 +148,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_computers(s
   } catch (...) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的用户id");
   }
-  if (auto l_r = co_await g_ctx().get<sqlite_database>().remove<computer>(l_id); !l_r) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  }
+  co_await g_ctx().get<sqlite_database>().remove<computer>(l_id);
   co_return in_handle->make_msg("{}");
 }
 }  // namespace

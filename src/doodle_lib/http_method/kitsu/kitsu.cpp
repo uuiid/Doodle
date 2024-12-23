@@ -68,9 +68,7 @@ boost::asio::awaitable<void> init_context_impl() {
     for (auto&& l_prj : l_c.value()) {
       l_prj_install->emplace_back(l_prj);
     }
-    if (!l_prj_install->empty())
-      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_prj_install); !l_r)
-        default_logger_raw()->error("初始化检查 项目后插入数据库失败 {}", l_r.error());
+    if (!l_prj_install->empty()) co_await g_ctx().get<sqlite_database>().install_range(l_prj_install);
   }
 
   {
@@ -101,9 +99,7 @@ boost::asio::awaitable<void> init_context_impl() {
         l_install->emplace_back(l_task_maps[l_.name_]);
       }
     }
-    if (!l_install->empty())
-      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
-        default_logger_raw()->error("初始化检查 task_type 后插入数据库失败 {}", l_r.error());
+    if (!l_install->empty()) co_await g_ctx().get<sqlite_database>().install_range(l_install);
   }
   {
     auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_assets_type();
@@ -122,9 +118,7 @@ boost::asio::awaitable<void> init_context_impl() {
       l_.type_ = conv_assets_type_enum(l_.name_);
       l_install->emplace_back(l_);
     }
-    if (!l_install->empty())
-      if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_install); !l_r)
-        default_logger_raw()->error("初始化检查 assets_type 后插入数据库失败 {}", l_r.error());
+    if (!l_install->empty()) co_await g_ctx().get<sqlite_database>().install_range(l_install);
   }
   {
     auto l_list_ptr   = std::make_shared<std::vector<assets_file_helper::database_t>>();
@@ -133,8 +127,7 @@ boost::asio::awaitable<void> init_context_impl() {
     for (auto&& l_obj : *l_list_ptr) {
       l_obj.has_thumbnail_ &= FSys::exists(l_path / "thumbnails" / (fmt::to_string(l_obj.uuid_id_) + ".png"));
     }
-    if (auto l_r = co_await g_ctx().get<sqlite_database>().install_range(l_list_ptr); !l_r)
-      default_logger_raw()->error("初始化检查 assets 后插入数据库失败 {}", l_r.error());
+    co_await g_ctx().get<sqlite_database>().install_range(l_list_ptr);
   }
   app_base::Get().stop_app();
 }

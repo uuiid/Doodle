@@ -165,29 +165,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   // 切换到主线程
 
   if (l_modify_user) {
-    if (auto l_r = co_await l_sqlite.install(std::make_shared<user_helper::database_t>(l_user)); !l_r) {
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-    }
+    co_await l_sqlite.install(std::make_shared<user_helper::database_t>(l_user));
   }
   if (!l_attends.empty()) {
     auto l_rem = std::make_shared<std::vector<std::int64_t>>();
     for (auto&& id : l_attends) {
       l_rem->emplace_back(id.id_);
     }
-    if (auto l_r = co_await l_sqlite.remove<attendance_helper::database_t>(l_rem); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await l_sqlite.remove<attendance_helper::database_t>(l_rem);
   }
   if (!l_attendance_list->empty()) {
-    if (auto l_r = co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_list); !l_r)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+    co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_list);
   }
 
-  if (auto l_r = co_await recomputing_time(
-          std::make_shared<user_helper::database_t>(l_user), chrono::year_month{l_date.year(), l_date.month()}
-      );
-      !l_r) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  }
+  co_await recomputing_time(
+      std::make_shared<user_helper::database_t>(l_user), chrono::year_month{l_date.year(), l_date.month()}
+  );
   std::erase_if(*l_attendance_list, [](const auto& l_attendance) {
     return l_attendance.type_ == attendance_helper::att_enum::max;
   });

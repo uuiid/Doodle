@@ -40,9 +40,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
       l_user_ptr->mobile_  = l_phone;
       l_user_ptr->power_   = l_user["role"].get<power_enum>();
       l_user_ptr->uuid_id_ = l_user_id;
-      if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_user_ptr); !l_e)
-        co_return in_handle->logger_->error("api/auth/authenticated {}", l_e.error()),
-            in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+      co_await g_ctx().get<sqlite_database>().install(l_user_ptr);
     }
     if (!l_user_ptr->dingding_company_id_.is_nil())
       l_user["dingding_company_id"] = l_user_ptr->dingding_company_id_;
@@ -86,11 +84,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
         l_user->dingding_company_id_ = l_company_id;
     }
 
-    // l_json.erase("dingding_company_id");
-
-    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_user); !l_e)
-      co_return in_handle->logger_->error("api/user/persons_post {}", l_e.error()),
-          in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+    co_await g_ctx().get<sqlite_database>().install(l_user);
   } catch (...) {
     in_handle->logger_->error("api/user/persons_post {}", boost::current_exception_diagnostic_information());
   }

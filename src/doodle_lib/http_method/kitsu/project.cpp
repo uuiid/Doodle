@@ -38,9 +38,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
     l_json.get_to(*l_prj);
     static project_helper::database_t g_prj{};
     if (g_prj != *l_prj)
-      if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_prj); !l_e)
-        co_return in_handle->logger_->error("api/data/projects/id {}", l_e.error()),
-            in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+      co_await g_ctx().get<sqlite_database>().install(l_prj);
   } catch (...) {
     in_handle->logger_->error("api/data/projects/id {}", boost::current_exception_diagnostic_information());
   }

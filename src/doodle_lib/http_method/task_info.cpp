@@ -61,8 +61,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
     );
   }
 
-  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
   boost::asio::co_spawn(g_io_context(), task_emit(l_ptr), boost::asio::consign(boost::asio::detached, l_ptr));
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
@@ -135,9 +134,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_task(sessio
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
-  if (auto l_list = co_await g_ctx().get<sqlite_database>().remove<server_task_info>(l_uuid); !l_list) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_list.error());
-  }
+  co_await g_ctx().get<sqlite_database>().remove<server_task_info>(l_uuid);
   co_return in_handle->make_msg("{}");
 }
 
@@ -307,9 +304,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
     );
   }
 
-  if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_ptr); !l_e)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
-
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
   if (l_import_and_render_args) {
     boost::asio::co_spawn(
         g_io_context(), run_post_task_local_impl(l_ptr, l_import_and_render_args, l_logger_ptr),
@@ -358,9 +353,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(s
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的任务数据");
   }
   if (*l_server_task_info != l_server_task_info_org)
-    if (auto l_e = co_await g_ctx().get<sqlite_database>().install(l_server_task_info); !l_e) {
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_e.error());
-    }
+    co_await g_ctx().get<sqlite_database>().install(l_server_task_info);
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
