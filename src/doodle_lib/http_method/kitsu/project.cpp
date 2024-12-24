@@ -16,20 +16,20 @@ namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> put_project(session_data_ptr in_handle) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  uuid l_uuid  = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
+  uuid l_uuid        = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
-  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
+  const auto& l_json = std::get<nlohmann::json>(in_handle->body_);
 
-  auto l_prj   = std::make_shared<project_helper::database_t>();
+  auto l_prj         = std::make_shared<project_helper::database_t>();
 
   if (auto l_prj_t = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); !l_prj_t.empty()) {
     *l_prj = l_prj_t.front();
   } else {
     l_prj->uuid_id_ = l_uuid;
   }
+  auto l_org_prj = *l_prj;
   l_json.get_to(*l_prj);
-  static project_helper::database_t g_prj{};
-  if (g_prj != *l_prj) co_await g_ctx().get<sqlite_database>().install(l_prj);
+  if (l_org_prj != *l_prj) co_await g_ctx().get<sqlite_database>().install(l_prj);
 
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
