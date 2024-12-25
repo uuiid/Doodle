@@ -24,13 +24,13 @@ struct metadata_descriptor_department_link {
 };
 
 struct metadata_descriptor : base {
-  uuid project_uuid_;
-  std::string entity_type_;
   std::string name_;
+  std::string entity_type_;
+  uuid project_uuid_;
   metadata_descriptor_data_type data_type_;
-  std::string field_name;
+  std::string field_name_;
   nlohmann::json choices_;
-  bool for_client;
+  bool for_client_;
   std::vector<uuid> department_;
 };
 }  // namespace doodle
