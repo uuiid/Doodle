@@ -23,6 +23,7 @@ target_sources(
         scan_data_t.h
         image_size.h
         metadata_descriptor.h
+        department.h
 
 
         PRIVATE
