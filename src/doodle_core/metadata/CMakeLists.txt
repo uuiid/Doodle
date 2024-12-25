@@ -24,6 +24,7 @@ target_sources(
         image_size.h
         metadata_descriptor.h
         department.h
+        base.h
 
 
         PRIVATE
