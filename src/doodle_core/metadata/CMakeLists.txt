@@ -22,6 +22,7 @@ target_sources(
         work_xlsx_task_info.h
         scan_data_t.h
         image_size.h
+        metadata_descriptor.h
 
 
         PRIVATE
