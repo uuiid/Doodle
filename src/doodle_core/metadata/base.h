@@ -6,4 +6,9 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle {}
+namespace doodle {
+struct DOODLE_CORE_API base {
+  std::int64_t id_;
+  uuid uuid_;
+};
+}  // namespace doodle
