@@ -25,6 +25,8 @@ target_sources(
         metadata_descriptor.h
         department.h
         base.h
+        preview_background_file.h
+        task_type.h
 
 
         PRIVATE
