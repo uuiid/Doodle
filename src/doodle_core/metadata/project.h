@@ -38,7 +38,7 @@ struct project_asset_type_link {
 struct project_status_automation_link {
   std::int64_t id_;
   uuid project_id_;
-  uuid asset_type_id_;
+  uuid status_automation_id_;
 };
 
 struct project_preview_background_file_link {

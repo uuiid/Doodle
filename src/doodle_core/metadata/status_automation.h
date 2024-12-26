@@ -9,6 +9,7 @@
 namespace doodle {
 enum class status_automation_change_type { status, ready_for };
 struct status_automation {
+  DOODLE_BASE_FIELDS();
   std::string entity_type_;
   uuid in_task_type_id_;
   uuid in_task_status_id_;

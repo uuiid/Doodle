@@ -30,6 +30,7 @@
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
 #include "metadata/attendance.h"
+#include "metadata/status_automation.h"
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::power_enum)
@@ -235,11 +236,10 @@ auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_asset_type_link::asset_type_id_).references(&asset_type::uuid_).on_delete.cascade()
       ),
       make_table(
-          "project_task_status_link",                                                                          //
-          make_column("id", &project_task_status_link::id_, primary_key().autoincrement()),                    //
-          make_column("project_id", &project_task_status_link::project_id_, not_null()),                       //
-          make_column("task_status_id", &project_task_status_link::task_status_id_, not_null()),               //
-          foreign_key(&project_task_status_link::project_id_).references(&project::uuid_).on_delete.cascade()  //
+          "project_status_automation_link",
+          make_column("id", &project_status_automation_link::id_, primary_key().autoincrement()),
+          make_column("project_id", &project_status_automation_link::project_id_, not_null()),
+          make_column("asset_type_id", &project_status_automation_link::status_automation_id_, not_null())
       ),
       make_table(
           "project",                                                                                         //
@@ -418,6 +418,19 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("short_name", &asset_type::short_name_),                 //
           make_column("description", &asset_type::description_),               //
           make_column("archived", &asset_type::archived_)                      //
+      ),
+      make_table(
+          "status_automation",                                                             //
+          make_column("id", &status_automation::id_, primary_key().autoincrement()),       //
+          make_column("uuid", &status_automation::uuid_, not_null(), unique()),            //
+          make_column("entity_type", &status_automation::entity_type_),                    //
+          make_column("in_task_type_id", &status_automation::in_task_type_id_),            //
+          make_column("in_task_status_id", &status_automation::in_task_status_id_),        //
+          make_column("out_field_type", &status_automation::out_field_type_),              //
+          make_column("out_task_type_id", &status_automation::out_task_type_id_),          //
+          make_column("out_task_status_id", &status_automation::out_task_status_id_),      //
+          make_column("import_last_revision", &status_automation::import_last_revision_),  //
+          make_column("archived", &status_automation::archived_)                           //
       )
   ));
 }
