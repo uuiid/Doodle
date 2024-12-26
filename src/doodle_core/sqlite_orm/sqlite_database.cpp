@@ -12,7 +12,11 @@
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
+#include <doodle_core/metadata/preview_background_file.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
+#include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/macro.h>
@@ -34,6 +38,8 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_type)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::details::assets_type_enum);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::attendance_helper::att_enum);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::metadata_descriptor_data_type);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::two_factor_authentication_types);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::person_role_type);
 
 template <>
 struct type_is_nullable<std::string> : std::true_type {
@@ -180,6 +186,77 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),  //
           make_column("code", &project_helper::database_t::code_)
       ),
+
+      /// 这个下方是模拟kitsu的表
+      make_table(
+          "project_person_link",  //
+          make_column("id", &project_person_link::id_, primary_key().autoincrement()),
+          make_column("project_id", &project_person_link::project_id_, not_null()),
+          make_column("person_id", &project_person_link::person_id_, not_null()),
+          foreign_key(&project_person_link::project_id_).references(&project::uuid_),
+          foreign_key(&project_person_link::person_id_).references(&person::uuid_)
+      ),
+      make_table(
+          "project_task_type_link",  //
+          make_column("id", &project_task_type_link::id_, primary_key().autoincrement()),
+          make_column("uuid", &project_task_type_link::uuid_, unique(), not_null()),
+          make_column("project_id", &project_task_type_link::project_id_, not_null()),
+          make_column("task_type_id", &project_task_type_link::task_type_id_, not_null()),
+          make_column("priority", &project_task_type_link::priority_),
+          foreign_key(&project_task_type_link::project_id_).references(&project::uuid_).on_delete.cascade(),
+          foreign_key(&project_task_type_link::task_type_id_).references(&task_type::uuid_).on_delete.cascade()
+      ),
+      make_table(
+          "project_task_status_link",  //
+          make_column("id", &project_task_status_link::id_, primary_key().autoincrement()),
+          make_column("uuid", &project_task_status_link::uuid_, unique(), not_null()),
+          make_column("project_id", &project_task_status_link::project_id_, not_null()),
+          make_column("task_status_id", &project_task_status_link::task_status_id_, not_null()),
+          make_column("priority", &project_task_status_link::priority_),
+          foreign_key(&project_task_status_link::project_id_).references(&project::uuid_).on_delete.cascade(),
+          foreign_key(&project_task_status_link::task_status_id_).references(&task_status::uuid_).on_delete.cascade()
+      ),
+      make_table(
+          "project_task_status_link",                                                                          //
+          make_column("id", &project_task_status_link::id_, primary_key().autoincrement()),                    //
+          make_column("project_id", &project_task_status_link::project_id_, not_null()),                       //
+          make_column("task_status_id", &project_task_status_link::task_status_id_, not_null()),               //
+          foreign_key(&project_task_status_link::project_id_).references(&project::uuid_).on_delete.cascade()  //
+      ),
+      make_table(
+          "project",                                                                                         //
+          make_column("id", &project::id_, primary_key().autoincrement()),                                   //
+          make_column("uuid", &project::uuid_, not_null(), unique()),                                        //
+          make_column("name", &project::name_),                                                              //
+          make_column("code", &project::code_),                                                              //
+          make_column("description", &project::description_),                                                //
+          make_column("shotgun_id", &project::shotgun_id_),                                                  //
+          make_column("file_tree", &project::file_tree_),                                                    //
+          make_column("data", &project::data_),                                                              //
+          make_column("has_avatar", &project::has_avatar_),                                                  //
+          make_column("fps", &project::fps_),                                                                //
+          make_column("ratio", &project::ratio_),                                                            //
+          make_column("resolution", &project::resolution_),                                                  //
+          make_column("production_type", &project::production_type_),                                        //
+          make_column("production_style", &project::production_style_),                                      //
+          make_column("start_date", &project::start_date_),                                                  //
+          make_column("end_date", &project::end_date_),                                                      //
+          make_column("nb_episodes", &project::nb_episodes_),                                                //
+          make_column("episode_span", &project::episode_span_),                                              //
+          make_column("max_retakes", &project::max_retakes_),                                                //
+          make_column("is_clients_isolated", &project::is_clients_isolated_),                                //
+          make_column("is_preview_download_allowed", &project::is_preview_download_allowed_),                //
+          make_column("is_set_preview_automated", &project::is_set_preview_automated_),                      //
+          make_column("is_publish_default_for_artists", &project::is_publish_default_for_artists_),          //
+          make_column("hd_bitrate_compression", &project::hd_bitrate_compression_),                          //
+          make_column("ld_bitrate_compression", &project::ld_bitrate_compression_),                          //
+          make_column("project_status_id", &project::project_status_id_),                                    //
+          make_column("default_preview_background_file_id", &project::default_preview_background_file_id_),  //
+          foreign_key(&project::project_status_id_).references(&project_status::uuid_).on_delete.cascade(),
+          foreign_key(&project::default_preview_background_file_id_)
+              .references(&preview_background_file::uuid_)
+              .on_delete.cascade()
+      ),
       make_table(
           "metadata_descriptor_department_link",  //
           make_column("id", &metadata_descriptor_department_link::id_, primary_key().autoincrement()),
@@ -205,14 +282,97 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("for_client", &metadata_descriptor::for_client_)
       ),
       make_table(
+          "project_status",                                                        //
+          make_column("id", &project_status::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &project_status::uuid_, not_null(), unique()),       //
+          make_column("name", &project_status::name_),                             //
+          make_column("color", &project_status::color_)
+      ),
+
+      make_table(
+          "person_department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
+          make_column("person_id", &person_department_link::person_id_),
+          make_column("department_id", &person_department_link::department_id_),
+          foreign_key(&person_department_link::person_id_).references(&person::uuid_).on_delete.cascade(),
+          foreign_key(&person_department_link::department_id_).references(&department::uuid_).on_delete.cascade()
+      ),
+      make_table(
+          "person",                                                                                           //
+          make_column("id", &person::id_, primary_key().autoincrement()),                                     //
+          make_column("uuid", &person::uuid_, not_null(), unique()),                                          //
+          make_column("first_name", &person::first_name_),                                                    //
+          make_column("last_name", &person::last_name_),                                                      //
+          make_column("email", &person::email_),                                                              //
+          make_column("phone", &person::phone_),                                                              //
+          make_column("contract_type", &person::contract_type_),                                              //
+          make_column("active", &person::active_),                                                            //
+          make_column("archived", &person::archived_),                                                        //
+          make_column("last_presence", &person::last_presence_),                                              //
+          make_column("password", &person::password_),                                                        //
+          make_column("desktop_login", &person::desktop_login_),                                              //
+          make_column("login_failed_attemps", &person::login_failed_attemps_),                                //
+          make_column("last_login_failed", &person::last_login_failed_),                                      //
+          make_column("totp_enabled", &person::totp_enabled_),                                                //
+          make_column("totp_secret", &person::totp_secret_),                                                  //
+          make_column("email_otp_enabled", &person::email_otp_enabled_),                                      //
+          make_column("email_otp_secret", &person::email_otp_secret_),                                        //
+          make_column("fido_enabled", &person::fido_enabled_),                                                //
+          make_column("fido_credentials", &person::fido_credentials_),                                        //
+          make_column("otp_recovery_codes", &person::otp_recovery_codes_),                                    //
+          make_column("preferred_two_factor_authentication", &person::preferred_two_factor_authentication_),  //
+          make_column("shotgun_id", &person::shotgun_id_),                                                    //
+          make_column("timezone", &person::timezone_),                                                        //
+          make_column("locale", &person::locale_),                                                            //
+          make_column("data", &person::data_),                                                                //
+          make_column("role", &person::role_),                                                                //
+          make_column("has_avatar", &person::has_avatar_),                                                    //
+          make_column("notifications_enabled", &person::notifications_enabled_),                              //
+          make_column("notifications_slack_enabled", &person::notifications_slack_enabled_),                  //
+          make_column("notifications_slack_userid", &person::notifications_slack_userid_),                    //
+          make_column("notifications_mattermost_enabled", &person::notifications_mattermost_enabled_),        //
+          make_column("notifications_mattermost_userid", &person::notifications_mattermost_userid_),          //
+          make_column("notifications_discord_enabled", &person::notifications_discord_enabled_),              //
+          make_column("notifications_discord_userid", &person::notifications_discord_userid_),                //
+          make_column("is_bot", &person::is_bot_),                                                            //
+          make_column("jti", &person::jti_),                                                                  //
+          make_column("expiration_date", &person::expiration_date_),                                          //
+          make_column("studio_id", &person::studio_id_),                                                      //
+          make_column("is_generated_from_ldap", &person::is_generated_from_ldap_),                            //
+          make_column("ldap_uid", &person::ldap_uid_)
+      ),
+      make_table(
           "department",                                                        //
           make_column("id", &department::id_, primary_key().autoincrement()),  //
           make_column("uuid", &department::uuid_, not_null(), unique()),       //
           make_column("name", &department::name_),                             //
           make_column("color", &department::color_),                           //
           make_column("archived", &department::archived_)                      //
+      ),
+      make_table(
+          "preview_background_file",                                                        //
+          make_column("id", &preview_background_file::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &preview_background_file::uuid_, not_null(), unique()),       //
+          make_column("name", &preview_background_file::name_),                             //
+          make_column("archived", &preview_background_file::archived_),                     //
+          make_column("is_default", &preview_background_file::is_default_),                 //
+          make_column("original_name", &preview_background_file::original_name_),           //
+          make_column("extension", &preview_background_file::extension_),                   //
+          make_column("file_size", &preview_background_file::file_size_)                    //
+      ),
+      make_table(
+          "task_type",                                                        //
+          make_column("id", &task_type::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &task_type::uuid_, not_null(), unique()),       //
+          make_column("name", &task_type::name_),                             //
+          make_column("short_name", &task_type::short_name_),                 //
+          make_column("description", &task_type::description_),               //
+          make_column("color", &task_type::color_),                           //
+          make_column("priority", &task_type::priority_),                     //
+          make_column("for_entity", &task_type::for_entity_),                 //
+          make_column("allow_timelog", &task_type::allow_timelog_),           //
+          make_column("archived", &task_type::archived_),                     //
+          make_column("shotgun_id", &task_type::shotgun_id_)                  //
       )
-
   ));
 }
 using sqlite_orm_type = decltype(make_storage_doodle(""));
