@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/department.h>
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
@@ -16,6 +17,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
+#include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
@@ -189,6 +191,14 @@ auto make_storage_doodle(const std::string& in_path) {
 
       /// 这个下方是模拟kitsu的表
       make_table(
+          "task_type_asset_type_link",                                                           //
+          make_column("id", &task_type_asset_type_link::id_, primary_key().autoincrement()),     //
+          make_column("asset_type_id", &task_type_asset_type_link::asset_type_id_, not_null()),  //
+          make_column("task_type_id", &task_type_asset_type_link::task_type_id_, not_null()),    //
+          foreign_key(&task_type_asset_type_link::asset_type_id_).references(&asset_type::uuid_).on_delete.cascade(),
+          foreign_key(&task_type_asset_type_link::task_type_id_).references(&task_type::uuid_).on_delete.cascade()
+      ),
+      make_table(
           "project_person_link",  //
           make_column("id", &project_person_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_person_link::project_id_, not_null()),
@@ -215,6 +225,14 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("priority", &project_task_status_link::priority_),
           foreign_key(&project_task_status_link::project_id_).references(&project::uuid_).on_delete.cascade(),
           foreign_key(&project_task_status_link::task_status_id_).references(&task_status::uuid_).on_delete.cascade()
+      ),
+      make_table(
+          "project_asset_type_link",  //
+          make_column("id", &project_asset_type_link::id_, primary_key().autoincrement()),
+          make_column("project_id", &project_asset_type_link::project_id_, not_null()),
+          make_column("asset_type_id", &project_asset_type_link::asset_type_id_, not_null()),
+          foreign_key(&project_asset_type_link::project_id_).references(&project::uuid_).on_delete.cascade(),
+          foreign_key(&project_asset_type_link::asset_type_id_).references(&asset_type::uuid_).on_delete.cascade()
       ),
       make_table(
           "project_task_status_link",                                                                          //
@@ -372,6 +390,34 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("allow_timelog", &task_type::allow_timelog_),           //
           make_column("archived", &task_type::archived_),                     //
           make_column("shotgun_id", &task_type::shotgun_id_)                  //
+      ),
+      make_table(
+          "task_status",                                                           //
+          make_column("id", &task_status::id_, primary_key().autoincrement()),     //
+          make_column("uuid", &task_status::uuid_, not_null(), unique()),          //
+          make_column("name", &task_status::name_),                                //
+          make_column("archived", &task_status::archived_),                        //
+          make_column("short_name", &task_status::short_name_),                    //
+          make_column("description", &task_status::description_),                  //
+          make_column("color", &task_status::color_),                              //
+          make_column("priority", &task_status::priority_),                        //
+          make_column("is_done", &task_status::is_done_),                          //
+          make_column("is_artist_allowed", &task_status::is_artist_allowed_),      //
+          make_column("is_client_allowed", &task_status::is_client_allowed_),      //
+          make_column("is_retake", &task_status::is_retake_),                      //
+          make_column("is_feedback_request", &task_status::is_feedback_request_),  //
+          make_column("is_default", &task_status::is_default_),                    //
+          make_column("shotgun_id", &task_status::shotgun_id_),                    //
+          make_column("for_concept", &task_status::for_concept_)                   //
+      ),
+      make_table(
+          "asset_type",                                                        //
+          make_column("id", &asset_type::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &asset_type::uuid_, not_null(), unique()),       //
+          make_column("name", &asset_type::name_),                             //
+          make_column("short_name", &asset_type::short_name_),                 //
+          make_column("description", &asset_type::description_),               //
+          make_column("archived", &asset_type::archived_)                      //
       )
   ));
 }
