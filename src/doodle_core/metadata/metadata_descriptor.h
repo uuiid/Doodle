@@ -23,7 +23,8 @@ struct metadata_descriptor_department_link {
   uuid department_uuid_;
 };
 
-struct metadata_descriptor : base {
+struct metadata_descriptor   {
+  DOODLE_BASE_FIELDS();
   std::string name_;
   std::string entity_type_;
   uuid project_uuid_;

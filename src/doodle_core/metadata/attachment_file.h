@@ -7,7 +7,9 @@
 #include <doodle_core/metadata/base.h>
 
 namespace doodle {
-struct attachment_file : base {
+struct attachment_file {
+  DOODLE_BASE_FIELDS();
+
   std::string name_;
   std::int64_t size_;
   std::string extension_;

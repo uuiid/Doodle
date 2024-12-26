@@ -12,7 +12,9 @@ struct DOODLE_CORE_API task_type_asset_type_link {
   uuid asset_type_id_;
   uuid task_type_id_;
 };
-struct DOODLE_CORE_API asset_type : base {
+struct DOODLE_CORE_API asset_type {
+  DOODLE_BASE_FIELDS();
+
   std::string name_;
   std::string short_name_;
   std::string description_;

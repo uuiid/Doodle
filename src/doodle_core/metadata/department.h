@@ -6,7 +6,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 namespace doodle {
-struct DOODLE_CORE_API department : base {
+struct DOODLE_CORE_API department {
+  DOODLE_BASE_FIELDS();
   std::string name_;
   std::string color_;
   bool archived_;

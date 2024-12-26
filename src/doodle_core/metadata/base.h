@@ -7,8 +7,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
-struct DOODLE_CORE_API base {
-  std::int64_t id_;
+
+#define DOODLE_BASE_FIELDS() \
+  std::int64_t id_;          \
   uuid uuid_;
-};
 }  // namespace doodle

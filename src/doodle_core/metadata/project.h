@@ -9,7 +9,9 @@ namespace project_helper {
 struct database_t;
 }
 
-struct project_task_status_link : base {
+struct project_task_status_link {
+  DOODLE_BASE_FIELDS();
+
   uuid project_id_;
   uuid task_status_id_;
   std::int32_t priority_;
@@ -39,7 +41,9 @@ struct project_person_link {
   uuid person_id_;
 };
 
-struct project : base {
+struct project {
+  DOODLE_BASE_FIELDS();
+
   std::string name_;
   std::string code_;
   std::string description_;

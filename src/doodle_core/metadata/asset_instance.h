@@ -8,7 +8,9 @@
 
 namespace doodle {
 
-struct DOODLE_CORE_API asset_instance : base {
+struct DOODLE_CORE_API asset_instance {
+  DOODLE_BASE_FIELDS();
+
   uuid asset_id_;
   std::string name_;
   std::int32_t number_;

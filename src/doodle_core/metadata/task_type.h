@@ -8,7 +8,9 @@
 
 namespace doodle {
 
-struct task_type : base {
+struct task_type {
+  DOODLE_BASE_FIELDS();
+
   std::string name_;
   std::string short_name_;
   std::string description_;
