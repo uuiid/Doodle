@@ -1,6 +1,6 @@
 target_sources(
         doodle_core
-        
+
         PUBLIC
         assets.h
         assets_file.h
@@ -27,6 +27,8 @@ target_sources(
         base.h
         preview_background_file.h
         task_type.h
+        entity_type.h
+        person.h
 
 
         PRIVATE

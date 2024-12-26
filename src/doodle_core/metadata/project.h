@@ -2,11 +2,18 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
+#include <doodle_core/metadata/person.h>
 namespace doodle {
 
 namespace project_helper {
 struct database_t;
 }
+
+struct project_task_status_link : base {
+  uuid project_id_;
+  uuid task_status_id_;
+  std::int32_t priority_;
+};
 
 struct project_status_automation_link {
   std::int64_t id_;
@@ -18,6 +25,18 @@ struct project_preview_background_file_link {
   std::int64_t id_;
   uuid project_id_;
   uuid preview_background_file_id_;
+  std::vector<person_role_type> roles_for_board_;
+};
+struct project_task_type_link {
+  std::int64_t id_;
+  uuid project_id_;
+  uuid task_type_id_;
+  std::int32_t priority_;
+};
+struct project_person_link {
+  std::int64_t id_;
+  uuid project_id_;
+  uuid person_id_;
 };
 
 struct project : base {
