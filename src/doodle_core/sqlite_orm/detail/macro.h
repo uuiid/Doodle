@@ -29,6 +29,56 @@
     }                                                                                                                \
   };
 
+template <typename T>
+std::string enum_array_to_string(const T& t) {
+  std::string l_ret{'{'};
+  for (const auto& v : t) {
+    l_ret += fmt::format(", {}", magic_enum::enum_name(v));
+  }
+  l_ret += '}';
+  return l_ret;
+}
+
+template <typename T>
+std::vector<T> string_to_enum_array(const std::string& t) {
+  std::vector<T> l_ret;
+  if (t.empty()) return l_ret;
+  auto l_begin = ++t.begin();
+  while (l_begin != t.end()) {
+    auto l_end = std::find(l_begin, t.end(), ',');
+    l_ret.emplace_back(magic_enum::enum_cast<T>(std::string_view{l_begin, l_end}).value());
+    l_begin = l_end + 1;
+  }
+  return l_ret;
+}
+
+#define DOODLE_SQLITE_ENUM_ARRAY_TYPE_(enum_type)                                                                  \
+  template <>                                                                                                      \
+  struct type_printer<std::vector<enum_type>> : public text_printer {};                                            \
+                                                                                                                   \
+  template <>                                                                                                      \
+  struct statement_binder<std::vector<enum_type>> {                                                                \
+    int bind(sqlite3_stmt* stmt, int index, const std::vector<enum_type>& value) {                                 \
+      return statement_binder<std::string_view>().bind(stmt, index, enum_array_to_string(value));                  \
+    }                                                                                                              \
+  };                                                                                                               \
+                                                                                                                   \
+  template <>                                                                                                      \
+  struct field_printer<std::vector<enum_type>> {                                                                   \
+    std::string operator()(const std::vector<enum_type>& t) const { return std::string{enum_array_to_string(t)}; } \
+  };                                                                                                               \
+                                                                                                                   \
+  template <>                                                                                                      \
+  struct row_extractor<std::vector<enum_type>> {                                                                   \
+    std::vector<enum_type> extract(const char* columnText) const {                                                 \
+      return string_to_enum_array<enum_type>(columnText);                                                          \
+    }                                                                                                              \
+    std::vector<enum_type> extract(sqlite3_stmt* stmt, int columnIndex) const {                                    \
+      const auto str = sqlite3_column_text(stmt, columnIndex);                                                     \
+      return this->extract(reinterpret_cast<const char*>(str));                                                    \
+    }                                                                                                              \
+  };
+
 #define DOODLE_GET_BY_PARENT_ID_SQL(class_name)                                                \
   template <>                                                                                  \
   std::vector<class_name> sqlite_database::get_by_parent_id<class_name>(const uuid& in_uuid) { \
