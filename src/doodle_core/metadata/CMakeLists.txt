@@ -31,6 +31,8 @@ target_sources(
         person.h
         asset_instance.h
         attachment_file.h
+        project_status.h
+        task_status.h
 
 
         PRIVATE
