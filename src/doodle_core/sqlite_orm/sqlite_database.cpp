@@ -33,6 +33,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_type)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::details::assets_type_enum);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::attendance_helper::att_enum);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::metadata_descriptor_data_type);
 
 template <>
 struct type_is_nullable<std::string> : std::true_type {
