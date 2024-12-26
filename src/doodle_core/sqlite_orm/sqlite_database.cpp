@@ -8,12 +8,15 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/macro.h>
+#include <doodle_core/sqlite_orm/detail/nlohmann_json.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
@@ -175,7 +178,40 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("en_str", &project_helper::database_t::en_str_),                      //
           make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),  //
           make_column("code", &project_helper::database_t::code_)
+      ),
+      make_table(
+          "metadata_descriptor_department_link",  //
+          make_column("id", &metadata_descriptor_department_link::id_, primary_key().autoincrement()),
+          make_column("metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_),
+          make_column("department_id", &metadata_descriptor_department_link::department_uuid_),
+          foreign_key(&metadata_descriptor_department_link::metadata_descriptor_uuid_)
+              .references(&metadata_descriptor::uuid_)
+              .on_delete.cascade(),
+          foreign_key(&metadata_descriptor_department_link::department_uuid_)
+              .references(&department::uuid_)
+              .on_delete.cascade()
+      ),
+      make_table(
+          "metadata_descriptor",                                                        //
+          make_column("id", &metadata_descriptor::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &metadata_descriptor::uuid_, not_null(), unique()),       //
+          make_column("name", &metadata_descriptor::name_),                             //
+          make_column("entity_type", &metadata_descriptor::entity_type_),               //
+          make_column("project_uuid", &metadata_descriptor::project_uuid_),             //
+          make_column("data_type", &metadata_descriptor::data_type_),                   //
+          make_column("field_name", &metadata_descriptor::field_name_),                 //
+          make_column("choices", &metadata_descriptor::choices_),                       //
+          make_column("for_client", &metadata_descriptor::for_client_)
+      ),
+      make_table(
+          "department",                                                        //
+          make_column("id", &department::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &department::uuid_, not_null(), unique()),       //
+          make_column("name", &department::name_),                             //
+          make_column("color", &department::color_),                           //
+          make_column("archived", &department::archived_)                      //
       )
+
   ));
 }
 using sqlite_orm_type = decltype(make_storage_doodle(""));

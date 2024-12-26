@@ -29,6 +29,8 @@ target_sources(
         task_type.h
         entity_type.h
         person.h
+        asset_instance.h
+        attachment_file.h
 
 
         PRIVATE
