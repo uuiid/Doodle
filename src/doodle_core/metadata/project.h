@@ -9,12 +9,30 @@ namespace project_helper {
 struct database_t;
 }
 
+struct project_person_link {
+  std::int64_t id_;
+  uuid project_id_;
+  uuid person_id_;
+};
+struct project_task_type_link {
+  DOODLE_BASE_FIELDS();
+  uuid project_id_;
+  uuid task_type_id_;
+  std::int32_t priority_;
+};
+
 struct project_task_status_link {
   DOODLE_BASE_FIELDS();
 
   uuid project_id_;
   uuid task_status_id_;
   std::int32_t priority_;
+  std::vector<person_role_type> roles_for_board_;
+};
+struct project_asset_type_link {
+  std::int64_t id_;
+  uuid project_id_;
+  uuid asset_type_id_;
 };
 
 struct project_status_automation_link {
@@ -27,18 +45,6 @@ struct project_preview_background_file_link {
   std::int64_t id_;
   uuid project_id_;
   uuid preview_background_file_id_;
-  std::vector<person_role_type> roles_for_board_;
-};
-struct project_task_type_link {
-  std::int64_t id_;
-  uuid project_id_;
-  uuid task_type_id_;
-  std::int32_t priority_;
-};
-struct project_person_link {
-  std::int64_t id_;
-  uuid project_id_;
-  uuid person_id_;
 };
 
 struct project {
