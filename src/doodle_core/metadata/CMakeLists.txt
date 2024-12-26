@@ -33,6 +33,7 @@ target_sources(
         attachment_file.h
         project_status.h
         task_status.h
+        status_automation.h
 
 
         PRIVATE
