@@ -99,14 +99,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
               l_gui_dang = std::stoi(l_user_data["gui_dang"].get<std::string>());
             auto l_pin_yin_ming_cheng = l_user_data["pin_yin_ming_cheng"].get<std::string>();
             scan::scan_key_t l_key{
-                .dep_     = conv_assets_type_enum(l_asset_type_name),
-                .season_  = season{l_gui_dang},
-                .project_ = l_prj_id,
-                .number_ =
-                    l_user_data.contains("bian_hao") ? l_user_data["bian_hao"].get<std::string>() : std::string{},
-                .name_ = l_pin_yin_ming_cheng,
-                .version_name_ =
-                    l_user_data.contains("ban_ben") ? l_user_data["ban_ben"].get<std::string>() : std::string{},
+                .dep_          = conv_assets_type_enum(l_asset_type_name),
+                .season_       = season{l_gui_dang},
+                .project_      = l_prj_id,
+                .number_       = l_user_data.contains("bian_hao") && l_user_data["bian_hao"].is_string()
+                                     ? l_user_data["bian_hao"].get<std::string>()
+                                     : std::string{},
+                .name_         = l_pin_yin_ming_cheng,
+                .version_name_ = l_user_data.contains("ban_ben") && l_user_data["ban_ben"].is_string()
+                                     ? l_user_data["ban_ben"].get<std::string>()
+                                     : std::string{},
             };
             l_file_exist = l_map.contains(l_key);
             if (l_file_exist)
