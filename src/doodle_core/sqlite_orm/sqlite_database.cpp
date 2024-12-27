@@ -43,6 +43,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::attendance_helper::att_enum);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::metadata_descriptor_data_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::two_factor_authentication_types);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::person_role_type);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::status_automation_change_type);
 
 template <>
 struct type_is_nullable<std::string> : std::true_type {
@@ -239,7 +240,11 @@ auto make_storage_doodle(const std::string& in_path) {
           "project_status_automation_link",
           make_column("id", &project_status_automation_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_status_automation_link::project_id_, not_null()),
-          make_column("asset_type_id", &project_status_automation_link::status_automation_id_, not_null())
+          make_column("status_automation_id", &project_status_automation_link::status_automation_id_, not_null()),
+          foreign_key(&project_status_automation_link::project_id_).references(&project::uuid_).on_delete.cascade(),
+          foreign_key(&project_status_automation_link::status_automation_id_)
+              .references(&status_automation::uuid_)
+              .on_delete.cascade()
       ),
       make_table(
           "project",                                                                                         //
