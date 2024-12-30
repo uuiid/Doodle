@@ -49,9 +49,9 @@ holidaycn_time2::holidaycn_time2(time_duration_vector in_work_time, const FSys::
       chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}.get_local_time()
   )};
 
-  load_year(fmt::format("{}.json", static_cast<std::int32_t>(l_year.year())));
-  load_year(fmt::format("{}.json", static_cast<std::int32_t>(++l_year.year())));
-  load_year(fmt::format("{}.json", static_cast<std::int32_t>(--l_year.year())));
+  load_year(in_path / fmt::format("{}.json", static_cast<std::int32_t>(l_year.year())));
+  load_year(in_path / fmt::format("{}.json", static_cast<std::int32_t>(++l_year.year())));
+  load_year(in_path / fmt::format("{}.json", static_cast<std::int32_t>(--l_year.year())));
 }
 
 holidaycn_time2::~holidaycn_time2() = default;

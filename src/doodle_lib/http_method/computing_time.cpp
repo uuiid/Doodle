@@ -389,8 +389,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
       l_task_id{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("task_id"))};
 
   chrono::year_month l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
-  std::optional<chrono::microseconds> l_duration = chrono::microseconds{l_json["duration"].get<std::int64_t>()};
-  std::optional<std::string> l_comment           = l_json["user_remark"].get<std::string>();
+
+  std::optional<chrono::microseconds> l_duration =
+      l_json.contains("duration") ? std::optional{chrono::microseconds{l_json["duration"].get<std::int64_t>()}}
+                                  : std::nullopt;
+  std::optional<std::string> l_comment =
+      l_json.contains("user_remark") ? std::optional{l_json["user_remark"].get<std::string>()} : std::nullopt;
 
   if (l_duration && l_duration->count() <= 0) {
     co_return in_handle->make_error_code_msg(
