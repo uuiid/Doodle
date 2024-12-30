@@ -52,6 +52,7 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   auto l_router = std::make_shared<kitsu::http_route_proxy>();
   l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
       .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
+  reg_kitsu_front_end_http(*l_router, in_root);
   kitsu::epiboly_reg(*l_router);
   return l_router;
 }
