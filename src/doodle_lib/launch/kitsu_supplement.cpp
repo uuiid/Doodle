@@ -140,8 +140,14 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
-    l_args.db_path_              = register_file_type::program_location().parent_path() / "epiboly.database";
-    l_args.kitsu_front_end_path_ = register_file_type::program_location().parent_path() / "dist";
+    // 调整一些特有的上下文
+    l_args.db_path_               = register_file_type::program_location().parent_path() / "epiboly.database";
+    l_args.kitsu_front_end_path_  = register_file_type::program_location().parent_path() / "dist";
+    l_args.kitsu_thumbnails_path_ = register_file_type::program_location().parent_path() / "thumbnails";
+    // 初始化上下文
+    g_ctx().emplace<http::kitsu_ctx_t>(
+        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
+    );
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // 初始化路由
