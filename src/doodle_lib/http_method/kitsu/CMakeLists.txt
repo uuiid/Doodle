@@ -8,6 +8,7 @@ target_sources(
         http_route_proxy.h
         project.h
         epiboly.h
+        assets.h
 
         PRIVATE
         task.cpp
@@ -17,4 +18,5 @@ target_sources(
         http_route_proxy.cpp
         project.cpp
         epiboly.cpp
+        assets.cpp
 )
