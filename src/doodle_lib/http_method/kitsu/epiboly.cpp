@@ -44,7 +44,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
 }  // namespace
 void epiboly_reg(http_route& in_http_route) {
   in_http_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/config", config))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/auth/authenticated", authenticated))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", authenticated))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context));
 }
