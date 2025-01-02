@@ -36,8 +36,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated(sess
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   nlohmann::json l_json{};
-  auto& l_database   = g_ctx().get<sqlite_database>();
-  auto l_all_prj     = l_database.get_all<project_helper::database_t>();
   l_json["projects"] = nlohmann::json::parse(R"([{
   "asset_types": [],
   "auto_upload_path": "//192.168.10.240/public/后期/JJ_DJ/",
