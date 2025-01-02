@@ -38,7 +38,51 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   nlohmann::json l_json{};
   auto& l_database   = g_ctx().get<sqlite_database>();
   auto l_all_prj     = l_database.get_all<project_helper::database_t>();
-  l_json["projects"] = l_all_prj;
+  l_json["projects"] = nlohmann::json::parse(R"([{
+  "asset_types": [],
+  "auto_upload_path": "//192.168.10.240/public/后期/JJ_DJ/",
+  "code": "JJ",
+  "created_at": "2024-11-07T05:40:42",
+  "data": null,
+  "default_preview_background_file_id": null,
+  "description": null,
+  "descriptors": [],
+  "en_str": "JingJie",
+  "end_date": "2027-11-30",
+  "episode_span": 0,
+  "file_tree": null,
+  "fps": "25",
+  "has_avatar": false,
+  "hd_bitrate_compression": null,
+  "homepage": "assets",
+  "id": "d41d3dae-f86b-4080-850d-3d41ef272dd2",
+  "is_clients_isolated": false,
+  "is_preview_download_allowed": false,
+  "is_publish_default_for_artists": false,
+  "is_set_preview_automated": false,
+  "ld_bitrate_compression": null,
+  "man_days": null,
+  "max_retakes": 0,
+  "name": "镜·界",
+  "nb_episodes": 0,
+  "path": "//192.168.10.242/public/JJ_DJ",
+  "preview_background_files": [],
+  "production_style": "3d",
+  "production_type": "featurefilm",
+  "project_status_id": "755c9edd-9481-4145-ab43-21491bdf2739",
+  "ratio": "9:16",
+  "resolution": "1080x1920",
+  "shotgun_id": null,
+  "start_date": "2024-09-01",
+  "status_automations": [],
+  "task_statuses": [],
+  "task_statuses_link": {},
+  "task_types": [],
+  "task_types_priority": {},
+  "team": [],
+  "type": "Project",
+  "updated_at": "2024-12-26T03:47:56"
+}])");
   co_return in_handle->make_msg(l_json.dump());
 }
 }  // namespace
