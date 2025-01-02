@@ -232,17 +232,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
   auto& l_task = l_json["task_data"];
-  if (l_task.contains("replace_ref_file")) {
+  if (l_task.contains("replace_ref_file")) {  /// 解算文件
     auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
     l_task.get_to(*l_arg_t);
     l_arg_t->sim_path = FSys::path{l_task["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
 
     l_arg             = l_arg_t;
-  } else if (l_task.contains("file_list")) {
+  } else if (l_task.contains("file_list")) {  /// 替换文件
     auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
     l_task.get_to(*l_arg_t);
     l_arg = l_arg_t;
-  } else if (l_task.contains("is_sim")) {
+  } else if (l_task.contains("is_sim")) {  /// 自动渲染
     l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
     l_task.get_to(*l_import_and_render_args);
     if (l_task["is_sim"].get<bool>()) {
@@ -261,7 +261,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
       l_arg                       = l_arg_t;
     }
     l_import_and_render_args->maya_arg_ = l_arg;
-  } else {
+  } else if (l_task.contains("category")) {  // 检查文件任务
+    auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
+    l_arg_t->config(l_task.get<maya_exe_ns::inspect_file_type>());
+  } else {  /// 导出fbx
     auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
     l_task.get_to(*l_arg_t);
     l_arg = l_arg_t;
