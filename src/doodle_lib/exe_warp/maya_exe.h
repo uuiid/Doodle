@@ -155,7 +155,7 @@ class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
 
 enum class inspect_file_type { model_maya };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(inspect_file_type, {inspect_file_type::model_maya, "model_maya"});
+NLOHMANN_JSON_SERIALIZE_ENUM(inspect_file_type, {{inspect_file_type::model_maya, "model_maya"}});
 
 class DOODLELIB_API inspect_file_arg : public maya_exe_ns::arg {
  public:
