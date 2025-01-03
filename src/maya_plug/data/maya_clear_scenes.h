@@ -9,17 +9,17 @@ namespace doodle::maya_plug {
 class maya_clear_scenes {
  public:
   maya_clear_scenes();
-  bool unlock_normal();
-  bool duplicate_name(MSelectionList& in_select);
-  bool multilateral_surface(MSelectionList& in_select);
-  std::tuple<bool, MSelectionList> multilateral_surface_by_select(const MSelectionList& in_select);
-  bool uv_set(MSelectionList& in_select);
+  static bool unlock_normal();
+  static bool duplicate_name(MSelectionList& in_select);
+  static bool multilateral_surface(MSelectionList& in_select);
+  static std::tuple<bool, MSelectionList> multilateral_surface_by_select(const MSelectionList& in_select);
+  static bool uv_set(MSelectionList& in_select);
 
-  bool err_1();  // (1)大纲
-  bool err_2();  // (2)onModelChange3dc
-  bool err_3();  // (3)CgAbBlastPanelOptChangeCallback
-  bool err_4();  // (4)贼健康
+  static bool err_1();  // (1)大纲
+  static bool err_2();  // (2)onModelChange3dc
+  static bool err_3();  // (3)CgAbBlastPanelOptChangeCallback
+  static bool err_4();  // (4)贼健康
 
-  void delete_unknown_node();
+  static void delete_unknown_node();
 };
 }  // namespace doodle::maya_plug

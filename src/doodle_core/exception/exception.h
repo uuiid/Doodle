@@ -19,17 +19,19 @@ namespace bsys = boost::system;
 
 namespace maya_enum {
 enum class maya_error_t : std::int32_t {
-  success           = 0,
+  success             = 0,
   // 未知错误
-  unknown_error     = 1,
+  unknown_error       = 1,
   // 相机命名错误
-  camera_name_error = 2,
+  camera_name_error   = 2,
   // 骨骼缩放为 0 错误
-  bone_scale_error  = 3,
+  bone_scale_error    = 3,
   // 相机纵横比错误
   camera_aspect_error = 4,
   // 缓存路径不存在
-  cache_path_error = 5,
+  cache_path_error    = 5,
+  // 检查错误
+  check_error         = 6
 
 };
 [[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(maya_error_t e);
@@ -66,7 +68,7 @@ enum error_t : std::int32_t {
 }  // namespace error_enum
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
-  explicit doodle_error(const std::string& message) : std::runtime_error(message){};
+  explicit doodle_error(const std::string& message) : std::runtime_error(message) {};
   template <typename... Args>
   explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
       : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))){};

@@ -293,7 +293,6 @@ std::tuple<bool, MSelectionList> maya_clear_scenes::multilateral_surface_by_sele
   return std::make_tuple(l_r, l_r_select);
 }
 void maya_clear_scenes::delete_unknown_node() {
-  boost::ignore_unused(this);
 
   std::vector<MObject> l_node{};
   MStatus l_s{};
