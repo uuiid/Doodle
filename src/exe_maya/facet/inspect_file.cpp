@@ -173,7 +173,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
   if (l_arg.too_many_point_check_) {
     default_logger_raw()->info("检查多余点数功能暂时不可用");
   }
-
+return false;
 }
 
 }  // namespace doodle::maya_plug
