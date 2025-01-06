@@ -19,6 +19,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     {
         Write-Host "更新服务"
         Stop-Service -Force -Name doodle_kitsu_supplement
+        Start-Sleep -Milliseconds 50
         &robocopy "$Tmp\bin" "$Target\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts /w:1
         Start-Service -Name doodle_kitsu_supplement
     }
