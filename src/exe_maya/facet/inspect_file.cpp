@@ -126,7 +126,8 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
       }
       if (l_polygon.size() > 0) {
         default_logger_raw()->error(
-            "存在反面 {}:\n {}", get_node_full_name(l_mesh.object()), fmt::join(l_polygon | ranges::views::chunk(10), "\n")
+            "存在反面 {}:\n {}", get_node_full_name(l_mesh.object()),
+            fmt::join(l_polygon | ranges::views::chunk(10), "\n")
         );
       }
     }
@@ -161,15 +162,16 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
 
   if (l_arg.only_default_camera_check_) {
     default_logger_raw()->info("开始检查默认相机");
-    std::array<std::int8_t, 4> l_checks{};
+    std::array<std::int8_t, 5> l_checks{};
     for (MItDag l_iter{MItDag::kDepthFirst, MFn::kCamera, &l_s}; !l_iter.isDone(); l_iter.next()) {
       auto l_name = get_node_full_name(l_iter.currentItem());
       // side front top persp
       l_checks[0] += l_name.starts_with("|side");
       l_checks[1] += l_name.starts_with("|front");
-      l_checks[2] += l_name.starts_with("|top");
-      l_checks[3] += l_name.starts_with("|persp");
-      if (l_checks[0] > 1 || l_checks[1] > 1 || l_checks[2] > 1 || l_checks[3] > 1) {
+      l_checks[2] += static_cast<int>(l_name.starts_with("|top"));
+      l_checks[3] += static_cast<int>(l_name.starts_with("|persp"));
+      ++l_checks[4];
+      if (l_checks[0] > 1 || l_checks[1] > 1 || l_checks[2] > 1 || l_checks[3] > 1 || l_checks[4] > 4) {
         default_logger_raw()->error("存在多个默认相机 {}", l_name);
         l_e = maya_enum::maya_error_t::check_error;
       }
