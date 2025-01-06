@@ -84,11 +84,11 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
   if (l_arg.special_copy_check_) {
     default_logger_raw()->info("开始检查特殊拷贝");
     MDagPath l_dag_path{};
-    MFnDagNode l_dag_node{};
-    for (MItDag l_iter{MItDag::kDepthFirst, MFn::kTransform, &l_s}; !l_iter.isDone(); l_iter.next()) {
+    // MFnDagNode l_dag_node{};
+    for (MItDag l_iter{MItDag::kDepthFirst, MFn::kMesh, &l_s}; !l_iter.isDone(); l_iter.next()) {
       maya_chick(l_iter.getPath(l_dag_path));
-      maya_chick(l_dag_node.setObject(l_dag_path));
-      default_logger_raw()->info("检查特殊拷贝 {}", l_dag_path);
+      // maya_chick(l_dag_node.setObject(l_dag_path));
+      // default_logger_raw()->info("检查特殊拷贝 {}", l_dag_path);
       if (l_dag_path.isInstanced(&l_s)) {
         maya_chick(l_s);
         default_logger_raw()->error("存在特殊拷贝 {}", l_dag_path);
@@ -116,8 +116,6 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
           l_e = maya_enum::maya_error_t::check_error;
           continue;
         }
-        // auto l_str = fmt::format("面{} {}", l_i, l_vertices);
-        // default_logger_raw()->error("ver {}", l_str);
         maya_chick(l_mesh.getPolygonUV(l_i, 0, l_point_x.x, l_point_x.y));
         maya_chick(l_mesh.getPolygonUV(l_i, 1, l_point_org.x, l_point_org.y));
         maya_chick(l_mesh.getPolygonUV(l_i, 2, l_point_y.x, l_point_y.y));
@@ -128,7 +126,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
       }
       if (l_polygon.size() > 0) {
         default_logger_raw()->error(
-            "存在反面 {} {}", get_node_full_name(l_mesh.object()), fmt::join(l_polygon | ranges::views::chunk(10), "\n")
+            "存在反面 {}:\n {}", get_node_full_name(l_mesh.object()), fmt::join(l_polygon | ranges::views::chunk(10), "\n")
         );
       }
     }
