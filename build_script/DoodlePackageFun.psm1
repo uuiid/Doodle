@@ -31,7 +31,7 @@ function Add-Compensatory()
 }
 
 
-function Package-Doodle
+function Initialize-Doodle
 {
     param(
         [string]$OutPath
@@ -92,3 +92,4 @@ function Package-Doodle
 }
 
 
+Export-ModuleMember -Function Initialize-Doodle
