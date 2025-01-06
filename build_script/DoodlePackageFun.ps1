@@ -71,12 +71,12 @@ function Package-Doodle
         [System.Management.Automation.PSObject]@{
             name = "公司年假补班"
             date = "2024-12-14"
-            isOffDay = $true
+            isOffDay = $false
         },
         [System.Management.Automation.PSObject]@{
             name = "公司年假补班"
             date = "2024-12-29"
-            isOffDay = $true
+            isOffDay = $false
         }
     )
 
@@ -84,7 +84,7 @@ function Package-Doodle
         [System.Management.Automation.PSObject]@{
             name = "公司年假补班"
             date = "2024-01-11"
-            isOffDay = $true
+            isOffDay = $false
         }
     )
 
