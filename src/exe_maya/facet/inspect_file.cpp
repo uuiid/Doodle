@@ -179,6 +179,8 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
     default_logger_raw()->info("检查多余点数功能暂时不可用");
   }
   app_base::Get().stop_app();
+  if (l_e == maya_enum::maya_error_t::check_error)
+    throw_error(l_e);
   return false;
 }
 
