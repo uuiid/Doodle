@@ -40,12 +40,13 @@ boost::asio::cancellation_slot app_base::cancellation_signals::slot() {
 app_base* app_base::self = nullptr;
 
 app_base::app_base(int argc, const char* const argv[])
-    : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format("doodle {}", version::build_info::get().version_str))
+    : p_title(
+          boost::locale::conv::utf_to_utf<wchar_t>(fmt::format("doodle {}", version::build_info::get().version_str))
       ),
       stop_(false),
       lib_ptr(std::make_shared<doodle_lib>()),
       arg_{argc, argv} {
-  self                   = this;
+  self = this;
   default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   default_logger_raw()->flush();
   add_signal();
@@ -123,6 +124,7 @@ std::int32_t app_base::poll_one() {
 }
 void app_base::stop_app(std::int32_t in_exit_code) {
   exit_code = in_exit_code;
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   on_cancel.emit();
   stop_ = true;
   on_stop();

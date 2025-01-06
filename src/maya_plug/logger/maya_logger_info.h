@@ -18,7 +18,8 @@ class maya_msg : public spdlog::sinks::base_sink<mutex_t> {
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<mutex_t>::formatter_->format(msg, formatted);
     auto k_str = fmt::to_string(formatted);
-    boost::erase_all(k_str, "\n");
+    while (k_str.ends_with('\n')) k_str.pop_back();
+    // boost::erase_all(k_str, "\n");
     MString k_m_str{};
     k_m_str.setUTF8(k_str.data());
 

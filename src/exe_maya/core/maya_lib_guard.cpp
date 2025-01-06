@@ -30,7 +30,7 @@ namespace doodle::maya_plug {
 
 maya_lib_guard::maya_lib_guard() {
   MLibrary::initialize(true, "maya_doodle");
-  doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
+  doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_exe");
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "ik2Bsolver";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "renderSetup";)"));

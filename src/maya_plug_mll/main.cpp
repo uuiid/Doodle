@@ -68,7 +68,7 @@ MStatus initializePlugin(MObject obj) {
   /**
    * @brief 添加插件注册方法
    */
-  MStatus status = MStatus::MStatusCode::kFailure;
+  MStatus status = MStatus::MStatusCode::kSuccess;
   MFnPlugin k_plugin{
       obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()
   };
@@ -78,9 +78,6 @@ MStatus initializePlugin(MObject obj) {
 
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
 
-  CHECK_MSTATUS(status);
-
-  CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
   CHECK_MSTATUS(status);
   /// 添加文件编辑命令
