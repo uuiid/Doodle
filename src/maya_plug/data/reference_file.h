@@ -20,7 +20,7 @@ class generate_file_path_base : boost::less_than_comparable<generate_file_path_b
   std::string format_reference_name;
   std::string extract_scene_name;
   std::string format_scene_name;
-  bool use_add_range;
+  bool use_add_range{true};
   template <typename T1, typename Char, typename Enable>
   friend struct fmt::formatter;
 
