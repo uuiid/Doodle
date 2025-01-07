@@ -12,11 +12,12 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
-#include "computer_reg_data.h"
-#include "exe_warp/import_and_render_ue.h"
-#include "exe_warp/maya_exe.h"
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
@@ -334,6 +335,7 @@ void task_info_reg(doodle::http::http_route& in_route) {
 }
 void task_info_reg_local(doodle::http::http_route& in_route) {
   if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
+  if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
   g_ctx().emplace<run_post_task_local_cancel_manager>();
   app_base::Get().on_stop.connect([]() { g_ctx().get<run_post_task_local_cancel_manager>().cancel_all(); });
 

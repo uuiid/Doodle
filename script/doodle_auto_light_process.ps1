@@ -6428,7 +6428,7 @@
 foreach ($log in $logger_data)
 {
     Write-Host "$log" ;
-    Start-Sleep -Seconds 1;
+    Start-Sleep -Milliseconds 10;
 }
 
-# ps2exe E:\Doodle\script\doodle_auto_light_process.ps1 E:\Doodle\build\doodle_auto_light_process.exe
+# ps2exe E:\Doodle\script\doodle_auto_light_process.ps1 E:\Doodle\build\install\bin\doodle_auto_light_process.exe
