@@ -613,7 +613,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		}
 	}
 	//--------------------
-	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
+	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, true);
 	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
@@ -745,7 +745,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		}
 	}
 	// L_LevelSequencePlayer->
-	EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
+	// EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
 	L_LevelSequencePlayer->ConditionalBeginDestroy();
 
 	GEngine->ForceGarbageCollection(true);
