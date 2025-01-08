@@ -18,8 +18,13 @@
       <file path="$PROJECT_DIR$/script/uePlug/4.27" />
       <file path="$PROJECT_DIR$/script/uePlug/5.0" />
       <file path="$PROJECT_DIR$/script/uePlug/5.1" />
+      <file path="$PROJECT_DIR$/script/uePlug/5.4" />
+      <file path="$PROJECT_DIR$/script/uePlug/Doodle" />
       <file path="$PROJECT_DIR$/script/uePlug/PluginMenu" />
       <file path="$PROJECT_DIR$/script/uePlug/SideFX_Labs" />
+      <file path="$PROJECT_DIR$/script/uePlug/UnrealEngine5VLC" />
+      <file path="$PROJECT_DIR$/script/uePlug/test" />
+      <file path="$PROJECT_DIR$/script/uePlug/unreal-vdb" />
       <file path="$PROJECT_DIR$/vcpkg" />
     </excludeRoots>
   </component>

@@ -51,6 +51,7 @@ struct multipart_body {
     std::string header_value_;
     std::optional<std::size_t> length_{0};
     std::size_t pos_{};
+    std::string data_{};
 
    public:
     template <bool isRequest, class Fields>
@@ -61,21 +62,25 @@ struct multipart_body {
       ec     = {};
       if (length) length_ = *length;
     }
-    void parser_headers() {}
-    void add_data(const char& input) {}
+    void parser_headers() {
+      default_logger_raw()->info("headers {} value {}", header_field_, header_value_);
+      header_field_.clear();
+      header_value_.clear();
+    }
+    void add_data(const char& input) { data_ += input; }
 
     template <class ConstBufferSequence>
     std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
       auto const extra   = boost::beast::buffer_bytes(buffers);
       ec                 = {};
-      const auto& l_buff = boost::beast::buffers_range_ref(buffers);
-      for (auto l_begin = l_buff.begin(), l_end = l_buff.end(); l_begin != l_end; ++l_begin) {
+      // const auto& l_buff = boost::beast::buffers_cat(buffers);
+      for (auto l_begin = boost::asio::buffers_begin(buffers), l_end = boost::asio::buffers_end(buffers); l_begin != l_end; ++l_begin) {
         switch (state_) {
           case parser_state::start:
             index_ = 0;
             state_ = parser_state::start_boundary;
           case parser_state::start_boundary:
-            if (index_ == 0 && (*l_begin == '-' && *(l_begin + 1) == '-')) {
+            if (index_ == 0 && *l_begin == '-') {
               ++(++l_begin);  // 跳过 --
             }
 
@@ -95,7 +100,7 @@ struct multipart_body {
             break;
           case parser_state::header_field_start:
             state_ = parser_state::header_field;
-          case parser_state::header_field:
+          case parser_state::header_field: {
             if (*l_begin == '\r') {
               state_ = parser_state::headers_almost_done;
               break;
@@ -110,6 +115,7 @@ struct multipart_body {
               return ec = make_error_code(boost::system::errc::invalid_argument), 0;
             header_field_ += *l_begin;
             break;
+          }
 
           case parser_state::headers_almost_done:
             if (*l_begin == '\n') return ec = make_error_code(boost::system::errc::invalid_argument), 0;
@@ -181,6 +187,7 @@ struct multipart_body {
       }
       return extra;
     }
+    void finish(boost::system::error_code& ec) {}
   };
 };
 }  // namespace doodle::http
