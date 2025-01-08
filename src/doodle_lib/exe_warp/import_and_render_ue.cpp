@@ -100,7 +100,7 @@ void fix_project(const FSys::path& in_project_path) {
     bool l_has{};
     for (auto&& l_v : in_json) {
       if (l_v.contains("Name") && l_v["Name"] == in_plug_name) {
-        l_v["Enabled"] = true;
+        l_v["Enabled"] = in_enable;
         l_has          = true;
       }
     }
@@ -108,7 +108,7 @@ void fix_project(const FSys::path& in_project_path) {
     if (!l_has) {
       auto&& l_plugin_obj     = in_json.emplace_back(nlohmann::json::object());
       l_plugin_obj["Name"]    = in_plug_name;
-      l_plugin_obj["Enabled"] = true;
+      l_plugin_obj["Enabled"] = in_enable;
     }
   };
 
