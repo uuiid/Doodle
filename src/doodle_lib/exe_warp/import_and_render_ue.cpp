@@ -96,7 +96,7 @@ void fix_project(const FSys::path& in_project_path) {
   auto l_json                = nlohmann::json::parse(FSys::ifstream{in_project_path});
   auto&& l_plugin            = l_json["Plugins"];
 
-  static auto l_enabled_plug = [](nlohmann::json& in_json, const std::string& in_plug_name) {
+  static auto l_enabled_plug = [](nlohmann::json& in_json, const std::string& in_plug_name, bool in_enable = true) {
     bool l_has{};
     for (auto&& l_v : in_json) {
       if (l_v.contains("Name") && l_v["Name"] == in_plug_name) {
@@ -115,6 +115,7 @@ void fix_project(const FSys::path& in_project_path) {
   l_enabled_plug(l_plugin, "Doodle");
   l_enabled_plug(l_plugin, "MoviePipelineMaskRenderPass");
   l_enabled_plug(l_plugin, "MovieRenderPipeline");
+  l_enabled_plug(l_plugin, "UAssetBrowser", false);
   FSys::ofstream{in_project_path} << l_json.dump();
 }
 
