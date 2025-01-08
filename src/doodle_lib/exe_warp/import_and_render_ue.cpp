@@ -29,6 +29,8 @@ import_and_render_ue_ns::import_data_t gen_import_config(const import_and_render
   l_import_data.shot       = in_args.shot_;
   l_import_data.begin_time = in_args.maya_out_arg_.begin_time;
   l_import_data.end_time   = in_args.maya_out_arg_.end_time;
+  l_import_data.size_      = in_args.size_;
+  l_import_data.layering_  = in_args.layering_;
 
   l_import_data.project_   = in_args.project_;
   l_import_data.out_file_dir =
