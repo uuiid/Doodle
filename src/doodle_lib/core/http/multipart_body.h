@@ -74,7 +74,8 @@ struct multipart_body {
         }
         if (l_c == "content-type") {
           if (auto l_pos = in_header.find(':'); l_pos != in_header.npos) {
-            part_.content_type = detail::get_content_type(in_header.substr(l_pos + 2, in_header.find(l_pos, ';')));
+            auto l_str         = in_header.substr(l_pos + 2, in_header.find(l_pos, ';'));
+            part_.content_type = detail::get_content_type(l_str);
           }
         }
       }
@@ -84,6 +85,9 @@ struct multipart_body {
     void add_data(InIt const& in_begin, InIt const& in_end) {
       switch (part_.content_type) {
         case detail::content_type::application_json:
+        case detail::content_type::image_jpeg:
+        case detail::content_type::image_jpg:
+        case detail::content_type::image_png:
         case detail::content_type::unknown:
           if (!std::holds_alternative<std::string>(part_.body_)) {
             part_.body_ = std::string{in_begin, in_end};
@@ -116,7 +120,8 @@ struct multipart_body {
            l_begin != l_end;) {
         decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
         while (l_end_eof != l_end && *(++l_end_eof) != '\n') l_end_eof = std::find(l_begin, l_end, '\r');
-        if (line_state_ != parser_line_state::data && l_end_eof == l_end) return l_size;  // 不是完整的一行, 直接返回, 下次解析
+        if (line_state_ != parser_line_state::data && l_end_eof == l_end)
+          return l_size;  // 不是完整的一行, 直接返回, 下次解析
         l_size += std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1);
         {
           auto l_end_eof_t = l_end_eof;

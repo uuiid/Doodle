@@ -28,7 +28,7 @@
 namespace doodle::http {
 namespace detail {
 
-content_type get_content_type(const std::string& in_content_type) {
+content_type get_content_type(const std::string_view& in_content_type) {
   if (in_content_type.starts_with("application/json")) return content_type::application_json;
   if (in_content_type.starts_with("image/jpeg")) return content_type::image_jpeg;
   if (in_content_type.starts_with("image/jpg")) return content_type::image_jpg;
@@ -375,23 +375,6 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
     co_return;
   }
 
-  void parse_content_type() {
-    std::string_view l_content_type = request_parser_->get()[boost::beast::http::field::content_type];
-    if (l_content_type.starts_with("application/json"))
-      session_->content_type_ = content_type::application_json;
-    else if (l_content_type.starts_with("image/jpeg"))
-      session_->content_type_ = content_type::image_jpeg;
-    else if (l_content_type.starts_with("image/jpg"))
-      session_->content_type_ = content_type::image_jpg;
-    else if (l_content_type.starts_with("image/png"))
-      session_->content_type_ = content_type::image_png;
-    else if (l_content_type.starts_with("image/gif"))
-      session_->content_type_ = content_type::image_gif;
-    else if (l_content_type.starts_with("video/mp4"))
-      session_->content_type_ = content_type::video_mp4;
-    else
-      session_->content_type_ = content_type::unknown;
-  }
   boost::asio::awaitable<bool> save_bode_file(const std::string& in_ext) {
     auto l_file_request_parser_ =
         std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(std::move(*request_parser_)
@@ -425,7 +408,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       case boost::beast::http::verb::put:
       case boost::beast::http::verb::delete_:
       case boost::beast::http::verb::patch:
-        parse_content_type();
+        session_->content_type_ = get_content_type(request_parser_->get()[boost::beast::http::field::content_type]);
         switch (session_->content_type_) {
           case content_type::image_jpeg:
           case content_type::image_jpg:
