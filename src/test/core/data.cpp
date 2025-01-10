@@ -100,30 +100,28 @@ BOOST_AUTO_TEST_CASE(scan_key_t) {
 }
 
 BOOST_AUTO_TEST_CASE(multipart_body) {
-  std::istringstream l_str{R"(POST /foo HTTP/1.1
-Content-Length: 68137
-Content-Type: multipart/form-data; boundary=---------------------------974767299852498929531610575
-
------------------------------974767299852498929531610575
-Content-Disposition: form-data; name="description"
-
-一些文本
------------------------------974767299852498929531610575
-Content-Disposition: form-data; name="myFile"; filename="foo.txt"
-Content-Type: text/plain
-
-（上传文件 foo.txt 的内容）
------------------------------974767299852498929531610575--
-)"};
+  std::string l_data_str{
+      "GET /e5f5186e-5847-42c5-9f69-ed2761c00f69 HTTP/1.1\r\n"
+      "Content-Type: multipart/form-data; boundary=--------------------------047199375297039570322486\r\n"
+      "Content-Length: 330\r\n\r\n"
+      "----------------------------047199375297039570322486\r\n"
+      "Content-Disposition: form-data; name=\"test\"\r\n\r\n"
+      "dasd\r\n"
+      "----------------------------047199375297039570322486\r\n"
+      "Content-Disposition: form-data; name=\"myFile\"\r\n"
+      "Content-Type: image/jpeg\r\n\r\n"
+      "（上传文件 foo.txt 的内容）\r\n"
+      "----------------------------047199375297039570322486--\r\n"
+  };
+  std::istringstream l_str{l_data_str};
 
   boost::beast::flat_buffer l_buffer{};
   boost::beast::http::request<doodle::http::multipart_body> l_msg{};
   boost::beast::http::vector_body<char> l_body{};
   boost::beast::error_code l_ec{};
-  l_msg.body().boundary_ = "---------------------------974767299852498929531610575";
   read_istream(l_str, l_buffer, l_msg, l_ec);
 
-  BOOST_TEST(l_ec);
+  BOOST_TEST(!l_ec);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

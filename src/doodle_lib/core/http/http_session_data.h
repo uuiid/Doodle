@@ -42,6 +42,8 @@ enum class content_type {
   unknown
 };
 
+content_type get_content_type(const std::string& in_str);
+
 class session_data {
   std::string zlib_compress(const std::string& in_str);
 

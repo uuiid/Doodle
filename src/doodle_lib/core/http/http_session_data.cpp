@@ -27,6 +27,17 @@
 #include <tl/expected.hpp>
 namespace doodle::http {
 namespace detail {
+
+content_type get_content_type(const std::string& in_content_type) {
+  if (in_content_type.starts_with("application/json")) return content_type::application_json;
+  if (in_content_type.starts_with("image/jpeg")) return content_type::image_jpeg;
+  if (in_content_type.starts_with("image/jpg")) return content_type::image_jpg;
+  if (in_content_type.starts_with("image/png")) return content_type::image_png;
+  if (in_content_type.starts_with("image/gif")) return content_type::image_gif;
+  if (in_content_type.starts_with("video/mp4")) return content_type::video_mp4;
+  return content_type::unknown;
+}
+
 class async_session_t : public std::enable_shared_from_this<async_session_t> {
   static constexpr auto g_body_limit{500 * 1024 * 1024};  // 500M
   using executor_type              = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
