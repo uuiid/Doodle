@@ -1,4 +1,4 @@
-class OffDays
+﻿class OffDays
 {
     [string]$name
     [string]$date
@@ -25,7 +25,16 @@ function Add-Compensatory()
     $Json = Get-Content -Path $Path -Raw -Encoding UTF8 | ConvertFrom-Json;
     foreach ($day in $OffDays)
     {
-        $Json.days += $day
+        $it = $Json.days | Where-Object { $_.date -eq $day.date }
+        if ($it)
+        {
+            $it.isOffDay = $day.isOffDay
+            $it.name = $day.name
+        }
+        else
+        {
+            $Json.days += $day
+        }
     }
     $Json | ConvertTo-Json  | Set-Content -Path $Path -Encoding UTF8
 }
@@ -83,8 +92,23 @@ function Initialize-Doodle
     Add-Compensatory -Path "$DoodleTimePath\2025.json" @(
         [System.Management.Automation.PSObject]@{
             name = "公司年假补班"
-            date = "2024-01-11"
+            date = "2025-01-11"
             isOffDay = $false
+        },
+        [System.Management.Automation.PSObject]@{
+            name = "公司放假"
+            date = "2025-01-26"
+            isOffDay = $true
+        },
+        [System.Management.Automation.PSObject]@{
+            name = "公司放假"
+            date = "2025-01-27"
+            isOffDay = $true
+        },
+        [System.Management.Automation.PSObject]@{
+            name = "公司放假"
+            date = "2025-02-05"
+            isOffDay = $true
         }
     )
 
