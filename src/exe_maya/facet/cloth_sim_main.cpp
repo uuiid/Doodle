@@ -211,16 +211,14 @@ void cloth_sim::export_anim_file() {
 
   // 导出相机
   camera_path_ = l_ex.export_cam(l_gen, film_aperture_);
+  out_arg_.out_file_list.emplace_back(camera_path_, FSys::path{});  // 导出相机
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");
+  out_arg_.begin_time = anim_begin_time_.value();
+  out_arg_.end_time   = MAnimControl::maxTime().value();
 
-  maya_exe_ns::maya_out_arg l_out_arg{};
-  l_out_arg.begin_time = anim_begin_time_.value();
-  l_out_arg.end_time   = MAnimControl::maxTime().value();
-  l_out_arg.out_file_list.emplace_back(camera_path_, FSys::path{});  // 导出相机
-
-  nlohmann::json l_json = l_out_arg;
+  nlohmann::json l_json = out_arg_;
   if (!out_path_file_.empty()) {
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
     default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
