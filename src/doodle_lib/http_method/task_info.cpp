@@ -293,7 +293,7 @@ class run_long_task_local {
     for (auto&& l_image : l_images) {
       l_image.watermarks_attr.emplace_back(in_arg->user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
     }
-    auto l_ec             = doodle::detail::create_move(in_arg->out_path_, in_arg->msg_, l_images, in_arg->image_size_);
+    auto l_ec             = doodle::detail::create_move(in_arg->out_path_, logger_, l_images, in_arg->image_size_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
@@ -311,7 +311,7 @@ class run_long_task_local {
     );
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) {
-    auto l_ec = doodle::detail::connect_video(in_arg->out_path_, in_arg->msg_, in_arg->file_list_, in_arg->image_size_);
+    auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
