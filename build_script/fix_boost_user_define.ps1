@@ -6,7 +6,7 @@ Copy-Item "$Root/vcpkg/ports/boost-config/portfile.cmake" -Destination "$Root/vc
 
 $RawData = Get-Content "$Root/vcpkg_ports/boost-config/portfile.cmake" -Raw
 
-$RawData = $RawData -replace "\n#undef BOOST_ALL_DYN_LINK\n", "\n#undef BOOST_ALL_DYN_LINK\n#define BOOST_PROCESS_USE_STD_FS\n#define BOOST_DLL_USE_STD_FS\n"
+$RawData = $RawData.Replace("\n#undef BOOST_ALL_DYN_LINK\n", "\n#undef BOOST_ALL_DYN_LINK\n#define BOOST_PROCESS_USE_STD_FS\n#define BOOST_DLL_USE_STD_FS\n")
 
 Set-Content -LiteralPath "$Root/vcpkg_ports/boost-config/portfile.cmake" `
     -Value $RawData `
