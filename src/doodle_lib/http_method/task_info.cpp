@@ -236,7 +236,7 @@ class run_long_task_local {
     logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
   }
 
-  void run() {
+  void run() const {
     boost::asio::co_spawn(
         g_io_context(), std::visit(*this, arg_),
         boost::asio::bind_cancellation_slot(
@@ -245,7 +245,7 @@ class run_long_task_local {
     );
   }
 
-  boost::asio::awaitable<void> operator()(std::shared_ptr<maya_exe_ns::arg>& in_arg) {
+  boost::asio::awaitable<void> operator()(std::shared_ptr<maya_exe_ns::arg>& in_arg) const {
     auto [l_e, l_r]       = co_await async_run_maya(in_arg, logger_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
@@ -264,7 +264,7 @@ class run_long_task_local {
     );
     co_return;
   }
-  boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) {
+  boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) const {
     auto [l_e, l_r]       = co_await async_auto_loght(in_arg, logger_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
@@ -283,7 +283,7 @@ class run_long_task_local {
     );
     co_return;
   }
-  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) {
+  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) const {
     std::vector<FSys::path> l_paths{};
     for (auto&& l_path_info : FSys::directory_iterator{in_arg->path_}) {
       auto l_ext = l_path_info.path().extension();
@@ -310,7 +310,7 @@ class run_long_task_local {
         )
     );
   }
-  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) {
+  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
     auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
