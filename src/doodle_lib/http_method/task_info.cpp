@@ -182,8 +182,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   run_long_task_local() = default;
   explicit run_long_task_local(std::shared_ptr<server_task_info> in_task_info) : task_info_(std::move(in_task_info)) {}
 
-
-
   void load_form_json(const nlohmann::json& in_json) {
     if (in_json.contains("replace_ref_file")) {  /// 解算文件
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
@@ -287,6 +285,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     co_return;
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) const {
+    co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
     std::vector<FSys::path> l_paths{};
     for (auto&& l_path_info : FSys::directory_iterator{in_arg->path_}) {
       auto l_ext = l_path_info.path().extension();
@@ -314,6 +313,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     );
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
+    co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
     in_arg->file_list_ |=
         ranges::action::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
     auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
@@ -362,8 +362,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
   l_run_long_task_local->load_form_json(l_task);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
-  boost::asio::post(g_io_context(), [l_run_long_task_local]() { l_run_long_task_local->run(); });
-  // l_run_long_task_local->run(); // 莫名其妙的无法产生新的携程, 需要使用post方法
+  l_run_long_task_local->run();
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
