@@ -22,7 +22,6 @@ boost::system::error_code create_move(
 struct image_to_move {
   FSys::path out_path_;
   FSys::path path_{};
-  logger_ptr msg_;
   image_size image_size_;
   shot shot_;
   episodes eps_;

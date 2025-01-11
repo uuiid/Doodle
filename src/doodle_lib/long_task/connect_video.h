@@ -20,8 +20,6 @@ struct connect_video_t {
   std::vector<FSys::path> file_list_{};
   image_size image_size_;
 
-  logger_ptr msg_;
-
   friend void from_json(const nlohmann::json &nlohmann_json_j, connect_video_t &nlohmann_json_t) {
     nlohmann_json_j["out_path"].get_to(nlohmann_json_t.out_path_);
     nlohmann_json_j["file_list"].get_to(nlohmann_json_t.file_list_);
