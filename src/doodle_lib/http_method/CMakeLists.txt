@@ -9,6 +9,7 @@ target_sources(
         kitsu_front_end_reg.h
         tool_version.h
         local_setting.h
+        up_file.h
 
         PRIVATE
         computer.cpp
@@ -20,7 +21,7 @@ target_sources(
         kitsu_front_end_reg.cpp
         tool_version.cpp
         local_setting.cpp
-
+        up_file.cpp
 )
 
 add_subdirectory(kitsu)
