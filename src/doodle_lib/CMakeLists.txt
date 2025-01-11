@@ -1,12 +1,3 @@
-
-cmrc_add_resource_library(
-        doodle_holidaycn
-        WHENCE ${holidaycn_SOURCE_DIR}
-        ${holidaycn_SOURCE_DIR}/2023.json
-        ${holidaycn_SOURCE_DIR}/2024.json
-)
-
-
 add_library(doodle_lib
         #        SHARED
         #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
@@ -19,7 +10,6 @@ target_sources(doodle_lib
         doodle_lib_fwd.h
         doodle_lib_all.h
         doodle_lib_pch.h
-        ${OUT_LISTS_sqlpp}
 )
 
 
@@ -58,6 +48,7 @@ target_link_libraries(doodle_lib
         Boost::contract
         Boost::url
         Boost::iostreams
+        Boost::process
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
         opencv_ml opencv_dnn opencv_core opencv_flann
@@ -72,11 +63,10 @@ target_link_libraries(doodle_lib
         Mpr.lib
         #        Microsoft::DirectXTK
         Eigen3::Eigen
-        doodle_holidaycn
         Alembic::Alembic # abc文件读写
         sqlite_orm::sqlite_orm
         OpenSSL::SSL
-#        OpenSSL::applink
+        #        OpenSSL::applink
 )
 
 target_compile_definitions(doodle_lib

@@ -1,19 +1,3 @@
-# set(FETCHCONTENT_FULLY_DISCONNECTED ON)
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
-
-include(ExternalProject)
-include(FetchContent)
-
-
-FetchContent_Declare(
-        holidaycn
-        GIT_REPOSITORY https://github.com/NateScarlet/holiday-cn.git
-        GIT_TAG master
-)
-
-FetchContent_MakeAvailable(holidaycn)
-
-
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
 

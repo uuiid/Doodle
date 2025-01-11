@@ -62,6 +62,7 @@ find_package(Boost CONFIGS REQUIRED COMPONENTS
         log
         log_setup
         url
+        process
 )
 
 
