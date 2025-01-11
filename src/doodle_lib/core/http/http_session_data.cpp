@@ -13,6 +13,7 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_websocket_client.h>
+#include <doodle_lib/core/http/multipart_body.h>
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 
@@ -23,7 +24,7 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 
-#include "../../../../build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include/sqlite_orm/sqlite_orm.h"
+#include <sqlite_orm/sqlite_orm.h>
 #include <tl/expected.hpp>
 namespace doodle::http {
 namespace detail {
@@ -40,17 +41,20 @@ content_type get_content_type(const std::string_view& in_content_type) {
 
 class async_session_t : public std::enable_shared_from_this<async_session_t> {
   static constexpr auto g_body_limit{500 * 1024 * 1024};  // 500M
-  using executor_type              = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-  using tcp_stream_type            = executor_type::as_default_on_t<boost::beast::tcp_stream>;
-  using tcp_stream_type_ptr        = std::shared_ptr<tcp_stream_type>;
-  using empty_body_type            = boost::beast::http::empty_body;
-  using empty_request_parser_type  = boost::beast::http::request_parser<empty_body_type>;
-  using string_request_parser_type = boost::beast::http::request_parser<boost::beast::http::string_body>;
-  using file_request_parser_type   = boost::beast::http::request_parser<boost::beast::http::file_body>;
+  using executor_type                 = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
+  using tcp_stream_type               = executor_type::as_default_on_t<boost::beast::tcp_stream>;
+  using tcp_stream_type_ptr           = std::shared_ptr<tcp_stream_type>;
+  using empty_body_type               = boost::beast::http::empty_body;
+  using empty_request_parser_type     = boost::beast::http::request_parser<empty_body_type>;
+  using string_request_parser_type    = boost::beast::http::request_parser<boost::beast::http::string_body>;
+  using file_request_parser_type      = boost::beast::http::request_parser<boost::beast::http::file_body>;
+  using multipart_request_parser_type = boost::beast::http::request_parser<doodle::http::multipart_body>;
 
-  using empty_request_parser_ptr   = std::shared_ptr<empty_request_parser_type>;
-  using string_request_parser_ptr  = std::shared_ptr<string_request_parser_type>;
-  using file_request_parser_ptr    = std::shared_ptr<file_request_parser_type>;
+  using empty_request_parser_ptr      = std::shared_ptr<empty_request_parser_type>;
+  using string_request_parser_ptr     = std::shared_ptr<string_request_parser_type>;
+  using file_request_parser_ptr       = std::shared_ptr<file_request_parser_type>;
+  using multipart_request_parser_ptr  = std::shared_ptr<multipart_request_parser_type>;
+
   std::shared_ptr<tcp_stream_type> stream_;
   std::shared_ptr<tcp_stream_type> proxy_relay_stream_;
 
