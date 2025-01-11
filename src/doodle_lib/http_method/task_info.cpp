@@ -311,6 +311,8 @@ class run_long_task_local {
     );
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
+    in_arg->file_list_ |=
+        ranges::action::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
     auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
