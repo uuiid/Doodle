@@ -17,6 +17,8 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/long_task/connect_video.h>
+#include <doodle_lib/long_task/image_to_move.h>
 
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -168,51 +170,166 @@ class run_post_task_local_cancel_manager {
   }
 };
 
-boost::asio::awaitable<void> run_post_task_local_impl(
-    std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
-) {
-  in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
-  auto [l_e, l_r]         = co_await async_run_maya(in_arg, in_logger);
-  in_task_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  // 用户取消
-  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    in_task_info->status_ = server_task_info_status::canceled;
-  else if (l_e) {
-    in_task_info->status_ = server_task_info_status::failed;
-  } else
-    in_task_info->status_ = server_task_info_status::completed;
-  boost::asio::co_spawn(
-      g_io_context(), g_ctx().get<sqlite_database>().install(in_task_info),
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::detached
+class run_long_task_local {
+  std::variant<
+      std::shared_ptr<maya_exe_ns::arg>, std::shared_ptr<import_and_render_ue_ns::args>,
+      std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>>
+      arg_;
+  logger_ptr logger_{};
 
-      )
-  );
-  co_return;
-}
-boost::asio::awaitable<void> run_post_task_local_impl(
-    std::shared_ptr<server_task_info> in_task_info, std::shared_ptr<import_and_render_ue_ns::args> in_arg,
-    logger_ptr in_logger
-) {
-  in_logger->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(in_task_info));
-  auto [l_e, l_r]         = co_await async_auto_loght(in_arg, in_logger);
-  in_task_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  // 用户取消
-  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    in_task_info->status_ = server_task_info_status::canceled;
-  else if (l_e) {
-    in_task_info->status_ = server_task_info_status::failed;
-  } else
-    in_task_info->status_ = server_task_info_status::completed;
-  boost::asio::co_spawn(
-      g_io_context(), g_ctx().get<sqlite_database>().install(in_task_info),
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::detached
+ public:
+  std::shared_ptr<server_task_info> task_info_{};
+  run_long_task_local() = default;
+  explicit run_long_task_local(std::shared_ptr<server_task_info> in_task_info) : task_info_(std::move(in_task_info)) {}
 
-      )
-  );
-  co_return;
-}
+  void load_form_json(const nlohmann::json& in_json) {
+    if (in_json.contains("replace_ref_file")) {  /// 解算文件
+      auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
+      in_json.get_to(*l_arg_t);
+      l_arg_t->sim_path = FSys::path{in_json["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
+      arg_              = l_arg_t;
+    } else if (in_json.contains("file_list")) {  /// 替换文件
+      auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
+      in_json.get_to(*l_arg_t);
+      arg_ = l_arg_t;
+    } else if (in_json.contains("is_sim")) {  /// 自动渲染
+      auto l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
+      in_json.get_to(*l_import_and_render_args);
+      if (in_json["is_sim"].get<bool>()) {
+        auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
+        in_json.get_to(*l_arg_t);
+        l_arg_t->sim_path                   = l_import_and_render_args->project_.path_ / "6-moxing" / "CFX";
+        l_arg_t->export_file                = true;
+        l_arg_t->touch_sim                  = true;
+        l_arg_t->export_anim_file           = true;
+        l_arg_t->create_play_blast_         = true;
+        l_import_and_render_args->maya_arg_ = l_arg_t;
+      } else {
+        auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
+        in_json.get_to(*l_arg_t);
+        l_arg_t->create_play_blast_         = true;
+        l_import_and_render_args->maya_arg_ = l_arg_t;
+      }
+      arg_ = l_import_and_render_args;
+    } else if (in_json.contains("category")) {  // 检查文件任务
+      auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
+      l_arg_t->config(in_json.get<maya_exe_ns::inspect_file_type>());
+    } else if (in_json.contains("image_to_move")) {
+      auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
+      in_json.get_to(*l_image_to_move_args);
+      arg_ = l_image_to_move_args;
+    } else if (in_json.contains("connect_video")) {
+      auto l_connect_video_args = std::make_shared<doodle::detail::connect_video_t>();
+      in_json.get_to(*l_connect_video_args);
+      arg_ = l_connect_video_args;
+    } else {  /// 导出fbx
+      auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
+      in_json.get_to(*l_arg_t);
+      arg_ = l_arg_t;
+    }
+    auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                         fmt::format("{}.log", task_info_->uuid_id_);
+    logger_ = std::make_shared<spdlog::async_logger>(
+        task_info_->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+        spdlog::thread_pool()
+    );
+    logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
+  }
+
+  void run() {
+    boost::asio::co_spawn(
+        g_io_context(), std::visit(*this, arg_),
+        boost::asio::bind_cancellation_slot(
+            g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_), boost::asio::detached
+        )
+    );
+  }
+
+  boost::asio::awaitable<void> operator()(std::shared_ptr<maya_exe_ns::arg>& in_arg) {
+    auto [l_e, l_r]       = co_await async_run_maya(in_arg, logger_);
+    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+    // 用户取消
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+      task_info_->status_ = server_task_info_status::canceled;
+    else if (l_e) {
+      task_info_->status_ = server_task_info_status::failed;
+    } else
+      task_info_->status_ = server_task_info_status::completed;
+    boost::asio::co_spawn(
+        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::detached
+
+        )
+    );
+    co_return;
+  }
+  boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) {
+    auto [l_e, l_r]       = co_await async_auto_loght(in_arg, logger_);
+    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+    // 用户取消
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+      task_info_->status_ = server_task_info_status::canceled;
+    else if (l_e) {
+      task_info_->status_ = server_task_info_status::failed;
+    } else
+      task_info_->status_ = server_task_info_status::completed;
+    boost::asio::co_spawn(
+        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::detached
+
+        )
+    );
+    co_return;
+  }
+  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) {
+    std::vector<FSys::path> l_paths{};
+    for (auto&& l_path_info : FSys::directory_iterator{in_arg->path_}) {
+      auto l_ext = l_path_info.path().extension();
+      if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") l_paths.emplace_back(l_path_info.path());
+    }
+    auto l_images = doodle::movie::image_attr::make_default_attr(&in_arg->eps_, &in_arg->shot_, l_paths);
+    for (auto&& l_image : l_images) {
+      l_image.watermarks_attr.emplace_back(in_arg->user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
+    }
+    auto l_ec             = doodle::detail::create_move(in_arg->out_path_, in_arg->msg_, l_images, in_arg->image_size_);
+    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+    // 用户取消
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+      task_info_->status_ = server_task_info_status::canceled;
+    else if (l_ec) {
+      task_info_->status_ = server_task_info_status::failed;
+    } else
+      task_info_->status_ = server_task_info_status::completed;
+    boost::asio::co_spawn(
+        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::detached
+
+        )
+    );
+  }
+  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) {
+    auto l_ec = doodle::detail::connect_video(in_arg->out_path_, in_arg->msg_, in_arg->file_list_, in_arg->image_size_);
+    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+    // 用户取消
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+      task_info_->status_ = server_task_info_status::canceled;
+    else if (l_ec) {
+      task_info_->status_ = server_task_info_status::failed;
+    } else
+      task_info_->status_ = server_task_info_status::completed;
+    boost::asio::co_spawn(
+        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::detached
+
+        )
+    );
+  }
+};
+
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
   if (in_handle->content_type_ != http::detail::content_type::application_json)
@@ -223,6 +340,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   auto l_ptr = std::make_shared<server_task_info>();
   std::shared_ptr<maya_exe_ns::arg> l_arg{};
   std::shared_ptr<import_and_render_ue_ns::args> l_import_and_render_args{};
+  std::shared_ptr<doodle::detail::image_to_move> l_image_to_move_args{};
+  std::shared_ptr<doodle::detail::connect_video_t> l_connect_video_args{};
+
   logger_ptr l_logger_ptr{};
 
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
@@ -233,71 +353,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
   auto& l_task = l_json["task_data"];
-  if (l_task.contains("replace_ref_file")) {  /// 解算文件
-    auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
-    l_task.get_to(*l_arg_t);
-    l_arg_t->sim_path = FSys::path{l_task["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
-
-    l_arg             = l_arg_t;
-  } else if (l_task.contains("file_list")) {  /// 替换文件
-    auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
-    l_task.get_to(*l_arg_t);
-    l_arg = l_arg_t;
-  } else if (l_task.contains("is_sim")) {  /// 自动渲染
-    l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
-    l_task.get_to(*l_import_and_render_args);
-    if (l_task["is_sim"].get<bool>()) {
-      auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
-      l_task.get_to(*l_arg_t);
-      l_arg_t->sim_path           = l_import_and_render_args->project_.path_ / "6-moxing" / "CFX";
-      l_arg_t->export_file        = true;
-      l_arg_t->touch_sim          = true;
-      l_arg_t->export_anim_file   = true;
-      l_arg_t->create_play_blast_ = true;
-      l_arg                       = l_arg_t;
-    } else {
-      auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
-      l_task.get_to(*l_arg_t);
-      l_arg_t->create_play_blast_ = true;
-      l_arg                       = l_arg_t;
-    }
-    l_import_and_render_args->maya_arg_ = l_arg;
-  } else if (l_task.contains("category")) {  // 检查文件任务
-    auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
-    l_arg_t->config(l_task.get<maya_exe_ns::inspect_file_type>());
-  } else {  /// 导出fbx
-    auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
-    l_task.get_to(*l_arg_t);
-    l_arg = l_arg_t;
-  }
-
-  auto l_logger_path =
-      core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_ptr->uuid_id_);
-  l_logger_ptr = std::make_shared<spdlog::async_logger>(
-      l_ptr->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
-      spdlog::thread_pool()
-  );
-
+  run_long_task_local l_run_long_task_local{l_ptr};
+  // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
+  l_run_long_task_local.load_form_json(l_task);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
-  if (l_import_and_render_args) {
-    boost::asio::co_spawn(
-        g_io_context(), run_post_task_local_impl(l_ptr, l_import_and_render_args, l_logger_ptr),
-        boost::asio::bind_cancellation_slot(
-            g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
-            boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
-
-        )
-    );
-  } else {
-    boost::asio::co_spawn(
-        g_io_context(), run_post_task_local_impl(l_ptr, l_arg, l_logger_ptr),
-        boost::asio::bind_cancellation_slot(
-            g_ctx().get<run_post_task_local_cancel_manager>().add(l_ptr->uuid_id_),
-            boost::asio::consign(boost::asio::detached, l_arg, l_ptr, l_logger_ptr)
-
-        )
-    );
-  }
+  l_run_long_task_local.run();
 
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
