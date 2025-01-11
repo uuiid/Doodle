@@ -170,7 +170,7 @@ class run_post_task_local_cancel_manager {
   }
 };
 
-class run_long_task_local {
+class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
   std::variant<
       std::shared_ptr<maya_exe_ns::arg>, std::shared_ptr<import_and_render_ue_ns::args>,
       std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>>
@@ -181,6 +181,8 @@ class run_long_task_local {
   std::shared_ptr<server_task_info> task_info_{};
   run_long_task_local() = default;
   explicit run_long_task_local(std::shared_ptr<server_task_info> in_task_info) : task_info_(std::move(in_task_info)) {}
+
+
 
   void load_form_json(const nlohmann::json& in_json) {
     if (in_json.contains("replace_ref_file")) {  /// 解算文件
@@ -240,7 +242,8 @@ class run_long_task_local {
     boost::asio::co_spawn(
         g_io_context(), std::visit(*this, arg_),
         boost::asio::bind_cancellation_slot(
-            g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_), boost::asio::detached
+            g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_),
+            boost::asio::consign(boost::asio::detached, shared_from_this())
         )
     );
   }
@@ -354,13 +357,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
-  auto& l_task = l_json["task_data"];
-  run_long_task_local l_run_long_task_local{l_ptr};
+  auto& l_task               = l_json["task_data"];
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
-  l_run_long_task_local.load_form_json(l_task);
+  l_run_long_task_local->load_form_json(l_task);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
-  boost::asio::post(g_io_context(), [l_run_long_task_local]() mutable { l_run_long_task_local.run(); });
-  // l_run_long_task_local.run(); // 莫名其妙的无法产生新的携程, 需要使用post方法
+  boost::asio::post(g_io_context(), [l_run_long_task_local]() { l_run_long_task_local->run(); });
+  // l_run_long_task_local->run(); // 莫名其妙的无法产生新的携程, 需要使用post方法
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
