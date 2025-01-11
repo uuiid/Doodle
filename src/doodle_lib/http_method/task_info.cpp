@@ -236,7 +236,7 @@ class run_long_task_local {
     logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
   }
 
-  void run() const {
+  void run() {
     boost::asio::co_spawn(
         g_io_context(), std::visit(*this, arg_),
         boost::asio::bind_cancellation_slot(
@@ -357,8 +357,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
   l_run_long_task_local.load_form_json(l_task);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
-  l_run_long_task_local.run();
-
+  boost::asio::post(g_io_context(), [l_run_long_task_local]() mutable { l_run_long_task_local.run(); });
+  // l_run_long_task_local.run(); // 莫名其妙的无法产生新的携程, 需要使用post方法
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
