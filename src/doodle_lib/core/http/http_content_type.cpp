@@ -12,6 +12,7 @@ content_type get_content_type(const std::string_view& in_content_type) {
   if (in_content_type.starts_with("image/gif")) return content_type::image_gif;
   if (in_content_type.starts_with("video/mp4")) return content_type::video_mp4;
   if (in_content_type.starts_with("multipart/form-data")) return content_type::multipart_form_data;
+  if (in_content_type.starts_with("application/")) return content_type::application_nuknown;
   return content_type::unknown;
 }
 }  // namespace doodle::http::detail

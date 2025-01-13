@@ -9,6 +9,7 @@ namespace doodle::http::detail {
 enum class content_type {
   text_plain,
   application_json,
+  application_nuknown,
   text_html,
   text_css,
   text_javascript,

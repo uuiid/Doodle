@@ -66,10 +66,14 @@ struct multipart_body {
         boost::to_lower(l_c);
         if (l_c == "content-disposition") {
           if (auto l_pos = in_header.find("name="); l_pos != in_header.npos) {
-            part_.file_name = in_header.substr(l_pos + 5, in_header.find(l_pos, ';'));
+            auto l_end_pos = in_header.find(';', l_pos);
+            part_.name     = in_header.substr(l_pos + 6, l_end_pos - (l_pos + 6) - 1);
+            if (l_end_pos == in_header.npos) part_.name.pop_back();
           }
           if (auto l_pos = in_header.find("filename="); l_pos != in_header.npos) {
-            part_.file_name = in_header.substr(l_pos + 9, in_header.find(l_pos, ';'));
+            auto l_end_pos  = in_header.find(';', l_pos);
+            part_.file_name = in_header.substr(l_pos + 10, l_end_pos - (l_pos + 10) - 1);
+            if (l_end_pos == in_header.npos) part_.file_name.pop_back();
           }
         }
         if (l_c == "content-type") {
