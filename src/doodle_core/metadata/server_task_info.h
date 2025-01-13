@@ -66,7 +66,10 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                             {server_task_info_type::export_sim, "export_sim"},
                             {server_task_info_type::auto_light, "auto_light"},
                             {server_task_info_type::merge_video, "merge_video"},
-                            {server_task_info_type::connect_video, "connect_video"}}
+                            {server_task_info_type::connect_video, "connect_video"},
+                            {server_task_info_type::check_maya, "check_maya"}
+
+                           }
 );
 class server_task_info : boost::equality_comparable<server_task_info> {
  public:

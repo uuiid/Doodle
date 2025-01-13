@@ -6,6 +6,7 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include "boost/beast/http/field.hpp"
 
 namespace doodle::http {
 namespace {
