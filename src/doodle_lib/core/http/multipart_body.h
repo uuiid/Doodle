@@ -62,7 +62,7 @@ struct multipart_body {
     void parser_headers(InIt const& in_begin, InIt const& in_end) {
       std::string in_header{in_begin, in_end};
       if (auto l_it = in_header.find(':'); l_it != in_header.npos) {
-        std::string_view l_c{in_header.c_str(), l_it};
+        auto l_c = in_header.substr(0, l_it);
         boost::to_lower(l_c);
         if (l_c == "content-disposition") {
           if (auto l_pos = in_header.find("name="); l_pos != in_header.npos) {
@@ -92,7 +92,7 @@ struct multipart_body {
           if (!std::holds_alternative<std::string>(part_.body_)) {
             part_.body_ = std::string{in_begin, in_end};
           } else
-            part_.body_ += std::string{in_begin, in_end};
+            std::get<std::string>(part_.body_) += std::string{in_begin, in_end};
           break;
         default:
           if (!std::holds_alternative<FSys::path>(part_.body_)) {

@@ -29,16 +29,6 @@
 namespace doodle::http {
 namespace detail {
 
-content_type get_content_type(const std::string_view& in_content_type) {
-  if (in_content_type.starts_with("application/json")) return content_type::application_json;
-  if (in_content_type.starts_with("image/jpeg")) return content_type::image_jpeg;
-  if (in_content_type.starts_with("image/jpg")) return content_type::image_jpg;
-  if (in_content_type.starts_with("image/png")) return content_type::image_png;
-  if (in_content_type.starts_with("image/gif")) return content_type::image_gif;
-  if (in_content_type.starts_with("video/mp4")) return content_type::video_mp4;
-  return content_type::unknown;
-}
-
 class async_session_t : public std::enable_shared_from_this<async_session_t> {
   static constexpr auto g_body_limit{500 * 1024 * 1024};  // 500M
   using executor_type                 = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
@@ -61,7 +51,6 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
   http_route_ptr route_ptr_;
   empty_request_parser_ptr request_parser_;
   string_request_parser_ptr string_request_parser_;
-  file_request_parser_ptr file_request_parser_;
 
   std::shared_ptr<session_data> session_;
 
@@ -390,6 +379,18 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
     if (ec_) co_return false;
     session_->body_       = l_path;
     session_->req_header_ = std::move(l_file_request_parser_->release().base());
+    co_return true;
+  }
+
+  boost::asio::awaitable<bool> save_multipart_form_data_file() {
+    auto l_multipart_request_parser_ =
+        std::make_shared<boost::beast::http::request_parser<doodle::http::multipart_body>>(std::move(*request_parser_));
+    std::tie(ec_, std::ignore) =
+        co_await boost::beast::http::async_read(*stream_, buffer_, *l_multipart_request_parser_);
+    if (ec_) co_return false;
+    session_->body_       = l_multipart_request_parser_->get().body();
+    session_->req_header_ = std::move(l_multipart_request_parser_->release().base());
+    co_return true;
   }
 
   boost::asio::awaitable<bool> parse_body() {
@@ -433,7 +434,9 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           case content_type::video_mp4:
             if (!co_await save_bode_file(".mp4")) co_return false;
             break;
-
+          case content_type::multipart_form_data:
+            if (!co_await save_multipart_form_data_file()) co_return false;
+            break;
           case content_type::unknown:
             break;
           default:
