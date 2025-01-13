@@ -16,6 +16,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
   if (in_handle->req_header_.count(boost::beast::http::field::content_disposition) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "缺失必要的请求头信息");
 
+  auto l_d = in_handle->req_header_[boost::beast::http::field::content_disposition];
+  default_logger_raw()->info("{}", std::string{l_d});
+
   co_return in_handle->make_msg("{}");
 }
 }  // namespace
