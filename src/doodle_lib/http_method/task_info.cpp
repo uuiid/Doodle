@@ -213,7 +213,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       arg_ = l_import_and_render_args;
     } else if (in_json.contains("category")) {  // 检查文件任务
       auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
-      l_arg_t->config(in_json.get<maya_exe_ns::inspect_file_type>());
+      l_arg_t->config(in_json["category"].get<maya_exe_ns::inspect_file_type>());
       arg_ = l_arg_t;
     } else if (in_json.contains("image_to_move")) {
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
