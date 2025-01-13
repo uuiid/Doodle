@@ -5,7 +5,7 @@
 #pragma once
 #include "doodle_core/core/core_set.h"
 
-#include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/core/http/http_content_type.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/ssl/error.hpp>

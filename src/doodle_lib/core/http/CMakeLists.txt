@@ -10,6 +10,7 @@ target_sources(
         http_websocket_client.h
         zlib_deflate_file_body.h
         multipart_body.h
+        http_content_type.h
 
 
         PRIVATE
@@ -22,4 +23,5 @@ target_sources(
         http_websocket_client.cpp
         zlib_deflate_file_body.cpp
         multipart_body.cpp
+        http_content_type.cpp
 )

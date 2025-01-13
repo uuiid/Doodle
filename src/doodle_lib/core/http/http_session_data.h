@@ -6,9 +6,13 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/core/http/http_content_type.h>
+#include <doodle_lib/core/http/multipart_body.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
+
 #include <tl/expected.hpp>
 
 namespace doodle::http {
@@ -26,23 +30,6 @@ using tcp_stream_type       = executor_type::as_default_on_t<boost::beast::tcp_s
 using tcp_stream_type_ptr   = std::shared_ptr<tcp_stream_type>;
 using request_parser_ptr    = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
 namespace detail {
-enum class content_type {
-  text_plain,
-  application_json,
-  text_html,
-  text_css,
-  text_javascript,
-  text_xml,
-  image_jpeg,
-  image_jpg,
-  image_png,
-  image_gif,
-  video_mp4,
-  form_data,
-  unknown
-};
-
-content_type get_content_type(const std::string_view& in_str);
 
 class session_data {
   std::string zlib_compress(const std::string& in_str);
@@ -58,7 +45,8 @@ class session_data {
   bool keep_alive_{};
 
   content_type content_type_{content_type::text_plain};
-  std::variant<std::string, nlohmann::json, FSys::path> body_;  // std::variant<std::string, nlohmann::json>
+  std::variant<std::string, nlohmann::json, FSys::path, multipart_body::value_type>
+      body_;  // std::variant<std::string, nlohmann::json>
   // 请求头
   boost::beast::http::request_header<> req_header_;
 
@@ -76,7 +64,7 @@ class session_data {
   );
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body);
-  tl::expected<boost::beast::http::message_generator,std::string> make_msg(
+  tl::expected<boost::beast::http::message_generator, std::string> make_msg(
       const FSys::path& in_path, const std::string_view& mine_type
   );
 };
