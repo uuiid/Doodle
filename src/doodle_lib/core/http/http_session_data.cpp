@@ -434,6 +434,9 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           case content_type::video_mp4:
             if (!co_await save_bode_file(".mp4")) co_return false;
             break;
+          case content_type::application_nuknown:
+            if (!co_await save_bode_file(".tmp")) co_return false;
+            break;
           case content_type::multipart_form_data:
             if (!co_await save_multipart_form_data_file()) co_return false;
             break;
