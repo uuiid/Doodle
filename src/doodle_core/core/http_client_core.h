@@ -104,6 +104,7 @@ using http_client_data_base_ptr = std::shared_ptr<http_client_data_base>;
 template <typename ResponseBody, typename RequestType>
 boost::asio::awaitable<std::tuple<boost::system::error_code, boost::beast::http::response<ResponseBody>>>
 read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::beast::http::request<RequestType> in_req) {
+  in_req.payload_size();
   using buffer_type = boost::beast::flat_buffer;
   auto l_g          = co_await in_client_data->queue_.queue(boost::asio::use_awaitable);
   auto l_work_guard = boost::asio::make_work_guard(in_client_data->get_executor());

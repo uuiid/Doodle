@@ -34,12 +34,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
 
   } else {
     boost::beast::http::request<boost::beast::http::empty_body> l_req{in_handle->req_header_};
+    l_req.target(fmt::format("/api/data/tasks/{}/full", l_task_id));
+    l_req.method(boost::beast::http::verb::get);
     l_req.erase(boost::beast::http::field::content_disposition);
     l_req.erase(boost::beast::http::field::content_type);
+    l_req.erase(boost::beast::http::field::content_length);
     l_req.prepare_payload();
 
     auto [l_ec, l_res] =
-        co_await detail::read_and_write<boost::beast::http::empty_body>(kitsu::create_kitsu_proxy(in_handle), l_req);
+        co_await detail::read_and_write<boost::beast::http::string_body>(kitsu::create_kitsu_proxy(in_handle), l_req);
     if (l_ec) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
 
     l_json = nlohmann::json::parse(l_res.body());
