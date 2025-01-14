@@ -4,6 +4,8 @@
 
 #include "up_file.h"
 
+#include "doodle_core/sqlite_orm/sqlite_database.h"
+
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -24,8 +26,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "缺失必要的请求头信息");
 
   FSys::path l_d{std::string{in_handle->req_header_[boost::beast::http::field::content_disposition]}};
+  nlohmann::json l_json;
   if (auto l_task = g_ctx().get<cache_manger>().get(l_task_id); l_task) {
-    l_d = gen_path_from_json(*l_task) / l_d;
+    l_json = std::move(*l_task);
+
   } else {
     boost::beast::http::request<boost::beast::http::empty_body> l_req{in_handle->req_header_};
     l_req.erase(boost::beast::http::field::content_disposition);
@@ -36,10 +40,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
         co_await detail::read_and_write<boost::beast::http::empty_body>(kitsu::create_kitsu_proxy(in_handle), l_req);
     if (l_ec) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
 
-    auto l_json = nlohmann::json::parse(l_res.body());
-    l_d         = gen_path_from_json(l_json) / l_d;
+    l_json = nlohmann::json::parse(l_res.body());
     g_ctx().get<cache_manger>().set(l_task_id, l_json);
   }
+
+  auto l_prj =
+      g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
+  if (l_prj.empty()) throw_exception(std::runtime_error{"未找到对应的项目"});
+  l_d             = l_prj.front().path_ / gen_path_from_json(l_json) / l_d;
+
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
   if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
   FSys::rename(l_tmp_path, l_d);
