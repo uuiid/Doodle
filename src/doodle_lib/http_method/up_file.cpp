@@ -16,7 +16,9 @@ namespace doodle::http {
 namespace {
 
 /// 从json中生成路径
-FSys::path gen_path_from_json(const nlohmann::json& in_json) {}
+FSys::path gen_path_from_json(const nlohmann::json& in_json) {
+  if (in_json["task_type"]["name"] != "模型") throw_exception(doodle_error{"未知的 task_type 类型"});
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(session_data_ptr in_handle) {
   uuid l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
@@ -46,7 +48,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
 
   auto l_prj =
       g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
-  if (l_prj.empty()) throw_exception(std::runtime_error{"未找到对应的项目"});
+  if (l_prj.empty()) throw_exception(doodle_error{"未找到对应的项目"});
   l_d             = l_prj.front().path_ / gen_path_from_json(l_json) / l_d;
 
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
