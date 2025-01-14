@@ -16,8 +16,21 @@ namespace doodle::http {
 namespace {
 
 /// 从json中生成路径
-FSys::path gen_path_from_json(const nlohmann::json& in_json) {
+FSys::path gen_path_from_json_ma(const nlohmann::json& in_json) {
   if (in_json["task_type"]["name"] != "模型") throw_exception(doodle_error{"未知的 task_type 类型"});
+  auto l_data = in_json["entity"]["data"];
+
+  std::int32_t l_gui_dang{};
+  if (l_data["gui_dang"].is_number())
+    l_gui_dang = l_data["gui_dang"].get<std::int32_t>();
+  else if (l_data["gui_dang"].is_string() && !l_data["gui_dang"].get<std::string>().empty())
+    l_gui_dang = std::stoi(l_data["gui_dang"].get<std::string>());
+
+  auto l_str  = fmt::format(
+      "6-moxing/Ch/JD{:02d}_01/Ch{}/Mod", l_gui_dang,
+      l_data["bian_hao"].get_ref<const std::string&>()
+  );
+  return l_str;
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(session_data_ptr in_handle) {
@@ -52,7 +65,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
   auto l_prj =
       g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
   if (l_prj.empty()) throw_exception(doodle_error{"未找到对应的项目"});
-  l_d             = l_prj.front().path_ / gen_path_from_json(l_json) / l_d;
+  l_d             = l_prj.front().path_ / gen_path_from_json_ma(l_json) / l_d;
 
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
   if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
