@@ -19,7 +19,6 @@
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <doodle_lib/core/http/json_body.h>
-#include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>

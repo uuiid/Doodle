@@ -16,7 +16,6 @@
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/scan_win_service.h>
-#include <doodle_lib/core/up_auto_light_file.h>
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
