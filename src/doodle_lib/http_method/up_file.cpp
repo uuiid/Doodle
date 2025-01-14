@@ -27,7 +27,7 @@ FSys::path gen_path_from_json_ma(const nlohmann::json& in_json) {
     l_gui_dang = std::stoi(l_data["gui_dang"].get<std::string>());
 
   auto l_str  = fmt::format(
-      "6-moxing/Ch/JD{:02d}_01/Ch{}/Mod", l_gui_dang,
+      "6-moxing/Ch/JD{:02d}/Ch{}/Mod", l_gui_dang,
       l_data["bian_hao"].get_ref<const std::string&>()
   );
   return l_str;
