@@ -178,7 +178,18 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
     }
   }
   if (l_arg.too_many_point_check_) {
-    default_logger_raw()->info("检查多余点数功能暂时不可用");
+    default_logger_raw()->info("检查多余点数");
+    MFnMesh l_mesh{};
+    for (MItDag l_iter{MItDag::kDepthFirst, MFn::kMesh, &l_s}; !l_iter.isDone(); l_iter.next()) {
+      maya_chick(l_mesh.setObject(l_iter.currentItem()));
+      auto l_num_ver = l_mesh.numVertices();
+      auto l_num_uv  = l_mesh.numUVs();
+      // default_logger_raw()->warn("{} {} {}", get_node_name(l_iter.currentItem()), l_num_ver, l_num_uv);
+      if (l_num_ver > l_num_uv) {
+        l_e = maya_enum::maya_error_t::check_error;
+        default_logger_raw()->error("存在多余点数 {}", get_node_full_name(l_iter.currentItem()));
+      }
+    }
   }
   app_base::Get().stop_app();
   if (l_e == maya_enum::maya_error_t::check_error)
