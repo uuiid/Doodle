@@ -312,6 +312,7 @@ sudo systemctl enable zou
 sudo systemctl enable zou-events
 sudo systemctl start zou
 sudo systemctl start zou-events
+sudo systemctl restart zou-events
 sudo systemctl restart nginx
 
 
