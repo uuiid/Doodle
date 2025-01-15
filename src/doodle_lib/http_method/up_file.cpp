@@ -25,9 +25,14 @@ FSys::path gen_path_from_json_ma(const nlohmann::json& in_json) {
     l_gui_dang = l_data["gui_dang"].get<std::int32_t>();
   else if (l_data["gui_dang"].is_string() && !l_data["gui_dang"].get<std::string>().empty())
     l_gui_dang = std::stoi(l_data["gui_dang"].get<std::string>());
+  std::int32_t l_kai_shi_ji_shu{};
+  if (l_data["kai_shi_ji_shu"].is_number())
+    l_kai_shi_ji_shu = l_data["kai_shi_ji_shu"].get<std::int32_t>();
+  else if (l_data["kai_shi_ji_shu"].is_string() && !l_data["kai_shi_ji_shu"].get<std::string>().empty())
+    l_kai_shi_ji_shu = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
 
-  auto l_str  = fmt::format(
-      "6-moxing/Ch/JD{:02d}/Ch{}/Mod", l_gui_dang,
+  auto l_str = fmt::format(
+      "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", l_gui_dang, l_kai_shi_ji_shu,
       l_data["bian_hao"].get_ref<const std::string&>()
   );
   return l_str;
