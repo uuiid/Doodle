@@ -17,7 +17,9 @@ namespace {
 
 /// 从json中生成路径
 FSys::path gen_path_from_json_ma(const nlohmann::json& in_json) {
-  if (in_json["task_type"]["name"] != "模型") throw_exception(doodle_error{"未知的 task_type 类型"});
+  if (in_json["task_type"]["name"].get_ref<const std::string&>() != "角色")
+    throw_exception(doodle_error{"未知的 task_type 类型"});
+
   auto l_data = in_json["entity"]["data"];
 
   std::int32_t l_gui_dang{};
