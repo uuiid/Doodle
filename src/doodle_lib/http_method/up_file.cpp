@@ -34,13 +34,14 @@ FSys::path gen_path_from_json_ma(const nlohmann::json& in_json) {
     l_kai_shi_ji_shu = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
 
   auto l_str = fmt::format(
-      "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", l_gui_dang, l_kai_shi_ji_shu,
-      l_data["bian_hao"].get_ref<const std::string&>()
+      "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", l_gui_dang, l_kai_shi_ji_shu, l_data["bian_hao"].get_ref<const std::string&>()
   );
   return l_str;
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(
+    std::shared_ptr<std::function<std::string(const nlohmann::json&)>> in_path, session_data_ptr in_handle
+) {
   uuid l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
@@ -72,19 +73,44 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(sess
   auto l_prj =
       g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
   if (l_prj.empty()) throw_exception(doodle_error{"未找到对应的项目"});
-  l_d             = l_prj.front().path_ / gen_path_from_json_ma(l_json) / l_d;
+  l_d             = l_prj.front().path_ / gen_path_from_json_ma(l_json) / (*in_path)(l_json) / l_d;
 
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
   if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
   FSys::rename(l_tmp_path, l_d);
   co_return in_handle->make_msg("{}");
 }
+
 }  // namespace
 void up_file_reg(http_route& in_route) {
-  in_route.reg(
-      std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/maya", up_file_asset
+  in_route
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/maya",
+              std::bind_front(
+                  up_file_asset, std::make_shared<std::function<std::string(const nlohmann::json&)>>(
+                                     [](const nlohmann::json&) -> std::string { return {"Mod"}; }
+                                 )
+              )
+          )
       )
-  );
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/ue",
+              std::bind_front(
+                  up_file_asset,
+                  std::make_shared<std::function<std::string(const nlohmann::json&)>>(
+                      [](const nlohmann::json& in_json) -> std::string {
+                        auto l_data = in_json["entity"]["data"];
+                        return fmt::format("{}_UE5", l_data["pin_yin_ming_cheng"].get_ref<const std::string&>());
+                      }
+                  )
+              )
+
+          )
+      )
+
+  ;
+
 }
 }  // namespace doodle::http
