@@ -66,6 +66,7 @@
 #include "FileHelpers.h"
 #include "MoviePipelineCameraSetting.h"
 #include "MoviePipelineEXROutput.h"
+#include "SequencerTools.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -613,7 +614,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		}
 	}
 	//--------------------
-	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, true);
+	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
 	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
@@ -648,7 +649,6 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
 	L_LevelSequenceActor->InitializePlayer();
 	L_LevelSequencePlayer->Play();
-	L_LevelSequencePlayer->Stop();
 	//-----------------------
 	FFBXInOutParameters InOutParams;
 	UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
@@ -666,9 +666,14 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	//---------------------
 	bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(GWorld, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, L_ImportFBXSettings, InOutParams);
 	//----------------
+	L_LevelSequencePlayer->Stop();
 	TempActor->Destroy();
 	L_LevelSequenceActor->Destroy();
 	FbxImporter->ReleaseScene();
+
+
+	// USequencerToolsFunctionLibrary::ImportLevelSequenceFBX(GWorld, TheLevelSequence, {}, L_ImportFBXSettings, InFbxPath);
+
 	//----------------------------
 	Bindings = TheLevelSequence->GetMovieScene()->GetBindings();
 	TArray<FRotator> MainLightRot{};
@@ -746,11 +751,11 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	}
 	// L_LevelSequencePlayer->
 	// EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
-	L_LevelSequencePlayer->ConditionalBeginDestroy();
-
-	GEngine->ForceGarbageCollection(true);
-	GEngine->PerformGarbageCollectionAndCleanupActors();
-	GEngine->ConditionalCollectGarbage();
+	// L_LevelSequencePlayer->ConditionalBeginDestroy();
+	//
+	// GEngine->ForceGarbageCollection(true);
+	// GEngine->PerformGarbageCollectionAndCleanupActors();
+	// GEngine->ConditionalCollectGarbage();
 	CommandletHelpers::TickEngine(TheRenderWorld);
 }
 
