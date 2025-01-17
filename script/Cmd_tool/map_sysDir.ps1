@@ -1,43 +1,46 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
-class map_dir {
+class map_dir
+{
     [string]$link;
     [string]$source;
     [string]$name;
 }
 
 $map_item = @(
-    [map_dir]@{link = "C:\sy\ChengXv_8"; source = "\\192.168.10.250\public\Prism_projects"; name = "程序开发_250" },
-    [map_dir]@{link = "C:\sy\donghuagongxiang_8"; source = "\\192.168.10.250\public\动画共享"; name = "动画共享_250" },
-    [map_dir]@{link = "C:\sy\HouQi_8"; source = "\\192.168.10.250\public\HouQi"; name = "后期_250" },
-    [map_dir]@{link = "C:\sy\MeiYiGiao_8"; source = "\\192.168.10.250\public\美易高"; name = "美易高" },
-    [map_dir]@{link = "C:\sy\jianji_250"; source = "\\192.168.10.250\public\11-剪辑" ; name = "剪辑_250" },
-    [map_dir]@{link = "C:\sy\JianJi_9"; source = "\\192.168.10.218\jianji"; name = "剪辑_218" },
-    [map_dir]@{link = "C:\sy\HouQi_9"; source = "\\192.168.10.218\houqi"; name = "后期_218" },
-    [map_dir]@{link = "C:\sy\JianJi_8"; source = "\\192.168.10.240\public\剪辑_240"; name = "剪辑_240" },
-    [map_dir]@{link = "C:\sy\doodle"; source = "\\192.168.10.242\public\doodle"; name = "软件" },
+    [map_dir]@{ link = "C:\sy\ChengXv_8"; source = "\\192.168.10.250\public\Prism_projects"; name = "程序开发_250" },
+    [map_dir]@{ link = "C:\sy\donghuagongxiang_8"; source = "\\192.168.10.250\public\动画共享"; name = "动画共享_250" },
+    [map_dir]@{ link = "C:\sy\HouQi_8"; source = "\\192.168.10.250\public\HouQi"; name = "后期_250" },
+    [map_dir]@{ link = "C:\sy\MeiYiGiao_8"; source = "\\192.168.10.250\public\美易高"; name = "美易高" },
+    [map_dir]@{ link = "C:\sy\jianji_250"; source = "\\192.168.10.250\public\11-剪辑"; name = "剪辑_250" },
+    [map_dir]@{ link = "C:\sy\JianJi_9"; source = "\\192.168.10.218\jianji"; name = "剪辑_218" },
+    [map_dir]@{ link = "C:\sy\HouQi_9"; source = "\\192.168.10.218\houqi"; name = "后期_218" },
+    [map_dir]@{ link = "C:\sy\JianJi_8"; source = "\\192.168.10.240\public\剪辑_240"; name = "剪辑_240" },
+    [map_dir]@{ link = "C:\sy\doodle"; source = "\\192.168.10.242\public\doodle"; name = "软件" },
 
-    [map_dir]@{link = "C:\sy\ChangAnHuanJie_8"; source = "\\192.168.10.240\public\changanhuanjie"; name = "长安幻街_240" },
-    [map_dir]@{link = "C:\sy\WuJinShenYu_8"; source = "\\192.168.10.240\public\WuJinShenYu"; name = "无尽神域_240" },
-    [map_dir]@{link = "C:\sy\WuDiJianHun_8"; source = "\\192.168.10.240\public\WuDiJianHun"; name = "无敌剑魂_240" },
-    [map_dir]@{link = "C:\sy\WanGuShenHua_8"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
-    [map_dir]@{link = "C:\sy\LianQiShiWanNian_8"; source = "\\192.168.10.253\public\LianQiShiWanNian"; name = "炼气十万年_240" },
-    [map_dir]@{link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
-    [map_dir]@{link = "C:\sy\WGXD"; source = "\\192.168.10.242\public\WGXD"; name = "万古邪帝_240" },
-    [map_dir]@{link = "C:\sy\LongMaiWuShen"; source = "\\192.168.10.240\public\LongMaiWuShen"; name = "龙脉武神_240" },
+    [map_dir]@{ link = "C:\sy\ChangAnHuanJie_8"; source = "\\192.168.10.240\public\changanhuanjie"; name = "长安幻街_240" },
+    [map_dir]@{ link = "C:\sy\WuJinShenYu_8"; source = "\\192.168.10.240\public\WuJinShenYu"; name = "无尽神域_240" },
+    [map_dir]@{ link = "C:\sy\WuDiJianHun_8"; source = "\\192.168.10.240\public\WuDiJianHun"; name = "无敌剑魂_240" },
+    [map_dir]@{ link = "C:\sy\WanGuShenHua_8"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
+    [map_dir]@{ link = "C:\sy\LianQiShiWanNian_8"; source = "\\192.168.10.253\public\LianQiShiWanNian"; name = "炼气十万年_240" },
+    [map_dir]@{ link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
+    [map_dir]@{ link = "C:\sy\WGXD"; source = "\\192.168.10.242\public\WGXD"; name = "万古邪帝_240" },
+    [map_dir]@{ link = "C:\sy\LongMaiWuShen"; source = "\\192.168.10.240\public\LongMaiWuShen"; name = "龙脉武神_240" },
     [map_dir]@{ link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" },
 
-    [map_dir]@{link = "C:\sy\WanYuFengShen_9"; source = "\\192.168.10.218\WanYuFengShen"; name = "万域封神_218" },
-    [map_dir]@{link = "C:\sy\KuangShenMoZun_9"; source = "\\192.168.10.218\KuangShenMoZun"; name = "狂神魔尊_218" },
-    [map_dir]@{link = "C:\sy\DuBuXiaoYao_8"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
-    [map_dir]@{link = "C:\sy\SSWH"; source = "\\192.168.10.240\public\SSWH"; name = "双生武魂_240" },
-    [map_dir]@{link = "C:\sy\WDSXTQL"; source = "\\192.168.10.242\public\WDSXTQL"; name = "我的师兄太强了_240" },
-    [map_dir]@{link = "C:\sy\ZMLCLWDSWD"; source = "\\192.168.10.240\public\ZMLCLWDSWD"; name = "宗门里除了我都是卧底_240" },
-    [map_dir]@{link = "C:\sy\WSMSHWDL"; source = "\\192.168.10.242\public\WSMSHWDL"; name = "我什么时候无敌了_242" },
-    [map_dir]@{link = "C:\sy\DJ_PV"; source = "\\192.168.10.242\public\DJ_PV"; name = "DJ_PV" },
-    [map_dir]@{link = "C:\sy\JJ_DJ"; source = "\\192.168.10.242\public\JJ_DJ"; name = "JJ_DJ" },
-    [map_dir]@{link = "C:\sy\AssetLibrary"; source = "\\192.168.10.242\public\AssetLibrary"; name = "AssetLibrary" }
+    [map_dir]@{ link = "C:\sy\WanYuFengShen_9"; source = "\\192.168.10.218\WanYuFengShen"; name = "万域封神_218" },
+    [map_dir]@{ link = "C:\sy\KuangShenMoZun_9"; source = "\\192.168.10.218\KuangShenMoZun"; name = "狂神魔尊_218" },
+    [map_dir]@{ link = "C:\sy\DuBuXiaoYao_8"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
+    [map_dir]@{ link = "C:\sy\SSWH"; source = "\\192.168.10.240\public\SSWH"; name = "双生武魂_240" },
+    [map_dir]@{ link = "C:\sy\WDSXTQL"; source = "\\192.168.10.242\public\WDSXTQL"; name = "我的师兄太强了_240" },
+    [map_dir]@{ link = "C:\sy\ZMLCLWDSWD"; source = "\\192.168.10.240\public\ZMLCLWDSWD"; name = "宗门里除了我都是卧底_240" },
+    [map_dir]@{ link = "C:\sy\WSMSHWDL"; source = "\\192.168.10.242\public\WSMSHWDL"; name = "我什么时候无敌了_242" },
+    [map_dir]@{ link = "C:\sy\DJ_PV"; source = "\\192.168.10.242\public\DJ_PV"; name = "DJ_PV" },
+    [map_dir]@{ link = "C:\sy\JJ_DJ"; source = "\\192.168.10.242\public\JJ_DJ"; name = "JJ_DJ" },
+    [map_dir]@{ link = "C:\sy\AssetLibrary"; source = "\\192.168.10.242\public\AssetLibrary"; name = "AssetLibrary" },
+    [map_dir]@{ link = "C:\sy\ShouQianZX"; source = "\\192.168.10.250\public\ShouQianZX"; name = "ShouQianZX" }
 )
-function Add-SyDir {
+function Add-SyDir
+{
     $main_ini = @"
 [.ShellClassInfo]
 InfoTip=@Shell32.dll,-12688
@@ -59,15 +62,18 @@ FolderType=
 Logo =
 
 "@;
-    foreach ($i in Get-Childitem -Path "C:\sy" ) {
+    foreach ($i in Get-Childitem -Path "C:\sy")
+    {
         $path = "C:\sy\" + $i
         (Get-Item -Path $path).Delete()
-        Write-Host "删除 " $path  
+        Write-Host "删除 " $path
     }
     # Remove-Item -Path "C:\sy" -Recurse -Confirm -ErrorAction Stop
-    if ( Test-Path -Path "C:\sy") {
+    if (Test-Path -Path "C:\sy")
+    {
     }
-    else {
+    else
+    {
         New-Item "C:\sy" -ItemType Directory
     }
     Set-Content -Path "C:\sy\desktop.ini" -Value $main_ini -Encoding "unicode" -Force
@@ -75,39 +81,48 @@ Logo =
     $file.Attributes = 'Archive, System, Hidden'
 }
 
-function Add-SymLink {
-    foreach ($item in $map_item) {
+function Add-SymLink
+{
+    foreach ($item in $map_item)
+    {
         $item -is [map_dir]
-        
-        try {
+
+        try
+        {
 
             # $test_file_path = $item.source + "\test.run_txt"
             Get-Childitem -Path $item.source -ErrorAction Stop
             # New-Item -Path $test_file_path -ItemType File -Force -ErrorAction Stop
             # Remove-Item -Path $test_file_path -ErrorAction Stop
-            if (Test-Path $item.source) {
-                if (Test-Path $item.link) {
+            if (Test-Path $item.source)
+            {
+                if (Test-Path $item.link)
+                {
                     $fod = Get-Item -Path $item.link
                     $fod.Delete()
                 }
                 New-Item -ItemType SymbolicLink -Path $item.link -Target $item.source
             }
         }
-        catch [System.Management.Automation.ActionPreferenceStopException] {
+        catch [System.Management.Automation.ActionPreferenceStopException]
+        {
             Write-Host "目录" $item.source "没有访问权限， 取消映射"
         }
-        catch {
+        catch
+        {
             $message = $_
             Write-Warning "catch all 目录 $message"
         }
     }
 }
 
-function Add-Tile {
+function Add-Tile
+{
     param (
-        
+
     )
-    foreach ($item in $map_item) {
+    foreach ($item in $map_item)
+    {
         Write-Host "开始创建 目录 " $item.source " 的别名"
         $ini = $item.source + "\desktop.ini"
         $con = @"
@@ -118,22 +133,25 @@ IconIndex=-101
 IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 
 [{F29F85E0-4FF9-1068-AB91-08002B27B3D9}]
-    Prop2 = 31,$($item.name)
+    Prop2 = 31,$( $item.name )
     Prop3 = 31,secret
     Prop4 = 31,John Doe
     Prop5 = 31,how it works
     Prop6 = 31,this is comment
 
 "@
-        try {
+        try
+        {
             Set-Content -Path $ini -Value $con -Encoding "unicode" -Force -ErrorAction Stop
             $file = Get-Item -Path $ini -Force
             $file.Attributes = 'Archive, System, Hidden'
         }
-        catch [System.Management.Automation.ActionPreferenceStopException] {
+        catch [System.Management.Automation.ActionPreferenceStopException]
+        {
             Write-Host "目录" $item.source "没有访问权限， 不写入"
         }
-        catch {
+        catch
+        {
             $message = $_
             Write-Warning "catch all 目录 $message"
         }
@@ -142,4 +160,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.18.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.19.exe -requireAdmin
