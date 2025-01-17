@@ -146,7 +146,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> create_task(sessio
     g_ctx().get<cache_manger>().erase(l_json["id"].get<uuid>());
   co_return std::move(l_res);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> create_task2(session_data_ptr in_handle) {
+  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
 
+  auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
+
+  if (l_ec) {
+    co_return std::move(l_res);
+  }
+  if (auto l_json = nlohmann::json::parse(l_res.body()); l_json.contains("id"))
+    g_ctx().get<cache_manger>().erase(l_json["id"].get<uuid>());
+  co_return std::move(l_res);
+}
 }  // namespace
 void task_reg(http_route& in_http_route) {
   in_http_route
@@ -162,6 +174,12 @@ void task_reg(http_route& in_http_route) {
           )
       )
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/tasks", create_task))
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post,
+              "api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks", create_task2
+          )
+      )
 
       ;
 }

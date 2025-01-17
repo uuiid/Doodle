@@ -34,6 +34,7 @@ target_sources(
         project_status.h
         task_status.h
         status_automation.h
+        entity.h
 
 
         PRIVATE
