@@ -69,7 +69,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
   using time_point = std::chrono::time_point<Clock, Duration>;
   static void to_json(json& j, const time_point& in_time) {
     try {
-      j = fmt::format("{:%F %T}",in_time);
+      j = fmt::format("{:%F %T}", in_time);
     } catch (const fmt::format_error& in_err) {
       // j = nlohmann::json::value_t::null;
       throw nlohmann::json::other_error::create(502, in_err.what(), &j);
@@ -93,8 +93,18 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
   }
 
   static void from_json(const json& j, time_point& in_time) {
-    std::chrono::local_time<Duration> l_local_time = j.get<std::chrono::local_time<Duration>>();
-    in_time = std::chrono::zoned_time<Duration>{std::chrono::current_zone(), l_local_time};
+    auto& l_str = j.get_ref<const std::string&>();
+    std::istringstream in{l_str};
+    std::chrono::system_clock::time_point l_time{};
+    if (in >> std::chrono::parse("%FT%TZ", l_time))
+      ;
+    else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%FT%T%Ez", l_time))
+      ;
+    else if (in.clear(), in.exceptions(std::ios::failbit), in.str(l_str), in >> std::chrono::parse("%F %T", l_time))
+      ;
+    in_time = time_point{std::chrono::current_zone(), l_time};
+    // std::chrono::local_time<Duration> l_local_time = j.get<std::chrono::local_time<Duration>>();
+    // in_time = std::chrono::zoned_time<Duration>{std::chrono::current_zone(), l_local_time};
   }
 };
 template <class T>

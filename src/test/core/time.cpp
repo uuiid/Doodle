@@ -9,7 +9,6 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
-
 #include <boost/system/detail/error_code.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
@@ -26,7 +25,6 @@ struct time_cpp_suite {
 };
 }  // namespace
 BOOST_FIXTURE_TEST_SUITE(tset_time, time_cpp_suite)
-
 
 BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {
   time_point_wrap l_time{2022, 5, 7, 11, 46, 55};
@@ -46,16 +44,26 @@ BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {
   BOOST_TEST_MESSAGE(fmt::format("{}", chrono::system_clock::now()));
 }
 
-BOOST_AUTO_TEST_CASE(time_warp_local_to_sys) {
-  using namespace chrono::literals;
-  time_point_wrap l_sys_time{time_point_wrap::time_point{chrono::sys_days{2022y / 7 / 30d} + chrono::hours{7}}};
-  time_point_wrap l_local_time{
-      time_point_wrap::time_local_point{chrono::local_days{2022y / 7 / 30d} + chrono::hours{7}}};
+BOOST_AUTO_TEST_CASE(time_to_json) {
+  using namespace std::literals;
+  chrono::system_zoned_time l_time{
+      chrono::current_zone(), std::chrono::system_clock::time_point{chrono::sys_days{2022y / 5 / 7} + 11h + 46min + 55s}
+  };
+  auto l_time_sys = l_time.get_sys_time();
+  auto l_t =
+      nlohmann::json::parse(R"({"time":"2022-05-07 11:46:55"})")["time"].get<chrono::system_zoned_time>().get_sys_time(
+      );
+  BOOST_TEST(l_t == l_time_sys);
 
-  auto l_time_du = chrono::duration_cast<chrono::hours>(l_sys_time - l_local_time);
+  auto l_t1 =
+      nlohmann::json::parse(R"({"time":"2022-05-07T11:46:55Z"})")["time"].get<chrono::system_zoned_time>().get_sys_time(
+      );
+  BOOST_TEST(l_t1 == l_time_sys);
 
-  BOOST_TEST(l_time_du.count() == 8);
+  auto l_t2 = nlohmann::json::parse(R"({"time":"2022-05-07T19:46:55+08:00"})")["time"]
+                  .get<chrono::system_zoned_time>()
+                  .get_sys_time();
+  BOOST_TEST(l_t2 == l_time_sys);
 }
- 
 
 BOOST_AUTO_TEST_SUITE_END()
