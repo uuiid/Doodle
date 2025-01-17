@@ -83,14 +83,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_project_all(se
 
   co_return std::move(l_res);
 }
-
+boost::asio::awaitable<boost::beast::http::message_generator> post_project(session_data_ptr in_handle) {
+  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
+  auto& l_json       = std::get<nlohmann::json>(in_handle->body_);
+  l_request.body()   = std::get<nlohmann::json>(in_handle->body_).dump();
+  auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
+  if (l_ec) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
+  }
+  co_return std::move(l_res);
+}
 }  // namespace
 void project_reg(http_route& in_http_route) {
   in_http_route
       .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/projects/{id}", put_project))
-      .reg(
-          std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/projects", get_project_all)
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/projects", get_project_all))
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/projects", post_project))
 
-      );
+      ;
 }
 }  // namespace doodle::http::kitsu

@@ -83,6 +83,38 @@ struct project {
   std::vector<uuid> task_types_;
   std::vector<uuid> status_automations_;
   std::vector<uuid> preview_background_files_;
+  friend void from_json(const nlohmann::json& j, project& p) {
+    if (j.contains("name")) j.at("name").get_to(p.name_);
+    if (j.contains("code")) j.at("code").get_to(p.code_);
+    if (j.contains("description")) j.at("description").get_to(p.description_);
+    if (j.contains("shotgun_id")) j.at("shotgun_id").get_to(p.shotgun_id_);
+    if (j.contains("file_tree")) j.at("file_tree").get_to(p.file_tree_);
+    if (j.contains("data")) j.at("data").get_to(p.data_);
+    if (j.contains("has_avatar")) j.at("has_avatar").get_to(p.has_avatar_);
+    if (j.contains("fps")) j.at("fps").get_to(p.fps_);
+    if (j.contains("ratio")) j.at("ratio").get_to(p.ratio_);
+    if (j.contains("resolution")) j.at("resolution").get_to(p.resolution_);
+    if (j.contains("production_type")) j.at("production_type").get_to(p.production_type_);
+    if (j.contains("production_style")) j.at("production_style").get_to(p.production_style_);
+    if (j.contains("start_date")) j.at("start_date").get_to(p.start_date_);
+    if (j.contains("end_date")) j.at("end_date").get_to(p.end_date_);
+    if (j.contains("man_days")) j.at("man_days").get_to(p.man_days_);
+    if (j.contains("nb_episodes")) j.at("nb_episodes").get_to(p.nb_episodes_);
+    if (j.contains("episode_span")) j.at("episode_span").get_to(p.episode_span_);
+    if (j.contains("max_retakes")) j.at("max_retakes").get_to(p.max_retakes_);
+    if (j.contains("is_clients_isolated")) j.at("is_clients_isolated").get_to(p.is_clients_isolated_);
+    if (j.contains("is_preview_download_allowed"))
+      j.at("is_preview_download_allowed").get_to(p.is_preview_download_allowed_);
+    if (j.contains("is_set_preview_automated")) j.at("is_set_preview_automated").get_to(p.is_set_preview_automated_);
+    if (j.contains("homepage")) j.at("homepage").get_to(p.homepage_);
+    if (j.contains("is_publish_default_for_artists"))
+      j.at("is_publish_default_for_artists").get_to(p.is_publish_default_for_artists_);
+    if (j.contains("hd_bitrate_compression")) j.at("hd_bitrate_compression").get_to(p.hd_bitrate_compression_);
+    if (j.contains("ld_bitrate_compression")) j.at("ld_bitrate_compression").get_to(p.ld_bitrate_compression_);
+    if (j.contains("project_status_id")) j.at("project_status_id").get_to(p.project_status_id_);
+    if (j.contains("default_preview_background_file_id"))
+      j.at("default_preview_background_file_id").get_to(p.default_preview_background_file_id_);
+  }
 };
 namespace project_helper {
 
