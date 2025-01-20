@@ -194,7 +194,6 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),  //
           make_column("code", &project_helper::database_t::code_)
       )
-#ifdef KITSU_TABLE
       /// 这个下方是模拟kitsu的表
       ,
       make_table(
@@ -442,7 +441,6 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("import_last_revision", &status_automation::import_last_revision_),  //
           make_column("archived", &status_automation::archived_)                           //
       )
-#endif
   ));
 }
 using sqlite_orm_type = decltype(make_storage_doodle(""));
