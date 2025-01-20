@@ -149,6 +149,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> create_task(sessio
 boost::asio::awaitable<boost::beast::http::message_generator> create_task2(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
+  l_request.body()   = std::get<nlohmann::json>(in_handle->body_);
 
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
 
