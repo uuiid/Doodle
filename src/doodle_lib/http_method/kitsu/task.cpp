@@ -149,7 +149,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> create_task(sessio
 boost::asio::awaitable<boost::beast::http::message_generator> create_task2(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
-  l_request.body()   = std::get<nlohmann::json>(in_handle->body_);
+  l_request.body()   = std::get<nlohmann::json>(in_handle->body_).dump();
 
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
 
@@ -180,8 +180,6 @@ void task_reg(http_route& in_http_route) {
               boost::beast::http::verb::post,
               "api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks", create_task2
           )
-      )
-
-      ;
+      );
 }
 }  // namespace doodle::http::kitsu
