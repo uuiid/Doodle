@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/project_status.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -66,74 +67,18 @@ namespace kitsu {
 namespace {
 
 boost::asio::awaitable<void> init_context_impl() {
-  {
-    auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_project();
-    if (!l_c) co_return default_logger_raw()->error(l_c.error());
-
-    auto l_prj_install = std::make_shared<std::vector<project_helper::database_t>>();
-    for (auto&& l_prj : l_c.value()) {
-      l_prj_install->emplace_back(l_prj);
-    }
-    if (!l_prj_install->empty()) co_await g_ctx().get<sqlite_database>().install_range(l_prj_install);
-  }
-
-  {
-    auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_task_type();
-    if (!l_c) default_logger_raw()->error(l_c.error());
-    std::map<std::string, metadata::kitsu::task_type_t> l_task_maps{};
-    {
-      auto l_ts = g_ctx().get<sqlite_database>().get_all<metadata::kitsu::task_type_t>();
-      for (auto&& l : l_ts) l_task_maps.emplace(l.name_, l);
-    }
-    auto l_install = std::make_shared<std::vector<metadata::kitsu::task_type_t>>();
-    for (auto&& l_ : l_c.value()) {
-      if (!l_task_maps.contains(l_.name_)) {
-        auto l_type_ = conv_assets_type_enum(l_.name_);
-        switch (l_type_) {
-          case details::assets_type_enum::scene:
-          case details::assets_type_enum::character:
-          case details::assets_type_enum::rig:
-            l_.use_chick_files = true;
-            break;
-          default:
-            break;
-        }
-        l_install->emplace_back(l_);
-
-      } else if (l_task_maps[l_.name_].uuid_id_ != l_.uuid_id_) {
-        l_task_maps[l_.name_].uuid_id_ = l_.uuid_id_;
-        l_install->emplace_back(l_task_maps[l_.name_]);
-      }
-    }
-    if (!l_install->empty()) co_await g_ctx().get<sqlite_database>().install_range(l_install);
-  }
-  {
-    auto l_c = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get_all_assets_type();
-    if (!l_c) default_logger_raw()->error(l_c.error());
-    std::map<uuid, metadata::kitsu::assets_type_t> l_assets_maps{};
-    {
-      auto l_ts = g_ctx().get<sqlite_database>().get_all<metadata::kitsu::assets_type_t>();
-      for (auto&& l : l_ts) l_assets_maps.emplace(l.uuid_id_, l);
-    }
-    auto l_install = std::make_shared<std::vector<metadata::kitsu::assets_type_t>>();
-    for (auto&& l_ : l_c.value()) {
-      if (l_assets_maps.contains(l_.uuid_id_)) {
-        l_.id_      = l_assets_maps[l_.uuid_id_].id_;
-        l_.uuid_id_ = l_assets_maps[l_.uuid_id_].uuid_id_;
-      }
-      l_.type_ = conv_assets_type_enum(l_.name_);
-      l_install->emplace_back(l_);
-    }
-    if (!l_install->empty()) co_await g_ctx().get<sqlite_database>().install_range(l_install);
-  }
-  {
-    auto l_list_ptr   = std::make_shared<std::vector<assets_file_helper::database_t>>();
-    *l_list_ptr       = g_ctx().get<sqlite_database>().get_all<assets_file_helper::database_t>();
-    FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
-    for (auto&& l_obj : *l_list_ptr) {
-      l_obj.has_thumbnail_ &= FSys::exists(l_path / "thumbnails" / (fmt::to_string(l_obj.uuid_id_) + ".png"));
-    }
-    co_await g_ctx().get<sqlite_database>().install_range(l_list_ptr);
+  auto& l_data = g_ctx().get<sqlite_database>();
+  if (l_data.get_all<project_status>().size() == 0) {
+    auto l_s    = std::make_shared<project_status>();
+    l_s->uuid_  = from_uuid_str("755c9edd-9481-4145-ab43-21491bdf2739");
+    l_s->name_  = "Open";
+    l_s->color_ = "#000000";
+    co_await l_data.install(l_s);
+    l_s         = std::make_shared<project_status>();
+    l_s->uuid_  = from_uuid_str("5159f210-7ec8-40e3-b8c9-2a06d0b4b116");
+    l_s->name_  = "Closed";
+    l_s->color_ = "#000000";
+    co_await l_data.install(l_s);
   }
   app_base::Get().stop_app();
 }
