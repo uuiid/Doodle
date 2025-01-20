@@ -105,8 +105,9 @@ void project_reg(http_route& in_http_route) {
   in_http_route
       .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/projects/{id}", put_project))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/projects", get_project_all))
-      // .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/projects", post_project))
-
+#ifndef NDEBUG
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/projects", post_project))
+#endif
       ;
 }
 }  // namespace doodle::http::kitsu
