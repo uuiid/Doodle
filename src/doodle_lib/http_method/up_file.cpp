@@ -109,8 +109,18 @@ void up_file_reg(http_route& in_route) {
 
           )
       )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/image",
+              std::bind_front(
+                  up_file_asset, std::make_shared<std::function<std::string(const nlohmann::json&)>>(
+                                     [](const nlohmann::json&) -> std::string { return ""; }
+                                 )
+              )
 
-  ;
+          )
+      )
 
+      ;
 }
 }  // namespace doodle::http
