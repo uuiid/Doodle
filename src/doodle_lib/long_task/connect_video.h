@@ -22,7 +22,7 @@ struct connect_video_t {
 
   friend void from_json(const nlohmann::json &nlohmann_json_j, connect_video_t &nlohmann_json_t) {
     nlohmann_json_j["out_path"].get_to(nlohmann_json_t.out_path_);
-    nlohmann_json_j["file_list"].get_to(nlohmann_json_t.file_list_);
+    nlohmann_json_j["paths"].get_to(nlohmann_json_t.file_list_);
     nlohmann_json_j["image_size"].get_to(nlohmann_json_t.image_size_);
   }
 };
