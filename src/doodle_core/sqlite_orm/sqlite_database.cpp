@@ -690,6 +690,7 @@ DOODLE_INSTALL_SQL(assets_helper::database_t)
 DOODLE_INSTALL_SQL(computer)
 DOODLE_INSTALL_SQL(server_task_info)
 DOODLE_INSTALL_SQL(work_xlsx_task_info_helper::database_t)
+DOODLE_INSTALL_SQL(project)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
