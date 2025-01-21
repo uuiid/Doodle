@@ -102,7 +102,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   if (!l_ex) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_ex.error());
   co_return std::move(*l_ex);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger_mini(session_data_ptr in_handle) {
+  boost::uuids::uuid l_uuid{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"))};
 
+  auto l_path =
+      core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_uuid);
+  if (!FSys::exists(l_path))
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
+  auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
+  l_mime += "; charset=utf-8";
+
+  FSys::ifstream l_ifs(l_path, std::ios::binary | std::ios::ate);
+  auto l_size = l_ifs.tellg();
+  if (l_size > 110) l_size -= 100;
+  l_ifs.seekg(l_size);
+  std::string l_content(l_size, '\0');
+  l_ifs.read(l_content.data(), l_size);
+  co_return in_handle->make_msg(l_content, l_mime);
+}
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
 
@@ -215,7 +232,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
       l_arg_t->config(in_json["category"].get<maya_exe_ns::inspect_file_type>());
       l_arg_t->file_path = in_json["path"].get<std::string>();
-      arg_ = l_arg_t;
+      arg_               = l_arg_t;
     } else if (in_json.contains("image_to_move")) {
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
       in_json.get_to(*l_image_to_move_args);
@@ -408,6 +425,11 @@ void task_info_reg_local(doodle::http::http_route& in_route) {
   in_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task", list_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}", get_task))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/task/{id}/log", get_task_logger))
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/task/{id}/log/mini", get_task_logger_mini
+          )
+      )
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/task", post_task_local))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::patch, "api/doodle/task/{id}", patch_task_local))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));

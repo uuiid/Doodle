@@ -63,7 +63,12 @@ class session_data {
       boost::beast::http::status in_code, const std::string& in_str, std::int32_t in_msg_code = -1
   );
 
-  boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body);
+  boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body) {
+    return make_msg(std::move(in_body), "application/json; charset=utf-8");
+  }
+  boost::beast::http::response<boost::beast::http::string_body> make_msg(
+      std::string&& in_body, const std::string_view& mine_type
+  );
   tl::expected<boost::beast::http::message_generator, std::string> make_msg(
       const FSys::path& in_path, const std::string_view& mine_type
   );
