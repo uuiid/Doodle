@@ -191,9 +191,9 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
       }
     }
   }
-  app_base::Get().stop_app();
   if (l_e == maya_enum::maya_error_t::check_error)
     throw_error(l_e);
+  app_base::Get().stop_app();
   return false;
 }
 
