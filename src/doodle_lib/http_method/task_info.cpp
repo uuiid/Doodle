@@ -67,8 +67,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
 boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_data_ptr in_handle) {
   uuid l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
 
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid); !l_list.empty())
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid); !l_list.empty()) {
+    l_list[0].get_last_line_log();
     co_return in_handle->make_msg((nlohmann::json{} = l_list[0]).dump());
+  }
 
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务不存在");
 }
@@ -114,8 +116,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger_mi
 
   FSys::ifstream l_ifs(l_path, std::ios::binary | std::ios::ate);
   auto l_size = l_ifs.tellg();
-  if (l_size > 5100) l_size -= 5000;
-  l_ifs.seekg(l_size);
+  if (l_size > 5100) {
+    l_size -= 5000;
+    l_ifs.seekg(l_size);
+  } else
+    l_ifs.seekg(0);
   std::string l_content{};
   l_content.resize(5000ull, '\0');
   l_ifs.read(l_content.data(), 5000);

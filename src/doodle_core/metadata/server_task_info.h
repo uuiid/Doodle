@@ -103,8 +103,11 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   uuid kitsu_task_id_{};
 
   server_task_info_type type_{};
+  std::string last_line_log_;
 
   static constexpr auto logger_category = "server_task";
+
+  void get_last_line_log();
 
   bool operator==(const server_task_info& in_rhs) const {
     return std::tie(
@@ -135,14 +138,14 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["end_time"]        = p.end_time_;
     j["run_computer_id"] = p.run_computer_id_;
     j["type"]            = p.type_;
+    j["last_line_log"]   = p.last_line_log_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
     j.at("name").get_to(p.name_);
     j.at("source_computer").get_to(p.source_computer_);
     if (j.contains("submitter")) j.at("submitter").get_to(p.submitter_);
-    if (j.contains("run_computer_id"))
-    j.at("run_computer_id").get_to(p.run_computer_id_);
+    if (j.contains("run_computer_id")) j.at("run_computer_id").get_to(p.run_computer_id_);
     j.at("type").get_to(p.type_);
   }
 };
