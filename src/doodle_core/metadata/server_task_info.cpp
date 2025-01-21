@@ -28,12 +28,15 @@ void server_task_info::get_last_line_log() {
   if (!FSys::exists(l_path)) return;
   FSys::ifstream l_ifs(l_path, std::ios::binary | std::ios::ate);
   auto l_size = l_ifs.tellg();
-  if (l_size > 510) {
-    l_size -= 500;
+  if (l_size > 810) {
+    l_size -= 800;
     l_ifs.seekg(l_size);
   } else
     l_ifs.seekg(0);
-  while (std::getline(l_ifs, last_line_log_));
+  std::string l_line[2]{};
+  std::int8_t l_index{};
+  while (std::getline(l_ifs, l_line[l_index])) l_index = !l_index;
+  last_line_log_ = l_line[l_index];
 }
 
 }  // namespace doodle
