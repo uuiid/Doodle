@@ -27,7 +27,7 @@ void server_task_info::get_last_line_log() {
   auto l_path =
       core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", uuid_id_);
   if (!FSys::exists(l_path)) return;
-  FSys::ifstream l_ifs(l_path, std::ios::binary | std::ios::ate);
+  FSys::ifstream l_ifs(l_path, std::ios::ate);
   auto l_size = l_ifs.tellg();
   if (l_size > 810) {
     l_size -= 800;

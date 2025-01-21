@@ -116,7 +116,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger_mi
   auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
   l_mime += "; charset=utf-8";
 
-  FSys::ifstream l_ifs(l_path, std::ios::binary | std::ios::ate);
+  FSys::ifstream l_ifs(l_path, std::ios::ate);
   auto l_size = l_ifs.tellg();
   if (l_size > 5100) {
     l_size -= 5000;
