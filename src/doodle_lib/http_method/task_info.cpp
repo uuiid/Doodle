@@ -114,11 +114,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger_mi
 
   FSys::ifstream l_ifs(l_path, std::ios::binary | std::ios::ate);
   auto l_size = l_ifs.tellg();
-  if (l_size > 110) l_size -= 100;
+  if (l_size > 5100) l_size -= 5000;
   l_ifs.seekg(l_size);
-  std::string l_content(l_size, '\0');
-  l_ifs.read(l_content.data(), l_size);
-  co_return in_handle->make_msg(l_content, l_mime);
+  std::string l_content{};
+  l_content.resize(5000ull, '\0');
+  l_ifs.read(l_content.data(), 5000);
+  co_return in_handle->make_msg(std::move(l_content), l_mime);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
