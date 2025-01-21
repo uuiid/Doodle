@@ -34,7 +34,9 @@ void server_task_info::get_last_line_log() {
     l_ifs.seekg(l_size);
   } else
     l_ifs.seekg(0);
-  while (std::getline(l_ifs, last_line_log_));
+  std::string l_line{};
+  while (std::getline(l_ifs, l_line))
+    if (!l_line.empty()) last_line_log_ = l_line;
 }
 
 }  // namespace doodle
