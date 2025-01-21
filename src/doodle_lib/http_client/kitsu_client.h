@@ -98,10 +98,10 @@ class kitsu_client {
     header_operator_resp(l_res);
     nlohmann::json l_json{};
     try {
-      l_json = nlohmann::json::parse(l_res.body()).get<task>();
+      l_json = nlohmann::json::parse(l_res.body());
     } catch (const nlohmann::json::exception& e) {
       http_client_core_ptr_->logger_->log(log_loc(), level::err, "get task failed: {}", e.what());
-      co_return tl::make_unexpected(fmt::format("错误 {}", e));
+      co_return tl::make_unexpected(fmt::format("错误 {}", e.what()));
     }
     co_return tl::expected<nlohmann::json, std::string>{std::move(l_json)};
   }
