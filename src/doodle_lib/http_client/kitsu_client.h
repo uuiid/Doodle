@@ -83,6 +83,28 @@ class kitsu_client {
   boost::asio::awaitable<tl::expected<std::vector<project_helper::database_t>, std::string>> get_all_project();
   boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::task_type_t>, std::string>> get_all_task_type();
   boost::asio::awaitable<tl::expected<std::vector<metadata::kitsu::assets_type_t>, std::string>> get_all_assets_type();
+
+  template <typename Req>
+  boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> get(Req&& in_req) {
+    auto [l_e, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(
+        http_client_core_ptr_, header_operator_req(std::move(in_req))
+    );
+    if (l_e) {
+      co_return tl::make_unexpected(fmt::format("错误 {}", l_e));
+    }
+    if (l_res.result() != boost::beast::http::status::ok || l_res.result() != boost::beast::http::status::created)
+      co_return tl::make_unexpected(fmt::format("错误 {}", l_res.result_int()));
+
+    header_operator_resp(l_res);
+    nlohmann::json l_json{};
+    try {
+      l_json = nlohmann::json::parse(l_res.body()).get<task>();
+    } catch (const nlohmann::json::exception& e) {
+      http_client_core_ptr_->logger_->log(log_loc(), level::err, "get task failed: {}", e.what());
+      co_return tl::make_unexpected(fmt::format("错误 {}", e));
+    }
+    co_return tl::expected<nlohmann::json, std::string>{std::move(l_json)};
+  }
 };
 
 using kitsu_client_ptr = std::shared_ptr<kitsu_client>;

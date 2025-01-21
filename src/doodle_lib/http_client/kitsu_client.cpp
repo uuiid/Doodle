@@ -41,6 +41,7 @@ boost::asio::awaitable<tl::expected<kitsu_client::user_t, std::string>> kitsu_cl
   if (l_e) {
     co_return tl::make_unexpected(fmt::format("无法获取到用户电话号码 {}", l_e));
   }
+
   header_operator_resp(l_res);
   try {
     l_user = nlohmann::json::parse(l_res.body()).get<user_t>();
