@@ -23,6 +23,7 @@ void server_task_info::sql_command(const std::string& in_str) {
 }
 
 void server_task_info::get_last_line_log() {
+  if (status_ != server_task_info_status::failed) return;
   auto l_path =
       core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", uuid_id_);
   if (!FSys::exists(l_path)) return;
@@ -33,10 +34,7 @@ void server_task_info::get_last_line_log() {
     l_ifs.seekg(l_size);
   } else
     l_ifs.seekg(0);
-  std::string l_line[2]{};
-  std::int8_t l_index{};
-  while (std::getline(l_ifs, l_line[l_index])) l_index = !l_index;
-  last_line_log_ = l_line[l_index];
+  while (std::getline(l_ifs, last_line_log_));
 }
 
 }  // namespace doodle
