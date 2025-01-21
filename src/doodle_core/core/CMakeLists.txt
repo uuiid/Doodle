@@ -8,7 +8,6 @@ target_sources(
         chrono_.h
         app_base.h
         global_function.h
-        wait_op.h
         app_service.h
         http_client_core.h
         co_queue.h
@@ -19,7 +18,6 @@ target_sources(
         doodle_lib.cpp
         file_sys.cpp
         app_base.cpp
-        wait_op.cpp
         app_service.cpp
         http_client_core.cpp
         co_queue.cpp

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_core/core/co_queue.h>
-#include <doodle_core/core/wait_op.h>
 #include <doodle_core/metadata/image_size.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
