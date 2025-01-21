@@ -80,6 +80,12 @@ boost::asio::awaitable<void> init_context_impl() {
     l_s->color_ = "#000000";
     co_await l_data.install(l_s);
   }
+  {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, "/api/data/task-status", 11
+    };
+    auto l_r = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
+  }
   app_base::Get().stop_app();
 }
 }  // namespace
