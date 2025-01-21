@@ -96,7 +96,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_project(sessi
   if (l_ec) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
   }
-  l_prj->uuid_ = nlohmann::json::parse(l_res.body()).at("id").get<uuid>();
+  l_prj->uuid_id_ = nlohmann::json::parse(l_res.body()).at("id").get<uuid>();
   co_await g_ctx().get<sqlite_database>().install(l_prj);
   co_return std::move(l_res);
 }

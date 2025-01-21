@@ -3,6 +3,8 @@
 //
 #include "kitsu.h"
 
+#include "doodle_core/metadata/task_status.h"
+#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
@@ -70,21 +72,30 @@ boost::asio::awaitable<void> init_context_impl() {
   auto& l_data = g_ctx().get<sqlite_database>();
   if (l_data.get_all<project_status>().size() == 0) {
     auto l_s    = std::make_shared<project_status>();
-    l_s->uuid_  = from_uuid_str("755c9edd-9481-4145-ab43-21491bdf2739");
+    l_s->uuid_id_  = from_uuid_str("755c9edd-9481-4145-ab43-21491bdf2739");
     l_s->name_  = "Open";
     l_s->color_ = "#000000";
     co_await l_data.install(l_s);
     l_s         = std::make_shared<project_status>();
-    l_s->uuid_  = from_uuid_str("5159f210-7ec8-40e3-b8c9-2a06d0b4b116");
+    l_s->uuid_id_  = from_uuid_str("5159f210-7ec8-40e3-b8c9-2a06d0b4b116");
     l_s->name_  = "Closed";
     l_s->color_ = "#000000";
     co_await l_data.install(l_s);
   }
-  {
+  if (l_data.get_all<task_status>().size() == 0) {
     boost::beast::http::request<boost::beast::http::empty_body> l_req{
         boost::beast::http::verb::get, "/api/data/task-status", 11
     };
-    auto l_r = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
+    auto l_r         = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
+    auto l_task_list = std::make_shared<std::vector<task_status>>();
+
+    for (auto& l_j : *l_r) {
+      auto l_task = l_j.get<task_status>();
+      l_task.uuid_id_ = l_j["id"].get<uuid>();
+      l_task_list->emplace_back(l_task);
+    }
+
+    co_await l_data.install_range(l_task_list);
   }
   app_base::Get().stop_app();
 }

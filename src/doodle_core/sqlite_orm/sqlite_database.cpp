@@ -201,59 +201,59 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &task_type_asset_type_link::id_, primary_key().autoincrement()),     //
           make_column("asset_type_id", &task_type_asset_type_link::asset_type_id_, not_null()),  //
           make_column("task_type_id", &task_type_asset_type_link::task_type_id_, not_null()),    //
-          foreign_key(&task_type_asset_type_link::asset_type_id_).references(&asset_type::uuid_).on_delete.cascade(),
-          foreign_key(&task_type_asset_type_link::task_type_id_).references(&task_type::uuid_).on_delete.cascade()
+          foreign_key(&task_type_asset_type_link::asset_type_id_).references(&asset_type::uuid_id_).on_delete.cascade(),
+          foreign_key(&task_type_asset_type_link::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
       make_table(
           "project_person_link",  //
           make_column("id", &project_person_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_person_link::project_id_, not_null()),
           make_column("person_id", &project_person_link::person_id_, not_null()),
-          foreign_key(&project_person_link::project_id_).references(&project::uuid_),
-          foreign_key(&project_person_link::person_id_).references(&person::uuid_)
+          foreign_key(&project_person_link::project_id_).references(&project::uuid_id_),
+          foreign_key(&project_person_link::person_id_).references(&person::uuid_id_)
       ),
       make_table(
           "project_task_type_link",  //
           make_column("id", &project_task_type_link::id_, primary_key().autoincrement()),
-          make_column("uuid", &project_task_type_link::uuid_, unique(), not_null()),
+          make_column("uuid", &project_task_type_link::uuid_id_, unique(), not_null()),
           make_column("project_id", &project_task_type_link::project_id_, not_null()),
           make_column("task_type_id", &project_task_type_link::task_type_id_, not_null()),
           make_column("priority", &project_task_type_link::priority_),
-          foreign_key(&project_task_type_link::project_id_).references(&project::uuid_).on_delete.cascade(),
-          foreign_key(&project_task_type_link::task_type_id_).references(&task_type::uuid_).on_delete.cascade()
+          foreign_key(&project_task_type_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
+          foreign_key(&project_task_type_link::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
       make_table(
           "project_task_status_link",  //
           make_column("id", &project_task_status_link::id_, primary_key().autoincrement()),
-          make_column("uuid", &project_task_status_link::uuid_, unique(), not_null()),
+          make_column("uuid", &project_task_status_link::uuid_id_, unique(), not_null()),
           make_column("project_id", &project_task_status_link::project_id_, not_null()),
           make_column("task_status_id", &project_task_status_link::task_status_id_, not_null()),
           make_column("priority", &project_task_status_link::priority_),
-          foreign_key(&project_task_status_link::project_id_).references(&project::uuid_).on_delete.cascade(),
-          foreign_key(&project_task_status_link::task_status_id_).references(&task_status::uuid_).on_delete.cascade()
+          foreign_key(&project_task_status_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
+          foreign_key(&project_task_status_link::task_status_id_).references(&task_status::uuid_id_).on_delete.cascade()
       ),
       make_table(
           "project_asset_type_link",  //
           make_column("id", &project_asset_type_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_asset_type_link::project_id_, not_null()),
           make_column("asset_type_id", &project_asset_type_link::asset_type_id_, not_null()),
-          foreign_key(&project_asset_type_link::project_id_).references(&project::uuid_).on_delete.cascade(),
-          foreign_key(&project_asset_type_link::asset_type_id_).references(&asset_type::uuid_).on_delete.cascade()
+          foreign_key(&project_asset_type_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
+          foreign_key(&project_asset_type_link::asset_type_id_).references(&asset_type::uuid_id_).on_delete.cascade()
       ),
       make_table(
           "project_status_automation_link",
           make_column("id", &project_status_automation_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_status_automation_link::project_id_, not_null()),
           make_column("status_automation_id", &project_status_automation_link::status_automation_id_, not_null()),
-          foreign_key(&project_status_automation_link::project_id_).references(&project::uuid_).on_delete.cascade(),
+          foreign_key(&project_status_automation_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_status_automation_link::status_automation_id_)
-              .references(&status_automation::uuid_)
+              .references(&status_automation::uuid_id_)
               .on_delete.cascade()
       ),
       make_table(
           "project",                                                                                         //
           make_column("id", &project::id_, primary_key().autoincrement()),                                   //
-          make_column("uuid", &project::uuid_, not_null(), unique()),                                        //
+          make_column("uuid", &project::uuid_id_, not_null(), unique()),                                     //
           make_column("name", &project::name_),                                                              //
           make_column("code", &project::code_),                                                              //
           make_column("description", &project::description_),                                                //
@@ -279,9 +279,9 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("ld_bitrate_compression", &project::ld_bitrate_compression_),                          //
           make_column("project_status_id", &project::project_status_id_),                                    //
           make_column("default_preview_background_file_id", &project::default_preview_background_file_id_),  //
-          foreign_key(&project::project_status_id_).references(&project_status::uuid_).on_delete.cascade(),
+          foreign_key(&project::project_status_id_).references(&project_status::uuid_id_).on_delete.cascade(),
           foreign_key(&project::default_preview_background_file_id_)
-              .references(&preview_background_file::uuid_)
+              .references(&preview_background_file::uuid_id_)
               .on_delete.cascade()
       ),
       make_table(
@@ -290,16 +290,16 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_),
           make_column("department_id", &metadata_descriptor_department_link::department_uuid_),
           foreign_key(&metadata_descriptor_department_link::metadata_descriptor_uuid_)
-              .references(&metadata_descriptor::uuid_)
+              .references(&metadata_descriptor::uuid_id_)
               .on_delete.cascade(),
           foreign_key(&metadata_descriptor_department_link::department_uuid_)
-              .references(&department::uuid_)
+              .references(&department::uuid_id_)
               .on_delete.cascade()
       ),
       make_table(
           "metadata_descriptor",                                                        //
           make_column("id", &metadata_descriptor::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &metadata_descriptor::uuid_, not_null(), unique()),       //
+          make_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique()),    //
           make_column("name", &metadata_descriptor::name_),                             //
           make_column("entity_type", &metadata_descriptor::entity_type_),               //
           make_column("project_uuid", &metadata_descriptor::project_uuid_),             //
@@ -311,7 +311,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "project_status",                                                        //
           make_column("id", &project_status::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &project_status::uuid_, not_null(), unique()),       //
+          make_column("uuid", &project_status::uuid_id_, not_null(), unique()),    //
           make_column("name", &project_status::name_),                             //
           make_column("color", &project_status::color_)
       ),
@@ -320,13 +320,13 @@ auto make_storage_doodle(const std::string& in_path) {
           "person_department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
           make_column("person_id", &person_department_link::person_id_),
           make_column("department_id", &person_department_link::department_id_),
-          foreign_key(&person_department_link::person_id_).references(&person::uuid_).on_delete.cascade(),
-          foreign_key(&person_department_link::department_id_).references(&department::uuid_).on_delete.cascade()
+          foreign_key(&person_department_link::person_id_).references(&person::uuid_id_).on_delete.cascade(),
+          foreign_key(&person_department_link::department_id_).references(&department::uuid_id_).on_delete.cascade()
       ),
       make_table(
           "person",                                                                                           //
           make_column("id", &person::id_, primary_key().autoincrement()),                                     //
-          make_column("uuid", &person::uuid_, not_null(), unique()),                                          //
+          make_column("uuid", &person::uuid_id_, not_null(), unique()),                                       //
           make_column("first_name", &person::first_name_),                                                    //
           make_column("last_name", &person::last_name_),                                                      //
           make_column("email", &person::email_),                                                              //
@@ -370,7 +370,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "department",                                                        //
           make_column("id", &department::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &department::uuid_, not_null(), unique()),       //
+          make_column("uuid", &department::uuid_id_, not_null(), unique()),    //
           make_column("name", &department::name_),                             //
           make_column("color", &department::color_),                           //
           make_column("archived", &department::archived_)                      //
@@ -378,7 +378,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "preview_background_file",                                                        //
           make_column("id", &preview_background_file::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &preview_background_file::uuid_, not_null(), unique()),       //
+          make_column("uuid", &preview_background_file::uuid_id_, not_null(), unique()),    //
           make_column("name", &preview_background_file::name_),                             //
           make_column("archived", &preview_background_file::archived_),                     //
           make_column("is_default", &preview_background_file::is_default_),                 //
@@ -389,7 +389,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "task_type",                                                        //
           make_column("id", &task_type::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &task_type::uuid_, not_null(), unique()),       //
+          make_column("uuid", &task_type::uuid_id_, not_null(), unique()),    //
           make_column("name", &task_type::name_),                             //
           make_column("short_name", &task_type::short_name_),                 //
           make_column("description", &task_type::description_),               //
@@ -403,7 +403,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "task_status",                                                           //
           make_column("id", &task_status::id_, primary_key().autoincrement()),     //
-          make_column("uuid", &task_status::uuid_, not_null(), unique()),          //
+          make_column("uuid", &task_status::uuid_id_, not_null(), unique()),       //
           make_column("name", &task_status::name_),                                //
           make_column("archived", &task_status::archived_),                        //
           make_column("short_name", &task_status::short_name_),                    //
@@ -422,7 +422,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "asset_type",                                                        //
           make_column("id", &asset_type::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &asset_type::uuid_, not_null(), unique()),       //
+          make_column("uuid", &asset_type::uuid_id_, not_null(), unique()),    //
           make_column("name", &asset_type::name_),                             //
           make_column("short_name", &asset_type::short_name_),                 //
           make_column("description", &asset_type::description_),               //
@@ -431,7 +431,7 @@ auto make_storage_doodle(const std::string& in_path) {
       make_table(
           "status_automation",                                                             //
           make_column("id", &status_automation::id_, primary_key().autoincrement()),       //
-          make_column("uuid", &status_automation::uuid_, not_null(), unique()),            //
+          make_column("uuid", &status_automation::uuid_id_, not_null(), unique()),         //
           make_column("entity_type", &status_automation::entity_type_),                    //
           make_column("in_task_type_id", &status_automation::in_task_type_id_),            //
           make_column("in_task_status_id", &status_automation::in_task_status_id_),        //
@@ -680,6 +680,7 @@ DOODLE_GET_ALL_SQL(assets_helper::database_t)
 DOODLE_GET_ALL_SQL(computer)
 DOODLE_GET_ALL_SQL(server_task_info)
 DOODLE_GET_ALL_SQL(project_status)
+DOODLE_GET_ALL_SQL(task_status)
 
 DOODLE_INSTALL_SQL(project_helper::database_t)
 DOODLE_INSTALL_SQL(user_helper::database_t)
@@ -691,6 +692,7 @@ DOODLE_INSTALL_SQL(server_task_info)
 DOODLE_INSTALL_SQL(work_xlsx_task_info_helper::database_t)
 DOODLE_INSTALL_SQL(project)
 DOODLE_INSTALL_SQL(project_status)
+DOODLE_INSTALL_SQL(task_status)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
@@ -700,6 +702,7 @@ DOODLE_INSTALL_RANGE(assets_helper::database_t)
 DOODLE_INSTALL_RANGE(assets_file_helper::database_t)
 DOODLE_INSTALL_RANGE(metadata::kitsu::assets_type_t)
 DOODLE_INSTALL_RANGE(computer)
+DOODLE_INSTALL_RANGE(task_status)
 
 DOODLE_REMOVE_RANGE(attendance_helper::database_t)
 DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
