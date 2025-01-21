@@ -10,5 +10,5 @@ namespace doodle {
 
 #define DOODLE_BASE_FIELDS() \
   std::int64_t id_;          \
-  uuid uuid_;
+  uuid uuid_id_;
 }  // namespace doodle
