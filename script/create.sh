@@ -368,7 +368,7 @@ sudo apt install nodejs -y
 
 
 更新核心
-sudo /opt/zou/env/bin/python -m pip install --upgrade zou
+sudo /opt/zou/env/bin/python -m pip install --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple --upgrade zou
 DB_PASSWORD=euQVpMXeFz8k0A3lD0aj /opt/zou/env/bin/zou upgrade-db
 sudo systemctl restart zou&&sudo systemctl restart zou-events
 
