@@ -193,7 +193,6 @@ void scan_win_service_t::add_handle(
     const std::vector<doodle::details::scan_category_data_ptr>& in_data_vec, std::int32_t in_current_index
 ) {
   auto& l_scan_data = scan_data_maps_[in_current_index];
-  l_scan_data.clear();
   for (auto&& l_data : in_data_vec) {
     scan_win_service_id_is_nil(l_data->rig_file_.uuid_, l_data->rig_file_.path_);
     scan_win_service_id_is_nil(l_data->ue_file_.uuid_, l_data->ue_file_.path_);
@@ -204,7 +203,6 @@ void scan_win_service_t::add_handle(
   }
 
   auto& l_scan_key_data = scan_data_key_maps_[in_current_index];
-  l_scan_key_data.clear();
   for (auto&& l_data : in_data_vec) {
     l_scan_key_data[{
         .dep_          = l_data->assets_type_,
