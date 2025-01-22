@@ -77,6 +77,8 @@ WarningsAsErrors: " "
 
 HeaderFilterRegex: ''
 
+ExcludeHeaderFilterRegex: ".*\.h"
+
 CheckOptions:
     - { key: misc-include-cleaner.IgnoreHeaders, value: '.*' }
 #   - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
