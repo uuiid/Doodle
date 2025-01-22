@@ -7,12 +7,13 @@ target_sources(doodle_lib
         holidaycn_time.h
         scan_win_service.h
         cache_manger.h
+        engine_io.h
 
         PRIVATE
         filesystem_extend.cpp
         holidaycn_time.cpp
         scan_win_service.cpp
-
+        engine_io.cpp
 )
 add_subdirectory(scan_assets)
 add_subdirectory(http)
