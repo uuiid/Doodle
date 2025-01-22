@@ -369,6 +369,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local_re
     *l_ptr = l_list[0];
   } else
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务不存在");
+  if (l_ptr->status_ != server_task_info_status::completed || l_ptr->status_ != server_task_info_status::failed ||
+      l_ptr->status_ != server_task_info_status::canceled)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::method_not_allowed, "任务未完成, 无法重启");
   l_ptr->clear_log_file();
   l_ptr->status_             = server_task_info_status::submitted;
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
