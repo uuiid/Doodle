@@ -71,14 +71,14 @@ Checks: >
   -bugprone-narrowing-conversions,
   -bugprone-easily-swappable-parameters,
   -bugprone-implicit-widening-of-multiplication-result
-  -misc-include-cleaner
 
 # Turn all the warnings from the checks above into errors.
 WarningsAsErrors: " "
 
 HeaderFilterRegex: ''
 
-# CheckOptions:
+CheckOptions:
+    - { key: misc-include-cleaner.IgnoreHeaders, value: '.*' }
 #   - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
 #   - { key: readability-identifier-naming.ClassCase,              value: lower_case }
 #   - { key: readability-identifier-naming.StructCase,             value: lower_case }

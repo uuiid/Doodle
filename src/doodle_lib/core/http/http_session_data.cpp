@@ -5,7 +5,9 @@
 #include "http_session_data.h"
 
 #include "doodle_core/core/core_set.h"
+// ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_core/lib_warp/boost_fmt_beast.h>
+// ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/lib_warp/boost_fmt_url.h>
 #include <doodle_core/logger/logger.h>
@@ -21,7 +23,6 @@
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 
 #include <sqlite_orm/sqlite_orm.h>
