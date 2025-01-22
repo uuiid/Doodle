@@ -342,7 +342,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
     co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
     in_arg->file_list_ |=
-        ranges::action::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
+        ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
     auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
@@ -362,32 +362,41 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
 };
 
+boost::asio::awaitable<boost::beast::http::message_generator> post_task_local_restart(session_data_ptr in_handle) {
+  auto l_id  = from_uuid_str(in_handle->capture_->get("id"));
+  auto l_ptr = std::make_shared<server_task_info>();
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_id); !l_list.empty()) {
+    *l_ptr = l_list[0];
+  } else
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务不存在");
+  l_ptr->clear_log_file();
+  l_ptr->status_             = server_task_info_status::submitted;
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
+  l_run_long_task_local->load_form_json(l_ptr->command_);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+  l_run_long_task_local->run();
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
         "不是json请求"
     );
-  auto l_ptr = std::make_shared<server_task_info>();
-  std::shared_ptr<maya_exe_ns::arg> l_arg{};
-  std::shared_ptr<import_and_render_ue_ns::args> l_import_and_render_args{};
-  std::shared_ptr<doodle::detail::image_to_move> l_image_to_move_args{};
-  std::shared_ptr<doodle::detail::connect_video_t> l_connect_video_args{};
-
-  logger_ptr l_logger_ptr{};
+  auto l_ptr  = std::make_shared<server_task_info>();
 
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
   l_json.get_to(*l_ptr);
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+  l_ptr->command_         = l_json["task_data"];
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
-  auto& l_task               = l_json["task_data"];
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
-  l_run_long_task_local->load_form_json(l_task);
+  l_run_long_task_local->load_form_json(l_ptr->command_);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
   l_run_long_task_local->run();
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
@@ -439,6 +448,11 @@ void task_info_reg_local(doodle::http::http_route& in_route) {
           )
       )
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/task", post_task_local))
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/task/{id}/restart", post_task_local_restart
+          )
+      )
       .reg(std::make_shared<http_function>(boost::beast::http::verb::patch, "api/doodle/task/{id}", patch_task_local))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::delete_, "api/doodle/task/{id}", delete_task));
 }

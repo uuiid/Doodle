@@ -80,7 +80,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // 执行程序
   std::string exe_{};
   // 任务命令
-  std::vector<std::string> command_{};
+  nlohmann::json command_{};
   // 任务的状态
   server_task_info_status status_{server_task_info_status::submitted};
   // 任务名称
@@ -108,6 +108,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   static constexpr auto logger_category = "server_task";
 
   void get_last_line_log();
+  void clear_log_file();
 
   bool operator==(const server_task_info& in_rhs) const {
     return std::tie(
