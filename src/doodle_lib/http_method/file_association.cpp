@@ -50,12 +50,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
     }
   }
 
-  std::map<FSys::path, std::shared_ptr<details::scan_category_data_t>> l_map2{};
-  for (auto&& l_val : l_map | std::views::values) {
-    l_map2[l_val->base_path_] = l_val;
-  }
-
-  for (auto& l_val : l_map2 | std::views::values) {
+  for (auto& l_val : l_map | std::views::values) {
     bool l_match{l_project_id.empty() && l_assets_id.empty()};
     if (!l_project_id.empty()) l_match = l_project_id.contains(l_val->project_database_ptr->uuid_id_);
     if (!l_assets_id.empty()) l_match &= l_type.contains(l_val->assets_type_);
