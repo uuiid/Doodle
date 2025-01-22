@@ -63,9 +63,6 @@ class scan_category_data_t {
   // 编号
   std::string number_str_;
 
-  // 文件hash(包含 ue(工程, 配置),rig,解算文件) 所有文件的文件名称, 大小, 修改时间 的hash
-  std::string file_hash_;
-
   // to_json
   friend void to_json(nlohmann::json& j, const scan_category_data_t& p) {
     j["ue_file"]              = p.ue_file_;
@@ -77,7 +74,6 @@ class scan_category_data_t {
     j["version_name"]         = p.version_name_;
     j["assets_type"]          = p.assets_type_;
     j["number_str"]           = p.number_str_;
-    j["file_hash"]            = p.file_hash_;
     j["project_database_ptr"] = p.project_database_ptr->uuid_id_;
   }
   // from_json
@@ -91,7 +87,6 @@ class scan_category_data_t {
     j.at("version_name").get_to(p.version_name_);
     j.at("assets_type").get_to(p.assets_type_);
     j.at("number_str").get_to(p.number_str_);
-    j.at("file_hash").get_to(p.file_hash_);
   }
 };
 using scan_category_data_ptr = std::shared_ptr<scan_category_data_t>;
