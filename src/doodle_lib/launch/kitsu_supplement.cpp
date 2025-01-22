@@ -124,7 +124,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     else
       l_args.port_ = 0;
     // 打开内存数据库
-    g_ctx().emplace<sqlite_database>().load(":memory:");
+    g_ctx().emplace<sqlite_database>().load(core_set::get_set().get_cache_root("database") / "kitsu.database");
     // 初始化授权上下文
     g_ctx().emplace<authorization>(core_set::get_set().authorize_);
     // 初始化路由
@@ -211,4 +211,4 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
   return false;
 }
-} // namespace doodle::launch
+}  // namespace doodle::launch
