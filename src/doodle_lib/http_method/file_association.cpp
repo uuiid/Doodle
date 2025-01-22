@@ -10,6 +10,21 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 
 namespace doodle::http {
+namespace {
+struct key_t : boost::less_than_comparable<key_t> {
+  FSys::path path_{};
+  std::string version_{};
+  explicit key_t(FSys::path in_path, std::string in_version)
+      : path_(std::move(in_path)), version_(std::move(in_version)) {}
+  friend bool operator==(const key_t& lhs, const key_t& rhs) {
+    return lhs.path_ == rhs.path_ && lhs.version_ == rhs.version_;
+  }
+  friend bool operator<(const key_t& lhs, const key_t& rhs) {
+    return std::tie(lhs.path_, lhs.version_) < std::tie(rhs.path_, rhs.version_);
+  }
+};
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> file_association_get(session_data_ptr in_handle) {
   auto l_logger           = in_handle->logger_;
   boost::uuids::uuid l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("uuid"));
@@ -50,7 +65,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
     }
   }
 
-  for (auto& l_val : l_map | std::views::values) {
+  std::map<key_t, std::shared_ptr<details::scan_category_data_t>> l_map2{};
+  for (auto& l_data : l_map | std::views::values) {
+    l_map2.emplace(key_t{l_data->base_path_, l_data->version_name_}, l_data);
+  }
+
+  for (auto& l_val : l_map2 | std::views::values) {
     bool l_match{l_project_id.empty() && l_assets_id.empty()};
     if (!l_project_id.empty()) l_match = l_project_id.contains(l_val->project_database_ptr->uuid_id_);
     if (!l_assets_id.empty()) l_match &= l_type.contains(l_val->assets_type_);
