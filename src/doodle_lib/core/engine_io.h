@@ -17,5 +17,16 @@ class DOODLE_CORE_API engine_io {
   void parse(const std::string& in_data);
   engine_io_packet_type packet_type_;
   std::string data_;
+  /// 生成回复
+  std::string reply(std::string&& in_data);
 };
+
+/// 是多个包
+bool is_multi_packet(const std::string& in_data) {
+  if (auto l_it = in_data.find('\x1e'); l_it != in_data.npos) return true;
+}
+std::vector<std::string> split_multi_packet(const std::string& in_data) {
+  std::vector<std::string> l_vec{};
+  return boost::split(l_vec, in_data, boost::is_any_of("\x1e"));
+}
 }  // namespace doodle::socket_io
