@@ -3,6 +3,7 @@
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/doodle_core_pch.h>
 
+#include <boost/beast.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception/exception.hpp>
 #include <boost/system.hpp>
@@ -77,6 +78,13 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
 class DOODLE_CORE_API sys_error : public std::system_error {
  public:
   using std::system_error::system_error;
+};
+
+class DOODLE_CORE_API http_request_error : public std::runtime_error {
+ public:
+  boost::beast::http::status code_status_;
+  explicit http_request_error(boost::beast::http::status in_status, const std::string& message)
+      : code_status_{in_status}, std::runtime_error(message) {};
 };
 
 class DOODLE_CORE_API doodle_category : public bsys::error_category {

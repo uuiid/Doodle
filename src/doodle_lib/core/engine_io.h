@@ -18,7 +18,7 @@ struct query_data {
   std::string sid_;
 };
 
-tl::expected<query_data, std::string> parse_query_data(const boost::urls::url& in_url);
+query_data parse_query_data(const boost::urls::url& in_url);
 
 class DOODLE_CORE_API engine_io {
  public:

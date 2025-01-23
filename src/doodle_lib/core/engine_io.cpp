@@ -21,7 +21,7 @@ std::string engine_io::reply(std::string&& in_data) {
   if (packet_type_ == engine_io_packet_type::message) return in_data;
   if (packet_type_ == engine_io_packet_type::ping) return {"3probe"};
 }
-tl::expected<query_data, std::string> parse_query_data(const boost::urls::url& in_url) {
+query_data parse_query_data(const boost::urls::url& in_url) {
   query_data l_ret{};
   for (auto&& l_item : in_url.params()) {
     if (l_item.key == "sid" && l_item.has_value) l_ret.sid_ = l_item.value;
@@ -30,8 +30,9 @@ tl::expected<query_data, std::string> parse_query_data(const boost::urls::url& i
     }
     if (l_item.key == "EIO" && l_item.has_value) l_ret.EIO_ = std::stoi(l_item.value);
   }
-  if (l_ret.EIO_ != 4 || l_ret.transport_ == transport_type::unknown) return tl::make_unexpected("invalid query data");
-  return {std::move(l_ret)};
+  if (l_ret.EIO_ != 4 || l_ret.transport_ == transport_type::unknown)
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的请求"});
+  return l_ret;
 }
 
 }  // namespace doodle::socket_io
