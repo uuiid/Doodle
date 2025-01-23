@@ -11,6 +11,15 @@
 #include <cpp-base64/base64.h>
 namespace doodle::socket_io {
 enum class engine_io_packet_type : std::int8_t { open = 0, close, ping, pong, message, upgrade, noop };
+enum class transport_type : std::int8_t { unknown, polling, websocket };
+struct query_data {
+  std::int8_t EIO_{0};
+  transport_type transport_;
+  std::string sid_;
+};
+
+tl::expected<query_data, std::string> parse_query_data(const boost::urls::url& in_url);
+
 class DOODLE_CORE_API engine_io {
  public:
   engine_io() = default;
