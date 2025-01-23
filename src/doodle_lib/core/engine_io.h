@@ -22,10 +22,11 @@ class DOODLE_CORE_API engine_io {
 };
 
 /// 是多个包
-bool is_multi_packet(const std::string& in_data) {
+inline bool is_multi_packet(const std::string& in_data) {
   if (auto l_it = in_data.find('\x1e'); l_it != in_data.npos) return true;
+  return false;
 }
-std::vector<std::string> split_multi_packet(const std::string& in_data) {
+inline std::vector<std::string> split_multi_packet(const std::string& in_data) {
   std::vector<std::string> l_vec{};
   return boost::split(l_vec, in_data, boost::is_any_of("\x1e"));
 }
