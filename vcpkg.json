@@ -36,6 +36,7 @@
     "cmakerc",
     "treehh",
     "wil",
+    "cpp-base64",
     "tl-expected",
     "sqlite-orm",
     "jwt-cpp",
