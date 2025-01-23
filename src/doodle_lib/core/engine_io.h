@@ -30,4 +30,11 @@ inline std::vector<std::string> split_multi_packet(const std::string& in_data) {
   std::vector<std::string> l_vec{};
   return boost::split(l_vec, in_data, boost::is_any_of("\x1e"));
 }
+// inline bool is_binary_packet(const std::string& in_data) { return in_data.front() == 'b'; }
+inline bool is_binary_packet(std::string& in_data) {
+  auto l_is = in_data.front() == 'b';
+  if (l_is) in_data.erase(0, 1);
+  return l_is;
+}
+
 }  // namespace doodle::socket_io
