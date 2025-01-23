@@ -507,6 +507,11 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       else {
         try {
           l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback_(session_));
+        } catch (const http_request_error& e) {
+          session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
+          l_gen = std::make_unique<boost::beast::http::message_generator>(
+              session_->make_error_code_msg(e.code_status_, e.what())
+          );
         } catch (const boost::bad_lexical_cast& e) {
           session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
           l_gen = std::make_unique<boost::beast::http::message_generator>(
