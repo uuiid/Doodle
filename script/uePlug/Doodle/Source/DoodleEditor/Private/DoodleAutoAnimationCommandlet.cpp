@@ -296,23 +296,28 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	DeleteAsseet(EffectMapPath);
 	DeleteAsseet(SequencePath);
 
+
 	// 创建主要的关卡和关卡序列
 	OnCreateSequence();
 	OnCreateSequenceWorld();
 	OnCreateDirectionalLight();
+	EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
+	TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
+	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
+	CommandletHelpers::TickEngine(TheRenderWorld);
 
 	/// 创建特效关卡和关卡序列
 	OnCreateEffectSequenceWorld();
 	OnCreateEffectSequence();
+	CommandletHelpers::TickEngine(TheRenderWorld);
 
 	OnBuildSequence();
+	CommandletHelpers::TickEngine(TheRenderWorld);
 	//---------------------
-	EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
-	TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
+
 	AddSequenceWorldToRenderWorld();
 	PostProcessVolumeConfig();
 
-	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
 	//-----------------
 	OnSaveReanderConfig();
 }
@@ -751,11 +756,11 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	}
 	// L_LevelSequencePlayer->
 	// EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
-	// L_LevelSequencePlayer->ConditionalBeginDestroy();
-	//
-	// GEngine->ForceGarbageCollection(true);
-	// GEngine->PerformGarbageCollectionAndCleanupActors();
-	// GEngine->ConditionalCollectGarbage();
+	L_LevelSequencePlayer->ConditionalBeginDestroy();
+
+	GEngine->ForceGarbageCollection(true);
+	GEngine->PerformGarbageCollectionAndCleanupActors();
+	GEngine->ConditionalCollectGarbage();
 	CommandletHelpers::TickEngine(TheRenderWorld);
 }
 
