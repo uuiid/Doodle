@@ -3,3 +3,19 @@
 //
 
 #pragma once
+
+#include <doodle_core/doodle_core_fwd.h>
+
+#include <boost/url/url.hpp>
+
+namespace doodle::socket_io {
+enum class engine_io_packet_type : std::int8_t { open = 0, close, ping, pong, message, upgrade, noop };
+class DOODLE_CORE_API engine_io {
+ public:
+  engine_io() = default;
+  explicit engine_io(const std::string& in_data) { parse(in_data); }
+  void parse(const std::string& in_data);
+  engine_io_packet_type packet_type_;
+  std::string data_;
+};
+}  // namespace doodle::socket_io
