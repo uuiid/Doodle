@@ -4,4 +4,8 @@
 
 #pragma once
 
-namespace doodle::http::local::event {}
+namespace doodle::http::local::event {
+
+class event {};
+
+}  // namespace doodle::http::local::event
