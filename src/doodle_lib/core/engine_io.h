@@ -23,7 +23,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 struct query_data {
   std::int8_t EIO_{0};
   transport_type transport_;
-  std::string sid_;
+  uuid sid_{};
 };
 
 query_data parse_query_data(const boost::urls::url& in_url);
@@ -74,6 +74,9 @@ class sid_ctx {
   void update_sid_time(const uuid& in_sid);
 };
 
+engine_io_packet_type parse_engine_packet(const std::string& in_str) {
+  return num_to_enum<engine_io_packet_type>(in_str.front());
+}
 /// 是多个包
 inline bool is_multi_packet(const std::string& in_data) {
   if (auto l_it = in_data.find('\x1e'); l_it != in_data.npos) return true;

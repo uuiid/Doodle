@@ -12,7 +12,7 @@ namespace doodle::socket_io {
 query_data parse_query_data(const boost::urls::url& in_url) {
   query_data l_ret{};
   for (auto&& l_item : in_url.params()) {
-    if (l_item.key == "sid" && l_item.has_value) l_ret.sid_ = l_item.value;
+    if (l_item.key == "sid" && l_item.has_value) l_ret.sid_ = from_uuid_str(l_item.value);
     if (l_item.key == "transport" && l_item.has_value) {
       l_ret.transport_ = magic_enum::enum_cast<transport_type>(l_item.value).value_or(transport_type::unknown);
     }

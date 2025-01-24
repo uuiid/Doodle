@@ -419,6 +419,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           case content_type::image_jpeg:
           case content_type::image_jpg:
           case content_type::image_png:
+          case content_type::text_plain:
           case content_type::application_json: {
             string_request_parser_ =
                 std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>(
