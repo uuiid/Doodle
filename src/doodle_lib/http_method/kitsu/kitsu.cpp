@@ -63,6 +63,7 @@ http_route_ptr create_kitsu_local_route() {
   http::local_setting_reg(*l_rout_ptr);
   local::local_event_reg(*l_rout_ptr);
   if (g_ctx().get<authorization>().is_expire()) http::task_info_reg_local(*l_rout_ptr);
+  return l_rout_ptr;
 }
 
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
