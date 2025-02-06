@@ -146,17 +146,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> delete_computers(s
 
 void computer_reg(doodle::http::http_route& in_route) {
   default_logger_raw()->info("任务日志目录 {}", core_set::get_set().get_cache_root(server_task_info::logger_category));
-  in_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/computer", list_computers, reg_computer
-          )
-      )
-      .reg(
-
-          std::make_shared<http_function>(
-              boost::beast::http::verb::delete_, "api/doodle/computer/{user_id}", delete_computers
-          )
-      );
+  // in_route
+  //     .reg(
+  //         std::make_shared<http_function>(
+  //             boost::beast::http::verb::get, "api/doodle/computer", list_computers, reg_computer
+  //         )
+  //     )
+  //     .reg(
+  //
+  //         std::make_shared<http_function>(
+  //             boost::beast::http::verb::delete_, "api/doodle/computer/{user_id}", delete_computers
+  //         )
+  //     );
 }
 }  // namespace doodle::http

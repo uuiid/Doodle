@@ -24,5 +24,11 @@ std::tuple<bool, http::capture_t> kitsu_proxy_url::set_match_url(boost::urls::se
   }
   return {l_result, http::capture_t{}};
 }
+bool kitsu_proxy_url::is_proxy() const { return true; }
+boost::asio::awaitable<boost::beast::http::message_generator> kitsu_proxy_url::callback(
+    http::session_data_ptr in_handle
+) {
+  co_return in_handle->make_msg({});
+}
 
 }  // namespace doodle::kitsu

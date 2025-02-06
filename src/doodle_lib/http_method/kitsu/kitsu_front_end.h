@@ -7,14 +7,11 @@
 
 namespace doodle::kitsu {
 class kitsu_front_end : public doodle::http::http_function_base_t {
- public:
+ protected:
   std::shared_ptr<FSys::path> root_path_{};
-  explicit kitsu_front_end(
-      FSys::path&& in_root, boost::beast::http::verb in_verb,
-      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(http::session_data_ptr)> in_callback
-  )
-      : http::http_function_base_t(in_verb, std::move(in_callback), nullptr),
-        root_path_(std::make_shared<FSys::path>(std::move(in_root))) {}
+
+ public:
+  using http::http_function_base_t::http_function_base_t;
   ~kitsu_front_end() override = default;
   std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
@@ -29,11 +26,12 @@ class kitsu_proxy_url : public doodle::http::http_function_base_t {
   }
 
  public:
-  explicit kitsu_proxy_url(const std::string& in_url) : http::http_function_base_t(), url_segments_(split_url(in_url)) {
-    is_proxy_ = true;
-  }
+  explicit kitsu_proxy_url(const std::string& in_url)
+      : http::http_function_base_t(), url_segments_(split_url(in_url)) {}
   ~kitsu_proxy_url() override = default;
   std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+  [[nodiscard]] bool is_proxy() const override;
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 };
 
 }  // namespace doodle::kitsu

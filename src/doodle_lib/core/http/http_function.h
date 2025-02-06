@@ -42,30 +42,20 @@ struct capture_t {
 class http_function_base_t {
  protected:
   boost::beast::http::verb verb_;
-  bool is_proxy_{false};
 
  public:
   http_function_base_t() = default;
-  explicit http_function_base_t(
-      boost::beast::http::verb in_verb,
-      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
-      std::function<void(const websocket_route_ptr&, const session_data_ptr&)> in_callback_websocket,
-      bool in_is_proxy = false
-  )
-      : verb_{in_verb},
-        callback_{std::move(in_callback)},
-        websocket_callback_{std::move(in_callback_websocket)},
-        is_proxy_(in_is_proxy) {}
+  explicit http_function_base_t(boost::beast::http::verb in_verb) : verb_{in_verb} {}
   virtual ~http_function_base_t() = default;
 
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
-  [[nodiscard]] inline bool has_websocket() const { return static_cast<bool>(websocket_callback_); }
-  [[nodiscard]] inline bool is_proxy() const { return is_proxy_; }
+  [[nodiscard]] virtual bool has_websocket() const;
+  [[nodiscard]] virtual bool is_proxy() const;
 
-  virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const = 0;
+  virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const         = 0;
 
-  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
-  std::function<void(const websocket_route_ptr&, const session_data_ptr&)> websocket_callback_;
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) = 0;
+  virtual void websocket_callback(const websocket_route_ptr& in_route, session_data_ptr in_handle);
 };
 
 class http_function : public http_function_base_t {
@@ -77,6 +67,7 @@ class http_function : public http_function_base_t {
   static std::vector<capture_data_t> set_cap_bit(std::string& in_str);
 
   const std::vector<capture_data_t> capture_vector_;
+  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
 
  public:
   using capture_t = capture_t;
@@ -85,17 +76,10 @@ class http_function : public http_function_base_t {
       boost::beast::http::verb in_verb, std::string in_url,
       std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
   )
-      : http_function_base_t(in_verb, std::move(in_callback), {}, false), capture_vector_(set_cap_bit(in_url)) {}
-
-  explicit http_function(
-      boost::beast::http::verb in_verb, std::string in_url,
-      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback,
-      std::function<void(const websocket_route_ptr&, const session_data_ptr&)> in_callback_websocket
-  )
-      : http_function_base_t(in_verb, std::move(in_callback), std::move(in_callback_websocket), false),
-        capture_vector_(set_cap_bit(in_url)) {}
+      : http_function_base_t(in_verb), capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {}
 
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 };
 
 using http_function_ptr = std::shared_ptr<http_function_base_t>;

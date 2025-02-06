@@ -347,7 +347,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
   boost::asio::awaitable<void> async_websocket_session() {
     boost::beast::get_lowest_layer(*stream_).expires_never();
     auto l_websocket_route = std::make_shared<websocket_route>();
-    callback_->websocket_callback_(l_websocket_route, session_);
+    callback_->websocket_callback(l_websocket_route, session_);
 
     boost::beast::websocket::stream<tcp_stream_type> l_stream{std::move(*stream_)};
     stream_.reset();
@@ -507,7 +507,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
         );
       else {
         try {
-          l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback_(session_));
+          l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback(session_));
         } catch (const http_request_error& e) {
           session_->logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
           l_gen = std::make_unique<boost::beast::http::message_generator>(

@@ -10,6 +10,13 @@
 #include <doodle_lib/core/http/http_session_data.h>
 namespace doodle::http {
 
+void http_function_base_t::websocket_callback(const websocket_route_ptr& in_route, session_data_ptr in_handle) {}
+bool http_function_base_t::has_websocket() const { return false; }
+bool http_function_base_t::is_proxy() const { return false; }
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
+  return callback_(in_handle);
+}
+
 std::vector<http_function::capture_data_t> http_function::set_cap_bit(std::string& in_str) {
   std::vector<std::string> l_vector{};
   boost::split(l_vector, in_str, boost::is_any_of("/"));
@@ -28,7 +35,8 @@ std::vector<http_function::capture_data_t> http_function::set_cap_bit(std::strin
   return l_capture_vector;
 }
 
-std::tuple<bool, http_function::capture_t> http_function::set_match_url(boost::urls::segments_ref in_segments_ref
+std::tuple<bool, http_function::capture_t> http_function::set_match_url(
+    boost::urls::segments_ref in_segments_ref
 ) const {
   std::map<std::string, std::string> l_str{};
   if (in_segments_ref.size() != capture_vector_.size()) {
