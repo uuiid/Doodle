@@ -6,6 +6,7 @@
 #include "doodle_core/metadata/task_status.h"
 #include "doodle_core/metadata/task_type.h"
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/core/authorization.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
@@ -27,6 +28,7 @@
 #include <doodle_lib/http_method/kitsu/user.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/local/event.h>
+#include <doodle_lib/http_method/local_setting.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
 #include <doodle_lib/http_method/model_library/thumbnail.h>
@@ -56,6 +58,13 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   return l_router;
 }
 
+http_route_ptr create_kitsu_local_route() {
+  auto l_rout_ptr = std::make_shared<http::http_route>();
+  http::local_setting_reg(*l_rout_ptr);
+  local::local_event_reg(*l_rout_ptr);
+  if (g_ctx().get<authorization>().is_expire()) http::task_info_reg_local(*l_rout_ptr);
+}
+
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   auto l_router = std::make_shared<kitsu::http_route_proxy>();
   l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
@@ -63,7 +72,6 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   reg_kitsu_front_end_http(*l_router, in_root);
   kitsu::epiboly_reg(*l_router);
   tool_version_reg(*l_router);
-  local::local_event_reg(*l_router);
   return l_router;
 }
 

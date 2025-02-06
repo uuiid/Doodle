@@ -128,9 +128,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     // 初始化授权上下文
     g_ctx().emplace<authorization>(core_set::get_set().authorize_);
     // 初始化路由
-    auto l_rout_ptr = std::make_shared<http::http_route>();
-    http::local_setting_reg(*l_rout_ptr);
-    if (g_ctx().get<authorization>().is_expire()) http::task_info_reg_local(*l_rout_ptr);
+    auto l_rout_ptr = http::create_kitsu_local_route();
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return false;
