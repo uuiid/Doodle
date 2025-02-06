@@ -73,8 +73,7 @@ class sid_ctx {
 
   void update_sid_time(const uuid& in_sid);
 };
-
-engine_io_packet_type parse_engine_packet(const std::string& in_str) {
+inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return num_to_enum<engine_io_packet_type>(in_str.front());
 }
 /// 是多个包
