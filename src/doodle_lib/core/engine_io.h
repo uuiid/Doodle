@@ -30,7 +30,7 @@ query_data parse_query_data(const boost::urls::url& in_url);
 inline std::string dump_message(
     const std::string& in_data, engine_io_packet_type in_type = engine_io_packet_type::message
 ) {
-  return fmt::format("{}{}", in_type, in_data);
+  return fmt::format("{}{}", static_cast<std::int8_t>(in_type), in_data);
 }
 
 /// 握手数据
@@ -52,7 +52,7 @@ struct handshake_data {
 
 class sid_ctx {
   /// 线程锁
-  std::mutex mutex_;
+  mutable std::shared_mutex mutex_;
 
  public:
   std::map<uuid, chrono::sys_time_pos> sid_time_map_{};

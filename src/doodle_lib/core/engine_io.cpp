@@ -25,29 +25,30 @@ query_data parse_query_data(const boost::urls::url& in_url) {
 
 uuid sid_ctx::generate_sid() {
   // 加锁
-  std::lock_guard l_lock{mutex_};
+  std::unique_lock l_lock{mutex_};
 
   auto&& [l_it, l_] = sid_time_map_.emplace(core_set::get_set().get_uuid(), std::chrono::system_clock::now());
-  return l_it->first;
-}
-bool sid_ctx::is_sid_timeout(const uuid& in_sid) const {
-  // 加锁
-  std::lock_guard l_lock{mutex_};
-  return sid_time_map_.find(in_sid) != sid_time_map_.end() &&
-         std::chrono::system_clock::now() - sid_time_map_.at(in_sid) > handshake_data_.ping_timeout_;
-}
-void sid_ctx::update_sid_time(const uuid& in_sid) {
-  auto l_now = std::chrono::system_clock::now();
-  // 加锁
-  std::lock_guard l_lock{mutex_};
-  sid_time_map_[in_sid] = l_now;
   // 清除超时的sid
+  auto l_now        = std::chrono::system_clock::now();
   for (auto it = sid_time_map_.begin(); it != sid_time_map_.end();) {
     if (l_now - it->second > handshake_data_.ping_timeout_)
       it = sid_time_map_.erase(it);
     else
       ++it;
   }
+  return l_it->first;
+}
+bool sid_ctx::is_sid_timeout(const uuid& in_sid) const {
+  // 加锁
+  std::shared_lock l_lock{mutex_};
+  return sid_time_map_.find(in_sid) != sid_time_map_.end() &&
+         std::chrono::system_clock::now() - sid_time_map_.at(in_sid) > handshake_data_.ping_timeout_;
+}
+void sid_ctx::update_sid_time(const uuid& in_sid) {
+  auto l_now = std::chrono::system_clock::now();
+  // 加锁
+  std::shared_lock l_lock{mutex_};
+  sid_time_map_[in_sid] = l_now;
 }
 
 }  // namespace doodle::socket_io
