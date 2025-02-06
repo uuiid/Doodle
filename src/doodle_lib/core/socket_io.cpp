@@ -38,6 +38,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   }
   ++l_pos;
   l_packet.json_data_ = nlohmann::json::parse(in_str.begin() + l_pos, in_str.end());
+  return l_packet;
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::get_fun_impl(
