@@ -53,7 +53,7 @@ class socket_io_http : public socket_io {
   boost::asio::awaitable<boost::beast::http::message_generator> post_fun_impl(http::session_data_ptr in_handle) const;
 
  public:
-  explicit socket_io_http(const std::shared_ptr<event_base>& in_event) : socket_io(in_event) {}
+  using socket_io::socket_io;
   std::function<boost::asio::awaitable<boost::beast::http::message_generator>(http::session_data_ptr in_handle)>
   get_fun() const {
     return std::bind_front(&socket_io_http::get_fun_impl, this);

@@ -26,6 +26,7 @@
 #include <doodle_lib/http_method/kitsu/task.h>
 #include <doodle_lib/http_method/kitsu/user.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
+#include <doodle_lib/http_method/local/event.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
 #include <doodle_lib/http_method/model_library/thumbnail.h>
@@ -62,6 +63,7 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   reg_kitsu_front_end_http(*l_router, in_root);
   kitsu::epiboly_reg(*l_router);
   tool_version_reg(*l_router);
+  local::local_event_reg(*l_router);
   return l_router;
 }
 
@@ -71,15 +73,15 @@ namespace {
 boost::asio::awaitable<void> init_context_impl() {
   auto& l_data = g_ctx().get<sqlite_database>();
   if (l_data.get_all<project_status>().size() == 0) {
-    auto l_s    = std::make_shared<project_status>();
-    l_s->uuid_id_  = from_uuid_str("755c9edd-9481-4145-ab43-21491bdf2739");
-    l_s->name_  = "Open";
-    l_s->color_ = "#000000";
+    auto l_s      = std::make_shared<project_status>();
+    l_s->uuid_id_ = from_uuid_str("755c9edd-9481-4145-ab43-21491bdf2739");
+    l_s->name_    = "Open";
+    l_s->color_   = "#000000";
     co_await l_data.install(l_s);
-    l_s         = std::make_shared<project_status>();
-    l_s->uuid_id_  = from_uuid_str("5159f210-7ec8-40e3-b8c9-2a06d0b4b116");
-    l_s->name_  = "Closed";
-    l_s->color_ = "#000000";
+    l_s           = std::make_shared<project_status>();
+    l_s->uuid_id_ = from_uuid_str("5159f210-7ec8-40e3-b8c9-2a06d0b4b116");
+    l_s->name_    = "Closed";
+    l_s->color_   = "#000000";
     co_await l_data.install(l_s);
   }
   if (l_data.get_all<task_status>().size() == 0) {
@@ -90,7 +92,7 @@ boost::asio::awaitable<void> init_context_impl() {
     auto l_task_list = std::make_shared<std::vector<task_status>>();
 
     for (auto& l_j : *l_r) {
-      auto l_task = l_j.get<task_status>();
+      auto l_task     = l_j.get<task_status>();
       l_task.uuid_id_ = l_j["id"].get<uuid>();
       l_task_list->emplace_back(l_task);
     }
