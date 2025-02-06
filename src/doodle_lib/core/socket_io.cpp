@@ -5,7 +5,8 @@
 #include "socket_io.h"
 
 #include <doodle_lib/core/engine_io.h>
-
+#include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/core/http/http_route.h>
 namespace doodle::socket_io {
 
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
@@ -92,6 +93,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
   auto l_pack = socket_io_packet::parse(l_body);
   event_->event(l_pack);
   co_return in_handle->make_msg("{}");
+}
+void socket_io_http::reg(http::http_route& in_route, const std::string& in_path) const {
+  in_route.reg(std::make_shared<http::http_function>(boost::beast::http::verb::get, in_path, get_fun()))
+      .reg(std::make_shared<http::http_function>(boost::beast::http::verb::post, in_path, post_fun()));
 }
 
 }  // namespace doodle::socket_io

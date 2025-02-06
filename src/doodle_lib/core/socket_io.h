@@ -62,6 +62,8 @@ class socket_io_http : public socket_io {
   post_fun() const {
     return std::bind_front(&socket_io_http::post_fun_impl, this);
   }
+
+  void reg(http::http_route& in_route, const std::string& in_path = "socket.io") const;
 };
 
 }  // namespace doodle::socket_io
