@@ -55,7 +55,10 @@ class http_function_base_t {
   virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const         = 0;
 
   virtual boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) = 0;
-  virtual void websocket_init(const websocket_route_ptr& in_route, session_data_ptr in_handle);
+  virtual void websocket_init(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<void> websocket_callback(
+      boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
+  );
 };
 
 class http_function : public http_function_base_t {
