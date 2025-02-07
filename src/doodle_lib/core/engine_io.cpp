@@ -45,8 +45,15 @@ uuid sid_ctx::generate_sid() {
 bool sid_ctx::is_sid_timeout(const uuid& in_sid) const {
   // 加锁
   std::shared_lock l_lock{mutex_};
+  // if (sid_time_map_.find(in_sid) != sid_time_map_.end()) {
+  //   default_logger_raw()->info(
+  //       "{} {} {}", std::chrono::system_clock::now(), sid_time_map_.at(in_sid),
+  //       chrono::floor<chrono::milliseconds>(std::chrono::system_clock::now() - sid_time_map_.at(in_sid))
+  //   );
+  // }
   return sid_time_map_.find(in_sid) != sid_time_map_.end() &&
-         std::chrono::system_clock::now() - sid_time_map_.at(in_sid) > handshake_data_.ping_timeout_;
+         std::chrono::system_clock::now() - sid_time_map_.at(in_sid) >
+             (handshake_data_.ping_timeout_ + handshake_data_.ping_interval_);
 }
 void sid_ctx::update_sid_time(const uuid& in_sid) {
   auto l_now = std::chrono::system_clock::now();
