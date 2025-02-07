@@ -8,7 +8,6 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 namespace doodle::socket_io {
-
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   socket_io_packet l_packet{};
   std::size_t l_pos{};
@@ -42,61 +41,102 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   return l_packet;
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::get_fun_impl(
-    http::session_data_ptr in_handle
-) const {
-  auto l_p = parse_query_data(in_handle->url_);
-  // 注册
-  if (l_p.sid_.is_nil()) {
-    auto l_hd             = g_ctx().get<sid_ctx>().handshake_data_;
-    l_hd.sid_             = g_ctx().get<sid_ctx>().generate_sid();
-    nlohmann::json l_json = l_hd;
-    co_return in_handle->make_msg(dump_message(l_json.dump(), engine_io_packet_type::open));
-  }
+class socket_io_http_base_fun : public ::doodle::http::http_function {
+ protected:
+  std::shared_ptr<event_base> event_;
+  std::string url_;
 
-  // 心跳超时检查
-  if (g_ctx().get<sid_ctx>().is_sid_timeout(l_p.sid_))
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid超时"});
-  if (auto l_packet = event_->get_last_event(); l_packet) {
-    // TODO: 序列化数据包
-  } else
-    co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::ping));
-}
-boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::post_fun_impl(
-    http::session_data_ptr in_handle
-) const {
-  auto l_p = parse_query_data(in_handle->url_);
-  // 注册
-  if (l_p.sid_.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid为空"});
+ public:
+  explicit socket_io_http_base_fun(
+      boost::beast::http::verb in_verb, std::string in_url, const std::shared_ptr<event_base>& in_event
+  )
+      : http_function(in_verb, {}), event_(std::move(in_event)), url_(std::move(in_url)) {}
 
-  if (in_handle->content_type_ != http::detail::content_type::application_nuknown)  // TODO: 二进制数据, 未实现
-    co_return in_handle->make_msg(std::string{"null"});
-  auto l_body = std::get<std::string>(in_handle->body_);
-  switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
-    case engine_io_packet_type::open:
-      break;
-    case engine_io_packet_type::ping:
-      g_ctx().get<sid_ctx>().update_sid_time(l_p.sid_);
-      break;
-    case engine_io_packet_type::pong:
-      co_return in_handle->make_msg(std::string{});
-      break;
-    case engine_io_packet_type::message:
-      break;
-    case engine_io_packet_type::close:
-    case engine_io_packet_type::upgrade:
-    case engine_io_packet_type::noop:
-      co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
-      break;
+  std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override {
+    default_logger_raw()->info(std::string{in_segments_ref.buffer()});
+    if (in_segments_ref.buffer() == url_) return {true, {}};
+    return {false, {}};
   }
-  l_body.erase(0, 1);
-  auto l_pack = socket_io_packet::parse(l_body);
-  event_->event(l_pack);
-  co_return in_handle->make_msg("{}");
-}
-void socket_io_http::reg(http::http_route& in_route, const std::string& in_path) const {
-  in_route.reg(std::make_shared<http::http_function>(boost::beast::http::verb::get, in_path, get_fun()))
-      .reg(std::make_shared<http::http_function>(boost::beast::http::verb::post, in_path, post_fun()));
+};
+
+class socket_io_http_get : public socket_io_http_base_fun {
+ public:
+  socket_io_http_get(const std::string& in_path, const std::shared_ptr<event_base>& in_event)
+      : socket_io_http_base_fun(boost::beast::http::verb::get, in_path, in_event) {}
+
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override {
+    auto l_p = parse_query_data(in_handle->url_);
+    // 注册
+    if (l_p.sid_.is_nil()) {
+      auto l_hd             = g_ctx().get<sid_ctx>().handshake_data_;
+      l_hd.sid_             = g_ctx().get<sid_ctx>().generate_sid();
+      nlohmann::json l_json = l_hd;
+      co_return in_handle->make_msg(dump_message(l_json.dump(), engine_io_packet_type::open));
+    }
+
+    // 心跳超时检查
+    if (g_ctx().get<sid_ctx>().is_sid_timeout(l_p.sid_))
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid超时"});
+    if (auto l_packet = event_->get_last_event(); l_packet) {
+      // TODO: 序列化数据包
+    } else
+      co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::ping));
+  }
+  [[nodiscard]] bool has_websocket() const override { return true; }
+
+};
+
+class socket_io_http_post : public socket_io_http_base_fun {
+ public:
+  socket_io_http_post(const std::string& in_path, const std::shared_ptr<event_base>& in_event)
+      : socket_io_http_base_fun(boost::beast::http::verb::post, in_path, in_event) {}
+
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override {
+    auto l_p = parse_query_data(in_handle->url_);
+    // 注册
+    if (l_p.sid_.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid为空"});
+
+    if (in_handle->content_type_ != http::detail::content_type::application_nuknown)  // TODO: 二进制数据, 未实现
+      co_return in_handle->make_msg(std::string{"null"});
+    auto l_body = std::get<std::string>(in_handle->body_);
+    switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
+      case engine_io_packet_type::open:
+        break;
+      case engine_io_packet_type::ping:
+        g_ctx().get<sid_ctx>().update_sid_time(l_p.sid_);
+        break;
+      case engine_io_packet_type::pong:
+        co_return in_handle->make_msg(std::string{});
+        break;
+      case engine_io_packet_type::message:
+        break;
+      case engine_io_packet_type::close:
+      case engine_io_packet_type::upgrade:
+      case engine_io_packet_type::noop:
+        co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
+        break;
+    }
+    l_body.erase(0, 1);
+    auto l_pack = socket_io_packet::parse(l_body);
+    event_->event(l_pack);
+    co_return in_handle->make_msg("{}");
+  }
+};
+class socket_io_http_put : public socket_io_http_base_fun {
+ public:
+  socket_io_http_put(const std::string& in_path, const std::shared_ptr<event_base>& in_event)
+      : socket_io_http_base_fun(boost::beast::http::verb::put, in_path, in_event) {}
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不支持put请求");
+  }
+};
+
+void create_socket_io(
+    http::http_route& in_route, const std::shared_ptr<event_base>& in_event, const std::string& in_path
+) {
+  in_route.reg(std::make_shared<socket_io_http_get>(in_path, in_event))
+      .reg(std::make_shared<socket_io_http_post>(in_path, in_event))
+      .reg(std::make_shared<socket_io_http_put>(in_path, in_event));
 }
 
 }  // namespace doodle::socket_io

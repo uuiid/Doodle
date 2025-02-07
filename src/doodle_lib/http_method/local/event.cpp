@@ -14,7 +14,6 @@ std::optional<socket_io::socket_io_packet> local_event::get_last_event() const {
 void local_event_reg(http_route& in_route) {
   g_ctx().emplace<socket_io::sid_ctx>();
   auto l_event = std::make_shared<local_event>();
-  socket_io::socket_io_http l_http{l_event};
-  l_http.reg(in_route);
+  socket_io::create_socket_io(in_route, l_event);
 }
 }  // namespace doodle::http::local

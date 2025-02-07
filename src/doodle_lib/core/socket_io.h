@@ -40,30 +40,8 @@ class event_base {
   virtual void event(const socket_io_packet& in_packet)          = 0;
 };
 
-class socket_io {
- protected:
-  std::shared_ptr<event_base> event_;
-
- public:
-  explicit socket_io(const std::shared_ptr<event_base>& in_event) : event_(in_event) {}
-};
-
-class socket_io_http : public socket_io {
-  boost::asio::awaitable<boost::beast::http::message_generator> get_fun_impl(http::session_data_ptr in_handle) const;
-  boost::asio::awaitable<boost::beast::http::message_generator> post_fun_impl(http::session_data_ptr in_handle) const;
-
- public:
-  using socket_io::socket_io;
-  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(http::session_data_ptr in_handle)>
-  get_fun() const {
-    return std::bind_front(&socket_io_http::get_fun_impl, this);
-  }
-  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(http::session_data_ptr in_handle)>
-  post_fun() const {
-    return std::bind_front(&socket_io_http::post_fun_impl, this);
-  }
-
-  void reg(http::http_route& in_route, const std::string& in_path = "socket.io") const;
-};
+void create_socket_io(
+    http::http_route& in_route, const std::shared_ptr<event_base>& in_event, const std::string& in_path = "/socket.io/"
+);
 
 }  // namespace doodle::socket_io

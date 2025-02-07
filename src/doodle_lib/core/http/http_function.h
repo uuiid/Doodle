@@ -55,10 +55,11 @@ class http_function_base_t {
   virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const         = 0;
 
   virtual boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) = 0;
-  virtual void websocket_callback(const websocket_route_ptr& in_route, session_data_ptr in_handle);
+  virtual void websocket_init(const websocket_route_ptr& in_route, session_data_ptr in_handle);
 };
 
 class http_function : public http_function_base_t {
+ protected:
   struct capture_data_t {
     std::string name;
     bool is_capture;
@@ -72,6 +73,9 @@ class http_function : public http_function_base_t {
  public:
   using capture_t = capture_t;
 
+  explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
+      : http_function_base_t(in_verb), capture_vector_(set_cap_bit(in_url)) {}
+
   explicit http_function(
       boost::beast::http::verb in_verb, std::string in_url,
       std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
@@ -81,6 +85,13 @@ class http_function : public http_function_base_t {
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
   boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 };
+#define DOODLE_HTTP_FUN(fun_name, verb_, url)                                                   \
+  class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::http_function { \
+   public:                                                                                      \
+    BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_)() : http_function(boost::beast::http::verb::verb_, url) {}
 
+#define DOODLE_HTTP_FUN_END() \
+  }                           \
+  ;
 using http_function_ptr = std::shared_ptr<http_function_base_t>;
 }  // namespace doodle::http

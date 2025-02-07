@@ -10,7 +10,7 @@
 #include <doodle_lib/core/http/http_session_data.h>
 namespace doodle::http {
 
-void http_function_base_t::websocket_callback(const websocket_route_ptr& in_route, session_data_ptr in_handle) {}
+void http_function_base_t::websocket_init(const websocket_route_ptr& in_route, session_data_ptr in_handle) {}
 bool http_function_base_t::has_websocket() const { return false; }
 bool http_function_base_t::is_proxy() const { return false; }
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
