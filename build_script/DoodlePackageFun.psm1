@@ -57,8 +57,8 @@ function Initialize-Doodle
     $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
 
     Write-Host "开始构建文件"
-    Start-Process -FilePath "npm" -ArgumentList "run build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait
-    if ($LastExitCode -ne 0)
+    $NpmResult = Start-Process -FilePath "npm" -ArgumentList "run build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+    if ($NpmResult.ExitCode -ne 0)
     {
         # 抛出异常
         throw "构建失败"
