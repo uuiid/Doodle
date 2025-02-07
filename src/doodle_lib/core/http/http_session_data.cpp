@@ -448,6 +448,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
         switch (session_->content_type_) {
           case content_type::image_jpeg:
           case content_type::image_jpg:
+          case content_type::text_plain:
           case content_type::image_png:
             session_->body_       = string_request_parser_->get().body();
             session_->req_header_ = std::move(string_request_parser_->release().base());
