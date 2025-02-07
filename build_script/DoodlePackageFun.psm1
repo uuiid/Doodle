@@ -56,6 +56,14 @@ function Initialize-Doodle
     $DoodleTimePath = "$DoodleKitsuRoot\dist\time"
     $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
 
+    Write-Host "开始构建文件"
+    Start-Process -FilePath "npm" -ArgumentList "run build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait
+    if ($LastExitCode -ne 0)
+    {
+        # 抛出异常
+        throw "构建失败"
+    }
+
     Write-Host "开始复制文件"
     &robocopy "$DoodleSource\$DoodleName\bin" "$OutPath\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
