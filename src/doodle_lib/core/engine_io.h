@@ -72,9 +72,11 @@ class sid_ctx {
   bool is_sid_timeout(const uuid& in_sid) const;
 
   void update_sid_time(const uuid& in_sid);
+
+  void remove_sid(const uuid& in_sid);
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
-  return num_to_enum<engine_io_packet_type>(in_str.front());
+  return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');
 }
 /// 是多个包
 inline bool is_multi_packet(const std::string& in_data) {

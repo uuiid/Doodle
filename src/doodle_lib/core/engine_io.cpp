@@ -62,4 +62,10 @@ void sid_ctx::update_sid_time(const uuid& in_sid) {
   sid_time_map_[in_sid] = l_now;
 }
 
+void sid_ctx::remove_sid(const uuid& in_sid) {
+  // 加锁
+  std::unique_lock l_lock{mutex_};
+  sid_time_map_.erase(in_sid);
+}
+
 }  // namespace doodle::socket_io
