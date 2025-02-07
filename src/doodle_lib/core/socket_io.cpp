@@ -53,7 +53,6 @@ class socket_io_http_base_fun : public ::doodle::http::http_function {
       : http_function(in_verb, {}), event_(std::move(in_event)), url_(std::move(in_url)) {}
 
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override {
-    default_logger_raw()->info(std::string{in_segments_ref.buffer()});
     if (in_segments_ref.buffer() == url_) return {true, {}};
     return {false, {}};
   }
@@ -83,7 +82,20 @@ class socket_io_http_get : public socket_io_http_base_fun {
       co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::ping));
   }
   [[nodiscard]] bool has_websocket() const override { return true; }
-
+  boost::asio::awaitable<void> websocket_callback(
+      boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
+  ) override {
+    auto l_p = parse_query_data(in_handle->url_);
+    // 注册
+    if (l_p.sid_.is_nil()) {
+      auto l_hd             = g_ctx().get<sid_ctx>().handshake_data_;
+      l_hd.sid_             = g_ctx().get<sid_ctx>().generate_sid();
+      l_hd.upgrades_.clear();
+      nlohmann::json l_json = l_hd;
+      // const auto l_str      = l_json.dump();
+      co_await in_stream.async_write(boost::asio::buffer(dump_message(l_json.dump(), engine_io_packet_type::open)));
+    }
+  }
 };
 
 class socket_io_http_post : public socket_io_http_base_fun {
