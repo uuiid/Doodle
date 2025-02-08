@@ -53,9 +53,14 @@ struct handshake_data {
 class sid_ctx {
   /// 线程锁
   mutable std::shared_mutex mutex_;
+  struct sid_data {
+    chrono::sys_time_pos last_time_{};
+    bool is_upgrade_to_websocket_{false};
+    std::weak_ptr<std::int8_t> lock_{};
+  };
 
  public:
-  std::map<uuid, chrono::sys_time_pos> sid_time_map_{};
+  std::map<uuid, sid_data> sid_time_map_{};
 
   handshake_data handshake_data_{};
   sid_ctx()
@@ -70,10 +75,15 @@ class sid_ctx {
   uuid generate_sid();
   /// 查询sid是否超时
   bool is_sid_timeout(const uuid& in_sid) const;
-
   void update_sid_time(const uuid& in_sid);
-
   void remove_sid(const uuid& in_sid);
+
+  /// 是否升级到了websocket
+  bool is_upgrade_to_websocket(const uuid& in_sid) const;
+  void set_upgrade_to_websocket(const uuid& in_sid);
+  /// 获取单独sid锁
+  std::shared_ptr<void> get_sid_lock(const uuid& in_sid);
+  bool has_sid_lock(const uuid& in_sid) const;
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');
