@@ -62,7 +62,7 @@ class event_t : public event_base {
   void event(std::string in_packet) override;
 };
 
-class socket_io_websocket_core {
+class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_websocket_core> {
   logger_ptr logger_;
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<awaitable_queue_limitation> write_queue_limitation_;

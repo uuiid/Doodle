@@ -67,6 +67,18 @@ void sid_ctx::remove_sid(const uuid& in_sid) {
   std::unique_lock l_lock{mutex_};
   sid_time_map_.erase(in_sid);
 }
+void sid_ctx::close_sid(const uuid& in_sid) {
+  // 加锁
+  std::shared_lock l_lock{mutex_};
+  if (sid_time_map_.contains(in_sid)) {
+    sid_time_map_[in_sid].close_ = true;
+  }
+}
+bool sid_ctx::is_sid_close(const uuid& in_sid) const {
+  // 加锁
+  std::shared_lock l_lock{mutex_};
+  return sid_time_map_.contains(in_sid) && sid_time_map_.at(in_sid).close_;
+}
 bool sid_ctx::is_upgrade_to_websocket(const uuid& in_sid) const {
   // 加锁
   std::shared_lock l_lock{mutex_};

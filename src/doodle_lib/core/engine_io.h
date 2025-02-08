@@ -57,6 +57,7 @@ class sid_ctx {
     chrono::sys_time_pos last_time_{};
     bool is_upgrade_to_websocket_{false};
     std::weak_ptr<std::int8_t> lock_{};
+    bool close_{false};
   };
 
  public:
@@ -77,6 +78,8 @@ class sid_ctx {
   bool is_sid_timeout(const uuid& in_sid) const;
   void update_sid_time(const uuid& in_sid);
   void remove_sid(const uuid& in_sid);
+  void close_sid(const uuid& in_sid);
+  bool is_sid_close(const uuid& in_sid) const;
 
   /// 是否升级到了websocket
   bool is_upgrade_to_websocket(const uuid& in_sid) const;

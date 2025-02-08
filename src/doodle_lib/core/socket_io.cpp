@@ -99,7 +99,10 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   if (g_ctx().get<sid_ctx>().has_sid_lock(sid_)) co_return co_await async_close_websocket();
 
   sid_lock_ = g_ctx().get<sid_ctx>().get_sid_lock(sid_);
-  boost::asio::co_spawn(co_await boost::asio::this_coro::executor, async_ping_pong(), boost::asio::detached);
+  boost::asio::co_spawn(
+      co_await boost::asio::this_coro::executor, async_ping_pong(),
+      boost::asio::consign(boost::asio::detached, shared_from_this())
+  );
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
@@ -177,8 +180,9 @@ class socket_io_http_get : public socket_io_http_base_fun {
     if (l_p.sid_.is_nil()) co_return in_handle->make_msg(generate_register_reply());
 
     // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
-    if (g_ctx().get<sid_ctx>().is_sid_timeout(l_p.sid_) || g_ctx().get<sid_ctx>().is_upgrade_to_websocket(l_p.sid_))
-      throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级"});
+    if (g_ctx().get<sid_ctx>().is_sid_timeout(l_p.sid_) || g_ctx().get<sid_ctx>().is_upgrade_to_websocket(l_p.sid_) ||
+        g_ctx().get<sid_ctx>().is_sid_close(l_p.sid_))
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"});
 
     if (auto l_packet = event_->get_last_event(); !l_packet.empty()) {
       co_return in_handle->make_msg(std::move(l_packet));
@@ -188,6 +192,9 @@ class socket_io_http_get : public socket_io_http_base_fun {
         co_await boost::asio::this_coro::executor, g_ctx().get<sid_ctx>().handshake_data_.ping_interval_
     };
     co_await l_timer.async_wait(boost::asio::use_awaitable);
+
+    if (g_ctx().get<sid_ctx>().is_sid_close(l_p.sid_))
+      co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
     if (auto l_packet = event_->get_last_event(); !l_packet.empty()) {
       co_return in_handle->make_msg(std::move(l_packet));
     }
@@ -226,13 +233,13 @@ class socket_io_http_post : public socket_io_http_base_fun {
         g_ctx().get<sid_ctx>().update_sid_time(l_p.sid_);
         break;
       case engine_io_packet_type::pong:
+        g_ctx().get<sid_ctx>().update_sid_time(l_p.sid_);
         co_return in_handle->make_msg(std::string{});
         break;
       case engine_io_packet_type::message:
         break;
       case engine_io_packet_type::close:
-        g_ctx().get<sid_ctx>().remove_sid(l_p.sid_);
-        event_->event(dump_message({}, engine_io_packet_type::noop));
+        g_ctx().get<sid_ctx>().close_sid(l_p.sid_);
         co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
       case engine_io_packet_type::upgrade:
       case engine_io_packet_type::noop:
