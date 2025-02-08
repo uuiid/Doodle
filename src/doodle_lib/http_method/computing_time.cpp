@@ -68,8 +68,8 @@ struct computing_time_post_req_custom_data {
     j.at("name").get_to(p.name);
     j.at("grade").get_to(p.grade);
     j.at("remark").get_to(p.remark);
-    j.at("start_date").get_to(p.start_time);
-    j.at("end_date").get_to(p.end_time);
+    j.at("start_time").get_to(p.start_time);
+    j.at("end_time").get_to(p.end_time);
 
     // 检查数据
     if (p.start_time > p.end_time)
