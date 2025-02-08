@@ -182,15 +182,15 @@ class socket_io_http_get : public socket_io_http_base_fun {
     // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
     if (g_ctx().get<sid_ctx>().is_sid_timeout(l_p.sid_) || g_ctx().get<sid_ctx>().is_upgrade_to_websocket(l_p.sid_) ||
         g_ctx().get<sid_ctx>().is_sid_close(l_p.sid_))
-      throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"});
+      throw_exception(
+          http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
+      );
 
-    if (auto l_packet = event_->get_last_event(); !l_packet.empty()) {
-      co_return in_handle->make_msg(std::move(l_packet));
-    }
+    // if (auto l_packet = event_->get_last_event(); !l_packet.empty()) {
+    //   co_return in_handle->make_msg(std::move(l_packet));
+    // }
 
-    boost::asio::system_timer l_timer{
-        co_await boost::asio::this_coro::executor, g_ctx().get<sid_ctx>().handshake_data_.ping_interval_
-    };
+    boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor, 250ms};
     co_await l_timer.async_wait(boost::asio::use_awaitable);
 
     if (g_ctx().get<sid_ctx>().is_sid_close(l_p.sid_))
