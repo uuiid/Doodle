@@ -49,6 +49,36 @@ struct computing_time_post_req_data {
   }
 };
 
+struct computing_time_post_req_custom_data {
+  uuid project_id;
+  std::int32_t season;
+  std::int32_t episode;
+  std::string name;
+  std::string grade;
+  std::string remark;
+  chrono::local_time_pos start_time;
+  chrono::local_time_pos end_time;
+  chrono::year_month year_month_;
+  boost::uuids::uuid user_id_;
+
+  friend void from_json(const nlohmann::json& j, computing_time_post_req_custom_data& p) {
+    j.at("project_id").get_to(p.project_id);
+    j.at("season").get_to(p.season);
+    j.at("episode").get_to(p.episode);
+    j.at("name").get_to(p.name);
+    j.at("grade").get_to(p.grade);
+    j.at("remark").get_to(p.remark);
+    j.at("start_date").get_to(p.start_time);
+    j.at("end_date").get_to(p.end_time);
+
+    // 检查数据
+    if (p.start_time > p.end_time)
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "开始时间大于结束时间"});
+    if (p.project_id.is_nil())
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "project_id 不能为空"});
+  }
+};
+
 business::work_clock2 create_time_clock(const chrono::year_month& in_year_month, const std::int64_t& in_user_id) {
   business::work_clock2 l_time_clock_{};
   auto l_rules_ = business::rules::get_default();
@@ -299,8 +329,6 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
   co_return tl::expected<nlohmann::json, std::string>{std::move(l_json_res)};
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
-
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -313,6 +341,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   {  // 检查除空以外的id是否重复
     std::map<uuid, std::size_t> l_map;
     for (auto&& l_task : l_data.data) {
+      if (l_task.task_id.is_nil())
+        co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
       l_map[l_task.task_id]++;
     }
     if (l_map.contains(uuid{})) l_map.erase(uuid{});
@@ -341,6 +371,82 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.id_);
   computing_time_run(l_data.year_month_, l_time_clock, l_user, l_data, *l_block_ptr);
 
+  co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
+
+  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  } else
+    co_return in_handle->make_msg(l_r->dump());
+}
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_custom(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "不是json请求"
+    );
+  auto l_json                                = std::get<nlohmann::json>(in_handle->body_);
+  computing_time_post_req_custom_data l_data = l_json.get<computing_time_post_req_custom_data>();
+
+  l_data.user_id_ = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
+  l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
+
+  // 检查数据
+  if (l_data.start_time > l_data.end_time)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "开始时间大于结束时间"
+    );
+  if (l_data.project_id.is_nil())
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "project_id 不可为空"
+    );
+
+  user_helper::database_t l_user{};
+  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id_);
+      l_users.empty())
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::not_found,
+        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
+    );
+  else
+    l_user = std::move(*l_users.begin());
+
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
+  chrono::system_zoned_time{
+      chrono::current_zone(), chrono::time_point_cast<chrono::system_clock::duration>(l_data.start_time)
+  };
+  l_block_ptr->emplace_back(
+      work_xlsx_task_info_helper::database_t{
+          .uuid_id_ = core_set::get_set().get_uuid(),
+          .start_time_ =
+              work_xlsx_task_info_helper::database_t::zoned_time{
+                  chrono::current_zone(),
+                  chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
+                      l_data.start_time
+                  )
+              },
+          .end_time_ =
+              work_xlsx_task_info_helper::database_t::zoned_time{
+                  chrono::current_zone(),
+                  chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.end_time)
+              },
+          .user_remark_ = l_data.remark,
+          .year_month_  = chrono::local_days{l_data.year_month_ / 1},
+          .user_ref_    = l_user.id_,
+          .season_      = l_data.season,
+          .episode_     = l_data.episode,
+          .name_        = l_data.name,
+          .grade_       = l_data.grade,
+          .project_id_  = l_data.project_id
+      }
+  );
+
+  auto l_time_clock = create_time_clock(l_data.year_month_, l_user.id_);
+  recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
   if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
@@ -501,6 +607,12 @@ void reg_computing_time(http_route& in_route) {
       )
       .reg(
           std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/custom",
+              computing_time_post_custom
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
               boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_get
           )
       )
@@ -513,7 +625,8 @@ void reg_computing_time(http_route& in_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::delete_, "api/doodle/computing_time/{computing_time_id}",
-          computing_time_patch_delete
-      ));
+              computing_time_patch_delete
+          )
+      );
 }
 }  // namespace doodle::http

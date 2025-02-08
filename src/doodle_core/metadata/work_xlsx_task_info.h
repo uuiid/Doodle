@@ -18,15 +18,27 @@ struct database_t {
   std::int32_t user_ref_;
 
   boost::uuids::uuid kitsu_task_ref_id_;
+
+  std::optional<std::int32_t> season_{};
+  std::optional<std::int32_t> episode_{};
+  std::string name_{};
+  std::string grade_{};
+  uuid project_id_;
+
   // to json
   friend void to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]                = p.uuid_id_;
-    j["start_time"]        = p.start_time_.get_local_time();
-    j["end_time"]          = p.end_time_.get_local_time();
-    j["duration"]          = p.duration_.count();
-    j["remark"]            = p.remark_;
-    j["user_remark"]       = p.user_remark_;
-    j["kitsu_task_ref_id"] = p.kitsu_task_ref_id_;
+    j["id"]          = p.uuid_id_;
+    j["start_time"]  = p.start_time_.get_local_time();
+    j["end_time"]    = p.end_time_.get_local_time();
+    j["duration"]    = p.duration_.count();
+    j["remark"]      = p.remark_;
+    j["user_remark"] = p.user_remark_;
+    if (!p.kitsu_task_ref_id_.is_nil()) j["kitsu_task_ref_id"] = p.kitsu_task_ref_id_;
+    if (p.season_) j["season"] = *p.season_;
+    if (p.episode_) j["episode"] = *p.episode_;
+    if (!p.name_.empty()) j["name"] = p.name_;
+    if (!p.grade_.empty()) j["grade"] = p.grade_;
+    if (!p.project_id_.is_nil()) j["project_id"] = p.project_id_;
   }
 };
 }  // namespace work_xlsx_task_info_helper

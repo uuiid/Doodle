@@ -170,6 +170,11 @@ auto make_storage_doodle(const std::string& in_path) {
           make_column("year_month", &work_xlsx_task_info_helper::database_t::year_month_),
           make_column("user_id", &work_xlsx_task_info_helper::database_t::user_ref_),
           make_column("kitsu_task_ref_id", &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_),
+          make_column("season", &work_xlsx_task_info_helper::database_t::season_),
+          make_column("episode", &work_xlsx_task_info_helper::database_t::episode_),
+          make_column("name", &work_xlsx_task_info_helper::database_t::name_),
+          make_column("grade", &work_xlsx_task_info_helper::database_t::grade_),
+          make_column("project_id", &work_xlsx_task_info_helper::database_t::project_id_),
           foreign_key(&work_xlsx_task_info_helper::database_t::user_ref_).references(&user_helper::database_t::id_)
       ),
       make_index("user_tab_dingding_index", &user_helper::database_t::dingding_id_),
