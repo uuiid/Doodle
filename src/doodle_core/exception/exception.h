@@ -75,11 +75,6 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
       : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))){};
 };
 
-class DOODLE_CORE_API sys_error : public std::system_error {
- public:
-  using std::system_error::system_error;
-};
-
 class DOODLE_CORE_API http_request_error : public std::runtime_error {
  public:
   boost::beast::http::status code_status_;
@@ -127,7 +122,7 @@ template <typename Error>
 [[noreturn]] void throw_error(
     Error in_error_index, ::boost::source_location const& in_loc = std::source_location::current()
 ) {
-  boost::throw_exception(sys_error{bsys::error_code{in_error_index}}, in_loc);
+  boost::throw_exception(std::system_error{bsys::error_code{in_error_index}}, in_loc);
 }
 
 template <typename Error>
@@ -135,7 +130,7 @@ template <typename Error>
     Error in_error_index, const std::string& mess,
     ::boost::source_location const& in_loc = std::source_location::current()
 ) {
-  boost::throw_exception(sys_error{bsys::error_code{in_error_index}, mess}, in_loc);
+  boost::throw_exception(std::system_error{bsys::error_code{in_error_index}, mess}, in_loc);
 }
 
 #define DOODLE_CHICK(condition, ...) \
