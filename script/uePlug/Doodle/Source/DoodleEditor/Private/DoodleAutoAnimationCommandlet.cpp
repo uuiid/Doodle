@@ -377,6 +377,7 @@ void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
 	// UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
 	UGameplayStatics::FlushLevelStreaming(TheRenderWorld);
 	CommandletHelpers::TickEngine(TheRenderWorld);
+	TheRenderWorld->MarkPackageDirty();
 }
 
 
