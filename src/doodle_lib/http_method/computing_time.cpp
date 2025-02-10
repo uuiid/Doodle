@@ -387,7 +387,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
   computing_time_post_req_data l_data{};
   l_data.data.emplace_back(l_json.get<computing_time_post_req_data::task_data>());
-
+  if (l_data.data.front().task_id.is_nil())
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
   l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
   std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
   l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
