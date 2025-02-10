@@ -406,29 +406,42 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
+  {
+    work_xlsx_task_info_helper::database_t l_data_work{
+        .uuid_id_ = core_set::get_set().get_uuid(),
+        .start_time_ =
+            work_xlsx_task_info_helper::database_t::zoned_time{
+                chrono::current_zone(),
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
+                    l_data.data.front().start_time
+                )
+            },
+        .end_time_ =
+            work_xlsx_task_info_helper::database_t::zoned_time{
+                chrono::current_zone(),
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
+                    l_data.data.front().end_time
+                )
+            },
+        .year_month_        = chrono::local_days{l_data.year_month_ / 1},
+        .user_ref_          = l_user.id_,
+        .kitsu_task_ref_id_ = l_data.data.front().task_id,
+    };
+    chrono::local_time_pos l_end_time =
+        chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
 
-  l_block_ptr->emplace_back(
-      work_xlsx_task_info_helper::database_t{
-          .uuid_id_ = core_set::get_set().get_uuid(),
-          .start_time_ =
-              work_xlsx_task_info_helper::database_t::zoned_time{
-                  chrono::current_zone(),
-                  chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                      l_data.data.front().start_time
-                  )
-              },
-          .end_time_ =
-              work_xlsx_task_info_helper::database_t::zoned_time{
-                  chrono::current_zone(),
-                  chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                      l_data.data.front().end_time
-                  )
-              },
-          .year_month_        = chrono::local_days{l_data.year_month_ / 1},
-          .user_ref_          = l_user.id_,
-          .kitsu_task_ref_id_ = l_data.data.front().task_id,
-      }
-  );
+    chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} + chrono::seconds{1}};
+
+    l_data_work.start_time_ = std::clamp(
+        chrono::time_point_cast<chrono::local_time_pos::duration>(l_data_work.start_time_.get_local_time()),
+        l_begin_time, l_end_time
+    );
+    l_data_work.end_time_ = std::clamp(
+        chrono::time_point_cast<chrono::local_time_pos::duration>(l_data_work.end_time_.get_local_time()), l_begin_time,
+        l_end_time
+    );
+    l_block_ptr->emplace_back(std::move(l_data_work));
+  }
 
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.id_);
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
