@@ -378,6 +378,66 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   } else
     co_return in_handle->make_msg(l_r->dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_add(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "不是json请求"
+    );
+  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  computing_time_post_req_data l_data{};
+  l_data.data.emplace_back(l_json.get<computing_time_post_req_data::task_data>());
+
+  l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
+  l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
+
+  user_helper::database_t l_user{};
+  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id);
+      l_users.empty())
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::not_found,
+        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
+    );
+  else
+    l_user = std::move(*l_users.begin());
+
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
+
+  l_block_ptr->emplace_back(
+      work_xlsx_task_info_helper::database_t{
+          .uuid_id_ = core_set::get_set().get_uuid(),
+          .start_time_ =
+              work_xlsx_task_info_helper::database_t::zoned_time{
+                  chrono::current_zone(),
+                  chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
+                      l_data.data.front().start_time
+                  )
+              },
+          .end_time_ =
+              work_xlsx_task_info_helper::database_t::zoned_time{
+                  chrono::current_zone(),
+                  chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
+                      l_data.data.front().end_time
+                  )
+              },
+          .year_month_        = chrono::local_days{l_data.year_month_ / 1},
+          .user_ref_          = l_user.id_,
+          .kitsu_task_ref_id_ = l_data.data.front().task_id,
+      }
+  );
+
+  auto l_time_clock = create_time_clock(l_data.year_month_, l_user.id_);
+  recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
+  co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
+
+  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
+  } else
+    co_return in_handle->make_msg(l_r->dump());
+}
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_custom(session_data_ptr in_handle) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
@@ -416,9 +476,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
-  chrono::system_zoned_time{
-      chrono::current_zone(), chrono::time_point_cast<chrono::system_clock::duration>(l_data.start_time)
-  };
+
   l_block_ptr->emplace_back(
       work_xlsx_task_info_helper::database_t{
           .uuid_id_ = core_set::get_set().get_uuid(),
@@ -603,6 +661,12 @@ void reg_computing_time(http_route& in_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_post
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/add",
+              computing_time_post
           )
       )
       .reg(
