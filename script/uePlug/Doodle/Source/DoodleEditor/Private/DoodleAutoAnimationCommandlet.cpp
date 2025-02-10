@@ -317,7 +317,8 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 
 	AddSequenceWorldToRenderWorld();
 	PostProcessVolumeConfig();
-
+	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
+	CommandletHelpers::TickEngine(TheRenderWorld);
 	//-----------------
 	OnSaveReanderConfig();
 }
