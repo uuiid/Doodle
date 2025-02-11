@@ -43,7 +43,8 @@ function Add-Compensatory()
 function Initialize-Doodle
 {
     param(
-        [string]$OutPath
+        [string]$OutPath,
+        [Switch]$BuildKitsu
     )
     if (-not (Test-Path $OutPath))
     {
@@ -56,12 +57,15 @@ function Initialize-Doodle
     $DoodleTimePath = "$DoodleKitsuRoot\dist\time"
     $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
 
-    Write-Host "开始构建文件"
-    $NpmResult = Start-Process -FilePath "npm" -ArgumentList "run build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
-    if ($NpmResult.ExitCode -ne 0)
+    if ($BuildKitsu)
     {
-        # 抛出异常
-        throw "构建失败"
+        Write-Host "开始构建文件"
+        $NpmResult = Start-Process -FilePath "npm" -ArgumentList "run build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+        if ($NpmResult.ExitCode -ne 0)
+        {
+            # 抛出异常
+            throw "构建失败"
+        }
     }
 
     Write-Host "开始复制文件"
@@ -80,7 +84,7 @@ function Initialize-Doodle
     # 检查文件是否存在
     if (-not (Test-Path "$DoodleBuildRoot\holiday-cn-$tag.zip"))
     {
-        Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
+        Invoke-WebRequest -Uri https: //github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
     }
     Expand-Archive -Path "$DoodleBuildRoot\holiday-cn-$tag.zip" -DestinationPath $DoodleTimePath -Force
 

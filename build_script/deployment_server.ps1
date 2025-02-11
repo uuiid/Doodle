@@ -1,12 +1,13 @@
 ﻿param (
-    [switch]$CopyServer
+    [switch]$CopyServer,
+    [switch]$BuildKitsu
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 $DoodleOut = "\\192.168.40.181\tmp"
-Initialize-Doodle -OutPath $DoodleOut
+Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu
 
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList auto_light,$RootPassword
