@@ -71,13 +71,14 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::shared_ptr<void> sid_lock_{};
   std::string generate_register_reply();
 
+  boost::asio::awaitable<void> async_ping_pong();
+
  public:
   explicit socket_io_websocket_core(
       http::session_data_ptr in_handle, boost::beast::websocket::stream<http::tcp_stream_type> in_stream
   );
 
   boost::asio::awaitable<void> run();
-  boost::asio::awaitable<void> async_ping_pong();
   boost::asio::awaitable<void> async_write_websocket(std::string in_data);
   boost::asio::awaitable<void> async_close_websocket();
 };
