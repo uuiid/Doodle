@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <boost/asio/experimental/channel.hpp>
+#include <boost/asio/experimental/concurrent_channel.hpp>
 #include <boost/url/url.hpp>
 
 #include <cpp-base64/base64.h>
@@ -59,6 +61,7 @@ class sid_ctx {
     std::weak_ptr<std::int8_t> lock_{};
     bool close_{false};
   };
+  boost::asio::awaitable<void> start_run_message_pump_impl();
 
  public:
   std::map<uuid, sid_data> sid_time_map_{};
@@ -87,6 +90,12 @@ class sid_ctx {
   /// 获取单独sid锁
   std::shared_ptr<void> get_sid_lock(const uuid& in_sid);
   bool has_sid_lock(const uuid& in_sid) const;
+  using channel_type =
+      boost::asio::experimental::concurrent_channel<boost::asio::io_context::executor_type, void(std::string)>;
+  using channel_type_ptr = std::shared_ptr<channel_type>;
+  channel_type_ptr channel_;
+  /// 开始运行消息泵
+  void start_run_message_pump();
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');

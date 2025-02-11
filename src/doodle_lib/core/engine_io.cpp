@@ -4,7 +4,8 @@
 
 #include "engine_io.h"
 
-#include "doodle_core/core/core_set.h"
+#include <doodle_core/core/app_base.h>
+#include <doodle_core/core/core_set.h>
 
 #include <magic_enum.hpp>
 namespace doodle::socket_io {
@@ -110,6 +111,26 @@ bool sid_ctx::has_sid_lock(const uuid& in_sid) const {
   // 加锁
   std::shared_lock l_lock{mutex_};
   return sid_time_map_.contains(in_sid) && sid_time_map_.at(in_sid).lock_.lock();
+}
+
+void sid_ctx::start_run_message_pump() {
+  channel_ = std::make_unique<channel_type>(g_io_context());
+  boost::asio::co_spawn(
+      g_io_context(), start_run_message_pump_impl(),
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+  );
+}
+boost::asio::awaitable<void> sid_ctx::start_run_message_pump_impl() {
+  try {
+    boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      channel_->try_send(dump_message({}, engine_io_packet_type::ping));
+      l_timer.expires_from_now(handshake_data_.ping_interval_);
+      co_await l_timer.async_wait(boost::asio::use_awaitable);
+    }
+  } catch (...) {
+    default_logger_raw()->error(boost::current_exception_diagnostic_information());
+  }
 }
 
 }  // namespace doodle::socket_io
