@@ -124,7 +124,7 @@ boost::asio::awaitable<void> sid_ctx::start_run_message_pump_impl() {
   try {
     boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      channel_->try_send(dump_message({}, engine_io_packet_type::ping));
+      channel_->try_send(boost::system::error_code{}, dump_message({}, engine_io_packet_type::ping));
       l_timer.expires_from_now(handshake_data_.ping_interval_);
       co_await l_timer.async_wait(boost::asio::use_awaitable);
     }

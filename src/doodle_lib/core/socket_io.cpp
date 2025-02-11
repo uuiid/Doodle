@@ -9,6 +9,8 @@
 #include <doodle_lib/core/engine_io.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
+
+#include <boost/asio/experimental/parallel_group.hpp>
 namespace doodle::socket_io {
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   socket_io_packet l_packet{};
@@ -186,19 +188,11 @@ class socket_io_http_get : public socket_io_http_base_fun {
           http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
       );
 
-    // if (auto l_packet = event_->get_last_event(); !l_packet.empty()) {
-    //   co_return in_handle->make_msg(std::move(l_packet));
-    // }
-
-    boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor, 250ms};
-    co_await l_timer.async_wait(boost::asio::use_awaitable);
+    auto l_str = co_await g_ctx().get<sid_ctx>().channel_->async_receive();
 
     if (g_ctx().get<sid_ctx>().is_sid_close(l_p.sid_))
       co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
-    if (auto l_packet = event_->get_last_event(); !l_packet.empty()) {
-      co_return in_handle->make_msg(std::move(l_packet));
-    }
-    co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::ping));
+    co_return in_handle->make_msg(std::move(l_str));
   }
 
   [[nodiscard]] bool has_websocket() const override { return true; }

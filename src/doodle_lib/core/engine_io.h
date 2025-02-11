@@ -90,8 +90,8 @@ class sid_ctx {
   /// 获取单独sid锁
   std::shared_ptr<void> get_sid_lock(const uuid& in_sid);
   bool has_sid_lock(const uuid& in_sid) const;
-  using channel_type =
-      boost::asio::experimental::concurrent_channel<boost::asio::io_context::executor_type, void(std::string)>;
+  using channel_type = boost::asio::use_awaitable_t<>::as_default_on_t<boost::asio::experimental::concurrent_channel<
+      boost::asio::io_context::executor_type, void(boost::system::error_code, std::string)>>;
   using channel_type_ptr = std::shared_ptr<channel_type>;
   channel_type_ptr channel_;
   /// 开始运行消息泵
