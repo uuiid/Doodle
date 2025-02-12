@@ -49,7 +49,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   return l_packet;
 }
 
-std::string socket_io_packet::dump(const nlohmann::json& in_load) {
+std::string socket_io_packet::dump() {
   std::string l_result{};
   switch (type_) {
     case socket_io_packet_type::connect:
@@ -69,7 +69,7 @@ std::string socket_io_packet::dump(const nlohmann::json& in_load) {
       break;
   }
   if (!namespace_.empty()) l_result += '/' + namespace_ + ',';
-  l_result += in_load.dump();
+  l_result += json_data_.dump();
   return dump_message(l_result);
 }
 

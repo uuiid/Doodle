@@ -32,7 +32,7 @@ struct socket_io_packet {
 
   // 从字符串中解析
   static socket_io_packet parse(const std::string& in_str);
-  std::string dump(const nlohmann::json& in_load);
+  std::string dump();
 };
 
 void create_socket_io(

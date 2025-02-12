@@ -51,6 +51,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       co_await boost::asio::this_coro::executor, async_ping_pong(),
       boost::asio::consign(boost::asio::detached, shared_from_this())
   );
+  scoped_connection_ = sid_ctx_->on_message(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()));
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
@@ -74,7 +75,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
       l_reply_json["sid"] = l_ptr->get_sid();
       l_ptr->auth_        = in_body.json_data_;
       sid_ctx_->emit_connect(l_ptr);
-      co_await async_write_websocket(in_body.dump(l_reply_json));
+      in_body.json_data_ = l_reply_json;
+      co_await async_write_websocket(in_body.dump());
       break;
     }
     case socket_io_packet_type::disconnect:
@@ -98,7 +100,6 @@ boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::stri
       sid_data_->update_sid_time();
       in_body.erase(0, 1);
       co_await async_write_websocket(dump_message(in_body, engine_io_packet_type::pong));
-
       break;
     case engine_io_packet_type::pong:
       sid_data_->update_sid_time();
@@ -118,13 +119,20 @@ boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::stri
   }
   co_return true;
 }
-
+void socket_io_websocket_core::on_message(const std::string& in_event, const socket_io_packet_ptr& in_data) {
+  boost::asio::co_spawn(
+      web_stream_->get_executor(),
+      [in_data, in_event, this]() -> boost::asio::awaitable<void> {
+        co_await async_write_websocket(dump_message(nlohmann::json{{in_data, in_event}}.dump()));
+      },
+      boost::asio::consign(boost::asio::detached, shared_from_this())
+  );
+}
 boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_timer.expires_from_now(sid_ctx_->handshake_data_.ping_interval_);
     if (sid_data_->is_timeout()) co_return co_await async_close_websocket();
-
     co_await l_timer.async_wait(boost::asio::use_awaitable);
     co_await async_write_websocket(dump_message({}, engine_io_packet_type::ping));
   }
