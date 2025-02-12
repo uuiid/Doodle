@@ -12,7 +12,7 @@
 #include <boost/signals2.hpp>
 
 namespace doodle::socket_io {
-
+class sid_ctx;
 enum class socket_io_packet_type : std::uint8_t {
   connect       = 0,
   disconnect    = 1,
@@ -33,38 +33,13 @@ struct socket_io_packet {
 
   // 从字符串中解析
   static socket_io_packet parse(const std::string& in_str);
-};
-
-class event_base {
- protected:
-  boost::signals2::signal<void(const std::string&)> event_signal_;
-
- public:
-  virtual ~event_base()                      = default;
-
-  virtual std::string get_last_event() const = 0;
-  virtual void event(const socket_io_packet& in_packet);
-  virtual void event(std::string in_packet) = 0;
-
-  /// 连接事件
-  template <typename Slot>
-  auto connect(Slot in_slot) {
-    return event_signal_.connect(in_slot);
-  }
-};
-
-class event_t : public event_base {
- protected:
-  std::atomic<std::shared_ptr<std::string>> event_{};
-
- public:
-  std::string get_last_event() const override;
-  void event(std::string in_packet) override;
+  std::string dump(const nlohmann::json& in_load);
 };
 
 class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_websocket_core> {
   logger_ptr logger_;
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
+  std::shared_ptr<sid_ctx> sid_ctx_{};
   std::shared_ptr<awaitable_queue_limitation> write_queue_limitation_;
   http::session_data_ptr handle_;
   uuid sid_{};
@@ -75,7 +50,8 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
  public:
   explicit socket_io_websocket_core(
-      http::session_data_ptr in_handle, boost::beast::websocket::stream<http::tcp_stream_type> in_stream
+      http::session_data_ptr in_handle, const std::shared_ptr<sid_ctx>& in_sid_ctx,
+      boost::beast::websocket::stream<http::tcp_stream_type> in_stream
   );
 
   boost::asio::awaitable<void> run();
@@ -84,7 +60,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 };
 
 void create_socket_io(
-    http::http_route& in_route, const std::shared_ptr<event_base>& in_event, const std::string& in_path = "/socket.io/"
+    http::http_route& in_route, const std::shared_ptr<sid_ctx>& in_sid_ctx, const std::string& in_path = "/socket.io/"
 );
 
 }  // namespace doodle::socket_io
