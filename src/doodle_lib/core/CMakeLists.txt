@@ -19,3 +19,4 @@ target_sources(doodle_lib
 )
 add_subdirectory(scan_assets)
 add_subdirectory(http)
+add_subdirectory(socket_io)
