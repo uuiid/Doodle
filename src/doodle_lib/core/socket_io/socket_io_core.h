@@ -14,7 +14,9 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   std::string namespace_;
 
  public:
-  explicit socket_io_core(const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace);
+  explicit socket_io_core(
+      const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace, const nlohmann::json& in_json
+  );
 
   uuid get_sid() const { return sid_; }
   nlohmann::json auth_{};
