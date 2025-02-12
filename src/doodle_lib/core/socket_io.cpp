@@ -9,6 +9,7 @@
 #include <doodle_lib/core/engine_io.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/core/socket_io/websocket_impl.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 namespace doodle::socket_io {
@@ -86,120 +87,6 @@ class socket_io_http_base_fun : public ::doodle::http::http_function {
     return {false, {}};
   }
 };
-
-socket_io_websocket_core::socket_io_websocket_core(
-    http::session_data_ptr in_handle, const std::shared_ptr<sid_ctx>& in_sid_ctx,
-    boost::beast::websocket::stream<http::tcp_stream_type> in_stream
-)
-    : logger_(in_handle->logger_),
-      web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))),
-      sid_ctx_(in_sid_ctx),
-      write_queue_limitation_(std::make_shared<awaitable_queue_limitation>()),
-      handle_(std::move(in_handle)) {}
-
-std::string socket_io_websocket_core::generate_register_reply() {
-  auto l_hd = sid_ctx_->handshake_data_;
-  sid_data_ = sid_ctx_->generate();
-  l_hd.sid_ = sid_data_->get_sid();
-  l_hd.upgrades_.clear();
-  nlohmann::json l_json = l_hd;
-  return dump_message(l_json.dump(), engine_io_packet_type::open);
-}
-boost::asio::awaitable<void> socket_io_websocket_core::run() {
-  // 注册
-  if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil())
-    co_await async_write_websocket(generate_register_reply());
-  else
-    sid_ = l_p.sid_;
-  sid_data_->upgrade_to_websocket();
-
-  /// 查看是否有锁, 有锁直接返回
-  if (sid_data_->is_locked()) co_return co_await async_close_websocket();
-  sid_lock_ = sid_data_->get_lock();
-
-  boost::asio::co_spawn(
-      co_await boost::asio::this_coro::executor, async_ping_pong(),
-      boost::asio::consign(boost::asio::detached, shared_from_this())
-  );
-
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    // boost::beast::flat_buffer l_buffer{};
-    std::string l_body{};
-    auto l_buffer = boost::asio::dynamic_buffer(l_body);
-    if (!web_stream_) co_return;
-    auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
-    if (l_ec_r == boost::beast::websocket::error::closed) co_return;
-    if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
-
-    switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
-      case engine_io_packet_type::ping:
-        sid_data_->update_sid_time();
-        l_body.erase(0, 1);
-        co_await async_write_websocket(dump_message(l_body, engine_io_packet_type::pong));
-        continue;
-        break;
-      case engine_io_packet_type::pong:
-        sid_data_->update_sid_time();
-        continue;
-        break;
-      case engine_io_packet_type::message:
-        break;
-      case engine_io_packet_type::close:
-        co_return co_await async_close_websocket();
-      case engine_io_packet_type::upgrade:
-      case engine_io_packet_type::open:
-      case engine_io_packet_type::noop:
-        continue;
-    }
-    l_body.erase(0, 1);
-    auto l_socket_io = socket_io_packet::parse(l_body);
-    nlohmann::json l_reply_json{};
-    switch (l_socket_io.type_) {
-      case socket_io_packet_type::connect:
-        l_reply_json["sid"] = core_set::get_set().get_uuid();
-        // l_reply_json["auth"] = l_socket_io.json_data_;
-        co_await async_write_websocket(l_socket_io.dump(l_reply_json));
-        break;
-      case socket_io_packet_type::disconnect:
-        break;
-      case socket_io_packet_type::event:
-        break;
-      case socket_io_packet_type::ack:
-        break;
-      case socket_io_packet_type::connect_error:
-        break;
-      case socket_io_packet_type::binary_event:
-        break;
-      case socket_io_packet_type::binary_ack:
-        break;
-    }
-  }
-}
-boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
-  boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    l_timer.expires_from_now(sid_ctx_->handshake_data_.ping_interval_);
-    if (sid_data_->is_timeout()) co_return co_await async_close_websocket();
-
-    co_await l_timer.async_wait(boost::asio::use_awaitable);
-    co_await async_write_websocket(dump_message({}, engine_io_packet_type::ping));
-  }
-  co_return;
-}
-boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(std::string in_data) {
-  auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
-  if (!web_stream_) co_return;
-  auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(in_data));
-  if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
-  if (l_ec_w) logger_->error(l_ec_w.what()), co_await async_close_websocket();
-}
-boost::asio::awaitable<void> socket_io_websocket_core::async_close_websocket() {
-  auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
-  if (!web_stream_) co_return;
-  auto [l_ec_close] = co_await web_stream_->async_close(boost::beast::websocket::close_code::normal);
-  if (l_ec_close) logger_->error(l_ec_close.what());
-  web_stream_.reset();
-}
 
 class socket_io_http_get : public socket_io_http_base_fun {
   // 生成注册回复

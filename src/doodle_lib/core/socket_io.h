@@ -9,8 +9,6 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 
-#include <boost/signals2.hpp>
-
 namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
@@ -35,30 +33,6 @@ struct socket_io_packet {
   // 从字符串中解析
   static socket_io_packet parse(const std::string& in_str);
   std::string dump(const nlohmann::json& in_load);
-};
-
-class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_websocket_core> {
-  logger_ptr logger_;
-  std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
-  std::shared_ptr<sid_ctx> sid_ctx_{};
-  std::shared_ptr<sid_data> sid_data_{};
-  std::shared_ptr<awaitable_queue_limitation> write_queue_limitation_;
-  http::session_data_ptr handle_;
-  uuid sid_{};
-  std::shared_ptr<void> sid_lock_{};
-  std::string generate_register_reply();
-
-  boost::asio::awaitable<void> async_ping_pong();
-
- public:
-  explicit socket_io_websocket_core(
-      http::session_data_ptr in_handle, const std::shared_ptr<sid_ctx>& in_sid_ctx,
-      boost::beast::websocket::stream<http::tcp_stream_type> in_stream
-  );
-
-  boost::asio::awaitable<void> run();
-  boost::asio::awaitable<void> async_write_websocket(std::string in_data);
-  boost::asio::awaitable<void> async_close_websocket();
 };
 
 void create_socket_io(
