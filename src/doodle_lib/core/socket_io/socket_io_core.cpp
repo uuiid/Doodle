@@ -18,7 +18,8 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
   auto l_ptr        = std::make_shared<socket_io_packet>();
   l_ptr->type_      = socket_io_packet_type::event;
   l_ptr->namespace_ = namespace_;
-  l_ptr->json_data_ = nlohmann::json{{in_event, in_data}};
+  l_ptr->json_data_.emplace_back(in_event);
+  l_ptr->json_data_.emplace_back(in_data);
   ctx_->emit(l_ptr);
 }
 }  // namespace doodle::socket_io

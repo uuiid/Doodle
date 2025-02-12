@@ -58,6 +58,7 @@ std::string socket_io_packet::dump() {
     case socket_io_packet_type::disconnect:
       break;
     case socket_io_packet_type::event:
+      l_result += '2';
       break;
     case socket_io_packet_type::ack:
       break;

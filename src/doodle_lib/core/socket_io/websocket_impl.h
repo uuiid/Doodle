@@ -42,6 +42,8 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
       boost::beast::websocket::stream<http::tcp_stream_type> in_stream
   );
 
+  ~socket_io_websocket_core() = default;
+
   boost::asio::awaitable<void> run();
   boost::asio::awaitable<void> async_write_websocket(std::string in_data);
   boost::asio::awaitable<void> async_close_websocket();

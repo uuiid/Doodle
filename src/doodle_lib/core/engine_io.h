@@ -125,8 +125,12 @@ class sid_ctx {
     return on_message_.connect(in_solt);
   }
 
-  void emit_connect(const std::shared_ptr<socket_io_core>& in_core) { on_connect_(in_core); }
-  void emit(const socket_io_packet_ptr& in_data) { on_message_(in_data); }
+  void emit_connect(const std::shared_ptr<socket_io_core>& in_data) {
+    boost::asio::post(g_io_context(), [in_data, this]() { on_connect_(in_data); });
+  }
+  void emit(const socket_io_packet_ptr& in_data) {
+    boost::asio::post(g_io_context(), [in_data, this]() { on_message_(in_data); });
+  }
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');
