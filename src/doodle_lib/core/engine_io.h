@@ -116,13 +116,6 @@ class sid_ctx {
   std::shared_ptr<sid_data> generate();
   std::shared_ptr<sid_data> get_sid(const uuid& in_sid) const;
 
-  using channel_type = boost::asio::use_awaitable_t<>::as_default_on_t<boost::asio::experimental::concurrent_channel<
-      boost::asio::io_context::executor_type, void(boost::system::error_code, std::string)>>;
-  using channel_type_ptr = std::shared_ptr<channel_type>;
-  channel_type_ptr channel_{std::make_unique<channel_type>(g_io_context())};
-
-  /// 开始运行消息泵
-  void start_run_message_pump();
   template <typename Solt>
   auto on_connect(Solt&& in_solt) {
     return on_connect_.connect(in_solt);

@@ -9,6 +9,7 @@
 
 #include <boost/asio/experimental/parallel_group.hpp>
 
+#include "socket_io.h"
 #include <magic_enum.hpp>
 namespace doodle::socket_io {
 
@@ -57,39 +58,20 @@ std::shared_ptr<sid_data> sid_ctx::get_sid(const uuid& in_sid) const {
 boost::asio::awaitable<std::string> sid_data::async_event() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   l_timer.expires_at(last_time_.load() + ctx_->handshake_data_.ping_timeout_);
-  auto&& [l_array, l_event_ec, l_event, l_ec] =
-      co_await boost::asio::experimental::make_parallel_group(
-          ctx_->channel_->async_receive(boost::asio::deferred), l_timer.async_wait(boost::asio::deferred)
-      )
-          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
-
-  switch (l_array[0]) {
-    case 0:
-      co_return l_event;
-    case 1:
-      co_return dump_message({}, close_ ? engine_io_packet_type::noop : engine_io_packet_type::ping);
-    default:;
-  }
-}
-
-void sid_ctx::start_run_message_pump() {
-  // channel_ = std::make_unique<channel_type>(g_io_context());
-  boost::asio::co_spawn(
-      g_io_context(), start_run_message_pump_impl(),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-  );
-}
-boost::asio::awaitable<void> sid_ctx::start_run_message_pump_impl() {
+  auto l_sig           = std::make_shared<boost::asio::cancellation_signal>();
+  auto l_use_awaitable = boost::asio::bind_cancellation_slot(*l_sig, boost::asio::use_awaitable);
+  auto l_data          = std::make_shared<std::string>();
+  auto l_s             = ctx_->on_message([l_sig, l_data](const socket_io_packet_ptr& in_data) {
+    l_sig->emit(boost::asio::cancellation_type::all);
+    *l_data = in_data->dump();
+  });
   try {
-    boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      channel_->try_send(boost::system::error_code{}, dump_message({}, engine_io_packet_type::ping));
-      l_timer.expires_from_now(handshake_data_.ping_interval_);
-      co_await l_timer.async_wait(boost::asio::use_awaitable);
-    }
-  } catch (...) {
-    default_logger_raw()->error(boost::current_exception_diagnostic_information());
+    co_await l_timer.async_wait(l_use_awaitable);
+  } catch (const boost::system::system_error& e) {
+    if (e.code() != boost::asio::error::operation_aborted) default_logger_raw()->log(log_loc(), level::err, e.what());
   }
+  co_return l_data->empty() ? dump_message({}, close_ ? engine_io_packet_type::noop : engine_io_packet_type::ping)
+                            : *l_data;
 }
 
 }  // namespace doodle::socket_io
