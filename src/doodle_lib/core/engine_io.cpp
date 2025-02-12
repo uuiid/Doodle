@@ -32,7 +32,7 @@ query_data parse_query_data(const boost::urls::url& in_url) {
 bool sid_data::is_upgrade_to_websocket() const { return is_upgrade_to_websocket_; }
 bool sid_data::is_timeout() const {
   auto l_now = std::chrono::system_clock::now();
-  return !close_ &&
+  return close_ ||
          l_now - last_time_.load() > ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_;
 }
 void sid_data::update_sid_time() { last_time_ = std::chrono::system_clock::now(); }
