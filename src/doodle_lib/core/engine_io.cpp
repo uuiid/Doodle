@@ -7,6 +7,8 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_set.h>
 
+#include <boost/asio/experimental/parallel_group.hpp>
+
 #include <magic_enum.hpp>
 namespace doodle::socket_io {
 
@@ -27,94 +29,51 @@ query_data parse_query_data(const boost::urls::url& in_url) {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的请求"});
   return l_ret;
 }
-
-uuid sid_ctx::generate_sid() {
-  // 加锁
-  std::unique_lock l_lock{mutex_};
-
-  auto&& [l_it, l_] = sid_time_map_.emplace(core_set::get_set().get_uuid(), std::chrono::system_clock::now());
-  // 清除超时的sid
-  auto l_now        = std::chrono::system_clock::now();
-  for (auto it = sid_time_map_.begin(); it != sid_time_map_.end();) {
-    if (l_now - it->second.last_time_ > handshake_data_.ping_timeout_ + handshake_data_.ping_interval_)
-      it = sid_time_map_.erase(it);
-    else
-      ++it;
-  }
-  return l_it->first;
-}
-bool sid_ctx::is_sid_timeout(const uuid& in_sid) const {
-  // 加锁
-  std::shared_lock l_lock{mutex_};
-  // if (sid_time_map_.find(in_sid) != sid_time_map_.end()) {
-  //   default_logger_raw()->info(
-  //       "{} {} {}", std::chrono::system_clock::now(), sid_time_map_.at(in_sid),
-  //       chrono::floor<chrono::milliseconds>(std::chrono::system_clock::now() - sid_time_map_.at(in_sid))
-  //   );
-  // }
-  return (sid_time_map_.contains(in_sid) && std::chrono::system_clock::now() - sid_time_map_.at(in_sid).last_time_ >
-                                                handshake_data_.ping_timeout_ + handshake_data_.ping_interval_) ||
-         !sid_time_map_.contains(in_sid);
-}
-void sid_ctx::update_sid_time(const uuid& in_sid) {
+bool sid_data::is_upgrade_to_websocket() const { return is_upgrade_to_websocket_; }
+bool sid_data::is_timeout() const {
   auto l_now = std::chrono::system_clock::now();
+  return !close_ &&
+         l_now - last_time_.load() > ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_;
+}
+void sid_data::update_sid_time() { last_time_ = std::chrono::system_clock::now(); }
+void sid_data::close() { close_ = true; }
+std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(this); }
+bool sid_data::is_locked() const { return lock_count_ > 0; }
+
+std::shared_ptr<sid_data> sid_ctx::generate() {
   // 加锁
-  std::shared_lock l_lock{mutex_};
-  sid_time_map_[in_sid].last_time_ = l_now;
+  auto l_ptr = std::make_shared<sid_data>(this);
+  std::unique_lock l_lock{mutex_};
+  sid_map_.emplace(l_ptr->sid_, l_ptr);
+  return l_ptr;
 }
 
-void sid_ctx::remove_sid(const uuid& in_sid) {
-  // 加锁
-  std::unique_lock l_lock{mutex_};
-  sid_time_map_.erase(in_sid);
-}
-void sid_ctx::close_sid(const uuid& in_sid) {
+std::shared_ptr<sid_data> sid_ctx::get_sid(const uuid& in_sid) const {
   // 加锁
   std::shared_lock l_lock{mutex_};
-  if (sid_time_map_.contains(in_sid)) {
-    sid_time_map_[in_sid].close_ = true;
-  }
-}
-bool sid_ctx::is_sid_close(const uuid& in_sid) const {
-  // 加锁
-  std::shared_lock l_lock{mutex_};
-  return sid_time_map_.contains(in_sid) && sid_time_map_.at(in_sid).close_;
-}
-bool sid_ctx::is_upgrade_to_websocket(const uuid& in_sid) const {
-  // 加锁
-  std::shared_lock l_lock{mutex_};
-  return sid_time_map_.contains(in_sid) && sid_time_map_.at(in_sid).is_upgrade_to_websocket_;
-}
-void sid_ctx::set_upgrade_to_websocket(const uuid& in_sid) {
-  // 加锁
-  std::unique_lock l_lock{mutex_};
-  sid_time_map_[in_sid].is_upgrade_to_websocket_ = true;
+  return sid_map_.contains(in_sid) ? sid_map_.at(in_sid) : nullptr;
 }
 
-std::shared_ptr<void> sid_ctx::get_sid_lock(const uuid& in_sid) {
-  std::shared_ptr<std::int8_t> l_ptr;
-  {
-    // 加锁
-    std::shared_lock l_lock{mutex_};
-    l_ptr = sid_time_map_[in_sid].lock_.lock();
-    if (l_ptr) return l_ptr;
+boost::asio::awaitable<std::string> sid_data::async_event() {
+  boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
+  l_timer.expires_at(last_time_.load() + ctx_->handshake_data_.ping_timeout_);
+  auto&& [l_array, l_event_ec, l_event, l_ec] =
+      co_await boost::asio::experimental::make_parallel_group(
+          ctx_->channel_->async_receive(boost::asio::deferred), l_timer.async_wait(boost::asio::deferred)
+      )
+          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
+
+  switch (l_array[0]) {
+    case 0:
+      co_return l_event;
+    case 1:
+      co_return dump_message({}, close_ ? engine_io_packet_type::noop : engine_io_packet_type::ping);
+    default:;
   }
-  {
-    // 加锁
-    std::unique_lock l_lock{mutex_};
-    l_ptr                       = std::make_shared<std::int8_t>(0);
-    sid_time_map_[in_sid].lock_ = l_ptr;
-    return l_ptr;
-  }
-}
-bool sid_ctx::has_sid_lock(const uuid& in_sid) const {
-  // 加锁
-  std::shared_lock l_lock{mutex_};
-  return sid_time_map_.contains(in_sid) && sid_time_map_.at(in_sid).lock_.lock();
 }
 
 void sid_ctx::start_run_message_pump() {
-  channel_ = std::make_unique<channel_type>(g_io_context());
+  // channel_ = std::make_unique<channel_type>(g_io_context());
   boost::asio::co_spawn(
       g_io_context(), start_run_message_pump_impl(),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)

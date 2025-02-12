@@ -13,6 +13,7 @@
 
 namespace doodle::socket_io {
 class sid_ctx;
+class sid_data;
 enum class socket_io_packet_type : std::uint8_t {
   connect       = 0,
   disconnect    = 1,
@@ -40,6 +41,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   logger_ptr logger_;
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<sid_ctx> sid_ctx_{};
+  std::shared_ptr<sid_data> sid_data_{};
   std::shared_ptr<awaitable_queue_limitation> write_queue_limitation_;
   http::session_data_ptr handle_;
   uuid sid_{};

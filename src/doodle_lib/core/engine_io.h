@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/asio/experimental/channel.hpp>
@@ -51,17 +52,48 @@ struct handshake_data {
     nlohmann_json_j["maxPayload"]   = nlohmann_json_t.max_payload_;
   }
 };
+class sid_ctx;
+class sid_data {
+ public:
+  explicit sid_data(sid_ctx* in_ctx, uuid in_sid = core_set::get_set().get_uuid())
+      : ctx_{in_ctx},
+        sid_{in_sid},
+        last_time_{std::chrono::system_clock::now()},
+        is_upgrade_to_websocket_{false},
+        close_{false} {}
 
+  bool is_upgrade_to_websocket() const;
+  bool is_timeout() const;
+  void update_sid_time();
+  void upgrade_to_websocket() { is_upgrade_to_websocket_ = true; }
+  void close();
+  uuid get_sid() const { return sid_; }
+
+  std::shared_ptr<void> get_lock();
+  bool is_locked() const;
+
+  boost::asio::awaitable<std::string> async_event();
+
+ private:
+  struct lock_type {
+    sid_data* data_;
+    explicit lock_type(sid_data* in_data) : data_{in_data} { ++data_->lock_count_; }
+    ~lock_type() { --data_->lock_count_; }
+  };
+  friend class sid_ctx;
+  const sid_ctx* ctx_;
+  const uuid sid_;
+  std::atomic<chrono::sys_time_pos> last_time_;
+  std::atomic_bool is_upgrade_to_websocket_;
+  std::atomic_int lock_count_;
+  std::atomic_bool close_;
+};
 class sid_ctx {
   /// 线程锁
   mutable std::shared_mutex mutex_;
-  struct sid_data {
-    chrono::sys_time_pos last_time_{};
-    bool is_upgrade_to_websocket_{false};
-    std::weak_ptr<std::int8_t> lock_{};
-    bool close_{false};
-  };
   boost::asio::awaitable<void> start_run_message_pump_impl();
+
+  std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
 
  public:
   std::map<uuid, sid_data> sid_time_map_{};
@@ -74,26 +106,13 @@ class sid_ctx {
             .ping_timeout_  = chrono::milliseconds{200},
             .max_payload_   = 1000000
         } {}
+  std::shared_ptr<sid_data> generate();
+  std::shared_ptr<sid_data> get_sid(const uuid& in_sid) const;
 
-  /// 生成sid
-  uuid generate_sid();
-  /// 查询sid是否超时
-  bool is_sid_timeout(const uuid& in_sid) const;
-  void update_sid_time(const uuid& in_sid);
-  void remove_sid(const uuid& in_sid);
-  void close_sid(const uuid& in_sid);
-  bool is_sid_close(const uuid& in_sid) const;
-
-  /// 是否升级到了websocket
-  bool is_upgrade_to_websocket(const uuid& in_sid) const;
-  void set_upgrade_to_websocket(const uuid& in_sid);
-  /// 获取单独sid锁
-  std::shared_ptr<void> get_sid_lock(const uuid& in_sid);
-  bool has_sid_lock(const uuid& in_sid) const;
   using channel_type = boost::asio::use_awaitable_t<>::as_default_on_t<boost::asio::experimental::concurrent_channel<
       boost::asio::io_context::executor_type, void(boost::system::error_code, std::string)>>;
   using channel_type_ptr = std::shared_ptr<channel_type>;
-  channel_type_ptr channel_;
+  channel_type_ptr channel_{std::make_unique<channel_type>(g_io_context())};
   /// 开始运行消息泵
   void start_run_message_pump();
 };

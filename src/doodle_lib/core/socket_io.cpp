@@ -99,8 +99,8 @@ socket_io_websocket_core::socket_io_websocket_core(
 
 std::string socket_io_websocket_core::generate_register_reply() {
   auto l_hd = sid_ctx_->handshake_data_;
-  l_hd.sid_ = sid_ctx_->generate_sid();
-  sid_      = l_hd.sid_;
+  sid_data_ = sid_ctx_->generate();
+  l_hd.sid_ = sid_data_->get_sid();
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
   return dump_message(l_json.dump(), engine_io_packet_type::open);
@@ -111,12 +111,12 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     co_await async_write_websocket(generate_register_reply());
   else
     sid_ = l_p.sid_;
-  sid_ctx_->set_upgrade_to_websocket(sid_);
+  sid_data_->upgrade_to_websocket();
 
   /// 查看是否有锁, 有锁直接返回
-  if (sid_ctx_->has_sid_lock(sid_)) co_return co_await async_close_websocket();
+  if (sid_data_->is_locked()) co_return co_await async_close_websocket();
+  sid_lock_ = sid_data_->get_lock();
 
-  sid_lock_ = sid_ctx_->get_sid_lock(sid_);
   boost::asio::co_spawn(
       co_await boost::asio::this_coro::executor, async_ping_pong(),
       boost::asio::consign(boost::asio::detached, shared_from_this())
@@ -133,13 +133,13 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 
     switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
       case engine_io_packet_type::ping:
-        sid_ctx_->update_sid_time(sid_);
+        sid_data_->update_sid_time();
         l_body.erase(0, 1);
         co_await async_write_websocket(dump_message(l_body, engine_io_packet_type::pong));
         continue;
         break;
       case engine_io_packet_type::pong:
-        sid_ctx_->update_sid_time(sid_);
+        sid_data_->update_sid_time();
         continue;
         break;
       case engine_io_packet_type::message:
@@ -179,7 +179,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_timer.expires_from_now(sid_ctx_->handshake_data_.ping_interval_);
-    if (sid_ctx_->is_sid_timeout(sid_)) co_return co_await async_close_websocket();
+    if (sid_data_->is_timeout()) co_return co_await async_close_websocket();
 
     co_await l_timer.async_wait(boost::asio::use_awaitable);
     co_await async_write_websocket(dump_message({}, engine_io_packet_type::ping));
@@ -205,7 +205,7 @@ class socket_io_http_get : public socket_io_http_base_fun {
   // 生成注册回复
   std::string generate_register_reply() {
     auto l_hd             = sid_ctx_->handshake_data_;
-    l_hd.sid_             = sid_ctx_->generate_sid();
+    l_hd.sid_             = sid_ctx_->generate()->get_sid();
     nlohmann::json l_json = l_hd;
     return dump_message(l_json.dump(), engine_io_packet_type::open);
   }
@@ -218,20 +218,15 @@ class socket_io_http_get : public socket_io_http_base_fun {
     auto l_p = parse_query_data(in_handle->url_);
     // 注册
     if (l_p.sid_.is_nil()) co_return in_handle->make_msg(generate_register_reply());
+    auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
 
     // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
-    if (sid_ctx_->is_sid_timeout(l_p.sid_) || sid_ctx_->is_upgrade_to_websocket(l_p.sid_) ||
-        sid_ctx_->is_sid_close(l_p.sid_))
+    if (!l_sid_data || l_sid_data->is_timeout() || l_sid_data->is_upgrade_to_websocket())
       throw_exception(
           http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
       );
-
-    boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor, 250ms};
-    co_await l_timer.async_wait(boost::asio::use_awaitable);
-
-    if (sid_ctx_->is_sid_close(l_p.sid_)) co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
-
-    co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::ping));
+    auto l_event = co_await l_sid_data->async_event();
+    co_return in_handle->make_msg(std::move(l_event));
   }
 
   [[nodiscard]] bool has_websocket() const override { return true; }
@@ -258,21 +253,22 @@ class socket_io_http_post : public socket_io_http_base_fun {
 
     if (in_handle->content_type_ != http::detail::content_type::text_plain)  // TODO: 二进制数据, 未实现
       co_return in_handle->make_msg(std::string{"null"});
-    auto l_body = std::get<std::string>(in_handle->body_);
+    auto l_body     = std::get<std::string>(in_handle->body_);
+    auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
     switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
       case engine_io_packet_type::open:
         break;
       case engine_io_packet_type::ping:
-        sid_ctx_->update_sid_time(l_p.sid_);
+        l_sid_data->update_sid_time();
         break;
       case engine_io_packet_type::pong:
-        sid_ctx_->update_sid_time(l_p.sid_);
+        l_sid_data->update_sid_time();
         co_return in_handle->make_msg(std::string{});
         break;
       case engine_io_packet_type::message:
         break;
       case engine_io_packet_type::close:
-        sid_ctx_->close_sid(l_p.sid_);
+        l_sid_data->close();
         co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
       case engine_io_packet_type::upgrade:
       case engine_io_packet_type::noop:
