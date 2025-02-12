@@ -14,6 +14,7 @@
 namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
+struct socket_io_packet;
 
 class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_websocket_core> {
   logger_ptr logger_;
@@ -26,6 +27,9 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::string generate_register_reply();
 
   boost::asio::awaitable<void> async_ping_pong();
+
+  boost::asio::awaitable<bool> parse_engine_io(std::string& in_body);
+  boost::asio::awaitable<void> parse_socket_io(socket_io_packet& in_body);
 
  public:
   explicit socket_io_websocket_core(

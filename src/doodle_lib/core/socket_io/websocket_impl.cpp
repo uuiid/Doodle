@@ -13,6 +13,8 @@
 #include <doodle_lib/core/socket_io/websocket_impl.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
+
+#include "socket_io_core.h"
 namespace doodle::socket_io {
 
 socket_io_websocket_core::socket_io_websocket_core(
@@ -59,50 +61,64 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     if (l_ec_r == boost::beast::websocket::error::closed) co_return;
     if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
 
-    switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
-      case engine_io_packet_type::ping:
-        sid_data_->update_sid_time();
-        l_body.erase(0, 1);
-        co_await async_write_websocket(dump_message(l_body, engine_io_packet_type::pong));
-        continue;
-        break;
-      case engine_io_packet_type::pong:
-        sid_data_->update_sid_time();
-        continue;
-        break;
-      case engine_io_packet_type::message:
-        break;
-      case engine_io_packet_type::close:
-        co_return co_await async_close_websocket();
-      case engine_io_packet_type::upgrade:
-      case engine_io_packet_type::open:
-      case engine_io_packet_type::noop:
-        continue;
-    }
-    l_body.erase(0, 1);
+    if (co_await parse_engine_io(l_body)) continue;
     auto l_socket_io = socket_io_packet::parse(l_body);
-    nlohmann::json l_reply_json{};
-    switch (l_socket_io.type_) {
-      case socket_io_packet_type::connect:
-        l_reply_json["sid"] = core_set::get_set().get_uuid();
-        // l_reply_json["auth"] = l_socket_io.json_data_;
-        co_await async_write_websocket(l_socket_io.dump(l_reply_json));
-        break;
-      case socket_io_packet_type::disconnect:
-        break;
-      case socket_io_packet_type::event:
-        break;
-      case socket_io_packet_type::ack:
-        break;
-      case socket_io_packet_type::connect_error:
-        break;
-      case socket_io_packet_type::binary_event:
-        break;
-      case socket_io_packet_type::binary_ack:
-        break;
-    }
+    co_await parse_socket_io(l_socket_io);
   }
 }
+boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io_packet& in_body) {
+  nlohmann::json l_reply_json{};
+  switch (in_body.type_) {
+    case socket_io_packet_type::connect: {
+      auto l_ptr          = std::make_shared<socket_io_core>(sid_ctx_);
+      l_reply_json["sid"] = l_ptr->get_sid();
+      l_ptr->auth_        = in_body.json_data_;
+      sid_ctx_->emit_connect(l_ptr);
+      co_await async_write_websocket(in_body.dump(l_reply_json));
+      break;
+    }
+    case socket_io_packet_type::disconnect:
+      break;
+    case socket_io_packet_type::event:
+      break;
+    case socket_io_packet_type::ack:
+      break;
+    case socket_io_packet_type::connect_error:
+      break;
+    case socket_io_packet_type::binary_event:
+      break;
+    case socket_io_packet_type::binary_ack:
+      break;
+  }
+}
+
+boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::string& in_body) {
+  switch (auto l_engine_packet = parse_engine_packet(in_body); l_engine_packet) {
+    case engine_io_packet_type::ping:
+      sid_data_->update_sid_time();
+      in_body.erase(0, 1);
+      co_await async_write_websocket(dump_message(in_body, engine_io_packet_type::pong));
+
+      break;
+    case engine_io_packet_type::pong:
+      sid_data_->update_sid_time();
+
+      break;
+    case engine_io_packet_type::message:
+      in_body.erase(0, 1);
+      co_return false;
+      break;
+    case engine_io_packet_type::close:
+      co_await async_close_websocket();
+      break;
+    case engine_io_packet_type::upgrade:
+    case engine_io_packet_type::open:
+    case engine_io_packet_type::noop:
+      break;
+  }
+  co_return true;
+}
+
 boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {

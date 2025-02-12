@@ -9,10 +9,13 @@
 
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/experimental/concurrent_channel.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/url/url.hpp>
 
 #include <cpp-base64/base64.h>
 namespace doodle::socket_io {
+
+class socket_io_core;
 enum class engine_io_packet_type : std::int8_t { open = 0, close, ping, pong, message, upgrade, noop };
 
 enum class transport_type : std::int8_t { unknown, polling, websocket };
@@ -94,6 +97,7 @@ class sid_ctx {
   boost::asio::awaitable<void> start_run_message_pump_impl();
 
   std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
+  boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
 
  public:
   std::map<uuid, sid_data> sid_time_map_{};
@@ -115,6 +119,11 @@ class sid_ctx {
   channel_type_ptr channel_{std::make_unique<channel_type>(g_io_context())};
   /// 开始运行消息泵
   void start_run_message_pump();
+  template <typename Solt>
+  auto on_connect(Solt&& in_solt) {
+    return on_connect_.connect(in_solt);
+  }
+  void emit_connect(const std::shared_ptr<socket_io_core>& in_core) { on_connect_(in_core); }
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');
