@@ -86,7 +86,7 @@ class sid_data {
     ~lock_type() { --data_->lock_count_; }
   };
   friend class sid_ctx;
-  const sid_ctx* ctx_;
+  sid_ctx* ctx_;
   const uuid sid_;
   std::atomic<chrono::sys_time_pos> last_time_;
   std::atomic_bool is_upgrade_to_websocket_;
@@ -100,7 +100,7 @@ class sid_ctx {
 
   std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
   boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
-  boost::signals2::signal<void(const std::string&, const socket_io_packet_ptr&)> on_message_;
+  boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
 
  public:
   std::map<uuid, sid_data> sid_time_map_{};
@@ -126,7 +126,7 @@ class sid_ctx {
   }
 
   void emit_connect(const std::shared_ptr<socket_io_core>& in_core) { on_connect_(in_core); }
-  void emit(const std::string& in_event, const socket_io_packet_ptr& in_data) { on_message_(in_event, in_data); }
+  void emit(const socket_io_packet_ptr& in_data) { on_message_(in_data); }
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');

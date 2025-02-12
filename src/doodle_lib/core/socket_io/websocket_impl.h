@@ -32,7 +32,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   std::optional<boost::signals2::scoped_connection> scoped_connection_{};
 
-  void on_message(const std::string& in_event, const socket_io_packet_ptr& in_data);
+  void on_message(const socket_io_packet_ptr& in_data);
   boost::asio::awaitable<bool> parse_engine_io(std::string& in_body);
   boost::asio::awaitable<void> parse_socket_io(socket_io_packet& in_body);
 

@@ -71,7 +71,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
   nlohmann::json l_reply_json{};
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      auto l_ptr          = std::make_shared<socket_io_core>(sid_ctx_);
+      auto l_ptr          = std::make_shared<socket_io_core>(sid_ctx_, in_body.namespace_);
       l_reply_json["sid"] = l_ptr->get_sid();
       l_ptr->auth_        = in_body.json_data_;
       sid_ctx_->emit_connect(l_ptr);
@@ -119,12 +119,10 @@ boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::stri
   }
   co_return true;
 }
-void socket_io_websocket_core::on_message(const std::string& in_event, const socket_io_packet_ptr& in_data) {
+void socket_io_websocket_core::on_message(const socket_io_packet_ptr& in_data) {
   boost::asio::co_spawn(
       web_stream_->get_executor(),
-      [in_data, in_event, this]() -> boost::asio::awaitable<void> {
-        co_await async_write_websocket(dump_message(nlohmann::json{{in_data, in_event}}.dump()));
-      },
+      [in_data, this]() -> boost::asio::awaitable<void> { co_await async_write_websocket(in_data->dump()); },
       boost::asio::consign(boost::asio::detached, shared_from_this())
   );
 }
