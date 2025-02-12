@@ -58,10 +58,10 @@ std::shared_ptr<sid_data> sid_ctx::get_sid(const uuid& in_sid) const {
 boost::asio::awaitable<std::string> sid_data::async_event() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   l_timer.expires_at(last_time_.load() + ctx_->handshake_data_.ping_timeout_);
-  auto l_sig  = std::make_shared<boost::asio::cancellation_signal>();
+  auto l_sig                             = std::make_shared<boost::asio::cancellation_signal>();
   // auto l_use_awaitable = boost::asio::bind_cancellation_slot(*l_sig, boost::asio::use_awaitable);
-  auto l_data = std::make_shared<std::string>();
-  auto l_s    = ctx_->on_message([l_sig, l_data](const socket_io_packet_ptr& in_data) {
+  auto l_data                            = std::make_shared<std::string>();
+  boost::signals2::scoped_connection l_s = ctx_->on_message([l_sig, l_data](const socket_io_packet_ptr& in_data) {
     l_sig->emit(boost::asio::cancellation_type::all);
     *l_data = in_data->dump();
   });
