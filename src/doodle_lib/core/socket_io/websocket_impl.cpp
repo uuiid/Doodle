@@ -51,9 +51,6 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       co_await boost::asio::this_coro::executor, async_ping_pong(),
       boost::asio::consign(boost::asio::detached, shared_from_this())
   );
-  scoped_connection_ = boost::signals2::scoped_connection{
-      sid_ctx_->on_message(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
-  };
 
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
@@ -77,10 +74,14 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
         in_body.type_      = socket_io_packet_type::connect_error;
         in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
         co_await async_write_websocket(in_body.dump());
-      }else {
+      } else {
         auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, in_body.namespace_, in_body.json_data_);
         sid_ctx_->emit_connect(l_ptr);
         in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
+        scoped_connection_ = boost::signals2::scoped_connection{
+            sid_ctx_->on(in_body.namespace_)
+                ->on_message(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
+        };
         co_await async_write_websocket(in_body.dump());
       }
       break;
