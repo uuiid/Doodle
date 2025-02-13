@@ -30,7 +30,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   boost::asio::awaitable<void> async_ping_pong();
 
-  std::optional<boost::signals2::scoped_connection> scoped_connection_{};
+  std::map<std::string, std::optional<boost::signals2::scoped_connection>> scoped_connections_{};
 
   void on_message(const socket_io_packet_ptr& in_data);
   boost::asio::awaitable<bool> parse_engine_io(std::string& in_body);
