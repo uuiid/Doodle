@@ -18,7 +18,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   std::size_t l_pos{};
   {
     std::int32_t l_type = in_str.front() - '0';
-    if (l_type < 0 || l_type > 6)
+    if (l_type < 0 || l_type > enum_to_num(socket_io_packet_type::binary_ack))
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
     l_packet.type_ = static_cast<socket_io_packet_type>(l_type);
   }
