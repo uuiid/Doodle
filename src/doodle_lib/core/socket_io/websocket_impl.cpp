@@ -80,7 +80,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
       in_body.json_data_                      = nlohmann::json{{"sid", l_ptr->get_sid()}};
       scoped_connections_[in_body.namespace_] = boost::signals2::scoped_connection{
           sid_ctx_->on(in_body.namespace_)
-              ->on_message(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
+              ->on_emit(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
       };
       co_await async_write_websocket(in_body.dump());
       break;
@@ -91,7 +91,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
       if (!in_body.namespace_.empty()) {
         // 转移到主名称空间
         scoped_connections_[{}] = boost::signals2::scoped_connection{
-            sid_ctx_->on({})->on_message(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
+            sid_ctx_->on({})->on_emit(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
         };
       }
       break;

@@ -87,7 +87,7 @@ void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const
 
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
   if (signal_map_.contains(in_data->namespace_))
-    boost::asio::post(g_io_context(), [in_data, this]() { signal_map_.at(in_data->namespace_)->on_message_(in_data); });
+    boost::asio::post(g_io_context(), [in_data, this]() { signal_map_.at(in_data->namespace_)->on_emit_(in_data); });
 }
 
 boost::asio::awaitable<std::string> sid_data::async_event() {
@@ -96,7 +96,7 @@ boost::asio::awaitable<std::string> sid_data::async_event() {
   auto l_sig                             = std::make_shared<boost::asio::cancellation_signal>();
   // auto l_use_awaitable = boost::asio::bind_cancellation_slot(*l_sig, boost::asio::use_awaitable);
   auto l_data                            = std::make_shared<std::string>();
-  boost::signals2::scoped_connection l_s = ctx_->on_message([l_sig, l_data](const socket_io_packet_ptr& in_data) {
+  boost::signals2::scoped_connection l_s = ctx_->on_emit([l_sig, l_data](const socket_io_packet_ptr& in_data) {
     l_sig->emit(boost::asio::cancellation_type::all);
     *l_data = in_data->dump();
   });

@@ -99,6 +99,9 @@ class sid_ctx {
 
    private:
     boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
+    /// 服务器发出信号
+    boost::signals2::signal<void(const socket_io_packet_ptr&)> on_emit_;
+    /// 服务器接收到消息时调用
     boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
 
    public:
@@ -106,6 +109,13 @@ class sid_ctx {
     auto on_connect(Solt&& in_solt) {
       return on_connect_.connect(in_solt);
     }
+    /// 在服务器发出信号时调用的槽
+    template <typename Solt>
+    auto on_emit(Solt&& in_solt) {
+      return on_emit_.connect(in_solt);
+    }
+
+    /// 在服务器接受到消息时调用的槽
     template <typename Solt>
     auto on_message(Solt&& in_solt) {
       return on_message_.connect(in_solt);
@@ -135,12 +145,19 @@ class sid_ctx {
   auto on_connect(Solt&& in_solt) {
     return signal_map_.at({})->on_connect_.connect(in_solt);
   }
+  /// 在服务器发出信号时调用的槽
+  template <typename Solt>
+  auto on_emit(Solt&& in_solt) {
+    return signal_map_.at({})->on_emit_.connect(in_solt);
+  }
+  /// 在服务器接受到消息时调用的槽
   template <typename Solt>
   auto on_message(Solt&& in_solt) {
     return signal_map_.at({})->on_message_.connect(in_solt);
   }
 
   void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
+  /// 发出信号
   void emit(const socket_io_packet_ptr& in_data) const;
 
   bool has_register(const std::string& in_namespace) const { return signal_map_.contains(in_namespace); }
