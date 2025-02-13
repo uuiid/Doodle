@@ -35,6 +35,8 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
     while (in_str[++l_pos] != ',' && l_pos < in_str.size()) ++l_size;
     l_packet.namespace_ = in_str.substr(l_begin, l_size);
   }
+  if (l_pos == in_str.size()) return l_packet;
+
   if (auto l_id = in_str[l_pos + 1]; std::isdigit(l_id)) {
     auto l_begin = l_pos + 1;
     std::size_t l_size{};
@@ -50,26 +52,8 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
 }
 
 std::string socket_io_packet::dump() {
-  std::string l_result{};
-  switch (type_) {
-    case socket_io_packet_type::connect:
-      l_result += '0';
-      break;
-    case socket_io_packet_type::disconnect:
-      break;
-    case socket_io_packet_type::event:
-      l_result += '2';
-      break;
-    case socket_io_packet_type::ack:
-      break;
-    case socket_io_packet_type::connect_error:
-      break;
-    case socket_io_packet_type::binary_event:
-      break;
-    case socket_io_packet_type::binary_ack:
-      break;
-  }
-  if (!namespace_.empty()) l_result += '/' + namespace_ + ',';
+  std::string l_result{std::to_string(enum_to_num(type_))};
+  if (!namespace_.empty()) l_result += namespace_ + ',';
   l_result += json_data_.dump();
   return dump_message(l_result);
 }
