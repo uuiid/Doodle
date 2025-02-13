@@ -73,10 +73,16 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io_packet& in_body) {
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, in_body.namespace_, in_body.json_data_);
-      sid_ctx_->emit_connect(l_ptr);
-      in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      co_await async_write_websocket(in_body.dump());
+      if (!sid_ctx_->has_register(in_body.namespace_)) {
+        in_body.type_      = socket_io_packet_type::connect_error;
+        in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
+        co_await async_write_websocket(in_body.dump());
+      }else {
+        auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, in_body.namespace_, in_body.json_data_);
+        sid_ctx_->emit_connect(l_ptr);
+        in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
+        co_await async_write_websocket(in_body.dump());
+      }
       break;
     }
     case socket_io_packet_type::disconnect:

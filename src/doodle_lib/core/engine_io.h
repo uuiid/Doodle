@@ -95,8 +95,21 @@ class sid_data {
 };
 class sid_ctx {
   struct signal_type {
+    friend class sid_ctx;
+
+   private:
     boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
     boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
+
+   public:
+    template <typename Solt>
+    auto on_connect(Solt&& in_solt) {
+      return on_connect_.connect(in_solt);
+    }
+    template <typename Solt>
+    auto on_message(Solt&& in_solt) {
+      return on_message_.connect(in_solt);
+    }
   };
   using signal_type_ptr = std::shared_ptr<signal_type>;
   /// 线程锁
