@@ -118,6 +118,8 @@ class sid_ctx {
   std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
   std::map<std::string, signal_type_ptr> signal_map_{};
 
+  void clear_timeout_sid();
+
  public:
   handshake_data handshake_data_{};
   sid_ctx();

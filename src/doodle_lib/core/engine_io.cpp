@@ -48,7 +48,19 @@ sid_ctx::sid_ctx()
       /// 默认的命名空间
       signal_map_{{std::string{}, std::make_shared<signal_type>()}} {}
 
+void sid_ctx::clear_timeout_sid() {
+  std::unique_lock l_lock{mutex_};
+  for (auto it = sid_map_.begin(); it != sid_map_.end();) {
+    if (it->second->is_timeout()) {
+      it = sid_map_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
 std::shared_ptr<sid_data> sid_ctx::generate() {
+  clear_timeout_sid();
   // 加锁
   auto l_ptr = std::make_shared<sid_data>(this);
   std::unique_lock l_lock{mutex_};
