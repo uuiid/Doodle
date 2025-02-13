@@ -10,6 +10,7 @@
 #include <boost/asio/experimental/parallel_group.hpp>
 
 #include "socket_io.h"
+#include "socket_io/socket_io_core.h"
 #include <magic_enum.hpp>
 namespace doodle::socket_io {
 
@@ -30,6 +31,7 @@ query_data parse_query_data(const boost::urls::url& in_url) {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的请求"});
   return l_ret;
 }
+
 bool sid_data::is_upgrade_to_websocket() const { return is_upgrade_to_websocket_; }
 bool sid_data::is_timeout() const {
   auto l_now = std::chrono::system_clock::now();
@@ -40,6 +42,11 @@ void sid_data::update_sid_time() { last_time_ = std::chrono::system_clock::now()
 void sid_data::close() { close_ = true; }
 std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(this); }
 bool sid_data::is_locked() const { return lock_count_ > 0; }
+
+sid_ctx::sid_ctx()
+    : handshake_data_{.upgrades_ = {transport_type::websocket}, .ping_interval_ = chrono::milliseconds{250}, .ping_timeout_ = chrono::milliseconds{200}, .max_payload_ = 1000000},
+      /// 默认的命名空间
+      signal_map_{{std::string{}, std::make_shared<signal_type>()}} {}
 
 std::shared_ptr<sid_data> sid_ctx::generate() {
   // 加锁
@@ -53,6 +60,22 @@ std::shared_ptr<sid_data> sid_ctx::get_sid(const uuid& in_sid) const {
   // 加锁
   std::shared_lock l_lock{mutex_};
   return sid_map_.contains(in_sid) ? sid_map_.at(in_sid) : nullptr;
+}
+sid_ctx::signal_type_ptr sid_ctx::on(const std::string& in_namespace) {
+  if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
+  return signal_map_.at(in_namespace);
+}
+
+void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const {
+  if (signal_map_.contains(in_data->get_namespace()))
+    boost::asio::post(g_io_context(), [in_data, this]() {
+      signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
+    });
+}
+
+void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
+  if (signal_map_.contains(in_data->namespace_))
+    boost::asio::post(g_io_context(), [in_data, this]() { signal_map_.at(in_data->namespace_)->on_message_(in_data); });
 }
 
 boost::asio::awaitable<std::string> sid_data::async_event() {

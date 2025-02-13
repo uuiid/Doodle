@@ -94,43 +94,39 @@ class sid_data {
   std::atomic_bool close_;
 };
 class sid_ctx {
+  struct signal_type {
+    boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
+    boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
+  };
+  using signal_type_ptr = std::shared_ptr<signal_type>;
   /// 线程锁
   mutable std::shared_mutex mutex_;
-  boost::asio::awaitable<void> start_run_message_pump_impl();
 
   std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
-  boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
-  boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
+  std::map<std::string, signal_type_ptr> signal_map_{};
 
  public:
-  std::map<uuid, sid_data> sid_time_map_{};
-
   handshake_data handshake_data_{};
-  sid_ctx()
-      : handshake_data_{
-            .upgrades_      = {transport_type::websocket},
-            .ping_interval_ = chrono::milliseconds{250},
-            .ping_timeout_  = chrono::milliseconds{200},
-            .max_payload_   = 1000000
-        } {}
+  sid_ctx();
+  /// 线程安全
   std::shared_ptr<sid_data> generate();
+  /// 线程安全
   std::shared_ptr<sid_data> get_sid(const uuid& in_sid) const;
+
+  /// 线程不安全
+  signal_type_ptr on(const std::string& in_namespace);
 
   template <typename Solt>
   auto on_connect(Solt&& in_solt) {
-    return on_connect_.connect(in_solt);
+    return signal_map_.at({})->on_connect_.connect(in_solt);
   }
   template <typename Solt>
   auto on_message(Solt&& in_solt) {
-    return on_message_.connect(in_solt);
+    return signal_map_.at({})->on_message_.connect(in_solt);
   }
 
-  void emit_connect(const std::shared_ptr<socket_io_core>& in_data) {
-    boost::asio::post(g_io_context(), [in_data, this]() { on_connect_(in_data); });
-  }
-  void emit(const socket_io_packet_ptr& in_data) {
-    boost::asio::post(g_io_context(), [in_data, this]() { on_message_(in_data); });
-  }
+  void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
+  void emit(const socket_io_packet_ptr& in_data) const;
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');

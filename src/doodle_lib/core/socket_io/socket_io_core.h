@@ -18,7 +18,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
       const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace, const nlohmann::json& in_json
   );
 
-  uuid get_sid() const { return sid_; }
+  const uuid& get_sid() const { return sid_; }
+  const std::string& get_namespace() const { return namespace_; }
   nlohmann::json auth_{};
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
