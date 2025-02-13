@@ -15,7 +15,7 @@ void local_event_reg(http_route& in_route) {
   l_sid_ctx->on_connect([](const std::shared_ptr<socket_io::socket_io_core>& in_core) {
     in_core->emit("auth", in_core->auth_);
   });
-  l_sid_ctx->on("custom")->on_connect([](const std::shared_ptr<socket_io::socket_io_core>& in_core) {
+  l_sid_ctx->on("/custom")->on_connect([](const std::shared_ptr<socket_io::socket_io_core>& in_core) {
     in_core->emit("auth", in_core->auth_);
   });
   socket_io::create_socket_io(in_route, l_sid_ctx);
