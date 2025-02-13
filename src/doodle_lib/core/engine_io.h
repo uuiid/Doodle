@@ -127,6 +127,8 @@ class sid_ctx {
 
   void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
   void emit(const socket_io_packet_ptr& in_data) const;
+
+  bool has_register(const std::string& in_namespace) const { return signal_map_.contains(in_namespace); }
 };
 inline engine_io_packet_type parse_engine_packet(const std::string& in_str) {
   return in_str.empty() ? engine_io_packet_type::noop : num_to_enum<engine_io_packet_type>(in_str.front() - '0');
