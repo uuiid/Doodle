@@ -25,7 +25,7 @@ enum class socket_io_packet_type : std::uint8_t {
 struct socket_io_packet {
   socket_io_packet_type type_;
   std::string namespace_;
-  std::string id_;
+  std::int64_t id_;
   std::size_t binary_count_{};
   nlohmann::json json_data_{};
   std::vector<std::string> binary_data_{};

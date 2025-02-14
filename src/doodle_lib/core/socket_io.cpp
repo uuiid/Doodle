@@ -54,6 +54,11 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
 std::string socket_io_packet::dump() {
   std::string l_result{std::to_string(enum_to_num(type_))};
   if (!namespace_.empty()) l_result += namespace_ + ',';
+
+  if (type_ == socket_io_packet_type::binary_ack || type_ == socket_io_packet_type::binary_event)
+    l_result += std::to_string(binary_count_) + '-';
+  if (type_ == socket_io_packet_type::binary_ack || type_ == socket_io_packet_type::ack) l_result += id_  ;
+
   l_result += json_data_.dump();
   return dump_message(l_result);
 }
