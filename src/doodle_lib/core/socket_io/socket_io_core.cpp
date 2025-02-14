@@ -13,7 +13,9 @@ namespace doodle::socket_io {
 socket_io_core::socket_io_core(
     const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace, const nlohmann::json& in_json
 )
-    : sid_(core_set::get_set().get_uuid()), ctx_(in_ctx), namespace_(in_namespace), auth_(in_json) {}
+    : sid_(core_set::get_set().get_uuid()), ctx_(in_ctx), namespace_(in_namespace), auth_(in_json) {
+  connect();
+}
 void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_data) {
   auto l_ptr        = std::make_shared<socket_io_packet>();
   l_ptr->type_      = socket_io_packet_type::event;
@@ -31,7 +33,7 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
   }
 }
 
-void socket_io_core::connect(boost::signals2::signal<void(const socket_io_packet_ptr&)>& in_signal) {
-  scoped_connection_ = in_signal.connect(std::bind_front(&socket_io_core::on_impl, this));
+void socket_io_core::connect() {
+  scoped_connection_ = ctx_->on(namespace_)->on_message(std::bind_front(&socket_io_core::on_impl, this));
 }
 }  // namespace doodle::socket_io

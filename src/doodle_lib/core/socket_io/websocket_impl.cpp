@@ -91,10 +91,11 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
     case socket_io_packet_type::disconnect:
       if (socket_io_contexts_.contains(in_body.namespace_)) {
         in_body.type_ = socket_io_packet_type::event;
-        auto l_ptr    = socket_io_contexts_[in_body.namespace_].core_;
+        socket_io_contexts_[in_body.namespace_].scoped_connection_.reset();
+        auto l_ptr = socket_io_contexts_[in_body.namespace_].core_;
         if (!in_body.namespace_.empty()) {
-          /// 转移到主名称空间
           l_ptr->set_namespace({});
+          sid_ctx_->emit_connect({});
           // 转移到主名称空间
           socket_io_contexts_[in_body.namespace_].scoped_connection_ = boost::signals2::scoped_connection{
               sid_ctx_->on({})->on_emit(

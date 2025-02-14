@@ -44,7 +44,11 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   const uuid& get_sid() const { return sid_; }
   const std::string& get_namespace() const { return namespace_; }
-  void set_namespace(const std::string& in_namespace) { namespace_ = in_namespace; }
+  void set_namespace(const std::string& in_namespace) {
+    namespace_ = in_namespace;
+    signal_map_.clear();
+    connect();
+  }
   nlohmann::json auth_{};
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
@@ -54,6 +58,6 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   }
 
   /// 连接消息来源
-  void connect(boost::signals2::signal<void(const socket_io_packet_ptr&)>& in_signal);
+  void connect();
 };
 }  // namespace doodle::socket_io
