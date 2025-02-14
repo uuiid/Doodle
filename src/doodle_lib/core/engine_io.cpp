@@ -43,6 +43,10 @@ void sid_data::close() { close_ = true; }
 std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(this); }
 bool sid_data::is_locked() const { return lock_count_ > 0; }
 
+void sid_ctx::signal_type::message(const socket_io_packet_ptr& in_data) {
+  boost::asio::post(g_io_context(), [in_data, this]() { on_emit_(in_data); });
+}
+
 sid_ctx::sid_ctx()
     : handshake_data_{.upgrades_ = {transport_type::websocket}, .ping_interval_ = chrono::milliseconds{250}, .ping_timeout_ = chrono::milliseconds{200}, .max_payload_ = 1000000},
       /// 默认的命名空间

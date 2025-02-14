@@ -120,12 +120,20 @@ class sid_ctx {
     auto on_message(Solt&& in_solt) {
       return on_message_.connect(in_solt);
     }
+    /// 发出消息
+    void message(const socket_io_packet_ptr& in_data);
   };
   using signal_type_ptr = std::shared_ptr<signal_type>;
   /// 线程锁
   mutable std::shared_mutex mutex_;
 
+  /// 线程安全
   std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
+
+  /// 线程安全
+  std::map<std::string, socket_io_packet_ptr> socket_map_{};
+
+  /// 线程不安全
   std::map<std::string, signal_type_ptr> signal_map_{};
 
   void clear_timeout_sid();

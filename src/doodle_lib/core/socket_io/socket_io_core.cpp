@@ -22,4 +22,13 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
   l_ptr->json_data_.emplace_back(in_data);
   ctx_->emit(l_ptr);
 }
+void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
+  auto l_json = in_data->json_data_;
+  l_json.erase(0);
+  (*on_message_)(in_data->json_data_.front().get_ref<const std::string&>(), l_json);
+}
+
+void socket_io_core::connect(boost::signals2::signal<void(const socket_io_packet_ptr&)>& in_signal) {
+  scoped_connection_ = in_signal.connect(std::bind_front(&socket_io_core::on_impl, this));
+}
 }  // namespace doodle::socket_io

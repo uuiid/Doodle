@@ -9,6 +9,8 @@
 
 namespace doodle::socket_io {
 class sid_ctx;
+struct socket_io_packet;
+using socket_io_packet_ptr = std::shared_ptr<socket_io_packet>;
 /// socket 连接
 class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   uuid sid_;
@@ -16,7 +18,16 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   std::string namespace_;
   std::shared_ptr<boost::signals2::signal<void(const std::string&, const nlohmann::json&)>> on_message_;
 
+  std::optional<boost::signals2::scoped_connection> scoped_connection_{};
+  void on_impl(const socket_io_packet_ptr&);
+
  public:
+  /**
+   *
+   * @param in_ctx 总上下文
+   * @param in_namespace 连接使用的名称空间
+   * @param in_json 初次连接时的负载
+   */
   explicit socket_io_core(
       const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace, const nlohmann::json& in_json
   );
@@ -31,6 +42,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   const uuid& get_sid() const { return sid_; }
   const std::string& get_namespace() const { return namespace_; }
+  void set_namespace(const std::string& in_namespace) { namespace_ = in_namespace; }
   nlohmann::json auth_{};
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
@@ -38,5 +50,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   auto on_message(Solt&& in_solt) {
     return on_message_->connect(in_solt);
   }
+
+  /// 连接消息来源
+  void connect(boost::signals2::signal<void(const socket_io_packet_ptr&)>& in_signal);
 };
 }  // namespace doodle::socket_io
