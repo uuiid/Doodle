@@ -42,7 +42,11 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
   auto l_event_name = in_data->json_data_.front().get_ref<const std::string&>();
   l_json.erase(0);
   if (signal_map_.contains(l_event_name)) {
-    (*signal_map_.at(l_event_name))(l_json);
+    try {
+      (*signal_map_.at(l_event_name))(l_json);
+    } catch (...) {
+      default_logger_raw()->error(boost::current_exception_diagnostic_information());
+    }
   }
 }
 void socket_io_core::ask(const nlohmann::json& in_data) const {
@@ -56,6 +60,9 @@ void socket_io_core::ask(const nlohmann::json& in_data) const {
           g_io_context(),
           [l_data, l_websocket]() -> boost::asio::awaitable<void> {
             co_await l_websocket->async_write_websocket(l_data->dump());
+            for (int i = 0; i < l_data->binary_count_; ++i) {
+              co_await l_websocket->async_write_websocket(l_data->binary_data_[i]);
+            }
           },
           boost::asio::detached
       );
