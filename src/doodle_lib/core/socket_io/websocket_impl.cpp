@@ -95,13 +95,13 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
       }
       break;
     case socket_io_packet_type::event:
-    case socket_io_packet_type::ack:
       sid_ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
+      break;
+    case socket_io_packet_type::ack:
       break;
     case socket_io_packet_type::connect_error:
       break;
     case socket_io_packet_type::binary_event:
-    case socket_io_packet_type::binary_ack:
       for (int i = 0; i < in_body.binary_count_; ++i) {
         std::string l_body{};
         auto l_buffer = boost::asio::dynamic_buffer(l_body);
@@ -112,6 +112,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
         in_body.binary_data_.emplace_back(l_body);
       }
       sid_ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
+      break;
+    case socket_io_packet_type::binary_ack:
       break;
   }
 }
