@@ -75,33 +75,21 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
   }
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, in_body.namespace_, in_body.json_data_);
-      socket_io_contexts_[in_body.namespace_].core_ = l_ptr;
+      auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, weak_from_this(), in_body.namespace_, in_body.json_data_);
+      socket_io_contexts_[in_body.namespace_] = l_ptr;
       sid_ctx_->emit_connect(l_ptr);
-      in_body.json_data_                                         = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      socket_io_contexts_[in_body.namespace_].scoped_connection_ = boost::signals2::scoped_connection{
-          sid_ctx_->on(in_body.namespace_)
-              ->on_emit(
-                  std::bind_front(&socket_io_websocket_core::on_message, this)
-              )  // 此处不使用共享指针, 避免造成循环引用
-      };
+      in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
+
       co_await async_write_websocket(in_body.dump());
       break;
     }
     case socket_io_packet_type::disconnect:
       if (socket_io_contexts_.contains(in_body.namespace_)) {
         in_body.type_ = socket_io_packet_type::event;
-        socket_io_contexts_[in_body.namespace_].scoped_connection_.reset();
-        auto l_ptr = socket_io_contexts_[in_body.namespace_].core_;
+        auto l_ptr    = socket_io_contexts_[in_body.namespace_];
         if (!in_body.namespace_.empty()) {
-          l_ptr->set_namespace({});
-          sid_ctx_->emit_connect({});
           // 转移到主名称空间
-          socket_io_contexts_[in_body.namespace_].scoped_connection_ = boost::signals2::scoped_connection{
-              sid_ctx_->on({})->on_emit(
-                  std::bind_front(&socket_io_websocket_core::on_message, this)
-              )  // 此处不使用共享指针, 避免造成循环引用
-          };
+          l_ptr->set_namespace({});
         } else
           socket_io_contexts_.erase(in_body.namespace_);
       }

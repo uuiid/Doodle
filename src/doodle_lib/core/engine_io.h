@@ -94,6 +94,7 @@ class sid_data {
   std::atomic_bool close_;
 };
 class sid_ctx {
+ public:
   struct signal_type {
     friend class sid_ctx;
 
@@ -105,6 +106,11 @@ class sid_ctx {
     boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
 
    public:
+    using emit_signal_type    = boost::signals2::signal<void(const socket_io_packet_ptr&)>;
+    using message_signal_type = boost::signals2::signal<void(const socket_io_packet_ptr&)>;
+    using emit_solt_type      = emit_signal_type::slot_type;
+    using message_solt_type   = message_signal_type::slot_type;
+
     template <typename Solt>
     auto on_connect(Solt&& in_solt) {
       return on_connect_.connect(in_solt);
@@ -123,6 +129,8 @@ class sid_ctx {
     /// 发出消息
     void message(const socket_io_packet_ptr& in_data);
   };
+
+ private:
   using signal_type_ptr = std::shared_ptr<signal_type>;
   /// 线程锁
   mutable std::shared_mutex mutex_;

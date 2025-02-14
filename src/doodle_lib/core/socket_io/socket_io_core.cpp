@@ -7,13 +7,19 @@
 #include <doodle_core/core/core_set.h>
 
 #include <doodle_lib/core/engine_io.h>
+#include <doodle_lib/core/socket_io/websocket_impl.h>
 
 #include "core/socket_io.h"
 namespace doodle::socket_io {
 socket_io_core::socket_io_core(
-    const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace, const nlohmann::json& in_json
+    const std::shared_ptr<sid_ctx>& in_ctx, socket_io_websocket_core_wptr in_websocket, const std::string& in_namespace,
+    const nlohmann::json& in_json
 )
-    : sid_(core_set::get_set().get_uuid()), ctx_(in_ctx), namespace_(in_namespace), auth_(in_json) {
+    : sid_(core_set::get_set().get_uuid()),
+      websocket_(std::move(in_websocket)),
+      ctx_(in_ctx),
+      namespace_(in_namespace),
+      auth_(in_json) {
   connect();
 }
 void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_data) {
@@ -34,6 +40,25 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
 }
 
 void socket_io_core::connect() {
-  scoped_connection_ = ctx_->on(namespace_)->on_message(std::bind_front(&socket_io_core::on_impl, this));
+  /// 挂载接收消息槽
+  on_message_scoped_connection_ =
+      ctx_->on(namespace_)
+          ->on_message(sid_ctx::signal_type::message_solt_type{std::bind_front(&socket_io_core::on_impl, this)});
+
+  if (auto l_websocket = websocket_.lock(); l_websocket)
+    /// 挂载发送消息槽
+    on_emit_scoped_connection_ =
+        ctx_->on(namespace_)
+            ->on_emit(sid_ctx::signal_type::emit_solt_type{[web_ = websocket_](const socket_io_packet_ptr& in_data) {
+                        auto l_websocket_ = web_.lock();
+                        if (!l_websocket_) return;
+                        boost::asio::co_spawn(
+                            g_io_context(),
+                            [in_data, l_websocket_]() -> boost::asio::awaitable<void> {
+                              co_await l_websocket_->async_write_websocket(in_data->dump());
+                            },
+                            boost::asio::detached
+                        );
+                      }}.track_foreign(l_websocket));
 }
 }  // namespace doodle::socket_io

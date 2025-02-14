@@ -30,12 +30,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   http::session_data_ptr handle_;
   std::shared_ptr<void> sid_lock_{};
 
-  struct socket_io_core_data {
-    socket_io_core_ptr core_;
-    std::optional<boost::signals2::scoped_connection> scoped_connection_;
-  };
-
-  std::map<std::string, socket_io_core_data> socket_io_contexts_;
+  std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
 
   std::string generate_register_reply();
   boost::asio::awaitable<void> async_ping_pong();

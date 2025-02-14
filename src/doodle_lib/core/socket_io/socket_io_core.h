@@ -11,16 +11,22 @@ namespace doodle::socket_io {
 class sid_ctx;
 struct socket_io_packet;
 using socket_io_packet_ptr = std::shared_ptr<socket_io_packet>;
+class socket_io_websocket_core;
+using socket_io_websocket_core_ptr  = std::shared_ptr<socket_io_websocket_core>;
+using socket_io_websocket_core_wptr = std::weak_ptr<socket_io_websocket_core>;
 /// socket 连接
 class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
-  uuid sid_;
-  std::shared_ptr<sid_ctx> ctx_;
-  std::string namespace_;
   using signal_type = boost::signals2::signal<void(const nlohmann::json&)>;
   using signal_ptr  = std::shared_ptr<signal_type>;
-  std::map<std::string, signal_ptr> signal_map_;
 
-  std::optional<boost::signals2::scoped_connection> scoped_connection_{};
+  uuid sid_;
+  std::shared_ptr<sid_ctx> ctx_;
+  socket_io_websocket_core_wptr websocket_;
+  std::string namespace_;
+  /// 发送事件的信号
+  std::map<std::string, signal_ptr> signal_map_;
+  std::optional<boost::signals2::scoped_connection> on_emit_scoped_connection_{};
+  std::optional<boost::signals2::scoped_connection> on_message_scoped_connection_{};
   void on_impl(const socket_io_packet_ptr&);
 
  public:
@@ -31,7 +37,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    * @param in_json 初次连接时的负载
    */
   explicit socket_io_core(
-      const std::shared_ptr<sid_ctx>& in_ctx, const std::string& in_namespace, const nlohmann::json& in_json
+      const std::shared_ptr<sid_ctx>& in_ctx, socket_io_websocket_core_wptr in_websocket,
+      const std::string& in_namespace, const nlohmann::json& in_json
   );
   // destructor
   ~socket_io_core()                                      = default;
