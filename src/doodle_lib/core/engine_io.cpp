@@ -44,7 +44,7 @@ std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(
 bool sid_data::is_locked() const { return lock_count_ > 0; }
 
 void sid_ctx::signal_type::message(const socket_io_packet_ptr& in_data) {
-  boost::asio::post(g_io_context(), [in_data, this]() { on_emit_(in_data); });
+  boost::asio::post(g_io_context(), [in_data, this]() { on_message_(in_data); });
 }
 
 sid_ctx::sid_ctx()
