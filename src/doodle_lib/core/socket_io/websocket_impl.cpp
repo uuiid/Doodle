@@ -134,14 +134,7 @@ boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::stri
   }
   co_return true;
 }
-void socket_io_websocket_core::on_message(const socket_io_packet_ptr& in_data) {
-  if (web_stream_)
-    boost::asio::co_spawn(
-        web_stream_->get_executor(),
-        [in_data, this]() -> boost::asio::awaitable<void> { co_await async_write_websocket(in_data->dump()); },
-        boost::asio::consign(boost::asio::detached, shared_from_this())
-    );
-}
+
 boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
