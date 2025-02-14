@@ -26,10 +26,21 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   std::shared_ptr<sid_ctx> ctx_;
   socket_io_websocket_core_wptr websocket_;
   std::string namespace_;
+  /// 当前接收的事件
+  socket_io_packet_ptr current_packet_;
   /// 发送事件的信号
   std::map<std::string, signal_ptr> signal_map_;
   std::optional<boost::signals2::scoped_connection> on_emit_scoped_connection_{};
   std::optional<boost::signals2::scoped_connection> on_message_scoped_connection_{};
+
+  struct current_packet_guard {
+    socket_io_core* self{};
+    explicit current_packet_guard(const socket_io_packet_ptr& in_data, socket_io_core* in_core) : self(in_core) {
+      self->current_packet_ = in_data;
+    }
+    ~current_packet_guard() { self->current_packet_.reset(); }
+  };
+
   void on_impl(const socket_io_packet_ptr&);
 
  public:
@@ -62,6 +73,9 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   nlohmann::json auth_{};
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
+  /// 这个只能在同步的回调里面调用
+  /// 不要在异步的回调里面调用
+  void ask(const nlohmann::json& in_data);
   template <typename Solt>
   auto on_message(const std::string& in_event_name, Solt&& in_solt) {
     if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();

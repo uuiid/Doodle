@@ -37,11 +37,27 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
   ctx_->emit(l_ptr);
 }
 void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
+  current_packet_guard l_guard{in_data, this};
   auto l_json       = in_data->json_data_;
   auto l_event_name = in_data->json_data_.front().get_ref<const std::string&>();
   l_json.erase(0);
   if (signal_map_.contains(l_event_name)) {
     (*signal_map_.at(l_event_name))(l_json);
+  }
+}
+void socket_io_core::ask(const nlohmann::json& in_data) {
+  if (current_packet_) {
+    auto l_data        = current_packet_;
+    l_data->type_      = socket_io_packet_type::ack;
+    l_data->json_data_ = in_data;
+    if (auto l_websocket = websocket_.lock(); l_websocket)
+      boost::asio::co_spawn(
+          g_io_context(),
+          [l_data, l_websocket]() -> boost::asio::awaitable<void> {
+            co_await l_websocket->async_write_websocket(l_data->dump());
+          },
+          boost::asio::detached
+      );
   }
 }
 
