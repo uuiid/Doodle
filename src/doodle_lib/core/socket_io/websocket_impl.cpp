@@ -65,7 +65,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     auto l_socket_io = socket_io_packet::parse(l_body);
     co_await parse_socket_io(l_socket_io);
   }
-  scoped_connections_.clear();
+  socket_io_contexts_.clear();
 }
 boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io_packet& in_body) {
   if (!sid_ctx_->has_register(in_body.namespace_)) {
@@ -76,26 +76,37 @@ boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
       auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, in_body.namespace_, in_body.json_data_);
+      socket_io_contexts_[in_body.namespace_].core_ = l_ptr;
       sid_ctx_->emit_connect(l_ptr);
-      in_body.json_data_                      = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      scoped_connections_[in_body.namespace_] = boost::signals2::scoped_connection{
+      in_body.json_data_                                         = nlohmann::json{{"sid", l_ptr->get_sid()}};
+      socket_io_contexts_[in_body.namespace_].scoped_connection_ = boost::signals2::scoped_connection{
           sid_ctx_->on(in_body.namespace_)
-              ->on_emit(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
+              ->on_emit(
+                  std::bind_front(&socket_io_websocket_core::on_message, this)
+              )  // 此处不使用共享指针, 避免造成循环引用
       };
       co_await async_write_websocket(in_body.dump());
       break;
     }
     case socket_io_packet_type::disconnect:
-      scoped_connections_.erase(in_body.namespace_);
-      in_body.type_ = socket_io_packet_type::event;
-      if (!in_body.namespace_.empty()) {
-        // 转移到主名称空间
-        scoped_connections_[{}] = boost::signals2::scoped_connection{
-            sid_ctx_->on({})->on_emit(std::bind_front(&socket_io_websocket_core::on_message, shared_from_this()))
-        };
+      if (socket_io_contexts_.contains(in_body.namespace_)) {
+        in_body.type_ = socket_io_packet_type::event;
+        auto l_ptr    = socket_io_contexts_[in_body.namespace_].core_;
+        if (!in_body.namespace_.empty()) {
+          /// 转移到主名称空间
+          l_ptr->set_namespace({});
+          // 转移到主名称空间
+          socket_io_contexts_[in_body.namespace_].scoped_connection_ = boost::signals2::scoped_connection{
+              sid_ctx_->on({})->on_emit(
+                  std::bind_front(&socket_io_websocket_core::on_message, this)
+              )  // 此处不使用共享指针, 避免造成循环引用
+          };
+        } else
+          socket_io_contexts_.erase(in_body.namespace_);
       }
       break;
     case socket_io_packet_type::event:
+      sid_ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
       break;
     case socket_io_packet_type::ack:
       break;
@@ -165,7 +176,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_close_websocket() {
   auto [l_ec_close] = co_await web_stream_->async_close(boost::beast::websocket::close_code::normal);
   if (l_ec_close) logger_->error(l_ec_close.what());
   web_stream_.reset();
-  scoped_connections_.clear();
+  socket_io_contexts_.clear();
 }
 
 }  // namespace doodle::socket_io
