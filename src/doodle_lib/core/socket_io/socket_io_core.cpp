@@ -25,7 +25,10 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
 void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
   auto l_json = in_data->json_data_;
   l_json.erase(0);
-  (*on_message_)(in_data->json_data_.front().get_ref<const std::string&>(), l_json);
+  auto l_event_name = in_data->json_data_.front().get_ref<const std::string&>();
+  if (signal_map_.contains(l_event_name)) {
+    (*signal_map_.at(l_event_name))(l_json);
+  }
 }
 
 void socket_io_core::connect(boost::signals2::signal<void(const socket_io_packet_ptr&)>& in_signal) {

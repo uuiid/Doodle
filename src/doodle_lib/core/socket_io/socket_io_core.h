@@ -16,7 +16,9 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   uuid sid_;
   std::shared_ptr<sid_ctx> ctx_;
   std::string namespace_;
-  std::shared_ptr<boost::signals2::signal<void(const std::string&, const nlohmann::json&)>> on_message_;
+  using signal_type = boost::signals2::signal<void(const nlohmann::json&)>;
+  using signal_ptr  = std::shared_ptr<signal_type>;
+  std::map<std::string, signal_ptr> signal_map_;
 
   std::optional<boost::signals2::scoped_connection> scoped_connection_{};
   void on_impl(const socket_io_packet_ptr&);
@@ -47,8 +49,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
   template <typename Solt>
-  auto on_message(Solt&& in_solt) {
-    return on_message_->connect(in_solt);
+  auto on_message(std::string& in_event_name, Solt&& in_solt) {
+    return signal_map_[in_event_name]->connect(in_solt);
   }
 
   /// 连接消息来源
