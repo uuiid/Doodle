@@ -26,14 +26,20 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
   auto l_ptr        = std::make_shared<socket_io_packet>();
   l_ptr->type_      = socket_io_packet_type::event;
   l_ptr->namespace_ = namespace_;
-  l_ptr->json_data_.emplace_back(in_event);
-  l_ptr->json_data_.emplace_back(in_data);
+  if (in_data.is_array()) {
+    l_ptr->json_data_ = in_data;
+    l_ptr->json_data_.insert(l_ptr->json_data_.begin(), in_event);
+  } else {
+    l_ptr->json_data_ = nlohmann::json::array();
+    l_ptr->json_data_.emplace_back(in_event);
+    l_ptr->json_data_.emplace_back(in_data);
+  }
   ctx_->emit(l_ptr);
 }
 void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
-  auto l_json = in_data->json_data_;
-  l_json.erase(0);
+  auto l_json       = in_data->json_data_;
   auto l_event_name = in_data->json_data_.front().get_ref<const std::string&>();
+  l_json.erase(0);
   if (signal_map_.contains(l_event_name)) {
     (*signal_map_.at(l_event_name))(l_json);
   }

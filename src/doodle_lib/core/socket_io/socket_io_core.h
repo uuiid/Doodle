@@ -16,9 +16,12 @@ using socket_io_websocket_core_ptr  = std::shared_ptr<socket_io_websocket_core>;
 using socket_io_websocket_core_wptr = std::weak_ptr<socket_io_websocket_core>;
 /// socket 连接
 class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
+ public:
   using signal_type = boost::signals2::signal<void(const nlohmann::json&)>;
   using signal_ptr  = std::shared_ptr<signal_type>;
+  using slot_type   = signal_type::slot_type;
 
+ private:
   uuid sid_;
   std::shared_ptr<sid_ctx> ctx_;
   socket_io_websocket_core_wptr websocket_;
@@ -60,7 +63,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
   template <typename Solt>
-  auto on_message(std::string& in_event_name, Solt&& in_solt) {
+  auto on_message(const std::string& in_event_name, Solt&& in_solt) {
+    if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
     return signal_map_[in_event_name]->connect(in_solt);
   }
 
