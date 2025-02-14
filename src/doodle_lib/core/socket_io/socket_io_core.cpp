@@ -45,10 +45,11 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
     (*signal_map_.at(l_event_name))(l_json);
   }
 }
-void socket_io_core::ask(const nlohmann::json& in_data) {
+void socket_io_core::ask(const nlohmann::json& in_data) const {
   if (current_packet_) {
-    auto l_data        = current_packet_;
-    l_data->type_      = socket_io_packet_type::ack;
+    auto l_data = current_packet_;
+    l_data->type_ =
+        l_data->type_ == socket_io_packet_type::event ? socket_io_packet_type::ack : socket_io_packet_type::binary_ack;
     l_data->json_data_ = in_data;
     if (auto l_websocket = websocket_.lock(); l_websocket)
       boost::asio::co_spawn(

@@ -73,9 +73,14 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   nlohmann::json auth_{};
 
   void emit(const std::string& in_event, const nlohmann::json& in_data);
-  /// 这个只能在同步的回调里面调用
-  /// 不要在异步的回调里面调用
-  void ask(const nlohmann::json& in_data);
+
+  /**
+   * 这个只能在同步的回调里面调用
+   *只能在 on_message solt 槽中调用
+   * @param in_data 回调数据
+   *
+   */
+  void ask(const nlohmann::json& in_data) const;
   template <typename Solt>
   auto on_message(const std::string& in_event_name, Solt&& in_solt) {
     if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
