@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
@@ -10,9 +11,8 @@
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/platform/win/register_file_type.h>
-#include <doodle_core/core/app_base.h>
 
-
+#include <../../doodle_lib/http_method/local/task_info.h>
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/scan_win_service.h>
@@ -27,7 +27,6 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-#include <doodle_lib/http_method/task_info.h>
 
 #include <boost/asio.hpp>
 #include <boost/log/trivial.hpp>
