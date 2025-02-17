@@ -158,6 +158,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(std::string in_data) {
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   if (!web_stream_) co_return;
+  // web_stream_->binary(false);
   auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(in_data));
   if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
   if (l_ec_w) logger_->error(l_ec_w.what()), co_await async_close_websocket();
@@ -166,19 +167,29 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(soc
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   if (!web_stream_) co_return;
   {
+    // web_stream_->binary(false);
     auto l_str            = in_data->dump();
     auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
     if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
     if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
   }
 
+  struct binary_data_guard {
+    boost::beast::websocket::stream<http::tcp_stream_type>* web_stream_;
+    explicit binary_data_guard(boost::beast::websocket::stream<http::tcp_stream_type>* in_web_stream)
+        : web_stream_(std::move(in_web_stream)) {
+      web_stream_->binary(true);
+    }
+    ~binary_data_guard() {
+      if (web_stream_) web_stream_->binary(false);
+    }
+  };
+  binary_data_guard l_binary_data_guard{web_stream_.get()};
   for (auto& l_str : in_data->binary_data_) {
-    web_stream_->binary(true);
     auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
     if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
     if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
   }
-  web_stream_->binary(false);
 }
 boost::asio::awaitable<void> socket_io_websocket_core::async_close_websocket() {
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
