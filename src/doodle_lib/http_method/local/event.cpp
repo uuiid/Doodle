@@ -20,6 +20,7 @@ void local_event_reg(http_route& in_route) {
     //                  l_s.lock()->emit("message-back", in_data);
     //                }}.track_foreign(in_core)
     // );
+
     in_core->on_message(
         "message",
         socket_io::socket_io_core::slot_type{

@@ -88,7 +88,11 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
     if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
     return signal_map_[in_event_name]->connect(in_solt);
   }
-
+  template <typename T>
+  auto on_message_json(const std::string& in_event_name, T&& in_solt) {
+    if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
+    return signal_map_[in_event_name]->connect(slot_type{in_solt}.track_foreign(shared_from_this()));
+  }
   /// 连接消息来源
   void connect();
 };
