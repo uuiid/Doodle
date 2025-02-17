@@ -22,7 +22,7 @@ socket_io_core::socket_io_core(
       auth_(in_json) {
   connect();
 }
-void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_data) {
+void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_data) const {
   auto l_ptr        = std::make_shared<socket_io_packet>();
   l_ptr->type_      = socket_io_packet_type::event;
   l_ptr->namespace_ = namespace_;
@@ -36,6 +36,20 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
   }
   ctx_->emit(l_ptr);
 }
+void socket_io_core::emit(const std::string& in_event, const std::vector<std::string>& in_data) const {
+  auto l_ptr        = std::make_shared<socket_io_packet>();
+  l_ptr->type_      = socket_io_packet_type::binary_event;
+  l_ptr->namespace_ = namespace_;
+  l_ptr->json_data_ = nlohmann::json::array();
+  l_ptr->json_data_.emplace_back(in_event);
+  for (auto i = 0; i < in_data.size(); ++i) {
+    l_ptr->json_data_.emplace_back(nlohmann::json::object({{"_placeholder", true}, {"num", i}}));
+  }
+  l_ptr->binary_data_  = in_data;
+  l_ptr->binary_count_ = in_data.size();
+  ctx_->emit(l_ptr);
+}
+
 void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
   current_packet_guard l_guard{in_data, this};
   auto l_json       = in_data->json_data_;
@@ -43,32 +57,52 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
   l_json.erase(0);
   if (signal_map_.contains(l_event_name)) {
     try {
-      (*signal_map_.at(l_event_name))(l_json);
+      if (in_data->binary_count_ != 0)
+        (*signal_map_.at(l_event_name))(in_data->binary_data_);
+      else
+        (*signal_map_.at(l_event_name))(l_json);
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   }
 }
 void socket_io_core::ask(const nlohmann::json& in_data) const {
-  if (current_packet_) {
-    auto l_data = current_packet_;
-    l_data->type_ =
-        l_data->type_ == socket_io_packet_type::event ? socket_io_packet_type::ack : socket_io_packet_type::binary_ack;
-    l_data->json_data_ = in_data;
-    if (auto l_websocket = websocket_.lock(); l_websocket)
-      boost::asio::co_spawn(
-          g_io_context(),
-          [l_data, l_websocket]() -> boost::asio::awaitable<void> {
-            co_await l_websocket->async_write_websocket(l_data->dump());
-            for (int i = 0; i < l_data->binary_count_; ++i) {
-              co_await l_websocket->async_write_websocket(l_data->binary_data_[i]);
-            }
-          },
-          boost::asio::detached
-      );
-  }
-}
+  if (!current_packet_) return;
 
+  auto l_data        = current_packet_;
+  l_data->type_      = socket_io_packet_type::ack;
+  l_data->namespace_ = namespace_;
+  l_data->json_data_ = in_data;
+  if (auto l_websocket = websocket_.lock(); l_websocket)
+    boost::asio::co_spawn(
+        g_io_context(),
+        [l_data, l_websocket]() -> boost::asio::awaitable<void> {
+          co_await l_websocket->async_write_websocket(l_data);
+        },
+        boost::asio::detached
+    );
+}
+void socket_io_core::ask(const std::vector<std::string>& in_data) const {
+  if (!current_packet_) return;
+
+  auto l_data        = current_packet_;
+  l_data->type_      = socket_io_packet_type::binary_ack;
+  l_data->namespace_ = namespace_;
+  l_data->json_data_ = nlohmann::json::array();
+  for (auto i = 0; i < in_data.size(); ++i) {
+    l_data->json_data_.emplace_back(nlohmann::json::object({{"_placeholder", true}, {"num", i}}));
+  }
+  l_data->binary_data_  = in_data;
+  l_data->binary_count_ = in_data.size();
+  if (auto l_websocket = websocket_.lock(); l_websocket)
+    boost::asio::co_spawn(
+        g_io_context(),
+        [l_data, l_websocket]() -> boost::asio::awaitable<void> {
+          co_await l_websocket->async_write_websocket(l_data);
+        },
+        boost::asio::detached
+    );
+}
 void socket_io_core::connect() {
   /// 挂载接收消息槽
   on_message_scoped_connection_ =
@@ -85,7 +119,7 @@ void socket_io_core::connect() {
                         boost::asio::co_spawn(
                             g_io_context(),
                             [in_data, l_websocket_]() -> boost::asio::awaitable<void> {
-                              co_await l_websocket_->async_write_websocket(in_data->dump());
+                              co_await l_websocket_->async_write_websocket(in_data);
                             },
                             boost::asio::detached
                         );

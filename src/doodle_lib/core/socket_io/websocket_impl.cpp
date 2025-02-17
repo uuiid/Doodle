@@ -162,6 +162,24 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(std
   if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
   if (l_ec_w) logger_->error(l_ec_w.what()), co_await async_close_websocket();
 }
+boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(socket_io_packet_ptr in_data) {
+  auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
+  if (!web_stream_) co_return;
+  {
+    auto l_str            = in_data->dump();
+    auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
+    if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
+    if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
+  }
+
+  for (auto& l_str : in_data->binary_data_) {
+    web_stream_->binary(true);
+    auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
+    if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
+    if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
+  }
+  web_stream_->binary(false);
+}
 boost::asio::awaitable<void> socket_io_websocket_core::async_close_websocket() {
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   if (!web_stream_) co_return;

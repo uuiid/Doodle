@@ -17,7 +17,7 @@ using socket_io_websocket_core_wptr = std::weak_ptr<socket_io_websocket_core>;
 /// socket 连接
 class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
  public:
-  using signal_type = boost::signals2::signal<void(const nlohmann::json&)>;
+  using signal_type = boost::signals2::signal<void(const std::variant<nlohmann::json, std::vector<std::string>>&)>;
   using signal_ptr  = std::shared_ptr<signal_type>;
   using slot_type   = signal_type::slot_type;
 
@@ -72,7 +72,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   }
   nlohmann::json auth_{};
 
-  void emit(const std::string& in_event, const nlohmann::json& in_data);
+  void emit(const std::string& in_event, const nlohmann::json& in_data) const;
+  void emit(const std::string& in_event, const std::vector<std::string>& in_data) const;
 
   /**
    * 这个只能在同步的回调里面调用
@@ -81,6 +82,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    *
    */
   void ask(const nlohmann::json& in_data) const;
+  void ask(const std::vector<std::string>& in_data) const;
   template <typename Solt>
   auto on_message(const std::string& in_event_name, Solt&& in_solt) {
     if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
