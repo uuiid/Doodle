@@ -40,8 +40,9 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   if (auto l_id = in_str[l_pos + 1]; std::isdigit(l_id)) {
     auto l_begin = l_pos + 1;
     std::size_t l_size{};
-    while (!std::isdigit(in_str[++l_pos]) && l_pos < in_str.size()) ++l_size;
+    while (std::isdigit(in_str[++l_pos]) && l_pos < in_str.size()) ++l_size;
     l_packet.id_ = std::stoll(in_str.substr(l_begin, l_size));
+    --l_pos;
   }
   ++l_pos;
   if (in_str.begin() + l_pos != in_str.end())
@@ -57,7 +58,8 @@ std::string socket_io_packet::dump() {
 
   if (type_ == socket_io_packet_type::binary_ack || type_ == socket_io_packet_type::binary_event)
     l_result += std::to_string(binary_data_.size()) + '-';
-  if (type_ == socket_io_packet_type::binary_ack || type_ == socket_io_packet_type::ack) l_result += id_;
+  if (type_ == socket_io_packet_type::binary_ack || type_ == socket_io_packet_type::ack)
+    l_result += std::to_string(id_);
 
   l_result += json_data_.dump();
   return dump_message(l_result);
