@@ -69,8 +69,9 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
 void socket_io_core::ask(const nlohmann::json& in_data) const {
   if (!current_packet_) return;
 
-  auto l_data        = current_packet_;
+  auto l_data        = std::make_shared<socket_io_packet>();
   l_data->type_      = socket_io_packet_type::ack;
+  l_data->id_        = current_packet_->id_;
   l_data->namespace_ = namespace_;
   l_data->json_data_ = in_data;
   if (auto l_websocket = websocket_.lock(); l_websocket)
@@ -85,7 +86,8 @@ void socket_io_core::ask(const nlohmann::json& in_data) const {
 void socket_io_core::ask(const std::vector<std::string>& in_data) const {
   if (!current_packet_) return;
 
-  auto l_data        = current_packet_;
+  auto l_data        = std::make_shared<socket_io_packet>();
+  l_data->id_        = current_packet_->id_;
   l_data->type_      = socket_io_packet_type::binary_ack;
   l_data->namespace_ = namespace_;
   l_data->json_data_ = nlohmann::json::array();
