@@ -45,6 +45,8 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
     --l_pos;
   }
   ++l_pos;
+  if (in_str[l_pos] != '[')
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
   if (in_str.begin() + l_pos != in_str.end())
     l_packet.json_data_ = nlohmann::json::parse(in_str.begin() + l_pos, in_str.end());
   else
