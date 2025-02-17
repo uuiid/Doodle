@@ -12,6 +12,7 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -19,6 +20,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
+
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
@@ -148,6 +150,9 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
  public:
   explicit run_post_task_local_impl_sink(std::shared_ptr<server_task_info> in_task_info) : task_info_(in_task_info) {}
   void sink_it_(const spdlog::details::log_msg& msg) override {
+    spdlog::memory_buf_t l_formatted;
+    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, l_formatted);
+    task_info_->last_line_log_ = fmt::to_string(l_formatted);
     // std::call_once(flag_, &set_state, this);
     std::call_once(flag_, [this]() { set_state(); });
   }
@@ -289,6 +294,8 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 
         )
     );
+    emit_signal();
+
     co_return;
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) const {
@@ -308,6 +315,8 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 
         )
     );
+    emit_signal();
+
     co_return;
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) const {
@@ -337,6 +346,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 
         )
     );
+    emit_signal();
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
     co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
@@ -357,6 +367,12 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
             app_base::Get().on_cancel.slot(), boost::asio::detached
 
         )
+    );
+    emit_signal();
+  }
+  void emit_signal() const {
+    socket_io::broadcast(
+        "doodle:task_info:update", {{"task_info_id", task_info_->uuid_id_}, {"log", task_info_->last_line_log_}}
     );
   }
 };
