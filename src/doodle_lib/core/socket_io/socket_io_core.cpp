@@ -6,7 +6,9 @@
 
 #include <doodle_core/core/core_set.h>
 
-#include <doodle_lib/core/engine_io.h>
+#include <doodle_lib/core/socket_io/engine_io.h>
+#include <doodle_lib/core/socket_io/socket_io_ctx.h>
+#include <doodle_lib/core/socket_io/socket_io_packet.h>
 #include <doodle_lib/core/socket_io/websocket_impl.h>
 
 #include "core/socket_io.h"

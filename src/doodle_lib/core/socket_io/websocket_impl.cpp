@@ -6,15 +6,14 @@
 
 #include <doodle_core/core/co_queue.h>
 
-#include <doodle_lib/core/engine_io.h>
 #include <doodle_lib/core/http/http_function.h>
-#include <doodle_lib/core/http/http_route.h>
-#include <doodle_lib/core/socket_io.h>
-#include <doodle_lib/core/socket_io/websocket_impl.h>
+#include <doodle_lib/core/socket_io/engine_io.h>
+#include <doodle_lib/core/socket_io/sid_data.h>
+#include <doodle_lib/core/socket_io/socket_io_core.h>
+#include <doodle_lib/core/socket_io/socket_io_ctx.h>
+#include <doodle_lib/core/socket_io/socket_io_packet.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
-
-#include "socket_io_core.h"
 namespace doodle::socket_io {
 
 socket_io_websocket_core::socket_io_websocket_core(
