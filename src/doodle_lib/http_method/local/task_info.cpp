@@ -4,22 +4,22 @@
 
 #include "task_info.h"
 
-#include "../../../doodle_core/core/app_base.h"
-#include "../../../doodle_core/sqlite_orm/sqlite_database.h"
-#include <../../../doodle_core/lib_warp/boost_uuid_warp.h>
-#include <../../../doodle_core/lib_warp/json_warp.h>
-#include <../../../doodle_core/metadata/server_task_info.h>
+#include "doodle_core/core/app_base.h"
+#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/lib_warp/boost_uuid_warp.h>
+#include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/metadata/server_task_info.h>
 
-#include <../../../../build/Ninja_debug/vcpkg_installed/x64-windows/include/spdlog/sinks/basic_file_sink.h>
-#include <../../core/http/http_session_data.h>
-#include <../../core/http/json_body.h>
-#include <../../exe_warp/import_and_render_ue.h>
-#include <../../exe_warp/maya_exe.h>
-#include <../../exe_warp/ue_exe.h>
-#include <../../long_task/connect_video.h>
-#include <../../long_task/image_to_move.h>
-#include <../computer_reg_data.h>
-#include <../kitsu/kitsu.h>
+#include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_method/computer_reg_data.h>
+#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/long_task/connect_video.h>
+#include <doodle_lib/long_task/image_to_move.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http {
 namespace {
