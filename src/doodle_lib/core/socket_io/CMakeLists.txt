@@ -7,6 +7,7 @@ target_sources(doodle_lib
         core_enum.h
         engine_io.h
         socket_io_packet.h
+        broadcast.h
 
         PRIVATE
         websocket_impl.cpp
@@ -15,4 +16,5 @@ target_sources(doodle_lib
         socket_io_ctx.cpp
         engine_io.cpp
         socket_io_packet.cpp
+        broadcast.cpp
 )
