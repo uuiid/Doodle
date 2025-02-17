@@ -28,13 +28,14 @@
 #include <doodle_lib/http_method/kitsu/user.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/local/event.h>
-#include <doodle_lib/http_method/local_setting.h>
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
 #include <doodle_lib/http_method/model_library/thumbnail.h>
 #include <doodle_lib/http_method/task_info.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
+
+#include <doodle_lib/http_method/local/local_setting.h>
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {

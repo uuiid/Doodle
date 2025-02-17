@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_lib/core/http/http_route.h>
+#include <../../core/http/http_route.h>
 
 namespace doodle::http {
 

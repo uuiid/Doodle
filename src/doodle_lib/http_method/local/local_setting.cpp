@@ -4,17 +4,17 @@
 
 #include "local_setting.h"
 
-#include "doodle_core/sqlite_orm/sqlite_database.h"
-#include <doodle_core/core/authorization.h>
-#include <doodle_core/lib_warp/boost_uuid_warp.h>
-#include <doodle_core/lib_warp/json_warp.h>
-#include <doodle_core/metadata/server_task_info.h>
+#include "../../../doodle_core/sqlite_orm/sqlite_database.h"
+#include <../../../doodle_core/core/authorization.h>
+#include <../../../doodle_core/lib_warp/boost_uuid_warp.h>
+#include <../../../doodle_core/lib_warp/json_warp.h>
+#include <../../../doodle_core/metadata/server_task_info.h>
 
-#include <doodle_lib/core/http/http_function.h>
-#include <doodle_lib/core/http/http_session_data.h>
-#include <doodle_lib/core/http/json_body.h>
-#include <doodle_lib/exe_warp/maya_exe.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <../../core/http/http_function.h>
+#include <../../core/http/http_session_data.h>
+#include <../../core/http/json_body.h>
+#include <../../exe_warp/maya_exe.h>
+#include <../kitsu/kitsu.h>
 
 namespace doodle::http {
 

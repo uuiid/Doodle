@@ -14,8 +14,6 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-#include <doodle_lib/http_method/local_setting.h>
-#include <doodle_lib/http_method/task_info.h>
 
 #include <winreg/WinReg.hpp>
 namespace doodle::launch {

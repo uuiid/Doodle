@@ -126,6 +126,7 @@ class socket_io_http_put : public socket_io_http_base_fun {
 void create_socket_io(
     http::http_route& in_route, const std::shared_ptr<sid_ctx>& in_sid_ctx, const std::string& in_path
 ) {
+  g_ctx().emplace<sid_ctx&>(*in_sid_ctx);
   in_route.reg(std::make_shared<socket_io_http_get>(in_path, in_sid_ctx))
       .reg(std::make_shared<socket_io_http_post>(in_path, in_sid_ctx))
       .reg(std::make_shared<socket_io_http_put>(in_path, in_sid_ctx));

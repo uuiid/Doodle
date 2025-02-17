@@ -8,7 +8,6 @@ target_sources(
         file_association.h
         kitsu_front_end_reg.h
         tool_version.h
-        local_setting.h
         up_file.h
 
         PRIVATE
@@ -20,7 +19,6 @@ target_sources(
         computer_reg_data.cpp
         kitsu_front_end_reg.cpp
         tool_version.cpp
-        local_setting.cpp
         up_file.cpp
 )
 
