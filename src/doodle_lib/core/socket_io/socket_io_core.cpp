@@ -106,6 +106,13 @@ void socket_io_core::connect() {
       ctx_->on(namespace_)
           ->on_message(sid_ctx::signal_type::message_solt_type{std::bind_front(&socket_io_core::on_impl, this)});
 
+  connect_websocket();
+}
+void socket_io_core::set_websocket(const socket_io_websocket_core_ptr& in_websocket) {
+  websocket_ = in_websocket;
+  connect_websocket();
+}
+void socket_io_core::connect_websocket() {
   if (auto l_websocket = websocket_.lock(); l_websocket)
     /// 挂载发送消息槽
     on_emit_scoped_connection_ =

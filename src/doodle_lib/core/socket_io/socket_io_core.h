@@ -42,7 +42,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   };
 
   void on_impl(const socket_io_packet_ptr&);
-
+  void connect_websocket();
  public:
   /**
    *
@@ -67,7 +67,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
     signal_map_.clear();
     connect();
   }
-  void set_websocket(const socket_io_websocket_core_ptr& in_websocket) { websocket_ = in_websocket; }
+  void set_websocket(const socket_io_websocket_core_ptr& in_websocket);
 
   nlohmann::json auth_{};
 
