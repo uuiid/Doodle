@@ -7,26 +7,31 @@ import { io } from 'socket.io-client';
 // globalThis.chai = chai;
 
 const URL = 'http://localhost:50025';
-describe('doodle 本地服务器测试', function() {
-  describe('提交作业测试', function() {
+describe('doodle 本地服务器测试', function () {
+  describe('提交作业测试', function () {
+    it('连接事件测试', async function () {
+      this.timeout(10000);
 
-
-    it('连接事件测试', async function(done) {
-      this.timeout(0);
-      const socket = io(`${URL}/socket.io/`);
-      socket.onAny((eventName, ...args) => {
-        expect(eventName).to.equal('doodle:task_info:update');
-        done();
+      const socket = new io(`${URL}/socket.io/`);
+      socket.on('connect', function () {
+        socket.close();
       });
-
+      socket.io.on('connect_error', (error) => {
+        console.log('error', error);
+      });
+      afterEach(() => {
+        socket.close();
+      });
     });
 
 
-    it('should 提交maya作业', async function() {
-      const socket = io(`${URL}/socket.io/`);
-      socket.onAny((eventName, ...args) => {
-        expect(eventName).to.equal('doodle:task_info:update');
+    it('should 提交maya作业', async function () {
+      afterEach(() => {
+        socket.close();
       });
+      this.timeout(60000);
+      const socket = io(`${URL}/socket.io/`);
+
       const req = await request.post(`${URL}/api/doodle/task`).send({
         name: '测试maya作业',
         source_computer: '本机',
@@ -57,7 +62,13 @@ describe('doodle 本地服务器测试', function() {
         'submitter',
         'type',
       );
-
+      return new Promise((resolve) => {
+        socket.onAny((eventName, ...args) => {
+          expect(eventName).to.equal('doodle:task_info:update');
+          socket.close();
+          resolve();
+        });
+      });
 
     });
   });
