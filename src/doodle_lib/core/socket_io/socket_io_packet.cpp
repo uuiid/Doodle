@@ -27,7 +27,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
     std::size_t l_size{};
     while (in_str[++l_pos] != ',' && l_pos < in_str.size()) ++l_size;
     l_packet.namespace_ = in_str.substr(l_begin, l_size);
-  }else
+  } else
     l_packet.namespace_ = "/";
   if (l_pos == in_str.size()) return l_packet;
 
@@ -50,7 +50,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
 
 std::string socket_io_packet::dump() {
   std::string l_result{std::to_string(enum_to_num(type_))};
-  if (!namespace_.empty()) l_result += namespace_ + ',';
+  if (namespace_ != "/") l_result += namespace_ + ',';
 
   if (type_ == socket_io_packet_type::binary_ack || type_ == socket_io_packet_type::binary_event)
     l_result += std::to_string(binary_data_.size()) + '-';
