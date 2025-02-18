@@ -372,7 +372,8 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
   void emit_signal() const {
     socket_io::broadcast(
-        "doodle:task_info:update", {{"task_info_id", task_info_->uuid_id_}, {"log", task_info_->last_line_log_}}
+        "doodle:task_info:update", {{"task_info_id", task_info_->uuid_id_}, {"log", task_info_->last_line_log_}},
+        "/socket.io/"
     );
   }
 };
