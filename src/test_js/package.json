@@ -1,0 +1,16 @@
+{
+  "name": "test_js",
+  "version": "1.0.0",
+  "description": "doodle 测试",
+  "scripts": {
+    "test": "mocha test-suite.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^11.1.0"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}
