@@ -20,16 +20,16 @@ namespace doodle::socket_io {
 class socket_io_http_base_fun : public ::doodle::http::http_function {
  protected:
   std::shared_ptr<sid_ctx> sid_ctx_;
-  std::string url_;
 
  public:
   explicit socket_io_http_base_fun(
       boost::beast::http::verb in_verb, std::string in_url, const std::shared_ptr<sid_ctx>& in_sid_ctx
   )
-      : http_function(in_verb, {}), sid_ctx_(std::move(in_sid_ctx)), url_(std::move(in_url)) {}
+      : http_function(in_verb, {}), sid_ctx_(std::move(in_sid_ctx)) {}
 
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override {
-    if (in_segments_ref.buffer() == url_) return {true, {}};
+    std::string l_path{std::string_view{in_segments_ref.buffer()}};
+    if (sid_ctx_->has_register(l_path)) return {true, {}};
     return {false, {}};
   }
 };
@@ -59,6 +59,7 @@ class socket_io_http_get : public socket_io_http_base_fun {
           http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
       );
     auto l_event = co_await l_sid_data->async_event();
+    default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
     co_return in_handle->make_msg(std::move(l_event));
   }
 
@@ -111,6 +112,7 @@ class socket_io_http_post : public socket_io_http_base_fun {
     }
     l_body.erase(0, 1);
     auto l_pack = socket_io_packet::parse(l_body);
+    l_sid_data->parse_socket_io(l_pack);
     co_return in_handle->make_msg("{}");
   }
 };
