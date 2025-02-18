@@ -27,7 +27,8 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
     std::size_t l_size{};
     while (in_str[++l_pos] != ',' && l_pos < in_str.size()) ++l_size;
     l_packet.namespace_ = in_str.substr(l_begin, l_size);
-  }
+  }else
+    l_packet.namespace_ = "/";
   if (l_pos == in_str.size()) return l_packet;
 
   if (auto l_id = in_str[l_pos + 1]; std::isdigit(l_id)) {

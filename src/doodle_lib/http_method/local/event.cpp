@@ -12,6 +12,7 @@ namespace doodle::http::local {
 
 void local_event_reg(http_route& in_route) {
   auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
+  l_sid_ctx->on("/socket.io/");
   l_sid_ctx->on_connect([](const std::shared_ptr<socket_io::socket_io_core>& in_core) {
 
   });
