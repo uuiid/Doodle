@@ -57,65 +57,24 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     auto l_buffer = boost::asio::dynamic_buffer(l_body);
     if (!web_stream_) co_return;
     auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
-    default_logger_raw()->info("websocket read {}", l_body);
     if (l_ec_r == boost::beast::websocket::error::closed) co_return;
     if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
 
     if (co_await parse_engine_io(l_body)) continue;
     auto l_socket_io = socket_io_packet::parse(l_body);
-    co_await parse_socket_io(l_socket_io);
+    /// 解析二进制数据
+    for (int i = 0; i < l_socket_io.binary_count_; ++i) {
+      std::string l_body_{};
+      auto l_buffer_ = boost::asio::dynamic_buffer(l_body_);
+      if (!web_stream_) co_return;
+      auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer_);
+      if (l_ec_r == boost::beast::websocket::error::closed) co_return;
+      if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
+      l_socket_io.binary_data_.emplace_back(l_body);
+    }
+    if (auto l_str = sid_data_->parse_socket_io(l_socket_io); !l_str.empty()) co_await async_write_websocket(l_str);
   }
   socket_io_contexts_.clear();
-}
-boost::asio::awaitable<void> socket_io_websocket_core::parse_socket_io(socket_io_packet& in_body) {
-  if (!sid_ctx_->has_register(in_body.namespace_)) {
-    in_body.type_      = socket_io_packet_type::connect_error;
-    in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
-    co_return co_await async_write_websocket(in_body.dump());
-  }
-  switch (in_body.type_) {
-    case socket_io_packet_type::connect: {
-      auto l_ptr = std::make_shared<socket_io_core>(sid_ctx_, weak_from_this(), in_body.namespace_, in_body.json_data_);
-      socket_io_contexts_[in_body.namespace_] = l_ptr;
-      sid_ctx_->emit_connect(l_ptr);
-      in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
-
-      co_await async_write_websocket(in_body.dump());
-      break;
-    }
-    case socket_io_packet_type::disconnect:
-      if (socket_io_contexts_.contains(in_body.namespace_)) {
-        in_body.type_ = socket_io_packet_type::event;
-        auto l_ptr    = socket_io_contexts_[in_body.namespace_];
-        if (!in_body.namespace_.empty()) {
-          // 转移到主名称空间
-          l_ptr->set_namespace({});
-        } else
-          socket_io_contexts_.erase(in_body.namespace_);
-      }
-      break;
-    case socket_io_packet_type::event:
-      sid_ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
-      break;
-    case socket_io_packet_type::ack:
-      break;
-    case socket_io_packet_type::connect_error:
-      break;
-    case socket_io_packet_type::binary_event:
-      for (int i = 0; i < in_body.binary_count_; ++i) {
-        std::string l_body{};
-        auto l_buffer = boost::asio::dynamic_buffer(l_body);
-        if (!web_stream_) co_return;
-        auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
-        if (l_ec_r == boost::beast::websocket::error::closed) co_return;
-        if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
-        in_body.binary_data_.emplace_back(l_body);
-      }
-      sid_ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
-      break;
-    case socket_io_packet_type::binary_ack:
-      break;
-  }
 }
 
 boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::string& in_body) {

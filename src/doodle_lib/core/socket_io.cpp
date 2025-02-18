@@ -110,7 +110,6 @@ class socket_io_http_post : public socket_io_http_base_fun {
         break;
     }
     l_body.erase(0, 1);
-    default_logger_raw()->info("body {}", l_body);
     auto l_pack = socket_io_packet::parse(l_body);
     co_return in_handle->make_msg("{}");
   }

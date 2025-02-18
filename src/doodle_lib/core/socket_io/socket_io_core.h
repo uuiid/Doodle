@@ -23,7 +23,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
  private:
   uuid sid_;
-  std::shared_ptr<sid_ctx> ctx_;
+  sid_ctx* ctx_;
   socket_io_websocket_core_wptr websocket_;
   std::string namespace_;
   /// 当前接收的事件
@@ -50,10 +50,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    * @param in_namespace 连接使用的名称空间
    * @param in_json 初次连接时的负载
    */
-  explicit socket_io_core(
-      const std::shared_ptr<sid_ctx>& in_ctx, socket_io_websocket_core_wptr in_websocket,
-      const std::string& in_namespace, const nlohmann::json& in_json
-  );
+  explicit socket_io_core(sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json);
   // destructor
   ~socket_io_core()                                      = default;
   // copy constructor
@@ -70,6 +67,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
     signal_map_.clear();
     connect();
   }
+  void set_websocket(const socket_io_websocket_core_ptr& in_websocket) { websocket_ = in_websocket; }
+
   nlohmann::json auth_{};
 
   void emit(const std::string& in_event, const nlohmann::json& in_data) const;
@@ -89,7 +88,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
     return signal_map_[in_event_name]->connect(in_solt);
   }
   template <typename T>
-  requires std::is_invocable_v<T, const nlohmann::json&>
+    requires std::is_invocable_v<T, const nlohmann::json&>
   auto on_message_json(const std::string& in_event_name, T&& in_solt) {
     if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
     auto l_fun_ptr = std::make_shared<T>(std::move(in_solt));

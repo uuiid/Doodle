@@ -13,15 +13,8 @@
 
 #include "core/socket_io.h"
 namespace doodle::socket_io {
-socket_io_core::socket_io_core(
-    const std::shared_ptr<sid_ctx>& in_ctx, socket_io_websocket_core_wptr in_websocket, const std::string& in_namespace,
-    const nlohmann::json& in_json
-)
-    : sid_(core_set::get_set().get_uuid()),
-      websocket_(std::move(in_websocket)),
-      ctx_(in_ctx),
-      namespace_(in_namespace),
-      auth_(in_json) {
+socket_io_core::socket_io_core(sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json)
+    : sid_(core_set::get_set().get_uuid()), ctx_(in_ctx), namespace_(in_namespace), auth_(in_json) {
   connect();
 }
 void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_data) const {

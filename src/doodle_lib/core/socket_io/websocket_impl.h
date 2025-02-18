@@ -36,7 +36,6 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   boost::asio::awaitable<void> async_ping_pong();
 
   boost::asio::awaitable<bool> parse_engine_io(std::string& in_body);
-  boost::asio::awaitable<void> parse_socket_io(socket_io_packet& in_body);
 
  public:
   explicit socket_io_websocket_core(
