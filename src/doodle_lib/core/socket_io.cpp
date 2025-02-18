@@ -88,6 +88,7 @@ class socket_io_http_post : public socket_io_http_base_fun {
       co_return in_handle->make_msg(std::string{"null"});
     auto l_body     = std::get<std::string>(in_handle->body_);
     auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
+    if (!l_sid_data) co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "sid不存在");
     switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
       case engine_io_packet_type::open:
         break;
