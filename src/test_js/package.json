@@ -1,6 +1,7 @@
 {
   "name": "test_js",
   "version": "1.0.0",
+  "type": "module",
   "description": "doodle 测试",
   "scripts": {
     "test": "mocha test-suite.js"
@@ -11,6 +12,8 @@
     "chai": "^5.2.0",
     "mocha": "^11.1.0",
     "socket.io": "^4.8.1",
-    "superagent": "^10.1.1"
+    "socket.io-client": "^4.8.1",
+    "superagent": "^10.1.1",
+    "uuid": "^11.0.5"
   }
 }
