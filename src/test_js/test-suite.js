@@ -29,7 +29,7 @@ describe('doodle 本地服务器测试', function () {
       afterEach(() => {
         socket.close();
       });
-      this.timeout(60000);
+      this.timeout(20000);
       const socket = io(`${URL}/socket.io/`);
 
       const req = await request.post(`${URL}/api/doodle/task`).send({
@@ -63,8 +63,9 @@ describe('doodle 本地服务器测试', function () {
         'type',
       );
       return new Promise((resolve) => {
-        socket.onAny((eventName, ...args) => {
+        socket.onAny((eventName, data) => {
           expect(eventName).to.equal('doodle:task_info:update');
+          expect(data).to.have.keys('task_info_id', 'log');
           socket.close();
           resolve();
         });
