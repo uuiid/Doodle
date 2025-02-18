@@ -40,7 +40,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     co_await async_write_websocket(generate_register_reply());
   else
     sid_data_ = sid_ctx_->get_sid(l_p.sid_);
-  sid_data_->upgrade_to_websocket();
+  sid_data_->set_websocket_connect(shared_from_this());
 
   /// 查看是否有锁, 有锁直接返回
   if (sid_data_->is_locked()) co_return co_await async_close_websocket();
