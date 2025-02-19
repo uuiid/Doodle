@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import threading
 import inspect
+from collections import OrderedDict
 
 from PySide2.QtWidgets import QMessageBox, QWidget
 from maya import cmds, mel
@@ -46,7 +47,7 @@ class State(object):
         if not hasattr(self, '_initialized'):
             self._initialized = True
             self._sidebar = ''
-            self.low_model = {}
+            self.low_model = OrderedDict()
             self.collide = []
             self.doodle_tool_widget = None
             # self.high_model = {}
@@ -105,6 +106,7 @@ class State(object):
 
     def confirm_data(self):
         cloth = self.format_data()
+        print cloth
         if cloth:
             cmds.doodle_create_qcloth_assets(cloth=cloth, collision=self.collide)
 
