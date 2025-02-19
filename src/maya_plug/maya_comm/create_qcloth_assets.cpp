@@ -642,17 +642,20 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
   if (l_arg.isFlagSet(create_qcloth_assets_ns::collision, &l_s)) {
     maya_chick(l_s);
     auto l_num = l_arg.numberOfFlagUses(create_qcloth_assets_ns::collision);
-    MSelectionList l_list{};
     for (auto i = 0; i < l_num; ++i) {
       MArgList l_arg_list{};
       l_s = l_arg.getFlagArgumentList(create_qcloth_assets_ns::collision, i, l_arg_list);
       maya_chick(l_s);
-      MString l_names = l_arg_list.asString(0, &l_s);
-      maya_chick(l_s);
-      MObject l_tmp_obj{};
-      maya_chick(l_list.add(l_names));
-      maya_chick(l_list.getDependNode(0, l_tmp_obj));
-      p_i->coll_list.emplace_back(l_tmp_obj);
+      for (auto j = 0; j < l_arg_list.length(); ++j) {
+        MString l_names;
+        if (l_arg_list.get(j, l_names) == MStatus::kSuccess) {
+          MSelectionList l_list{};
+          MObject l_tmp_obj{};
+          maya_chick(l_list.add(l_names));
+          maya_chick(l_list.getDependNode(0, l_tmp_obj));
+          p_i->coll_list.emplace_back(l_tmp_obj);
+        }
+      }
     }
   }
 
@@ -697,9 +700,7 @@ std::vector<MObject> create_qcloth_assets::get_all_node() {
 }
 
 bool create_qcloth_assets::isUndoable() const { return true; }
-void create_qcloth_assets::delete_node() {
-  MGlobal::deleteNode(p_i->cfx.cfx_grp);
-}
+void create_qcloth_assets::delete_node() { MGlobal::deleteNode(p_i->cfx.cfx_grp); }
 
 void create_qcloth_assets::reset_properties() {
   for (auto& l_h : p_i->cloth_list) {
