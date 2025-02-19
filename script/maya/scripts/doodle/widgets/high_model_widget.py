@@ -2,14 +2,14 @@
 
 from PySide2.QtWidgets import QPushButton
 
-from doodle.cell.v_box_layout_widget import VBoxLayoutWidget
+from doodle.cell.h_box_layout_widget import HBoxLayoutWidget
 from doodle.cell.name_button_widget import NameButtonWidget
 from doodle.cell.h_box_layout_widget import HBoxLayoutCenterWidget
 from doodle.widgets.doodle_scroll_area import DoodleScrollArea
 from doodle.doodle_maya import State
 
 
-class HighModelWidget(VBoxLayoutWidget):
+class HighModelWidget(HBoxLayoutWidget):
     def __init__(self, parent=None):
         super(HighModelWidget, self).__init__(parent)
         self.parent = parent
@@ -42,6 +42,6 @@ class HighModelWidget(VBoxLayoutWidget):
     def remove_high_model(self, name):
         self.state.low_model[self.parent.label].remove(name)
 
-    @staticmethod
-    def on_clicked_high_model(name):
+    
+    def on_clicked_high_model(self,name):
         State.select_maya_object(name)

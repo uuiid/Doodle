@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from PySide2.QtCore import Signal, QSize, Qt
 from PySide2.QtWidgets import QLabel, QPushButton, QHBoxLayout
-from doodle.cell.h_box_layout_widget import HBoxLayoutWidget, HBoxLayoutCenterWidget, HBoxLayoutLeftWidget
+from doodle.cell.h_box_layout_widget import HBoxLayoutWidget, HBoxLayoutRightWidget, HBoxLayoutLeftWidget
 from doodle.cell.v_box_layout_widget import VBoxLayoutWidget
 from doodle.doodle_maya import State, StateSignal
 from doodle.widgets.high_model_widget import HighModelWidget
 
 
-class CreateClothModelItemHeader(HBoxLayoutLeftWidget):
+class CreateClothModelItemHeader(HBoxLayoutWidget):
     def __init__(self, parent=None):
         super(CreateClothModelItemHeader, self).__init__(parent=parent)
         self.setObjectName('header')
@@ -37,26 +37,27 @@ class CreateClothModelItem(VBoxLayoutWidget):
         self.close_button.setFixedWidth(20)
         self.close_button.setText('-')
         self.close_button.setCursor(Qt.PointingHandCursor)
+        self.remove_button = QPushButton(u"移除")
+        self.remove_button.setMaximumWidth(80)
+        self.remove_button.setCursor(Qt.PointingHandCursor)
+        self.remove_widget = HBoxLayoutRightWidget()
+        self.remove_widget.layout.addWidget(self.remove_button)
         self.header_left.layout.addWidget(self.open_button)
         self.header_left.layout.addWidget(self.close_button)
         self.header_left.layout.addWidget(self.header_title)
         self.header.layout.addWidget(self.header_left)
+        self.header.layout.addWidget(self.remove_widget)
         self.name_label = QLabel("")
+        self.name_label.hide()
         self._label = ''
         # self.mian_widget.setObjectName('create-cloth-model-item')
         self.content_widget = HBoxLayoutWidget(self)
         self.high_model_widget = HighModelWidget(self)
-        self.remove_button = QPushButton(u"移除")
-        self.remove_button.setMaximumWidth(80)
-        self.remove_widget = HBoxLayoutCenterWidget()
-        self.remove_widget.layout.addWidget(self.remove_button)
         self.content_widget.layout.addWidget(self.name_label)
         self.content_widget.layout.addWidget(self.high_model_widget)
-        self.content_widget.layout.addWidget(self.remove_widget)
         self.content_widget.layout.setSpacing(2)
         self.content_widget.layout.setStretch(0, 1)
         self.content_widget.layout.setStretch(1, 2)
-        self.content_widget.layout.setStretch(2, 1)
         self.layout.addWidget(self.header)
         self.layout.addWidget(self.content_widget)
         self.setMaximumHeight(200)

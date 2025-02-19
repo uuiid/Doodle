@@ -1,4 +1,4 @@
-from PySide2.QtCore import Signal
+from PySide2.QtCore import Signal, Qt
 from PySide2.QtWidgets import QPushButton, QLabel
 
 from doodle.cell.h_box_layout_widget import HBoxLayoutWidget
@@ -11,6 +11,7 @@ class NameButtonWidget(HBoxLayoutWidget):
         super(NameButtonWidget, self).__init__(parent)
         self.name = QLabel(self)
         self.label = None
+        self.name.setCursor(Qt.PointingHandCursor)
         self.layout.setContentsMargins(0, 0, 10, 0)
         self.button = QPushButton(self)
         self.button.setMaximumWidth(20)

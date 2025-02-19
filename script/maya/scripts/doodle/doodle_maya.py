@@ -106,7 +106,6 @@ class State(object):
 
     def confirm_data(self):
         cloth = self.format_data()
-        print cloth
         if cloth:
             cmds.doodle_create_qcloth_assets(cloth=cloth, collision=self.collide)
 
