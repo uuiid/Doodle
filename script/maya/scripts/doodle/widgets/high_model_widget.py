@@ -27,11 +27,10 @@ class HighModelWidget(VBoxLayoutWidget):
 
     def add_high_model(self):
         names = self.state.check_high_model(self.parent.label)
-        print names
         if names:
             for name in names:
                 item = NameButtonWidget()
-                item.mian_widget.setObjectName('high-model-widget-item')
+                item.main_widget.setObjectName('high-model-widget-item')
                 item.button.setText('-')
                 item.name.setText(name)
                 item.label = name
@@ -40,7 +39,7 @@ class HighModelWidget(VBoxLayoutWidget):
                 self.state.low_model[self.parent.label].append(name)
                 self.scroll_area.add_widget(item)
 
-    def remove_high_modulus(self, name):
+    def remove_high_model(self, name):
         self.state.low_model[self.parent.label].remove(name)
 
     @staticmethod
