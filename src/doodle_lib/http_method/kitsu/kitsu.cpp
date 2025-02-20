@@ -6,6 +6,7 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/authorization.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
@@ -137,6 +138,30 @@ boost::asio::awaitable<void> init_context_impl() {
         l_link->task_type_id_  = i;
         co_await l_data.install(l_link);
       }
+    }
+  }
+  if (l_data.get_all<department>().size() == 0) {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, "/api/data/departments", 11
+    };
+    auto l_r = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
+    for (auto& l_j : *l_r) {
+      auto l_task_list      = std::make_shared<department>();
+      *l_task_list          = l_j.get<department>();
+      l_task_list->uuid_id_ = l_j["id"].get<uuid>();
+      co_await l_data.install(l_task_list);
+    }
+  }
+  if (l_data.get_all<person>().size() == 0) {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, "/api/data/peoples", 11
+    };
+    auto l_r = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
+    for (auto& l_j : *l_r) {
+      auto l_task_list      = std::make_shared<person>();
+      *l_task_list          = l_j.get<person>();
+      l_task_list->uuid_id_ = l_j["id"].get<uuid>();
+      co_await l_data.install(l_task_list);
     }
   }
   app_base::Get().stop_app();

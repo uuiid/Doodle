@@ -95,6 +95,8 @@ DOODLE_GET_ALL_SQL(server_task_info)
 DOODLE_GET_ALL_SQL(project_status)
 DOODLE_GET_ALL_SQL(task_status)
 DOODLE_GET_ALL_SQL(task_type)
+DOODLE_GET_ALL_SQL(department)
+DOODLE_GET_ALL_SQL(person)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
   auto l_list = impl_->get_all<asset_type>();
@@ -123,6 +125,8 @@ DOODLE_INSTALL_SQL(task_status)
 DOODLE_INSTALL_SQL(task_type)
 DOODLE_INSTALL_SQL(asset_type)
 DOODLE_INSTALL_SQL(task_type_asset_type_link)
+DOODLE_INSTALL_SQL(department)
+DOODLE_INSTALL_SQL(person)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
