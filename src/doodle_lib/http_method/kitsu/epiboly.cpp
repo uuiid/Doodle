@@ -281,7 +281,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   {
     "asset_types": [],
     "auto_upload_path": "//192.168.10.240/public/后期/WuJinShenYu",
-    "code": null,
+    "code": "WJ",
     "created_at": "2024-05-11T01:43:15",
     "data": null,
     "default_preview_background_file_id": null,
