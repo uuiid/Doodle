@@ -104,10 +104,10 @@ struct DOODLE_CORE_API person {
     j.at("totp_enabled").get_to(p.totp_enabled_);
     j.at("totp_secret").get_to(p.totp_secret_);
     j.at("email_otp_enabled").get_to(p.email_otp_enabled_);
-    j.at("email_otp_secret").get_to(p.email_otp_secret_);
+    if (j.contains("email_otp_secret")) j.at("email_otp_secret").get_to(p.email_otp_secret_);
     j.at("fido_enabled").get_to(p.fido_enabled_);
-    j.at("fido_credentials").get_to(p.fido_credentials_);
-    j.at("otp_recovery_codes").get_to(p.otp_recovery_codes_);
+    if (j.contains("fido_credentials")) j.at("fido_credentials").get_to(p.fido_credentials_);
+    if (j.contains("otp_recovery_codes")) j.at("otp_recovery_codes").get_to(p.otp_recovery_codes_);
     j.at("preferred_two_factor_authentication").get_to(p.preferred_two_factor_authentication_);
     j.at("shotgun_id").get_to(p.shotgun_id_);
     j.at("timezone").get_to(p.timezone_);
@@ -123,8 +123,8 @@ struct DOODLE_CORE_API person {
     j.at("notifications_discord_enabled").get_to(p.notifications_discord_enabled_);
     j.at("notifications_discord_userid").get_to(p.notifications_discord_userid_);
     j.at("is_bot").get_to(p.is_bot_);
-    j.at("jti").get_to(p.jti_);
     j.at("expiration_date").get_to(p.expiration_date_);
+    j.at("studio_id").get_to(p.studio_id_);
     j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
     j.at("ldap_uid").get_to(p.ldap_uid_);
   }
