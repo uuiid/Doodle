@@ -8,12 +8,8 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/computer.h>
-#include <doodle_core/metadata/department.h>
-#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
-#include <doodle_core/metadata/metadata_descriptor.h>
-#include <doodle_core/metadata/preview_background_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
@@ -21,17 +17,8 @@
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
-#include <doodle_core/sqlite_orm/detail/macro.h>
-#include <doodle_core/sqlite_orm/detail/nlohmann_json.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
-#include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
-#include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
-#include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
-#include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
-#include "metadata/attendance.h"
-#include "metadata/status_automation.h"
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle {
@@ -98,6 +85,19 @@ DOODLE_GET_ALL_SQL(server_task_info)
 DOODLE_GET_ALL_SQL(project_status)
 DOODLE_GET_ALL_SQL(task_status)
 DOODLE_GET_ALL_SQL(task_type)
+template <>
+std::vector<asset_type> sqlite_database::get_all() {
+  auto l_list = impl_->get_all<asset_type>();
+  auto l_map =
+      l_list |
+      ranges::views::transform([](asset_type& i) -> std::pair<uuid, asset_type*> { return {i.uuid_id_, &i}; }) |
+      ranges::to<std::map<uuid, asset_type*>>();
+  auto l_link = impl_->get_all<task_type_asset_type_link>();
+  for (auto&& i : impl_->get_all<task_type_asset_type_link>()) {
+    if (l_map.contains(i.asset_type_id_)) l_map.at(i.asset_type_id_)->task_types_.emplace_back(i.task_type_id_);
+  }
+  return l_list;
+}
 
 DOODLE_INSTALL_SQL(project_helper::database_t)
 DOODLE_INSTALL_SQL(user_helper::database_t)
@@ -111,6 +111,7 @@ DOODLE_INSTALL_SQL(project)
 DOODLE_INSTALL_SQL(project_status)
 DOODLE_INSTALL_SQL(task_status)
 DOODLE_INSTALL_SQL(task_type)
+DOODLE_INSTALL_SQL(asset_type)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
@@ -122,6 +123,7 @@ DOODLE_INSTALL_RANGE(metadata::kitsu::assets_type_t)
 DOODLE_INSTALL_RANGE(computer)
 DOODLE_INSTALL_RANGE(task_status)
 DOODLE_INSTALL_RANGE(task_type)
+DOODLE_INSTALL_RANGE(asset_type)
 
 DOODLE_REMOVE_RANGE(attendance_helper::database_t)
 DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)

@@ -3,14 +3,15 @@
 //
 #include "kitsu.h"
 
-#include "doodle_core/metadata/task_status.h"
-#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/authorization.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project_status.h>
+#include <doodle_core/metadata/task_status.h>
+#include <doodle_core/metadata/task_type.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -109,7 +110,7 @@ boost::asio::awaitable<void> init_context_impl() {
   }
   if (l_data.get_all<task_type>().size() == 0) {
     boost::beast::http::request<boost::beast::http::empty_body> l_req{
-        boost::beast::http::verb::get, "/api/data/task-type", 11
+        boost::beast::http::verb::get, "/api/data/task-types", 11
     };
     auto l_r         = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
     auto l_task_list = std::make_shared<std::vector<task_type>>();
@@ -118,7 +119,19 @@ boost::asio::awaitable<void> init_context_impl() {
       l_task.uuid_id_ = l_j["id"].get<uuid>();
       l_task_list->emplace_back(l_task);
     }
-
+    co_await l_data.install_range(l_task_list);
+  }
+  if (l_data.get_all<asset_type>().size() == 0) {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, "/api/data/asset-types", 11
+    };
+    auto l_r         = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
+    auto l_task_list = std::make_shared<std::vector<asset_type>>();
+    for (auto& l_j : *l_r) {
+      auto l_task     = l_j.get<asset_type>();
+      l_task.uuid_id_ = l_j["id"].get<uuid>();
+      l_task_list->emplace_back(l_task);
+    }
     co_await l_data.install_range(l_task_list);
   }
   app_base::Get().stop_app();
