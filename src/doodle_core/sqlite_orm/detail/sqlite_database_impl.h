@@ -540,6 +540,12 @@ struct sqlite_database_impl {
     auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
     return l_v.empty() ? 0 : l_v[0];
   }
+  template <typename T>
+  uuid id_to_uuid(const std::int64_t& in_id) {
+    using namespace sqlite_orm;
+    auto l_v = storage_any_.select(&T::uuid_id_, sqlite_orm::where(sqlite_orm::c(&T::id_) == in_id));
+    return l_v.empty() ? uuid{} : l_v[0];
+  }
 
   template <typename T>
   std::vector<T> get_by_uuid(const uuid& in_uuid) {
