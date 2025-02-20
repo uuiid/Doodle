@@ -8,4 +8,8 @@ target_sources(
         nlohmann_json.h
         uuid_to_blob.h
         macro.h
+        sqlite_database_impl.h
+
+        PRIVATE
+        sqlite_database_impl.cpp
 )
