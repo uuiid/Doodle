@@ -7,6 +7,7 @@
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -17,6 +18,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
+#include <doodle_core/metadata/status_automation.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
@@ -29,8 +31,6 @@
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
-#include "metadata/attendance.h"
-#include "metadata/status_automation.h"
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::power_enum)
