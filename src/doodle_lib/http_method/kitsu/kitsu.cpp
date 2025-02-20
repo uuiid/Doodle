@@ -125,14 +125,19 @@ boost::asio::awaitable<void> init_context_impl() {
     boost::beast::http::request<boost::beast::http::empty_body> l_req{
         boost::beast::http::verb::get, "/api/data/asset-types", 11
     };
-    auto l_r         = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
-    auto l_task_list = std::make_shared<std::vector<asset_type>>();
+    auto l_r = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
     for (auto& l_j : *l_r) {
-      auto l_task     = l_j.get<asset_type>();
-      l_task.uuid_id_ = l_j["id"].get<uuid>();
-      l_task_list->emplace_back(l_task);
+      auto l_task_list      = std::make_shared<asset_type>();
+      *l_task_list          = l_j.get<asset_type>();
+      l_task_list->uuid_id_ = l_j["id"].get<uuid>();
+      co_await l_data.install(l_task_list);
+      for (auto&& i : l_task_list->task_types_) {
+        auto l_link            = std::make_shared<task_type_asset_type_link>();
+        l_link->asset_type_id_ = l_task_list->uuid_id_;
+        l_link->task_type_id_  = i;
+        co_await l_data.install(l_link);
+      }
     }
-    co_await l_data.install_range(l_task_list);
   }
   app_base::Get().stop_app();
 }
