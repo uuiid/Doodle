@@ -11,5 +11,12 @@ struct DOODLE_CORE_API department {
   std::string name_;
   std::string color_;
   bool archived_;
+  // from json
+  template <typename BasicJsonType>
+  friend void from_json(const BasicJsonType& j, department& p) {
+    j.at("name").get_to(p.name_);
+    j.at("color").get_to(p.color_);
+    j.at("archived").get_to(p.archived_);
+  }
 };
 }  // namespace doodle
