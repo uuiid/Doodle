@@ -25,7 +25,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_tool_version(s
     std::vector<std::string> l_version;
     // getline
     for (std::string l_line; std::getline(l_version_file, l_line);) l_version.emplace_back(std::move(l_line));
-    co_return in_handle->make_msg(nlohmann::json{l_version}.dump());
+    std::ranges::reverse(l_version);
+    co_return in_handle->make_msg((nlohmann::json{} = l_version).dump());
   }
   co_return in_handle->make_msg(nlohmann::json{});
 }
