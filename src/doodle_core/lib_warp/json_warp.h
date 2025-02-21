@@ -90,7 +90,10 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
   using time_point = std::chrono::zoned_time<Duration>;
   static void to_json(json& j, const time_point& in_time) {
     try {
-      j = in_time.get_local_time();
+      if (in_time.get_sys_time() <= std::chrono::duration_cast<Duration>(0))
+        j = "1970-01-01 00:00:00";
+      else
+        j = in_time.get_local_time();
     } catch (const fmt::format_error& in_err) {
       throw nlohmann::json::other_error::create(502, in_err.what(), &j);
     }

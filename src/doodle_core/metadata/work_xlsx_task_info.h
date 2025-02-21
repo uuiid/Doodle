@@ -29,8 +29,8 @@ struct database_t {
   // to json
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["id"]          = p.uuid_id_;
-    j["start_time"]  = p.start_time_.get_local_time();
-    j["end_time"]    = p.end_time_.get_local_time();
+    j["start_time"]  = p.start_time_;
+    j["end_time"]    = p.end_time_;
     j["duration"]    = p.duration_.count();
     j["remark"]      = p.remark_;
     j["user_remark"] = p.user_remark_;

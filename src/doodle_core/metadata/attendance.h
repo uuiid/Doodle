@@ -27,8 +27,8 @@ struct database_t {
   std::int64_t user_ref{};
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["id"]         = fmt::to_string(p.id_);
-    j["start_time"] = p.start_time_.get_local_time();
-    j["end_time"]   = p.end_time_.get_local_time();
+    j["start_time"] = p.start_time_;
+    j["end_time"]   = p.end_time_;
     j["remark"]     = p.remark_;
     j["type"] = static_cast<std::uint32_t>(p.type_);
   }

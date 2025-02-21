@@ -134,7 +134,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;
     j["submitter"]       = p.submitter_;
-    j["submit_time"]     = p.submit_time_.get_local_time();
+    j["submit_time"]     = p.submit_time_;
     j["run_time"]        = p.run_time_;
     j["end_time"]        = p.end_time_;
     j["run_computer_id"] = p.run_computer_id_;
