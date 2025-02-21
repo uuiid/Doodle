@@ -44,7 +44,8 @@ function Initialize-Doodle
 {
     param(
         [string]$OutPath,
-        [Switch]$BuildKitsu
+        [Switch]$BuildKitsu,
+        [switch]$OnlyOne
     )
     if (-not (Test-Path $OutPath))
     {
@@ -72,9 +73,18 @@ function Initialize-Doodle
     &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
     # 复制安装包
-    Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip" | Copy-Item -Destination "$OutPath\dist"
-    $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
-    Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
+    if ($OnlyOne)
+    {
+        Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip" | Copy-Item -Destination "$OutPath\dist"
+        $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
+        Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
+    }
+    else
+    {
+        Copy-Item (Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip")[-1]  -Destination "$OutPath\dist"
+        $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
+        Set-Content -Path "$OutPath\dist\version.txt" -Value $DoodleVersionList[-1] -NoNewline
+    }
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist"
 

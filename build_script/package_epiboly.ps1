@@ -4,7 +4,7 @@ Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 
 $DoodleExePath = "E:\source\doodle\dist\win-unpacked\*"
 $DoodleOut = Convert-Path "$PSScriptRoot/../build"
-Initialize-Doodle -OutPath "$DoodleOut/epiboly"
+Initialize-Doodle -OutPath "$DoodleOut/epiboly" -OnlyOne
 Copy-Item $DoodleExePath -Destination "$DoodleOut/epiboly" -Recurse -Force
 Compress-Archive -Path "$DoodleOut/epiboly/*" -DestinationPath "$DoodleOut/epiboly.zip" -Force
 $DoodleName = (Get-ChildItem "$DoodleOut/epiboly/dist/" -Filter "*.zip")[0].Name.Split("-")[1] + ".0"
