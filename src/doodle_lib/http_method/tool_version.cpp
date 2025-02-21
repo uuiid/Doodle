@@ -22,8 +22,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_tool_version(s
 
   if (FSys::exists(l_kitsu_version)) {
     FSys::ifstream l_version_file(l_kitsu_version);
-    std::string l_version{std::istreambuf_iterator<char>(l_version_file), std::istreambuf_iterator<char>()};
-    co_return in_handle->make_msg(nlohmann::json{{"version", l_version}}.dump());
+    std::vector<std::string> l_version;
+    // getline
+    for (std::string l_line; std::getline(l_version_file, l_line);) l_version.emplace_back(std::move(l_line));
+    co_return in_handle->make_msg(nlohmann::json{l_version}.dump());
   }
   co_return in_handle->make_msg(nlohmann::json{});
 }
