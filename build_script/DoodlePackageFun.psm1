@@ -75,15 +75,15 @@ function Initialize-Doodle
     # 复制安装包
     if ($OnlyOne)
     {
-        Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip" | Copy-Item -Destination "$OutPath\dist"
-        $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
-        Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
-    }
-    else
-    {
         Copy-Item (Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip")[-1]  -Destination "$OutPath\dist"
         $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
         Set-Content -Path "$OutPath\dist\version.txt" -Value $DoodleVersionList[-1] -NoNewline
+    }
+    else
+    {
+        Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip" | Copy-Item -Destination "$OutPath\dist"
+        $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
+        Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
     }
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist"
