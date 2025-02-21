@@ -12,6 +12,8 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include "boost/beast/http/field.hpp"
+
+#include <cpp-base64/base64.h>
 namespace doodle::http {
 namespace {
 
@@ -48,7 +50,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(
   if (in_handle->req_header_.count(boost::beast::http::field::content_disposition) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "缺失必要的请求头信息");
 
-  FSys::path l_d{std::string{in_handle->req_header_[boost::beast::http::field::content_disposition]}};
+  std::string l_name{in_handle->req_header_[boost::beast::http::field::content_disposition]};
+  FSys::path l_d{l_name};
+  try {
+    static const std::regex g_regex_base64{R"(^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$)"};
+    if (std::regex_match(l_name, g_regex_base64))
+      l_d = base64_decode(std::string_view{in_handle->req_header_[boost::beast::http::field::content_disposition]});
+  } catch (...) {
+    default_logger_raw()->error("base64 decode error {}", boost::current_exception_diagnostic_information());
+  }
+
   nlohmann::json l_json;
   if (auto l_task = g_ctx().get<cache_manger>().get(l_task_id); l_task) {
     l_json = std::move(*l_task);
