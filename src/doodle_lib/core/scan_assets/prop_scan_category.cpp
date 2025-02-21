@@ -54,12 +54,13 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
 
       for (auto &&l_s3 : FSys::directory_iterator{l_mesh_path}) {
         if (l_s3.path().extension() != ".uasset") continue;
-        auto l_stem = l_s3.path().stem().generic_string();
+        auto l_stem    = l_s3.path().stem().generic_string();
+        auto l_sk_name = "SK_" + l_name_str;
 
-        if (!l_stem.starts_with(l_name_str))  // 检查文件名称和是否有不同的版本
+        if (!l_stem.starts_with(l_sk_name))  // 检查文件名称和是否有不同的版本
           continue;
 
-        auto l_version_str = l_stem.substr(l_name_str.size());
+        auto l_version_str = l_stem.substr(l_sk_name.size());
         if (l_version_str.starts_with("_")) {
           l_version_str = l_version_str.substr(1);
         }
@@ -76,12 +77,11 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
           l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::prop;
           l_out.emplace_back(l_ptr);
           l_ptr->version_name_ = l_version_str;
+        }else {
+          l_ptr->ue_file_.path_            = l_s3.path();
+          l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
+          l_ptr->ue_file_.last_write_time_ = l_s3.last_write_time();
         }
-
-        l_ptr->ue_file_.path_            = l_s3.path();
-        l_ptr->ue_file_.uuid_            = FSys::software_flag_file(l_s3.path());
-        l_ptr->ue_file_.last_write_time_ = l_s3.last_write_time();
-
         logger_->log(log_loc(), level::info, "扫描到道具文件:{}", l_s3.path());  // 输出日志
       }
     }
