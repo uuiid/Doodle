@@ -8,12 +8,14 @@ target_sources(doodle_lib
         scan_win_service.h
         cache_manger.h
         socket_io.h
+        base64.h
 
         PRIVATE
         filesystem_extend.cpp
         holidaycn_time.cpp
         scan_win_service.cpp
         socket_io.cpp
+        base64.cpp
 )
 add_subdirectory(scan_assets)
 add_subdirectory(http)
