@@ -51,8 +51,8 @@ function Initialize-Doodle
         New-Item $OutPath -ItemType Directory
     }
     $DoodleBuildRoot = Convert-Path "$PSScriptRoot/../build"
-    $DoodleSource = Convert-Path "$PSScriptRoot/../build/Ninja_release/_CPack_Packages/win64/ZIP"
-    $DoodleName = (Get-ChildItem $DoodleSource -Directory)[0].Name
+    $DoodleSource = Convert-Path (Get-ChildItem "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP" -Directory)[0]
+    $DoodleBuildRelease = Convert-Path "$DoodleBuildRoot/Ninja_release"
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleKitsuRoot\dist\time"
     $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
@@ -69,11 +69,12 @@ function Initialize-Doodle
     }
 
     Write-Host "开始复制文件"
-    &robocopy "$DoodleSource\$DoodleName\bin" "$OutPath\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+    &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
-
-    Copy-Item "$DoodleSource/$DoodleName.zip" -Destination "$OutPath\dist"
-    Set-Content -Path "$OutPath\dist\version.txt" -Value $DoodleName.Split("-")[1] -NoNewline
+    # 复制安装包
+    Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip" | Copy-Item -Destination "$OutPath\dist"
+    $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
+    Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist"
 
