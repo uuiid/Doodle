@@ -97,7 +97,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
     }
   }
 
-  if (l_arg.uv_check_) {
+  if (false) {
     default_logger_raw()->info("开始检查UV");
     MFnMesh l_mesh{};
     for (MItDag l_iter{MItDag::kDepthFirst, MFn::kMesh, &l_s}; !l_iter.isDone(); l_iter.next()) {
