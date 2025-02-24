@@ -230,15 +230,20 @@ struct maya_out_arg {
     FSys::path out_file{};
     // 引用文件
     FSys::path ref_file{};
+    // 需要隐藏的材质列表
+    std::vector<std::string> hide_material_list{};
 
     friend void from_json(const nlohmann::json& nlohmann_json_j, out_file_t& nlohmann_json_t) {
       nlohmann_json_j["out_file"].get_to(nlohmann_json_t.out_file);
       nlohmann_json_j["ref_file"].get_to(nlohmann_json_t.ref_file);
+      if (nlohmann_json_j.contains("hide_material_list"))
+        nlohmann_json_j.at("hide_material_list").get_to(nlohmann_json_t.hide_material_list);
     };
 
     friend void to_json(nlohmann::json& nlohmann_json_j, const out_file_t& nlohmann_json_t) {
-      nlohmann_json_j["out_file"] = nlohmann_json_t.out_file.generic_string();
-      nlohmann_json_j["ref_file"] = nlohmann_json_t.ref_file.generic_string();
+      nlohmann_json_j["out_file"]           = nlohmann_json_t.out_file.generic_string();
+      nlohmann_json_j["ref_file"]           = nlohmann_json_t.ref_file.generic_string();
+      nlohmann_json_j["hide_material_list"] = nlohmann_json_t.hide_material_list;
     };
   };
 
