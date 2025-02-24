@@ -352,7 +352,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
   }
 
   // 检查文件
-
   auto l_scene_uuid = boost::uuids::nil_uuid();
   FSys::path l_down_path_file_name{};
 
@@ -379,6 +378,24 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, import_and_render_u
         boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
         import_and_render_ue_ns::down_info{}
     };
+  }
+
+  // 添加导入问价对应的sk文件
+  for (auto&& l_path : in_args->maya_out_arg_.out_file_list) {
+    auto l_id = FSys::software_flag_file(l_path.ref_file);
+
+    auto l_it = std::ranges::find_if(l_refs, [&](const association_data& in_data) { return in_data.id_ == l_id; });
+    if (l_it == l_refs.end())
+      co_return std::tuple{
+          boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
+          import_and_render_ue_ns::down_info{}
+      };
+    auto l_root     = l_it->ue_prj_path_.parent_path() / doodle_config::ue4_content;
+    auto l_original = l_it->ue_file_.lexically_relative(l_root);
+
+    l_out.file_list_.emplace_back(
+        l_path.out_file, fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem())
+    );
   }
 
   static auto g_root{FSys::path{doodle_config::g_cache_path}};
@@ -631,8 +648,13 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
   if (auto l_e = copy_diff(l_movie_path, l_rem_path.parent_path() / "mov" / l_movie_path.filename(), in_logger))
     co_return std::tuple{l_e, FSys::path{}};
   // 额外要求上传的序列图片
-    if (auto l_e = copy_diff(l_ret, FSys::path{in_args->project_.auto_upload_path_} / fmt::format("EP{:03}", in_args->episodes_.p_episodes)/ "自动灯光序列帧"/l_ret.filename(), in_logger))
-      co_return std::tuple{l_e, FSys::path{}};
+  if (auto l_e = copy_diff(
+          l_ret,
+          FSys::path{in_args->project_.auto_upload_path_} / fmt::format("EP{:03}", in_args->episodes_.p_episodes) /
+              "自动灯光序列帧" / l_ret.filename(),
+          in_logger
+      ))
+    co_return std::tuple{l_e, FSys::path{}};
   co_return std::tuple{l_ec, l_ret};
 }
-} // namespace doodle
+}  // namespace doodle

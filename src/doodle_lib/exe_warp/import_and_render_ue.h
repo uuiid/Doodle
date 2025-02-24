@@ -18,10 +18,12 @@ namespace import_and_render_ue_ns {
 struct import_files_t {
   std::string type_;
   FSys::path path_;
+  FSys::path skin_path_;
 
   friend void to_json(nlohmann::json& j, const import_files_t& p) {
-    j["type"] = p.type_;
-    j["path"] = p.path_.generic_string();
+    j["type"]      = p.type_;
+    j["path"]      = p.path_;
+    j["skin_path"] = p.skin_path_;
   }
 };
 
@@ -85,6 +87,8 @@ struct down_info {
   FSys::path render_project_{};  // 渲染工程文件(.project)
   // 场景文件
   FSys::path scene_file_{};
+  // 导入文件和对应是 skin(skin 对应的是 /Game/路径)
+  std::vector<std::pair<FSys::path, FSys::path>> file_list_{};
 };
 
 struct args {
@@ -134,6 +138,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_
 );
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
-  std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
+    std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 );
-} // namespace doodle
+}  // namespace doodle
