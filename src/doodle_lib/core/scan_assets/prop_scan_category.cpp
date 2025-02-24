@@ -60,11 +60,11 @@ std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
         std::string l_version_str{};
         if (l_stem.starts_with(l_sk_name))  // 检查文件名称和是否有不同的版本
           l_version_str = l_stem.substr(l_sk_name.size());
-        else if (l_stem.starts_with(l_name_str))
-          l_version_str = l_stem.substr(l_name_str.size());
+        // else if (l_stem.starts_with(l_name_str))
+        //   l_version_str = l_stem.substr(l_name_str.size());
         else
           continue;
-        
+
         if (l_version_str.starts_with("_")) {
           l_version_str = l_version_str.substr(1);
         }
