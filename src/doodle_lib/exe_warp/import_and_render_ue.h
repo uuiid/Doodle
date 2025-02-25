@@ -91,6 +91,14 @@ struct down_info {
   std::vector<std::pair<FSys::path, FSys::path>> file_list_{};
 };
 
+struct association_data {
+  boost::uuids::uuid id_{};
+  FSys::path maya_file_{};
+  FSys::path ue_file_{};
+  details::assets_type_enum type_{};
+  FSys::path ue_prj_path_{};
+  FSys::path export_file_{};
+};
 struct args {
   /// 需要填写
   episodes episodes_{};
@@ -100,6 +108,15 @@ struct args {
   image_size size_{};
   bool layering_{};
 
+  logger_ptr logger_ptr_{};
+  boost::asio::awaitable<tl::expected<FSys::path, std::string>> run();
+  boost::asio::awaitable<tl::expected<FSys::path, std::string>> async_import_and_render_ue();
+  boost::asio::awaitable<tl::expected<void, std::string>> analysis_out_file();
+  import_data_t gen_import_config();
+
+  boost::asio::awaitable<tl::expected<std::map<uuid, association_data>, std::string>> fetch_association_data(
+      std::map<uuid, FSys::path> in_uuid
+  );
   // 不需要填写
   maya_exe_ns::maya_out_arg maya_out_arg_{};
   down_info down_info_{};
@@ -116,25 +133,9 @@ void fix_project(const FSys::path& in_project_path);
 void fix_config(const FSys::path& in_project_path);
 }  // namespace import_and_render_ue_ns
 
-struct association_data {
-  boost::uuids::uuid id_{};
-  FSys::path maya_file_{};
-  FSys::path ue_file_{};
-  details::assets_type_enum type_{};
-  FSys::path ue_prj_path_{};
-  FSys::path export_file_{};
-};
-
 // 清除 1001 以前的帧数
-std::tuple<boost::system::error_code, std::vector<FSys::path>> clean_1001_before_frame(
+tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
     const FSys::path& in_path, std::int32_t in_frame
-);
-/// 这个函数不打印错误日志, 返回值测试后, 由调用函数打印错误日志
-boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<association_data>>> fetch_association_data(
-    std::vector<boost::uuids::uuid> in_uuid, logger_ptr in_logger
-);
-boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_import_and_render_ue(
-    std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
 );
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
