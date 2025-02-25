@@ -144,7 +144,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
     }
     logger_ptr_->warn("运行maya错误, 开始第{}次重试", i + 1);
   }
-  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+  if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
   maya_out_arg_ = l_out;
   auto l_ret    = co_await async_import_and_render_ue();
@@ -162,7 +162,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   }
   if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
-  logger_ptr_->warn("开始上传文件夹 :{}", l_ret);
+  logger_ptr_->warn("开始上传文件夹 :{}", *l_ret);
   auto l_u_project = down_info_.render_project_;
   auto l_scene     = l_u_project.parent_path();
   auto l_rem_path  = project_.path_ / "03_Workflow" / doodle_config::ue4_shot /
@@ -217,8 +217,8 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   logger_ptr_->warn("排队导入文件 {} ", down_info_.render_project_);
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-    logger_ptr_->error(" 用户取消操作");
-    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
+    logger_ptr_->error("用户取消操作");
+    co_return tl::make_unexpected("用户取消操作"s);
   }
   boost::system::error_code l_ec;
   // 添加三次重试
@@ -232,7 +232,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
     logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
   }
-  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+  if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
   logger_ptr_->warn("导入文件完成");
   logger_ptr_->warn("排队渲染, 输出目录 {}", l_import_data.out_file_dir);
@@ -245,7 +245,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
   }
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
     logger_ptr_->error(" 用户取消操作");
-    co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, FSys::path{});
+    co_return tl::make_unexpected("用户取消操作");
   }
   for (int i = 0; i < 3; ++i) {
     l_ec = co_await async_run_ue(
@@ -259,10 +259,10 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
     logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
   }
-  if (l_ec) co_return std::tuple(l_ec, FSys::path{});
+  if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
-  co_return std::tuple(boost::system::error_code{}, l_import_data.out_file_dir);
+  co_return tl::expected<FSys::path, std::string>{l_import_data.out_file_dir};
 }
 boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file() {
   std::vector<boost::uuids::uuid> l_uuids_tmp{};
@@ -271,13 +271,11 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
 
   for (auto&& i : maya_out_arg_.out_file_list) {
     if (!FSys::exists(i.ref_file)) continue;
-    logger_ptr_->warn("引用文件:{}", i.ref_file);
+    logger_ptr_->warn("引用文件不存在:{}", i.ref_file);
     auto l_uuid = FSys::software_flag_file(i.ref_file);
     if (l_uuid.is_nil()) {
       logger_ptr_->error("获取引用文件失败 {}", i.ref_file);
-      co_return std::tuple<boost::system::error_code, import_and_render_ue_ns::down_info>{
-          boost::system::errc::make_error_code(boost::system::errc::not_supported), import_and_render_ue_ns::down_info{}
-      };
+      co_return tl::make_unexpected(fmt::format("获取引用文件失败 {}", i.ref_file));
     }
 
     l_uuids_tmp.push_back(l_uuid);
@@ -299,13 +297,11 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
   for (auto&& [id, h] : *l_refs) {
     if (auto l_is_e = h.ue_file_.empty(), l_is_ex = FSys::exists(h.ue_file_); l_is_e || !l_is_ex) {
       if (l_is_e)
-        logger_ptr_->error("文件 {} 的 ue 引用无效, 为空", h.maya_file_);
+        co_return logger_ptr_->error("文件 {} 的 ue 引用无效, 为空", h.maya_file_),
+            tl::make_unexpected(fmt::format("文件 {} 的 ue 引用无效, 为空", h.maya_file_));
       else if (!l_is_ex)
-        logger_ptr_->error("文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_);
-      co_return std::tuple{
-          boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
-          import_and_render_ue_ns::down_info{}
-      };
+        co_return logger_ptr_->error("文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_),
+            tl::make_unexpected(fmt::format("文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_));
     }
 
     if (h.type_ == details::assets_type_enum::scene) {
@@ -314,17 +310,14 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
     }
   }
   if (l_scene_uuid.is_nil()) {
-    logger_ptr_->error("未查找到主项目文件(没有找到场景文件)");
-    co_return std::tuple{
-        boost::system::error_code{error_enum::file_not_exists, doodle_category::get()},
-        import_and_render_ue_ns::down_info{}
-    };
+    co_return logger_ptr_->error("未查找到主项目文件(没有找到场景文件)"),
+        tl::make_unexpected("未查找到主项目文件(没有找到场景文件)");
   }
 
   // 添加导入问价对应的sk文件
   for (auto&& l_path : maya_out_arg_.out_file_list) {
     auto l_id = FSys::software_flag_file(l_path.ref_file);
-    if (!l_refs->contains(l_id)) co_return tl::make_unexpected(fmt::format("路径中未找到sk {}", l_path));
+    if (!l_refs->contains(l_id)) co_return tl::make_unexpected(fmt::format("路径中未找到sk {}", l_path.ref_file));
     auto l_root     = l_refs->at(l_id).ue_prj_path_.parent_path() / doodle_config::ue4_content;
     auto l_original = l_refs->at(l_id).ue_file_.lexically_relative(l_root);
     l_out.file_list_.emplace_back(
@@ -343,53 +336,60 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
     auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
     auto l_local_path = g_root / project_.code_ / l_down_path_file_name;
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-      logger_ptr_->error(" 用户取消操作");
-      co_return std::tuple(
-          boost::system::error_code{boost::asio::error::operation_aborted}, import_and_render_ue_ns::down_info{}
-      );
+      logger_ptr_->error("用户取消操作");
+      co_return tl::make_unexpected("用户取消操作");
     }
     switch (h.type_) {
       // 场景文件
       case details::assets_type_enum::scene: {
         auto l_original   = h.ue_file_.lexically_relative(l_root);
         l_out.scene_file_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-        auto l_ec_copy =
-            copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
+
+        if (auto l_ec_copy = copy_diff(
+                l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_
+            );
+            !l_ec_copy)
+          co_return tl::make_unexpected(l_ec_copy.error());
         // 配置文件夹复制
-        l_ec_copy =
-            copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
+        if (auto l_ec_copy = copy_diff(
+                l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_
+            );
+            !l_ec_copy)
+          co_return tl::make_unexpected(l_ec_copy.error());
         // 复制项目文件
-        if (!FSys::exists(l_local_path / h.ue_prj_path_.filename())) {
-          l_ec_copy = copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), logger_ptr_);
-          if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
-        }
+        if (!FSys::exists(l_local_path / h.ue_prj_path_.filename()))
+          if (auto l_ec_copy = copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), logger_ptr_);
+              l_ec_copy)
+            co_return tl::make_unexpected(l_ec_copy.error());
+
         l_out.render_project_ = l_local_path / h.ue_prj_path_.filename();
       } break;
 
       // 角色文件
-      case details::assets_type_enum::character: {
-        auto l_ec_copy =
-            copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
-      } break;
+      case details::assets_type_enum::character:
+        if (auto l_ec_copy = copy_diff(
+                l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_
+            );
+            !l_ec_copy)
+          co_return tl::make_unexpected(l_ec_copy.error());
+        break;
 
       // 道具文件
       case details::assets_type_enum::prop: {
         auto l_prop_path = h.ue_file_.lexically_relative(l_root / "Prop");
         if (l_prop_path.empty()) continue;
         auto l_prop_path_name = *l_prop_path.begin();
-        auto l_ec_copy        = copy_diff(
-            l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
-            l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
-        );
-        if (l_ec_copy) co_return std::tuple{l_ec_copy, import_and_render_ue_ns::down_info{}};
-        l_ec_copy = copy_diff(
+        if (auto l_ec_copy = copy_diff(
+                l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
+                l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
+            );
+            !l_ec_copy)
+          co_return tl::make_unexpected(l_ec_copy.error());
+        /// 此处忽略错误
+        copy_diff(
             l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
             l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", logger_ptr_
         );
-        // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
       } break;
       default:
         break;
@@ -401,7 +401,7 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
 boost::asio::awaitable<tl::expected<std::map<uuid, association_data>, std::string>> args::fetch_association_data(
     std::map<uuid, FSys::path> in_uuid
 ) {
-  std::vector<association_data> l_out{};
+  std::map<uuid, association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
   auto l_c = std::make_shared<http::detail::http_client_data_base>(co_await boost::asio::this_coro::executor);
   l_c->init(core_set::get_set().server_ip);
@@ -427,16 +427,16 @@ boost::asio::awaitable<tl::expected<std::map<uuid, association_data>, std::strin
           .ue_file_   = l_json.at("ue_file").get<std::string>(),
           .type_      = l_json.at("type").get<details::assets_type_enum>()
       };
-      l_out.emplace_back(std::move(l_data));
+      l_out.emplace(i, std::move(l_data));
     }
   } catch (const std::exception& e) {
     logger_ptr_->error("连接服务器失败:{}", e.what());
     co_return tl::make_unexpected(fmt::format("连接服务器失败:{}", e.what()));
   }
-  for (auto&& i : l_out) {
+  for (auto&& [k, i] : l_out) {
     i.ue_prj_path_ = ue_exe_ns::find_ue_project_file(i.ue_file_);
   }
-  co_return tl::expected<std::vector<association_data>, std::string>{std::move(l_out)};
+  co_return tl::expected<std::map<uuid, association_data>, std::string>{std::move(l_out)};
 }
 
 import_data_t args::gen_import_config() {
@@ -485,7 +485,7 @@ import_data_t args::gen_import_config() {
     l_import_data.import_dir = fmt::format(
         "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", l_import_data.project_.code_,
         l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum,
-        time_point_wrap{}.get_local_time()
+        chrono::current_zone()->to_local(chrono::system_clock::now())
     );
 
     l_import_data.render_map = fmt::format(
@@ -542,7 +542,6 @@ tl::expected<void, std::string> copy_diff(const FSys::path& from, const FSys::pa
           copy_diff_impl(l_file.path(), l_to_file);
         }
       }
-
       return {};
     } catch (...) {
       in_logger->log(log_loc(), spdlog::level::err, "未知错误 {}", boost::current_exception_diagnostic_information());

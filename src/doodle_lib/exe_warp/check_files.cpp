@@ -77,7 +77,8 @@ run_ue_check_arg_t create_check_arg(
   l_arg.render_map_   = fmt::format("{}/check/main_map", doodle_config::ue4_game);
   l_arg.create_map_   = fmt::format("{}/check/sub_import_map", doodle_config::ue4_game);
   l_arg.import_dir_   = fmt::format(
-      "{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game}, time_point_wrap{}.get_local_time()
+      "{}/check/import_{:%m_%d_%H_%M}", std::string{doodle_config::ue4_game},
+      chrono::current_zone()->to_local(chrono::system_clock::now())
   );
   l_arg.out_file_dir_          = in_args.out_files_dir_;
   l_arg.level_sequence_import_ = fmt::format("{}/check/{}", doodle_config::ue4_game, in_args.ue_project_path_.stem());
@@ -196,9 +197,9 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     );
 
   boost::system::error_code l_ec{};
-  std::vector<association_data> l_face_data{};
+  std::vector<import_and_render_ue_ns::association_data> l_face_data{};
   std::string l_err_msg{};
-  std::tie(l_ec, l_face_data) = co_await fetch_association_data({in_check_path}, in_logger);
+  // std::tie(l_ec, l_face_data) = co_await fetch_association_data({in_check_path}, in_logger);
   if (l_ec) {
     in_logger->error("获取关联数据失败 {}", l_ec.message());
     co_return std::tuple(l_ec, std::string{"错误的关联数据"});
@@ -225,14 +226,14 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::tuple(l_ec, l_err_msg);
   }
   std::vector<FSys::path> l_move_paths{};
-  std::tie(l_ec, l_move_paths) = clean_1001_before_frame(l_arg->out_files_dir_, 1001);
+  // std::tie(l_ec, l_move_paths) = clean_1001_before_frame(l_arg->out_files_dir_, 1001);
   if (l_ec) {
     in_logger->error("检查文件失败, 无法获取到渲染输出的文件 {}", l_ec.message());
     co_return std::tuple(l_ec, l_err_msg);
   }
 
   std::vector<movie::image_attr> l_attr{};
-  auto l_t = chrono::floor<chrono::seconds>(time_point_wrap{}.get_local_time());
+  auto l_t = chrono::floor<chrono::seconds>(chrono::current_zone()->to_local(chrono::system_clock::now()));
   for (auto l_p : l_move_paths) {
     movie::image_attr l_attribute{};
     l_attribute.path_attr = l_p;
@@ -263,7 +264,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::tuple(l_ec2, l_err_msg);
   }
   co_return std::tuple(boost::system::error_code{}, std::string{});
-
 }
 
 boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check_files(
@@ -272,5 +272,4 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   return check_files(FSys::software_flag_file(in_check_path), in_logger);
 }
 
-
-}
+}  // namespace doodle
