@@ -9,7 +9,6 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
-#include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 
 #include <fmt/chrono.h>
@@ -127,11 +126,14 @@ std::vector<image_attr> image_attr::make_default_attr(
     );
 
     in_attribute.watermarks_attr.emplace_back(
-        fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::seconds>(time_point_wrap{}.get_local_time())), 0.8,
-        0.1, image_watermark::rgb_default
+        fmt::format(
+            "{:%Y-%m-%d %H:%M:%S}",
+            chrono::floor<chrono::seconds>(chrono::current_zone()->to_local(chrono::system_clock::now()))
+        ),
+        0.8, 0.1, image_watermark::rgb_default
     );
   });
 
   return list;
 }
-} // namespace doodle::movie
+}  // namespace doodle::movie

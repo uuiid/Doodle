@@ -12,6 +12,5 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 
-#include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 // clang-format on

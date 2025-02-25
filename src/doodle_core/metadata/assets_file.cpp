@@ -7,7 +7,6 @@
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/rules.h>
-#include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 
 #include <boost/uuid/uuid.hpp>

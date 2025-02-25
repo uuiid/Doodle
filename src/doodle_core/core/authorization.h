@@ -19,7 +19,7 @@ class DOODLE_CORE_API authorization {
   [[nodiscard]] bool is_expire() const;
   void load_authorization_data(const std::string& in_str);
 
-  time_point_wrap::time_duration get_expire_time() const;
+  chrono::sys_time_pos::duration get_expire_time() const;
 
   static void generate_token(const FSys::path& in_path);
 };

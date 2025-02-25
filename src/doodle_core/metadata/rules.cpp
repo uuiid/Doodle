@@ -4,8 +4,6 @@
 
 #include "rules.h"
 
-#include <doodle_core/metadata/time_point_wrap.h>
-
 #include <array>
 #include <mutex>
 #include <vector>

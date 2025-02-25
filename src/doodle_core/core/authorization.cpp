@@ -23,10 +23,10 @@ class authorization::impl {
     j["uuid2"] = core_set::get_set().get_uuid();
     j["uuid3"] = core_set::get_set().get_uuid();
   }
-  friend void from_json(const nlohmann::json& j, impl& p) { p.l_time = j.at("time").get<time_point_wrap>(); }
+  friend void from_json(const nlohmann::json& j, impl& p) { p.l_time = j.at("time").get<chrono::system_zoned_time>(); }
 
  public:
-  time_point_wrap l_time{2020, 1, 1};
+  chrono::system_zoned_time l_time{};
 };
 
 bool authorization::is_build_near() {
@@ -80,11 +80,11 @@ authorization::authorization(const std::string& in_data) : p_i(std::make_shared<
   load_authorization_data(in_data);
 }
 
-bool authorization::is_expire() const { return p_i->l_time > time_point_wrap::now(); }
+bool authorization::is_expire() const { return p_i->l_time.get_sys_time() > chrono::system_clock::now(); }
 void authorization::generate_token(const FSys::path& in_path) {
   DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
   impl l_impl{};
-  l_impl.l_time           = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
+  l_impl.l_time           = chrono::system_clock::now();
   nlohmann::json out_json = l_impl;
 
   {
@@ -108,7 +108,8 @@ void authorization::generate_token(const FSys::path& in_path) {
   }
 }
 
-time_point_wrap::time_duration authorization::get_expire_time() const { return p_i->l_time - time_point_wrap::now(); }
-
+chrono::sys_time_pos::duration authorization::get_expire_time() const {
+  return p_i->l_time.get_sys_time() - chrono::system_clock::now();
+}
 
 }  // namespace doodle
