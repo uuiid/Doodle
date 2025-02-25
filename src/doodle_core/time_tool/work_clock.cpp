@@ -5,7 +5,6 @@
 #include "work_clock.h"
 
 #include <doodle_core/lib_warp/boost_fmt_icl.h>
-#include <doodle_core/lib_warp/std_fmt_set.h>
 #include <doodle_core/metadata/comment.h>
 
 #include <boost/contract.hpp>

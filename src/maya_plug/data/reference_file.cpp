@@ -6,8 +6,6 @@
 
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/logger/logger.h"
-#include <doodle_core/lib_warp/std_fmt_optional.h>
-#include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 
