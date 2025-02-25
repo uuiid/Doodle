@@ -351,53 +351,60 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
   // 开始复制文件
   // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
-  for (auto&& [id, h] : *l_refs) {
-    auto l_down_path  = h.ue_prj_path_.parent_path();
-    auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
-    auto l_local_path = g_root / project_.code_ / l_down_path_file_name;
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-      co_return tl::make_unexpected("用户取消操作");
+  try {
+    for (auto&& [id, h] : *l_refs) {
+      auto l_down_path  = h.ue_prj_path_.parent_path();
+      auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
+      auto l_local_path = g_root / project_.code_ / l_down_path_file_name;
+      if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+        co_return tl::make_unexpected("用户取消操作");
 
-    switch (h.type_) {
-      // 场景文件
-      case details::assets_type_enum::scene: {
-        auto l_original   = h.ue_file_.lexically_relative(l_root);
-        l_out.scene_file_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+      switch (h.type_) {
+        // 场景文件
+        case details::assets_type_enum::scene: {
+          auto l_original   = h.ue_file_.lexically_relative(l_root);
+          l_out.scene_file_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
 
-        copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
-        // 配置文件夹复制
-        copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
-        // 复制项目文件
-        if (!FSys::exists(l_local_path / h.ue_prj_path_.filename()))
-          copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), logger_ptr_);
+          copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+          // 配置文件夹复制
+          copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
+          // 复制项目文件
+          if (!FSys::exists(l_local_path / h.ue_prj_path_.filename()))
+            copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), logger_ptr_);
 
-        l_out.render_project_ = l_local_path / h.ue_prj_path_.filename();
-      } break;
+          l_out.render_project_ = l_local_path / h.ue_prj_path_.filename();
+        } break;
 
-      // 角色文件
-      case details::assets_type_enum::character:
-        copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
-        break;
+        // 角色文件
+        case details::assets_type_enum::character:
+          copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+          break;
 
-      // 道具文件
-      case details::assets_type_enum::prop: {
-        auto l_prop_path = h.ue_file_.lexically_relative(l_root / "Prop");
-        if (l_prop_path.empty()) continue;
-        auto l_prop_path_name = *l_prop_path.begin();
-        copy_diff(
-            l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
-            l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
-        );
-        /// 此处忽略错误
-        copy_diff(
-            l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
-            l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", logger_ptr_
-        );
-      } break;
-      default:
-        break;
+        // 道具文件
+        case details::assets_type_enum::prop: {
+          auto l_prop_path = h.ue_file_.lexically_relative(l_root / "Prop");
+          if (l_prop_path.empty()) continue;
+          auto l_prop_path_name = *l_prop_path.begin();
+          copy_diff(
+              l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
+              l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
+          );
+          /// 此处忽略错误
+          copy_diff(
+              l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
+              l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", logger_ptr_
+          );
+        } break;
+        default:
+          break;
+      }
     }
+  } catch (...) {
+    co_return tl::make_unexpected(
+        fmt::format("{} {}", std::source_location::current(), boost::current_exception_diagnostic_information())
+    );
   }
+
   down_info_ = l_out;
 }
 
