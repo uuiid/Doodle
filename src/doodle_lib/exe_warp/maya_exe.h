@@ -275,7 +275,7 @@ class maya_ctx {
       std::make_shared<awaitable_queue_limitation>(core_set::get_set().p_max_thread);
 };
 
-boost::asio::awaitable<std::tuple<boost::system::error_code, maya_exe_ns::maya_out_arg>> async_run_maya(
+boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> async_run_maya(
     std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 );
 }  // namespace doodle

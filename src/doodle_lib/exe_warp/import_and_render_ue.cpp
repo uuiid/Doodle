@@ -159,18 +159,16 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
     co_return tl::make_unexpected("用户取消操作");
 
   // 添加三次重试
-  maya_exe_ns::maya_out_arg l_out{};
+  tl::expected<maya_exe_ns::maya_out_arg, std::string> l_out{};
   boost::system::error_code l_ec{};
   for (int i = 0; i < 3; ++i) {
-    std::tie(l_ec, l_out) = co_await async_run_maya(maya_arg_, logger_ptr_);
-    if (!l_ec) {
-      break;
-    }
-    logger_ptr_->warn("运行maya错误, 开始第{}次重试", i + 1);
+    l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
+    if (l_out) break;
+    logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
   }
-  if (l_ec) co_return tl::make_unexpected(l_ec.what());
+  if (!l_out) co_return tl::make_unexpected(l_out.error());
 
-  maya_out_arg_ = l_out;
+  maya_out_arg_ = *l_out;
   auto l_ret    = co_await async_import_and_render_ue();
   if (!l_ret) co_return l_ret;
 

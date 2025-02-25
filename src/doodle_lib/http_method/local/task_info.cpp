@@ -278,13 +278,17 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
 
   boost::asio::awaitable<void> operator()(std::shared_ptr<maya_exe_ns::arg>& in_arg) const {
-    auto [l_e, l_r]       = co_await async_run_maya(in_arg, logger_);
+    auto l_r              = co_await async_run_maya(in_arg, logger_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-      task_info_->status_ = server_task_info_status::canceled;
-    else if (l_e) {
-      task_info_->status_ = server_task_info_status::failed;
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+      task_info_->status_        = server_task_info_status::canceled;
+      task_info_->last_line_log_ = "用户取消";
+      logger_->error("用户取消");
+    } else if (!l_r) {
+      task_info_->status_        = server_task_info_status::failed;
+      task_info_->last_line_log_ = l_r.error();
+      logger_->error(l_r.error());
     } else
       task_info_->status_ = server_task_info_status::completed;
     boost::asio::co_spawn(

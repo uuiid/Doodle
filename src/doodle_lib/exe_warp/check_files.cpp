@@ -107,21 +107,20 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
 
   // 开始导出maya文件, 并进行检查
   auto l_arg = std::make_shared<maya_exe_ns::export_fbx_arg>();
-  maya_exe_ns::maya_out_arg l_out{};
+  tl::expected<maya_exe_ns::maya_out_arg, std::string> l_out{};
   l_arg->rig_file_export_ = true;
   l_arg->file_path        = in_args->maya_rig_file_;
   for (int i = 0; i < 3; ++i) {
-    std::tie(l_ec, l_out) = co_await async_run_maya(l_arg, in_logger);
-    if (!l_ec) {
-      break;
-    }
-    in_logger->warn("运行maya错误, 开始第{}次重试", i + 1);
+    l_out = co_await async_run_maya(l_arg, in_logger);
+    if (l_out) break;
+
+    in_logger->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
   }
-  if (l_ec) co_return std::tuple(l_ec, "maya绑定文件错误");
+  if (!l_out) co_return std::tuple(l_ec, "maya绑定文件错误");
 
   // 导入UE中, 检查Ue文件
 
-  if (l_out.out_file_list.empty() && in_args->maya_has_export_fbx_) {
+  if (l_out->out_file_list.empty() && in_args->maya_has_export_fbx_) {
     in_logger->error("运行maya时, 没有导出任何物体, 错误的文件");
     l_ec = boost::asio::error::make_error_code(boost::asio::error::not_found);
     co_return std::tuple(l_ec, "maya绑定文件错误");
@@ -139,7 +138,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     }
   }
 
-  auto l_check_arg                = create_check_arg(*in_args, l_out);
+  auto l_check_arg                = create_check_arg(*in_args, *l_out);
   l_check_arg.check_type_         = magic_enum::enum_name(in_args->check_type_);
   nlohmann::json l_run_import_arg = l_check_arg;
   auto l_tmp_path                 = FSys::write_tmp_file("ue_check", l_run_import_arg.dump(), ".json");
