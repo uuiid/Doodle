@@ -445,7 +445,7 @@ import_data_t args::gen_import_config() {
                           return !in_arg.out_file.empty() && FSys::exists(in_arg.out_file);
                         }) |
                         ranges::to_vector;
-  import_and_render_ue_ns::import_data_t l_import_data;
+  import_data_t l_import_data;
   l_import_data.episode    = episodes_;
   l_import_data.shot       = shot_;
   l_import_data.begin_time = maya_out_arg_.begin_time;
@@ -525,7 +525,6 @@ void copy_diff_impl(const FSys::path& from, const FSys::path& to) {
 }
 
 tl::expected<void, std::string> copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
-  std::error_code l_error_code_NETNAME_DELETED{ERROR_NETNAME_DELETED, std::system_category()};
   for (int i = 0; i < 10; ++i) {
     try {
       in_logger->warn("复制 {} -> {}", from, to);
@@ -534,7 +533,6 @@ tl::expected<void, std::string> copy_diff(const FSys::path& from, const FSys::pa
         copy_diff_impl(from, to);
         return {};
       }
-
       for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
         auto l_to_file = to / l_file.path().lexically_proximate(from);
         if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path()) &&

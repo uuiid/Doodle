@@ -116,26 +116,6 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   l_args.project_  = l_project;
   l_args.shot_     = l_shot;
 
-  if (in_arh[g_animation]) {
-    auto l_arg       = maya_exe_ns::export_fbx_arg{};
-    l_arg.file_path  = l_file;
-    l_args.maya_arg_ = std::make_shared<maya_exe_ns::export_fbx_arg>(l_arg);
-  } else if (in_arh[g_cfx]) {
-    auto l_arg               = maya_exe_ns::qcloth_arg{};
-    l_arg.file_path          = l_file;
-    l_arg.export_file        = true;
-    l_arg.export_anim_file   = true;
-    l_arg.touch_sim          = true;
-    l_arg.create_play_blast_ = true;
-    l_args.maya_arg_         = std::make_shared<maya_exe_ns::qcloth_arg>(l_arg);
-  } else {
-    default_logger_raw()->error("必须有参数");
-    return true;
-  }
-  boost::asio::co_spawn(
-      g_io_context(),
-      async_auto_loght(std::make_shared<import_and_render_ue_ns::args>(std::move(l_args)), spdlog::default_logger()),
-      boost::asio::detached);
   return false;
 }
-} // namespace doodle::launch
+}  // namespace doodle::launch
