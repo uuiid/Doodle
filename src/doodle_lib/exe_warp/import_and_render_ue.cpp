@@ -316,8 +316,15 @@ boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file(
 
   // 添加导入问价对应的sk文件
   for (auto&& l_path : maya_out_arg_.out_file_list) {
+    if (l_path.ref_file.empty()) {
+      l_out.file_list_.emplace_back(l_path.out_file, "");
+      continue;  /// 如果为空,是相机, 无引用, 不查找
+    }
+
     auto l_id = FSys::software_flag_file(l_path.ref_file);
     if (!l_refs->contains(l_id)) co_return tl::make_unexpected(fmt::format("路径中未找到sk {}", l_path.ref_file));
+    if (l_refs->at(l_id).type_ == details::assets_type_enum::scene) continue;  // 场景文件, 不用管
+
     auto l_root     = l_refs->at(l_id).ue_prj_path_.parent_path() / doodle_config::ue4_content;
     auto l_original = l_refs->at(l_id).ue_file_.lexically_relative(l_root);
     l_out.file_list_.emplace_back(
