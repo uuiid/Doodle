@@ -82,15 +82,6 @@ struct import_data_t {
   }
 };
 
-struct down_info {
- public:
-  FSys::path render_project_{};  // 渲染工程文件(.project)
-  // 场景文件
-  FSys::path scene_file_{};
-  // 导入文件和对应是 skin(skin 对应的是 /Game/路径)
-  std::vector<std::pair<FSys::path, FSys::path>> file_list_{};
-};
-
 struct association_data {
   boost::uuids::uuid id_{};
   FSys::path maya_file_{};
@@ -107,9 +98,11 @@ struct args {
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
   image_size size_{};
   bool layering_{};
-
   logger_ptr logger_ptr_{};
+
   boost::asio::awaitable<tl::expected<FSys::path, std::string>> run();
+
+ private:
   boost::asio::awaitable<tl::expected<FSys::path, std::string>> async_import_and_render_ue();
   boost::asio::awaitable<tl::expected<void, std::string>> analysis_out_file();
   import_data_t gen_import_config();
@@ -117,6 +110,14 @@ struct args {
   boost::asio::awaitable<tl::expected<std::map<uuid, association_data>, std::string>> fetch_association_data(
       std::map<uuid, FSys::path> in_uuid
   );
+  struct down_info {
+   public:
+    FSys::path render_project_{};  // 渲染工程文件(.project)
+    // 场景文件
+    FSys::path scene_file_{};
+    // 导入文件和对应是 skin(skin 对应的是 /Game/路径)
+    std::vector<std::pair<FSys::path, FSys::path>> file_list_{};
+  };
   // 不需要填写
   maya_exe_ns::maya_out_arg maya_out_arg_{};
   down_info down_info_{};
@@ -138,7 +139,4 @@ tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
     const FSys::path& in_path, std::int32_t in_frame
 );
 
-boost::asio::awaitable<std::tuple<boost::system::error_code, FSys::path>> async_auto_loght(
-    std::shared_ptr<import_and_render_ue_ns::args> in_args, logger_ptr in_logger
-);
 }  // namespace doodle
