@@ -20,7 +20,6 @@
 #include <entt/entt.hpp>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
-
 namespace boost::asio {
 class io_context;
 class thread_pool;
