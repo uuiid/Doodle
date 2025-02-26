@@ -2,7 +2,7 @@
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QSplitter, QMessageBox
-
+from collections import OrderedDict
 from doodle import NameButtonWidget
 from doodle.cell.h_box_layout_widget import HBoxLayoutWidget, HBoxLayoutLeftWidget, HBoxLayoutRightWidget
 from doodle.doodle_maya import State
@@ -98,7 +98,7 @@ class CreateClothWidget(QWidget):
 
     def on_confirm_button_clicked(self):
         self.state.confirm_data()
-        self.state.low_model = {}
+        self.state.low_model = OrderedDict()
         self.state.collide = []
         self.clear_items()
 
