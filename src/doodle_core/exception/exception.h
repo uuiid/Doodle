@@ -70,10 +70,11 @@ enum error_t : std::int32_t {
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
   std::int32_t error_code_;
-  explicit doodle_error(const std::string& message) : std::runtime_error(message) {};
+  explicit doodle_error(const std::string& message) : std::runtime_error(message), error_code_(0) {};
   template <typename... Args>
   explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
-      : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))){};
+      : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))),
+        error_code_(0){};
   template <typename... Args>
   explicit doodle_error(std::int32_t in_core, const std::string& fmt_str, Args&&... in_args)
       : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))),
@@ -106,8 +107,6 @@ class DOODLE_CORE_API maya_code_category : public bsys::error_category {
 
   static const bsys::error_category& get();
 };
-
-
 
 template <typename exception_type>
 [[noreturn]] inline void throw_exception(
