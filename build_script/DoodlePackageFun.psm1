@@ -93,14 +93,24 @@ function Initialize-Doodle
 
     # 从github 下载网络资源
     # 先查看标签, 再组合下载url
-    $tag = (Invoke-WebRequest -Uri https://api.github.com/repos/NateScarlet/holiday-cn/tags -Headers @{ "accept" = "application/json" } |
-            ConvertFrom-Json)[0].name
-    # 检查文件是否存在
-    if (-not (Test-Path "$DoodleBuildRoot\holiday-cn-$tag.zip"))
+
+    # 检查文件是否是三个月以上的旧文件
+    if ((Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].LastWriteTime - (Get-Date).AddMonths(-3) -lt 0)
     {
-        Invoke-WebRequest -Uri https: //github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
+        $tag = (Invoke-WebRequest -Uri https://api.github.com/repos/NateScarlet/holiday-cn/tags -Headers @{ "accept" = "application/json" } |
+                ConvertFrom-Json)[0].name
+        # 检查文件是否存在
+        if (-not (Test-Path "$DoodleBuildRoot\holiday-cn-$tag.zip"))
+        {
+            Invoke-WebRequest -Uri https: //github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
+        }
+        Expand-Archive -Path "$DoodleBuildRoot\holiday-cn-$tag.zip" -DestinationPath $DoodleTimePath -Force
     }
-    Expand-Archive -Path "$DoodleBuildRoot\holiday-cn-$tag.zip" -DestinationPath $DoodleTimePath -Force
+    else
+    {
+        Expand-Archive -Path (Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].FullName -DestinationPath $DoodleTimePath -Force
+    }
+
 
     Add-Compensatory -Path "$DoodleTimePath\2024.json" @(
         [System.Management.Automation.PSObject]@{
