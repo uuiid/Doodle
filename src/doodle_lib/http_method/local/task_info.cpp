@@ -303,21 +303,27 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     co_return;
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) const {
-    in_arg->logger_ptr_   = logger_;
-
-    auto l_r              = co_await in_arg->run();
-    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-    // 用户取消
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-      task_info_->status_ = server_task_info_status::canceled;
-      logger_->error("用户取消");
-      task_info_->last_line_log_ = "用户取消";
-    } else if (!l_r) {
+    in_arg->logger_ptr_ = logger_;
+    try {
+      auto l_r              = co_await in_arg->run();
+      task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+      // 用户取消
+      if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
+        task_info_->status_ = server_task_info_status::canceled;
+        logger_->error("用户取消");
+        task_info_->last_line_log_ = "用户取消";
+      } else if (!l_r) {
+        task_info_->status_        = server_task_info_status::failed;
+        task_info_->last_line_log_ = l_r.error();
+        logger_->error(l_r.error());
+      } else
+        task_info_->status_ = server_task_info_status::completed;
+    } catch (...) {
+      task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
       task_info_->status_        = server_task_info_status::failed;
-      task_info_->last_line_log_ = l_r.error();
-      logger_->error(l_r.error());
-    } else
-      task_info_->status_ = server_task_info_status::completed;
+      task_info_->last_line_log_ = boost::current_exception_diagnostic_information();
+      logger_->error(task_info_->last_line_log_);
+    }
 
     boost::asio::co_spawn(
         g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
