@@ -160,13 +160,12 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
 
   // 添加三次重试
   tl::expected<maya_exe_ns::maya_out_arg, std::string> l_out{};
-  boost::system::error_code l_ec{};
   for (int i = 0; i < 3; ++i) {
     l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
     if (l_out) break;
+    if (i == 2) co_return tl::make_unexpected(l_out.error());
     logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
   }
-  if (!l_out) co_return tl::make_unexpected(l_out.error());
 
   maya_out_arg_ = *l_out;
   auto l_ret    = co_await async_import_and_render_ue();
@@ -176,13 +175,14 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   logger_ptr_->warn("开始合成视屏 :{}", *l_ret);
   auto l_movie_path = detail::create_out_path(l_ret->parent_path(), episodes_, shot_, project_.code_);
   {
+    boost::system::error_code l_ec{};
     auto l_move_paths = clean_1001_before_frame(*l_ret, maya_out_arg_.begin_time);
     if (!l_move_paths) co_return tl::make_unexpected(l_move_paths.error());
     l_ec = detail::create_move(
         l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(&episodes_, &shot_, *l_move_paths), size_
     );
+    if (l_ec) co_return tl::make_unexpected(l_ec.what());
   }
-  if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
   logger_ptr_->warn("开始上传文件夹 :{}", *l_ret);
   auto l_u_project = down_info_.render_project_;
@@ -238,19 +238,17 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     co_return tl::make_unexpected("用户取消操作"s);
 
-  boost::system::error_code l_ec;
   // 添加三次重试
   for (int i = 0; i < 3; ++i) {
-    l_ec = co_await async_run_ue(
+    auto l_r = co_await async_run_ue(
         {down_info_.render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
          "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
         logger_ptr_
     );
-    if (!l_ec) break;
+    if (l_r) break;
+    if (i == 2) co_return tl::make_unexpected(l_r.error());
     logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
-    // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
   }
-  if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
   logger_ptr_->warn("导入文件完成");
   logger_ptr_->warn("排队渲染, 输出目录 {}", l_import_data.out_file_dir);
@@ -265,18 +263,17 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
     co_return tl::make_unexpected("用户取消操作");
 
   for (int i = 0; i < 3; ++i) {
-    l_ec = co_await async_run_ue(
+    auto l_r = co_await async_run_ue(
         {down_info_.render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
          fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
          fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log",
          "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
         logger_ptr_
     );
-    if (!l_ec) break;
+    if (l_r) break;
+    if (i == 2) co_return tl::make_unexpected(l_r.error());
     logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
-    // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
   }
-  if (l_ec) co_return tl::make_unexpected(l_ec.what());
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
   co_return tl::expected<FSys::path, std::string>{l_import_data.out_file_dir};
