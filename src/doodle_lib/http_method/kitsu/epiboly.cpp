@@ -187,7 +187,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   {
     "asset_types": [],
     "auto_upload_path": "//192.168.10.240/public/后期/SSWH/",
-    "code": null,
+    "code": "SS",
     "created_at": "2024-09-24T11:51:32",
     "data": null,
     "default_preview_background_file_id": null,
