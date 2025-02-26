@@ -72,5 +72,42 @@ describe('doodle 本地服务器测试', function () {
       });
 
     });
+
+    it('should maya替换引用文件', async function () {
+      const req = await request.post(`${URL}/api/doodle/task`).send({
+        name: '测试maya作业',
+        source_computer: '本机',
+        submitter: uuidv4(),
+        run_computer_id: uuidv4(),
+        type: 'check_maya',
+        task_data: {
+          path: 'C:\\Users\\63418\\Desktop\\JJ_EP001_SC001.ma',
+          file_list: [
+            [
+              'C:\\Users\\63418\\Desktop\\JJ_EP001_SC001.ma',// 旧的
+              'C:\\Users\\63418\\Desktop\\JJ_EP001_SC001.ma',// 新的
+            ],
+            [
+              'C:\\Users\\63418\\Desktop\\JJ_EP001_SC001.ma',
+              'C:\\Users\\63418\\Desktop\\JJ_EP001_SC001.ma',
+            ]
+          ]
+        },
+      });
+      expect(req.status).to.equal(200);
+      expect(req.body).to.have.keys(
+        'end_time',
+        'id',
+        'last_line_log',
+        'name',
+        'run_computer_id',
+        'run_time',
+        'source_computer',
+        'status',
+        'submit_time',
+        'submitter',
+        'type',
+      );
+    });
   });
 });

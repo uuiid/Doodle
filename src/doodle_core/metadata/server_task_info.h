@@ -60,16 +60,21 @@ enum server_task_info_type {
   connect_video,
   // 检查maya文件
   check_maya,
+  // 替换maya引用文件
+  replace_maya_ref,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    server_task_info_type, {{server_task_info_type::export_fbx, "export_fbx"},
-                            {server_task_info_type::export_sim, "export_sim"},
-                            {server_task_info_type::auto_light, "auto_light"},
-                            {server_task_info_type::merge_video, "merge_video"},
-                            {server_task_info_type::connect_video, "connect_video"},
-                            {server_task_info_type::check_maya, "check_maya"}
+    server_task_info_type,
+    {
+        {server_task_info_type::export_fbx, "export_fbx"},
+        {server_task_info_type::export_sim, "export_sim"},
+        {server_task_info_type::auto_light, "auto_light"},
+        {server_task_info_type::merge_video, "merge_video"},
+        {server_task_info_type::connect_video, "connect_video"},
+        {server_task_info_type::check_maya, "check_maya"},
+        {server_task_info_type::replace_maya_ref, "replace_maya_ref"},
 
-                           }
+    }
 );
 class server_task_info : boost::equality_comparable<server_task_info> {
  public:
