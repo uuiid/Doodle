@@ -69,10 +69,15 @@ enum error_t : std::int32_t {
 }  // namespace error_enum
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
+  std::int32_t error_code_;
   explicit doodle_error(const std::string& message) : std::runtime_error(message) {};
   template <typename... Args>
   explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
       : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))){};
+  template <typename... Args>
+  explicit doodle_error(std::int32_t in_core, const std::string& fmt_str, Args&&... in_args)
+      : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))),
+        error_code_(in_core){};
 };
 
 class DOODLE_CORE_API http_request_error : public std::runtime_error {
