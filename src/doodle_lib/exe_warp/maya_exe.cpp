@@ -185,7 +185,6 @@ boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> asy
   switch (l_array_completion_order[0]) {
     case 0:
       if (l_exit_code != 0 || l_ec) {
-        if (!l_ec) l_ec = {l_exit_code, exit_code_category::get()};
         switch (maya_enum::maya_error_t{l_exit_code}) {
           case maya_enum::maya_error_t::unknown_error:
             l_ret = tl::make_unexpected("maya 运行未知错误"s);

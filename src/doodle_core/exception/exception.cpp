@@ -54,18 +54,7 @@ const bsys::error_category& doodle_category::get() {
 bsys::error_condition doodle_category::default_error_condition(int ev) const noexcept {
   return error_category::default_error_condition(ev);
 }
-/////////////////////////////////////////////////////////////////////////
-const char* exit_code_category::name() const noexcept {
-  static std::string name{"退出值错误"};
-  return name.c_str();
-}
 
-std::string exit_code_category::message(int ev) const { return fmt::format("进程退出值 {}", ev); }
-
-const bsys::error_category& exit_code_category::get() {
-  const static exit_code_category l_exit_code_category{};
-  return l_exit_code_category;
-}
 /////////////////////////////////////////////////////////////////////////
 const char* maya_code_category::name() const noexcept {
   static std::string name{"退出值错误"};
@@ -87,4 +76,4 @@ bsys::error_code maya_enum::make_error_code(maya_error_t e) {
   return bsys::error_code{enum_to_num(e), doodle_category::get()};
   //  return boost::system::error_code{enum_to_num(e), doodle_category{}};
 }
-} // namespace doodle
+}  // namespace doodle
