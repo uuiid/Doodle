@@ -303,7 +303,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
 
   p_i->startFrame_p < p_i->endFrame_p
       ? void()
-      : throw_exception(doodle_error{"开始帧 {} 大于结束帧 {}"s, p_i->startFrame_p, p_i->endFrame_p});
+      : throw_exception(doodle_error{"开始帧 {} 大于结束帧 {}", p_i->startFrame_p, p_i->endFrame_p});
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::bindFrame_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
@@ -317,7 +317,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
       ? void()
       : throw_exception(
             doodle_error{
-                "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内"s, p_i->bindFrame_p, p_i->startFrame_p, p_i->endFrame_p
+                "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内", p_i->bindFrame_p, p_i->startFrame_p, p_i->endFrame_p
             }
         );
 
@@ -329,7 +329,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     p_i->nBones_p = l_value;
   }
 
-  p_i->nBones_p > 0 ? void() : throw_exception(doodle_error{"骨骼数小于零 {}"s, p_i->nBones_p});
+  p_i->nBones_p > 0 ? void() : throw_exception(doodle_error{"骨骼数小于零 {}", p_i->nBones_p});
   if (k_prase.isFlagSet(dem_bones_comm_ns::nInitIters_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
