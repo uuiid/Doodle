@@ -204,9 +204,9 @@ boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> asy
           default:
             l_ret = tl::make_unexpected(fmt::format("maya 运行未知错误 {}", l_exit_code));
         }
-        co_return l_ret;
+      } else {
+        l_ret = get_out_arg(l_out_path_file_);
       }
-      l_ret = get_out_arg(l_out_path_file_);
       co_return l_ret;
     case 1:
       l_ret = tl::make_unexpected(fmt::format("maya 运行超时 {}", l_ec.message()));
