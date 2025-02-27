@@ -32,6 +32,9 @@ struct FImportFiles2
 
 	EImportFilesType2 Type;
 	FString Path;
+	UPROPERTY()
+	TObjectPtr<USkeleton> Skeleton;
+	TArray<FString> HideMaterials;
 };
 
 USTRUCT()
@@ -96,7 +99,7 @@ private:
 	/// 创建几何缓存导入任务
 	UAssetImportTask* CreateGeometryImportTask(const FString& InFbxPath) const;
 	/// 创建角色导入任务
-	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath) const;
+	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton) const;
 
 	// 修复材质属性
 	static void FixMaterialProperty();
@@ -147,5 +150,5 @@ private:
 
 	// 输出大小
 	FImageSize ImageSize;
-	bool  Layering;
+	bool Layering;
 };

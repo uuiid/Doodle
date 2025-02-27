@@ -2,7 +2,8 @@
 
 
 #include "DoodleAutoAnimationCommandlet.h"
-#include "Engine.h"
+// #include "Engine.h"
+#include "EngineUtils.h"
 #include "Engine/Light.h"
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonReader.h"
@@ -42,6 +43,7 @@
 #include "Engine/LevelStreamingDynamic.h"
 #include "EditorLevelUtils.h"
 #include "Doodle/Abc/DoodleAlembicImportFactory.h"
+#include "Materials/MaterialInstanceConstant.h"
 ///-------------
 #include "Doodle/Abc/DoodleAbcImportSettings.h"
 #include "GeometryCache.h"       //
@@ -67,6 +69,7 @@
 #include "MoviePipelineCameraSetting.h"
 #include "MoviePipelineEXROutput.h"
 #include "SequencerTools.h"
+#include "Materials/MaterialParameterCollection.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -280,7 +283,26 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		if (Type == TEXT("cam")) Type2 = EImportFilesType2::Camera;
 		else if (Type == TEXT("char")) Type2 = EImportFilesType2::Character;
 		else if (Type == TEXT("geo")) Type2 = EImportFilesType2::Geometry;
-		ImportFiles.Add(FImportFiles2{Type2, Path});
+		USkeleton* L_Skeleton{};
+		if (Obj->HasField(TEXT("skin_path")))
+		{
+			const FString Skin = Obj->GetStringField(TEXT("skin_path"));
+			if (!Skin.IsEmpty())
+			{
+				if (auto SkinMesh = LoadObject<USkeletalMesh>(nullptr, *Skin); SkinMesh)
+				{
+					L_Skeleton = SkinMesh->GetSkeleton();
+				}
+			}
+		}
+
+		TArray<FString> Mats;
+		if (Obj->HasField(TEXT("hide_materials")))
+			for (TArray<TSharedPtr<FJsonValue>> JsonMats = Obj->GetArrayField(TEXT("hide_materials")); const TSharedPtr<FJsonValue>& JsonMat : JsonMats)
+			{
+				Mats.Add(JsonMat->AsString());
+			}
+		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, Mats});
 	}
 
 	//--------------------
@@ -802,15 +824,16 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const
 	return Task;
 }
 
-UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const FString& InFbxPath) const
+UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton) const
 {
 	UFbxFactory* K_FBX_F = NewObject<UFbxFactory>(UFbxFactory::StaticClass());
 	K_FBX_F->ImportUI = NewObject<UFbxImportUI>(K_FBX_F);
-	K_FBX_F->ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
-	K_FBX_F->ImportUI->OriginalImportType = FBXIT_SkeletalMesh;
-	K_FBX_F->ImportUI->bImportAsSkeletal = true;
+	K_FBX_F->ImportUI->Skeleton = InSkeleton;
+	K_FBX_F->ImportUI->MeshTypeToImport = InSkeleton ? FBXIT_Animation : FBXIT_SkeletalMesh;
+	K_FBX_F->ImportUI->OriginalImportType = InSkeleton ? FBXIT_Animation : FBXIT_SkeletalMesh;
+	K_FBX_F->ImportUI->bImportAsSkeletal = !InSkeleton;
 	K_FBX_F->ImportUI->bCreatePhysicsAsset = true;
-	K_FBX_F->ImportUI->bImportMesh = true;
+	K_FBX_F->ImportUI->bImportMesh = !InSkeleton;
 	K_FBX_F->ImportUI->bImportAnimations = true;
 	K_FBX_F->ImportUI->bImportRigidMesh = true;
 	K_FBX_F->ImportUI->bImportMaterials = false;
@@ -844,7 +867,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 	TArray<UGeometryCache*> GeometryCaches;
 	TArray<UAssetImportTask*> ImportTasks;
 	TArray<UAssetImportTask*> ImportTasksAbc;
-	for (const auto& [Type, Path] : ImportFiles)
+	for (const auto& [Type, Path, Skeleton, HideMaterials] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -855,7 +878,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			ImportTasksAbc.Add(CreateGeometryImportTask(Path));
 			break;
 		case EImportFilesType2::Character:
-			ImportTasks.Add(CreateCharacterImportTask(Path));
+			ImportTasks.Add(CreateCharacterImportTask(Path, Skeleton));
 			break;
 		}
 	}
@@ -1002,7 +1025,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	TArray<UAssetImportTask*> ImportTasks;
-	for (const auto& [Type, Path] : ImportFiles)
+	for (const auto& [Type, Path, _,__] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -1012,7 +1035,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 		case EImportFilesType2::Geometry:
 			break;
 		case EImportFilesType2::Character:
-			ImportTasks.Add(CreateCharacterImportTask(Path));
+			ImportTasks.Add(CreateCharacterImportTask(Path, _));
 			break;
 		}
 	}
