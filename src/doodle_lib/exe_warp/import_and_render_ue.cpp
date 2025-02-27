@@ -310,7 +310,8 @@ boost::asio::awaitable<void> args::fetch_association_data() {
 
   for (auto&& l_data : import_files_) {
     if (l_data.is_camera_) continue;
-    if (l_data.ue_file_.empty()) throw_exception(doodle_error{"文件 {} 的 ue 引用无效, 为空", l_data.maya_file_});
+    if (l_data.ue_file_.empty())
+      throw_exception(doodle_error{"文件 {} 的 ue 引用无效, 为空 {}", l_data.maya_file_, l_data.id});
     if (!FSys::exists(l_data.ue_file_))
       throw_exception(doodle_error{"文件 {} 的 ue {} 引用不存在", l_data.maya_file_, l_data.ue_file_});
 
