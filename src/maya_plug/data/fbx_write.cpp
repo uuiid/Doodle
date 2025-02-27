@@ -665,11 +665,10 @@ void fbx_node_mesh::build_skin() {
     return;
   }
   auto l_skin_obj = get_skin_custer();
+  if (l_skin_obj.isNull())
+    throw_exception(doodle_error{"未找到皮肤簇 {}", get_node_name(dag_path)});
+
   default_logger_raw()->info("使用皮肤簇 {}", get_node_name(l_skin_obj));
-  if (l_skin_obj.isNull()) {
-    log_error(fmt::format(" {} is not skin", dag_path));
-    return;
-  }
   auto* l_sk = FbxSkin::Create(node->GetScene(), get_node_name(l_skin_obj).c_str());
   mesh->AddDeformer(l_sk);
 
