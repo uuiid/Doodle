@@ -19,11 +19,13 @@ struct import_files_t {
   std::string type_;
   FSys::path path_;
   FSys::path skin_path_;
+  std::vector<std::string> hide_materials_;
 
   friend void to_json(nlohmann::json& j, const import_files_t& p) {
-    j["type"]      = p.type_;
-    j["path"]      = p.path_;
-    j["skin_path"] = p.skin_path_;
+    j["type"]           = p.type_;
+    j["path"]           = p.path_;
+    j["skin_path"]      = p.skin_path_;
+    j["hide_materials"] = p.hide_materials_;
   }
 };
 
@@ -104,23 +106,34 @@ struct args {
 
  private:
   boost::asio::awaitable<tl::expected<FSys::path, std::string>> async_import_and_render_ue();
-  boost::asio::awaitable<tl::expected<void, std::string>> analysis_out_file();
   import_data_t gen_import_config();
 
-  boost::asio::awaitable<tl::expected<std::map<uuid, association_data>, std::string>> fetch_association_data(
-      std::map<uuid, FSys::path> in_uuid
-  );
-  struct down_info {
-   public:
-    FSys::path render_project_{};  // 渲染工程文件(.project)
-    // 场景文件
-    FSys::path scene_file_{};
-    // 导入文件和对应是 skin(skin 对应的是 /Game/路径)
-    std::vector<std::pair<FSys::path, FSys::path>> file_list_{};
+  boost::asio::awaitable<void> fetch_association_data();
+  void down_files();
+  void up_files(const FSys::path& in_out_image_path, const FSys::path& in_move_path) const;
+
+  FSys::path create_move(const FSys::path& in_out_image_path) const;
+
+  FSys::path render_project_{};  // 渲染工程文件(.project)
+  // 场景文件
+  FSys::path scene_file_{};
+  // 导入文件和对应是 skin(skin 对应的是 /Game/路径)
+  struct import_file {
+    uuid id{};                          // 导出文件对应的id
+    bool is_camera_{};                  // 是否是相机文件
+    FSys::path file_{};                 // 导出的文件
+    FSys::path skin_{};                 // 对应的骨骼文件
+    details::assets_type_enum type_{};  // 类型
+    FSys::path maya_file_{};            // 对应的maya文件
+    FSys::path ue_file_{};              // 对应的ue文件
+    FSys::path ue_prj_path_{};          // 对应的ue工程文件
+    /// 需要隐藏的材质名称
+    std::vector<std::string> hide_materials_{};
   };
-  // 不需要填写
-  maya_exe_ns::maya_out_arg maya_out_arg_{};
-  down_info down_info_{};
+  std::vector<import_file> import_files_{};
+  std::uint32_t begin_time_{};
+  std::uint32_t end_time_{};
+
   // from json
   friend void from_json(const nlohmann::json& j, args& p) {
     j["episodes"].get_to(p.episodes_);

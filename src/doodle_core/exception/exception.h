@@ -72,8 +72,8 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
   std::int32_t error_code_;
   explicit doodle_error(const std::string& message) : std::runtime_error(message), error_code_(0) {};
   template <typename... Args>
-  explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
-      : std::runtime_error(fmt::vformat(fmt_str, fmt::make_format_args(std::forward<Args>(in_args)...))),
+  explicit doodle_error(fmt::format_string<Args...> fmt_str, Args&&... in_args)
+      : std::runtime_error(fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)),
         error_code_(0){};
   template <typename... Args>
   explicit doodle_error(std::int32_t in_core, const std::string& fmt_str, Args&&... in_args)

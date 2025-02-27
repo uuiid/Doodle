@@ -166,83 +166,82 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
     if (i == 2) co_return tl::make_unexpected(l_out.error());
     logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
   }
-
-  maya_out_arg_ = *l_out;
-  auto l_ret    = co_await async_import_and_render_ue();
-  if (!l_ret) co_return l_ret;
-
-  // 合成视屏
-  logger_ptr_->warn("开始合成视屏 :{}", *l_ret);
-  auto l_movie_path = detail::create_out_path(l_ret->parent_path(), episodes_, shot_, project_.code_);
-  {
-    boost::system::error_code l_ec{};
-    auto l_move_paths = clean_1001_before_frame(*l_ret, maya_out_arg_.begin_time);
-    if (!l_move_paths) co_return tl::make_unexpected(l_move_paths.error());
-    l_ec = detail::create_move(
-        l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(&episodes_, &shot_, *l_move_paths), size_
-    );
-    if (l_ec) co_return tl::make_unexpected(l_ec.what());
+  /// 将导出数据转移到数据块中
+  begin_time_ = l_out->begin_time;
+  end_time_   = l_out->end_time;
+  for (auto&& i : l_out->out_file_list) {
+    auto&& l_data     = import_files_.emplace_back();
+    l_data.file_      = i.out_file;
+    l_data.maya_file_ = i.ref_file;
+    l_data.is_camera_ = i.out_file.generic_string().find("_camera_") != std::string::npos;
+    if (!FSys::exists(i.ref_file)) continue;
+    logger_ptr_->info("引用文件:{}", i.ref_file);
+    l_data.id = FSys::software_flag_file(i.ref_file);
+    if (l_data.id.is_nil()) throw_exception(doodle_error{"获取引用文件失败 {}", i.ref_file});
   }
 
-  logger_ptr_->warn("开始上传文件夹 :{}", *l_ret);
-  auto l_u_project = down_info_.render_project_;
+  co_await fetch_association_data();
+  {
+    // 开始复制文件
+    // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
+    auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+    down_files();
+  }
+  auto l_ret = co_await async_import_and_render_ue();
+  if (!l_ret) co_return l_ret;
+
+  // 合成视屏, 并上传文件
+  up_files(*l_ret, create_move(*l_ret));
+
+  co_return tl::expected<FSys::path, std::string>{FSys::path{}};
+}
+void args::up_files(const FSys::path& in_out_image_path, const FSys::path& in_move_path) const {
+  auto l_u_project = render_project_;
   auto l_scene     = l_u_project.parent_path();
   auto l_rem_path  = project_.path_ / "03_Workflow" / doodle_config::ue4_shot /
                     fmt::format("EP{:04}", episodes_.p_episodes) / l_u_project.stem();
   // maya输出
   auto l_maya_out =
-      maya_out_arg_.out_file_list | ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
-        return in_arg.out_file.parent_path();
-      }) |
+      import_files_ | ranges::views::transform([](const import_file& in_arg) { return in_arg.file_.parent_path(); }) |
       ranges::views::filter([](const FSys::path& in_path) { return !in_path.empty(); }) | ranges::to_vector;
   l_maya_out |= ranges::actions::unique;
-  try {
-    // 渲染输出文件
-    copy_diff(*l_ret, l_rem_path / l_ret->lexically_proximate(l_scene), logger_ptr_);
-    // 渲染工程文件
-    copy_diff(l_scene / doodle_config::ue4_config, l_rem_path / doodle_config::ue4_config, logger_ptr_);
-    copy_diff(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content, logger_ptr_);
-    copy_diff(l_u_project, l_rem_path / l_u_project.filename(), logger_ptr_);
-    // maya输出文件
-    for (const auto& l_maya : l_maya_out) {
-      copy_diff(l_maya, l_rem_path.parent_path() / l_maya.stem(), logger_ptr_);
-    }
-    copy_diff(l_movie_path, l_rem_path.parent_path() / "mov" / l_movie_path.filename(), logger_ptr_);
-    // 额外要求上传的序列图片
-    copy_diff(
-        *l_ret,
-        FSys::path{project_.auto_upload_path_} / fmt::format("EP{:03}", episodes_.p_episodes) / "自动灯光序列帧" /
-            l_ret->filename(),
-        logger_ptr_
-    );
-  } catch (...) {
-    co_return tl::make_unexpected(
-        fmt::format("{} {}", std::source_location::current(), boost::current_exception_diagnostic_information())
-    );
+
+  // 渲染输出文件
+  copy_diff(in_out_image_path, l_rem_path / in_out_image_path.lexically_proximate(l_scene), logger_ptr_);
+  // 渲染工程文件
+  copy_diff(l_scene / doodle_config::ue4_config, l_rem_path / doodle_config::ue4_config, logger_ptr_);
+  copy_diff(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content, logger_ptr_);
+  copy_diff(l_u_project, l_rem_path / l_u_project.filename(), logger_ptr_);
+  // maya输出文件
+  for (const auto& l_maya : l_maya_out) {
+    copy_diff(l_maya, l_rem_path.parent_path() / l_maya.stem(), logger_ptr_);
   }
-
-  co_return tl::expected<FSys::path, std::string>{*l_ret};
+  copy_diff(in_move_path, l_rem_path.parent_path() / "mov" / in_move_path.filename(), logger_ptr_);
+  // 额外要求上传的序列图片
+  copy_diff(
+      in_out_image_path,
+      FSys::path{project_.auto_upload_path_} / fmt::format("EP{:03}", episodes_.p_episodes) / "自动灯光序列帧" /
+          in_out_image_path.filename(),
+      logger_ptr_
+  );
 }
-
 boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import_and_render_ue() {
-  // 先分析和下载文件
-  if (auto l_r = co_await analysis_out_file(); !l_r) co_return tl::make_unexpected(l_r.error());
   // 导入文件
-  fix_config(down_info_.render_project_);
-  fix_project(down_info_.render_project_);
+  fix_config(render_project_);
+  fix_project(render_project_);
   auto l_import_data = gen_import_config();
   nlohmann::json l_json{};
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
-  logger_ptr_->warn("排队导入文件 {} ", down_info_.render_project_);
+  logger_ptr_->warn("排队导入文件 {} ", render_project_);
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     co_return tl::make_unexpected("用户取消操作"s);
 
   // 添加三次重试
   for (int i = 0; i < 3; ++i) {
     auto l_r = co_await async_run_ue(
-        {down_info_.render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
-         "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
+        {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+         "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
         logger_ptr_
     );
     if (l_r) break;
@@ -264,7 +263,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
 
   for (int i = 0; i < 3; ++i) {
     auto l_r = co_await async_run_ue(
-        {down_info_.render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
+        {render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
          fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
          fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log",
          "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
@@ -278,187 +277,145 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
   co_return tl::expected<FSys::path, std::string>{l_import_data.out_file_dir};
 }
-boost::asio::awaitable<tl::expected<void, std::string>> args::analysis_out_file() {
-  std::vector<boost::uuids::uuid> l_uuids_tmp{};
-  std::map<boost::uuids::uuid, FSys::path> l_refs_tmp{};
-  down_info l_out{};
 
-  for (auto&& i : maya_out_arg_.out_file_list) {
-    if (!FSys::exists(i.ref_file)) continue;
-    logger_ptr_->info("引用文件:{}", i.ref_file);
-    auto l_uuid = FSys::software_flag_file(i.ref_file);
-    if (l_uuid.is_nil()) {
-      co_return tl::make_unexpected(fmt::format("获取引用文件失败 {}", i.ref_file));
-    }
-
-    l_uuids_tmp.push_back(l_uuid);
-    l_refs_tmp.emplace(l_uuid, i.ref_file);
-  }
-
-  std::sort(l_uuids_tmp.begin(), l_uuids_tmp.end(), [](const auto& l, const auto& r) { return l < r; });
-  l_uuids_tmp.erase(
-      std::unique(l_uuids_tmp.begin(), l_uuids_tmp.end(), [](const auto& l, const auto& r) { return l == r; }),
-      l_uuids_tmp.end()
-  );
-  auto l_refs = co_await fetch_association_data(l_refs_tmp);
-  if (!l_refs) co_return tl::make_unexpected(l_refs.error());
-
-  // 检查文件
-  auto l_scene_uuid = boost::uuids::nil_uuid();
-  FSys::path l_down_path_file_name{};
-
-  for (auto&& [id, h] : *l_refs) {
-    if (auto l_is_e = h.ue_file_.empty(), l_is_ex = FSys::exists(h.ue_file_); l_is_e || !l_is_ex) {
-      if (l_is_e) co_return tl::make_unexpected(fmt::format("文件 {} 的 ue 引用无效, 为空", h.maya_file_));
-      if (!l_is_ex) co_return tl::make_unexpected(fmt::format("文件 {} 的 ue {} 引用不存在", h.maya_file_, h.ue_file_));
-    }
-
-    if (h.type_ == details::assets_type_enum::scene) {
-      l_scene_uuid          = h.id_;
-      l_down_path_file_name = h.ue_prj_path_.parent_path().filename();
-    }
-  }
-  if (l_scene_uuid.is_nil()) {
-    co_return tl::make_unexpected("未查找到主项目文件(没有找到场景文件)");
-  }
-
-  // 添加导入问价对应的sk文件
-  for (auto&& l_path : maya_out_arg_.out_file_list) {
-    if (l_path.ref_file.empty()) {
-      l_out.file_list_.emplace_back(l_path.out_file, "");
-      continue;  /// 如果为空,是相机, 无引用, 不查找
-    }
-
-    auto l_id = FSys::software_flag_file(l_path.ref_file);
-    if (!l_refs->contains(l_id)) co_return tl::make_unexpected(fmt::format("路径中未找到sk {}", l_path.ref_file));
-    if (l_refs->at(l_id).type_ == details::assets_type_enum::scene) continue;  // 场景文件, 不用管
-
-    auto l_root     = l_refs->at(l_id).ue_prj_path_.parent_path() / doodle_config::ue4_content;
-    auto l_original = l_refs->at(l_id).ue_file_.lexically_relative(l_root);
-    l_out.file_list_.emplace_back(
-        l_path.out_file, fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem())
-    );
-  }
-
-  static auto g_root{FSys::path{doodle_config::g_cache_path}};
-  std::vector<std::pair<FSys::path, FSys::path>> l_copy_path{};
-  logger_ptr_->warn("排队复制文件");
-  // 开始复制文件
-  // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
-  auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
-  try {
-    for (auto&& [id, h] : *l_refs) {
-      auto l_down_path  = h.ue_prj_path_.parent_path();
-      auto l_root       = h.ue_prj_path_.parent_path() / doodle_config::ue4_content;
-      auto l_local_path = g_root / project_.code_ / l_down_path_file_name;
-      if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-        co_return tl::make_unexpected("用户取消操作");
-
-      switch (h.type_) {
-        // 场景文件
-        case details::assets_type_enum::scene: {
-          auto l_original   = h.ue_file_.lexically_relative(l_root);
-          l_out.scene_file_ = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-
-          copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
-          // 配置文件夹复制
-          copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
-          // 复制项目文件
-          if (!FSys::exists(l_local_path / h.ue_prj_path_.filename()))
-            copy_diff(h.ue_prj_path_, l_local_path / h.ue_prj_path_.filename(), logger_ptr_);
-
-          l_out.render_project_ = l_local_path / h.ue_prj_path_.filename();
-        } break;
-
-        // 角色文件
-        case details::assets_type_enum::character:
-          copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
-          break;
-
-        // 道具文件
-        case details::assets_type_enum::prop: {
-          auto l_prop_path = h.ue_file_.lexically_relative(l_root / "Prop");
-          if (l_prop_path.empty()) continue;
-          auto l_prop_path_name = *l_prop_path.begin();
-          copy_diff(
-              l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
-              l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
-          );
-          /// 此处忽略错误
-          copy_diff(
-              l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
-              l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", logger_ptr_
-          );
-        } break;
-        default:
-          break;
-      }
-    }
-  } catch (...) {
-    co_return tl::make_unexpected(
-        fmt::format("{} {}", std::source_location::current(), boost::current_exception_diagnostic_information())
-    );
-  }
-
-  down_info_ = l_out;
-}
-
-boost::asio::awaitable<tl::expected<std::map<uuid, association_data>, std::string>> args::fetch_association_data(
-    std::map<uuid, FSys::path> in_uuid
-) {
+boost::asio::awaitable<void> args::fetch_association_data() {
   std::map<uuid, association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
   auto l_c = std::make_shared<http::detail::http_client_data_base>(co_await boost::asio::this_coro::executor);
   l_c->init(core_set::get_set().server_ip);
-  try {
-    for (auto&& [i, l_path] : in_uuid) {
-      boost::beast::http::request<boost::beast::http::empty_body> l_req{
-          boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", i), 11
-      };
-      l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-      l_req.set(boost::beast::http::field::accept, "application/json");
-      l_req.prepare_payload();
-      auto [l_ec, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req);
-
-      if (l_res.result() != boost::beast::http::status::ok) {
-        co_return tl::make_unexpected(fmt::format("未找到关联数据: {} {}", i, l_path));
-      }
-
-      auto l_json = nlohmann::json::parse(l_res.body());
-      association_data l_data{
-          .id_        = i,
-          .maya_file_ = l_json.at("maya_file").get<std::string>(),
-          .ue_file_   = l_json.at("ue_file").get<std::string>(),
-          .type_      = l_json.at("type").get<details::assets_type_enum>()
-      };
-      l_out.emplace(i, std::move(l_data));
+  for (auto&& l_data : import_files_) {
+    if (l_data.is_camera_) {
+      l_data.type_ = details::assets_type_enum::other;
+      continue;
     }
-  } catch (const std::exception& e) {
-    co_return tl::make_unexpected(fmt::format("连接服务器失败:{}", e.what()));
-  }
-  for (auto&& [k, i] : l_out) {
-    i.ue_prj_path_ = ue_exe_ns::find_ue_project_file(i.ue_file_);
-  }
-  co_return tl::expected<std::map<uuid, association_data>, std::string>{std::move(l_out)};
-}
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", l_data.id), 11
+    };
+    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    l_req.set(boost::beast::http::field::accept, "application/json");
+    l_req.prepare_payload();
+    auto [l_ec, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req);
 
+    if (l_res.result() != boost::beast::http::status::ok)
+      throw_exception(doodle_error{"未找到关联数据: {} {}", l_data.id, l_data.maya_file_});
+
+    auto l_json         = nlohmann::json::parse(l_res.body());
+
+    l_data.ue_file_     = l_json.at("ue_file").get<std::string>();
+    l_data.type_        = l_json.at("type").get<details::assets_type_enum>();
+    l_data.ue_prj_path_ = ue_exe_ns::find_ue_project_file(l_data.ue_file_);
+  }
+  // 检查文件
+  auto l_scene_uuid = boost::uuids::nil_uuid();
+
+  for (auto&& l_data : import_files_) {
+    if (l_data.is_camera_) continue;
+    if (l_data.ue_file_.empty()) throw_exception(doodle_error{"文件 {} 的 ue 引用无效, 为空", l_data.maya_file_});
+    if (!FSys::exists(l_data.ue_file_))
+      throw_exception(doodle_error{"文件 {} 的 ue {} 引用不存在", l_data.maya_file_, l_data.ue_file_});
+
+    if (l_data.type_ == details::assets_type_enum::scene) {
+      l_scene_uuid = l_data.id;
+    }
+  }
+  if (l_scene_uuid.is_nil()) throw_exception(doodle_error{"未查找到主项目文件(没有找到场景文件)"});
+
+  // 添加导入问价对应的sk文件
+  for (auto&& l_data : import_files_) {
+    if (l_data.is_camera_) continue;
+    if (l_data.type_ == details::assets_type_enum::scene) continue;
+
+    auto l_root     = l_data.ue_prj_path_.parent_path() / doodle_config::ue4_content;
+    auto l_original = l_data.ue_file_.lexically_relative(l_root);
+    l_data.skin_    = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+  }
+}
+FSys::path args::create_move(const FSys::path& in_out_image_path) const {
+  // 合成视屏
+  logger_ptr_->warn("开始合成视屏 :{}", in_out_image_path);
+  auto l_movie_path = detail::create_out_path(in_out_image_path.parent_path(), episodes_, shot_, project_.code_);
+  {
+    boost::system::error_code l_ec{};
+    auto l_move_paths = clean_1001_before_frame(in_out_image_path, begin_time_);
+    if (!l_move_paths) throw_exception(doodle_error{l_move_paths.error()});
+    l_ec = detail::create_move(
+        l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(&episodes_, &shot_, *l_move_paths), size_
+    );
+    if (l_ec) throw_exception(doodle_error{l_ec.what()});
+  }
+  return l_movie_path;
+}
+void args::down_files() {
+  static auto g_root{FSys::path{doodle_config::g_cache_path}};
+  logger_ptr_->warn("排队复制文件");
+  FSys::path l_down_path_file_name =
+      std::ranges::find_if(
+          import_files_, [](const import_file& in_data) { return in_data.type_ == details::assets_type_enum::scene; }
+      )
+          ->ue_prj_path_.parent_path()
+          .filename();
+
+  for (auto&& l_data : import_files_) {
+    auto l_down_path  = l_data.ue_prj_path_.parent_path();
+    auto l_root       = l_data.ue_prj_path_.parent_path() / doodle_config::ue4_content;
+    auto l_local_path = g_root / project_.code_ / l_down_path_file_name;
+    switch (l_data.type_) {
+      // 场景文件
+      case details::assets_type_enum::scene: {
+        auto l_original = l_data.ue_file_.lexically_relative(l_root);
+        scene_file_     = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+
+        copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+        // 配置文件夹复制
+        copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
+        // 复制项目文件
+        if (!FSys::exists(l_local_path / l_data.ue_prj_path_.filename()))
+          copy_diff(l_data.ue_prj_path_, l_local_path / l_data.ue_prj_path_.filename(), logger_ptr_);
+
+        render_project_ = l_local_path / l_data.ue_prj_path_.filename();
+      } break;
+
+      // 角色文件
+      case details::assets_type_enum::character:
+        copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+        break;
+
+      // 道具文件
+      case details::assets_type_enum::prop: {
+        auto l_prop_path = l_data.ue_file_.lexically_relative(l_root / "Prop");
+        if (l_prop_path.empty()) continue;
+        auto l_prop_path_name = *l_prop_path.begin();
+        copy_diff(
+            l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
+            l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
+        );
+        /// 此处忽略错误
+        copy_diff(
+            l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
+            l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", logger_ptr_
+        );
+      } break;
+      default:
+        break;
+    }
+  }
+}
 import_data_t args::gen_import_config() {
-  auto l_maya_out_arg = maya_out_arg_.out_file_list |
-                        ranges::views::filter([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
-                          return !in_arg.out_file.empty() && FSys::exists(in_arg.out_file);
+  auto l_maya_out_arg = import_files_ | ranges::views::filter([](const import_file& in_arg) {
+                          return in_arg.type_ != details::assets_type_enum::scene;
                         }) |
                         ranges::to_vector;
   import_data_t l_import_data;
   l_import_data.episode    = episodes_;
   l_import_data.shot       = shot_;
-  l_import_data.begin_time = maya_out_arg_.begin_time;
-  l_import_data.end_time   = maya_out_arg_.end_time;
+  l_import_data.begin_time = begin_time_;
+  l_import_data.end_time   = end_time_;
   l_import_data.size_      = size_;
   l_import_data.layering_  = layering_;
 
   l_import_data.project_   = project_;
   l_import_data.out_file_dir =
-      down_info_.render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
+      render_project_.parent_path() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
       fmt::format(
           "{}_EP{:03}_SC{:03}{}", l_import_data.project_.code_, l_import_data.episode.p_episodes,
           l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
@@ -497,22 +454,21 @@ import_data_t args::gen_import_config() {
     );
   }
 
-  l_import_data.files = l_maya_out_arg |
-                        ranges::views::transform([](const maya_exe_ns::maya_out_arg::out_file_t& in_arg) {
-                          auto l_file_name_str = in_arg.out_file.filename().generic_string();
-                          auto l_ext           = in_arg.out_file.extension().generic_string();
+  l_import_data.files = l_maya_out_arg | ranges::views::transform([](const import_file& in_arg) {
+                          auto l_file_name_str = in_arg.file_.filename().generic_string();
+                          auto l_ext           = in_arg.file_.extension().generic_string();
                           std::string l_type{};
-                          if (l_file_name_str.find("_camera_") != std::string::npos) {
+                          if (in_arg.is_camera_) {
                             l_type = "cam";
                           } else if (l_ext == ".abc") {
                             l_type = "geo";
                           } else if (l_ext == ".fbx") {
                             l_type = "char";
                           }
-                          return import_and_render_ue_ns::import_files_t{l_type, in_arg.out_file};
+                          return import_files_t{l_type, in_arg.file_, in_arg.skin_, in_arg.hide_materials_};
                         }) |
                         ranges::to_vector;
-  l_import_data.original_map = down_info_.scene_file_.generic_string();
+  l_import_data.original_map = scene_file_.generic_string();
   return l_import_data;
 }
 }  // namespace import_and_render_ue_ns
