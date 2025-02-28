@@ -888,77 +888,79 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 	AssetTools.ImportAssetTasks(ImportTasks);
 	for (UAssetImportTask* Task : ImportTasks)
 	{
-		if (Task->IsAsyncImportComplete())
+		if (TArray<UObject*> ImportedObjs = Task->GetObjects(); !ImportedObjs.IsEmpty())
 		{
-			if (TArray<UObject*> ImportedObjs = Task->GetObjects(); !ImportedObjs.IsEmpty())
+			USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
+			UAnimSequence* AnimSeq{};
+			if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
 			{
-				if (UObject* ImportedObject = ImportedObjs.Top(); ImportedObject->GetClass()->IsChildOf(USkeletalMesh::StaticClass()))
+				AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
+				TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
+			}
+			else
+			{
+				TArray<FAssetData> OutAssetData;
+				IAssetRegistry::Get()->GetAssetsByPath(FName(*ImportPath), OutAssetData, false);
+				for (const FAssetData& Asset : OutAssetData)
 				{
-					USkeletalMesh* TmpSkeletalMesh = Cast<USkeletalMesh>(ImportedObject);
-					UAnimSequence* AnimSeq = nullptr;
-					TArray<FAssetData> OutAssetData;
-					IAssetRegistry::Get()->GetAssetsByPath(FName(*ImportPath), OutAssetData, false);
-					for (const FAssetData& Asset : OutAssetData)
+					EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
+					if (UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset()); Anim && Anim->GetSkeleton() == TmpSkeletalMesh->GetSkeleton())
 					{
-						EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
-						if (UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset()); Anim && Anim->GetSkeleton() == TmpSkeletalMesh->GetSkeleton())
-						{
-							AnimSeq = Anim;
-							break;
-						}
-					}
-					//------------
-					if (AnimSeq)
-					{
-						AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
-						if (AnimSeq->IsDataModelValid())
-						{
-							AnimSeq->CompressCommandletVersion = 0;
-							AnimSeq->ClearAllCachedCookedPlatformData();
-							AnimSeq->CacheDerivedDataForCurrentPlatform();
-						}
-						//------------------
-						ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
-						L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
-						L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
-						L_Actor->GetSkeletalMeshComponent()->SetLightingChannels(false, true, false);
-						L_Actor->GetSkeletalMeshComponent()->SetReceivesDecals(false);
-						//---------------------
-						const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
-						TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
-						//-----------------------
-						UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
-						UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
-						L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
-						L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-						UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-						UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
-						AnimSection->SetPreRollFrames(50);
-						AnimSection->Modify();
-						//--------------------------Clone------------------------
-						ASkeletalMeshActor* L_Actor2 = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
-						L_Actor2->SetActorLabel(TmpSkeletalMesh->GetName() + TEXT("_SH"));
-						L_Actor2->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
-						L_Actor2->GetSkeletalMeshComponent()->SetLightingChannels(true, false, false);
-						L_Actor2->GetSkeletalMeshComponent()->SetVisibility(false);
-						L_Actor2->GetSkeletalMeshComponent()->SetCastHiddenShadow(true);
-						L_Actor2->GetSkeletalMeshComponent()->SetReceivesDecals(false);
-						const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
-						TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
-						UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
-						UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
-						L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
-						L_MovieSceneSpawnSection2->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-						UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID2);
-						UMovieSceneSection* AnimSection2 = L_MovieSceneSkeletalAnim2->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
-						AnimSection2->SetPreRollFrames(50);
-						AnimSection2->Modify();
-						//----------------------
-						TheLevelSequence->GetMovieScene()->Modify();
-						TheLevelSequence->Modify();
-						TheSequenceWorld->Modify();
+						AnimSeq = Anim;
+						break;
 					}
 				}
+			}
+			//------------
+			if (AnimSeq && TmpSkeletalMesh)
+			{
+				AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+				if (AnimSeq->IsDataModelValid())
+				{
+					AnimSeq->CompressCommandletVersion = 0;
+					AnimSeq->ClearAllCachedCookedPlatformData();
+					AnimSeq->CacheDerivedDataForCurrentPlatform();
+				}
+				//------------------
+				ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+				L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
+				L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
+				L_Actor->GetSkeletalMeshComponent()->SetLightingChannels(false, true, false);
+				L_Actor->GetSkeletalMeshComponent()->SetReceivesDecals(false);
+				//---------------------
+				const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
+				TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
+				//-----------------------
+				UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
+				UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+				L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
+				L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+				UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
+				UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
+				AnimSection->SetPreRollFrames(50);
+				AnimSection->Modify();
+				//--------------------------Clone------------------------
+				ASkeletalMeshActor* L_Actor2 = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+				L_Actor2->SetActorLabel(TmpSkeletalMesh->GetName() + TEXT("_SH"));
+				L_Actor2->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
+				L_Actor2->GetSkeletalMeshComponent()->SetLightingChannels(true, false, false);
+				L_Actor2->GetSkeletalMeshComponent()->SetVisibility(false);
+				L_Actor2->GetSkeletalMeshComponent()->SetCastHiddenShadow(true);
+				L_Actor2->GetSkeletalMeshComponent()->SetReceivesDecals(false);
+				const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
+				TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
+				UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
+				UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
+				L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
+				L_MovieSceneSpawnSection2->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+				UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID2);
+				UMovieSceneSection* AnimSection2 = L_MovieSceneSkeletalAnim2->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
+				AnimSection2->SetPreRollFrames(50);
+				AnimSection2->Modify();
+				//----------------------
+				TheLevelSequence->GetMovieScene()->Modify();
+				TheLevelSequence->Modify();
+				TheSequenceWorld->Modify();
 			}
 		}
 		Task->RemoveFromRoot();
