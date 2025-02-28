@@ -9,6 +9,8 @@ target_sources(doodle_lib
         cache_manger.h
         socket_io.h
         base64.h
+        fbx_file.h
+        alembic_file.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -16,6 +18,8 @@ target_sources(doodle_lib
         scan_win_service.cpp
         socket_io.cpp
         base64.cpp
+        fbx_file.cpp
+        alembic_file.cpp
 )
 add_subdirectory(scan_assets)
 add_subdirectory(http)
