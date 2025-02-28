@@ -63,7 +63,7 @@ target_link_libraries(doodle_lib
         #        Microsoft::DirectXTK
         Eigen3::Eigen
         Alembic::Alembic # abc文件读写
-        Fbx::Fbx # fbx
+#        Fbx::Fbx # fbx
         sqlite_orm::sqlite_orm
         OpenSSL::SSL
         #        OpenSSL::applink
