@@ -153,7 +153,9 @@ NearClipPlane=0.500000
 
   FSys::ofstream{l_file_path} << l_str;
 }
+void args::check_materials() {
 
+}
 boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     co_return tl::make_unexpected("用户取消操作");
@@ -181,6 +183,8 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   }
 
   co_await fetch_association_data();
+  if (bind_skin_) check_materials();
+
   {
     // 开始复制文件
     // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)

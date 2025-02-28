@@ -100,6 +100,7 @@ struct args {
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
   image_size size_{};
   bool layering_{};
+  bool bind_skin_{};
   logger_ptr logger_ptr_{};
 
   boost::asio::awaitable<tl::expected<FSys::path, std::string>> run();
@@ -111,6 +112,8 @@ struct args {
   boost::asio::awaitable<void> fetch_association_data();
   void down_files();
   void up_files(const FSys::path& in_out_image_path, const FSys::path& in_move_path) const;
+  /// 检查文件的材质名称, 错误直接抛出异常
+  void check_materials();
 
   FSys::path create_move(const FSys::path& in_out_image_path) const;
 
@@ -141,6 +144,7 @@ struct args {
     j["project"].get_to(p.project_);
     j["image_size"].get_to(p.size_);
     j["layering"].get_to(p.layering_);
+    if (j.contains("bind_skin")) j["bind_skin"].get_to(p.bind_skin_);
   }
 };
 void fix_project(const FSys::path& in_project_path);
