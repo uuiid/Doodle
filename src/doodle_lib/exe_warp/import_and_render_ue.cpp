@@ -10,6 +10,8 @@
 #include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
+#include <doodle_lib/core/alembic_file.h>
+#include <doodle_lib/core/fbx_file.h>
 #include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -154,7 +156,26 @@ NearClipPlane=0.500000
   FSys::ofstream{l_file_path} << l_str;
 }
 void args::check_materials() {
+  std::vector<import_file*> l_files =
+      import_files_ | ranges::views::transform([](import_file& in_arg) { return &in_arg; }) |
+      ranges::views::filter([](import_file* in_arg) -> bool {
+        auto l_path = in_arg->file_;
+        return l_path.extension() == ".abc" && FSys::exists(l_path.replace_extension(".fbx"));
+      }) |
+      ranges::to_vector;
 
+  for (auto&& l_file : l_files) {
+    auto l_fbx_path = l_file->file_.replace_extension(".fbx");
+    auto l_abc_path = l_file->file_;
+
+    auto l_fbx_mat  = fbx::get_all_materials(l_fbx_path);
+    auto l_abc_mat  = alembic::get_all_materials(l_abc_path);
+    std::vector<std::string> l_intersection{};
+    std::ranges::set_intersection(l_abc_mat, l_fbx_mat, std::back_inserter(l_intersection));
+    if (!l_intersection.empty())
+      throw_exception(doodle_error{"错误的材质, 同时存在于解算和不解算物体上 :{}", l_intersection});
+    l_file->hide_materials_ = l_fbx_mat;
+  }
 }
 boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
