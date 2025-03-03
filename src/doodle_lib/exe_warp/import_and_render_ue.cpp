@@ -165,11 +165,11 @@ void args::check_materials() {
       ranges::to_vector;
 
   for (auto&& l_file : l_files) {
-    auto l_fbx_path = l_file->file_.replace_extension(".fbx");
-    auto l_abc_path = l_file->file_;
+    auto l_fbx_path = l_file->file_;
+    l_fbx_path.replace_extension(".fbx");
 
     auto l_fbx_mat  = fbx::get_all_materials(l_fbx_path);
-    auto l_abc_mat  = alembic::get_all_materials(l_abc_path);
+    auto l_abc_mat  = alembic::get_all_materials(l_file->file_);
     std::vector<std::string> l_intersection{};
     std::ranges::set_intersection(l_abc_mat, l_fbx_mat, std::back_inserter(l_intersection));
     if (!l_intersection.empty())
