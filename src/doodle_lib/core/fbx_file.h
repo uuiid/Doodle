@@ -3,3 +3,8 @@
 //
 
 #pragma once
+
+#include <doodle_core/doodle_core_fwd.h>
+namespace doodle::fbx {
+std::vector<std::string> get_all_materials(const FSys::path& in_path);
+}  // namespace doodle::fbx
