@@ -53,6 +53,7 @@ std::vector<std::string> get_all_materials(const FSys::path& in_path) {
     }
   };
   l_iter(l_top, &l_materials);
+  l_materials |= ranges::actions::unique | ranges::actions::sort;
 
   return l_materials;
 }
