@@ -12,7 +12,6 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/platform/win/register_file_type.h>
 
-#include <../../doodle_lib/http_method/local/task_info.h>
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/scan_win_service.h>
