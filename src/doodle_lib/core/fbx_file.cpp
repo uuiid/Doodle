@@ -13,7 +13,9 @@ std::vector<std::string> get_all_materials(const FSys::path& in_path) {
   l_manager->SetIOSettings(FbxIOSettings::Create(l_manager.get(), IOSROOT));
 
   FbxScene* l_scene = FbxScene::Create(l_manager.get(), "doodle_to_ue_fbx");
-  if (FbxImporter* l_importer = FbxImporter::Create(l_manager.get(), "");
+  if (const auto l_importer = std::shared_ptr<FbxImporter>(
+          FbxImporter::Create(l_manager.get(), ""), [](FbxImporter* in_ptr) { in_ptr->Destroy(); }
+      );
       l_importer->Initialize(in_path.generic_string().c_str(), -1, l_manager->GetIOSettings()))
     l_importer->Import(l_scene);
   else
