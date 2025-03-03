@@ -40,7 +40,7 @@ std::vector<std::string> get_all_materials(const FSys::path& in_path, bool in_sp
   };
 
   l_add_mats(l_root, &l_materials);
-  l_materials |= ranges::actions::unique | ranges::actions::sort;
+  l_materials |= ranges::actions::sort | ranges::actions::unique;
   if (in_split_namespace)
     for (auto&& i: l_materials) {
       i = i.substr(i.find_last_of(':') + 1);
