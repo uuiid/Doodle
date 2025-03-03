@@ -15,7 +15,7 @@
 #include <boost/test/unit_test_suite.hpp>
 BOOST_AUTO_TEST_CASE(alembic_get_mats) {
   auto l_str = doodle::alembic::get_all_materials(
-      "D:/test_files/vfx_24_11_07/abc/ZM_EP048_SC095A/ZM_EP048_SC095A_Ch070C_rig_1001-1157.abc"
+      R"(D:\test_files\test_ue_auto_main\test_auto_vfx\DBXY_EP360_SC003_AN\DBXY_EP360_SC003_AN_YeYuYJB_Rig_cyh_1001-1151.abc)"
   );
   BOOST_TEST(!l_str.empty());
   auto l_ss = fmt::format("{}", l_str);
@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(alembic_get_mats) {
 }
 BOOST_AUTO_TEST_CASE(fbx_get_mats) {
   auto l_str = doodle::fbx::get_all_materials(
-      R"(D:\test_files\vfx_24_11_07\abc\ZM_EP048_SC095A\ZM_EP048_SC095A_Ch070C_rig_1001-1157.fbx)"
+      R"(D:\test_files\test_ue_auto_main\test_auto_vfx\DBXY_EP360_SC003_AN\DBXY_EP360_SC003_AN_YeYuYJB_Rig_cyh_1001-1151.fbx)"
   );
   BOOST_TEST(!l_str.empty());
   auto l_ss = fmt::format("{}", l_str);
