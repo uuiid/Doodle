@@ -168,8 +168,8 @@ void args::check_materials() {
     auto l_fbx_path = l_file->file_;
     l_fbx_path.replace_extension(".fbx");
 
-    auto l_fbx_mat  = fbx::get_all_materials(l_fbx_path);
-    auto l_abc_mat  = alembic::get_all_materials(l_file->file_);
+    auto l_fbx_mat = fbx::get_all_materials(l_fbx_path);
+    auto l_abc_mat = alembic::get_all_materials(l_file->file_);
     std::vector<std::string> l_intersection{};
     std::ranges::set_intersection(l_abc_mat, l_fbx_mat, std::back_inserter(l_intersection));
     if (!l_intersection.empty())
@@ -347,14 +347,15 @@ boost::asio::awaitable<void> args::fetch_association_data() {
   if (l_scene_uuid.is_nil()) throw_exception(doodle_error{"未查找到主项目文件(没有找到场景文件)"});
 
   // 添加导入问价对应的sk文件
-  for (auto&& l_data : import_files_) {
-    if (l_data.is_camera_) continue;
-    if (l_data.type_ == details::assets_type_enum::scene) continue;
+  if (bind_skin_)
+    for (auto&& l_data : import_files_) {
+      if (l_data.is_camera_) continue;
+      if (l_data.type_ == details::assets_type_enum::scene) continue;
 
-    auto l_root     = l_data.ue_prj_path_.parent_path() / doodle_config::ue4_content;
-    auto l_original = l_data.ue_file_.lexically_relative(l_root);
-    l_data.skin_    = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-  }
+      auto l_root     = l_data.ue_prj_path_.parent_path() / doodle_config::ue4_content;
+      auto l_original = l_data.ue_file_.lexically_relative(l_root);
+      l_data.skin_    = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+    }
 }
 FSys::path args::create_move(const FSys::path& in_out_image_path) const {
   // 合成视屏
