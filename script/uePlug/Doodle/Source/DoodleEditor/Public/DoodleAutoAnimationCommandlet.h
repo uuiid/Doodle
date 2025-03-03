@@ -101,6 +101,9 @@ private:
 	/// 创建角色导入任务
 	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton) const;
 
+	/// 隐藏材质
+	void HideMaterials(const ASkeletalMeshActor* InActor) const;
+
 	// 修复材质属性
 	static void FixMaterialProperty();
 	/// 修复5.4版本的材质参数集问题
