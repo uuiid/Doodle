@@ -20,11 +20,17 @@ namespace doodle::http {
 
 namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> get_local_setting(session_data_ptr in_handle) {
+  FSys::path l_maya_path{};
+  try {
+    l_maya_path = maya_exe_ns::find_maya_path();
+  } catch (const doodle_error& e) {
+    default_logger_raw()->error("获取maya路径失败 {}", e.what());
+  }
   co_return in_handle->make_msg(
       nlohmann::json{
           {"maya_parallel_quantity", core_set::get_set().p_max_thread},
           {"authorize", g_ctx().get<authorization>().is_expire()},
-          {"maya_path", maya_exe_ns::find_maya_path()},
+          {"maya_path", l_maya_path},
           {"UE_path", core_set::get_set().ue4_path},
           {"UE_version", core_set::get_set().ue4_version},
       }
