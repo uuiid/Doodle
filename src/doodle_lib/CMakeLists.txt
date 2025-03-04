@@ -33,6 +33,13 @@ add_subdirectory(http_client)
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# 添加fbx动态库复制
+add_custom_command(
+        TARGET doodle_lib
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Fbx::Fbx> $<TARGET_FILE_DIR:doodle_lib>
+)
+
 # 如果使用mysql mariadb  连接器则需要这个函数
 # fix_mariadb_plug(NAME doodle_lib)
 # string(TIMESTAMP doodle_time "(%Y_y/ %m/ %d_d) + %Hh +%Mmin+ %Ss" UTC)
