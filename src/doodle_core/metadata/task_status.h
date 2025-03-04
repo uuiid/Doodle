@@ -23,7 +23,7 @@ struct DOODLE_CORE_API task_status {
   bool is_retake_;
   bool is_feedback_request_;
   bool is_default_;
-  std::int32_t shotgun_id_;
+  std::optional<std::int32_t> shotgun_id_;
   bool for_concept_;
 
   // form json

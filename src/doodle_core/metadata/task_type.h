@@ -19,7 +19,7 @@ struct task_type {
   std::string for_entity_;
   bool allow_timelog_;
   bool archived_;
-  std::int32_t shotgun_id_;
+  std::optional<std::int32_t> shotgun_id_;
 
   // from json
   template <typename BasicJsonType>

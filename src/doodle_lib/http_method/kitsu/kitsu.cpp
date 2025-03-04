@@ -154,7 +154,7 @@ boost::asio::awaitable<void> init_context_impl() {
   }
   if (l_data.get_all<person>().size() == 0) {
     boost::beast::http::request<boost::beast::http::empty_body> l_req{
-        boost::beast::http::verb::get, "/api/data/peoples", 11
+        boost::beast::http::verb::get, "/api/data/persons", 11
     };
     auto l_r = co_await g_ctx().get<std::shared_ptr<doodle::kitsu::kitsu_client>>()->get(std::move(l_req));
     for (auto& l_j : *l_r) {

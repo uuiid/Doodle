@@ -47,12 +47,12 @@ struct DOODLE_CORE_API person {
 
   bool active_;
   bool archived_;
-  chrono::system_zoned_time last_presence_;
+  std::optional<chrono::system_zoned_time> last_presence_;
 
   std::string password_;
   std::string desktop_login_;
   std::int32_t login_failed_attemps_;
-  chrono::system_zoned_time last_login_failed_;
+  std::optional<chrono::system_zoned_time> last_login_failed_;
   bool totp_enabled_;
   std::string totp_secret_;
   bool email_otp_enabled_;
@@ -60,9 +60,9 @@ struct DOODLE_CORE_API person {
   bool fido_enabled_;
   std::string fido_credentials_;
   std::string otp_recovery_codes_;
-  two_factor_authentication_types preferred_two_factor_authentication_;
+  std::optional<two_factor_authentication_types> preferred_two_factor_authentication_;
 
-  std::int32_t shotgun_id_;
+  std::optional<std::int32_t> shotgun_id_;
   std::string timezone_;
   std::string locale_;
   std::string data_;

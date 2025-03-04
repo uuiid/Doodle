@@ -53,7 +53,7 @@ struct project {
   std::string name_;
   std::string code_;
   std::string description_;
-  std::int64_t shotgun_id_;
+  std::optional<std::int64_t> shotgun_id_;
   nlohmann::json file_tree_;
   nlohmann::json data_;
   bool has_avatar_;
