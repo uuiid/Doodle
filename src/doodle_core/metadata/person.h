@@ -79,7 +79,7 @@ struct DOODLE_CORE_API person {
 
   bool is_bot_;
   std::string jti_;
-  chrono::system_zoned_time expiration_date_;
+  std::optional<chrono::system_zoned_time> expiration_date_;
 
   std::vector<uuid> departments_;
   uuid studio_id_;

@@ -317,7 +317,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       ),
 
       make_table(
-          "person_department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
+          "department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
           make_column("person_id", &person_department_link::person_id_),
           make_column("department_id", &person_department_link::department_id_),
           foreign_key(&person_department_link::person_id_).references(&person::uuid_id_).on_delete.cascade(),
