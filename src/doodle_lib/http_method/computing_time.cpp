@@ -526,7 +526,64 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   } else
     co_return in_handle->make_msg(l_r->dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_sort(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "不是json请求"
+    );
+  auto l_json       = std::get<nlohmann::json>(in_handle->body_);
+  auto l_data       = l_json.get<std::vector<uuid>>();
+  auto l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  auto l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
 
+  user_helper::database_t l_user{};
+
+  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::not_found,
+        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
+    );
+  else
+    l_user = std::move(*l_users.begin());
+
+  const auto l_block =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
+
+  {
+    // 检查排序
+    if (l_block.size() != l_data.size())
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "排序错误传入的列表不是总列表"});
+    std::vector<uuid> l_tmp = l_data;
+    std::vector<uuid> l_tmp2 =
+        l_block | ranges::views::transform([](auto& in) { return in.uuid_id_; }) | ranges::to_vector;
+    l_tmp |= ranges::actions::sort;
+    l_tmp2 |= ranges::actions::sort;
+    if (l_tmp != l_tmp2)
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "排序列表和总列表id不一致"});
+  }
+
+  std::map<uuid, const work_xlsx_task_info_helper::database_t*> l_map =
+      l_block | ranges::views::transform([](const work_xlsx_task_info_helper::database_t& in) {
+        return std::make_pair(in.uuid_id_, &in);
+      }) |
+      ranges::to<std::map<uuid, const work_xlsx_task_info_helper::database_t*>>;
+
+  auto l_block_sort = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+
+  for (int i = 0; i < l_data.size(); ++i) {
+    auto&& l_d      = l_block_sort->emplace_back(*l_map[l_data.at(i)]);
+    l_d.start_time_ = l_block.at(i).start_time_;
+    l_d.end_time_   = l_block.at(i).end_time_;
+  }
+
+  auto l_time_clock = create_time_clock(l_year_month, l_user.id_);
+  recomputing_time_run(l_year_month, l_time_clock, *l_block_sort);
+  co_await g_ctx().get<sqlite_database>().install_range(l_block_sort);
+  nlohmann::json l_json_res{};
+  l_json_res["data"] = *l_block_sort;
+  co_return in_handle->make_msg(l_json_res.dump());
+}
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get(session_data_ptr in_handle) {
   auto l_logger                   = in_handle->logger_;
 
@@ -686,6 +743,12 @@ void reg_computing_time(http_route& in_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/custom",
+              computing_time_post_custom
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/sort",
               computing_time_post_custom
           )
       )
