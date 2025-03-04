@@ -749,7 +749,7 @@ void reg_computing_time(http_route& in_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/sort",
-              computing_time_post_custom
+              computing_time_post_sort
           )
       )
       .reg(
