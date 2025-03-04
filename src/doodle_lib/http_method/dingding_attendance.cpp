@@ -141,12 +141,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     };
     l_attendance_list->emplace_back(std::move(l_attendance));
   }
+  if (l_modify_user) co_await l_sqlite.install(std::make_shared<user_helper::database_t>(l_user));
 
-  // 切换到主线程
-
-  if (l_modify_user) {
-    co_await l_sqlite.install(std::make_shared<user_helper::database_t>(l_user));
-  }
   if (!l_attends.empty()) {
     auto l_rem = std::make_shared<std::vector<std::int64_t>>();
     for (auto&& id : l_attends) {
@@ -170,8 +166,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
-
   std::vector<chrono::local_days> l_date_list{};
   boost::uuids::uuid l_user_uuid{};
 
@@ -209,14 +203,37 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_get(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
-
-  auto l_cs     = g_ctx().get<dingding::dingding_company>();
+  auto l_cs = g_ctx().get<dingding::dingding_company>();
   nlohmann::json l_json{};
   for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
     l_json.emplace_back(l_value);
   }
   co_return in_handle->make_msg(l_json.dump());
+}
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_add(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求格式不正确"});
+
+  auto l_user_id = from_uuid_str(in_handle->capture_->get("user_id"));
+  auto l_data    = std::make_shared<attendance_helper::database_t>(
+      std::move(std::get<nlohmann::json>(in_handle->body_).get<attendance_helper::database_t>())
+  );
+  if (l_data->type_ == attendance_helper::att_enum::max)
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "类型错误"});
+  auto l_user = std::make_shared<user_helper::database_t>();
+  auto& l_sql = g_ctx().get<sqlite_database>();
+  if (auto l_users = l_sql.get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "未找到用户,请检查id"});
+  else
+    *l_user = l_users.front();
+
+  l_data->uuid_id_     = l_user->uuid_id_;
+  l_data->user_ref     = l_user->id_;
+  l_data->update_time_ = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
+  const chrono::year_month_day l_date{l_data->create_date_};
+  co_await l_sql.install(l_data);
+  co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
+  co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
 
 void reg_dingding_attendance(http_route& in_route) {
@@ -228,9 +245,13 @@ void reg_dingding_attendance(http_route& in_route) {
       )
       .reg(
           std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
+              boost::beast::http::verb::post, "api/doodle/attendance/{user_id}/custom", dingding_attendance_custom_add
           )
       )
-       ;
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
+          )
+      );
 }
-} // namespace doodle::http
+}  // namespace doodle::http

@@ -11,6 +11,12 @@ enum class att_enum : std::uint32_t {
   // 最大值
   max      = 2
 };
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    att_enum, {{att_enum::overtime, "overtime"}, {att_enum::leave, "leave"}, {att_enum::max, "max"}}
+
+)
+
 struct database_t {
   std::int32_t id_{};
   uuid uuid_id_{};
@@ -29,7 +35,15 @@ struct database_t {
     j["start_time"] = p.start_time_;
     j["end_time"]   = p.end_time_;
     j["remark"]     = p.remark_;
-    j["type"] = static_cast<std::uint32_t>(p.type_);
+    j["type"]       = p.type_;
+    j["is_custom"]  = p.dingding_id_.empty();
+  }
+  friend void from_json(const nlohmann::json& j, database_t& p) {
+    j.at("start_time").get_to(p.start_time_);
+    j.at("create_date").get_to(p.create_date_);
+    j.at("end_time").get_to(p.end_time_);
+    j.at("remark").get_to(p.remark_);
+    j.at("type").get_to(p.type_);
   }
 };
 }  // namespace attendance_helper
