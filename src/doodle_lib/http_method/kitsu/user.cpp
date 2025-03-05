@@ -113,7 +113,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   for (auto&& l_project : l_json["projects"]) {
     auto l_id = l_project["id"].get<uuid>();
     nlohmann::json l_j{};
-    l_j = l_database.get_by_uuid<project_helper::database_t>(l_id);
+
+    l_j = !!l_database.uuid_to_id<project_helper::database_t>(l_id)
+              ? l_database.get_by_uuid<project_helper::database_t>(l_id)
+              : project_helper::database_t{};
     l_j.update(l_project);
     l_project = l_j;
   }
