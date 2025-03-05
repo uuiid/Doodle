@@ -89,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
         if (auto l_p = g_ctx().get<sqlite_database>().get_by_uuid<metadata::kitsu::task_type_t>(
                 l_json_task["task_type_id"].get<uuid>()
             );
-            !l_p.empty() && l_p.front().use_chick_files) {
+            l_p.use_chick_files) {
           if (l_user_data.contains("gui_dang") &&  //
               l_user_data.contains("pin_yin_ming_cheng")) {
             std::int32_t l_gui_dang{};
@@ -112,7 +112,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_with_task
             };
             l_file_exist = l_map.contains(l_key);
             if (l_file_exist)
-              if (l_p.front().name_ == "绑定")
+              if (l_p.name_ == "绑定")
                 l_path = l_map.at(l_key)->rig_file_.path_;
               else
                 l_path = l_map.at(l_key)->ue_file_.path_;

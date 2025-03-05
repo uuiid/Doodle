@@ -231,14 +231,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求格式不正确"});
 
-  auto l_id = from_uuid_str(in_handle->capture_->get("id"));
+  auto l_id   = from_uuid_str(in_handle->capture_->get("id"));
   auto l_data = std::make_shared<attendance_helper::database_t>(
       g_ctx().get<sqlite_database>().get_by_uuid<attendance_helper::database_t>(l_id)
   );
+  std::get<nlohmann::json>(in_handle->body_).get_to(*l_data);
+  l_data->update_time_ = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
+  const chrono::year_month_day l_date{l_data->create_date_};
+  auto& l_sql = g_ctx().get<sqlite_database>();
+  co_await l_sql.install(l_data);
+  auto l_user = std::make_shared<user_helper::database_t>(
+      l_sql.get_by_uuid<user_helper::database_t>(l_sql.id_to_uuid<user_helper::database_t>(l_data->user_ref))
+  );
+  co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
+  co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete(
     session_data_ptr in_handle
-) {}
+) {
+  auto l_id = from_uuid_str(in_handle->capture_->get("id"));
+  auto& l_sql = g_ctx().get<sqlite_database>();
+  co_await l_sql.remove<attendance_helper::database_t>(std::make_shared<uuid>(l_id));
+  co_return in_handle->make_msg((nlohmann::json{} = l_id).dump());
+}
 void reg_dingding_attendance(http_route& in_route) {
   in_route
       .reg(

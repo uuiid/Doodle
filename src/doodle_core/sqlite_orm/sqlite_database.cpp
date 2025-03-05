@@ -64,6 +64,14 @@ DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
 
+
+DOODLE_ID_TO_UUID(project_helper::database_t)
+DOODLE_ID_TO_UUID(user_helper::database_t)
+DOODLE_ID_TO_UUID(metadata::kitsu::task_type_t)
+DOODLE_ID_TO_UUID(assets_file_helper::database_t)
+DOODLE_ID_TO_UUID(assets_helper::database_t)
+DOODLE_ID_TO_UUID(computer)
+
 template <>
 work_xlsx_task_info_helper::database_t sqlite_database::get_by_uuid<work_xlsx_task_info_helper::database_t>(
     const uuid& in_uuid

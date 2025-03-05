@@ -69,8 +69,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
   using time_point = std::chrono::time_point<Clock, Duration>;
   static void to_json(json& j, const time_point& in_time) {
     try {
-      if (in_time.time_since_epoch() <= Duration{0} &&
-          std::is_same_v<Clock, std::chrono::local_t>)
+      if (in_time.time_since_epoch() <= Duration{0} && std::is_same_v<Clock, std::chrono::local_t>)
         j = "1970-01-01 00:00:00";
       else
         j = fmt::format("{:%F %T}", in_time);
@@ -102,7 +101,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
   static void from_json(const json& j, time_point& in_time) {
     auto& l_str = j.get_ref<const std::string&>();
     std::istringstream in{l_str};
-    std::chrono::system_clock::time_point l_time{};
+    std::chrono::time_point<std::chrono::system_clock, Duration> l_time{};
     if (in >> std::chrono::parse("%FT%TZ", l_time))
       ;
     else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%FT%T%Ez", l_time))

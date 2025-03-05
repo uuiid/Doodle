@@ -90,11 +90,16 @@ std::vector<T> string_to_enum_array(const std::string& t) {
   std::int64_t sqlite_database::uuid_to_id<class_name>(const uuid& in_uuid) { \
     return impl_->uuid_to_id<class_name>(in_uuid);                            \
   }
+#define DOODLE_ID_TO_UUID(class_name)                                \
+  template <>                                                        \
+  uuid sqlite_database::id_to_uuid<class_name>(std::int64_t in_id) { \
+    return impl_->id_to_uuid<class_name>(in_id);                     \
+  }
 
-#define DOODLE_GET_BY_UUID_SQL(class_name)                                                \
-  template <>                                                                             \
+#define DOODLE_GET_BY_UUID_SQL(class_name)                                   \
+  template <>                                                                \
   class_name sqlite_database::get_by_uuid<class_name>(const uuid& in_uuid) { \
-    return impl_->get_by_uuid<class_name>(in_uuid);                                       \
+    return impl_->get_by_uuid<class_name>(in_uuid);                          \
   }
 
 #define DOODLE_GET_ALL_SQL(class_name)                 \

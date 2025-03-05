@@ -51,6 +51,9 @@ class sqlite_database {
   std::int64_t uuid_to_id(const uuid& in_uuid);
 
   template <typename T>
+  uuid id_to_uuid(std::int64_t in_id);
+
+  template <typename T>
   T get_by_uuid(const uuid& in_uuid);
 
   template <typename T>
@@ -87,9 +90,5 @@ class sqlite_database {
   std::vector<server_task_info> get_server_task_info_by_type(const server_task_info_type& in_user_id);
 
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
-
-
-
-
 };
 }  // namespace doodle
