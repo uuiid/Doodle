@@ -552,7 +552,7 @@ struct sqlite_database_impl {
     using namespace sqlite_orm;
     auto l_vec = storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
     if (l_vec.empty())
-      throw_error(doodle_error{"id对应的实体不存在"});
+      throw_exception(doodle_error{"id对应的实体不存在"});
     return l_vec[0];
   }
 
