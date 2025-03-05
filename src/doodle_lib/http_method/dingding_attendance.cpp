@@ -219,7 +219,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_user      = std::make_shared<user_helper::database_t>(l_sql.get_by_uuid<user_helper::database_t>(l_user_id));
   l_data->uuid_id_ = l_user->uuid_id_;
   l_data->user_ref = l_user->id_;
-  l_data->update_time_ = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
+  l_data->uuid_id_ = core_set::get_set().get_uuid();
+  l_data->update_time_ = {
+      chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+  };
   const chrono::year_month_day l_date{l_data->create_date_};
   co_await l_sql.install(l_data);
   co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
@@ -236,7 +239,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       g_ctx().get<sqlite_database>().get_by_uuid<attendance_helper::database_t>(l_id)
   );
   std::get<nlohmann::json>(in_handle->body_).get_to(*l_data);
-  l_data->update_time_ = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
+  l_data->update_time_ = {
+      chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
+  };
   const chrono::year_month_day l_date{l_data->create_date_};
   auto& l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.install(l_data);
