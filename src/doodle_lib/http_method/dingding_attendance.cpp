@@ -268,7 +268,7 @@ void reg_dingding_attendance(http_route& in_route) {
       )
       .reg(
           std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/attendance/custom/{id}", dingding_attendance_custom_modify
+              boost::beast::http::verb::put, "api/doodle/attendance/custom/{id}", dingding_attendance_custom_modify
           )
       )
       .reg(

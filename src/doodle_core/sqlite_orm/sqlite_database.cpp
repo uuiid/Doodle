@@ -63,6 +63,7 @@ DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
+DOODLE_UUID_TO_ID(attendance_helper::database_t)
 
 
 DOODLE_ID_TO_UUID(project_helper::database_t)
@@ -71,6 +72,7 @@ DOODLE_ID_TO_UUID(metadata::kitsu::task_type_t)
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
 DOODLE_ID_TO_UUID(computer)
+DOODLE_ID_TO_UUID(attendance_helper::database_t)
 
 template <>
 work_xlsx_task_info_helper::database_t sqlite_database::get_by_uuid<work_xlsx_task_info_helper::database_t>(
@@ -88,6 +90,7 @@ DOODLE_GET_BY_UUID_SQL(project_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(server_task_info)
+DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 
 DOODLE_GET_ALL_SQL(project_helper::database_t)
 DOODLE_GET_ALL_SQL(user_helper::database_t)
@@ -132,6 +135,7 @@ DOODLE_INSTALL_SQL(asset_type)
 DOODLE_INSTALL_SQL(task_type_asset_type_link)
 DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(person)
+DOODLE_INSTALL_SQL(attendance_helper::database_t)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
@@ -156,5 +160,6 @@ DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(server_task_info)
+DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 
 }  // namespace doodle
