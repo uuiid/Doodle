@@ -172,6 +172,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     std::istringstream l_date_stream{l_date};
     l_date_stream >> chrono::parse("%Y-%m", l_ym);
     if (!l_date_stream.eof()) {
+      l_date_stream.str(l_date);
       l_date_stream >> chrono::parse("%Y-%m-%d", l_ymd);
       l_date_list.emplace_back(l_ymd);
     } else {

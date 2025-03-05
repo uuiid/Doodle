@@ -31,7 +31,7 @@ struct database_t {
   std::string dingding_id_{};  // 钉钉id
   std::int64_t user_ref{};
   friend void to_json(nlohmann::json& j, const database_t& p) {
-    j["id"]         = fmt::to_string(p.id_);
+    j["id"]         = p.uuid_id_;
     j["start_time"] = p.start_time_;
     j["end_time"]   = p.end_time_;
     j["remark"]     = p.remark_;

@@ -6,7 +6,7 @@
         "VSCODE_VERSION": "insiders",
         "ELECTRON_RUN_AS_NODE": null
     },
-    "mochaExplorer.files": "test*.js",
+    // "mochaExplorer.files": "test*.js",
     // "mochaExplorer.require": "source-map-support/register",
     // "mochaExplorer.watch": "out/**/*.js"
 }
