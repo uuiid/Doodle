@@ -65,14 +65,11 @@ DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
 
 template <>
-std::vector<work_xlsx_task_info_helper::database_t>
-sqlite_database::get_by_uuid<work_xlsx_task_info_helper::database_t>(const uuid& in_uuid) {
-  auto l_list = impl_->get_by_uuid<work_xlsx_task_info_helper::database_t>(in_uuid);
-
-  for (auto& l_item : l_list) {
-    l_item.user_id_ = impl_->id_to_uuid<user_helper::database_t>(l_item.user_ref_);
-  }
-
+work_xlsx_task_info_helper::database_t sqlite_database::get_by_uuid<work_xlsx_task_info_helper::database_t>(
+    const uuid& in_uuid
+) {
+  auto l_list     = impl_->get_by_uuid<work_xlsx_task_info_helper::database_t>(in_uuid);
+  l_list.user_id_ = impl_->id_to_uuid<user_helper::database_t>(l_list.user_ref_);
   return l_list;
 }
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)

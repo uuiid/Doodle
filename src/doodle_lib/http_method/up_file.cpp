@@ -83,8 +83,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(
 
   auto l_prj =
       g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
-  if (l_prj.empty()) throw_exception(doodle_error{"未找到对应的项目"});
-  l_d             = l_prj.front().path_ / gen_path_from_json_ma(l_json) / (*in_path)(l_json) / l_d;
+  l_d             = l_prj.path_ / gen_path_from_json_ma(l_json) / (*in_path)(l_json) / l_d;
 
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
   if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());

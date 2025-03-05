@@ -123,8 +123,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post_modify
 boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
 
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(*l_uuid);
-      !l_list.empty() && l_list.front().active_)
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(*l_uuid); l_list.active_)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "节点正在使用中, 无法删除");
   uuid l_user_uuid{};
   if (in_handle->req_header_.count(boost::beast::http::field::authorization) > 0) {
@@ -142,16 +141,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete(sess
   if (l_user_uuid.is_nil())
     co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, "请先登录");
 
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_uuid); l_list.empty())
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, "无效的token");
-  else {
-    switch (l_list.front().power_) {
-      case power_enum::admin:
-      case power_enum::manager:
-        break;
-      default:
-        co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "权限不足");
-    }
+  switch (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_uuid);
+          l_list.power_) {
+    case power_enum::admin:
+    case power_enum::manager:
+      break;
+    default:
+      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "权限不足");
   }
 
   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid);
@@ -181,10 +177,10 @@ void assets_reg(http_route& in_http_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::patch, "api/doodle/model_library/assets", assets_post_modify_batch
-  ))
+          )
+      )
 
-
-  ;
+      ;
 }
 
 }  // namespace doodle::http::kitsu

@@ -67,13 +67,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_
 
 boost::asio::awaitable<boost::beast::http::message_generator> get_task(session_data_ptr in_handle) {
   uuid l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
-
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid); !l_list.empty()) {
-    l_list[0].get_last_line_log();
-    co_return in_handle->make_msg((nlohmann::json{} = l_list[0]).dump());
-  }
-
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务不存在");
+  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid);
+  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> list_task(session_data_ptr in_handle) {
@@ -131,9 +126,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger_mi
 }
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
-
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid);
-      !l_list.empty() && l_list.front().status_ == server_task_info_status::running) {
+  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid);
+  if (l_list.status_ == server_task_info_status::running) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
@@ -320,7 +314,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         task_info_->status_ = server_task_info_status::completed;
     } catch (...) {
       task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-      task_info_->status_        = server_task_info_status::failed;
+      task_info_->status_   = server_task_info_status::failed;
       task_info_->last_line_log_ = boost::current_exception_diagnostic_information();
       logger_->error(task_info_->last_line_log_);
     }
@@ -397,11 +391,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 
 boost::asio::awaitable<boost::beast::http::message_generator> post_task_local_restart(session_data_ptr in_handle) {
   auto l_id  = from_uuid_str(in_handle->capture_->get("id"));
-  auto l_ptr = std::make_shared<server_task_info>();
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_id); !l_list.empty()) {
-    *l_ptr = l_list[0];
-  } else
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务不存在");
+  auto l_ptr = std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_id));
   switch (l_ptr->status_) {
     case server_task_info_status::submitted:
     case server_task_info_status::assigned:
@@ -452,15 +442,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
 
 boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
-  auto l_server_task_info = std::make_shared<server_task_info>();
+  auto l_server_task_info = std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid));
 
-  server_task_info l_server_task_info_org{};
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid); l_list.empty()) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "任务不存在");
-  } else {
-    *l_server_task_info    = l_list[0];
-    l_server_task_info_org = l_list[0];
-  }
+  server_task_info l_server_task_info_org{*l_server_task_info};
   auto l_sr   = l_server_task_info->status_;
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
   if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);

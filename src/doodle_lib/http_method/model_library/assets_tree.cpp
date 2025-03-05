@@ -135,27 +135,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete(session_data_ptr in_handle) {
-  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
-
-  if (auto l_e = g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(*l_uuid); !l_e.empty()) {
-    auto& l_uuid_ = l_e.front().uuid_id_;
-    if (const auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_helper::database_t>(l_uuid_);
-        !l_r.empty())
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
-
-    if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(l_uuid_);
-        !l_r.empty() &&
-        std::ranges::any_of(l_r, [](const assets_file_helper::database_t& l_item) -> bool { return l_item.active_; }))
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
-    else if (!l_r.empty()) {
-      auto l_rem = std::make_shared<std::vector<std::int64_t>>();
-      l_rem->reserve(l_r.size());
-      for (const auto& l_item : l_r) {
-        l_rem->push_back(l_item.id_);
-      }
-      co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_rem);
-    }
-  }
+  auto l_uuid  = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
+  if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(*l_uuid);
+      !l_r.empty() &&
+      std::ranges::any_of(l_r, [](const assets_file_helper::database_t& l_item) -> bool { return l_item.active_; }))
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
+  // else if (!l_r.empty()) {
+  //   auto l_rem = std::make_shared<std::vector<std::int64_t>>();
+  //   l_rem->reserve(l_r.size());
+  //   for (const auto& l_item : l_r) {
+  //     l_rem->push_back(l_item.id_);
+  //   }
+  //   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_rem);
+  // }
   co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid);
 
   co_return in_handle->make_msg("{}");
@@ -187,10 +179,9 @@ void assets_tree_reg(http_route& in_http_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::patch, "api/doodle/model_library/assets_tree", assets_tree_patch
-      )
+          )
       )
 
-
-  ;
+      ;
 }
 }  // namespace doodle::http::kitsu

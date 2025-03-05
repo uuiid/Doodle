@@ -45,11 +45,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       parse_time<chrono::year_month_day>(l_json_1["work_date"].get<std::string>(), "%Y-%m-%d");
 
   auto& l_sqlite = g_ctx().get<sqlite_database>();
-  auto l_users   = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
-
-  if (l_users.empty()) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有用户");
-  auto l_user = l_users.front();
-  auto& l_d   = g_ctx().get<const dingding::dingding_company>();
+  auto l_user    = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
+  auto& l_d      = g_ctx().get<const dingding::dingding_company>();
   if (l_user.dingding_company_id_.is_nil() && !l_d.company_info_map_.contains(l_user.dingding_company_id_))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
 
@@ -184,15 +181,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       l_date_list.emplace_back(l_day);
     }
   }
-  l_user_uuid  = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
+  l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
 
-  auto& l_sql  = g_ctx().get<sqlite_database>();
-  auto l_users = l_sql.get_by_uuid<user_helper::database_t>(l_user_uuid);
-  if (l_users.empty()) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户不存在");
-  }
-  auto& l_user = l_users.front();
-  auto l_list  = l_sql.get_attendance(l_user.id_, l_date_list);
+  auto& l_sql = g_ctx().get<sqlite_database>();
+  auto l_user = l_sql.get_by_uuid<user_helper::database_t>(l_user_uuid);
+  auto l_list = l_sql.get_attendance(l_user.id_, l_date_list);
   l_list |= ranges::actions::remove_if([](const attendance_helper::database_t& in_) {
     return in_.type_ == attendance_helper::att_enum::max;
   });
@@ -210,7 +203,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_g
   }
   co_return in_handle->make_msg(l_json.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_add(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_add(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求格式不正确"});
 
@@ -220,22 +215,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   );
   if (l_data->type_ == attendance_helper::att_enum::max)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "类型错误"});
-  auto l_user = std::make_shared<user_helper::database_t>();
-  auto& l_sql = g_ctx().get<sqlite_database>();
-  if (auto l_users = l_sql.get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "未找到用户,请检查id"});
-  else
-    *l_user = l_users.front();
-
-  l_data->uuid_id_     = l_user->uuid_id_;
-  l_data->user_ref     = l_user->id_;
+  auto& l_sql      = g_ctx().get<sqlite_database>();
+  auto l_user      = std::make_shared<user_helper::database_t>(l_sql.get_by_uuid<user_helper::database_t>(l_user_id));
+  l_data->uuid_id_ = l_user->uuid_id_;
+  l_data->user_ref = l_user->id_;
   l_data->update_time_ = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
   const chrono::year_month_day l_date{l_data->create_date_};
   co_await l_sql.install(l_data);
   co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_modify(
+    session_data_ptr in_handle
+) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求格式不正确"});
 
+  auto l_id = from_uuid_str(in_handle->capture_->get("id"));
+  auto l_data = std::make_shared<attendance_helper::database_t>(
+      g_ctx().get<sqlite_database>().get_by_uuid<attendance_helper::database_t>(l_id)
+  );
+}
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete(
+    session_data_ptr in_handle
+) {}
 void reg_dingding_attendance(http_route& in_route) {
   in_route
       .reg(
@@ -246,6 +249,16 @@ void reg_dingding_attendance(http_route& in_route) {
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::post, "api/doodle/attendance/{user_id}/custom", dingding_attendance_custom_add
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/attendance/custom/{id}", dingding_attendance_custom_modify
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::delete_, "api/doodle/attendance/custom/{id}", dingding_attendance_custom_delete
           )
       )
       .reg(

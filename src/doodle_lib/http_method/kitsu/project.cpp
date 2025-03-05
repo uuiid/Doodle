@@ -20,13 +20,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
 
   const auto& l_json = std::get<nlohmann::json>(in_handle->body_);
 
-  auto l_prj         = std::make_shared<project_helper::database_t>();
+  auto l_prj         = std::make_shared<project_helper::database_t>(
+      g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid)
+  );
 
-  if (auto l_prj_t = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); !l_prj_t.empty()) {
-    *l_prj = l_prj_t.front();
-  } else {
-    l_prj->uuid_id_ = l_uuid;
-  }
   auto l_org_prj = *l_prj;
   l_json.get_to(*l_prj);
   if (l_org_prj != *l_prj) co_await g_ctx().get<sqlite_database>().install(l_prj);
@@ -42,11 +39,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
 
   auto l_json_r = nlohmann::json::parse(l_res.body());
   nlohmann::json l_j{};
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid); l_list.empty()) {
-    l_j = project_helper::database_t{};
-  } else {
-    l_j = l_list.front();
-  }
+  l_j = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid);
   l_j.update(l_json_r);
   l_res.body() = l_j.dump();
   l_res.prepare_payload();
@@ -69,11 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_project_all(se
   for (auto& l_item : l_json) {
     uuid l_id = l_item["id"].get<uuid>();
     nlohmann::json l_j{};
-    if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_id); l_list.empty()) {
-      l_j = project_helper::database_t{};
-    } else {
-      l_j = l_list.front();
-    }
+    l_j = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_id);
     l_j.update(l_item);
     l_item = l_j;
   }
@@ -104,8 +93,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_project(sessi
 void project_reg(http_route& in_http_route) {
   in_http_route
       .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/projects/{id}", put_project))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/projects", get_project_all))
 #ifndef NDEBUG
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/projects", get_project_all))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/projects", post_project))
 #endif
       ;

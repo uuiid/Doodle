@@ -30,9 +30,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
   auto& l_user    = l_json["user"];
   auto l_user_id  = l_user["id"].get<uuid>();
 
-  auto l_users    = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
-  auto l_user_ptr = std::make_shared<user_helper::database_t>();
-  if (!l_users.empty()) *l_user_ptr = l_users.front();
+  auto l_user_ptr = std::make_shared<user_helper::database_t>(
+      g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id)
+  );
   std::string l_phone{};
   if (l_user["phone"].is_string()) l_phone = l_user["phone"].get<std::string>();
 
@@ -57,12 +57,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   uuid l_uuid  = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
   auto& l_json = std::get<nlohmann::json>(in_handle->body_);
-  auto l_user  = std::make_shared<user_helper::database_t>();
-  if (auto l_user_t = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_uuid); !l_user_t.empty()) {
-    *l_user = l_user_t.front();
-  } else {
-    l_user->uuid_id_ = l_uuid;
-  }
+  auto l_user  = std::make_shared<user_helper::database_t>(
+      g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_uuid)
+  );
   if (l_json["mobile"].is_string()) l_user->mobile_ = l_json["mobile"].get<std::string>();
   l_user->power_ = l_json["power"].get<power_enum>();
   if (l_json["dingding_company_id"].is_string()) {
@@ -116,11 +113,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   for (auto&& l_project : l_json["projects"]) {
     auto l_id = l_project["id"].get<uuid>();
     nlohmann::json l_j{};
-    if (auto l_prj = l_database.get_by_uuid<project_helper::database_t>(l_id); l_prj.empty()) {
-      l_j = project_helper::database_t{};
-    } else {
-      l_j = l_prj.front();
-    }
+    l_j = l_database.get_by_uuid<project_helper::database_t>(l_id);
     l_j.update(l_project);
     l_project = l_j;
   }

@@ -51,7 +51,7 @@ class sqlite_database {
   std::int64_t uuid_to_id(const uuid& in_uuid);
 
   template <typename T>
-  std::vector<T> get_by_uuid(const uuid& in_uuid);
+  T get_by_uuid(const uuid& in_uuid);
 
   template <typename T>
   boost::asio::awaitable<void> install(const std::shared_ptr<T>& in_data);

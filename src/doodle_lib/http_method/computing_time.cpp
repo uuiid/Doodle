@@ -354,17 +354,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
   l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
 
-  user_helper::database_t l_user{};
-
-  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id);
-      l_users.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
-    );
-  else
-    l_user = std::move(*l_users.begin());
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id);
+  auto l_block_ptr               = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
 
@@ -393,17 +384,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
   l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
 
-  user_helper::database_t l_user{};
-  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id);
-      l_users.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
-    );
-  else
-    l_user = std::move(*l_users.begin());
-
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id);
+  auto l_block_ptr               = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
   {
@@ -477,17 +459,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
         "project_id 不可为空"
     );
 
-  user_helper::database_t l_user{};
-  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id_);
-      l_users.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
-    );
-  else
-    l_user = std::move(*l_users.begin());
-
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id_);
+  auto l_block_ptr               = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_data.year_month_ / 1});
 
@@ -532,20 +505,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
         "不是json请求"
     );
-  auto l_json       = std::get<nlohmann::json>(in_handle->body_);
-  auto l_data       = l_json.get<std::vector<uuid>>();
-  auto l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
-  auto l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
+  auto l_json                    = std::get<nlohmann::json>(in_handle->body_);
+  auto l_data                    = l_json.get<std::vector<uuid>>();
+  auto l_user_id                 = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  auto l_year_month              = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
 
-  user_helper::database_t l_user{};
-
-  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
-    );
-  else
-    l_user = std::move(*l_users.begin());
+  user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
 
   const auto l_block =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
@@ -590,16 +555,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
   boost::uuids::uuid l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
   chrono::year_month l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
 
-  user_helper::database_t l_user{};
-
-  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
-    );
-  else
-    l_user = std::move(*l_users.begin());
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  user_helper::database_t l_user  = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
+  auto l_block_ptr                = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
 
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
@@ -638,17 +595,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     );
   }
 
-  user_helper::database_t l_user{};
-
-  if (auto l_users = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id); l_users.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "找不到用户"
-    );
-  else
-    l_user = std::move(*l_users.begin());
-
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
+  auto l_block_ptr               = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
 
@@ -693,26 +641,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   boost::uuids::uuid l_computing_time_id =
       boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("computing_time_id"));
 
-  auto l_rem = g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
+  work_xlsx_task_info_helper::database_t l_task =
+      g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
   nlohmann::json l_json_res{};
-  if (!l_rem.empty()) {
-    auto& l_task = l_rem.front();
-    co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(
-        std::make_shared<std::vector<std::int64_t>>(std::vector<std::int64_t>{l_task.id_})
-    );
-    chrono::year_month_day l_year_month_day{l_task.year_month_};
-    chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
+  co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(
+      std::make_shared<std::vector<std::int64_t>>(std::vector<std::int64_t>{l_task.id_})
+  );
+  chrono::year_month_day l_year_month_day{l_task.year_month_};
+  chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
 
-    auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-    *l_block_ptr      = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_task.user_ref_, l_task.year_month_);
+  auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr      = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_task.user_ref_, l_task.year_month_);
 
-    auto l_time_clock = create_time_clock(l_year_month, l_task.user_ref_);
-    recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
+  auto l_time_clock = create_time_clock(l_year_month, l_task.user_ref_);
+  recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
 
-    co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
+  co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
-    l_json_res["data"] = *l_block_ptr;
-  }
+  l_json_res["data"] = *l_block_ptr;
   co_return in_handle->make_msg(l_json_res.dump());
 }
 
