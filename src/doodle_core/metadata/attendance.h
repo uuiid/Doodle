@@ -39,11 +39,11 @@ struct database_t {
     j["is_custom"]  = p.dingding_id_.empty();
   }
   friend void from_json(const nlohmann::json& j, database_t& p) {
-    j.at("start_time").get_to(p.start_time_);
-    j.at("create_date").get_to(p.create_date_);
-    j.at("end_time").get_to(p.end_time_);
-    j.at("remark").get_to(p.remark_);
-    j.at("type").get_to(p.type_);
+    if (j.contains("start_time")) j.at("start_time").get_to(p.start_time_);
+    if (j.contains("end_time")) j.at("end_time").get_to(p.end_time_);
+    if (j.contains("remark")) j.at("remark").get_to(p.remark_);
+    if (j.contains("type")) j.at("type").get_to(p.type_);
+    if (j.contains("create_date")) j.at("create_date").get_to(p.create_date_);
   }
 };
 }  // namespace attendance_helper
