@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { io } from 'socket.io-client';
 // globalThis.chai = chai;
 
-const URL = 'http://localhost:50025';
+import { URL } from 'config.js';
 describe('doodle 本地服务器测试', function () {
   describe('提交作业测试', function () {
     it('连接事件测试', async function () {
