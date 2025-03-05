@@ -164,24 +164,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
   std::vector<chrono::local_days> l_date_list{};
-  boost::uuids::uuid l_user_uuid{};
-
-  auto l_date    = in_handle->capture_->get("date");
-  auto l_user_id = in_handle->capture_->get("user_id");
-  chrono::year_month_day l_ymd{};
-  chrono::year_month l_ym{};
-  std::istringstream l_date_stream{l_date};
-  l_date_stream >> chrono::parse("%Y-%m", l_ym);
-  if (!l_date_stream.eof()) {
-    l_date_stream >> chrono::parse("%Y-%m-%d", l_ymd);
-    l_date_list.emplace_back(l_ymd);
-  } else {
-    auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
-    for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end; l_day += chrono::days{1}) {
-      l_date_list.emplace_back(l_day);
+  boost::uuids::uuid l_user_uuid = from_uuid_str(in_handle->capture_->get("user_id"));
+  {
+    auto l_date = in_handle->capture_->get("date");
+    chrono::year_month_day l_ymd{};
+    chrono::year_month l_ym{};
+    std::istringstream l_date_stream{l_date};
+    l_date_stream >> chrono::parse("%Y-%m", l_ym);
+    if (!l_date_stream.eof()) {
+      l_date_stream >> chrono::parse("%Y-%m-%d", l_ymd);
+      l_date_list.emplace_back(l_ymd);
+    } else {
+      auto l_end = chrono::local_days{chrono::year_month_day{l_ym / chrono::last}};
+      for (auto l_day = chrono::local_days{chrono::year_month_day{l_ym / 1}}; l_day <= l_end;
+           l_day += chrono::days{1}) {
+        l_date_list.emplace_back(l_day);
+      }
     }
   }
-  l_user_uuid = boost::lexical_cast<boost::uuids::uuid>(l_user_id);
 
   auto& l_sql = g_ctx().get<sqlite_database>();
   auto l_user = l_sql.get_by_uuid<user_helper::database_t>(l_user_uuid);
@@ -249,7 +249,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete(
     session_data_ptr in_handle
 ) {
-  auto l_id = from_uuid_str(in_handle->capture_->get("id"));
+  auto l_id   = from_uuid_str(in_handle->capture_->get("id"));
   auto& l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.remove<attendance_helper::database_t>(std::make_shared<uuid>(l_id));
   co_return in_handle->make_msg((nlohmann::json{} = l_id).dump());
