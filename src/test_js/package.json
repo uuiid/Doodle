@@ -4,7 +4,7 @@
   "type": "module",
   "description": "doodle 测试",
   "scripts": {
-    "test": "mocha test-suite.js"
+    "test": "mocha test-loc.js"
   },
   "author": "",
   "license": "ISC",
