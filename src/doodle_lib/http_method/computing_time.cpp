@@ -561,11 +561,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
 
-  *l_block_ptr |= ranges::actions::sort(
-      [](const work_xlsx_task_info_helper::database_t& in_l, const work_xlsx_task_info_helper::database_t& in_r
-      ) -> bool { return in_l.start_time_.get_sys_time() < in_r.start_time_.get_sys_time(); }
-  );
-
   if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   } else
