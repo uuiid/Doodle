@@ -44,6 +44,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::metadata_descriptor_data_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::two_factor_authentication_types);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::person_role_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::status_automation_change_type);
+DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
 struct type_is_nullable<std::string> : std::true_type {
@@ -52,6 +53,10 @@ struct type_is_nullable<std::string> : std::true_type {
 template <>
 struct type_is_nullable<boost::uuids::uuid> : std::true_type {
   bool operator()(const boost::uuids::uuid& t) const { return t.is_nil(); }
+};
+template <>
+struct type_is_nullable<nlohmann::json> : std::true_type {
+  bool operator()(const nlohmann::json& t) const { return t.is_null(); }
 };
 }  // namespace sqlite_orm
 
@@ -229,6 +234,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("project_id", &project_task_status_link::project_id_, not_null()),
           make_column("task_status_id", &project_task_status_link::task_status_id_, not_null()),
           make_column("priority", &project_task_status_link::priority_),
+          make_column("roles_for_board", &project_task_status_link::roles_for_board_),
           foreign_key(&project_task_status_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_task_status_link::task_status_id_).references(&task_status::uuid_id_).on_delete.cascade()
       ),
@@ -551,8 +557,7 @@ struct sqlite_database_impl {
   T get_by_uuid(const uuid& in_uuid) {
     using namespace sqlite_orm;
     auto l_vec = storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
-    if (l_vec.empty())
-      throw_exception(doodle_error{"id对应的实体不存在"});
+    if (l_vec.empty()) throw_exception(doodle_error{"id对应的实体不存在"});
     return l_vec[0];
   }
 

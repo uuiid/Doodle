@@ -72,9 +72,9 @@ struct project {
   bool is_preview_download_allowed_;
   bool is_set_preview_automated_;
   bool homepage_;
-  bool is_publish_default_for_artists_;
-  std::int32_t hd_bitrate_compression_;
-  std::int32_t ld_bitrate_compression_;
+  std::optional<bool> is_publish_default_for_artists_;
+  std::optional<std::int32_t> hd_bitrate_compression_;
+  std::optional<std::int32_t> ld_bitrate_compression_;
   uuid project_status_id_;
   uuid default_preview_background_file_id_;
   std::vector<uuid> team_;
