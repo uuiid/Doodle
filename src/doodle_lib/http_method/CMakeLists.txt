@@ -8,6 +8,7 @@ target_sources(
         kitsu_front_end_reg.h
         tool_version.h
         up_file.h
+        http_jwt_fun.h
 
         PRIVATE
         computer.cpp
@@ -18,6 +19,7 @@ target_sources(
         kitsu_front_end_reg.cpp
         tool_version.cpp
         up_file.cpp
+        http_jwt_fun.cpp
 )
 
 add_subdirectory(kitsu)
