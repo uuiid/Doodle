@@ -24,3 +24,4 @@ target_sources(
         authorization.cpp
         global_function.cpp
 )
+add_subdirectory(bcrypt)
