@@ -18,7 +18,7 @@ struct project_task_type_link {
   DOODLE_BASE_FIELDS();
   uuid project_id_;
   uuid task_type_id_;
-  std::int32_t priority_;
+  std::optional<std::int32_t> priority_;
 };
 
 struct project_task_status_link {
@@ -26,7 +26,7 @@ struct project_task_status_link {
 
   uuid project_id_;
   uuid task_status_id_;
-  std::int32_t priority_;
+  std::optional<std::int32_t> priority_;
   std::vector<person_role_type> roles_for_board_;
 };
 struct project_asset_type_link {
